@@ -1,0 +1,343 @@
+# Core Mechanics - Developer Implementation Guide
+
+## Mission: The Infinite Adaptive World
+
+**Our Vision**: Create a 2D sandbox game that becomes a unique, infinite world for each player - one that understands how they think and adapts accordingly. Whether someone is an analytical optimizer who loves efficiency systems, a creative explorer who seeks discovery, or a social builder who enjoys collaboration, the game should recognize their cognitive style and procedurally generate content that resonates with how their mind works.
+
+**The Infinite Promise**: 
+- **Infinite Resources** through procedural material generation that creates new crafting possibilities
+- **Infinite Recipes** via algorithmic combination systems that generate personalized crafting trees  
+- **Infinite Territory** through modular world building blocks that combine into endless unique regions
+- **Infinite Progression** where mastery in one area opens entirely new systems and possibilities
+- **Infinite Personalization** where the game learns player preferences and generates content tailored to their cognitive profile
+
+Everything above this is just us shooting the moon, below is what we are working on in this phase. The above text is to provide context and drive the importance of solid foundations/scalability.
+
+**Technical Philosophy**: Start with rock-solid, simple foundations (place tiles, craft items, automate systems) but architect every system to scale infinitely through data and algorithms, not code rewrites. Like Minecraft's blocks or No Man's Sky's planets - simple rules creating infinite emergent complexity.
+
+**The Developer Challenge**: Build systems so robust and extensible that in 5 years, players could still be discovering new combinations, new territories, and new possibilities that surprise even us as the creators.
+
+---
+
+## Foundational Systems (Code These First)
+
+### 1. Grid-Based World System
+**Core Concept**: Everything exists on a tile-based grid (like Minecraft blocks but 2D)
+
+```
+WorldTile {
+  position: {x, y}
+  tileType: enum (GRASS, STONE, WATER, etc.)
+  occupiedBy: entityID | null
+  resources: resourceNode | null
+  ownership: playerID | null
+  discoveredBy: [playerIDs]
+}
+```
+
+**Why This Works**:
+- **Simple**: Click to place/interact with tiles
+- **Scalable**: Add infinite tile types via data files
+- **Testable**: Easy to visualize and debug
+- **Expandable**: Supports buildings, resources, territory, automation
+
+**Implementation Priority**: 
+1. Basic tile placement/removal
+2. Multiple tile types with different properties
+3. Chunk-based loading for infinite worlds
+4. Tile state persistence
+
+---
+
+### 2. Universal Item System
+**Core Concept**: Everything is an "item" with properties (like Minecraft items)
+
+```
+Item {
+  id: string
+  name: string
+  stackSize: number
+  properties: {
+    isPlaceable: boolean
+    isConsumable: boolean
+    toolTier: number
+    resourceValue: number
+    automationComponent: boolean
+    // Infinite expandability through properties
+  }
+  metadata: flexible_data
+}
+```
+
+**Why This Works**:
+- **Unified**: Tools, resources, buildings all use same system
+- **Data-Driven**: New items added via JSON files, no code changes
+- **Moddable**: Players could eventually create custom items
+- **Testable**: Easy to spawn/test any item combination
+
+**Implementation Priority**:
+1. Basic item creation and stacking
+2. Inventory UI and management
+3. Item property system
+4. Drag-and-drop interactions
+
+---
+
+### 3. Recipe & Crafting Engine
+**Core Concept**: Data-driven recipe system that can generate new recipes
+
+```
+Recipe {
+  id: string
+  inputs: [{itemId, quantity}]
+  outputs: [{itemId, quantity}]  
+  requiredTool: string | null
+  requiredBuilding: string | null
+  discoveryConditions: [conditions]
+  isPersonal: boolean  // Player-specific recipes
+}
+```
+
+**Recipe Generation System**:
+```
+RecipeGenerator {
+  generatePersonalRecipe(playerProfile, existingRecipes)
+  combineItems(item1, item2) -> possibleOutputs
+  checkDiscoveryConditions(player, recipe) -> boolean
+}
+```
+
+**Why This Works**:
+- **Infinite Content**: Algorithm generates new recipes procedurally
+- **Player Differentiation**: Each player gets unique recipe discoveries
+- **Simple Base**: Start with handcrafted recipes, expand algorithmically  
+- **Testable**: Easy to verify recipe logic and balance
+
+**Implementation Priority**:
+1. Static recipe system with basic crafting UI
+2. Discovery mechanics (try combining items)
+3. Personal recipe book per player
+4. Recipe generation algorithms
+
+---
+
+### 4. Resource Node System
+**Core Concept**: Placeable generators that can be configured and upgraded
+
+```
+ResourceNode {
+  position: {x, y}
+  nodeType: string
+  currentResource: itemId
+  productionRate: number
+  inputRequirements: [items] | null
+  outputStorage: inventory
+  automationConnections: [directions]
+  upgrades: [upgradeIds]
+}
+```
+
+**Why This Works**:
+- **Simple Start**: Place generator → produces items over time
+- **Complex Evolution**: Add fuel requirements, multi-outputs, efficiency upgrades
+- **Automation Ready**: Built-in connection system for later automation
+- **Configurable**: Change what's produced without replacing the generator
+
+**Implementation Priority**:
+1. Basic timed resource generation
+2. Resource switching/configuration UI  
+3. Upgrade system for efficiency
+4. Connection points for automation
+
+---
+
+### 5. Territory & Ownership System
+**Core Concept**: Simple area claiming that tracks player control and builds reputation
+
+```
+Territory {
+  ownerId: string
+  bounds: rectangle
+  territoryType: enum (CORE_BASE, EXPANSION, OUTPOST)
+  buildings: [entityIds]
+  reputation: number
+  specializations: [strings]
+}
+
+Player {
+  territories: [territoryIds]
+  totalReputation: number
+  specializations: {craftingMastery, automationEfficiency, etc}
+  discoveries: [itemIds, recipeIds, locationIds]
+}
+```
+
+**Why This Works**:
+- **Clear Ownership**: Players know what's theirs and what's safe
+- **Progression Tracking**: Reputation builds through various activities
+- **Expansion Mechanics**: Claim more territory as you advance
+- **Social Foundation**: Later supports trading, cooperation, competition
+
+**Implementation Priority**:
+1. Basic territory claiming (right-click to claim area)
+2. Building placement restrictions (only in owned territory)
+3. Reputation calculation system
+4. Territory expansion mechanics
+
+---
+
+### 6. Simple Automation Framework
+**Core Concept**: State machine system that can grow from basic to complex
+
+```
+AutomationComponent {
+  id: string
+  inputConnections: [directions]
+  outputConnections: [directions]  
+  state: enum (IDLE, PROCESSING, OUTPUTTING)
+  timer: number
+  conditions: [condition_objects]
+  actions: [action_objects]
+}
+```
+
+**Basic Automation Types**:
+- **Auto-Collector**: Picks up items in adjacent tiles
+- **Timer**: Triggers actions every X seconds
+- **Conveyor**: Moves items in a direction
+- **Filter**: Routes items based on type
+- **Storage**: Holds items with in/out rules
+
+**Why This Works**:
+- **Composable**: Basic components combine for complex behaviors
+- **Visual**: Players can see automation working in real-time  
+- **Scalable**: Add new component types without changing core system
+- **Debuggable**: Easy to trace automation logic and find issues
+
+**Implementation Priority**:
+1. Basic auto-collector and storage components
+2. Conveyor system for item movement
+3. Timer-based automation
+4. Visual feedback for automation state
+
+---
+
+## Core Game Loop Implementation
+
+### Moment-to-Moment Gameplay:
+```
+1. Player clicks on world tile
+2. Check what action is possible (place, interact, collect)
+3. Execute action (update world state, inventory, etc.)
+4. Update UI (inventory, territory view, automation status)
+5. Save incremental changes
+6. Repeat
+```
+
+### Session-Level Progression:
+```
+1. Player starts session, loads persistent world
+2. Check automated systems (resources generated while away)
+3. Present new opportunities (recipes to discover, territories to claim)
+4. Player pursues goals (building, exploring, optimizing)
+5. Track progress (reputation, discoveries, efficiency metrics)
+6. Save full state on exit
+```
+
+---
+
+## Data Architecture for Infinite Scaling
+
+### JSON-Driven Content:
+```
+/data/
+  /items/          - All item definitions
+  /recipes/        - Base recipe templates  
+  /tiles/          - Tile type definitions
+  /biomes/         - World generation rules
+  /automation/     - Automation component definitions
+  /generation/     - Procedural generation parameters
+```
+
+### Player Profile System:
+```
+PlayerProfile {
+  cognitiveStyle: {analytical, creative, social, mixed}
+  playPatterns: {timePlayed, actionsPerMinute, focusAreas}
+  preferences: {discoveredFromBehavior}
+  personalContent: {recipes, territories, specializations}
+}
+```
+
+---
+
+## Testing & Validation Framework
+
+### Core Mechanics Testing:
+1. **World Integrity**: Tiles save/load correctly, no data loss
+2. **Recipe Logic**: All input/output combinations work as expected  
+3. **Automation Chains**: Complex automation doesn't break or lag
+4. **Territory Boundaries**: Ownership rules enforced correctly
+5. **Infinite Content**: Generation algorithms produce valid, balanced results
+
+### Player Experience Testing:
+1. **Onboarding Flow**: New players understand basic mechanics quickly
+2. **Progression Pacing**: Goals feel achievable and rewarding
+3. **Cognitive Adaptation**: Different play styles lead to different experiences
+4. **Performance**: Game runs smoothly with large bases and complex automation
+
+---
+
+## Implementation Roadmap
+
+### Sprint 1 (2-3 weeks): Foundation
+- Grid-based world with basic tile placement
+- Item system with inventory management
+- Simple crafting with 10-15 hardcoded recipes
+- Basic resource generators (wood, stone, ore)
+
+### Sprint 2 (2-3 weeks): Interaction
+- Territory claiming system
+- Basic building placement and restrictions
+- Recipe discovery through experimentation
+- Personal recipe book UI
+
+### Sprint 3 (3-4 weeks): Automation
+- Auto-collector implementation
+- Basic conveyor system
+- Timer-based automation
+- Visual feedback for automation state
+
+### Sprint 4 (2-3 weeks): Progression
+- Reputation/rating system
+- Tool progression and world access gating
+- Advanced resource generators with configuration
+- Save/load system optimization
+
+### Sprint 5+ (Ongoing): Expansion
+- Procedural recipe generation
+- Advanced automation components
+- Biome system and world expansion
+- Player profile tracking and adaptive content
+
+---
+
+## Technical Notes
+
+**Engine Recommendations**:
+- **Unity 2D** or **Godot** for rapid prototyping and built-in UI systems
+- **SQLite** for local save data with JSON for content definitions
+- **State Machine** library for automation logic
+- **Tilemap** system for efficient world rendering
+
+**Performance Considerations**:
+- Chunk-based world loading (only load visible + adjacent areas)
+- Object pooling for frequently created/destroyed items  
+- Automation processing in background threads
+- Incremental saving (only save changed data)
+
+**Scalability Architecture**:
+- Content definition files separate from code
+- Plugin system for future mod support
+- Event-driven architecture for system communication
+- Profile-based procedural generation for personalized content

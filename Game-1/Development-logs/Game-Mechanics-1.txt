@@ -1,0 +1,616 @@
+# Refined System Breakdown
+## Using Crafting as Template for All Future Systems
+
+---
+
+## 🔨 CRAFTING SYSTEM
+
+### General Overview
+
+1. **Core Concept:** Material-driven mini-games where recipe complexity and material value determines challenge difficulty and potential rewards. Specializations emerge from material usage patterns (e.g., using many fire materials adds fire modifiers to mini-games, enabling fire-focused sub-specializations).
+
+2. **LLM Role:** Generates new recipe results after guided-play period. Timing TBD: Does LLM generate result then determine difficulty? Or difficulty first then reward? Or are they independent? Needs decision.
+
+3. **Guided-Play Foundation:** Initial hand-crafted recipes and mechanics establish baseline material interactions and trends. These define the rules LLM uses for future generation.
+
+4. **Sub-Specialization Mechanics:** Modifications to base mini-game based on material patterns. Example: Base game = click green squares in time limit. Earth specialization = larger click zones. Fire specialization = shorter time limit. Water specialization = irregular shapes. *Note: These are placeholder concepts, actual mechanics TBD.*
+
+5. **Crafting Time & Instant Craft Option:** 
+   - Simpler recipes = faster mini-games
+   - ALL items can be instantly crafted with recipe + materials (base stats only)
+   - Mini-games add +X bonus stats/attributes to base item
+   - Higher tier items have higher potential +X bonuses
+   - Both base stats and +X bonuses are procedurally generated
+
+6. **Failure States & Attempts:**
+   - Failure loses some resources (scales with recipe tier/complexity)
+   - Multiple attempts allowed (3 attempts?)
+   - All attempts have same reward calculation
+   - **First-Try Bonus:** Chance-based unique attribute class, only available on first attempt (not guaranteed, adds incentive)
+
+7. **Recipe Discovery & Unlocking:**
+   - Guided-play recipes: Pre-unlocked, craftable immediately
+   - Post-guided-play recipes: Require mini-game completion to unlock
+   - Once unlocked, can be base-crafted (no +X) or mini-game crafted (+X bonuses)
+   - Set attributes may exist on items regardless, but mini-games can boost them
+
+---
+
+### Sub-Crafting Disciplines
+
+#### Smithing (Weapons/Tools/Armor)
+
+1. **Base Mechanic:** Temperature management + hammering/forging
+
+2. **Mini-Game Structure:**
+   - **Temperature:** Keyboard controls (WASD/arrows)
+   - **Hammering/Forging:** Mouse controls (clicking)
+   - **Difficulty Scaling:**
+     - T1: Simple timing with spacebar + click
+     - T2: WASD temperature zones + clicking different forge spots
+     - T3-T4: OSU-style complexity with rhythm, precision, multi-tasking
+   - Combines click timing with spatial awareness
+
+3. **Material Input Method:** TBD - Needs system where material placement/timing has meaning during forging process
+
+4. **Specialization Branches:** Reflect guided-play material trends (Pyrosmithing, Cryosmithing, Heavy Forging, Precision Crafting) - Full definition after guided-play established
+
+5. **Progression Formula:** Based on resource tier + recipe complexity. Target: Max complexity T1 ≈ Simple T3 (excluding special abilities)
+
+6. **Time Requirements:** 15-120 seconds depending on tier and complexity (exact timing TBD through playtesting)
+
+---
+
+#### Forging/Refining (Material Processing)
+
+1. **Base Mechanic:** Lockpicking-style timing game - "unlocking" the potential of materials
+
+2. **Mini-Game Structure:**
+   - Visual: Rotating cylinders/locks (like lockpicking in games)
+   - Input: Timing-based rotation to align cylinders correctly
+   - Must align all cylinders to unlock material's true properties
+
+3. **Complexity Scaling:**
+   - T1: Few cylinders, slow rotation, wide timing windows
+   - T2: More cylinders, faster rotation, narrower windows
+   - T3: Many cylinders, fast rotation, precise timing required
+   - T4: Multiple cylinder layers, very fast, frame-perfect timing
+
+4. **Material Integration:** Always separate station from smithing. Refined materials add attributes that transfer to final crafted items (any crafting type)
+
+5. **Batch Processing:** Can refine using recipes only (instant, no bonuses) or refine large stacks. Alloy creation by combining different refined metals in ratios. Refined materials can be refined again for higher tiers.
+
+6. **Specialization Branches:** TBD based on material patterns (Alloy Mastery, Purification Expert, etc.)
+
+---
+
+#### Alchemy (Potions/Transmutation)
+
+**Note:** Chef specialization potential - system must work for both potions and cooking
+
+1. **Material Property System (Hidden Complexity):**
+   - All ingredients have hidden volatility levels (stable → explosive)
+   - Hidden attributes (fire, water, earth, air, light, dark, etc.)
+   - Attributes visible through indicators/item descriptions but exact values unknown
+   - Multi-use materials: Items have multiple properties across different crafting types
+   - Higher quality recipes generally require ingredient tier balance
+
+2. **Mini-Game Structure (Dual Input):**
+   - **Stirring (Mouse):** Affects progress rate
+     - Speed/direction of stirring speeds up or slows down progress bar
+     - Different ingredients respond to different stirring patterns
+   - **Adding Ingredients (Keyboard/Click):** Boosts progress bar
+     - Timing of when you add ingredients matters
+     - Adding ingredients always boosts the bar
+     - Goal: Maximize progress bar by end of time limit
+   
+3. **Time Pressure:**
+   - Recipes have time limits
+   - Too much time left = bar slowly declines after peak
+   - Not enough time = progress bar doesn't fill completely
+   - Higher bar at end = better reward (+X bonuses)
+
+4. **Complexity Scaling:**
+   - T1: Few ingredients, forgiving stirring, long time limits, slow decline
+   - T2: More ingredients, specific stirring patterns needed, medium time
+   - T3: Many ingredients, precise stirring + timing required, tight time limits
+   - T4: Complex ingredient interactions, stirring affects volatility, very tight timing, rapid decline
+
+5. **Ingredient Interactions:**
+   - Volatility matters: Some ingredients pacify, some amplify, some cancel out
+   - Order of addition affects outcomes
+   - Stirring can extract or suppress ingredient properties
+
+6. **Recipe Discovery:** Ingredient selection → Mini-game attempt. Success = Recipe learned
+
+7. **Specialization Branches:** TBD after guided-play (Healing Alchemy, Volatile Alchemy, Transmutation, Culinary Arts)
+
+---
+
+#### Engineering (Turrets/Bombs/Traps/Tools)
+
+1. **Base Mechanic & Craftable Items:**
+   - Combat through gadgets (turrets, bombs, traps)
+   - Advanced tools (utility items)
+   - Can place items outside claimed territory
+   - Class identity: Builders, fortifiers, tactical planners
+
+2. **Mini-Game Structure: Pure Cognitive Puzzles**
+   - **No narrative integration** - just puzzles, not themed around device function
+   - Untimed - take as long as needed
+   - Can save progress and return later
+   - Can cancel anytime (counts as failure, materials lost)
+   
+3. **Puzzle Types by Tier:**
+   - **T1:** Rotation pipe puzzles (3x3 to 5x5 grids, simple connections)
+   - **T2:** Rotation + Sliding puzzles (5x5 grids, 3x3 sliding tiles)
+   - **T3:** Rotation + Sliding + Traffic jam puzzles (6x6 grids, complex blocking)
+   - **T4:** All types + Pattern matching + Logic grids (7x7+ grids, sudoku-like constraints)
+   
+4. **Multiple Puzzles Per Device:**
+   - Higher tier devices = more puzzles (T4 devices might have 4-6 puzzles)
+   - Each puzzle completion affects device stats
+   - Optimal solutions = better performance stats
+
+5. **Complexity Philosophy:** All products are simple to use, complexity is entirely in crafting process. Quality determines effectiveness.
+
+6. **Specialization Branches:** TBD based on guided-play patterns
+
+7. **Unique Property:** Strong devices but immobile/situational (niche role, not general combat replacement)
+
+---
+
+#### Adornment/Enchanting (Enhancement & Accessories)
+
+1. **Base Mechanic & Purpose:**
+   - Make existing items stronger (weapons, armor, tools, turrets, anything craftable)
+   - Can also craft new accessories (rings, amulets, charms) from scratch
+
+2. **Mini-Game Structure: Freeform Pattern Creation**
+   - **Phase 1 - Placement:** Place enhancement materials anywhere in circular workspace (complete creative freedom, no grid/guides)
+   - **Phase 2 - Connection:** Draw lines between materials to create pattern
+   - **Phase 3 - Recognition:** System recognizes what geometric pattern was created
+   - **Phase 4 - Judgment:** System judges quality/precision of pattern (angle accuracy, spacing, symmetry)
+   
+3. **Material Types:**
+   - **Key materials:** Few materials that provide main enhancement properties (gems, essences, cores)
+   - **Connector materials:** Majority of materials used to form the pattern structure
+   - More total materials at higher tiers, but key materials remain few
+
+4. **Pattern Recognition:**
+   - System detects geometric shapes (triangles, squares, stars, circles, spirals, nested patterns, etc.)
+   - Pattern type determines bonus type (offensive, defensive, utility, elemental)
+   - Pattern complexity determines bonus magnitude
+   - Pattern quality (precision) determines bonus strength percentage
+
+5. **Complexity Scaling:**
+   - **Scales by grid detail:** Higher tiers have finer placement precision required
+   - T1: 3-5 materials, simple shapes, forgiving quality judgment
+   - T2: 6-8 materials, intermediate patterns, moderate precision needed
+   - T3: 9-12 materials, complex nested patterns, high precision required
+   - T4: 13-20 materials, multi-layered intricate patterns, pixel-perfect placement
+
+6. **Discovery Element:** Players discover what patterns create what effects through experimentation and experience
+
+7. **Failure States:**
+   - Low-Mid tier: Enchanting materials consumed, item remains intact
+   - High tier: Materials consumed + item being enchanted BREAKS (high risk/reward)
+
+8. **Specialization Branches:** TBD based on pattern types players gravitate toward
+
+---
+
+### Cross-Crafting Systems
+
+#### Crafting Stations
+
+1. **Station Requirements:**
+   - Each discipline needs dedicated station
+   - Stations are prerequisites for crafting (can't smith without forge)
+   - Starter stations provided/cheap to craft
+
+2. **Station Upgrades:**
+   - Stations upgradable through their own crafting type
+   - Example: Forge has 3 upgrade slots → Craft "Forge Enhancement Plates" using smithing
+   - Each upgrade unlocks: Higher tier recipes, Better +X potential, New mini-game mechanics
+   - Upgrades use same mini-game as their discipline
+
+3. **Upgrade Progression:**
+   - Tier 1 Station: Basic recipes, simple mini-games
+   - Tier 2 Station: Intermediate recipes, complex mini-games
+   - Tier 3 Station: Advanced recipes, specialized mechanics
+   - Tier 4 Station: Master recipes, sub-specialization unlocks
+
+4. **Station Placement:**
+   - Must be placed in claimed territory
+   - Size requirements (some stations bigger than others)
+   - Aesthetic variations (reflect player's crafting style?)
+
+#### Material Consumption & Failure
+
+1. **Base Crafting (No Mini-Game):**
+   - 100% material consumption
+   - No failure possible
+   - Produces base item with no +X bonuses
+
+2. **Mini-Game Crafting:**
+   - **Success:** 100% material consumption, item created with +X
+   - **Partial Success:** 100% material consumption, item created with reduced/no +X
+   - **Failure:** Partial material return or total loss (scales with tier)
+   
+3. **Failure Scaling:**
+   - T1 Failure: Lose 30-50% of materials
+   - T2 Failure: Lose 50-70% of materials
+   - T3 Failure: Lose 70-90% of materials
+   - T4 Failure: Lose 90-100% of materials
+   - High stakes at high tiers encourages skill development
+
+4. **Multi-Attempt System:**
+   - 3 attempts per recipe instance
+   - All attempts use same material pool
+   - First attempt: Chance for unique "First-Try Bonus" attributes
+   - Subsequent attempts: Standard reward calculation, no bonus chance
+   - After 3 failures: Must gather new materials to try again
+
+#### Quality Tiers & +X System
+
+1. **Base Item Stats:**
+   - Every item has base stats determined by recipe and materials
+   - Base stats are procedurally generated (guided-play defines ranges)
+   - Example: T2 Iron Sword base = 15-20 damage
+
+2. **+X Bonus System:**
+   - Mini-game performance determines +X value
+   - +X adds to base stats
+   - Example: Perfect craft = +5 damage → Total 20-25 damage
+   - Higher tier items have higher potential +X (T4 could get +15)
+
+3. **Quality Naming:**
+   - Normal: Base stats, no +X (instant craft)
+   - Fine: Base stats +1 to +3
+   - Superior: Base stats +4 to +7
+   - Masterwork: Base stats +8 to +12
+   - Legendary: Base stats +13+, possible unique attributes
+
+4. **Attribute Bonuses:**
+   - Beyond stat +X, can gain special attributes
+   - Attributes from materials used (fire materials → fire damage)
+   - First-Try Bonus attributes (unique, rare)
+   - LLM-generated attributes (post guided-play)
+
+#### Recipe Discovery & Experimentation
+
+1. **Guided-Play Recipes:**
+   - Pre-designed, hand-crafted recipes
+   - Unlocked through tutorial/early quests
+   - Establish baseline for material interactions
+   - ~20-30 recipes per discipline to start
+
+2. **Experimentation Discovery:**
+   - Select materials → Attempt craft → Mini-game
+   - Success = Recipe learned + item created
+   - Failure = No recipe, some materials lost
+   - Can try any combination (no restrictions)
+
+3. **Recipe Hints:**
+   - Item descriptions hint at uses
+   - Material combinations show "potential" indicator
+   - NPCs might suggest combinations
+   - Lore/books contain recipe clues
+
+4. **LLM Recipe Generation:**
+   - Post guided-play, LLM generates new valid recipes
+   - Based on player's material usage patterns
+   - Validation: Must be balanced, must make thematic sense
+   - Player discovers through experimentation (LLM doesn't tell them directly)
+
+5. **Recipe Book/Journal:**
+   - Personal recipe journal per player
+   - Records all discovered recipes
+   - Can instant-craft from journal (base quality)
+   - Shows materials required, expected output
+   - Tags/categories for organization
+
+---
+
+## 📊 PROGRESSION SYSTEMS
+
+### General Overview
+
+1. **Core Concept:** [NEEDS DEFINITION]
+   - How do players advance overall?
+   - What gates content access?
+   - Multiple progression paths or unified?
+
+2. **Progression Currencies:**
+   - Experience points? Skill points? Reputation? All of the above?
+   - How earned and spent?
+
+3. **Soft vs Hard Gates:**
+   - What stops players from accessing T4 content immediately?
+   - Tool requirements? Skill requirements? Story progression?
+
+4. **LLM Role:**
+   - How does LLM affect progression?
+   - Personalized progression paths?
+
+### Character Stats
+
+1. **Stat Types:** [NEEDS DEFINITION]
+   - Strength, Agility, Intelligence, Vitality, Others?
+   - What does each stat do?
+   - How do stats affect gameplay?
+
+2. **Stat Points:**
+   - Max 30 stat points total (from notes)
+   - How earned: Level up? Quests? Activities?
+   - Allocation: Free choice or restricted?
+
+3. **Respec System:**
+   - Can you respec stats?
+   - Cost/limitations?
+   - Frequency allowed?
+
+4. **Stat Scaling:**
+   - Linear growth or diminishing returns?
+   - Soft caps? Hard caps?
+   - Synergies between stats?
+
+### Skill System (Difference Maker)
+
+1. **Skill Categories:** [NEEDS DEFINITION]
+   - Combat skills, Crafting skills, Gathering skills, Magic skills?
+   - How many total skills?
+   - Separate from stats or integrated?
+
+2. **Skill Leveling:**
+   - Use-based progression (mine to level mining)?
+   - Quest/achievement unlocks?
+   - Trainer NPCs?
+
+3. **Skill Effects:**
+   - Efficiency bonuses (gather faster, craft better)?
+   - Unlock new abilities/recipes?
+   - Quality improvements?
+
+4. **Skill Caps:**
+   - Per-skill max level?
+   - Can you master all skills or must specialize?
+   - Total skill point budget?
+
+5. **Specialization Bonuses:**
+   - Focusing on one skill gives unique rewards?
+   - Deep specialist vs broad generalist?
+
+6. **LLM Skill Generation:**
+   - Can LLM create unique skills for specialists?
+   - Custom abilities based on playstyle?
+
+### Class System (Changeable, but most won't)
+
+1. **Class Definition:** [NEEDS COMPLETE REDESIGN]
+   - What is a class in this game?
+   - Pre-defined roles or emergent from play?
+   - How many classes exist?
+
+2. **Class Selection:**
+   - Chosen at character creation?
+   - Earned through gameplay?
+   - Multiple classes simultaneously?
+
+3. **Class Benefits:**
+   - Stat bonuses? Skill access? Unique abilities?
+   - Passive effects? Active skills?
+   - Equipment restrictions?
+
+4. **Class Changing:**
+   - How does changing work?
+   - Penalties for changing?
+   - How often can you change?
+   - Why would "most not" change?
+
+5. **Classless Option:**
+   - Can you play without a class?
+   - Advantages/disadvantages?
+
+6. **LLM-Generated Classes:**
+   - Personal classes based on playstyle?
+   - Unique classes only you have access to?
+
+### Equipment Progression
+
+1. **Tier System:**
+   - T1 → T2 → T3 → T4 defined how?
+   - Material tier? Crafting complexity? Both?
+   - Can T1 maxed compete with T4 basic?
+
+2. **Equipment Types:**
+   - Weapons, Armor, Accessories, Tools
+   - Slot system (head, chest, legs, etc.)?
+   - How many equipment slots?
+
+3. **Upgrade vs Replace:**
+   - Can you upgrade existing gear or must craft new?
+   - Adornment for upgrades, crafting for new?
+   - Both viable paths?
+
+4. **Set Bonuses:**
+   - Do equipment sets exist?
+   - Bonuses for wearing matching pieces?
+   - Crafted sets or found sets?
+
+5. **Legendary/Unique Items:**
+   - How obtained?
+   - LLM-generated?
+   - Quest rewards? Rare drops? Boss loot?
+
+### Reputation/Rating System
+
+1. **Definition:** [NEEDS COMPLETE DEFINITION]
+   - What is reputation in this game?
+   - Single score or multiple categories?
+   - Visible number or hidden?
+
+2. **How Earned:**
+   - Completing activities?
+   - Mastery achievements?
+   - Discoveries?
+   - Quality of crafts?
+
+3. **Effects of Reputation:**
+   - Unlocks content?
+   - NPC treatment?
+   - Rewards?
+   - Prestige/bragging rights?
+
+4. **Specialization Reputation:**
+   - Separate rep for each activity?
+   - "Master Smith" vs "Master Alchemist"?
+   - Can be master of multiple?
+
+---
+
+## ⚔️ COMBAT SYSTEM
+
+### General Overview
+
+1. **Combat Style:** [NEEDS DEFINITION]
+   - Real-time action combat?
+   - Turn-based?
+   - Hybrid?
+   - Skill-based or stat-based?
+
+2. **Core Mechanics:**
+   - What actions can player take in combat?
+   - Attack, Dodge, Block, Skills?
+   - Resource management (stamina, mana)?
+
+3. **Combat Frequency:**
+   - Constant threat or opt-in?
+   - Safe zones vs danger zones?
+   - Can you avoid combat entirely?
+
+4. **Specialization:**
+   - Weapon types, magic schools, combat styles
+   - How does material usage affect combat specialization?
+
+5. **LLM Role:**
+   - Generate unique enemies?
+   - Personalized boss fights?
+   - Adaptive difficulty?
+
+[Continue with detailed numbered breakdowns for each combat subsystem...]
+
+---
+
+## 🎣 GATHERING ACTIVITIES
+
+### General Overview
+
+1. **Core Concept:** [NEEDS DEFINITION]
+   - Primary resource acquisition method
+   - Tool-based or skill-based?
+   - Active engagement or passive?
+
+2. **Specialization:**
+   - Based on resource focus?
+   - Based on gathering method?
+   - Based on efficiency vs completionism?
+
+3. **LLM Role:**
+   - Generate rare resources?
+   - Personalized gathering challenges?
+   - Unique gathering locations?
+
+4. **Integration with Crafting:**
+   - How do gathered materials feed crafting?
+   - Refinement before use or raw materials?
+   - Quality tiers in gathering?
+
+[Continue with numbered breakdowns for Mining, Forestry, Fishing, Harvesting...]
+
+---
+
+## 🗺️ EXPLORATION SYSTEM
+
+### General Overview
+
+1. **Core Concept:** [NEEDS DEFINITION]
+2. **Primary Loop:** [NEEDS DEFINITION]
+3. **Rewards:** [NEEDS DEFINITION]
+4. **Specialization:** [NEEDS DEFINITION]
+5. **LLM Role:** [NEEDS DEFINITION]
+
+[Continue with detailed subsections...]
+
+---
+
+## 🌍 WORLD STRUCTURE
+
+### General Overview
+
+1. **Core Concept:** [NEEDS DEFINITION]
+2. **World Scale:** [NEEDS DEFINITION]
+3. **Guided-Play Region:** [NEEDS DEFINITION]
+4. **Transition to Freedom:** [NEEDS DEFINITION]
+5. **LLM World Generation:** [NEEDS DEFINITION]
+
+[Continue with detailed subsections...]
+
+---
+
+## 🎮 CORE GAMEPLAY SYSTEMS
+
+[Follow same detailed numbered format for:]
+- Material & Item System
+- Recipe System
+- World Interaction
+- Building System
+- Save System
+- UI/UX Systems
+
+---
+
+## 🤖 LLM INTEGRATION SYSTEM
+
+### General Overview
+
+1. **Core Concept:** [NEEDS DEFINITION]
+2. **Guided-Play Endpoint:** [NEEDS DEFINITION]
+3. **Data Collection:** [NEEDS DEFINITION]
+4. **Generation Triggers:** [NEEDS DEFINITION]
+5. **Validation:** [NEEDS DEFINITION]
+
+[Continue with detailed subsections...]
+
+---
+
+## 🎯 NEXT STEPS
+
+### Immediate Decisions Needed
+
+1. **Forging/Refining Mini-Game:** Which option? Or different idea?
+2. **Alchemy Mini-Game:** Which option? Must support cooking specialization
+3. **Engineering Mini-Game:** Which option? Accessible but infinitely deep
+4. **Material Input Method (Smithing):** How do materials get added during crafting?
+
+### Systems Requiring Full Definition
+
+1. **Progression Systems** - Character stats, skills, classes
+2. **Combat System** - Complete mechanical design
+3. **Gathering Activities** - Detailed mini-game designs
+4. **Exploration** - Core loop and rewards
+5. **World Structure** - Guided-play to freedom transition
+6. **LLM Integration** - Exactly when and how it activates
+
+### Priority Order
+
+1. **Finish Crafting System** - Answer mini-game questions, define guided-play recipes
+2. **Material Property System** - Foundation for everything
+3. **One Gathering Activity** - Template for others
+4. **Basic Progression** - Gates and advancement
+5. **World Structure** - Guided-play region design
+
+---
+
+**What should we tackle first? Which mini-game needs brainstorming help most urgently?**

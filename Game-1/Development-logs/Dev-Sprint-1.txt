@@ -1,0 +1,556 @@
+# Development Roadmap: Character & Tools Expansion
+
+## Current State Assessment
+
+### ✅ Foundation Systems Complete (From Original Plan)
+- **Grid-Based World System**: Tile placement, harvesting, territory claiming
+- **Universal Item System**: Tiered items (T1/T2/T3) with properties and metadata
+- **Recipe & Crafting Engine**: Multi-category crafting (basic resources, generators, upgrades)
+- **Resource Node System**: Generators with stackable upgrades (speed, storage, output)
+- **Simple Automation Framework**: Auto-collectors and storage containers working
+- **Territory & Ownership**: Basic claiming and ownership visualization
+- **Testing Infrastructure**: Infinite resources toggle for development
+
+### 📊 Current Game State
+- **Functional Core Loop**: Gather → Craft → Place → Upgrade → Automate
+- **Tier Progression**: T1 → T2 advancement with meaningful resource investment
+- **Visual Feedback**: Progress bars, upgrade indicators, storage displays
+- **Solid Architecture**: Modular systems ready for expansion
+
+---
+
+## Identified Gaps & Next Priorities
+
+### 🎯 Core Issues to Address
+1. **Static World**: No natural resources, everything is placed/crafted
+2. **Click-to-Teleport Interaction**: No character presence or movement
+3. **Single Activity Focus**: Only generator management, no diverse gameplay
+4. **Limited Tool Usage**: No tool requirements or specialization
+5. **UI Scalability**: Interface will become cluttered as activities expand
+
+### 🚀 Vision for Next Phase
+Transform from a "generator management sim" into a "character-driven resource exploration game" while maintaining the solid automation foundation.
+
+---
+
+## Sprint 6: Character Movement & Tool Foundation (3-4 weeks)
+
+### Core Objective
+Add character-based interaction model with WASD movement and tool-based resource harvesting.
+
+**⚠️ Major Architectural Change**: This sprint implements 3D-ready architecture from the ground up. While building the 2D version, all systems will use Position objects, renderer abstraction, and asset management that allows seamless 3D conversion in the future.
+
+### Primary Features
+
+#### Character System
+- **Player Avatar**: Simple sprite/icon that represents the player
+- **WASD Movement**: Smooth character movement around the grid world
+- **Interaction Range**: 3-tile radius for tool usage and interaction
+- **Visual Feedback**: Highlight harvestable tiles within range
+
+#### Tool System Foundation
+- **Tool Items**: Axe, Pickaxe, Shovel with tier progression
+- **Durability System**: Tools wear down with use, require replacement/repair
+- **Harvesting Requirements**: Specific tools needed for specific resource types
+- **Tool Effectiveness**: Higher tier tools harvest lower tiers faster
+
+#### Natural Resource Generation
+- **World Generation**: Scatter natural resources during terrain generation
+- **Tree Nodes**: Oak (T1), Birch (T2), Maple (T3) - infinite respawn after timer
+- **Stone Deposits**: Limestone (T1), Granite (T2), Obsidian (T3) - finite nodes
+- **Ore Veins**: Copper (T1), Iron (T2), Steel (T3) - finite with rich deposits
+
+#### Updated Crafting
+- **Tool Recipes**: Craft axes, pickaxes from materials
+- **Material Renaming**: Replace generic "wood_1" with "Oak Log", "Birch Log", etc.
+- **Tool Tier Gating**: T2 axe required for T2+ trees, etc.
+
+### Technical Implementation
+
+#### 3D-Ready Architecture Foundation
+
+##### Position & Spatial Systems
+```javascript
+// 3D-ready position system (z defaults to 0 for 2D)
+class Position {
+  x: number
+  y: number
+  z: number = 0
+  
+  static distance(pos1: Position, pos2: Position): number {
+    return Math.sqrt(
+      (pos1.x - pos2.x)² + 
+      (pos1.y - pos2.y)² + 
+      (pos1.z - pos2.z)²
+    )
+  }
+  
+  clone(): Position { return {x: this.x, y: this.y, z: this.z} }
+}
+
+// Abstract viewport (works for 2D canvas or 3D camera)
+class Viewport {
+  position: Position
+  zoom: number
+  rotation: {x: 0, y: 0, z: 0}  // Future 3D rotation
+  
+  screenToWorld(screenX: number, screenY: number): Position
+  worldToScreen(worldPos: Position): {x: number, y: number}
+}
+```
+
+##### Renderer Abstraction
+```javascript
+// Renderer interface for easy 2D → 3D conversion
+interface IRenderer {
+  renderWorld(worldSystem: WorldSystem): void
+  renderCharacter(character: Character): void
+  renderUI(uiData: any): void
+  handleResize(width: number, height: number): void
+}
+
+// 2D Canvas implementation (current sprint)
+class Canvas2DRenderer implements IRenderer {
+  canvas: HTMLCanvasElement
+  ctx: CanvasRenderingContext2D
+  viewport: Viewport
+  
+  renderWorld(worldSystem: WorldSystem): void
+  renderTile(tile: WorldTile): void
+}
+
+// Future 3D WebGL implementation (ready to drop in)
+class WebGL3DRenderer implements IRenderer {
+  scene: THREE.Scene
+  camera: THREE.Camera
+  renderer: THREE.WebGLRenderer
+  // Implementation ready for future sprint
+}
+```
+
+##### Asset Management System
+```javascript
+// 3D-ready asset definitions
+interface AssetDefinition {
+  id: string
+  name: string
+  sprite2D?: string      // Current: PNG/sprite
+  model3D?: string       // Future: GLTF/OBJ
+  color: string          // Fallback for both
+  scale?: number         // 3D scaling
+}
+
+class AssetManager {
+  assets: Map<string, AssetDefinition>
+  loadedAssets: Map<string, any>
+  
+  loadAsset(id: string): Promise<any>
+  getAsset(id: string): any
+  preloadAssets(assetIds: string[]): Promise<void>
+}
+```
+
+#### Character Controller
+```javascript
+class Character {
+  position: Position  // 3D-ready from start
+  facing: Position    // Direction vector (future 3D rotation)
+  movementSpeed: number
+  selectedTool: string
+  interactionRange: number
+  
+  // 3D-ready movement with direction vectors
+  move(direction: Position): boolean
+  moveUp(): boolean { return this.move({x: 0, y: -1, z: 0}) }
+  moveDown(): boolean { return this.move({x: 0, y: 1, z: 0}) }
+  moveLeft(): boolean { return this.move({x: -1, y: 0, z: 0}) }
+  moveRight(): boolean { return this.move({x: 1, y: 0, z: 0}) }
+  
+  // Position-based interaction (works in 2D and 3D)
+  canHarvest(tilePosition: Position, tool: Tool): boolean
+  harvestTile(tilePosition: Position): harvestedItems
+  isInRange(targetPosition: Position): boolean
+}
+```
+
+#### Tool System
+```javascript
+class Tool {
+  toolType: 'axe' | 'pickaxe' | 'shovel'
+  tier: number
+  durability: {current: number, max: number}
+  efficiency: number
+  
+  canHarvest(resourceType: string, resourceTier: number): boolean
+  reduceDurability(amount: number): void
+  getRepairCost(): {itemId: string, quantity: number}[]
+}
+```
+
+#### Natural Resource Nodes
+```javascript
+class NaturalResource {
+  position: Position  // 3D-ready positioning
+  resourceType: string
+  tier: number
+  requiredTool: string
+  respawnTime: number | null  // null = finite
+  harvestYield: {itemId: string, quantity: number}[]
+  
+  harvest(tool: Tool): harvestedItems | null
+  respawn(): void
+  isHarvestable(): boolean
+}
+```
+
+#### World System Updates
+```javascript
+class WorldSystem {
+  tiles: Map<string, WorldTile>
+  naturalResources: Map<string, NaturalResource>
+  
+  // 3D-ready tile management
+  placeTile(position: Position, tileType: string): void
+  getTile(position: Position): WorldTile
+  harvestTile(position: Position): string | null
+  
+  // Helper for current 2D usage (z defaults to 0)
+  placeTile2D(x: number, y: number, tileType: string): void {
+    this.placeTile({x, y, z: 0}, tileType)
+  }
+  
+  // Natural resource generation
+  generateNaturalResources(): void
+  spawnResource(position: Position, resourceType: string): void
+  
+  // 3D-ready key generation
+  private getPositionKey(position: Position): string {
+    return `${position.x},${position.y},${position.z}`
+  }
+}
+```
+
+#### Input Management
+```javascript
+class InputManager {
+  viewport: Viewport
+  character: Character
+  
+  constructor(viewport: Viewport, character: Character) {
+    this.viewport = viewport
+    this.character = character
+    this.setupEventListeners()
+  }
+  
+  // Abstract input handling (works for 2D mouse + 3D mouse/touch)
+  handleClick(screenX: number, screenY: number): void {
+    const worldPos = this.viewport.screenToWorld(screenX, screenY)
+    this.character.interactAt(worldPos)
+  }
+  
+  // WASD movement (ready for 3D camera controls)
+  handleKeyDown(key: string): void
+  handleKeyUp(key: string): void
+}
+```
+
+#### Configuration System
+```javascript
+// Rendering configuration (easy 2D → 3D switching)
+const RenderConfig = {
+  mode: '2d',  // '2d' | '3d' (future)
+  tileSize: 32,  // 2D pixel size
+  worldScale: 1.0,    // 3D world scale
+  perspective: 'orthographic',  // Future: 'perspective'
+  showGrid: true,
+  showDebugInfo: true
+}
+
+// Game engine chooses renderer based on config
+class GameEngine {
+  renderer: IRenderer
+  viewport: Viewport
+  character: Character
+  
+  constructor() {
+    this.renderer = RenderConfig.mode === '2d' 
+      ? new Canvas2DRenderer() 
+      : new WebGL3DRenderer()  // Future implementation
+    this.viewport = new Viewport()
+    this.character = new Character({x: 10, y: 10, z: 0})
+  }
+}
+```
+
+### Sprint 6 Success Criteria
+- [ ] Character moves smoothly with WASD using Position-based system
+- [ ] Character can only harvest resources within 3-tile range (3D distance calculation)
+- [ ] Tools are required for harvesting (no tool = no harvest)
+- [ ] Natural trees/stones spawn across the world using Position objects
+- [ ] Tool durability decreases with use
+- [ ] UI shows character position and selected tool
+- [ ] Material names use real wood types (Oak, Birch, Maple)
+- [ ] **Architecture is 3D-ready**: All position calculations use Position objects
+- [ ] **Renderer abstraction works**: WorldSystem has no rendering code
+- [ ] **Asset system functional**: Items reference AssetDefinitions, not hardcoded colors
+- [ ] **Input system abstracted**: Click handling goes through Viewport.screenToWorld()
+- [ ] **Configuration system**: Easy to switch between 2D and 3D mode via RenderConfig
+
+---
+
+## Sprint 7: Activity Expansion & UI Organization (3-4 weeks)
+
+### Core Objective
+Add multiple distinct activity systems and organize UI to handle complexity without overwhelming players.
+
+### Primary Features
+
+#### Activity System Architecture
+- **Activity Manager**: Central system to track and switch between activities
+- **Progressive Unlocking**: Start with Mining + Forestry, unlock others through progression
+- **Activity-Specific Tools**: Each activity has its own tool set and progression
+
+#### New Activities
+
+##### Advanced Mining
+- **Underground Levels**: Dig down to access deeper, rarer materials
+- **Cave Systems**: Procedural underground layouts with special resources
+- **Mining Equipment**: Lanterns for visibility, carts for transport capacity
+- **Rare Materials**: Gems, crystals, special alloys found only underground
+
+##### Expanded Forestry
+- **Seasonal Mechanics**: Different trees produce different yields by season
+- **Forestry Management**: Replanting, growth acceleration, tree breeding
+- **Wood Processing**: Lumber mill buildings for converting logs to refined materials
+- **Special Trees**: Fruit trees, magical trees with unique properties
+
+##### Basic Combat System
+- **Hostile Creatures**: Simple enemies that spawn in certain areas
+- **Weapon Crafting**: Swords, bows, armor from harvested materials
+- **Combat Mechanics**: Turn-based or real-time simple combat
+- **Loot Drops**: Creatures drop materials not available elsewhere
+
+#### UI Organization & Management
+
+##### Tabbed Interface System
+- **Activity Tabs**: Mining, Forestry, Combat, Automation, Building
+- **Context-Sensitive UI**: Show only relevant crafting/tools for current activity
+- **Focus Mode**: Hide inactive systems to reduce cognitive load
+- **Quick Switch**: Hotkeys or radial menu for fast activity switching
+
+##### Enhanced Inventory Management
+- **Tool Belt**: Quick-access slots for frequently used tools
+- **Material Sorting**: Auto-organize by activity/type
+- **Search & Filter**: Find items quickly in large inventories
+- **Storage Categories**: Separate storage for different activity materials
+
+### Technical Implementation
+
+#### Activity System
+```javascript
+class ActivityManager {
+  activeActivity: 'mining' | 'forestry' | 'combat' | 'automation'
+  unlockedActivities: Set<string>
+  activityProgress: Map<string, number>
+  
+  switchActivity(newActivity): void
+  unlockActivity(activity): void
+  getRelevantUI(activity): UIComponents
+}
+```
+
+#### Advanced Resource Nodes
+```javascript
+class UndergroundNode extends NaturalResource {
+  depth: number
+  accessRequirements: string[]
+  lightRequired: boolean
+  dangerLevel: number
+}
+
+class SeasonalResource extends NaturalResource {
+  seasonalMultipliers: Map<string, number>
+  currentSeason: string
+  
+  getSeasonalYield(): harvestedItems
+}
+```
+
+### Sprint 7 Success Criteria
+- [ ] Players can switch between 3+ distinct activities
+- [ ] UI adapts to show only relevant information for current activity
+- [ ] Underground mining system works with depth progression
+- [ ] Combat system with basic enemies and weapons
+- [ ] Inventory organizes items by activity type
+- [ ] Tool belt provides quick access to essential tools
+- [ ] Activity progression unlocks new systems
+
+---
+
+## Sprint 8: Advanced Crafting & Discovery Systems (3-4 weeks)
+
+### Core Objective
+Implement multiple crafting methods and recipe discovery mechanics to add depth and experimentation to the game.
+
+### Primary Features
+
+#### Multi-Method Crafting System
+
+##### Crafting Stations
+- **Workbench**: Basic item combination (current system)
+- **Forge**: Metal working, requires fuel (coal/wood) and heat management
+- **Alchemy Lab**: Potion brewing with reaction chains and timing
+- **Enchanting Table**: Adding magical properties, requires rare materials
+- **Assembly Station**: Multi-step automated crafting for complex items
+
+##### Station-Specific Mechanics
+- **Forge**: Temperature control, alloy creation, tool tempering
+- **Alchemy**: Ingredient timing, reaction monitoring, quality control
+- **Enchanting**: Material consumption, success/failure rates, power levels
+
+#### Discovery & Experimentation
+
+##### Recipe Discovery System
+- **Experimentation Mode**: Try combining any materials to discover new recipes
+- **Discovery Hints**: Contextual clues about potential combinations
+- **Knowledge Journal**: Track discovered recipes and failed experiments
+- **Collaboration**: Share discoveries between players (future online feature)
+
+##### Progressive Recipe Unlocking
+- **Skill-Based Unlocks**: Using crafting stations improves skill, unlocks advanced recipes
+- **Material Analysis**: Examining rare materials reveals potential uses
+- **Research System**: Spend time/resources to unlock recipe categories
+
+#### Advanced Material Processing
+
+##### Multi-Step Production Chains
+- **Raw → Refined → Finished**: Iron Ore → Iron Ingot → Steel Alloy → Tempered Steel
+- **Quality Tiers**: Same item with different quality levels affecting stats
+- **Batch Processing**: Craft multiple items simultaneously with efficiency bonuses
+
+##### Specialized Processing
+- **Smelting**: Convert ores to ingots with different furnace types
+- **Refinement**: Improve material quality through repeated processing
+- **Combination Materials**: Alloys requiring precise ratios of components
+
+### Technical Implementation
+
+#### Crafting Station System
+```javascript
+class CraftingStation {
+  stationType: string
+  fuelRequired: boolean
+  currentFuel: number
+  temperature: number
+  activeRecipes: Recipe[]
+  
+  canCraft(recipe): boolean
+  startCrafting(recipe, materials): CraftingProcess
+  updateProcess(process): CraftingResult
+}
+
+class CraftingProcess {
+  recipe: Recipe
+  timeRemaining: number
+  requiresAttention: boolean
+  qualityModifiers: number[]
+  
+  update(): ProcessStatus
+  playerIntervention(action): void
+}
+```
+
+#### Discovery System
+```javascript
+class DiscoveryManager {
+  knownRecipes: Set<string>
+  failedAttempts: Map<string, number>
+  discoveryHints: Map<string, string[]>
+  
+  attemptDiscovery(materials): DiscoveryResult
+  generateHints(availableMaterials): string[]
+  trackExperiment(materials, result): void
+}
+```
+
+### Sprint 8 Success Criteria
+- [ ] Multiple crafting stations with unique mechanics
+- [ ] Recipe discovery through experimentation works
+- [ ] Forge requires fuel management and produces better items
+- [ ] Alchemy lab has timing-based reaction system
+- [ ] Knowledge journal tracks all discovered recipes
+- [ ] Multi-step production chains create complex materials
+- [ ] Quality tiers affect item effectiveness
+
+---
+
+## Sprint 9: World Expansion & Save System (2-3 weeks)
+
+### Core Objective
+Implement biome system, save/load functionality, and world expansion mechanics.
+
+### Primary Features
+
+#### Biome System
+- **Biome Types**: Forest, Mountains, Desert, Swamp, each with unique resources
+- **Biome-Specific Materials**: Materials only available in certain biomes
+- **Environmental Challenges**: Different tool/equipment requirements per biome
+- **Biome Transitions**: Gradual changes between biome types
+
+#### World Expansion
+- **Exploration Mechanics**: Character can discover new map areas
+- **Map System**: Minimap showing explored vs unexplored areas
+- **Transportation**: Faster movement options for long-distance travel
+- **Landmarks**: Special locations with unique resources or challenges
+
+#### Save/Load System
+- **Persistent World State**: All placed tiles, resources, character progress
+- **Incremental Saving**: Save changes as they happen, not just on exit
+- **Multiple Save Slots**: Allow players to maintain different worlds/characters
+- **Import/Export**: Share world files or character progress
+
+### Sprint 9 Success Criteria
+- [ ] Game saves/loads all world state correctly
+- [ ] Multiple biomes with distinct visual and resource differences
+- [ ] Character can explore and expand the visible world
+- [ ] Biome-specific materials require travel to obtain
+- [ ] No data loss during save/load cycles
+
+---
+
+## Long-Term Roadmap (Post-Sprint 9)
+
+### Advanced Systems to Consider
+- **3D Conversion**: With 3D-ready architecture, conversion becomes 3-4 week effort (new renderer + assets)
+- **Multiplayer Foundation**: Shared worlds, cooperative building
+- **Quest System**: Directed objectives and story elements
+- **Advanced Automation**: Complex production chains, logistics
+- **Building System**: Multi-tile structures, architectural components
+- **Economy System**: Trading, resource markets, specialization
+- **Procedural Generation**: Infinite world generation, personalized content
+
+### Technical Debt to Address
+- **Performance Optimization**: Large world handling, efficient rendering
+- **Code Organization**: Split into proper modules, clean architecture
+- **3D Architecture Maintenance**: Ensure new systems follow Position/Renderer abstraction patterns
+- **Content Pipeline**: Tools for adding new items/recipes without code changes
+- **Testing Framework**: Automated testing for game mechanics
+- **Documentation**: Player guides, modding documentation, 3D conversion guide
+
+---
+
+## Success Metrics
+
+### Player Engagement
+- **Session Length**: Players spend 30+ minutes per session exploring/building
+- **Return Rate**: Players return to the game after initial play session
+- **Discovery Rate**: Players discover new recipes/areas regularly
+- **Progression Satisfaction**: Clear sense of advancement and achievement
+
+### Technical Quality
+- **Performance**: 60fps even with large bases and complex automation
+- **Stability**: No data loss, consistent behavior across sessions
+- **Extensibility**: Easy to add new content without major refactoring
+- **Player Feedback**: UI is intuitive, systems are learnable
+
+This roadmap transforms the current generator-focused game into a rich, multi-activity sandbox while preserving the solid automation foundation we've built.

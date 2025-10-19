@@ -1,0 +1,1605 @@
+# Refined System Breakdown
+## Using Crafting as Template for All Future Systems
+
+---
+
+## 🔨 CRAFTING SYSTEM
+
+### General Overview
+
+1. **Core Concept:** Material-driven mini-games where recipe complexity and material value determines challenge difficulty and potential rewards. Specializations emerge from material usage patterns (e.g., using many fire materials adds fire modifiers to mini-games, enabling fire-focused sub-specializations).
+
+2. **LLM Role:** Generates new recipes and materials for ANY TIER as long as recipe is unknown to player. T4 is maximum tier (9x9 grid limit), but quality continues through rarity system. Players receive message when discovering LLM-generated recipes ("You've discovered something new!"). NO messages for mini-game quality bonuses on standard recipes. 
+   - **Standardization**: Most players at most levels experience standardized content (guided-play recipes)
+   - **Custom Content**: Only at highest end (T4 + high rarity + complex specializations) does LLM create truly personalized items/recipes for individual player profiles
+   - **Tier vs Quality**: Tier = complexity/grid size. Rarity = quality within tier. Both matter for endgame.
+
+3. **Guided-Play Foundation:** 
+   - **Style**: BOTW/Minecraft approach - hints and info bubbles, but complete freedom
+   - **Initial Quest**: Direct player to first city/NPC (NPCs as placeholders for cities)
+   - **Gating**: First 3 cities/NPCs have soft gates, then gradually opens to full freedom
+   - **Tutorial Vibe**: Easy start with core mechanics, but no forced tutorial sequences
+   - **Content Volume**: Large handcrafted dataset acts as "training data" for LLM
+     - Every material used in minimum 1 recipe, most in 2+ recipes
+     - Lower tier materials appear in progressively more recipes
+     - Establishes baseline material interactions and trends
+
+4. **Sub-Specialization Mechanics:** Modifications to base mini-game based on material patterns. Example: Base game = click green squares in time limit. Earth specialization = larger click zones. Fire specialization = shorter time limit. Water specialization = irregular shapes. *Note: These are placeholder concepts, actual mechanics TBD.*
+
+5. **Crafting Time & Instant Craft Option:** 
+   - Simpler recipes = faster mini-games
+   - ALL items can be instantly crafted with recipe + materials (base stats only)
+   - Mini-games add +X bonus stats/attributes to base item
+   - Higher tier items have higher potential +X bonuses
+   - Both base stats and +X bonuses are procedurally generated
+
+6. **Item Metadata Display:**
+   - **Prominent Info (Non-Greyed)**: Stats, attributes, effects, narrative description
+   - **Technical Info (Greyed Out)**: Material quality details
+     - Example: "Blade forged from Legendary Steel (T2) with Common Oak Handle (T1)"
+     - Shows tier mixing and rarity mixing in recipe
+   - **Always Visible**: Metadata permanently displayed on item inspection
+
+7. **Durability & Maintenance System:**
+   - **100% → 50% Durability**: Item functions at full stats
+   - **50% → 0% Durability**: Item stats gradually decline to 75% effectiveness
+   - **0% Durability**: Item functions infinitely at 50% effectiveness (never breaks completely)
+   - **Wrong Tool Usage**: Drains durability faster
+     - Mining Pickaxe used in combat = faster durability loss
+     - Battle Sword used for mining = major durability drain
+   - **Tool Affinities**: 
+     - Correct use = normal durability drain
+     - Minor wrong use (T3 Pickaxe as weapon) = increased drain
+     - Major wrong use (Sword for mining) = severe drain or impossible
+   - **Maintenance**: Repair items to restore durability (separate system TBD)
+
+8. **Failure States & Attempts:**
+   - Failure loses some resources (scales with recipe tier/complexity)
+   - Multiple attempts allowed (3 attempts?)
+   - All attempts have same reward calculation
+   - **First-Try Bonus:** Chance-based unique attribute class, only available on first attempt (not guaranteed, adds incentive)
+
+9. **Recipe Discovery & Unlocking:**
+   - Guided-play recipes: Given through hints, NPC dialogue, or recipe book
+   - Post-guided-play recipes: Experimentation required for non-standard recipes
+   - LLM recipes: Discovered through trying unknown material combinations
+   - Once unlocked, can be base-crafted (no +X) or mini-game crafted (+X bonuses)
+   - Set attributes may exist on items regardless, but mini-games can boost them
+
+---
+
+### Material & Recipe Structure
+
+#### Rarity System
+- **Rarity Levels**: Common, Uncommon, Rare, Epic, Legendary (separate from tier)
+- **Tier vs Rarity**: 
+  - Tier = Material type and general power level (T1 Copper, T2 Iron, T3 Steel, T4 Exotic)
+  - Rarity = Quality within tier (Common Copper vs Legendary Copper)
+  - Both exist independently: "Legendary Copper (T1)" is still T1, but higher quality
+- **Rarity Mixing in Recipes**: 
+  - Can mix any rarities in same recipe
+  - Result quality weighted toward higher rarities (gradient system)
+  - Example: 2 Legendary + 1 Rare = slightly better than 2 Legendary + 1 Common
+  - No invalid combinations, only quality variance
+
+#### Material System
+- **Per Tier**: 2-3 distinct materials (e.g., T1 metals: Copper, Tin, Bronze)
+- **Cross-Recipe Usage**: Materials can overlap between recipes (mix and match)
+  - Example: 3 wood types + 3 metal types = 9 possible material combinations per weapon recipe
+- **Properties**: All materials have name, tier/rarity, meaningful description
+- **Stats**: Materials have stats/attributes/effects that transfer to crafted items
+- **Lower Tier Persistence**: T1 materials appear in many T2-T3 recipes (bindings, components, etc.)
+- **No Stacking in Grid**: Each grid slot = 1 material (no quantity stacking)
+
+#### Recipe System
+- **Variety Scaling**: Starts simple at T1, more variety/choices at higher tiers
+- **Recipe Types Define Weapons**: Different recipes for Longsword vs Greatsword (not material-driven)
+- **Materials Define Attributes**: Same recipe with different materials = different stats/attributes
+- **Mix-and-Match**: Same recipe template can use different material combinations
+  - "Sword" recipe accepts any T1 metal + any T1 wood = different stat outcomes based on materials
+- **Elemental Integration**: Material-determined (Fire Crystal in recipe = Fire Sword automatically)
+  - Quantity matters: 1 Fire Crystal = minor fire, 5+ Fire Crystals = major fire specialization
+- **Equipment Slots**: 
+  - **Armor**: Helmet, Chestplate, Leggings, Boots, Gauntlets (5 slots)
+  - **Accessories**: Additional slot for rings/amulets/charms
+  - Each slot has multiple item types that can fill it (different armor styles for same slot)
+- **Piece-by-Piece Crafting**: Each armor piece is separate recipe (like Minecraft but more complex)
+
+#### Recipe Discovery
+- **Guided-Play Recipes**: Given through hints, NPC dialogue, or recipe book/journal
+- **Post-Guided-Play**: Experimentation required for non-standard recipes
+- **LLM Recipes**: Discovered through trying unknown material combinations
+- **Recipe Book**: Displays known recipes permanently for reference
+
+---
+
+---
+
+### Material Economy & Cross-Discipline Overlap
+
+#### **Venn Diagram Philosophy**
+
+All five crafting disciplines (Smithing, Forging, Alchemy, Engineering, Enchanting) share a unified material economy with intentional overlap:
+
+```
+Material Overlap Tiers:
+
+CORE MATERIALS (Center of Venn Diagram - ALL 5 disciplines):
+- Basic Metals: Iron Ore, Copper Ore, Tin
+- Basic Wood: Oak, Pine, Ash
+- Basic Binding: Plant Fiber, Leather Strips, Sinew
+- Basic Stone: Limestone, Granite
+- Used in every crafting discipline in some form
+
+COMMON MATERIALS (Overlap 3-4 disciplines):
+- Elemental Crystals: Fire, Water, Earth, Air, Lightning, Ice
+- Processed Metals: Iron Ingots, Steel, Bronze Alloys
+- Quality Wood: Birch, Maple, Ironwood
+- Refined Materials: Treated Leather, Polished Stone, Crystal Dust
+- Used in most crafting, different applications per discipline
+
+MID-TIER MATERIALS (Overlap 2-3 disciplines):
+- Special Alloys: Mithril, Adamantine, Orichalcum
+- Rare Crystals: Dragon Scales, Phoenix Feathers, Void Essence
+- Advanced Components: Gears, Mechanisms, Power Cores
+- Exotic Wood: Ebony, Ancient Wood, Petrified Wood
+- Used in specific combinations, niche applications
+
+SPECIALTY MATERIALS (Unique to 1 discipline - Outer edges):
+- Discipline-specific reagents and components
+- Extremely rare, unique crafting applications
+- Examples TBD during guided-play design
+- Minimal unique materials - most overlap
+```
+
+#### **Cross-Discipline Material Examples**
+
+**Iron (Core Material - Used Everywhere):**
+- **Smithing**: Weapon blades, armor plates, tool heads
+- **Forging**: Refined into steel, alloyed with other metals, elemental infusion
+- **Alchemy**: Iron filings as catalyst, iron-based strength potions
+- **Engineering**: Turret frames, bomb casings, structural components
+- **Enchanting**: Metal base for enchantments, iron accessories
+
+**Fire Crystal (Common Material - 4-5 Disciplines):**
+- **Smithing**: (via Forging) Fire-infused weapons directly
+- **Forging**: Create Fire Steel, Fire Copper, elemental metals
+- **Alchemy**: Fire damage potions, fire resistance elixirs, heat-based recipes
+- **Engineering**: Incendiary bombs, flame turrets, thermal devices
+- **Enchanting**: Fire enchantments, burning effects, heat patterns
+
+**Wood (Core Material - Used Everywhere):**
+- **Smithing**: Weapon handles, shield frames, bow construction
+- **Forging**: Fuel source, refined into charcoal, treated wood materials
+- **Alchemy**: Fuel for brewing, container material, wood-based reagents
+- **Engineering**: Device casings, structural frames, insulation
+- **Enchanting**: Wooden charms, staffs, natural-element accessories
+
+**Dragon Scale (Mid-Tier Material - 2-3 Disciplines):**
+- **Smithing**: Premium armor plating, legendary weapon components
+- **Forging**: Legendary alloy creation, extreme refinement catalyst
+- **Alchemy**: Power potions, transmutation elixirs, high-tier recipes
+- **Enchanting**: Dragon-aspect enchantments, high-power patterns
+- **Engineering**: Might not use (or very specific applications)
+
+**Gears (Mid-Tier Material - 2-3 Disciplines):**
+- **Smithing**: Complex weapon mechanisms, advanced tool construction
+- **Engineering**: Turret mechanisms, bomb triggers, device internals
+- **Enchanting**: Clockwork accessories, mechanical-themed enchantments
+- **Forging/Alchemy**: Generally not used
+
+#### **Design Benefits**
+
+1. **Unified Economy**: All crafters hunt for same core materials
+2. **Market Interdependence**: Excess iron useful for multiple disciplines
+3. **Flexible Specialization**: Can switch disciplines without wasted materials
+4. **Shared Progression**: Advancing in one discipline helps others
+5. **Discovery Rewards**: Finding rare materials benefits multiple playstyles
+6. **Reduced Complexity**: Players don't need to track 5 separate material pools
+7. **Natural Trading**: Players have valuable materials for disciplines they don't use
+
+#### **Specialty Material Philosophy**
+
+- Only 5-10% of materials are discipline-unique
+- Unique materials are high-tier or extremely specific
+- Core progression uses shared materials
+- Specialization comes from recipes and techniques, not exclusive materials
+- Example unique materials TBD during guided-play design
+
+---
+
+### Sub-Crafting Disciplines
+
+#### Smithing (Weapons/Tools/Armor)
+
+1. **Base Mechanic:** Temperature management + hammering/forging
+
+2. **Workbench Tier System:**
+   - **T1 Forge (3x3 grid)**: Basic weapons, simple recipes
+   - **T2 Forge (5x5 grid)**: Intermediate weapons, unlocks larger weapon types (longswords, battleaxes)
+   - **T3 Forge (7x7 grid)**: Advanced weapons, unlocks heavy weapons (greatswords, warhammers)
+   - **T4 Forge (9x9 grid)**: Master weapons, unlocks exotic weapons (halberds, special items)
+   - **Backward Compatibility**: Higher tier benches can craft ALL lower tier recipes
+   - **Recipe Size = Power**: Larger recipes (more materials) produce better items, even with same-tier materials
+
+3. **Triple Gating System:**
+   - **Workbench Gate**: Weapon types locked by bench tier (greatsword needs T2+ bench)
+   - **Recipe Complexity**: Recipe grid size determines item power/quality potential
+   - **Material Tier**: Material quality affects base stats
+   - **Example**: Copper greatsword (T1 materials) in 5x5 recipe (T2 bench) = powerful T1 weapon
+
+4. **Tool vs Weapon System:**
+   - **Separate Tools with Affinities**: Mining Pickaxe, Forestry Axe, etc. are distinct from weapons
+   - **Cross-Purpose Usage**: Tools can fight, weapons can gather (with penalties)
+   - **Affinity Examples**:
+     - T3 Mining Pickaxe = T2 Weapon equivalent damage (but worse than actual T2 weapon)
+     - Using pickaxe in combat = faster durability drain
+     - Using sword to mine = severe durability drain or impossible
+   - **Dual Purpose Balance**: Highest tier tools comparable to mid-tier weapons (not equal-tier)
+
+5. **Elemental Integration:**
+   - **Material-Determined**: Fire Crystals in recipe automatically create Fire Sword
+   - **Quantity Scaling**: 
+     - 1 Fire Crystal = minor fire damage bonus
+     - 3+ Fire Crystals = moderate fire specialization
+     - 5+ Fire Crystals = major fire specialization with unique attributes
+   - **No Separate Elemental Recipes**: Elements emerge from material choices
+
+6. **Mini-Game Structure:**
+   - **Temperature:** Keyboard controls (WASD/arrows)
+   - **Hammering/Forging:** Mouse controls (clicking)
+   - **Difficulty Scaling:**
+     - T1: Simple timing with spacebar + click
+     - T2: WASD temperature zones + clicking different forge spots
+     - T3-T4: OSU-style complexity with rhythm, precision, multi-tasking
+   - Combines click timing with spatial awareness
+
+7. **Material Input Method:** Materials placed in crafting grid (no stacking - each slot = 1 item)
+
+8. **Specialization Branches:** Reflect guided-play material trends (Pyrosmithing, Cryosmithing, Heavy Forging, Precision Crafting) - Full definition after guided-play established
+
+9. **Progression Formula:** Based on workbench tier + recipe size + material tier + rarity. Target: Max complexity T1 recipe ≈ Simple T3 recipe (excluding special abilities)
+
+10. **Time Requirements:** 15-120 seconds depending on tier and complexity (exact timing TBD through playtesting)
+
+---
+
+#### Forging/Refining (Material Processing)
+
+**Core Purpose:** Primary source for elemental materials, alloy creation, and material quality enhancement. Enables "anything + anything" combinations for infinite experimentation.
+
+1. **Base Mechanic:** Lockpicking-style timing game - "unlocking" the potential of materials through cylinder alignment
+
+2. **Workbench Tier System (Hub and Spoke):**
+   - **T1 Refinery**: 1 Core Slot + 2 Surrounding Slots
+   - **T2 Refinery**: 1 Core Slot + 4 Surrounding Slots
+   - **T3 Refinery**: 2 Core Slots + 5 Surrounding Slots
+   - **T4 Refinery**: 3 Core Slots + 6 Surrounding Slots
+   - **All Slots Stackable**: Up to 256 items per slot
+   - **Fuel Slot**: Separate optional slot for minigame buffs only
+
+3. **Slot Rules & Core Mechanics:**
+   - **Core Slots**: Determine output type and quantity (stackable to 256)
+   - **Surrounding Slots**: All identical, position doesn't matter (stackable to 256)
+   - **Multi-Core Rule**: All core slots MUST have equal quantities
+     - Valid: Core 1 = 32, Core 2 = 32 → Output = 32
+     - Invalid: Core 1 = 32, Core 2 = 16 → Recipe won't process
+   - **Core Quantity = Output Quantity**: Amount in core determines output amount
+     - Example: 64 Iron Ore in core → 64 Iron Ingot output
+     - Exception: Rarity upgrades use ratio (64 → 16 for 4:1 ratio)
+
+4. **Material Refinement Types:**
+   
+   **Type A: Required Refinement (Vertical - Enables Use)**
+   - Raw ore cannot be used in crafting, must refine to ingot
+   - Example: Copper Ore → Copper Ingot (1:1 ratio, instant without minigame)
+   
+   **Type B: Optional Quality Refinement (Vertical - Better Stats)**
+   - Can use raw material, but refined is significantly better
+   - Example: Raw Wood vs Treated Wood (both usable, treated has +durability)
+   
+   **Type C: Horizontal Refinement (Different, Not Better)**
+   - Refinement changes properties, not power level
+   - Example: Raw Ruby (high power, unstable) vs Refined Ruby (moderate power, stable)
+   - Example: Soft Leather (mobility) vs Hardened Leather (defense)
+   - Use case dependent: Neither is objectively better
+   
+   **Type D: Rarity Refinement (Vertical - Exponential Cost)**
+   - Single-ingredient rarity upgrades with exponential material loss
+   - Placeholder Ratio: 4:1 per rarity tier (subject to guided-play balance)
+   - Example Path: 1024 Iron Ingot → 256 Uncommon → 64 Rare → 16 Epic → 4 Mythic → 1 Legendary
+   - Capped at Legendary for single-ingredient refinement
+   - Total cost example: 4,096 Iron Ore for 1 Legendary Iron Ingot
+   
+   **Type E: Multi-Material Fusion (Combination Effects)**
+   - Can change item type + rarity + attributes + tier simultaneously
+   - Better ratios than single-ingredient (encourages complexity)
+   - Example: 16 Rare Iron + 16 Rare Steel + 8 Fire Crystal → 16 Epic Fire Steel
+   - "Anything + Anything" possible: metals, woods, gems, leather, etc.
+
+5. **Elemental Material Creation (Primary Purpose):**
+   - **Elemental Metals**: Fire Steel, Ice Copper, Lightning Iron, etc.
+   - **Elemental Woods**: Crystal Maple, Flame Oak, Frost Birch, etc.
+   - **Elemental Everything**: Any base material + elemental additive = elemental variant
+   - Created through multi-material recipes with elemental crystals/cores
+   - Example Recipe:
+     ```
+     Core: 32 Steel Ingot
+     Slot 1: 16 Fire Crystal
+     Slot 2: 4 Stabilizer
+     Result: 32 Fire Steel Ingot (+fire damage, +heat resistance)
+     ```
+
+6. **Alloy Creation:**
+   - Requires T3+ Refinery (multi-core slots)
+   - Equal parts rule: All cores must have same quantity
+   - Example: Core 1 = 16 Copper, Core 2 = 16 Tin → 16 Bronze
+   - Different ratios create different alloys:
+     - 50/50 Copper/Tin = Balanced Bronze
+     - 70/30 via slots = Copper-Heavy Bronze (different stats)
+   - Complex Alloys (T4):
+     ```
+     Core 1: 8 Steel
+     Core 2: 8 Mithril
+     Core 3: 8 Adamantine
+     Slot 1: 4 Fire Core
+     Slot 2: 4 Dragon Scale
+     Result: 8 Prismatic Alloy (legendary triple-metal fusion)
+     ```
+
+7. **Fuel System (Minigame Only):**
+   - **Base Processing**: Instant, no fuel required, guaranteed output (no minigame)
+   - **Fuel Purpose**: Optional buffs for minigame attempts only
+   - **Fuel Types & Effects**:
+     - Coal (T1): +10% timing window
+     - Refined Coal (T2): +20% window, +1 allowed failure
+     - Magma Core (T3): +30% window, +2 failures, +10% fire recipe success
+     - Void Crystal (T4): +50% window, +3 failures, +15% all recipe success
+     - Elemental Fuels: Matching element bonuses (Frost = slower rotation, etc.)
+   - Fuel consumed per minigame attempt, not per batch
+
+8. **Mini-Game Structure (All-or-Nothing):**
+   
+   **Success/Failure Only (No Gradient):**
+   - Success: Full designed output + rarity upgrade (if applicable) + attributes
+   - Failure: 50% material loss (configurable), no output, must retry
+   - No partial success or reduced quality output
+   
+   **Difficulty Variables:**
+   - **Time Allowed**: 10-60 seconds based on recipe complexity
+   - **Cylinder Count**: 2-15+ alignments required
+   - **Timing Window**: 0.1-1.0 seconds per cylinder
+   - **Allowed Failures**: 0-3 missed timings before total failure
+   - **Additional Modifiers**:
+     - Rotation speed variations
+     - Direction changes mid-game
+     - Multiple speeds simultaneously
+     - Visual effects/obscuration
+     - Shrinking windows over time
+   
+   **Example Difficulty Tiers:**
+   - Easy (T1 basic): 45s, 3 cylinders, 0.8s window, 2 failures allowed
+   - Medium (T2 elemental): 30s, 6 cylinders, 0.5s window, 1 failure allowed
+   - Hard (T3 rarity): 20s, 10 cylinders, 0.3s window, 0 failures (perfect required)
+   - Extreme (T4 fusion): 15s, 15 cylinders, 0.2s window, 0 failures, multi-speed
+
+9. **Recipe UI & Discovery:**
+   - **Known Recipe**: Shows exact output preview, materials required, can base-craft or minigame-craft
+   - **Unknown Recipe**: Shows "? Unknown Recipe ?" symbol, must experiment with minigame
+   - **After Discovery**: Recipe added to book, can instant-craft (base) or minigame-craft (bonuses)
+   - **Base Processing**: Always instant, always successful, no bonuses
+   - **Max Stack Per Slot**: 256 items
+
+10. **Material Requirement Examples:**
+
+| Material | Raw Usable? | Refinement Type | Effect |
+|----------|-------------|-----------------|--------|
+| Iron Ore | No | Required | Must refine to Ingot (vertical enabler) |
+| Iron Ingot | Yes | Optional | Can upgrade rarity or add elements (vertical) |
+| Wood | Yes | Optional | Treated vs Hardened = different properties (horizontal) |
+| Gems | Yes | Horizontal | Raw (powerful/unstable) vs Refined (stable/moderate) |
+| Leather | Yes | Horizontal | Soft (mobility) vs Hard (defense) |
+| Fire Crystal | Yes | Optional | Concentrated = more power (vertical) |
+| Steel | Yes | Both | Can upgrade rarity (vertical) OR create variants (horizontal) |
+
+11. **Processing Time:**
+   - **Base Crafting (No Minigame)**: Instant, guaranteed success
+   - **Minigame Crafting**: Varies by difficulty (10-60 seconds of active play)
+   - No passive waiting time, all processing is immediate
+
+12. **Specialization Branches:** TBD based on material patterns from guided-play (Elemental Mastery, Alloy Expertise, Purification Specialist, Exotic Fusion, etc.)
+
+13. **Important Disclaimers:**
+   - All numerical ratios (4:1 rarity, material quantities, fuel bonuses) are PLACEHOLDERS
+   - Guided-play recipes will define actual values during balance testing
+   - System structure is final, numbers are flexible
+   - Recipe complexity and requirements defined per-recipe basis
+
+---
+
+#### Alchemy (Potions/Transmutation/Cooking)
+
+**Core Purpose:** Universal consumable creation system. No distinction between "potions" and "food" - all are consumables with buffs/effects. Same mechanics, different aesthetic (cauldron for potions, pot for food).
+
+1. **Base Mechanic:** Reaction chain management - reading visual cues to identify optimal timing for ingredient additions
+
+2. **Station Tier System:**
+   - **T1 Alchemy Station**: 3 Ingredient Slots
+   - **T2 Alchemy Station**: 5 Ingredient Slots
+   - **T3 Alchemy Station**: 7 Ingredient Slots
+   - **T4 Alchemy Station**: 9 Ingredient Slots
+   - **All Slots Identical**: No categorization (base/modifier/catalyst), just numbered ingredient slots
+   - **Order Matters**: When ingredients are added affects outcome
+   - **Simultaneous Addition**: Multiple ingredients can be added together at same moment
+   - **All Slots Stackable**: Up to 256 items per slot
+
+3. **Rarity & Tier System:**
+   
+   **Tier = Efficacy (Power & Duration)**
+   - Higher tier = stronger effect numbers and longer durations
+   - Example: T1 Fire Resist = -50% for 2:00, T4 = -95% for 4:00
+   - Tier determined by recipe and materials used
+   
+   **Rarity = Effect Complexity (Types & Combinations)**
+   - Common: Single effect
+   - Uncommon: Two complementary effects
+   - Rare: Multiple effects with synergies
+   - Epic: Complex effects with conditional bonuses
+   - Mythic: Advanced conditional effects and powerful combos
+   - Legendary: Ultimate effect combinations with dual-state bonuses
+   - Higher rarity = more effects, better synergies, conditional bonuses
+   
+   **Output Rarity Rule**: Capped at highest ingredient rarity used
+   - Rare ingredients max → Rare output max
+   - Legendary ingredients → Legendary output possible
+   - Cannot skip rarity tiers through skill alone
+
+4. **Gradient Success System (NOT All-or-Nothing):**
+   
+   **Progress-Based Quality:**
+   ```
+   0-25%: Complete Failure (no output, 50% materials lost)
+   25-50%: Weak Success (50% duration, 50% effect strength)
+   50-75%: Standard Success (75% duration, 75% effect strength)
+   75-90%: Quality Success (100% duration, 100% effect strength)
+   90-99%: Superior Success (120% duration, 110% effect strength)
+   100%: Perfect Success (150% duration, 125% effect strength)
+   ```
+   
+   **For Instant Effects (Healing):**
+   - Progress directly scales effect magnitude
+   - 50% progress = 50% healing, 100% = full healing, Perfect = 150% healing
+   
+   **Handcrafting Bonus (Unique to Alchemy):**
+   - Unlike other crafting (which gives +stats/attributes), Alchemy handcrafting can boost TIER
+   - Perfect execution: Output can be effectively T2.5 instead of T2 (stronger numbers)
+   - Poor execution: Gradient decline in tier effectiveness
+   - Base crafting (no minigame): Always produces T-level output, no bonus possible
+
+5. **Effect Stacking Rules:**
+   - **Different Effects**: Stack fully, timers independent
+   - **Same Effect, Different Tiers**: Stack (T1 Fire Resist + T2 Fire Resist = both active)
+   - **Same Effect, Same Tier**: Don't stack - longest remaining timer overwrites
+   - Example: Can have Fire Resist + Fire Damage + Healing all active simultaneously
+
+6. **Reaction Chain Minigame:**
+
+   **Core Loop:**
+   1. Load ingredients into slots (pre-minigame)
+   2. Start brewing (timer begins)
+   3. Add first ingredient → reaction begins
+   4. Watch reaction grow through stages
+   5. Either CHAIN (add next ingredient) or STABILIZE (end process)
+   6. Chaining: Locks current reaction, starts new reaction with next ingredient
+   7. Stabilizing: Locks current reaction, completes recipe
+   8. Total progress = sum of all locked reaction qualities
+
+   **Reaction Growth Stages (Every Ingredient):**
+   
+   **Stage 1: Initiation (Early)**
+   - Visual: Small bubble, dim glow, gentle
+   - Progress: 5% (very weak)
+   - Player trap: "It's starting, should I add next one?"
+   - Reality: TOO EARLY
+   
+   **Stage 2: Building (False Peaks)**
+   - Visual: Growing bubble, brightening, pulsing begins
+   - Progress: 15-20% (improving but not optimal)
+   - Contains FALSE PEAKS that look promising but aren't sweet spot
+   - Player trap: "It's glowing! This looks good!"
+   - Reality: STILL TOO EARLY - looks good but hasn't peaked
+   - Beginners add next ingredient here
+   
+   **Stage 3: SWEET SPOT (Optimal)**
+   - Visual: Optimal size, steady intense glow, rhythmic pulse, saturated color
+   - Audio: Strong resonant bubbling tone
+   - Progress: 30-35% (OPTIMAL)
+   - Distinct from Stage 2: sustained vs spiking, harmonic audio, stable size
+   - Reality: TARGET WINDOW - experienced players recognize this
+   
+   **Stage 4: Degrading (Late)**
+   - Visual: Irregular expansion, flickering glow, darkening edges
+   - Audio: Popping, erratic bubbling
+   - Progress: 20-25% (declining)
+   - Reality: LATE but still viable
+   
+   **Stage 5: Critical Failure (Explosion Risk)**
+   - Visual: Over-expansion, dark/smoky, violent shaking, red warnings
+   - Audio: Loud popping, hissing
+   - Progress: 5-10% (very weak) OR total failure if left too long
+   - Reality: CRITICAL - explosion imminent
+   - Waiting longer = explosion = recipe fails, 75% materials lost
+
+7. **Ingredient Type Behaviors:**
+   
+   **Stable Ingredients (Easy):**
+   - Slow predictable growth
+   - Smooth transitions, no false peaks
+   - Sweet spot: 2+ second window
+   - Easy to read, forgiving
+   - Example: Healing Herbs, Pure Water, Vegetables
+   
+   **Moderate Ingredients (Medium):**
+   - Medium speed, some irregularity
+   - Occasional pulse variations (distractors)
+   - Sweet spot: 1.5 second window
+   - Some false indicators during Stage 2
+   - Example: Fire Flowers, Mineral Salts, Quality Meats
+   
+   **Volatile Ingredients (Hard):**
+   - Fast erratic growth
+   - Multiple false glows during Stage 2
+   - Sweet spot: 1 second window
+   - Must distinguish real peak from fakes
+   - Example: Dragon Blood, Lightning Cores, Explosive Mushrooms
+   
+   **Legendary Ingredients (Extreme):**
+   - Very fast, complex layered reactions
+   - Many false peaks, color shifts, cascading effects
+   - Sweet spot: 0.5-0.8 second window
+   - Requires extensive experience
+   - Example: Phoenix Ash, Void Essence, Eternity Bloom
+
+8. **Advanced Mechanics:**
+   
+   **Cascading Reactions (CRITICAL for T3-T4):**
+   - Previous ingredient's reaction quality affects next ingredient's timing
+   - Example: Fire ingredient added optimally → Water ingredient sweet spot shifts earlier
+   - Fire added late → Water sweet spot shifts later
+   - Creates dynamic gameplay - can't just memorize fixed timings
+   - Must adapt based on actual performance
+   
+   **Ingredient Total Timers (Narrative Cooking Logic):**
+   - Some ingredients need longer total cooking time (hardy/base ingredients)
+   - Other ingredients are "finishing" ingredients (added near end)
+   - Hardy ingredients: Added first, can cook through multiple other reactions
+   - Finishing ingredients: Added last, short cooking time before stabilizing
+   - Example: Meat base cooks for 30s, herbs added at 25s as finisher
+   
+   **Simultaneous Addition:**
+   - Can press multiple number keys at once to add multiple ingredients
+   - Useful for ingredients that should be combined
+   - Example: Press 2+3 together to add both Cooling Mint and Crystal Dust
+   - Creates combined reaction with blended properties
+   - Advanced technique for complex recipes
+
+9. **Difficulty Scaling:**
+   
+   **T1 Recipes:**
+   - 2-3 ingredients
+   - All stable or moderate
+   - No false peaks
+   - 2+ second sweet spot windows
+   - No cascading
+   - 60 second time limit
+   
+   **T2 Recipes:**
+   - 3-5 ingredients
+   - Mix of stable and moderate
+   - 1-2 false peaks per ingredient
+   - 1.5 second sweet spot windows
+   - No cascading
+   - 45 second time limit
+   
+   **T3 Recipes:**
+   - 5-7 ingredients
+   - Mix of moderate and volatile
+   - 2-3 false peaks per ingredient
+   - 1 second sweet spot windows
+   - Some cascading reactions
+   - 30 second time limit
+   
+   **T4 Recipes:**
+   - 7-9 ingredients
+   - Volatile and legendary ingredients
+   - 4-5 false peaks per ingredient
+   - 0.5-0.8 second sweet spot windows
+   - Cascading reactions throughout
+   - Complex simultaneous additions required
+   - 20 second time limit
+
+10. **Learning Curve (Experience-Based Pattern Recognition):**
+    - Like learning when water truly boils vs just simmering
+    - Novice: Fooled by Stage 2 false peaks
+    - Intermediate: Recognizes Stage 3 sustained glow
+    - Expert: Feels the "harmonic convergence" at peak
+    - Audio cues become intuitive (resonant tone at sweet spot)
+    - Visual rhythm becomes internalized (steady pulse vs erratic)
+    - Each ingredient type has signature that becomes familiar
+
+11. **Recipe Discovery:**
+    - **Known Recipe**: Shows ingredient list, no timing hints, expected output
+    - **Unknown Recipe**: Shows "? Experiment ?", must discover through trial
+    - **No Order Hints**: Players learn optimal order through experience
+    - **Guided Play**: Provides enough base recipes to establish patterns
+    - **Discovery Reward**: Successful experiment adds recipe to journal
+
+12. **Time Pressure:**
+    - Timer runs during entire minigame
+    - Time expiry: Auto-stabilizes at current progress
+    - If progress < 25%: Failure
+    - If progress ≥ 25%: Success with current quality
+    - Tighter time limits at higher tiers create pressure
+
+13. **Failure Conditions:**
+    - Progress < 25%: Complete failure, 50% materials lost
+    - Explosion (Stage 5 critical): Total failure, 75% materials lost
+    - Time expiry with low progress: Failure as above
+    - Gradient below 25%: Partial success with reduced effects
+
+14. **Multi-Use Materials:**
+    - Same materials used across multiple disciplines
+    - Fire Crystal: Forging (Fire Steel), Alchemy (Fire potions), Enchanting (Fire enchants), Engineering (Incendiary bombs)
+    - Dragon Blood: Alchemy (Power potions), Forging (Legendary alloys), Enchanting (Dragon enchants)
+    - Creates interconnected material economy
+
+15. **Food vs Potions (Cosmetic Distinction):**
+    - Same exact mechanics and minigame
+    - Different ingredient pools (food items vs alchemical reagents)
+    - Different aesthetic (cooking pot vs cauldron)
+    - Roughly equivalent power and duration
+    - Effects may slightly differ thematically but mechanically similar
+
+16. **Specialization Branches:** TBD after guided-play (Healing Alchemy, Elemental Brewing, Transmutation, Culinary Arts, Buff Mastery, etc.)
+
+17. **Important Disclaimers:**
+    - ALL numbers (timings, percentages, durations, effect strengths) are PLACEHOLDERS
+    - Example recipes are for demonstration only
+    - Guided-play will define actual values during balance testing
+    - Sweet spot windows, stage durations, progress contributions all subject to change
+    - System structure is final, numerical values are flexible
+
+---
+
+#### Engineering (Turrets/Bombs/Traps/Tools)
+
+**Core Purpose:** Tactical device creation through cognitive puzzles. Devices can be placed outside claimed territory. Complexity in crafting, simplicity in deployment.
+
+1. **Base Mechanic:** Sequential cognitive puzzle solving - pure problem-solving, no timing, no dexterity
+
+2. **Station Tier System (Drag-and-Drop Canvas):**
+   
+   **T1 Engineering Station:**
+   - 3 Slot Types available (FRAME, POWER, FUNCTION)
+   - 3 Canvas Slots (can place up to 3 slot types)
+   - Minimum viable devices only
+   
+   **T2 Engineering Station:**
+   - 3 Slot Types available (FRAME, POWER, FUNCTION)
+   - 5 Canvas Slots (more complexity with same types)
+   - Can use multiple of same type (e.g., 2 POWER slots)
+   
+   **T3 Engineering Station:**
+   - 5 Slot Types available (FRAME, POWER, FUNCTION, MODIFIER, UTILITY)
+   - 5 Canvas Slots (new types, same slot count)
+   - Advanced customization unlocked
+   
+   **T4 Engineering Station:**
+   - 7 Slot Types available (full palette including special types)
+   - 7 Canvas Slots (maximum customization)
+   - Legendary device complexity
+   
+   **UI Flow:**
+   1. Start with blank canvas
+   2. Drag slot types from palette onto canvas (up to tier limit)
+   3. Fill each placed slot with materials from inventory
+   4. System analyzes combination and determines device type
+   5. Begin assembly (puzzle sequence)
+
+3. **Slot Type System (Modular Building Blocks):**
+   
+   **Available Slot Types:**
+   
+   **FRAME Slot (All Tiers)**
+   - Purpose: Structural base
+   - Accepts: Casings, plates, frameworks, mounts
+   - Affects: Durability, size, weight
+   - Examples: Iron Casing, Crystal Framework, Wooden Frame
+   
+   **POWER Slot (All Tiers)**
+   - Purpose: Energy source
+   - Accepts: Crystals, cores, fuel sources
+   - Affects: Output strength, duration, recharge rate
+   - Can use multiple: Dual/triple power sources create hybrid effects
+   - Examples: Fire Crystal, Mana Core, Battery Cell, Lightning Core
+   
+   **FUNCTION Slot (All Tiers) - DEVICE TYPE DETERMINANT**
+   - Purpose: Defines what device is created
+   - Accepts: Weapons, explosives, utility items, magic items, tools
+   - Material attributes determine device category:
+     - Explosive attribute → BOMB
+     - Ranged weapon attribute → TURRET
+     - Hidden/triggered attribute → TRAP
+     - Utility attribute → SCANNER/COLLECTOR
+     - Magic attribute → SPELL DEVICE
+     - Defensive attribute → BARRIER
+   - **Most critical slot** - determines entire device category
+   
+   **MODIFIER Slot (T3+)**
+   - Purpose: Add special effects and attributes
+   - Accepts: Enhancement items, elemental materials, special components
+   - Affects: Special attributes, conditional effects, bonus properties
+   - Can use multiple: Stack different effects
+   - Examples: Shrapnel (AoE), Timer (delay), Targeting (accuracy), Amplifier (power boost)
+   
+   **UTILITY Slot (T3+)**
+   - Purpose: Secondary functions and automation
+   - Accepts: Tools, sensors, interfaces, automation components
+   - Affects: Usability, automation, detection, quality-of-life
+   - Examples: Auto-Reload, Targeting System, Concealment, Remote Trigger
+   
+   **Special Slot Types (T4 Only - TBD):**
+   - Advanced slot types unlocked at highest tier
+   - Examples: DEFENSE, SPECIAL, AUGMENT (exact types TBD)
+
+4. **Blank Canvas Assembly Process:**
+   
+   **Step 1: Drag Slot Types**
+   - Start with empty canvas
+   - Drag desired slot types from palette onto canvas
+   - Can use same type multiple times (e.g., 2 POWER slots, 3 MODIFIER slots)
+   - Limited by station tier slot count (3, 5, 5, or 7 slots)
+   - Slot arrangement defines device structure
+   
+   **Step 2: Fill Slots with Materials**
+   - Click each placed slot to add materials from inventory
+   - Each slot accepts specific material categories
+   - Materials stackable to 256 per slot
+   - System validates material compatibility with slot type
+   
+   **Step 3: System Recognition**
+   - Once all slots filled, system analyzes combination
+   - FUNCTION slot material determines device category
+   - Other slots modify device stats and effects
+   - Shows preview: Known device OR "? Unknown Device ?"
+   
+   **Step 4: Assembly/Experimentation**
+   - Known device: [Begin Assembly] → Puzzle sequence
+   - Unknown device: [Experiment] → Risk materials to discover
+   - Success: Device created, recipe learned (if new)
+   - Abandon: 50% materials returned, no device
+
+5. **Device Type Determination (FUNCTION Slot):**
+   
+   **Material Attributes Define Device:**
+   
+   **Explosive Attribute → BOMB**
+   ```
+   [FRAME: Iron Casing]
+   [POWER: Fire Crystal]
+   [FUNCTION: Explosive Powder] ← Has "explosive" attribute
+   [MODIFIER: Shrapnel]
+   [MODIFIER: Timer]
+   
+   Result: DELAYED FIRE BOMB (AoE)
+   ```
+   
+   **Ranged Weapon Attribute → TURRET**
+   ```
+   [FRAME: Metal Mount]
+   [POWER: Lightning Crystal]
+   [FUNCTION: Crossbow] ← Has "ranged_weapon" attribute
+   [MODIFIER: Auto-Reload]
+   [UTILITY: Targeting Lens]
+   
+   Result: LIGHTNING AUTO-TURRET
+   ```
+   
+   **Hidden/Triggered Attribute → TRAP**
+   ```
+   [FRAME: Concealed Plate]
+   [POWER: Pressure Crystal]
+   [FUNCTION: Spike Ball] ← Has "hidden" + "triggered" attributes
+   [MODIFIER: Trip Wire]
+   
+   Result: SPIKE TRAP (one-time use)
+   ```
+   
+   **Utility Attribute → SCANNER/COLLECTOR**
+   ```
+   [FRAME: Lightweight Frame]
+   [POWER: Scanning Crystal]
+   [FUNCTION: Telescope] ← Has "utility" + "detection" attributes
+   [MODIFIER: Range Enhancer]
+   
+   Result: RESOURCE SCANNER
+   ```
+   
+   **Magic Attribute → SPELL DEVICE**
+   ```
+   [FRAME: Crystal Framework]
+   [POWER: Mana Core]
+   [FUNCTION: Fire Staff] ← Has "magic" + "fire" attributes
+   [MODIFIER: Amplifier]
+   
+   Result: FIRE SPELL TURRET
+   ```
+
+6. **Slot Arrangement Freedom:**
+   - Players choose which slot types to use
+   - Same materials in different slot configurations = different devices
+   - Examples of valid builds:
+     - Standard: [FRAME][POWER][FUNCTION][MOD][MOD]
+     - Multi-Power: [FRAME][POWER][POWER][POWER][FUNCTION]
+     - Modifier-Heavy: [FRAME][POWER][FUNCTION][MOD][MOD][MOD][MOD]
+     - Minimal: [FRAME][POWER][FUNCTION] (T1 only)
+   - Strategic choices: More power vs more effects vs more durability
+   
+   **Combat Devices:**
+   - Turrets (auto-attack enemies, stationary)
+   - Mines/Traps (triggered defenses, one-time use)
+   - Bombs (throwable/placeable explosives, consumable with recoverable casing)
+   - Barriers (defensive walls/shields)
+   
+   **Utility Devices:**
+   - Auto-collectors (gather resources)
+   - Teleporters (fast travel points)
+   - Scanners (reveal map/resources)
+   - Deployable crafting stations
+   
+   **Advanced Tools:**
+   - Upgraded gathering tools
+   - Multi-function devices
+   - Specialized equipment
+
+7. **Device Categories (Determined by FUNCTION Slot):**
+   - Materials determine device base stats (like other crafting)
+   - Common components → Common device (basic stats)
+   - Legendary components → Legendary device (powerful stats)
+   - Higher rarity materials = more puzzles to solve
+   - Player choice: Easy puzzles with weak device OR hard puzzles with strong device
+
+8. **Material Rarity Impact:**
+   
+   **Puzzle Count by Device Tier & Material Rarity:**
+   ```
+   T1 Device (Common materials): 1-2 puzzles
+   T2 Device (Uncommon materials): 2-3 puzzles
+   T3 Device (Rare materials): 3-5 puzzles
+   T4 Device (Epic+ materials): 4-6 puzzles
+   
+   Higher tier + higher rarity = more puzzles
+   ```
+   
+   **Sequential Solving:**
+   - Each puzzle affects different device stat
+   - Must solve all puzzles to complete device
+   - Solve in sequence: Puzzle 1 → Puzzle 2 → Puzzle 3 → etc.
+   - Each puzzle independently affects one aspect (accuracy, fire rate, durability, etc.)
+   
+   **No Failure State:**
+   - Untimed - take as long as needed
+   - No material loss during puzzle solving
+   - Can attempt puzzle solution as many times as needed
+   - Optional: Move counter that resets puzzle if exceeded (soft limit, not failure)
+   
+   **Only Ways to End Without Device:**
+   - ABANDON: Choose to give up, returns 50% materials, no device created
+   - Cannot solve puzzle: Eventually must abandon if stuck
+
+9. **Multiple Puzzle Gauntlet System:**
+   
+   **T1: Rotation Pipe Puzzles**
+   - Grid: 3x3 to 5x5
+   - Goal: Rotate pieces to connect input to output
+   - Pieces: Straight pipes, L-bends, T-junctions, crosses
+   - Constraint: All pieces must connect (no loose ends)
+   - Difficulty: Easy (3x3, obvious) → Hard (5x5, multiple paths, distractors)
+   
+   **T2: Rotation + Sliding Tile Puzzles**
+   - Rotation: Same as T1 but harder (5x5, multiple inputs/outputs)
+   - Sliding Tiles: Classic sliding puzzle (3x3 or 4x4 grid with empty space)
+   - Goal: Arrange numbered tiles in order by sliding into empty space
+   - Difficulty: Easy (3x3, ~15 moves) → Hard (4x4, ~50+ moves)
+   
+   **T3: Traffic Jam Puzzles**
+   - Grid: 6x6
+   - Pieces: Various sized blocks (1x2, 1x3, 2x2, 2x3)
+   - Goal: Slide target piece to exit by moving blocking pieces
+   - Pieces slide in direction of orientation only
+   - Difficulty: Medium (few pieces) → Very Hard (dense, 40+ moves, dead-ends)
+   
+   **T4: Pattern Matching + Logic Grids**
+   - Pattern Matching: Complete partial patterns following rules (symmetry, no adjacent same, tiling)
+   - Logic Grids: Sudoku-style with engineering constraints (power flow, wiring, no loops)
+   - Grid: 5x5 to 9x9
+   - Multiple complex rules simultaneously
+   - Difficulty: Medium (simple rules, 5x5) → Extreme (many constraints, 9x9)
+
+10. **Puzzle Types by Tier:**
+   - Once puzzle solved, it's done - cannot retry for better result
+   - No "par" or optimal move count shown
+   - No stat bonus for efficient solutions
+   - Solve puzzle = that stat contribution locked in
+   - Device stats purely from material quality, NOT puzzle performance
+   - Puzzles are gateway/skill-check, not optimization minigame
+
+11. **Puzzle Completion (No Optimization System):**
+   - Once puzzle solved, it's done - cannot retry for better result
+   - No "par" or optimal move count shown
+   - No stat bonus for efficient solutions
+   - Solve puzzle = that stat contribution locked in
+   - Device stats purely from material quality and slot configuration, NOT puzzle performance
+   - Puzzles are gateway/skill-check, not optimization minigame
+
+12. **Save & Resume System:**
+   - Can save progress at any time during puzzle
+   - Click "Save & Exit" → puzzle state saved with current configuration
+   - Materials remain locked in station while saved
+   - Slot configuration and filled materials saved
+   - Can return later from exact same state
+   - No time penalty for saving/resuming
+   - Can have multiple devices in progress across different stations
+   - Example: T2 station with turret 40% done, T3 station with bomb 60% done
+
+13. **Discovery System:**
+   - No blueprints - discovery through experimentation
+   - Try slot + material combinations
+   - System recognizes valid device patterns
+   - Unknown combinations show "? Unknown Device ?"
+   - Must experiment to discover new devices
+   - Successful discovery adds recipe to journal
+   - Recipe journal shows: Slot configuration + materials required
+   - Can recreate known devices easily after discovery
+
+14. **Device Durability & Maintenance:**
+    
+    **Turrets:**
+    - No ammo required
+    - Have durability/health bar
+    - Take damage when: Attacking (wear), being attacked (enemy damage)
+    - At 0 durability: Turret breaks, must be rebuilt
+    - Maintenance/Repair system: TBD (can repair in field or must return to station)
+    - Efficacy decreases as durability drops (like tools at 50%+ durability loss)
+    
+    **Bombs:**
+    - Single-use consumable
+    - Explodes and consumed on use
+    - Casing can be recovered after explosion (material return)
+    - Example: Bomb uses 5 iron plates → After explosion, recover 2-3 iron plates
+    
+    **Traps:**
+    - One-time use only
+    - Trigger once, then destroyed
+    - Must craft new trap to replace
+    - No material recovery
+    
+    **Barriers/Walls:**
+    - Have durability/health
+    - Break when durability reaches 0
+    - Cannot repair (TBD - might allow repair later)
+    
+    **Utility Devices:**
+    - Durability system TBD (might be permanent, might degrade)
+    - Balance decision: Should teleporters/collectors need maintenance?
+
+11. **Deployment Limits:**
+    - Maximum 5 devices deployed simultaneously per player (static limit)
+    - Must destroy/remove existing device to place new one if at limit
+    - Applies across all device types (5 total, not 5 per type)
+    - Example: Can have 3 turrets + 2 traps, but not 3 turrets + 3 bombs
+    - Conservative limit for initial development, subject to balance changes
+
+12. **Placement Freedom (UNIQUE TO ENGINEERING):**
+    - Can place devices outside claimed territory
+    - Turrets/traps/bombs deployable anywhere accessible
+    - Creates tactical gameplay and forward positions
+    - Utility devices may still require claimed territory (TBD per device type)
+    - Tradeoff: Powerful but positional - once placed, devices are immobile
+
+13. **Immobility & Tactical Positioning:**
+    - Devices cannot be picked up and moved after placement
+    - Must destroy and rebuild to relocate (lose durability investment)
+    - Encourages thoughtful placement
+    - Exception: Bombs are throwable/placeable before detonation
+
+14. **Build Philosophy:**
+    - High complexity in crafting (difficult puzzles)
+    - Low complexity in usage (deploy and activate)
+    - Quality determined by material rarity, not puzzle performance
+    - Devices are investments requiring maintenance/replacement
+
+15. **Material Overlap (Critical Design Principle):**
+    - Engineering shares MOST materials with other disciplines
+    - Only fringe/specialty materials are unique to engineering
+    - Material economy follows Venn diagram principle:
+      - Core materials (iron, wood, fiber): Used in ALL 5 disciplines
+      - Common materials (crystals, leather, stone): Used in 3-4 disciplines
+      - Mid-tier materials (alloys, refined items): Used in 2-3 disciplines
+      - Specialty materials (unique components): Used in 1 discipline only (rare)
+    - Example shared materials:
+      - Iron Plates: Smithing (armor), Engineering (turret frames), Enchanting (metal bases)
+      - Fire Crystals: Forging (elemental metals), Alchemy (fire potions), Engineering (incendiary devices), Enchanting (fire patterns)
+      - Gears: Engineering (mechanisms), Smithing (complex weapons), Enchanting (clockwork accessories)
+      - Wood: Smithing (handles), Engineering (casings), Alchemy (fuel), Enchanting (wooden charms)
+    - Creates unified material economy across all crafting
+
+20. **Example Device: Basic Turret (T2)**
+    ```
+    Slot Configuration:
+    [FRAME] → Iron Mount (Common)
+    [POWER] → Power Crystal (Common)
+    [FUNCTION] → Crossbow Mechanism (Common, has "ranged_weapon" attribute)
+    [MODIFIER] → Auto-Reload Gears (Uncommon)
+    [MODIFIER] → Targeting Lens (Uncommon)
+    
+    Puzzle Gauntlet: 2 puzzles (Common materials = fewer puzzles)
+    - Puzzle 1: Rotation Pipe (5x5)
+    - Puzzle 2: Sliding Tile (3x3)
+    
+    Result: Basic Turret (Common, T2)
+    - Damage: 50
+    - Fire Rate: 2/sec
+    - Accuracy: 70%
+    - Durability: 500 HP
+    - Range: 8 tiles
+    
+    Degrades with use, needs replacement when durability depleted
+    ```
+
+21. **Example Device: Legendary Dragon Turret (T4)**
+    ```
+    Slot Configuration:
+    [FRAME] → Legendary Alloy Frame
+    [POWER] → Dragon Heart Core (Legendary)
+    [POWER] → Phoenix Flame Core (Legendary) ← Dual power
+    [FUNCTION] → Draconic Ballista (Legendary, has "ranged_weapon" + "dragon" attributes)
+    [MODIFIER] → Piercing Crystals (Epic)
+    [MODIFIER] → Fire Amplifier (Epic)
+    [UTILITY] → Advanced Targeting Matrix (Legendary)
+    
+    Puzzle Gauntlet: 6 puzzles (Legendary materials = max puzzles)
+    - Puzzle 1: Complex Rotation (7x7, multiple paths)
+    - Puzzle 2: Large Sliding (5x5)
+    - Puzzle 3: Dense Traffic Jam (6x6)
+    - Puzzle 4: Pattern Matching (symmetry + color)
+    - Puzzle 5: Logic Grid (7x7 sudoku-style)
+    - Puzzle 6: Hybrid Puzzle (rotation + sliding combined)
+    
+    Result: Legendary Dragon Turret
+    - Damage: 500
+    - Fire Rate: 8/sec
+    - Accuracy: 95%
+    - Durability: 5000 HP
+    - Range: 15 tiles
+    - Special: Dragon's Wrath - Piercing shots that burn
+    
+    Most powerful turret, requires significant material investment
+    Must solve 6 difficult T4 puzzles
+    Eventually needs replacement/repair after heavy use
+    ```
+
+22. **Specialization Branches:** TBD based on guided-play patterns (Turret Specialist, Explosive Expert, Trap Master, Utility Engineer, etc.)
+
+23. **Important Disclaimers:**
+    - All device stats (damage, fire rate, durability) are PLACEHOLDERS
+    - Puzzle difficulty balance TBD through playtesting
+    - Device limits subject to change based on game balance
+    - Maintenance/repair systems may evolve during development
+    - Deployment restrictions per device type TBD
+
+---
+
+#### Adornment/Enchanting (Enhancement & Accessories)
+
+1. **Base Mechanic & Purpose:**
+   - Make existing items stronger (weapons, armor, tools, turrets, anything craftable)
+   - Can also craft new accessories (rings, amulets, charms) from scratch
+
+2. **Mini-Game Structure: Freeform Pattern Creation**
+   - **Phase 1 - Placement:** Place enhancement materials anywhere in circular workspace (complete creative freedom, no grid/guides)
+   - **Phase 2 - Connection:** Draw lines between materials to create pattern
+   - **Phase 3 - Recognition:** System recognizes what geometric pattern was created
+   - **Phase 4 - Judgment:** System judges quality/precision of pattern (angle accuracy, spacing, symmetry)
+   
+3. **Material Types:**
+   - **Key materials:** Few materials that provide main enhancement properties (gems, essences, cores)
+   - **Connector materials:** Majority of materials used to form the pattern structure
+   - More total materials at higher tiers, but key materials remain few
+
+4. **Pattern Recognition:**
+   - System detects geometric shapes (triangles, squares, stars, circles, spirals, nested patterns, etc.)
+   - Pattern type determines bonus type (offensive, defensive, utility, elemental)
+   - Pattern complexity determines bonus magnitude
+   - Pattern quality (precision) determines bonus strength percentage
+
+5. **Complexity Scaling:**
+   - **Scales by grid detail:** Higher tiers have finer placement precision required
+   - T1: 3-5 materials, simple shapes, forgiving quality judgment
+   - T2: 6-8 materials, intermediate patterns, moderate precision needed
+   - T3: 9-12 materials, complex nested patterns, high precision required
+   - T4: 13-20 materials, multi-layered intricate patterns, pixel-perfect placement
+
+6. **Discovery Element:** Players discover what patterns create what effects through experimentation and experience
+
+7. **Failure States:**
+   - Low-Mid tier: Enchanting materials consumed, item remains intact
+   - High tier: Materials consumed + item being enchanted BREAKS (high risk/reward)
+
+8. **Specialization Branches:** TBD based on pattern types players gravitate toward
+
+---
+
+### Cross-Crafting Systems
+
+#### Crafting Stations
+
+1. **Tiered Workbench System (Universal Across All Disciplines):**
+   - **T1 Station (3x3 grid)**: Basic recipes, simple items
+   - **T2 Station (5x5 grid)**: Intermediate recipes, unlocks new item categories
+   - **T3 Station (7x7 grid)**: Advanced recipes, unlocks complex item types
+   - **T4 Station (9x9 grid)**: Master recipes, unlocks exotic/legendary items
+   - **Backward Compatibility**: T2 bench can craft all T1 recipes, T3 can craft T1+T2, etc.
+   - **Grid-Only Interface**: Crafting grid is primary/only interface (no additional UI complexity)
+
+2. **Recipe Size = Item Quality:**
+   - **Small Recipes (3x3)**: Basic items, simple materials
+   - **Medium Recipes (5x5)**: Improved items, more materials = better stats
+   - **Large Recipes (7x7)**: Powerful items, complex material combinations
+   - **Massive Recipes (9x9)**: Legendary items, maximum material investment
+   - **Key Principle**: Same materials in larger recipe = better result
+     - Example: Copper sword in 3x3 = basic | Copper greatsword in 5x5 = much better
+   - **No Stacking**: Each grid slot holds exactly 1 material (no quantity stacking)
+
+3. **Material Tier Flexibility:**
+   - **Can use lower tier materials in higher tier benches**
+   - T1 materials in 7x7 recipe = excellent T1 item (better than simple T2 item)
+   - T3 materials in 9x9 recipe = god-tier T3 item
+   - Allows material investment to create exceptional lower-tier gear
+   - **Tier Mixing Allowed**: Can mix T1 + T2 + T3 in same recipe (affects quality metadata)
+
+4. **Weapon/Item Type Unlocking:**
+   - **T1 Bench**: Shortswords, daggers, hand axes, basic armor
+   - **T2 Bench**: Longswords, battleaxes, spears, medium armor, unlocks "heavy" variants
+   - **T3 Bench**: Greatswords, warhammers, pikes, heavy armor, unlocks "exotic" variants  
+   - **T4 Bench**: Halberds, dual weapons, special armors, legendary item types
+   - **Narrative Logic**: Bigger weapons need bigger workspaces
+
+5. **Station Requirements:**
+   - Each discipline needs dedicated station
+   - Stations are prerequisites for crafting (can't smith without forge)
+   - Starter stations (T1) provided/cheap to craft
+
+6. **Station Upgrades:**
+   - Stations upgradable through their own crafting type
+   - Example: Forge has upgrade slots → Craft "Forge Enhancement" using smithing
+   - Each upgrade tier unlocks: Next tier recipes, Better +X potential, New mini-game mechanics
+   - Upgrades use same mini-game as their discipline
+   - **T4 is Maximum**: No infinite grid expansion beyond 9x9
+
+7. **Station Placement:**
+   - Must be placed in claimed territory
+   - Size requirements (some stations bigger than others)
+   - Aesthetic variations (reflect player's crafting style?)
+
+#### Material Consumption & Failure
+
+1. **Base Crafting (No Mini-Game):**
+   - 100% material consumption
+   - No failure possible
+   - Produces base item with no +X bonuses
+
+2. **Mini-Game Crafting:**
+   - **Success:** 100% material consumption, item created with +X
+   - **Partial Success:** 100% material consumption, item created with reduced/no +X
+   - **Failure:** Partial material return or total loss (scales with tier)
+   
+3. **Failure Scaling:**
+   - T1 Failure: Lose 30-50% of materials
+   - T2 Failure: Lose 50-70% of materials
+   - T3 Failure: Lose 70-90% of materials
+   - T4 Failure: Lose 90-100% of materials
+   - High stakes at high tiers encourages skill development
+
+4. **Multi-Attempt System:**
+   - 3 attempts per recipe instance
+   - All attempts use same material pool
+   - First attempt: Chance for unique "First-Try Bonus" attributes
+   - Subsequent attempts: Standard reward calculation, no bonus chance
+   - After 3 failures: Must gather new materials to try again
+
+#### Quality Tiers & +X System
+
+1. **Base Item Stats:**
+   - Every item has base stats determined by recipe and materials
+   - Base stats are procedurally generated (guided-play defines ranges)
+   - Example: T2 Iron Sword base = 15-20 damage
+
+2. **+X Bonus System:**
+   - Mini-game performance determines +X value
+   - +X adds to base stats
+   - Example: Perfect craft = +5 damage → Total 20-25 damage
+   - Higher tier items have higher potential +X (T4 could get +15)
+
+3. **Quality Naming:**
+   - Normal: Base stats, no +X (instant craft)
+   - Fine: Base stats +1 to +3
+   - Superior: Base stats +4 to +7
+   - Masterwork: Base stats +8 to +12
+   - Legendary: Base stats +13+, possible unique attributes
+
+4. **Attribute Bonuses:**
+   - Beyond stat +X, can gain special attributes
+   - Attributes from materials used (fire materials → fire damage)
+   - First-Try Bonus attributes (unique, rare)
+   - LLM-generated attributes (post guided-play)
+
+#### Recipe Discovery & Experimentation
+
+1. **Guided-Play Recipes:**
+   - Pre-designed, hand-crafted recipes
+   - Unlocked through tutorial/early quests
+   - Establish baseline for material interactions
+   - ~20-30 recipes per discipline to start
+
+2. **Experimentation Discovery:**
+   - Select materials → Attempt craft → Mini-game
+   - Success = Recipe learned + item created
+   - Failure = No recipe, some materials lost
+   - Can try any combination (no restrictions)
+
+3. **Recipe Hints:**
+   - Item descriptions hint at uses
+   - Material combinations show "potential" indicator
+   - NPCs might suggest combinations
+   - Lore/books contain recipe clues
+
+4. **LLM Recipe Generation:**
+   - Post guided-play, LLM generates new valid recipes
+   - Based on player's material usage patterns
+   - Validation: Must be balanced, must make thematic sense
+   - Player discovers through experimentation (LLM doesn't tell them directly)
+
+5. **Recipe Book/Journal:**
+   - Personal recipe journal per player
+   - Records all discovered recipes
+   - Can instant-craft from journal (base quality)
+   - Shows materials required, expected output
+   - Tags/categories for organization
+
+---
+
+### World Structure & Guided Play
+
+#### Biome System (Initial Implementation)
+- **Starting Biome**: Grassland (placeholder for all terrain)
+- **Future Expansion**: Multiple biomes with unique resources (post-guided-play)
+- **Simplicity Focus**: Keep world generation simple during core mechanic development
+
+#### Progression Gating
+- **Soft Gates**: First 3 cities/NPCs have gentle guidance/gates
+  - Initial quest directs to first city/NPC
+  - Hints and info bubbles provide guidance
+  - Core mechanics accessible immediately
+- **Gradual Opening**: After 3 cities, scope gradually broadens
+- **Full Freedom**: Post-3rd city, entire world open for exploration
+- **No Tutorial Lock**: Players can technically go anywhere, but hints guide optimal path
+
+#### NPC/City Placeholder System
+- **Current**: NPCs act as city placeholders
+- **Future**: Full cities with multiple NPCs, shops, quest givers
+- **Guided Play**: 3 key NPCs provide structure without forcing linearity
+
+---
+
+## 📊 PROGRESSION SYSTEMS
+
+### General Overview
+
+1. **Core Concept:** [NEEDS DEFINITION]
+   - How do players advance overall?
+   - What gates content access?
+   - Multiple progression paths or unified?
+
+2. **Progression Currencies:**
+   - Experience points? Skill points? Reputation? All of the above?
+   - How earned and spent?
+
+3. **Soft vs Hard Gates:**
+   - What stops players from accessing T4 content immediately?
+   - Tool requirements? Skill requirements? Story progression?
+
+4. **LLM Role:**
+   - How does LLM affect progression?
+   - Personalized progression paths?
+
+### Character Stats
+
+1. **Stat Types:** [NEEDS DEFINITION]
+   - Strength, Agility, Intelligence, Vitality, Others?
+   - What does each stat do?
+   - How do stats affect gameplay?
+
+2. **Stat Points:**
+   - Max 30 stat points total (from notes)
+   - How earned: Level up? Quests? Activities?
+   - Allocation: Free choice or restricted?
+
+3. **Respec System:**
+   - Can you respec stats?
+   - Cost/limitations?
+   - Frequency allowed?
+
+4. **Stat Scaling:**
+   - Linear growth or diminishing returns?
+   - Soft caps? Hard caps?
+   - Synergies between stats?
+
+### Skill System (Difference Maker)
+
+1. **Skill Categories:** [NEEDS DEFINITION]
+   - Combat skills, Crafting skills, Gathering skills, Magic skills?
+   - How many total skills?
+   - Separate from stats or integrated?
+
+2. **Skill Leveling:**
+   - Use-based progression (mine to level mining)?
+   - Quest/achievement unlocks?
+   - Trainer NPCs?
+
+3. **Skill Effects:**
+   - Efficiency bonuses (gather faster, craft better)?
+   - Unlock new abilities/recipes?
+   - Quality improvements?
+
+4. **Skill Caps:**
+   - Per-skill max level?
+   - Can you master all skills or must specialize?
+   - Total skill point budget?
+
+5. **Specialization Bonuses:**
+   - Focusing on one skill gives unique rewards?
+   - Deep specialist vs broad generalist?
+
+6. **LLM Skill Generation:**
+   - Can LLM create unique skills for specialists?
+   - Custom abilities based on playstyle?
+
+### Class System (Changeable, but most won't)
+
+1. **Class Definition:** [NEEDS COMPLETE REDESIGN]
+   - What is a class in this game?
+   - Pre-defined roles or emergent from play?
+   - How many classes exist?
+
+2. **Class Selection:**
+   - Chosen at character creation?
+   - Earned through gameplay?
+   - Multiple classes simultaneously?
+
+3. **Class Benefits:**
+   - Stat bonuses? Skill access? Unique abilities?
+   - Passive effects? Active skills?
+   - Equipment restrictions?
+
+4. **Class Changing:**
+   - How does changing work?
+   - Penalties for changing?
+   - How often can you change?
+   - Why would "most not" change?
+
+5. **Classless Option:**
+   - Can you play without a class?
+   - Advantages/disadvantages?
+
+6. **LLM-Generated Classes:**
+   - Personal classes based on playstyle?
+   - Unique classes only you have access to?
+
+### Equipment Progression
+
+1. **Tier System:**
+   - T1 → T2 → T3 → T4 defined how?
+   - Material tier? Crafting complexity? Both?
+   - Can T1 maxed compete with T4 basic?
+
+2. **Equipment Types:**
+   - Weapons, Armor, Accessories, Tools
+   - Slot system (head, chest, legs, etc.)?
+   - How many equipment slots?
+
+3. **Upgrade vs Replace:**
+   - Can you upgrade existing gear or must craft new?
+   - Adornment for upgrades, crafting for new?
+   - Both viable paths?
+
+4. **Set Bonuses:**
+   - Do equipment sets exist?
+   - Bonuses for wearing matching pieces?
+   - Crafted sets or found sets?
+
+5. **Legendary/Unique Items:**
+   - How obtained?
+   - LLM-generated?
+   - Quest rewards? Rare drops? Boss loot?
+
+### Reputation/Rating System
+
+1. **Definition:** [NEEDS COMPLETE DEFINITION]
+   - What is reputation in this game?
+   - Single score or multiple categories?
+   - Visible number or hidden?
+
+2. **How Earned:**
+   - Completing activities?
+   - Mastery achievements?
+   - Discoveries?
+   - Quality of crafts?
+
+3. **Effects of Reputation:**
+   - Unlocks content?
+   - NPC treatment?
+   - Rewards?
+   - Prestige/bragging rights?
+
+4. **Specialization Reputation:**
+   - Separate rep for each activity?
+   - "Master Smith" vs "Master Alchemist"?
+   - Can be master of multiple?
+
+---
+
+## ⚔️ COMBAT SYSTEM
+
+### General Overview
+
+1. **Combat Style:** [NEEDS DEFINITION]
+   - Real-time action combat?
+   - Turn-based?
+   - Hybrid?
+   - Skill-based or stat-based?
+
+2. **Core Mechanics:**
+   - What actions can player take in combat?
+   - Attack, Dodge, Block, Skills?
+   - Resource management (stamina, mana)?
+
+3. **Combat Frequency:**
+   - Constant threat or opt-in?
+   - Safe zones vs danger zones?
+   - Can you avoid combat entirely?
+
+4. **Specialization:**
+   - Weapon types, magic schools, combat styles
+   - How does material usage affect combat specialization?
+
+5. **LLM Role:**
+   - Generate unique enemies?
+   - Personalized boss fights?
+   - Adaptive difficulty?
+
+[Continue with detailed numbered breakdowns for each combat subsystem...]
+
+---
+
+## 🎣 GATHERING ACTIVITIES
+
+### General Overview
+
+1. **Core Concept:** [NEEDS DEFINITION]
+   - Primary resource acquisition method
+   - Tool-based or skill-based?
+   - Active engagement or passive?
+
+2. **Specialization:**
+   - Based on resource focus?
+   - Based on gathering method?
+   - Based on efficiency vs completionism?
+
+3. **LLM Role:**
+   - Generate rare resources?
+   - Personalized gathering challenges?
+   - Unique gathering locations?
+
+4. **Integration with Crafting:**
+   - How do gathered materials feed crafting?
+   - Refinement before use or raw materials?
+   - Quality tiers in gathering?
+
+[Continue with numbered breakdowns for Mining, Forestry, Fishing, Harvesting...]
+
+---
+
+## 🗺️ EXPLORATION SYSTEM
+
+### General Overview
+
+1. **Core Concept:** [NEEDS DEFINITION]
+2. **Primary Loop:** [NEEDS DEFINITION]
+3. **Rewards:** [NEEDS DEFINITION]
+4. **Specialization:** [NEEDS DEFINITION]
+5. **LLM Role:** [NEEDS DEFINITION]
+
+[Continue with detailed subsections...]
+
+---
+
+## 🌍 WORLD STRUCTURE
+
+### General Overview
+
+1. **Core Concept:** [NEEDS DEFINITION]
+2. **World Scale:** [NEEDS DEFINITION]
+3. **Guided-Play Region:** [NEEDS DEFINITION]
+4. **Transition to Freedom:** [NEEDS DEFINITION]
+5. **LLM World Generation:** [NEEDS DEFINITION]
+
+[Continue with detailed subsections...]
+
+---
+
+## 🎮 CORE GAMEPLAY SYSTEMS
+
+[Follow same detailed numbered format for:]
+- Material & Item System
+- Recipe System
+- World Interaction
+- Building System
+- Save System
+- UI/UX Systems
+
+---
+
+## 🤖 LLM INTEGRATION SYSTEM
+
+### General Overview
+
+1. **Core Concept:** [NEEDS DEFINITION]
+2. **Guided-Play Endpoint:** [NEEDS DEFINITION]
+3. **Data Collection:** [NEEDS DEFINITION]
+4. **Generation Triggers:** [NEEDS DEFINITION]
+5. **Validation:** [NEEDS DEFINITION]
+
+[Continue with detailed subsections...]
+
+---
+
+## 🎯 NEXT STEPS
+
+### Immediate Decisions Needed
+
+1. **Forging/Refining Mini-Game:** Which option? Or different idea?
+2. **Alchemy Mini-Game:** Which option? Must support cooking specialization
+3. **Engineering Mini-Game:** Which option? Accessible but infinitely deep
+4. **Material Input Method (Smithing):** How do materials get added during crafting?
+
+### Systems Requiring Full Definition
+
+1. **Progression Systems** - Character stats, skills, classes
+2. **Combat System** - Complete mechanical design
+3. **Gathering Activities** - Detailed mini-game designs
+4. **Exploration** - Core loop and rewards
+5. **World Structure** - Guided-play to freedom transition
+6. **LLM Integration** - Exactly when and how it activates
+
+### Priority Order
+
+1. **Finish Crafting System** - Answer mini-game questions, define guided-play recipes
+2. **Material Property System** - Foundation for everything
+3. **One Gathering Activity** - Template for others
+4. **Basic Progression** - Gates and advancement
+5. **World Structure** - Guided-play region design
+
+---
+
+**Current Focus: Defining T1 Smithing Recipes and Material Lists**
