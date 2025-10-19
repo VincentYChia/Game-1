@@ -82,58 +82,75 @@
     "area": {
       "description": "Affects all targets in radius",
       "radius": 5,
-      "note": "Radius in tiles, can be modified by magnitude"
+      "note": "Radius in tiles, modified by magnitude"
     }
   },
 
   "categoryTranslations": {
     "mining": {
       "description": "Applies to mining actions and pickaxe damage",
-      "applicableTo": ["resource_nodes", "mining_damage", "ore_yield"]
+      "applicableTo": ["resource_nodes", "mining_damage", "ore_yield"],
+      "compatibleEffects": ["empower", "quicken", "enrich", "pierce", "devastate"]
     },
     "forestry": {
       "description": "Applies to forestry actions and axe damage",
-      "applicableTo": ["tree_nodes", "forestry_damage", "wood_yield"]
+      "applicableTo": ["tree_nodes", "forestry_damage", "wood_yield"],
+      "compatibleEffects": ["empower", "quicken", "enrich", "pierce", "devastate"]
     },
     "fishing": {
       "description": "Applies to fishing actions",
-      "applicableTo": ["fishing_nodes", "catch_rate", "fish_quality"]
+      "applicableTo": ["fishing_nodes", "catch_rate", "fish_quality"],
+      "compatibleEffects": ["empower", "quicken", "enrich", "pierce"]
     },
     "combat": {
       "description": "Applies to combat actions",
-      "applicableTo": ["weapon_damage", "attack_speed", "critical_chance"]
+      "applicableTo": ["weapon_damage", "attack_speed", "critical_chance"],
+      "compatibleEffects": ["empower", "quicken", "fortify", "pierce", "restore", "regenerate", "devastate"]
     },
     "smithing": {
       "description": "Applies to smithing mini-game",
-      "applicableTo": ["crafting_quality", "mini_game_time", "success_rate"]
+      "applicableTo": ["item_stats", "mini_game_time", "rarity_chance", "first_try_bonus"],
+      "compatibleEffects": ["empower", "quicken", "pierce", "elevate"]
     },
     "refining": {
       "description": "Applies to refining mini-game",
-      "applicableTo": ["refinement_quality", "mini_game_time", "success_rate"]
+      "applicableTo": ["material_quality", "mini_game_time", "rarity_chance"],
+      "compatibleEffects": ["empower", "quicken", "pierce", "elevate"]
     },
     "alchemy": {
       "description": "Applies to alchemy mini-game",
-      "applicableTo": ["potion_quality", "mini_game_time", "success_rate"]
+      "applicableTo": ["potion_quality", "mini_game_time", "effect_strength"],
+      "compatibleEffects": ["empower", "quicken", "pierce", "elevate"]
     },
     "engineering": {
       "description": "Applies to engineering mini-game",
-      "applicableTo": ["device_quality", "mini_game_time", "success_rate"]
+      "applicableTo": ["device_stats", "mini_game_time", "success_rate"],
+      "compatibleEffects": ["empower", "quicken", "pierce", "elevate"]
     },
     "enchanting": {
       "description": "Applies to enchanting mini-game",
-      "applicableTo": ["enchantment_power", "pattern_accuracy", "success_rate"]
+      "applicableTo": ["enchantment_power", "pattern_accuracy", "success_rate"],
+      "compatibleEffects": ["empower", "quicken", "pierce", "elevate"]
     },
     "movement": {
       "description": "Applies to character movement",
-      "applicableTo": ["move_speed", "dash_distance", "stamina_cost"]
+      "applicableTo": ["move_speed", "dash_distance"],
+      "compatibleEffects": ["quicken"]
     },
     "defense": {
       "description": "Applies to defensive stats",
-      "applicableTo": ["damage_reduction", "armor_effectiveness", "block_chance"]
+      "applicableTo": ["damage_reduction", "armor_effectiveness"],
+      "compatibleEffects": ["fortify", "restore", "regenerate"]
     },
     "damage": {
       "description": "Applies to all damage types",
-      "applicableTo": ["physical_damage", "elemental_damage", "critical_damage"]
+      "applicableTo": ["physical_damage", "elemental_damage", "critical_damage"],
+      "compatibleEffects": ["empower", "pierce", "devastate"]
+    },
+    "durability": {
+      "description": "Applies to tool/weapon/armor durability",
+      "applicableTo": ["durability_consumption", "repair_rate"],
+      "compatibleEffects": ["fortify", "restore", "regenerate"]
     }
   },
 
@@ -167,8 +184,51 @@
     }
   },
 
-  "calculationFormula": {
-    "note": "Skills use: baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling",
-    "example": "major frenzy (common, level 10) = 100% × 1.0 × 2.0 × 1.9 = 380% damage boost"
+  "effectCalculations": {
+    "empower": {
+      "formula": "baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling",
+      "example": "major empower (rare, level 5) = 100% × 1.35 × 2.0 × 1.4 = 378% damage"
+    },
+    "quicken": {
+      "formula": "baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling",
+      "example": "moderate quicken (epic, level 10) = 50% × 1.6 × 0.5 × 1.9 = 76% speed boost"
+    },
+    "fortify": {
+      "formula": "baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling",
+      "example": "major fortify (legendary, level 7) = 20 × 2.0 × 40 × 1.6 = 2560 flat reduction"
+    },
+    "enrich": {
+      "formula": "baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling",
+      "example": "moderate enrich (uncommon, level 3) = 3 × 1.15 × 3 × 1.2 = 12.42 → 12 items",
+      "note": "Results rounded down to nearest whole item"
+    },
+    "pierce": {
+      "formula": "baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling",
+      "example": "major pierce (mythic, level 10) = 15% × 2.5 × 0.25 × 1.9 = 17.8% crit chance",
+      "note": "Caps at 100% chance"
+    },
+    "restore": {
+      "formula": "baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling",
+      "example": "major restore (epic, level 6) = 100 × 1.6 × 200 × 1.5 = 48000 HP/mana/durability"
+    },
+    "regenerate": {
+      "formula": "baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling (per second)",
+      "example": "moderate regenerate (rare, level 8) = 5 × 1.35 × 5 × 1.7 = 57.375 per second"
+    },
+    "elevate": {
+      "formula": "baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling",
+      "example": "major elevate (legendary, level 10) = 25% × 2.0 × 0.4 × 1.9 = 38% rarity upgrade",
+      "note": "Caps at 100% chance"
+    },
+    "devastate": {
+      "formula": "baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling",
+      "example": "moderate devastate (uncommon, level 4) = 5 × 1.15 × 5 × 1.3 = 37.375 → 37 tiles",
+      "note": "Results rounded down to nearest whole tile"
+    },
+    "transcend": {
+      "formula": "baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling",
+      "example": "moderate transcend (mythic, level 10) = 1 × 2.5 × 2 × 1.9 = 9.5 → 9 tiers",
+      "note": "Results rounded down. At magnitude values, typically 1-4 tiers bypassed"
+    }
   }
 }
