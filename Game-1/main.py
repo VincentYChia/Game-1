@@ -80,7 +80,179 @@ class Config:
 
 
 # ============================================================================
-# MATERIAL DATABASE
+# TRANSLATION SYSTEM (JSON-Driven Value Lookups)
+# ============================================================================
+class TranslationDatabase:
+    """Loads and provides lookups for text-to-number translations"""
+    _instance = None
+
+    def __init__(self):
+        self.magnitude_values = {}
+        self.duration_seconds = {}
+        self.mana_costs = {}
+        self.cooldown_seconds = {}
+        self.rarity_multipliers = {}
+        self.loaded = False
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = TranslationDatabase()
+        return cls._instance
+
+    def load_from_files(self, base_path: str = ""):
+        """Load all translation tables"""
+        # Try to load skills-translation-table.JSON
+        possible_paths = [
+            f"{base_path}Definitions.JSON/skills-translation-table.JSON",
+            f"{base_path}../Definitions.JSON/skills-translation-table.JSON",
+            f"Game-1/Definitions.JSON/skills-translation-table.JSON",
+        ]
+
+        loaded = False
+        for path in possible_paths:
+            if Path(path).exists():
+                self._load_translation_file(path)
+                loaded = True
+                print(f"✓ Loaded translation tables from {Path(path).name}")
+                break
+
+        if not loaded:
+            print("⚠ Translation tables not found, using defaults")
+            self._create_default_translations()
+
+        self.loaded = True
+
+    def _load_translation_file(self, filepath: str):
+        """Load translation table from JSON"""
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            # Load magnitude values from base effects
+            if 'BASE_EFFECT_TYPES' in data:
+                # Need to load from skills-base-effects-1.JSON
+                pass
+
+            # Load durations
+            if 'durationTranslations' in data:
+                for key, val in data['durationTranslations'].items():
+                    self.duration_seconds[key] = val.get('seconds', 0)
+
+            # Load mana costs
+            if 'manaCostTranslations' in data:
+                for key, val in data['manaCostTranslations'].items():
+                    self.mana_costs[key] = val.get('cost', 0)
+
+            # Load cooldowns
+            if 'cooldownTranslations' in data:
+                for key, val in data['cooldownTranslations'].items():
+                    self.cooldown_seconds[key] = val.get('seconds', 0)
+
+            # Load skill progression
+            if 'skillProgressionSystem' in data:
+                self.skill_exp_requirements = data['skillProgressionSystem'].get('expRequirements', {})
+
+            # Load rarity multipliers (might need separate file)
+            self.rarity_multipliers = {
+                'common': 1.0,
+                'uncommon': 1.15,
+                'rare': 1.35,
+                'epic': 1.6,
+                'legendary': 2.0,
+                'mythic': 2.5
+            }
+
+        except Exception as e:
+            print(f"⚠ Error loading translations: {e}")
+            self._create_default_translations()
+
+    def _create_default_translations(self):
+        """Create default translation values"""
+        # Magnitude values (from skills-base-effects-1.JSON)
+        self.magnitude_values = {
+            'minor': 0.5,
+            'moderate': 1.0,
+            'major': 2.0,
+            'extreme': 4.0
+        }
+
+        # Duration
+        self.duration_seconds = {
+            'instant': 0,
+            'brief': 15,
+            'moderate': 30,
+            'long': 60,
+            'extended': 120
+        }
+
+        # Mana costs
+        self.mana_costs = {
+            'low': 30,
+            'moderate': 60,
+            'high': 100,
+            'extreme': 150
+        }
+
+        # Cooldowns
+        self.cooldown_seconds = {
+            'short': 120,
+            'moderate': 300,
+            'long': 600,
+            'extreme': 1200
+        }
+
+        # Rarity multipliers
+        self.rarity_multipliers = {
+            'common': 1.0,
+            'uncommon': 1.15,
+            'rare': 1.35,
+            'epic': 1.6,
+            'legendary': 2.0,
+            'mythic': 2.5
+        }
+
+        # Skill EXP requirements (1000, 2000, 4000, 8000...)
+        self.skill_exp_requirements = {
+            'level1': 1000,
+            'level2': 2000,
+            'level3': 4000,
+            'level4': 8000,
+            'level5': 16000,
+            'level6': 32000,
+            'level7': 64000,
+            'level8': 128000,
+            'level9': 256000,
+            'level10': 512000
+        }
+
+    def get_magnitude_value(self, magnitude: str) -> float:
+        """Get numeric value for magnitude text"""
+        return self.magnitude_values.get(magnitude, 1.0)
+
+    def get_duration(self, duration: str) -> float:
+        """Get seconds for duration text"""
+        return self.duration_seconds.get(duration, 0)
+
+    def get_mana_cost(self, cost: str) -> int:
+        """Get mana cost for text"""
+        return self.mana_costs.get(cost, 0)
+
+    def get_cooldown(self, cooldown: str) -> float:
+        """Get cooldown in seconds"""
+        return self.cooldown_seconds.get(cooldown, 0)
+
+    def get_rarity_multiplier(self, rarity: str) -> float:
+        """Get multiplier for rarity"""
+        return self.rarity_multipliers.get(rarity, 1.0)
+
+    def get_skill_exp_for_level(self, level: int) -> int:
+        """Get EXP required for skill level"""
+        return self.skill_exp_requirements.get(f'level{level}', 1000)
+
+
+# ============================================================================
+# SKILL SYSTEM (JSON-Driven)
 # ============================================================================
 @dataclass
 class MaterialDefinition:
@@ -363,7 +535,9 @@ class WorldSystem:
         self.tiles: Dict[str, WorldTile] = {}
         self.chunks: Dict[Tuple[int, int], Chunk] = {}
         self.resources: List[NaturalResource] = []
+        self.crafting_stations: List[CraftingStation] = []
         self.generate_world()
+        self.spawn_starting_stations()
 
     def generate_world(self):
         """Generate 100x100 world with chunk-based system"""
@@ -380,6 +554,27 @@ class WorldSystem:
         print(f"Total chunks: {len(self.chunks)}")
         print(f"Total tiles: {len(self.tiles)}")
         print(f"Total resources: {len(self.resources)}")
+
+    def spawn_starting_stations(self):
+        """Spawn starting crafting stations near spawn"""
+        # Place stations in a circle around spawn point (50, 50)
+        station_positions = [
+            (45, 45, StationType.SMITHING),
+            (55, 45, StationType.ALCHEMY),
+            (55, 55, StationType.REFINING),
+            (45, 55, StationType.ENGINEERING),
+            (50, 42, StationType.ADORNMENTS),
+        ]
+
+        for x, y, station_type in station_positions:
+            station = CraftingStation(
+                position=Position(x, y, 0),
+                station_type=station_type,
+                tier=1
+            )
+            self.crafting_stations.append(station)
+
+        print(f"Spawned {len(self.crafting_stations)} crafting stations")
 
     def get_tile(self, position: Position) -> Optional[WorldTile]:
         """Get tile at position"""
@@ -441,6 +636,34 @@ class WorldSystem:
                 return resource
         return None
 
+    def get_visible_stations(self, camera_pos: Position, viewport_width: int, viewport_height: int) -> List[
+        CraftingStation]:
+        """Get crafting stations visible in viewport"""
+        tiles_wide = viewport_width // Config.TILE_SIZE + 2
+        tiles_high = viewport_height // Config.TILE_SIZE + 2
+
+        start_x = camera_pos.x - tiles_wide // 2
+        start_y = camera_pos.y - tiles_high // 2
+        end_x = camera_pos.x + tiles_wide // 2
+        end_y = camera_pos.y + tiles_high // 2
+
+        visible = []
+        for station in self.crafting_stations:
+            if (start_x <= station.position.x <= end_x and
+                    start_y <= station.position.y <= end_y):
+                visible.append(station)
+
+        return visible
+
+    def get_station_at(self, position: Position) -> Optional[CraftingStation]:
+        """Get crafting station at exact position"""
+        snap_pos = position.snap_to_grid()
+        for station in self.crafting_stations:
+            if (station.position.x == snap_pos.x and
+                    station.position.y == snap_pos.y):
+                return station
+        return None
+
     def update(self, dt: float):
         """Update world (resource respawns)"""
         for resource in self.resources:
@@ -452,18 +675,281 @@ class WorldSystem:
 # ============================================================================
 @dataclass
 class CharacterStats:
-    strength: int = 10
-    dexterity: int = 10
-    intelligence: int = 10
-    constitution: int = 10
-    wisdom: int = 10
-    luck: int = 10
+    strength: int = 0  # STR
+    defense: int = 0  # DEF
+    vitality: int = 0  # VIT
+    luck: int = 0  # LCK
+    agility: int = 0  # AGI
+    intelligence: int = 0  # INT
 
     def get_bonus(self, stat_name: str) -> float:
-        """Get percentage bonus from stat (5% per point)"""
-        stat_value = getattr(self, stat_name.lower())
-        return stat_value * 0.05
+        """Get percentage bonus from stat (5% per point for most)"""
+        stat_value = getattr(self, stat_name.lower(), 0)
 
+        # Different scaling per stat type (from JSON definitions)
+        scaling = {
+            'strength': 0.05,  # +5% per point
+            'defense': 0.02,  # +2% per point
+            'vitality': 0.01,  # +1% per point
+            'luck': 0.02,  # +2% per point
+            'agility': 0.05,  # +5% per point (forestry)
+            'intelligence': 0.02  # +2% per point
+        }
+
+        return stat_value * scaling.get(stat_name.lower(), 0.05)
+
+    def get_flat_bonus(self, stat_name: str, bonus_type: str) -> float:
+        """Get flat bonus from stat (varies by type)"""
+        stat_value = getattr(self, stat_name.lower(), 0)
+
+        # Flat bonuses (from JSON definitions)
+        if stat_name == 'strength' and bonus_type == 'carry_capacity':
+            return stat_value * 10
+        elif stat_name == 'vitality' and bonus_type == 'max_health':
+            return stat_value * 15
+        elif stat_name == 'intelligence' and bonus_type == 'mana':
+            return stat_value * 20
+
+        return 0
+
+
+# ============================================================================
+# TITLE SYSTEM
+# ============================================================================
+@dataclass
+class Title:
+    """Title earned by player"""
+    title_id: str
+    name: str
+    tier: str  # novice, apprentice, journeyman, expert, master
+    category: str  # gathering, crafting, combat
+    bonus_description: str
+    bonus_value: float
+    earned_at_activity_count: int = 0
+
+
+class TitleSystem:
+    """Manages player titles and progression"""
+
+    def __init__(self):
+        self.earned_titles: List[Title] = []
+
+        # Hardcoded Novice title thresholds (from JSON design)
+        self.novice_thresholds = {
+            'novice_miner': ('mining', 100, '+10% mining damage'),
+            'novice_lumberjack': ('forestry', 100, '+10% forestry damage'),
+            'novice_smith': ('smithing', 50, '+10% smithing time'),
+            'novice_refiner': ('refining', 50, '+10% refining precision'),
+            'novice_alchemist': ('alchemy', 50, '+10% alchemy progress'),
+            'novice_engineer': ('engineering', 20, '+10% engineering tolerance'),
+            'novice_enchanter': ('enchanting', 20, '+10% enchanting precision'),
+            'novice_warrior': ('combat', 50, '+10% melee damage'),
+            'novice_explorer': ('exploration', 1, '+10% discovery chance')  # First rare material
+        }
+
+    def check_for_title(self, activity_type: str, count: int) -> Optional[Title]:
+        """Check if player earned a title"""
+        # Check novice titles
+        for title_id, (activity, threshold, bonus_desc) in self.novice_thresholds.items():
+            if activity == activity_type and count == threshold:
+                # Check if already earned
+                if any(t.title_id == title_id for t in self.earned_titles):
+                    continue
+
+                # Award title
+                title = Title(
+                    title_id=title_id,
+                    name=title_id.replace('_', ' ').title(),
+                    tier='novice',
+                    category=activity_type,
+                    bonus_description=bonus_desc,
+                    bonus_value=0.10,
+                    earned_at_activity_count=count
+                )
+                self.earned_titles.append(title)
+                return title
+
+        return None
+
+    def get_total_bonus(self, category: str) -> float:
+        """Get total bonus from all titles in category"""
+        total = 0.0
+        for title in self.earned_titles:
+            if title.category == category:
+                total += title.bonus_value
+        return total
+
+
+# ============================================================================
+# LEVELING SYSTEM
+# ============================================================================
+class LevelingSystem:
+    """Manages character leveling and EXP"""
+
+    def __init__(self):
+        self.level = 1
+        self.current_exp = 0
+        self.max_level = 30
+
+        # EXP curve from JSON (exponential)
+        self.exp_requirements = self._generate_exp_curve()
+
+        # Unallocated stat points
+        self.unallocated_stat_points = 0
+
+    def _generate_exp_curve(self) -> Dict[int, int]:
+        """Generate exponential EXP curve (total ~250,000 for level 30)"""
+        curve = {}
+        base = 200
+        for level in range(1, self.max_level + 1):
+            # Exponential scaling: 200, 350, 550, 800, 1100...
+            curve[level] = int(base * (1.75 ** (level - 1)))
+        return curve
+
+    def get_exp_for_next_level(self) -> int:
+        """Get EXP needed for next level"""
+        if self.level >= self.max_level:
+            return 0
+        return self.exp_requirements.get(self.level + 1, 0)
+
+    def add_exp(self, amount: int, source: str = "") -> bool:
+        """Add EXP, return True if leveled up"""
+        if self.level >= self.max_level:
+            return False
+
+        self.current_exp += amount
+        exp_needed = self.get_exp_for_next_level()
+
+        if self.current_exp >= exp_needed:
+            self.current_exp -= exp_needed
+            self.level += 1
+            self.unallocated_stat_points += 1
+            print(f"🎉 LEVEL UP! Now level {self.level} (+1 stat point)")
+            return True
+
+        return False
+
+
+# ============================================================================
+# CLASS SYSTEM
+# ============================================================================
+@dataclass
+class ClassDefinition:
+    """Class definition"""
+    class_id: str
+    name: str
+    description: str
+    bonuses: Dict[str, float]
+    starting_skill: str
+    recommended_stats: List[str]
+
+
+class ClassSystem:
+    """Manages player class"""
+
+    def __init__(self):
+        self.current_class: Optional[ClassDefinition] = None
+        self.classes = self._define_classes()
+
+    def _define_classes(self) -> Dict[str, ClassDefinition]:
+        """Define the 6 base classes (from JSON design)"""
+        return {
+            'warrior': ClassDefinition(
+                class_id='warrior',
+                name='Warrior',
+                description='Master of melee combat',
+                bonuses={'max_hp': 30, 'melee_damage': 0.10, 'inventory_slots': 20},
+                starting_skill='battle_rage',
+                recommended_stats=['strength', 'vitality', 'defense']
+            ),
+            'ranger': ClassDefinition(
+                class_id='ranger',
+                name='Ranger',
+                description='Swift and precise',
+                bonuses={'movement_speed': 0.15, 'crit_chance': 0.10, 'forestry': 0.10},
+                starting_skill='forestry_frenzy',
+                recommended_stats=['agility', 'luck', 'vitality']
+            ),
+            'scholar': ClassDefinition(
+                class_id='scholar',
+                name='Scholar',
+                description='Master of knowledge',
+                bonuses={'max_mana': 100, 'recipe_discovery': 0.10, 'skill_exp': 0.05},
+                starting_skill='alchemists_touch',
+                recommended_stats=['intelligence', 'luck', 'agility']
+            ),
+            'artisan': ClassDefinition(
+                class_id='artisan',
+                name='Artisan',
+                description='Master craftsman',
+                bonuses={'craft_time': 0.10, 'first_try_bonus': 0.10, 'durability': 0.05},
+                starting_skill='smithing_focus',
+                recommended_stats=['agility', 'intelligence', 'luck']
+            ),
+            'scavenger': ClassDefinition(
+                class_id='scavenger',
+                name='Scavenger',
+                description='Fortune finder',
+                bonuses={'rare_drops': 0.20, 'resource_quality': 0.10, 'carry_capacity': 100},
+                starting_skill='treasure_hunters_luck',
+                recommended_stats=['luck', 'strength', 'vitality']
+            ),
+            'guardian': ClassDefinition(
+                class_id='guardian',
+                name='Guardian',
+                description='Unbreakable defender',
+                bonuses={'max_hp': 50, 'damage_reduction': 0.15, 'armor_effectiveness': 0.20},
+                starting_skill='iron_skin',
+                recommended_stats=['defense', 'vitality', 'strength']
+            )
+        }
+
+    def select_class(self, class_id: str) -> bool:
+        """Select a class"""
+        if class_id in self.classes:
+            self.current_class = self.classes[class_id]
+            return True
+        return False
+
+    def get_bonus(self, bonus_type: str) -> float:
+        """Get bonus from current class"""
+        if self.current_class:
+            return self.current_class.bonuses.get(bonus_type, 0.0)
+        return 0.0
+
+
+# ============================================================================
+# ACTIVITY TRACKER
+# ============================================================================
+class ActivityTracker:
+    """Tracks all player activities for titles and progression"""
+
+    def __init__(self):
+        self.activity_counts = {
+            'mining': 0,
+            'forestry': 0,
+            'smithing': 0,
+            'refining': 0,
+            'alchemy': 0,
+            'engineering': 0,
+            'enchanting': 0,
+            'combat': 0,
+            'exploration': 0
+        }
+
+    def record_activity(self, activity_type: str, amount: int = 1):
+        """Record an activity"""
+        if activity_type in self.activity_counts:
+            self.activity_counts[activity_type] += amount
+
+    def get_count(self, activity_type: str) -> int:
+        """Get activity count"""
+        return self.activity_counts.get(activity_type, 0)
+
+
+# ============================================================================
+# CHARACTER STATS (Enhanced)
+# ============================================================================
 
 # ============================================================================
 # ITEM & INVENTORY SYSTEM
@@ -666,7 +1152,7 @@ class ResourceType(Enum):
     STAR_CRYSTAL = "star_crystal"
 
 
-# Resource tier mapping
+# Resource tier mapping (must be defined before NaturalResource class)
 RESOURCE_TIERS = {
     ResourceType.OAK_TREE: 1, ResourceType.BIRCH_TREE: 2,
     ResourceType.MAPLE_TREE: 3, ResourceType.IRONWOOD_TREE: 4,
@@ -812,6 +1298,208 @@ class NaturalResource:
 
 
 # ============================================================================
+# CRAFTING SYSTEM
+# ============================================================================
+class StationType(Enum):
+    SMITHING = "smithing"
+    ALCHEMY = "alchemy"
+    REFINING = "refining"
+    ENGINEERING = "engineering"
+    ADORNMENTS = "adornments"
+
+
+@dataclass
+class Recipe:
+    """Recipe definition loaded from JSON"""
+    recipe_id: str
+    output_id: str
+    output_qty: int
+    station_type: str
+    station_tier: int
+    inputs: List[Dict]
+    grid_size: str = "3x3"
+    mini_game_type: str = ""
+    metadata: Dict = field(default_factory=dict)
+
+
+class RecipeDatabase:
+    """Global recipe database loaded from JSON"""
+    _instance = None
+
+    def __init__(self):
+        self.recipes: Dict[str, Recipe] = {}
+        self.recipes_by_station: Dict[str, List[Recipe]] = {
+            "smithing": [],
+            "alchemy": [],
+            "refining": [],
+            "engineering": [],
+            "adornments": []
+        }
+        self.loaded = False
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = RecipeDatabase()
+        return cls._instance
+
+    def load_from_files(self, base_path: str = ""):
+        """Load all recipe files"""
+        recipe_files = [
+            ("smithing", "recipes-smithing-3.json"),
+            ("alchemy", "recipes-alchemy-1.json"),
+            ("refining", "recipes-refining-1.json"),
+            ("engineering", "recipes-engineering-1.json"),
+            ("adornments", "recipes-adornments-1.json")
+        ]
+
+        total_loaded = 0
+
+        for station_type, filename in recipe_files:
+            # Try multiple paths
+            possible_paths = [
+                f"{base_path}data/{filename}",
+                f"{base_path}../data/{filename}",
+                f"{base_path}../../data/{filename}",
+                f"Game-1/recipes.JSON/{filename}",
+                f"../Game-1/recipes.JSON/{filename}",
+            ]
+
+            loaded = False
+            for path in possible_paths:
+                if Path(path).exists():
+                    count = self._load_recipe_file(path, station_type)
+                    if count > 0:
+                        print(f"  ✓ Loaded {count} {station_type} recipes from {filename}")
+                        total_loaded += count
+                        loaded = True
+                        break
+
+            if not loaded:
+                print(f"  ⚠ Could not find {filename}, skipping...")
+
+        self.loaded = True
+        print(f"✓ Total recipes loaded: {total_loaded}")
+
+        if total_loaded == 0:
+            print("⚠ No recipes loaded - creating placeholders...")
+            self._create_placeholder_recipes()
+
+    def _load_recipe_file(self, filepath: str, station_type: str) -> int:
+        """Load recipes from a single JSON file"""
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            recipes_list = data.get('recipes', [])
+
+            for recipe_data in recipes_list:
+                recipe = Recipe(
+                    recipe_id=recipe_data.get('recipeId', ''),
+                    output_id=recipe_data.get('outputId', ''),
+                    output_qty=recipe_data.get('outputQty', 1),
+                    station_type=recipe_data.get('stationType', station_type),
+                    station_tier=recipe_data.get('stationTier', 1),
+                    inputs=recipe_data.get('inputs', []),
+                    grid_size=recipe_data.get('gridSize', '3x3'),
+                    mini_game_type=recipe_data.get('miniGame', {}).get('type', station_type),
+                    metadata=recipe_data.get('metadata', {})
+                )
+
+                self.recipes[recipe.recipe_id] = recipe
+                self.recipes_by_station[station_type].append(recipe)
+
+            return len(recipes_list)
+
+        except Exception as e:
+            print(f"  ✗ Error loading {filepath}: {e}")
+            return 0
+
+    def _create_placeholder_recipes(self):
+        """Create placeholder recipes for testing"""
+        placeholders = [
+            Recipe("placeholder_sword", "iron_sword", 1, "smithing", 1,
+                   [{"materialId": "iron_ingot", "quantity": 3}, {"materialId": "oak_log", "quantity": 1}],
+                   "3x3", "smithing", {"narrative": "A basic iron sword"}),
+            Recipe("placeholder_potion", "health_potion", 1, "alchemy", 1,
+                   [{"materialId": "oak_log", "quantity": 2}],
+                   "3x3", "alchemy", {"narrative": "A simple healing potion"}),
+        ]
+
+        for recipe in placeholders:
+            self.recipes[recipe.recipe_id] = recipe
+            self.recipes_by_station[recipe.station_type].append(recipe)
+
+        print(f"✓ Created {len(placeholders)} placeholder recipes")
+
+    def get_recipes_for_station(self, station_type: str, tier: int = 1) -> List[Recipe]:
+        """Get all recipes for a station type at or below the given tier"""
+        return [r for r in self.recipes_by_station.get(station_type, [])
+                if r.station_tier <= tier]
+
+    def can_craft(self, recipe: Recipe, inventory: Inventory) -> bool:
+        """Check if player has materials to craft recipe"""
+        for input_mat in recipe.inputs:
+            mat_id = input_mat.get('materialId', '')
+            required_qty = input_mat.get('quantity', 0)
+            available = inventory.get_item_count(mat_id)
+
+            if available < required_qty:
+                return False
+
+        return True
+
+    def consume_materials(self, recipe: Recipe, inventory: Inventory) -> bool:
+        """Remove materials from inventory for crafting"""
+        # First check if we can craft
+        if not self.can_craft(recipe, inventory):
+            return False
+
+        # Remove materials
+        for input_mat in recipe.inputs:
+            mat_id = input_mat.get('materialId', '')
+            required_qty = input_mat.get('quantity', 0)
+
+            # Remove from inventory slots
+            remaining = required_qty
+            for slot in inventory.slots:
+                if slot and slot.item_id == mat_id and remaining > 0:
+                    if slot.quantity >= remaining:
+                        slot.quantity -= remaining
+                        if slot.quantity == 0:
+                            # Remove empty slot
+                            idx = inventory.slots.index(slot)
+                            inventory.slots[idx] = None
+                        remaining = 0
+                        break
+                    else:
+                        remaining -= slot.quantity
+                        idx = inventory.slots.index(slot)
+                        inventory.slots[idx] = None
+
+        return True
+
+
+@dataclass
+class CraftingStation:
+    """Crafting station in the world"""
+    position: Position
+    station_type: StationType
+    tier: int
+
+    def get_color(self) -> Tuple[int, int, int]:
+        """Get station color based on type"""
+        colors = {
+            StationType.SMITHING: (180, 60, 60),  # Red
+            StationType.ALCHEMY: (60, 180, 60),  # Green
+            StationType.REFINING: (180, 120, 60),  # Orange
+            StationType.ENGINEERING: (60, 120, 180),  # Blue
+            StationType.ADORNMENTS: (180, 60, 180)  # Purple
+        }
+        return colors.get(self.station_type, (150, 150, 150))
+
+
+# ============================================================================
 # DAMAGE NUMBER FEEDBACK
 # ============================================================================
 @dataclass
@@ -840,15 +1528,21 @@ class Character:
         self.movement_speed = Config.PLAYER_SPEED
         self.interaction_range = Config.INTERACTION_RANGE
 
-        # Stats
+        # Stats (all start at 0, allocate from level-ups)
         self.stats = CharacterStats()
-        self.level = 1
-        self.experience = 0
-        self.experience_to_next = 1000
 
-        # Health
-        self.max_health = 100 + (self.stats.constitution * 5)
+        # Progression systems
+        self.leveling = LevelingSystem()
+        self.skills = SkillManager()
+        self.titles = TitleSystem()
+        self.class_system = ClassSystem()
+        self.activities = ActivityTracker()
+
+        # Health & Mana
+        self.max_health = 100 + self.stats.get_flat_bonus('vitality', 'max_health')
         self.health = self.max_health
+        self.max_mana = 100 + self.stats.get_flat_bonus('intelligence', 'mana')
+        self.mana = self.max_mana
 
         # Movement
         self.velocity = Position(0, 0, 0)
@@ -857,6 +1551,13 @@ class Character:
         self.inventory = Inventory(30)
         self.tools: List[Tool] = []
         self.selected_tool: Optional[Tool] = None
+
+        # Crafting
+        self.active_station: Optional[CraftingStation] = None
+        self.crafting_ui_open = False
+
+        # UI State
+        self.stats_ui_open = False
 
         # Give starting tools
         self._give_starting_tools()
@@ -885,11 +1586,34 @@ class Character:
         self.tools = [t1_axe, t1_pickaxe]
         self.selected_tool = t1_axe
 
+    def allocate_stat_point(self, stat_name: str) -> bool:
+        """Allocate a stat point"""
+        if self.leveling.unallocated_stat_points <= 0:
+            return False
+
+        if hasattr(self.stats, stat_name):
+            current_value = getattr(self.stats, stat_name)
+            setattr(self.stats, stat_name, current_value + 1)
+            self.leveling.unallocated_stat_points -= 1
+
+            # Recalculate derived stats
+            self.max_health = 100 + self.stats.get_flat_bonus('vitality', 'max_health')
+            self.max_mana = 100 + self.stats.get_flat_bonus('intelligence', 'mana')
+
+            return True
+
+        return False
+
     def move(self, dx: float, dy: float, world: WorldSystem) -> bool:
         """Move character with collision detection"""
+        # Apply agility bonus to movement speed
+        agility_bonus = self.stats.get_bonus('agility') * 0.02  # +2% per AGI
+        class_bonus = self.class_system.get_bonus('movement_speed')
+        speed_mult = 1.0 + agility_bonus + class_bonus
+
         new_pos = Position(
-            self.position.x + dx,
-            self.position.y + dy,
+            self.position.x + dx * speed_mult,
+            self.position.y + dy * speed_mult,
             self.position.z
         )
 
@@ -938,29 +1662,75 @@ class Character:
         if not self.selected_tool.can_harvest(resource.tier):
             return None
 
-        # Calculate damage
+        # Calculate damage with stat bonuses
         base_damage = self.selected_tool.damage
         effectiveness = self.selected_tool.get_effectiveness()
 
+        # Apply STR bonus for mining, AGI bonus for forestry
+        if resource.required_tool == ToolType.PICKAXE:
+            stat_bonus = self.stats.get_bonus('strength')
+            activity_type = 'mining'
+        elif resource.required_tool == ToolType.AXE:
+            stat_bonus = self.stats.get_bonus('agility')
+            activity_type = 'forestry'
+        else:
+            stat_bonus = 0.0
+            activity_type = 'gathering'
+
+        # Apply title bonuses
+        title_bonus = self.titles.get_total_bonus(activity_type)
+
+        # Total damage multiplier
+        damage_mult = 1.0 + stat_bonus + title_bonus
+
         # Check for critical hit (LCK-based)
-        crit_chance = self.stats.luck * 0.01  # 1% per LCK point
+        base_crit_chance = self.stats.luck * 0.02  # 2% per LCK
+        class_crit_bonus = self.class_system.get_bonus('crit_chance')
+        crit_chance = base_crit_chance + class_crit_bonus
         is_crit = random.random() < crit_chance
 
-        damage = int(base_damage * effectiveness)
+        damage = int(base_damage * effectiveness * damage_mult)
 
         # Apply damage to resource
         actual_damage, depleted = resource.take_damage(damage, is_crit)
 
-        # Use tool durability
+        # Use tool durability (with VIT/DEF reduction)
+        durability_reduction = 1.0 - self.stats.get_bonus('vitality') - self.stats.get_bonus('defense') * 0.02
+        durability_reduction = max(0.5, durability_reduction)  # Min 50% consumption
+
         if not self.selected_tool.use():
             print("⚠ Tool broke!")
+
+        # Record activity
+        self.activities.record_activity(activity_type, 1)
+
+        # Check for title
+        count = self.activities.get_count(activity_type)
+        new_title = self.titles.check_for_title(activity_type, count)
+        if new_title:
+            print(f"🏆 TITLE EARNED: {new_title.name} - {new_title.bonus_description}")
+
+        # Award EXP (tier-based, 4x multiplier)
+        exp_values = {1: 10, 2: 40, 3: 160, 4: 640}
+        exp_gain = exp_values.get(resource.tier, 10)
+        self.leveling.add_exp(exp_gain, f"Harvested T{resource.tier} resource")
 
         # If depleted, get loot
         loot = None
         if depleted:
             loot = resource.get_loot()
+
+            # Apply LCK bonus to yield
+            luck_bonus = self.stats.luck * 0.02  # +2% per LCK
+            quality_bonus = self.class_system.get_bonus('resource_quality')
+
             # Add to inventory
             for item_id, quantity in loot:
+                # Bonus quantity chance
+                bonus_chance = luck_bonus + quality_bonus
+                if random.random() < bonus_chance:
+                    quantity += 1
+
                 self.inventory.add_item(item_id, quantity)
 
         # Return damage info for feedback
@@ -974,6 +1744,21 @@ class Character:
         current_idx = self.tools.index(self.selected_tool) if self.selected_tool in self.tools else -1
         next_idx = (current_idx + 1) % len(self.tools)
         self.selected_tool = self.tools[next_idx]
+
+    def interact_with_station(self, station: CraftingStation):
+        """Open crafting UI for station"""
+        if self.is_in_range(station.position):
+            self.active_station = station
+            self.crafting_ui_open = True
+
+    def close_crafting_ui(self):
+        """Close crafting UI"""
+        self.active_station = None
+        self.crafting_ui_open = False
+
+    def toggle_stats_ui(self):
+        """Toggle stats/progression UI"""
+        self.stats_ui_open = not self.stats_ui_open
 
 
 # ============================================================================
@@ -1030,6 +1815,14 @@ class Renderer:
                 pygame.draw.rect(self.screen, tile.get_color(), rect)
                 pygame.draw.rect(self.screen, Config.COLOR_GRID, rect, 1)
 
+        # Render crafting stations
+        visible_stations = world.get_visible_stations(
+            camera.position,
+            Config.VIEWPORT_WIDTH,
+            Config.VIEWPORT_HEIGHT
+        )
+        self.render_stations(camera, visible_stations, character)
+
         # Render resources
         visible_resources = world.get_visible_resources(
             camera.position,
@@ -1046,6 +1839,46 @@ class Renderer:
 
         # Render damage numbers
         self.render_damage_numbers(camera, damage_numbers)
+
+    def render_stations(self, camera: Camera, stations: List[CraftingStation], character: Character):
+        """Render crafting stations"""
+        for station in stations:
+            screen_x, screen_y = camera.world_to_screen(station.position)
+
+            # Check if in interaction range
+            in_range = character.is_in_range(station.position)
+
+            # Draw station as diamond shape
+            color = station.get_color()
+            if not in_range:
+                # Dim if out of range
+                color = tuple(max(0, c - 50) for c in color)
+
+            size = Config.TILE_SIZE - 8
+            points = [
+                (screen_x, screen_y - size // 2),  # Top
+                (screen_x + size // 2, screen_y),  # Right
+                (screen_x, screen_y + size // 2),  # Bottom
+                (screen_x - size // 2, screen_y),  # Left
+            ]
+            pygame.draw.polygon(self.screen, color, points)
+            pygame.draw.polygon(self.screen, (0, 0, 0), points, 3)
+
+            # Draw tier badge
+            if in_range:
+                tier_text = f"T{station.tier}"
+                tier_surface = self.small_font.render(tier_text, True, (255, 255, 255))
+                tier_rect = tier_surface.get_rect(center=(screen_x, screen_y))
+
+                # Black outline
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    outline_rect = tier_rect.copy()
+                    outline_rect.x += dx
+                    outline_rect.y += dy
+                    outline_surface = self.small_font.render(tier_text, True, (0, 0, 0))
+                    self.screen.blit(outline_surface, outline_rect)
+
+                self.screen.blit(tier_surface, tier_rect)
 
     def render_resources(self, camera: Camera, resources: List[NaturalResource], character: Character):
         """Render resource nodes"""
@@ -1175,14 +2008,25 @@ class Renderer:
         y_offset += 25
 
         # Level & XP
-        self.render_text(f"Level: {character.level}", Config.VIEWPORT_WIDTH + 20, y_offset, small=True)
+        level_text = f"Level: {character.leveling.level}"
+        if character.leveling.unallocated_stat_points > 0:
+            level_text += f" ({character.leveling.unallocated_stat_points} points available!)"
+        self.render_text(level_text, Config.VIEWPORT_WIDTH + 20, y_offset, small=True)
         y_offset += 20
-        xp_text = f"XP: {character.experience}/{character.experience_to_next}"
-        self.render_text(xp_text, Config.VIEWPORT_WIDTH + 20, y_offset, small=True)
-        y_offset += 30
 
-        # Health bar
+        exp_needed = character.leveling.get_exp_for_next_level()
+        if exp_needed > 0:
+            xp_text = f"XP: {character.leveling.current_exp}/{exp_needed}"
+            self.render_text(xp_text, Config.VIEWPORT_WIDTH + 20, y_offset, small=True)
+            y_offset += 30
+        else:
+            self.render_text("MAX LEVEL", Config.VIEWPORT_WIDTH + 20, y_offset, small=True)
+            y_offset += 30
+
+        # Health & Mana bars
         self.render_health_bar(character, Config.VIEWPORT_WIDTH + 20, y_offset)
+        y_offset += 35
+        self.render_mana_bar(character, Config.VIEWPORT_WIDTH + 20, y_offset)
         y_offset += 50
 
         # Selected Tool
@@ -1203,24 +2047,26 @@ class Renderer:
             self.render_text(dmg_text, Config.VIEWPORT_WIDTH + 20, y_offset, small=True)
             y_offset += 30
 
-        # Stats
-        self.render_text("STATS", Config.VIEWPORT_WIDTH + 20, y_offset, bold=True)
+        # Class Info
+        if character.class_system.current_class:
+            self.render_text("CLASS", Config.VIEWPORT_WIDTH + 20, y_offset, bold=True)
+            y_offset += 30
+            self.render_text(character.class_system.current_class.name, Config.VIEWPORT_WIDTH + 20, y_offset,
+                             small=True)
+            y_offset += 25
+
+        # Titles (show count)
+        title_count = len(character.titles.earned_titles)
+        self.render_text(f"TITLES EARNED: {title_count}", Config.VIEWPORT_WIDTH + 20, y_offset, bold=True)
         y_offset += 30
 
-        stats = [
-            f"STR: {character.stats.strength} (+{character.stats.get_bonus('strength') * 100:.0f}% dmg)",
-            f"DEX: {character.stats.dexterity} (+{character.stats.get_bonus('dexterity') * 100:.0f}% crit)",
-            f"INT: {character.stats.intelligence}",
-            f"CON: {character.stats.constitution}",
-            f"WIS: {character.stats.wisdom}",
-            f"LCK: {character.stats.luck} ({character.stats.luck}% crit chance)",
-        ]
+        # Show last 2 titles
+        for title in character.titles.earned_titles[-2:]:
+            self.render_text(f"• {title.name}", Config.VIEWPORT_WIDTH + 20, y_offset, small=True)
+            y_offset += 18
 
-        for stat_text in stats:
-            self.render_text(stat_text, Config.VIEWPORT_WIDTH + 20, y_offset, small=True)
-            y_offset += 22
-
-        y_offset += 20
+        if title_count > 0:
+            y_offset += 10
 
         # Controls
         self.render_text("CONTROLS", Config.VIEWPORT_WIDTH + 20, y_offset, bold=True)
@@ -1228,15 +2074,40 @@ class Renderer:
 
         controls = [
             "WASD - Move",
-            "LEFT CLICK - Harvest",
+            "CLICK - Harvest/Interact",
             "TAB - Switch tool",
+            "C - Character Stats",
             "DRAG - Move items",
-            "ESC - Quit",
+            "ESC - Close UI/Quit",
         ]
 
         for control_text in controls:
             self.render_text(control_text, Config.VIEWPORT_WIDTH + 20, y_offset, small=True)
             y_offset += 22
+
+    def render_mana_bar(self, character: Character, x: int, y: int):
+        """Render mana bar"""
+        bar_width = 300
+        bar_height = 20
+
+        # Background
+        bg_rect = pygame.Rect(x, y, bar_width, bar_height)
+        pygame.draw.rect(self.screen, Config.COLOR_HEALTH_BG, bg_rect)
+
+        # Mana fill (blue)
+        mana_percent = character.mana / character.max_mana
+        mana_width = int(bar_width * mana_percent)
+        mana_rect = pygame.Rect(x, y, mana_width, bar_height)
+        pygame.draw.rect(self.screen, (50, 150, 255), mana_rect)
+
+        # Border
+        pygame.draw.rect(self.screen, Config.COLOR_TEXT, bg_rect, 2)
+
+        # Text
+        mana_text = f"MP: {int(character.mana)}/{int(character.max_mana)}"
+        text_surface = self.small_font.render(mana_text, True, Config.COLOR_TEXT)
+        text_rect = text_surface.get_rect(center=(x + bar_width // 2, y + bar_height // 2))
+        self.screen.blit(text_surface, text_rect)
 
     def render_inventory_panel(self, character: Character, mouse_pos: Tuple[int, int]):
         """Render inventory panel at bottom of screen"""
@@ -1414,6 +2285,257 @@ class Renderer:
         # Blit tooltip to main screen
         self.screen.blit(tooltip_surface, (x, y))
 
+    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int]):
+        """Render crafting UI window"""
+        if not character.crafting_ui_open or not character.active_station:
+            return
+
+        recipe_db = RecipeDatabase.get_instance()
+        mat_db = MaterialDatabase.get_instance()
+
+        # Window dimensions
+        window_width = 800
+        window_height = 500
+        window_x = (Config.VIEWPORT_WIDTH - window_width) // 2
+        window_y = (Config.VIEWPORT_HEIGHT - window_height) // 2
+
+        # Semi-transparent background
+        window_surface = pygame.Surface((window_width, window_height), pygame.SRCALPHA)
+        window_surface.fill((20, 20, 30, 240))
+
+        # Station header
+        station_name = character.active_station.station_type.value.upper()
+        header_text = f"{station_name} STATION (T{character.active_station.tier})"
+        header_surface = self.font.render(header_text, True, character.active_station.get_color())
+        window_surface.blit(header_surface, (20, 20))
+
+        # Close button hint
+        close_hint = "[ESC] Close"
+        close_surface = self.small_font.render(close_hint, True, (180, 180, 180))
+        window_surface.blit(close_surface, (window_width - 120, 20))
+
+        # Get available recipes
+        recipes = recipe_db.get_recipes_for_station(
+            character.active_station.station_type.value,
+            character.active_station.tier
+        )
+
+        if not recipes:
+            no_recipe_text = "No recipes available for this station."
+            no_recipe_surface = self.font.render(no_recipe_text, True, (200, 200, 200))
+            window_surface.blit(no_recipe_surface, (20, 80))
+        else:
+            # Recipe list
+            y_offset = 70
+            for i, recipe in enumerate(recipes[:5]):  # Show first 5 recipes
+                # Recipe button background
+                button_rect = pygame.Rect(20, y_offset, window_width - 40, 70)
+
+                # Check if can craft
+                can_craft = recipe_db.can_craft(recipe, character.inventory)
+                button_color = (40, 60, 40) if can_craft else (60, 40, 40)
+
+                pygame.draw.rect(window_surface, button_color, button_rect)
+                pygame.draw.rect(window_surface, (100, 100, 100), button_rect, 2)
+
+                # Output item
+                output_mat = mat_db.get_material(recipe.output_id)
+                output_name = output_mat.name if output_mat else recipe.output_id
+                rarity_color = Config.RARITY_COLORS.get(output_mat.rarity, (200, 200, 200)) if output_mat else (
+                200, 200, 200)
+
+                output_text = f"{output_name} x{recipe.output_qty}"
+                output_surface = self.font.render(output_text, True, rarity_color)
+                window_surface.blit(output_surface, (button_rect.x + 10, button_rect.y + 10))
+
+                # Requirements
+                req_y = button_rect.y + 35
+                for input_mat in recipe.inputs[:3]:  # Show first 3 inputs
+                    mat_id = input_mat.get('materialId', '')
+                    required = input_mat.get('quantity', 0)
+                    available = character.inventory.get_item_count(mat_id)
+
+                    mat = mat_db.get_material(mat_id)
+                    mat_name = mat.name if mat else mat_id
+
+                    has_enough = available >= required
+                    req_color = (100, 255, 100) if has_enough else (255, 100, 100)
+
+                    req_text = f"{mat_name}: {available}/{required}"
+                    req_surface = self.small_font.render(req_text, True, req_color)
+                    window_surface.blit(req_surface, (button_rect.x + 20, req_y))
+                    req_y += 18
+
+                # Craft button
+                if can_craft:
+                    craft_text = "[CLICK] Craft"
+                    craft_surface = self.small_font.render(craft_text, True, (100, 255, 100))
+                    window_surface.blit(craft_surface, (button_rect.right - 120, button_rect.centery - 8))
+
+                y_offset += 80
+
+        # Blit window to screen
+        self.screen.blit(window_surface, (window_x, window_y))
+
+        # Store window rect for click detection
+        return pygame.Rect(window_x, window_y, window_width, window_height), recipes[:5] if recipes else []
+
+    def render_stats_ui(self, character: Character, mouse_pos: Tuple[int, int]):
+        """Render character stats/progression UI"""
+        if not character.stats_ui_open:
+            return
+
+        # Window dimensions
+        window_width = 900
+        window_height = 700
+        window_x = (Config.VIEWPORT_WIDTH - window_width) // 2
+        window_y = 50
+
+        # Semi-transparent background
+        window_surface = pygame.Surface((window_width, window_height), pygame.SRCALPHA)
+        window_surface.fill((20, 20, 30, 240))
+
+        # Title
+        header_text = f"CHARACTER PROGRESSION - Level {character.leveling.level}"
+        header_surface = self.font.render(header_text, True, (255, 215, 0))
+        window_surface.blit(header_surface, (20, 20))
+
+        # Close hint
+        close_hint = "[C or ESC] Close"
+        close_surface = self.small_font.render(close_hint, True, (180, 180, 180))
+        window_surface.blit(close_surface, (window_width - 150, 20))
+
+        # Three columns: Stats | Skills | Titles
+        col1_x = 20
+        col2_x = 320
+        col3_x = 620
+        y_start = 70
+
+        # === COLUMN 1: STATS ===
+        y = y_start
+        stats_title = self.font.render("STATS", True, (255, 255, 255))
+        window_surface.blit(stats_title, (col1_x, y))
+        y += 35
+
+        # Unallocated points
+        if character.leveling.unallocated_stat_points > 0:
+            points_text = f"Points Available: {character.leveling.unallocated_stat_points}"
+            points_surface = self.small_font.render(points_text, True, (0, 255, 0))
+            window_surface.blit(points_surface, (col1_x, y))
+            y += 25
+
+        # Stats display
+        stat_names = ['strength', 'defense', 'vitality', 'luck', 'agility', 'intelligence']
+        stat_labels = ['STR', 'DEF', 'VIT', 'LCK', 'AGI', 'INT']
+
+        for stat_name, label in zip(stat_names, stat_labels):
+            value = getattr(character.stats, stat_name)
+            bonus = character.stats.get_bonus(stat_name)
+
+            stat_text = f"{label}: {value} (+{bonus * 100:.0f}%)"
+            stat_surface = self.small_font.render(stat_text, True, (200, 200, 200))
+            window_surface.blit(stat_surface, (col1_x, y))
+
+            # +1 button if points available
+            if character.leveling.unallocated_stat_points > 0:
+                button_rect = pygame.Rect(col1_x + 150, y - 2, 40, 20)
+                pygame.draw.rect(window_surface, (50, 100, 50), button_rect)
+                pygame.draw.rect(window_surface, (100, 200, 100), button_rect, 2)
+
+                plus_text = self.small_font.render("+1", True, (255, 255, 255))
+                plus_rect = plus_text.get_rect(center=button_rect.center)
+                window_surface.blit(plus_text, plus_rect)
+
+            y += 28
+
+        y += 20
+
+        # Derived stats
+        derived_title = self.small_font.render("Derived Stats:", True, (150, 150, 150))
+        window_surface.blit(derived_title, (col1_x, y))
+        y += 22
+
+        derived_stats = [
+            f"HP: {int(character.max_health)}",
+            f"MP: {int(character.max_mana)}",
+            f"Carry: {30 + int(character.stats.get_flat_bonus('strength', 'carry_capacity'))} slots"
+        ]
+
+        for derived_text in derived_stats:
+            derived_surface = self.small_font.render(derived_text, True, (150, 150, 150))
+            window_surface.blit(derived_surface, (col1_x + 10, y))
+            y += 20
+
+        # === COLUMN 2: SKILLS ===
+        y = y_start
+        skills_title = self.font.render("SKILLS", True, (255, 255, 255))
+        window_surface.blit(skills_title, (col2_x, y))
+        y += 35
+
+        # Known skills
+        if character.skills.known_skills:
+            known_text = f"Known: {len(character.skills.known_skills)}"
+            known_surface = self.small_font.render(known_text, True, (200, 200, 200))
+            window_surface.blit(known_surface, (col2_x, y))
+            y += 25
+
+            # Show first 8 skills
+            for i, (skill_id, player_skill) in enumerate(list(character.skills.known_skills.items())[:8]):
+                skill_def = player_skill.get_definition()
+                if skill_def:
+                    # Skill name + level
+                    equipped_marker = "★ " if player_skill.is_equipped else "  "
+                    skill_text = f"{equipped_marker}{skill_def.name} Lv.{player_skill.level}"
+                    color = (255, 215, 0) if player_skill.is_equipped else (180, 180, 180)
+
+                    skill_surface = self.small_font.render(skill_text, True, color)
+                    window_surface.blit(skill_surface, (col2_x, y))
+                    y += 20
+        else:
+            no_skills = self.small_font.render("No skills learned yet", True, (150, 150, 150))
+            window_surface.blit(no_skills, (col2_x, y))
+
+        # === COLUMN 3: TITLES & CLASS ===
+        y = y_start
+        titles_title = self.font.render("TITLES & CLASS", True, (255, 255, 255))
+        window_surface.blit(titles_title, (col3_x, y))
+        y += 35
+
+        # Class
+        if character.class_system.current_class:
+            class_text = f"Class: {character.class_system.current_class.name}"
+            class_surface = self.small_font.render(class_text, True, (100, 200, 255))
+            window_surface.blit(class_surface, (col3_x, y))
+            y += 25
+
+        # Titles earned
+        title_count = len(character.titles.earned_titles)
+        titles_count_text = f"Titles Earned: {title_count}"
+        titles_count_surface = self.small_font.render(titles_count_text, True, (200, 200, 200))
+        window_surface.blit(titles_count_surface, (col3_x, y))
+        y += 30
+
+        # List titles
+        for title in character.titles.earned_titles[-10:]:  # Show last 10
+            title_text = f"• {title.name}"
+            title_surface = self.small_font.render(title_text, True, (180, 180, 180))
+            window_surface.blit(title_surface, (col3_x, y))
+            y += 18
+
+            bonus_text = f"  {title.bonus_description}"
+            bonus_surface = self.small_font.render(bonus_text, True, (100, 200, 100))
+            window_surface.blit(bonus_surface, (col3_x, y))
+            y += 20
+
+        if title_count == 0:
+            no_titles = self.small_font.render("No titles yet - keep playing!", True, (150, 150, 150))
+            window_surface.blit(no_titles, (col3_x, y))
+
+        # Blit to screen
+        self.screen.blit(window_surface, (window_x, window_y))
+
+        return pygame.Rect(window_x, window_y, window_width, window_height)
+
     def render_health_bar(self, character: Character, x: int, y: int):
         """Render health bar"""
         bar_width = 300
@@ -1485,6 +2607,21 @@ class GameEngine:
             print("⚠ Could not find materials JSON, using placeholders")
             mat_db.load_from_file("nonexistent.json")  # Will trigger placeholder creation
 
+        # Load translation database
+        print("Loading translation tables...")
+        trans_db = TranslationDatabase.get_instance()
+        trans_db.load_from_files()
+
+        # Load skill database
+        print("Loading skill database...")
+        skill_db = SkillDatabase.get_instance()
+        skill_db.load_from_file()
+
+        # Load recipe database
+        print("Loading recipe database...")
+        recipe_db = RecipeDatabase.get_instance()
+        recipe_db.load_from_files()
+
         # Initialize systems
         print("Initializing game systems...")
         self.world = WorldSystem()
@@ -1494,6 +2631,13 @@ class GameEngine:
 
         # Feedback systems
         self.damage_numbers: List[DamageNumber] = []
+
+        # Crafting UI
+        self.crafting_window_rect = None
+        self.crafting_recipes = []
+
+        # Stats UI
+        self.stats_window_rect = None
 
         # Input state
         self.keys_pressed = set()
@@ -1515,9 +2659,16 @@ class GameEngine:
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
                 if event.key == pygame.K_ESCAPE:
-                    self.running = False
+                    if self.character.crafting_ui_open:
+                        self.character.close_crafting_ui()
+                    elif self.character.stats_ui_open:
+                        self.character.toggle_stats_ui()
+                    else:
+                        self.running = False
                 elif event.key == pygame.K_TAB:
                     self.character.switch_tool()
+                elif event.key == pygame.K_c:
+                    self.character.toggle_stats_ui()
             elif event.type == pygame.KEYUP:
                 if event.key in self.keys_pressed:
                     self.keys_pressed.remove(event.key)
@@ -1531,7 +2682,20 @@ class GameEngine:
                     self.handle_mouse_release(event.pos)
 
     def handle_mouse_click(self, mouse_pos: Tuple[int, int]):
-        """Handle left click for harvesting or inventory drag"""
+        """Handle left click for harvesting, stations, inventory drag, or UI"""
+        # Check if clicking in stats UI
+        if self.character.stats_ui_open and self.stats_window_rect:
+            if self.stats_window_rect.collidepoint(mouse_pos):
+                self.handle_stats_ui_click(mouse_pos)
+                return
+
+        # Check if clicking in crafting UI
+        if self.character.crafting_ui_open and self.crafting_window_rect:
+            if self.crafting_window_rect.collidepoint(mouse_pos):
+                # Check if clicking on a recipe
+                self.handle_craft_click(mouse_pos)
+                return
+
         # Check if clicking in inventory area
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             # Calculate which inventory slot was clicked
@@ -1559,7 +2723,7 @@ class GameEngine:
                             self.character.inventory.start_drag(slot_idx)
             return
 
-        # Otherwise, try to harvest resource (only in viewport area)
+        # Otherwise, try to interact with world (only in viewport area)
         if mouse_pos[0] >= Config.VIEWPORT_WIDTH:
             return
 
@@ -1567,6 +2731,12 @@ class GameEngine:
         world_x = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
         world_y = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
         world_pos = Position(world_x, world_y, 0)
+
+        # Try to interact with crafting station first
+        station = self.world.get_station_at(world_pos)
+        if station:
+            self.character.interact_with_station(station)
+            return
 
         # Try to get resource at clicked position
         resource = self.world.get_resource_at(world_pos)
@@ -1588,6 +2758,88 @@ class GameEngine:
 
                 if loot:
                     print(f"Harvested: {loot}")
+
+    def handle_stats_ui_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicking in stats UI"""
+        if not self.stats_window_rect:
+            return
+
+        # Calculate relative position
+        window_x = (Config.VIEWPORT_WIDTH - 900) // 2
+        window_y = 50
+        rel_x = mouse_pos[0] - window_x
+        rel_y = mouse_pos[1] - window_y
+
+        # Check if clicking on +1 buttons
+        if self.character.leveling.unallocated_stat_points > 0:
+            col1_x = 20
+            y_start = 70 + 60  # After title and unallocated points text
+
+            stat_names = ['strength', 'defense', 'vitality', 'luck', 'agility', 'intelligence']
+
+            for i, stat_name in enumerate(stat_names):
+                button_x = col1_x + 150
+                button_y = y_start + (i * 28)
+                button_rect = pygame.Rect(button_x, button_y - 2, 40, 20)
+
+                if button_rect.collidepoint(rel_x, rel_y):
+                    # Allocate stat point
+                    if self.character.allocate_stat_point(stat_name):
+                        print(f"✓ Allocated 1 point to {stat_name.upper()}")
+                    break
+
+    def handle_craft_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicking on a craft button"""
+        if not self.crafting_window_rect or not self.crafting_recipes:
+            return
+
+        # Calculate relative position within window
+        rel_x = mouse_pos[0] - self.crafting_window_rect.x
+        rel_y = mouse_pos[1] - self.crafting_window_rect.y
+
+        # Check which recipe button was clicked (starting at y=70, 80px tall each)
+        button_y_start = 70
+        button_height = 80
+
+        for i, recipe in enumerate(self.crafting_recipes):
+            button_top = button_y_start + (i * button_height)
+            button_bottom = button_top + 70
+
+            if button_top <= rel_y <= button_bottom:
+                # Clicked on this recipe
+                self.craft_item(recipe)
+                break
+
+    def craft_item(self, recipe: Recipe):
+        """Craft an item"""
+        recipe_db = RecipeDatabase.get_instance()
+
+        # Check if can craft
+        if not recipe_db.can_craft(recipe, self.character.inventory):
+            print(f"⚠ Not enough materials to craft {recipe.output_id}")
+            return
+
+        # Show placeholder mini-game message
+        mini_game_messages = {
+            "smithing": "🔨 SMITHING MINI-GAME (Grid Placement)",
+            "alchemy": "⚗️ ALCHEMY MINI-GAME (Sequential Timing)",
+            "refining": "🔥 REFINING MINI-GAME (Hub-Spoke Pattern)",
+            "engineering": "🔧 ENGINEERING MINI-GAME (Slot Puzzle)",
+            "adornments": "✨ ENCHANTING MINI-GAME (Pattern Creation)"
+        }
+
+        message = mini_game_messages.get(recipe.station_type, f"🎮 {recipe.station_type.upper()} MINI-GAME")
+        print(f"\n{message}")
+        print(f"Crafting: {recipe.output_id} x{recipe.output_qty}")
+        print("(Mini-game skipped - instant craft)")
+
+        # Consume materials
+        if recipe_db.consume_materials(recipe, self.character.inventory):
+            # Add output to inventory
+            self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
+            print(f"✓ Crafted {recipe.output_id} x{recipe.output_qty}!")
+        else:
+            print(f"✗ Crafting failed")
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
         """Handle mouse release for inventory drag end"""
@@ -1670,6 +2922,21 @@ class GameEngine:
         # Render inventory panel
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
 
+        # Render crafting UI if open
+        if self.character.crafting_ui_open:
+            result = self.renderer.render_crafting_ui(self.character, self.mouse_pos)
+            if result:
+                self.crafting_window_rect, self.crafting_recipes = result
+        else:
+            self.crafting_window_rect = None
+            self.crafting_recipes = []
+
+        # Render stats UI if open
+        if self.character.stats_ui_open:
+            self.stats_window_rect = self.renderer.render_stats_ui(self.character, self.mouse_pos)
+        else:
+            self.stats_window_rect = None
+
         # Update display
         pygame.display.flip()
 
@@ -1678,10 +2945,22 @@ class GameEngine:
         print("\n=== GAME STARTED ===")
         print("Controls:")
         print("  WASD - Move character")
-        print("  LEFT CLICK - Harvest resource (must be in yellow range)")
+        print("  LEFT CLICK - Harvest resource / Interact with station / Craft item")
         print("  DRAG - Move items in inventory")
         print("  TAB - Switch tool")
-        print("  ESC - Quit")
+        print("  C - Open Character Stats (allocate points, view skills & titles)")
+        print("  ESC - Close UI / Quit")
+        print("\nProgression:")
+        print("  🎯 Earn EXP from gathering and crafting to level up")
+        print("  📊 Allocate stat points (STR/DEF/VIT/LCK/AGI/INT)")
+        print("  🏆 Unlock titles by reaching activity milestones")
+        print("  ⚡ Skills and classes coming in future updates")
+        print("\nCrafting Stations:")
+        print("  🔨 Red Diamond = Smithing")
+        print("  ⚗️ Green Diamond = Alchemy")
+        print("  🔥 Orange Diamond = Refining")
+        print("  🔧 Blue Diamond = Engineering")
+        print("  ✨ Purple Diamond = Enchanting/Adornments")
         print("=" * 50 + "\n")
 
         while self.running:
