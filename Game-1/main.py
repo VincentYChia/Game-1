@@ -39,7 +39,11 @@ class Config:
 
     # Character/Movement
     PLAYER_SPEED = 0.15
-    INTERACTION_RANGE = 3.0
+    INTERACTION_RANGE = 3.5
+    CLICK_TOLERANCE = 0.7
+
+    # Debug Mode
+    DEBUG_INFINITE_RESOURCES = False  # Toggle with F1
 
     # Colors
     COLOR_BACKGROUND = (20, 20, 30)
@@ -66,11 +70,29 @@ class Config:
     COLOR_SLOT_SELECTED = (255, 215, 0)
     COLOR_TOOLTIP_BG = (20, 20, 30, 230)
     COLOR_RESPAWN_BAR = (100, 200, 100)
+    COLOR_CAN_HARVEST = (100, 255, 100)
+    COLOR_CANNOT_HARVEST = (255, 100, 100)
+    COLOR_NOTIFICATION = (255, 215, 0)
+    COLOR_EQUIPPED = (255, 215, 0)  # Gold border for equipped items
 
     RARITY_COLORS = {
         "common": (200, 200, 200), "uncommon": (30, 255, 0), "rare": (0, 112, 221),
         "epic": (163, 53, 238), "legendary": (255, 128, 0), "artifact": (230, 204, 128)
     }
+
+
+# ============================================================================
+# NOTIFICATION SYSTEM
+# ============================================================================
+@dataclass
+class Notification:
+    message: str
+    lifetime: float = 3.0
+    color: Tuple[int, int, int] = Config.COLOR_NOTIFICATION
+
+    def update(self, dt: float) -> bool:
+        self.lifetime -= dt
+        return self.lifetime > 0
 
 
 # ============================================================================
@@ -93,10 +115,9 @@ class TranslationDatabase:
         return cls._instance
 
     def load_from_files(self, base_path: str = ""):
-        # Try to load from JSON files
         possible_paths = [
+            "Definitions.JSON/skills-translation-table.JSON",
             f"{base_path}Definitions.JSON/skills-translation-table.JSON",
-            f"Game-1/Definitions.JSON/skills-translation-table.JSON",
         ]
 
         for path in possible_paths:
@@ -184,6 +205,8 @@ class MaterialDatabase:
             ("limestone", "Limestone", 1, "stone", "common"), ("granite", "Granite", 2, "stone", "common"),
             ("obsidian", "Obsidian", 3, "stone", "uncommon"), ("star_crystal", "Star Crystal", 4, "stone", "legendary"),
             ("copper_ingot", "Copper Ingot", 1, "metal", "common"), ("iron_ingot", "Iron Ingot", 2, "metal", "common"),
+            ("steel_ingot", "Steel Ingot", 3, "metal", "uncommon"),
+            ("mithril_ingot", "Mithril Ingot", 4, "metal", "rare"),
         ]:
             self.materials[mat_id] = MaterialDefinition(mat_id, name, tier, cat, rarity,
                                                         f"A {rarity} {cat} material (Tier {tier})")
@@ -193,18 +216,47 @@ class MaterialDatabase:
     def get_material(self, material_id: str) -> Optional[MaterialDefinition]:
         return self.materials.get(material_id)
 
+    def load_refining_items(self, filepath: str):
+        """Load additional material items from items-refining-1.JSON"""
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for section in ['basic_ingots', 'alloys', 'wood_planks']:
+                if section in data:
+                    for item_data in data[section]:
+                        mat = MaterialDefinition(
+                            material_id=item_data.get('itemId', ''),  # Note: refining JSON uses itemId!
+                            name=item_data.get('name', ''),
+                            tier=item_data.get('tier', 1),
+                            category=item_data.get('type', 'unknown'),
+                            rarity=item_data.get('rarity', 'common'),
+                            description=item_data.get('metadata', {}).get('narrative', ''),
+                            max_stack=item_data.get('stackSize', 256),
+                            properties={}
+                        )
+                        if mat.material_id and mat.material_id not in self.materials:
+                            self.materials[mat.material_id] = mat
+                            count += 1
+
+            print(f"✓ Loaded {count} additional materials from refining")
+            return True
+        except Exception as e:
+            print(f"⚠ Error loading refining items: {e}")
+            return False
+
 
 # ============================================================================
 # EQUIPMENT SYSTEM
 # ============================================================================
 @dataclass
 class EquipmentItem:
-    """Represents an equippable item with stats"""
     item_id: str
     name: str
     tier: int
     rarity: str
-    slot: str  # mainHand, offHand, helmet, chestplate, etc.
+    slot: str
     damage: Tuple[int, int] = (0, 0)
     defense: int = 0
     durability_current: int = 100
@@ -213,29 +265,97 @@ class EquipmentItem:
     weight: float = 1.0
     requirements: Dict[str, Any] = field(default_factory=dict)
     bonuses: Dict[str, float] = field(default_factory=dict)
+    # Enchantment system
+    enchantments: List[Dict[str, Any]] = field(default_factory=list)  # List of applied enchantments
 
     def get_effectiveness(self) -> float:
-        """Calculate effectiveness based on durability"""
+        if Config.DEBUG_INFINITE_RESOURCES:
+            return 1.0
         if self.durability_current <= 0:
             return 0.5
         dur_pct = self.durability_current / self.durability_max
         return 1.0 if dur_pct >= 0.5 else 1.0 - (0.5 - dur_pct) * 0.5
 
     def get_actual_damage(self) -> Tuple[int, int]:
-        """Get damage adjusted by effectiveness"""
         eff = self.get_effectiveness()
         return (int(self.damage[0] * eff), int(self.damage[1] * eff))
 
-    def can_equip(self, character) -> bool:
-        """Check if character meets requirements"""
+    def can_equip(self, character) -> Tuple[bool, str]:
+        """Check if character meets requirements, return (can_equip, reason)"""
         reqs = self.requirements
         if 'level' in reqs and character.leveling.level < reqs['level']:
-            return False
+            return False, f"Requires level {reqs['level']}"
         if 'stats' in reqs:
             for stat, val in reqs['stats'].items():
                 if getattr(character.stats, stat.lower(), 0) < val:
-                    return False
-        return True
+                    return False, f"Requires {stat.upper()} {val}"
+        return True, "OK"
+
+    def copy(self) -> 'EquipmentItem':
+        """Create a deep copy of this equipment item"""
+        import copy as copy_module
+        return EquipmentItem(
+            item_id=self.item_id,
+            name=self.name,
+            tier=self.tier,
+            rarity=self.rarity,
+            slot=self.slot,
+            damage=self.damage,
+            defense=self.defense,
+            durability_current=self.durability_current,
+            durability_max=self.durability_max,
+            attack_speed=self.attack_speed,
+            weight=self.weight,
+            requirements=self.requirements.copy(),
+            bonuses=self.bonuses.copy(),
+            enchantments=copy_module.deepcopy(self.enchantments)
+        )
+
+    def can_apply_enchantment(self, enchantment_id: str, applicable_to: List[str], effect: Dict) -> Tuple[bool, str]:
+        """Check if an enchantment can be applied to this item"""
+        # Check if item type is compatible
+        item_type = self._get_item_type()
+        if item_type not in applicable_to:
+            return False, f"Cannot apply to {item_type} items"
+
+        # Check for conflicts with existing enchantments
+        conflicts_with = effect.get('conflictsWith', [])
+        for existing_ench in self.enchantments:
+            existing_id = existing_ench.get('enchantment_id', '')
+            # Check if new enchantment conflicts with existing
+            if existing_id in conflicts_with:
+                return False, f"Conflicts with {existing_ench.get('name', 'existing enchantment')}"
+            # Check if existing conflicts with new
+            existing_conflicts = existing_ench.get('effect', {}).get('conflictsWith', [])
+            if enchantment_id in existing_conflicts:
+                return False, f"Conflicts with {existing_ench.get('name', 'existing enchantment')}"
+
+        return True, "OK"
+
+    def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict):
+        """Apply an enchantment effect to this item"""
+        self.enchantments.append({
+            'enchantment_id': enchantment_id,
+            'name': enchantment_name,
+            'effect': effect
+        })
+
+    def _get_item_type(self) -> str:
+        """Determine the item type for enchantment compatibility"""
+        # Map slot to enchantment-compatible type
+        weapon_slots = ['mainHand', 'offHand']
+        tool_slots = ['tool']
+        armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+
+        if self.slot in weapon_slots and self.damage != (0, 0):
+            return 'weapon'
+        elif self.slot in weapon_slots or self.slot in tool_slots:
+            return 'tool'
+        elif self.slot in armor_slots:
+            return 'armor'
+        elif self.slot == 'accessory':
+            return 'accessory'
+        return 'unknown'
 
 
 class EquipmentDatabase:
@@ -252,62 +372,101 @@ class EquipmentDatabase:
         return cls._instance
 
     def load_from_file(self, filepath: str):
-        """Load equipment items from JSON"""
+        count = 0
         try:
             with open(filepath, 'r') as f:
                 data = json.load(f)
-
-            # Handle both weapons and armor arrays
-            count = 0
-            for section in ['weapons', 'armor', 'accessories']:
+            for section in ['weapons', 'armor', 'accessories', 'tools']:  # FIX #3: Added 'tools'
                 if section in data:
                     for item_data in data[section]:
-                        item_id = item_data.get('itemId', '')
-                        self.items[item_id] = item_data
-                        count += 1
-
-            self.loaded = True
-            print(f"✓ Loaded {count} equipment items")
-            return True
+                        try:
+                            item_id = item_data.get('itemId', '')
+                            if item_id:
+                                self.items[item_id] = item_data
+                                count += 1
+                        except Exception as e:
+                            print(f"⚠ Skipping invalid item: {e}")
+                            continue
+            if count > 0:
+                self.loaded = True
+                print(f"✓ Loaded {count} equipment items")
+                return True
+            else:
+                raise Exception("No valid items loaded")
         except Exception as e:
             print(f"⚠ Error loading equipment: {e}")
+            print(f"⚠ Creating placeholder equipment...")
             self._create_placeholders()
             return False
 
     def _create_placeholders(self):
-        """Create placeholder equipment"""
+        """Create comprehensive equipment placeholders"""
         self.items = {
-            'iron_shortsword': {
-                'itemId': 'iron_shortsword',
-                'name': 'Iron Shortsword',
-                'tier': 1,
-                'rarity': 'common',
-                'slot': 'mainHand',
-                'stats': {'damage': [15, 20], 'durability': [500, 500], 'attackSpeed': 1.2},
-                'requirements': {'level': 1}
+            # WEAPONS
+            'copper_sword': {
+                'itemId': 'copper_sword', 'name': 'Copper Sword', 'tier': 1, 'rarity': 'common', 'slot': 'mainHand',
+                'stats': {'damage': [8, 12], 'durability': [400, 400], 'attackSpeed': 1.0}, 'requirements': {'level': 1}
             },
+            'iron_sword': {
+                'itemId': 'iron_sword', 'name': 'Iron Sword', 'tier': 2, 'rarity': 'common', 'slot': 'mainHand',
+                'stats': {'damage': [15, 22], 'durability': [600, 600], 'attackSpeed': 1.0},
+                'requirements': {'level': 5}
+            },
+            'steel_sword': {
+                'itemId': 'steel_sword', 'name': 'Steel Sword', 'tier': 3, 'rarity': 'uncommon', 'slot': 'mainHand',
+                'stats': {'damage': [28, 38], 'durability': [800, 800], 'attackSpeed': 1.1},
+                'requirements': {'level': 10}
+            },
+            # ARMOR - Helmets
+            'copper_helmet': {
+                'itemId': 'copper_helmet', 'name': 'Copper Helmet', 'tier': 1, 'rarity': 'common', 'slot': 'helmet',
+                'stats': {'defense': 8, 'durability': [400, 400]}, 'requirements': {'level': 1}
+            },
+            'iron_helmet': {
+                'itemId': 'iron_helmet', 'name': 'Iron Helmet', 'tier': 2, 'rarity': 'common', 'slot': 'helmet',
+                'stats': {'defense': 15, 'durability': [600, 600]}, 'requirements': {'level': 5}
+            },
+            # ARMOR - Chestplates
             'copper_chestplate': {
-                'itemId': 'copper_chestplate',
-                'name': 'Copper Chestplate',
-                'tier': 1,
-                'rarity': 'common',
+                'itemId': 'copper_chestplate', 'name': 'Copper Chestplate', 'tier': 1, 'rarity': 'common',
                 'slot': 'chestplate',
-                'stats': {'defense': 15, 'durability': [500, 500]},
-                'requirements': {'level': 1}
-            }
+                'stats': {'defense': 15, 'durability': [500, 500]}, 'requirements': {'level': 1}
+            },
+            'iron_chestplate': {
+                'itemId': 'iron_chestplate', 'name': 'Iron Chestplate', 'tier': 2, 'rarity': 'common',
+                'slot': 'chestplate',
+                'stats': {'defense': 25, 'durability': [700, 700]}, 'requirements': {'level': 5}
+            },
+            # ARMOR - Leggings
+            'copper_leggings': {
+                'itemId': 'copper_leggings', 'name': 'Copper Leggings', 'tier': 1, 'rarity': 'common',
+                'slot': 'leggings',
+                'stats': {'defense': 12, 'durability': [450, 450]}, 'requirements': {'level': 1}
+            },
+            'iron_leggings': {
+                'itemId': 'iron_leggings', 'name': 'Iron Leggings', 'tier': 2, 'rarity': 'common', 'slot': 'leggings',
+                'stats': {'defense': 20, 'durability': [650, 650]}, 'requirements': {'level': 5}
+            },
+            # ARMOR - Boots
+            'copper_boots': {
+                'itemId': 'copper_boots', 'name': 'Copper Boots', 'tier': 1, 'rarity': 'common', 'slot': 'boots',
+                'stats': {'defense': 6, 'durability': [350, 350]}, 'requirements': {'level': 1}
+            },
+            'iron_boots': {
+                'itemId': 'iron_boots', 'name': 'Iron Boots', 'tier': 2, 'rarity': 'common', 'slot': 'boots',
+                'stats': {'defense': 12, 'durability': [550, 550]}, 'requirements': {'level': 5}
+            },
         }
         self.loaded = True
         print(f"✓ Created {len(self.items)} placeholder equipment")
 
     def create_equipment_from_id(self, item_id: str) -> Optional[EquipmentItem]:
-        """Create an EquipmentItem instance from item ID"""
         if item_id not in self.items:
             return None
 
         data = self.items[item_id]
         stats = data.get('stats', {})
 
-        # Extract damage range
         damage = stats.get('damage', [0, 0])
         if isinstance(damage, list):
             damage = tuple(damage)
@@ -316,7 +475,6 @@ class EquipmentDatabase:
         else:
             damage = (0, 0)
 
-        # Extract durability
         durability = stats.get('durability', [100, 100])
         if isinstance(durability, list):
             dur_max = durability[1] if len(durability) > 1 else durability[0]
@@ -339,10 +497,12 @@ class EquipmentDatabase:
             bonuses=stats.get('bonuses', {})
         )
 
+    def is_equipment(self, item_id: str) -> bool:
+        """Check if an item ID is equipment"""
+        return item_id in self.items
+
 
 class EquipmentManager:
-    """Manages character equipment slots"""
-
     def __init__(self):
         self.slots = {
             'mainHand': None,
@@ -353,33 +513,46 @@ class EquipmentManager:
             'boots': None,
             'gauntlets': None,
             'accessory': None,
-            'pickaxe': None,
-            'axe': None
         }
 
-    def equip(self, item: EquipmentItem, character) -> Optional[EquipmentItem]:
-        """Equip an item, returns previously equipped item if any"""
-        if not item.can_equip(character):
-            return None
+    def equip(self, item: EquipmentItem, character) -> Tuple[Optional[EquipmentItem], str]:
+        """Equip an item, returns (previously_equipped_item, status_message)"""
+        can_equip, reason = item.can_equip(character)
+        if not can_equip:
+            return None, reason
 
         slot = item.slot
         if slot not in self.slots:
-            return None
+            return None, f"Invalid slot: {slot}"
 
         old_item = self.slots[slot]
         self.slots[slot] = item
-        return old_item
 
-    def unequip(self, slot: str) -> Optional[EquipmentItem]:
+        # Recalculate character stats
+        character.recalculate_stats()
+
+        return old_item, "OK"
+
+    def unequip(self, slot: str, character) -> Optional[EquipmentItem]:
         """Unequip item from slot"""
         if slot not in self.slots:
             return None
         item = self.slots[slot]
         self.slots[slot] = None
+
+        # Recalculate character stats
+        character.recalculate_stats()
+
         return item
 
+    def is_equipped(self, item_id: str) -> bool:
+        """Check if an item is currently equipped"""
+        for item in self.slots.values():
+            if item and item.item_id == item_id:
+                return True
+        return False
+
     def get_total_defense(self) -> int:
-        """Calculate total defense from all armor pieces"""
         total = 0
         armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
         for slot in armor_slots:
@@ -389,14 +562,12 @@ class EquipmentManager:
         return total
 
     def get_weapon_damage(self) -> Tuple[int, int]:
-        """Get damage from equipped weapon"""
         weapon = self.slots.get('mainHand')
         if weapon:
             return weapon.get_actual_damage()
-        return (1, 2)  # Bare hands
+        return (1, 2)
 
     def get_stat_bonuses(self) -> Dict[str, float]:
-        """Get all stat bonuses from equipped items"""
         bonuses = {}
         for item in self.slots.values():
             if item:
@@ -410,15 +581,14 @@ class EquipmentManager:
 # ============================================================================
 @dataclass
 class TitleDefinition:
-    """Definition of a title from JSON"""
     title_id: str
     name: str
-    tier: str  # novice, apprentice, journeyman, expert, master
-    category: str  # mining, forestry, smithing, etc.
+    tier: str
+    category: str
     activity_type: str
     acquisition_threshold: int
     bonus_description: str
-    bonuses: Dict[str, float]  # bonus_type: value
+    bonuses: Dict[str, float]
     prerequisites: List[str] = field(default_factory=list)
     hidden: bool = False
 
@@ -437,22 +607,14 @@ class TitleDatabase:
         return cls._instance
 
     def load_from_file(self, filepath: str):
-        """Load titles from JSON"""
         try:
             with open(filepath, 'r') as f:
                 data = json.load(f)
             for title_data in data.get('titles', []):
-                # Parse prerequisites
                 prereqs = title_data.get('prerequisites', {})
-
-                # Extract activity type and threshold from activities object
                 activities = prereqs.get('activities', {})
                 activity_type, threshold = self._parse_activity(activities)
-
-                # Parse prerequisite titles
                 prereq_titles = prereqs.get('requiredTitles', [])
-
-                # Parse bonuses and map to internal names
                 bonuses = self._map_title_bonuses(title_data.get('bonuses', {}))
 
                 title = TitleDefinition(
@@ -473,28 +635,17 @@ class TitleDatabase:
             return True
         except Exception as e:
             print(f"⚠ Error loading titles: {e}")
-            import traceback
-            traceback.print_exc()
             self._create_placeholders()
             return False
 
     def _parse_activity(self, activities: Dict) -> Tuple[str, int]:
-        """Extract activity type and threshold from activities object"""
-        # Mapping from JSON activity names to internal activity types
         activity_mapping = {
-            'oresMined': 'mining',
-            'treesChopped': 'forestry',
-            'itemsSmithed': 'smithing',
-            'materialsRefined': 'refining',
-            'potionsBrewed': 'alchemy',
-            'itemsEnchanted': 'enchanting',
-            'devicesCreated': 'engineering',
-            'enemiesDefeated': 'combat',
-            'bossesDefeated': 'combat',
+            'oresMined': 'mining', 'treesChopped': 'forestry', 'itemsSmithed': 'smithing',
+            'materialsRefined': 'refining', 'potionsBrewed': 'alchemy', 'itemsEnchanted': 'enchanting',
+            'devicesCreated': 'engineering', 'enemiesDefeated': 'combat', 'bossesDefeated': 'combat',
             'areasExplored': 'exploration'
         }
 
-        # Get the first activity (primary requirement)
         if activities:
             for json_key, threshold in activities.items():
                 activity_type = activity_mapping.get(json_key, 'general')
@@ -503,32 +654,16 @@ class TitleDatabase:
         return 'general', 0
 
     def _map_title_bonuses(self, bonuses: Dict) -> Dict[str, float]:
-        """Map JSON bonus names to internal bonus names"""
         mapping = {
-            'miningDamage': 'mining_damage',
-            'miningSpeed': 'mining_speed',
-            'forestryDamage': 'forestry_damage',
-            'forestrySpeed': 'forestry_speed',
-            'smithingTime': 'smithing_speed',
-            'smithingQuality': 'smithing_quality',
-            'refiningPrecision': 'refining_speed',
-            'meleeDamage': 'melee_damage',
-            'criticalChance': 'crit_chance',
-            'attackSpeed': 'attack_speed',
-            'firstTryBonus': 'first_try_bonus',
-            'rareOreChance': 'rare_ore_chance',
-            'rareWoodChance': 'rare_wood_chance',
-            'fireOreChance': 'fire_ore_chance',
-            'alloyQuality': 'alloy_quality',
-            'materialYield': 'material_yield',
-            'combatSkillExp': 'combat_skill_exp',
-            'counterChance': 'counter_chance',
-            'durabilityBonus': 'durability_bonus',
-            'legendaryChance': 'legendary_chance',
+            'miningDamage': 'mining_damage', 'miningSpeed': 'mining_speed', 'forestryDamage': 'forestry_damage',
+            'forestrySpeed': 'forestry_speed', 'smithingTime': 'smithing_speed', 'smithingQuality': 'smithing_quality',
+            'refiningPrecision': 'refining_speed', 'meleeDamage': 'melee_damage', 'criticalChance': 'crit_chance',
+            'attackSpeed': 'attack_speed', 'firstTryBonus': 'first_try_bonus', 'rareOreChance': 'rare_ore_chance',
+            'rareWoodChance': 'rare_wood_chance', 'fireOreChance': 'fire_ore_chance', 'alloyQuality': 'alloy_quality',
+            'materialYield': 'material_yield', 'combatSkillExp': 'combat_skill_exp', 'counterChance': 'counter_chance',
+            'durabilityBonus': 'durability_bonus', 'legendaryChance': 'legendary_chance',
             'dragonDamage': 'dragon_damage',
-            'fireResistance': 'fire_resistance',
-            'legendaryDropRate': 'legendary_drop_rate',
-            'luckStat': 'luck_stat',
+            'fireResistance': 'fire_resistance', 'legendaryDropRate': 'legendary_drop_rate', 'luckStat': 'luck_stat',
             'rareDropRate': 'rare_drop_rate'
         }
 
@@ -540,27 +675,15 @@ class TitleDatabase:
         return mapped_bonuses
 
     def _create_bonus_description(self, bonuses: Dict[str, float]) -> str:
-        """Create a human-readable bonus description"""
         if not bonuses:
             return "No bonuses"
-
-        # Just use the first bonus for description
         first_bonus = list(bonuses.items())[0]
         bonus_name, bonus_value = first_bonus
-
-        # Format percentage
-        if bonus_value < 1.0:
-            percent = f"+{int(bonus_value * 100)}%"
-        else:
-            percent = f"+{int(bonus_value * 100)}%"
-
-        # Readable name
+        percent = f"+{int(bonus_value * 100)}%"
         readable = bonus_name.replace('_', ' ').title()
-
         return f"{percent} {readable}"
 
     def _create_placeholders(self):
-        """Create hardcoded novice titles as fallback"""
         novice_titles = [
             TitleDefinition('novice_miner', 'Novice Miner', 'novice', 'gathering', 'mining', 100,
                             '+10% mining damage', {'mining_damage': 0.10}),
@@ -580,28 +703,18 @@ class TitleDatabase:
 
 
 class TitleSystem:
-    """Manages player titles"""
-
     def __init__(self):
         self.earned_titles: List[TitleDefinition] = []
         self.title_db = TitleDatabase.get_instance()
 
     def check_for_title(self, activity_type: str, count: int) -> Optional[TitleDefinition]:
-        """Check if player qualifies for any title"""
         for title_id, title_def in self.title_db.titles.items():
-            # Skip if already earned
             if any(t.title_id == title_id for t in self.earned_titles):
                 continue
-
-            # Check activity type matches
             if title_def.activity_type != activity_type:
                 continue
-
-            # Check threshold
             if count < title_def.acquisition_threshold:
                 continue
-
-            # Check prerequisites
             if title_def.prerequisites:
                 has_prereqs = all(
                     any(t.title_id == prereq for t in self.earned_titles)
@@ -609,15 +722,11 @@ class TitleSystem:
                 )
                 if not has_prereqs:
                     continue
-
-            # Title earned!
             self.earned_titles.append(title_def)
             return title_def
-
         return None
 
     def get_total_bonus(self, bonus_type: str) -> float:
-        """Get total bonus of a specific type from all earned titles"""
         total = 0.0
         for title in self.earned_titles:
             if bonus_type in title.bonuses:
@@ -625,7 +734,6 @@ class TitleSystem:
         return total
 
     def has_title(self, title_id: str) -> bool:
-        """Check if player has a specific title"""
         return any(t.title_id == title_id for t in self.earned_titles)
 
 
@@ -634,11 +742,10 @@ class TitleSystem:
 # ============================================================================
 @dataclass
 class ClassDefinition:
-    """Definition of a character class from JSON"""
     class_id: str
     name: str
     description: str
-    bonuses: Dict[str, float]  # bonus_type: value
+    bonuses: Dict[str, float]
     starting_skill: str = ""
     recommended_stats: List[str] = field(default_factory=list)
 
@@ -657,25 +764,16 @@ class ClassDatabase:
         return cls._instance
 
     def load_from_file(self, filepath: str):
-        """Load classes from JSON"""
         try:
             with open(filepath, 'r') as f:
                 data = json.load(f)
             for class_data in data.get('classes', []):
-                # Parse startingBonuses and map to internal bonus names
                 starting_bonuses = class_data.get('startingBonuses', {})
                 bonuses = self._map_bonuses(starting_bonuses)
-
-                # Parse starting skill
                 skill_data = class_data.get('startingSkill', {})
                 starting_skill = skill_data.get('skillId', '') if isinstance(skill_data, dict) else ''
-
-                # Parse recommended stats
                 rec_stats_data = class_data.get('recommendedStats', {})
-                if isinstance(rec_stats_data, dict):
-                    rec_stats = rec_stats_data.get('primary', [])
-                else:
-                    rec_stats = []
+                rec_stats = rec_stats_data.get('primary', []) if isinstance(rec_stats_data, dict) else []
 
                 cls_def = ClassDefinition(
                     class_id=class_data.get('classId', ''),
@@ -695,46 +793,24 @@ class ClassDatabase:
             return False
 
     def _map_bonuses(self, starting_bonuses: Dict) -> Dict[str, float]:
-        """Map JSON bonus names to internal bonus names"""
         mapping = {
-            'baseHP': 'max_health',
-            'baseMana': 'max_mana',
-            'meleeDamage': 'melee_damage',
-            'inventorySlots': 'inventory_slots',
-            'carryCapacity': 'carry_capacity',
-            'movementSpeed': 'movement_speed',
-            'critChance': 'crit_chance',
-            'forestryBonus': 'forestry_damage',
-            'recipeDiscovery': 'recipe_discovery',
-            'skillExpGain': 'skill_exp',
-            'allCraftingTime': 'crafting_speed',
-            'firstTryBonus': 'first_try_bonus',
-            'itemDurability': 'durability_bonus',
-            'rareDropRate': 'rare_drops',
-            'resourceQuality': 'resource_quality',
-            'allGathering': 'gathering_bonus',
-            'allCrafting': 'crafting_bonus',
-            'defense': 'defense_bonus',
-            'miningBonus': 'mining_damage',  # ADD THIS
-            'attackSpeed': 'attack_speed'  # ADD THIS
+            'baseHP': 'max_health', 'baseMana': 'max_mana', 'meleeDamage': 'melee_damage',
+            'inventorySlots': 'inventory_slots', 'carryCapacity': 'carry_capacity', 'movementSpeed': 'movement_speed',
+            'critChance': 'crit_chance', 'forestryBonus': 'forestry_damage', 'recipeDiscovery': 'recipe_discovery',
+            'skillExpGain': 'skill_exp', 'allCraftingTime': 'crafting_speed', 'firstTryBonus': 'first_try_bonus',
+            'itemDurability': 'durability_bonus', 'rareDropRate': 'rare_drops', 'resourceQuality': 'resource_quality',
+            'allGathering': 'gathering_bonus', 'allCrafting': 'crafting_bonus', 'defense': 'defense_bonus',
+            'miningBonus': 'mining_damage', 'attackSpeed': 'attack_speed'
         }
 
         bonuses = {}
         for json_key, value in starting_bonuses.items():
-            internal_key = mapping.get(json_key, json_key.lower().replace(' ', '_'))  # ADD fallback handling
-            bonuses[internal_key] = value
-
-        return bonuses
-
-        bonuses = {}
-        for json_key, value in starting_bonuses.items():
-            internal_key = mapping.get(json_key, json_key)
+            internal_key = mapping.get(json_key, json_key.lower().replace(' ', '_'))
             bonuses[internal_key] = value
 
         return bonuses
 
     def _create_placeholders(self):
-        """Create hardcoded classes as fallback"""
         classes_data = [
             ('warrior', 'Warrior', 'A melee fighter with high health and damage',
              {'max_health': 30, 'melee_damage': 0.10, 'carry_capacity': 20}, 'battle_rage', ['STR', 'VIT', 'DEF']),
@@ -759,17 +835,13 @@ class ClassDatabase:
 
 
 class ClassSystem:
-    """Manages player class"""
-
     def __init__(self):
         self.current_class: Optional[ClassDefinition] = None
 
     def set_class(self, class_def: ClassDefinition):
-        """Set player's class"""
         self.current_class = class_def
 
     def get_bonus(self, bonus_type: str) -> float:
-        """Get a specific bonus from current class"""
         if not self.current_class:
             return 0.0
         return self.current_class.bonuses.get(bonus_type, 0.0)
@@ -865,7 +937,7 @@ class NaturalResource:
         if "tree" in resource_type.value:
             self.required_tool = "axe"
             self.respawns = True
-            self.respawn_timer = 60.0
+            self.respawn_timer = 60.0 if not Config.DEBUG_INFINITE_RESOURCES else 1.0
         else:
             self.required_tool = "pickaxe"
             self.respawns = False
@@ -913,7 +985,6 @@ class NaturalResource:
                 self.time_until_respawn = 0.0
 
     def get_respawn_progress(self) -> float:
-        """Get respawn progress 0.0-1.0"""
         if not self.depleted or not self.respawns:
             return 0.0
         return min(1.0, self.time_until_respawn / self.respawn_timer)
@@ -921,7 +992,6 @@ class NaturalResource:
     def get_color(self) -> Tuple[int, int, int]:
         if self.depleted:
             if self.respawns:
-                # Color shift from gray to green as it respawns
                 progress = self.get_respawn_progress()
                 gray = int(50 + progress * 50)
                 green = int(progress * 100)
@@ -1035,6 +1105,11 @@ class Recipe:
     grid_size: str = "3x3"
     mini_game_type: str = ""
     metadata: Dict = field(default_factory=dict)
+    # Enchanting-specific fields
+    is_enchantment: bool = False
+    enchantment_name: str = ""
+    applicable_to: List[str] = field(default_factory=list)
+    effect: Dict = field(default_factory=dict)
 
 
 class RecipeDatabase:
@@ -1055,14 +1130,19 @@ class RecipeDatabase:
 
     def load_from_files(self, base_path: str = ""):
         total = 0
-        for station_type, filename in [("smithing", "recipes-smithing-3.json"), ("alchemy", "recipes-alchemy-1.json"),
-                                       ("refining", "recipes-refining-1.json"),
-                                       ("engineering", "recipes-engineering-1.json"),
+        for station_type, filename in [("smithing", "recipes-smithing-3.json"), ("alchemy", "recipes-alchemy-1.JSON"),
+                                       ("refining", "recipes-refining-1.JSON"),
+                                       ("engineering", "recipes-engineering-1.JSON"),
                                        ("adornments", "recipes-adornments-1.json")]:
-            for path in [f"Game-1/recipes.JSON/{filename}", f"../Game-1/recipes.JSON/{filename}"]:
+            for path in [f"recipes.JSON/{filename}", f"{base_path}recipes.JSON/{filename}"]:
                 if Path(path).exists():
                     total += self._load_file(path, station_type)
                     break
+
+        if total == 0:
+            self._create_default_recipes()
+            total = len(self.recipes)
+
         self.loaded = True
         print(f"✓ Loaded {total} recipes")
 
@@ -1071,13 +1151,29 @@ class RecipeDatabase:
             with open(filepath, 'r') as f:
                 data = json.load(f)
             for recipe_data in data.get('recipes', []):
+                # Check if this is an enchanting recipe (has enchantmentId instead of outputId)
+                is_enchanting = 'enchantmentId' in recipe_data
+
+                if is_enchanting:
+                    # For enchanting: use enchantmentId as the output_id
+                    output_id = recipe_data.get('enchantmentId', '')
+                    output_qty = 1  # Enchantments don't have quantity
+                else:
+                    # Regular crafting: use outputId
+                    output_id = recipe_data.get('outputId', '')
+                    output_qty = recipe_data.get('outputQty', 1)
+
                 recipe = Recipe(
                     recipe_id=recipe_data.get('recipeId', ''),
-                    output_id=recipe_data.get('outputId', ''),
-                    output_qty=recipe_data.get('outputQty', 1),
+                    output_id=output_id,
+                    output_qty=output_qty,
                     station_type=station_type,
                     station_tier=recipe_data.get('stationTier', 1),
                     inputs=recipe_data.get('inputs', []),
+                    is_enchantment=is_enchanting,
+                    enchantment_name=recipe_data.get('enchantmentName', ''),
+                    applicable_to=recipe_data.get('applicableTo', []),
+                    effect=recipe_data.get('effect', {})
                 )
                 self.recipes[recipe.recipe_id] = recipe
                 self.recipes_by_station[station_type].append(recipe)
@@ -1085,22 +1181,85 @@ class RecipeDatabase:
         except:
             return 0
 
+    def _create_default_recipes(self):
+        """Create comprehensive default recipes for equipment and materials"""
+        default_recipes = [
+            # REFINING - Basic Ingots
+            Recipe("copper_ingot_recipe", "copper_ingot", 1, "refining", 1,
+                   [{"materialId": "copper_ore", "quantity": 3}]),
+            Recipe("iron_ingot_recipe", "iron_ingot", 1, "refining", 1,
+                   [{"materialId": "iron_ore", "quantity": 3}]),
+            Recipe("steel_ingot_recipe", "steel_ingot", 1, "refining", 2,
+                   [{"materialId": "steel_ore", "quantity": 3}]),
+
+            # SMITHING - Weapons
+            Recipe("copper_sword_recipe", "copper_sword", 1, "smithing", 1,
+                   [{"materialId": "copper_ingot", "quantity": 3}, {"materialId": "oak_log", "quantity": 1}]),
+            Recipe("iron_sword_recipe", "iron_sword", 1, "smithing", 1,
+                   [{"materialId": "iron_ingot", "quantity": 3}, {"materialId": "birch_log", "quantity": 1}]),
+            Recipe("steel_sword_recipe", "steel_sword", 1, "smithing", 2,
+                   [{"materialId": "steel_ingot", "quantity": 3}, {"materialId": "maple_log", "quantity": 1}]),
+
+            # SMITHING - Helmets
+            Recipe("copper_helmet_recipe", "copper_helmet", 1, "smithing", 1,
+                   [{"materialId": "copper_ingot", "quantity": 4}]),
+            Recipe("iron_helmet_recipe", "iron_helmet", 1, "smithing", 1,
+                   [{"materialId": "iron_ingot", "quantity": 4}]),
+
+            # SMITHING - Chestplates
+            Recipe("copper_chestplate_recipe", "copper_chestplate", 1, "smithing", 1,
+                   [{"materialId": "copper_ingot", "quantity": 7}]),
+            Recipe("iron_chestplate_recipe", "iron_chestplate", 1, "smithing", 1,
+                   [{"materialId": "iron_ingot", "quantity": 7}]),
+
+            # SMITHING - Leggings
+            Recipe("copper_leggings_recipe", "copper_leggings", 1, "smithing", 1,
+                   [{"materialId": "copper_ingot", "quantity": 6}]),
+            Recipe("iron_leggings_recipe", "iron_leggings", 1, "smithing", 1,
+                   [{"materialId": "iron_ingot", "quantity": 6}]),
+
+            # SMITHING - Boots
+            Recipe("copper_boots_recipe", "copper_boots", 1, "smithing", 1,
+                   [{"materialId": "copper_ingot", "quantity": 3}]),
+            Recipe("iron_boots_recipe", "iron_boots", 1, "smithing", 1,
+                   [{"materialId": "iron_ingot", "quantity": 3}]),
+        ]
+
+        for recipe in default_recipes:
+            self.recipes[recipe.recipe_id] = recipe
+            self.recipes_by_station[recipe.station_type].append(recipe)
+
+        print(f"✓ Created {len(default_recipes)} default recipes")
+
     def get_recipes_for_station(self, station_type: str, tier: int = 1) -> List[Recipe]:
         return [r for r in self.recipes_by_station.get(station_type, []) if r.station_tier <= tier]
 
     def can_craft(self, recipe: Recipe, inventory) -> bool:
+        if Config.DEBUG_INFINITE_RESOURCES:
+            return True
         for inp in recipe.inputs:
             if inventory.get_item_count(inp.get('materialId', '')) < inp.get('quantity', 0):
                 return False
         return True
 
     def consume_materials(self, recipe: Recipe, inventory) -> bool:
+        if Config.DEBUG_INFINITE_RESOURCES:
+            return True
+
         if not self.can_craft(recipe, inventory):
             return False
+
+        to_consume = {}
         for inp in recipe.inputs:
-            mat_id, remaining = inp.get('materialId', ''), inp.get('quantity', 0)
-            for i, slot in enumerate(inventory.slots):
-                if slot and slot.item_id == mat_id and remaining > 0:
+            mat_id = inp.get('materialId', '')
+            qty = inp.get('quantity', 0)
+            to_consume[mat_id] = qty
+
+        for mat_id, needed in to_consume.items():
+            remaining = needed
+            for i in range(len(inventory.slots)):
+                if inventory.slots[i] and inventory.slots[i].item_id == mat_id:
+                    slot = inventory.slots[i]
                     if slot.quantity >= remaining:
                         slot.quantity -= remaining
                         if slot.quantity == 0:
@@ -1110,17 +1269,11 @@ class RecipeDatabase:
                     else:
                         remaining -= slot.quantity
                         inventory.slots[i] = None
-        return True
 
-    def get_repair_cost(self, recipe: Recipe) -> List[Dict]:
-        """Calculate 20% of original recipe materials for repair"""
-        repair_materials = []
-        for inp in recipe.inputs:
-            mat_id = inp.get('materialId', '')
-            quantity = inp.get('quantity', 0)
-            repair_qty = max(1, int(quantity * 0.2))  # 20% cost, minimum 1
-            repair_materials.append({'materialId': mat_id, 'quantity': repair_qty})
-        return repair_materials
+            if remaining > 0:
+                return False
+
+        return True
 
 
 # ============================================================================
@@ -1146,9 +1299,15 @@ class WorldSystem:
         print(f"Generated {Config.WORLD_SIZE}x{Config.WORLD_SIZE} world, {len(self.resources)} resources")
 
     def spawn_starting_stations(self):
-        for x, y, stype in [(45, 45, StationType.SMITHING), (55, 45, StationType.ALCHEMY),
-                            (55, 55, StationType.REFINING), (45, 55, StationType.ENGINEERING),
-                            (50, 42, StationType.ADORNMENTS)]:
+        """Spawn crafting stations near player start (50, 50)"""
+        # Place stations in starting chunk around the player
+        for x, y, stype in [
+            (48, 48, StationType.SMITHING),
+            (52, 48, StationType.REFINING),
+            (48, 52, StationType.ALCHEMY),
+            (52, 52, StationType.ENGINEERING),
+            (50, 50, StationType.ADORNMENTS)  # Center station
+        ]:
             self.crafting_stations.append(CraftingStation(Position(x, y, 0), stype, 1))
 
     def get_tile(self, position: Position) -> Optional[WorldTile]:
@@ -1175,11 +1334,14 @@ class WorldSystem:
         ex, ey = camera_pos.x + tw // 2, camera_pos.y + th // 2
         return [r for r in self.resources if sx <= r.position.x <= ex and sy <= r.position.y <= ey]
 
-    def get_resource_at(self, position: Position) -> Optional[NaturalResource]:
-        snap_pos = position.snap_to_grid()
+    def get_resource_at(self, position: Position, tolerance: float = Config.CLICK_TOLERANCE) -> Optional[
+        NaturalResource]:
         for r in self.resources:
-            if r.position.x == snap_pos.x and r.position.y == snap_pos.y and not r.depleted:
-                return r
+            if not r.depleted:
+                dx = abs(r.position.x - position.x)
+                dy = abs(r.position.y - position.y)
+                if dx <= tolerance and dy <= tolerance:
+                    return r
         return None
 
     def get_visible_stations(self, camera_pos: Position, vw: int, vh: int) -> List[CraftingStation]:
@@ -1188,10 +1350,12 @@ class WorldSystem:
         ex, ey = camera_pos.x + tw // 2, camera_pos.y + th // 2
         return [s for s in self.crafting_stations if sx <= s.position.x <= ex and sy <= s.position.y <= ey]
 
-    def get_station_at(self, position: Position) -> Optional[CraftingStation]:
-        snap_pos = position.snap_to_grid()
+    def get_station_at(self, position: Position, tolerance: float = 0.8) -> Optional[CraftingStation]:
+        """Get station at position with tolerance for easier clicking"""
         for s in self.crafting_stations:
-            if s.position.x == snap_pos.x and s.position.y == snap_pos.y:
+            dx = abs(s.position.x - position.x)
+            dy = abs(s.position.y - position.y)
+            if dx <= tolerance and dy <= tolerance:
                 return s
         return None
 
@@ -1256,7 +1420,10 @@ class LevelingSystem:
 
 class ActivityTracker:
     def __init__(self):
-        self.activity_counts = {'mining': 0, 'forestry': 0, 'smithing': 0, 'refining': 0, 'alchemy': 0}
+        self.activity_counts = {
+            'mining': 0, 'forestry': 0, 'smithing': 0, 'refining': 0, 'alchemy': 0,
+            'engineering': 0, 'enchanting': 0
+        }
 
     def record_activity(self, activity_type: str, amount: int = 1):
         if activity_type in self.activity_counts:
@@ -1315,6 +1482,7 @@ class ItemStack:
     item_id: str
     quantity: int
     max_stack: int = 99
+    equipment_data: Optional['EquipmentItem'] = None  # For equipment items, store actual instance
 
     def __post_init__(self):
         mat_db = MaterialDatabase.get_instance()
@@ -1322,6 +1490,14 @@ class ItemStack:
             mat = mat_db.get_material(self.item_id)
             if mat:
                 self.max_stack = mat.max_stack
+
+        # Equipment items don't stack
+        equip_db = EquipmentDatabase.get_instance()
+        if equip_db.is_equipment(self.item_id):
+            self.max_stack = 1
+            # Create equipment instance if not already set
+            if self.equipment_data is None:
+                self.equipment_data = equip_db.create_equipment_from_id(self.item_id)
 
     def can_add(self, amount: int) -> bool:
         return self.quantity + amount <= self.max_stack
@@ -1335,6 +1511,20 @@ class ItemStack:
     def get_material(self) -> Optional[MaterialDefinition]:
         return MaterialDatabase.get_instance().get_material(self.item_id)
 
+    def is_equipment(self) -> bool:
+        """Check if this item stack is equipment"""
+        return EquipmentDatabase.get_instance().is_equipment(self.item_id)
+
+    def get_equipment(self) -> Optional[EquipmentItem]:
+        """Get equipment data if this is equipment"""
+        if not self.is_equipment():
+            return None
+        # Return the stored equipment instance if available
+        if self.equipment_data:
+            return self.equipment_data
+        # Otherwise create a new one (shouldn't happen for equipment items)
+        return EquipmentDatabase.get_instance().create_equipment_from_id(self.item_id)
+
 
 class Inventory:
     def __init__(self, max_slots: int = 30):
@@ -1342,10 +1532,25 @@ class Inventory:
         self.max_slots = max_slots
         self.dragging_slot: Optional[int] = None
         self.dragging_stack: Optional[ItemStack] = None
+        self.dragging_from_equipment: bool = False  # Track if dragging from equipment slot
 
-    def add_item(self, item_id: str, quantity: int) -> bool:
+    def add_item(self, item_id: str, quantity: int, equipment_instance: Optional['EquipmentItem'] = None) -> bool:
         remaining = quantity
         mat_db = MaterialDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Equipment doesn't stack
+        if equip_db.is_equipment(item_id):
+            for _ in range(quantity):
+                empty = self.get_empty_slot()
+                if empty is None:
+                    return False
+                # Use provided equipment instance or create new one
+                equip_data = equipment_instance if equipment_instance else None
+                self.slots[empty] = ItemStack(item_id, 1, 1, equip_data)
+            return True
+
+        # Normal materials can stack
         mat = mat_db.get_material(item_id)
         max_stack = mat.max_stack if mat else 99
 
@@ -1376,6 +1581,7 @@ class Inventory:
             self.dragging_slot = slot_index
             self.dragging_stack = self.slots[slot_index]
             self.slots[slot_index] = None
+            self.dragging_from_equipment = False
 
     def end_drag(self, target_slot: int):
         if self.dragging_stack is None:
@@ -1383,7 +1589,8 @@ class Inventory:
         if 0 <= target_slot < self.max_slots:
             if self.slots[target_slot] is None:
                 self.slots[target_slot] = self.dragging_stack
-            elif self.slots[target_slot].item_id == self.dragging_stack.item_id:
+            elif self.slots[
+                target_slot].item_id == self.dragging_stack.item_id and not self.dragging_stack.is_equipment():
                 overflow = self.slots[target_slot].add(self.dragging_stack.quantity)
                 if overflow > 0:
                     self.dragging_stack.quantity = overflow
@@ -1393,15 +1600,18 @@ class Inventory:
                 if self.dragging_stack and self.dragging_slot is not None:
                     self.slots[self.dragging_slot] = self.dragging_stack
         else:
-            self.slots[self.dragging_slot] = self.dragging_stack
+            if self.dragging_slot is not None:
+                self.slots[self.dragging_slot] = self.dragging_stack
         self.dragging_slot = None
         self.dragging_stack = None
+        self.dragging_from_equipment = False
 
     def cancel_drag(self):
-        if self.dragging_stack and self.dragging_slot is not None:
+        if self.dragging_stack and self.dragging_slot is not None and not self.dragging_from_equipment:
             self.slots[self.dragging_slot] = self.dragging_stack
         self.dragging_slot = None
         self.dragging_stack = None
+        self.dragging_from_equipment = False
 
 
 # ============================================================================
@@ -1422,19 +1632,22 @@ class Tool:
         return self.tier >= resource_tier
 
     def use(self) -> bool:
+        if Config.DEBUG_INFINITE_RESOURCES:
+            return True
         if self.durability_current <= 0:
             return False
         self.durability_current -= 1
         return True
 
     def get_effectiveness(self) -> float:
+        if Config.DEBUG_INFINITE_RESOURCES:
+            return 1.0
         if self.durability_current <= 0:
             return 0.5
         dur_pct = self.durability_current / self.durability_max
         return 1.0 if dur_pct >= 0.5 else 1.0 - (0.5 - dur_pct) * 0.5
 
     def repair(self, amount: int = None):
-        """Repair tool to full durability or by amount"""
         if amount is None:
             self.durability_current = self.durability_max
         else:
@@ -1476,9 +1689,11 @@ class Character:
         self.activities = ActivityTracker()
         self.equipment = EquipmentManager()
 
-        self.max_health = 100 + self.stats.get_flat_bonus('vitality', 'max_health')
+        self.base_max_health = 100
+        self.base_max_mana = 100
+        self.max_health = self.base_max_health
         self.health = self.max_health
-        self.max_mana = 100 + self.stats.get_flat_bonus('intelligence', 'mana')
+        self.max_mana = self.base_max_mana
         self.mana = self.max_mana
 
         self.inventory = Inventory(30)
@@ -1492,6 +1707,8 @@ class Character:
         self.class_selection_open = False
 
         self._give_starting_tools()
+        if Config.DEBUG_INFINITE_RESOURCES:
+            self._give_debug_items()
 
     def _give_starting_tools(self):
         self.tools = [
@@ -1500,16 +1717,51 @@ class Character:
         ]
         self.selected_tool = self.tools[0]
 
+    def _give_debug_items(self):
+        """Give starter items in debug mode"""
+        # Give lots of materials
+        self.inventory.add_item("copper_ore", 50)
+        self.inventory.add_item("iron_ore", 50)
+        self.inventory.add_item("oak_log", 50)
+        self.inventory.add_item("birch_log", 50)
+
+    def recalculate_stats(self):
+        """Recalculate character stats based on equipment, class, titles, etc."""
+        # Start with base + stat bonuses
+        stat_health = self.stats.get_flat_bonus('vitality', 'max_health')
+        stat_mana = self.stats.get_flat_bonus('intelligence', 'mana')
+
+        # Add class bonuses
+        class_health = self.class_system.get_bonus('max_health')
+        class_mana = self.class_system.get_bonus('max_mana')
+
+        # Add equipment bonuses
+        equip_bonuses = self.equipment.get_stat_bonuses()
+        equip_health = equip_bonuses.get('max_health', 0)
+        equip_mana = equip_bonuses.get('max_mana', 0)
+
+        # Calculate new max values
+        old_max_health = self.max_health
+        old_max_mana = self.max_mana
+
+        self.max_health = self.base_max_health + stat_health + class_health + equip_health
+        self.max_mana = self.base_max_mana + stat_mana + class_mana + equip_mana
+
+        # Scale current health/mana proportionally
+        if old_max_health > 0:
+            health_ratio = self.health / old_max_health
+            self.health = min(self.max_health, int(self.max_health * health_ratio))
+        if old_max_mana > 0:
+            mana_ratio = self.mana / old_max_mana
+            self.mana = min(self.max_mana, int(self.max_mana * mana_ratio))
+
     def allocate_stat_point(self, stat_name: str) -> bool:
         if self.leveling.unallocated_stat_points <= 0:
             return False
         if hasattr(self.stats, stat_name):
             setattr(self.stats, stat_name, getattr(self.stats, stat_name) + 1)
             self.leveling.unallocated_stat_points -= 1
-            self.max_health = 100 + self.stats.get_flat_bonus('vitality', 'max_health') + self.class_system.get_bonus(
-                'max_health')
-            self.max_mana = 100 + self.stats.get_flat_bonus('intelligence', 'mana') + self.class_system.get_bonus(
-                'max_mana')
+            self.recalculate_stats()
             return True
         return False
 
@@ -1527,10 +1779,23 @@ class Character:
     def is_in_range(self, target_position: Position) -> bool:
         return self.position.distance_to(target_position) <= self.interaction_range
 
+    def can_harvest_resource(self, resource: NaturalResource) -> Tuple[bool, str]:
+        if not self.selected_tool:
+            return False, "No tool selected"
+        if not self.is_in_range(resource.position):
+            return False, "Too far away"
+        if self.selected_tool.tool_type != resource.required_tool:
+            tool_name = "axe" if resource.required_tool == "axe" else "pickaxe"
+            return False, f"Need {tool_name}"
+        if not self.selected_tool.can_harvest(resource.tier):
+            return False, f"Tool tier too low (need T{resource.tier})"
+        if self.selected_tool.durability_current <= 0 and not Config.DEBUG_INFINITE_RESOURCES:
+            return False, "Tool broken"
+        return True, "OK"
+
     def harvest_resource(self, resource: NaturalResource):
-        if not self.selected_tool or not self.is_in_range(resource.position):
-            return None
-        if self.selected_tool.tool_type != resource.required_tool or not self.selected_tool.can_harvest(resource.tier):
+        can_harvest, reason = self.can_harvest_resource(resource)
+        if not can_harvest:
             return None
 
         base_damage = self.selected_tool.damage
@@ -1568,6 +1833,8 @@ class Character:
         if self.tools:
             idx = self.tools.index(self.selected_tool) if self.selected_tool in self.tools else -1
             self.selected_tool = self.tools[(idx + 1) % len(self.tools)]
+            return self.selected_tool.name
+        return None
 
     def interact_with_station(self, station: CraftingStation):
         if self.is_in_range(station.position):
@@ -1585,16 +1852,64 @@ class Character:
         self.equipment_ui_open = not self.equipment_ui_open
 
     def select_class(self, class_def: ClassDefinition):
-        """Select character class (one-time at game start or class switch)"""
         self.class_system.set_class(class_def)
-        # Recalculate health and mana with class bonuses
-        self.max_health = 100 + self.stats.get_flat_bonus('vitality', 'max_health') + self.class_system.get_bonus(
-            'max_health')
+        self.recalculate_stats()
         self.health = self.max_health
-        self.max_mana = 100 + self.stats.get_flat_bonus('intelligence', 'mana') + self.class_system.get_bonus(
-            'max_mana')
         self.mana = self.max_mana
         print(f"✓ Class selected: {class_def.name}")
+
+    def try_equip_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
+        """Try to equip item from inventory slot"""
+        if slot_index < 0 or slot_index >= self.inventory.max_slots:
+            return False, "Invalid slot"
+
+        item_stack = self.inventory.slots[slot_index]
+        if not item_stack:
+            return False, "Empty slot"
+
+        if not item_stack.is_equipment():
+            return False, "Not equipment"
+
+        equipment = item_stack.get_equipment()
+        if not equipment:
+            return False, "Invalid equipment"
+
+        # Try to equip
+        old_item, status = self.equipment.equip(equipment, self)
+        if status != "OK":
+            return False, status
+
+        # Remove from inventory
+        self.inventory.slots[slot_index] = None
+
+        # If there was an old item, put it back in inventory (preserve equipment data)
+        if old_item:
+            if not self.inventory.add_item(old_item.item_id, 1, old_item):
+                # Inventory full, swap back
+                self.equipment.slots[equipment.slot] = old_item
+                self.inventory.slots[slot_index] = item_stack
+                self.recalculate_stats()
+                return False, "Inventory full"
+
+        return True, "OK"
+
+    def try_unequip_to_inventory(self, slot_name: str) -> Tuple[bool, str]:
+        """Try to unequip item to inventory"""
+        if slot_name not in self.equipment.slots:
+            return False, "Invalid slot"
+
+        item = self.equipment.slots[slot_name]
+        if not item:
+            return False, "Empty slot"
+
+        # Try to add to inventory (preserve equipment data)
+        if not self.inventory.add_item(item.item_id, 1, item):
+            return False, "Inventory full"
+
+        # Remove from equipment
+        self.equipment.unequip(slot_name, self)
+
+        return True, "OK"
 
 
 # ============================================================================
@@ -1640,7 +1955,7 @@ class Renderer:
             sx, sy = camera.world_to_screen(station.position)
             in_range = character.is_in_range(station.position)
             color = station.get_color() if in_range else tuple(max(0, c - 50) for c in station.get_color())
-            size = Config.TILE_SIZE - 8
+            size = Config.TILE_SIZE + 8  # Larger than before (was - 8, now + 8)
             pts = [(sx, sy - size // 2), (sx + size // 2, sy), (sx, sy + size // 2), (sx - size // 2, sy)]
             pygame.draw.polygon(self.screen, color, pts)
             pygame.draw.polygon(self.screen, (0, 0, 0), pts, 3)
@@ -1658,13 +1973,30 @@ class Renderer:
                 continue
             sx, sy = camera.world_to_screen(resource.position)
             in_range = character.is_in_range(resource.position)
+
+            can_harvest, reason = character.can_harvest_resource(resource) if in_range else (False, "")
+
             color = resource.get_color() if in_range else tuple(max(0, c - 50) for c in resource.get_color())
             size = Config.TILE_SIZE - 4
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
             pygame.draw.rect(self.screen, color, rect)
-            pygame.draw.rect(self.screen, (0, 0, 0), rect, 2)
 
-            # Show respawn progress bar for depleted trees
+            if in_range:
+                border_color = Config.COLOR_CAN_HARVEST if can_harvest else Config.COLOR_CANNOT_HARVEST
+                border_width = 3
+            else:
+                border_color = (0, 0, 0)
+                border_width = 2
+            pygame.draw.rect(self.screen, border_color, rect, border_width)
+
+            if in_range and not resource.depleted:
+                tier_text = f"T{resource.tier}"
+                tier_surf = self.tiny_font.render(tier_text, True, (255, 255, 255))
+                tier_bg = pygame.Rect(sx - size // 2 + 2, sy - size // 2 + 2,
+                                      tier_surf.get_width() + 4, tier_surf.get_height() + 2)
+                pygame.draw.rect(self.screen, (0, 0, 0, 180), tier_bg)
+                self.screen.blit(tier_surf, (sx - size // 2 + 4, sy - size // 2 + 2))
+
             if resource.depleted and resource.respawns and in_range:
                 progress = resource.get_respawn_progress()
                 bar_w, bar_h = Config.TILE_SIZE - 8, 4
@@ -1672,13 +2004,11 @@ class Renderer:
                 pygame.draw.rect(self.screen, Config.COLOR_HP_BAR_BG, (sx - bar_w // 2, bar_y, bar_w, bar_h))
                 respawn_w = int(bar_w * progress)
                 pygame.draw.rect(self.screen, Config.COLOR_RESPAWN_BAR, (sx - bar_w // 2, bar_y, respawn_w, bar_h))
-                # Show timer text
                 time_left = int(resource.respawn_timer - resource.time_until_respawn)
                 time_surf = self.tiny_font.render(f"{time_left}s", True, (200, 200, 200))
                 self.screen.blit(time_surf, (sx - time_surf.get_width() // 2, bar_y - 12))
 
             elif not resource.depleted and in_range:
-                # Show HP bar
                 bar_w, bar_h = Config.TILE_SIZE - 8, 4
                 bar_y = sy - Config.TILE_SIZE // 2 - 8
                 pygame.draw.rect(self.screen, Config.COLOR_HP_BAR_BG, (sx - bar_w // 2, bar_y, bar_w, bar_h))
@@ -1702,10 +2032,16 @@ class Renderer:
         pygame.draw.rect(self.screen, Config.COLOR_UI_BG, ui_rect)
 
         y = 20
+
+        # Debug mode indicator
+        if Config.DEBUG_INFINITE_RESOURCES:
+            debug_surf = self.font.render("DEBUG MODE", True, (255, 100, 100))
+            self.screen.blit(debug_surf, (Config.VIEWPORT_WIDTH + 20, y))
+            y += 30
+
         self.render_text("CHARACTER INFO", Config.VIEWPORT_WIDTH + 20, y, bold=True)
         y += 40
 
-        # Show class info
         if character.class_system.current_class:
             class_text = f"Class: {character.class_system.current_class.name}"
             self.render_text(class_text, Config.VIEWPORT_WIDTH + 20, y, small=True)
@@ -1740,8 +2076,10 @@ class Renderer:
             tool = character.selected_tool
             self.render_text(f"{tool.name} (T{tool.tier})", Config.VIEWPORT_WIDTH + 20, y, small=True)
             y += 20
-            self.render_text(f"Durability: {tool.durability_current}/{tool.durability_max}",
-                             Config.VIEWPORT_WIDTH + 20, y, small=True)
+            dur_text = f"Durability: {tool.durability_current}/{tool.durability_max}"
+            if Config.DEBUG_INFINITE_RESOURCES:
+                dur_text += " (∞)"
+            self.render_text(dur_text, Config.VIEWPORT_WIDTH + 20, y, small=True)
             y += 20
             self.render_text(f"Effectiveness: {tool.get_effectiveness() * 100:.0f}%",
                              Config.VIEWPORT_WIDTH + 20, y, small=True)
@@ -1759,8 +2097,16 @@ class Renderer:
 
         self.render_text("CONTROLS", Config.VIEWPORT_WIDTH + 20, y, bold=True)
         y += 30
-        for ctrl in ["WASD - Move", "CLICK - Harvest/Interact", "TAB - Switch tool",
-                     "C - Stats", "E - Equipment", "ESC - Close/Quit"]:
+        controls = [
+            "WASD - Move",
+            "CLICK - Harvest/Interact",
+            "TAB - Switch tool",
+            "C - Stats",
+            "E - Equipment",
+            "F1 - Debug Mode",
+            "ESC - Close/Quit"
+        ]
+        for ctrl in controls:
             self.render_text(ctrl, Config.VIEWPORT_WIDTH + 20, y, small=True)
             y += 22
 
@@ -1782,6 +2128,21 @@ class Renderer:
         text = self.small_font.render(f"MP: {int(char.mana)}/{int(char.max_mana)}", True, Config.COLOR_TEXT)
         self.screen.blit(text, text.get_rect(center=(x + w // 2, y + h // 2)))
 
+    def render_notifications(self, notifications: List[Notification]):
+        y = 50
+        for notification in notifications:
+            alpha = int(255 * min(1.0, notification.lifetime / 3.0))
+            surf = self.font.render(notification.message, True, notification.color)
+            surf.set_alpha(alpha)
+            x = Config.VIEWPORT_WIDTH // 2 - surf.get_width() // 2
+
+            bg = pygame.Surface((surf.get_width() + 20, surf.get_height() + 10), pygame.SRCALPHA)
+            bg.fill((0, 0, 0, int(180 * alpha / 255)))
+            self.screen.blit(bg, (x - 10, y - 5))
+
+            self.screen.blit(surf, (x, y))
+            y += surf.get_height() + 15
+
     def render_inventory_panel(self, character: Character, mouse_pos: Tuple[int, int]):
         panel_rect = pygame.Rect(Config.INVENTORY_PANEL_X, Config.INVENTORY_PANEL_Y,
                                  Config.INVENTORY_PANEL_WIDTH, Config.INVENTORY_PANEL_HEIGHT)
@@ -1802,25 +2163,71 @@ class Renderer:
             if is_hovered and item_stack:
                 hovered_slot = (i, item_stack, slot_rect)
 
+            # Check if item is equipped
+            is_equipped = False
+            if item_stack and item_stack.is_equipment():
+                is_equipped = character.equipment.is_equipped(item_stack.item_id)
+
             pygame.draw.rect(self.screen, Config.COLOR_SLOT_FILLED if item_stack else Config.COLOR_SLOT_EMPTY,
                              slot_rect)
-            border = Config.COLOR_SLOT_SELECTED if is_hovered else Config.COLOR_SLOT_BORDER
-            pygame.draw.rect(self.screen, border, slot_rect, 2)
+
+            # Special border for equipped items
+            if is_equipped:
+                border = Config.COLOR_EQUIPPED
+                border_width = 3
+            elif is_hovered:
+                border = Config.COLOR_SLOT_SELECTED
+                border_width = 2
+            else:
+                border = Config.COLOR_SLOT_BORDER
+                border_width = 2
+            pygame.draw.rect(self.screen, border, slot_rect, border_width)
 
             if item_stack and i != character.inventory.dragging_slot:
-                self.render_item_in_slot(item_stack, slot_rect)
+                self.render_item_in_slot(item_stack, slot_rect, is_equipped)
 
         if character.inventory.dragging_stack:
             drag_rect = pygame.Rect(mouse_pos[0] - slot_size // 2, mouse_pos[1] - slot_size // 2, slot_size, slot_size)
             pygame.draw.rect(self.screen, Config.COLOR_SLOT_FILLED, drag_rect)
             pygame.draw.rect(self.screen, Config.COLOR_SLOT_SELECTED, drag_rect, 3)
-            self.render_item_in_slot(character.inventory.dragging_stack, drag_rect)
+            self.render_item_in_slot(character.inventory.dragging_stack, drag_rect, False)
 
         if hovered_slot and not character.inventory.dragging_stack:
             _, item_stack, _ = hovered_slot
-            self.render_item_tooltip(item_stack, mouse_pos)
+            self.render_item_tooltip(item_stack, mouse_pos, character)
 
-    def render_item_in_slot(self, item_stack: ItemStack, rect: pygame.Rect):
+    def render_item_in_slot(self, item_stack: ItemStack, rect: pygame.Rect, is_equipped: bool = False):
+        # Check if it's equipment
+        if item_stack.is_equipment():
+            equipment = item_stack.get_equipment()
+            if equipment:
+                color = Config.RARITY_COLORS.get(equipment.rarity, (200, 200, 200))
+                inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
+                pygame.draw.rect(self.screen, color, inner)
+
+                # Show "E" for equipped items
+                if is_equipped:
+                    e_surf = self.font.render("E", True, (255, 255, 255))
+                    e_rect = e_surf.get_rect(center=inner.center)
+                    # Black outline
+                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
+                        self.screen.blit(self.font.render("E", True, (0, 0, 0)), (e_rect.x + dx, e_rect.y + dy))
+                    self.screen.blit(e_surf, e_rect)
+                else:
+                    tier_surf = self.small_font.render(f"T{equipment.tier}", True, (0, 0, 0))
+                    self.screen.blit(tier_surf, (rect.x + 6, rect.y + 6))
+
+                # Add item name label
+                name_surf = self.tiny_font.render(equipment.name[:8], True, (255, 255, 255))
+                name_rect = name_surf.get_rect(centerx=rect.centerx, bottom=rect.bottom - 2)
+                # Black outline for readability
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    self.screen.blit(self.tiny_font.render(equipment.name[:8], True, (0, 0, 0)),
+                                     (name_rect.x + dx, name_rect.y + dy))
+                self.screen.blit(name_surf, name_rect)
+                return
+
+        # Regular material
         mat = item_stack.get_material()
         if mat:
             color = Config.RARITY_COLORS.get(mat.rarity, (200, 200, 200))
@@ -1828,6 +2235,15 @@ class Renderer:
             pygame.draw.rect(self.screen, color, inner)
             tier_surf = self.small_font.render(f"T{mat.tier}", True, (0, 0, 0))
             self.screen.blit(tier_surf, (rect.x + 6, rect.y + 6))
+
+            # Add item name label
+            name_surf = self.tiny_font.render(mat.name[:8], True, (255, 255, 255))
+            name_rect = name_surf.get_rect(centerx=rect.centerx, bottom=rect.bottom - 2)
+            # Black outline for readability
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                self.screen.blit(self.tiny_font.render(mat.name[:8], True, (0, 0, 0)),
+                                 (name_rect.x + dx, name_rect.y + dy))
+            self.screen.blit(name_surf, name_rect)
 
         if item_stack.quantity > 1:
             qty_text = str(item_stack.quantity)
@@ -1838,7 +2254,15 @@ class Renderer:
                                  (qty_rect.x + dx, qty_rect.y + dy))
             self.screen.blit(qty_surf, qty_rect)
 
-    def render_item_tooltip(self, item_stack: ItemStack, mouse_pos: Tuple[int, int]):
+    def render_item_tooltip(self, item_stack: ItemStack, mouse_pos: Tuple[int, int], character: Character):
+        # Check if equipment
+        if item_stack.is_equipment():
+            equipment = item_stack.get_equipment()
+            if equipment:
+                self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=True)
+                return
+
+        # Regular material tooltip
         mat = item_stack.get_material()
         if not mat:
             return
@@ -1870,6 +2294,7 @@ class Renderer:
 
         recipe_db = RecipeDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
 
         ww, wh = 900, 600
         wx = (Config.VIEWPORT_WIDTH - ww) // 2
@@ -1889,16 +2314,24 @@ class Renderer:
             surf.blit(self.font.render("No recipes available", True, (200, 200, 200)), (20, 80))
         else:
             y_off = 70
-            for i, recipe in enumerate(recipes[:6]):  # Show 6 recipes
+            for i, recipe in enumerate(recipes[:6]):
                 btn = pygame.Rect(20, y_off, ww - 40, 80)
                 can_craft = recipe_db.can_craft(recipe, character.inventory)
                 btn_color = (40, 60, 40) if can_craft else (60, 40, 40)
                 pygame.draw.rect(surf, btn_color, btn)
                 pygame.draw.rect(surf, (100, 100, 100), btn, 2)
 
-                out_mat = mat_db.get_material(recipe.output_id)
-                out_name = out_mat.name if out_mat else recipe.output_id
-                color = Config.RARITY_COLORS.get(out_mat.rarity, (200, 200, 200)) if out_mat else (200, 200, 200)
+                # Check if output is equipment or material
+                is_equipment = equip_db.is_equipment(recipe.output_id)
+                if is_equipment:
+                    equip = equip_db.create_equipment_from_id(recipe.output_id)
+                    out_name = equip.name if equip else recipe.output_id
+                    color = Config.RARITY_COLORS.get(equip.rarity, (200, 200, 200)) if equip else (200, 200, 200)
+                else:
+                    out_mat = mat_db.get_material(recipe.output_id)
+                    out_name = out_mat.name if out_mat else recipe.output_id
+                    color = Config.RARITY_COLORS.get(out_mat.rarity, (200, 200, 200)) if out_mat else (200, 200, 200)
+
                 surf.blit(self.font.render(f"{out_name} x{recipe.output_qty}", True, color),
                           (btn.x + 10, btn.y + 10))
 
@@ -1909,7 +2342,7 @@ class Renderer:
                     avail = character.inventory.get_item_count(mat_id)
                     mat = mat_db.get_material(mat_id)
                     mat_name = mat.name if mat else mat_id
-                    req_color = (100, 255, 100) if avail >= req else (255, 100, 100)
+                    req_color = (100, 255, 100) if avail >= req or Config.DEBUG_INFINITE_RESOURCES else (255, 100, 100)
                     surf.blit(self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color),
                               (btn.x + 20, req_y))
                     req_y += 18
@@ -1935,9 +2368,9 @@ class Renderer:
         surf.fill((20, 20, 30, 240))
 
         surf.blit(self.font.render("EQUIPMENT", True, (255, 215, 0)), (20, 20))
-        surf.blit(self.small_font.render("[E or ESC] Close", True, (180, 180, 180)), (ww - 150, 20))
+        surf.blit(self.small_font.render("[E or ESC] Close | [SHIFT+CLICK] to unequip", True, (180, 180, 180)),
+                  (ww - 350, 20))
 
-        # Draw equipment slots
         slot_size = 80
         slots_layout = {
             'helmet': (ww // 2 - slot_size // 2, 70),
@@ -1951,36 +2384,34 @@ class Renderer:
         }
 
         hovered_slot = None
+        equipment_rects = {}
+
         for slot_name, (sx, sy) in slots_layout.items():
             slot_rect = pygame.Rect(sx, sy, slot_size, slot_size)
+            equipment_rects[slot_name] = (slot_rect, wx, wy)
             item = character.equipment.slots.get(slot_name)
 
             is_hovered = slot_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
             if is_hovered and item:
                 hovered_slot = (slot_name, item)
 
-            # Draw slot
             color = Config.COLOR_SLOT_FILLED if item else Config.COLOR_SLOT_EMPTY
             pygame.draw.rect(surf, color, slot_rect)
             border_color = Config.COLOR_SLOT_SELECTED if is_hovered else Config.COLOR_SLOT_BORDER
             pygame.draw.rect(surf, border_color, slot_rect, 2)
 
-            # Draw item if equipped
             if item:
                 rarity_color = Config.RARITY_COLORS.get(item.rarity, (200, 200, 200))
                 inner_rect = pygame.Rect(sx + 5, sy + 5, slot_size - 10, slot_size - 10)
                 pygame.draw.rect(surf, rarity_color, inner_rect)
 
-                # Draw tier
                 tier_text = f"T{item.tier}"
                 tier_surf = self.small_font.render(tier_text, True, (0, 0, 0))
                 surf.blit(tier_surf, (sx + 8, sy + 8))
 
-            # Draw slot label
             label_surf = self.tiny_font.render(slot_name, True, (150, 150, 150))
             surf.blit(label_surf, (sx + slot_size // 2 - label_surf.get_width() // 2, sy + slot_size + 3))
 
-        # Draw stats summary
         stats_x = 20
         stats_y = 470
         surf.blit(self.font.render("Equipment Stats:", True, (200, 200, 200)), (stats_x, stats_y))
@@ -2004,17 +2435,16 @@ class Renderer:
                           (stats_x + 10, stats_y))
                 stats_y += 16
 
-        # Show tooltip for hovered item
         if hovered_slot:
             slot_name, item = hovered_slot
-            self.render_equipment_tooltip(item, (mouse_pos[0], mouse_pos[1]))
+            self.render_equipment_tooltip(item, (mouse_pos[0], mouse_pos[1]), character, from_inventory=False)
 
         self.screen.blit(surf, (wx, wy))
-        return pygame.Rect(wx, wy, ww, wh)
+        return pygame.Rect(wx, wy, ww, wh), equipment_rects
 
-    def render_equipment_tooltip(self, item: EquipmentItem, mouse_pos: Tuple[int, int]):
-        """Render tooltip for equipment item"""
-        tw, th, pad = 300, 200, 10
+    def render_equipment_tooltip(self, item: EquipmentItem, mouse_pos: Tuple[int, int], character: Character,
+                                 from_inventory: bool = False):
+        tw, th, pad = 320, 240, 10
         x, y = mouse_pos[0] + 15, mouse_pos[1] + 15
         if x + tw > Config.SCREEN_WIDTH:
             x = mouse_pos[0] - tw - 15
@@ -2027,13 +2457,12 @@ class Renderer:
         y_pos = pad
         color = Config.RARITY_COLORS.get(item.rarity, (200, 200, 200))
 
-        # Name and rarity
         surf.blit(self.font.render(item.name, True, color), (pad, y_pos))
         y_pos += 25
-        surf.blit(self.small_font.render(f"Tier {item.tier} | {item.rarity.capitalize()}", True, color), (pad, y_pos))
+        surf.blit(self.small_font.render(f"Tier {item.tier} | {item.rarity.capitalize()} | {item.slot}", True, color),
+                  (pad, y_pos))
         y_pos += 25
 
-        # Stats
         if item.damage[0] > 0:
             dmg = item.get_actual_damage()
             surf.blit(self.small_font.render(f"Damage: {dmg[0]}-{dmg[1]}", True, (200, 200, 200)), (pad, y_pos))
@@ -2049,32 +2478,40 @@ class Renderer:
                       (pad, y_pos))
             y_pos += 20
 
-        # Durability
         dur_pct = (item.durability_current / item.durability_max) * 100
         dur_color = (100, 255, 100) if dur_pct > 50 else (255, 200, 100) if dur_pct > 25 else (255, 100, 100)
-        surf.blit(
-            self.small_font.render(f"Durability: {item.durability_current}/{item.durability_max} ({dur_pct:.0f}%)",
-                                   True, dur_color), (pad, y_pos))
+        dur_text = f"Durability: {item.durability_current}/{item.durability_max} ({dur_pct:.0f}%)"
+        if Config.DEBUG_INFINITE_RESOURCES:
+            dur_text += " (∞)"
+        surf.blit(self.small_font.render(dur_text, True, dur_color), (pad, y_pos))
         y_pos += 20
 
-        # Requirements
         if item.requirements:
             y_pos += 5
             surf.blit(self.tiny_font.render("Requirements:", True, (150, 150, 150)), (pad, y_pos))
             y_pos += 15
+            can_equip, reason = item.can_equip(character)
+            req_color = (100, 255, 100) if can_equip else (255, 100, 100)
             if 'level' in item.requirements:
-                surf.blit(self.tiny_font.render(f"  Level {item.requirements['level']}", True, (180, 180, 180)),
+                surf.blit(self.tiny_font.render(f"  Level {item.requirements['level']}", True, req_color),
                           (pad + 10, y_pos))
                 y_pos += 14
             if 'stats' in item.requirements:
                 for stat, val in item.requirements['stats'].items():
-                    surf.blit(self.tiny_font.render(f"  {stat}: {val}", True, (180, 180, 180)), (pad + 10, y_pos))
+                    surf.blit(self.tiny_font.render(f"  {stat}: {val}", True, req_color), (pad + 10, y_pos))
                     y_pos += 14
+
+        # Show hint about equipping/unequipping
+        y_pos += 5
+        if from_inventory:
+            hint = "[DOUBLE-CLICK] to equip"
+        else:
+            hint = "[SHIFT+CLICK] to unequip"
+        surf.blit(self.tiny_font.render(hint, True, (150, 150, 255)), (pad, y_pos))
 
         self.screen.blit(surf, (x, y))
 
     def render_class_selection_ui(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Render class selection screen"""
         if not character.class_selection_open:
             return None
 
@@ -2093,7 +2530,6 @@ class Renderer:
         surf.blit(self.small_font.render("Choose wisely - this defines your playstyle", True, (180, 180, 180)),
                   (ww // 2 - 150, 50))
 
-        # Display classes in 2 columns
         classes_list = list(class_db.classes.values())
         col_width = (ww - 60) // 2
         card_height = 90
@@ -2109,26 +2545,20 @@ class Renderer:
             card_rect = pygame.Rect(x, y, col_width, card_height)
             is_hovered = card_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
 
-            # Draw card
             card_color = (60, 80, 100) if is_hovered else (40, 50, 60)
             pygame.draw.rect(surf, card_color, card_rect)
             pygame.draw.rect(surf, (100, 120, 140) if is_hovered else (80, 90, 100), card_rect, 2)
 
-            # Class name
             name_surf = self.font.render(class_def.name, True, (255, 215, 0))
             surf.blit(name_surf, (x + 10, y + 8))
 
-            # Show 2 key bonuses
             bonus_y = y + 35
-            bonus_count = 0
             for bonus_type, value in list(class_def.bonuses.items())[:2]:
                 bonus_text = f"+{value if isinstance(value, int) else f'{value * 100:.0f}%'} {bonus_type.replace('_', ' ')}"
                 bonus_surf = self.tiny_font.render(bonus_text, True, (100, 200, 100))
                 surf.blit(bonus_surf, (x + 15, bonus_y))
                 bonus_y += 14
-                bonus_count += 1
 
-            # "Click to select"
             if is_hovered:
                 select_surf = self.small_font.render("[CLICK] Select", True, (100, 255, 100))
                 surf.blit(select_surf, (x + col_width - select_surf.get_width() - 10, y + card_height - 25))
@@ -2155,7 +2585,6 @@ class Renderer:
         col1_x, col2_x, col3_x = 20, 320, 620
         y_start = 70
 
-        # STATS
         y = y_start
         surf.blit(self.font.render("STATS", True, (255, 255, 255)), (col1_x, y))
         y += 35
@@ -2182,7 +2611,6 @@ class Renderer:
                 stat_buttons.append((btn, stat_name))
             y += 28
 
-        # TITLES with progress tracking
         y = y_start
         surf.blit(self.font.render("TITLES", True, (255, 255, 255)), (col2_x, y))
         y += 35
@@ -2190,14 +2618,10 @@ class Renderer:
                                          True, (200, 200, 200)), (col2_x, y))
         y += 30
 
-        # Show earned titles
         for title in character.titles.earned_titles[-8:]:
             tier_color = {
-                'novice': (200, 200, 200),
-                'apprentice': (100, 255, 100),
-                'journeyman': (100, 150, 255),
-                'expert': (200, 100, 255),
-                'master': (255, 215, 0)
+                'novice': (200, 200, 200), 'apprentice': (100, 255, 100), 'journeyman': (100, 150, 255),
+                'expert': (200, 100, 255), 'master': (255, 215, 0)
             }.get(title.tier, (200, 200, 200))
 
             surf.blit(self.small_font.render(f"• {title.name}", True, tier_color), (col2_x, y))
@@ -2208,7 +2632,6 @@ class Renderer:
         if len(character.titles.earned_titles) == 0:
             surf.blit(self.small_font.render("Keep playing to earn titles!", True, (150, 150, 150)), (col2_x, y))
 
-        # ACTIVITY PROGRESS (show progress toward next title)
         y = y_start
         surf.blit(self.font.render("PROGRESS", True, (255, 255, 255)), (col3_x, y))
         y += 35
@@ -2218,8 +2641,7 @@ class Renderer:
 
         for activity_type in ['mining', 'forestry', 'smithing', 'refining', 'alchemy']:
             count = character.activities.get_count(activity_type)
-            if count > 0 or activity_type in ['mining', 'forestry']:  # Always show gathering
-                # Find next title for this activity
+            if count > 0 or activity_type in ['mining', 'forestry']:
                 next_title = None
                 for title_def in title_db.titles.values():
                     if title_def.activity_type == activity_type:
@@ -2235,7 +2657,6 @@ class Renderer:
                               (col3_x, y))
                     y += 18
 
-                    # Progress bar
                     bar_w, bar_h = 220, 12
                     bar_rect = pygame.Rect(col3_x, y, bar_w, bar_h)
                     pygame.draw.rect(surf, (40, 40, 40), bar_rect)
@@ -2243,13 +2664,11 @@ class Renderer:
                     pygame.draw.rect(surf, (100, 200, 100), pygame.Rect(col3_x, y, prog_w, bar_h))
                     pygame.draw.rect(surf, (100, 100, 100), bar_rect, 1)
 
-                    # Progress text
                     prog_text = f"{count}/{next_title.acquisition_threshold}"
                     prog_surf = self.tiny_font.render(prog_text, True, (255, 255, 255))
                     surf.blit(prog_surf, (col3_x + bar_w // 2 - prog_surf.get_width() // 2, y + 1))
                     y += 18
 
-                    # Next title name
                     next_surf = self.tiny_font.render(f"Next: {next_title.name}", True, (150, 150, 150))
                     surf.blit(next_surf, (col3_x, y))
                     y += 22
@@ -2277,7 +2696,7 @@ class GameEngine:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
-        pygame.display.set_caption("2D RPG Game - Enhanced v2.0")
+        pygame.display.set_caption("2D RPG Game - Equipment System v2.2")
         self.clock = pygame.time.Clock()
         self.running = True
 
@@ -2285,16 +2704,15 @@ class GameEngine:
         print("Loading databases...")
         print("=" * 60)
 
-        # Load all databases
-        MaterialDatabase.get_instance().load_from_file("Game-1/items.JSON/items-materials-1.JSON")
+        MaterialDatabase.get_instance().load_from_file("items.JSON/items-materials-1.JSON")
+        MaterialDatabase.get_instance().load_refining_items(
+            "items.JSON/items-refining-1.JSON")  # FIX #2: Load ingots/planks
         TranslationDatabase.get_instance().load_from_files()
         SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
-
-        # Load new systems
-        EquipmentDatabase.get_instance().load_from_file("Game-1/items.JSON/items-smithing-2.JSON")
-        TitleDatabase.get_instance().load_from_file("Game-1/Progression/titles-1.JSON")
-        ClassDatabase.get_instance().load_from_file("Game-1/Progression/classes-1.JSON")
+        EquipmentDatabase.get_instance().load_from_file("items.JSON/items-smithing-2.JSON")
+        TitleDatabase.get_instance().load_from_file("progression/titles-1.JSON")
+        ClassDatabase.get_instance().load_from_file("progression/classes-1.JSON")
 
         print("\nInitializing systems...")
         self.world = WorldSystem()
@@ -2303,25 +2721,33 @@ class GameEngine:
         self.renderer = Renderer(self.screen)
 
         self.damage_numbers: List[DamageNumber] = []
+        self.notifications: List[Notification] = []
         self.crafting_window_rect = None
         self.crafting_recipes = []
         self.stats_window_rect = None
         self.stats_buttons = []
         self.equipment_window_rect = None
+        self.equipment_rects = {}
         self.class_selection_rect = None
         self.class_buttons = []
 
         self.keys_pressed = set()
         self.mouse_pos = (0, 0)
         self.last_tick = pygame.time.get_ticks()
+        self.last_click_time = 0
+        self.last_clicked_slot = None
 
-        # Show class selection if no class chosen
         if not self.character.class_system.current_class:
             self.character.class_selection_open = True
 
         print("\n" + "=" * 60)
         print("✓ Game ready!")
+        if Config.DEBUG_INFINITE_RESOURCES:
+            print("⚠ DEBUG MODE ENABLED (F1 to toggle)")
         print("=" * 60 + "\n")
+
+    def add_notification(self, message: str, color: Tuple[int, int, int] = Config.COLOR_NOTIFICATION):
+        self.notifications.append(Notification(message, 3.0, color))
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -2337,16 +2763,22 @@ class GameEngine:
                     elif self.character.equipment_ui_open:
                         self.character.toggle_equipment_ui()
                     elif self.character.class_selection_open:
-                        # Can't close class selection without choosing
                         pass
                     else:
                         self.running = False
                 elif event.key == pygame.K_TAB:
-                    self.character.switch_tool()
+                    tool_name = self.character.switch_tool()
+                    if tool_name:
+                        self.add_notification(f"Switched to {tool_name}", (100, 200, 255))
                 elif event.key == pygame.K_c:
                     self.character.toggle_stats_ui()
                 elif event.key == pygame.K_e:
                     self.character.toggle_equipment_ui()
+                elif event.key == pygame.K_F1:
+                    Config.DEBUG_INFINITE_RESOURCES = not Config.DEBUG_INFINITE_RESOURCES
+                    status = "ENABLED" if Config.DEBUG_INFINITE_RESOURCES else "DISABLED"
+                    self.add_notification(f"Debug Mode {status}", (255, 100, 255))
+                    print(f"⚠ Debug Mode {status}")
             elif event.type == pygame.KEYUP:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
@@ -2357,7 +2789,14 @@ class GameEngine:
                 self.handle_mouse_release(event.pos)
 
     def handle_mouse_click(self, mouse_pos: Tuple[int, int]):
-        # Class selection (priority)
+        shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
+
+        # Check double-click
+        current_time = pygame.time.get_ticks()
+        is_double_click = (current_time - self.last_click_time < 300)
+        self.last_click_time = current_time
+
+        # Class selection
         if self.character.class_selection_open and self.class_selection_rect:
             if self.class_selection_rect.collidepoint(mouse_pos):
                 self.handle_class_selection_click(mouse_pos)
@@ -2372,7 +2811,7 @@ class GameEngine:
         # Equipment UI
         if self.character.equipment_ui_open and self.equipment_window_rect:
             if self.equipment_window_rect.collidepoint(mouse_pos):
-                self.handle_equipment_click(mouse_pos)
+                self.handle_equipment_click(mouse_pos, shift_held)
                 return
 
         # Crafting UI
@@ -2381,7 +2820,7 @@ class GameEngine:
                 self.handle_craft_click(mouse_pos)
                 return
 
-        # Inventory drag
+        # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             start_x, start_y = 20, Config.INVENTORY_PANEL_Y + 50
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
@@ -2395,6 +2834,24 @@ class GameEngine:
                 if in_x and in_y:
                     idx = row * Config.INVENTORY_SLOTS_PER_ROW + col
                     if 0 <= idx < self.character.inventory.max_slots:
+                        # Double-click to equip equipment
+                        if is_double_click and self.last_clicked_slot == idx:
+                            item_stack = self.character.inventory.slots[idx]
+                            if item_stack and item_stack.is_equipment():
+                                equipment = item_stack.get_equipment()
+                                if equipment:  # FIX #4: Check equipment exists before trying to equip
+                                    success, msg = self.character.try_equip_from_inventory(idx)
+                                    if success:
+                                        self.add_notification(f"Equipped {equipment.name}", (100, 255, 100))
+                                    else:
+                                        self.add_notification(f"Cannot equip: {msg}", (255, 100, 100))
+                                else:
+                                    self.add_notification("Invalid equipment data", (255, 100, 100))
+                                return
+
+                        self.last_clicked_slot = idx
+
+                        # Regular drag
                         if self.character.inventory.slots[idx] is not None:
                             self.character.inventory.start_drag(idx)
             return
@@ -2414,15 +2871,23 @@ class GameEngine:
 
         resource = self.world.get_resource_at(world_pos)
         if resource:
+            can_harvest, reason = self.character.can_harvest_resource(resource)
+            if not can_harvest:
+                self.add_notification(f"Cannot harvest: {reason}", (255, 100, 100))
+                return
+
             result = self.character.harvest_resource(resource)
             if result:
                 loot, dmg, is_crit = result
                 self.damage_numbers.append(DamageNumber(dmg, resource.position.copy(), is_crit))
                 if loot:
-                    print(f"Harvested: {loot}")
+                    mat_db = MaterialDatabase.get_instance()
+                    for item_id, qty in loot:
+                        mat = mat_db.get_material(item_id)
+                        item_name = mat.name if mat else item_id
+                        self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
 
     def handle_class_selection_click(self, mouse_pos: Tuple[int, int]):
-        """Handle clicks on class selection UI"""
         if not self.class_buttons:
             return
 
@@ -2433,14 +2898,28 @@ class GameEngine:
             if card_rect.collidepoint(rx, ry):
                 self.character.select_class(class_def)
                 self.character.class_selection_open = False
+                self.add_notification(f"Welcome, {class_def.name}!", (255, 215, 0))
                 print(f"\n🎉 Welcome, {class_def.name}!")
                 print(f"   {class_def.description}")
                 break
 
-    def handle_equipment_click(self, mouse_pos: Tuple[int, int]):
-        """Handle clicks on equipment UI - for future equip/unequip functionality"""
-        # For now, just close on ESC (handled in handle_events)
-        pass
+    def handle_equipment_click(self, mouse_pos: Tuple[int, int], shift_held: bool):
+        if not self.equipment_rects:
+            return
+
+        wx, wy = self.equipment_window_rect.x, self.equipment_window_rect.y
+        rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+
+        for slot_name, (rect, _, _) in self.equipment_rects.items():
+            if rect.collidepoint(rx, ry):
+                if shift_held:
+                    # Unequip
+                    success, msg = self.character.try_unequip_to_inventory(slot_name)
+                    if success:
+                        self.add_notification(f"Unequipped item", (100, 255, 100))
+                    else:
+                        self.add_notification(f"Cannot unequip: {msg}", (255, 100, 100))
+                break
 
     def handle_stats_click(self, mouse_pos: Tuple[int, int]):
         if not self.stats_window_rect or not self.stats_buttons:
@@ -2451,6 +2930,7 @@ class GameEngine:
         for btn_rect, stat_name in self.stats_buttons:
             if btn_rect.collidepoint(rx, ry):
                 if self.character.allocate_stat_point(stat_name):
+                    self.add_notification(f"+1 {stat_name.upper()}", (100, 255, 100))
                     print(f"✓ +1 {stat_name.upper()}")
                 break
 
@@ -2469,23 +2949,92 @@ class GameEngine:
     def craft_item(self, recipe: Recipe):
         recipe_db = RecipeDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
+        mat_db = MaterialDatabase.get_instance()
 
         if not recipe_db.can_craft(recipe, self.character.inventory):
-            print(f"⚠ Not enough materials")
+            self.add_notification("Not enough materials!", (255, 100, 100))
             return
 
-        print(f"🔨 Crafting {recipe.output_id}")
+        # Handle enchanting recipes differently
+        if recipe.is_enchantment:
+            self._apply_enchantment(recipe)
+            return
+
+        # Regular crafting
         if recipe_db.consume_materials(recipe, self.character.inventory):
-            # Check if output is equipment
-            equipment_item = equip_db.create_equipment_from_id(recipe.output_id)
-            if equipment_item:
-                # Add as regular item for now (will show in equipment UI when we add equipping from inventory)
-                self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
-                print(f"✓ Crafted {equipment_item.name} x{recipe.output_qty} (equipment)")
+            activity_map = {
+                'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
+                'engineering': 'engineering', 'adornments': 'enchanting'
+            }
+            activity_type = activity_map.get(recipe.station_type, 'smithing')
+            self.character.activities.record_activity(activity_type, 1)
+
+            xp_reward = 20 * recipe.station_tier
+            self.character.leveling.add_exp(xp_reward)
+
+            new_title = self.character.titles.check_for_title(
+                activity_type, self.character.activities.get_count(activity_type)
+            )
+            if new_title:
+                self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+
+            # Add to inventory
+            self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
+
+            # Get proper name
+            if equip_db.is_equipment(recipe.output_id):
+                equipment = equip_db.create_equipment_from_id(recipe.output_id)
+                out_name = equipment.name if equipment else recipe.output_id
             else:
-                # Regular material/item
-                self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
-                print(f"✓ Crafted {recipe.output_id} x{recipe.output_qty}")
+                out_mat = mat_db.get_material(recipe.output_id)
+                out_name = out_mat.name if out_mat else recipe.output_id
+
+            self.add_notification(f"Crafted {out_name} x{recipe.output_qty}", (100, 255, 100))
+
+    def _apply_enchantment(self, recipe: Recipe):
+        """Apply an enchantment to an item in inventory"""
+        recipe_db = RecipeDatabase.get_instance()
+
+        # Find compatible items in inventory
+        compatible_items = []
+        for i, slot in enumerate(self.character.inventory.slots):
+            if slot and slot.is_equipment() and slot.equipment_data:
+                equipment = slot.equipment_data
+                can_apply, reason = equipment.can_apply_enchantment(
+                    recipe.output_id, recipe.applicable_to, recipe.effect
+                )
+                if can_apply:
+                    compatible_items.append((i, slot))
+
+        if not compatible_items:
+            self.add_notification("No compatible items found!", (255, 100, 100))
+            return
+
+        # For now, apply to the first compatible item found
+        # TODO: Add UI for item selection
+        slot_idx, slot = compatible_items[0]
+        equipment = slot.equipment_data
+
+        # Consume materials
+        if not recipe_db.consume_materials(recipe, self.character.inventory):
+            self.add_notification("Failed to consume materials!", (255, 100, 100))
+            return
+
+        # Apply enchantment to the equipment instance stored in inventory
+        equipment.apply_enchantment(recipe.output_id, recipe.enchantment_name, recipe.effect)
+
+        # Record activity
+        self.character.activities.record_activity('enchanting', 1)
+        xp_reward = 20 * recipe.station_tier
+        self.character.leveling.add_exp(xp_reward)
+
+        new_title = self.character.titles.check_for_title(
+            'enchanting', self.character.activities.get_count('enchanting')
+        )
+        if new_title:
+            self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+
+        self.add_notification(f"Applied {recipe.enchantment_name} to {equipment.name}!", (100, 255, 255))
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
         if self.character.inventory.dragging_stack:
@@ -2511,7 +3060,6 @@ class GameEngine:
         dt = (curr - self.last_tick) / 1000.0
         self.last_tick = curr
 
-        # Don't allow movement during class selection
         if not self.character.class_selection_open:
             dx = dy = 0
             if pygame.K_w in self.keys_pressed:
@@ -2533,6 +3081,7 @@ class GameEngine:
         self.camera.follow(self.character.position)
         self.world.update(dt)
         self.damage_numbers = [d for d in self.damage_numbers if d.update(dt)]
+        self.notifications = [n for n in self.notifications if n.update(dt)]
 
     def render(self):
         self.screen.fill(Config.COLOR_BACKGROUND)
@@ -2540,7 +3089,8 @@ class GameEngine:
         self.renderer.render_ui(self.character, self.mouse_pos)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
 
-        # Render class selection first (blocks everything else)
+        self.renderer.render_notifications(self.notifications)
+
         if self.character.class_selection_open:
             result = self.renderer.render_class_selection_ui(self.character, self.mouse_pos)
             if result:
@@ -2549,7 +3099,6 @@ class GameEngine:
             self.class_selection_rect = None
             self.class_buttons = []
 
-            # Render other UIs
             if self.character.crafting_ui_open:
                 result = self.renderer.render_crafting_ui(self.character, self.mouse_pos)
                 if result:
@@ -2567,15 +3116,30 @@ class GameEngine:
                 self.stats_buttons = []
 
             if self.character.equipment_ui_open:
-                self.equipment_window_rect = self.renderer.render_equipment_ui(self.character, self.mouse_pos)
+                result = self.renderer.render_equipment_ui(self.character, self.mouse_pos)
+                if result:
+                    self.equipment_window_rect, self.equipment_rects = result
             else:
                 self.equipment_window_rect = None
+                self.equipment_rects = {}
 
         pygame.display.flip()
 
     def run(self):
         print("=== GAME STARTED ===")
-        print("Controls: WASD=Move | Click=Harvest | TAB=Tool | C=Stats | E=Equipment | ESC=Quit\n")
+        print("Controls:")
+        print("  WASD - Move")
+        print("  Click - Harvest/Interact")
+        print("  TAB - Switch Tool")
+        print("  C - Stats")
+        print("  E - Equipment")
+        print("  F1 - Toggle Debug Mode")
+        print("  ESC - Close/Quit")
+        print("\nEquipment:")
+        print("  Double-click item in inventory to equip")
+        print("  Shift+click equipment slot to unequip")
+        print("\nTip: Crafting stations are right next to you!")
+        print()
 
         while self.running:
             self.handle_events()
