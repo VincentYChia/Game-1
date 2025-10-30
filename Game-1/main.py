@@ -1546,7 +1546,7 @@ class Inventory:
                 if empty is None:
                     return False
                 # Use provided equipment instance or create new one
-                equip_data = equipment_instance if equipment_instance else None
+                equip_data = equipment_instance if equipment_instance else equip_db.create_equipment_from_id(item_id)
                 self.slots[empty] = ItemStack(item_id, 1, 1, equip_data)
             return True
 
