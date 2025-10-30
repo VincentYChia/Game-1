@@ -265,6 +265,8 @@ class EquipmentItem:
     weight: float = 1.0
     requirements: Dict[str, Any] = field(default_factory=dict)
     bonuses: Dict[str, float] = field(default_factory=dict)
+    # Enchantment system
+    enchantments: List[Dict[str, Any]] = field(default_factory=list)  # List of applied enchantments
 
     def get_effectiveness(self) -> float:
         if Config.DEBUG_INFINITE_RESOURCES:
@@ -291,6 +293,7 @@ class EquipmentItem:
 
     def copy(self) -> 'EquipmentItem':
         """Create a deep copy of this equipment item"""
+        import copy as copy_module
         return EquipmentItem(
             item_id=self.item_id,
             name=self.name,
@@ -304,8 +307,55 @@ class EquipmentItem:
             attack_speed=self.attack_speed,
             weight=self.weight,
             requirements=self.requirements.copy(),
-            bonuses=self.bonuses.copy()
+            bonuses=self.bonuses.copy(),
+            enchantments=copy_module.deepcopy(self.enchantments)
         )
+
+    def can_apply_enchantment(self, enchantment_id: str, applicable_to: List[str], effect: Dict) -> Tuple[bool, str]:
+        """Check if an enchantment can be applied to this item"""
+        # Check if item type is compatible
+        item_type = self._get_item_type()
+        if item_type not in applicable_to:
+            return False, f"Cannot apply to {item_type} items"
+
+        # Check for conflicts with existing enchantments
+        conflicts_with = effect.get('conflictsWith', [])
+        for existing_ench in self.enchantments:
+            existing_id = existing_ench.get('enchantment_id', '')
+            # Check if new enchantment conflicts with existing
+            if existing_id in conflicts_with:
+                return False, f"Conflicts with {existing_ench.get('name', 'existing enchantment')}"
+            # Check if existing conflicts with new
+            existing_conflicts = existing_ench.get('effect', {}).get('conflictsWith', [])
+            if enchantment_id in existing_conflicts:
+                return False, f"Conflicts with {existing_ench.get('name', 'existing enchantment')}"
+
+        return True, "OK"
+
+    def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict):
+        """Apply an enchantment effect to this item"""
+        self.enchantments.append({
+            'enchantment_id': enchantment_id,
+            'name': enchantment_name,
+            'effect': effect
+        })
+
+    def _get_item_type(self) -> str:
+        """Determine the item type for enchantment compatibility"""
+        # Map slot to enchantment-compatible type
+        weapon_slots = ['mainHand', 'offHand']
+        tool_slots = ['tool']
+        armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+
+        if self.slot in weapon_slots and self.damage != (0, 0):
+            return 'weapon'
+        elif self.slot in weapon_slots or self.slot in tool_slots:
+            return 'tool'
+        elif self.slot in armor_slots:
+            return 'armor'
+        elif self.slot == 'accessory':
+            return 'accessory'
+        return 'unknown'
 
 
 class EquipmentDatabase:
@@ -1055,6 +1105,11 @@ class Recipe:
     grid_size: str = "3x3"
     mini_game_type: str = ""
     metadata: Dict = field(default_factory=dict)
+    # Enchanting-specific fields
+    is_enchantment: bool = False
+    enchantment_name: str = ""
+    applicable_to: List[str] = field(default_factory=list)
+    effect: Dict = field(default_factory=dict)
 
 
 class RecipeDatabase:
@@ -1096,13 +1151,29 @@ class RecipeDatabase:
             with open(filepath, 'r') as f:
                 data = json.load(f)
             for recipe_data in data.get('recipes', []):
+                # Check if this is an enchanting recipe (has enchantmentId instead of outputId)
+                is_enchanting = 'enchantmentId' in recipe_data
+
+                if is_enchanting:
+                    # For enchanting: use enchantmentId as the output_id
+                    output_id = recipe_data.get('enchantmentId', '')
+                    output_qty = 1  # Enchantments don't have quantity
+                else:
+                    # Regular crafting: use outputId
+                    output_id = recipe_data.get('outputId', '')
+                    output_qty = recipe_data.get('outputQty', 1)
+
                 recipe = Recipe(
                     recipe_id=recipe_data.get('recipeId', ''),
-                    output_id=recipe_data.get('outputId', ''),
-                    output_qty=recipe_data.get('outputQty', 1),
+                    output_id=output_id,
+                    output_qty=output_qty,
                     station_type=station_type,
                     station_tier=recipe_data.get('stationTier', 1),
                     inputs=recipe_data.get('inputs', []),
+                    is_enchantment=is_enchanting,
+                    enchantment_name=recipe_data.get('enchantmentName', ''),
+                    applicable_to=recipe_data.get('applicableTo', []),
+                    effect=recipe_data.get('effect', {})
                 )
                 self.recipes[recipe.recipe_id] = recipe
                 self.recipes_by_station[station_type].append(recipe)
@@ -1411,6 +1482,7 @@ class ItemStack:
     item_id: str
     quantity: int
     max_stack: int = 99
+    equipment_data: Optional['EquipmentItem'] = None  # For equipment items, store actual instance
 
     def __post_init__(self):
         mat_db = MaterialDatabase.get_instance()
@@ -1423,6 +1495,9 @@ class ItemStack:
         equip_db = EquipmentDatabase.get_instance()
         if equip_db.is_equipment(self.item_id):
             self.max_stack = 1
+            # Create equipment instance if not already set
+            if self.equipment_data is None:
+                self.equipment_data = equip_db.create_equipment_from_id(self.item_id)
 
     def can_add(self, amount: int) -> bool:
         return self.quantity + amount <= self.max_stack
@@ -1444,6 +1519,10 @@ class ItemStack:
         """Get equipment data if this is equipment"""
         if not self.is_equipment():
             return None
+        # Return the stored equipment instance if available
+        if self.equipment_data:
+            return self.equipment_data
+        # Otherwise create a new one (shouldn't happen for equipment items)
         return EquipmentDatabase.get_instance().create_equipment_from_id(self.item_id)
 
 
@@ -1455,7 +1534,7 @@ class Inventory:
         self.dragging_stack: Optional[ItemStack] = None
         self.dragging_from_equipment: bool = False  # Track if dragging from equipment slot
 
-    def add_item(self, item_id: str, quantity: int) -> bool:
+    def add_item(self, item_id: str, quantity: int, equipment_instance: Optional['EquipmentItem'] = None) -> bool:
         remaining = quantity
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
@@ -1466,7 +1545,9 @@ class Inventory:
                 empty = self.get_empty_slot()
                 if empty is None:
                     return False
-                self.slots[empty] = ItemStack(item_id, 1, 1)
+                # Use provided equipment instance or create new one
+                equip_data = equipment_instance if equipment_instance else None
+                self.slots[empty] = ItemStack(item_id, 1, 1, equip_data)
             return True
 
         # Normal materials can stack
@@ -1801,9 +1882,9 @@ class Character:
         # Remove from inventory
         self.inventory.slots[slot_index] = None
 
-        # If there was an old item, put it back in inventory
+        # If there was an old item, put it back in inventory (preserve equipment data)
         if old_item:
-            if not self.inventory.add_item(old_item.item_id, 1):
+            if not self.inventory.add_item(old_item.item_id, 1, old_item):
                 # Inventory full, swap back
                 self.equipment.slots[equipment.slot] = old_item
                 self.inventory.slots[slot_index] = item_stack
@@ -1821,8 +1902,8 @@ class Character:
         if not item:
             return False, "Empty slot"
 
-        # Try to add to inventory
-        if not self.inventory.add_item(item.item_id, 1):
+        # Try to add to inventory (preserve equipment data)
+        if not self.inventory.add_item(item.item_id, 1, item):
             return False, "Inventory full"
 
         # Remove from equipment
@@ -2874,6 +2955,12 @@ class GameEngine:
             self.add_notification("Not enough materials!", (255, 100, 100))
             return
 
+        # Handle enchanting recipes differently
+        if recipe.is_enchantment:
+            self._apply_enchantment(recipe)
+            return
+
+        # Regular crafting
         if recipe_db.consume_materials(recipe, self.character.inventory):
             activity_map = {
                 'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
@@ -2903,6 +2990,51 @@ class GameEngine:
                 out_name = out_mat.name if out_mat else recipe.output_id
 
             self.add_notification(f"Crafted {out_name} x{recipe.output_qty}", (100, 255, 100))
+
+    def _apply_enchantment(self, recipe: Recipe):
+        """Apply an enchantment to an item in inventory"""
+        recipe_db = RecipeDatabase.get_instance()
+
+        # Find compatible items in inventory
+        compatible_items = []
+        for i, slot in enumerate(self.character.inventory.slots):
+            if slot and slot.is_equipment() and slot.equipment_data:
+                equipment = slot.equipment_data
+                can_apply, reason = equipment.can_apply_enchantment(
+                    recipe.output_id, recipe.applicable_to, recipe.effect
+                )
+                if can_apply:
+                    compatible_items.append((i, slot))
+
+        if not compatible_items:
+            self.add_notification("No compatible items found!", (255, 100, 100))
+            return
+
+        # For now, apply to the first compatible item found
+        # TODO: Add UI for item selection
+        slot_idx, slot = compatible_items[0]
+        equipment = slot.equipment_data
+
+        # Consume materials
+        if not recipe_db.consume_materials(recipe, self.character.inventory):
+            self.add_notification("Failed to consume materials!", (255, 100, 100))
+            return
+
+        # Apply enchantment to the equipment instance stored in inventory
+        equipment.apply_enchantment(recipe.output_id, recipe.enchantment_name, recipe.effect)
+
+        # Record activity
+        self.character.activities.record_activity('enchanting', 1)
+        xp_reward = 20 * recipe.station_tier
+        self.character.leveling.add_exp(xp_reward)
+
+        new_title = self.character.titles.check_for_title(
+            'enchanting', self.character.activities.get_count('enchanting')
+        )
+        if new_title:
+            self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+
+        self.add_notification(f"Applied {recipe.enchantment_name} to {equipment.name}!", (100, 255, 255))
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
         if self.character.inventory.dragging_stack:
