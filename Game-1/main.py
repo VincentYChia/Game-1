@@ -1893,6 +1893,11 @@ class Character:
 
     def _give_debug_items(self):
         """Give starter items in debug mode"""
+        # Set max level
+        self.leveling.level = self.leveling.max_level
+        self.leveling.unallocated_stat_points = 100
+        print(f"🔧 DEBUG: Set level to {self.leveling.level} with {self.leveling.unallocated_stat_points} stat points")
+
         # Give lots of materials
         self.inventory.add_item("copper_ore", 50)
         self.inventory.add_item("iron_ore", 50)
@@ -2710,9 +2715,9 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
-    def render_enchantment_selection_ui(self, mouse_pos: Tuple[int, int]):
+    def render_enchantment_selection_ui(self, mouse_pos: Tuple[int, int], recipe: Recipe, compatible_items: List):
         """Render UI for selecting which item to apply enchantment to"""
-        if not self.enchantment_selection_active or not self.enchantment_recipe:
+        if not recipe or not compatible_items:
             return None
 
         ww, wh = 600, 500
@@ -2723,7 +2728,7 @@ class Renderer:
         surf.blit(surf.fill((25, 25, 35, 250)), (0, 0))
 
         # Title
-        title_text = f"Apply {self.enchantment_recipe.enchantment_name}"
+        title_text = f"Apply {recipe.enchantment_name}"
         surf.blit(self.font.render(title_text, True, (255, 215, 0)), (20, 20))
         surf.blit(self.small_font.render("[ESC] Cancel | [CLICK] Select Item", True, (180, 180, 180)),
                   (ww - 280, 20))
@@ -2737,7 +2742,7 @@ class Renderer:
         slot_size = 60
         item_rects = []
 
-        for idx, (source_type, source_id, item_stack, equipment) in enumerate(self.enchantment_compatible_items):
+        for idx, (source_type, source_id, item_stack, equipment) in enumerate(compatible_items):
             if y_pos + slot_size + 10 > wh - 20:
                 break  # Don't overflow window
 
@@ -3510,7 +3515,8 @@ class GameEngine:
 
             # Enchantment selection UI (rendered on top of everything)
             if self.enchantment_selection_active:
-                self.enchantment_item_rects = self.renderer.render_enchantment_selection_ui(self.mouse_pos)
+                self.enchantment_item_rects = self.renderer.render_enchantment_selection_ui(
+                    self.mouse_pos, self.enchantment_recipe, self.enchantment_compatible_items)
             else:
                 self.enchantment_item_rects = None
 
