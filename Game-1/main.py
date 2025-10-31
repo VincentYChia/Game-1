@@ -246,6 +246,55 @@ class MaterialDatabase:
             print(f"⚠ Error loading refining items: {e}")
             return False
 
+    def load_stackable_items(self, filepath: str, categories: list = None):
+        """Load stackable items (consumables, devices, etc.) from item files
+
+        Args:
+            filepath: Path to the JSON file
+            categories: List of categories to load (e.g., ['consumable', 'device'])
+                       If None, loads all items with stackable=True flag
+        """
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for section, section_data in data.items():
+                if section == 'metadata':
+                    continue
+
+                if isinstance(section_data, list):
+                    for item_data in section_data:
+                        category = item_data.get('category', '')
+                        flags = item_data.get('flags', {})
+                        is_stackable = flags.get('stackable', False)
+
+                        # Load if category matches (or no filter) AND item is stackable
+                        should_load = is_stackable and (
+                            categories is None or category in categories
+                        )
+
+                        if should_load:
+                            mat = MaterialDefinition(
+                                material_id=item_data.get('itemId', ''),
+                                name=item_data.get('name', ''),
+                                tier=item_data.get('tier', 1),
+                                category=category,
+                                rarity=item_data.get('rarity', 'common'),
+                                description=item_data.get('metadata', {}).get('narrative', ''),
+                                max_stack=item_data.get('stackSize', 99),
+                                properties={}
+                            )
+                            if mat.material_id and mat.material_id not in self.materials:
+                                self.materials[mat.material_id] = mat
+                                count += 1
+
+            print(f"✓ Loaded {count} stackable items from {filepath} (categories: {categories})")
+            return True
+        except Exception as e:
+            print(f"⚠ Error loading stackable items from {filepath}: {e}")
+            return False
+
 
 # ============================================================================
 # EQUIPMENT SYSTEM
@@ -373,30 +422,55 @@ class EquipmentDatabase:
 
     def load_from_file(self, filepath: str):
         count = 0
+        print(f"\n🔧 EquipmentDatabase.load_from_file('{filepath}')")
         try:
             with open(filepath, 'r') as f:
                 data = json.load(f)
-            for section in ['weapons', 'armor', 'accessories', 'tools']:  # FIX #3: Added 'tools'
-                if section in data:
-                    for item_data in data[section]:
+            print(f"   - JSON sections available: {list(data.keys())}")
+
+            # Load from all sections except 'metadata'
+            # ONLY load items with category='equipment' (weapons, armor, tools, etc.)
+            # Exclude consumables, devices, materials - those should stack!
+            for section, section_data in data.items():
+                if section == 'metadata':
+                    continue
+
+                # Check if this section contains a list of items
+                if isinstance(section_data, list):
+                    print(f"   - Loading section '{section}'...")
+                    for item_data in section_data:
                         try:
                             item_id = item_data.get('itemId', '')
-                            if item_id:
+                            category = item_data.get('category', '')
+
+                            # ONLY load equipment items (not consumables, devices, materials)
+                            if item_id and category == 'equipment':
                                 self.items[item_id] = item_data
                                 count += 1
+                                if count <= 5:  # Show first 5 items loaded
+                                    print(f"      ✓ Loaded: {item_id} (category: {category})")
+                            elif item_id and category:
+                                print(f"      ⊘ Skipped: {item_id} (category: {category}, not equipment)")
                         except Exception as e:
-                            print(f"⚠ Skipping invalid item: {e}")
+                            print(f"      ⚠ Skipping invalid item: {e}")
                             continue
+                else:
+                    print(f"   - Skipping non-list section '{section}'")
+
             if count > 0:
                 self.loaded = True
-                print(f"✓ Loaded {count} equipment items")
+                print(f"✓ Loaded {count} equipment items from this file")
+                print(f"   Total equipment items in DB: {len(self.items)}")
                 return True
             else:
-                raise Exception("No valid items loaded")
+                print(f"⚠ No items loaded from {filepath}")
+                # Don't fail completely if one file has no items
+                return True
         except Exception as e:
             print(f"⚠ Error loading equipment: {e}")
-            print(f"⚠ Creating placeholder equipment...")
-            self._create_placeholders()
+            if not self.loaded:
+                print(f"⚠ Creating placeholder equipment...")
+                self._create_placeholders()
             return False
 
     def _create_placeholders(self):
@@ -481,12 +555,33 @@ class EquipmentDatabase:
         else:
             dur_max = int(durability)
 
+        # Map JSON slot names to EquipmentManager slot names
+        slot_mapping = {
+            'head': 'helmet',
+            'chest': 'chestplate',
+            'legs': 'leggings',
+            'feet': 'boots',
+            'hands': 'gauntlets',
+            # These already match:
+            'mainHand': 'mainHand',
+            'offHand': 'offHand',
+            'helmet': 'helmet',
+            'chestplate': 'chestplate',
+            'leggings': 'leggings',
+            'boots': 'boots',
+            'gauntlets': 'gauntlets',
+            'accessory': 'accessory',
+        }
+
+        json_slot = data.get('slot', 'mainHand')
+        mapped_slot = slot_mapping.get(json_slot, json_slot)
+
         return EquipmentItem(
             item_id=item_id,
             name=data.get('name', item_id),
             tier=data.get('tier', 1),
             rarity=data.get('rarity', 'common'),
-            slot=data.get('slot', 'mainHand'),
+            slot=mapped_slot,
             damage=damage,
             defense=stats.get('defense', 0),
             durability_current=dur_max,
@@ -499,7 +594,14 @@ class EquipmentDatabase:
 
     def is_equipment(self, item_id: str) -> bool:
         """Check if an item ID is equipment"""
-        return item_id in self.items
+        result = item_id in self.items
+        if not result and item_id == '':
+            import traceback
+            print(f"      🔍 EquipmentDB.is_equipment('{item_id}'): False - EMPTY STRING!")
+            print(f"         Available equipment IDs: {list(self.items.keys())[:10]}...")  # Show first 10
+            print(f"         Call stack:")
+            traceback.print_stack()
+        return result
 
 
 class EquipmentManager:
@@ -517,16 +619,24 @@ class EquipmentManager:
 
     def equip(self, item: EquipmentItem, character) -> Tuple[Optional[EquipmentItem], str]:
         """Equip an item, returns (previously_equipped_item, status_message)"""
+        print(f"      🔧 EquipmentManager.equip() called")
+        print(f"         - item: {item.name} (slot: {item.slot})")
+
         can_equip, reason = item.can_equip(character)
+        print(f"         - can_equip: {can_equip}, reason: {reason}")
+
         if not can_equip:
+            print(f"         ❌ Cannot equip: {reason}")
             return None, reason
 
         slot = item.slot
         if slot not in self.slots:
+            print(f"         ❌ Invalid slot '{slot}' not in {list(self.slots.keys())}")
             return None, f"Invalid slot: {slot}"
 
         old_item = self.slots[slot]
         self.slots[slot] = item
+        print(f"         ✅ Equipped to slot '{slot}'")
 
         # Recalculate character stats
         character.recalculate_stats()
@@ -1150,6 +1260,7 @@ class RecipeDatabase:
         try:
             with open(filepath, 'r') as f:
                 data = json.load(f)
+            loaded_count = 0
             for recipe_data in data.get('recipes', []):
                 # Check if this is an enchanting recipe (has enchantmentId instead of outputId)
                 is_enchanting = 'enchantmentId' in recipe_data
@@ -1158,17 +1269,34 @@ class RecipeDatabase:
                     # For enchanting: use enchantmentId as the output_id
                     output_id = recipe_data.get('enchantmentId', '')
                     output_qty = 1  # Enchantments don't have quantity
+                    station_tier = recipe_data.get('stationTier', 1)
+                elif 'outputs' in recipe_data:
+                    # New format: outputs array (used in refining recipes)
+                    outputs = recipe_data.get('outputs', [])
+                    if outputs and len(outputs) > 0:
+                        output_id = outputs[0].get('materialId', outputs[0].get('itemId', ''))
+                        output_qty = outputs[0].get('quantity', 1)
+                    else:
+                        output_id = ''
+                        output_qty = 1
+                    station_tier = recipe_data.get('stationTierRequired', recipe_data.get('stationTier', 1))
                 else:
                     # Regular crafting: use outputId
                     output_id = recipe_data.get('outputId', '')
                     output_qty = recipe_data.get('outputQty', 1)
+                    station_tier = recipe_data.get('stationTier', 1)
+
+                # Skip recipes with empty output_id
+                if not output_id or output_id.strip() == '':
+                    print(f"⚠ Skipping recipe {recipe_data.get('recipeId', 'UNKNOWN')} - no valid output ID")
+                    continue
 
                 recipe = Recipe(
                     recipe_id=recipe_data.get('recipeId', ''),
                     output_id=output_id,
                     output_qty=output_qty,
                     station_type=station_type,
-                    station_tier=recipe_data.get('stationTier', 1),
+                    station_tier=station_tier,
                     inputs=recipe_data.get('inputs', []),
                     is_enchantment=is_enchanting,
                     enchantment_name=recipe_data.get('enchantmentName', ''),
@@ -1177,8 +1305,10 @@ class RecipeDatabase:
                 )
                 self.recipes[recipe.recipe_id] = recipe
                 self.recipes_by_station[station_type].append(recipe)
-            return len(data.get('recipes', []))
-        except:
+                loaded_count += 1
+            return loaded_count
+        except Exception as e:
+            print(f"⚠ Error loading recipes from {filepath}: {e}")
             return 0
 
     def _create_default_recipes(self):
@@ -1485,19 +1615,34 @@ class ItemStack:
     equipment_data: Optional['EquipmentItem'] = None  # For equipment items, store actual instance
 
     def __post_init__(self):
+        print(f"      📦 ItemStack.__post_init__ called for '{self.item_id}'")
+        print(f"         - quantity: {self.quantity}")
+        print(f"         - max_stack: {self.max_stack}")
+        print(f"         - equipment_data before: {self.equipment_data}")
+
         mat_db = MaterialDatabase.get_instance()
         if mat_db.loaded:
             mat = mat_db.get_material(self.item_id)
             if mat:
                 self.max_stack = mat.max_stack
+                print(f"         - Updated max_stack from material: {self.max_stack}")
 
         # Equipment items don't stack
         equip_db = EquipmentDatabase.get_instance()
-        if equip_db.is_equipment(self.item_id):
+        is_equip = equip_db.is_equipment(self.item_id)
+        print(f"         - is_equipment: {is_equip}")
+
+        if is_equip:
             self.max_stack = 1
             # Create equipment instance if not already set
             if self.equipment_data is None:
+                print(f"         - equipment_data is None, creating new instance...")
                 self.equipment_data = equip_db.create_equipment_from_id(self.item_id)
+                print(f"         - Created: {self.equipment_data}")
+            else:
+                print(f"         - equipment_data already set: {self.equipment_data.name}")
+
+        print(f"         - equipment_data after: {self.equipment_data}")
 
     def can_add(self, amount: int) -> bool:
         return self.quantity + amount <= self.max_stack
@@ -1535,24 +1680,51 @@ class Inventory:
         self.dragging_from_equipment: bool = False  # Track if dragging from equipment slot
 
     def add_item(self, item_id: str, quantity: int, equipment_instance: Optional['EquipmentItem'] = None) -> bool:
+        print(f"\n   🎒 ADD_ITEM called: item_id='{item_id}', quantity={quantity}, equipment_instance={equipment_instance}")
+
         remaining = quantity
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
         # Equipment doesn't stack
-        if equip_db.is_equipment(item_id):
-            for _ in range(quantity):
+        is_equip = equip_db.is_equipment(item_id)
+        print(f"   🔍 is_equipment check: {is_equip}")
+
+        if is_equip:
+            print(f"   ⚙️ Processing as equipment (non-stackable)")
+            for i in range(quantity):
                 empty = self.get_empty_slot()
+                print(f"   📍 Empty slot found: {empty}")
                 if empty is None:
+                    print(f"   ❌ No empty slot available!")
                     return False
                 # Use provided equipment instance or create new one
-                equip_data = equipment_instance if equipment_instance else None
-                self.slots[empty] = ItemStack(item_id, 1, 1, equip_data)
+                print(f"   🔧 equipment_instance provided: {equipment_instance is not None}")
+                equip_data = equipment_instance if equipment_instance else equip_db.create_equipment_from_id(item_id)
+                print(f"   🔧 equip_data created: {equip_data}")
+                if equip_data:
+                    print(f"      - name: {equip_data.name}")
+                    print(f"      - tier: {equip_data.tier}")
+                    print(f"      - item_id: {equip_data.item_id}")
+                else:
+                    print(f"   ❌ WARNING: equip_data is None!")
+
+                stack = ItemStack(item_id, 1, 1, equip_data)
+                print(f"   📦 ItemStack created: {stack}")
+                print(f"      - item_id: {stack.item_id}")
+                print(f"      - quantity: {stack.quantity}")
+                print(f"      - equipment_data: {stack.equipment_data}")
+
+                self.slots[empty] = stack
+                print(f"   ✅ Added to slot {empty}")
             return True
 
         # Normal materials can stack
+        print(f"   📚 Processing as material (stackable)")
         mat = mat_db.get_material(item_id)
+        print(f"   📚 Material lookup: {mat}")
         max_stack = mat.max_stack if mat else 99
+        print(f"   📚 Max stack size: {max_stack}")
 
         for slot in self.slots:
             if slot and slot.item_id == item_id and remaining > 0:
@@ -1561,9 +1733,11 @@ class Inventory:
         while remaining > 0:
             empty = self.get_empty_slot()
             if empty is None:
+                print(f"   ❌ No empty slot available!")
                 return False
             stack_size = min(remaining, max_stack)
             self.slots[empty] = ItemStack(item_id, stack_size, max_stack)
+            print(f"   ✅ Added {stack_size} to slot {empty}")
             remaining -= stack_size
         return True
 
@@ -1719,6 +1893,11 @@ class Character:
 
     def _give_debug_items(self):
         """Give starter items in debug mode"""
+        # Set max level
+        self.leveling.level = self.leveling.max_level
+        self.leveling.unallocated_stat_points = 100
+        print(f"🔧 DEBUG: Set level to {self.leveling.level} with {self.leveling.unallocated_stat_points} stat points")
+
         # Give lots of materials
         self.inventory.add_item("copper_ore", 50)
         self.inventory.add_item("iron_ore", 50)
@@ -1860,27 +2039,49 @@ class Character:
 
     def try_equip_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
         """Try to equip item from inventory slot"""
+        print(f"\n🎯 try_equip_from_inventory called for slot {slot_index}")
+
         if slot_index < 0 or slot_index >= self.inventory.max_slots:
+            print(f"   ❌ Invalid slot index")
             return False, "Invalid slot"
 
         item_stack = self.inventory.slots[slot_index]
         if not item_stack:
+            print(f"   ❌ Empty slot")
             return False, "Empty slot"
 
-        if not item_stack.is_equipment():
+        print(f"   📦 Item: {item_stack.item_id}")
+        is_equip = item_stack.is_equipment()
+        print(f"   🔍 is_equipment(): {is_equip}")
+
+        if not is_equip:
+            print(f"   ❌ Not equipment - FAILED")
             return False, "Not equipment"
 
         equipment = item_stack.get_equipment()
+        print(f"   ⚙️  get_equipment(): {equipment}")
+
         if not equipment:
+            print(f"   ❌ Invalid equipment - FAILED")
             return False, "Invalid equipment"
 
+        print(f"   📋 Equipment details:")
+        print(f"      - name: {equipment.name}")
+        print(f"      - slot: {equipment.slot}")
+        print(f"      - tier: {equipment.tier}")
+
         # Try to equip
+        print(f"   🔄 Calling equipment.equip()...")
         old_item, status = self.equipment.equip(equipment, self)
+        print(f"   📤 equip() returned: old_item={old_item}, status={status}")
+
         if status != "OK":
+            print(f"   ❌ Equip failed with status: {status}")
             return False, status
 
         # Remove from inventory
         self.inventory.slots[slot_index] = None
+        print(f"   ✅ Removed from inventory slot {slot_index}")
 
         # If there was an old item, put it back in inventory (preserve equipment data)
         if old_item:
@@ -1889,8 +2090,11 @@ class Character:
                 self.equipment.slots[equipment.slot] = old_item
                 self.inventory.slots[slot_index] = item_stack
                 self.recalculate_stats()
+                print(f"   ❌ Inventory full, swapped back")
                 return False, "Inventory full"
+            print(f"   ↩️  Returned old item to inventory")
 
+        print(f"   ✅ SUCCESS - Equipped {equipment.name}")
         return True, "OK"
 
     def try_unequip_to_inventory(self, slot_name: str) -> Tuple[bool, str]:
@@ -2511,6 +2715,80 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
+    def render_enchantment_selection_ui(self, mouse_pos: Tuple[int, int], recipe: Recipe, compatible_items: List):
+        """Render UI for selecting which item to apply enchantment to"""
+        if not recipe or not compatible_items:
+            return None
+
+        ww, wh = 600, 500
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = 100
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.blit(surf.fill((25, 25, 35, 250)), (0, 0))
+
+        # Title
+        title_text = f"Apply {recipe.enchantment_name}"
+        surf.blit(self.font.render(title_text, True, (255, 215, 0)), (20, 20))
+        surf.blit(self.small_font.render("[ESC] Cancel | [CLICK] Select Item", True, (180, 180, 180)),
+                  (ww - 280, 20))
+
+        # Description
+        y_pos = 60
+        surf.blit(self.small_font.render("Select an item to enchant:", True, (200, 200, 200)), (20, y_pos))
+        y_pos += 30
+
+        # List compatible items
+        slot_size = 60
+        item_rects = []
+
+        for idx, (source_type, source_id, item_stack, equipment) in enumerate(compatible_items):
+            if y_pos + slot_size + 10 > wh - 20:
+                break  # Don't overflow window
+
+            item_rect = pygame.Rect(20, y_pos, ww - 40, slot_size + 10)
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+            is_hovered = item_rect.collidepoint(rx, ry)
+
+            # Background
+            bg_color = (50, 50, 70) if is_hovered else (35, 35, 50)
+            pygame.draw.rect(surf, bg_color, item_rect)
+            pygame.draw.rect(surf, (100, 100, 150) if is_hovered else (70, 70, 90), item_rect, 2)
+
+            # Item icon/color
+            icon_rect = pygame.Rect(30, y_pos + 5, slot_size, slot_size)
+            rarity_color = Config.RARITY_COLORS.get(equipment.rarity, (200, 200, 200))
+            pygame.draw.rect(surf, rarity_color, icon_rect)
+            pygame.draw.rect(surf, (50, 50, 50), icon_rect, 2)
+
+            # Tier
+            tier_text = f"T{equipment.tier}"
+            tier_surf = self.small_font.render(tier_text, True, (0, 0, 0))
+            surf.blit(tier_surf, (35, y_pos + 10))
+
+            # Item name and info
+            name_x = 110
+            surf.blit(self.small_font.render(equipment.name, True, (255, 255, 255)),
+                     (name_x, y_pos + 10))
+
+            # Location (inventory or equipped)
+            location_text = f"[{source_type.upper()}]" if source_type == 'equipped' else f"[Inventory slot {source_id}]"
+            surf.blit(self.tiny_font.render(location_text, True, (150, 150, 200)),
+                     (name_x, y_pos + 35))
+
+            # Show current enchantments if any
+            if equipment.enchantments:
+                enchant_count = len(equipment.enchantments)
+                surf.blit(self.tiny_font.render(f"Enchantments: {enchant_count}", True, (100, 200, 200)),
+                         (name_x, y_pos + 50))
+
+            item_rects.append((item_rect, source_type, source_id, item_stack, equipment))
+            y_pos += slot_size + 15
+
+        self.screen.blit(surf, (wx, wy))
+        self.enchantment_selection_rect = pygame.Rect(wx, wy, ww, wh)
+        return item_rects
+
     def render_class_selection_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.class_selection_open:
             return None
@@ -2707,10 +2985,23 @@ class GameEngine:
         MaterialDatabase.get_instance().load_from_file("items.JSON/items-materials-1.JSON")
         MaterialDatabase.get_instance().load_refining_items(
             "items.JSON/items-refining-1.JSON")  # FIX #2: Load ingots/planks
+        # Load stackable consumables (potions, oils, etc.)
+        MaterialDatabase.get_instance().load_stackable_items(
+            "items.JSON/items-alchemy-1.JSON", categories=['consumable'])
+        # Load stackable devices (turrets, etc.)
+        MaterialDatabase.get_instance().load_stackable_items(
+            "items.JSON/items-smithing-1.JSON", categories=['device'])
         TranslationDatabase.get_instance().load_from_files()
         SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
-        EquipmentDatabase.get_instance().load_from_file("items.JSON/items-smithing-2.JSON")
+
+        # Load equipment from all item files
+        equip_db = EquipmentDatabase.get_instance()
+        equip_db.load_from_file("items.JSON/items-smithing-1.JSON")
+        equip_db.load_from_file("items.JSON/items-smithing-2.JSON")
+        equip_db.load_from_file("items.JSON/items-tools-1.JSON")
+        equip_db.load_from_file("items.JSON/items-alchemy-1.JSON")
+
         TitleDatabase.get_instance().load_from_file("progression/titles-1.JSON")
         ClassDatabase.get_instance().load_from_file("progression/classes-1.JSON")
 
@@ -2730,6 +3021,12 @@ class GameEngine:
         self.equipment_rects = {}
         self.class_selection_rect = None
         self.class_buttons = []
+
+        # Enchantment/Adornment selection UI
+        self.enchantment_selection_active = False
+        self.enchantment_recipe = None
+        self.enchantment_compatible_items = []
+        self.enchantment_selection_rect = None
 
         self.keys_pressed = set()
         self.mouse_pos = (0, 0)
@@ -2756,7 +3053,10 @@ class GameEngine:
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
                 if event.key == pygame.K_ESCAPE:
-                    if self.character.crafting_ui_open:
+                    if self.enchantment_selection_active:
+                        self._close_enchantment_selection()
+                        print("🚫 Enchantment selection cancelled")
+                    elif self.character.crafting_ui_open:
                         self.character.close_crafting_ui()
                     elif self.character.stats_ui_open:
                         self.character.toggle_stats_ui()
@@ -2777,6 +3077,13 @@ class GameEngine:
                 elif event.key == pygame.K_F1:
                     Config.DEBUG_INFINITE_RESOURCES = not Config.DEBUG_INFINITE_RESOURCES
                     status = "ENABLED" if Config.DEBUG_INFINITE_RESOURCES else "DISABLED"
+
+                    # Set max level when enabling debug mode
+                    if Config.DEBUG_INFINITE_RESOURCES:
+                        self.character.leveling.level = self.character.leveling.max_level
+                        self.character.leveling.unallocated_stat_points = 100
+                        print(f"🔧 DEBUG: Set level to {self.character.leveling.level} with 100 stat points")
+
                     self.add_notification(f"Debug Mode {status}", (255, 100, 255))
                     print(f"⚠ Debug Mode {status}")
             elif event.type == pygame.KEYUP:
@@ -2795,6 +3102,12 @@ class GameEngine:
         current_time = pygame.time.get_ticks()
         is_double_click = (current_time - self.last_click_time < 300)
         self.last_click_time = current_time
+
+        # Enchantment selection UI (priority over other UIs)
+        if self.enchantment_selection_active and self.enchantment_selection_rect:
+            if self.enchantment_selection_rect.collidepoint(mouse_pos):
+                self.handle_enchantment_selection_click(mouse_pos)
+                return
 
         # Class selection
         if self.character.class_selection_open and self.class_selection_rect:
@@ -2837,17 +3150,28 @@ class GameEngine:
                         # Double-click to equip equipment
                         if is_double_click and self.last_clicked_slot == idx:
                             item_stack = self.character.inventory.slots[idx]
-                            if item_stack and item_stack.is_equipment():
-                                equipment = item_stack.get_equipment()
-                                if equipment:  # FIX #4: Check equipment exists before trying to equip
-                                    success, msg = self.character.try_equip_from_inventory(idx)
-                                    if success:
-                                        self.add_notification(f"Equipped {equipment.name}", (100, 255, 100))
+                            print(f"\n🖱️  Double-click detected on slot {idx}")
+                            if item_stack:
+                                print(f"   Item: {item_stack.item_id}")
+                                is_equip = item_stack.is_equipment()
+                                print(f"   is_equipment(): {is_equip}")
+                                if is_equip:
+                                    equipment = item_stack.get_equipment()
+                                    print(f"   get_equipment(): {equipment}")
+                                    if equipment:  # FIX #4: Check equipment exists before trying to equip
+                                        success, msg = self.character.try_equip_from_inventory(idx)
+                                        if success:
+                                            self.add_notification(f"Equipped {equipment.name}", (100, 255, 100))
+                                        else:
+                                            self.add_notification(f"Cannot equip: {msg}", (255, 100, 100))
                                     else:
-                                        self.add_notification(f"Cannot equip: {msg}", (255, 100, 100))
+                                        print(f"   ❌ equipment is None!")
+                                        self.add_notification("Invalid equipment data", (255, 100, 100))
                                 else:
-                                    self.add_notification("Invalid equipment data", (255, 100, 100))
-                                return
+                                    print(f"   ⚠️  Not equipment, skipping")
+                            else:
+                                print(f"   ⚠️  item_stack is None")
+                            return
 
                         self.last_clicked_slot = idx
 
@@ -2886,6 +3210,21 @@ class GameEngine:
                         mat = mat_db.get_material(item_id)
                         item_name = mat.name if mat else item_id
                         self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+
+    def handle_enchantment_selection_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicks on the enchantment selection UI"""
+        if not self.enchantment_item_rects:
+            return
+
+        for item_rect, source_type, source_id, item_stack, equipment in self.enchantment_item_rects:
+            # Check if click is within this item's rect (already relative to window)
+            wx, wy = self.enchantment_selection_rect.x, self.enchantment_selection_rect.y
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+
+            if item_rect.collidepoint(rx, ry):
+                print(f"✨ Selected {equipment.name} for enchantment")
+                self._complete_enchantment_application(source_type, source_id, item_stack, equipment)
+                break
 
     def handle_class_selection_click(self, mouse_pos: Tuple[int, int]):
         if not self.class_buttons:
@@ -2951,8 +3290,17 @@ class GameEngine:
         equip_db = EquipmentDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
 
+        print("\n" + "="*80)
+        print(f"🔨 CRAFT_ITEM DEBUG START")
+        print(f"Recipe ID: {recipe.recipe_id}")
+        print(f"Output ID: {recipe.output_id}")
+        print(f"Output Qty: {recipe.output_qty}")
+        print(f"Station Type: {recipe.station_type}")
+        print("="*80)
+
         if not recipe_db.can_craft(recipe, self.character.inventory):
             self.add_notification("Not enough materials!", (255, 100, 100))
+            print("❌ Cannot craft - not enough materials")
             return
 
         # Handle enchanting recipes differently
@@ -2978,8 +3326,33 @@ class GameEngine:
             if new_title:
                 self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
+            # Check what type of item this is
+            print(f"🔍 Checking item type for: '{recipe.output_id}'")
+            is_equip = equip_db.is_equipment(recipe.output_id)
+            print(f"   - is_equipment: {is_equip}")
+
+            if is_equip:
+                test_equip = equip_db.create_equipment_from_id(recipe.output_id)
+                print(f"   - test create equipment: {test_equip}")
+                if test_equip:
+                    print(f"     - name: {test_equip.name}")
+                    print(f"     - tier: {test_equip.tier}")
+                    print(f"     - slot: {test_equip.slot}")
+                else:
+                    print(f"     ❌ create_equipment_from_id returned None!")
+            else:
+                test_mat = mat_db.get_material(recipe.output_id)
+                print(f"   - test get material: {test_mat}")
+                if test_mat:
+                    print(f"     - name: {test_mat.name}")
+                    print(f"     - tier: {test_mat.tier}")
+                else:
+                    print(f"     ❌ get_material returned None!")
+
             # Add to inventory
-            self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
+            print(f"📦 Calling inventory.add_item('{recipe.output_id}', {recipe.output_qty})")
+            success = self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
+            print(f"   - add_item returned: {success}")
 
             # Get proper name
             if equip_db.is_equipment(recipe.output_id):
@@ -2989,12 +3362,12 @@ class GameEngine:
                 out_mat = mat_db.get_material(recipe.output_id)
                 out_name = out_mat.name if out_mat else recipe.output_id
 
+            print(f"✅ Crafting complete: {out_name} x{recipe.output_qty}")
+            print("="*80 + "\n")
             self.add_notification(f"Crafted {out_name} x{recipe.output_qty}", (100, 255, 100))
 
     def _apply_enchantment(self, recipe: Recipe):
-        """Apply an enchantment to an item in inventory"""
-        recipe_db = RecipeDatabase.get_instance()
-
+        """Apply an enchantment to an item - shows selection UI"""
         # Find compatible items in inventory
         compatible_items = []
         for i, slot in enumerate(self.character.inventory.slots):
@@ -3004,23 +3377,39 @@ class GameEngine:
                     recipe.output_id, recipe.applicable_to, recipe.effect
                 )
                 if can_apply:
-                    compatible_items.append((i, slot))
+                    compatible_items.append(('inventory', i, slot, equipment))
+
+        # Also check equipped items
+        for slot_name, equipped_item in self.character.equipment.slots.items():
+            if equipped_item:
+                can_apply, reason = equipped_item.can_apply_enchantment(
+                    recipe.output_id, recipe.applicable_to, recipe.effect
+                )
+                if can_apply:
+                    compatible_items.append(('equipped', slot_name, None, equipped_item))
 
         if not compatible_items:
             self.add_notification("No compatible items found!", (255, 100, 100))
             return
 
-        # For now, apply to the first compatible item found
-        # TODO: Add UI for item selection
-        slot_idx, slot = compatible_items[0]
-        equipment = slot.equipment_data
+        # Open selection UI
+        self.enchantment_selection_active = True
+        self.enchantment_recipe = recipe
+        self.enchantment_compatible_items = compatible_items
+        print(f"🔮 Opening enchantment selection UI with {len(compatible_items)} compatible items")
+
+    def _complete_enchantment_application(self, source_type: str, source_id, item_stack, equipment):
+        """Complete the enchantment application after user selects an item"""
+        recipe = self.enchantment_recipe
+        recipe_db = RecipeDatabase.get_instance()
 
         # Consume materials
         if not recipe_db.consume_materials(recipe, self.character.inventory):
             self.add_notification("Failed to consume materials!", (255, 100, 100))
+            self._close_enchantment_selection()
             return
 
-        # Apply enchantment to the equipment instance stored in inventory
+        # Apply enchantment to the equipment instance
         equipment.apply_enchantment(recipe.output_id, recipe.enchantment_name, recipe.effect)
 
         # Record activity
@@ -3035,6 +3424,14 @@ class GameEngine:
             self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
         self.add_notification(f"Applied {recipe.enchantment_name} to {equipment.name}!", (100, 255, 255))
+        self._close_enchantment_selection()
+
+    def _close_enchantment_selection(self):
+        """Close the enchantment selection UI"""
+        self.enchantment_selection_active = False
+        self.enchantment_recipe = None
+        self.enchantment_compatible_items = []
+        self.enchantment_selection_rect = None
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
         if self.character.inventory.dragging_stack:
@@ -3122,6 +3519,13 @@ class GameEngine:
             else:
                 self.equipment_window_rect = None
                 self.equipment_rects = {}
+
+            # Enchantment selection UI (rendered on top of everything)
+            if self.enchantment_selection_active:
+                self.enchantment_item_rects = self.renderer.render_enchantment_selection_ui(
+                    self.mouse_pos, self.enchantment_recipe, self.enchantment_compatible_items)
+            else:
+                self.enchantment_item_rects = None
 
         pygame.display.flip()
 

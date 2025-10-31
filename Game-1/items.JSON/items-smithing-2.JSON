@@ -689,31 +689,6 @@
   ],
 
   "stations": [
-	{
-	  "metadata": {
-		"narrative": "Advanced granite refinery with improved efficiency and heat control. Earth crystals help maintain steady temperatures for processing higher-grade ores.",
-		"tags": ["station", "refinery", "forging", "standard"]
-	  },
-	  "itemId": "refinery_t2",
-	  "name": "Improved Refinery",
-	  "category": "station",
-	  "type": "forging",
-	  "subtype": "refinery",
-	  "tier": 2,
-	  "rarity": "uncommon",
-	  "statMultipliers": {
-		"weight": 1.0
-	  },
-	  "requirements": {
-		"level": 8,
-		"stats": {}
-	  },
-	  "flags": {
-		"stackable": false,
-		"placeable": true,
-		"repairable": false
-		}
-	},
     {
       "metadata": {
         "narrative": "Basic stone forge suitable for working copper and iron. The foundation of smithing - crude but functional. Every master started with a forge like this.",
