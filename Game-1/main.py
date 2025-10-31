@@ -373,23 +373,33 @@ class EquipmentDatabase:
 
     def load_from_file(self, filepath: str):
         count = 0
+        print(f"\n🔧 EquipmentDatabase.load_from_file('{filepath}')")
         try:
             with open(filepath, 'r') as f:
                 data = json.load(f)
-            for section in ['weapons', 'armor', 'accessories', 'tools']:  # FIX #3: Added 'tools'
+            print(f"   - JSON sections available: {list(data.keys())}")
+
+            for section in ['weapons', 'armor', 'accessories', 'tools', 'stations']:  # Added 'stations'
                 if section in data:
+                    print(f"   - Loading section '{section}'...")
                     for item_data in data[section]:
                         try:
                             item_id = item_data.get('itemId', '')
                             if item_id:
                                 self.items[item_id] = item_data
                                 count += 1
+                                if count <= 5:  # Show first 5 items loaded
+                                    print(f"      ✓ Loaded: {item_id}")
                         except Exception as e:
-                            print(f"⚠ Skipping invalid item: {e}")
+                            print(f"      ⚠ Skipping invalid item: {e}")
                             continue
+                else:
+                    print(f"   - Section '{section}' not found in JSON")
+
             if count > 0:
                 self.loaded = True
-                print(f"✓ Loaded {count} equipment items")
+                print(f"✓ Loaded {count} equipment items total")
+                print(f"   Sample IDs: {list(self.items.keys())[:10]}")
                 return True
             else:
                 raise Exception("No valid items loaded")
@@ -499,7 +509,11 @@ class EquipmentDatabase:
 
     def is_equipment(self, item_id: str) -> bool:
         """Check if an item ID is equipment"""
-        return item_id in self.items
+        result = item_id in self.items
+        if not result:
+            print(f"      🔍 EquipmentDB.is_equipment('{item_id}'): False - not in items dict")
+            print(f"         Available equipment IDs: {list(self.items.keys())[:10]}...")  # Show first 10
+        return result
 
 
 class EquipmentManager:
@@ -1485,19 +1499,34 @@ class ItemStack:
     equipment_data: Optional['EquipmentItem'] = None  # For equipment items, store actual instance
 
     def __post_init__(self):
+        print(f"      📦 ItemStack.__post_init__ called for '{self.item_id}'")
+        print(f"         - quantity: {self.quantity}")
+        print(f"         - max_stack: {self.max_stack}")
+        print(f"         - equipment_data before: {self.equipment_data}")
+
         mat_db = MaterialDatabase.get_instance()
         if mat_db.loaded:
             mat = mat_db.get_material(self.item_id)
             if mat:
                 self.max_stack = mat.max_stack
+                print(f"         - Updated max_stack from material: {self.max_stack}")
 
         # Equipment items don't stack
         equip_db = EquipmentDatabase.get_instance()
-        if equip_db.is_equipment(self.item_id):
+        is_equip = equip_db.is_equipment(self.item_id)
+        print(f"         - is_equipment: {is_equip}")
+
+        if is_equip:
             self.max_stack = 1
             # Create equipment instance if not already set
             if self.equipment_data is None:
+                print(f"         - equipment_data is None, creating new instance...")
                 self.equipment_data = equip_db.create_equipment_from_id(self.item_id)
+                print(f"         - Created: {self.equipment_data}")
+            else:
+                print(f"         - equipment_data already set: {self.equipment_data.name}")
+
+        print(f"         - equipment_data after: {self.equipment_data}")
 
     def can_add(self, amount: int) -> bool:
         return self.quantity + amount <= self.max_stack
@@ -1535,24 +1564,51 @@ class Inventory:
         self.dragging_from_equipment: bool = False  # Track if dragging from equipment slot
 
     def add_item(self, item_id: str, quantity: int, equipment_instance: Optional['EquipmentItem'] = None) -> bool:
+        print(f"\n   🎒 ADD_ITEM called: item_id='{item_id}', quantity={quantity}, equipment_instance={equipment_instance}")
+
         remaining = quantity
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
         # Equipment doesn't stack
-        if equip_db.is_equipment(item_id):
-            for _ in range(quantity):
+        is_equip = equip_db.is_equipment(item_id)
+        print(f"   🔍 is_equipment check: {is_equip}")
+
+        if is_equip:
+            print(f"   ⚙️ Processing as equipment (non-stackable)")
+            for i in range(quantity):
                 empty = self.get_empty_slot()
+                print(f"   📍 Empty slot found: {empty}")
                 if empty is None:
+                    print(f"   ❌ No empty slot available!")
                     return False
                 # Use provided equipment instance or create new one
+                print(f"   🔧 equipment_instance provided: {equipment_instance is not None}")
                 equip_data = equipment_instance if equipment_instance else equip_db.create_equipment_from_id(item_id)
-                self.slots[empty] = ItemStack(item_id, 1, 1, equip_data)
+                print(f"   🔧 equip_data created: {equip_data}")
+                if equip_data:
+                    print(f"      - name: {equip_data.name}")
+                    print(f"      - tier: {equip_data.tier}")
+                    print(f"      - item_id: {equip_data.item_id}")
+                else:
+                    print(f"   ❌ WARNING: equip_data is None!")
+
+                stack = ItemStack(item_id, 1, 1, equip_data)
+                print(f"   📦 ItemStack created: {stack}")
+                print(f"      - item_id: {stack.item_id}")
+                print(f"      - quantity: {stack.quantity}")
+                print(f"      - equipment_data: {stack.equipment_data}")
+
+                self.slots[empty] = stack
+                print(f"   ✅ Added to slot {empty}")
             return True
 
         # Normal materials can stack
+        print(f"   📚 Processing as material (stackable)")
         mat = mat_db.get_material(item_id)
+        print(f"   📚 Material lookup: {mat}")
         max_stack = mat.max_stack if mat else 99
+        print(f"   📚 Max stack size: {max_stack}")
 
         for slot in self.slots:
             if slot and slot.item_id == item_id and remaining > 0:
@@ -1561,9 +1617,11 @@ class Inventory:
         while remaining > 0:
             empty = self.get_empty_slot()
             if empty is None:
+                print(f"   ❌ No empty slot available!")
                 return False
             stack_size = min(remaining, max_stack)
             self.slots[empty] = ItemStack(item_id, stack_size, max_stack)
+            print(f"   ✅ Added {stack_size} to slot {empty}")
             remaining -= stack_size
         return True
 
@@ -2951,8 +3009,17 @@ class GameEngine:
         equip_db = EquipmentDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
 
+        print("\n" + "="*80)
+        print(f"🔨 CRAFT_ITEM DEBUG START")
+        print(f"Recipe ID: {recipe.recipe_id}")
+        print(f"Output ID: {recipe.output_id}")
+        print(f"Output Qty: {recipe.output_qty}")
+        print(f"Station Type: {recipe.station_type}")
+        print("="*80)
+
         if not recipe_db.can_craft(recipe, self.character.inventory):
             self.add_notification("Not enough materials!", (255, 100, 100))
+            print("❌ Cannot craft - not enough materials")
             return
 
         # Handle enchanting recipes differently
@@ -2978,8 +3045,33 @@ class GameEngine:
             if new_title:
                 self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
+            # Check what type of item this is
+            print(f"🔍 Checking item type for: '{recipe.output_id}'")
+            is_equip = equip_db.is_equipment(recipe.output_id)
+            print(f"   - is_equipment: {is_equip}")
+
+            if is_equip:
+                test_equip = equip_db.create_equipment_from_id(recipe.output_id)
+                print(f"   - test create equipment: {test_equip}")
+                if test_equip:
+                    print(f"     - name: {test_equip.name}")
+                    print(f"     - tier: {test_equip.tier}")
+                    print(f"     - slot: {test_equip.slot}")
+                else:
+                    print(f"     ❌ create_equipment_from_id returned None!")
+            else:
+                test_mat = mat_db.get_material(recipe.output_id)
+                print(f"   - test get material: {test_mat}")
+                if test_mat:
+                    print(f"     - name: {test_mat.name}")
+                    print(f"     - tier: {test_mat.tier}")
+                else:
+                    print(f"     ❌ get_material returned None!")
+
             # Add to inventory
-            self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
+            print(f"📦 Calling inventory.add_item('{recipe.output_id}', {recipe.output_qty})")
+            success = self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
+            print(f"   - add_item returned: {success}")
 
             # Get proper name
             if equip_db.is_equipment(recipe.output_id):
@@ -2989,6 +3081,8 @@ class GameEngine:
                 out_mat = mat_db.get_material(recipe.output_id)
                 out_name = out_mat.name if out_mat else recipe.output_id
 
+            print(f"✅ Crafting complete: {out_name} x{recipe.output_qty}")
+            print("="*80 + "\n")
             self.add_notification(f"Crafted {out_name} x{recipe.output_qty}", (100, 255, 100))
 
     def _apply_enchantment(self, recipe: Recipe):
