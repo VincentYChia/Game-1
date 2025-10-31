@@ -1167,6 +1167,7 @@ class RecipeDatabase:
         try:
             with open(filepath, 'r') as f:
                 data = json.load(f)
+            loaded_count = 0
             for recipe_data in data.get('recipes', []):
                 # Check if this is an enchanting recipe (has enchantmentId instead of outputId)
                 is_enchanting = 'enchantmentId' in recipe_data
@@ -1175,17 +1176,34 @@ class RecipeDatabase:
                     # For enchanting: use enchantmentId as the output_id
                     output_id = recipe_data.get('enchantmentId', '')
                     output_qty = 1  # Enchantments don't have quantity
+                    station_tier = recipe_data.get('stationTier', 1)
+                elif 'outputs' in recipe_data:
+                    # New format: outputs array (used in refining recipes)
+                    outputs = recipe_data.get('outputs', [])
+                    if outputs and len(outputs) > 0:
+                        output_id = outputs[0].get('materialId', outputs[0].get('itemId', ''))
+                        output_qty = outputs[0].get('quantity', 1)
+                    else:
+                        output_id = ''
+                        output_qty = 1
+                    station_tier = recipe_data.get('stationTierRequired', recipe_data.get('stationTier', 1))
                 else:
                     # Regular crafting: use outputId
                     output_id = recipe_data.get('outputId', '')
                     output_qty = recipe_data.get('outputQty', 1)
+                    station_tier = recipe_data.get('stationTier', 1)
+
+                # Skip recipes with empty output_id
+                if not output_id or output_id.strip() == '':
+                    print(f"⚠ Skipping recipe {recipe_data.get('recipeId', 'UNKNOWN')} - no valid output ID")
+                    continue
 
                 recipe = Recipe(
                     recipe_id=recipe_data.get('recipeId', ''),
                     output_id=output_id,
                     output_qty=output_qty,
                     station_type=station_type,
-                    station_tier=recipe_data.get('stationTier', 1),
+                    station_tier=station_tier,
                     inputs=recipe_data.get('inputs', []),
                     is_enchantment=is_enchanting,
                     enchantment_name=recipe_data.get('enchantmentName', ''),
@@ -1194,8 +1212,10 @@ class RecipeDatabase:
                 )
                 self.recipes[recipe.recipe_id] = recipe
                 self.recipes_by_station[station_type].append(recipe)
-            return len(data.get('recipes', []))
-        except:
+                loaded_count += 1
+            return loaded_count
+        except Exception as e:
+            print(f"⚠ Error loading recipes from {filepath}: {e}")
             return 0
 
     def _create_default_recipes(self):
