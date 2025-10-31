@@ -3077,6 +3077,13 @@ class GameEngine:
                 elif event.key == pygame.K_F1:
                     Config.DEBUG_INFINITE_RESOURCES = not Config.DEBUG_INFINITE_RESOURCES
                     status = "ENABLED" if Config.DEBUG_INFINITE_RESOURCES else "DISABLED"
+
+                    # Set max level when enabling debug mode
+                    if Config.DEBUG_INFINITE_RESOURCES:
+                        self.character.leveling.level = self.character.leveling.max_level
+                        self.character.leveling.unallocated_stat_points = 100
+                        print(f"🔧 DEBUG: Set level to {self.character.leveling.level} with 100 stat points")
+
                     self.add_notification(f"Debug Mode {status}", (255, 100, 255))
                     print(f"⚠ Debug Mode {status}")
             elif event.type == pygame.KEYUP:
