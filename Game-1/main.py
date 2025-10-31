@@ -510,9 +510,12 @@ class EquipmentDatabase:
     def is_equipment(self, item_id: str) -> bool:
         """Check if an item ID is equipment"""
         result = item_id in self.items
-        if not result:
-            print(f"      🔍 EquipmentDB.is_equipment('{item_id}'): False - not in items dict")
+        if not result and item_id == '':
+            import traceback
+            print(f"      🔍 EquipmentDB.is_equipment('{item_id}'): False - EMPTY STRING!")
             print(f"         Available equipment IDs: {list(self.items.keys())[:10]}...")  # Show first 10
+            print(f"         Call stack:")
+            traceback.print_stack()
         return result
 
 
