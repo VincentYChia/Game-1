@@ -379,10 +379,15 @@ class EquipmentDatabase:
                 data = json.load(f)
             print(f"   - JSON sections available: {list(data.keys())}")
 
-            for section in ['weapons', 'armor', 'accessories', 'tools', 'stations']:  # Added 'stations'
-                if section in data:
+            # Load from all sections except 'metadata'
+            for section, section_data in data.items():
+                if section == 'metadata':
+                    continue
+
+                # Check if this section contains a list of items
+                if isinstance(section_data, list):
                     print(f"   - Loading section '{section}'...")
-                    for item_data in data[section]:
+                    for item_data in section_data:
                         try:
                             item_id = item_data.get('itemId', '')
                             if item_id:
@@ -394,19 +399,22 @@ class EquipmentDatabase:
                             print(f"      ⚠ Skipping invalid item: {e}")
                             continue
                 else:
-                    print(f"   - Section '{section}' not found in JSON")
+                    print(f"   - Skipping non-list section '{section}'")
 
             if count > 0:
                 self.loaded = True
-                print(f"✓ Loaded {count} equipment items total")
-                print(f"   Sample IDs: {list(self.items.keys())[:10]}")
+                print(f"✓ Loaded {count} equipment items from this file")
+                print(f"   Total equipment items in DB: {len(self.items)}")
                 return True
             else:
-                raise Exception("No valid items loaded")
+                print(f"⚠ No items loaded from {filepath}")
+                # Don't fail completely if one file has no items
+                return True
         except Exception as e:
             print(f"⚠ Error loading equipment: {e}")
-            print(f"⚠ Creating placeholder equipment...")
-            self._create_placeholders()
+            if not self.loaded:
+                print(f"⚠ Creating placeholder equipment...")
+                self._create_placeholders()
             return False
 
     def _create_placeholders(self):
@@ -2791,7 +2799,14 @@ class GameEngine:
         TranslationDatabase.get_instance().load_from_files()
         SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
-        EquipmentDatabase.get_instance().load_from_file("items.JSON/items-smithing-2.JSON")
+
+        # Load equipment from all item files
+        equip_db = EquipmentDatabase.get_instance()
+        equip_db.load_from_file("items.JSON/items-smithing-1.JSON")
+        equip_db.load_from_file("items.JSON/items-smithing-2.JSON")
+        equip_db.load_from_file("items.JSON/items-tools-1.JSON")
+        equip_db.load_from_file("items.JSON/items-alchemy-1.JSON")
+
         TitleDatabase.get_instance().load_from_file("progression/titles-1.JSON")
         ClassDatabase.get_instance().load_from_file("progression/classes-1.JSON")
 
