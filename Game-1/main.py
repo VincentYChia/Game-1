@@ -2710,6 +2710,80 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
+    def render_enchantment_selection_ui(self, mouse_pos: Tuple[int, int]):
+        """Render UI for selecting which item to apply enchantment to"""
+        if not self.enchantment_selection_active or not self.enchantment_recipe:
+            return None
+
+        ww, wh = 600, 500
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = 100
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.blit(surf.fill((25, 25, 35, 250)), (0, 0))
+
+        # Title
+        title_text = f"Apply {self.enchantment_recipe.enchantment_name}"
+        surf.blit(self.font.render(title_text, True, (255, 215, 0)), (20, 20))
+        surf.blit(self.small_font.render("[ESC] Cancel | [CLICK] Select Item", True, (180, 180, 180)),
+                  (ww - 280, 20))
+
+        # Description
+        y_pos = 60
+        surf.blit(self.small_font.render("Select an item to enchant:", True, (200, 200, 200)), (20, y_pos))
+        y_pos += 30
+
+        # List compatible items
+        slot_size = 60
+        item_rects = []
+
+        for idx, (source_type, source_id, item_stack, equipment) in enumerate(self.enchantment_compatible_items):
+            if y_pos + slot_size + 10 > wh - 20:
+                break  # Don't overflow window
+
+            item_rect = pygame.Rect(20, y_pos, ww - 40, slot_size + 10)
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+            is_hovered = item_rect.collidepoint(rx, ry)
+
+            # Background
+            bg_color = (50, 50, 70) if is_hovered else (35, 35, 50)
+            pygame.draw.rect(surf, bg_color, item_rect)
+            pygame.draw.rect(surf, (100, 100, 150) if is_hovered else (70, 70, 90), item_rect, 2)
+
+            # Item icon/color
+            icon_rect = pygame.Rect(30, y_pos + 5, slot_size, slot_size)
+            rarity_color = Config.RARITY_COLORS.get(equipment.rarity, (200, 200, 200))
+            pygame.draw.rect(surf, rarity_color, icon_rect)
+            pygame.draw.rect(surf, (50, 50, 50), icon_rect, 2)
+
+            # Tier
+            tier_text = f"T{equipment.tier}"
+            tier_surf = self.small_font.render(tier_text, True, (0, 0, 0))
+            surf.blit(tier_surf, (35, y_pos + 10))
+
+            # Item name and info
+            name_x = 110
+            surf.blit(self.small_font.render(equipment.name, True, (255, 255, 255)),
+                     (name_x, y_pos + 10))
+
+            # Location (inventory or equipped)
+            location_text = f"[{source_type.upper()}]" if source_type == 'equipped' else f"[Inventory slot {source_id}]"
+            surf.blit(self.tiny_font.render(location_text, True, (150, 150, 200)),
+                     (name_x, y_pos + 35))
+
+            # Show current enchantments if any
+            if equipment.enchantments:
+                enchant_count = len(equipment.enchantments)
+                surf.blit(self.tiny_font.render(f"Enchantments: {enchant_count}", True, (100, 200, 200)),
+                         (name_x, y_pos + 50))
+
+            item_rects.append((item_rect, source_type, source_id, item_stack, equipment))
+            y_pos += slot_size + 15
+
+        self.screen.blit(surf, (wx, wy))
+        self.enchantment_selection_rect = pygame.Rect(wx, wy, ww, wh)
+        return item_rects
+
     def render_class_selection_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.class_selection_open:
             return None
@@ -2943,6 +3017,12 @@ class GameEngine:
         self.class_selection_rect = None
         self.class_buttons = []
 
+        # Enchantment/Adornment selection UI
+        self.enchantment_selection_active = False
+        self.enchantment_recipe = None
+        self.enchantment_compatible_items = []
+        self.enchantment_selection_rect = None
+
         self.keys_pressed = set()
         self.mouse_pos = (0, 0)
         self.last_tick = pygame.time.get_ticks()
@@ -2968,7 +3048,10 @@ class GameEngine:
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
                 if event.key == pygame.K_ESCAPE:
-                    if self.character.crafting_ui_open:
+                    if self.enchantment_selection_active:
+                        self._close_enchantment_selection()
+                        print("🚫 Enchantment selection cancelled")
+                    elif self.character.crafting_ui_open:
                         self.character.close_crafting_ui()
                     elif self.character.stats_ui_open:
                         self.character.toggle_stats_ui()
@@ -3007,6 +3090,12 @@ class GameEngine:
         current_time = pygame.time.get_ticks()
         is_double_click = (current_time - self.last_click_time < 300)
         self.last_click_time = current_time
+
+        # Enchantment selection UI (priority over other UIs)
+        if self.enchantment_selection_active and self.enchantment_selection_rect:
+            if self.enchantment_selection_rect.collidepoint(mouse_pos):
+                self.handle_enchantment_selection_click(mouse_pos)
+                return
 
         # Class selection
         if self.character.class_selection_open and self.class_selection_rect:
@@ -3109,6 +3198,21 @@ class GameEngine:
                         mat = mat_db.get_material(item_id)
                         item_name = mat.name if mat else item_id
                         self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+
+    def handle_enchantment_selection_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicks on the enchantment selection UI"""
+        if not self.enchantment_item_rects:
+            return
+
+        for item_rect, source_type, source_id, item_stack, equipment in self.enchantment_item_rects:
+            # Check if click is within this item's rect (already relative to window)
+            wx, wy = self.enchantment_selection_rect.x, self.enchantment_selection_rect.y
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+
+            if item_rect.collidepoint(rx, ry):
+                print(f"✨ Selected {equipment.name} for enchantment")
+                self._complete_enchantment_application(source_type, source_id, item_stack, equipment)
+                break
 
     def handle_class_selection_click(self, mouse_pos: Tuple[int, int]):
         if not self.class_buttons:
@@ -3251,9 +3355,7 @@ class GameEngine:
             self.add_notification(f"Crafted {out_name} x{recipe.output_qty}", (100, 255, 100))
 
     def _apply_enchantment(self, recipe: Recipe):
-        """Apply an enchantment to an item in inventory"""
-        recipe_db = RecipeDatabase.get_instance()
-
+        """Apply an enchantment to an item - shows selection UI"""
         # Find compatible items in inventory
         compatible_items = []
         for i, slot in enumerate(self.character.inventory.slots):
@@ -3263,23 +3365,39 @@ class GameEngine:
                     recipe.output_id, recipe.applicable_to, recipe.effect
                 )
                 if can_apply:
-                    compatible_items.append((i, slot))
+                    compatible_items.append(('inventory', i, slot, equipment))
+
+        # Also check equipped items
+        for slot_name, equipped_item in self.character.equipment.slots.items():
+            if equipped_item:
+                can_apply, reason = equipped_item.can_apply_enchantment(
+                    recipe.output_id, recipe.applicable_to, recipe.effect
+                )
+                if can_apply:
+                    compatible_items.append(('equipped', slot_name, None, equipped_item))
 
         if not compatible_items:
             self.add_notification("No compatible items found!", (255, 100, 100))
             return
 
-        # For now, apply to the first compatible item found
-        # TODO: Add UI for item selection
-        slot_idx, slot = compatible_items[0]
-        equipment = slot.equipment_data
+        # Open selection UI
+        self.enchantment_selection_active = True
+        self.enchantment_recipe = recipe
+        self.enchantment_compatible_items = compatible_items
+        print(f"🔮 Opening enchantment selection UI with {len(compatible_items)} compatible items")
+
+    def _complete_enchantment_application(self, source_type: str, source_id, item_stack, equipment):
+        """Complete the enchantment application after user selects an item"""
+        recipe = self.enchantment_recipe
+        recipe_db = RecipeDatabase.get_instance()
 
         # Consume materials
         if not recipe_db.consume_materials(recipe, self.character.inventory):
             self.add_notification("Failed to consume materials!", (255, 100, 100))
+            self._close_enchantment_selection()
             return
 
-        # Apply enchantment to the equipment instance stored in inventory
+        # Apply enchantment to the equipment instance
         equipment.apply_enchantment(recipe.output_id, recipe.enchantment_name, recipe.effect)
 
         # Record activity
@@ -3294,6 +3412,14 @@ class GameEngine:
             self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
         self.add_notification(f"Applied {recipe.enchantment_name} to {equipment.name}!", (100, 255, 255))
+        self._close_enchantment_selection()
+
+    def _close_enchantment_selection(self):
+        """Close the enchantment selection UI"""
+        self.enchantment_selection_active = False
+        self.enchantment_recipe = None
+        self.enchantment_compatible_items = []
+        self.enchantment_selection_rect = None
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
         if self.character.inventory.dragging_stack:
@@ -3381,6 +3507,12 @@ class GameEngine:
             else:
                 self.equipment_window_rect = None
                 self.equipment_rects = {}
+
+            # Enchantment selection UI (rendered on top of everything)
+            if self.enchantment_selection_active:
+                self.enchantment_item_rects = self.renderer.render_enchantment_selection_ui(self.mouse_pos)
+            else:
+                self.enchantment_item_rects = None
 
         pygame.display.flip()
 
