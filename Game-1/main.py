@@ -641,8 +641,18 @@ class EquipmentManager:
         self.slots[slot] = item
         print(f"         ✅ Equipped to slot '{slot}'")
 
+        # Debug: Show weapon damage if equipping to weapon slot
+        if slot in ['mainHand', 'offHand']:
+            print(f"         🗡️  Weapon damage: {item.damage}")
+            print(f"         🗡️  Actual damage (with effectiveness): {item.get_actual_damage()}")
+
         # Recalculate character stats
         character.recalculate_stats()
+
+        # Debug: Show new weapon damage total
+        if slot in ['mainHand', 'offHand']:
+            weapon_dmg = self.get_weapon_damage()
+            print(f"         🎯 Total weapon damage range: {weapon_dmg}")
 
         return old_item, "OK"
 
@@ -1876,6 +1886,7 @@ class Character:
         self.inventory = Inventory(30)
         self.tools: List[Tool] = []
         self.selected_tool: Optional[Tool] = None
+        self._selected_weapon: Optional[EquipmentItem] = None  # For Tab cycling through weapons
 
         self.active_station: Optional[CraftingStation] = None
         self.crafting_ui_open = False
@@ -2016,11 +2027,44 @@ class Character:
         return (loot, actual_damage, is_crit)
 
     def switch_tool(self):
-        if self.tools:
-            idx = self.tools.index(self.selected_tool) if self.selected_tool in self.tools else -1
-            self.selected_tool = self.tools[(idx + 1) % len(self.tools)]
-            return self.selected_tool.name
-        return None
+        """Cycle through tools and equipped weapons"""
+        # Build list of available items (tools + equipped weapons)
+        available_items = list(self.tools)
+
+        # Add equipped weapons
+        main_weapon = self.equipment.slots.get('mainHand')
+        off_weapon = self.equipment.slots.get('offHand')
+        if main_weapon:
+            available_items.append(main_weapon)
+        if off_weapon:
+            available_items.append(off_weapon)
+
+        if not available_items:
+            return None
+
+        # Find current index
+        current_idx = -1
+        if self.selected_tool:
+            for i, item in enumerate(available_items):
+                if isinstance(item, Tool) and item == self.selected_tool:
+                    current_idx = i
+                    break
+                elif isinstance(item, EquipmentItem) and hasattr(self, '_selected_weapon') and item == self._selected_weapon:
+                    current_idx = i
+                    break
+
+        # Cycle to next
+        next_idx = (current_idx + 1) % len(available_items)
+        next_item = available_items[next_idx]
+
+        if isinstance(next_item, Tool):
+            self.selected_tool = next_item
+            self._selected_weapon = None
+            return f"{next_item.name} (Tool)"
+        else:  # EquipmentItem (weapon)
+            self.selected_tool = None
+            self._selected_weapon = next_item
+            return f"{next_item.name} (Weapon)"
 
     def interact_with_station(self, station: CraftingStation):
         if self.is_in_range(station.position):
@@ -3106,6 +3150,8 @@ class GameEngine:
             "Definitions.JSON/combat-config.JSON",
             "Definitions.JSON/hostiles-1.JSON"
         )
+        # Spawn initial enemies for testing
+        self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
         self.damage_numbers: List[DamageNumber] = []
         self.notifications: List[Notification] = []

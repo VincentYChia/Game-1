@@ -146,7 +146,7 @@ class EnemyDatabase:
                     tier=enemy_data.get('tier', 1),
                     category=enemy_data.get('category', 'beast'),
                     behavior=enemy_data.get('behavior', 'passive_patrol'),
-                    max_health=stats.get('health', 50),
+                    max_health=stats.get('health', 50) * 0.1,  # Reduced by 90% for testing
                     damage_min=damage[0] if isinstance(damage, list) else damage,
                     damage_max=damage[1] if isinstance(damage, list) else damage,
                     defense=stats.get('defense', 0),
@@ -442,7 +442,7 @@ class Enemy:
 
         if dist > 0.1:
             # Normalize and move
-            move_speed = self.definition.speed * dt * 10  # Scale for reasonable movement
+            move_speed = self.definition.speed * dt * 2  # Reduced from 10 to 2 for slower movement
             self.position[0] += (dx / dist) * move_speed
             self.position[1] += (dy / dist) * move_speed
 

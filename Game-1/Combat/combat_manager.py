@@ -137,7 +137,7 @@ class CombatManager:
             return "rare"
         return "normal"
 
-    def spawn_enemies_in_chunk(self, chunk):
+    def spawn_enemies_in_chunk(self, chunk, initial_spawn=False):
         """Spawn enemies in a chunk based on its danger level"""
         chunk_coords = (chunk.chunk_x, chunk.chunk_y)
 
@@ -158,9 +158,10 @@ class CombatManager:
         if chunk_coords not in self.enemies:
             self.enemies[chunk_coords] = []
 
-        # Don't spawn if already at max
+        # Don't spawn if already at max (max 3 per chunk)
+        MAX_PER_CHUNK = 3
         current_count = len([e for e in self.enemies[chunk_coords] if e.is_alive])
-        if current_count >= spawn_config.get('maxEnemies', 5):
+        if current_count >= MAX_PER_CHUNK:
             return
 
         # Determine how many to spawn
@@ -188,6 +189,60 @@ class CombatManager:
             enemy = Enemy(enemy_def, (spawn_x, spawn_y), chunk_coords)
             enemy.corpse_lifetime = self.config.corpse_lifetime
             self.enemies[chunk_coords].append(enemy)
+
+    def spawn_initial_enemies(self, player_position: Tuple[float, float], count: int = 5):
+        """Spawn initial enemies for testing (around player but outside safe zone)"""
+        print(f"🎮 Spawning {count} initial enemies for testing...")
+
+        # Get chunks around player
+        player_chunk_x = int(player_position[0] // 16)
+        player_chunk_y = int(player_position[1] // 16)
+
+        spawned = 0
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                if spawned >= count:
+                    break
+
+                chunk_x = player_chunk_x + dx
+                chunk_y = player_chunk_y + dy
+                chunk_coords = (chunk_x, chunk_y)
+
+                # Get chunk
+                chunk = self.world.chunks.get(chunk_coords)
+                if not chunk:
+                    continue
+
+                # Check if in safe zone
+                chunk_center_x = chunk_x * 16 + 8
+                chunk_center_y = chunk_y * 16 + 8
+                if self.is_in_safe_zone(chunk_center_x, chunk_center_y):
+                    continue
+
+                # Spawn 1-2 enemies in this chunk
+                to_spawn = min(2, count - spawned)
+                for _ in range(to_spawn):
+                    # Spawn T1 enemy for testing
+                    enemy_def = self.enemy_db.get_random_enemy(1)
+                    if not enemy_def:
+                        continue
+
+                    # Random position in chunk
+                    spawn_x = chunk_x * 16 + random.uniform(4, 12)
+                    spawn_y = chunk_y * 16 + random.uniform(4, 12)
+
+                    # Create enemy
+                    enemy = Enemy(enemy_def, (spawn_x, spawn_y), chunk_coords)
+                    enemy.corpse_lifetime = self.config.corpse_lifetime
+
+                    if chunk_coords not in self.enemies:
+                        self.enemies[chunk_coords] = []
+                    self.enemies[chunk_coords].append(enemy)
+
+                    spawned += 1
+                    print(f"   ✓ Spawned {enemy_def.name} at ({spawn_x:.1f}, {spawn_y:.1f})")
+
+        print(f"✓ Spawned {spawned} initial enemies")
 
     def _pick_weighted_tier(self, tier_weights: Dict[str, float]) -> int:
         """Pick a tier based on weighted probabilities"""
@@ -283,23 +338,30 @@ class CombatManager:
         Calculate player damage to enemy
         Returns (damage, is_crit)
         """
+        print(f"\n⚔️ PLAYER ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
+
         # Get weapon damage
         weapon_damage = self.character.get_weapon_damage()
+        print(f"   Weapon damage: {weapon_damage}")
         if weapon_damage == 0:
             weapon_damage = 5  # Unarmed damage
+            print(f"   Using unarmed damage: {weapon_damage}")
 
         # Calculate multipliers
         str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
+        print(f"   STR multiplier: {str_multiplier:.2f} (STR: {self.character.stats.strength})")
 
         # Title bonuses (from activity tracker)
         title_multiplier = 1.0
         if hasattr(self.character, 'activity_tracker'):
             title_multiplier = 1.0 + self.character.activity_tracker.get_combat_bonus()
+        print(f"   Title multiplier: {title_multiplier:.2f}")
 
         # Equipment bonuses (already in weapon damage)
 
         # Calculate base damage
         base_damage = weapon_damage * str_multiplier * title_multiplier
+        print(f"   Base damage: {base_damage:.1f}")
 
         # Check for critical hit
         is_crit = False
@@ -307,22 +369,29 @@ class CombatManager:
         if random.random() < crit_chance:
             is_crit = True
             base_damage *= 2.0
+            print(f"   💥 CRITICAL HIT! x2 damage")
 
         # Apply enemy defense
         defense_reduction = enemy.definition.defense * 0.01  # 1% reduction per defense
         final_damage = base_damage * (1.0 - min(0.75, defense_reduction))
+        print(f"   Enemy defense: {enemy.definition.defense} (reduction: {defense_reduction*100:.1f}%)")
+        print(f"   ➜ Final damage: {final_damage:.1f}")
 
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
         # Grant EXP if killed
         if enemy_died:
+            print(f"   💀 Enemy killed!")
             exp_reward = self._calculate_exp_reward(enemy)
             self.character.leveling.gain_exp(exp_reward)
+            print(f"   +{exp_reward} EXP")
 
             # Track combat activity
             if hasattr(self.character, 'activity_tracker'):
                 self.character.activity_tracker.record_activity('combat', 1)
+        else:
+            print(f"   Enemy HP remaining: {enemy.current_health:.1f}/{enemy.max_health:.1f}")
 
         # Update combat state
         self.player_last_combat_time = 0.0
@@ -332,25 +401,32 @@ class CombatManager:
 
     def _enemy_attack_player(self, enemy: Enemy):
         """Enemy attacks player"""
+        print(f"\n👹 ENEMY ATTACK: {enemy.definition.name}")
+
         # Calculate damage
         damage = enemy.perform_attack()
+        print(f"   Base damage: {damage:.1f}")
 
         # Calculate damage reduction
         def_multiplier = 1.0 - (self.character.stats.defense * 0.02)
+        print(f"   DEF multiplier: {def_multiplier:.2f} (DEF: {self.character.stats.defense})")
 
         # Armor bonus from equipment
         armor_bonus = 0.0
         if hasattr(self.character, 'equipment_manager'):
             armor_bonus = self.character.equipment_manager.get_total_defense()
+        print(f"   Armor bonus: {armor_bonus}")
 
         armor_multiplier = 1.0 - (armor_bonus * 0.01)
 
         # Final damage
         final_damage = damage * def_multiplier * armor_multiplier
         final_damage = max(1, final_damage)  # Minimum 1 damage
+        print(f"   ➜ Final damage to player: {final_damage:.1f}")
 
         # Apply to player
         self.character.take_damage(final_damage)
+        print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
         # Update combat state
         self.player_last_combat_time = 0.0
