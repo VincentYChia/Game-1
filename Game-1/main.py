@@ -555,12 +555,33 @@ class EquipmentDatabase:
         else:
             dur_max = int(durability)
 
+        # Map JSON slot names to EquipmentManager slot names
+        slot_mapping = {
+            'head': 'helmet',
+            'chest': 'chestplate',
+            'legs': 'leggings',
+            'feet': 'boots',
+            'hands': 'gauntlets',
+            # These already match:
+            'mainHand': 'mainHand',
+            'offHand': 'offHand',
+            'helmet': 'helmet',
+            'chestplate': 'chestplate',
+            'leggings': 'leggings',
+            'boots': 'boots',
+            'gauntlets': 'gauntlets',
+            'accessory': 'accessory',
+        }
+
+        json_slot = data.get('slot', 'mainHand')
+        mapped_slot = slot_mapping.get(json_slot, json_slot)
+
         return EquipmentItem(
             item_id=item_id,
             name=data.get('name', item_id),
             tier=data.get('tier', 1),
             rarity=data.get('rarity', 'common'),
-            slot=data.get('slot', 'mainHand'),
+            slot=mapped_slot,
             damage=damage,
             defense=stats.get('defense', 0),
             durability_current=dur_max,
@@ -598,16 +619,24 @@ class EquipmentManager:
 
     def equip(self, item: EquipmentItem, character) -> Tuple[Optional[EquipmentItem], str]:
         """Equip an item, returns (previously_equipped_item, status_message)"""
+        print(f"      🔧 EquipmentManager.equip() called")
+        print(f"         - item: {item.name} (slot: {item.slot})")
+
         can_equip, reason = item.can_equip(character)
+        print(f"         - can_equip: {can_equip}, reason: {reason}")
+
         if not can_equip:
+            print(f"         ❌ Cannot equip: {reason}")
             return None, reason
 
         slot = item.slot
         if slot not in self.slots:
+            print(f"         ❌ Invalid slot '{slot}' not in {list(self.slots.keys())}")
             return None, f"Invalid slot: {slot}"
 
         old_item = self.slots[slot]
         self.slots[slot] = item
+        print(f"         ✅ Equipped to slot '{slot}'")
 
         # Recalculate character stats
         character.recalculate_stats()
@@ -2005,27 +2034,49 @@ class Character:
 
     def try_equip_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
         """Try to equip item from inventory slot"""
+        print(f"\n🎯 try_equip_from_inventory called for slot {slot_index}")
+
         if slot_index < 0 or slot_index >= self.inventory.max_slots:
+            print(f"   ❌ Invalid slot index")
             return False, "Invalid slot"
 
         item_stack = self.inventory.slots[slot_index]
         if not item_stack:
+            print(f"   ❌ Empty slot")
             return False, "Empty slot"
 
-        if not item_stack.is_equipment():
+        print(f"   📦 Item: {item_stack.item_id}")
+        is_equip = item_stack.is_equipment()
+        print(f"   🔍 is_equipment(): {is_equip}")
+
+        if not is_equip:
+            print(f"   ❌ Not equipment - FAILED")
             return False, "Not equipment"
 
         equipment = item_stack.get_equipment()
+        print(f"   ⚙️  get_equipment(): {equipment}")
+
         if not equipment:
+            print(f"   ❌ Invalid equipment - FAILED")
             return False, "Invalid equipment"
 
+        print(f"   📋 Equipment details:")
+        print(f"      - name: {equipment.name}")
+        print(f"      - slot: {equipment.slot}")
+        print(f"      - tier: {equipment.tier}")
+
         # Try to equip
+        print(f"   🔄 Calling equipment.equip()...")
         old_item, status = self.equipment.equip(equipment, self)
+        print(f"   📤 equip() returned: old_item={old_item}, status={status}")
+
         if status != "OK":
+            print(f"   ❌ Equip failed with status: {status}")
             return False, status
 
         # Remove from inventory
         self.inventory.slots[slot_index] = None
+        print(f"   ✅ Removed from inventory slot {slot_index}")
 
         # If there was an old item, put it back in inventory (preserve equipment data)
         if old_item:
@@ -2034,8 +2085,11 @@ class Character:
                 self.equipment.slots[equipment.slot] = old_item
                 self.inventory.slots[slot_index] = item_stack
                 self.recalculate_stats()
+                print(f"   ❌ Inventory full, swapped back")
                 return False, "Inventory full"
+            print(f"   ↩️  Returned old item to inventory")
 
+        print(f"   ✅ SUCCESS - Equipped {equipment.name}")
         return True, "OK"
 
     def try_unequip_to_inventory(self, slot_name: str) -> Tuple[bool, str]:
@@ -2995,17 +3049,28 @@ class GameEngine:
                         # Double-click to equip equipment
                         if is_double_click and self.last_clicked_slot == idx:
                             item_stack = self.character.inventory.slots[idx]
-                            if item_stack and item_stack.is_equipment():
-                                equipment = item_stack.get_equipment()
-                                if equipment:  # FIX #4: Check equipment exists before trying to equip
-                                    success, msg = self.character.try_equip_from_inventory(idx)
-                                    if success:
-                                        self.add_notification(f"Equipped {equipment.name}", (100, 255, 100))
+                            print(f"\n🖱️  Double-click detected on slot {idx}")
+                            if item_stack:
+                                print(f"   Item: {item_stack.item_id}")
+                                is_equip = item_stack.is_equipment()
+                                print(f"   is_equipment(): {is_equip}")
+                                if is_equip:
+                                    equipment = item_stack.get_equipment()
+                                    print(f"   get_equipment(): {equipment}")
+                                    if equipment:  # FIX #4: Check equipment exists before trying to equip
+                                        success, msg = self.character.try_equip_from_inventory(idx)
+                                        if success:
+                                            self.add_notification(f"Equipped {equipment.name}", (100, 255, 100))
+                                        else:
+                                            self.add_notification(f"Cannot equip: {msg}", (255, 100, 100))
                                     else:
-                                        self.add_notification(f"Cannot equip: {msg}", (255, 100, 100))
+                                        print(f"   ❌ equipment is None!")
+                                        self.add_notification("Invalid equipment data", (255, 100, 100))
                                 else:
-                                    self.add_notification("Invalid equipment data", (255, 100, 100))
-                                return
+                                    print(f"   ⚠️  Not equipment, skipping")
+                            else:
+                                print(f"   ⚠️  item_stack is None")
+                            return
 
                         self.last_clicked_slot = idx
 
