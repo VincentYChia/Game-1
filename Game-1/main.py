@@ -246,6 +246,55 @@ class MaterialDatabase:
             print(f"⚠ Error loading refining items: {e}")
             return False
 
+    def load_stackable_items(self, filepath: str, categories: list = None):
+        """Load stackable items (consumables, devices, etc.) from item files
+
+        Args:
+            filepath: Path to the JSON file
+            categories: List of categories to load (e.g., ['consumable', 'device'])
+                       If None, loads all items with stackable=True flag
+        """
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for section, section_data in data.items():
+                if section == 'metadata':
+                    continue
+
+                if isinstance(section_data, list):
+                    for item_data in section_data:
+                        category = item_data.get('category', '')
+                        flags = item_data.get('flags', {})
+                        is_stackable = flags.get('stackable', False)
+
+                        # Load if category matches (or no filter) AND item is stackable
+                        should_load = is_stackable and (
+                            categories is None or category in categories
+                        )
+
+                        if should_load:
+                            mat = MaterialDefinition(
+                                material_id=item_data.get('itemId', ''),
+                                name=item_data.get('name', ''),
+                                tier=item_data.get('tier', 1),
+                                category=category,
+                                rarity=item_data.get('rarity', 'common'),
+                                description=item_data.get('metadata', {}).get('narrative', ''),
+                                max_stack=item_data.get('stackSize', 99),
+                                properties={}
+                            )
+                            if mat.material_id and mat.material_id not in self.materials:
+                                self.materials[mat.material_id] = mat
+                                count += 1
+
+            print(f"✓ Loaded {count} stackable items from {filepath} (categories: {categories})")
+            return True
+        except Exception as e:
+            print(f"⚠ Error loading stackable items from {filepath}: {e}")
+            return False
+
 
 # ============================================================================
 # EQUIPMENT SYSTEM
@@ -380,6 +429,8 @@ class EquipmentDatabase:
             print(f"   - JSON sections available: {list(data.keys())}")
 
             # Load from all sections except 'metadata'
+            # ONLY load items with category='equipment' (weapons, armor, tools, etc.)
+            # Exclude consumables, devices, materials - those should stack!
             for section, section_data in data.items():
                 if section == 'metadata':
                     continue
@@ -390,11 +441,16 @@ class EquipmentDatabase:
                     for item_data in section_data:
                         try:
                             item_id = item_data.get('itemId', '')
-                            if item_id:
+                            category = item_data.get('category', '')
+
+                            # ONLY load equipment items (not consumables, devices, materials)
+                            if item_id and category == 'equipment':
                                 self.items[item_id] = item_data
                                 count += 1
                                 if count <= 5:  # Show first 5 items loaded
-                                    print(f"      ✓ Loaded: {item_id}")
+                                    print(f"      ✓ Loaded: {item_id} (category: {category})")
+                            elif item_id and category:
+                                print(f"      ⊘ Skipped: {item_id} (category: {category}, not equipment)")
                         except Exception as e:
                             print(f"      ⚠ Skipping invalid item: {e}")
                             continue
@@ -2796,6 +2852,12 @@ class GameEngine:
         MaterialDatabase.get_instance().load_from_file("items.JSON/items-materials-1.JSON")
         MaterialDatabase.get_instance().load_refining_items(
             "items.JSON/items-refining-1.JSON")  # FIX #2: Load ingots/planks
+        # Load stackable consumables (potions, oils, etc.)
+        MaterialDatabase.get_instance().load_stackable_items(
+            "items.JSON/items-alchemy-1.JSON", categories=['consumable'])
+        # Load stackable devices (turrets, etc.)
+        MaterialDatabase.get_instance().load_stackable_items(
+            "items.JSON/items-smithing-1.JSON", categories=['device'])
         TranslationDatabase.get_instance().load_from_files()
         SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
