@@ -537,7 +537,7 @@
           "quantity": [3, 4],
           "chance": "moderate"
         }
-      },
+      ],
       "aiPattern": {
         "defaultState": "patrol",
         "aggroOnDamage": true,
