@@ -9,6 +9,9 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any
 from enum import Enum
 
+# Combat system
+from Combat import CombatManager, EnemyDatabase
+
 
 # ============================================================================
 # CONFIGURATION
@@ -638,8 +641,18 @@ class EquipmentManager:
         self.slots[slot] = item
         print(f"         ✅ Equipped to slot '{slot}'")
 
+        # Debug: Show weapon damage if equipping to weapon slot
+        if slot in ['mainHand', 'offHand']:
+            print(f"         🗡️  Weapon damage: {item.damage}")
+            print(f"         🗡️  Actual damage (with effectiveness): {item.get_actual_damage()}")
+
         # Recalculate character stats
         character.recalculate_stats()
+
+        # Debug: Show new weapon damage total
+        if slot in ['mainHand', 'offHand']:
+            weapon_dmg = self.get_weapon_damage()
+            print(f"         🎯 Total weapon damage range: {weapon_dmg}")
 
         return old_item, "OK"
 
@@ -1873,12 +1886,17 @@ class Character:
         self.inventory = Inventory(30)
         self.tools: List[Tool] = []
         self.selected_tool: Optional[Tool] = None
+        self._selected_weapon: Optional[EquipmentItem] = None  # For Tab cycling through weapons
 
         self.active_station: Optional[CraftingStation] = None
         self.crafting_ui_open = False
         self.stats_ui_open = False
         self.equipment_ui_open = False
         self.class_selection_open = False
+
+        # Combat
+        self.attack_cooldown = 0.0
+        self.last_attacked_enemy = None
 
         self._give_starting_tools()
         if Config.DEBUG_INFINITE_RESOURCES:
@@ -2009,11 +2027,44 @@ class Character:
         return (loot, actual_damage, is_crit)
 
     def switch_tool(self):
-        if self.tools:
-            idx = self.tools.index(self.selected_tool) if self.selected_tool in self.tools else -1
-            self.selected_tool = self.tools[(idx + 1) % len(self.tools)]
-            return self.selected_tool.name
-        return None
+        """Cycle through tools and equipped weapons"""
+        # Build list of available items (tools + equipped weapons)
+        available_items = list(self.tools)
+
+        # Add equipped weapons
+        main_weapon = self.equipment.slots.get('mainHand')
+        off_weapon = self.equipment.slots.get('offHand')
+        if main_weapon:
+            available_items.append(main_weapon)
+        if off_weapon:
+            available_items.append(off_weapon)
+
+        if not available_items:
+            return None
+
+        # Find current index
+        current_idx = -1
+        if self.selected_tool:
+            for i, item in enumerate(available_items):
+                if isinstance(item, Tool) and item == self.selected_tool:
+                    current_idx = i
+                    break
+                elif isinstance(item, EquipmentItem) and hasattr(self, '_selected_weapon') and item == self._selected_weapon:
+                    current_idx = i
+                    break
+
+        # Cycle to next
+        next_idx = (current_idx + 1) % len(available_items)
+        next_item = available_items[next_idx]
+
+        if isinstance(next_item, Tool):
+            self.selected_tool = next_item
+            self._selected_weapon = None
+            return f"{next_item.name} (Tool)"
+        else:  # EquipmentItem (weapon)
+            self.selected_tool = None
+            self._selected_weapon = next_item
+            return f"{next_item.name} (Weapon)"
 
     def interact_with_station(self, station: CraftingStation):
         if self.is_in_range(station.position):
@@ -2115,6 +2166,46 @@ class Character:
 
         return True, "OK"
 
+    def take_damage(self, damage: float):
+        """Take damage from enemy"""
+        self.health -= damage
+        if self.health <= 0:
+            self.health = 0
+            self._handle_death()
+
+    def _handle_death(self):
+        """Handle player death - respawn at spawn point"""
+        print("💀 You died! Respawning...")
+        self.health = self.max_health
+        self.position = Position(50, 50, 0)  # Respawn at spawn
+        # Keep all items and equipment (no death penalty)
+
+    def get_weapon_damage(self) -> float:
+        """Get average weapon damage from equipped weapon"""
+        damage_range = self.equipment.get_weapon_damage()
+        # Return average damage
+        return (damage_range[0] + damage_range[1]) / 2.0
+
+    def update_attack_cooldown(self, dt: float):
+        """Update attack cooldown timer"""
+        if self.attack_cooldown > 0:
+            self.attack_cooldown -= dt
+
+    def can_attack(self) -> bool:
+        """Check if player can attack (cooldown ready)"""
+        return self.attack_cooldown <= 0
+
+    def reset_attack_cooldown(self, is_weapon: bool = True):
+        """Reset attack cooldown based on attack speed"""
+        if is_weapon:
+            # Weapon attack cooldown based on attack speed stat
+            base_cooldown = 1.0
+            attack_speed_bonus = self.stats.agility * 0.03  # 3% faster per AGI
+            self.attack_cooldown = base_cooldown / (1.0 + attack_speed_bonus)
+        else:
+            # Tool attack cooldown (faster)
+            self.attack_cooldown = 0.5
+
 
 # ============================================================================
 # CAMERA
@@ -2145,7 +2236,7 @@ class Renderer:
         self.tiny_font = pygame.font.Font(None, 14)
 
     def render_world(self, world: WorldSystem, camera: Camera, character: Character,
-                     damage_numbers: List[DamageNumber]):
+                     damage_numbers: List[DamageNumber], combat_manager=None):
         pygame.draw.rect(self.screen, Config.COLOR_BACKGROUND, (0, 0, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT))
 
         for tile in world.get_visible_tiles(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
@@ -2219,6 +2310,47 @@ class Renderer:
                 hp_w = int(bar_w * (resource.current_hp / resource.max_hp))
                 pygame.draw.rect(self.screen, Config.COLOR_HP_BAR, (sx - bar_w // 2, bar_y, hp_w, bar_h))
 
+        # Render enemies
+        if combat_manager:
+            for enemy in combat_manager.get_all_active_enemies():
+                ex, ey = camera.world_to_screen(Position(enemy.position[0], enemy.position[1], 0))
+
+                # Enemy body
+                if enemy.is_alive:
+                    # Color based on tier
+                    tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
+                    enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                    if enemy.is_boss:
+                        enemy_color = (255, 215, 0)  # Gold for bosses
+
+                    size = Config.TILE_SIZE // 2
+                    pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
+                    pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
+
+                    # Health bar
+                    health_percent = enemy.current_health / enemy.max_health
+                    bar_w, bar_h = Config.TILE_SIZE, 4
+                    bar_y = ey - Config.TILE_SIZE // 2 - 12
+                    pygame.draw.rect(self.screen, Config.COLOR_HP_BAR_BG, (ex - bar_w // 2, bar_y, bar_w, bar_h))
+                    hp_w = int(bar_w * health_percent)
+                    pygame.draw.rect(self.screen, (255, 0, 0), (ex - bar_w // 2, bar_y, hp_w, bar_h))
+
+                    # Tier indicator
+                    tier_text = f"T{enemy.definition.tier}"
+                    if enemy.is_boss:
+                        tier_text = "BOSS"
+                    tier_surf = self.tiny_font.render(tier_text, True, (255, 255, 255))
+                    self.screen.blit(tier_surf, (ex - tier_surf.get_width() // 2, ey - 5))
+
+                else:
+                    # Corpse (greyed out)
+                    corpse_color = (100, 100, 100)
+                    size = Config.TILE_SIZE // 3
+                    pygame.draw.circle(self.screen, corpse_color, (ex, ey), size)
+                    loot_text = self.tiny_font.render("LOOT", True, (255, 255, 0))
+                    self.screen.blit(loot_text, (ex - loot_text.get_width() // 2, ey - 10))
+
+        # Render player
         center_x, center_y = camera.world_to_screen(character.position)
         pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
 
@@ -3011,6 +3143,16 @@ class GameEngine:
         self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
         self.renderer = Renderer(self.screen)
 
+        # Initialize combat system
+        print("Loading combat system...")
+        self.combat_manager = CombatManager(self.world, self.character)
+        self.combat_manager.load_config(
+            "Definitions.JSON/combat-config.JSON",
+            "Definitions.JSON/hostiles-1.JSON"
+        )
+        # Spawn initial enemies for testing
+        self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+
         self.damage_numbers: List[DamageNumber] = []
         self.notifications: List[Notification] = []
         self.crafting_window_rect = None
@@ -3187,6 +3329,41 @@ class GameEngine:
         wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
         wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
         world_pos = Position(wx, wy, 0)
+
+        # Check for enemy click (living enemies)
+        enemy = self.combat_manager.get_enemy_at_position((wx, wy))
+        if enemy and enemy.is_alive:
+            # Check if player can attack
+            if not self.character.can_attack():
+                return  # Still on cooldown
+
+            # Check if in range
+            dist = enemy.distance_to((self.character.position.x, self.character.position.y))
+            if dist > self.combat_manager.config.player_attack_range:
+                self.add_notification("Enemy too far away", (255, 100, 100))
+                return
+
+            # Attack enemy
+            damage, is_crit = self.combat_manager.player_attack_enemy(enemy)
+            self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
+            self.character.reset_attack_cooldown(is_weapon=True)
+
+            if not enemy.is_alive:
+                self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
+            return
+
+        # Check for corpse click (looting)
+        corpse = self.combat_manager.get_corpse_at_position((wx, wy))
+        if corpse:
+            loot = self.combat_manager.loot_corpse(corpse, self.character.inventory)
+            if loot:
+                mat_db = MaterialDatabase.get_instance()
+                for material_id, qty in loot:
+                    mat = mat_db.get_material(material_id)
+                    item_name = mat.name if mat else material_id
+                    self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+                self.add_notification(f"Looted {corpse.definition.name}", (150, 200, 255))
+            return
 
         station = self.world.get_station_at(world_pos)
         if station:
@@ -3477,12 +3654,14 @@ class GameEngine:
 
         self.camera.follow(self.character.position)
         self.world.update(dt)
+        self.combat_manager.update(dt)
+        self.character.update_attack_cooldown(dt)
         self.damage_numbers = [d for d in self.damage_numbers if d.update(dt)]
         self.notifications = [n for n in self.notifications if n.update(dt)]
 
     def render(self):
         self.screen.fill(Config.COLOR_BACKGROUND)
-        self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers)
+        self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
         self.renderer.render_ui(self.character, self.mouse_pos)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
 
