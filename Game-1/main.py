@@ -12,6 +12,22 @@ from enum import Enum
 # Combat system
 from Combat import CombatManager, EnemyDatabase
 
+# Crafting subdisciplines
+try:
+    sys.path.insert(0, str(Path(__file__).parent / "Crafting-subdisciplines"))
+    from smithing import SmithingCrafter
+    from refining import RefiningCrafter
+    from alchemy import AlchemyCrafter
+    from engineering import EngineeringCrafter
+    from enchanting import EnchantingCrafter
+    from rarity_utils import rarity_system
+    CRAFTING_MODULES_LOADED = True
+    print("✓ Loaded crafting subdisciplines modules")
+except ImportError as e:
+    CRAFTING_MODULES_LOADED = False
+    print(f"⚠ Could not load crafting subdisciplines: {e}")
+    print("  Crafting will use legacy instant-craft only")
+
 
 # ============================================================================
 # CONFIGURATION
@@ -1626,6 +1642,8 @@ class ItemStack:
     quantity: int
     max_stack: int = 99
     equipment_data: Optional['EquipmentItem'] = None  # For equipment items, store actual instance
+    rarity: str = 'common'  # Rarity for materials and crafted items
+    crafted_stats: Optional[Dict[str, Any]] = None  # Stats from minigame crafting with rarity modifiers
 
     def __post_init__(self):
         print(f"      📦 ItemStack.__post_init__ called for '{self.item_id}'")
@@ -3137,6 +3155,22 @@ class GameEngine:
         TitleDatabase.get_instance().load_from_file("progression/titles-1.JSON")
         ClassDatabase.get_instance().load_from_file("progression/classes-1.JSON")
 
+        # Initialize crafting subdisciplines (minigames)
+        if CRAFTING_MODULES_LOADED:
+            print("\nInitializing crafting subdisciplines...")
+            self.smithing_crafter = SmithingCrafter()
+            self.refining_crafter = RefiningCrafter()
+            self.alchemy_crafter = AlchemyCrafter()
+            self.engineering_crafter = EngineeringCrafter()
+            self.enchanting_crafter = EnchantingCrafter()
+            print("✓ All 5 crafting disciplines loaded")
+        else:
+            self.smithing_crafter = None
+            self.refining_crafter = None
+            self.alchemy_crafter = None
+            self.engineering_crafter = None
+            self.enchanting_crafter = None
+
         print("\nInitializing systems...")
         self.world = WorldSystem()
         self.character = Character(Position(50.0, 50.0, 0.0))
@@ -3169,6 +3203,12 @@ class GameEngine:
         self.enchantment_recipe = None
         self.enchantment_compatible_items = []
         self.enchantment_selection_rect = None
+
+        # Minigame state
+        self.current_minigame = None  # Active minigame instance
+        self.minigame_result = None  # Result after minigame completes
+        self.minigame_recipe = None  # Recipe being crafted with minigame
+        self.minigame_active = False  # Whether minigame is currently running
 
         self.keys_pressed = set()
         self.mouse_pos = (0, 0)
