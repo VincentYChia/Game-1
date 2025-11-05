@@ -310,6 +310,8 @@ class CraftingSimulator:
                                             'name': name,
                                             'narrative': narrative,
                                             'tier': item.get('tier', 1),
+                                            'category': item.get('category', ''),
+                                            'type': item.get('type', ''),
                                             'source': 'item'
                                         }
             except (FileNotFoundError, json.JSONDecodeError):
@@ -535,7 +537,15 @@ class CraftingSimulator:
                 qty = item_data
 
             if qty > 0:
-                if 'any' in applicable_to or any(app_type in item_id.lower() for app_type in applicable_to):
+                # Check item metadata for proper type matching
+                item_meta = self.item_metadata.get(item_id, {})
+                item_type = item_meta.get('type', '')
+                item_category = item_meta.get('category', '')
+
+                if ('any' in applicable_to or
+                    item_type in applicable_to or
+                    item_category in applicable_to or
+                    any(app_type in item_id.lower() for app_type in applicable_to)):
                     enchantable_items.append(item_id)
 
         # Item list clicks (select item to enchant)
@@ -1212,7 +1222,31 @@ class CraftingSimulator:
         pygame.draw.line(self.screen, GRAY, (center_x, grid_y), (center_x, grid_y + grid_pixel_size), 2)
         pygame.draw.line(self.screen, GRAY, (grid_x, center_y), (grid_x + grid_pixel_size, center_y), 2)
 
-        # Draw vertices from placement
+        # Draw shape connecting lines first (so they appear behind vertices)
+        shapes = placement.get('shapes', [])
+        for shape in shapes:
+            shape_vertices = shape.get('vertices', [])
+            if len(shape_vertices) > 1:
+                # Draw lines connecting the vertices in the shape
+                for i in range(len(shape_vertices)):
+                    v1_str = shape_vertices[i]
+                    v2_str = shape_vertices[(i + 1) % len(shape_vertices)]  # Wrap around to close the shape
+
+                    # Parse coordinates
+                    if ',' in v1_str and ',' in v2_str:
+                        gx1, gy1 = map(int, v1_str.split(','))
+                        gx2, gy2 = map(int, v2_str.split(','))
+
+                        # Convert to screen positions
+                        sx1 = grid_x + (gx1 + half) * cell_size + cell_size // 2
+                        sy1 = grid_y + (half - gy1) * cell_size + cell_size // 2
+                        sx2 = grid_x + (gx2 + half) * cell_size + cell_size // 2
+                        sy2 = grid_y + (half - gy2) * cell_size + cell_size // 2
+
+                        # Draw connecting line
+                        pygame.draw.line(self.screen, BLUE, (sx1, sy1), (sx2, sy2), 3)
+
+        # Draw vertices from placement (on top of lines)
         vertices = placement.get('vertices', {})
         for coord_str, vertex_data in vertices.items():
             if ',' in coord_str:
@@ -1269,8 +1303,14 @@ class CraftingSimulator:
                 else:
                     # Check item metadata to see if it matches applicable types
                     item_meta = self.item_metadata.get(item_id, {})
-                    # Simple heuristic: check if item_id contains any of the applicable types
-                    if any(app_type in item_id.lower() for app_type in applicable_to):
+                    item_type = item_meta.get('type', '')
+                    item_category = item_meta.get('category', '')
+
+                    # Check if item type matches any of the applicable types
+                    # Also check item_id as fallback for items without metadata
+                    if (item_type in applicable_to or
+                        item_category in applicable_to or
+                        any(app_type in item_id.lower() for app_type in applicable_to)):
                         enchantable_items.append(item_id)
 
         if not enchantable_items:
