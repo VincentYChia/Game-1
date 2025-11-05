@@ -16,6 +16,7 @@ Minigame: Temperature management + hammering/forging
 import pygame
 import json
 from pathlib import Path
+from rarity_utils import rarity_system
 
 
 class SmithingMinigame:
@@ -313,38 +314,55 @@ class SmithingCrafter:
     def can_craft(self, recipe_id, inventory):
         """
         Check if recipe can be crafted with given inventory
+        Also checks rarity uniformity (all materials must be same rarity)
 
         Args:
             recipe_id: Recipe ID to check
             inventory: Dict of {material_id: quantity}
 
         Returns:
-            bool: True if can craft
+            tuple: (can_craft: bool, error_message: str or None)
         """
         if recipe_id not in self.recipes:
-            return False
+            return False, "Recipe not found"
 
         recipe = self.recipes[recipe_id]
+
+        # Check material quantities
         for inp in recipe.get('inputs', []):
             if inventory.get(inp['materialId'], 0) < inp['quantity']:
-                return False
-        return True
+                return False, f"Insufficient {inp['materialId']}"
 
-    def craft_instant(self, recipe_id, inventory):
+        # Check rarity uniformity
+        inputs = recipe.get('inputs', [])
+        is_uniform, rarity, error_msg = rarity_system.check_rarity_uniformity(inputs)
+
+        if not is_uniform:
+            return False, error_msg
+
+        return True, None
+
+    def craft_instant(self, recipe_id, inventory, item_metadata=None):
         """
         Instant craft (no minigame) - produces base item
 
         Args:
             recipe_id: Recipe ID to craft
             inventory: Dict of {material_id: quantity} (will be modified)
+            item_metadata: Optional dict of item metadata for category lookup
 
         Returns:
-            dict: Result with outputId, quantity, success
+            dict: Result with outputId, quantity, success, rarity
         """
-        if not self.can_craft(recipe_id, inventory):
-            return {"success": False, "message": "Insufficient materials"}
+        can_craft, error_msg = self.can_craft(recipe_id, inventory)
+        if not can_craft:
+            return {"success": False, "message": error_msg or "Cannot craft"}
 
         recipe = self.recipes[recipe_id]
+
+        # Detect input rarity
+        inputs = recipe.get('inputs', [])
+        _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
 
         # Deduct materials
         for inp in recipe['inputs']:
@@ -355,7 +373,8 @@ class SmithingCrafter:
             "outputId": recipe['outputId'],
             "quantity": recipe['outputQty'],
             "bonus": 0,
-            "message": "Crafted (base stats)"
+            "rarity": input_rarity,
+            "message": f"Crafted ({input_rarity})"
         }
 
     def create_minigame(self, recipe_id):
@@ -376,17 +395,18 @@ class SmithingCrafter:
 
         return SmithingMinigame(recipe, tier)
 
-    def craft_with_minigame(self, recipe_id, inventory, minigame_result):
+    def craft_with_minigame(self, recipe_id, inventory, minigame_result, item_metadata=None):
         """
-        Craft with minigame result - produces item with bonuses
+        Craft with minigame result - produces item with bonuses and rarity modifiers
 
         Args:
             recipe_id: Recipe ID to craft
             inventory: Dict of {material_id: quantity} (will be modified)
             minigame_result: Result dict from SmithingMinigame
+            item_metadata: Optional dict of item metadata for category lookup
 
         Returns:
-            dict: Result with outputId, quantity, bonus, success
+            dict: Result with outputId, quantity, bonus, rarity, stats, success
         """
         if not minigame_result.get('success'):
             # Failure - lose some materials (50% for now)
@@ -406,7 +426,11 @@ class SmithingCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
-        # Calculate base stats for the item (will be modified by rarity bonus)
+        # Detect input rarity
+        inputs = recipe.get('inputs', [])
+        _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+
+        # Calculate base stats for the item
         tier = recipe.get('stationTier', 1)
         bonus_pct = minigame_result.get('bonus', 0)
 
@@ -414,17 +438,28 @@ class SmithingCrafter:
         base_stats = {
             "durability": 100 + (tier * 20) + bonus_pct,  # Tier 1: 100-120, Tier 2: 120-140, etc.
             "quality": 100 + bonus_pct,  # Minigame performance
-            "power": 100 + (tier * 15)  # Tier-based power
+            "power": 100 + (tier * 15),  # Tier-based power
+            "damage": 25 + (tier * 10),  # Base damage for weapons
+            "defense": 20 + (tier * 8)   # Base defense for armor
         }
+
+        # Get item category and apply rarity modifiers
+        output_id = recipe['outputId']
+        if item_metadata is None:
+            item_metadata = {}
+
+        item_category = rarity_system.get_item_category(output_id, item_metadata)
+        modified_stats = rarity_system.apply_rarity_modifiers(base_stats, item_category, input_rarity)
 
         return {
             "success": True,
-            "outputId": recipe['outputId'],
+            "outputId": output_id,
             "quantity": recipe['outputQty'],
             "bonus": minigame_result.get('bonus', 0),
             "score": minigame_result.get('score', 0),
-            "stats": base_stats,
-            "message": f"Crafted with +{minigame_result.get('bonus', 0)}% bonus!"
+            "rarity": input_rarity,
+            "stats": modified_stats,
+            "message": f"Crafted {input_rarity} item with +{minigame_result.get('bonus', 0)}% bonus!"
         }
 
     def get_recipe(self, recipe_id):

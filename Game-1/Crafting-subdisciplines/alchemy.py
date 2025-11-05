@@ -17,6 +17,8 @@ Minigame: Reaction chain management - reading visual cues
 import pygame
 import json
 import random
+from pathlib import Path
+from rarity_utils import rarity_system
 
 
 class AlchemyReaction:
@@ -498,31 +500,50 @@ class AlchemyCrafter:
         return self.placements.get(recipe_id)
 
     def can_craft(self, recipe_id, inventory):
-        """Check if recipe can be crafted"""
+        """
+        Check if recipe can be crafted with given inventory
+        Also checks rarity uniformity (all materials must be same rarity)
+        """
         if recipe_id not in self.recipes:
-            return False
+            return False, "Recipe not found"
 
         recipe = self.recipes[recipe_id]
+
+        # Check material quantities
         for inp in recipe.get('inputs', []):
             if inventory.get(inp['materialId'], 0) < inp['quantity']:
-                return False
-        return True
+                return False, f"Insufficient {inp['materialId']}"
 
-    def craft_instant(self, recipe_id, inventory):
+        # Check rarity uniformity
+        inputs = recipe.get('inputs', [])
+        is_uniform, rarity, error_msg = rarity_system.check_rarity_uniformity(inputs)
+
+        if not is_uniform:
+            return False, error_msg
+
+        return True, None
+
+    def craft_instant(self, recipe_id, inventory, item_metadata=None):
         """
         Instant craft (no minigame) - produces base T-level output
 
         Args:
             recipe_id: Recipe ID to craft
             inventory: Dict of {material_id: quantity} (will be modified)
+            item_metadata: Optional dict of item metadata for category lookup
 
         Returns:
-            dict: Result with outputId, quantity, success
+            dict: Result with outputId, quantity, success, rarity
         """
-        if not self.can_craft(recipe_id, inventory):
-            return {"success": False, "message": "Insufficient materials"}
+        can_craft, error_msg = self.can_craft(recipe_id, inventory)
+        if not can_craft:
+            return {"success": False, "message": error_msg or "Cannot craft"}
 
         recipe = self.recipes[recipe_id]
+
+        # Detect input rarity
+        inputs = recipe.get('inputs', [])
+        _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
 
         # Deduct materials
         for inp in recipe['inputs']:
@@ -534,7 +555,8 @@ class AlchemyCrafter:
             "quantity": recipe['outputQty'],
             "duration_mult": 1.0,  # Base duration
             "effect_mult": 1.0,  # Base effect
-            "message": "Brewed (base quality)"
+            "rarity": input_rarity,
+            "message": f"Brewed ({input_rarity})"
         }
 
     def create_minigame(self, recipe_id):
@@ -547,17 +569,18 @@ class AlchemyCrafter:
 
         return AlchemyMinigame(recipe, tier)
 
-    def craft_with_minigame(self, recipe_id, inventory, minigame_result):
+    def craft_with_minigame(self, recipe_id, inventory, minigame_result, item_metadata=None):
         """
-        Craft with minigame result - gradient success
+        Craft with minigame result - gradient success with rarity modifiers
 
         Args:
             recipe_id: Recipe ID to craft
             inventory: Dict of {material_id: quantity} (will be modified)
             minigame_result: Result dict from AlchemyMinigame
+            item_metadata: Optional dict of item metadata for category lookup
 
         Returns:
-            dict: Result with outputId, quality, multipliers
+            dict: Result with outputId, quality, multipliers, rarity, stats
         """
         recipe = self.recipes[recipe_id]
 
@@ -578,7 +601,11 @@ class AlchemyCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
-        # Convert multipliers to stats (will be modified by rarity bonus)
+        # Detect input rarity
+        inputs = recipe.get('inputs', [])
+        _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+
+        # Convert multipliers to stats
         tier = recipe.get('stationTier', recipe.get('stationTierRequired', 1))
         duration_mult = minigame_result.get('duration_mult', 1.0)
         effect_mult = minigame_result.get('effect_mult', 1.0)
@@ -589,15 +616,24 @@ class AlchemyCrafter:
             "quality": 100 + (tier * 10)  # Base quality from tier
         }
 
+        # Get item category and apply rarity modifiers
+        output_id = recipe['outputId']
+        if item_metadata is None:
+            item_metadata = {}
+
+        item_category = rarity_system.get_item_category(output_id, item_metadata)
+        modified_stats = rarity_system.apply_rarity_modifiers(base_stats, item_category, input_rarity)
+
         return {
             "success": True,
-            "outputId": recipe['outputId'],
+            "outputId": output_id,
             "quantity": recipe['outputQty'],
             "quality": minigame_result.get('quality', 'Standard'),
             "duration_mult": duration_mult,
             "effect_mult": effect_mult,
-            "stats": base_stats,
-            "message": minigame_result.get('message', 'Brewing complete!')
+            "rarity": input_rarity,
+            "stats": modified_stats,
+            "message": f"Brewed {input_rarity} potion! {minigame_result.get('message', '')}"
         }
 
     def get_recipe(self, recipe_id):

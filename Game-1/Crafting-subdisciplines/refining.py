@@ -18,6 +18,8 @@ import pygame
 import json
 import random
 import math
+from pathlib import Path
+from rarity_utils import rarity_system
 
 
 class RefiningMinigame:
@@ -306,22 +308,33 @@ class RefiningCrafter:
     def can_craft(self, recipe_id, inventory):
         """
         Check if recipe can be crafted with given inventory
+        Also checks rarity uniformity (all materials must be same rarity)
 
         Args:
             recipe_id: Recipe ID to check
             inventory: Dict of {material_id: quantity}
 
         Returns:
-            bool: True if can craft
+            tuple: (can_craft: bool, error_message: str or None)
         """
         if recipe_id not in self.recipes:
-            return False
+            return False, "Recipe not found"
 
         recipe = self.recipes[recipe_id]
+
+        # Check material quantities
         for inp in recipe.get('inputs', []):
             if inventory.get(inp['materialId'], 0) < inp['quantity']:
-                return False
-        return True
+                return False, f"Insufficient {inp['materialId']}"
+
+        # Check rarity uniformity
+        inputs = recipe.get('inputs', [])
+        is_uniform, rarity, error_msg = rarity_system.check_rarity_uniformity(inputs)
+
+        if not is_uniform:
+            return False, error_msg
+
+        return True, None
 
     def craft_instant(self, recipe_id, inventory):
         """
@@ -332,12 +345,17 @@ class RefiningCrafter:
             inventory: Dict of {material_id: quantity} (will be modified)
 
         Returns:
-            dict: Result with outputId, quantity, success
+            dict: Result with outputId, quantity, success, rarity
         """
-        if not self.can_craft(recipe_id, inventory):
-            return {"success": False, "message": "Insufficient materials"}
+        can_craft, error_msg = self.can_craft(recipe_id, inventory)
+        if not can_craft:
+            return {"success": False, "message": error_msg or "Cannot craft"}
 
         recipe = self.recipes[recipe_id]
+
+        # Detect input rarity
+        inputs = recipe.get('inputs', [])
+        _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
 
         # Deduct materials
         for inp in recipe['inputs']:
@@ -358,7 +376,8 @@ class RefiningCrafter:
             "success": True,
             "outputId": output_id,
             "quantity": output_qty,
-            "message": "Refined (base quality)"
+            "rarity": input_rarity,
+            "message": f"Refined ({input_rarity})"
         }
 
     def create_minigame(self, recipe_id):
@@ -382,6 +401,7 @@ class RefiningCrafter:
     def craft_with_minigame(self, recipe_id, inventory, minigame_result):
         """
         Craft with minigame result - all-or-nothing
+        Refining outputs materials with rarity but NO stat bonuses
 
         Args:
             recipe_id: Recipe ID to craft
@@ -389,7 +409,7 @@ class RefiningCrafter:
             minigame_result: Result dict from RefiningMinigame
 
         Returns:
-            dict: Result with outputId, quantity, success
+            dict: Result with outputId, quantity, rarity, success
         """
         recipe = self.recipes[recipe_id]
 
@@ -409,6 +429,10 @@ class RefiningCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
+        # Detect input rarity (base rarity from input materials)
+        inputs = recipe.get('inputs', [])
+        _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+
         # Handle outputs array format (refining uses outputs, not outputId)
         outputs = recipe.get('outputs', [])
         if outputs:
@@ -420,26 +444,30 @@ class RefiningCrafter:
             output_qty = recipe.get('outputQty', 1)
 
         # Apply rarity upgrade based on minigame performance (Game Mechanics v5)
-        # Successful refining grants quality upgrade to the output
+        # Refining can upgrade material rarity based on quality
         quality = minigame_result.get('quality', 0.5)
-        rarity = None
-        if quality >= 0.9:
-            rarity = "Exceptional"
-        elif quality >= 0.7:
-            rarity = "Fine"
-        elif quality >= 0.5:
-            rarity = "Standard"
+
+        # Map rarity tiers to upgrade logic
+        rarity_tiers = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+        current_tier_idx = rarity_tiers.index(input_rarity) if input_rarity in rarity_tiers else 0
+
+        # Quality determines rarity upgrade
+        if quality >= 0.95:  # Exceptional performance
+            output_rarity_idx = min(current_tier_idx + 2, len(rarity_tiers) - 1)  # +2 tiers
+        elif quality >= 0.8:  # Great performance
+            output_rarity_idx = min(current_tier_idx + 1, len(rarity_tiers) - 1)  # +1 tier
+        else:  # Good performance
+            output_rarity_idx = current_tier_idx  # Same tier
+
+        output_rarity = rarity_tiers[output_rarity_idx]
 
         result = {
             "success": True,
             "outputId": output_id,
             "quantity": output_qty,
-            "message": "Refinement successful!"
+            "rarity": output_rarity,
+            "message": f"Refined to {output_rarity} quality!"
         }
-
-        # Add rarity if applicable
-        if rarity:
-            result["rarity"] = rarity
 
         return result
 
