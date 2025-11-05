@@ -1104,23 +1104,26 @@ class CraftingSimulator:
         if not self.selected_recipe:
             return
 
-        crafter = self.get_current_crafter()
-        if not hasattr(crafter, 'get_placement'):
-            return
+        try:
+            crafter = self.get_current_crafter()
+            if not hasattr(crafter, 'get_placement'):
+                return
 
-        placement = crafter.get_placement(self.selected_recipe)
-        if not placement:
-            return
+            placement = crafter.get_placement(self.selected_recipe)
+            if not placement:
+                return
 
-        # Display pattern based on discipline
-        if self.current_discipline == "smithing":
-            self.draw_smithing_pattern(placement)
-        elif self.current_discipline == "refining":
-            self.draw_refining_pattern(placement)
-        elif self.current_discipline == "alchemy":
-            self.draw_alchemy_pattern(placement)
-        elif self.current_discipline == "engineering":
-            self.draw_engineering_pattern(placement)
+            # Display pattern based on discipline
+            if self.current_discipline == "smithing":
+                self.draw_smithing_pattern(placement)
+            elif self.current_discipline == "refining":
+                self.draw_refining_pattern(placement)
+            elif self.current_discipline == "alchemy":
+                self.draw_alchemy_pattern(placement)
+            elif self.current_discipline == "engineering":
+                self.draw_engineering_pattern(placement)
+        except Exception as e:
+            print(f"[Pattern Display] Error drawing pattern for {self.current_discipline}: {e}")
 
     def draw_smithing_pattern(self, placement):
         """Draw smithing grid pattern"""
@@ -1161,26 +1164,29 @@ class CraftingSimulator:
                 pygame.draw.rect(self.screen, (60, 60, 60), (x, y, cell_size - 1, cell_size - 1))
                 pygame.draw.rect(self.screen, LIGHT_GRAY, (x, y, cell_size - 1, cell_size - 1), 1)
 
-        # Draw materials
+        # Draw materials - placement format is "row,col" (1-indexed)
         for coord_str, material_id in placement_map.items():
             if coord_str != 'metadata' and ',' in coord_str:
-                col, row = map(int, coord_str.split(','))
-                col -= 1  # Convert to 0-indexed
-                row -= 1
+                try:
+                    row, col = map(int, coord_str.split(','))
+                    row -= 1  # Convert to 0-indexed
+                    col -= 1
 
-                if 0 <= col < grid_size and 0 <= row < grid_size:
-                    x = grid_start_x + col * cell_size
-                    y = grid_start_y + row * cell_size
+                    if 0 <= row < grid_size and 0 <= col < grid_size:
+                        x = grid_start_x + col * cell_size
+                        y = grid_start_y + row * cell_size
 
-                    # Draw material cell
-                    mat_color = MATERIAL_COLORS.get(material_id, CYAN)
-                    pygame.draw.rect(self.screen, mat_color, (x + 2, y + 2, cell_size - 5, cell_size - 5))
+                        # Draw material cell
+                        mat_color = MATERIAL_COLORS.get(material_id, CYAN)
+                        pygame.draw.rect(self.screen, mat_color, (x + 2, y + 2, cell_size - 5, cell_size - 5))
 
-                    # Draw label
-                    if cell_size >= 30:
-                        label = material_id[:4].upper()
-                        label_text = self.small_font.render(label, True, WHITE)
-                        self.screen.blit(label_text, (x + 4, y + cell_size - 16))
+                        # Draw label
+                        if cell_size >= 30:
+                            label = material_id[:4].upper()
+                            label_text = self.small_font.render(label, True, WHITE)
+                            self.screen.blit(label_text, (x + 4, y + cell_size - 16))
+                except (ValueError, IndexError) as e:
+                    print(f"[Smithing] Invalid coordinate {coord_str}: {e}")
 
     def draw_refining_pattern(self, placement):
         """Draw refining hub-and-spoke pattern"""
@@ -1204,8 +1210,8 @@ class CraftingSimulator:
             core_y += 25
 
             for inp in core_inputs:
-                mat_id = inp['materialId']
-                qty = inp['quantity']
+                mat_id = inp.get('materialId', 'unknown')
+                qty = inp.get('quantity', 1)
                 mat_color = MATERIAL_COLORS.get(mat_id, GRAY)
 
                 # Draw circle for core
@@ -1223,8 +1229,8 @@ class CraftingSimulator:
             surr_y += 25
 
             for inp in surrounding[:6]:  # Limit display
-                mat_id = inp['materialId']
-                qty = inp['quantity']
+                mat_id = inp.get('materialId', 'unknown')
+                qty = inp.get('quantity', 1)
                 mat_color = MATERIAL_COLORS.get(mat_id, GRAY)
 
                 # Draw small circle for spoke
@@ -1252,8 +1258,8 @@ class CraftingSimulator:
 
         for ing in ingredients:
             slot = ing.get('slot', 0)
-            mat_id = ing['materialId']
-            qty = ing['quantity']
+            mat_id = ing.get('materialId', 'unknown')
+            qty = ing.get('quantity', 1)
             mat_color = MATERIAL_COLORS.get(mat_id, GRAY)
 
             # Draw slot number
@@ -1299,8 +1305,8 @@ class CraftingSimulator:
 
         for slot_data in slots:
             slot_type = slot_data.get('type', 'UNKNOWN')
-            mat_id = slot_data['materialId']
-            qty = slot_data['quantity']
+            mat_id = slot_data.get('materialId', 'unknown')
+            qty = slot_data.get('quantity', 1)
 
             slot_color = slot_colors.get(slot_type, GRAY)
             mat_color = MATERIAL_COLORS.get(mat_id, GRAY)
@@ -1873,7 +1879,11 @@ class CraftingSimulator:
 
         if 'quality' in self.minigame_result:
             quality = self.minigame_result['quality']
-            quality_text = self.font.render(f"Quality: {quality:.0%}", True, YELLOW)
+            # Handle both numeric quality (float) and text quality (string)
+            if isinstance(quality, str):
+                quality_text = self.font.render(f"Quality: {quality}", True, YELLOW)
+            else:
+                quality_text = self.font.render(f"Quality: {quality:.0%}", True, YELLOW)
             quality_rect = quality_text.get_rect(center=(SCREEN_WIDTH // 2, detail_y))
             self.screen.blit(quality_text, quality_rect)
             detail_y += 35
