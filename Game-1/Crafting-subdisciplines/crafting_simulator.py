@@ -146,7 +146,8 @@ class CraftingSimulator:
         # Simulated inventory (unlimited for testing)
         self.inventory = self._create_test_inventory()
 
-        # Crafted items inventory
+        # Crafted items inventory (now with enchantment support)
+        # Format: {item_id: {'quantity': int, 'enchantments': [list of enchantment dicts]}}
         self.crafted_items = {}
 
         # UI state
@@ -155,6 +156,11 @@ class CraftingSimulator:
         self.inventory_scroll = 0
         self.current_minigame = None
         self.minigame_result = None
+
+        # Enchanting UI state
+        self.enchanting_mode = False  # True when viewing enchanting pattern
+        self.selected_enchant_target = None  # Item to apply enchantment to
+        self.enchant_item_scroll = 0
 
         # Running state
         self.running = True
@@ -354,7 +360,11 @@ class CraftingSimulator:
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    if self.current_minigame:
+                    if self.enchanting_mode:
+                        # Exit enchanting mode
+                        self.enchanting_mode = False
+                        self.selected_enchant_target = None
+                    elif self.current_minigame:
                         # Exit minigame
                         self.current_minigame = None
                         self.minigame_result = None
@@ -405,6 +415,11 @@ class CraftingSimulator:
         """Handle mouse clicks"""
         x, y = pos
 
+        # Enchanting mode clicks
+        if self.enchanting_mode:
+            self.handle_enchanting_click(pos)
+            return
+
         # Discipline tabs
         tab_y = 50
         tab_height = 50
@@ -450,18 +465,24 @@ class CraftingSimulator:
                 instant_h = 45
 
                 if instant_x <= x <= instant_x + instant_w and instant_y <= y <= instant_y + instant_h:
-                    # All disciplines can instant craft (including enchanting)
-                    result = crafter.craft_instant(self.selected_recipe, self.inventory)
-                    if result.get('success'):
-                        output_id = result['outputId']
-                        qty = result['quantity']
-                        self.crafted_items[output_id] = self.crafted_items.get(output_id, 0) + qty
-                        if self.current_discipline == "enchanting":
-                            print(f"Crafted {qty}x {output_id} (enchantment)")
-                        else:
-                            print(f"Crafted {qty}x {output_id} (instant)")
+                    # For enchanting, show the pattern UI and item selection
+                    if self.current_discipline == "enchanting":
+                        self.enchanting_mode = True
+                        self.selected_enchant_target = None
+                        print("Enchanting mode: Select an item to enchant")
                     else:
-                        print(f"Failed to craft: {result.get('message')}")
+                        # Other disciplines: instant craft
+                        result = crafter.craft_instant(self.selected_recipe, self.inventory)
+                        if result.get('success'):
+                            output_id = result['outputId']
+                            qty = result['quantity']
+                            # Initialize item entry if doesn't exist
+                            if output_id not in self.crafted_items:
+                                self.crafted_items[output_id] = {'quantity': 0, 'enchantments': []}
+                            self.crafted_items[output_id]['quantity'] += qty
+                            print(f"Crafted {qty}x {output_id} (instant)")
+                        else:
+                            print(f"Failed to craft: {result.get('message')}")
                     return
 
                 # Minigame button (NOT for enchanting)
@@ -492,6 +513,101 @@ class CraftingSimulator:
             self.minigame_result = None
             print(f"Started minigame for {self.selected_recipe}")
 
+    def handle_enchanting_click(self, pos):
+        """Handle clicks in enchanting mode"""
+        x, y = pos
+
+        if not self.selected_recipe:
+            return
+
+        recipe = self.get_current_crafter().get_recipe(self.selected_recipe)
+        if not recipe:
+            return
+
+        # Get applicable items
+        applicable_to = recipe.get('applicableTo', ['any'])
+        enchantable_items = []
+
+        for item_id, item_data in self.crafted_items.items():
+            if isinstance(item_data, dict):
+                qty = item_data.get('quantity', 0)
+            else:
+                qty = item_data
+
+            if qty > 0:
+                if 'any' in applicable_to or any(app_type in item_id.lower() for app_type in applicable_to):
+                    enchantable_items.append(item_id)
+
+        # Item list clicks (select item to enchant)
+        panel_x = 950
+        panel_y = 150
+        item_y = panel_y + 50
+
+        for i, item_id in enumerate(enchantable_items[:20]):
+            item_rect = pygame.Rect(panel_x + 10, item_y, 580, 25)
+            if item_rect.collidepoint(x, y):
+                self.selected_enchant_target = item_id
+                print(f"Selected {item_id} for enchanting")
+                return
+            item_y += 28
+
+        # Apply button
+        button_x = 950
+        button_y = 770
+        button_w = 280
+        button_h = 50
+
+        if button_x <= x <= button_x + button_w and button_y <= y <= button_y + button_h:
+            if self.selected_enchant_target and self.get_current_crafter().can_craft(self.selected_recipe, self.inventory):
+                self.apply_enchantment()
+            return
+
+        # Cancel button
+        cancel_x = button_x + button_w + 20
+        if cancel_x <= x <= cancel_x + 280 and button_y <= y <= button_y + button_h:
+            self.enchanting_mode = False
+            self.selected_enchant_target = None
+            print("Cancelled enchanting")
+            return
+
+    def apply_enchantment(self):
+        """Apply selected enchantment to selected item"""
+        if not self.selected_recipe or not self.selected_enchant_target:
+            return
+
+        crafter = self.get_current_crafter()
+        recipe = crafter.get_recipe(self.selected_recipe)
+
+        if not crafter.can_craft(self.selected_recipe, self.inventory):
+            print("Insufficient materials!")
+            return
+
+        # Deduct materials
+        for inp in recipe.get('inputs', []):
+            self.inventory[inp['materialId']] -= inp['quantity']
+
+        # Add enchantment to the item
+        enchantment = {
+            'id': recipe.get('enchantmentId', ''),
+            'name': recipe.get('enchantmentName', 'Unknown'),
+            'effect': recipe.get('effect', {})
+        }
+
+        # Ensure item has enchantments list
+        item_data = self.crafted_items[self.selected_enchant_target]
+        if not isinstance(item_data, dict):
+            self.crafted_items[self.selected_enchant_target] = {'quantity': item_data, 'enchantments': []}
+            item_data = self.crafted_items[self.selected_enchant_target]
+
+        # Add enchantment
+        item_data['enchantments'].append(enchantment)
+
+        print(f"Applied {enchantment['name']} to {self.selected_enchant_target}!")
+
+        # Exit enchanting mode
+        self.enchanting_mode = False
+        self.selected_enchant_target = None
+
     def handle_minigame_click(self, pos):
         """Handle clicks within minigame"""
         x, y = pos
@@ -519,7 +635,10 @@ class CraftingSimulator:
                 output_id = result.get('outputId')
                 qty = result.get('quantity', 1)
                 if output_id:
-                    self.crafted_items[output_id] = self.crafted_items.get(output_id, 0) + qty
+                    # Initialize item entry if doesn't exist
+                    if output_id not in self.crafted_items:
+                        self.crafted_items[output_id] = {'quantity': 0, 'enchantments': []}
+                    self.crafted_items[output_id]['quantity'] += qty
                 print(f"Crafted {qty}x {output_id} via minigame")
             else:
                 print(f"Minigame failed: {result.get('message')}")
@@ -545,7 +664,9 @@ class CraftingSimulator:
         """Main draw function"""
         self.screen.fill(DARK_GRAY)
 
-        if self.current_minigame and not self.minigame_result:
+        if self.enchanting_mode:
+            self.draw_enchanting_ui()
+        elif self.current_minigame and not self.minigame_result:
             self.draw_minigame()
         elif self.minigame_result:
             self.draw_minigame_result()
@@ -882,7 +1003,17 @@ class CraftingSimulator:
         item_y = panel_y + 50
         hovered_item = None
 
-        for item_id, qty in list(self.crafted_items.items())[:12]:
+        for item_id, item_data in list(self.crafted_items.items())[:12]:
+            # Handle both old format (just a number) and new format (dict)
+            if isinstance(item_data, dict):
+                qty = item_data.get('quantity', 0)
+                enchantments = item_data.get('enchantments', [])
+            else:
+                # Legacy support - migrate to new format
+                qty = item_data
+                enchantments = []
+                self.crafted_items[item_id] = {'quantity': qty, 'enchantments': enchantments}
+
             # Get metadata
             metadata = self.item_metadata.get(item_id, {})
             item_name = metadata.get('name', item_id.replace('_', ' ').title())
@@ -896,20 +1027,25 @@ class CraftingSimulator:
             is_hovering = item_rect.collidepoint(mouse_pos)
             if is_hovering:
                 pygame.draw.rect(self.screen, LIGHT_GRAY, item_rect)
-                hovered_item = (item_id, metadata, mouse_pos)
+                hovered_item = (item_id, metadata, mouse_pos, enchantments)
 
-            # Draw item text
-            item_text = self.font.render(f"{item_name}: x{qty}", True, GREEN if not is_hovering else YELLOW)
+            # Draw item text with enchantment indicator
+            enchant_suffix = f" [{len(enchantments)} ench]" if enchantments else ""
+            item_color = PURPLE if enchantments else (YELLOW if is_hovering else GREEN)
+            item_text = self.font.render(f"{item_name}: x{qty}{enchant_suffix}", True, item_color)
             self.screen.blit(item_text, (panel_x + 25, item_y))
 
             item_y += 25
 
         # Draw tooltip for hovered item (on top of everything)
         if hovered_item:
-            self._draw_item_tooltip(hovered_item[0], hovered_item[1], hovered_item[2])
+            self._draw_item_tooltip(hovered_item[0], hovered_item[1], hovered_item[2], hovered_item[3])
 
-    def _draw_item_tooltip(self, item_id, metadata, mouse_pos):
+    def _draw_item_tooltip(self, item_id, metadata, mouse_pos, enchantments=None):
         """Draw detailed tooltip for an item"""
+        if enchantments is None:
+            enchantments = []
+
         if not metadata or not metadata.get('narrative'):
             return
 
@@ -922,8 +1058,9 @@ class CraftingSimulator:
         narrative = metadata.get('narrative', 'No description available.')
         wrapped_lines = self._wrap_text(narrative, tooltip_width - 2 * tooltip_padding)
 
-        # Calculate tooltip height
-        tooltip_height = tooltip_padding * 2 + line_height * (len(wrapped_lines) + 2)  # +2 for name and tier
+        # Calculate tooltip height (include enchantments)
+        enchant_lines = len(enchantments)
+        tooltip_height = tooltip_padding * 2 + line_height * (len(wrapped_lines) + 2 + enchant_lines)  # +2 for name and tier
 
         # Position tooltip (try to show near mouse, but keep on screen)
         tooltip_x = mouse_pos[0] + 15
@@ -960,6 +1097,249 @@ class CraftingSimulator:
             line_text = self.small_font.render(line, True, WHITE)
             self.screen.blit(line_text, (tooltip_x + tooltip_padding, text_y))
             text_y += line_height - 2
+
+        # Draw enchantments if any
+        if enchantments:
+            text_y += 5
+            for enchant in enchantments:
+                enchant_name = enchant.get('name', 'Unknown Enchantment')
+                enchant_text = self.small_font.render(f"• {enchant_name}", True, PURPLE)
+                self.screen.blit(enchant_text, (tooltip_x + tooltip_padding, text_y))
+                text_y += line_height - 2
+
+    def draw_enchanting_ui(self):
+        """Draw enchanting pattern UI and item selection"""
+        # Title
+        title = self.title_font.render("Enchanting Station", True, PURPLE)
+        self.screen.blit(title, (550, 10))
+
+        if not self.selected_recipe:
+            self.enchanting_mode = False
+            return
+
+        recipe = self.get_current_crafter().get_recipe(self.selected_recipe)
+        if not recipe:
+            self.enchanting_mode = False
+            return
+
+        # Get placement pattern
+        placement = self.get_current_crafter().get_placement(self.selected_recipe)
+
+        # Enchantment info panel
+        self.draw_enchantment_info(recipe, placement)
+
+        # Pattern grid display
+        if placement:
+            self.draw_pattern_grid(placement)
+
+        # Item selection panel
+        self.draw_enchantable_items(recipe)
+
+        # Bottom buttons
+        self.draw_enchanting_buttons()
+
+        # ESC hint
+        esc_text = self.small_font.render("Press ESC to return", True, LIGHT_GRAY)
+        self.screen.blit(esc_text, (700, 870))
+
+    def draw_enchantment_info(self, recipe, placement):
+        """Draw enchantment recipe information"""
+        panel_x = 50
+        panel_y = 80
+        panel_width = 350
+        panel_height = 300
+
+        pygame.draw.rect(self.screen, GRAY, (panel_x, panel_y, panel_width, panel_height))
+        pygame.draw.rect(self.screen, PURPLE, (panel_x, panel_y, panel_width, panel_height), 3)
+
+        # Enchantment name
+        enchant_name = recipe.get('enchantmentName', 'Unknown')
+        name_text = self.large_font.render(enchant_name, True, YELLOW)
+        self.screen.blit(name_text, (panel_x + 10, panel_y + 10))
+
+        # Applicable to
+        applicable_to = recipe.get('applicableTo', ['any'])
+        applicable_text = self.font.render(f"Applies to: {', '.join(applicable_to)}", True, CYAN)
+        self.screen.blit(applicable_text, (panel_x + 10, panel_y + 50))
+
+        # Narrative
+        narrative = recipe.get('metadata', {}).get('narrative', 'No description')
+        wrapped = self._wrap_text(narrative, panel_width - 20)
+        text_y = panel_y + 80
+        for line in wrapped[:6]:  # Limit to 6 lines
+            line_text = self.small_font.render(line, True, WHITE)
+            self.screen.blit(line_text, (panel_x + 10, text_y))
+            text_y += 20
+
+        # Materials required
+        mat_y = panel_y + 220
+        mats_title = self.font.render("Materials:", True, YELLOW)
+        self.screen.blit(mats_title, (panel_x + 10, mat_y))
+        mat_y += 25
+
+        for inp in recipe.get('inputs', [])[:3]:
+            mat_id = inp['materialId']
+            qty = inp['quantity']
+            has = self.inventory.get(mat_id, 0)
+            mat_color = GREEN if has >= qty else RED
+            mat_text = self.small_font.render(f"• {mat_id.replace('_', ' ').title()}: {has}/{qty}", True, mat_color)
+            self.screen.blit(mat_text, (panel_x + 15, mat_y))
+            mat_y += 18
+
+    def draw_pattern_grid(self, placement):
+        """Draw the enchanting pattern grid"""
+        grid_x = 450
+        grid_y = 150
+        cell_size = 40
+        grid_type = placement.get('gridType', 'square_8x8')
+        grid_size = int(grid_type.split('_')[1].split('x')[0])
+
+        # Draw grid background
+        grid_pixel_size = grid_size * cell_size
+        pygame.draw.rect(self.screen, (30, 30, 30), (grid_x, grid_y, grid_pixel_size, grid_pixel_size))
+
+        # Draw grid cells
+        for row in range(grid_size):
+            for col in range(grid_size):
+                x = grid_x + col * cell_size
+                y = grid_y + row * cell_size
+                pygame.draw.rect(self.screen, LIGHT_GRAY, (x, y, cell_size - 1, cell_size - 1), 1)
+
+        # Draw center axes
+        half = grid_size // 2
+        center_x = grid_x + half * cell_size
+        center_y = grid_y + half * cell_size
+        pygame.draw.line(self.screen, GRAY, (center_x, grid_y), (center_x, grid_y + grid_pixel_size), 2)
+        pygame.draw.line(self.screen, GRAY, (grid_x, center_y), (grid_x + grid_pixel_size, center_y), 2)
+
+        # Draw vertices from placement
+        vertices = placement.get('vertices', {})
+        for coord_str, vertex_data in vertices.items():
+            if ',' in coord_str:
+                gx, gy = map(int, coord_str.split(','))
+                # Convert centered coordinates to screen position
+                screen_x = grid_x + (gx + half) * cell_size + cell_size // 2
+                screen_y = grid_y + (half - gy) * cell_size + cell_size // 2
+
+                # Draw material dot
+                material_id = vertex_data.get('materialId')
+                is_key = vertex_data.get('isKey', False)
+                color = RED if is_key else CYAN
+                pygame.draw.circle(self.screen, color, (screen_x, screen_y), 6)
+                pygame.draw.circle(self.screen, BLACK, (screen_x, screen_y), 6, 1)
+
+                # Draw material label
+                if material_id:
+                    mat_label = material_id[:4].upper()
+                    label_text = self.small_font.render(mat_label, True, WHITE)
+                    self.screen.blit(label_text, (screen_x - 12, screen_y - 25))
+
+        # Grid title
+        grid_title = self.font.render(f"Pattern ({grid_type})", True, CYAN)
+        self.screen.blit(grid_title, (grid_x, grid_y - 30))
+
+    def draw_enchantable_items(self, recipe):
+        """Draw list of items that can be enchanted"""
+        panel_x = 950
+        panel_y = 150
+        panel_width = 600
+        panel_height = 600
+
+        pygame.draw.rect(self.screen, GRAY, (panel_x, panel_y, panel_width, panel_height))
+        pygame.draw.rect(self.screen, ORANGE, (panel_x, panel_y, panel_width, panel_height), 3)
+
+        title = self.font.render("Select Item to Enchant", True, ORANGE)
+        self.screen.blit(title, (panel_x + 10, panel_y + 10))
+
+        # Filter applicable items
+        applicable_to = recipe.get('applicableTo', ['any'])
+        enchantable_items = []
+
+        for item_id, item_data in self.crafted_items.items():
+            # Get item quantity
+            if isinstance(item_data, dict):
+                qty = item_data.get('quantity', 0)
+            else:
+                qty = item_data
+
+            if qty > 0:
+                # Check if applicable
+                if 'any' in applicable_to:
+                    enchantable_items.append(item_id)
+                else:
+                    # Check item metadata to see if it matches applicable types
+                    item_meta = self.item_metadata.get(item_id, {})
+                    # Simple heuristic: check if item_id contains any of the applicable types
+                    if any(app_type in item_id.lower() for app_type in applicable_to):
+                        enchantable_items.append(item_id)
+
+        if not enchantable_items:
+            no_items = self.font.render("No applicable items to enchant", True, LIGHT_GRAY)
+            self.screen.blit(no_items, (panel_x + 150, panel_y + 250))
+            info = self.small_font.render(f"This enchantment applies to: {', '.join(applicable_to)}", True, LIGHT_GRAY)
+            self.screen.blit(info, (panel_x + 100, panel_y + 290))
+            return
+
+        # Draw item list
+        item_y = panel_y + 50
+        mouse_pos = pygame.mouse.get_pos()
+
+        for i, item_id in enumerate(enchantable_items[:20]):  # Limit to 20 items
+            item_data = self.crafted_items[item_id]
+            if isinstance(item_data, dict):
+                qty = item_data.get('quantity', 0)
+                enchantments = item_data.get('enchantments', [])
+            else:
+                qty = item_data
+                enchantments = []
+
+            # Item row
+            item_rect = pygame.Rect(panel_x + 10, item_y, panel_width - 20, 25)
+            is_selected = item_id == self.selected_enchant_target
+            is_hovering = item_rect.collidepoint(mouse_pos)
+
+            # Background
+            if is_selected:
+                pygame.draw.rect(self.screen, PURPLE, item_rect)
+            elif is_hovering:
+                pygame.draw.rect(self.screen, LIGHT_GRAY, item_rect)
+
+            # Item name
+            item_name = self.item_metadata.get(item_id, {}).get('name', item_id.replace('_', ' ').title())
+            if len(item_name) > 35:
+                item_name = item_name[:33] + "..."
+
+            enchant_suffix = f" [{len(enchantments)} ench]" if enchantments else ""
+            item_text = self.font.render(f"{item_name}: x{qty}{enchant_suffix}", True, WHITE)
+            self.screen.blit(item_text, (panel_x + 20, item_y + 2))
+
+            item_y += 28
+
+    def draw_enchanting_buttons(self):
+        """Draw enchanting action buttons"""
+        # Apply button
+        button_x = 950
+        button_y = 770
+        button_w = 280
+        button_h = 50
+
+        can_apply = (self.selected_enchant_target is not None and
+                     self.get_current_crafter().can_craft(self.selected_recipe, self.inventory))
+
+        button_color = GREEN if can_apply else LIGHT_GRAY
+        pygame.draw.rect(self.screen, button_color, (button_x, button_y, button_w, button_h))
+        pygame.draw.rect(self.screen, WHITE, (button_x, button_y, button_w, button_h), 2)
+
+        button_text = self.font.render("APPLY ENCHANTMENT", True, WHITE)
+        self.screen.blit(button_text, (button_x + 30, button_y + 15))
+
+        # Cancel button
+        cancel_x = button_x + button_w + 20
+        pygame.draw.rect(self.screen, RED, (cancel_x, button_y, 280, button_h))
+        pygame.draw.rect(self.screen, WHITE, (cancel_x, button_y, 280, button_h), 2)
+
+        cancel_text = self.font.render("CANCEL", True, WHITE)
+        self.screen.blit(cancel_text, (cancel_x + 90, button_y + 15))
 
     def _wrap_text(self, text, max_width):
         """Wrap text to fit within max_width"""
