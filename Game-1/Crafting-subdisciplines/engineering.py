@@ -413,12 +413,35 @@ class EngineeringMinigame:
         pass
 
     def end(self):
-        """Complete device creation"""
+        """Complete device creation with stat modifications (Game Mechanics v5)"""
         self.active = False
+
+        # Calculate device stats based on puzzle performance
+        # Each puzzle affects a different aspect of the device
+        stats = {
+            "durability": 100,  # Base stats
+            "efficiency": 100,
+            "accuracy": 100,
+            "power": 100
+        }
+
+        # Each solved puzzle adds +10-20% to its corresponding stat
+        stat_types = ["durability", "efficiency", "accuracy", "power"]
+        for i, puzzle in enumerate(self.solved_puzzles):
+            stat_type = stat_types[i % len(stat_types)]
+            # Bonus based on how well puzzle was solved (10-20%)
+            bonus = 15  # Could be adjusted based on puzzle difficulty
+            stats[stat_type] += bonus
+
+        # Calculate overall quality (avg of all stats)
+        quality = sum(stats.values()) / (len(stats) * 100)
+
         self.result = {
             "success": True,
             "puzzles_solved": len(self.solved_puzzles),
             "total_puzzles": self.puzzle_count,
+            "stats": stats,
+            "quality": quality,
             "message": f"Device created! Solved {len(self.solved_puzzles)} puzzles."
         }
 
@@ -598,12 +621,23 @@ class EngineeringCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
-        return {
+        # Get device stats from minigame result
+        stats = minigame_result.get('stats', {})
+        quality = minigame_result.get('quality', 1.0)
+
+        result = {
             "success": True,
             "outputId": recipe['outputId'],
             "quantity": recipe['outputQty'],
             "message": "Device created successfully!"
         }
+
+        # Add stats if present (from puzzle performance)
+        if stats:
+            result["stats"] = stats
+            result["quality"] = quality
+
+        return result
 
     def get_recipe(self, recipe_id):
         """Get recipe by ID"""

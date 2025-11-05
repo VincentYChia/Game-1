@@ -419,12 +419,29 @@ class RefiningCrafter:
             output_id = recipe.get('outputId', 'unknown')
             output_qty = recipe.get('outputQty', 1)
 
-        return {
+        # Apply rarity upgrade based on minigame performance (Game Mechanics v5)
+        # Successful refining grants quality upgrade to the output
+        quality = minigame_result.get('quality', 0.5)
+        rarity = None
+        if quality >= 0.9:
+            rarity = "Exceptional"
+        elif quality >= 0.7:
+            rarity = "Fine"
+        elif quality >= 0.5:
+            rarity = "Standard"
+
+        result = {
             "success": True,
             "outputId": output_id,
             "quantity": output_qty,
             "message": "Refinement successful!"
         }
+
+        # Add rarity if applicable
+        if rarity:
+            result["rarity"] = rarity
+
+        return result
 
     def get_recipe(self, recipe_id):
         """Get recipe by ID"""

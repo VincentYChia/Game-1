@@ -622,12 +622,27 @@ class CraftingSimulator:
             if result.get('success'):
                 output_id = result.get('outputId')
                 qty = result.get('quantity', 1)
+                rarity = result.get('rarity')  # Get rarity from refining
+                stats = result.get('stats')  # Get stats from engineering
+                quality = result.get('quality')  # Get quality from engineering/refining
+
                 if output_id:
                     # Initialize item entry if doesn't exist
                     if output_id not in self.crafted_items:
-                        self.crafted_items[output_id] = {'quantity': 0, 'enchantments': []}
+                        self.crafted_items[output_id] = {'quantity': 0, 'enchantments': [], 'rarity': None, 'stats': None}
                     self.crafted_items[output_id]['quantity'] += qty
-                print(f"Crafted {qty}x {output_id} via minigame")
+
+                    # Store rarity if present (from refining minigames)
+                    if rarity and not self.crafted_items[output_id].get('rarity'):
+                        self.crafted_items[output_id]['rarity'] = rarity
+
+                    # Store stats if present (from engineering minigames)
+                    if stats and not self.crafted_items[output_id].get('stats'):
+                        self.crafted_items[output_id]['stats'] = stats
+
+                rarity_str = f" ({rarity})" if rarity else ""
+                stats_str = f" [Stats: {quality:.1%}]" if stats else ""
+                print(f"Crafted {qty}x {output_id}{rarity_str}{stats_str} via minigame")
             else:
                 print(f"Minigame failed: {result.get('message')}")
 
@@ -1019,21 +1034,25 @@ class CraftingSimulator:
             is_hovering = item_rect.collidepoint(mouse_pos)
             if is_hovering:
                 pygame.draw.rect(self.screen, LIGHT_GRAY, item_rect)
-                hovered_item = (item_id, metadata, mouse_pos, enchantments)
+                item_stats = item_data.get('stats') if isinstance(item_data, dict) else None
+                hovered_item = (item_id, metadata, mouse_pos, enchantments, item_stats)
 
-            # Draw item text with enchantment indicator
+            # Draw item text with rarity and enchantment indicator
+            rarity = item_data.get('rarity') if isinstance(item_data, dict) else None
+            rarity_suffix = f" ({rarity})" if rarity else ""
             enchant_suffix = f" [{len(enchantments)} ench]" if enchantments else ""
             item_color = PURPLE if enchantments else (YELLOW if is_hovering else GREEN)
-            item_text = self.font.render(f"{item_name}: x{qty}{enchant_suffix}", True, item_color)
+            item_text = self.font.render(f"{item_name}: x{qty}{rarity_suffix}{enchant_suffix}", True, item_color)
             self.screen.blit(item_text, (panel_x + 25, item_y))
 
             item_y += 25
 
         # Draw tooltip for hovered item (on top of everything)
         if hovered_item:
-            self._draw_item_tooltip(hovered_item[0], hovered_item[1], hovered_item[2], hovered_item[3])
+            item_stats = hovered_item[4] if len(hovered_item) > 4 else None
+            self._draw_item_tooltip(hovered_item[0], hovered_item[1], hovered_item[2], hovered_item[3], item_stats)
 
-    def _draw_item_tooltip(self, item_id, metadata, mouse_pos, enchantments=None):
+    def _draw_item_tooltip(self, item_id, metadata, mouse_pos, enchantments=None, stats=None):
         """Draw detailed tooltip for an item"""
         if enchantments is None:
             enchantments = []
@@ -1050,9 +1069,10 @@ class CraftingSimulator:
         narrative = metadata.get('narrative', 'No description available.')
         wrapped_lines = self._wrap_text(narrative, tooltip_width - 2 * tooltip_padding)
 
-        # Calculate tooltip height (include enchantments)
+        # Calculate tooltip height (include enchantments and stats)
         enchant_lines = len(enchantments)
-        tooltip_height = tooltip_padding * 2 + line_height * (len(wrapped_lines) + 2 + enchant_lines)  # +2 for name and tier
+        stat_lines = len(stats) if stats else 0
+        tooltip_height = tooltip_padding * 2 + line_height * (len(wrapped_lines) + 2 + enchant_lines + stat_lines)  # +2 for name and tier
 
         # Position tooltip (try to show near mouse, but keep on screen)
         tooltip_x = mouse_pos[0] + 15
@@ -1099,6 +1119,17 @@ class CraftingSimulator:
                 self.screen.blit(enchant_text, (tooltip_x + tooltip_padding, text_y))
                 text_y += line_height - 2
 
+        # Draw device stats if any (from engineering)
+        if stats:
+            text_y += 5
+            stats_title = self.small_font.render("Device Stats:", True, CYAN)
+            self.screen.blit(stats_title, (tooltip_x + tooltip_padding, text_y))
+            text_y += line_height - 2
+            for stat_name, stat_value in stats.items():
+                stat_text = self.small_font.render(f"  {stat_name.title()}: {stat_value}", True, GREEN)
+                self.screen.blit(stat_text, (tooltip_x + tooltip_padding, text_y))
+                text_y += line_height - 2
+
     def draw_pattern_display(self):
         """Draw placement pattern for current selected recipe"""
         if not self.selected_recipe:
@@ -1142,15 +1173,20 @@ class CraftingSimulator:
         # Get placementMap (dict like "2,3": "iron_ingot")
         placement_map = placement if isinstance(placement, dict) else {}
 
-        # Get grid size from placement or recipe
-        if 'metadata' in placement_map and 'gridSize' in placement_map['metadata']:
-            grid_size_str = placement_map['metadata']['gridSize']
-        else:
-            # Try to get from recipe
-            recipe = self.get_current_crafter().get_recipe(self.selected_recipe)
-            grid_size_str = recipe.get('gridSize', '3x3') if recipe else '3x3'
+        # Dynamically calculate grid size from actual coordinates (more robust than metadata)
+        max_row = 0
+        max_col = 0
+        for coord_str in placement_map.keys():
+            if coord_str != 'metadata' and ',' in coord_str:
+                try:
+                    row, col = map(int, coord_str.split(','))
+                    max_row = max(max_row, row)
+                    max_col = max(max_col, col)
+                except (ValueError, IndexError):
+                    pass
 
-        grid_size = int(grid_size_str.split('x')[0])
+        # Use the larger dimension for a square grid (or could use max_row x max_col for rectangular)
+        grid_size = max(max_row, max_col, 3)  # Minimum 3x3
 
         # Draw grid
         cell_size = min(40, (panel_width - 40) // grid_size)
