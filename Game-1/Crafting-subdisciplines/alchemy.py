@@ -578,13 +578,25 @@ class AlchemyCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
+        # Convert multipliers to stats (will be modified by rarity bonus)
+        tier = recipe.get('stationTier', recipe.get('stationTierRequired', 1))
+        duration_mult = minigame_result.get('duration_mult', 1.0)
+        effect_mult = minigame_result.get('effect_mult', 1.0)
+
+        base_stats = {
+            "potency": int(100 * effect_mult),  # Effect strength
+            "duration": int(100 * duration_mult),  # How long it lasts
+            "quality": 100 + (tier * 10)  # Base quality from tier
+        }
+
         return {
             "success": True,
             "outputId": recipe['outputId'],
             "quantity": recipe['outputQty'],
             "quality": minigame_result.get('quality', 'Standard'),
-            "duration_mult": minigame_result.get('duration_mult', 1.0),
-            "effect_mult": minigame_result.get('effect_mult', 1.0),
+            "duration_mult": duration_mult,
+            "effect_mult": effect_mult,
+            "stats": base_stats,
             "message": minigame_result.get('message', 'Brewing complete!')
         }
 

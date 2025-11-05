@@ -146,8 +146,11 @@ class CraftingSimulator:
         # Simulated inventory (unlimited for testing)
         self.inventory = self._create_test_inventory()
 
+        # Material rarity lookup (for bonus calculations)
+        self.material_rarities = self._load_material_rarities()
+
         # Crafted items inventory (now with enchantment support)
-        # Format: {item_id: {'quantity': int, 'enchantments': [list of enchantment dicts]}}
+        # Format: {item_id: {'quantity': int, 'enchantments': [list of enchantment dicts], 'rarity': str, 'stats': dict}}
         self.crafted_items = {}
 
         # UI state
@@ -186,6 +189,75 @@ class CraftingSimulator:
             ]
 
         return {mat: 999 for mat in materials}  # Unlimited for testing
+
+    def _load_material_rarities(self):
+        """Load material rarity information from JSON for bonus calculations"""
+        rarities = {}
+
+        try:
+            with open('../items.JSON/items-materials-1.JSON', 'r') as f:
+                data = json.load(f)
+                materials_list = data.get('materials', [])
+                for mat in materials_list:
+                    mat_id = mat.get('materialId')
+                    rarity = mat.get('rarity', 'common')
+                    if mat_id:
+                        rarities[mat_id] = rarity
+                print(f"[Rarities] Loaded rarities for {len(rarities)} materials")
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"[Rarities] WARNING: Could not load material rarities: {e}")
+
+        return rarities
+
+    def calculate_rarity_bonus(self, inputs):
+        """
+        Calculate rarity bonus multiplier based on input materials
+
+        Formula: For each rarity level above common:
+        - Count items at that rarity
+        - Bonus per item = rarity_level * 2.5%
+        - Total = sum all bonuses, apply as multiplier
+
+        Example: 6 common, 1 rare (level 2), 2 epic (level 3)
+        - Common: 6 * 0 * 2.5% = 0%
+        - Rare: 1 * 2 * 2.5% = 5%
+        - Epic: 2 * 3 * 2.5% = 15%
+        - Total: 20% → 1.20x multiplier
+
+        Args:
+            inputs: List of {materialId, quantity} dicts
+
+        Returns:
+            float: Multiplier (e.g., 1.20 for 20% bonus)
+        """
+        # Rarity levels
+        RARITY_LEVELS = {
+            "common": 0,
+            "uncommon": 1,
+            "rare": 2,
+            "epic": 3,
+            "legendary": 4
+        }
+
+        total_bonus = 0.0
+
+        for inp in inputs:
+            mat_id = inp.get('materialId', '')
+            quantity = inp.get('quantity', 0)
+
+            # Get material rarity
+            rarity = self.material_rarities.get(mat_id, 'common')
+            rarity_level = RARITY_LEVELS.get(rarity, 0)
+
+            # Calculate bonus: rarity_level * 2.5% * quantity
+            bonus_per_item = rarity_level * 0.025
+            total_bonus += bonus_per_item * quantity
+
+        # Return as multiplier (1.0 + bonus percentage)
+        multiplier = 1.0 + total_bonus
+
+        print(f"[Rarity Bonus] Calculated {total_bonus:.1%} bonus → {multiplier:.2f}x multiplier")
+        return multiplier
 
     def _load_item_metadata(self):
         """Load all item metadata from recipes and items JSON files"""
@@ -625,6 +697,19 @@ class CraftingSimulator:
                 rarity = result.get('rarity')  # Get rarity from refining
                 stats = result.get('stats')  # Get stats from engineering
                 quality = result.get('quality')  # Get quality from engineering/refining
+
+                # Calculate and apply rarity bonus based on input materials
+                recipe = crafter.get_recipe(self.selected_recipe)
+                if recipe:
+                    inputs = recipe.get('inputs', [])
+                    rarity_multiplier = self.calculate_rarity_bonus(inputs)
+
+                    # Apply rarity bonus to stats (for smithing, alchemy, engineering, enchanting)
+                    if stats and rarity_multiplier > 1.0:
+                        # Apply multiplier to all stats
+                        for stat_name in stats:
+                            stats[stat_name] = int(stats[stat_name] * rarity_multiplier)
+                        print(f"[Rarity Bonus] Applied {rarity_multiplier:.2f}x to stats: {stats}")
 
                 if output_id:
                     # Initialize item entry if doesn't exist
@@ -1070,26 +1155,33 @@ class CraftingSimulator:
             self._draw_item_tooltip(hovered_item[0], hovered_item[1], hovered_item[2], hovered_item[3], item_stats)
 
     def _draw_item_tooltip(self, item_id, metadata, mouse_pos, enchantments=None, stats=None):
-        """Draw detailed tooltip for an item"""
+        """Draw detailed tooltip for an item (similar to main.py format)"""
         if enchantments is None:
             enchantments = []
 
-        if not metadata or not metadata.get('narrative'):
-            return
+        # Get item data to show rarity
+        item_data = self.crafted_items.get(item_id, {})
+        rarity = item_data.get('rarity') if isinstance(item_data, dict) else None
 
         # Tooltip dimensions
         tooltip_width = 400
         tooltip_padding = 10
         line_height = 20
 
-        # Wrap narrative text
-        narrative = metadata.get('narrative', 'No description available.')
-        wrapped_lines = self._wrap_text(narrative, tooltip_width - 2 * tooltip_padding)
+        # Calculate lines needed
+        lines_needed = 3  # Name, tier/category/rarity, blank line
 
-        # Calculate tooltip height (include enchantments and stats)
-        enchant_lines = len(enchantments)
-        stat_lines = len(stats) if stats else 0
-        tooltip_height = tooltip_padding * 2 + line_height * (len(wrapped_lines) + 2 + enchant_lines + stat_lines)  # +2 for name and tier
+        if metadata and metadata.get('narrative'):
+            narrative = metadata.get('narrative', '')
+            wrapped_lines = self._wrap_text(narrative, tooltip_width - 2 * tooltip_padding)
+            lines_needed += len(wrapped_lines)
+
+        if stats:
+            lines_needed += len(stats) + 2  # +2 for header and spacing
+        if enchantments:
+            lines_needed += len(enchantments) + 1
+
+        tooltip_height = tooltip_padding * 2 + line_height * lines_needed
 
         # Position tooltip (try to show near mouse, but keep on screen)
         tooltip_x = mouse_pos[0] + 15
@@ -1108,43 +1200,65 @@ class CraftingSimulator:
         pygame.draw.rect(self.screen, BLACK, tooltip_rect)
         pygame.draw.rect(self.screen, ORANGE, tooltip_rect, 2)
 
-        # Draw item name (bold/larger)
+        # Rarity colors (like main.py)
+        RARITY_COLORS = {
+            "common": (200, 200, 200),
+            "uncommon": (100, 255, 100),
+            "rare": (100, 150, 255),
+            "epic": (200, 100, 255),
+            "legendary": (255, 165, 0),
+            "Standard": (200, 200, 200),
+            "Fine": (100, 255, 100),
+            "Exceptional": (255, 165, 0)
+        }
+
+        # Draw item name (colored by rarity)
         text_y = tooltip_y + tooltip_padding
-        name_text = self.font.render(metadata.get('name', item_id), True, YELLOW)
+        item_color = RARITY_COLORS.get(rarity, YELLOW) if rarity else YELLOW
+        name_text = self.font.render(metadata.get('name', item_id) if metadata else item_id, True, item_color)
         self.screen.blit(name_text, (tooltip_x + tooltip_padding, text_y))
         text_y += line_height + 5
 
-        # Draw tier if available
-        tier = metadata.get('tier')
-        if tier:
-            tier_text = self.small_font.render(f"Tier {tier}", True, CYAN)
-            self.screen.blit(tier_text, (tooltip_x + tooltip_padding, text_y))
-            text_y += line_height
+        # Draw tier, category, and rarity (like main.py)
+        tier = metadata.get('tier', '?') if metadata else '?'
+        category = metadata.get('category', 'Item').capitalize() if metadata else 'Item'
+        rarity_display = rarity if rarity else "Common"
+
+        info_line = f"Tier {tier} | {category}"
+        if rarity:
+            info_line += f" | {rarity_display}"
+
+        info_text = self.small_font.render(info_line, True, item_color)
+        self.screen.blit(info_text, (tooltip_x + tooltip_padding, text_y))
+        text_y += line_height + 3
 
         # Draw narrative (wrapped)
-        for line in wrapped_lines:
-            line_text = self.small_font.render(line, True, WHITE)
-            self.screen.blit(line_text, (tooltip_x + tooltip_padding, text_y))
-            text_y += line_height - 2
-
-        # Draw enchantments if any
-        if enchantments:
-            text_y += 5
-            for enchant in enchantments:
-                enchant_name = enchant.get('name', 'Unknown Enchantment')
-                enchant_text = self.small_font.render(f"• {enchant_name}", True, PURPLE)
-                self.screen.blit(enchant_text, (tooltip_x + tooltip_padding, text_y))
+        if metadata and metadata.get('narrative'):
+            narrative = metadata.get('narrative', '')
+            wrapped_lines = self._wrap_text(narrative, tooltip_width - 2 * tooltip_padding)
+            for line in wrapped_lines:
+                line_text = self.small_font.render(line, True, WHITE)
+                self.screen.blit(line_text, (tooltip_x + tooltip_padding, text_y))
                 text_y += line_height - 2
 
         # Draw device stats if any (from engineering)
         if stats:
-            text_y += 5
+            text_y += 8
             stats_title = self.small_font.render("Device Stats:", True, CYAN)
             self.screen.blit(stats_title, (tooltip_x + tooltip_padding, text_y))
             text_y += line_height - 2
             for stat_name, stat_value in stats.items():
                 stat_text = self.small_font.render(f"  {stat_name.title()}: {stat_value}", True, GREEN)
                 self.screen.blit(stat_text, (tooltip_x + tooltip_padding, text_y))
+                text_y += line_height - 2
+
+        # Draw enchantments if any
+        if enchantments:
+            text_y += 8
+            for enchant in enchantments:
+                enchant_name = enchant.get('name', 'Unknown Enchantment')
+                enchant_text = self.small_font.render(f"• {enchant_name}", True, PURPLE)
+                self.screen.blit(enchant_text, (tooltip_x + tooltip_padding, text_y))
                 text_y += line_height - 2
 
     def draw_pattern_display(self):

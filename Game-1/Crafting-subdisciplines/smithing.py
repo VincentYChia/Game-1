@@ -406,12 +406,24 @@ class SmithingCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
+        # Calculate base stats for the item (will be modified by rarity bonus)
+        tier = recipe.get('stationTier', 1)
+        bonus_pct = minigame_result.get('bonus', 0)
+
+        # Base stats scale with tier and minigame performance
+        base_stats = {
+            "durability": 100 + (tier * 20) + bonus_pct,  # Tier 1: 100-120, Tier 2: 120-140, etc.
+            "quality": 100 + bonus_pct,  # Minigame performance
+            "power": 100 + (tier * 15)  # Tier-based power
+        }
+
         return {
             "success": True,
             "outputId": recipe['outputId'],
             "quantity": recipe['outputQty'],
             "bonus": minigame_result.get('bonus', 0),
             "score": minigame_result.get('score', 0),
+            "stats": base_stats,
             "message": f"Crafted with +{minigame_result.get('bonus', 0)}% bonus!"
         }
 
