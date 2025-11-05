@@ -448,23 +448,32 @@ class RefiningCrafter:
             output_qty *= 2
             print(f"[Refining] Lucky! Doubled output: {output_qty}x {output_id}")
 
-        # Apply rarity upgrade based on minigame performance (Game Mechanics v5)
-        # Refining can upgrade material rarity based on quality
-        quality = minigame_result.get('quality', 0.5)
-
-        # Map rarity tiers to upgrade logic
+        # Refining rarity upgrade based on INPUT QUANTITY (4:1 ratio)
+        # 4 inputs = +1 rarity tier (common -> uncommon)
+        # 16 inputs = +2 rarity tiers (common -> rare, skipping uncommon)
+        # 64 inputs = +3 rarity tiers (common -> epic)
+        # 256 inputs = +4 rarity tiers (common -> legendary)
         rarity_tiers = ['common', 'uncommon', 'rare', 'epic', 'legendary']
         current_tier_idx = rarity_tiers.index(input_rarity) if input_rarity in rarity_tiers else 0
 
-        # Quality determines rarity upgrade
-        if quality >= 0.95:  # Exceptional performance
-            output_rarity_idx = min(current_tier_idx + 2, len(rarity_tiers) - 1)  # +2 tiers
-        elif quality >= 0.8:  # Great performance
-            output_rarity_idx = min(current_tier_idx + 1, len(rarity_tiers) - 1)  # +1 tier
-        else:  # Good performance
-            output_rarity_idx = current_tier_idx  # Same tier
+        # Calculate total input quantity
+        total_input_qty = sum(inp['quantity'] for inp in inputs)
 
+        # Determine rarity upgrade based on input quantity (4:1 ratio per tier)
+        rarity_upgrade = 0
+        if total_input_qty >= 256:
+            rarity_upgrade = 4  # +4 tiers
+        elif total_input_qty >= 64:
+            rarity_upgrade = 3  # +3 tiers
+        elif total_input_qty >= 16:
+            rarity_upgrade = 2  # +2 tiers
+        elif total_input_qty >= 4:
+            rarity_upgrade = 1  # +1 tier
+
+        output_rarity_idx = min(current_tier_idx + rarity_upgrade, len(rarity_tiers) - 1)
         output_rarity = rarity_tiers[output_rarity_idx]
+
+        print(f"[Refining] {total_input_qty} inputs ({input_rarity}) -> {output_rarity} (+{rarity_upgrade} tiers)")
 
         result = {
             "success": True,

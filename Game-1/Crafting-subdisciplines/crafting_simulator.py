@@ -1271,8 +1271,28 @@ class CraftingSimulator:
             wrapped_lines = self._wrap_text(narrative, tooltip_width - 2 * tooltip_padding)
             lines_needed += len(wrapped_lines)
 
-        if stats:
-            lines_needed += len(stats) + 2  # +2 for header and spacing
+        # Calculate stats lines (base stats + rarity mods + special effects)
+        if stats or (metadata and metadata.get('stats')):
+            base_stats = metadata.get('stats', {}) if metadata else {}
+            current_stats = stats or {}
+            item_category = metadata.get('category', 'item').lower() if metadata else 'item'
+
+            # Count stat lines
+            all_stat_names = set(list(base_stats.keys()) + list(current_stats.keys()))
+            if rarity and rarity != 'common':
+                from rarity_utils import rarity_system
+                rarity_data = rarity_system.rarity_modifiers.get(item_category, {}).get(rarity, {})
+                rarity_mods = rarity_data.get('modifiers', {})
+                special_effects = rarity_data.get('special_effects', {})
+                all_stat_names.update(rarity_mods.keys())
+
+                # Add lines for special effects
+                effect_count = sum(1 for v in special_effects.values() if v)
+                if effect_count > 0:
+                    lines_needed += effect_count + 2  # +2 for "Special Effects:" header
+
+            lines_needed += len(all_stat_names) + 2  # +2 for "Stats:" header and spacing
+
         if enchantments:
             lines_needed += len(enchantments) + 1
 
@@ -1336,16 +1356,80 @@ class CraftingSimulator:
                 self.screen.blit(line_text, (tooltip_x + tooltip_padding, text_y))
                 text_y += line_height - 2
 
-        # Draw device stats if any (from engineering)
-        if stats:
+        # Draw detailed stats breakdown
+        if stats or (metadata and metadata.get('stats')):
             text_y += 8
-            stats_title = self.small_font.render("Device Stats:", True, CYAN)
+            stats_title = self.small_font.render("Stats:", True, CYAN)
             self.screen.blit(stats_title, (tooltip_x + tooltip_padding, text_y))
             text_y += line_height - 2
-            for stat_name, stat_value in stats.items():
-                stat_text = self.small_font.render(f"  {stat_name.title()}: {stat_value}", True, GREEN)
+
+            # Get base stats from metadata
+            base_stats = metadata.get('stats', {}) if metadata else {}
+            current_stats = stats or {}
+
+            # Get rarity modifiers for this item category
+            item_category = metadata.get('category', 'item').lower() if metadata else 'item'
+            rarity_mods = {}
+            special_effects = {}
+
+            if rarity and rarity != 'common':
+                from rarity_utils import rarity_system
+                rarity_data = rarity_system.rarity_modifiers.get(item_category, {}).get(rarity, {})
+                rarity_mods = rarity_data.get('modifiers', {})
+                special_effects = rarity_data.get('special_effects', {})
+
+            # Display stats with modifiers
+            all_stat_names = set(list(base_stats.keys()) + list(current_stats.keys()) + list(rarity_mods.keys()))
+            for stat_name in sorted(all_stat_names):
+                base_value = base_stats.get(stat_name, 0)
+                current_value = current_stats.get(stat_name, 0)
+                modifier = rarity_mods.get(stat_name, 0)
+
+                # Format stat display
+                if modifier > 0:
+                    # Show: "Damage: 50 (+100%) = 100"
+                    mod_pct = int(modifier * 100)
+                    stat_line = f"  {stat_name.title()}: {base_value} (+{mod_pct}%) = {current_value}"
+                    stat_color = GREEN
+                elif modifier < 0:
+                    # Show negative modifiers (like cooldown reduction)
+                    mod_pct = int(abs(modifier) * 100)
+                    stat_line = f"  {stat_name.title()}: {base_value} (-{mod_pct}%) = {current_value}"
+                    stat_color = GREEN
+                elif current_value > 0:
+                    # Just show current value (no rarity modifier)
+                    stat_line = f"  {stat_name.title()}: {current_value}"
+                    stat_color = WHITE
+                else:
+                    continue
+
+                stat_text = self.small_font.render(stat_line, True, stat_color)
                 self.screen.blit(stat_text, (tooltip_x + tooltip_padding, text_y))
                 text_y += line_height - 2
+
+            # Draw special effects if any
+            if special_effects:
+                text_y += 5
+                effects_title = self.small_font.render("Special Effects:", True, ORANGE)
+                self.screen.blit(effects_title, (tooltip_x + tooltip_padding, text_y))
+                text_y += line_height - 2
+
+                effect_names = {
+                    'lifesteal': 'Lifesteal',
+                    'enhanced_durability': 'Enhanced Durability',
+                    'knockback_resistance': 'Knockback Resistance',
+                    'damage_boost': 'Damage Boost',
+                    'thorns': 'Thorns',
+                    'auto_smelt': 'Auto-Smelt',
+                    'auto_reload': 'Auto-Reload'
+                }
+
+                for effect_key, effect_value in special_effects.items():
+                    if effect_value:
+                        effect_name = effect_names.get(effect_key, effect_key.title())
+                        effect_text = self.small_font.render(f"  • {effect_name}", True, PURPLE)
+                        self.screen.blit(effect_text, (tooltip_x + tooltip_padding, text_y))
+                        text_y += line_height - 2
 
         # Draw enchantments if any
         if enchantments:
