@@ -384,12 +384,16 @@ class EnchantingCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
-        # Create enchantment
+        # Create enchantment - enchanting uses enchantmentId not outputId
+        enchantment_id = recipe.get('enchantmentId', recipe.get('outputId', 'unknown_enchantment'))
+        enchantment_name = recipe.get('enchantmentName', recipe.get('name', 'Unknown Enchantment'))
+
         return {
             "success": True,
-            "outputId": recipe['outputId'],
-            "quantity": recipe['outputQty'],
-            "message": "Enchantment created (basic crafting)"
+            "outputId": enchantment_id,  # Use enchantmentId as outputId
+            "quantity": 1,  # Enchantments are always quantity 1
+            "enchantmentName": enchantment_name,
+            "message": f"Created {enchantment_name}"
         }
 
     def create_minigame(self, recipe_id, target_item=None):

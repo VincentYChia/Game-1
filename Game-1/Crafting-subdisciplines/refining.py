@@ -317,10 +317,21 @@ class RefiningCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
+        # Refining uses 'outputs' array instead of outputId/outputQty
+        outputs = recipe.get('outputs', [])
+        if outputs:
+            output = outputs[0]  # Take first output
+            output_id = output.get('materialId', recipe.get('outputId', 'unknown'))
+            output_qty = output.get('quantity', recipe.get('outputQty', 1))
+        else:
+            # Fallback to old format
+            output_id = recipe.get('outputId', 'unknown')
+            output_qty = recipe.get('outputQty', 1)
+
         return {
             "success": True,
-            "outputId": recipe['outputId'],
-            "quantity": recipe['outputQty'],
+            "outputId": output_id,
+            "quantity": output_qty,
             "message": "Refined (base quality)"
         }
 

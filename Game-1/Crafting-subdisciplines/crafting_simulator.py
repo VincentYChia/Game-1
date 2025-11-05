@@ -19,6 +19,7 @@ Features:
 
 import pygame
 import sys
+import json
 from pathlib import Path
 
 # Import all crafting subdisciplines
@@ -117,6 +118,10 @@ class CraftingSimulator:
         self.large_font = pygame.font.Font(None, 36)
         self.title_font = pygame.font.Font(None, 48)
 
+        # Load item metadata database
+        print("Loading item metadata...")
+        self.item_metadata = self._load_item_metadata()
+
         # Initialize all crafters
         print("Initializing crafting systems...")
         self.smithing = SmithingCrafter()
@@ -213,6 +218,99 @@ class CraftingSimulator:
         ]
 
         return {mat: 999 for mat in materials}  # Unlimited for testing
+
+    def _load_item_metadata(self):
+        """Load all item metadata from recipes and items JSON files"""
+        metadata = {}
+
+        # Load from recipe files (recipes have metadata.narrative for outputs)
+        recipe_paths = [
+            "../recipes.JSON/recipes-smithing-1.JSON",
+            "../recipes.JSON/recipes-smithing-2.JSON",
+            "../recipes.JSON/recipes-smithing-3.JSON",
+            "../recipes.JSON/recipes-refining-1.JSON",
+            "../recipes.JSON/recipes-alchemy-1.JSON",
+            "../recipes.JSON/recipes-engineering-1.JSON",
+            "../recipes.JSON/recipes-enchanting-1.JSON",
+            "../recipes.JSON/recipes-adornments-1.json",
+            "recipes.JSON/recipes-smithing-1.JSON",
+            "recipes.JSON/recipes-smithing-2.JSON",
+            "recipes.JSON/recipes-smithing-3.JSON",
+            "recipes.JSON/recipes-refining-1.JSON",
+            "recipes.JSON/recipes-alchemy-1.JSON",
+            "recipes.JSON/recipes-engineering-1.JSON",
+            "recipes.JSON/recipes-enchanting-1.JSON",
+            "recipes.JSON/recipes-adornments-1.json",
+        ]
+
+        for path in recipe_paths:
+            try:
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    recipes = data.get('recipes', [])
+                    for recipe in recipes:
+                        # Get output ID (varies by discipline)
+                        output_id = None
+                        if 'outputId' in recipe:
+                            output_id = recipe['outputId']
+                        elif 'enchantmentId' in recipe:
+                            output_id = recipe['enchantmentId']
+                        elif 'outputs' in recipe and recipe['outputs']:
+                            output_id = recipe['outputs'][0].get('materialId')
+
+                        if output_id:
+                            narrative = recipe.get('metadata', {}).get('narrative', '')
+                            name = recipe.get('name', output_id.replace('_', ' ').title())
+                            if narrative:
+                                metadata[output_id] = {
+                                    'name': name,
+                                    'narrative': narrative,
+                                    'tier': recipe.get('stationTier', 1),
+                                    'source': 'recipe'
+                                }
+            except (FileNotFoundError, json.JSONDecodeError):
+                continue
+
+        # Load from item files (items have metadata.narrative)
+        item_paths = [
+            "../items.JSON/items-smithing-1.JSON",
+            "../items.JSON/items-smithing-2.JSON",
+            "../items.JSON/items-alchemy-1.JSON",
+            "../items.JSON/items-refining-1.JSON",
+            "../items.JSON/items-materials-1.JSON",
+            "../items.JSON/items-tools-1.JSON",
+            "items.JSON/items-smithing-1.JSON",
+            "items.JSON/items-smithing-2.JSON",
+            "items.JSON/items-alchemy-1.JSON",
+            "items.JSON/items-refining-1.JSON",
+            "items.JSON/items-materials-1.JSON",
+            "items.JSON/items-tools-1.JSON",
+        ]
+
+        for path in item_paths:
+            try:
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    # Items can be in various arrays (turrets, bombs, consumables, etc.)
+                    for key, items_list in data.items():
+                        if isinstance(items_list, list):
+                            for item in items_list:
+                                if isinstance(item, dict) and 'itemId' in item:
+                                    item_id = item['itemId']
+                                    narrative = item.get('metadata', {}).get('narrative', '')
+                                    name = item.get('name', item_id.replace('_', ' ').title())
+                                    if narrative and item_id not in metadata:  # Don't overwrite recipe data
+                                        metadata[item_id] = {
+                                            'name': name,
+                                            'narrative': narrative,
+                                            'tier': item.get('tier', 1),
+                                            'source': 'item'
+                                        }
+            except (FileNotFoundError, json.JSONDecodeError):
+                continue
+
+        print(f"Loaded metadata for {len(metadata)} items")
+        return metadata
 
     def get_current_crafter(self):
         """Get current discipline's crafter"""
@@ -462,6 +560,13 @@ class CraftingSimulator:
         title = self.title_font.render("Crafting Subdisciplines Simulator", True, ORANGE)
         self.screen.blit(title, (400, 10))
 
+        # Quick help text
+        help_text = self.small_font.render(
+            "Keys: 1-5=Switch Discipline | T=Toggle Tier Filter | ESC=Exit | Mouse: Click recipes, scroll lists",
+            True, LIGHT_GRAY
+        )
+        self.screen.blit(help_text, (50, 830))
+
         # Discipline tabs
         self.draw_discipline_tabs()
 
@@ -614,14 +719,31 @@ class CraftingSimulator:
 
         # Tier and output
         tier = recipe.get('stationTier', 1)
-        output = recipe.get('outputId', 'unknown')
-        if len(output) > 30:
-            output = output[:28] + "..."
-        info_text = self.font.render(f"Tier {tier} | Output: {output}", True, CYAN)
+        output_id = recipe.get('outputId') or recipe.get('enchantmentId') or \
+                    (recipe.get('outputs', [{}])[0].get('materialId') if recipe.get('outputs') else 'unknown')
+        if len(output_id) > 30:
+            output_id = output_id[:28] + "..."
+
+        # Show tier with color coding
+        tier_colors = {1: GREEN, 2: CYAN, 3: PURPLE, 4: ORANGE}
+        tier_color = tier_colors.get(tier, WHITE)
+        info_text = self.font.render(f"Tier {tier} | Output: {output_id}", True, tier_color)
         self.screen.blit(info_text, (panel_x + 20, panel_y + 70))
 
+        # Show recipe description if available
+        recipe_desc = recipe.get('metadata', {}).get('narrative', '')
+        if recipe_desc:
+            # Show first 80 chars of description
+            if len(recipe_desc) > 80:
+                recipe_desc = recipe_desc[:77] + "..."
+            desc_text = self.small_font.render(recipe_desc, True, LIGHT_GRAY)
+            self.screen.blit(desc_text, (panel_x + 20, panel_y + 95))
+            mat_y_start = panel_y + 125
+        else:
+            mat_y_start = panel_y + 110
+
         # Materials required
-        mat_y = panel_y + 110
+        mat_y = mat_y_start
         materials_title = self.font.render("Materials Required:", True, YELLOW)
         self.screen.blit(materials_title, (panel_x + 20, mat_y))
         mat_y += 35
@@ -738,7 +860,7 @@ class CraftingSimulator:
             self.screen.blit(scroll_text, (panel_x + 400, panel_y + 15))
 
     def draw_crafted_items(self):
-        """Draw crafted items inventory"""
+        """Draw crafted items inventory with tooltips"""
         panel_x = 1000
         panel_y = 490
         panel_width = 550
@@ -747,7 +869,7 @@ class CraftingSimulator:
         pygame.draw.rect(self.screen, GRAY, (panel_x, panel_y, panel_width, panel_height))
         pygame.draw.rect(self.screen, ORANGE, (panel_x, panel_y, panel_width, panel_height), 3)
 
-        title = self.font.render("Crafted Items", True, ORANGE)
+        title = self.font.render("Crafted Items (Hover for details)", True, ORANGE)
         self.screen.blit(title, (panel_x + 10, panel_y + 10))
 
         if not self.crafted_items:
@@ -755,15 +877,114 @@ class CraftingSimulator:
             self.screen.blit(empty_text, (panel_x + 200, panel_y + 150))
             return
 
-        # Display crafted items
+        # Display crafted items with hover tooltips
+        mouse_pos = pygame.mouse.get_pos()
         item_y = panel_y + 50
+        hovered_item = None
+
         for item_id, qty in list(self.crafted_items.items())[:12]:
-            item_name = item_id.replace('_', ' ').title()
+            # Get metadata
+            metadata = self.item_metadata.get(item_id, {})
+            item_name = metadata.get('name', item_id.replace('_', ' ').title())
             if len(item_name) > 40:
                 item_name = item_name[:38] + "..."
-            item_text = self.font.render(f"{item_name}: x{qty}", True, GREEN)
-            self.screen.blit(item_text, (panel_x + 20, item_y))
+
+            # Item row
+            item_rect = pygame.Rect(panel_x + 20, item_y, panel_width - 40, 22)
+
+            # Highlight if hovering
+            is_hovering = item_rect.collidepoint(mouse_pos)
+            if is_hovering:
+                pygame.draw.rect(self.screen, LIGHT_GRAY, item_rect)
+                hovered_item = (item_id, metadata, mouse_pos)
+
+            # Draw item text
+            item_text = self.font.render(f"{item_name}: x{qty}", True, GREEN if not is_hovering else YELLOW)
+            self.screen.blit(item_text, (panel_x + 25, item_y))
+
             item_y += 25
+
+        # Draw tooltip for hovered item (on top of everything)
+        if hovered_item:
+            self._draw_item_tooltip(hovered_item[0], hovered_item[1], hovered_item[2])
+
+    def _draw_item_tooltip(self, item_id, metadata, mouse_pos):
+        """Draw detailed tooltip for an item"""
+        if not metadata or not metadata.get('narrative'):
+            return
+
+        # Tooltip dimensions
+        tooltip_width = 400
+        tooltip_padding = 10
+        line_height = 20
+
+        # Wrap narrative text
+        narrative = metadata.get('narrative', 'No description available.')
+        wrapped_lines = self._wrap_text(narrative, tooltip_width - 2 * tooltip_padding)
+
+        # Calculate tooltip height
+        tooltip_height = tooltip_padding * 2 + line_height * (len(wrapped_lines) + 2)  # +2 for name and tier
+
+        # Position tooltip (try to show near mouse, but keep on screen)
+        tooltip_x = mouse_pos[0] + 15
+        tooltip_y = mouse_pos[1] - tooltip_height // 2
+
+        # Keep on screen
+        if tooltip_x + tooltip_width > SCREEN_WIDTH:
+            tooltip_x = mouse_pos[0] - tooltip_width - 15
+        if tooltip_y < 0:
+            tooltip_y = 0
+        if tooltip_y + tooltip_height > SCREEN_HEIGHT:
+            tooltip_y = SCREEN_HEIGHT - tooltip_height
+
+        # Draw tooltip background
+        tooltip_rect = pygame.Rect(tooltip_x, tooltip_y, tooltip_width, tooltip_height)
+        pygame.draw.rect(self.screen, BLACK, tooltip_rect)
+        pygame.draw.rect(self.screen, ORANGE, tooltip_rect, 2)
+
+        # Draw item name (bold/larger)
+        text_y = tooltip_y + tooltip_padding
+        name_text = self.font.render(metadata.get('name', item_id), True, YELLOW)
+        self.screen.blit(name_text, (tooltip_x + tooltip_padding, text_y))
+        text_y += line_height + 5
+
+        # Draw tier if available
+        tier = metadata.get('tier')
+        if tier:
+            tier_text = self.small_font.render(f"Tier {tier}", True, CYAN)
+            self.screen.blit(tier_text, (tooltip_x + tooltip_padding, text_y))
+            text_y += line_height
+
+        # Draw narrative (wrapped)
+        for line in wrapped_lines:
+            line_text = self.small_font.render(line, True, WHITE)
+            self.screen.blit(line_text, (tooltip_x + tooltip_padding, text_y))
+            text_y += line_height - 2
+
+    def _wrap_text(self, text, max_width):
+        """Wrap text to fit within max_width"""
+        words = text.split(' ')
+        lines = []
+        current_line = []
+
+        for word in words:
+            test_line = ' '.join(current_line + [word])
+            test_surface = self.small_font.render(test_line, True, WHITE)
+
+            if test_surface.get_width() <= max_width:
+                current_line.append(word)
+            else:
+                if current_line:
+                    lines.append(' '.join(current_line))
+                    current_line = [word]
+                else:
+                    # Word is too long, add it anyway
+                    lines.append(word)
+
+        if current_line:
+            lines.append(' '.join(current_line))
+
+        return lines
 
     def draw_minigame(self):
         """Draw active minigame (simplified for now)"""
@@ -984,12 +1205,15 @@ class CraftingSimulator:
         self.screen.blit(overlay, (0, 0))
 
         # Result box
-        box_width, box_height = 600, 400
+        box_width, box_height = 600, 450
         box_x = (SCREEN_WIDTH - box_width) // 2
         box_y = (SCREEN_HEIGHT - box_height) // 2
 
         pygame.draw.rect(self.screen, GRAY, (box_x, box_y, box_width, box_height))
-        pygame.draw.rect(self.screen, WHITE, (box_x, box_y, box_width, box_height), 3)
+
+        # Border color based on success
+        border_color = GREEN if self.minigame_result.get('success') else RED
+        pygame.draw.rect(self.screen, border_color, (box_x, box_y, box_width, box_height), 4)
 
         # Success or failure
         if self.minigame_result.get('success'):
@@ -1000,14 +1224,19 @@ class CraftingSimulator:
         status_rect = status_text.get_rect(center=(SCREEN_WIDTH // 2, box_y + 60))
         self.screen.blit(status_text, status_rect)
 
+        # Discipline name
+        disc_text = self.font.render(f"{self.current_discipline.title()} Minigame", True, CYAN)
+        disc_rect = disc_text.get_rect(center=(SCREEN_WIDTH // 2, box_y + 110))
+        self.screen.blit(disc_text, disc_rect)
+
         # Message
         message = self.minigame_result.get('message', 'Crafting complete')
         msg_text = self.font.render(message, True, WHITE)
-        msg_rect = msg_text.get_rect(center=(SCREEN_WIDTH // 2, box_y + 150))
+        msg_rect = msg_text.get_rect(center=(SCREEN_WIDTH // 2, box_y + 160))
         self.screen.blit(msg_text, msg_rect)
 
         # Additional details based on discipline
-        detail_y = box_y + 200
+        detail_y = box_y + 210
         if 'score' in self.minigame_result:
             score_text = self.font.render(f"Score: {self.minigame_result['score']:.1f}", True, CYAN)
             score_rect = score_text.get_rect(center=(SCREEN_WIDTH // 2, detail_y))
@@ -1018,6 +1247,21 @@ class CraftingSimulator:
             bonus_text = self.font.render(f"Bonus: +{self.minigame_result['bonus']}%", True, YELLOW)
             bonus_rect = bonus_text.get_rect(center=(SCREEN_WIDTH // 2, detail_y))
             self.screen.blit(bonus_text, bonus_rect)
+            detail_y += 35
+
+        if 'quality' in self.minigame_result:
+            quality = self.minigame_result['quality']
+            quality_text = self.font.render(f"Quality: {quality:.0%}", True, YELLOW)
+            quality_rect = quality_text.get_rect(center=(SCREEN_WIDTH // 2, detail_y))
+            self.screen.blit(quality_text, quality_rect)
+            detail_y += 35
+
+        # Materials consumed/lost notification
+        if not self.minigame_result.get('success'):
+            if self.minigame_result.get('materials_lost'):
+                loss_text = self.small_font.render("Materials consumed", True, RED)
+                loss_rect = loss_text.get_rect(center=(SCREEN_WIDTH // 2, detail_y))
+                self.screen.blit(loss_text, loss_rect)
 
         # Continue button
         button_width, button_height = 200, 50
@@ -1025,6 +1269,7 @@ class CraftingSimulator:
         button_y = box_y + box_height - 80
 
         pygame.draw.rect(self.screen, BLUE, (button_x, button_y, button_width, button_height))
+        pygame.draw.rect(self.screen, WHITE, (button_x, button_y, button_width, button_height), 2)
         continue_text = self.font.render("Continue", True, WHITE)
         continue_rect = continue_text.get_rect(center=(button_x + button_width // 2, button_y + button_height // 2))
         self.screen.blit(continue_text, continue_rect)
