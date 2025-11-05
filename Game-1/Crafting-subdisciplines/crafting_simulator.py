@@ -14,6 +14,7 @@ Features:
 - Material limitations
 - Recipe browsing
 - Result tracking
+- Tier filtering (T1/T2/T3/T4)
 """
 
 import pygame
@@ -55,19 +56,31 @@ MATERIAL_COLORS = {
     "copper_ingot": (184, 115, 51),
     "steel_ingot": (119, 136, 153),
     "mithril_ingot": (192, 192, 192),
+    "orichalcum_ingot": (218, 165, 32),
+    "dragonsteel_ingot": (139, 0, 0),
+    "voidsteel_ingot": (75, 0, 130),
     "oak_plank": (139, 69, 19),
+    "pine_plank": (139, 90, 43),
     "ash_plank": (160, 130, 109),
     "maple_plank": (210, 105, 30),
+    "birch_plank": (222, 184, 135),
     "ironwood_plank": (105, 105, 105),
+    "ebony_plank": (60, 60, 60),
     "fire_crystal": (255, 69, 0),
     "water_crystal": (0, 191, 255),
     "earth_crystal": (139, 69, 19),
     "air_crystal": (135, 206, 250),
+    "ice_crystal": (175, 238, 238),
     "lightning_shard": (255, 255, 0),
+    "lightning_core": (255, 215, 0),
+    "storm_heart": (75, 0, 130),
     "wolf_pelt": (169, 169, 169),
+    "dire_fang": (245, 245, 220),
     "beetle_carapace": (85, 107, 47),
     "slime_gel": (50, 205, 50),
     "granite": (128, 128, 128),
+    "marble": (245, 245, 245),
+    "obsidian": (0, 0, 0),
     "leather_strip": (139, 90, 43),
     "spectral_thread": (230, 230, 250),
     "golem_core": (105, 105, 105),
@@ -76,6 +89,16 @@ MATERIAL_COLORS = {
     "healing_herb": (50, 205, 50),
     "fire_flower": (255, 99, 71),
     "dragon_blood": (139, 0, 0),
+    "phoenix_ash": (255, 140, 0),
+    "crystal_quartz": (255, 255, 255),
+    "light_gem": (255, 255, 224),
+    "diamond": (185, 242, 255),
+    "iron_ore": (169, 169, 169),
+    "copper_ore": (184, 115, 51),
+    "tin_ore": (211, 211, 211),
+    "pine_log": (139, 90, 43),
+    "oak_log": (101, 67, 33),
+    "ash_log": (120, 100, 80),
 }
 
 
@@ -103,7 +126,7 @@ class CraftingSimulator:
         self.enchanting = EnchantingCrafter()
 
         # Current discipline
-        self.current_discipline = "smithing"  # smithing, refining, alchemy, engineering, enchanting
+        self.current_discipline = "smithing"
         self.disciplines = {
             "smithing": self.smithing,
             "refining": self.refining,
@@ -112,7 +135,10 @@ class CraftingSimulator:
             "enchanting": self.enchanting
         }
 
-        # Simulated inventory (generous for testing)
+        # Tier filter (0 = all, 1-4 = specific tier)
+        self.tier_filter = 0
+
+        # Simulated inventory (unlimited for testing)
         self.inventory = self._create_test_inventory()
 
         # Crafted items inventory
@@ -121,6 +147,7 @@ class CraftingSimulator:
         # UI state
         self.selected_recipe = None
         self.recipe_scroll = 0
+        self.inventory_scroll = 0
         self.current_minigame = None
         self.minigame_result = None
 
@@ -128,28 +155,83 @@ class CraftingSimulator:
         self.running = True
 
     def _create_test_inventory(self):
-        """Create test inventory with generous amounts"""
+        """Create test inventory with ALL materials (unlimited for testing)"""
+        # Comprehensive material list covering all disciplines
         materials = [
-            "iron_ingot", "copper_ingot", "steel_ingot", "mithril_ingot",
-            "oak_plank", "ash_plank", "maple_plank", "ironwood_plank",
+            # Metals - T1
+            "iron_ingot", "copper_ingot", "tin_ingot", "bronze_ingot",
+            "iron_ore", "copper_ore", "tin_ore",
+            # Metals - T2
+            "steel_ingot", "silver_ingot", "gold_ingot",
+            # Metals - T3
+            "mithril_ingot", "adamantine_ingot", "orichalcum_ingot",
+            # Metals - T4
+            "dragonsteel_ingot", "voidsteel_ingot",
+
+            # Wood - T1
+            "oak_plank", "pine_plank", "ash_plank",
+            "oak_log", "pine_log", "ash_log",
+            # Wood - T2
+            "maple_plank", "birch_plank", "cedar_plank",
+            # Wood - T3
+            "ironwood_plank", "ebony_plank", "ancient_wood",
+            # Wood - T4
+            "petrified_wood", "void_wood",
+
+            # Crystals & Gems
             "fire_crystal", "water_crystal", "earth_crystal", "air_crystal",
-            "lightning_shard", "wolf_pelt", "beetle_carapace", "slime_gel",
-            "granite", "leather_strip", "spectral_thread", "golem_core",
-            "dragon_scale", "void_essence", "healing_herb", "fire_flower",
-            "dragon_blood", "iron_ore", "pine_log", "ash_log", "oak_log",
-            "birch_plank", "ebony_plank", "dire_fang", "crystal_quartz",
-            "light_gem", "storm_heart", "diamond", "orichalcum_ingot"
+            "ice_crystal", "lightning_shard", "lightning_core", "storm_heart",
+            "crystal_quartz", "light_gem", "diamond", "ruby", "sapphire", "emerald",
+
+            # Stone
+            "granite", "limestone", "marble", "obsidian", "voidstone",
+
+            # Monster drops
+            "wolf_pelt", "dire_fang", "beetle_carapace", "slime_gel",
+            "golem_core", "dragon_scale", "phoenix_feather", "void_essence",
+            "spectral_thread", "dragon_blood", "phoenix_ash",
+
+            # Binding materials
+            "leather_strip", "sinew", "plant_fiber", "rope",
+
+            # Alchemy ingredients
+            "healing_herb", "fire_flower", "ice_blossom", "storm_root",
+            "dragon_blood", "phoenix_ash", "void_essence", "crystal_dust",
+            "pure_water", "mineral_salt", "sulfur", "mercury",
+
+            # Engineering components
+            "gear", "spring", "wire", "lens", "battery_cell", "power_core",
+            "iron_plate", "steel_plate", "mechanism", "targeting_system",
+
+            # Enchanting materials
+            "arcane_dust", "soul_gem", "mana_crystal", "rune_stone",
+            "binding_agent", "catalyst", "essence_vial",
+
+            # Refined materials
+            "treated_leather", "polished_stone", "refined_oil",
+            "charcoal", "coke", "steel_alloy", "bronze_alloy",
         ]
 
-        return {mat: 100 for mat in materials}
+        return {mat: 999 for mat in materials}  # Unlimited for testing
 
     def get_current_crafter(self):
         """Get current discipline's crafter"""
         return self.disciplines[self.current_discipline]
 
     def get_current_recipes(self):
-        """Get recipes for current discipline"""
-        return self.get_current_crafter().get_all_recipes()
+        """Get recipes for current discipline, filtered by tier"""
+        all_recipes = self.get_current_crafter().get_all_recipes()
+
+        if self.tier_filter == 0:
+            return all_recipes
+
+        # Filter by tier
+        filtered = {}
+        for recipe_id, recipe in all_recipes.items():
+            if recipe.get('stationTier', 1) == self.tier_filter:
+                filtered[recipe_id] = recipe
+
+        return filtered
 
     def switch_discipline(self, discipline):
         """Switch to different discipline"""
@@ -159,6 +241,12 @@ class CraftingSimulator:
             self.recipe_scroll = 0
             self.current_minigame = None
             self.minigame_result = None
+
+    def cycle_tier_filter(self):
+        """Cycle through tier filters: All -> T1 -> T2 -> T3 -> T4 -> All"""
+        self.tier_filter = (self.tier_filter + 1) % 5
+        self.selected_recipe = None
+        self.recipe_scroll = 0
 
     def handle_events(self):
         """Handle pygame events"""
@@ -187,6 +275,10 @@ class CraftingSimulator:
                 elif event.key == pygame.K_5:
                     self.switch_discipline("enchanting")
 
+                # T key to toggle tier filter
+                elif event.key == pygame.K_t:
+                    self.cycle_tier_filter()
+
                 # Minigame controls
                 elif event.key == pygame.K_SPACE:
                     if self.current_minigame and self.current_discipline == "smithing":
@@ -197,10 +289,16 @@ class CraftingSimulator:
                         self.current_minigame.chain()
 
             elif event.type == pygame.MOUSEWHEEL:
-                # Scroll recipes
-                recipes = list(self.get_current_recipes().keys())
-                max_scroll = max(0, len(recipes) - 10)
-                self.recipe_scroll = max(0, min(max_scroll, self.recipe_scroll - event.y))
+                # Scroll recipes or inventory
+                if 50 <= pygame.mouse.get_pos()[0] <= 400:
+                    # Recipe list scrolling
+                    recipes = list(self.get_current_recipes().keys())
+                    max_scroll = max(0, len(recipes) - 10)
+                    self.recipe_scroll = max(0, min(max_scroll, self.recipe_scroll - event.y))
+                elif 1000 <= pygame.mouse.get_pos()[0] <= 1550:
+                    # Inventory scrolling
+                    max_inv_scroll = max(0, len(self.inventory) // 8 - 15)
+                    self.inventory_scroll = max(0, min(max_inv_scroll, self.inventory_scroll - event.y))
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self.handle_click(event.pos)
@@ -221,8 +319,13 @@ class CraftingSimulator:
                 self.switch_discipline(disc)
                 return
 
+        # Tier filter button
+        if 1400 <= x <= 1550 and 50 <= y <= 100:
+            self.cycle_tier_filter()
+            return
+
         # Recipe list
-        if 50 <= x <= 400 and 150 <= y <= 750:
+        if 50 <= x <= 400 and 150 <= y <= 800:
             recipes = list(self.get_current_recipes().items())
             visible_recipes = recipes[self.recipe_scroll:self.recipe_scroll + 10]
 
@@ -233,24 +336,45 @@ class CraftingSimulator:
                     return
                 recipe_y += 60
 
-        # Craft buttons
-        if self.selected_recipe:
-            crafter = self.get_current_crafter()
+        # Craft buttons (when in main UI, not minigame)
+        if not self.current_minigame and not self.minigame_result:
+            if self.selected_recipe:
+                crafter = self.get_current_crafter()
 
-            # Instant craft button (if allowed)
-            if 1000 <= x <= 1500 and 700 <= y <= 750:
-                if self.current_discipline != "enchanting":  # Enchanting requires minigame
-                    result = crafter.craft_instant(self.selected_recipe, self.inventory)
-                    if result.get('success'):
-                        output_id = result['outputId']
-                        qty = result['quantity']
-                        self.crafted_items[output_id] = self.crafted_items.get(output_id, 0) + qty
-                        print(f"Crafted {qty}x {output_id}")
+                # Recipe panel location
+                panel_x = 450
+                panel_y = 120
 
-            # Minigame button
-            if 1000 <= x <= 1500 and 760 <= y <= 810:
-                if crafter.can_craft(self.selected_recipe, self.inventory):
-                    self.start_minigame()
+                # Instant craft button
+                instant_x = panel_x + 20
+                instant_y = panel_y + 600
+                instant_w = 460
+                instant_h = 45
+
+                if instant_x <= x <= instant_x + instant_w and instant_y <= y <= instant_y + instant_h:
+                    if self.current_discipline != "enchanting":
+                        result = crafter.craft_instant(self.selected_recipe, self.inventory)
+                        if result.get('success'):
+                            output_id = result['outputId']
+                            qty = result['quantity']
+                            self.crafted_items[output_id] = self.crafted_items.get(output_id, 0) + qty
+                            print(f"Crafted {qty}x {output_id} (instant)")
+                        else:
+                            print(f"Failed to craft: {result.get('message')}")
+                    return
+
+                # Minigame button
+                minigame_x = panel_x + 20
+                minigame_y = panel_y + 655
+                minigame_w = 460
+                minigame_h = 45
+
+                if minigame_x <= x <= minigame_x + minigame_w and minigame_y <= y <= minigame_y + minigame_h:
+                    if crafter.can_craft(self.selected_recipe, self.inventory):
+                        self.start_minigame()
+                    else:
+                        print("Cannot craft: Insufficient materials")
+                    return
 
         # Minigame-specific clicks
         if self.current_minigame:
@@ -264,6 +388,7 @@ class CraftingSimulator:
         if self.current_minigame:
             self.current_minigame.start()
             self.minigame_result = None
+            print(f"Started minigame for {self.selected_recipe}")
 
     def handle_minigame_click(self, pos):
         """Handle clicks within minigame"""
@@ -290,6 +415,8 @@ class CraftingSimulator:
                 if output_id:
                     self.crafted_items[output_id] = self.crafted_items.get(output_id, 0) + qty
                 print(f"Crafted {qty}x {output_id} via minigame")
+            else:
+                print(f"Minigame failed: {result.get('message')}")
 
             # Clear minigame
             self.current_minigame = None
@@ -330,14 +457,17 @@ class CraftingSimulator:
         # Discipline tabs
         self.draw_discipline_tabs()
 
+        # Tier filter button
+        self.draw_tier_filter()
+
         # Recipe list
         self.draw_recipe_list()
 
         # Recipe details / craft buttons
         self.draw_recipe_panel()
 
-        # Inventory display
-        self.draw_inventory_preview()
+        # Visual inventory
+        self.draw_visual_inventory()
 
         # Crafted items
         self.draw_crafted_items()
@@ -369,19 +499,35 @@ class CraftingSimulator:
             text_rect = text.get_rect(center=(tab_x + tab_width // 2, tab_y + tab_height // 2))
             self.screen.blit(text, text_rect)
 
+    def draw_tier_filter(self):
+        """Draw tier filter toggle"""
+        button_x = 1400
+        button_y = 50
+        button_w = 150
+        button_h = 50
+
+        pygame.draw.rect(self.screen, PURPLE, (button_x, button_y, button_w, button_h))
+        pygame.draw.rect(self.screen, WHITE, (button_x, button_y, button_w, button_h), 2)
+
+        tier_text = "All Tiers" if self.tier_filter == 0 else f"Tier {self.tier_filter}"
+        text = self.font.render(f"T: {tier_text}", True, WHITE)
+        text_rect = text.get_rect(center=(button_x + button_w // 2, button_y + button_h // 2))
+        self.screen.blit(text, text_rect)
+
     def draw_recipe_list(self):
         """Draw recipe list for current discipline"""
         panel_x = 50
         panel_y = 120
         panel_width = 350
-        panel_height = 650
+        panel_height = 700
 
         # Background
         pygame.draw.rect(self.screen, GRAY, (panel_x, panel_y, panel_width, panel_height))
         pygame.draw.rect(self.screen, WHITE, (panel_x, panel_y, panel_width, panel_height), 3)
 
         # Title
-        title = self.font.render(f"{self.current_discipline.title()} Recipes", True, WHITE)
+        tier_suffix = f" (T{self.tier_filter})" if self.tier_filter > 0 else ""
+        title = self.font.render(f"{self.current_discipline.title()} Recipes{tier_suffix}", True, WHITE)
         self.screen.blit(title, (panel_x + 10, panel_y + 10))
 
         # Recipes
@@ -453,12 +599,16 @@ class CraftingSimulator:
 
         # Recipe name
         recipe_name = recipe.get('name', self.selected_recipe)
+        if len(recipe_name) > 25:
+            recipe_name = recipe_name[:23] + "..."
         name_text = self.large_font.render(recipe_name, True, WHITE)
         self.screen.blit(name_text, (panel_x + 20, panel_y + 20))
 
         # Tier and output
         tier = recipe.get('stationTier', 1)
         output = recipe.get('outputId', 'unknown')
+        if len(output) > 30:
+            output = output[:28] + "..."
         info_text = self.font.render(f"Tier {tier} | Output: {output}", True, CYAN)
         self.screen.blit(info_text, (panel_x + 20, panel_y + 70))
 
@@ -468,13 +618,16 @@ class CraftingSimulator:
         self.screen.blit(materials_title, (panel_x + 20, mat_y))
         mat_y += 35
 
-        for inp in recipe.get('inputs', []):
+        for inp in recipe.get('inputs', [])[:15]:  # Limit to 15 to fit
             mat_id = inp['materialId']
             qty = inp['quantity']
             has = self.inventory.get(mat_id, 0)
 
             mat_color = GREEN if has >= qty else RED
-            mat_text = self.small_font.render(f"• {mat_id}: {has}/{qty}", True, mat_color)
+            mat_name = mat_id.replace('_', ' ').title()
+            if len(mat_name) > 25:
+                mat_name = mat_name[:23] + "..."
+            mat_text = self.small_font.render(f"• {mat_name}: {has}/{qty}", True, mat_color)
             self.screen.blit(mat_text, (panel_x + 30, mat_y))
             mat_y += 25
 
@@ -483,56 +636,99 @@ class CraftingSimulator:
         can_craft = crafter.can_craft(self.selected_recipe, self.inventory)
 
         # Instant craft button (if available)
+        instant_y = panel_y + 600
         if self.current_discipline != "enchanting":
             instant_color = GREEN if can_craft else LIGHT_GRAY
-            pygame.draw.rect(self.screen, instant_color, (panel_x + 20, panel_y + 600, panel_width - 40, 45))
+            pygame.draw.rect(self.screen, instant_color, (panel_x + 20, instant_y, panel_width - 40, 45))
             instant_text = self.font.render("INSTANT CRAFT (Base Stats)", True, WHITE)
-            self.screen.blit(instant_text, (panel_x + 100, panel_y + 615))
+            self.screen.blit(instant_text, (panel_x + 100, instant_y + 15))
         else:
             # Enchanting requires minigame
+            pygame.draw.rect(self.screen, DARK_GRAY, (panel_x + 20, instant_y, panel_width - 40, 45))
             info_text = self.small_font.render("Enchanting requires minigame - no instant craft", True, YELLOW)
-            self.screen.blit(info_text, (panel_x + 60, panel_y + 615))
+            self.screen.blit(info_text, (panel_x + 60, instant_y + 15))
 
         # Minigame button
+        minigame_y = panel_y + 655
         minigame_color = BLUE if can_craft else LIGHT_GRAY
-        pygame.draw.rect(self.screen, minigame_color, (panel_x + 20, panel_y + 655, panel_width - 40, 45))
+        pygame.draw.rect(self.screen, minigame_color, (panel_x + 20, minigame_y, panel_width - 40, 45))
         minigame_text = self.font.render("START MINIGAME", True, WHITE)
-        self.screen.blit(minigame_text, (panel_x + 150, panel_y + 670))
+        self.screen.blit(minigame_text, (panel_x + 150, minigame_y + 15))
 
-    def draw_inventory_preview(self):
-        """Draw small inventory preview"""
+    def draw_visual_inventory(self):
+        """Draw visual inventory with grid of material squares"""
         panel_x = 1000
         panel_y = 120
         panel_width = 550
-        panel_height = 200
+        panel_height = 350
 
         pygame.draw.rect(self.screen, GRAY, (panel_x, panel_y, panel_width, panel_height))
-        pygame.draw.rect(self.screen, WHITE, (panel_x, panel_y, panel_width, panel_height), 2)
+        pygame.draw.rect(self.screen, CYAN, (panel_x, panel_y, panel_width, panel_height), 3)
 
-        title = self.font.render("Inventory Preview (Testing)", True, CYAN)
+        title = self.font.render("Inventory (Unlimited Testing Mode)", True, CYAN)
         self.screen.blit(title, (panel_x + 10, panel_y + 10))
 
-        # Show some materials
-        mat_x = panel_x + 20
-        mat_y = panel_y + 50
-        count = 0
-        for mat_id, qty in list(self.inventory.items())[:20]:
-            if qty > 0:
-                mat_text = self.small_font.render(f"{mat_id}: {qty}", True, WHITE)
-                self.screen.blit(mat_text, (mat_x, mat_y))
-                count += 1
-                if count % 2 == 0:
-                    mat_x = panel_x + 20
-                    mat_y += 25
-                else:
-                    mat_x = panel_x + 290
+        # Draw materials in grid (8 per row)
+        cell_size = 60
+        cells_per_row = 8
+        start_x = panel_x + 15
+        start_y = panel_y + 50
+
+        materials = sorted(self.inventory.items())
+        visible_start = self.inventory_scroll * cells_per_row
+        visible_materials = materials[visible_start:visible_start + cells_per_row * 4]  # 4 rows
+
+        for idx, (mat_id, qty) in enumerate(visible_materials):
+            row = idx // cells_per_row
+            col = idx % cells_per_row
+
+            cell_x = start_x + col * (cell_size + 5)
+            cell_y = start_y + row * (cell_size + 5)
+
+            # Draw cell
+            color = MATERIAL_COLORS.get(mat_id, GRAY)
+            pygame.draw.rect(self.screen, color, (cell_x, cell_y, cell_size, cell_size))
+            pygame.draw.rect(self.screen, WHITE, (cell_x, cell_y, cell_size, cell_size), 2)
+
+            # Draw quantity
+            qty_text = self.small_font.render(str(qty), True, WHITE)
+            qty_rect = qty_text.get_rect(center=(cell_x + cell_size // 2, cell_y + cell_size - 12))
+
+            # Draw background for qty
+            bg_rect = pygame.Rect(cell_x + 2, cell_y + cell_size - 18, cell_size - 4, 16)
+            pygame.draw.rect(self.screen, BLACK, bg_rect)
+            self.screen.blit(qty_text, qty_rect)
+
+        # Material name tooltip on hover
+        mouse_pos = pygame.mouse.get_pos()
+        for idx, (mat_id, qty) in enumerate(visible_materials):
+            row = idx // cells_per_row
+            col = idx % cells_per_row
+            cell_x = start_x + col * (cell_size + 5)
+            cell_y = start_y + row * (cell_size + 5)
+
+            if cell_x <= mouse_pos[0] <= cell_x + cell_size and cell_y <= mouse_pos[1] <= cell_y + cell_size:
+                # Draw tooltip
+                tooltip_text = mat_id.replace('_', ' ').title()
+                tooltip = self.small_font.render(tooltip_text, True, WHITE)
+                tooltip_bg = pygame.Rect(mouse_pos[0] + 10, mouse_pos[1] - 25, tooltip.get_width() + 10, 20)
+                pygame.draw.rect(self.screen, BLACK, tooltip_bg)
+                pygame.draw.rect(self.screen, CYAN, tooltip_bg, 1)
+                self.screen.blit(tooltip, (mouse_pos[0] + 15, mouse_pos[1] - 23))
+                break
+
+        # Scroll indicator
+        total_rows = (len(materials) + cells_per_row - 1) // cells_per_row
+        if total_rows > 4:
+            scroll_text = self.small_font.render(f"Scroll: Row {self.inventory_scroll + 1}/{total_rows - 3}", True, WHITE)
+            self.screen.blit(scroll_text, (panel_x + 400, panel_y + 15))
 
     def draw_crafted_items(self):
         """Draw crafted items inventory"""
         panel_x = 1000
-        panel_y = 350
+        panel_y = 490
         panel_width = 550
-        panel_height = 470
+        panel_height = 330
 
         pygame.draw.rect(self.screen, GRAY, (panel_x, panel_y, panel_width, panel_height))
         pygame.draw.rect(self.screen, ORANGE, (panel_x, panel_y, panel_width, panel_height), 3)
@@ -542,15 +738,18 @@ class CraftingSimulator:
 
         if not self.crafted_items:
             empty_text = self.small_font.render("No items crafted yet", True, LIGHT_GRAY)
-            self.screen.blit(empty_text, (panel_x + 200, panel_y + 200))
+            self.screen.blit(empty_text, (panel_x + 200, panel_y + 150))
             return
 
         # Display crafted items
         item_y = panel_y + 50
-        for item_id, qty in list(self.crafted_items.items())[:15]:
-            item_text = self.font.render(f"{item_id}: x{qty}", True, GREEN)
+        for item_id, qty in list(self.crafted_items.items())[:12]:
+            item_name = item_id.replace('_', ' ').title()
+            if len(item_name) > 40:
+                item_name = item_name[:38] + "..."
+            item_text = self.font.render(f"{item_name}: x{qty}", True, GREEN)
             self.screen.blit(item_text, (panel_x + 20, item_y))
-            item_y += 30
+            item_y += 25
 
     def draw_minigame(self):
         """Draw active minigame (simplified for now)"""
@@ -670,11 +869,11 @@ class CraftingSimulator:
             pygame.draw.circle(self.screen, GRAY, (center_x, center_y), radius, 3)
 
             # Draw target zone (top)
+            import math
             pygame.draw.arc(self.screen, GREEN, (center_x - radius, center_y - radius, radius * 2, radius * 2),
                             math.radians(-10), math.radians(10), 10)
 
             # Draw current position
-            import math
             angle_rad = math.radians(current['angle'])
             indicator_x = center_x + int(radius * math.sin(angle_rad))
             indicator_y = center_y - int(radius * math.cos(angle_rad))
