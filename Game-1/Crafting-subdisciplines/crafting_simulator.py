@@ -352,29 +352,33 @@ class CraftingSimulator:
                 instant_h = 45
 
                 if instant_x <= x <= instant_x + instant_w and instant_y <= y <= instant_y + instant_h:
-                    if self.current_discipline != "enchanting":
-                        result = crafter.craft_instant(self.selected_recipe, self.inventory)
-                        if result.get('success'):
-                            output_id = result['outputId']
-                            qty = result['quantity']
-                            self.crafted_items[output_id] = self.crafted_items.get(output_id, 0) + qty
-                            print(f"Crafted {qty}x {output_id} (instant)")
+                    # All disciplines can instant craft (including enchanting)
+                    result = crafter.craft_instant(self.selected_recipe, self.inventory)
+                    if result.get('success'):
+                        output_id = result['outputId']
+                        qty = result['quantity']
+                        self.crafted_items[output_id] = self.crafted_items.get(output_id, 0) + qty
+                        if self.current_discipline == "enchanting":
+                            print(f"Crafted {qty}x {output_id} (enchantment)")
                         else:
-                            print(f"Failed to craft: {result.get('message')}")
-                    return
-
-                # Minigame button
-                minigame_x = panel_x + 20
-                minigame_y = panel_y + 655
-                minigame_w = 460
-                minigame_h = 45
-
-                if minigame_x <= x <= minigame_x + minigame_w and minigame_y <= y <= minigame_y + minigame_h:
-                    if crafter.can_craft(self.selected_recipe, self.inventory):
-                        self.start_minigame()
+                            print(f"Crafted {qty}x {output_id} (instant)")
                     else:
-                        print("Cannot craft: Insufficient materials")
+                        print(f"Failed to craft: {result.get('message')}")
                     return
+
+                # Minigame button (NOT for enchanting)
+                if self.current_discipline != "enchanting":
+                    minigame_x = panel_x + 20
+                    minigame_y = panel_y + 655
+                    minigame_w = 460
+                    minigame_h = 45
+
+                    if minigame_x <= x <= minigame_x + minigame_w and minigame_y <= y <= minigame_y + minigame_h:
+                        if crafter.can_craft(self.selected_recipe, self.inventory):
+                            self.start_minigame()
+                        else:
+                            print("Cannot craft: Insufficient materials")
+                        return
 
         # Minigame-specific clicks
         if self.current_minigame:
@@ -399,8 +403,12 @@ class CraftingSimulator:
             if 500 <= x <= 900 and 650 <= y <= 700:
                 self.current_minigame.handle_hammer()
 
-        # Result continue button
-        if self.minigame_result and 600 <= x <= 900 and 750 <= y <= 800:
+        # Result continue button - FIX: Correct coordinates to match drawn button
+        button_x = (SCREEN_WIDTH - 200) // 2  # 700
+        button_y_base = (SCREEN_HEIGHT - 400) // 2  # 250
+        button_y = button_y_base + 400 - 80  # box_y + box_height - 80
+
+        if self.minigame_result and button_x <= x <= button_x + 200 and button_y <= y <= button_y + 50:
             # Process result
             crafter = self.get_current_crafter()
             result = crafter.craft_with_minigame(
@@ -635,25 +643,31 @@ class CraftingSimulator:
         crafter = self.get_current_crafter()
         can_craft = crafter.can_craft(self.selected_recipe, self.inventory)
 
-        # Instant craft button (if available)
+        # Instant craft button
         instant_y = panel_y + 600
-        if self.current_discipline != "enchanting":
-            instant_color = GREEN if can_craft else LIGHT_GRAY
-            pygame.draw.rect(self.screen, instant_color, (panel_x + 20, instant_y, panel_width - 40, 45))
+        instant_color = GREEN if can_craft else LIGHT_GRAY
+        pygame.draw.rect(self.screen, instant_color, (panel_x + 20, instant_y, panel_width - 40, 45))
+
+        if self.current_discipline == "enchanting":
+            # Enchanting is BASIC CRAFT ONLY - no minigame
+            instant_text = self.font.render("CRAFT ENCHANTMENT", True, WHITE)
+            self.screen.blit(instant_text, (panel_x + 130, instant_y + 15))
+        else:
             instant_text = self.font.render("INSTANT CRAFT (Base Stats)", True, WHITE)
             self.screen.blit(instant_text, (panel_x + 100, instant_y + 15))
-        else:
-            # Enchanting requires minigame
-            pygame.draw.rect(self.screen, DARK_GRAY, (panel_x + 20, instant_y, panel_width - 40, 45))
-            info_text = self.small_font.render("Enchanting requires minigame - no instant craft", True, YELLOW)
-            self.screen.blit(info_text, (panel_x + 60, instant_y + 15))
 
-        # Minigame button
+        # Minigame button (NOT for enchanting)
         minigame_y = panel_y + 655
-        minigame_color = BLUE if can_craft else LIGHT_GRAY
-        pygame.draw.rect(self.screen, minigame_color, (panel_x + 20, minigame_y, panel_width - 40, 45))
-        minigame_text = self.font.render("START MINIGAME", True, WHITE)
-        self.screen.blit(minigame_text, (panel_x + 150, minigame_y + 15))
+        if self.current_discipline != "enchanting":
+            minigame_color = BLUE if can_craft else LIGHT_GRAY
+            pygame.draw.rect(self.screen, minigame_color, (panel_x + 20, minigame_y, panel_width - 40, 45))
+            minigame_text = self.font.render("START MINIGAME (Bonus Stats)", True, WHITE)
+            self.screen.blit(minigame_text, (panel_x + 90, minigame_y + 15))
+        else:
+            # Enchanting has NO minigame
+            pygame.draw.rect(self.screen, DARK_GRAY, (panel_x + 20, minigame_y, panel_width - 40, 45))
+            info_text = self.small_font.render("Enchanting has no minigame - basic craft only", True, LIGHT_GRAY)
+            self.screen.blit(info_text, (panel_x + 75, minigame_y + 15))
 
     def draw_visual_inventory(self):
         """Draw visual inventory with grid of material squares"""

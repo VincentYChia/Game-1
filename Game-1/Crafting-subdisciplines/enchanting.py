@@ -364,16 +364,32 @@ class EnchantingCrafter:
 
     def craft_instant(self, recipe_id, inventory):
         """
-        NO INSTANT CRAFTING FOR ENCHANTING
+        Instant craft (basic crafting) - ONLY method for enchanting
 
-        Enchanting REQUIRES the minigame - cannot skip
+        Enchanting does NOT have minigames - it's basic craft only
+
+        Args:
+            recipe_id: Recipe ID to craft
+            inventory: Dict of {material_id: quantity} (will be modified)
 
         Returns:
-            dict: Error message
+            dict: Result with outputId, quantity, success
         """
+        if not self.can_craft(recipe_id, inventory):
+            return {"success": False, "message": "Insufficient materials"}
+
+        recipe = self.recipes[recipe_id]
+
+        # Deduct materials
+        for inp in recipe['inputs']:
+            inventory[inp['materialId']] -= inp['quantity']
+
+        # Create enchantment
         return {
-            "success": False,
-            "message": "Enchanting requires the minigame - instant crafting not available"
+            "success": True,
+            "outputId": recipe['outputId'],
+            "quantity": recipe['outputQty'],
+            "message": "Enchantment created (basic crafting)"
         }
 
     def create_minigame(self, recipe_id, target_item=None):
