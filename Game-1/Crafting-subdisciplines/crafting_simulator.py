@@ -730,8 +730,14 @@ class CraftingSimulator:
                     # Debug: Show what's in the dict
                     print(f"[DEBUG] crafted_items[{output_id}] = {self.crafted_items[output_id]}")
 
+                # Format output message
                 rarity_str = f" ({rarity})" if rarity else ""
-                stats_str = f" [Stats: {quality:.1%}]" if stats else ""
+                stats_str = ""
+                if stats:
+                    # Calculate average stat for display
+                    avg_stat = sum(stats.values()) / len(stats) if stats else 0
+                    stats_str = f" [Stats: {avg_stat:.0f}]"
+
                 print(f"Crafted {qty}x {output_id}{rarity_str}{stats_str} via minigame")
             else:
                 print(f"Minigame failed: {result.get('message')}")
