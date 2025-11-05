@@ -278,6 +278,7 @@ class CraftingSimulator:
                 continue
 
         # Load from item files (items have metadata.narrative)
+        # IMPORTANT: Items have type/category info, so we should UPDATE existing metadata
         item_paths = [
             "../items.JSON/items-smithing-1.JSON",
             "../items.JSON/items-smithing-2.JSON",
@@ -305,15 +306,26 @@ class CraftingSimulator:
                                     item_id = item['itemId']
                                     narrative = item.get('metadata', {}).get('narrative', '')
                                     name = item.get('name', item_id.replace('_', ' ').title())
-                                    if narrative and item_id not in metadata:  # Don't overwrite recipe data
-                                        metadata[item_id] = {
-                                            'name': name,
-                                            'narrative': narrative,
-                                            'tier': item.get('tier', 1),
-                                            'category': item.get('category', ''),
-                                            'type': item.get('type', ''),
-                                            'source': 'item'
-                                        }
+                                    item_type = item.get('type', '')
+                                    item_category = item.get('category', '')
+
+                                    # UPDATE existing metadata or create new
+                                    # Items have more complete info (type, category) than recipes
+                                    if narrative:
+                                        if item_id in metadata:
+                                            # Update existing with type/category from item data
+                                            metadata[item_id]['type'] = item_type
+                                            metadata[item_id]['category'] = item_category
+                                        else:
+                                            # Create new entry
+                                            metadata[item_id] = {
+                                                'name': name,
+                                                'narrative': narrative,
+                                                'tier': item.get('tier', 1),
+                                                'category': item_category,
+                                                'type': item_type,
+                                                'source': 'item'
+                                            }
             except (FileNotFoundError, json.JSONDecodeError):
                 continue
 

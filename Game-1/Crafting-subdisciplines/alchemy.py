@@ -442,7 +442,9 @@ class AlchemyCrafter:
     def __init__(self):
         """Initialize alchemy crafter"""
         self.recipes = {}
+        self.placements = {}
         self.load_recipes()
+        self.load_placements()
 
     def load_recipes(self):
         """Load alchemy recipes from JSON files"""
@@ -465,6 +467,31 @@ class AlchemyCrafter:
             print(f"[Alchemy] Loaded {len(self.recipes)} recipes")
         else:
             print("[Alchemy] WARNING: No recipes loaded")
+
+    
+    def load_placements(self):
+        """Load placement data from JSON files"""
+        possible_paths = [
+            "../placements.JSON/placements-alchemy-1.JSON",
+            "placements.JSON/placements-alchemy-1.JSON",
+        ]
+
+        for path in possible_paths:
+            try:
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    placement_list = data.get('placements', [])
+                    for p in placement_list:
+                        self.placements[p['recipeId']] = p
+            except FileNotFoundError:
+                continue
+
+        if self.placements:
+            print(f"[Alchemy] Loaded {len(self.placements)} placements")
+
+    def get_placement(self, recipe_id):
+        """Get placement pattern for a recipe"""
+        return self.placements.get(recipe_id)
 
     def can_craft(self, recipe_id, inventory):
         """Check if recipe can be crafted"""

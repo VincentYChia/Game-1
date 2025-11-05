@@ -306,6 +306,10 @@ class SmithingCrafter:
         if self.placements:
             print(f"[Smithing] Loaded {len(self.placements)} placement maps")
 
+    def get_placement(self, recipe_id):
+        """Get placement pattern for a recipe"""
+        return self.placements.get(recipe_id)
+
     def can_craft(self, recipe_id, inventory):
         """
         Check if recipe can be crafted with given inventory
