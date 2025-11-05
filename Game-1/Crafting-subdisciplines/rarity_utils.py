@@ -88,6 +88,17 @@ class RaritySystem:
         """Get rarity for a specific material"""
         return self.material_rarities.get(material_id, 'common')
 
+    def override_all_rarities(self, rarity: str):
+        """
+        Override all material rarities to a single rarity for testing
+
+        Args:
+            rarity: Rarity to set all materials to (common/uncommon/rare/epic/legendary)
+        """
+        for mat_id in self.material_rarities.keys():
+            self.material_rarities[mat_id] = rarity
+        print(f"[RaritySystem] Overridden all {len(self.material_rarities)} materials to: {rarity}")
+
     def apply_rarity_modifiers(
         self,
         base_stats: Dict[str, Any],

@@ -443,6 +443,11 @@ class RefiningCrafter:
             output_id = recipe.get('outputId', 'unknown')
             output_qty = recipe.get('outputQty', 1)
 
+        # 50% chance to double output (lucky refining)
+        if random.random() < 0.5:
+            output_qty *= 2
+            print(f"[Refining] Lucky! Doubled output: {output_qty}x {output_id}")
+
         # Apply rarity upgrade based on minigame performance (Game Mechanics v5)
         # Refining can upgrade material rarity based on quality
         quality = minigame_result.get('quality', 0.5)

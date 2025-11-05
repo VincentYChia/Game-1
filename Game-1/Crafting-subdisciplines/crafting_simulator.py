@@ -28,6 +28,7 @@ from refining import RefiningCrafter
 from alchemy import AlchemyCrafter
 from engineering import EngineeringCrafter
 from enchanting import EnchantingCrafter
+from rarity_utils import rarity_system
 
 # Initialize Pygame
 pygame.init()
@@ -154,6 +155,9 @@ class CraftingSimulator:
         self.base_material_rarities = self._load_material_rarities()
         self.material_rarities = self._apply_rarity_override()
 
+        # IMPORTANT: Set the global rarity_system to use common rarity for testing
+        rarity_system.override_all_rarities(self.rarity_override)
+
         # Crafted items inventory (nested by rarity)
         # Format: {item_id: {rarity: {'quantity': int, 'enchantments': [], 'stats': dict}}}
         # Example: {"iron_shortsword": {"common": {"quantity": 2, ...}, "rare": {"quantity": 3, ...}}}
@@ -228,6 +232,10 @@ class CraftingSimulator:
         next_idx = (current_idx + 1) % len(self.available_rarities)
         self.rarity_override = self.available_rarities[next_idx]
         self.material_rarities = self._apply_rarity_override()
+
+        # IMPORTANT: Also update the global rarity_system that crafters use
+        rarity_system.override_all_rarities(self.rarity_override)
+
         print(f"[Rarity Override] Changed all materials to: {self.rarity_override.upper()}")
 
     def _add_crafted_item(self, item_id, rarity, quantity=1, enchantments=None, stats=None):
