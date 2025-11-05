@@ -146,8 +146,13 @@ class CraftingSimulator:
         # Simulated inventory (unlimited for testing)
         self.inventory = self._create_test_inventory()
 
+        # Material rarity override for testing (defaults to "common" for all materials)
+        self.rarity_override = "common"  # Can be: common, uncommon, rare, epic, legendary
+        self.available_rarities = ["common", "uncommon", "rare", "epic", "legendary"]
+
         # Material rarity lookup (for bonus calculations)
-        self.material_rarities = self._load_material_rarities()
+        self.base_material_rarities = self._load_material_rarities()
+        self.material_rarities = self._apply_rarity_override()
 
         # Crafted items inventory (nested by rarity)
         # Format: {item_id: {rarity: {'quantity': int, 'enchantments': [], 'stats': dict}}}
@@ -209,6 +214,21 @@ class CraftingSimulator:
             print(f"[Rarities] WARNING: Could not load material rarities: {e}")
 
         return rarities
+
+    def _apply_rarity_override(self):
+        """Apply rarity override to all materials for testing"""
+        if self.rarity_override:
+            # Override all materials to the selected rarity
+            return {mat_id: self.rarity_override for mat_id in self.base_material_rarities.keys()}
+        return self.base_material_rarities.copy()
+
+    def cycle_rarity_override(self):
+        """Cycle to next rarity level for testing"""
+        current_idx = self.available_rarities.index(self.rarity_override)
+        next_idx = (current_idx + 1) % len(self.available_rarities)
+        self.rarity_override = self.available_rarities[next_idx]
+        self.material_rarities = self._apply_rarity_override()
+        print(f"[Rarity Override] Changed all materials to: {self.rarity_override.upper()}")
 
     def _add_crafted_item(self, item_id, rarity, quantity=1, enchantments=None, stats=None):
         """
@@ -485,6 +505,9 @@ class CraftingSimulator:
                 elif event.key == pygame.K_t:
                     self.cycle_tier_filter()
 
+                elif event.key == pygame.K_r:
+                    self.cycle_rarity_override()
+
                 # Minigame controls
                 elif event.key == pygame.K_SPACE:
                     if self.current_minigame and self.current_discipline == "smithing":
@@ -512,6 +535,17 @@ class CraftingSimulator:
     def handle_click(self, pos):
         """Handle mouse clicks"""
         x, y = pos
+
+        # Rarity override button (top right)
+        rarity_button_x = SCREEN_WIDTH - 250
+        rarity_button_y = 10
+        rarity_button_w = 230
+        rarity_button_h = 35
+
+        if (rarity_button_x <= x <= rarity_button_x + rarity_button_w and
+            rarity_button_y <= y <= rarity_button_y + rarity_button_h):
+            self.cycle_rarity_override()
+            return
 
         # Enchanting mode clicks
         if self.enchanting_mode:
@@ -824,9 +858,12 @@ class CraftingSimulator:
         title = self.title_font.render("Crafting Subdisciplines Simulator", True, ORANGE)
         self.screen.blit(title, (400, 10))
 
+        # Rarity override button (top right)
+        self.draw_rarity_override_button()
+
         # Quick help text
         help_text = self.small_font.render(
-            "Keys: 1-5=Switch Discipline | T=Toggle Tier Filter | ESC=Exit | Mouse: Click recipes, scroll lists",
+            "Keys: 1-5=Switch Discipline | T=Toggle Tier | R=Cycle Rarity | ESC=Exit | Mouse: Click recipes, scroll lists",
             True, LIGHT_GRAY
         )
         self.screen.blit(help_text, (50, 830))
@@ -1548,6 +1585,9 @@ class CraftingSimulator:
         title = self.title_font.render("Enchanting Station", True, PURPLE)
         self.screen.blit(title, (550, 10))
 
+        # Rarity override button (also visible in enchanting mode)
+        self.draw_rarity_override_button()
+
         if not self.selected_recipe:
             self.enchanting_mode = False
             return
@@ -1793,6 +1833,32 @@ class CraftingSimulator:
             self.screen.blit(item_text, (panel_x + 20, item_y + 2))
 
             item_y += 28
+
+    def draw_rarity_override_button(self):
+        """Draw button to cycle rarity override for testing"""
+        button_x = SCREEN_WIDTH - 250
+        button_y = 10
+        button_w = 230
+        button_h = 35
+
+        # Color based on current rarity
+        rarity_colors = {
+            'common': (200, 200, 200),
+            'uncommon': (100, 255, 100),
+            'rare': (100, 150, 255),
+            'epic': (200, 100, 255),
+            'legendary': (255, 165, 0)
+        }
+        button_color = rarity_colors.get(self.rarity_override, LIGHT_GRAY)
+
+        # Draw button
+        pygame.draw.rect(self.screen, button_color, (button_x, button_y, button_w, button_h))
+        pygame.draw.rect(self.screen, WHITE, (button_x, button_y, button_w, button_h), 2)
+
+        # Text
+        text = self.font.render(f"Materials: {self.rarity_override.upper()}", True, BLACK if self.rarity_override in ['common', 'uncommon'] else WHITE)
+        text_rect = text.get_rect(center=(button_x + button_w // 2, button_y + button_h // 2))
+        self.screen.blit(text, text_rect)
 
     def draw_enchanting_buttons(self):
         """Draw enchanting action buttons"""
