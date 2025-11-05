@@ -722,6 +722,10 @@ class CraftingSimulator:
         # Recipe details / craft buttons
         self.draw_recipe_panel()
 
+        # Pattern display (if recipe selected and not enchanting mode)
+        if self.selected_recipe and not self.enchanting_mode:
+            self.draw_pattern_display()
+
         # Visual inventory
         self.draw_visual_inventory()
 
@@ -1128,6 +1132,218 @@ class CraftingSimulator:
                 enchant_text = self.small_font.render(f"• {enchant_name}", True, PURPLE)
                 self.screen.blit(enchant_text, (tooltip_x + tooltip_padding, text_y))
                 text_y += line_height - 2
+
+    def draw_pattern_display(self):
+        """Draw placement pattern for current selected recipe"""
+        if not self.selected_recipe:
+            return
+
+        crafter = self.get_current_crafter()
+        if not hasattr(crafter, 'get_placement'):
+            return
+
+        placement = crafter.get_placement(self.selected_recipe)
+        if not placement:
+            return
+
+        # Display pattern based on discipline
+        if self.current_discipline == "smithing":
+            self.draw_smithing_pattern(placement)
+        elif self.current_discipline == "refining":
+            self.draw_refining_pattern(placement)
+        elif self.current_discipline == "alchemy":
+            self.draw_alchemy_pattern(placement)
+        elif self.current_discipline == "engineering":
+            self.draw_engineering_pattern(placement)
+
+    def draw_smithing_pattern(self, placement):
+        """Draw smithing grid pattern"""
+        # Panel location (overlay on recipe panel bottom)
+        panel_x = 470
+        panel_y = 500
+        panel_width = 460
+        panel_height = 300
+
+        pygame.draw.rect(self.screen, (40, 40, 40), (panel_x, panel_y, panel_width, panel_height))
+        pygame.draw.rect(self.screen, ORANGE, (panel_x, panel_y, panel_width, panel_height), 2)
+
+        title = self.small_font.render("Crafting Pattern:", True, ORANGE)
+        self.screen.blit(title, (panel_x + 10, panel_y + 5))
+
+        # Get placementMap (dict like "2,3": "iron_ingot")
+        placement_map = placement if isinstance(placement, dict) else {}
+        grid_size_str = placement_map.get('metadata', {}).get('gridSize', '3x3') if 'metadata' in placement_map else '3x3'
+        grid_size = int(grid_size_str.split('x')[0])
+
+        # Draw grid
+        cell_size = min(40, (panel_width - 40) // grid_size)
+        grid_start_x = panel_x + 20
+        grid_start_y = panel_y + 30
+
+        for row in range(grid_size):
+            for col in range(grid_size):
+                x = grid_start_x + col * cell_size
+                y = grid_start_y + row * cell_size
+                pygame.draw.rect(self.screen, (60, 60, 60), (x, y, cell_size - 1, cell_size - 1))
+                pygame.draw.rect(self.screen, LIGHT_GRAY, (x, y, cell_size - 1, cell_size - 1), 1)
+
+        # Draw materials
+        for coord_str, material_id in placement_map.items():
+            if coord_str != 'metadata' and ',' in coord_str:
+                col, row = map(int, coord_str.split(','))
+                col -= 1  # Convert to 0-indexed
+                row -= 1
+
+                if 0 <= col < grid_size and 0 <= row < grid_size:
+                    x = grid_start_x + col * cell_size
+                    y = grid_start_y + row * cell_size
+
+                    # Draw material cell
+                    mat_color = MATERIAL_COLORS.get(material_id, CYAN)
+                    pygame.draw.rect(self.screen, mat_color, (x + 2, y + 2, cell_size - 5, cell_size - 5))
+
+                    # Draw label
+                    if cell_size >= 30:
+                        label = material_id[:4].upper()
+                        label_text = self.small_font.render(label, True, WHITE)
+                        self.screen.blit(label_text, (x + 4, y + cell_size - 16))
+
+    def draw_refining_pattern(self, placement):
+        """Draw refining hub-and-spoke pattern"""
+        panel_x = 470
+        panel_y = 500
+        panel_width = 460
+        panel_height = 300
+
+        pygame.draw.rect(self.screen, (40, 40, 40), (panel_x, panel_y, panel_width, panel_height))
+        pygame.draw.rect(self.screen, CYAN, (panel_x, panel_y, panel_width, panel_height), 2)
+
+        title = self.small_font.render("Refining Pattern (Hub & Spoke):", True, CYAN)
+        self.screen.blit(title, (panel_x + 10, panel_y + 5))
+
+        # Core inputs (center)
+        core_inputs = placement.get('coreInputs', [])
+        core_y = panel_y + 35
+        if core_inputs:
+            core_label = self.font.render("Core (Center):", True, YELLOW)
+            self.screen.blit(core_label, (panel_x + 20, core_y))
+            core_y += 25
+
+            for inp in core_inputs:
+                mat_id = inp['materialId']
+                qty = inp['quantity']
+                mat_color = MATERIAL_COLORS.get(mat_id, GRAY)
+
+                # Draw circle for core
+                pygame.draw.circle(self.screen, mat_color, (panel_x + 30, core_y + 10), 8)
+                mat_text = self.small_font.render(f"{mat_id} x{qty}", True, WHITE)
+                self.screen.blit(mat_text, (panel_x + 50, core_y + 3))
+                core_y += 22
+
+        # Surrounding inputs (spokes)
+        surrounding = placement.get('surroundingInputs', [])
+        if surrounding:
+            surr_y = core_y + 10
+            surr_label = self.font.render("Surrounding (Spokes):", True, YELLOW)
+            self.screen.blit(surr_label, (panel_x + 20, surr_y))
+            surr_y += 25
+
+            for inp in surrounding[:6]:  # Limit display
+                mat_id = inp['materialId']
+                qty = inp['quantity']
+                mat_color = MATERIAL_COLORS.get(mat_id, GRAY)
+
+                # Draw small circle for spoke
+                pygame.draw.circle(self.screen, mat_color, (panel_x + 30, surr_y + 8), 6)
+                mat_text = self.small_font.render(f"{mat_id} x{qty}", True, LIGHT_GRAY)
+                self.screen.blit(mat_text, (panel_x + 50, surr_y + 1))
+                surr_y += 20
+
+    def draw_alchemy_pattern(self, placement):
+        """Draw alchemy sequential pattern"""
+        panel_x = 470
+        panel_y = 500
+        panel_width = 460
+        panel_height = 300
+
+        pygame.draw.rect(self.screen, (40, 40, 40), (panel_x, panel_y, panel_width, panel_height))
+        pygame.draw.rect(self.screen, GREEN, (panel_x, panel_y, panel_width, panel_height), 2)
+
+        title = self.small_font.render("Alchemy Sequence (Order Matters!):", True, GREEN)
+        self.screen.blit(title, (panel_x + 10, panel_y + 5))
+
+        # Ingredients in order
+        ingredients = placement.get('ingredients', [])
+        ing_y = panel_y + 35
+
+        for ing in ingredients:
+            slot = ing.get('slot', 0)
+            mat_id = ing['materialId']
+            qty = ing['quantity']
+            mat_color = MATERIAL_COLORS.get(mat_id, GRAY)
+
+            # Draw slot number
+            slot_text = self.font.render(f"{slot}.", True, YELLOW)
+            self.screen.blit(slot_text, (panel_x + 20, ing_y))
+
+            # Draw arrow
+            arrow_text = self.font.render("→", True, LIGHT_GRAY)
+            self.screen.blit(arrow_text, (panel_x + 45, ing_y))
+
+            # Draw material
+            pygame.draw.rect(self.screen, mat_color, (panel_x + 70, ing_y + 3, 15, 15))
+            mat_text = self.small_font.render(f"{mat_id} x{qty}", True, WHITE)
+            self.screen.blit(mat_text, (panel_x + 90, ing_y + 2))
+
+            ing_y += 25
+
+    def draw_engineering_pattern(self, placement):
+        """Draw engineering slot-based pattern"""
+        panel_x = 470
+        panel_y = 500
+        panel_width = 460
+        panel_height = 300
+
+        pygame.draw.rect(self.screen, (40, 40, 40), (panel_x, panel_y, panel_width, panel_height))
+        pygame.draw.rect(self.screen, BLUE, (panel_x, panel_y, panel_width, panel_height), 2)
+
+        title = self.small_font.render("Engineering Slots:", True, BLUE)
+        self.screen.blit(title, (panel_x + 10, panel_y + 5))
+
+        # Slot types with colors
+        slot_colors = {
+            'FRAME': (150, 150, 150),
+            'FUNCTION': (255, 200, 100),
+            'POWER': (255, 100, 100),
+            'MODIFIER': (150, 100, 255),
+            'ENHANCEMENT': (100, 255, 150)
+        }
+
+        # Slots
+        slots = placement.get('slots', [])
+        slot_y = panel_y + 35
+
+        for slot_data in slots:
+            slot_type = slot_data.get('type', 'UNKNOWN')
+            mat_id = slot_data['materialId']
+            qty = slot_data['quantity']
+
+            slot_color = slot_colors.get(slot_type, GRAY)
+            mat_color = MATERIAL_COLORS.get(mat_id, GRAY)
+
+            # Draw slot type label
+            type_rect = pygame.Rect(panel_x + 20, slot_y, 100, 20)
+            pygame.draw.rect(self.screen, slot_color, type_rect)
+            pygame.draw.rect(self.screen, WHITE, type_rect, 1)
+            type_text = self.small_font.render(slot_type, True, BLACK)
+            self.screen.blit(type_text, (panel_x + 25, slot_y + 3))
+
+            # Draw material
+            pygame.draw.rect(self.screen, mat_color, (panel_x + 130, slot_y + 2, 16, 16))
+            mat_text = self.small_font.render(f"{mat_id} x{qty}", True, WHITE)
+            self.screen.blit(mat_text, (panel_x + 150, slot_y + 2))
+
+            slot_y += 25
 
     def draw_enchanting_ui(self):
         """Draw enchanting pattern UI and item selection"""
