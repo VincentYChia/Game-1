@@ -167,61 +167,23 @@ class CraftingSimulator:
 
     def _create_test_inventory(self):
         """Create test inventory with ALL materials (unlimited for testing)"""
-        # Comprehensive material list covering all disciplines
-        materials = [
-            # Metals - T1
-            "iron_ingot", "copper_ingot", "tin_ingot", "bronze_ingot",
-            "iron_ore", "copper_ore", "tin_ore",
-            # Metals - T2
-            "steel_ingot", "silver_ingot", "gold_ingot",
-            # Metals - T3
-            "mithril_ingot", "adamantine_ingot", "orichalcum_ingot",
-            # Metals - T4
-            "dragonsteel_ingot", "voidsteel_ingot",
+        # Load actual materials from JSON file
+        materials = []
 
-            # Wood - T1
-            "oak_plank", "pine_plank", "ash_plank",
-            "oak_log", "pine_log", "ash_log",
-            # Wood - T2
-            "maple_plank", "birch_plank", "cedar_plank",
-            # Wood - T3
-            "ironwood_plank", "ebony_plank", "ancient_wood",
-            # Wood - T4
-            "petrified_wood", "void_wood",
-
-            # Crystals & Gems
-            "fire_crystal", "water_crystal", "earth_crystal", "air_crystal",
-            "ice_crystal", "lightning_shard", "lightning_core", "storm_heart",
-            "crystal_quartz", "light_gem", "diamond", "ruby", "sapphire", "emerald",
-
-            # Stone
-            "granite", "limestone", "marble", "obsidian", "voidstone",
-
-            # Monster drops
-            "wolf_pelt", "dire_fang", "beetle_carapace", "slime_gel",
-            "golem_core", "dragon_scale", "phoenix_feather", "void_essence",
-            "spectral_thread", "dragon_blood", "phoenix_ash",
-
-            # Binding materials
-            "leather_strip", "sinew", "plant_fiber", "rope",
-
-            # Alchemy ingredients
-            "healing_herb", "fire_flower", "ice_blossom", "storm_root",
-            "dragon_blood", "phoenix_ash", "void_essence", "crystal_dust",
-            "pure_water", "mineral_salt", "sulfur", "mercury",
-
-            # Engineering components
-            "gear", "spring", "wire", "lens", "battery_cell", "power_core",
-            "iron_plate", "steel_plate", "mechanism", "targeting_system",
-
-            # Enchanting materials
-            "arcane_dust", "soul_gem", "mana_crystal", "rune_stone",
-            "binding_agent", "catalyst", "essence_vial",
-
-            # Refined materials
-            "treated_leather", "polished_stone", "refined_oil",
-            "charcoal", "coke", "steel_alloy", "bronze_alloy",
-        ]
+        try:
+            with open('../items.JSON/items-materials-1.JSON', 'r') as f:
+                data = json.load(f)
+                materials_list = data.get('materials', [])
+                for mat in materials_list:
+                    materials.append(mat['materialId'])
+                print(f"[Inventory] Loaded {len(materials)} materials from items-materials-1.JSON")
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"[Inventory] WARNING: Could not load materials from JSON: {e}")
+            # Fallback to basic materials if JSON not found
+            materials = [
+                "copper_ore", "copper_ingot", "iron_ore", "iron_ingot",
+                "oak_log", "oak_plank", "granite", "fire_crystal", "water_crystal"
+            ]
 
         return {mat: 999 for mat in materials}  # Unlimited for testing
 
@@ -640,12 +602,15 @@ class CraftingSimulator:
             if 500 <= x <= 900 and 650 <= y <= 700:
                 self.current_minigame.handle_hammer()
 
-        # Result continue button - FIX: Correct coordinates to match drawn button
-        button_x = (SCREEN_WIDTH - 200) // 2  # 700
-        button_y_base = (SCREEN_HEIGHT - 400) // 2  # 250
-        button_y = button_y_base + 400 - 80  # box_y + box_height - 80
+        # Result continue button - FIXED: Use correct box_height (450 not 400)
+        box_width, box_height = 600, 450
+        box_x = (SCREEN_WIDTH - box_width) // 2
+        box_y = (SCREEN_HEIGHT - box_height) // 2
+        button_width, button_height = 200, 50
+        button_x = (SCREEN_WIDTH - button_width) // 2
+        button_y = box_y + box_height - 80
 
-        if self.minigame_result and button_x <= x <= button_x + 200 and button_y <= y <= button_y + 50:
+        if self.minigame_result and button_x <= x <= button_x + button_width and button_y <= y <= button_y + button_height:
             # Process result
             crafter = self.get_current_crafter()
             result = crafter.craft_with_minigame(

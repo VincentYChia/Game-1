@@ -307,6 +307,7 @@ class AlchemyMinigame:
             bool: True if chained successfully
         """
         if not self.active or not self.current_reaction:
+            print(f"[ALCHEMY DEBUG] Chain failed: active={self.active}, current_reaction={self.current_reaction}")
             return False
 
         # Lock current reaction quality
@@ -316,12 +317,15 @@ class AlchemyMinigame:
 
         # Move to next ingredient
         self.current_ingredient_index += 1
+        print(f"[ALCHEMY DEBUG] Chained ingredient {self.current_ingredient_index-1}, moving to index {self.current_ingredient_index}/{len(self.ingredients)}")
 
         if self.current_ingredient_index < len(self.ingredients):
             self._start_next_ingredient()
+            print(f"[ALCHEMY DEBUG] Started next ingredient")
             return True
         else:
             # No more ingredients - auto stabilize
+            print(f"[ALCHEMY DEBUG] No more ingredients, auto-stabilizing")
             self.stabilize()
             return True
 
