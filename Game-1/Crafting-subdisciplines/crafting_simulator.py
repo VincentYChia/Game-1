@@ -1137,10 +1137,6 @@ class CraftingSimulator:
             rarity = item_data.get('rarity') if isinstance(item_data, dict) else None
             item_stats = item_data.get('stats') if isinstance(item_data, dict) else None
 
-            # Debug logging (only log once per frame)
-            if item_y == panel_y + 50 and (rarity or item_stats):
-                print(f"[DEBUG DISPLAY] {item_id}: rarity={rarity}, stats={item_stats}")
-
             rarity_suffix = f" ({rarity})" if rarity else ""
             # Add stats quality indicator for engineering devices
             stats_suffix = ""
