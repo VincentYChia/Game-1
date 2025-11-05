@@ -635,10 +635,15 @@ class CraftingSimulator:
                     # Store rarity if present (from refining minigames)
                     if rarity and not self.crafted_items[output_id].get('rarity'):
                         self.crafted_items[output_id]['rarity'] = rarity
+                        print(f"[DEBUG] Stored rarity '{rarity}' for {output_id}")
 
                     # Store stats if present (from engineering minigames)
                     if stats and not self.crafted_items[output_id].get('stats'):
                         self.crafted_items[output_id]['stats'] = stats
+                        print(f"[DEBUG] Stored stats {stats} for {output_id}")
+
+                    # Debug: Show what's in the dict
+                    print(f"[DEBUG] crafted_items[{output_id}] = {self.crafted_items[output_id]}")
 
                 rarity_str = f" ({rarity})" if rarity else ""
                 stats_str = f" [Stats: {quality:.1%}]" if stats else ""
@@ -1039,10 +1044,22 @@ class CraftingSimulator:
 
             # Draw item text with rarity and enchantment indicator
             rarity = item_data.get('rarity') if isinstance(item_data, dict) else None
+            item_stats = item_data.get('stats') if isinstance(item_data, dict) else None
+
+            # Debug logging (only log once per frame)
+            if item_y == panel_y + 50 and (rarity or item_stats):
+                print(f"[DEBUG DISPLAY] {item_id}: rarity={rarity}, stats={item_stats}")
+
             rarity_suffix = f" ({rarity})" if rarity else ""
+            # Add stats quality indicator for engineering devices
+            stats_suffix = ""
+            if item_stats:
+                avg_stat = sum(item_stats.values()) / len(item_stats)
+                stats_suffix = f" [Q:{avg_stat:.0f}]"
+
             enchant_suffix = f" [{len(enchantments)} ench]" if enchantments else ""
             item_color = PURPLE if enchantments else (YELLOW if is_hovering else GREEN)
-            item_text = self.font.render(f"{item_name}: x{qty}{rarity_suffix}{enchant_suffix}", True, item_color)
+            item_text = self.font.render(f"{item_name}: x{qty}{rarity_suffix}{stats_suffix}{enchant_suffix}", True, item_color)
             self.screen.blit(item_text, (panel_x + 25, item_y))
 
             item_y += 25
