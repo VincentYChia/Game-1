@@ -338,7 +338,7 @@ class RefiningCrafter:
 
     def craft_instant(self, recipe_id, inventory):
         """
-        Instant craft (no minigame) - produces base output
+        Instant craft (no minigame) - produces base output with rarity upgrade
 
         Args:
             recipe_id: Recipe ID to craft
@@ -372,12 +372,37 @@ class RefiningCrafter:
             output_id = recipe.get('outputId', 'unknown')
             output_qty = recipe.get('outputQty', 1)
 
+        # Apply rarity upgrade based on input quantity (4:1 ratio)
+        # Calculate total input quantity from recipe
+        total_input_qty = sum(inp['quantity'] for inp in inputs)
+
+        # Map rarity tiers
+        rarity_tiers = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+        current_tier_idx = rarity_tiers.index(input_rarity) if input_rarity in rarity_tiers else 0
+
+        # Determine rarity upgrade based on input quantity (4:1 ratio per tier)
+        rarity_upgrade = 0
+        if total_input_qty >= 256:
+            rarity_upgrade = 4  # +4 tiers
+        elif total_input_qty >= 64:
+            rarity_upgrade = 3  # +3 tiers
+        elif total_input_qty >= 16:
+            rarity_upgrade = 2  # +2 tiers
+        elif total_input_qty >= 4:
+            rarity_upgrade = 1  # +1 tier
+        # If < 4, no upgrade (stays same rarity)
+
+        output_rarity_idx = min(current_tier_idx + rarity_upgrade, len(rarity_tiers) - 1)
+        output_rarity = rarity_tiers[output_rarity_idx]
+
+        print(f"[Refining Instant] {total_input_qty} {input_rarity} inputs -> {output_rarity} output (+{rarity_upgrade} tiers)")
+
         return {
             "success": True,
             "outputId": output_id,
             "quantity": output_qty,
-            "rarity": input_rarity,
-            "message": f"Refined ({input_rarity})"
+            "rarity": output_rarity,
+            "message": f"Refined to {output_rarity}!"
         }
 
     def create_minigame(self, recipe_id):
@@ -433,6 +458,15 @@ class RefiningCrafter:
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
 
+        # Debug: Show what materials and their rarities
+        print(f"\n[Refining Minigame] Recipe: {recipe_id}")
+        for inp in inputs:
+            mat_id = inp.get('materialId')
+            mat_qty = inp.get('quantity')
+            mat_rarity = rarity_system.get_material_rarity(mat_id)
+            print(f"  Input: {mat_qty}x {mat_id} (rarity: {mat_rarity})")
+        print(f"  Detected uniform input rarity: {input_rarity}")
+
         # Handle outputs array format (refining uses outputs, not outputId)
         outputs = recipe.get('outputs', [])
         if outputs:
@@ -446,7 +480,7 @@ class RefiningCrafter:
         # 50% chance to double output (lucky refining)
         if random.random() < 0.5:
             output_qty *= 2
-            print(f"[Refining] Lucky! Doubled output: {output_qty}x {output_id}")
+            print(f"  Lucky! Doubled output: {output_qty}x {output_id}")
 
         # Refining rarity upgrade based on INPUT QUANTITY (4:1 ratio)
         # 4 inputs = +1 rarity tier (common -> uncommon)
@@ -473,7 +507,8 @@ class RefiningCrafter:
         output_rarity_idx = min(current_tier_idx + rarity_upgrade, len(rarity_tiers) - 1)
         output_rarity = rarity_tiers[output_rarity_idx]
 
-        print(f"[Refining] {total_input_qty} inputs ({input_rarity}) -> {output_rarity} (+{rarity_upgrade} tiers)")
+        print(f"  Rarity calculation: {total_input_qty} inputs -> +{rarity_upgrade} tiers")
+        print(f"  Final output: {output_qty}x {output_id} ({input_rarity} -> {output_rarity})\n")
 
         result = {
             "success": True,
