@@ -149,8 +149,9 @@ class CraftingSimulator:
         # Material rarity lookup (for bonus calculations)
         self.material_rarities = self._load_material_rarities()
 
-        # Crafted items inventory (now with enchantment support)
-        # Format: {item_id: {'quantity': int, 'enchantments': [list of enchantment dicts], 'rarity': str, 'stats': dict}}
+        # Crafted items inventory (nested by rarity)
+        # Format: {item_id: {rarity: {'quantity': int, 'enchantments': [], 'stats': dict}}}
+        # Example: {"iron_shortsword": {"common": {"quantity": 2, ...}, "rare": {"quantity": 3, ...}}}
         self.crafted_items = {}
 
         # UI state
@@ -208,6 +209,54 @@ class CraftingSimulator:
             print(f"[Rarities] WARNING: Could not load material rarities: {e}")
 
         return rarities
+
+    def _add_crafted_item(self, item_id, rarity, quantity=1, enchantments=None, stats=None):
+        """
+        Add a crafted item to inventory with nested rarity structure
+
+        Args:
+            item_id: Base item ID (e.g., "iron_shortsword")
+            rarity: Rarity tier (common/uncommon/rare/epic/legendary)
+            quantity: Number to add
+            enchantments: List of enchantments (optional)
+            stats: Stats dict (optional)
+        """
+        # Initialize item entry if doesn't exist
+        if item_id not in self.crafted_items:
+            self.crafted_items[item_id] = {}
+
+        # Initialize rarity tier if doesn't exist
+        if rarity not in self.crafted_items[item_id]:
+            self.crafted_items[item_id][rarity] = {
+                'quantity': 0,
+                'enchantments': [],
+                'stats': None
+            }
+
+        # Add quantity
+        self.crafted_items[item_id][rarity]['quantity'] += quantity
+
+        # Store stats if provided (and not already stored)
+        if stats and not self.crafted_items[item_id][rarity]['stats']:
+            self.crafted_items[item_id][rarity]['stats'] = stats
+
+        # Add enchantments if provided
+        if enchantments:
+            self.crafted_items[item_id][rarity]['enchantments'].extend(enchantments)
+
+    def _get_all_crafted_items_flat(self):
+        """
+        Get flat list of all crafted items with rarity for display
+
+        Returns:
+            List of tuples: (item_id, rarity, data_dict)
+        """
+        flat_items = []
+        for item_id, rarity_dict in self.crafted_items.items():
+            for rarity, data in rarity_dict.items():
+                if data['quantity'] > 0:
+                    flat_items.append((item_id, rarity, data))
+        return flat_items
 
     def calculate_rarity_bonus(self, inputs):
         """
@@ -525,11 +574,12 @@ class CraftingSimulator:
                         if result.get('success'):
                             output_id = result['outputId']
                             qty = result['quantity']
-                            # Initialize item entry if doesn't exist
-                            if output_id not in self.crafted_items:
-                                self.crafted_items[output_id] = {'quantity': 0, 'enchantments': []}
-                            self.crafted_items[output_id]['quantity'] += qty
-                            print(f"Crafted {qty}x {output_id} (instant)")
+                            rarity = result.get('rarity', 'common')
+                            stats = result.get('stats')
+
+                            # Add to inventory using nested structure
+                            self._add_crafted_item(output_id, rarity, qty, enchantments=None, stats=stats)
+                            print(f"Crafted {qty}x {rarity} {output_id} (instant)")
                         else:
                             print(f"Failed to craft: {result.get('message')}")
                     return
@@ -712,23 +762,9 @@ class CraftingSimulator:
                         print(f"[Rarity Bonus] Applied {rarity_multiplier:.2f}x to stats: {stats}")
 
                 if output_id:
-                    # Initialize item entry if doesn't exist
-                    if output_id not in self.crafted_items:
-                        self.crafted_items[output_id] = {'quantity': 0, 'enchantments': [], 'rarity': None, 'stats': None}
-                    self.crafted_items[output_id]['quantity'] += qty
-
-                    # Store rarity if present (from refining minigames)
-                    if rarity and not self.crafted_items[output_id].get('rarity'):
-                        self.crafted_items[output_id]['rarity'] = rarity
-                        print(f"[DEBUG] Stored rarity '{rarity}' for {output_id}")
-
-                    # Store stats if present (from engineering minigames)
-                    if stats and not self.crafted_items[output_id].get('stats'):
-                        self.crafted_items[output_id]['stats'] = stats
-                        print(f"[DEBUG] Stored stats {stats} for {output_id}")
-
-                    # Debug: Show what's in the dict
-                    print(f"[DEBUG] crafted_items[{output_id}] = {self.crafted_items[output_id]}")
+                    # Add to inventory using nested structure
+                    self._add_crafted_item(output_id, rarity, qty, enchantments=None, stats=stats)
+                    print(f"[DEBUG] Stored {qty}x {rarity} {output_id} with stats: {stats}")
 
                 # Format output message
                 rarity_str = f" ({rarity})" if rarity else ""
@@ -1101,25 +1137,29 @@ class CraftingSimulator:
             self.screen.blit(empty_text, (panel_x + 200, panel_y + 150))
             return
 
-        # Display crafted items with hover tooltips
+        # Display crafted items with hover tooltips (using flat list)
         mouse_pos = pygame.mouse.get_pos()
         item_y = panel_y + 50
         hovered_item = None
 
-        for item_id, item_data in list(self.crafted_items.items())[:12]:
-            # Handle both old format (just a number) and new format (dict)
-            if isinstance(item_data, dict):
-                qty = item_data.get('quantity', 0)
-                enchantments = item_data.get('enchantments', [])
-            else:
-                # Legacy support - migrate to new format
-                qty = item_data
-                enchantments = []
-                self.crafted_items[item_id] = {'quantity': qty, 'enchantments': enchantments}
+        # Get flat list of items with rarity
+        flat_items = self._get_all_crafted_items_flat()[:12]
+
+        for item_id, rarity, item_data in flat_items:
+            qty = item_data.get('quantity', 0)
+            enchantments = item_data.get('enchantments', [])
+            stats = item_data.get('stats')
 
             # Get metadata
             metadata = self.item_metadata.get(item_id, {})
-            item_name = metadata.get('name', item_id.replace('_', ' ').title())
+            base_name = metadata.get('name', item_id.replace('_', ' ').title())
+
+            # Format name with rarity (e.g., "Iron Sword (Rare)")
+            if rarity != 'common':
+                item_name = f"{base_name} ({rarity.capitalize()})"
+            else:
+                item_name = base_name
+
             if len(item_name) > 40:
                 item_name = item_name[:38] + "..."
 
