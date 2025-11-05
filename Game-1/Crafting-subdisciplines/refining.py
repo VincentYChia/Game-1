@@ -409,12 +409,20 @@ class RefiningCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
-        # Check if rarity upgrade (some refining recipes upgrade rarity)
-        # This would be determined by recipe metadata in future
+        # Handle outputs array format (refining uses outputs, not outputId)
+        outputs = recipe.get('outputs', [])
+        if outputs:
+            output = outputs[0]
+            output_id = output.get('materialId', recipe.get('outputId', 'unknown'))
+            output_qty = output.get('quantity', recipe.get('outputQty', 1))
+        else:
+            output_id = recipe.get('outputId', 'unknown')
+            output_qty = recipe.get('outputQty', 1)
+
         return {
             "success": True,
-            "outputId": recipe['outputId'],
-            "quantity": recipe['outputQty'],
+            "outputId": output_id,
+            "quantity": output_qty,
             "message": "Refinement successful!"
         }
 

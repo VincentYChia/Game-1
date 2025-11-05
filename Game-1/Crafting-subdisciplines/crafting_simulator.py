@@ -343,10 +343,11 @@ class CraftingSimulator:
         if self.tier_filter == 0:
             return all_recipes
 
-        # Filter by tier
+        # Filter by tier (handle both stationTier and stationTierRequired)
         filtered = {}
         for recipe_id, recipe in all_recipes.items():
-            if recipe.get('stationTier', 1) == self.tier_filter:
+            recipe_tier = recipe.get('stationTier', recipe.get('stationTierRequired', 1))
+            if recipe_tier == self.tier_filter:
                 filtered[recipe_id] = recipe
 
         return filtered
@@ -817,8 +818,8 @@ class CraftingSimulator:
             name_text = self.small_font.render(recipe_name, True, WHITE)
             self.screen.blit(name_text, (panel_x + 20, recipe_y + 5))
 
-            # Tier
-            tier = recipe.get('stationTier', 1)
+            # Tier (handle both stationTier and stationTierRequired)
+            tier = recipe.get('stationTier', recipe.get('stationTierRequired', 1))
             tier_text = self.small_font.render(f"T{tier}", True, YELLOW)
             self.screen.blit(tier_text, (panel_x + 300, recipe_y + 5))
 
@@ -864,8 +865,8 @@ class CraftingSimulator:
         name_text = self.large_font.render(recipe_name, True, WHITE)
         self.screen.blit(name_text, (panel_x + 20, panel_y + 20))
 
-        # Tier and output
-        tier = recipe.get('stationTier', 1)
+        # Tier and output (handle both stationTier and stationTierRequired)
+        tier = recipe.get('stationTier', recipe.get('stationTierRequired', 1))
         output_id = recipe.get('outputId') or recipe.get('enchantmentId') or \
                     (recipe.get('outputs', [{}])[0].get('materialId') if recipe.get('outputs') else 'unknown')
         if len(output_id) > 30:
@@ -1158,11 +1159,11 @@ class CraftingSimulator:
 
     def draw_smithing_pattern(self, placement):
         """Draw smithing grid pattern"""
-        # Panel location (overlay on recipe panel bottom)
+        # Panel location (below recipe panel, above buttons)
         panel_x = 470
-        panel_y = 500
+        panel_y = 410
         panel_width = 460
-        panel_height = 300
+        panel_height = 180
 
         pygame.draw.rect(self.screen, (40, 40, 40), (panel_x, panel_y, panel_width, panel_height))
         pygame.draw.rect(self.screen, ORANGE, (panel_x, panel_y, panel_width, panel_height), 2)
@@ -1172,7 +1173,15 @@ class CraftingSimulator:
 
         # Get placementMap (dict like "2,3": "iron_ingot")
         placement_map = placement if isinstance(placement, dict) else {}
-        grid_size_str = placement_map.get('metadata', {}).get('gridSize', '3x3') if 'metadata' in placement_map else '3x3'
+
+        # Get grid size from placement or recipe
+        if 'metadata' in placement_map and 'gridSize' in placement_map['metadata']:
+            grid_size_str = placement_map['metadata']['gridSize']
+        else:
+            # Try to get from recipe
+            recipe = self.get_current_crafter().get_recipe(self.selected_recipe)
+            grid_size_str = recipe.get('gridSize', '3x3') if recipe else '3x3'
+
         grid_size = int(grid_size_str.split('x')[0])
 
         # Draw grid
@@ -1211,9 +1220,9 @@ class CraftingSimulator:
     def draw_refining_pattern(self, placement):
         """Draw refining hub-and-spoke pattern"""
         panel_x = 470
-        panel_y = 500
+        panel_y = 410
         panel_width = 460
-        panel_height = 300
+        panel_height = 180
 
         pygame.draw.rect(self.screen, (40, 40, 40), (panel_x, panel_y, panel_width, panel_height))
         pygame.draw.rect(self.screen, CYAN, (panel_x, panel_y, panel_width, panel_height), 2)
@@ -1262,9 +1271,9 @@ class CraftingSimulator:
     def draw_alchemy_pattern(self, placement):
         """Draw alchemy sequential pattern"""
         panel_x = 470
-        panel_y = 500
+        panel_y = 410
         panel_width = 460
-        panel_height = 300
+        panel_height = 180
 
         pygame.draw.rect(self.screen, (40, 40, 40), (panel_x, panel_y, panel_width, panel_height))
         pygame.draw.rect(self.screen, GREEN, (panel_x, panel_y, panel_width, panel_height), 2)
@@ -1300,9 +1309,9 @@ class CraftingSimulator:
     def draw_engineering_pattern(self, placement):
         """Draw engineering slot-based pattern"""
         panel_x = 470
-        panel_y = 500
+        panel_y = 410
         panel_width = 460
-        panel_height = 300
+        panel_height = 180
 
         pygame.draw.rect(self.screen, (40, 40, 40), (panel_x, panel_y, panel_width, panel_height))
         pygame.draw.rect(self.screen, BLUE, (panel_x, panel_y, panel_width, panel_height), 2)
