@@ -3286,6 +3286,35 @@ class Renderer:
 
         return True
 
+    def _validate_enchanting_placement(self) -> bool:
+        """Check if enchanting pattern placement matches requirements"""
+        if not self.placement_data:
+            return False
+
+        # Extract pattern slots from pattern data
+        pattern_data = self.placement_data.pattern or []
+
+        # Handle dict-based pattern with placementMap
+        if isinstance(pattern_data, dict) and 'placementMap' in pattern_data:
+            placement_map = pattern_data['placementMap']
+            if isinstance(placement_map, dict) and 'vertices' in placement_map:
+                vertices = placement_map['vertices']
+                expected_count = len(vertices)
+            else:
+                return False
+        elif isinstance(pattern_data, list):
+            expected_count = len(pattern_data)
+        else:
+            return False
+
+        # Check all pattern slots are filled
+        if len(self.placed_materials_grid) != expected_count:
+            return False
+
+        # Validate each slot (simplified - just check count matches)
+        # More detailed validation could check specific materials per coordinate
+        return True
+
     # Placeholder methods for other placement UIs (to be implemented)
     def _render_refining_placement(self, character: Character, mouse_pos: Tuple[int, int]):
         """Render refining hub-and-spoke placement UI"""
@@ -3896,9 +3925,200 @@ class Renderer:
         return pygame.Rect(wx, wy, ww, wh), []
 
     def _render_enchanting_placement(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Placeholder for enchanting pattern placement"""
-        # TODO: Implement enchanting placement UI
-        return self._render_placeholder_placement("ENCHANTING", character)
+        """Render enchanting pattern placement UI"""
+        mat_db = MaterialDatabase.get_instance()
+
+        ww, wh = 900, 700
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        # Title
+        title = self.font.render("ENCHANTING - Pattern Creation", True, (200, 200, 200))
+        surf.blit(title, (20, 20))
+
+        # Recipe name
+        recipe_name = self.placement_recipe.name if self.placement_recipe else "Unknown"
+        surf.blit(self.small_font.render(f"Enchantment: {recipe_name}", True, (180, 180, 180)), (20, 55))
+        surf.blit(self.tiny_font.render("Place materials to create enchantment pattern", True, (200, 150, 255)), (20, 85))
+
+        # For enchanting, we use pattern data which contains coordinate-based placementMap
+        # For simplicity, treat it as a simple slot list based on unique coordinates
+        pattern_data = self.placement_data.pattern or []
+
+        # If pattern is a dict with 'placementMap', extract vertices
+        if isinstance(pattern_data, dict) and 'placementMap' in pattern_data:
+            placement_map = pattern_data['placementMap']
+            if isinstance(placement_map, dict) and 'vertices' in placement_map:
+                vertices = placement_map['vertices']
+                # Convert vertices dict to list format
+                pattern_slots = []
+                for coord, vertex_data in vertices.items():
+                    mat_id = vertex_data.get('materialId', '')
+                    is_key = vertex_data.get('isKey', False)
+                    pattern_slots.append({
+                        'coord': coord,
+                        'materialId': mat_id,
+                        'isKey': is_key,
+                        'quantity': 1
+                    })
+            else:
+                pattern_slots = []
+        else:
+            # Fallback - treat as simple list
+            pattern_slots = pattern_data if isinstance(pattern_data, list) else []
+
+        # Clear previous rects
+        self.placement_slot_rects = {}
+
+        # Simple slot layout (horizontal flow)
+        slot_size = 75
+        slot_spacing = 15
+        slots_per_row = 10
+        start_x = 30
+        start_y = 140
+
+        total_slots = len(pattern_slots)
+
+        # Render pattern slots
+        for i, slot in enumerate(pattern_slots):
+            # Calculate position
+            row = i // slots_per_row
+            col = i % slots_per_row
+            slot_x = start_x + col * (slot_size + slot_spacing)
+            slot_y = start_y + row * (slot_size + slot_spacing + 25)
+
+            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
+
+            # Get slot info
+            required_mat_id = slot.get('materialId', '')
+            required_qty = slot.get('quantity', 1)
+            is_key = slot.get('isKey', False)
+            coord = slot.get('coord', f"{i}")
+
+            # Check if this slot is filled
+            # For enchanting, we use grid-like tracking
+            placed = self.placed_materials_grid.get(str(i))
+
+            # Color based on state
+            if placed and placed[0] == required_mat_id:
+                color = (120, 80, 150) if is_key else (80, 120, 150)  # Purple-ish for enchanting
+            elif placed:
+                color = (150, 50, 50)  # Red - wrong material
+            else:
+                color = (100, 80, 120) if is_key else (60, 60, 80)  # Dark purple - empty
+
+            pygame.draw.rect(surf, color, slot_rect)
+            border_color = (255, 215, 0) if is_key else (150, 150, 150)
+            border_width = 3 if is_key else 2
+            pygame.draw.rect(surf, border_color, slot_rect, border_width)
+
+            # Material info
+            mat = mat_db.get_material(required_mat_id)
+            mat_abbrev = mat.abbrev if mat and hasattr(mat, 'abbrev') else required_mat_id[:3].upper()
+
+            # Show coordinate (small, top)
+            coord_text = self.tiny_font.render(coord, True, (120, 120, 140))
+            surf.blit(coord_text, (slot_rect.x + 3, slot_rect.y + 3))
+
+            # Show material abbreviation (center)
+            abbrev_text = self.small_font.render(mat_abbrev, True, (255, 255, 255))
+            surf.blit(abbrev_text, (slot_rect.x + 8, slot_rect.y + 20))
+
+            # Key material indicator
+            if is_key:
+                key_text = self.tiny_font.render("KEY", True, (255, 215, 0))
+                surf.blit(key_text, (slot_rect.x + slot_size - 25, slot_rect.y + 3))
+
+            # Show placed indicator if any
+            if placed:
+                check = self.small_font.render("✓", True, (100, 255, 100))
+                surf.blit(check, (slot_rect.x + slot_size - 22, slot_rect.y + slot_size - 22))
+
+            # Show slot number below
+            slot_num = self.tiny_font.render(f"#{i+1}", True, (100, 100, 120))
+            surf.blit(slot_num, (slot_rect.x + slot_size // 2 - 10, slot_rect.y + slot_size + 3))
+
+            # Store rect for click handling
+            self.placement_slot_rects[str(i)] = pygame.Rect(wx + slot_x, wy + slot_y, slot_size, slot_size)
+
+        # Legend / Instructions
+        legend_y = wh - 220
+        surf.blit(self.small_font.render("Enchantment Pattern System:", True, (200, 200, 200)), (20, legend_y))
+        surf.blit(self.tiny_font.render("• Each enchantment requires specific material pattern", True, (180, 180, 180)), (20, legend_y + 25))
+        surf.blit(self.tiny_font.render("• KEY materials (gold border) are critical to pattern", True, (150, 150, 150)), (20, legend_y + 45))
+        surf.blit(self.tiny_font.render("• Pattern coordinates shown on each slot", True, (150, 150, 150)), (20, legend_y + 65))
+        surf.blit(self.tiny_font.render("• Click slots to place required materials", True, (150, 150, 150)), (20, legend_y + 85))
+
+        # Progress indicator
+        filled_count = len(self.placed_materials_grid)
+        progress_text = f"Progress: {filled_count}/{total_slots} materials placed"
+        progress_color = (50, 200, 50) if filled_count == total_slots else (200, 200, 100)
+        surf.blit(self.small_font.render(progress_text, True, progress_color), (20, legend_y + 115))
+
+        # Requirements checklist
+        checklist_x = ww - 300
+        surf.blit(self.small_font.render("Pattern Materials:", True, (200, 200, 200)), (checklist_x, legend_y))
+
+        check_y = legend_y + 25
+        for i, slot in enumerate(pattern_slots[:12]):  # Show first 12
+            mat_id = slot.get('materialId', '')
+            mat = mat_db.get_material(mat_id)
+            mat_name = mat.name if mat else mat_id
+            is_key = slot.get('isKey', False)
+
+            placed = self.placed_materials_grid.get(str(i))
+            is_correct = placed and placed[0] == mat_id
+
+            check = "✓" if is_correct else "○"
+            key_marker = "⭐" if is_key else ""
+            check_color = (50, 200, 50) if is_correct else (150, 150, 150)
+
+            text = f"{check} {key_marker}{mat_name[:13]}"
+            surf.blit(self.tiny_font.render(text, True, check_color), (checklist_x, check_y))
+            check_y += 15
+
+        if total_slots > 12:
+            surf.blit(self.tiny_font.render(f"... {total_slots - 12} more", True, (120, 120, 120)), (checklist_x, check_y))
+
+        # Validation status
+        is_valid = self._validate_enchanting_placement()
+        status_text = "✓ Pattern complete!" if is_valid else f"○ Place all pattern materials ({filled_count}/{total_slots})"
+        status_color = (50, 200, 50) if is_valid else (200, 200, 50)
+        surf.blit(self.small_font.render(status_text, True, status_color), (ww // 2 - 150, wh - 120))
+
+        # Buttons
+        button_y = wh - 80
+
+        # Back button
+        back_btn = pygame.Rect(20, button_y, 100, 40)
+        pygame.draw.rect(surf, (80, 60, 60), back_btn)
+        pygame.draw.rect(surf, (150, 100, 100), back_btn, 2)
+        surf.blit(self.small_font.render("BACK", True, (200, 200, 200)), (back_btn.x + 25, back_btn.y + 10))
+        self.placement_clear_button_rect = pygame.Rect(wx + back_btn.x, wy + back_btn.y, back_btn.width, back_btn.height)
+
+        # Clear button
+        clear_btn = pygame.Rect(140, button_y, 100, 40)
+        pygame.draw.rect(surf, (80, 60, 60), clear_btn)
+        pygame.draw.rect(surf, (150, 100, 100), clear_btn, 2)
+        surf.blit(self.small_font.render("CLEAR", True, (200, 200, 200)), (clear_btn.x + 20, clear_btn.y + 10))
+
+        # Instant Craft button (enchanting only has instant crafting, no minigame in current design)
+        instant_btn = pygame.Rect(ww - 200, button_y, 180, 40)
+        instant_color = (80, 60, 120) if is_valid else (50, 50, 50)
+        pygame.draw.rect(surf, instant_color, instant_btn)
+        pygame.draw.rect(surf, (150, 100, 200) if is_valid else (100, 100, 100), instant_btn, 2)
+        surf.blit(self.small_font.render("CREATE ENCHANTMENT", True, (200, 200, 200) if is_valid else (100, 100, 100)),
+                 (instant_btn.x + 10, instant_btn.y + 10))
+        self.placement_craft_button_rect = pygame.Rect(wx + instant_btn.x, wy + instant_btn.y, instant_btn.width, instant_btn.height)
+
+        # Note: Enchanting doesn't use minigame in current design
+        self.placement_minigame_button_rect = None
+
+        self.screen.blit(surf, (wx, wy))
+        return pygame.Rect(wx, wy, ww, wh), []
 
     def _render_placeholder_placement(self, discipline_name: str, character: Character):
         """Temporary placeholder for unimplemented placement UIs"""
@@ -4898,7 +5118,8 @@ class GameEngine:
             self._handle_alchemy_slot_click(mouse_pos)
         elif self.placement_data.discipline == 'engineering':
             self._handle_engineering_slot_click(mouse_pos)
-        # TODO: Add handler for enchanting
+        elif self.placement_data.discipline == 'adornments' or self.placement_data.discipline == 'enchanting':
+            self._handle_enchanting_pattern_click(mouse_pos)
 
     def _handle_smithing_grid_click(self, mouse_pos: Tuple[int, int]):
         """Handle grid slot clicks for smithing placement"""
@@ -5068,6 +5289,65 @@ class GameEngine:
                 # Check if complete
                 if len(self.placed_materials_slots) == len(slots):
                     print(f"✓ All {len(slots)} component slots filled!")
+                return
+
+    def _handle_enchanting_pattern_click(self, mouse_pos: Tuple[int, int]):
+        """Handle pattern slot clicks for enchanting placement"""
+        mat_db = MaterialDatabase.get_instance()
+
+        # Extract pattern slots
+        pattern_data = self.placement_data.pattern or []
+
+        # Handle dict-based pattern with placementMap
+        if isinstance(pattern_data, dict) and 'placementMap' in pattern_data:
+            placement_map = pattern_data['placementMap']
+            if isinstance(placement_map, dict) and 'vertices' in placement_map:
+                vertices = placement_map['vertices']
+                # Convert to list
+                pattern_slots = []
+                for coord, vertex_data in vertices.items():
+                    mat_id = vertex_data.get('materialId', '')
+                    pattern_slots.append({
+                        'coord': coord,
+                        'materialId': mat_id,
+                        'quantity': 1
+                    })
+            else:
+                pattern_slots = []
+        else:
+            pattern_slots = pattern_data if isinstance(pattern_data, list) else []
+
+        for slot_key, rect in self.placement_slot_rects.items():
+            if rect.collidepoint(mouse_pos):
+                # slot_key is string index
+                slot_index = int(slot_key) if slot_key.isdigit() else 0
+
+                if slot_index >= len(pattern_slots):
+                    return
+
+                slot = pattern_slots[slot_index]
+                required_mat_id = slot.get('materialId', '')
+                required_qty = slot.get('quantity', 1)
+
+                # Check if player has the material
+                available = self.character.inventory.get_item_count(required_mat_id)
+                if available < required_qty and not Config.DEBUG_INFINITE_RESOURCES:
+                    mat = mat_db.get_material(required_mat_id)
+                    mat_name = mat.name if mat else required_mat_id
+                    print(f"⚠ Insufficient material: {mat_name} (have {available}, need {required_qty})")
+                    self.add_notification(f"Need {required_qty}x {mat_name}", (255, 100, 100))
+                    return
+
+                # Place material (using grid storage for enchanting)
+                self.placed_materials_grid[slot_key] = (required_mat_id, required_qty)
+
+                mat = mat_db.get_material(required_mat_id)
+                mat_name = mat.name if mat else required_mat_id
+                print(f"✓ Placed {required_qty}x {mat_name} in pattern slot {slot_index + 1}")
+
+                # Check if complete
+                if len(self.placed_materials_grid) == len(pattern_slots):
+                    print(f"✓ Enchantment pattern complete ({len(pattern_slots)} materials placed)!")
                 return
 
     def _exit_placement_mode(self):
