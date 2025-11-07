@@ -28,6 +28,7 @@ from refining import RefiningCrafter
 from alchemy import AlchemyCrafter
 from engineering import EngineeringCrafter
 from enchanting import EnchantingCrafter
+from rarity_utils import rarity_system
 
 # Initialize Pygame
 pygame.init()
@@ -146,11 +147,20 @@ class CraftingSimulator:
         # Simulated inventory (unlimited for testing)
         self.inventory = self._create_test_inventory()
 
-        # Material rarity lookup (for bonus calculations)
-        self.material_rarities = self._load_material_rarities()
+        # Material rarity override for testing (defaults to "common" for all materials)
+        self.rarity_override = "common"  # Can be: common, uncommon, rare, epic, legendary
+        self.available_rarities = ["common", "uncommon", "rare", "epic", "legendary"]
 
-        # Crafted items inventory (now with enchantment support)
-        # Format: {item_id: {'quantity': int, 'enchantments': [list of enchantment dicts], 'rarity': str, 'stats': dict}}
+        # Material rarity lookup (for bonus calculations)
+        self.base_material_rarities = self._load_material_rarities()
+        self.material_rarities = self._apply_rarity_override()
+
+        # IMPORTANT: Set the global rarity_system to use common rarity for testing
+        rarity_system.override_all_rarities(self.rarity_override)
+
+        # Crafted items inventory (nested by rarity)
+        # Format: {item_id: {rarity: {'quantity': int, 'enchantments': [], 'stats': dict}}}
+        # Example: {"iron_shortsword": {"common": {"quantity": 2, ...}, "rare": {"quantity": 3, ...}}}
         self.crafted_items = {}
 
         # UI state
@@ -208,6 +218,73 @@ class CraftingSimulator:
             print(f"[Rarities] WARNING: Could not load material rarities: {e}")
 
         return rarities
+
+    def _apply_rarity_override(self):
+        """Apply rarity override to all materials for testing"""
+        if self.rarity_override:
+            # Override all materials to the selected rarity
+            return {mat_id: self.rarity_override for mat_id in self.base_material_rarities.keys()}
+        return self.base_material_rarities.copy()
+
+    def cycle_rarity_override(self):
+        """Cycle to next rarity level for testing"""
+        current_idx = self.available_rarities.index(self.rarity_override)
+        next_idx = (current_idx + 1) % len(self.available_rarities)
+        self.rarity_override = self.available_rarities[next_idx]
+        self.material_rarities = self._apply_rarity_override()
+
+        # IMPORTANT: Also update the global rarity_system that crafters use
+        rarity_system.override_all_rarities(self.rarity_override)
+
+        print(f"[Rarity Override] Changed all materials to: {self.rarity_override.upper()}")
+
+    def _add_crafted_item(self, item_id, rarity, quantity=1, enchantments=None, stats=None):
+        """
+        Add a crafted item to inventory with nested rarity structure
+
+        Args:
+            item_id: Base item ID (e.g., "iron_shortsword")
+            rarity: Rarity tier (common/uncommon/rare/epic/legendary)
+            quantity: Number to add
+            enchantments: List of enchantments (optional)
+            stats: Stats dict (optional)
+        """
+        # Initialize item entry if doesn't exist
+        if item_id not in self.crafted_items:
+            self.crafted_items[item_id] = {}
+
+        # Initialize rarity tier if doesn't exist
+        if rarity not in self.crafted_items[item_id]:
+            self.crafted_items[item_id][rarity] = {
+                'quantity': 0,
+                'enchantments': [],
+                'stats': None
+            }
+
+        # Add quantity
+        self.crafted_items[item_id][rarity]['quantity'] += quantity
+
+        # Store stats if provided (and not already stored)
+        if stats and not self.crafted_items[item_id][rarity]['stats']:
+            self.crafted_items[item_id][rarity]['stats'] = stats
+
+        # Add enchantments if provided
+        if enchantments:
+            self.crafted_items[item_id][rarity]['enchantments'].extend(enchantments)
+
+    def _get_all_crafted_items_flat(self):
+        """
+        Get flat list of all crafted items with rarity for display
+
+        Returns:
+            List of tuples: (item_id, rarity, data_dict)
+        """
+        flat_items = []
+        for item_id, rarity_dict in self.crafted_items.items():
+            for rarity, data in rarity_dict.items():
+                if data['quantity'] > 0:
+                    flat_items.append((item_id, rarity, data))
+        return flat_items
 
     def calculate_rarity_bonus(self, inputs):
         """
@@ -436,6 +513,9 @@ class CraftingSimulator:
                 elif event.key == pygame.K_t:
                     self.cycle_tier_filter()
 
+                elif event.key == pygame.K_r:
+                    self.cycle_rarity_override()
+
                 # Minigame controls
                 elif event.key == pygame.K_SPACE:
                     if self.current_minigame and self.current_discipline == "smithing":
@@ -463,6 +543,17 @@ class CraftingSimulator:
     def handle_click(self, pos):
         """Handle mouse clicks"""
         x, y = pos
+
+        # Rarity override button (top right)
+        rarity_button_x = SCREEN_WIDTH - 250
+        rarity_button_y = 10
+        rarity_button_w = 230
+        rarity_button_h = 35
+
+        if (rarity_button_x <= x <= rarity_button_x + rarity_button_w and
+            rarity_button_y <= y <= rarity_button_y + rarity_button_h):
+            self.cycle_rarity_override()
+            return
 
         # Enchanting mode clicks
         if self.enchanting_mode:
@@ -525,11 +616,12 @@ class CraftingSimulator:
                         if result.get('success'):
                             output_id = result['outputId']
                             qty = result['quantity']
-                            # Initialize item entry if doesn't exist
-                            if output_id not in self.crafted_items:
-                                self.crafted_items[output_id] = {'quantity': 0, 'enchantments': []}
-                            self.crafted_items[output_id]['quantity'] += qty
-                            print(f"Crafted {qty}x {output_id} (instant)")
+                            rarity = result.get('rarity', 'common')
+                            stats = result.get('stats')
+
+                            # Add to inventory using nested structure
+                            self._add_crafted_item(output_id, rarity, qty, enchantments=None, stats=stats)
+                            print(f"Crafted {qty}x {rarity} {output_id} (instant)")
                         else:
                             print(f"Failed to craft: {result.get('message')}")
                     return
@@ -542,10 +634,11 @@ class CraftingSimulator:
                     minigame_h = 45
 
                     if minigame_x <= x <= minigame_x + minigame_w and minigame_y <= y <= minigame_y + minigame_h:
-                        if crafter.can_craft(self.selected_recipe, self.inventory):
+                        can_craft, error_msg = crafter.can_craft(self.selected_recipe, self.inventory)
+                        if can_craft:
                             self.start_minigame()
                         else:
-                            print("Cannot craft: Insufficient materials")
+                            print(f"Cannot craft: {error_msg or 'Insufficient materials'}")
                         return
 
         # Minigame-specific clicks
@@ -573,17 +666,15 @@ class CraftingSimulator:
         if not recipe:
             return
 
-        # Get applicable items
+        # Get applicable items (flatten nested structure for enchanting)
         applicable_to = recipe.get('applicableTo', ['any'])
         enchantable_items = []
 
-        for item_id, item_data in self.crafted_items.items():
-            if isinstance(item_data, dict):
-                qty = item_data.get('quantity', 0)
-            else:
-                qty = item_data
+        for item_id, rarity_dict in self.crafted_items.items():
+            # Check if any rarity variant has quantity > 0
+            total_qty = sum(data.get('quantity', 0) for data in rarity_dict.values())
 
-            if qty > 0:
+            if total_qty > 0:
                 # Check item metadata for proper type matching
                 item_meta = self.item_metadata.get(item_id, {})
                 item_type = item_meta.get('type', '')
@@ -593,18 +684,21 @@ class CraftingSimulator:
                     item_type in applicable_to or
                     item_category in applicable_to or
                     any(app_type in item_id.lower() for app_type in applicable_to)):
-                    enchantable_items.append(item_id)
+                    # Add all rarity variants that have quantity > 0
+                    for rarity, data in rarity_dict.items():
+                        if data.get('quantity', 0) > 0:
+                            enchantable_items.append((item_id, rarity))
 
         # Item list clicks (select item to enchant)
         panel_x = 950
         panel_y = 150
         item_y = panel_y + 50
 
-        for i, item_id in enumerate(enchantable_items[:20]):
+        for i, (item_id, rarity) in enumerate(enchantable_items[:20]):
             item_rect = pygame.Rect(panel_x + 10, item_y, 580, 25)
             if item_rect.collidepoint(x, y):
-                self.selected_enchant_target = item_id
-                print(f"Selected {item_id} for enchanting")
+                self.selected_enchant_target = (item_id, rarity)
+                print(f"Selected {rarity} {item_id} for enchanting")
                 return
             item_y += 28
 
@@ -615,7 +709,8 @@ class CraftingSimulator:
         button_h = 50
 
         if button_x <= x <= button_x + button_w and button_y <= y <= button_y + button_h:
-            if self.selected_enchant_target and self.get_current_crafter().can_craft(self.selected_recipe, self.inventory):
+            can_craft, _ = self.get_current_crafter().can_craft(self.selected_recipe, self.inventory)
+            if self.selected_enchant_target and can_craft:
                 self.apply_enchantment()
             return
 
@@ -635,8 +730,9 @@ class CraftingSimulator:
         crafter = self.get_current_crafter()
         recipe = crafter.get_recipe(self.selected_recipe)
 
-        if not crafter.can_craft(self.selected_recipe, self.inventory):
-            print("Insufficient materials!")
+        can_craft, error_msg = crafter.can_craft(self.selected_recipe, self.inventory)
+        if not can_craft:
+            print(f"Cannot craft: {error_msg or 'Insufficient materials'}")
             return
 
         # Deduct materials
@@ -650,16 +746,20 @@ class CraftingSimulator:
             'effect': recipe.get('effect', {})
         }
 
-        # Ensure item has enchantments list
-        item_data = self.crafted_items[self.selected_enchant_target]
-        if not isinstance(item_data, dict):
-            self.crafted_items[self.selected_enchant_target] = {'quantity': item_data, 'enchantments': []}
-            item_data = self.crafted_items[self.selected_enchant_target]
+        # Extract item_id and rarity from selected_enchant_target
+        if isinstance(self.selected_enchant_target, tuple):
+            item_id, rarity = self.selected_enchant_target
+        else:
+            # Backwards compatibility - treat as item_id only
+            item_id = self.selected_enchant_target
+            rarity = 'common'
 
-        # Add enchantment
-        item_data['enchantments'].append(enchantment)
-
-        print(f"Applied {enchantment['name']} to {self.selected_enchant_target}!")
+        # Add enchantment to the specific rarity variant
+        if item_id in self.crafted_items and rarity in self.crafted_items[item_id]:
+            self.crafted_items[item_id][rarity]['enchantments'].append(enchantment)
+            print(f"Applied {enchantment['name']} to {rarity} {item_id}!")
+        else:
+            print(f"ERROR: Item {item_id} with rarity {rarity} not found in inventory")
 
         # Exit enchanting mode
         self.enchanting_mode = False
@@ -712,23 +812,9 @@ class CraftingSimulator:
                         print(f"[Rarity Bonus] Applied {rarity_multiplier:.2f}x to stats: {stats}")
 
                 if output_id:
-                    # Initialize item entry if doesn't exist
-                    if output_id not in self.crafted_items:
-                        self.crafted_items[output_id] = {'quantity': 0, 'enchantments': [], 'rarity': None, 'stats': None}
-                    self.crafted_items[output_id]['quantity'] += qty
-
-                    # Store rarity if present (from refining minigames)
-                    if rarity and not self.crafted_items[output_id].get('rarity'):
-                        self.crafted_items[output_id]['rarity'] = rarity
-                        print(f"[DEBUG] Stored rarity '{rarity}' for {output_id}")
-
-                    # Store stats if present (from engineering minigames)
-                    if stats and not self.crafted_items[output_id].get('stats'):
-                        self.crafted_items[output_id]['stats'] = stats
-                        print(f"[DEBUG] Stored stats {stats} for {output_id}")
-
-                    # Debug: Show what's in the dict
-                    print(f"[DEBUG] crafted_items[{output_id}] = {self.crafted_items[output_id]}")
+                    # Add to inventory using nested structure
+                    self._add_crafted_item(output_id, rarity, qty, enchantments=None, stats=stats)
+                    print(f"[DEBUG] Stored {qty}x {rarity} {output_id} with stats: {stats}")
 
                 # Format output message
                 rarity_str = f" ({rarity})" if rarity else ""
@@ -780,9 +866,12 @@ class CraftingSimulator:
         title = self.title_font.render("Crafting Subdisciplines Simulator", True, ORANGE)
         self.screen.blit(title, (400, 10))
 
+        # Rarity override button (top right)
+        self.draw_rarity_override_button()
+
         # Quick help text
         help_text = self.small_font.render(
-            "Keys: 1-5=Switch Discipline | T=Toggle Tier Filter | ESC=Exit | Mouse: Click recipes, scroll lists",
+            "Keys: 1-5=Switch Discipline | T=Toggle Tier | R=Cycle Rarity | ESC=Exit | Mouse: Click recipes, scroll lists",
             True, LIGHT_GRAY
         )
         self.screen.blit(help_text, (50, 830))
@@ -880,7 +969,7 @@ class CraftingSimulator:
         for recipe_id, recipe in visible_recipes:
             is_selected = recipe_id == self.selected_recipe
             crafter = self.get_current_crafter()
-            can_craft = crafter.can_craft(recipe_id, self.inventory)
+            can_craft, error_msg = crafter.can_craft(recipe_id, self.inventory)
 
             # Recipe box
             box_color = ORANGE if is_selected else (GREEN if can_craft else LIGHT_GRAY)
@@ -987,7 +1076,7 @@ class CraftingSimulator:
 
         # Craft buttons
         crafter = self.get_current_crafter()
-        can_craft = crafter.can_craft(self.selected_recipe, self.inventory)
+        can_craft, error_msg = crafter.can_craft(self.selected_recipe, self.inventory)
 
         # Instant craft button
         instant_y = panel_y + 600
@@ -1101,25 +1190,29 @@ class CraftingSimulator:
             self.screen.blit(empty_text, (panel_x + 200, panel_y + 150))
             return
 
-        # Display crafted items with hover tooltips
+        # Display crafted items with hover tooltips (using flat list)
         mouse_pos = pygame.mouse.get_pos()
         item_y = panel_y + 50
         hovered_item = None
 
-        for item_id, item_data in list(self.crafted_items.items())[:12]:
-            # Handle both old format (just a number) and new format (dict)
-            if isinstance(item_data, dict):
-                qty = item_data.get('quantity', 0)
-                enchantments = item_data.get('enchantments', [])
-            else:
-                # Legacy support - migrate to new format
-                qty = item_data
-                enchantments = []
-                self.crafted_items[item_id] = {'quantity': qty, 'enchantments': enchantments}
+        # Get flat list of items with rarity
+        flat_items = self._get_all_crafted_items_flat()[:12]
+
+        for item_id, rarity, item_data in flat_items:
+            qty = item_data.get('quantity', 0)
+            enchantments = item_data.get('enchantments', [])
+            stats = item_data.get('stats')
 
             # Get metadata
             metadata = self.item_metadata.get(item_id, {})
-            item_name = metadata.get('name', item_id.replace('_', ' ').title())
+            base_name = metadata.get('name', item_id.replace('_', ' ').title())
+
+            # Format name with rarity (e.g., "Iron Sword (Rare)")
+            if rarity != 'common':
+                item_name = f"{base_name} ({rarity.capitalize()})"
+            else:
+                item_name = base_name
+
             if len(item_name) > 40:
                 item_name = item_name[:38] + "..."
 
@@ -1130,40 +1223,40 @@ class CraftingSimulator:
             is_hovering = item_rect.collidepoint(mouse_pos)
             if is_hovering:
                 pygame.draw.rect(self.screen, LIGHT_GRAY, item_rect)
-                item_stats = item_data.get('stats') if isinstance(item_data, dict) else None
-                hovered_item = (item_id, metadata, mouse_pos, enchantments, item_stats)
+                hovered_item = (item_id, rarity, metadata, mouse_pos, enchantments, stats)
 
-            # Draw item text with rarity and enchantment indicator
-            rarity = item_data.get('rarity') if isinstance(item_data, dict) else None
-            item_stats = item_data.get('stats') if isinstance(item_data, dict) else None
-
-            rarity_suffix = f" ({rarity})" if rarity else ""
             # Add stats quality indicator for engineering devices
             stats_suffix = ""
-            if item_stats:
-                avg_stat = sum(item_stats.values()) / len(item_stats)
+            if stats:
+                avg_stat = sum(stats.values()) / len(stats)
                 stats_suffix = f" [Q:{avg_stat:.0f}]"
 
             enchant_suffix = f" [{len(enchantments)} ench]" if enchantments else ""
-            item_color = PURPLE if enchantments else (YELLOW if is_hovering else GREEN)
-            item_text = self.font.render(f"{item_name}: x{qty}{rarity_suffix}{stats_suffix}{enchant_suffix}", True, item_color)
+
+            # Color by rarity
+            rarity_colors = {
+                'common': GREEN,
+                'uncommon': (100, 255, 100),
+                'rare': BLUE,
+                'epic': PURPLE,
+                'legendary': ORANGE
+            }
+            item_color = PURPLE if enchantments else (YELLOW if is_hovering else rarity_colors.get(rarity, GREEN))
+
+            item_text = self.font.render(f"{item_name}: x{qty}{stats_suffix}{enchant_suffix}", True, item_color)
             self.screen.blit(item_text, (panel_x + 25, item_y))
 
             item_y += 25
 
         # Draw tooltip for hovered item (on top of everything)
         if hovered_item:
-            item_stats = hovered_item[4] if len(hovered_item) > 4 else None
-            self._draw_item_tooltip(hovered_item[0], hovered_item[1], hovered_item[2], hovered_item[3], item_stats)
+            # hovered_item = (item_id, rarity, metadata, mouse_pos, enchantments, stats)
+            self._draw_item_tooltip(hovered_item[0], hovered_item[1], hovered_item[2], hovered_item[3], hovered_item[4], hovered_item[5])
 
-    def _draw_item_tooltip(self, item_id, metadata, mouse_pos, enchantments=None, stats=None):
+    def _draw_item_tooltip(self, item_id, rarity, metadata, mouse_pos, enchantments=None, stats=None):
         """Draw detailed tooltip for an item (similar to main.py format)"""
         if enchantments is None:
             enchantments = []
-
-        # Get item data to show rarity
-        item_data = self.crafted_items.get(item_id, {})
-        rarity = item_data.get('rarity') if isinstance(item_data, dict) else None
 
         # Tooltip dimensions
         tooltip_width = 400
@@ -1178,8 +1271,28 @@ class CraftingSimulator:
             wrapped_lines = self._wrap_text(narrative, tooltip_width - 2 * tooltip_padding)
             lines_needed += len(wrapped_lines)
 
-        if stats:
-            lines_needed += len(stats) + 2  # +2 for header and spacing
+        # Calculate stats lines (base stats + rarity mods + special effects)
+        if stats or (metadata and metadata.get('stats')):
+            base_stats = metadata.get('stats', {}) if metadata else {}
+            current_stats = stats or {}
+            item_category = metadata.get('category', 'item').lower() if metadata else 'item'
+
+            # Count stat lines
+            all_stat_names = set(list(base_stats.keys()) + list(current_stats.keys()))
+            if rarity and rarity != 'common':
+                from rarity_utils import rarity_system
+                rarity_data = rarity_system.rarity_modifiers.get(item_category, {}).get(rarity, {})
+                rarity_mods = rarity_data.get('modifiers', {})
+                special_effects = rarity_data.get('special_effects', {})
+                all_stat_names.update(rarity_mods.keys())
+
+                # Add lines for special effects
+                effect_count = sum(1 for v in special_effects.values() if v)
+                if effect_count > 0:
+                    lines_needed += effect_count + 2  # +2 for "Special Effects:" header
+
+            lines_needed += len(all_stat_names) + 2  # +2 for "Stats:" header and spacing
+
         if enchantments:
             lines_needed += len(enchantments) + 1
 
@@ -1243,16 +1356,80 @@ class CraftingSimulator:
                 self.screen.blit(line_text, (tooltip_x + tooltip_padding, text_y))
                 text_y += line_height - 2
 
-        # Draw device stats if any (from engineering)
-        if stats:
+        # Draw detailed stats breakdown
+        if stats or (metadata and metadata.get('stats')):
             text_y += 8
-            stats_title = self.small_font.render("Device Stats:", True, CYAN)
+            stats_title = self.small_font.render("Stats:", True, CYAN)
             self.screen.blit(stats_title, (tooltip_x + tooltip_padding, text_y))
             text_y += line_height - 2
-            for stat_name, stat_value in stats.items():
-                stat_text = self.small_font.render(f"  {stat_name.title()}: {stat_value}", True, GREEN)
+
+            # Get base stats from metadata
+            base_stats = metadata.get('stats', {}) if metadata else {}
+            current_stats = stats or {}
+
+            # Get rarity modifiers for this item category
+            item_category = metadata.get('category', 'item').lower() if metadata else 'item'
+            rarity_mods = {}
+            special_effects = {}
+
+            if rarity and rarity != 'common':
+                from rarity_utils import rarity_system
+                rarity_data = rarity_system.rarity_modifiers.get(item_category, {}).get(rarity, {})
+                rarity_mods = rarity_data.get('modifiers', {})
+                special_effects = rarity_data.get('special_effects', {})
+
+            # Display stats with modifiers
+            all_stat_names = set(list(base_stats.keys()) + list(current_stats.keys()) + list(rarity_mods.keys()))
+            for stat_name in sorted(all_stat_names):
+                base_value = base_stats.get(stat_name, 0)
+                current_value = current_stats.get(stat_name, 0)
+                modifier = rarity_mods.get(stat_name, 0)
+
+                # Format stat display
+                if modifier > 0:
+                    # Show: "Damage: 50 (+100%) = 100"
+                    mod_pct = int(modifier * 100)
+                    stat_line = f"  {stat_name.title()}: {base_value} (+{mod_pct}%) = {current_value}"
+                    stat_color = GREEN
+                elif modifier < 0:
+                    # Show negative modifiers (like cooldown reduction)
+                    mod_pct = int(abs(modifier) * 100)
+                    stat_line = f"  {stat_name.title()}: {base_value} (-{mod_pct}%) = {current_value}"
+                    stat_color = GREEN
+                elif current_value > 0:
+                    # Just show current value (no rarity modifier)
+                    stat_line = f"  {stat_name.title()}: {current_value}"
+                    stat_color = WHITE
+                else:
+                    continue
+
+                stat_text = self.small_font.render(stat_line, True, stat_color)
                 self.screen.blit(stat_text, (tooltip_x + tooltip_padding, text_y))
                 text_y += line_height - 2
+
+            # Draw special effects if any
+            if special_effects:
+                text_y += 5
+                effects_title = self.small_font.render("Special Effects:", True, ORANGE)
+                self.screen.blit(effects_title, (tooltip_x + tooltip_padding, text_y))
+                text_y += line_height - 2
+
+                effect_names = {
+                    'lifesteal': 'Lifesteal',
+                    'enhanced_durability': 'Enhanced Durability',
+                    'knockback_resistance': 'Knockback Resistance',
+                    'damage_boost': 'Damage Boost',
+                    'thorns': 'Thorns',
+                    'auto_smelt': 'Auto-Smelt',
+                    'auto_reload': 'Auto-Reload'
+                }
+
+                for effect_key, effect_value in special_effects.items():
+                    if effect_value:
+                        effect_name = effect_names.get(effect_key, effect_key.title())
+                        effect_text = self.small_font.render(f"  • {effect_name}", True, PURPLE)
+                        self.screen.blit(effect_text, (tooltip_x + tooltip_padding, text_y))
+                        text_y += line_height - 2
 
         # Draw enchantments if any
         if enchantments:
@@ -1500,6 +1677,9 @@ class CraftingSimulator:
         title = self.title_font.render("Enchanting Station", True, PURPLE)
         self.screen.blit(title, (550, 10))
 
+        # Rarity override button (also visible in enchanting mode)
+        self.draw_rarity_override_button()
+
         if not self.selected_recipe:
             self.enchanting_mode = False
             return
@@ -1662,21 +1842,21 @@ class CraftingSimulator:
         title = self.font.render("Select Item to Enchant", True, ORANGE)
         self.screen.blit(title, (panel_x + 10, panel_y + 10))
 
-        # Filter applicable items
+        # Filter applicable items (flatten nested structure)
         applicable_to = recipe.get('applicableTo', ['any'])
         enchantable_items = []
 
-        for item_id, item_data in self.crafted_items.items():
-            # Get item quantity
-            if isinstance(item_data, dict):
-                qty = item_data.get('quantity', 0)
-            else:
-                qty = item_data
+        for item_id, rarity_dict in self.crafted_items.items():
+            # Check if any rarity variant has quantity > 0
+            total_qty = sum(data.get('quantity', 0) for data in rarity_dict.values())
 
-            if qty > 0:
+            if total_qty > 0:
                 # Check if applicable
                 if 'any' in applicable_to:
-                    enchantable_items.append(item_id)
+                    # Add all rarity variants
+                    for rarity, data in rarity_dict.items():
+                        if data.get('quantity', 0) > 0:
+                            enchantable_items.append((item_id, rarity))
                 else:
                     # Check item metadata to see if it matches applicable types
                     item_meta = self.item_metadata.get(item_id, {})
@@ -1688,7 +1868,10 @@ class CraftingSimulator:
                     if (item_type in applicable_to or
                         item_category in applicable_to or
                         any(app_type in item_id.lower() for app_type in applicable_to)):
-                        enchantable_items.append(item_id)
+                        # Add all rarity variants
+                        for rarity, data in rarity_dict.items():
+                            if data.get('quantity', 0) > 0:
+                                enchantable_items.append((item_id, rarity))
 
         if not enchantable_items:
             no_items = self.font.render("No applicable items to enchant", True, LIGHT_GRAY)
@@ -1701,18 +1884,14 @@ class CraftingSimulator:
         item_y = panel_y + 50
         mouse_pos = pygame.mouse.get_pos()
 
-        for i, item_id in enumerate(enchantable_items[:20]):  # Limit to 20 items
-            item_data = self.crafted_items[item_id]
-            if isinstance(item_data, dict):
-                qty = item_data.get('quantity', 0)
-                enchantments = item_data.get('enchantments', [])
-            else:
-                qty = item_data
-                enchantments = []
+        for i, (item_id, rarity) in enumerate(enchantable_items[:20]):  # Limit to 20 items
+            item_data = self.crafted_items[item_id][rarity]
+            qty = item_data.get('quantity', 0)
+            enchantments = item_data.get('enchantments', [])
 
             # Item row
             item_rect = pygame.Rect(panel_x + 10, item_y, panel_width - 20, 25)
-            is_selected = item_id == self.selected_enchant_target
+            is_selected = (item_id, rarity) == self.selected_enchant_target
             is_hovering = item_rect.collidepoint(mouse_pos)
 
             # Background
@@ -1721,16 +1900,57 @@ class CraftingSimulator:
             elif is_hovering:
                 pygame.draw.rect(self.screen, LIGHT_GRAY, item_rect)
 
-            # Item name
-            item_name = self.item_metadata.get(item_id, {}).get('name', item_id.replace('_', ' ').title())
+            # Item name with rarity
+            base_name = self.item_metadata.get(item_id, {}).get('name', item_id.replace('_', ' ').title())
+            if rarity != 'common':
+                item_name = f"{base_name} ({rarity.capitalize()})"
+            else:
+                item_name = base_name
+
             if len(item_name) > 35:
                 item_name = item_name[:33] + "..."
 
             enchant_suffix = f" [{len(enchantments)} ench]" if enchantments else ""
-            item_text = self.font.render(f"{item_name}: x{qty}{enchant_suffix}", True, WHITE)
+
+            # Color by rarity
+            rarity_colors = {
+                'common': GREEN,
+                'uncommon': (100, 255, 100),
+                'rare': BLUE,
+                'epic': PURPLE,
+                'legendary': ORANGE
+            }
+            item_color = WHITE if is_selected else rarity_colors.get(rarity, GREEN)
+            item_text = self.font.render(f"{item_name}: x{qty}{enchant_suffix}", True, item_color)
             self.screen.blit(item_text, (panel_x + 20, item_y + 2))
 
             item_y += 28
+
+    def draw_rarity_override_button(self):
+        """Draw button to cycle rarity override for testing"""
+        button_x = SCREEN_WIDTH - 250
+        button_y = 10
+        button_w = 230
+        button_h = 35
+
+        # Color based on current rarity
+        rarity_colors = {
+            'common': (200, 200, 200),
+            'uncommon': (100, 255, 100),
+            'rare': (100, 150, 255),
+            'epic': (200, 100, 255),
+            'legendary': (255, 165, 0)
+        }
+        button_color = rarity_colors.get(self.rarity_override, LIGHT_GRAY)
+
+        # Draw button
+        pygame.draw.rect(self.screen, button_color, (button_x, button_y, button_w, button_h))
+        pygame.draw.rect(self.screen, WHITE, (button_x, button_y, button_w, button_h), 2)
+
+        # Text
+        text = self.font.render(f"Materials: {self.rarity_override.upper()}", True, BLACK if self.rarity_override in ['common', 'uncommon'] else WHITE)
+        text_rect = text.get_rect(center=(button_x + button_w // 2, button_y + button_h // 2))
+        self.screen.blit(text, text_rect)
 
     def draw_enchanting_buttons(self):
         """Draw enchanting action buttons"""
@@ -1740,8 +1960,9 @@ class CraftingSimulator:
         button_w = 280
         button_h = 50
 
+        can_craft_result = self.get_current_crafter().can_craft(self.selected_recipe, self.inventory)
         can_apply = (self.selected_enchant_target is not None and
-                     self.get_current_crafter().can_craft(self.selected_recipe, self.inventory))
+                     can_craft_result[0])
 
         button_color = GREEN if can_apply else LIGHT_GRAY
         pygame.draw.rect(self.screen, button_color, (button_x, button_y, button_w, button_h))

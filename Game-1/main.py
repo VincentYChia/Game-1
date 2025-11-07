@@ -12,6 +12,22 @@ from enum import Enum
 # Combat system
 from Combat import CombatManager, EnemyDatabase
 
+# Crafting subdisciplines
+try:
+    sys.path.insert(0, str(Path(__file__).parent / "Crafting-subdisciplines"))
+    from smithing import SmithingCrafter
+    from refining import RefiningCrafter
+    from alchemy import AlchemyCrafter
+    from engineering import EngineeringCrafter
+    from enchanting import EnchantingCrafter
+    from rarity_utils import rarity_system
+    CRAFTING_MODULES_LOADED = True
+    print("✓ Loaded crafting subdisciplines modules")
+except ImportError as e:
+    CRAFTING_MODULES_LOADED = False
+    print(f"⚠ Could not load crafting subdisciplines: {e}")
+    print("  Crafting will use legacy instant-craft only")
+
 
 # ============================================================================
 # CONFIGURATION
@@ -1626,6 +1642,8 @@ class ItemStack:
     quantity: int
     max_stack: int = 99
     equipment_data: Optional['EquipmentItem'] = None  # For equipment items, store actual instance
+    rarity: str = 'common'  # Rarity for materials and crafted items
+    crafted_stats: Optional[Dict[str, Any]] = None  # Stats from minigame crafting with rarity modifiers
 
     def __post_init__(self):
         print(f"      📦 ItemStack.__post_init__ called for '{self.item_id}'")
@@ -2857,7 +2875,7 @@ class Renderer:
         wy = 100
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.blit(surf.fill((25, 25, 35, 250)), (0, 0))
+        surf.fill((25, 25, 35, 250))
 
         # Title
         title_text = f"Apply {recipe.enchantment_name}"
@@ -3137,6 +3155,22 @@ class GameEngine:
         TitleDatabase.get_instance().load_from_file("progression/titles-1.JSON")
         ClassDatabase.get_instance().load_from_file("progression/classes-1.JSON")
 
+        # Initialize crafting subdisciplines (minigames)
+        if CRAFTING_MODULES_LOADED:
+            print("\nInitializing crafting subdisciplines...")
+            self.smithing_crafter = SmithingCrafter()
+            self.refining_crafter = RefiningCrafter()
+            self.alchemy_crafter = AlchemyCrafter()
+            self.engineering_crafter = EngineeringCrafter()
+            self.enchanting_crafter = EnchantingCrafter()
+            print("✓ All 5 crafting disciplines loaded")
+        else:
+            self.smithing_crafter = None
+            self.refining_crafter = None
+            self.alchemy_crafter = None
+            self.engineering_crafter = None
+            self.enchanting_crafter = None
+
         print("\nInitializing systems...")
         self.world = WorldSystem()
         self.character = Character(Position(50.0, 50.0, 0.0))
@@ -3169,6 +3203,12 @@ class GameEngine:
         self.enchantment_recipe = None
         self.enchantment_compatible_items = []
         self.enchantment_selection_rect = None
+
+        # Minigame state
+        self.current_minigame = None  # Active minigame instance
+        self.minigame_result = None  # Result after minigame completes
+        self.minigame_recipe = None  # Recipe being crafted with minigame
+        self.minigame_active = False  # Whether minigame is currently running
 
         self.keys_pressed = set()
         self.mouse_pos = (0, 0)
@@ -3450,6 +3490,58 @@ class GameEngine:
                     print(f"✓ +1 {stat_name.upper()}")
                 break
 
+    # ========================================================================
+    # CRAFTING INTEGRATION HELPERS
+    # ========================================================================
+    def inventory_to_dict(self) -> Dict[str, int]:
+        """Convert main.py Inventory to crafter-compatible Dict[material_id: quantity]"""
+        materials = {}
+        for slot in self.character.inventory.slots:
+            if slot and not slot.is_equipment():
+                # Only include non-equipment items (materials)
+                if slot.item_id in materials:
+                    materials[slot.item_id] += slot.quantity
+                else:
+                    materials[slot.item_id] = slot.quantity
+        return materials
+
+    def get_crafter_for_station(self, station_type: str):
+        """Get the appropriate crafter module for a station type"""
+        if not CRAFTING_MODULES_LOADED:
+            return None
+
+        crafter_map = {
+            'smithing': self.smithing_crafter,
+            'refining': self.refining_crafter,
+            'alchemy': self.alchemy_crafter,
+            'engineering': self.engineering_crafter,
+            'adornments': self.enchanting_crafter
+        }
+        return crafter_map.get(station_type)
+
+    def add_crafted_item_to_inventory(self, item_id: str, quantity: int,
+                                     rarity: str = 'common', stats: Dict = None):
+        """Add a crafted item to inventory with rarity and stats"""
+        equip_db = EquipmentDatabase.get_instance()
+
+        if equip_db.is_equipment(item_id):
+            # Equipment - create with stats if provided
+            equipment = equip_db.create_equipment_from_id(item_id)
+            if equipment and stats:
+                # Apply crafted stats to equipment
+                for stat_name, stat_value in stats.items():
+                    if hasattr(equipment, stat_name):
+                        setattr(equipment, stat_name, stat_value)
+
+            # Add to inventory with equipment data
+            item_stack = ItemStack(item_id, quantity, equipment_data=equipment,
+                                  rarity=rarity, crafted_stats=stats)
+            self.character.inventory.add_stack(item_stack)
+        else:
+            # Material - add with rarity
+            item_stack = ItemStack(item_id, quantity, rarity=rarity)
+            self.character.inventory.add_stack(item_stack)
+
     def handle_craft_click(self, mouse_pos: Tuple[int, int]):
         if not self.crafting_window_rect or not self.crafting_recipes:
             return
@@ -3463,85 +3555,109 @@ class GameEngine:
                 break
 
     def craft_item(self, recipe: Recipe):
+        """Craft an item using the new crafting subdisciplines system"""
         recipe_db = RecipeDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
 
         print("\n" + "="*80)
-        print(f"🔨 CRAFT_ITEM DEBUG START")
+        print(f"🔨 CRAFT_ITEM - Using New Crafting System")
         print(f"Recipe ID: {recipe.recipe_id}")
         print(f"Output ID: {recipe.output_id}")
-        print(f"Output Qty: {recipe.output_qty}")
         print(f"Station Type: {recipe.station_type}")
         print("="*80)
 
+        # Check if we have materials
         if not recipe_db.can_craft(recipe, self.character.inventory):
             self.add_notification("Not enough materials!", (255, 100, 100))
             print("❌ Cannot craft - not enough materials")
             return
 
-        # Handle enchanting recipes differently
-        if recipe.is_enchantment:
-            self._apply_enchantment(recipe)
-            return
+        # Get the appropriate crafter for this discipline
+        crafter = self.get_crafter_for_station(recipe.station_type)
 
-        # Regular crafting
-        if recipe_db.consume_materials(recipe, self.character.inventory):
-            activity_map = {
-                'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
-                'engineering': 'engineering', 'adornments': 'enchanting'
-            }
-            activity_type = activity_map.get(recipe.station_type, 'smithing')
-            self.character.activities.record_activity(activity_type, 1)
+        if crafter and CRAFTING_MODULES_LOADED:
+            # NEW SYSTEM: Use crafting subdisciplines
+            print(f"✓ Using {recipe.station_type} crafter from subdisciplines")
 
-            xp_reward = 20 * recipe.station_tier
-            self.character.leveling.add_exp(xp_reward)
+            # Convert inventory to dict format
+            inv_dict = self.inventory_to_dict()
 
-            new_title = self.character.titles.check_for_title(
-                activity_type, self.character.activities.get_count(activity_type)
-            )
-            if new_title:
-                self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
-
-            # Check what type of item this is
-            print(f"🔍 Checking item type for: '{recipe.output_id}'")
-            is_equip = equip_db.is_equipment(recipe.output_id)
-            print(f"   - is_equipment: {is_equip}")
-
-            if is_equip:
-                test_equip = equip_db.create_equipment_from_id(recipe.output_id)
-                print(f"   - test create equipment: {test_equip}")
-                if test_equip:
-                    print(f"     - name: {test_equip.name}")
-                    print(f"     - tier: {test_equip.tier}")
-                    print(f"     - slot: {test_equip.slot}")
-                else:
-                    print(f"     ❌ create_equipment_from_id returned None!")
+            # Check if crafter can craft (with rarity checks)
+            can_craft_result = crafter.can_craft(recipe.recipe_id, inv_dict)
+            if isinstance(can_craft_result, tuple):
+                can_craft, error_msg = can_craft_result
             else:
-                test_mat = mat_db.get_material(recipe.output_id)
-                print(f"   - test get material: {test_mat}")
-                if test_mat:
-                    print(f"     - name: {test_mat.name}")
-                    print(f"     - tier: {test_mat.tier}")
+                can_craft, error_msg = can_craft_result, None
+
+            if not can_craft:
+                self.add_notification(f"Cannot craft: {error_msg or 'Unknown error'}", (255, 100, 100))
+                print(f"❌ Crafter blocked: {error_msg}")
+                return
+
+            # Use instant craft (minigames come later)
+            print(f"📦 Calling crafter.craft_instant()...")
+            result = crafter.craft_instant(recipe.recipe_id, inv_dict)
+
+            if result.get('success'):
+                output_id = result.get('outputId')
+                quantity = result.get('quantity', 1)
+                rarity = result.get('rarity', 'common')
+                stats = result.get('stats')
+
+                print(f"✓ Craft successful: {quantity}x {output_id} ({rarity})")
+                if stats:
+                    print(f"   Stats: {stats}")
+
+                # Add to inventory with rarity and stats
+                self.add_crafted_item_to_inventory(output_id, quantity, rarity, stats)
+
+                # Record activity and award XP (instant craft = 0 XP per Game Mechanics v5)
+                activity_map = {
+                    'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
+                    'engineering': 'engineering', 'adornments': 'enchanting'
+                }
+                activity_type = activity_map.get(recipe.station_type, 'smithing')
+                self.character.activities.record_activity(activity_type, 1)
+
+                # Instant craft gives 0 EXP (only minigames give EXP)
+                print("  (Instant craft = 0 EXP, use minigame for EXP)")
+
+                # Check for titles
+                new_title = self.character.titles.check_for_title(
+                    activity_type, self.character.activities.get_count(activity_type)
+                )
+                if new_title:
+                    self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+
+                # Get item name for notification
+                if equip_db.is_equipment(output_id):
+                    equipment = equip_db.create_equipment_from_id(output_id)
+                    item_name = equipment.name if equipment else output_id
                 else:
-                    print(f"     ❌ get_material returned None!")
+                    material = mat_db.get_material(output_id)
+                    item_name = material.name if material else output_id
 
-            # Add to inventory
-            print(f"📦 Calling inventory.add_item('{recipe.output_id}', {recipe.output_qty})")
-            success = self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
-            print(f"   - add_item returned: {success}")
-
-            # Get proper name
-            if equip_db.is_equipment(recipe.output_id):
-                equipment = equip_db.create_equipment_from_id(recipe.output_id)
-                out_name = equipment.name if equipment else recipe.output_id
+                rarity_str = f" ({rarity})" if rarity != 'common' else ""
+                self.add_notification(f"Crafted {item_name}{rarity_str} x{quantity}", (100, 255, 100))
+                print("="*80 + "\n")
             else:
-                out_mat = mat_db.get_material(recipe.output_id)
-                out_name = out_mat.name if out_mat else recipe.output_id
+                error_msg = result.get('message', 'Crafting failed')
+                self.add_notification(f"Failed: {error_msg}", (255, 100, 100))
+                print(f"❌ {error_msg}")
+                print("="*80 + "\n")
 
-            print(f"✅ Crafting complete: {out_name} x{recipe.output_qty}")
-            print("="*80 + "\n")
-            self.add_notification(f"Crafted {out_name} x{recipe.output_qty}", (100, 255, 100))
+        else:
+            # FALLBACK: Legacy instant craft system
+            print("⚠ Crafting modules not loaded, using legacy system")
+            if recipe.is_enchantment:
+                self._apply_enchantment(recipe)
+                return
+
+            # Old instant craft logic
+            if recipe_db.consume_materials(recipe, self.character.inventory):
+                self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
+                self.add_notification(f"Crafted (legacy) {recipe.output_id} x{recipe.output_qty}", (100, 255, 100))
 
     def _apply_enchantment(self, recipe: Recipe):
         """Apply an enchantment to an item - shows selection UI"""
