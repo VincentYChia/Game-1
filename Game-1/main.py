@@ -2919,7 +2919,7 @@ class Renderer:
 
     def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int],
                            placement_mode: bool = False, placement_recipe = None, placement_data = None):
-        """Main crafting UI dispatcher - handles recipe selection and placement modes"""
+        """Main crafting UI dispatcher - shows recipe list and placement UI side-by-side"""
         if not character.crafting_ui_open or not character.active_station:
             return None
 
@@ -2928,23 +2928,25 @@ class Renderer:
         self.placement_recipe = placement_recipe
         self.placement_data = placement_data
 
-        # Check which mode we're in
-        if placement_mode and placement_recipe:
-            # Placement mode - show material placement UI
-            return self._render_placement_ui(character, mouse_pos)
-        else:
-            # Recipe selection mode - show recipe list
-            return self._render_recipe_selection(character, mouse_pos)
+        # Always render recipe list on the left
+        recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos)
 
-    def _render_recipe_selection(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Render recipe selection UI - first phase of crafting"""
+        # If a recipe is selected, render placement UI on the right
+        if placement_mode and placement_recipe:
+            self._render_placement_ui_sidebar(character, mouse_pos)
+
+        return recipe_result
+
+    def _render_recipe_selection_sidebar(self, character: Character, mouse_pos: Tuple[int, int]):
+        """Render recipe selection sidebar - left side"""
         recipe_db = RecipeDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
-        ww, wh = 900, 600
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+        # Narrower width for sidebar (left side)
+        ww, wh = 450, 700
+        wx = 20  # Left edge
+        wy = 50  # Top
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 240))
@@ -2994,44 +2996,57 @@ class Renderer:
                               (btn.x + 20, req_y))
                     req_y += 18
 
-                # SELECT button
+                # Highlight if this is the selected recipe
+                if self.placement_recipe and recipe.recipe_id == self.placement_recipe.recipe_id:
+                    pygame.draw.rect(surf, (255, 215, 0), btn, 4)  # Gold border for selected
+                    surf.blit(self.tiny_font.render("◀ SELECTED", True, (255, 215, 0)),
+                              (btn.right - 90, btn.y + 5))
+
+                # Click hint
                 if can_craft:
-                    select_btn = pygame.Rect(btn.right - 120, btn.bottom - 28, 110, 23)
-                    pygame.draw.rect(surf, (60, 80, 100), select_btn)
-                    pygame.draw.rect(surf, (100, 150, 200), select_btn, 2)
-                    surf.blit(self.small_font.render("SELECT", True, (200, 220, 255)),
-                              (select_btn.x + 28, select_btn.y + 4))
+                    surf.blit(self.tiny_font.render("Click to view →", True, (150, 150, 150)),
+                              (btn.right - 100, btn.bottom - 18))
 
                 y_off += 100
 
         self.screen.blit(surf, (wx, wy))
         return pygame.Rect(wx, wy, ww, wh), recipes[:5] if recipes else []
 
-    def _render_placement_ui(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Dispatcher for placement UIs based on discipline"""
+    def _get_recipe_display_name(self, recipe):
+        """Helper to get display name for a recipe's output"""
+        if not recipe:
+            return "Unknown"
+
+        mat_db = MaterialDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Try equipment first
+        if equip_db.is_equipment(recipe.output_id):
+            equip = equip_db.create_equipment_from_id(recipe.output_id)
+            return equip.name if equip else recipe.output_id
+
+        # Try material
+        mat = mat_db.get_material(recipe.output_id)
+        return mat.name if mat else recipe.output_id
+
+    def _render_placement_ui_sidebar(self, character: Character, mouse_pos: Tuple[int, int]):
+        """Render placement UI on the right side"""
         if not self.placement_data:
-            print("⚠ ERROR: No placement_data!")
-            # Exit placement mode and go back to recipe selection
-            self._exit_placement_mode()
-            return self._render_recipe_selection(character, mouse_pos)
+            return
 
         discipline = self.placement_data.discipline
-        print(f"📐 Rendering {discipline} placement UI")
 
+        # Render the appropriate placement UI (they'll position themselves)
         if discipline == 'smithing':
-            return self._render_smithing_placement(character, mouse_pos)
+            self._render_smithing_placement(character, mouse_pos)
         elif discipline == 'refining':
-            return self._render_refining_placement(character, mouse_pos)
+            self._render_refining_placement(character, mouse_pos)
         elif discipline == 'alchemy':
-            return self._render_alchemy_placement(character, mouse_pos)
+            self._render_alchemy_placement(character, mouse_pos)
         elif discipline == 'engineering':
-            return self._render_engineering_placement(character, mouse_pos)
+            self._render_engineering_placement(character, mouse_pos)
         elif discipline == 'adornments' or discipline == 'enchanting':
-            return self._render_enchanting_placement(character, mouse_pos)
-        else:
-            print(f"⚠ Unknown discipline: {discipline}")
-            self._exit_placement_mode()
-            return self._render_recipe_selection(character, mouse_pos)
+            self._render_enchanting_placement(character, mouse_pos)
 
     def _render_smithing_placement(self, character: Character, mouse_pos: Tuple[int, int]):
         """Render smithing grid-based placement UI"""
@@ -3039,7 +3054,7 @@ class Renderer:
         equip_db = EquipmentDatabase.get_instance()
 
         ww, wh = 1000, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -3331,7 +3346,7 @@ class Renderer:
         mat_db = MaterialDatabase.get_instance()
 
         ww, wh = 900, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -3342,7 +3357,7 @@ class Renderer:
         surf.blit(title, (20, 20))
 
         # Recipe name
-        recipe_name = self.placement_recipe.name if self.placement_recipe else "Unknown"
+        recipe_name = self._get_recipe_display_name(self.placement_recipe)
         surf.blit(self.small_font.render(f"Recipe: {recipe_name}", True, (180, 180, 180)), (20, 55))
 
         # Hub-spoke visualization area
@@ -3553,7 +3568,7 @@ class Renderer:
         mat_db = MaterialDatabase.get_instance()
 
         ww, wh = 900, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -3564,7 +3579,7 @@ class Renderer:
         surf.blit(title, (20, 20))
 
         # Recipe name
-        recipe_name = self.placement_recipe.name if self.placement_recipe else "Unknown"
+        recipe_name = self._get_recipe_display_name(self.placement_recipe)
         surf.blit(self.small_font.render(f"Recipe: {recipe_name}", True, (180, 180, 180)), (20, 55))
         surf.blit(self.tiny_font.render("Order matters! Add ingredients in sequence.", True, (255, 200, 100)), (20, 85))
 
@@ -3734,7 +3749,7 @@ class Renderer:
         mat_db = MaterialDatabase.get_instance()
 
         ww, wh = 950, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -3745,7 +3760,7 @@ class Renderer:
         surf.blit(title, (20, 20))
 
         # Recipe name
-        recipe_name = self.placement_recipe.name if self.placement_recipe else "Unknown"
+        recipe_name = self._get_recipe_display_name(self.placement_recipe)
         surf.blit(self.small_font.render(f"Device: {recipe_name}", True, (180, 180, 180)), (20, 55))
         surf.blit(self.tiny_font.render("Each component slot requires specific materials", True, (150, 200, 255)), (20, 85))
 
@@ -3939,7 +3954,7 @@ class Renderer:
         mat_db = MaterialDatabase.get_instance()
 
         ww, wh = 900, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -3950,7 +3965,7 @@ class Renderer:
         surf.blit(title, (20, 20))
 
         # Recipe name
-        recipe_name = self.placement_recipe.name if self.placement_recipe else "Unknown"
+        recipe_name = self._get_recipe_display_name(self.placement_recipe)
         surf.blit(self.small_font.render(f"Enchantment: {recipe_name}", True, (180, 180, 180)), (20, 55))
         surf.blit(self.tiny_font.render("Place materials to create enchantment pattern", True, (200, 150, 255)), (20, 85))
 
@@ -4133,7 +4148,7 @@ class Renderer:
     def _render_placeholder_placement(self, discipline_name: str, character: Character):
         """Temporary placeholder for unimplemented placement UIs"""
         ww, wh = 800, 400
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -4159,7 +4174,7 @@ class Renderer:
             return None
 
         ww, wh = 800, 600
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = 50
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -4315,7 +4330,7 @@ class Renderer:
             return None
 
         ww, wh = 600, 500
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = 100
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -4392,7 +4407,7 @@ class Renderer:
             return None
 
         ww, wh = 900, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = 50
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -4445,7 +4460,7 @@ class Renderer:
             return None
 
         ww, wh = 900, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = 50
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -5010,7 +5025,7 @@ class GameEngine:
             self._handle_recipe_selection_click(mouse_pos)
 
     def _handle_recipe_selection_click(self, mouse_pos: Tuple[int, int]):
-        """Handle clicks in recipe selection mode"""
+        """Handle clicks in recipe selection mode - click anywhere on recipe box"""
         if not self.crafting_recipes:
             return
 
@@ -5020,31 +5035,25 @@ class GameEngine:
         recipe_db = RecipeDatabase.get_instance()
         placement_db = PlacementDatabase.get_instance()
 
+        # Updated for 450px sidebar width
         for i, recipe in enumerate(self.crafting_recipes):
             btn_top = 70 + (i * 100)
             btn_height = 95
-            btn_width = 900 - 40  # ww - 40
+            btn_width = 450 - 40  # Sidebar width - margins
             btn_left = 20
-            btn_right = btn_left + btn_width  # = 880
+            btn_right = btn_left + btn_width
             btn_bottom = btn_top + btn_height
 
-            if btn_top <= ry <= btn_bottom:
+            # Check if anywhere on the recipe box is clicked
+            if btn_left <= rx <= btn_right and btn_top <= ry <= btn_bottom:
                 can_craft = recipe_db.can_craft(recipe, self.character.inventory)
                 if not can_craft:
                     continue
 
-                # Check if SELECT button clicked
-                # SELECT button is at: btn.right - 120, btn.bottom - 28, width=110, height=23
-                select_left = btn_right - 120  # = 760
-                select_right = select_left + 110  # = 870
-                select_top = btn_bottom - 28
-                select_bottom = select_top + 23  # btn_bottom - 5
-
-                if select_left <= rx <= select_right and select_top <= ry <= select_bottom:
-                    # SELECT clicked - enter placement mode
-                    print(f"📋 SELECT button clicked for recipe: {recipe.recipe_id}")
-                    self._enter_placement_mode(recipe)
-                    break
+                # Entire box clicked - enter placement mode
+                print(f"📋 Recipe selected: {recipe.recipe_id}")
+                self._enter_placement_mode(recipe)
+                break
 
     def _enter_placement_mode(self, recipe: Recipe):
         """Enter placement mode for a selected recipe"""
@@ -5775,7 +5784,7 @@ class GameEngine:
 
         # Create overlay
         ww, wh = 1000, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -5877,7 +5886,7 @@ class GameEngine:
 
         # Create overlay
         ww, wh = 1000, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -5960,7 +5969,7 @@ class GameEngine:
         state = self.active_minigame.get_state()
 
         ww, wh = 1000, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -6019,7 +6028,7 @@ class GameEngine:
         state = self.active_minigame.get_state()
 
         ww, wh = 1000, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -6073,7 +6082,7 @@ class GameEngine:
     def _render_enchanting_minigame(self):
         """Render enchanting minigame UI (placeholder)"""
         ww, wh = 800, 600
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
