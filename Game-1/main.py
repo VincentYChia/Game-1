@@ -1461,16 +1461,49 @@ class WorldSystem:
         print(f"Generated {Config.WORLD_SIZE}x{Config.WORLD_SIZE} world, {len(self.resources)} resources")
 
     def spawn_starting_stations(self):
-        """Spawn crafting stations near player start (50, 50)"""
-        # Place stations in starting chunk around the player
-        for x, y, stype in [
-            (48, 48, StationType.SMITHING),
-            (52, 48, StationType.REFINING),
-            (48, 52, StationType.ALCHEMY),
-            (52, 52, StationType.ENGINEERING),
-            (50, 50, StationType.ADORNMENTS)  # Center station
-        ]:
-            self.crafting_stations.append(CraftingStation(Position(x, y, 0), stype, 1))
+        """Spawn ALL TIER crafting stations near player start (50, 50) for comprehensive testing"""
+        # Tier 1 stations (closest to spawn)
+        stations_t1 = [
+            (48, 48, StationType.SMITHING, 1),
+            (52, 48, StationType.REFINING, 1),
+            (48, 52, StationType.ALCHEMY, 1),
+            (52, 52, StationType.ENGINEERING, 1),
+            (50, 50, StationType.ADORNMENTS, 1)
+        ]
+
+        # Tier 2 stations (ring around T1)
+        stations_t2 = [
+            (46, 48, StationType.SMITHING, 2),
+            (54, 48, StationType.REFINING, 2),
+            (46, 52, StationType.ALCHEMY, 2),
+            (54, 52, StationType.ENGINEERING, 2),
+            (50, 46, StationType.ADORNMENTS, 2)
+        ]
+
+        # Tier 3 stations (outer ring)
+        stations_t3 = [
+            (44, 48, StationType.SMITHING, 3),
+            (56, 48, StationType.REFINING, 3),
+            (44, 52, StationType.ALCHEMY, 3),
+            (56, 52, StationType.ENGINEERING, 3),
+            (50, 44, StationType.ADORNMENTS, 3)
+        ]
+
+        # Tier 4 stations (corners for advanced testing)
+        stations_t4 = [
+            (44, 44, StationType.SMITHING, 4),
+            (56, 44, StationType.REFINING, 4),
+            (44, 56, StationType.ALCHEMY, 4),
+            (56, 56, StationType.ENGINEERING, 4),
+            (50, 56, StationType.ADORNMENTS, 4)
+        ]
+
+        # Spawn all tiers
+        all_stations = stations_t1 + stations_t2 + stations_t3 + stations_t4
+        for x, y, stype, tier in all_stations:
+            self.crafting_stations.append(CraftingStation(Position(x, y, 0), stype, tier))
+
+        print(f"✓ Spawned {len(all_stations)} crafting stations (T1-T4) near spawn")
 
     def get_tile(self, position: Position) -> Optional[WorldTile]:
         return self.tiles.get(position.snap_to_grid().to_key())
@@ -3292,11 +3325,50 @@ class GameEngine:
                     Config.DEBUG_INFINITE_RESOURCES = not Config.DEBUG_INFINITE_RESOURCES
                     status = "ENABLED" if Config.DEBUG_INFINITE_RESOURCES else "DISABLED"
 
-                    # Set max level when enabling debug mode
+                    # Set max level and give materials when enabling debug mode
                     if Config.DEBUG_INFINITE_RESOURCES:
                         self.character.leveling.level = self.character.leveling.max_level
                         self.character.leveling.unallocated_stat_points = 100
                         print(f"🔧 DEBUG: Set level to {self.character.leveling.level} with 100 stat points")
+
+                        # Give comprehensive materials for testing
+                        debug_materials = [
+                            # Tier 1 - Basic
+                            ("copper_ore", 999), ("copper_ingot", 999), ("tin_ore", 999), ("tin_ingot", 999),
+                            ("iron_ore", 999), ("iron_ingot", 999),
+                            ("oak_log", 999), ("oak_plank", 999), ("pine_log", 999), ("pine_plank", 999),
+                            ("birch_log", 999), ("birch_plank", 999),
+                            ("limestone", 999), ("granite", 999), ("sandstone", 999),
+                            ("wolf_pelt", 999), ("slime_gel", 999), ("beetle_carapace", 999),
+                            ("water_crystal", 999), ("fire_crystal", 999), ("earth_crystal", 999),
+                            ("spectral_thread", 999),
+
+                            # Tier 2
+                            ("steel_ore", 999), ("steel_ingot", 999), ("mithril_ore", 999), ("mithril_ingot", 999),
+                            ("ash_log", 999), ("ash_plank", 999), ("maple_log", 999), ("maple_plank", 999),
+                            ("dire_fang", 999), ("living_ichor", 999), ("iron_scales", 999),
+                            ("lightning_shard", 999), ("ice_shard", 999), ("shadow_essence", 999),
+
+                            # Tier 3
+                            ("adamantine_ore", 999), ("adamantine_ingot", 999), ("orichalcum_ore", 999), ("orichalcum_ingot", 999),
+                            ("ironwood_log", 999), ("ironwood_plank", 999), ("ebony_log", 999), ("ebony_plank", 999),
+                            ("dragon_scale", 999), ("essence_blood", 999), ("golem_core", 999),
+                            ("storm_heart", 999), ("void_crystal", 999), ("light_gem", 999),
+
+                            # Tier 4
+                            ("celestial_ore", 999), ("celestial_ingot", 999), ("void_metal_ore", 999), ("void_metal_ingot", 999),
+                            ("wyrmwood_log", 999), ("wyrmwood_plank", 999), ("bloodoak_log", 999), ("bloodoak_plank", 999),
+                            ("titan_bone", 999), ("phoenix_ash", 999), ("ancient_carapace", 999),
+                            ("star_fragment", 999), ("abyss_tear", 999), ("radiant_core", 999),
+
+                            # Special materials
+                            ("blast_powder", 999), ("arcane_dust", 999), ("enchanted_silk", 999),
+                        ]
+
+                        for mat_id, qty in debug_materials:
+                            self.character.inventory.add_item(mat_id, qty)
+
+                        print(f"✓ Added {len(debug_materials)} material types to inventory")
 
                     self.add_notification(f"Debug Mode {status}", (255, 100, 255))
                     print(f"⚠ Debug Mode {status}")
