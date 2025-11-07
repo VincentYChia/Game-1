@@ -2917,14 +2917,19 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
-    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int]):
+    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int],
+                           placement_mode: bool = False, placement_recipe = None, placement_data = None):
         """Main crafting UI dispatcher - handles recipe selection and placement modes"""
         if not character.crafting_ui_open or not character.active_station:
             return None
 
+        # Store placement state temporarily for rendering
+        self.placement_mode = placement_mode
+        self.placement_recipe = placement_recipe
+        self.placement_data = placement_data
+
         # Check which mode we're in
-        from_game_engine = hasattr(self, 'placement_mode')
-        if from_game_engine and self.placement_mode and self.placement_recipe:
+        if placement_mode and placement_recipe:
             # Placement mode - show material placement UI
             return self._render_placement_ui(character, mouse_pos)
         else:
@@ -5630,7 +5635,8 @@ class GameEngine:
             self.class_buttons = []
 
             if self.character.crafting_ui_open:
-                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos)
+                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos,
+                                                          self.placement_mode, self.placement_recipe, self.placement_data)
                 if result:
                     self.crafting_window_rect, self.crafting_recipes = result
             else:
