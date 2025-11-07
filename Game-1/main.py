@@ -3005,9 +3005,13 @@ class Renderer:
     def _render_placement_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         """Dispatcher for placement UIs based on discipline"""
         if not self.placement_data:
-            return None
+            print("⚠ ERROR: No placement_data!")
+            # Exit placement mode and go back to recipe selection
+            self._exit_placement_mode()
+            return self._render_recipe_selection(character, mouse_pos)
 
         discipline = self.placement_data.discipline
+        print(f"📐 Rendering {discipline} placement UI")
 
         if discipline == 'smithing':
             return self._render_smithing_placement(character, mouse_pos)
@@ -3017,11 +3021,12 @@ class Renderer:
             return self._render_alchemy_placement(character, mouse_pos)
         elif discipline == 'engineering':
             return self._render_engineering_placement(character, mouse_pos)
-        elif discipline == 'adornments':
+        elif discipline == 'adornments' or discipline == 'enchanting':
             return self._render_enchanting_placement(character, mouse_pos)
         else:
-            # Fallback - shouldn't happen
-            return None
+            print(f"⚠ Unknown discipline: {discipline}")
+            self._exit_placement_mode()
+            return self._render_recipe_selection(character, mouse_pos)
 
     def _render_smithing_placement(self, character: Character, mouse_pos: Tuple[int, int]):
         """Render smithing grid-based placement UI"""
@@ -5029,8 +5034,6 @@ class GameEngine:
                 select_right = select_left + 110  # = 870
                 select_top = btn_bottom - 28
                 select_bottom = select_top + 23  # btn_bottom - 5
-
-                print(f"DEBUG: Click at ({rx}, {ry}), SELECT button at ({select_left}-{select_right}, {select_top}-{select_bottom})")
 
                 if select_left <= rx <= select_right and select_top <= ry <= select_bottom:
                     # SELECT clicked - enter placement mode
