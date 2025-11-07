@@ -3237,6 +3237,32 @@ class Renderer:
 
         return True
 
+    def _validate_alchemy_placement(self) -> bool:
+        """Check if alchemy sequential placement matches requirements"""
+        if not self.placement_data:
+            return False
+
+        ingredients = self.placement_data.ingredients or []
+
+        # Check all ingredients are placed in correct order
+        if len(self.placed_materials_sequential) != len(ingredients):
+            return False
+
+        for i, ingredient in enumerate(ingredients):
+            required_mat_id = ingredient.get('materialId', '')
+            required_qty = ingredient.get('quantity', 1)
+
+            if i >= len(self.placed_materials_sequential):
+                return False
+
+            placed = self.placed_materials_sequential[i]
+            if not placed or placed.get('materialId') != required_mat_id:
+                return False
+            if placed.get('quantity', 0) < required_qty:
+                return False
+
+        return True
+
     # Placeholder methods for other placement UIs (to be implemented)
     def _render_refining_placement(self, character: Character, mouse_pos: Tuple[int, int]):
         """Render refining hub-and-spoke placement UI"""
@@ -3461,9 +3487,185 @@ class Renderer:
         return pygame.Rect(wx, wy, ww, wh), []
 
     def _render_alchemy_placement(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Placeholder for alchemy sequential placement"""
-        # TODO: Implement alchemy placement UI
-        return self._render_placeholder_placement("ALCHEMY", character)
+        """Render alchemy sequential placement UI"""
+        mat_db = MaterialDatabase.get_instance()
+
+        ww, wh = 900, 700
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        # Title
+        title = self.font.render("ALCHEMY - Sequential Ingredient Placement", True, (200, 200, 200))
+        surf.blit(title, (20, 20))
+
+        # Recipe name
+        recipe_name = self.placement_recipe.name if self.placement_recipe else "Unknown"
+        surf.blit(self.small_font.render(f"Recipe: {recipe_name}", True, (180, 180, 180)), (20, 55))
+        surf.blit(self.tiny_font.render("Order matters! Add ingredients in sequence.", True, (255, 200, 100)), (20, 85))
+
+        # Clear previous rects
+        self.placement_slot_rects = {}
+
+        # Sequential slot layout (horizontal flow, wrapping if needed)
+        slot_size = 90
+        slot_spacing = 20
+        slots_per_row = 8
+        start_x = 50
+        start_y = 140
+
+        ingredients = self.placement_data.ingredients or []
+        total_slots = len(ingredients)
+
+        # Render ingredient slots sequentially
+        for i, ingredient in enumerate(ingredients):
+            # Calculate position
+            row = i // slots_per_row
+            col = i % slots_per_row
+            slot_x = start_x + col * (slot_size + slot_spacing)
+            slot_y = start_y + row * (slot_size + slot_spacing + 30)
+
+            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
+
+            # Check if this slot is filled
+            placed = self.placed_materials_sequential[i] if i < len(self.placed_materials_sequential) else None
+            required_mat_id = ingredient.get('materialId', '')
+            required_qty = ingredient.get('quantity', 1)
+
+            # Determine slot state
+            # Can only fill slots in order (can't skip ahead)
+            can_place = (i == len(self.placed_materials_sequential))  # Next empty slot
+
+            # Color based on state
+            if placed and placed.get('materialId') == required_mat_id:
+                color = (50, 150, 50)  # Green - correct
+            elif placed:
+                color = (150, 50, 50)  # Red - wrong material
+            elif can_place:
+                color = (150, 150, 50)  # Yellow - next to fill
+            else:
+                color = (60, 60, 70)  # Dark gray - locked (future slot)
+
+            pygame.draw.rect(surf, color, slot_rect)
+            pygame.draw.rect(surf, (200, 200, 200) if can_place else (100, 100, 100), slot_rect, 3 if can_place else 2)
+
+            # Order number (large and prominent)
+            order_text = self.font.render(str(i + 1), True, (255, 255, 255))
+            order_rect = order_text.get_rect()
+            surf.blit(order_text, (slot_rect.x + 5, slot_rect.y + 5))
+
+            # Material info
+            mat = mat_db.get_material(required_mat_id)
+            mat_abbrev = mat.abbrev if mat and hasattr(mat, 'abbrev') else required_mat_id[:3].upper()
+
+            # Show abbreviation (smaller, below number)
+            abbrev_text = self.tiny_font.render(mat_abbrev, True, (255, 255, 255))
+            surf.blit(abbrev_text, (slot_rect.x + 5, slot_rect.y + 35))
+
+            # Show quantity
+            qty_text = self.tiny_font.render(f"x{required_qty}", True, (200, 200, 200))
+            surf.blit(qty_text, (slot_rect.x + 5, slot_rect.y + slot_size - 20))
+
+            # Show placed quantity if any
+            if placed:
+                placed_qty = placed.get('quantity', 0)
+                placed_text = self.tiny_font.render(f"({placed_qty})", True, (255, 255, 100))
+                surf.blit(placed_text, (slot_rect.x + slot_size - 35, slot_rect.y + slot_size - 20))
+
+            # Indicator for "next" slot
+            if can_place:
+                indicator = self.tiny_font.render("NEXT →", True, (255, 255, 100))
+                surf.blit(indicator, (slot_rect.x + slot_size // 2 - 25, slot_rect.y + slot_size + 5))
+            elif i < len(self.placed_materials_sequential):
+                check = self.tiny_font.render("✓", True, (50, 255, 50))
+                surf.blit(check, (slot_rect.x + slot_size // 2 - 8, slot_rect.y + slot_size + 5))
+
+            # Store rect for click handling (only for next slot)
+            if can_place:
+                self.placement_slot_rects[i] = pygame.Rect(wx + slot_x, wy + slot_y, slot_size, slot_size)
+
+        # Legend / Instructions
+        legend_y = wh - 220
+        surf.blit(self.small_font.render("Sequential Order System:", True, (200, 200, 200)), (20, legend_y))
+        surf.blit(self.tiny_font.render("• Ingredients must be added in numerical order", True, (180, 180, 180)), (20, legend_y + 25))
+        surf.blit(self.tiny_font.render("• Cannot skip ahead - fill each slot before the next", True, (180, 180, 180)), (20, legend_y + 45))
+        surf.blit(self.tiny_font.render("• Yellow slot with 'NEXT →' shows current placement", True, (150, 150, 150)), (20, legend_y + 65))
+        surf.blit(self.tiny_font.render("• Green checkmark ✓ shows completed slots", True, (150, 150, 150)), (20, legend_y + 85))
+
+        # Progress indicator
+        filled_count = len(self.placed_materials_sequential)
+        progress_text = f"Progress: {filled_count}/{total_slots} ingredients placed"
+        progress_color = (50, 200, 50) if filled_count == total_slots else (200, 200, 100)
+        surf.blit(self.small_font.render(progress_text, True, progress_color), (20, legend_y + 115))
+
+        # Requirements checklist
+        checklist_x = ww - 300
+        surf.blit(self.small_font.render("Sequence:", True, (200, 200, 200)), (checklist_x, legend_y))
+
+        check_y = legend_y + 25
+        for i, ingredient in enumerate(ingredients[:10]):  # Show first 10
+            mat_id = ingredient.get('materialId', '')
+            mat = mat_db.get_material(mat_id)
+            mat_name = mat.name if mat else mat_id
+            qty = ingredient.get('quantity', 1)
+
+            placed = self.placed_materials_sequential[i] if i < len(self.placed_materials_sequential) else None
+            is_correct = placed and placed.get('materialId') == mat_id and placed.get('quantity', 0) >= qty
+
+            check = "✓" if is_correct else str(i + 1)
+            check_color = (50, 200, 50) if is_correct else (150, 150, 150)
+
+            text = f"{check}. {mat_name[:12]} x{qty}"
+            surf.blit(self.tiny_font.render(text, True, check_color), (checklist_x, check_y))
+            check_y += 16
+
+        if total_slots > 10:
+            surf.blit(self.tiny_font.render(f"... and {total_slots - 10} more", True, (120, 120, 120)), (checklist_x, check_y))
+
+        # Validation status
+        is_valid = self._validate_alchemy_placement()
+        status_text = "✓ Ready to craft!" if is_valid else f"○ Add ingredients in order ({filled_count}/{total_slots})"
+        status_color = (50, 200, 50) if is_valid else (200, 200, 50)
+        surf.blit(self.small_font.render(status_text, True, status_color), (ww // 2 - 150, wh - 120))
+
+        # Buttons
+        button_y = wh - 80
+
+        # Back button
+        back_btn = pygame.Rect(20, button_y, 100, 40)
+        pygame.draw.rect(surf, (80, 60, 60), back_btn)
+        pygame.draw.rect(surf, (150, 100, 100), back_btn, 2)
+        surf.blit(self.small_font.render("BACK", True, (200, 200, 200)), (back_btn.x + 25, back_btn.y + 10))
+        self.placement_clear_button_rect = pygame.Rect(wx + back_btn.x, wy + back_btn.y, back_btn.width, back_btn.height)
+
+        # Clear button
+        clear_btn = pygame.Rect(140, button_y, 100, 40)
+        pygame.draw.rect(surf, (80, 60, 60), clear_btn)
+        pygame.draw.rect(surf, (150, 100, 100), clear_btn, 2)
+        surf.blit(self.small_font.render("CLEAR", True, (200, 200, 200)), (clear_btn.x + 20, clear_btn.y + 10))
+
+        # Instant Craft button
+        instant_btn = pygame.Rect(ww - 350, button_y, 150, 40)
+        instant_color = (60, 80, 100) if is_valid else (50, 50, 50)
+        pygame.draw.rect(surf, instant_color, instant_btn)
+        pygame.draw.rect(surf, (100, 150, 200) if is_valid else (100, 100, 100), instant_btn, 2)
+        surf.blit(self.small_font.render("INSTANT CRAFT", True, (200, 200, 200) if is_valid else (100, 100, 100)),
+                 (instant_btn.x + 15, instant_btn.y + 10))
+        self.placement_craft_button_rect = pygame.Rect(wx + instant_btn.x, wy + instant_btn.y, instant_btn.width, instant_btn.height)
+
+        # Minigame button
+        minigame_btn = pygame.Rect(ww - 180, button_y, 160, 40)
+        minigame_color = (80, 100, 60) if is_valid else (50, 50, 50)
+        pygame.draw.rect(surf, minigame_color, minigame_btn)
+        pygame.draw.rect(surf, (150, 200, 100) if is_valid else (100, 100, 100), minigame_btn, 2)
+        surf.blit(self.small_font.render("CRAFT (Minigame)", True, (200, 200, 200) if is_valid else (100, 100, 100)),
+                 (minigame_btn.x + 10, minigame_btn.y + 10))
+        self.placement_minigame_button_rect = pygame.Rect(wx + minigame_btn.x, wy + minigame_btn.y, minigame_btn.width, minigame_btn.height)
+
+        self.screen.blit(surf, (wx, wy))
+        return pygame.Rect(wx, wy, ww, wh), []
 
     def _render_engineering_placement(self, character: Character, mouse_pos: Tuple[int, int]):
         """Placeholder for engineering slot-type placement"""
@@ -4469,7 +4671,9 @@ class GameEngine:
             self._handle_smithing_grid_click(mouse_pos)
         elif self.placement_data.discipline == 'refining':
             self._handle_refining_slot_click(mouse_pos)
-        # TODO: Add handlers for alchemy, engineering, enchanting
+        elif self.placement_data.discipline == 'alchemy':
+            self._handle_alchemy_slot_click(mouse_pos)
+        # TODO: Add handlers for engineering, enchanting
 
     def _handle_smithing_grid_click(self, mouse_pos: Tuple[int, int]):
         """Handle grid slot clicks for smithing placement"""
@@ -4552,6 +4756,52 @@ class GameEngine:
                 mat_name = mat.name if mat else required_mat_id
                 slot_label = f"{slot_type.upper()} {slot_index}"
                 print(f"✓ Placed {required_qty}x {mat_name} in {slot_label}")
+                return
+
+    def _handle_alchemy_slot_click(self, mouse_pos: Tuple[int, int]):
+        """Handle sequential slot clicks for alchemy placement"""
+        mat_db = MaterialDatabase.get_instance()
+
+        # Only one slot is clickable at a time (the next empty one)
+        for slot_index, rect in self.placement_slot_rects.items():
+            if rect.collidepoint(mouse_pos):
+                # Verify this is the next slot in sequence
+                if slot_index != len(self.placed_materials_sequential):
+                    print(f"⚠ Must fill slots in order! Next slot is {len(self.placed_materials_sequential) + 1}")
+                    return
+
+                # Get required material for this slot
+                ingredients = self.placement_data.ingredients or []
+                if slot_index >= len(ingredients):
+                    return
+
+                ingredient = ingredients[slot_index]
+                required_mat_id = ingredient.get('materialId', '')
+                required_qty = ingredient.get('quantity', 1)
+
+                # Check if player has the material
+                available = self.character.inventory.get_item_count(required_mat_id)
+                if available < required_qty and not Config.DEBUG_INFINITE_RESOURCES:
+                    mat = mat_db.get_material(required_mat_id)
+                    mat_name = mat.name if mat else required_mat_id
+                    print(f"⚠ Insufficient material: {mat_name} (have {available}, need {required_qty})")
+                    self.add_notification(f"Need {required_qty}x {mat_name}", (255, 100, 100))
+                    return
+
+                # Place material
+                placement = {
+                    'materialId': required_mat_id,
+                    'quantity': required_qty
+                }
+                self.placed_materials_sequential.append(placement)
+
+                mat = mat_db.get_material(required_mat_id)
+                mat_name = mat.name if mat else required_mat_id
+                print(f"✓ Placed {required_qty}x {mat_name} in slot {slot_index + 1}")
+
+                # Check if complete
+                if len(self.placed_materials_sequential) == len(ingredients):
+                    print(f"✓ All {len(ingredients)} ingredients placed in sequence!")
                 return
 
     def _exit_placement_mode(self):
