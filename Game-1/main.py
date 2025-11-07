@@ -3198,11 +3198,267 @@ class Renderer:
 
         return True
 
+    def _validate_refining_placement(self) -> bool:
+        """Check if refining hub-spoke placement matches requirements"""
+        if not self.placement_data:
+            return False
+
+        # Check all core inputs are filled correctly
+        for i, core_input in enumerate(self.placement_data.core_inputs or []):
+            required_mat_id = core_input.get('materialId', '')
+            required_qty = core_input.get('quantity', 1)
+
+            if i >= len(self.placed_materials_hub['core']):
+                return False
+
+            placed = self.placed_materials_hub['core'][i]
+            if not placed or placed.get('materialId') != required_mat_id:
+                return False
+            if placed.get('quantity', 0) < required_qty:
+                return False
+
+        # Check required surrounding inputs (skip optional ones)
+        for i, surrounding_input in enumerate(self.placement_data.surrounding_inputs or []):
+            is_optional = surrounding_input.get('optional', False)
+            if is_optional:
+                continue  # Skip optional slots
+
+            required_mat_id = surrounding_input.get('materialId', '')
+            required_qty = surrounding_input.get('quantity', 1)
+
+            if i >= len(self.placed_materials_hub['surrounding']):
+                return False
+
+            placed = self.placed_materials_hub['surrounding'][i]
+            if not placed or placed.get('materialId') != required_mat_id:
+                return False
+            if placed.get('quantity', 0) < required_qty:
+                return False
+
+        return True
+
     # Placeholder methods for other placement UIs (to be implemented)
     def _render_refining_placement(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Placeholder for refining hub-spoke placement"""
-        # TODO: Implement refining placement UI
-        return self._render_placeholder_placement("REFINING", character)
+        """Render refining hub-and-spoke placement UI"""
+        mat_db = MaterialDatabase.get_instance()
+
+        ww, wh = 900, 700
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        # Title
+        title = self.font.render("REFINING - Hub & Spoke Placement", True, (200, 200, 200))
+        surf.blit(title, (20, 20))
+
+        # Recipe name
+        recipe_name = self.placement_recipe.name if self.placement_recipe else "Unknown"
+        surf.blit(self.small_font.render(f"Recipe: {recipe_name}", True, (180, 180, 180)), (20, 55))
+
+        # Hub-spoke visualization area
+        center_x, center_y = ww // 2, wh // 2 - 50
+        hub_radius = 60  # Radius of center hub
+        spoke_radius = 200  # Distance to surrounding slots
+        slot_size = 70  # Size of each slot
+
+        # Clear previous rects
+        self.placement_slot_rects = {}
+
+        # Draw connecting lines first (so they appear behind slots)
+        core_count = len(self.placement_data.core_inputs) if self.placement_data.core_inputs else 0
+        surrounding_count = len(self.placement_data.surrounding_inputs) if self.placement_data.surrounding_inputs else 0
+
+        if core_count > 0 and surrounding_count > 0:
+            # Draw lines from hub to each surrounding slot
+            for i in range(surrounding_count):
+                angle = (360 / surrounding_count) * i - 90  # -90 to start at top
+                angle_rad = math.radians(angle)
+                spoke_x = center_x + int(spoke_radius * math.cos(angle_rad))
+                spoke_y = center_y + int(spoke_radius * math.sin(angle_rad))
+                pygame.draw.line(surf, (80, 80, 100), (center_x, center_y), (spoke_x, spoke_y), 2)
+
+        # Render core (hub) slots
+        for i, core_input in enumerate(self.placement_data.core_inputs or []):
+            # Position core slots in center (if multiple, arrange in small circle)
+            if core_count == 1:
+                slot_x, slot_y = center_x - slot_size // 2, center_y - slot_size // 2
+            else:
+                core_angle = (360 / core_count) * i
+                core_angle_rad = math.radians(core_angle)
+                offset = 30
+                slot_x = center_x + int(offset * math.cos(core_angle_rad)) - slot_size // 2
+                slot_y = center_y + int(offset * math.sin(core_angle_rad)) - slot_size // 2
+
+            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
+
+            # Check if this slot is filled
+            placed = self.placed_materials_hub['core'][i] if i < len(self.placed_materials_hub['core']) else None
+            required_mat_id = core_input.get('materialId', '')
+
+            # Color based on state
+            if placed and placed.get('materialId') == required_mat_id:
+                color = (50, 150, 50)  # Green - correct
+            elif placed:
+                color = (150, 50, 50)  # Red - wrong material
+            else:
+                color = (150, 150, 50)  # Yellow - required but empty
+
+            pygame.draw.rect(surf, color, slot_rect)
+            pygame.draw.rect(surf, (200, 200, 200), slot_rect, 2)
+
+            # Material info
+            mat = mat_db.get_material(required_mat_id)
+            mat_abbrev = mat.abbrev if mat and hasattr(mat, 'abbrev') else required_mat_id[:3].upper()
+            required_qty = core_input.get('quantity', 1)
+
+            # Show abbreviation
+            abbrev_text = self.small_font.render(mat_abbrev, True, (255, 255, 255))
+            surf.blit(abbrev_text, (slot_rect.x + 5, slot_rect.y + 5))
+
+            # Show quantity
+            qty_text = self.tiny_font.render(f"x{required_qty}", True, (200, 200, 200))
+            surf.blit(qty_text, (slot_rect.x + 5, slot_rect.y + slot_size - 20))
+
+            # Show placed quantity if any
+            if placed:
+                placed_qty = placed.get('quantity', 0)
+                placed_text = self.tiny_font.render(f"({placed_qty})", True, (255, 255, 100))
+                surf.blit(placed_text, (slot_rect.x + slot_size - 35, slot_rect.y + slot_size - 20))
+
+            # Label
+            label = self.tiny_font.render("CORE", True, (150, 150, 200))
+            surf.blit(label, (slot_rect.x + slot_size // 2 - 15, slot_rect.y + slot_size + 5))
+
+            # Store rect for click handling
+            self.placement_slot_rects[('core', i)] = pygame.Rect(wx + slot_x, wy + slot_y, slot_size, slot_size)
+
+        # Render surrounding (spoke) slots
+        for i, surrounding_input in enumerate(self.placement_data.surrounding_inputs or []):
+            # Position in circle around hub
+            angle = (360 / surrounding_count) * i - 90  # -90 to start at top
+            angle_rad = math.radians(angle)
+            slot_x = center_x + int(spoke_radius * math.cos(angle_rad)) - slot_size // 2
+            slot_y = center_y + int(spoke_radius * math.sin(angle_rad)) - slot_size // 2
+
+            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
+
+            # Check if this slot is filled
+            placed = self.placed_materials_hub['surrounding'][i] if i < len(self.placed_materials_hub['surrounding']) else None
+            required_mat_id = surrounding_input.get('materialId', '')
+            is_optional = surrounding_input.get('optional', False)
+
+            # Color based on state
+            if placed and placed.get('materialId') == required_mat_id:
+                color = (50, 150, 50)  # Green - correct
+            elif placed:
+                color = (150, 50, 50)  # Red - wrong material
+            elif is_optional:
+                color = (80, 80, 80)  # Gray - optional
+            else:
+                color = (150, 150, 50)  # Yellow - required but empty
+
+            pygame.draw.rect(surf, color, slot_rect)
+            pygame.draw.rect(surf, (200, 200, 200), slot_rect, 2)
+
+            # Material info
+            mat = mat_db.get_material(required_mat_id)
+            mat_abbrev = mat.abbrev if mat and hasattr(mat, 'abbrev') else required_mat_id[:3].upper()
+            required_qty = surrounding_input.get('quantity', 1)
+
+            # Show abbreviation
+            abbrev_text = self.small_font.render(mat_abbrev, True, (255, 255, 255))
+            surf.blit(abbrev_text, (slot_rect.x + 5, slot_rect.y + 5))
+
+            # Show quantity
+            qty_text = self.tiny_font.render(f"x{required_qty}", True, (200, 200, 200))
+            surf.blit(qty_text, (slot_rect.x + 5, slot_rect.y + slot_size - 20))
+
+            # Show placed quantity if any
+            if placed:
+                placed_qty = placed.get('quantity', 0)
+                placed_text = self.tiny_font.render(f"({placed_qty})", True, (255, 255, 100))
+                surf.blit(placed_text, (slot_rect.x + slot_size - 35, slot_rect.y + slot_size - 20))
+
+            # Label
+            label_text = "OPT" if is_optional else f"SP{i+1}"
+            label = self.tiny_font.render(label_text, True, (150, 150, 200))
+            surf.blit(label, (slot_rect.x + slot_size // 2 - 15, slot_rect.y + slot_size + 5))
+
+            # Store rect for click handling
+            self.placement_slot_rects[('surrounding', i)] = pygame.Rect(wx + slot_x, wy + slot_y, slot_size, slot_size)
+
+        # Legend / Instructions
+        legend_y = wh - 180
+        surf.blit(self.small_font.render("Hub & Spoke System:", True, (200, 200, 200)), (20, legend_y))
+        surf.blit(self.tiny_font.render("• CORE (center): Primary materials", True, (180, 180, 180)), (20, legend_y + 25))
+        surf.blit(self.tiny_font.render("• SPOKES (outer): Modifiers & enhancers", True, (180, 180, 180)), (20, legend_y + 45))
+        surf.blit(self.tiny_font.render("• Click slots to place materials from inventory", True, (150, 150, 150)), (20, legend_y + 70))
+
+        # Requirements checklist
+        checklist_x = ww - 280
+        surf.blit(self.small_font.render("Requirements:", True, (200, 200, 200)), (checklist_x, legend_y))
+
+        check_y = legend_y + 25
+        for i, core_input in enumerate(self.placement_data.core_inputs or []):
+            mat_id = core_input.get('materialId', '')
+            mat = mat_db.get_material(mat_id)
+            mat_name = mat.name if mat else mat_id
+            qty = core_input.get('quantity', 1)
+
+            placed = self.placed_materials_hub['core'][i] if i < len(self.placed_materials_hub['core']) else None
+            is_correct = placed and placed.get('materialId') == mat_id and placed.get('quantity', 0) >= qty
+
+            check = "✓" if is_correct else "○"
+            check_color = (50, 200, 50) if is_correct else (150, 150, 150)
+
+            text = f"{check} Core: {mat_name[:15]} x{qty}"
+            surf.blit(self.tiny_font.render(text, True, check_color), (checklist_x, check_y))
+            check_y += 18
+
+        # Validation status
+        is_valid = self._validate_refining_placement()
+        status_text = "✓ Ready to craft!" if is_valid else "○ Place required materials"
+        status_color = (50, 200, 50) if is_valid else (200, 200, 50)
+        surf.blit(self.small_font.render(status_text, True, status_color), (ww // 2 - 100, wh - 120))
+
+        # Buttons
+        button_y = wh - 80
+
+        # Back button
+        back_btn = pygame.Rect(20, button_y, 100, 40)
+        pygame.draw.rect(surf, (80, 60, 60), back_btn)
+        pygame.draw.rect(surf, (150, 100, 100), back_btn, 2)
+        surf.blit(self.small_font.render("BACK", True, (200, 200, 200)), (back_btn.x + 25, back_btn.y + 10))
+        self.placement_clear_button_rect = pygame.Rect(wx + back_btn.x, wy + back_btn.y, back_btn.width, back_btn.height)
+
+        # Clear button
+        clear_btn = pygame.Rect(140, button_y, 100, 40)
+        pygame.draw.rect(surf, (80, 60, 60), clear_btn)
+        pygame.draw.rect(surf, (150, 100, 100), clear_btn, 2)
+        surf.blit(self.small_font.render("CLEAR", True, (200, 200, 200)), (clear_btn.x + 20, clear_btn.y + 10))
+
+        # Instant Craft button
+        instant_btn = pygame.Rect(ww - 350, button_y, 150, 40)
+        instant_color = (60, 80, 100) if is_valid else (50, 50, 50)
+        pygame.draw.rect(surf, instant_color, instant_btn)
+        pygame.draw.rect(surf, (100, 150, 200) if is_valid else (100, 100, 100), instant_btn, 2)
+        surf.blit(self.small_font.render("INSTANT CRAFT", True, (200, 200, 200) if is_valid else (100, 100, 100)),
+                 (instant_btn.x + 15, instant_btn.y + 10))
+        self.placement_craft_button_rect = pygame.Rect(wx + instant_btn.x, wy + instant_btn.y, instant_btn.width, instant_btn.height)
+
+        # Minigame button
+        minigame_btn = pygame.Rect(ww - 180, button_y, 160, 40)
+        minigame_color = (80, 100, 60) if is_valid else (50, 50, 50)
+        pygame.draw.rect(surf, minigame_color, minigame_btn)
+        pygame.draw.rect(surf, (150, 200, 100) if is_valid else (100, 100, 100), minigame_btn, 2)
+        surf.blit(self.small_font.render("CRAFT (Minigame)", True, (200, 200, 200) if is_valid else (100, 100, 100)),
+                 (minigame_btn.x + 10, minigame_btn.y + 10))
+        self.placement_minigame_button_rect = pygame.Rect(wx + minigame_btn.x, wy + minigame_btn.y, minigame_btn.width, minigame_btn.height)
+
+        self.screen.blit(surf, (wx, wy))
+        return pygame.Rect(wx, wy, ww, wh), []
 
     def _render_alchemy_placement(self, character: Character, mouse_pos: Tuple[int, int]):
         """Placeholder for alchemy sequential placement"""
@@ -4211,7 +4467,9 @@ class GameEngine:
         # Handle discipline-specific clicks
         if self.placement_data.discipline == 'smithing':
             self._handle_smithing_grid_click(mouse_pos)
-        # TODO: Add handlers for other disciplines
+        elif self.placement_data.discipline == 'refining':
+            self._handle_refining_slot_click(mouse_pos)
+        # TODO: Add handlers for alchemy, engineering, enchanting
 
     def _handle_smithing_grid_click(self, mouse_pos: Tuple[int, int]):
         """Handle grid slot clicks for smithing placement"""
@@ -4239,6 +4497,61 @@ class GameEngine:
                 mat = mat_db.get_material(required_mat_id)
                 mat_name = mat.name if mat else required_mat_id
                 print(f"✓ Placed {mat_name} at {coord}")
+                return
+
+    def _handle_refining_slot_click(self, mouse_pos: Tuple[int, int]):
+        """Handle hub-spoke slot clicks for refining placement"""
+        mat_db = MaterialDatabase.get_instance()
+
+        for slot_key, rect in self.placement_slot_rects.items():
+            if rect.collidepoint(mouse_pos):
+                slot_type, slot_index = slot_key  # ('core', 0) or ('surrounding', 1)
+
+                # Get required material for this slot
+                if slot_type == 'core':
+                    if slot_index >= len(self.placement_data.core_inputs):
+                        return
+                    slot_input = self.placement_data.core_inputs[slot_index]
+                elif slot_type == 'surrounding':
+                    if slot_index >= len(self.placement_data.surrounding_inputs):
+                        return
+                    slot_input = self.placement_data.surrounding_inputs[slot_index]
+                else:
+                    return
+
+                required_mat_id = slot_input.get('materialId', '')
+                required_qty = slot_input.get('quantity', 1)
+
+                # Check if player has the material
+                available = self.character.inventory.get_item_count(required_mat_id)
+                if available < required_qty and not Config.DEBUG_INFINITE_RESOURCES:
+                    mat = mat_db.get_material(required_mat_id)
+                    mat_name = mat.name if mat else required_mat_id
+                    print(f"⚠ Insufficient material: {mat_name} (have {available}, need {required_qty})")
+                    self.add_notification(f"Need {required_qty}x {mat_name}", (255, 100, 100))
+                    return
+
+                # Ensure lists are properly sized
+                while len(self.placed_materials_hub['core']) <= slot_index and slot_type == 'core':
+                    self.placed_materials_hub['core'].append(None)
+                while len(self.placed_materials_hub['surrounding']) <= slot_index and slot_type == 'surrounding':
+                    self.placed_materials_hub['surrounding'].append(None)
+
+                # Place material
+                placement = {
+                    'materialId': required_mat_id,
+                    'quantity': required_qty
+                }
+
+                if slot_type == 'core':
+                    self.placed_materials_hub['core'][slot_index] = placement
+                else:
+                    self.placed_materials_hub['surrounding'][slot_index] = placement
+
+                mat = mat_db.get_material(required_mat_id)
+                mat_name = mat.name if mat else required_mat_id
+                slot_label = f"{slot_type.upper()} {slot_index}"
+                print(f"✓ Placed {required_qty}x {mat_name} in {slot_label}")
                 return
 
     def _exit_placement_mode(self):
