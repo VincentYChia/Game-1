@@ -4731,50 +4731,17 @@ class GameEngine:
                     Config.DEBUG_INFINITE_RESOURCES = not Config.DEBUG_INFINITE_RESOURCES
                     status = "ENABLED" if Config.DEBUG_INFINITE_RESOURCES else "DISABLED"
 
-                    # Set max level and give materials when enabling debug mode
+                    # Set max level when enabling debug mode (but DON'T fill inventory)
                     if Config.DEBUG_INFINITE_RESOURCES:
                         self.character.leveling.level = self.character.leveling.max_level
                         self.character.leveling.unallocated_stat_points = 100
-                        print(f"🔧 DEBUG: Set level to {self.character.leveling.level} with 100 stat points")
-
-                        # Give comprehensive materials for testing
-                        debug_materials = [
-                            # Tier 1 - Basic
-                            ("copper_ore", 999), ("copper_ingot", 999), ("tin_ore", 999), ("tin_ingot", 999),
-                            ("iron_ore", 999), ("iron_ingot", 999),
-                            ("oak_log", 999), ("oak_plank", 999), ("pine_log", 999), ("pine_plank", 999),
-                            ("birch_log", 999), ("birch_plank", 999),
-                            ("limestone", 999), ("granite", 999), ("sandstone", 999),
-                            ("wolf_pelt", 999), ("slime_gel", 999), ("beetle_carapace", 999),
-                            ("water_crystal", 999), ("fire_crystal", 999), ("earth_crystal", 999),
-                            ("spectral_thread", 999),
-
-                            # Tier 2
-                            ("steel_ore", 999), ("steel_ingot", 999), ("mithril_ore", 999), ("mithril_ingot", 999),
-                            ("ash_log", 999), ("ash_plank", 999), ("maple_log", 999), ("maple_plank", 999),
-                            ("dire_fang", 999), ("living_ichor", 999), ("iron_scales", 999),
-                            ("lightning_shard", 999), ("ice_shard", 999), ("shadow_essence", 999),
-
-                            # Tier 3
-                            ("adamantine_ore", 999), ("adamantine_ingot", 999), ("orichalcum_ore", 999), ("orichalcum_ingot", 999),
-                            ("ironwood_log", 999), ("ironwood_plank", 999), ("ebony_log", 999), ("ebony_plank", 999),
-                            ("dragon_scale", 999), ("essence_blood", 999), ("golem_core", 999),
-                            ("storm_heart", 999), ("void_crystal", 999), ("light_gem", 999),
-
-                            # Tier 4
-                            ("celestial_ore", 999), ("celestial_ingot", 999), ("void_metal_ore", 999), ("void_metal_ingot", 999),
-                            ("wyrmwood_log", 999), ("wyrmwood_plank", 999), ("bloodoak_log", 999), ("bloodoak_plank", 999),
-                            ("titan_bone", 999), ("phoenix_ash", 999), ("ancient_carapace", 999),
-                            ("star_fragment", 999), ("abyss_tear", 999), ("radiant_core", 999),
-
-                            # Special materials
-                            ("blast_powder", 999), ("arcane_dust", 999), ("enchanted_silk", 999),
-                        ]
-
-                        for mat_id, qty in debug_materials:
-                            self.character.inventory.add_item(mat_id, qty)
-
-                        print(f"✓ Added {len(debug_materials)} material types to inventory")
+                        print(f"🔧 DEBUG MODE ENABLED:")
+                        print(f"   • Infinite resources (no materials consumed)")
+                        print(f"   • Level set to {self.character.leveling.level}")
+                        print(f"   • 100 stat points available")
+                        print(f"   • Inventory NOT filled (craft freely!)")
+                    else:
+                        print(f"🔧 DEBUG MODE DISABLED")
 
                     self.add_notification(f"Debug Mode {status}", (255, 100, 255))
                     print(f"⚠ Debug Mode {status}")
@@ -5045,21 +5012,29 @@ class GameEngine:
 
         for i, recipe in enumerate(self.crafting_recipes):
             btn_top = 70 + (i * 100)
-            if btn_top <= ry <= btn_top + 95:
+            btn_height = 95
+            btn_width = 900 - 40  # ww - 40
+            btn_left = 20
+            btn_right = btn_left + btn_width  # = 880
+            btn_bottom = btn_top + btn_height
+
+            if btn_top <= ry <= btn_bottom:
                 can_craft = recipe_db.can_craft(recipe, self.character.inventory)
                 if not can_craft:
                     continue
 
-                # Check if SELECT button clicked (bottom right of recipe button)
-                ww = 900
-                select_left = ww - 40 - 120
-                select_right = ww - 40
-                select_top = btn_top + 95 - 28
-                select_bottom = btn_top + 95 - 5
+                # Check if SELECT button clicked
+                # SELECT button is at: btn.right - 120, btn.bottom - 28, width=110, height=23
+                select_left = btn_right - 120  # = 760
+                select_right = select_left + 110  # = 870
+                select_top = btn_bottom - 28
+                select_bottom = select_top + 23  # btn_bottom - 5
+
+                print(f"DEBUG: Click at ({rx}, {ry}), SELECT button at ({select_left}-{select_right}, {select_top}-{select_bottom})")
 
                 if select_left <= rx <= select_right and select_top <= ry <= select_bottom:
                     # SELECT clicked - enter placement mode
-                    print(f"📋 Recipe selected: {recipe.recipe_id}")
+                    print(f"📋 SELECT button clicked for recipe: {recipe.recipe_id}")
                     self._enter_placement_mode(recipe)
                     break
 
