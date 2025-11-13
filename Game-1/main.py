@@ -2719,8 +2719,28 @@ class Renderer:
                     req_y += 18
 
                 if can_craft:
-                    surf.blit(self.small_font.render("[CLICK] Craft", True, (100, 255, 100)),
-                              (btn.right - 120, btn.centery - 8))
+                    # Two craft buttons: Instant and Minigame
+                    instant_btn_w, instant_btn_h = 80, 25
+                    minigame_btn_w, minigame_btn_h = 80, 25
+
+                    instant_btn_x = btn.right - instant_btn_w - minigame_btn_w - 15
+                    instant_btn_y = btn.centery - instant_btn_h // 2
+                    minigame_btn_x = btn.right - minigame_btn_w - 5
+                    minigame_btn_y = btn.centery - minigame_btn_h // 2
+
+                    # Instant button (gray)
+                    instant_rect = pygame.Rect(instant_btn_x, instant_btn_y, instant_btn_w, instant_btn_h)
+                    pygame.draw.rect(surf, (60, 60, 60), instant_rect)
+                    pygame.draw.rect(surf, (120, 120, 120), instant_rect, 2)
+                    instant_text = self.small_font.render("Instant", True, (200, 200, 200))
+                    surf.blit(instant_text, (instant_btn_x + 15, instant_btn_y + 5))
+
+                    # Minigame button (gold)
+                    minigame_rect = pygame.Rect(minigame_btn_x, minigame_btn_y, minigame_btn_w, minigame_btn_h)
+                    pygame.draw.rect(surf, (80, 60, 20), minigame_rect)
+                    pygame.draw.rect(surf, (255, 215, 0), minigame_rect, 2)
+                    minigame_text = self.small_font.render("Minigame", True, (255, 215, 0))
+                    surf.blit(minigame_text, (minigame_btn_x + 5, minigame_btn_y + 5))
 
                 y_off += btn_height + 10  # Dynamic spacing based on button height
 
@@ -3222,10 +3242,11 @@ class GameEngine:
         self.enchantment_selection_rect = None
 
         # Minigame state
-        self.current_minigame = None  # Active minigame instance
-        self.minigame_result = None  # Result after minigame completes
+        self.active_minigame = None  # Current minigame instance (SmithingMinigame, etc.)
+        self.minigame_type = None  # Station type: 'smithing', 'alchemy', 'refining', 'engineering', 'adornments'
         self.minigame_recipe = None  # Recipe being crafted with minigame
-        self.minigame_active = False  # Whether minigame is currently running
+        self.minigame_button_rect = None  # For click detection on minigame buttons
+        self.minigame_button_rect2 = None  # For secondary buttons (e.g., alchemy stabilize)
 
         self.keys_pressed = set()
         self.mouse_pos = (0, 0)
@@ -3251,6 +3272,21 @@ class GameEngine:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
+
+                # Minigame input handling (highest priority)
+                if self.active_minigame:
+                    if event.key == pygame.K_ESCAPE:
+                        # Cancel minigame (lose materials)
+                        print(f"🚫 Minigame cancelled by player")
+                        self.add_notification("Minigame cancelled!", (255, 100, 100))
+                        self.active_minigame = None
+                        self.minigame_type = None
+                        self.minigame_recipe = None
+                    elif self.minigame_type == 'smithing' and event.key == pygame.K_SPACE:
+                        self.active_minigame.handle_fan()
+                    # Skip other key handling when minigame is active
+                    continue
+
                 if event.key == pygame.K_ESCAPE:
                     if self.enchantment_selection_active:
                         self._close_enchantment_selection()
@@ -3301,6 +3337,17 @@ class GameEngine:
         current_time = pygame.time.get_ticks()
         is_double_click = (current_time - self.last_click_time < 300)
         self.last_click_time = current_time
+
+        # Minigame button clicks (highest priority)
+        if self.active_minigame:
+            if hasattr(self, 'minigame_button_rect') and self.minigame_button_rect:
+                if self.minigame_button_rect.collidepoint(mouse_pos):
+                    # Handle smithing hammer button
+                    if self.minigame_type == 'smithing':
+                        self.active_minigame.handle_hammer()
+                    return
+            # Consume all clicks when minigame is active (don't interact with world)
+            return
 
         # Enchantment selection UI (priority over other UIs)
         if self.enchantment_selection_active and self.enchantment_selection_rect:
@@ -3548,6 +3595,290 @@ class GameEngine:
         }
         return crafter_map.get(station_type)
 
+    def _start_minigame(self, recipe: Recipe):
+        """Start the appropriate minigame for this recipe"""
+        crafter = self.get_crafter_for_station(recipe.station_type)
+        if not crafter:
+            self.add_notification("Invalid crafting station!", (255, 100, 100))
+            return
+
+        # Create minigame instance
+        minigame = crafter.create_minigame(recipe.recipe_id)
+        if not minigame:
+            self.add_notification("Minigame not available!", (255, 100, 100))
+            return
+
+        # Start minigame
+        minigame.start()
+
+        # Store minigame state
+        self.active_minigame = minigame
+        self.minigame_type = recipe.station_type
+        self.minigame_recipe = recipe
+
+        # Close crafting UI
+        self.character.close_crafting_ui()
+
+        print(f"🎮 Started {recipe.station_type} minigame for {recipe.recipe_id}")
+        self.add_notification(f"Minigame Started!", (255, 215, 0))
+
+    def _complete_minigame(self):
+        """Complete the active minigame and process results"""
+        if not self.active_minigame or not self.minigame_recipe:
+            return
+
+        print(f"\n{'='*80}")
+        print(f"🎮 MINIGAME COMPLETED")
+        print(f"Recipe: {self.minigame_recipe.recipe_id}")
+        print(f"Type: {self.minigame_type}")
+        print(f"Result: {self.active_minigame.result}")
+        print(f"{'='*80}\n")
+
+        recipe = self.minigame_recipe
+        result = self.active_minigame.result
+        crafter = self.get_crafter_for_station(self.minigame_type)
+
+        recipe_db = RecipeDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+        mat_db = MaterialDatabase.get_instance()
+
+        # Convert inventory to dict
+        inv_dict = self.inventory_to_dict()
+
+        # Use crafter to process minigame result
+        craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
+
+        if not craft_result.get('success'):
+            # Failure - materials may have been lost
+            message = craft_result.get('message', 'Crafting failed')
+            self.add_notification(message, (255, 100, 100))
+
+            # Sync inventory back (consume materials even on failure)
+            recipe_db.consume_materials(recipe, self.character.inventory)
+        else:
+            # Success - consume materials and add output
+            recipe_db.consume_materials(recipe, self.character.inventory)
+
+            # Record activity and XP
+            activity_map = {
+                'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
+                'engineering': 'engineering', 'adornments': 'enchanting'
+            }
+            activity_type = activity_map.get(self.minigame_type, 'smithing')
+            self.character.activities.record_activity(activity_type, 1)
+
+            # Minigame gives XP (50% bonus over instant craft)
+            xp_reward = int(20 * recipe.station_tier * 1.5)
+            self.character.leveling.add_exp(xp_reward)
+
+            new_title = self.character.titles.check_for_title(
+                activity_type, self.character.activities.get_count(activity_type)
+            )
+            if new_title:
+                self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+
+            # Add output to inventory with rarity and stats
+            output_id = craft_result.get('outputId', recipe.output_id)
+            output_qty = craft_result.get('quantity', recipe.output_qty)
+            rarity = craft_result.get('rarity', 'common')
+            stats = craft_result.get('stats')
+
+            self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
+
+            # Get proper name for notification
+            if equip_db.is_equipment(output_id):
+                equipment = equip_db.create_equipment_from_id(output_id)
+                out_name = equipment.name if equipment else output_id
+            else:
+                out_mat = mat_db.get_material(output_id)
+                out_name = out_mat.name if out_mat else output_id
+
+            message = craft_result.get('message', f"Crafted {out_name} x{output_qty}")
+            self.add_notification(message, (100, 255, 100))
+            print(f"✅ Minigame crafting complete: {out_name} x{output_qty}")
+
+        # Clear minigame state
+        self.active_minigame = None
+        self.minigame_type = None
+        self.minigame_recipe = None
+
+    def _render_minigame(self):
+        """Render the active minigame (dispatcher to specific renderers)"""
+        if not self.active_minigame or not self.minigame_type:
+            return
+
+        # Route to appropriate renderer based on minigame type
+        if self.minigame_type == 'smithing':
+            self._render_smithing_minigame()
+        elif self.minigame_type == 'alchemy':
+            self._render_alchemy_minigame()
+        elif self.minigame_type == 'refining':
+            self._render_refining_minigame()
+        elif self.minigame_type == 'engineering':
+            self._render_engineering_minigame()
+        elif self.minigame_type == 'adornments':
+            self._render_enchanting_minigame()
+
+    def _render_smithing_minigame(self):
+        """Render smithing minigame UI"""
+        state = self.active_minigame.get_state()
+
+        # Create overlay
+        ww, wh = 1000, 700
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        # Header
+        header_text = self.renderer.font.render("SMITHING MINIGAME", True, (255, 215, 0))
+        surf.blit(header_text, (ww//2 - header_text.get_width()//2, 20))
+        controls_text = self.renderer.small_font.render("[SPACE] Fan Flames | [CLICK HAMMER BUTTON] Strike", True, (180, 180, 180))
+        surf.blit(controls_text, (20, 50))
+
+        # Temperature bar
+        temp_x, temp_y = 50, 100
+        temp_width = 300
+        temp_height = 40
+
+        # Draw temp bar background
+        pygame.draw.rect(surf, (40, 40, 40), (temp_x, temp_y, temp_width, temp_height))
+
+        # Draw ideal range
+        ideal_min = state['temp_ideal_min']
+        ideal_max = state['temp_ideal_max']
+        ideal_start = int((ideal_min / 100) * temp_width)
+        ideal_width_px = int(((ideal_max - ideal_min) / 100) * temp_width)
+        pygame.draw.rect(surf, (60, 80, 60), (temp_x + ideal_start, temp_y, ideal_width_px, temp_height))
+
+        # Draw current temperature
+        temp_pct = state['temperature'] / 100
+        temp_fill = int(temp_pct * temp_width)
+        temp_color = (255, 100, 100) if temp_pct > 0.8 else (255, 165, 0) if temp_pct > 0.5 else (100, 150, 255)
+        pygame.draw.rect(surf, temp_color, (temp_x, temp_y, temp_fill, temp_height))
+
+        pygame.draw.rect(surf, (200, 200, 200), (temp_x, temp_y, temp_width, temp_height), 2)
+        temp_label = self.renderer.small_font.render(f"Temperature: {int(state['temperature'])}°C", True, (255, 255, 255))
+        surf.blit(temp_label, (temp_x, temp_y - 25))
+
+        # Hammer bar
+        hammer_x, hammer_y = 50, 200
+        hammer_width = state['hammer_bar_width']
+        hammer_height = 60
+
+        # Draw hammer bar background
+        pygame.draw.rect(surf, (40, 40, 40), (hammer_x, hammer_y, hammer_width, hammer_height))
+
+        # Draw target zone (center)
+        center = hammer_width / 2
+        target_start = int(center - state['target_width'] / 2)
+        pygame.draw.rect(surf, (80, 80, 60), (hammer_x + target_start, hammer_y, state['target_width'], hammer_height))
+
+        # Draw perfect zone (center of target)
+        perfect_start = int(center - state['perfect_width'] / 2)
+        pygame.draw.rect(surf, (100, 120, 60), (hammer_x + perfect_start, hammer_y, state['perfect_width'], hammer_height))
+
+        # Draw hammer indicator
+        hammer_pos = int(state['hammer_position'])
+        pygame.draw.circle(surf, (255, 215, 0), (hammer_x + hammer_pos, hammer_y + hammer_height // 2), 15)
+
+        pygame.draw.rect(surf, (200, 200, 200), (hammer_x, hammer_y, hammer_width, hammer_height), 2)
+        hammer_label = self.renderer.small_font.render(f"Hammer Timing: {state['hammer_hits']}/{state['required_hits']}", True, (255, 255, 255))
+        surf.blit(hammer_label, (hammer_x, hammer_y - 25))
+
+        # Hammer button
+        btn_w, btn_h = 200, 60
+        btn_x, btn_y = ww // 2 - btn_w // 2, 300
+        btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+        pygame.draw.rect(surf, (80, 60, 20), btn_rect)
+        pygame.draw.rect(surf, (255, 215, 0), btn_rect, 3)
+        btn_text = self.renderer.font.render("HAMMER", True, (255, 215, 0))
+        surf.blit(btn_text, (btn_x + 40, btn_y + 15))
+
+        # Timer and scores
+        time_text = self.renderer.font.render(f"Time Left: {int(state['time_left'])}s", True, (255, 255, 255))
+        surf.blit(time_text, (50, 400))
+
+        if state['hammer_scores']:
+            scores_label = self.renderer.small_font.render("Hammer Scores:", True, (200, 200, 200))
+            surf.blit(scores_label, (50, 450))
+            for i, score in enumerate(state['hammer_scores'][-5:]):  # Last 5 scores
+                color = (100, 255, 100) if score >= 90 else (255, 215, 0) if score >= 70 else (255, 100, 100)
+                score_text = self.renderer.small_font.render(f"Hit {i+1}: {score}", True, color)
+                surf.blit(score_text, (70, 480 + i * 25))
+
+        # Result (if completed)
+        if state['result']:
+            result = state['result']
+            result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
+            result_surf.fill((10, 10, 20, 240))
+            if result['success']:
+                success_text = self.renderer.font.render("SUCCESS!", True, (100, 255, 100))
+                result_surf.blit(success_text, (200, 50))
+                score_text = self.renderer.small_font.render(f"Score: {int(result['score'])}", True, (255, 255, 255))
+                result_surf.blit(score_text, (150, 120))
+                bonus_text = self.renderer.small_font.render(f"Bonus: +{result['bonus']}%", True, (255, 215, 0))
+                result_surf.blit(bonus_text, (150, 150))
+                msg_text = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(msg_text, (150, 200))
+            else:
+                fail_text = self.renderer.font.render("FAILED!", True, (255, 100, 100))
+                result_surf.blit(fail_text, (200, 50))
+                msg_text = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(msg_text, (150, 120))
+
+            surf.blit(result_surf, (200, 200))
+
+        self.screen.blit(surf, (wx, wy))
+
+        # Store button rect for click detection (relative to screen)
+        self.minigame_button_rect = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
+
+    def _render_alchemy_minigame(self):
+        """Render alchemy minigame UI - TODO: Implement full rendering"""
+        # Placeholder for now
+        surf = pygame.Surface((800, 600), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        text = self.renderer.font.render("ALCHEMY MINIGAME (Not Yet Implemented)", True, (255, 215, 0))
+        surf.blit(text, (100, 300))
+        wx = (Config.VIEWPORT_WIDTH - 800) // 2
+        wy = (Config.VIEWPORT_HEIGHT - 600) // 2
+        self.screen.blit(surf, (wx, wy))
+
+    def _render_refining_minigame(self):
+        """Render refining minigame UI - TODO: Implement full rendering"""
+        # Placeholder for now
+        surf = pygame.Surface((800, 600), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        text = self.renderer.font.render("REFINING MINIGAME (Not Yet Implemented)", True, (255, 215, 0))
+        surf.blit(text, (100, 300))
+        wx = (Config.VIEWPORT_WIDTH - 800) // 2
+        wy = (Config.VIEWPORT_HEIGHT - 600) // 2
+        self.screen.blit(surf, (wx, wy))
+
+    def _render_engineering_minigame(self):
+        """Render engineering minigame UI - TODO: Implement full rendering"""
+        # Placeholder for now
+        surf = pygame.Surface((800, 600), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        text = self.renderer.font.render("ENGINEERING MINIGAME (Not Yet Implemented)", True, (255, 215, 0))
+        surf.blit(text, (100, 300))
+        wx = (Config.VIEWPORT_WIDTH - 800) // 2
+        wy = (Config.VIEWPORT_HEIGHT - 600) // 2
+        self.screen.blit(surf, (wx, wy))
+
+    def _render_enchanting_minigame(self):
+        """Render enchanting minigame UI - TODO: Implement full rendering"""
+        # Placeholder for now
+        surf = pygame.Surface((800, 600), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        text = self.renderer.font.render("ENCHANTING MINIGAME (Not Yet Implemented)", True, (255, 215, 0))
+        surf.blit(text, (100, 300))
+        wx = (Config.VIEWPORT_WIDTH - 800) // 2
+        wy = (Config.VIEWPORT_HEIGHT - 600) // 2
+        self.screen.blit(surf, (wx, wy))
+
     def add_crafted_item_to_inventory(self, item_id: str, quantity: int,
                                      rarity: str = 'common', stats: Dict = None):
         """Add a crafted item to inventory with rarity and stats"""
@@ -3585,14 +3916,52 @@ class GameEngine:
         rx = mouse_pos[0] - self.crafting_window_rect.x
         ry = mouse_pos[1] - self.crafting_window_rect.y
 
-        for i, recipe in enumerate(self.crafting_recipes):
-            btn_top = 70 + (i * 90)
-            if btn_top <= ry <= btn_top + 80:
-                self.craft_item(recipe)
-                break
+        recipe_db = RecipeDatabase.get_instance()
 
-    def craft_item(self, recipe: Recipe):
-        """Craft an item using the new crafting subdisciplines system"""
+        # Calculate button positions for each recipe
+        y_off = 70
+        for i, recipe in enumerate(self.crafting_recipes):
+            # Dynamic button height based on number of inputs
+            num_inputs = len(recipe.inputs)
+            btn_height = max(80, 35 + num_inputs * 18 + 10)
+
+            can_craft = recipe_db.can_craft(recipe, self.character.inventory)
+
+            if y_off <= ry <= y_off + btn_height and can_craft:
+                # Check which button was clicked (Instant or Minigame)
+                ww = 900  # Crafting window width
+                instant_btn_w, minigame_btn_w = 80, 80
+
+                instant_left = ww - 40 - instant_btn_w - minigame_btn_w - 15
+                instant_right = instant_left + instant_btn_w
+                minigame_left = ww - 40 - minigame_btn_w - 5
+                minigame_right = minigame_left + minigame_btn_w
+
+                btn_y_center = y_off + btn_height // 2
+                btn_top = btn_y_center - 12
+                btn_bottom = btn_y_center + 13
+
+                if instant_left <= rx <= instant_right and btn_top <= ry <= btn_bottom:
+                    # Instant craft clicked
+                    print(f"🔨 Instant craft clicked for {recipe.recipe_id}")
+                    self.craft_item(recipe, use_minigame=False)
+                    break
+                elif minigame_left <= rx <= minigame_right and btn_top <= ry <= btn_bottom:
+                    # Minigame clicked
+                    print(f"🎮 Minigame clicked for {recipe.recipe_id}")
+                    self.craft_item(recipe, use_minigame=True)
+                    break
+
+            y_off += btn_height + 10
+
+    def craft_item(self, recipe: Recipe, use_minigame: bool = False):
+        """
+        Craft an item either instantly or via minigame
+
+        Args:
+            recipe: Recipe to craft
+            use_minigame: If True, start minigame. If False, instant craft.
+        """
         recipe_db = RecipeDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
@@ -3609,6 +3978,29 @@ class GameEngine:
             self.add_notification("Not enough materials!", (255, 100, 100))
             print("❌ Cannot craft - not enough materials")
             return
+
+        # Handle enchanting recipes differently
+        if recipe.is_enchantment:
+            print("⚠ Enchantment recipe - using special handler")
+            # TODO: Implement enchantment UI selection
+            self.add_notification("Enchantment crafting not yet implemented", (255, 100, 100))
+            return
+
+        # Choose crafting method
+        if use_minigame:
+            print("🎮 Starting minigame...")
+            self._start_minigame(recipe)
+            return
+        else:
+            print("⚡ Using instant craft...")
+            self._instant_craft(recipe)
+            return
+
+    def _instant_craft(self, recipe: Recipe):
+        """Perform instant crafting (no minigame, 0 EXP)"""
+        recipe_db = RecipeDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+        mat_db = MaterialDatabase.get_instance()
 
         # Get the appropriate crafter for this discipline
         crafter = self.get_crafter_for_station(recipe.station_type)
@@ -3819,9 +4211,20 @@ class GameEngine:
                 self.character.move(dx, dy, self.world)
 
         self.camera.follow(self.character.position)
-        self.world.update(dt)
-        self.combat_manager.update(dt)
-        self.character.update_attack_cooldown(dt)
+
+        # Only update world/combat if minigame isn't active
+        if not self.active_minigame:
+            self.world.update(dt)
+            self.combat_manager.update(dt)
+            self.character.update_attack_cooldown(dt)
+        else:
+            # Update active minigame
+            self.active_minigame.update(dt)
+
+            # Check if minigame completed
+            if hasattr(self.active_minigame, 'result') and self.active_minigame.result is not None:
+                self._complete_minigame()
+
         self.damage_numbers = [d for d in self.damage_numbers if d.update(dt)]
         self.notifications = [n for n in self.notifications if n.update(dt)]
 
@@ -3871,6 +4274,10 @@ class GameEngine:
                     self.mouse_pos, self.enchantment_recipe, self.enchantment_compatible_items)
             else:
                 self.enchantment_item_rects = None
+
+        # Minigame rendering (rendered on top of EVERYTHING)
+        if self.active_minigame:
+            self._render_minigame()
 
         pygame.display.flip()
 
