@@ -4749,6 +4749,14 @@ class GameEngine:
                         self.minigame_recipe = None
                     elif self.minigame_type == 'smithing' and event.key == pygame.K_SPACE:
                         self.active_minigame.handle_fan()
+                    elif self.minigame_type == 'alchemy':
+                        if event.key == pygame.K_c:
+                            self.active_minigame.chain_ingredient()
+                        elif event.key == pygame.K_s:
+                            self.active_minigame.stabilize()
+                    elif self.minigame_type == 'refining' and event.key == pygame.K_SPACE:
+                        self.active_minigame.align_cylinder()
+                    # engineering uses button clicks, no keyboard input needed
                     # Skip other key handling when minigame is active
                     continue
 
@@ -4829,9 +4837,21 @@ class GameEngine:
         if self.active_minigame:
             if hasattr(self, 'minigame_button_rect') and self.minigame_button_rect:
                 if self.minigame_button_rect.collidepoint(mouse_pos):
-                    # Handle smithing hammer button
+                    # Handle minigame-specific buttons
                     if self.minigame_type == 'smithing':
                         self.active_minigame.handle_hammer()
+                    elif self.minigame_type == 'alchemy':
+                        # Chain button (minigame_button_rect is chain button)
+                        self.active_minigame.chain_ingredient()
+                    elif self.minigame_type == 'engineering':
+                        # Complete puzzle button
+                        self.active_minigame.complete_puzzle()
+                    return
+            # Check secondary button (alchemy stabilize)
+            if hasattr(self, 'minigame_button_rect2') and self.minigame_button_rect2:
+                if self.minigame_button_rect2.collidepoint(mouse_pos):
+                    if self.minigame_type == 'alchemy':
+                        self.active_minigame.stabilize()
                     return
             # Consume all clicks when minigame is active (don't interact with world)
             return
@@ -6011,7 +6031,7 @@ class GameEngine:
         compatible_items = []
 
         # From inventory
-        for slot_idx, stack in self.character.inventory.slots.items():
+        for slot_idx, stack in enumerate(self.character.inventory.slots):
             if stack and equip_db.is_equipment(stack.item_id):
                 equipment = equip_db.create_equipment_from_id(stack.item_id)
                 if equipment:
@@ -6186,7 +6206,7 @@ class GameEngine:
 
         recipe = self.minigame_recipe
         result = self.active_minigame.result
-        crafter = self._get_crafter(self.minigame_type)
+        crafter = self.get_crafter_for_station(self.minigame_type)
 
         recipe_db = RecipeDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
