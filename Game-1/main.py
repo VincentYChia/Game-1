@@ -3503,9 +3503,8 @@ class Renderer:
                 # Engineering: Slot-type
                 placement_grid_rects = self.render_engineering_slots(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
             elif station_type == 'adornments':
-                # Enchanting: Pattern-based (TODO in Phase 6)
-                placeholder_text = self.font.render("Enchanting Placement (TODO)", True, (150, 150, 150))
-                surf.blit(placeholder_text, (placement_rect.centerx - placeholder_text.get_width()//2, placement_rect.centery))
+                # Enchanting: Grid-based (reuses smithing grid renderer)
+                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
 
             # Craft buttons at bottom of right panel
             if can_craft:
