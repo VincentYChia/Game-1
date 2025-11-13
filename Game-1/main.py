@@ -1251,6 +1251,247 @@ class Recipe:
     effect: Dict = field(default_factory=dict)
 
 
+# ============================================================================
+# PLACEMENT SYSTEM
+# ============================================================================
+@dataclass
+class PlacementData:
+    """Universal placement data structure for all crafting disciplines"""
+    recipe_id: str
+    discipline: str  # smithing, alchemy, refining, engineering, adornments
+
+    # Smithing & Enchanting: Grid-based placement
+    grid_size: str = ""  # "3x3", "5x5", "12x12", etc.
+    placement_map: Dict[str, str] = field(default_factory=dict)  # "x,y" -> materialId
+
+    # Refining: Hub-and-spoke
+    core_inputs: List[Dict] = field(default_factory=list)  # Center slots
+    surrounding_inputs: List[Dict] = field(default_factory=list)  # Surrounding modifiers
+
+    # Alchemy: Sequential
+    ingredients: List[Dict] = field(default_factory=list)  # [{slot, materialId, quantity}]
+
+    # Engineering: Slot types
+    slots: List[Dict] = field(default_factory=list)  # [{type, materialId, quantity}]
+
+    # Enchanting: Pattern-based
+    pattern: List[Dict] = field(default_factory=list)  # Pattern vertices/shapes
+
+    # Metadata
+    narrative: str = ""
+    output_id: str = ""
+    station_tier: int = 1
+
+
+class PlacementDatabase:
+    """Manages placement data for all crafting disciplines"""
+    _instance = None
+
+    def __init__(self):
+        self.placements: Dict[str, PlacementData] = {}  # recipeId -> PlacementData
+        self.loaded = False
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = PlacementDatabase()
+        return cls._instance
+
+    def load_from_files(self, base_path: str = ""):
+        """Load all placement JSON files"""
+        total = 0
+
+        # Smithing placements
+        total += self._load_smithing("placements.JSON/placements-smithing-1.JSON")
+
+        # Refining placements
+        total += self._load_refining("placements.JSON/placements-refining-1.JSON")
+
+        # Alchemy placements
+        total += self._load_alchemy("placements.JSON/placements-alchemy-1.JSON")
+
+        # Engineering placements
+        total += self._load_engineering("placements.JSON/placements-engineering-1.JSON")
+
+        # Enchanting/Adornments placements
+        total += self._load_enchanting("placements.JSON/placements-adornments-1.JSON")
+
+        self.loaded = True
+        print(f"✓ Loaded {total} placement templates")
+        return total
+
+    def _load_smithing(self, filepath: str) -> int:
+        """Load smithing grid-based placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Smithing placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='smithing',
+                    grid_size=placement.get('metadata', {}).get('gridSize', '3x3'),
+                    placement_map=placement.get('placementMap', {}),
+                    narrative=placement.get('metadata', {}).get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} smithing placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading smithing placements: {e}")
+            return 0
+
+    def _load_refining(self, filepath: str) -> int:
+        """Load refining hub-and-spoke placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Refining placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='refining',
+                    core_inputs=placement.get('coreInputs', []),
+                    surrounding_inputs=placement.get('surroundingInputs', []),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} refining placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading refining placements: {e}")
+            return 0
+
+    def _load_alchemy(self, filepath: str) -> int:
+        """Load alchemy sequential placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Alchemy placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='alchemy',
+                    ingredients=placement.get('ingredients', []),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} alchemy placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading alchemy placements: {e}")
+            return 0
+
+    def _load_engineering(self, filepath: str) -> int:
+        """Load engineering slot-type placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Engineering placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='engineering',
+                    slots=placement.get('slots', []),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} engineering placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading engineering placements: {e}")
+            return 0
+
+    def _load_enchanting(self, filepath: str) -> int:
+        """Load enchanting pattern placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Enchanting placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                # Enchanting may have pattern or grid-based placement
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='adornments',
+                    pattern=placement.get('pattern', []),
+                    placement_map=placement.get('placementMap', {}),
+                    grid_size=placement.get('metadata', {}).get('gridSize', '3x3'),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} enchanting placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading enchanting placements: {e}")
+            return 0
+
+    def get_placement(self, recipe_id: str) -> Optional[PlacementData]:
+        """Get placement data for a recipe"""
+        return self.placements.get(recipe_id)
+
+    def has_placement(self, recipe_id: str) -> bool:
+        """Check if a recipe has placement data"""
+        return recipe_id in self.placements
+
+
 class RecipeDatabase:
     _instance = None
 
@@ -2266,6 +2507,247 @@ class Renderer:
         self.small_font = pygame.font.Font(None, 18)
         self.tiny_font = pygame.font.Font(None, 14)
 
+    def _get_grid_size_for_tier(self, tier: int, discipline: str) -> Tuple[int, int]:
+        """Get grid dimensions based on station tier for grid-based disciplines (smithing, adornments)"""
+        if discipline not in ['smithing', 'adornments']:
+            return (3, 3)  # Default for non-grid disciplines
+
+        tier_to_grid = {
+            1: (3, 3),
+            2: (5, 5),
+            3: (7, 7),
+            4: (9, 9)
+        }
+        return tier_to_grid.get(tier, (3, 3))
+
+    def render_smithing_grid(self, surf: pygame.Surface, placement_rect: pygame.Rect,
+                           station_tier: int, selected_recipe: Optional[Recipe],
+                           user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
+        """
+        Render smithing grid with:
+        - Station tier determines grid size shown (T1=3x3, T2=5x5, T3=7x7, T4=9x9)
+        - Recipe placement data shown (if selected)
+        - User's current placement overlaid
+        - Visual feedback for valid/invalid placements
+
+        Returns: Dict mapping grid cell rects to (grid_x, grid_y) for click handling
+        """
+        mat_db = MaterialDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        # Determine grid size based on station tier
+        grid_w, grid_h = self._get_grid_size_for_tier(station_tier, 'smithing')
+
+        # Calculate cell size to fit in placement_rect with padding
+        padding = 20
+        available_w = placement_rect.width - 2 * padding
+        available_h = placement_rect.height - 2 * padding
+        cell_size = min(available_w // grid_w, available_h // grid_h) - 4  # -4 for cell spacing
+
+        # Center the grid in the placement_rect
+        grid_pixel_w = grid_w * (cell_size + 4)
+        grid_pixel_h = grid_h * (cell_size + 4)
+        grid_start_x = placement_rect.x + (placement_rect.width - grid_pixel_w) // 2
+        grid_start_y = placement_rect.y + (placement_rect.height - grid_pixel_h) // 2
+
+        # Get recipe placement data if available
+        recipe_placement_map = {}
+        if selected_recipe:
+            placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            if placement_data:
+                recipe_placement_map = placement_data.placement_map
+
+        # Draw grid cells
+        cell_rects = {}  # Will store pygame.Rect -> (grid_x, grid_y) for click detection
+
+        for gy in range(1, grid_h + 1):  # 1-indexed to match placement data
+            for gx in range(1, grid_w + 1):
+                cell_x = grid_start_x + (gx - 1) * (cell_size + 4)
+                cell_y = grid_start_y + (gy - 1) * (cell_size + 4)
+                cell_rect = pygame.Rect(cell_x, cell_y, cell_size, cell_size)
+
+                # Determine cell state
+                grid_key = f"{gx},{gy}"
+                has_recipe_requirement = grid_key in recipe_placement_map
+                has_user_placement = grid_key in user_placement
+
+                # Cell background color
+                if has_user_placement:
+                    # User placed something here
+                    cell_color = (50, 70, 50)  # Green tint
+                elif has_recipe_requirement:
+                    # Recipe requires something here (but user hasn't placed it yet)
+                    cell_color = (70, 60, 40)  # Gold tint - shows what's needed
+                else:
+                    # Empty cell
+                    cell_color = (30, 30, 40)
+
+                # Highlight cell under mouse
+                is_hovered = cell_rect.collidepoint(mouse_pos)
+                if is_hovered:
+                    cell_color = tuple(min(255, c + 20) for c in cell_color)
+
+                pygame.draw.rect(surf, cell_color, cell_rect)
+
+                # Border
+                border_color = (100, 100, 100) if not has_recipe_requirement else (150, 130, 80)
+                pygame.draw.rect(surf, border_color, cell_rect, 1 if not is_hovered else 2)
+
+                # Draw material icon/name
+                if has_user_placement:
+                    # Show user's placement
+                    mat_id = user_placement[grid_key]
+                    mat = mat_db.get_material(mat_id)
+                    mat_name = (mat.name[:6] if mat else mat_id[:6])  # Truncate to fit
+                    text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                    text_rect = text_surf.get_rect(center=cell_rect.center)
+                    surf.blit(text_surf, text_rect)
+                elif has_recipe_requirement:
+                    # Show what recipe requires (semi-transparent hint)
+                    req_mat_id = recipe_placement_map[grid_key]
+                    mat = mat_db.get_material(req_mat_id)
+                    mat_name = (mat.name[:6] if mat else req_mat_id[:6])
+                    text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                    text_rect = text_surf.get_rect(center=cell_rect.center)
+                    surf.blit(text_surf, text_rect)
+
+                # Store rect for click handling
+                cell_rects[cell_rect] = (gx, gy)
+
+        # Draw grid size label
+        grid_label = f"Smithing Grid: {grid_w}x{grid_h} (T{station_tier})"
+        label_surf = self.small_font.render(grid_label, True, (150, 150, 150))
+        surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
+
+        return cell_rects
+
+    def render_refining_hub(self, surf: pygame.Surface, placement_rect: pygame.Rect,
+                          station_tier: int, selected_recipe: Optional[Recipe],
+                          user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
+        """
+        Render refining hub-and-spoke with:
+        - Station tier determines number of slots (T1=3 slots, T2=5, T3=7, T4=9)
+        - Core slots in center (hub)
+        - Surrounding slots in circle around core (spokes)
+        - User can place materials in slots
+
+        Returns: Dict mapping slot rects to slot_id for click handling
+        """
+        mat_db = MaterialDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        # Determine slot counts based on station tier
+        # T1: 1 core + 2 surrounding = 3 total
+        # T2: 1 core + 4 surrounding = 5 total
+        # T3: 1 core + 6 surrounding = 7 total
+        # T4: 1 core + 8 surrounding = 9 total
+        core_slots = 1
+        surrounding_slots = 2 + (station_tier - 1) * 2
+
+        # Get recipe placement data if available
+        required_core = []
+        required_surrounding = []
+        if selected_recipe:
+            placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            if placement_data:
+                required_core = placement_data.core_inputs
+                required_surrounding = placement_data.surrounding_inputs
+
+        # Calculate slot size
+        center_x = placement_rect.centerx
+        center_y = placement_rect.centery
+        core_radius = 40  # Radius of core slot
+        surrounding_radius = 30  # Radius of each surrounding slot
+        orbit_radius = 120  # Distance from center to surrounding slots
+
+        slot_rects = {}  # Will store pygame.Rect -> slot_id for click detection
+
+        # Draw core slot
+        core_x = center_x - core_radius
+        core_y = center_y - core_radius
+        core_rect = pygame.Rect(core_x, core_y, core_radius * 2, core_radius * 2)
+
+        # Determine core slot state
+        has_user_core = "core_0" in user_placement
+        has_required_core = len(required_core) > 0
+
+        core_color = (50, 70, 50) if has_user_core else ((70, 60, 40) if has_required_core else (30, 30, 40))
+        is_hovered = core_rect.collidepoint(mouse_pos)
+        if is_hovered:
+            core_color = tuple(min(255, c + 20) for c in core_color)
+
+        pygame.draw.circle(surf, core_color, (center_x, center_y), core_radius)
+        pygame.draw.circle(surf, (150, 130, 80), (center_x, center_y), core_radius, 2 if is_hovered else 1)
+
+        # Draw core material
+        if has_user_core:
+            mat_id = user_placement["core_0"]
+            mat = mat_db.get_material(mat_id)
+            mat_name = (mat.name[:8] if mat else mat_id[:8])
+            text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+            text_rect = text_surf.get_rect(center=(center_x, center_y))
+            surf.blit(text_surf, text_rect)
+        elif has_required_core:
+            req_mat_id = required_core[0].get('materialId', '')
+            mat = mat_db.get_material(req_mat_id)
+            mat_name = (mat.name[:8] if mat else req_mat_id[:8])
+            text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+            text_rect = text_surf.get_rect(center=(center_x, center_y))
+            surf.blit(text_surf, text_rect)
+
+        slot_rects[core_rect] = "core_0"
+
+        # Draw surrounding slots in circle
+        import math
+        for i in range(surrounding_slots):
+            angle = (2 * math.pi * i) / surrounding_slots - math.pi / 2  # Start at top
+            slot_x = center_x + int(orbit_radius * math.cos(angle))
+            slot_y = center_y + int(orbit_radius * math.sin(angle))
+
+            slot_rect = pygame.Rect(
+                slot_x - surrounding_radius,
+                slot_y - surrounding_radius,
+                surrounding_radius * 2,
+                surrounding_radius * 2
+            )
+
+            slot_id = f"surrounding_{i}"
+            has_user_surrounding = slot_id in user_placement
+            has_required_surrounding = i < len(required_surrounding)
+
+            slot_color = (50, 70, 50) if has_user_surrounding else ((70, 60, 40) if has_required_surrounding else (30, 30, 40))
+            is_hovered = slot_rect.collidepoint(mouse_pos)
+            if is_hovered:
+                slot_color = tuple(min(255, c + 20) for c in slot_color)
+
+            pygame.draw.circle(surf, slot_color, (slot_x, slot_y), surrounding_radius)
+            pygame.draw.circle(surf, (100, 100, 100), (slot_x, slot_y), surrounding_radius, 2 if is_hovered else 1)
+
+            # Draw slot material
+            if has_user_surrounding:
+                mat_id = user_placement[slot_id]
+                mat = mat_db.get_material(mat_id)
+                mat_name = (mat.name[:6] if mat else mat_id[:6])
+                text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                text_rect = text_surf.get_rect(center=(slot_x, slot_y))
+                surf.blit(text_surf, text_rect)
+            elif has_required_surrounding:
+                req_mat_id = required_surrounding[i].get('materialId', '')
+                mat = mat_db.get_material(req_mat_id)
+                mat_name = (mat.name[:6] if mat else req_mat_id[:6])
+                text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                text_rect = text_surf.get_rect(center=(slot_x, slot_y))
+                surf.blit(text_surf, text_rect)
+
+            slot_rects[slot_rect] = slot_id
+
+        # Draw label
+        label = f"Refining Hub: {core_slots} core + {surrounding_slots} surrounding (T{station_tier})"
+        label_surf = self.small_font.render(label, True, (150, 150, 150))
+        surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
+
+        return slot_rects
+
     def render_world(self, world: WorldSystem, camera: Camera, character: Character,
                      damage_numbers: List[DamageNumber], combat_manager=None):
         pygame.draw.rect(self.screen, Config.COLOR_BACKGROUND, (0, 0, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT))
@@ -2655,7 +3137,7 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
-    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int], selected_recipe=None):
+    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int], selected_recipe=None, user_placement=None):
         """
         Render crafting UI with two-panel layout:
         - Left panel (450px): Recipe list
@@ -2663,7 +3145,10 @@ class Renderer:
 
         Args:
             selected_recipe: Currently selected recipe (to highlight in UI)
+            user_placement: User's current material placement (Dict[str, str])
         """
+        if user_placement is None:
+            user_placement = {}
         if not character.crafting_ui_open or not character.active_station:
             return None
 
@@ -2764,21 +3249,35 @@ class Renderer:
             selected = selected_recipe
             can_craft = recipe_db.can_craft(selected, character.inventory)
 
-            # Placement visualization (placeholder for now - will add visual grid later)
+            # Placement visualization area
             placement_h = 380
             placement_rect = pygame.Rect(right_panel_x, right_panel_y, right_panel_w - 40, placement_h)
             pygame.draw.rect(surf, (30, 30, 40), placement_rect)
             pygame.draw.rect(surf, (80, 80, 90), placement_rect, 2)
 
-            # Placeholder text
-            placeholder_text = self.font.render("Placement Visualization", True, (150, 150, 150))
-            surf.blit(placeholder_text, (placement_rect.centerx - placeholder_text.get_width()//2, placement_rect.centery - 40))
+            # Render discipline-specific placement UI
+            station_type = character.active_station.station_type.value
+            station_tier = character.active_station.tier
+            placement_grid_rects = {}  # Will store grid cell rects for click detection
 
-            grid_text = self.small_font.render(f"(Grid: {selected.grid_size})", True, (120, 120, 120))
-            surf.blit(grid_text, (placement_rect.centerx - grid_text.get_width()//2, placement_rect.centery))
-
-            todo_text = self.small_font.render("TODO: Load from placements.JSON", True, (100, 100, 100))
-            surf.blit(todo_text, (placement_rect.centerx - todo_text.get_width()//2, placement_rect.centery + 30))
+            if station_type == 'smithing':
+                # Smithing: Grid-based placement
+                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+            elif station_type == 'refining':
+                # Refining: Hub-and-spoke
+                placement_grid_rects = self.render_refining_hub(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+            elif station_type == 'alchemy':
+                # Alchemy: Sequential (TODO in Phase 4)
+                placeholder_text = self.font.render("Alchemy Placement (TODO)", True, (150, 150, 150))
+                surf.blit(placeholder_text, (placement_rect.centerx - placeholder_text.get_width()//2, placement_rect.centery))
+            elif station_type == 'engineering':
+                # Engineering: Slot-type (TODO in Phase 5)
+                placeholder_text = self.font.render("Engineering Placement (TODO)", True, (150, 150, 150))
+                surf.blit(placeholder_text, (placement_rect.centerx - placeholder_text.get_width()//2, placement_rect.centery))
+            elif station_type == 'adornments':
+                # Enchanting: Pattern-based (TODO in Phase 6)
+                placeholder_text = self.font.render("Enchanting Placement (TODO)", True, (150, 150, 150))
+                surf.blit(placeholder_text, (placement_rect.centerx - placeholder_text.get_width()//2, placement_rect.centery))
 
             # Craft buttons at bottom of right panel
             if can_craft:
@@ -2823,7 +3322,14 @@ class Renderer:
             surf.blit(prompt_text, (right_panel_x + 50, right_panel_y + 150))
 
         self.screen.blit(surf, (wx, wy))
-        return pygame.Rect(wx, wy, ww, wh), recipes[:8] if recipes else []
+        # Return window rect, recipes, and grid cell rects for click handling
+        grid_rects_absolute = {}
+        if selected_recipe:
+            # Convert relative grid rects to absolute screen coordinates
+            for rect, grid_pos in placement_grid_rects.items():
+                abs_rect = rect.move(wx, wy)  # Offset by window position
+                grid_rects_absolute[abs_rect] = grid_pos
+        return pygame.Rect(wx, wy, ww, wh), recipes[:8] if recipes else [], grid_rects_absolute
 
     def render_equipment_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.equipment_ui_open:
@@ -3259,6 +3765,7 @@ class GameEngine:
         TranslationDatabase.get_instance().load_from_files()
         SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
+        PlacementDatabase.get_instance().load_from_files()
 
         # Load equipment from all item files
         equip_db = EquipmentDatabase.get_instance()
@@ -3307,6 +3814,9 @@ class GameEngine:
         self.crafting_window_rect = None
         self.crafting_recipes = []
         self.selected_recipe = None  # Currently selected recipe in crafting UI (for placement display)
+        self.user_placement = {}  # User's current material placement: "x,y" -> materialId for grids, or other structures
+        self.active_station_tier = 1  # Currently open crafting station's tier (determines grid size shown)
+        self.placement_grid_rects = {}  # Grid cell rects for click detection: pygame.Rect -> (grid_x, grid_y)
         self.stats_window_rect = None
         self.stats_buttons = []
         self.equipment_window_rect = None
@@ -3563,6 +4073,9 @@ class GameEngine:
         station = self.world.get_station_at(world_pos)
         if station:
             self.character.interact_with_station(station)
+            self.active_station_tier = station.tier  # Capture tier for placement UI
+            self.user_placement = {}  # Clear any previous placement
+            self.selected_recipe = None  # Clear selected recipe
             return
 
         resource = self.world.get_resource_at(world_pos)
@@ -4037,13 +4550,33 @@ class GameEngine:
                 y_off += btn_height + 8
 
         # ======================
-        # RIGHT PANEL: Craft Buttons
+        # RIGHT PANEL: Grid Cells & Craft Buttons
         # ======================
         elif rx >= right_panel_x:
-            # Click in right panel - check for craft buttons
             if not self.selected_recipe:
-                return  # No recipe selected, can't craft
+                return  # No recipe selected, nothing to interact with
 
+            # First check for grid cell clicks (placement interaction)
+            for cell_rect, (grid_x, grid_y) in self.placement_grid_rects.items():
+                if cell_rect.collidepoint(mouse_pos):
+                    # Grid cell clicked!
+                    grid_key = f"{grid_x},{grid_y}"
+
+                    if grid_key in self.user_placement:
+                        # Cell already has material - remove it
+                        removed_mat = self.user_placement.pop(grid_key)
+                        print(f"🗑️ Removed {removed_mat} from cell ({grid_x}, {grid_y})")
+                    else:
+                        # Cell is empty - place first material from recipe inputs
+                        # This is a simple approach; later we can add material picker UI
+                        if self.selected_recipe.inputs:
+                            first_mat_id = self.selected_recipe.inputs[0].get('materialId', '')
+                            if first_mat_id:
+                                self.user_placement[grid_key] = first_mat_id
+                                print(f"✅ Placed {first_mat_id} in cell ({grid_x}, {grid_y})")
+                    return  # Grid cell click handled
+
+            # Then check for craft buttons
             recipe = self.selected_recipe
             can_craft = recipe_db.can_craft(recipe, self.character.inventory)
 
@@ -4081,6 +4614,63 @@ class GameEngine:
                 print(f"🎮 Minigame clicked for {recipe.recipe_id}")
                 self.craft_item(recipe, use_minigame=True)
 
+    def validate_placement(self, recipe: Recipe, user_placement: Dict[str, str]) -> Tuple[bool, str]:
+        """
+        Validate user's material placement against recipe requirements
+
+        Args:
+            recipe: Recipe being crafted
+            user_placement: User's current placement (Dict[str, str] mapping "x,y" -> materialId)
+
+        Returns:
+            (is_valid, error_message): Tuple of validation result and error message
+        """
+        placement_db = PlacementDatabase.get_instance()
+
+        # Get required placement data
+        placement_data = placement_db.get_placement(recipe.recipe_id)
+        if not placement_data:
+            # No placement data - placement not required
+            return (True, "")
+
+        discipline = placement_data.discipline
+
+        if discipline == 'smithing' or discipline == 'adornments':
+            # Grid-based validation
+            required_map = placement_data.placement_map
+
+            # Check if all required positions are filled
+            for pos, required_mat in required_map.items():
+                if pos not in user_placement:
+                    return (False, f"Missing material at position {pos}")
+
+                user_mat = user_placement[pos]
+                if user_mat != required_mat:
+                    return (False, f"Wrong material at {pos}: expected {required_mat}, got {user_mat}")
+
+            # Check if user placed extra materials in wrong positions
+            for pos in user_placement.keys():
+                if pos not in required_map:
+                    return (False, f"Extra material at position {pos} (not required)")
+
+            return (True, "Placement correct!")
+
+        elif discipline == 'refining':
+            # Hub-and-spoke validation (TODO in Phase 3)
+            return (True, "Refining validation TODO")
+
+        elif discipline == 'alchemy':
+            # Sequential validation (TODO in Phase 4)
+            return (True, "Alchemy validation TODO")
+
+        elif discipline == 'engineering':
+            # Slot-type validation (TODO in Phase 5)
+            return (True, "Engineering validation TODO")
+
+        else:
+            # Unknown discipline
+            return (True, "")
+
     def craft_item(self, recipe: Recipe, use_minigame: bool = False):
         """
         Craft an item either instantly or via minigame
@@ -4105,6 +4695,15 @@ class GameEngine:
             self.add_notification("Not enough materials!", (255, 100, 100))
             print("❌ Cannot craft - not enough materials")
             return
+
+        # Validate placement (if required)
+        is_valid, error_msg = self.validate_placement(recipe, self.user_placement)
+        if not is_valid:
+            self.add_notification(f"Invalid placement: {error_msg}", (255, 100, 100))
+            print(f"❌ Cannot craft - invalid placement: {error_msg}")
+            return
+        elif error_msg:  # Valid with message
+            print(f"✓ Placement validated: {error_msg}")
 
         # Handle enchanting recipes differently
         if recipe.is_enchantment:
@@ -4372,9 +4971,9 @@ class GameEngine:
             self.class_buttons = []
 
             if self.character.crafting_ui_open:
-                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe)
+                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe, self.user_placement)
                 if result:
-                    self.crafting_window_rect, self.crafting_recipes = result
+                    self.crafting_window_rect, self.crafting_recipes, self.placement_grid_rects = result
             else:
                 self.crafting_window_rect = None
                 self.crafting_recipes = []
