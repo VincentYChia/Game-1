@@ -4556,25 +4556,34 @@ class GameEngine:
             if not self.selected_recipe:
                 return  # No recipe selected, nothing to interact with
 
-            # First check for grid cell clicks (placement interaction)
-            for cell_rect, (grid_x, grid_y) in self.placement_grid_rects.items():
+            # First check for placement slot clicks (grid cells or hub slots)
+            for cell_rect, slot_data in self.placement_grid_rects.items():
                 if cell_rect.collidepoint(mouse_pos):
-                    # Grid cell clicked!
-                    grid_key = f"{grid_x},{grid_y}"
-
-                    if grid_key in self.user_placement:
-                        # Cell already has material - remove it
-                        removed_mat = self.user_placement.pop(grid_key)
-                        print(f"🗑️ Removed {removed_mat} from cell ({grid_x}, {grid_y})")
+                    # Slot clicked!
+                    # slot_data can be either (grid_x, grid_y) tuple for grids or "slot_id" string for others
+                    if isinstance(slot_data, tuple):
+                        # Grid-based (smithing, adornments)
+                        grid_x, grid_y = slot_data
+                        slot_key = f"{grid_x},{grid_y}"
+                        slot_display = f"({grid_x}, {grid_y})"
                     else:
-                        # Cell is empty - place first material from recipe inputs
+                        # Slot-based (refining, alchemy, engineering)
+                        slot_key = slot_data
+                        slot_display = slot_key
+
+                    if slot_key in self.user_placement:
+                        # Slot already has material - remove it
+                        removed_mat = self.user_placement.pop(slot_key)
+                        print(f"🗑️ Removed {removed_mat} from {slot_display}")
+                    else:
+                        # Slot is empty - place first material from recipe inputs
                         # This is a simple approach; later we can add material picker UI
                         if self.selected_recipe.inputs:
                             first_mat_id = self.selected_recipe.inputs[0].get('materialId', '')
                             if first_mat_id:
-                                self.user_placement[grid_key] = first_mat_id
-                                print(f"✅ Placed {first_mat_id} in cell ({grid_x}, {grid_y})")
-                    return  # Grid cell click handled
+                                self.user_placement[slot_key] = first_mat_id
+                                print(f"✅ Placed {first_mat_id} in {slot_display}")
+                    return  # Slot click handled
 
             # Then check for craft buttons
             recipe = self.selected_recipe
@@ -4656,8 +4665,44 @@ class GameEngine:
             return (True, "Placement correct!")
 
         elif discipline == 'refining':
-            # Hub-and-spoke validation (TODO in Phase 3)
-            return (True, "Refining validation TODO")
+            # Hub-and-spoke validation
+            required_core = placement_data.core_inputs
+            required_surrounding = placement_data.surrounding_inputs
+
+            # Check core slots
+            for i, core_input in enumerate(required_core):
+                slot_id = f"core_{i}"
+                required_mat = core_input.get('materialId', '')
+
+                if slot_id not in user_placement:
+                    return (False, f"Missing core material: {required_mat}")
+
+                user_mat = user_placement[slot_id]
+                if user_mat != required_mat:
+                    return (False, f"Wrong core material: expected {required_mat}, got {user_mat}")
+
+            # Check surrounding slots
+            for i, surrounding_input in enumerate(required_surrounding):
+                slot_id = f"surrounding_{i}"
+                required_mat = surrounding_input.get('materialId', '')
+
+                if slot_id not in user_placement:
+                    return (False, f"Missing surrounding material: {required_mat}")
+
+                user_mat = user_placement[slot_id]
+                if user_mat != required_mat:
+                    return (False, f"Wrong surrounding material: expected {required_mat}, got {user_mat}")
+
+            # Check for extra materials in wrong slots
+            expected_slots = set(f"core_{i}" for i in range(len(required_core)))
+            expected_slots.update(f"surrounding_{i}" for i in range(len(required_surrounding)))
+
+            for slot_id in user_placement.keys():
+                if slot_id.startswith('core_') or slot_id.startswith('surrounding_'):
+                    if slot_id not in expected_slots:
+                        return (False, f"Extra material in {slot_id} (not required)")
+
+            return (True, "Refining placement correct!")
 
         elif discipline == 'alchemy':
             # Sequential validation (TODO in Phase 4)
