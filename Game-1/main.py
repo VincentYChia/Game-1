@@ -2552,23 +2552,45 @@ class Renderer:
 
         # Get recipe placement data if available
         recipe_placement_map = {}
+        recipe_grid_w, recipe_grid_h = grid_w, grid_h  # Default to station grid size
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
-            if placement_data:
+            if placement_data and placement_data.grid_size:
+                # Parse recipe's actual grid size (e.g., "3x3")
+                parts = placement_data.grid_size.lower().split('x')
+                if len(parts) == 2:
+                    try:
+                        recipe_grid_w = int(parts[0])
+                        recipe_grid_h = int(parts[1])
+                    except ValueError:
+                        pass
                 recipe_placement_map = placement_data.placement_map
+
+        # Calculate offset to center recipe on station grid
+        offset_x = (grid_w - recipe_grid_w) // 2
+        offset_y = (grid_h - recipe_grid_h) // 2
 
         # Draw grid cells
         cell_rects = []  # Will store list of (pygame.Rect, (grid_x, grid_y)) for click detection
 
         for gy in range(1, grid_h + 1):  # 1-indexed to match placement data
             for gx in range(1, grid_w + 1):
+                # Flip Y axis: placement data uses bottom-up (y=1 at bottom), pygame uses top-down
+                render_y = (grid_h + 1) - gy  # Convert to render row (1 at top)
+
                 cell_x = grid_start_x + (gx - 1) * (cell_size + 4)
-                cell_y = grid_start_y + (gy - 1) * (cell_size + 4)
+                cell_y = grid_start_y + (render_y - 1) * (cell_size + 4)
                 cell_rect = pygame.Rect(cell_x, cell_y, cell_size, cell_size)
 
-                # Determine cell state
+                # Check if this cell corresponds to a recipe requirement (with offset for centering)
+                recipe_x = gx - offset_x
+                recipe_y = gy - offset_y
+                recipe_key = f"{recipe_x},{recipe_y}"
+
                 grid_key = f"{gx},{gy}"
-                has_recipe_requirement = grid_key in recipe_placement_map
+                has_recipe_requirement = (1 <= recipe_x <= recipe_grid_w and
+                                        1 <= recipe_y <= recipe_grid_h and
+                                        recipe_key in recipe_placement_map)
                 has_user_placement = grid_key in user_placement
 
                 # Cell background color
@@ -2604,7 +2626,7 @@ class Renderer:
                     surf.blit(text_surf, text_rect)
                 elif has_recipe_requirement:
                     # Show what recipe requires (semi-transparent hint)
-                    req_mat_id = recipe_placement_map[grid_key]
+                    req_mat_id = recipe_placement_map[recipe_key]
                     mat = mat_db.get_material(req_mat_id)
                     mat_name = (mat.name[:6] if mat else req_mat_id[:6])
                     text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
@@ -4650,6 +4672,8 @@ class GameEngine:
                     # Recipe clicked - select it
                     self.selected_recipe = recipe
                     print(f"📋 Selected recipe: {recipe.recipe_id}")
+                    # Auto-load recipe placement
+                    self.load_recipe_placement(recipe)
                     return
 
                 y_off += btn_height + 8
@@ -4728,6 +4752,87 @@ class GameEngine:
                 print(f"🎮 Minigame clicked for {recipe.recipe_id}")
                 self.craft_item(recipe, use_minigame=True)
 
+    def load_recipe_placement(self, recipe: Recipe):
+        """
+        Auto-load recipe placement into user_placement when recipe is selected.
+        This pre-fills the placement so user can craft immediately or modify as needed.
+        """
+        placement_db = PlacementDatabase.get_instance()
+        placement_data = placement_db.get_placement(recipe.recipe_id)
+
+        if not placement_data:
+            # No placement data - clear user placement
+            self.user_placement = {}
+            return
+
+        # Clear existing placement
+        self.user_placement = {}
+
+        # Load based on discipline
+        if placement_data.discipline == 'smithing' or placement_data.discipline == 'adornments':
+            # Grid-based: copy placement_map with offset for centering
+            recipe_grid_w, recipe_grid_h = 3, 3  # Default
+            if placement_data.grid_size:
+                parts = placement_data.grid_size.lower().split('x')
+                if len(parts) == 2:
+                    try:
+                        recipe_grid_w = int(parts[0])
+                        recipe_grid_h = int(parts[1])
+                    except ValueError:
+                        pass
+
+            # Calculate offset to center recipe on station grid
+            station_tier = self.active_station_tier
+            station_grid_w, station_grid_h = self._get_grid_size_for_tier(station_tier, placement_data.discipline)
+            offset_x = (station_grid_w - recipe_grid_w) // 2
+            offset_y = (station_grid_h - recipe_grid_h) // 2
+
+            # Copy placements with offset
+            for pos, mat_id in placement_data.placement_map.items():
+                parts = pos.split(',')
+                if len(parts) == 2:
+                    try:
+                        recipe_x = int(parts[0])
+                        recipe_y = int(parts[1])
+                        station_x = recipe_x + offset_x
+                        station_y = recipe_y + offset_y
+                        self.user_placement[f"{station_x},{station_y}"] = mat_id
+                    except ValueError:
+                        pass
+
+        elif placement_data.discipline == 'refining':
+            # Hub-and-spoke: copy core and surrounding inputs
+            for i, core_input in enumerate(placement_data.core_inputs):
+                mat_id = core_input.get('materialId', '')
+                if mat_id:
+                    self.user_placement[f"core_{i}"] = mat_id
+
+            for i, surrounding_input in enumerate(placement_data.surrounding_inputs):
+                mat_id = surrounding_input.get('materialId', '')
+                if mat_id:
+                    self.user_placement[f"surrounding_{i}"] = mat_id
+
+        elif placement_data.discipline == 'alchemy':
+            # Sequential: copy ingredients
+            for ingredient in placement_data.ingredients:
+                slot_num = ingredient.get('slot')
+                mat_id = ingredient.get('materialId', '')
+                if slot_num and mat_id:
+                    self.user_placement[f"seq_{slot_num}"] = mat_id
+
+        elif placement_data.discipline == 'engineering':
+            # Slot-type: will implement in Phase 5
+            pass
+
+        print(f"✅ Loaded {len(self.user_placement)} placements for {recipe.recipe_id}")
+
+    def _get_grid_size_for_tier(self, tier: int, discipline: str) -> Tuple[int, int]:
+        """Get grid dimensions based on station tier (matches Renderer method)"""
+        if discipline not in ['smithing', 'adornments']:
+            return (3, 3)
+        tier_to_grid = {1: (3, 3), 2: (5, 5), 3: (7, 7), 4: (9, 9)}
+        return tier_to_grid.get(tier, (3, 3))
+
     def validate_placement(self, recipe: Recipe, user_placement: Dict[str, str]) -> Tuple[bool, str]:
         """
         Validate user's material placement against recipe requirements
@@ -4750,22 +4855,61 @@ class GameEngine:
         discipline = placement_data.discipline
 
         if discipline == 'smithing' or discipline == 'adornments':
-            # Grid-based validation
+            # Grid-based validation with centering offset
             required_map = placement_data.placement_map
 
-            # Check if all required positions are filled
+            # Get recipe and station grid sizes
+            recipe_grid_w, recipe_grid_h = 3, 3
+            if placement_data.grid_size:
+                parts = placement_data.grid_size.lower().split('x')
+                if len(parts) == 2:
+                    try:
+                        recipe_grid_w = int(parts[0])
+                        recipe_grid_h = int(parts[1])
+                    except ValueError:
+                        pass
+
+            station_grid_w, station_grid_h = self._get_grid_size_for_tier(self.active_station_tier, discipline)
+            offset_x = (station_grid_w - recipe_grid_w) // 2
+            offset_y = (station_grid_h - recipe_grid_h) // 2
+
+            # Check if all required positions are filled (with offset)
             for pos, required_mat in required_map.items():
-                if pos not in user_placement:
-                    return (False, f"Missing material at position {pos}")
+                parts = pos.split(',')
+                if len(parts) == 2:
+                    try:
+                        recipe_x = int(parts[0])
+                        recipe_y = int(parts[1])
+                        station_x = recipe_x + offset_x
+                        station_y = recipe_y + offset_y
+                        station_pos = f"{station_x},{station_y}"
 
-                user_mat = user_placement[pos]
-                if user_mat != required_mat:
-                    return (False, f"Wrong material at {pos}: expected {required_mat}, got {user_mat}")
+                        if station_pos not in user_placement:
+                            return (False, f"Missing material at {pos} ({required_mat})")
 
-            # Check if user placed extra materials in wrong positions
+                        user_mat = user_placement[station_pos]
+                        if user_mat != required_mat:
+                            return (False, f"Wrong material at {pos}: expected {required_mat}, got {user_mat}")
+                    except ValueError:
+                        pass
+
+            # Check for extra materials (allow placements within recipe bounds only)
+            expected_positions = set()
+            for pos in required_map.keys():
+                parts = pos.split(',')
+                if len(parts) == 2:
+                    try:
+                        recipe_x = int(parts[0])
+                        recipe_y = int(parts[1])
+                        station_x = recipe_x + offset_x
+                        station_y = recipe_y + offset_y
+                        expected_positions.add(f"{station_x},{station_y}")
+                    except ValueError:
+                        pass
+
             for pos in user_placement.keys():
-                if pos not in required_map:
-                    return (False, f"Extra material at position {pos} (not required)")
+                if pos not in expected_positions:
+                    return (False, f"Extra material at {pos} (not part of recipe)")
 
             return (True, "Placement correct!")
 
