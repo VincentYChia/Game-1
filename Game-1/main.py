@@ -2876,6 +2876,108 @@ class Renderer:
 
         return slot_rects
 
+    def render_engineering_slots(self, surf: pygame.Surface, placement_rect: pygame.Rect,
+                                 station_tier: int, selected_recipe: Optional[Recipe],
+                                 user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
+        """
+        Render engineering slot-type placement with:
+        - Station tier determines max slots (T1=3, T2=5, T3=5, T4=7)
+        - Vertical list of typed slots (FRAME, FUNCTION, POWER, MODIFIER, etc.)
+        - Each slot shows its type and required material
+
+        Returns: List of (pygame.Rect, slot_id) for click handling
+        """
+        mat_db = MaterialDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        # Determine max slots based on station tier
+        tier_to_max_slots = {1: 3, 2: 5, 3: 5, 4: 7}
+        max_slots = tier_to_max_slots.get(station_tier, 3)
+
+        # Get recipe placement data if available
+        required_slots = []
+        if selected_recipe:
+            placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            if placement_data:
+                required_slots = placement_data.slots
+
+        # Calculate slot dimensions
+        slot_width = 300
+        slot_height = 60
+        slot_spacing = 10
+        total_height = min(len(required_slots), max_slots) * (slot_height + slot_spacing) if required_slots else max_slots * (slot_height + slot_spacing)
+
+        start_x = placement_rect.centerx - slot_width // 2
+        start_y = placement_rect.centery - total_height // 2
+
+        slot_rects = []  # Will store list of (pygame.Rect, slot_id) for click handling
+
+        # Draw slots vertically
+        num_slots = max(len(required_slots), 1) if required_slots else max_slots
+        for i in range(num_slots):
+            slot_y = start_y + i * (slot_height + slot_spacing)
+            slot_rect = pygame.Rect(start_x, slot_y, slot_width, slot_height)
+            slot_id = f"eng_slot_{i}"
+
+            # Get required slot info
+            required_slot = required_slots[i] if i < len(required_slots) else None
+            has_user_material = slot_id in user_placement
+            has_requirement = required_slot is not None
+
+            # Slot background color
+            slot_color = (50, 70, 50) if has_user_material else ((70, 60, 40) if has_requirement else (30, 30, 40))
+            is_hovered = slot_rect.collidepoint(mouse_pos)
+            if is_hovered:
+                slot_color = tuple(min(255, c + 20) for c in slot_color)
+
+            pygame.draw.rect(surf, slot_color, slot_rect)
+            pygame.draw.rect(surf, (100, 100, 100), slot_rect, 2 if is_hovered else 1)
+
+            # Draw slot type label (left side)
+            if has_requirement:
+                slot_type = required_slot.get('type', 'UNKNOWN')
+                type_color = {
+                    'FRAME': (150, 150, 200),
+                    'FUNCTION': (200, 150, 100),
+                    'POWER': (200, 100, 100),
+                    'MODIFIER': (150, 200, 150),
+                    'STABILIZER': (180, 180, 100)
+                }.get(slot_type, (150, 150, 150))
+
+                type_surf = self.small_font.render(slot_type, True, type_color)
+                surf.blit(type_surf, (slot_rect.x + 10, slot_rect.y + 10))
+
+                # Draw material name (right side)
+                mat_id = required_slot.get('materialId', '')
+                mat = mat_db.get_material(mat_id)
+                mat_name = mat.name if mat else mat_id
+
+                if has_user_material:
+                    # Show user's material (green)
+                    user_mat_id = user_placement[slot_id]
+                    user_mat = mat_db.get_material(user_mat_id)
+                    user_mat_name = user_mat.name if user_mat else user_mat_id
+                    mat_surf = self.small_font.render(user_mat_name, True, (200, 255, 200))
+                else:
+                    # Show required material (gold hint)
+                    mat_surf = self.small_font.render(mat_name, True, (180, 160, 120))
+
+                surf.blit(mat_surf, (slot_rect.x + 120, slot_rect.y + 10))
+
+                # Draw quantity
+                qty = required_slot.get('quantity', 1)
+                qty_surf = self.small_font.render(f"x{qty}", True, (150, 150, 150))
+                surf.blit(qty_surf, (slot_rect.x + slot_width - 60, slot_rect.y + 10))
+
+            slot_rects.append((slot_rect, slot_id))
+
+        # Draw label
+        label = f"Engineering Slots: {max_slots} max slots (T{station_tier})"
+        label_surf = self.small_font.render(label, True, (150, 150, 150))
+        surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
+
+        return slot_rects
+
     def render_world(self, world: WorldSystem, camera: Camera, character: Character,
                      damage_numbers: List[DamageNumber], combat_manager=None):
         pygame.draw.rect(self.screen, Config.COLOR_BACKGROUND, (0, 0, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT))
@@ -3398,9 +3500,8 @@ class Renderer:
                 # Alchemy: Sequential
                 placement_grid_rects = self.render_alchemy_sequence(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
             elif station_type == 'engineering':
-                # Engineering: Slot-type (TODO in Phase 5)
-                placeholder_text = self.font.render("Engineering Placement (TODO)", True, (150, 150, 150))
-                surf.blit(placeholder_text, (placement_rect.centerx - placeholder_text.get_width()//2, placement_rect.centery))
+                # Engineering: Slot-type
+                placement_grid_rects = self.render_engineering_slots(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
             elif station_type == 'adornments':
                 # Enchanting: Pattern-based (TODO in Phase 6)
                 placeholder_text = self.font.render("Enchanting Placement (TODO)", True, (150, 150, 150))
@@ -4821,8 +4922,11 @@ class GameEngine:
                     self.user_placement[f"seq_{slot_num}"] = mat_id
 
         elif placement_data.discipline == 'engineering':
-            # Slot-type: will implement in Phase 5
-            pass
+            # Slot-type: copy slots
+            for i, slot in enumerate(placement_data.slots):
+                mat_id = slot.get('materialId', '')
+                if mat_id:
+                    self.user_placement[f"eng_slot_{i}"] = mat_id
 
         print(f"✅ Loaded {len(self.user_placement)} placements for {recipe.recipe_id}")
 
@@ -4981,8 +5085,32 @@ class GameEngine:
             return (True, "Alchemy sequence correct!")
 
         elif discipline == 'engineering':
-            # Slot-type validation (TODO in Phase 5)
-            return (True, "Engineering validation TODO")
+            # Slot-type validation
+            required_slots = placement_data.slots
+
+            # Check each slot
+            for i, slot_data in enumerate(required_slots):
+                slot_id = f"eng_slot_{i}"
+                required_mat = slot_data.get('materialId', '')
+
+                if slot_id not in user_placement:
+                    slot_type = slot_data.get('type', '')
+                    return (False, f"Missing material in {slot_type} slot: {required_mat}")
+
+                user_mat = user_placement[slot_id]
+                if user_mat != required_mat:
+                    slot_type = slot_data.get('type', '')
+                    return (False, f"Wrong material in {slot_type} slot: expected {required_mat}, got {user_mat}")
+
+            # Check for extra materials
+            expected_slots = set(f"eng_slot_{i}" for i in range(len(required_slots)))
+
+            for slot_id in user_placement.keys():
+                if slot_id.startswith('eng_slot_'):
+                    if slot_id not in expected_slots:
+                        return (False, f"Extra material in {slot_id} (not required)")
+
+            return (True, "Engineering placement correct!")
 
         else:
             # Unknown discipline
