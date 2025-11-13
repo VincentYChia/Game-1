@@ -2655,11 +2655,14 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
-    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int]):
+    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int], selected_recipe=None):
         """
         Render crafting UI with two-panel layout:
         - Left panel (450px): Recipe list
         - Right panel (700px): Placement visualization + craft buttons
+
+        Args:
+            selected_recipe: Currently selected recipe (to highlight in UI)
         """
         if not character.crafting_ui_open or not character.active_station:
             return None
@@ -2705,7 +2708,7 @@ class Renderer:
                 can_craft = recipe_db.can_craft(recipe, character.inventory)
 
                 # Highlight selected recipe with gold border
-                is_selected = (self.selected_recipe and self.selected_recipe.recipe_id == recipe.recipe_id)
+                is_selected = (selected_recipe and selected_recipe.recipe_id == recipe.recipe_id)
 
                 btn_color = (60, 80, 60) if can_craft else (80, 60, 60)
                 if is_selected:
@@ -2756,9 +2759,9 @@ class Renderer:
         right_panel_x = separator_x + 20
         right_panel_y = 70
 
-        if self.selected_recipe:
+        if selected_recipe:
             # Selected recipe - show placement and buttons
-            selected = self.selected_recipe
+            selected = selected_recipe
             can_craft = recipe_db.can_craft(selected, character.inventory)
 
             # Placement visualization (placeholder for now - will add visual grid later)
@@ -4369,7 +4372,7 @@ class GameEngine:
             self.class_buttons = []
 
             if self.character.crafting_ui_open:
-                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos)
+                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe)
                 if result:
                     self.crafting_window_rect, self.crafting_recipes = result
             else:
