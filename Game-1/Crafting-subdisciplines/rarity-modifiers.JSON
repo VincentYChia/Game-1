@@ -35,13 +35,16 @@
       }
     },
     "legendary": {
-      "description": "Legendary weapon with massive bonuses",
+      "description": "Legendary weapon with massive bonuses and lifesteal",
       "modifiers": {
-        "damage": 0.50,
+        "damage": 1.00,
         "durability": 0.30,
         "critical_chance": 0.15,
         "attack_speed": 0.10,
         "lifesteal": 0.05
+      },
+      "special_effects": {
+        "lifesteal": true
       }
     }
   },
@@ -67,22 +70,32 @@
       }
     },
     "epic": {
-      "description": "Exceptional armor with major protection",
+      "description": "Exceptional armor with knockback resistance and enhanced durability",
       "modifiers": {
         "defense": 0.35,
         "durability": 0.20,
         "resistance": 0.10,
         "damage_reduction": 0.05
+      },
+      "special_effects": {
+        "enhanced_durability": true,
+        "knockback_resistance": true
       }
     },
     "legendary": {
-      "description": "Legendary armor with massive protection",
+      "description": "Legendary armor with damage boost and thorns effect",
       "modifiers": {
-        "defense": 0.50,
+        "defense": 1.00,
         "durability": 0.30,
         "resistance": 0.15,
         "damage_reduction": 0.10,
         "thorns": 0.05
+      },
+      "special_effects": {
+        "enhanced_durability": true,
+        "knockback_resistance": true,
+        "damage_boost": true,
+        "thorns": true
       }
     }
   },
@@ -117,12 +130,15 @@
       }
     },
     "legendary": {
-      "description": "Legendary tool with massive efficiency",
+      "description": "Legendary tool with auto-smelt capability",
       "modifiers": {
-        "efficiency": 0.50,
+        "efficiency": 1.00,
         "durability": 0.30,
         "gathering_speed": 0.15,
         "yield_bonus": 0.10
+      },
+      "special_effects": {
+        "auto_smelt": true
       }
     }
   },
@@ -147,17 +163,23 @@
       }
     },
     "epic": {
-      "description": "Exceptional consumable",
+      "description": "Exceptional consumable with additional effect",
       "modifiers": {
         "potency": 0.50,
         "duration": 0.35
+      },
+      "special_effects": {
+        "effect_count": 1
       }
     },
     "legendary": {
-      "description": "Legendary consumable",
+      "description": "Legendary consumable with multiple effects",
       "modifiers": {
-        "potency": 0.75,
+        "potency": 1.00,
         "duration": 0.50
+      },
+      "special_effects": {
+        "effect_count": 2
       }
     }
   },
@@ -183,19 +205,24 @@
       }
     },
     "epic": {
-      "description": "Exceptional device",
+      "description": "Exceptional device with reduced cooldown",
       "modifiers": {
         "power": 0.35,
         "durability": 0.20,
-        "range": 0.10
+        "range": 0.10,
+        "cooldown": -0.10
       }
     },
     "legendary": {
-      "description": "Legendary device",
+      "description": "Legendary device with auto-reload",
       "modifiers": {
-        "power": 0.50,
+        "power": 1.00,
         "durability": 0.30,
-        "range": 0.15
+        "range": 0.15,
+        "cooldown": -0.20
+      },
+      "special_effects": {
+        "auto_reload": true
       }
     }
   },

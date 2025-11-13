@@ -12,24 +12,21 @@ from enum import Enum
 # Combat system
 from Combat import CombatManager, EnemyDatabase
 
-# Crafting systems - using importlib for hyphenated folder name
-import importlib
-crafting_smithing = importlib.import_module('Crafting-subdisciplines.smithing')
-crafting_alchemy = importlib.import_module('Crafting-subdisciplines.alchemy')
-crafting_enchanting = importlib.import_module('Crafting-subdisciplines.enchanting')
-crafting_engineering = importlib.import_module('Crafting-subdisciplines.engineering')
-crafting_refining = importlib.import_module('Crafting-subdisciplines.refining')
-
-SmithingCrafter = crafting_smithing.SmithingCrafter
-SmithingMinigame = crafting_smithing.SmithingMinigame
-AlchemyCrafter = crafting_alchemy.AlchemyCrafter
-AlchemyMinigame = crafting_alchemy.AlchemyMinigame
-EnchantingCrafter = crafting_enchanting.EnchantingCrafter
-EnchantingMinigame = crafting_enchanting.EnchantingMinigame
-EngineeringCrafter = crafting_engineering.EngineeringCrafter
-EngineeringMinigame = crafting_engineering.EngineeringMinigame
-RefiningCrafter = crafting_refining.RefiningCrafter
-RefiningMinigame = crafting_refining.RefiningMinigame
+# Crafting subdisciplines
+try:
+    sys.path.insert(0, str(Path(__file__).parent / "Crafting-subdisciplines"))
+    from smithing import SmithingCrafter
+    from refining import RefiningCrafter
+    from alchemy import AlchemyCrafter
+    from engineering import EngineeringCrafter
+    from enchanting import EnchantingCrafter
+    from rarity_utils import rarity_system
+    CRAFTING_MODULES_LOADED = True
+    print("✓ Loaded crafting subdisciplines modules")
+except ImportError as e:
+    CRAFTING_MODULES_LOADED = False
+    print(f"⚠ Could not load crafting subdisciplines: {e}")
+    print("  Crafting will use legacy instant-craft only")
 
 
 # ============================================================================
@@ -1919,6 +1916,8 @@ class ItemStack:
     quantity: int
     max_stack: int = 99
     equipment_data: Optional['EquipmentItem'] = None  # For equipment items, store actual instance
+    rarity: str = 'common'  # Rarity for materials and crafted items
+    crafted_stats: Optional[Dict[str, Any]] = None  # Stats from minigame crafting with rarity modifiers
 
     def __post_init__(self):
         print(f"      📦 ItemStack.__post_init__ called for '{self.item_id}'")
@@ -4351,7 +4350,7 @@ class Renderer:
         wy = 100
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.blit(surf.fill((25, 25, 35, 250)), (0, 0))
+        surf.fill((25, 25, 35, 250))
 
         # Title
         title_text = f"Apply {recipe.enchantment_name}"
@@ -4817,6 +4816,22 @@ class GameEngine:
         TitleDatabase.get_instance().load_from_file("progression/titles-1.JSON")
         ClassDatabase.get_instance().load_from_file("progression/classes-1.JSON")
 
+        # Initialize crafting subdisciplines (minigames)
+        if CRAFTING_MODULES_LOADED:
+            print("\nInitializing crafting subdisciplines...")
+            self.smithing_crafter = SmithingCrafter()
+            self.refining_crafter = RefiningCrafter()
+            self.alchemy_crafter = AlchemyCrafter()
+            self.engineering_crafter = EngineeringCrafter()
+            self.enchanting_crafter = EnchantingCrafter()
+            print("✓ All 5 crafting disciplines loaded")
+        else:
+            self.smithing_crafter = None
+            self.refining_crafter = None
+            self.alchemy_crafter = None
+            self.engineering_crafter = None
+            self.enchanting_crafter = None
+
         print("\nInitializing systems...")
         self.world = WorldSystem()
         self.character = Character(Position(50.0, 50.0, 0.0))
@@ -4886,6 +4901,12 @@ class GameEngine:
         self.enchantment_recipe = None
         self.enchantment_compatible_items = []
         self.enchantment_selection_rect = None
+
+        # Minigame state
+        self.current_minigame = None  # Active minigame instance
+        self.minigame_result = None  # Result after minigame completes
+        self.minigame_recipe = None  # Recipe being crafted with minigame
+        self.minigame_active = False  # Whether minigame is currently running
 
         self.keys_pressed = set()
         self.mouse_pos = (0, 0)
@@ -5225,6 +5246,58 @@ class GameEngine:
                     print(f"✓ +1 {stat_name.upper()}")
                 break
 
+    # ========================================================================
+    # CRAFTING INTEGRATION HELPERS
+    # ========================================================================
+    def inventory_to_dict(self) -> Dict[str, int]:
+        """Convert main.py Inventory to crafter-compatible Dict[material_id: quantity]"""
+        materials = {}
+        for slot in self.character.inventory.slots:
+            if slot and not slot.is_equipment():
+                # Only include non-equipment items (materials)
+                if slot.item_id in materials:
+                    materials[slot.item_id] += slot.quantity
+                else:
+                    materials[slot.item_id] = slot.quantity
+        return materials
+
+    def get_crafter_for_station(self, station_type: str):
+        """Get the appropriate crafter module for a station type"""
+        if not CRAFTING_MODULES_LOADED:
+            return None
+
+        crafter_map = {
+            'smithing': self.smithing_crafter,
+            'refining': self.refining_crafter,
+            'alchemy': self.alchemy_crafter,
+            'engineering': self.engineering_crafter,
+            'adornments': self.enchanting_crafter
+        }
+        return crafter_map.get(station_type)
+
+    def add_crafted_item_to_inventory(self, item_id: str, quantity: int,
+                                     rarity: str = 'common', stats: Dict = None):
+        """Add a crafted item to inventory with rarity and stats"""
+        equip_db = EquipmentDatabase.get_instance()
+
+        if equip_db.is_equipment(item_id):
+            # Equipment - create with stats if provided
+            equipment = equip_db.create_equipment_from_id(item_id)
+            if equipment and stats:
+                # Apply crafted stats to equipment
+                for stat_name, stat_value in stats.items():
+                    if hasattr(equipment, stat_name):
+                        setattr(equipment, stat_name, stat_value)
+
+            # Add to inventory with equipment data
+            item_stack = ItemStack(item_id, quantity, equipment_data=equipment,
+                                  rarity=rarity, crafted_stats=stats)
+            self.character.inventory.add_stack(item_stack)
+        else:
+            # Material - add with rarity
+            item_stack = ItemStack(item_id, quantity, rarity=rarity)
+            self.character.inventory.add_stack(item_stack)
+
     def handle_craft_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks in crafting UI - supports recipe selection and placement modes"""
         if not self.crafting_window_rect:
@@ -5267,449 +5340,111 @@ class GameEngine:
                 self._enter_placement_mode(recipe)
                 break
 
-    def _enter_placement_mode(self, recipe: Recipe):
-        """Enter placement mode for a selected recipe"""
-        placement_db = PlacementDatabase.get_instance()
-
-        # Check if recipe has placement data
-        placement_data = placement_db.get_placement(recipe.recipe_id)
-        if not placement_data:
-            print(f"⚠ No placement data for {recipe.recipe_id}")
-            self.add_notification("No placement data for this recipe!", (255, 100, 100))
-            return
-
-        # Set placement mode
-        self.placement_mode = True
-        self.placement_recipe = recipe
-        self.placement_data = placement_data
-
-        # Clear previous placement
-        self.placed_materials_grid = {}
-        self.placed_materials_hub = {'core': [], 'surrounding': []}
-        self.placed_materials_sequential = []
-        self.placed_materials_slots = {}
-
-        print(f"✓ Entered placement mode for {recipe.output_id}")
-        print(f"  Discipline: {placement_data.discipline}")
-        print(f"  Grid size: {placement_data.grid_size}")
-
-    def _handle_placement_click(self, mouse_pos: Tuple[int, int]):
-        """Handle clicks in placement mode"""
-        # Check BACK button
-        if self.placement_clear_button_rect and self.placement_clear_button_rect.collidepoint(mouse_pos):
-            print("🔙 Exiting placement mode")
-            self._exit_placement_mode()
-            return
-
-        # Check INSTANT button
-        if self.placement_craft_button_rect and self.placement_craft_button_rect.collidepoint(mouse_pos):
-            print("🔨 Crafting with placement (instant)")
-            self._craft_with_placement(use_minigame=False)
-            return
-
-        # Check MINIGAME button
-        if self.placement_minigame_button_rect and self.placement_minigame_button_rect.collidepoint(mouse_pos):
-            print("🎮 Crafting with placement (minigame)")
-            self._craft_with_placement(use_minigame=True)
-            return
-
-        # Handle discipline-specific clicks
-        if self.placement_data.discipline == 'smithing':
-            self._handle_smithing_grid_click(mouse_pos)
-        elif self.placement_data.discipline == 'refining':
-            self._handle_refining_slot_click(mouse_pos)
-        elif self.placement_data.discipline == 'alchemy':
-            self._handle_alchemy_slot_click(mouse_pos)
-        elif self.placement_data.discipline == 'engineering':
-            self._handle_engineering_slot_click(mouse_pos)
-        elif self.placement_data.discipline == 'adornments' or self.placement_data.discipline == 'enchanting':
-            self._handle_enchanting_pattern_click(mouse_pos)
-
-    def _handle_smithing_grid_click(self, mouse_pos: Tuple[int, int]):
-        """Handle grid slot clicks for smithing placement"""
-        mat_db = MaterialDatabase.get_instance()
-
-        for coord, rect in self.placement_grid_rects.items():
-            if rect.collidepoint(mouse_pos):
-                # Get required material for this slot
-                required_mat_id = self.placement_data.placement_map.get(coord)
-                if not required_mat_id:
-                    print(f"⚠ Slot {coord} doesn't require a material")
-                    return
-
-                # Check if player has the material
-                available = self.character.inventory.get_item_count(required_mat_id)
-                if available <= 0 and not Config.DEBUG_INFINITE_RESOURCES:
-                    mat = mat_db.get_material(required_mat_id)
-                    mat_name = mat.name if mat else required_mat_id
-                    print(f"⚠ Missing material: {mat_name}")
-                    self.add_notification(f"Need: {mat_name}", (255, 100, 100))
-                    return
-
-                # Place material
-                self.placed_materials_grid[coord] = (required_mat_id, 1)
-                mat = mat_db.get_material(required_mat_id)
-                mat_name = mat.name if mat else required_mat_id
-                print(f"✓ Placed {mat_name} at {coord}")
-                return
-
-    def _handle_refining_slot_click(self, mouse_pos: Tuple[int, int]):
-        """Handle hub-spoke slot clicks for refining placement"""
-        mat_db = MaterialDatabase.get_instance()
-
-        for slot_key, rect in self.placement_slot_rects.items():
-            if rect.collidepoint(mouse_pos):
-                slot_type, slot_index = slot_key  # ('core', 0) or ('surrounding', 1)
-
-                # Get required material for this slot
-                if slot_type == 'core':
-                    if slot_index >= len(self.placement_data.core_inputs):
-                        return
-                    slot_input = self.placement_data.core_inputs[slot_index]
-                elif slot_type == 'surrounding':
-                    if slot_index >= len(self.placement_data.surrounding_inputs):
-                        return
-                    slot_input = self.placement_data.surrounding_inputs[slot_index]
-                else:
-                    return
-
-                required_mat_id = slot_input.get('materialId', '')
-                required_qty = slot_input.get('quantity', 1)
-
-                # Check if player has the material
-                available = self.character.inventory.get_item_count(required_mat_id)
-                if available < required_qty and not Config.DEBUG_INFINITE_RESOURCES:
-                    mat = mat_db.get_material(required_mat_id)
-                    mat_name = mat.name if mat else required_mat_id
-                    print(f"⚠ Insufficient material: {mat_name} (have {available}, need {required_qty})")
-                    self.add_notification(f"Need {required_qty}x {mat_name}", (255, 100, 100))
-                    return
-
-                # Ensure lists are properly sized
-                while len(self.placed_materials_hub['core']) <= slot_index and slot_type == 'core':
-                    self.placed_materials_hub['core'].append(None)
-                while len(self.placed_materials_hub['surrounding']) <= slot_index and slot_type == 'surrounding':
-                    self.placed_materials_hub['surrounding'].append(None)
-
-                # Place material
-                placement = {
-                    'materialId': required_mat_id,
-                    'quantity': required_qty
-                }
-
-                if slot_type == 'core':
-                    self.placed_materials_hub['core'][slot_index] = placement
-                else:
-                    self.placed_materials_hub['surrounding'][slot_index] = placement
-
-                mat = mat_db.get_material(required_mat_id)
-                mat_name = mat.name if mat else required_mat_id
-                slot_label = f"{slot_type.upper()} {slot_index}"
-                print(f"✓ Placed {required_qty}x {mat_name} in {slot_label}")
-                return
-
-    def _handle_alchemy_slot_click(self, mouse_pos: Tuple[int, int]):
-        """Handle sequential slot clicks for alchemy placement"""
-        mat_db = MaterialDatabase.get_instance()
-
-        # Only one slot is clickable at a time (the next empty one)
-        for slot_index, rect in self.placement_slot_rects.items():
-            if rect.collidepoint(mouse_pos):
-                # Verify this is the next slot in sequence
-                if slot_index != len(self.placed_materials_sequential):
-                    print(f"⚠ Must fill slots in order! Next slot is {len(self.placed_materials_sequential) + 1}")
-                    return
-
-                # Get required material for this slot
-                ingredients = self.placement_data.ingredients or []
-                if slot_index >= len(ingredients):
-                    return
-
-                ingredient = ingredients[slot_index]
-                required_mat_id = ingredient.get('materialId', '')
-                required_qty = ingredient.get('quantity', 1)
-
-                # Check if player has the material
-                available = self.character.inventory.get_item_count(required_mat_id)
-                if available < required_qty and not Config.DEBUG_INFINITE_RESOURCES:
-                    mat = mat_db.get_material(required_mat_id)
-                    mat_name = mat.name if mat else required_mat_id
-                    print(f"⚠ Insufficient material: {mat_name} (have {available}, need {required_qty})")
-                    self.add_notification(f"Need {required_qty}x {mat_name}", (255, 100, 100))
-                    return
-
-                # Place material
-                placement = {
-                    'materialId': required_mat_id,
-                    'quantity': required_qty
-                }
-                self.placed_materials_sequential.append(placement)
-
-                mat = mat_db.get_material(required_mat_id)
-                mat_name = mat.name if mat else required_mat_id
-                print(f"✓ Placed {required_qty}x {mat_name} in slot {slot_index + 1}")
-
-                # Check if complete
-                if len(self.placed_materials_sequential) == len(ingredients):
-                    print(f"✓ All {len(ingredients)} ingredients placed in sequence!")
-                return
-
-    def _handle_engineering_slot_click(self, mouse_pos: Tuple[int, int]):
-        """Handle component slot clicks for engineering placement"""
-        mat_db = MaterialDatabase.get_instance()
-
-        for slot_index, rect in self.placement_slot_rects.items():
-            if rect.collidepoint(mouse_pos):
-                # Get required material for this slot
-                slots = self.placement_data.slots or []
-                if slot_index >= len(slots):
-                    return
-
-                slot = slots[slot_index]
-                required_mat_id = slot.get('materialId', '')
-                required_qty = slot.get('quantity', 1)
-                slot_type = slot.get('type', 'UNKNOWN')
-
-                # Check if player has the material
-                available = self.character.inventory.get_item_count(required_mat_id)
-                if available < required_qty and not Config.DEBUG_INFINITE_RESOURCES:
-                    mat = mat_db.get_material(required_mat_id)
-                    mat_name = mat.name if mat else required_mat_id
-                    print(f"⚠ Insufficient material: {mat_name} (have {available}, need {required_qty})")
-                    self.add_notification(f"Need {required_qty}x {mat_name}", (255, 100, 100))
-                    return
-
-                # Place material
-                placement = {
-                    'materialId': required_mat_id,
-                    'quantity': required_qty
-                }
-                self.placed_materials_slots[slot_index] = placement
-
-                mat = mat_db.get_material(required_mat_id)
-                mat_name = mat.name if mat else required_mat_id
-                print(f"✓ Placed {required_qty}x {mat_name} in {slot_type} slot")
-
-                # Check if complete
-                if len(self.placed_materials_slots) == len(slots):
-                    print(f"✓ All {len(slots)} component slots filled!")
-                return
-
-    def _handle_enchanting_pattern_click(self, mouse_pos: Tuple[int, int]):
-        """Handle pattern slot clicks for enchanting placement"""
-        mat_db = MaterialDatabase.get_instance()
-
-        # Extract pattern slots
-        pattern_data = self.placement_data.pattern or []
-
-        # Handle dict-based pattern with placementMap
-        if isinstance(pattern_data, dict) and 'placementMap' in pattern_data:
-            placement_map = pattern_data['placementMap']
-            if isinstance(placement_map, dict) and 'vertices' in placement_map:
-                vertices = placement_map['vertices']
-                # Convert to list
-                pattern_slots = []
-                for coord, vertex_data in vertices.items():
-                    mat_id = vertex_data.get('materialId', '')
-                    pattern_slots.append({
-                        'coord': coord,
-                        'materialId': mat_id,
-                        'quantity': 1
-                    })
-            else:
-                pattern_slots = []
-        else:
-            pattern_slots = pattern_data if isinstance(pattern_data, list) else []
-
-        for slot_key, rect in self.placement_slot_rects.items():
-            if rect.collidepoint(mouse_pos):
-                # slot_key is string index
-                slot_index = int(slot_key) if slot_key.isdigit() else 0
-
-                if slot_index >= len(pattern_slots):
-                    return
-
-                slot = pattern_slots[slot_index]
-                required_mat_id = slot.get('materialId', '')
-                required_qty = slot.get('quantity', 1)
-
-                # Check if player has the material
-                available = self.character.inventory.get_item_count(required_mat_id)
-                if available < required_qty and not Config.DEBUG_INFINITE_RESOURCES:
-                    mat = mat_db.get_material(required_mat_id)
-                    mat_name = mat.name if mat else required_mat_id
-                    print(f"⚠ Insufficient material: {mat_name} (have {available}, need {required_qty})")
-                    self.add_notification(f"Need {required_qty}x {mat_name}", (255, 100, 100))
-                    return
-
-                # Place material (using grid storage for enchanting)
-                self.placed_materials_grid[slot_key] = (required_mat_id, required_qty)
-
-                mat = mat_db.get_material(required_mat_id)
-                mat_name = mat.name if mat else required_mat_id
-                print(f"✓ Placed {required_qty}x {mat_name} in pattern slot {slot_index + 1}")
-
-                # Check if complete
-                if len(self.placed_materials_grid) == len(pattern_slots):
-                    print(f"✓ Enchantment pattern complete ({len(pattern_slots)} materials placed)!")
-                return
-
-    def _exit_placement_mode(self):
-        """Exit placement mode and return to recipe selection"""
-        self.placement_mode = False
-        self.placement_recipe = None
-        self.placement_data = None
-        self.placed_materials_grid = {}
-        self.placed_materials_hub = {'core': [], 'surrounding': []}
-        self.placed_materials_sequential = []
-        self.placed_materials_slots = {}
-
-    def _craft_with_placement(self, use_minigame: bool):
-        """Craft item using placed materials"""
-        if not self.placement_recipe:
-            return
-
-        # For now, call craft_item (materials already validated by placement)
-        # TODO: Could enhance to consume based on actual placement
-        self.craft_item(self.placement_recipe, use_minigame=use_minigame)
-
-        # Exit placement mode
-        self._exit_placement_mode()
-
-    def craft_item(self, recipe: Recipe, use_minigame: bool = False):
-        """
-        Craft an item either instantly or via minigame
-
-        Args:
-            recipe: Recipe to craft
-            use_minigame: If True, start minigame. If False, instant craft.
-        """
+    def craft_item(self, recipe: Recipe):
+        """Craft an item using the new crafting subdisciplines system"""
         recipe_db = RecipeDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
 
         print("\n" + "="*80)
-        print(f"🔨 CRAFT_ITEM DEBUG START")
+        print(f"🔨 CRAFT_ITEM - Using New Crafting System")
         print(f"Recipe ID: {recipe.recipe_id}")
         print(f"Output ID: {recipe.output_id}")
         print(f"Station Type: {recipe.station_type}")
         print(f"Use Minigame: {use_minigame}")
         print("="*80)
 
+        # Check if we have materials
         if not recipe_db.can_craft(recipe, self.character.inventory):
             self.add_notification("Not enough materials!", (255, 100, 100))
             print("❌ Cannot craft - not enough materials")
             return
 
-        # Handle enchanting recipes differently
-        if recipe.is_enchantment:
-            self._apply_enchantment(recipe)
-            return
+        # Get the appropriate crafter for this discipline
+        crafter = self.get_crafter_for_station(recipe.station_type)
 
-        # Choose crafting method
-        if use_minigame:
-            self._start_minigame(recipe)
+        if crafter and CRAFTING_MODULES_LOADED:
+            # NEW SYSTEM: Use crafting subdisciplines
+            print(f"✓ Using {recipe.station_type} crafter from subdisciplines")
+
+            # Convert inventory to dict format
+            inv_dict = self.inventory_to_dict()
+
+            # Check if crafter can craft (with rarity checks)
+            can_craft_result = crafter.can_craft(recipe.recipe_id, inv_dict)
+            if isinstance(can_craft_result, tuple):
+                can_craft, error_msg = can_craft_result
+            else:
+                can_craft, error_msg = can_craft_result, None
+
+            if not can_craft:
+                self.add_notification(f"Cannot craft: {error_msg or 'Unknown error'}", (255, 100, 100))
+                print(f"❌ Crafter blocked: {error_msg}")
+                return
+
+            # Use instant craft (minigames come later)
+            print(f"📦 Calling crafter.craft_instant()...")
+            result = crafter.craft_instant(recipe.recipe_id, inv_dict)
+
+            if result.get('success'):
+                output_id = result.get('outputId')
+                quantity = result.get('quantity', 1)
+                rarity = result.get('rarity', 'common')
+                stats = result.get('stats')
+
+                print(f"✓ Craft successful: {quantity}x {output_id} ({rarity})")
+                if stats:
+                    print(f"   Stats: {stats}")
+
+                # Add to inventory with rarity and stats
+                self.add_crafted_item_to_inventory(output_id, quantity, rarity, stats)
+
+                # Record activity and award XP (instant craft = 0 XP per Game Mechanics v5)
+                activity_map = {
+                    'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
+                    'engineering': 'engineering', 'adornments': 'enchanting'
+                }
+                activity_type = activity_map.get(recipe.station_type, 'smithing')
+                self.character.activities.record_activity(activity_type, 1)
+
+                # Instant craft gives 0 EXP (only minigames give EXP)
+                print("  (Instant craft = 0 EXP, use minigame for EXP)")
+
+                # Check for titles
+                new_title = self.character.titles.check_for_title(
+                    activity_type, self.character.activities.get_count(activity_type)
+                )
+                if new_title:
+                    self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+
+                # Get item name for notification
+                if equip_db.is_equipment(output_id):
+                    equipment = equip_db.create_equipment_from_id(output_id)
+                    item_name = equipment.name if equipment else output_id
+                else:
+                    material = mat_db.get_material(output_id)
+                    item_name = material.name if material else output_id
+
+                rarity_str = f" ({rarity})" if rarity != 'common' else ""
+                self.add_notification(f"Crafted {item_name}{rarity_str} x{quantity}", (100, 255, 100))
+                print("="*80 + "\n")
+            else:
+                error_msg = result.get('message', 'Crafting failed')
+                self.add_notification(f"Failed: {error_msg}", (255, 100, 100))
+                print(f"❌ {error_msg}")
+                print("="*80 + "\n")
+
         else:
-            self._instant_craft(recipe)
+            # FALLBACK: Legacy instant craft system
+            print("⚠ Crafting modules not loaded, using legacy system")
+            if recipe.is_enchantment:
+                self._apply_enchantment(recipe)
+                return
 
-    def _instant_craft(self, recipe: Recipe):
-        """Perform instant crafting (no minigame, base stats)"""
-        recipe_db = RecipeDatabase.get_instance()
-        equip_db = EquipmentDatabase.get_instance()
-        mat_db = MaterialDatabase.get_instance()
-
-        # Get appropriate crafter
-        crafter = self._get_crafter(recipe.station_type)
-        if not crafter:
-            self.add_notification("Invalid crafting station!", (255, 100, 100))
-            return
-
-        # Convert inventory to dict format for crafters
-        inv_dict = {}
-        for slot in self.character.inventory.slots:
-            if slot:
-                inv_dict[slot.item_id] = inv_dict.get(slot.item_id, 0) + slot.quantity
-
-        # Use crafter's instant craft method
-        result = crafter.craft_instant(recipe.recipe_id, inv_dict)
-
-        if not result.get('success'):
-            self.add_notification(result.get('message', 'Crafting failed'), (255, 100, 100))
-            return
-
-        # Consume materials from actual inventory
-        recipe_db.consume_materials(recipe, self.character.inventory)
-
-        # Record activity and XP
-        activity_map = {
-            'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
-            'engineering': 'engineering', 'adornments': 'enchanting'
-        }
-        activity_type = activity_map.get(recipe.station_type, 'smithing')
-        self.character.activities.record_activity(activity_type, 1)
-
-        xp_reward = 20 * recipe.station_tier
-        self.character.leveling.add_exp(xp_reward)
-
-        new_title = self.character.titles.check_for_title(
-            activity_type, self.character.activities.get_count(activity_type)
-        )
-        if new_title:
-            self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
-
-        # Add output to inventory
-        output_id = result.get('outputId', recipe.output_id)
-        output_qty = result.get('quantity', recipe.output_qty)
-        self.character.inventory.add_item(output_id, output_qty)
-
-        # Get proper name for notification
-        if equip_db.is_equipment(output_id):
-            equipment = equip_db.create_equipment_from_id(output_id)
-            out_name = equipment.name if equipment else output_id
-        else:
-            out_mat = mat_db.get_material(output_id)
-            out_name = out_mat.name if out_mat else output_id
-
-        print(f"✅ Instant crafting complete: {out_name} x{output_qty}")
-        self.add_notification(f"Crafted {out_name} x{output_qty}", (100, 255, 100))
-
-    def _start_minigame(self, recipe: Recipe):
-        """Start the appropriate minigame for this recipe"""
-        crafter = self._get_crafter(recipe.station_type)
-        if not crafter:
-            self.add_notification("Invalid crafting station!", (255, 100, 100))
-            return
-
-        # Create minigame instance
-        minigame = crafter.create_minigame(recipe.recipe_id)
-        if not minigame:
-            self.add_notification("Minigame not available!", (255, 100, 100))
-            return
-
-        # Start minigame
-        minigame.start()
-
-        # Store minigame state
-        self.active_minigame = minigame
-        self.minigame_type = recipe.station_type
-        self.minigame_recipe = recipe
-
-        # Close crafting UI
-        self.character.close_crafting_ui()
-
-        print(f"🎮 Started {recipe.station_type} minigame for {recipe.recipe_id}")
-        self.add_notification(f"Minigame Started!", (255, 215, 0))
-
-    def _get_crafter(self, station_type: str):
-        """Get the appropriate crafter instance for a station type"""
-        crafter_map = {
-            'smithing': self.smithing_crafter,
-            'alchemy': self.alchemy_crafter,
-            'refining': self.refining_crafter,
-            'engineering': self.engineering_crafter,
-            'adornments': self.enchanting_crafter
-        }
-        return crafter_map.get(station_type)
+            # Old instant craft logic
+            if recipe_db.consume_materials(recipe, self.character.inventory):
+                self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
+                self.add_notification(f"Crafted (legacy) {recipe.output_id} x{recipe.output_qty}", (100, 255, 100))
 
     def _apply_enchantment(self, recipe: Recipe):
         """Apply an enchantment to an item - shows selection UI"""

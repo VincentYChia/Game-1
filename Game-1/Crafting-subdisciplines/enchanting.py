@@ -19,6 +19,8 @@ NOTE: Enchanting is unique - minigame is REQUIRED, cannot be skipped
 import pygame
 import json
 import math
+from pathlib import Path
+from rarity_utils import rarity_system
 
 
 class EnchantingMinigame:
@@ -382,17 +384,30 @@ class EnchantingCrafter:
         return self.placements.get(recipe_id)
 
     def can_craft(self, recipe_id, inventory):
-        """Check if recipe can be crafted"""
+        """
+        Check if recipe can be crafted with given inventory
+        Also checks rarity uniformity (all materials must be same rarity)
+        """
         if recipe_id not in self.recipes:
-            return False
+            return False, "Recipe not found"
 
         recipe = self.recipes[recipe_id]
+
+        # Check material quantities
         for inp in recipe.get('inputs', []):
             if inventory.get(inp['materialId'], 0) < inp['quantity']:
-                return False
-        return True
+                return False, f"Insufficient {inp['materialId']}"
 
-    def craft_instant(self, recipe_id, inventory):
+        # Check rarity uniformity
+        inputs = recipe.get('inputs', [])
+        is_uniform, rarity, error_msg = rarity_system.check_rarity_uniformity(inputs)
+
+        if not is_uniform:
+            return False, error_msg
+
+        return True, None
+
+    def craft_instant(self, recipe_id, inventory, item_metadata=None):
         """
         Instant craft (basic crafting) - ONLY method for enchanting
 
@@ -401,14 +416,20 @@ class EnchantingCrafter:
         Args:
             recipe_id: Recipe ID to craft
             inventory: Dict of {material_id: quantity} (will be modified)
+            item_metadata: Optional dict of item metadata
 
         Returns:
-            dict: Result with outputId, quantity, success
+            dict: Result with outputId, quantity, rarity, success
         """
-        if not self.can_craft(recipe_id, inventory):
-            return {"success": False, "message": "Insufficient materials"}
+        can_craft, error_msg = self.can_craft(recipe_id, inventory)
+        if not can_craft:
+            return {"success": False, "message": error_msg or "Cannot craft"}
 
         recipe = self.recipes[recipe_id]
+
+        # Detect input rarity
+        inputs = recipe.get('inputs', [])
+        _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
 
         # Deduct materials
         for inp in recipe['inputs']:
@@ -423,7 +444,8 @@ class EnchantingCrafter:
             "outputId": enchantment_id,  # Use enchantmentId as outputId
             "quantity": 1,  # Enchantments are always quantity 1
             "enchantmentName": enchantment_name,
-            "message": f"Created {enchantment_name}"
+            "rarity": input_rarity,
+            "message": f"Created {input_rarity} {enchantment_name}"
         }
 
     def create_minigame(self, recipe_id, target_item=None):
@@ -445,20 +467,25 @@ class EnchantingCrafter:
 
         return EnchantingMinigame(recipe, tier, target_item)
 
-    def craft_with_minigame(self, recipe_id, inventory, minigame_result, target_item=None):
+    def craft_with_minigame(self, recipe_id, inventory, minigame_result, target_item=None, item_metadata=None):
         """
-        Craft with minigame result - apply enchantment
+        Craft with minigame result - apply enchantment with rarity
 
         Args:
             recipe_id: Recipe ID to craft
             inventory: Dict of {material_id: quantity} (will be modified)
             minigame_result: Result dict from EnchantingMinigame
             target_item: Item to enchant (modified in place)
+            item_metadata: Optional dict of item metadata
 
         Returns:
-            dict: Result with success, enchantment details
+            dict: Result with success, enchantment details, rarity
         """
         recipe = self.recipes[recipe_id]
+
+        # Detect input rarity before consuming materials
+        inputs = recipe.get('inputs', [])
+        _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
 
         # Always consume materials (even on failure)
         for inp in recipe['inputs']:
@@ -480,13 +507,27 @@ class EnchantingCrafter:
                     "materials_lost": True
                 }
 
-        # Success - apply enchantment
+        # Success - apply enchantment with rarity bonus
+        base_magnitude = minigame_result.get('bonus_magnitude', 10)
+
+        # Apply rarity modifier to enchantment strength
+        rarity_multipliers = {
+            'common': 1.0,
+            'uncommon': 1.1,
+            'rare': 1.2,
+            'epic': 1.35,
+            'legendary': 2.0
+        }
+        rarity_mult = rarity_multipliers.get(input_rarity, 1.0)
+        modified_magnitude = int(base_magnitude * rarity_mult)
+
         enchantment_data = {
             "recipeId": recipe_id,
             "bonus_type": minigame_result.get('bonus_type'),
-            "bonus_magnitude": minigame_result.get('bonus_magnitude'),
+            "bonus_magnitude": modified_magnitude,
             "pattern": minigame_result.get('pattern'),
-            "quality": minigame_result.get('quality')
+            "quality": minigame_result.get('quality'),
+            "rarity": input_rarity
         }
 
         if target_item:
@@ -498,9 +539,10 @@ class EnchantingCrafter:
 
             return {
                 "success": True,
-                "message": f"Enchantment applied to {target_item.get('itemId')}",
+                "message": f"{input_rarity.capitalize()} enchantment applied to {target_item.get('itemId')}",
                 "enchantment": enchantment_data,
-                "enchanted_item": target_item
+                "enchanted_item": target_item,
+                "rarity": input_rarity
             }
         else:
             # Create new accessory
@@ -508,8 +550,9 @@ class EnchantingCrafter:
                 "success": True,
                 "outputId": recipe['outputId'],
                 "quantity": recipe['outputQty'],
-                "message": "Accessory created",
-                "enchantment": enchantment_data
+                "message": f"Created {input_rarity} accessory",
+                "enchantment": enchantment_data,
+                "rarity": input_rarity
             }
 
     def get_recipe(self, recipe_id):
