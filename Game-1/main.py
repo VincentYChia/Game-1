@@ -2748,6 +2748,112 @@ class Renderer:
 
         return slot_rects
 
+    def render_alchemy_sequence(self, surf: pygame.Surface, placement_rect: pygame.Rect,
+                               station_tier: int, selected_recipe: Optional[Recipe],
+                               user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
+        """
+        Render alchemy sequential placement with:
+        - Station tier determines max slots (T1=2, T2=3, T3=4, T4=5)
+        - Horizontal sequence of numbered slots
+        - Order is critical for alchemy reactions
+
+        Returns: List of (pygame.Rect, slot_id) for click handling
+        """
+        mat_db = MaterialDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        # Determine max slots based on station tier
+        max_slots = 1 + station_tier  # T1=2, T2=3, T3=4, T4=5
+
+        # Get recipe placement data if available
+        required_ingredients = []
+        if selected_recipe:
+            placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            if placement_data:
+                required_ingredients = placement_data.ingredients
+
+        # Calculate slot dimensions
+        slot_width = 80
+        slot_height = 80
+        slot_spacing = 20
+        total_width = max_slots * slot_width + (max_slots - 1) * slot_spacing
+
+        start_x = placement_rect.centerx - total_width // 2
+        start_y = placement_rect.centery - slot_height // 2
+
+        slot_rects = []  # Will store list of (pygame.Rect, slot_id) for click detection
+
+        # Draw slots horizontally
+        for i in range(max_slots):
+            slot_num = i + 1  # 1-indexed
+            slot_x = start_x + i * (slot_width + slot_spacing)
+            slot_y = start_y
+
+            slot_rect = pygame.Rect(slot_x, slot_y, slot_width, slot_height)
+            slot_id = f"seq_{slot_num}"
+
+            # Find if this slot is required
+            required_for_slot = None
+            for ing in required_ingredients:
+                if ing.get('slot') == slot_num:
+                    required_for_slot = ing
+                    break
+
+            has_user_material = slot_id in user_placement
+            has_requirement = required_for_slot is not None
+
+            # Slot background color
+            slot_color = (50, 70, 50) if has_user_material else ((70, 60, 40) if has_requirement else (30, 30, 40))
+            is_hovered = slot_rect.collidepoint(mouse_pos)
+            if is_hovered:
+                slot_color = tuple(min(255, c + 20) for c in slot_color)
+
+            pygame.draw.rect(surf, slot_color, slot_rect)
+            pygame.draw.rect(surf, (100, 100, 100), slot_rect, 2 if is_hovered else 1)
+
+            # Draw slot number
+            num_surf = self.font.render(str(slot_num), True, (150, 150, 150))
+            num_rect = num_surf.get_rect(topleft=(slot_x + 5, slot_y + 5))
+            surf.blit(num_surf, num_rect)
+
+            # Draw material name
+            if has_user_material:
+                mat_id = user_placement[slot_id]
+                mat = mat_db.get_material(mat_id)
+                mat_name = (mat.name[:10] if mat else mat_id[:10])
+                text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
+                surf.blit(text_surf, text_rect)
+            elif has_requirement:
+                req_mat_id = required_for_slot.get('materialId', '')
+                mat = mat_db.get_material(req_mat_id)
+                mat_name = (mat.name[:10] if mat else req_mat_id[:10])
+                text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
+                surf.blit(text_surf, text_rect)
+
+            slot_rects.append((slot_rect, slot_id))
+
+            # Draw arrow between slots
+            if i < max_slots - 1:
+                arrow_start_x = slot_x + slot_width
+                arrow_end_x = arrow_start_x + slot_spacing
+                arrow_y = slot_y + slot_height // 2
+                pygame.draw.line(surf, (100, 100, 100), (arrow_start_x, arrow_y), (arrow_end_x, arrow_y), 2)
+                # Arrowhead
+                pygame.draw.polygon(surf, (100, 100, 100), [
+                    (arrow_end_x, arrow_y),
+                    (arrow_end_x - 8, arrow_y - 5),
+                    (arrow_end_x - 8, arrow_y + 5)
+                ])
+
+        # Draw label
+        label = f"Alchemy Sequence: {max_slots} sequential slots (T{station_tier})"
+        label_surf = self.small_font.render(label, True, (150, 150, 150))
+        surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
+
+        return slot_rects
+
     def render_world(self, world: WorldSystem, camera: Camera, character: Character,
                      damage_numbers: List[DamageNumber], combat_manager=None):
         pygame.draw.rect(self.screen, Config.COLOR_BACKGROUND, (0, 0, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT))
@@ -3267,9 +3373,8 @@ class Renderer:
                 # Refining: Hub-and-spoke
                 placement_grid_rects = self.render_refining_hub(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
             elif station_type == 'alchemy':
-                # Alchemy: Sequential (TODO in Phase 4)
-                placeholder_text = self.font.render("Alchemy Placement (TODO)", True, (150, 150, 150))
-                surf.blit(placeholder_text, (placement_rect.centerx - placeholder_text.get_width()//2, placement_rect.centery))
+                # Alchemy: Sequential
+                placement_grid_rects = self.render_alchemy_sequence(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
             elif station_type == 'engineering':
                 # Engineering: Slot-type (TODO in Phase 5)
                 placeholder_text = self.font.render("Engineering Placement (TODO)", True, (150, 150, 150))
@@ -4705,8 +4810,31 @@ class GameEngine:
             return (True, "Refining placement correct!")
 
         elif discipline == 'alchemy':
-            # Sequential validation (TODO in Phase 4)
-            return (True, "Alchemy validation TODO")
+            # Sequential validation
+            required_ingredients = placement_data.ingredients
+
+            # Check each sequential slot
+            for ingredient in required_ingredients:
+                slot_num = ingredient.get('slot')
+                slot_id = f"seq_{slot_num}"
+                required_mat = ingredient.get('materialId', '')
+
+                if slot_id not in user_placement:
+                    return (False, f"Missing ingredient in slot {slot_num}: {required_mat}")
+
+                user_mat = user_placement[slot_id]
+                if user_mat != required_mat:
+                    return (False, f"Wrong ingredient in slot {slot_num}: expected {required_mat}, got {user_mat}")
+
+            # Check for extra materials in wrong slots
+            expected_slots = set(f"seq_{ing.get('slot')}" for ing in required_ingredients)
+
+            for slot_id in user_placement.keys():
+                if slot_id.startswith('seq_'):
+                    if slot_id not in expected_slots:
+                        return (False, f"Extra ingredient in {slot_id} (not required)")
+
+            return (True, "Alchemy sequence correct!")
 
         elif discipline == 'engineering':
             # Slot-type validation (TODO in Phase 5)
