@@ -2669,7 +2669,11 @@ class Renderer:
         else:
             y_off = 70
             for i, recipe in enumerate(recipes[:6]):
-                btn = pygame.Rect(20, y_off, ww - 40, 80)
+                # Dynamic button height based on number of inputs
+                num_inputs = len(recipe.inputs)
+                btn_height = max(80, 35 + num_inputs * 18 + 10)  # Header + inputs + padding
+
+                btn = pygame.Rect(20, y_off, ww - 40, btn_height)
                 can_craft = recipe_db.can_craft(recipe, character.inventory)
                 btn_color = (40, 60, 40) if can_craft else (60, 40, 40)
                 pygame.draw.rect(surf, btn_color, btn)
@@ -2690,7 +2694,7 @@ class Renderer:
                           (btn.x + 10, btn.y + 10))
 
                 req_y = btn.y + 35
-                for inp in recipe.inputs[:3]:
+                for inp in recipe.inputs:  # Show ALL inputs, not just first 3
                     mat_id = inp.get('materialId', '')
                     req = inp.get('quantity', 0)
                     avail = character.inventory.get_item_count(mat_id)
@@ -2705,7 +2709,7 @@ class Renderer:
                     surf.blit(self.small_font.render("[CLICK] Craft", True, (100, 255, 100)),
                               (btn.right - 120, btn.centery - 8))
 
-                y_off += 90
+                y_off += btn_height + 10  # Dynamic spacing based on button height
 
         self.screen.blit(surf, (wx, wy))
         return pygame.Rect(wx, wy, ww, wh), recipes[:6] if recipes else []
@@ -3302,17 +3306,29 @@ class GameEngine:
             if self.stats_window_rect.collidepoint(mouse_pos):
                 self.handle_stats_click(mouse_pos)
                 return
+            # Click outside stats UI - close it
+            else:
+                self.character.toggle_stats_ui()
+                return
 
         # Equipment UI
         if self.character.equipment_ui_open and self.equipment_window_rect:
             if self.equipment_window_rect.collidepoint(mouse_pos):
                 self.handle_equipment_click(mouse_pos, shift_held)
                 return
+            # Click outside equipment UI - close it
+            else:
+                self.character.toggle_equipment_ui()
+                return
 
         # Crafting UI
         if self.character.crafting_ui_open and self.crafting_window_rect:
             if self.crafting_window_rect.collidepoint(mouse_pos):
                 self.handle_craft_click(mouse_pos)
+                return
+            # Click outside crafting UI - close it
+            else:
+                self.character.close_crafting_ui()
                 return
 
         # Inventory - check for equipment equipping
