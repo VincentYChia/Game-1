@@ -2558,7 +2558,7 @@ class Renderer:
                 recipe_placement_map = placement_data.placement_map
 
         # Draw grid cells
-        cell_rects = {}  # Will store pygame.Rect -> (grid_x, grid_y) for click detection
+        cell_rects = []  # Will store list of (pygame.Rect, (grid_x, grid_y)) for click detection
 
         for gy in range(1, grid_h + 1):  # 1-indexed to match placement data
             for gx in range(1, grid_w + 1):
@@ -2612,7 +2612,7 @@ class Renderer:
                     surf.blit(text_surf, text_rect)
 
                 # Store rect for click handling
-                cell_rects[cell_rect] = (gx, gy)
+                cell_rects.append((cell_rect, (gx, gy)))
 
         # Draw grid size label
         grid_label = f"Smithing Grid: {grid_w}x{grid_h} (T{station_tier})"
@@ -2660,7 +2660,7 @@ class Renderer:
         surrounding_radius = 30  # Radius of each surrounding slot
         orbit_radius = 120  # Distance from center to surrounding slots
 
-        slot_rects = {}  # Will store pygame.Rect -> slot_id for click detection
+        slot_rects = []  # Will store list of (pygame.Rect, slot_id) for click detection
 
         # Draw core slot
         core_x = center_x - core_radius
@@ -2695,7 +2695,7 @@ class Renderer:
             text_rect = text_surf.get_rect(center=(center_x, center_y))
             surf.blit(text_surf, text_rect)
 
-        slot_rects[core_rect] = "core_0"
+        slot_rects.append((core_rect, "core_0"))
 
         # Draw surrounding slots in circle
         import math
@@ -2739,7 +2739,7 @@ class Renderer:
                 text_rect = text_surf.get_rect(center=(slot_x, slot_y))
                 surf.blit(text_surf, text_rect)
 
-            slot_rects[slot_rect] = slot_id
+            slot_rects.append((slot_rect, slot_id))
 
         # Draw label
         label = f"Refining Hub: {core_slots} core + {surrounding_slots} surrounding (T{station_tier})"
@@ -3323,12 +3323,12 @@ class Renderer:
 
         self.screen.blit(surf, (wx, wy))
         # Return window rect, recipes, and grid cell rects for click handling
-        grid_rects_absolute = {}
+        grid_rects_absolute = []
         if selected_recipe:
             # Convert relative grid rects to absolute screen coordinates
-            for rect, grid_pos in placement_grid_rects.items():
+            for rect, grid_pos in placement_grid_rects:
                 abs_rect = rect.move(wx, wy)  # Offset by window position
-                grid_rects_absolute[abs_rect] = grid_pos
+                grid_rects_absolute.append((abs_rect, grid_pos))
         return pygame.Rect(wx, wy, ww, wh), recipes[:8] if recipes else [], grid_rects_absolute
 
     def render_equipment_ui(self, character: Character, mouse_pos: Tuple[int, int]):
@@ -3816,7 +3816,7 @@ class GameEngine:
         self.selected_recipe = None  # Currently selected recipe in crafting UI (for placement display)
         self.user_placement = {}  # User's current material placement: "x,y" -> materialId for grids, or other structures
         self.active_station_tier = 1  # Currently open crafting station's tier (determines grid size shown)
-        self.placement_grid_rects = {}  # Grid cell rects for click detection: pygame.Rect -> (grid_x, grid_y)
+        self.placement_grid_rects = []  # Grid cell rects for click detection: list of (pygame.Rect, (grid_x, grid_y) or slot_id)
         self.stats_window_rect = None
         self.stats_buttons = []
         self.equipment_window_rect = None
@@ -4557,7 +4557,7 @@ class GameEngine:
                 return  # No recipe selected, nothing to interact with
 
             # First check for placement slot clicks (grid cells or hub slots)
-            for cell_rect, slot_data in self.placement_grid_rects.items():
+            for cell_rect, slot_data in self.placement_grid_rects:
                 if cell_rect.collidepoint(mouse_pos):
                     # Slot clicked!
                     # slot_data can be either (grid_x, grid_y) tuple for grids or "slot_id" string for others
