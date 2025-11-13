@@ -2826,7 +2826,9 @@ class Renderer:
                 # Check if this cell corresponds to a recipe requirement (with offset for centering)
                 recipe_x = gx - offset_x
                 recipe_y = gy - offset_y
-                recipe_key = f"{recipe_x},{recipe_y}"
+                # NOTE: Placement data format is "row,col" where row=Y, col=X
+                # So we need to swap: recipe_key should be "{recipe_y},{recipe_x}"
+                recipe_key = f"{recipe_y},{recipe_x}"
 
                 grid_key = f"{gx},{gy}"
                 has_recipe_requirement = (1 <= recipe_x <= recipe_grid_w and
@@ -2883,6 +2885,149 @@ class Renderer:
         surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
 
         return cell_rects
+
+    def render_adornment_pattern(self, surf: pygame.Surface, placement_rect: pygame.Rect,
+                                 station_tier: int, selected_recipe: Optional[Recipe],
+                                 user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
+        """
+        Render adornment/enchanting pattern grid with vertices and shapes:
+        - Uses centered coordinate system (0,0 at center)
+        - Shows vertices as circles with material labels
+        - Draws connecting lines for shapes
+        - Supports different grid sizes (8x8, 10x10, 12x12, etc.)
+
+        Returns: List of (pygame.Rect, vertex_coord_str) for click handling
+        """
+        mat_db = MaterialDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        # Get placement data for selected recipe
+        vertices = {}
+        shapes = []
+        grid_size = 12  # Default grid size
+
+        if selected_recipe:
+            placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            if placement_data and placement_data.placement_map:
+                pmap = placement_data.placement_map
+                vertices = pmap.get('vertices', {})
+                shapes = pmap.get('shapes', [])
+                # Parse grid type (e.g., "square_12x12")
+                grid_type = pmap.get('gridType', 'square_12x12')
+                if 'x' in grid_type:
+                    try:
+                        grid_size = int(grid_type.split('_')[1].split('x')[0])
+                    except (IndexError, ValueError):
+                        pass
+
+        # Calculate cell size to fit grid in placement_rect
+        padding = 40
+        available = min(placement_rect.width, placement_rect.height) - 2 * padding
+        cell_size = available // grid_size
+
+        # Center the grid
+        grid_pixel_size = grid_size * cell_size
+        grid_start_x = placement_rect.x + (placement_rect.width - grid_pixel_size) // 2
+        grid_start_y = placement_rect.y + (placement_rect.height - grid_pixel_size) // 2
+
+        # Draw grid background
+        grid_rect = pygame.Rect(grid_start_x, grid_start_y, grid_pixel_size, grid_pixel_size)
+        pygame.draw.rect(surf, (25, 25, 35), grid_rect)
+
+        # Draw grid cells
+        for row in range(grid_size):
+            for col in range(grid_size):
+                x = grid_start_x + col * cell_size
+                y = grid_start_y + row * cell_size
+                cell_rect = pygame.Rect(x, y, cell_size - 1, cell_size - 1)
+                pygame.draw.rect(surf, (40, 40, 50), cell_rect, 1)
+
+        # Draw center axes
+        half = grid_size // 2
+        center_x = grid_start_x + half * cell_size
+        center_y = grid_start_y + half * cell_size
+        pygame.draw.line(surf, (60, 60, 70), (center_x, grid_start_y), (center_x, grid_start_y + grid_pixel_size), 2)
+        pygame.draw.line(surf, (60, 60, 70), (grid_start_x, center_y), (grid_start_x + grid_pixel_size, center_y), 2)
+
+        # Draw shape connecting lines first (behind vertices)
+        for shape in shapes:
+            shape_vertices = shape.get('vertices', [])
+            if len(shape_vertices) > 1:
+                for i in range(len(shape_vertices)):
+                    v1_str = shape_vertices[i]
+                    v2_str = shape_vertices[(i + 1) % len(shape_vertices)]
+
+                    if ',' in v1_str and ',' in v2_str:
+                        try:
+                            gx1, gy1 = map(int, v1_str.split(','))
+                            gx2, gy2 = map(int, v2_str.split(','))
+
+                            # Convert centered coords to screen position
+                            sx1 = grid_start_x + (gx1 + half) * cell_size + cell_size // 2
+                            sy1 = grid_start_y + (half - gy1) * cell_size + cell_size // 2
+                            sx2 = grid_start_x + (gx2 + half) * cell_size + cell_size // 2
+                            sy2 = grid_start_y + (half - gy2) * cell_size + cell_size // 2
+
+                            pygame.draw.line(surf, (100, 150, 255), (sx1, sy1), (sx2, sy2), 3)
+                        except (ValueError, IndexError):
+                            pass
+
+        # Draw vertices (material placement points)
+        vertex_rects = []
+        for coord_str, vertex_data in vertices.items():
+            if ',' in coord_str:
+                try:
+                    gx, gy = map(int, coord_str.split(','))
+
+                    # Convert centered coordinates to screen position
+                    screen_x = grid_start_x + (gx + half) * cell_size + cell_size // 2
+                    screen_y = grid_start_y + (half - gy) * cell_size + cell_size // 2
+
+                    material_id = vertex_data.get('materialId')
+                    is_key = vertex_data.get('isKey', False)
+
+                    # Determine color
+                    if material_id:
+                        mat = mat_db.get_material(material_id)
+                        if mat:
+                            mat_color = Config.RARITY_COLORS.get(mat.rarity, (100, 200, 200))
+                        else:
+                            mat_color = (255, 100, 100) if is_key else (100, 200, 200)
+                    else:
+                        mat_color = (255, 100, 100) if is_key else (100, 200, 200)
+
+                    # Draw larger, more visible circle
+                    pygame.draw.circle(surf, mat_color, (screen_x, screen_y), 10)
+                    pygame.draw.circle(surf, (255, 255, 255), (screen_x, screen_y), 10, 2)
+
+                    # Draw inner dot for key vertices
+                    if is_key:
+                        pygame.draw.circle(surf, (255, 255, 0), (screen_x, screen_y), 4)
+
+                    # Draw material label with shadow for visibility
+                    if material_id:
+                        mat_label = material_id[:4].upper()
+                        # Shadow
+                        label_shadow = self.tiny_font.render(mat_label, True, (0, 0, 0))
+                        surf.blit(label_shadow, (screen_x - 10, screen_y - 22))
+                        surf.blit(label_shadow, (screen_x - 8, screen_y - 20))
+                        # Main text
+                        label_text = self.tiny_font.render(mat_label, True, (255, 255, 255))
+                        surf.blit(label_text, (screen_x - 9, screen_y - 21))
+
+                    # Store for click handling
+                    vertex_rect = pygame.Rect(screen_x - 10, screen_y - 10, 20, 20)
+                    vertex_rects.append((vertex_rect, coord_str))
+
+                except (ValueError, IndexError):
+                    pass
+
+        # Draw grid label
+        grid_label = f"Adornment Pattern: {grid_size}x{grid_size} ({len(vertices)} vertices)"
+        label_surf = self.small_font.render(grid_label, True, (150, 150, 200))
+        surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
+
+        return vertex_rects
 
     def render_refining_hub(self, surf: pygame.Surface, placement_rect: pygame.Rect,
                           station_tier: int, selected_recipe: Optional[Recipe],
@@ -3628,16 +3773,19 @@ class Renderer:
         self._temp_selected_recipe = selected_recipe
         self._temp_user_placement = user_placement
 
-        # Always render recipe list on the left
-        recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos)
+        # Always render recipe list on the left (pass scroll offset from game engine)
+        # Note: Renderer doesn't have direct access to game engine, so we need to get it via a hack
+        # Check if there's a scroll offset to use (this will be set by the caller)
+        scroll_offset = getattr(self, '_temp_scroll_offset', 0)
+        recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos, scroll_offset)
 
         # If a recipe is selected, render placement UI on the right
         # (Note: Placement UI rendering is handled by the recipe selection sidebar)
 
         return recipe_result
 
-    def _render_recipe_selection_sidebar(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Render recipe selection sidebar - left side"""
+    def _render_recipe_selection_sidebar(self, character: Character, mouse_pos: Tuple[int, int], scroll_offset: int = 0):
+        """Render recipe selection sidebar - left side with scrolling support"""
         recipe_db = RecipeDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
@@ -3664,13 +3812,35 @@ class Renderer:
                                                     character.active_station.tier)
 
         # ======================
-        # LEFT PANEL: Recipe List
+        # LEFT PANEL: Recipe List with Scrolling
         # ======================
+        visible_recipes = []  # Initialize to empty list
         if not recipes:
             surf.blit(self.font.render("No recipes available", True, (200, 200, 200)), (20, 80))
         else:
+            # Apply scroll offset and show 8 recipes at a time
+            total_recipes = len(recipes)
+            max_visible = 8
+            start_idx = min(scroll_offset, max(0, total_recipes - max_visible))
+            end_idx = min(start_idx + max_visible, total_recipes)
+            visible_recipes = recipes[start_idx:end_idx]
+
+            # Show scroll indicators if needed
+            if total_recipes > max_visible:
+                scroll_text = f"Recipes {start_idx + 1}-{end_idx} of {total_recipes}"
+                scroll_surf = self.small_font.render(scroll_text, True, (150, 150, 150))
+                surf.blit(scroll_surf, (20, 50))
+
+                # Show scroll arrows
+                if start_idx > 0:
+                    up_arrow = self.small_font.render("▲ Scroll Up", True, (100, 200, 100))
+                    surf.blit(up_arrow, (left_panel_w - 120, 50))
+                if end_idx < total_recipes:
+                    down_arrow = self.small_font.render("▼ Scroll Down", True, (100, 200, 100))
+                    surf.blit(down_arrow, (left_panel_w - 120, wh - 30))
+
             y_off = 70
-            for i, recipe in enumerate(recipes[:8]):  # Show up to 8 recipes
+            for i, recipe in enumerate(visible_recipes):
                 # Compact recipe display (no buttons, just info)
                 num_inputs = len(recipe.inputs)
                 btn_height = max(70, 35 + num_inputs * 16 + 5)
@@ -3759,8 +3929,8 @@ class Renderer:
                 # Engineering: Slot-type
                 placement_grid_rects = self.render_engineering_slots(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
             elif station_type == 'adornments':
-                # Enchanting: Grid-based (reuses smithing grid renderer)
-                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
+                # Enchanting: Vertex-based pattern renderer
+                placement_grid_rects = self.render_adornment_pattern(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
 
             # Craft buttons at bottom of right panel
             if can_craft:
@@ -3812,7 +3982,9 @@ class Renderer:
             for rect, grid_pos in placement_grid_rects:
                 abs_rect = rect.move(wx, wy)  # Offset by window position
                 grid_rects_absolute.append((abs_rect, grid_pos))
-        return pygame.Rect(wx, wy, ww, wh), recipes[:8] if recipes else [], grid_rects_absolute
+        # Return visible recipes (affected by scroll offset)
+        return_recipes = visible_recipes if recipes else []
+        return pygame.Rect(wx, wy, ww, wh), return_recipes, grid_rects_absolute
 
     def render_equipment_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.equipment_ui_open:
@@ -4522,6 +4694,7 @@ class GameEngine:
         self.user_placement = {}  # User's current material placement: "x,y" -> materialId for grids, or other structures
         self.active_station_tier = 1  # Currently open crafting station's tier (determines grid size shown)
         self.placement_grid_rects = []  # Grid cell rects for click detection: list of (pygame.Rect, (grid_x, grid_y) or slot_id)
+        self.recipe_scroll_offset = 0  # Scroll offset for recipe list in crafting UI
         self.stats_window_rect = None
         self.stats_buttons = []
         self.equipment_window_rect = None
@@ -4632,6 +4805,15 @@ class GameEngine:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
                 self.mouse_pos = event.pos
+            elif event.type == pygame.MOUSEWHEEL:
+                # Handle mouse wheel scrolling for recipe list
+                if self.character.crafting_ui_open and self.crafting_window_rect:
+                    if self.crafting_window_rect.collidepoint(self.mouse_pos):
+                        # Scroll the recipe list
+                        self.recipe_scroll_offset -= event.y  # event.y is positive for scroll up
+                        # Clamp scroll offset to valid range
+                        max_scroll = max(0, len(self.crafting_recipes) - 8)
+                        self.recipe_scroll_offset = max(0, min(self.recipe_scroll_offset, max_scroll))
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.handle_mouse_click(event.pos)
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
@@ -4794,6 +4976,7 @@ class GameEngine:
             self.active_station_tier = station.tier  # Capture tier for placement UI
             self.user_placement = {}  # Clear any previous placement
             self.selected_recipe = None  # Clear selected recipe
+            self.recipe_scroll_offset = 0  # Reset recipe list scroll
             return
 
         resource = self.world.get_resource_at(world_pos)
@@ -5907,6 +6090,8 @@ class GameEngine:
             self.class_buttons = []
 
             if self.character.crafting_ui_open:
+                # Pass scroll offset via temporary attribute (renderer doesn't have direct access to game state)
+                self.renderer._temp_scroll_offset = self.recipe_scroll_offset
                 result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe, self.user_placement)
                 if result:
                     self.crafting_window_rect, self.crafting_recipes, self.placement_grid_rects = result
