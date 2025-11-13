@@ -1251,6 +1251,247 @@ class Recipe:
     effect: Dict = field(default_factory=dict)
 
 
+# ============================================================================
+# PLACEMENT SYSTEM
+# ============================================================================
+@dataclass
+class PlacementData:
+    """Universal placement data structure for all crafting disciplines"""
+    recipe_id: str
+    discipline: str  # smithing, alchemy, refining, engineering, adornments
+
+    # Smithing & Enchanting: Grid-based placement
+    grid_size: str = ""  # "3x3", "5x5", "12x12", etc.
+    placement_map: Dict[str, str] = field(default_factory=dict)  # "x,y" -> materialId
+
+    # Refining: Hub-and-spoke
+    core_inputs: List[Dict] = field(default_factory=list)  # Center slots
+    surrounding_inputs: List[Dict] = field(default_factory=list)  # Surrounding modifiers
+
+    # Alchemy: Sequential
+    ingredients: List[Dict] = field(default_factory=list)  # [{slot, materialId, quantity}]
+
+    # Engineering: Slot types
+    slots: List[Dict] = field(default_factory=list)  # [{type, materialId, quantity}]
+
+    # Enchanting: Pattern-based
+    pattern: List[Dict] = field(default_factory=list)  # Pattern vertices/shapes
+
+    # Metadata
+    narrative: str = ""
+    output_id: str = ""
+    station_tier: int = 1
+
+
+class PlacementDatabase:
+    """Manages placement data for all crafting disciplines"""
+    _instance = None
+
+    def __init__(self):
+        self.placements: Dict[str, PlacementData] = {}  # recipeId -> PlacementData
+        self.loaded = False
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = PlacementDatabase()
+        return cls._instance
+
+    def load_from_files(self, base_path: str = ""):
+        """Load all placement JSON files"""
+        total = 0
+
+        # Smithing placements
+        total += self._load_smithing("placements.JSON/placements-smithing-1.JSON")
+
+        # Refining placements
+        total += self._load_refining("placements.JSON/placements-refining-1.JSON")
+
+        # Alchemy placements
+        total += self._load_alchemy("placements.JSON/placements-alchemy-1.JSON")
+
+        # Engineering placements
+        total += self._load_engineering("placements.JSON/placements-engineering-1.JSON")
+
+        # Enchanting/Adornments placements
+        total += self._load_enchanting("placements.JSON/placements-adornments-1.JSON")
+
+        self.loaded = True
+        print(f"✓ Loaded {total} placement templates")
+        return total
+
+    def _load_smithing(self, filepath: str) -> int:
+        """Load smithing grid-based placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Smithing placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='smithing',
+                    grid_size=placement.get('metadata', {}).get('gridSize', '3x3'),
+                    placement_map=placement.get('placementMap', {}),
+                    narrative=placement.get('metadata', {}).get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} smithing placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading smithing placements: {e}")
+            return 0
+
+    def _load_refining(self, filepath: str) -> int:
+        """Load refining hub-and-spoke placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Refining placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='refining',
+                    core_inputs=placement.get('coreInputs', []),
+                    surrounding_inputs=placement.get('surroundingInputs', []),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} refining placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading refining placements: {e}")
+            return 0
+
+    def _load_alchemy(self, filepath: str) -> int:
+        """Load alchemy sequential placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Alchemy placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='alchemy',
+                    ingredients=placement.get('ingredients', []),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} alchemy placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading alchemy placements: {e}")
+            return 0
+
+    def _load_engineering(self, filepath: str) -> int:
+        """Load engineering slot-type placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Engineering placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='engineering',
+                    slots=placement.get('slots', []),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} engineering placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading engineering placements: {e}")
+            return 0
+
+    def _load_enchanting(self, filepath: str) -> int:
+        """Load enchanting pattern placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Enchanting placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                # Enchanting may have pattern or grid-based placement
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='adornments',
+                    pattern=placement.get('pattern', []),
+                    placement_map=placement.get('placementMap', {}),
+                    grid_size=placement.get('metadata', {}).get('gridSize', '3x3'),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} enchanting placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading enchanting placements: {e}")
+            return 0
+
+    def get_placement(self, recipe_id: str) -> Optional[PlacementData]:
+        """Get placement data for a recipe"""
+        return self.placements.get(recipe_id)
+
+    def has_placement(self, recipe_id: str) -> bool:
+        """Check if a recipe has placement data"""
+        return recipe_id in self.placements
+
+
 class RecipeDatabase:
     _instance = None
 
@@ -1699,49 +1940,29 @@ class WorldSystem:
         print(f"Generated {Config.WORLD_SIZE}x{Config.WORLD_SIZE} world, {len(self.resources)} resources")
 
     def spawn_starting_stations(self):
-        """Spawn ALL TIER crafting stations near player start (50, 50) for comprehensive testing"""
-        # Tier 1 stations (closest to spawn)
-        stations_t1 = [
-            (48, 48, StationType.SMITHING, 1),
-            (52, 48, StationType.REFINING, 1),
-            (48, 52, StationType.ALCHEMY, 1),
-            (52, 52, StationType.ENGINEERING, 1),
-            (50, 50, StationType.ADORNMENTS, 1)
+        """Spawn all tiers of crafting stations near player start (50, 50)"""
+        # Place all 4 tiers of each station type in a grid layout
+        # Format: (base_x, base_y, station_type)
+        # Each station type gets T1-T4 arranged vertically
+
+        station_positions = [
+            # SMITHING - Far left column
+            (44, StationType.SMITHING),
+            # REFINING - Left column
+            (46, StationType.REFINING),
+            # ALCHEMY - Right column
+            (54, StationType.ALCHEMY),
+            # ENGINEERING - Far right column
+            (56, StationType.ENGINEERING),
+            # ADORNMENTS/ENCHANTING - Center column
+            (50, StationType.ADORNMENTS),
         ]
 
-        # Tier 2 stations (ring around T1)
-        stations_t2 = [
-            (46, 48, StationType.SMITHING, 2),
-            (54, 48, StationType.REFINING, 2),
-            (46, 52, StationType.ALCHEMY, 2),
-            (54, 52, StationType.ENGINEERING, 2),
-            (50, 46, StationType.ADORNMENTS, 2)
-        ]
-
-        # Tier 3 stations (outer ring)
-        stations_t3 = [
-            (44, 48, StationType.SMITHING, 3),
-            (56, 48, StationType.REFINING, 3),
-            (44, 52, StationType.ALCHEMY, 3),
-            (56, 52, StationType.ENGINEERING, 3),
-            (50, 44, StationType.ADORNMENTS, 3)
-        ]
-
-        # Tier 4 stations (corners for advanced testing)
-        stations_t4 = [
-            (44, 44, StationType.SMITHING, 4),
-            (56, 44, StationType.REFINING, 4),
-            (44, 56, StationType.ALCHEMY, 4),
-            (56, 56, StationType.ENGINEERING, 4),
-            (50, 56, StationType.ADORNMENTS, 4)
-        ]
-
-        # Spawn all tiers
-        all_stations = stations_t1 + stations_t2 + stations_t3 + stations_t4
-        for x, y, stype, tier in all_stations:
-            self.crafting_stations.append(CraftingStation(Position(x, y, 0), stype, tier))
-
-        print(f"✓ Spawned {len(all_stations)} crafting stations (T1-T4) near spawn")
+        # Spawn T1-T4 of each station type
+        for base_x, stype in station_positions:
+            for tier in range(1, 5):  # T1, T2, T3, T4
+                y = 46 + (tier - 1) * 2  # Vertical spacing: 46, 48, 50, 52
+                self.crafting_stations.append(CraftingStation(Position(base_x, y, 0), stype, tier))
 
     def get_tile(self, position: Position) -> Optional[WorldTile]:
         return self.tiles.get(position.snap_to_grid().to_key())
@@ -2527,6 +2748,477 @@ class Renderer:
         self.small_font = pygame.font.Font(None, 18)
         self.tiny_font = pygame.font.Font(None, 14)
 
+    def _get_grid_size_for_tier(self, tier: int, discipline: str) -> Tuple[int, int]:
+        """Get grid dimensions based on station tier for grid-based disciplines (smithing, adornments)"""
+        if discipline not in ['smithing', 'adornments']:
+            return (3, 3)  # Default for non-grid disciplines
+
+        tier_to_grid = {
+            1: (3, 3),
+            2: (5, 5),
+            3: (7, 7),
+            4: (9, 9)
+        }
+        return tier_to_grid.get(tier, (3, 3))
+
+    def render_smithing_grid(self, surf: pygame.Surface, placement_rect: pygame.Rect,
+                           station_tier: int, selected_recipe: Optional[Recipe],
+                           user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
+        """
+        Render smithing grid with:
+        - Station tier determines grid size shown (T1=3x3, T2=5x5, T3=7x7, T4=9x9)
+        - Recipe placement data shown (if selected)
+        - User's current placement overlaid
+        - Visual feedback for valid/invalid placements
+
+        Returns: Dict mapping grid cell rects to (grid_x, grid_y) for click handling
+        """
+        mat_db = MaterialDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        # Determine grid size based on station tier
+        grid_w, grid_h = self._get_grid_size_for_tier(station_tier, 'smithing')
+
+        # Calculate cell size to fit in placement_rect with padding
+        padding = 20
+        available_w = placement_rect.width - 2 * padding
+        available_h = placement_rect.height - 2 * padding
+        cell_size = min(available_w // grid_w, available_h // grid_h) - 4  # -4 for cell spacing
+
+        # Center the grid in the placement_rect
+        grid_pixel_w = grid_w * (cell_size + 4)
+        grid_pixel_h = grid_h * (cell_size + 4)
+        grid_start_x = placement_rect.x + (placement_rect.width - grid_pixel_w) // 2
+        grid_start_y = placement_rect.y + (placement_rect.height - grid_pixel_h) // 2
+
+        # Get recipe placement data if available
+        recipe_placement_map = {}
+        recipe_grid_w, recipe_grid_h = grid_w, grid_h  # Default to station grid size
+        if selected_recipe:
+            placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            if placement_data and placement_data.grid_size:
+                # Parse recipe's actual grid size (e.g., "3x3")
+                parts = placement_data.grid_size.lower().split('x')
+                if len(parts) == 2:
+                    try:
+                        recipe_grid_w = int(parts[0])
+                        recipe_grid_h = int(parts[1])
+                    except ValueError:
+                        pass
+                recipe_placement_map = placement_data.placement_map
+
+        # Calculate offset to center recipe on station grid
+        offset_x = (grid_w - recipe_grid_w) // 2
+        offset_y = (grid_h - recipe_grid_h) // 2
+
+        # Draw grid cells
+        cell_rects = []  # Will store list of (pygame.Rect, (grid_x, grid_y)) for click detection
+
+        for gy in range(1, grid_h + 1):  # 1-indexed to match placement data
+            for gx in range(1, grid_w + 1):
+                # Flip Y axis: placement data uses bottom-up (y=1 at bottom), pygame uses top-down
+                render_y = (grid_h + 1) - gy  # Convert to render row (1 at top)
+
+                cell_x = grid_start_x + (gx - 1) * (cell_size + 4)
+                cell_y = grid_start_y + (render_y - 1) * (cell_size + 4)
+                cell_rect = pygame.Rect(cell_x, cell_y, cell_size, cell_size)
+
+                # Check if this cell corresponds to a recipe requirement (with offset for centering)
+                recipe_x = gx - offset_x
+                recipe_y = gy - offset_y
+                recipe_key = f"{recipe_x},{recipe_y}"
+
+                grid_key = f"{gx},{gy}"
+                has_recipe_requirement = (1 <= recipe_x <= recipe_grid_w and
+                                        1 <= recipe_y <= recipe_grid_h and
+                                        recipe_key in recipe_placement_map)
+                has_user_placement = grid_key in user_placement
+
+                # Cell background color
+                if has_user_placement:
+                    # User placed something here
+                    cell_color = (50, 70, 50)  # Green tint
+                elif has_recipe_requirement:
+                    # Recipe requires something here (but user hasn't placed it yet)
+                    cell_color = (70, 60, 40)  # Gold tint - shows what's needed
+                else:
+                    # Empty cell
+                    cell_color = (30, 30, 40)
+
+                # Highlight cell under mouse
+                is_hovered = cell_rect.collidepoint(mouse_pos)
+                if is_hovered:
+                    cell_color = tuple(min(255, c + 20) for c in cell_color)
+
+                pygame.draw.rect(surf, cell_color, cell_rect)
+
+                # Border
+                border_color = (100, 100, 100) if not has_recipe_requirement else (150, 130, 80)
+                pygame.draw.rect(surf, border_color, cell_rect, 1 if not is_hovered else 2)
+
+                # Draw material icon/name
+                if has_user_placement:
+                    # Show user's placement
+                    mat_id = user_placement[grid_key]
+                    mat = mat_db.get_material(mat_id)
+                    mat_name = (mat.name[:6] if mat else mat_id[:6])  # Truncate to fit
+                    text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                    text_rect = text_surf.get_rect(center=cell_rect.center)
+                    surf.blit(text_surf, text_rect)
+                elif has_recipe_requirement:
+                    # Show what recipe requires (semi-transparent hint)
+                    req_mat_id = recipe_placement_map[recipe_key]
+                    mat = mat_db.get_material(req_mat_id)
+                    mat_name = (mat.name[:6] if mat else req_mat_id[:6])
+                    text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                    text_rect = text_surf.get_rect(center=cell_rect.center)
+                    surf.blit(text_surf, text_rect)
+
+                # Store rect for click handling
+                cell_rects.append((cell_rect, (gx, gy)))
+
+        # Draw grid size label
+        grid_label = f"Smithing Grid: {grid_w}x{grid_h} (T{station_tier})"
+        label_surf = self.small_font.render(grid_label, True, (150, 150, 150))
+        surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
+
+        return cell_rects
+
+    def render_refining_hub(self, surf: pygame.Surface, placement_rect: pygame.Rect,
+                          station_tier: int, selected_recipe: Optional[Recipe],
+                          user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
+        """
+        Render refining hub-and-spoke with:
+        - Station tier determines number of slots (T1=3 slots, T2=5, T3=7, T4=9)
+        - Core slots in center (hub)
+        - Surrounding slots in circle around core (spokes)
+        - User can place materials in slots
+
+        Returns: Dict mapping slot rects to slot_id for click handling
+        """
+        mat_db = MaterialDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        # Determine slot counts based on station tier
+        # T1: 1 core + 2 surrounding = 3 total
+        # T2: 1 core + 4 surrounding = 5 total
+        # T3: 1 core + 6 surrounding = 7 total
+        # T4: 1 core + 8 surrounding = 9 total
+        core_slots = 1
+        surrounding_slots = 2 + (station_tier - 1) * 2
+
+        # Get recipe placement data if available
+        required_core = []
+        required_surrounding = []
+        if selected_recipe:
+            placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            if placement_data:
+                required_core = placement_data.core_inputs
+                required_surrounding = placement_data.surrounding_inputs
+
+        # Calculate slot size
+        center_x = placement_rect.centerx
+        center_y = placement_rect.centery
+        core_radius = 40  # Radius of core slot
+        surrounding_radius = 30  # Radius of each surrounding slot
+        orbit_radius = 120  # Distance from center to surrounding slots
+
+        slot_rects = []  # Will store list of (pygame.Rect, slot_id) for click detection
+
+        # Draw core slot
+        core_x = center_x - core_radius
+        core_y = center_y - core_radius
+        core_rect = pygame.Rect(core_x, core_y, core_radius * 2, core_radius * 2)
+
+        # Determine core slot state
+        has_user_core = "core_0" in user_placement
+        has_required_core = len(required_core) > 0
+
+        core_color = (50, 70, 50) if has_user_core else ((70, 60, 40) if has_required_core else (30, 30, 40))
+        is_hovered = core_rect.collidepoint(mouse_pos)
+        if is_hovered:
+            core_color = tuple(min(255, c + 20) for c in core_color)
+
+        pygame.draw.circle(surf, core_color, (center_x, center_y), core_radius)
+        pygame.draw.circle(surf, (150, 130, 80), (center_x, center_y), core_radius, 2 if is_hovered else 1)
+
+        # Draw core material
+        if has_user_core:
+            mat_id = user_placement["core_0"]
+            mat = mat_db.get_material(mat_id)
+            mat_name = (mat.name[:8] if mat else mat_id[:8])
+            text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+            text_rect = text_surf.get_rect(center=(center_x, center_y))
+            surf.blit(text_surf, text_rect)
+        elif has_required_core:
+            req_mat_id = required_core[0].get('materialId', '')
+            mat = mat_db.get_material(req_mat_id)
+            mat_name = (mat.name[:8] if mat else req_mat_id[:8])
+            text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+            text_rect = text_surf.get_rect(center=(center_x, center_y))
+            surf.blit(text_surf, text_rect)
+
+        slot_rects.append((core_rect, "core_0"))
+
+        # Draw surrounding slots in circle
+        import math
+        for i in range(surrounding_slots):
+            angle = (2 * math.pi * i) / surrounding_slots - math.pi / 2  # Start at top
+            slot_x = center_x + int(orbit_radius * math.cos(angle))
+            slot_y = center_y + int(orbit_radius * math.sin(angle))
+
+            slot_rect = pygame.Rect(
+                slot_x - surrounding_radius,
+                slot_y - surrounding_radius,
+                surrounding_radius * 2,
+                surrounding_radius * 2
+            )
+
+            slot_id = f"surrounding_{i}"
+            has_user_surrounding = slot_id in user_placement
+            has_required_surrounding = i < len(required_surrounding)
+
+            slot_color = (50, 70, 50) if has_user_surrounding else ((70, 60, 40) if has_required_surrounding else (30, 30, 40))
+            is_hovered = slot_rect.collidepoint(mouse_pos)
+            if is_hovered:
+                slot_color = tuple(min(255, c + 20) for c in slot_color)
+
+            pygame.draw.circle(surf, slot_color, (slot_x, slot_y), surrounding_radius)
+            pygame.draw.circle(surf, (100, 100, 100), (slot_x, slot_y), surrounding_radius, 2 if is_hovered else 1)
+
+            # Draw slot material
+            if has_user_surrounding:
+                mat_id = user_placement[slot_id]
+                mat = mat_db.get_material(mat_id)
+                mat_name = (mat.name[:6] if mat else mat_id[:6])
+                text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                text_rect = text_surf.get_rect(center=(slot_x, slot_y))
+                surf.blit(text_surf, text_rect)
+            elif has_required_surrounding:
+                req_mat_id = required_surrounding[i].get('materialId', '')
+                mat = mat_db.get_material(req_mat_id)
+                mat_name = (mat.name[:6] if mat else req_mat_id[:6])
+                text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                text_rect = text_surf.get_rect(center=(slot_x, slot_y))
+                surf.blit(text_surf, text_rect)
+
+            slot_rects.append((slot_rect, slot_id))
+
+        # Draw label
+        label = f"Refining Hub: {core_slots} core + {surrounding_slots} surrounding (T{station_tier})"
+        label_surf = self.small_font.render(label, True, (150, 150, 150))
+        surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
+
+        return slot_rects
+
+    def render_alchemy_sequence(self, surf: pygame.Surface, placement_rect: pygame.Rect,
+                               station_tier: int, selected_recipe: Optional[Recipe],
+                               user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
+        """
+        Render alchemy sequential placement with:
+        - Station tier determines max slots (T1=2, T2=3, T3=4, T4=5)
+        - Horizontal sequence of numbered slots
+        - Order is critical for alchemy reactions
+
+        Returns: List of (pygame.Rect, slot_id) for click handling
+        """
+        mat_db = MaterialDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        # Determine max slots based on station tier
+        max_slots = 1 + station_tier  # T1=2, T2=3, T3=4, T4=5
+
+        # Get recipe placement data if available
+        required_ingredients = []
+        if selected_recipe:
+            placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            if placement_data:
+                required_ingredients = placement_data.ingredients
+
+        # Calculate slot dimensions
+        slot_width = 80
+        slot_height = 80
+        slot_spacing = 20
+        total_width = max_slots * slot_width + (max_slots - 1) * slot_spacing
+
+        start_x = placement_rect.centerx - total_width // 2
+        start_y = placement_rect.centery - slot_height // 2
+
+        slot_rects = []  # Will store list of (pygame.Rect, slot_id) for click detection
+
+        # Draw slots horizontally
+        for i in range(max_slots):
+            slot_num = i + 1  # 1-indexed
+            slot_x = start_x + i * (slot_width + slot_spacing)
+            slot_y = start_y
+
+            slot_rect = pygame.Rect(slot_x, slot_y, slot_width, slot_height)
+            slot_id = f"seq_{slot_num}"
+
+            # Find if this slot is required
+            required_for_slot = None
+            for ing in required_ingredients:
+                if ing.get('slot') == slot_num:
+                    required_for_slot = ing
+                    break
+
+            has_user_material = slot_id in user_placement
+            has_requirement = required_for_slot is not None
+
+            # Slot background color
+            slot_color = (50, 70, 50) if has_user_material else ((70, 60, 40) if has_requirement else (30, 30, 40))
+            is_hovered = slot_rect.collidepoint(mouse_pos)
+            if is_hovered:
+                slot_color = tuple(min(255, c + 20) for c in slot_color)
+
+            pygame.draw.rect(surf, slot_color, slot_rect)
+            pygame.draw.rect(surf, (100, 100, 100), slot_rect, 2 if is_hovered else 1)
+
+            # Draw slot number
+            num_surf = self.font.render(str(slot_num), True, (150, 150, 150))
+            num_rect = num_surf.get_rect(topleft=(slot_x + 5, slot_y + 5))
+            surf.blit(num_surf, num_rect)
+
+            # Draw material name
+            if has_user_material:
+                mat_id = user_placement[slot_id]
+                mat = mat_db.get_material(mat_id)
+                mat_name = (mat.name[:10] if mat else mat_id[:10])
+                text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
+                surf.blit(text_surf, text_rect)
+            elif has_requirement:
+                req_mat_id = required_for_slot.get('materialId', '')
+                mat = mat_db.get_material(req_mat_id)
+                mat_name = (mat.name[:10] if mat else req_mat_id[:10])
+                text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
+                surf.blit(text_surf, text_rect)
+
+            slot_rects.append((slot_rect, slot_id))
+
+            # Draw arrow between slots
+            if i < max_slots - 1:
+                arrow_start_x = slot_x + slot_width
+                arrow_end_x = arrow_start_x + slot_spacing
+                arrow_y = slot_y + slot_height // 2
+                pygame.draw.line(surf, (100, 100, 100), (arrow_start_x, arrow_y), (arrow_end_x, arrow_y), 2)
+                # Arrowhead
+                pygame.draw.polygon(surf, (100, 100, 100), [
+                    (arrow_end_x, arrow_y),
+                    (arrow_end_x - 8, arrow_y - 5),
+                    (arrow_end_x - 8, arrow_y + 5)
+                ])
+
+        # Draw label
+        label = f"Alchemy Sequence: {max_slots} sequential slots (T{station_tier})"
+        label_surf = self.small_font.render(label, True, (150, 150, 150))
+        surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
+
+        return slot_rects
+
+    def render_engineering_slots(self, surf: pygame.Surface, placement_rect: pygame.Rect,
+                                 station_tier: int, selected_recipe: Optional[Recipe],
+                                 user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
+        """
+        Render engineering slot-type placement with:
+        - Station tier determines max slots (T1=3, T2=5, T3=5, T4=7)
+        - Vertical list of typed slots (FRAME, FUNCTION, POWER, MODIFIER, etc.)
+        - Each slot shows its type and required material
+
+        Returns: List of (pygame.Rect, slot_id) for click handling
+        """
+        mat_db = MaterialDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        # Determine max slots based on station tier
+        tier_to_max_slots = {1: 3, 2: 5, 3: 5, 4: 7}
+        max_slots = tier_to_max_slots.get(station_tier, 3)
+
+        # Get recipe placement data if available
+        required_slots = []
+        if selected_recipe:
+            placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            if placement_data:
+                required_slots = placement_data.slots
+
+        # Calculate slot dimensions
+        slot_width = 300
+        slot_height = 60
+        slot_spacing = 10
+        total_height = min(len(required_slots), max_slots) * (slot_height + slot_spacing) if required_slots else max_slots * (slot_height + slot_spacing)
+
+        start_x = placement_rect.centerx - slot_width // 2
+        start_y = placement_rect.centery - total_height // 2
+
+        slot_rects = []  # Will store list of (pygame.Rect, slot_id) for click handling
+
+        # Draw slots vertically
+        num_slots = max(len(required_slots), 1) if required_slots else max_slots
+        for i in range(num_slots):
+            slot_y = start_y + i * (slot_height + slot_spacing)
+            slot_rect = pygame.Rect(start_x, slot_y, slot_width, slot_height)
+            slot_id = f"eng_slot_{i}"
+
+            # Get required slot info
+            required_slot = required_slots[i] if i < len(required_slots) else None
+            has_user_material = slot_id in user_placement
+            has_requirement = required_slot is not None
+
+            # Slot background color
+            slot_color = (50, 70, 50) if has_user_material else ((70, 60, 40) if has_requirement else (30, 30, 40))
+            is_hovered = slot_rect.collidepoint(mouse_pos)
+            if is_hovered:
+                slot_color = tuple(min(255, c + 20) for c in slot_color)
+
+            pygame.draw.rect(surf, slot_color, slot_rect)
+            pygame.draw.rect(surf, (100, 100, 100), slot_rect, 2 if is_hovered else 1)
+
+            # Draw slot type label (left side)
+            if has_requirement:
+                slot_type = required_slot.get('type', 'UNKNOWN')
+                type_color = {
+                    'FRAME': (150, 150, 200),
+                    'FUNCTION': (200, 150, 100),
+                    'POWER': (200, 100, 100),
+                    'MODIFIER': (150, 200, 150),
+                    'STABILIZER': (180, 180, 100)
+                }.get(slot_type, (150, 150, 150))
+
+                type_surf = self.small_font.render(slot_type, True, type_color)
+                surf.blit(type_surf, (slot_rect.x + 10, slot_rect.y + 10))
+
+                # Draw material name (right side)
+                mat_id = required_slot.get('materialId', '')
+                mat = mat_db.get_material(mat_id)
+                mat_name = mat.name if mat else mat_id
+
+                if has_user_material:
+                    # Show user's material (green)
+                    user_mat_id = user_placement[slot_id]
+                    user_mat = mat_db.get_material(user_mat_id)
+                    user_mat_name = user_mat.name if user_mat else user_mat_id
+                    mat_surf = self.small_font.render(user_mat_name, True, (200, 255, 200))
+                else:
+                    # Show required material (gold hint)
+                    mat_surf = self.small_font.render(mat_name, True, (180, 160, 120))
+
+                surf.blit(mat_surf, (slot_rect.x + 120, slot_rect.y + 10))
+
+                # Draw quantity
+                qty = required_slot.get('quantity', 1)
+                qty_surf = self.small_font.render(f"x{qty}", True, (150, 150, 150))
+                surf.blit(qty_surf, (slot_rect.x + slot_width - 60, slot_rect.y + 10))
+
+            slot_rects.append((slot_rect, slot_id))
+
+        # Draw label
+        label = f"Engineering Slots: {max_slots} max slots (T{station_tier})"
+        label_surf = self.small_font.render(label, True, (150, 150, 150))
+        surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
+
+        return slot_rects
+
     def render_world(self, world: WorldSystem, camera: Camera, character: Character,
                      damage_numbers: List[DamageNumber], combat_manager=None):
         pygame.draw.rect(self.screen, Config.COLOR_BACKGROUND, (0, 0, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT))
@@ -2916,11 +3608,18 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
-    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int],
-                           placement_mode: bool = False, placement_recipe = None, placement_data = None,
-                           placed_materials_grid = None, placed_materials_hub = None,
-                           placed_materials_sequential = None, placed_materials_slots = None):
-        """Main crafting UI dispatcher - shows recipe list and placement UI side-by-side"""
+    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int], selected_recipe=None, user_placement=None):
+        """
+        Render crafting UI with two-panel layout:
+        - Left panel (450px): Recipe list
+        - Right panel (700px): Placement visualization + craft buttons
+
+        Args:
+            selected_recipe: Currently selected recipe (to highlight in UI)
+            user_placement: User's current material placement (Dict[str, str])
+        """
+        if user_placement is None:
+            user_placement = {}
         if not character.crafting_ui_open or not character.active_station:
             return None
 
@@ -2950,36 +3649,55 @@ class Renderer:
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
-        # Narrower width for sidebar (left side)
-        ww, wh = 450, 700
-        wx = 20  # Left edge
-        wy = 50  # Top
+        # Window dimensions - expanded to fit two panels
+        ww, wh = 1200, 600
+        left_panel_w = 450
+        right_panel_w = 700
+        separator_x = left_panel_w + 20
+
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 240))
 
+        # Header
         header = f"{character.active_station.station_type.value.upper()} (T{character.active_station.tier})"
         surf.blit(self.font.render(header, True, character.active_station.get_color()), (20, 20))
         surf.blit(self.small_font.render("[ESC] Close | Select recipe to place materials", True, (180, 180, 180)), (ww - 400, 20))
 
+        # Get recipes for this station
         recipes = recipe_db.get_recipes_for_station(character.active_station.station_type.value,
                                                     character.active_station.tier)
 
-        # Sort recipes by tier descending (highest tier first) so T3 benches show T3 recipes first
-        recipes = sorted(recipes, key=lambda r: r.station_tier, reverse=True)
-
+        # ======================
+        # LEFT PANEL: Recipe List
+        # ======================
         if not recipes:
             surf.blit(self.font.render("No recipes available", True, (200, 200, 200)), (20, 80))
         else:
             y_off = 70
-            for i, recipe in enumerate(recipes[:5]):
-                btn = pygame.Rect(20, y_off, ww - 40, 95)
-                can_craft = recipe_db.can_craft(recipe, character.inventory)
-                btn_color = (40, 60, 40) if can_craft else (60, 40, 40)
-                pygame.draw.rect(surf, btn_color, btn)
-                pygame.draw.rect(surf, (100, 100, 100), btn, 2)
+            for i, recipe in enumerate(recipes[:8]):  # Show up to 8 recipes
+                # Compact recipe display (no buttons, just info)
+                num_inputs = len(recipe.inputs)
+                btn_height = max(70, 35 + num_inputs * 16 + 5)
 
-                # Output name and color
+                btn = pygame.Rect(20, y_off, left_panel_w - 30, btn_height)
+                can_craft = recipe_db.can_craft(recipe, character.inventory)
+
+                # Highlight selected recipe with gold border
+                is_selected = (selected_recipe and selected_recipe.recipe_id == recipe.recipe_id)
+
+                btn_color = (60, 80, 60) if can_craft else (80, 60, 60)
+                if is_selected:
+                    btn_color = (80, 70, 30)  # Gold tint for selected
+
+                pygame.draw.rect(surf, btn_color, btn)
+                border_color = (255, 215, 0) if is_selected else (100, 100, 100)
+                border_width = 3 if is_selected else 2
+                pygame.draw.rect(surf, border_color, btn, border_width)
+
+                # Output name
                 is_equipment = equip_db.is_equipment(recipe.output_id)
                 if is_equipment:
                     equip = equip_db.create_equipment_from_id(recipe.output_id)
@@ -2991,17 +3709,11 @@ class Renderer:
                     color = Config.RARITY_COLORS.get(out_mat.rarity, (200, 200, 200)) if out_mat else (200, 200, 200)
 
                 surf.blit(self.font.render(f"{out_name} x{recipe.output_qty}", True, color),
-                          (btn.x + 10, btn.y + 10))
+                          (btn.x + 10, btn.y + 8))
 
-                # Tier indicator badge (top-right corner)
-                tier_text = f"T{recipe.station_tier}"
-                tier_color = (100, 150, 255) if recipe.station_tier == 3 else (150, 150, 150) if recipe.station_tier == 2 else (180, 180, 140)
-                tier_surf = self.small_font.render(tier_text, True, tier_color)
-                surf.blit(tier_surf, (btn.right - 40, btn.y + 10))
-
-                # Material requirements
-                req_y = btn.y + 35
-                for inp in recipe.inputs[:3]:
+                # Material requirements (compact)
+                req_y = btn.y + 30
+                for inp in recipe.inputs:
                     mat_id = inp.get('materialId', '')
                     req = inp.get('quantity', 0)
                     avail = character.inventory.get_item_count(mat_id)
@@ -3009,1181 +3721,105 @@ class Renderer:
                     mat_name = mat.name if mat else mat_id
                     req_color = (100, 255, 100) if avail >= req or Config.DEBUG_INFINITE_RESOURCES else (255, 100, 100)
                     surf.blit(self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color),
-                              (btn.x + 20, req_y))
-                    req_y += 18
+                              (btn.x + 15, req_y))
+                    req_y += 16
 
-                # Highlight if this is the selected recipe
-                if self.placement_recipe and recipe.recipe_id == self.placement_recipe.recipe_id:
-                    pygame.draw.rect(surf, (255, 215, 0), btn, 4)  # Gold border for selected
-                    surf.blit(self.tiny_font.render("◀ SELECTED", True, (255, 215, 0)),
-                              (btn.right - 90, btn.y + 5))
+                y_off += btn_height + 8
 
-                # Click hint
-                if can_craft:
-                    surf.blit(self.tiny_font.render("Click to view →", True, (150, 150, 150)),
-                              (btn.right - 100, btn.bottom - 18))
+        # ======================
+        # DIVIDER
+        # ======================
+        pygame.draw.line(surf, (100, 100, 100), (separator_x, 60), (separator_x, wh - 20), 2)
 
-                y_off += 100
+        # ======================
+        # RIGHT PANEL: Placement + Buttons
+        # ======================
+        right_panel_x = separator_x + 20
+        right_panel_y = 70
 
-        self.screen.blit(surf, (wx, wy))
-        return pygame.Rect(wx, wy, ww, wh), recipes[:5] if recipes else []
+        if selected_recipe:
+            # Selected recipe - show placement and buttons
+            selected = selected_recipe
+            can_craft = recipe_db.can_craft(selected, character.inventory)
 
-    def _get_recipe_display_name(self, recipe):
-        """Helper to get display name for a recipe's output"""
-        if not recipe:
-            return "Unknown"
+            # Placement visualization area
+            placement_h = 380
+            placement_rect = pygame.Rect(right_panel_x, right_panel_y, right_panel_w - 40, placement_h)
+            pygame.draw.rect(surf, (30, 30, 40), placement_rect)
+            pygame.draw.rect(surf, (80, 80, 90), placement_rect, 2)
 
-        mat_db = MaterialDatabase.get_instance()
-        equip_db = EquipmentDatabase.get_instance()
+            # Render discipline-specific placement UI
+            station_type = character.active_station.station_type.value
+            station_tier = character.active_station.tier
+            placement_grid_rects = {}  # Will store grid cell rects for click detection
 
-        # Try equipment first
-        if equip_db.is_equipment(recipe.output_id):
-            equip = equip_db.create_equipment_from_id(recipe.output_id)
-            return equip.name if equip else recipe.output_id
+            if station_type == 'smithing':
+                # Smithing: Grid-based placement
+                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+            elif station_type == 'refining':
+                # Refining: Hub-and-spoke
+                placement_grid_rects = self.render_refining_hub(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+            elif station_type == 'alchemy':
+                # Alchemy: Sequential
+                placement_grid_rects = self.render_alchemy_sequence(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+            elif station_type == 'engineering':
+                # Engineering: Slot-type
+                placement_grid_rects = self.render_engineering_slots(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+            elif station_type == 'adornments':
+                # Enchanting: Grid-based (reuses smithing grid renderer)
+                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
 
-        # Try material
-        mat = mat_db.get_material(recipe.output_id)
-        return mat.name if mat else recipe.output_id
+            # Craft buttons at bottom of right panel
+            if can_craft:
+                btn_y = placement_rect.bottom + 20
+                instant_btn_w, instant_btn_h = 120, 40
+                minigame_btn_w, minigame_btn_h = 120, 40
 
-    def _render_placement_ui_sidebar(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Render placement UI on the right side"""
-        if not self.placement_data:
-            return
+                # Center the buttons horizontally in right panel
+                total_btn_w = instant_btn_w + minigame_btn_w + 20
+                start_x = right_panel_x + (right_panel_w - 40 - total_btn_w) // 2
 
-        discipline = self.placement_data.discipline
+                instant_btn_x = start_x
+                minigame_btn_x = start_x + instant_btn_w + 20
 
-        # Render the appropriate placement UI (they'll position themselves)
-        if discipline == 'smithing':
-            self._render_smithing_placement(character, mouse_pos)
-        elif discipline == 'refining':
-            self._render_refining_placement(character, mouse_pos)
-        elif discipline == 'alchemy':
-            self._render_alchemy_placement(character, mouse_pos)
-        elif discipline == 'engineering':
-            self._render_engineering_placement(character, mouse_pos)
-        elif discipline == 'adornments' or discipline == 'enchanting':
-            self._render_enchanting_placement(character, mouse_pos)
+                # Instant button (gray)
+                instant_rect = pygame.Rect(instant_btn_x, btn_y, instant_btn_w, instant_btn_h)
+                pygame.draw.rect(surf, (60, 60, 60), instant_rect)
+                pygame.draw.rect(surf, (120, 120, 120), instant_rect, 2)
+                instant_text = self.font.render("Instant", True, (200, 200, 200))
+                surf.blit(instant_text, (instant_btn_x + 25, btn_y + 10))
 
-    def _render_smithing_placement(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Render smithing grid-based placement UI"""
-        mat_db = MaterialDatabase.get_instance()
-        equip_db = EquipmentDatabase.get_instance()
+                instant_subtext = self.small_font.render("0 XP", True, (150, 150, 150))
+                surf.blit(instant_subtext, (instant_btn_x + 40, btn_y + 28))
 
-        ww, wh = 1000, 700
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+                # Minigame button (gold)
+                minigame_rect = pygame.Rect(minigame_btn_x, btn_y, minigame_btn_w, minigame_btn_h)
+                pygame.draw.rect(surf, (80, 60, 20), minigame_rect)
+                pygame.draw.rect(surf, (255, 215, 0), minigame_rect, 2)
+                minigame_text = self.font.render("Minigame", True, (255, 215, 0))
+                surf.blit(minigame_text, (minigame_btn_x + 10, btn_y + 10))
 
-        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.fill((20, 20, 30, 250))
-
-        # Header
-        header = f"SMITHING - Place Materials"
-        surf.blit(self.font.render(header, True, (180, 60, 60)), (20, 20))
-
-        # Recipe name
-        is_equipment = equip_db.is_equipment(self.placement_recipe.output_id)
-        if is_equipment:
-            equip = equip_db.create_equipment_from_id(self.placement_recipe.output_id)
-            out_name = equip.name if equip else self.placement_recipe.output_id
+                minigame_subtext = self.small_font.render("1.5x XP", True, (255, 200, 100))
+                surf.blit(minigame_subtext, (minigame_btn_x + 30, btn_y + 28))
+            else:
+                # Can't craft - show why
+                btn_y = placement_rect.bottom + 30
+                cannot_text = self.font.render("Insufficient Materials", True, (255, 100, 100))
+                surf.blit(cannot_text, (right_panel_x + (right_panel_w - 40 - cannot_text.get_width())//2, btn_y))
         else:
-            out_mat = mat_db.get_material(self.placement_recipe.output_id)
-            out_name = out_mat.name if out_mat else self.placement_recipe.output_id
-
-        surf.blit(self.small_font.render(f"Crafting: {out_name}", True, (200, 200, 200)), (20, 50))
-
-        # Parse grid size
-        grid_size = self.placement_data.grid_size  # e.g., "3x3" or "5x5"
-        if 'x' in grid_size:
-            grid_w, grid_h = map(int, grid_size.split('x'))
-        else:
-            grid_w, grid_h = 3, 3
-
-        # Grid rendering
-        grid_x, grid_y = 50, 120
-        cell_size = 70
-        cell_spacing = 5
-
-        self.placement_grid_rects = {}
-
-        # Draw grid
-        for gy in range(grid_h):
-            for gx in range(grid_w):
-                cx = grid_x + gx * (cell_size + cell_spacing)
-                cy = grid_y + gy * (cell_size + cell_spacing)
-                cell_rect = pygame.Rect(cx, cy, cell_size, cell_size)
-
-                # Grid coordinates (1-indexed to match JSON)
-                grid_coord = f"{gx+1},{gy+1}"
-
-                # Check if this position requires a material
-                required_mat_id = self.placement_data.placement_map.get(grid_coord)
-
-                # Check if material is placed here
-                placed = self.placed_materials_grid.get(grid_coord)
-
-                # Determine color
-                if placed:
-                    # Material placed - check if correct
-                    if required_mat_id and placed[0] == required_mat_id:
-                        cell_color = (60, 100, 60)  # Correct - green
-                    else:
-                        cell_color = (100, 60, 60)  # Incorrect - red
-                elif required_mat_id:
-                    cell_color = (80, 80, 60)  # Required but empty - yellow tint
-                else:
-                    cell_color = (40, 40, 40)  # Not required - dark gray
-
-                pygame.draw.rect(surf, cell_color, cell_rect)
-                pygame.draw.rect(surf, (100, 100, 100), cell_rect, 2)
-
-                # Store rect for click detection (offset by window position)
-                self.placement_grid_rects[grid_coord] = pygame.Rect(
-                    wx + cx, wy + cy, cell_size, cell_size
-                )
-
-                # Show what's required or placed
-                if placed:
-                    mat = mat_db.get_material(placed[0])
-                    if mat:
-                        # Draw material icon (simplified - just name abbreviation)
-                        abbrev = mat.name[:3].upper()
-                        abbrev_surf = self.small_font.render(abbrev, True, (255, 255, 255))
-                        surf.blit(abbrev_surf, (cx + 10, cy + 10))
-
-                        qty_surf = self.tiny_font.render(f"x{placed[1]}", True, (200, 200, 200))
-                        surf.blit(qty_surf, (cx + 10, cy + cell_size - 20))
-                elif required_mat_id:
-                    mat = mat_db.get_material(required_mat_id)
-                    if mat:
-                        # Show what's needed (faded)
-                        need_surf = self.tiny_font.render(mat.name[:5], True, (150, 150, 150))
-                        surf.blit(need_surf, (cx + 5, cy + cell_size // 2 - 5))
-
-        # Legend/Instructions
-        legend_x = grid_x + (grid_w * (cell_size + cell_spacing)) + 40
-        legend_y = 120
-
-        surf.blit(self.small_font.render("Instructions:", True, (200, 200, 200)), (legend_x, legend_y))
-        legend_y += 25
-        surf.blit(self.tiny_font.render("1. Click grid slot", True, (180, 180, 180)), (legend_x, legend_y))
-        legend_y += 18
-        surf.blit(self.tiny_font.render("2. Material from inventory", True, (180, 180, 180)), (legend_x, legend_y))
-        legend_y += 18
-        surf.blit(self.tiny_font.render("   placed automatically", True, (180, 180, 180)), (legend_x, legend_y))
-        legend_y += 30
-
-        surf.blit(self.small_font.render("Required:", True, (200, 200, 200)), (legend_x, legend_y))
-        legend_y += 25
-        for coord, mat_id in sorted(self.placement_data.placement_map.items()):
-            mat = mat_db.get_material(mat_id)
-            if mat:
-                placed_here = self.placed_materials_grid.get(coord)
-                status_color = (100, 255, 100) if placed_here and placed_here[0] == mat_id else (255, 100, 100)
-                status = "✓" if placed_here and placed_here[0] == mat_id else "✗"
-
-                text = f"[{coord}] {mat.name[:15]}"
-                surf.blit(self.tiny_font.render(f"{status} {text}", True, status_color), (legend_x, legend_y))
-                legend_y += 18
-
-                if legend_y > 600:
-                    break  # Don't overflow window
-
-        # Validation and craft buttons
-        is_valid = self._validate_smithing_placement()
-
-        # Back button
-        back_btn = pygame.Rect(50, wh - 60, 100, 40)
-        pygame.draw.rect(surf, (80, 60, 60), back_btn)
-        pygame.draw.rect(surf, (150, 100, 100), back_btn, 2)
-        surf.blit(self.small_font.render("BACK", True, (200, 200, 200)), (back_btn.x + 25, back_btn.y + 10))
-        self.placement_craft_button_rect = None  # Reset from previous
-
-        # Store back button rect
-        self.placement_clear_button_rect = pygame.Rect(wx + back_btn.x, wy + back_btn.y, back_btn.width, back_btn.height)
-
-        # Craft buttons (only if valid)
-        if is_valid:
-            instant_btn = pygame.Rect(ww - 270, wh - 60, 120, 40)
-            minigame_btn = pygame.Rect(ww - 140, wh - 60, 120, 40)
-
-            # Instant craft
-            pygame.draw.rect(surf, (60, 80, 60), instant_btn)
-            pygame.draw.rect(surf, (100, 150, 100), instant_btn, 2)
-            surf.blit(self.small_font.render("INSTANT", True, (200, 255, 200)), (instant_btn.x + 20, instant_btn.y + 10))
-
-            # Minigame
-            pygame.draw.rect(surf, (80, 70, 40), minigame_btn)
-            pygame.draw.rect(surf, (255, 215, 0), minigame_btn, 2)
-            surf.blit(self.small_font.render("MINIGAME", True, (255, 215, 0)), (minigame_btn.x + 10, minigame_btn.y + 10))
-
-            # Store rects
-            self.placement_craft_button_rect = pygame.Rect(wx + instant_btn.x, wy + instant_btn.y, instant_btn.width, instant_btn.height)
-            self.placement_minigame_button_rect = pygame.Rect(wx + minigame_btn.x, wy + minigame_btn.y, minigame_btn.width, minigame_btn.height)
-        else:
-            # Show validation message
-            surf.blit(self.small_font.render("Complete placement to craft", True, (255, 100, 100)), (ww - 300, wh - 50))
+            # No recipe selected - show prompt
+            prompt_text = self.font.render("← Select a recipe to view details", True, (150, 150, 150))
+            surf.blit(prompt_text, (right_panel_x + 50, right_panel_y + 150))
 
         self.screen.blit(surf, (wx, wy))
-        return pygame.Rect(wx, wy, ww, wh), []
-
-    def _validate_smithing_placement(self) -> bool:
-        """Check if smithing placement matches requirements"""
-        if not self.placement_data or not self.placement_data.placement_map:
-            return False
-
-        # Check all required positions have correct materials
-        for coord, required_mat in self.placement_data.placement_map.items():
-            placed = self.placed_materials_grid.get(coord)
-            if not placed or placed[0] != required_mat:
-                return False
-
-        return True
-
-    def _validate_refining_placement(self) -> bool:
-        """Check if refining hub-spoke placement matches requirements"""
-        if not self.placement_data:
-            return False
-
-        # Check all core inputs are filled correctly
-        for i, core_input in enumerate(self.placement_data.core_inputs or []):
-            required_mat_id = core_input.get('materialId', '')
-            required_qty = core_input.get('quantity', 1)
-
-            if i >= len(self.placed_materials_hub['core']):
-                return False
-
-            placed = self.placed_materials_hub['core'][i]
-            if not placed or placed.get('materialId') != required_mat_id:
-                return False
-            if placed.get('quantity', 0) < required_qty:
-                return False
-
-        # Check required surrounding inputs (skip optional ones)
-        for i, surrounding_input in enumerate(self.placement_data.surrounding_inputs or []):
-            is_optional = surrounding_input.get('optional', False)
-            if is_optional:
-                continue  # Skip optional slots
-
-            required_mat_id = surrounding_input.get('materialId', '')
-            required_qty = surrounding_input.get('quantity', 1)
-
-            if i >= len(self.placed_materials_hub['surrounding']):
-                return False
-
-            placed = self.placed_materials_hub['surrounding'][i]
-            if not placed or placed.get('materialId') != required_mat_id:
-                return False
-            if placed.get('quantity', 0) < required_qty:
-                return False
-
-        return True
-
-    def _validate_alchemy_placement(self) -> bool:
-        """Check if alchemy sequential placement matches requirements"""
-        if not self.placement_data:
-            return False
-
-        ingredients = self.placement_data.ingredients or []
-
-        # Check all ingredients are placed in correct order
-        if len(self.placed_materials_sequential) != len(ingredients):
-            return False
-
-        for i, ingredient in enumerate(ingredients):
-            required_mat_id = ingredient.get('materialId', '')
-            required_qty = ingredient.get('quantity', 1)
-
-            if i >= len(self.placed_materials_sequential):
-                return False
-
-            placed = self.placed_materials_sequential[i]
-            if not placed or placed.get('materialId') != required_mat_id:
-                return False
-            if placed.get('quantity', 0) < required_qty:
-                return False
-
-        return True
-
-    def _validate_engineering_placement(self) -> bool:
-        """Check if engineering slot-type placement matches requirements"""
-        if not self.placement_data:
-            return False
-
-        slots = self.placement_data.slots or []
-
-        # Check all slots are filled correctly
-        if len(self.placed_materials_slots) != len(slots):
-            return False
-
-        for i, slot in enumerate(slots):
-            required_mat_id = slot.get('materialId', '')
-            required_qty = slot.get('quantity', 1)
-
-            placed = self.placed_materials_slots.get(i)
-            if not placed or placed.get('materialId') != required_mat_id:
-                return False
-            if placed.get('quantity', 0) < required_qty:
-                return False
-
-        return True
-
-    def _validate_enchanting_placement(self) -> bool:
-        """Check if enchanting pattern placement matches requirements"""
-        if not self.placement_data:
-            return False
-
-        # Extract pattern slots from pattern data
-        pattern_data = self.placement_data.pattern or []
-
-        # Handle dict-based pattern with placementMap
-        if isinstance(pattern_data, dict) and 'placementMap' in pattern_data:
-            placement_map = pattern_data['placementMap']
-            if isinstance(placement_map, dict) and 'vertices' in placement_map:
-                vertices = placement_map['vertices']
-                expected_count = len(vertices)
-            else:
-                return False
-        elif isinstance(pattern_data, list):
-            expected_count = len(pattern_data)
-        else:
-            return False
-
-        # Check all pattern slots are filled
-        if len(self.placed_materials_grid) != expected_count:
-            return False
-
-        # Validate each slot (simplified - just check count matches)
-        # More detailed validation could check specific materials per coordinate
-        return True
-
-    # Placeholder methods for other placement UIs (to be implemented)
-    def _render_refining_placement(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Render refining hub-and-spoke placement UI"""
-        mat_db = MaterialDatabase.get_instance()
-
-        ww, wh = 900, 700
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
-
-        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.fill((20, 20, 30, 250))
-
-        # Title
-        title = self.font.render("REFINING - Hub & Spoke Placement", True, (200, 200, 200))
-        surf.blit(title, (20, 20))
-
-        # Recipe name
-        recipe_name = self._get_recipe_display_name(self.placement_recipe)
-        surf.blit(self.small_font.render(f"Recipe: {recipe_name}", True, (180, 180, 180)), (20, 55))
-
-        # Hub-spoke visualization area
-        center_x, center_y = ww // 2, wh // 2 - 50
-        hub_radius = 60  # Radius of center hub
-        spoke_radius = 200  # Distance to surrounding slots
-        slot_size = 70  # Size of each slot
-
-        # Clear previous rects
-        self.placement_slot_rects = {}
-
-        # Draw connecting lines first (so they appear behind slots)
-        core_count = len(self.placement_data.core_inputs) if self.placement_data.core_inputs else 0
-        surrounding_count = len(self.placement_data.surrounding_inputs) if self.placement_data.surrounding_inputs else 0
-
-        if core_count > 0 and surrounding_count > 0:
-            # Draw lines from hub to each surrounding slot
-            for i in range(surrounding_count):
-                angle = (360 / surrounding_count) * i - 90  # -90 to start at top
-                angle_rad = math.radians(angle)
-                spoke_x = center_x + int(spoke_radius * math.cos(angle_rad))
-                spoke_y = center_y + int(spoke_radius * math.sin(angle_rad))
-                pygame.draw.line(surf, (80, 80, 100), (center_x, center_y), (spoke_x, spoke_y), 2)
-
-        # Render core (hub) slots
-        for i, core_input in enumerate(self.placement_data.core_inputs or []):
-            # Position core slots in center (if multiple, arrange in small circle)
-            if core_count == 1:
-                slot_x, slot_y = center_x - slot_size // 2, center_y - slot_size // 2
-            else:
-                core_angle = (360 / core_count) * i
-                core_angle_rad = math.radians(core_angle)
-                offset = 30
-                slot_x = center_x + int(offset * math.cos(core_angle_rad)) - slot_size // 2
-                slot_y = center_y + int(offset * math.sin(core_angle_rad)) - slot_size // 2
-
-            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
-
-            # Check if this slot is filled
-            placed = self.placed_materials_hub['core'][i] if i < len(self.placed_materials_hub['core']) else None
-            required_mat_id = core_input.get('materialId', '')
-
-            # Color based on state
-            if placed and placed.get('materialId') == required_mat_id:
-                color = (50, 150, 50)  # Green - correct
-            elif placed:
-                color = (150, 50, 50)  # Red - wrong material
-            else:
-                color = (150, 150, 50)  # Yellow - required but empty
-
-            pygame.draw.rect(surf, color, slot_rect)
-            pygame.draw.rect(surf, (200, 200, 200), slot_rect, 2)
-
-            # Material info
-            mat = mat_db.get_material(required_mat_id)
-            mat_abbrev = mat.abbrev if mat and hasattr(mat, 'abbrev') else required_mat_id[:3].upper()
-            required_qty = core_input.get('quantity', 1)
-
-            # Show abbreviation
-            abbrev_text = self.small_font.render(mat_abbrev, True, (255, 255, 255))
-            surf.blit(abbrev_text, (slot_rect.x + 5, slot_rect.y + 5))
-
-            # Show quantity
-            qty_text = self.tiny_font.render(f"x{required_qty}", True, (200, 200, 200))
-            surf.blit(qty_text, (slot_rect.x + 5, slot_rect.y + slot_size - 20))
-
-            # Show placed quantity if any
-            if placed:
-                placed_qty = placed.get('quantity', 0)
-                placed_text = self.tiny_font.render(f"({placed_qty})", True, (255, 255, 100))
-                surf.blit(placed_text, (slot_rect.x + slot_size - 35, slot_rect.y + slot_size - 20))
-
-            # Label
-            label = self.tiny_font.render("CORE", True, (150, 150, 200))
-            surf.blit(label, (slot_rect.x + slot_size // 2 - 15, slot_rect.y + slot_size + 5))
-
-            # Store rect for click handling
-            self.placement_slot_rects[('core', i)] = pygame.Rect(wx + slot_x, wy + slot_y, slot_size, slot_size)
-
-        # Render surrounding (spoke) slots
-        for i, surrounding_input in enumerate(self.placement_data.surrounding_inputs or []):
-            # Position in circle around hub
-            angle = (360 / surrounding_count) * i - 90  # -90 to start at top
-            angle_rad = math.radians(angle)
-            slot_x = center_x + int(spoke_radius * math.cos(angle_rad)) - slot_size // 2
-            slot_y = center_y + int(spoke_radius * math.sin(angle_rad)) - slot_size // 2
-
-            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
-
-            # Check if this slot is filled
-            placed = self.placed_materials_hub['surrounding'][i] if i < len(self.placed_materials_hub['surrounding']) else None
-            required_mat_id = surrounding_input.get('materialId', '')
-            is_optional = surrounding_input.get('optional', False)
-
-            # Color based on state
-            if placed and placed.get('materialId') == required_mat_id:
-                color = (50, 150, 50)  # Green - correct
-            elif placed:
-                color = (150, 50, 50)  # Red - wrong material
-            elif is_optional:
-                color = (80, 80, 80)  # Gray - optional
-            else:
-                color = (150, 150, 50)  # Yellow - required but empty
-
-            pygame.draw.rect(surf, color, slot_rect)
-            pygame.draw.rect(surf, (200, 200, 200), slot_rect, 2)
-
-            # Material info
-            mat = mat_db.get_material(required_mat_id)
-            mat_abbrev = mat.abbrev if mat and hasattr(mat, 'abbrev') else required_mat_id[:3].upper()
-            required_qty = surrounding_input.get('quantity', 1)
-
-            # Show abbreviation
-            abbrev_text = self.small_font.render(mat_abbrev, True, (255, 255, 255))
-            surf.blit(abbrev_text, (slot_rect.x + 5, slot_rect.y + 5))
-
-            # Show quantity
-            qty_text = self.tiny_font.render(f"x{required_qty}", True, (200, 200, 200))
-            surf.blit(qty_text, (slot_rect.x + 5, slot_rect.y + slot_size - 20))
-
-            # Show placed quantity if any
-            if placed:
-                placed_qty = placed.get('quantity', 0)
-                placed_text = self.tiny_font.render(f"({placed_qty})", True, (255, 255, 100))
-                surf.blit(placed_text, (slot_rect.x + slot_size - 35, slot_rect.y + slot_size - 20))
-
-            # Label
-            label_text = "OPT" if is_optional else f"SP{i+1}"
-            label = self.tiny_font.render(label_text, True, (150, 150, 200))
-            surf.blit(label, (slot_rect.x + slot_size // 2 - 15, slot_rect.y + slot_size + 5))
-
-            # Store rect for click handling
-            self.placement_slot_rects[('surrounding', i)] = pygame.Rect(wx + slot_x, wy + slot_y, slot_size, slot_size)
-
-        # Legend / Instructions
-        legend_y = wh - 180
-        surf.blit(self.small_font.render("Hub & Spoke System:", True, (200, 200, 200)), (20, legend_y))
-        surf.blit(self.tiny_font.render("• CORE (center): Primary materials", True, (180, 180, 180)), (20, legend_y + 25))
-        surf.blit(self.tiny_font.render("• SPOKES (outer): Modifiers & enhancers", True, (180, 180, 180)), (20, legend_y + 45))
-        surf.blit(self.tiny_font.render("• Click slots to place materials from inventory", True, (150, 150, 150)), (20, legend_y + 70))
-
-        # Requirements checklist
-        checklist_x = ww - 280
-        surf.blit(self.small_font.render("Requirements:", True, (200, 200, 200)), (checklist_x, legend_y))
-
-        check_y = legend_y + 25
-        for i, core_input in enumerate(self.placement_data.core_inputs or []):
-            mat_id = core_input.get('materialId', '')
-            mat = mat_db.get_material(mat_id)
-            mat_name = mat.name if mat else mat_id
-            qty = core_input.get('quantity', 1)
-
-            placed = self.placed_materials_hub['core'][i] if i < len(self.placed_materials_hub['core']) else None
-            is_correct = placed and placed.get('materialId') == mat_id and placed.get('quantity', 0) >= qty
-
-            check = "✓" if is_correct else "○"
-            check_color = (50, 200, 50) if is_correct else (150, 150, 150)
-
-            text = f"{check} Core: {mat_name[:15]} x{qty}"
-            surf.blit(self.tiny_font.render(text, True, check_color), (checklist_x, check_y))
-            check_y += 18
-
-        # Validation status
-        is_valid = self._validate_refining_placement()
-        status_text = "✓ Ready to craft!" if is_valid else "○ Place required materials"
-        status_color = (50, 200, 50) if is_valid else (200, 200, 50)
-        surf.blit(self.small_font.render(status_text, True, status_color), (ww // 2 - 100, wh - 120))
-
-        # Buttons
-        button_y = wh - 80
-
-        # Back button
-        back_btn = pygame.Rect(20, button_y, 100, 40)
-        pygame.draw.rect(surf, (80, 60, 60), back_btn)
-        pygame.draw.rect(surf, (150, 100, 100), back_btn, 2)
-        surf.blit(self.small_font.render("BACK", True, (200, 200, 200)), (back_btn.x + 25, back_btn.y + 10))
-        self.placement_clear_button_rect = pygame.Rect(wx + back_btn.x, wy + back_btn.y, back_btn.width, back_btn.height)
-
-        # Clear button
-        clear_btn = pygame.Rect(140, button_y, 100, 40)
-        pygame.draw.rect(surf, (80, 60, 60), clear_btn)
-        pygame.draw.rect(surf, (150, 100, 100), clear_btn, 2)
-        surf.blit(self.small_font.render("CLEAR", True, (200, 200, 200)), (clear_btn.x + 20, clear_btn.y + 10))
-
-        # Instant Craft button
-        instant_btn = pygame.Rect(ww - 350, button_y, 150, 40)
-        instant_color = (60, 80, 100) if is_valid else (50, 50, 50)
-        pygame.draw.rect(surf, instant_color, instant_btn)
-        pygame.draw.rect(surf, (100, 150, 200) if is_valid else (100, 100, 100), instant_btn, 2)
-        surf.blit(self.small_font.render("INSTANT CRAFT", True, (200, 200, 200) if is_valid else (100, 100, 100)),
-                 (instant_btn.x + 15, instant_btn.y + 10))
-        self.placement_craft_button_rect = pygame.Rect(wx + instant_btn.x, wy + instant_btn.y, instant_btn.width, instant_btn.height)
-
-        # Minigame button
-        minigame_btn = pygame.Rect(ww - 180, button_y, 160, 40)
-        minigame_color = (80, 100, 60) if is_valid else (50, 50, 50)
-        pygame.draw.rect(surf, minigame_color, minigame_btn)
-        pygame.draw.rect(surf, (150, 200, 100) if is_valid else (100, 100, 100), minigame_btn, 2)
-        surf.blit(self.small_font.render("CRAFT (Minigame)", True, (200, 200, 200) if is_valid else (100, 100, 100)),
-                 (minigame_btn.x + 10, minigame_btn.y + 10))
-        self.placement_minigame_button_rect = pygame.Rect(wx + minigame_btn.x, wy + minigame_btn.y, minigame_btn.width, minigame_btn.height)
-
-        self.screen.blit(surf, (wx, wy))
-        return pygame.Rect(wx, wy, ww, wh), []
-
-    def _render_alchemy_placement(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Render alchemy sequential placement UI"""
-        mat_db = MaterialDatabase.get_instance()
-
-        ww, wh = 900, 700
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
-
-        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.fill((20, 20, 30, 250))
-
-        # Title
-        title = self.font.render("ALCHEMY - Sequential Ingredient Placement", True, (200, 200, 200))
-        surf.blit(title, (20, 20))
-
-        # Recipe name
-        recipe_name = self._get_recipe_display_name(self.placement_recipe)
-        surf.blit(self.small_font.render(f"Recipe: {recipe_name}", True, (180, 180, 180)), (20, 55))
-        surf.blit(self.tiny_font.render("Order matters! Add ingredients in sequence.", True, (255, 200, 100)), (20, 85))
-
-        # Clear previous rects
-        self.placement_slot_rects = {}
-
-        # Sequential slot layout (horizontal flow, wrapping if needed)
-        slot_size = 90
-        slot_spacing = 20
-        slots_per_row = 8
-        start_x = 50
-        start_y = 140
-
-        ingredients = self.placement_data.ingredients or []
-        total_slots = len(ingredients)
-
-        # Render ingredient slots sequentially
-        for i, ingredient in enumerate(ingredients):
-            # Calculate position
-            row = i // slots_per_row
-            col = i % slots_per_row
-            slot_x = start_x + col * (slot_size + slot_spacing)
-            slot_y = start_y + row * (slot_size + slot_spacing + 30)
-
-            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
-
-            # Check if this slot is filled
-            placed = self.placed_materials_sequential[i] if i < len(self.placed_materials_sequential) else None
-            required_mat_id = ingredient.get('materialId', '')
-            required_qty = ingredient.get('quantity', 1)
-
-            # Determine slot state
-            # Can only fill slots in order (can't skip ahead)
-            can_place = (i == len(self.placed_materials_sequential))  # Next empty slot
-
-            # Color based on state
-            if placed and placed.get('materialId') == required_mat_id:
-                color = (50, 150, 50)  # Green - correct
-            elif placed:
-                color = (150, 50, 50)  # Red - wrong material
-            elif can_place:
-                color = (150, 150, 50)  # Yellow - next to fill
-            else:
-                color = (60, 60, 70)  # Dark gray - locked (future slot)
-
-            pygame.draw.rect(surf, color, slot_rect)
-            pygame.draw.rect(surf, (200, 200, 200) if can_place else (100, 100, 100), slot_rect, 3 if can_place else 2)
-
-            # Order number (large and prominent)
-            order_text = self.font.render(str(i + 1), True, (255, 255, 255))
-            order_rect = order_text.get_rect()
-            surf.blit(order_text, (slot_rect.x + 5, slot_rect.y + 5))
-
-            # Material info
-            mat = mat_db.get_material(required_mat_id)
-            mat_abbrev = mat.abbrev if mat and hasattr(mat, 'abbrev') else required_mat_id[:3].upper()
-
-            # Show abbreviation (smaller, below number)
-            abbrev_text = self.tiny_font.render(mat_abbrev, True, (255, 255, 255))
-            surf.blit(abbrev_text, (slot_rect.x + 5, slot_rect.y + 35))
-
-            # Show quantity
-            qty_text = self.tiny_font.render(f"x{required_qty}", True, (200, 200, 200))
-            surf.blit(qty_text, (slot_rect.x + 5, slot_rect.y + slot_size - 20))
-
-            # Show placed quantity if any
-            if placed:
-                placed_qty = placed.get('quantity', 0)
-                placed_text = self.tiny_font.render(f"({placed_qty})", True, (255, 255, 100))
-                surf.blit(placed_text, (slot_rect.x + slot_size - 35, slot_rect.y + slot_size - 20))
-
-            # Indicator for "next" slot
-            if can_place:
-                indicator = self.tiny_font.render("NEXT →", True, (255, 255, 100))
-                surf.blit(indicator, (slot_rect.x + slot_size // 2 - 25, slot_rect.y + slot_size + 5))
-            elif i < len(self.placed_materials_sequential):
-                check = self.tiny_font.render("✓", True, (50, 255, 50))
-                surf.blit(check, (slot_rect.x + slot_size // 2 - 8, slot_rect.y + slot_size + 5))
-
-            # Store rect for click handling (only for next slot)
-            if can_place:
-                self.placement_slot_rects[i] = pygame.Rect(wx + slot_x, wy + slot_y, slot_size, slot_size)
-
-        # Legend / Instructions
-        legend_y = wh - 220
-        surf.blit(self.small_font.render("Sequential Order System:", True, (200, 200, 200)), (20, legend_y))
-        surf.blit(self.tiny_font.render("• Ingredients must be added in numerical order", True, (180, 180, 180)), (20, legend_y + 25))
-        surf.blit(self.tiny_font.render("• Cannot skip ahead - fill each slot before the next", True, (180, 180, 180)), (20, legend_y + 45))
-        surf.blit(self.tiny_font.render("• Yellow slot with 'NEXT →' shows current placement", True, (150, 150, 150)), (20, legend_y + 65))
-        surf.blit(self.tiny_font.render("• Green checkmark ✓ shows completed slots", True, (150, 150, 150)), (20, legend_y + 85))
-
-        # Progress indicator
-        filled_count = len(self.placed_materials_sequential)
-        progress_text = f"Progress: {filled_count}/{total_slots} ingredients placed"
-        progress_color = (50, 200, 50) if filled_count == total_slots else (200, 200, 100)
-        surf.blit(self.small_font.render(progress_text, True, progress_color), (20, legend_y + 115))
-
-        # Requirements checklist
-        checklist_x = ww - 300
-        surf.blit(self.small_font.render("Sequence:", True, (200, 200, 200)), (checklist_x, legend_y))
-
-        check_y = legend_y + 25
-        for i, ingredient in enumerate(ingredients[:10]):  # Show first 10
-            mat_id = ingredient.get('materialId', '')
-            mat = mat_db.get_material(mat_id)
-            mat_name = mat.name if mat else mat_id
-            qty = ingredient.get('quantity', 1)
-
-            placed = self.placed_materials_sequential[i] if i < len(self.placed_materials_sequential) else None
-            is_correct = placed and placed.get('materialId') == mat_id and placed.get('quantity', 0) >= qty
-
-            check = "✓" if is_correct else str(i + 1)
-            check_color = (50, 200, 50) if is_correct else (150, 150, 150)
-
-            text = f"{check}. {mat_name[:12]} x{qty}"
-            surf.blit(self.tiny_font.render(text, True, check_color), (checklist_x, check_y))
-            check_y += 16
-
-        if total_slots > 10:
-            surf.blit(self.tiny_font.render(f"... and {total_slots - 10} more", True, (120, 120, 120)), (checklist_x, check_y))
-
-        # Validation status
-        is_valid = self._validate_alchemy_placement()
-        status_text = "✓ Ready to craft!" if is_valid else f"○ Add ingredients in order ({filled_count}/{total_slots})"
-        status_color = (50, 200, 50) if is_valid else (200, 200, 50)
-        surf.blit(self.small_font.render(status_text, True, status_color), (ww // 2 - 150, wh - 120))
-
-        # Buttons
-        button_y = wh - 80
-
-        # Back button
-        back_btn = pygame.Rect(20, button_y, 100, 40)
-        pygame.draw.rect(surf, (80, 60, 60), back_btn)
-        pygame.draw.rect(surf, (150, 100, 100), back_btn, 2)
-        surf.blit(self.small_font.render("BACK", True, (200, 200, 200)), (back_btn.x + 25, back_btn.y + 10))
-        self.placement_clear_button_rect = pygame.Rect(wx + back_btn.x, wy + back_btn.y, back_btn.width, back_btn.height)
-
-        # Clear button
-        clear_btn = pygame.Rect(140, button_y, 100, 40)
-        pygame.draw.rect(surf, (80, 60, 60), clear_btn)
-        pygame.draw.rect(surf, (150, 100, 100), clear_btn, 2)
-        surf.blit(self.small_font.render("CLEAR", True, (200, 200, 200)), (clear_btn.x + 20, clear_btn.y + 10))
-
-        # Instant Craft button
-        instant_btn = pygame.Rect(ww - 350, button_y, 150, 40)
-        instant_color = (60, 80, 100) if is_valid else (50, 50, 50)
-        pygame.draw.rect(surf, instant_color, instant_btn)
-        pygame.draw.rect(surf, (100, 150, 200) if is_valid else (100, 100, 100), instant_btn, 2)
-        surf.blit(self.small_font.render("INSTANT CRAFT", True, (200, 200, 200) if is_valid else (100, 100, 100)),
-                 (instant_btn.x + 15, instant_btn.y + 10))
-        self.placement_craft_button_rect = pygame.Rect(wx + instant_btn.x, wy + instant_btn.y, instant_btn.width, instant_btn.height)
-
-        # Minigame button
-        minigame_btn = pygame.Rect(ww - 180, button_y, 160, 40)
-        minigame_color = (80, 100, 60) if is_valid else (50, 50, 50)
-        pygame.draw.rect(surf, minigame_color, minigame_btn)
-        pygame.draw.rect(surf, (150, 200, 100) if is_valid else (100, 100, 100), minigame_btn, 2)
-        surf.blit(self.small_font.render("CRAFT (Minigame)", True, (200, 200, 200) if is_valid else (100, 100, 100)),
-                 (minigame_btn.x + 10, minigame_btn.y + 10))
-        self.placement_minigame_button_rect = pygame.Rect(wx + minigame_btn.x, wy + minigame_btn.y, minigame_btn.width, minigame_btn.height)
-
-        self.screen.blit(surf, (wx, wy))
-        return pygame.Rect(wx, wy, ww, wh), []
-
-    def _render_engineering_placement(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Render engineering slot-type placement UI"""
-        mat_db = MaterialDatabase.get_instance()
-
-        ww, wh = 950, 700
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
-
-        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.fill((20, 20, 30, 250))
-
-        # Title
-        title = self.font.render("ENGINEERING - Component Slot Placement", True, (200, 200, 200))
-        surf.blit(title, (20, 20))
-
-        # Recipe name
-        recipe_name = self._get_recipe_display_name(self.placement_recipe)
-        surf.blit(self.small_font.render(f"Device: {recipe_name}", True, (180, 180, 180)), (20, 55))
-        surf.blit(self.tiny_font.render("Each component slot requires specific materials", True, (150, 200, 255)), (20, 85))
-
-        # Clear previous rects
-        self.placement_slot_rects = {}
-
-        # Group slots by type
-        slots = self.placement_data.slots or []
-        slots_by_type = {}
-        for slot in slots:
-            slot_type = slot.get('type', 'UNKNOWN')
-            if slot_type not in slots_by_type:
-                slots_by_type[slot_type] = []
-            slots_by_type[slot_type].append(slot)
-
-        # Slot type colors and labels
-        slot_type_info = {
-            'FRAME': {'color': (80, 80, 120), 'label': 'FRAME', 'desc': 'Structural'},
-            'FUNCTION': {'color': (120, 80, 80), 'label': 'FUNCTION', 'desc': 'Mechanism'},
-            'POWER': {'color': (120, 120, 60), 'label': 'POWER', 'desc': 'Energy'},
-            'MODIFIER': {'color': (80, 120, 80), 'label': 'MODIFIER', 'desc': 'Enhancement'},
-            'UTILITY': {'color': (80, 120, 120), 'label': 'UTILITY', 'desc': 'Auxiliary'},
-            'UNKNOWN': {'color': (60, 60, 60), 'label': 'OTHER', 'desc': 'Misc'}
-        }
-
-        # Layout configuration
-        start_y = 130
-        section_spacing = 110
-        slot_size = 85
-        slot_spacing = 15
-
-        section_y = start_y
-        slot_index = 0  # Global slot index for placement tracking
-
-        # Render each slot type group
-        for slot_type, type_slots in slots_by_type.items():
-            type_info = slot_type_info.get(slot_type, slot_type_info['UNKNOWN'])
-
-            # Type header
-            type_header = self.small_font.render(f"{type_info['label']} ({type_info['desc']})", True, (200, 200, 200))
-            surf.blit(type_header, (30, section_y))
-
-            # Render slots for this type
-            slot_x = 30
-            slot_y = section_y + 30
-
-            for i, slot in enumerate(type_slots):
-                slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
-
-                required_mat_id = slot.get('materialId', '')
-                required_qty = slot.get('quantity', 1)
-
-                # Check if this slot is filled
-                placed = self.placed_materials_slots.get(slot_index)
-
-                # Color based on state
-                base_color = type_info['color']
-                if placed and placed.get('materialId') == required_mat_id:
-                    color = (min(base_color[0] + 70, 255), min(base_color[1] + 70, 255), min(base_color[2] + 70, 255))  # Brighter - correct
-                elif placed:
-                    color = (150, 50, 50)  # Red - wrong material
-                else:
-                    color = base_color  # Base color - empty
-
-                pygame.draw.rect(surf, color, slot_rect)
-                pygame.draw.rect(surf, (200, 200, 200), slot_rect, 2)
-
-                # Material info
-                mat = mat_db.get_material(required_mat_id)
-                mat_abbrev = mat.abbrev if mat and hasattr(mat, 'abbrev') else required_mat_id[:3].upper()
-
-                # Show type abbreviation (small, top)
-                type_abbrev = slot_type[:3].upper()
-                type_text = self.tiny_font.render(type_abbrev, True, (150, 150, 150))
-                surf.blit(type_text, (slot_rect.x + 5, slot_rect.y + 3))
-
-                # Show material abbreviation (large, center)
-                abbrev_text = self.small_font.render(mat_abbrev, True, (255, 255, 255))
-                surf.blit(abbrev_text, (slot_rect.x + 10, slot_rect.y + 25))
-
-                # Show quantity
-                qty_text = self.tiny_font.render(f"x{required_qty}", True, (200, 200, 200))
-                surf.blit(qty_text, (slot_rect.x + 5, slot_rect.y + slot_size - 20))
-
-                # Show placed quantity if any
-                if placed:
-                    placed_qty = placed.get('quantity', 0)
-                    placed_text = self.tiny_font.render(f"({placed_qty})", True, (255, 255, 100))
-                    surf.blit(placed_text, (slot_rect.x + slot_size - 35, slot_rect.y + slot_size - 20))
-
-                    # Checkmark if correct
-                    if placed.get('materialId') == required_mat_id and placed_qty >= required_qty:
-                        check = self.small_font.render("✓", True, (50, 255, 50))
-                        surf.blit(check, (slot_rect.x + slot_size - 25, slot_rect.y + 5))
-
-                # Store rect for click handling
-                self.placement_slot_rects[slot_index] = pygame.Rect(wx + slot_x, wy + slot_y, slot_size, slot_size)
-
-                # Move to next slot position
-                slot_x += slot_size + slot_spacing
-                slot_index += 1
-
-                # Wrap if needed (max 9 per row)
-                if i > 0 and (i + 1) % 9 == 0:
-                    slot_x = 30
-                    slot_y += slot_size + slot_spacing
-
-            # Move to next section
-            section_y += section_spacing
-
-        # Legend / Instructions
-        legend_y = wh - 220
-        surf.blit(self.small_font.render("Component Slot System:", True, (200, 200, 200)), (20, legend_y))
-        surf.blit(self.tiny_font.render("• Each device requires specific component types", True, (180, 180, 180)), (20, legend_y + 25))
-        surf.blit(self.tiny_font.render("• FRAME: Structural components (housing, casing)", True, (150, 150, 150)), (20, legend_y + 45))
-        surf.blit(self.tiny_font.render("• FUNCTION: Primary mechanism (defines device type)", True, (150, 150, 150)), (20, legend_y + 65))
-        surf.blit(self.tiny_font.render("• POWER: Energy source (crystals, cores)", True, (150, 150, 150)), (20, legend_y + 85))
-        surf.blit(self.tiny_font.render("• MODIFIER: Enhancements (amplifiers, stabilizers)", True, (150, 150, 150)), (20, legend_y + 105))
-
-        # Requirements checklist
-        checklist_x = ww - 300
-        surf.blit(self.small_font.render("Components:", True, (200, 200, 200)), (checklist_x, legend_y))
-
-        check_y = legend_y + 25
-        for i, slot in enumerate(slots[:12]):  # Show first 12
-            mat_id = slot.get('materialId', '')
-            mat = mat_db.get_material(mat_id)
-            mat_name = mat.name if mat else mat_id
-            qty = slot.get('quantity', 1)
-            slot_type = slot.get('type', 'UNKNOWN')
-
-            placed = self.placed_materials_slots.get(i)
-            is_correct = placed and placed.get('materialId') == mat_id and placed.get('quantity', 0) >= qty
-
-            check = "✓" if is_correct else "○"
-            check_color = (50, 200, 50) if is_correct else (150, 150, 150)
-
-            text = f"{check} {slot_type[:3]}: {mat_name[:10]} x{qty}"
-            surf.blit(self.tiny_font.render(text, True, check_color), (checklist_x, check_y))
-            check_y += 15
-
-        if len(slots) > 12:
-            surf.blit(self.tiny_font.render(f"... {len(slots) - 12} more", True, (120, 120, 120)), (checklist_x, check_y))
-
-        # Validation status
-        is_valid = self._validate_engineering_placement()
-        filled_count = len([s for s in self.placed_materials_slots.values() if s])
-        status_text = "✓ Ready to assemble!" if is_valid else f"○ Place all components ({filled_count}/{len(slots)})"
-        status_color = (50, 200, 50) if is_valid else (200, 200, 50)
-        surf.blit(self.small_font.render(status_text, True, status_color), (ww // 2 - 150, wh - 120))
-
-        # Buttons
-        button_y = wh - 80
-
-        # Back button
-        back_btn = pygame.Rect(20, button_y, 100, 40)
-        pygame.draw.rect(surf, (80, 60, 60), back_btn)
-        pygame.draw.rect(surf, (150, 100, 100), back_btn, 2)
-        surf.blit(self.small_font.render("BACK", True, (200, 200, 200)), (back_btn.x + 25, back_btn.y + 10))
-        self.placement_clear_button_rect = pygame.Rect(wx + back_btn.x, wy + back_btn.y, back_btn.width, back_btn.height)
-
-        # Clear button
-        clear_btn = pygame.Rect(140, button_y, 100, 40)
-        pygame.draw.rect(surf, (80, 60, 60), clear_btn)
-        pygame.draw.rect(surf, (150, 100, 100), clear_btn, 2)
-        surf.blit(self.small_font.render("CLEAR", True, (200, 200, 200)), (clear_btn.x + 20, clear_btn.y + 10))
-
-        # Instant Craft button
-        instant_btn = pygame.Rect(ww - 350, button_y, 150, 40)
-        instant_color = (60, 80, 100) if is_valid else (50, 50, 50)
-        pygame.draw.rect(surf, instant_color, instant_btn)
-        pygame.draw.rect(surf, (100, 150, 200) if is_valid else (100, 100, 100), instant_btn, 2)
-        surf.blit(self.small_font.render("INSTANT CRAFT", True, (200, 200, 200) if is_valid else (100, 100, 100)),
-                 (instant_btn.x + 15, instant_btn.y + 10))
-        self.placement_craft_button_rect = pygame.Rect(wx + instant_btn.x, wy + instant_btn.y, instant_btn.width, instant_btn.height)
-
-        # Minigame button
-        minigame_btn = pygame.Rect(ww - 180, button_y, 160, 40)
-        minigame_color = (80, 100, 60) if is_valid else (50, 50, 50)
-        pygame.draw.rect(surf, minigame_color, minigame_btn)
-        pygame.draw.rect(surf, (150, 200, 100) if is_valid else (100, 100, 100), minigame_btn, 2)
-        surf.blit(self.small_font.render("CRAFT (Minigame)", True, (200, 200, 200) if is_valid else (100, 100, 100)),
-                 (minigame_btn.x + 10, minigame_btn.y + 10))
-        self.placement_minigame_button_rect = pygame.Rect(wx + minigame_btn.x, wy + minigame_btn.y, minigame_btn.width, minigame_btn.height)
-
-        self.screen.blit(surf, (wx, wy))
-        return pygame.Rect(wx, wy, ww, wh), []
-
-    def _render_enchanting_placement(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Render enchanting pattern placement UI"""
-        mat_db = MaterialDatabase.get_instance()
-
-        ww, wh = 900, 700
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
-
-        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.fill((20, 20, 30, 250))
-
-        # Title
-        title = self.font.render("ENCHANTING - Pattern Creation", True, (200, 200, 200))
-        surf.blit(title, (20, 20))
-
-        # Recipe name
-        recipe_name = self._get_recipe_display_name(self.placement_recipe)
-        surf.blit(self.small_font.render(f"Enchantment: {recipe_name}", True, (180, 180, 180)), (20, 55))
-        surf.blit(self.tiny_font.render("Place materials to create enchantment pattern", True, (200, 150, 255)), (20, 85))
-
-        # For enchanting, we use pattern data which contains coordinate-based placementMap
-        # For simplicity, treat it as a simple slot list based on unique coordinates
-        pattern_data = self.placement_data.pattern or []
-
-        # If pattern is a dict with 'placementMap', extract vertices
-        if isinstance(pattern_data, dict) and 'placementMap' in pattern_data:
-            placement_map = pattern_data['placementMap']
-            if isinstance(placement_map, dict) and 'vertices' in placement_map:
-                vertices = placement_map['vertices']
-                # Convert vertices dict to list format
-                pattern_slots = []
-                for coord, vertex_data in vertices.items():
-                    mat_id = vertex_data.get('materialId', '')
-                    is_key = vertex_data.get('isKey', False)
-                    pattern_slots.append({
-                        'coord': coord,
-                        'materialId': mat_id,
-                        'isKey': is_key,
-                        'quantity': 1
-                    })
-            else:
-                pattern_slots = []
-        else:
-            # Fallback - treat as simple list
-            pattern_slots = pattern_data if isinstance(pattern_data, list) else []
-
-        # Clear previous rects
-        self.placement_slot_rects = {}
-
-        # Simple slot layout (horizontal flow)
-        slot_size = 75
-        slot_spacing = 15
-        slots_per_row = 10
-        start_x = 30
-        start_y = 140
-
-        total_slots = len(pattern_slots)
-
-        # Render pattern slots
-        for i, slot in enumerate(pattern_slots):
-            # Calculate position
-            row = i // slots_per_row
-            col = i % slots_per_row
-            slot_x = start_x + col * (slot_size + slot_spacing)
-            slot_y = start_y + row * (slot_size + slot_spacing + 25)
-
-            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
-
-            # Get slot info
-            required_mat_id = slot.get('materialId', '')
-            required_qty = slot.get('quantity', 1)
-            is_key = slot.get('isKey', False)
-            coord = slot.get('coord', f"{i}")
-
-            # Check if this slot is filled
-            # For enchanting, we use grid-like tracking
-            placed = self.placed_materials_grid.get(str(i))
-
-            # Color based on state
-            if placed and placed[0] == required_mat_id:
-                color = (120, 80, 150) if is_key else (80, 120, 150)  # Purple-ish for enchanting
-            elif placed:
-                color = (150, 50, 50)  # Red - wrong material
-            else:
-                color = (100, 80, 120) if is_key else (60, 60, 80)  # Dark purple - empty
-
-            pygame.draw.rect(surf, color, slot_rect)
-            border_color = (255, 215, 0) if is_key else (150, 150, 150)
-            border_width = 3 if is_key else 2
-            pygame.draw.rect(surf, border_color, slot_rect, border_width)
-
-            # Material info
-            mat = mat_db.get_material(required_mat_id)
-            mat_abbrev = mat.abbrev if mat and hasattr(mat, 'abbrev') else required_mat_id[:3].upper()
-
-            # Show coordinate (small, top)
-            coord_text = self.tiny_font.render(coord, True, (120, 120, 140))
-            surf.blit(coord_text, (slot_rect.x + 3, slot_rect.y + 3))
-
-            # Show material abbreviation (center)
-            abbrev_text = self.small_font.render(mat_abbrev, True, (255, 255, 255))
-            surf.blit(abbrev_text, (slot_rect.x + 8, slot_rect.y + 20))
-
-            # Key material indicator
-            if is_key:
-                key_text = self.tiny_font.render("KEY", True, (255, 215, 0))
-                surf.blit(key_text, (slot_rect.x + slot_size - 25, slot_rect.y + 3))
-
-            # Show placed indicator if any
-            if placed:
-                check = self.small_font.render("✓", True, (100, 255, 100))
-                surf.blit(check, (slot_rect.x + slot_size - 22, slot_rect.y + slot_size - 22))
-
-            # Show slot number below
-            slot_num = self.tiny_font.render(f"#{i+1}", True, (100, 100, 120))
-            surf.blit(slot_num, (slot_rect.x + slot_size // 2 - 10, slot_rect.y + slot_size + 3))
-
-            # Store rect for click handling
-            self.placement_slot_rects[str(i)] = pygame.Rect(wx + slot_x, wy + slot_y, slot_size, slot_size)
-
-        # Legend / Instructions
-        legend_y = wh - 220
-        surf.blit(self.small_font.render("Enchantment Pattern System:", True, (200, 200, 200)), (20, legend_y))
-        surf.blit(self.tiny_font.render("• Each enchantment requires specific material pattern", True, (180, 180, 180)), (20, legend_y + 25))
-        surf.blit(self.tiny_font.render("• KEY materials (gold border) are critical to pattern", True, (150, 150, 150)), (20, legend_y + 45))
-        surf.blit(self.tiny_font.render("• Pattern coordinates shown on each slot", True, (150, 150, 150)), (20, legend_y + 65))
-        surf.blit(self.tiny_font.render("• Click slots to place required materials", True, (150, 150, 150)), (20, legend_y + 85))
-
-        # Progress indicator
-        filled_count = len(self.placed_materials_grid)
-        progress_text = f"Progress: {filled_count}/{total_slots} materials placed"
-        progress_color = (50, 200, 50) if filled_count == total_slots else (200, 200, 100)
-        surf.blit(self.small_font.render(progress_text, True, progress_color), (20, legend_y + 115))
-
-        # Requirements checklist
-        checklist_x = ww - 300
-        surf.blit(self.small_font.render("Pattern Materials:", True, (200, 200, 200)), (checklist_x, legend_y))
-
-        check_y = legend_y + 25
-        for i, slot in enumerate(pattern_slots[:12]):  # Show first 12
-            mat_id = slot.get('materialId', '')
-            mat = mat_db.get_material(mat_id)
-            mat_name = mat.name if mat else mat_id
-            is_key = slot.get('isKey', False)
-
-            placed = self.placed_materials_grid.get(str(i))
-            is_correct = placed and placed[0] == mat_id
-
-            check = "✓" if is_correct else "○"
-            key_marker = "⭐" if is_key else ""
-            check_color = (50, 200, 50) if is_correct else (150, 150, 150)
-
-            text = f"{check} {key_marker}{mat_name[:13]}"
-            surf.blit(self.tiny_font.render(text, True, check_color), (checklist_x, check_y))
-            check_y += 15
-
-        if total_slots > 12:
-            surf.blit(self.tiny_font.render(f"... {total_slots - 12} more", True, (120, 120, 120)), (checklist_x, check_y))
-
-        # Validation status
-        is_valid = self._validate_enchanting_placement()
-        status_text = "✓ Pattern complete!" if is_valid else f"○ Place all pattern materials ({filled_count}/{total_slots})"
-        status_color = (50, 200, 50) if is_valid else (200, 200, 50)
-        surf.blit(self.small_font.render(status_text, True, status_color), (ww // 2 - 150, wh - 120))
-
-        # Buttons
-        button_y = wh - 80
-
-        # Back button
-        back_btn = pygame.Rect(20, button_y, 100, 40)
-        pygame.draw.rect(surf, (80, 60, 60), back_btn)
-        pygame.draw.rect(surf, (150, 100, 100), back_btn, 2)
-        surf.blit(self.small_font.render("BACK", True, (200, 200, 200)), (back_btn.x + 25, back_btn.y + 10))
-        self.placement_clear_button_rect = pygame.Rect(wx + back_btn.x, wy + back_btn.y, back_btn.width, back_btn.height)
-
-        # Clear button
-        clear_btn = pygame.Rect(140, button_y, 100, 40)
-        pygame.draw.rect(surf, (80, 60, 60), clear_btn)
-        pygame.draw.rect(surf, (150, 100, 100), clear_btn, 2)
-        surf.blit(self.small_font.render("CLEAR", True, (200, 200, 200)), (clear_btn.x + 20, clear_btn.y + 10))
-
-        # Instant Craft button (enchanting only has instant crafting, no minigame in current design)
-        instant_btn = pygame.Rect(ww - 200, button_y, 180, 40)
-        instant_color = (80, 60, 120) if is_valid else (50, 50, 50)
-        pygame.draw.rect(surf, instant_color, instant_btn)
-        pygame.draw.rect(surf, (150, 100, 200) if is_valid else (100, 100, 100), instant_btn, 2)
-        surf.blit(self.small_font.render("CREATE ENCHANTMENT", True, (200, 200, 200) if is_valid else (100, 100, 100)),
-                 (instant_btn.x + 10, instant_btn.y + 10))
-        self.placement_craft_button_rect = pygame.Rect(wx + instant_btn.x, wy + instant_btn.y, instant_btn.width, instant_btn.height)
-
-        # Note: Enchanting doesn't use minigame in current design
-        self.placement_minigame_button_rect = None
-
-        self.screen.blit(surf, (wx, wy))
-        return pygame.Rect(wx, wy, ww, wh), []
-
-    def _render_placeholder_placement(self, discipline_name: str, character: Character):
-        """Temporary placeholder for unimplemented placement UIs"""
-        ww, wh = 800, 400
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
-
-        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.fill((20, 20, 30, 250))
-
-        surf.blit(self.font.render(f"{discipline_name} PLACEMENT", True, (200, 200, 200)), (20, 20))
-        surf.blit(self.small_font.render("(Placement UI under construction)", True, (180, 180, 180)), (20, 60))
-        surf.blit(self.small_font.render("Click BACK to return", True, (150, 150, 150)), (20, 100))
-
-        # Back button
-        back_btn = pygame.Rect(20, wh - 60, 100, 40)
-        pygame.draw.rect(surf, (80, 60, 60), back_btn)
-        pygame.draw.rect(surf, (150, 100, 100), back_btn, 2)
-        surf.blit(self.small_font.render("BACK", True, (200, 200, 200)), (back_btn.x + 25, back_btn.y + 10))
-
-        self.placement_clear_button_rect = pygame.Rect(wx + back_btn.x, wy + back_btn.y, back_btn.width, back_btn.height)
-
-        self.screen.blit(surf, (wx, wy))
-        return pygame.Rect(wx, wy, ww, wh), []
+        # Return window rect, recipes, and grid cell rects for click handling
+        grid_rects_absolute = []
+        if selected_recipe:
+            # Convert relative grid rects to absolute screen coordinates
+            for rect, grid_pos in placement_grid_rects:
+                abs_rect = rect.move(wx, wy)  # Offset by window position
+                grid_rects_absolute.append((abs_rect, grid_pos))
+        return pygame.Rect(wx, wy, ww, wh), recipes[:8] if recipes else [], grid_rects_absolute
 
     def render_equipment_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.equipment_ui_open:
@@ -4889,6 +4525,10 @@ class GameEngine:
         self.notifications: List[Notification] = []
         self.crafting_window_rect = None
         self.crafting_recipes = []
+        self.selected_recipe = None  # Currently selected recipe in crafting UI (for placement display)
+        self.user_placement = {}  # User's current material placement: "x,y" -> materialId for grids, or other structures
+        self.active_station_tier = 1  # Currently open crafting station's tier (determines grid size shown)
+        self.placement_grid_rects = []  # Grid cell rects for click detection: list of (pygame.Rect, (grid_x, grid_y) or slot_id)
         self.stats_window_rect = None
         self.stats_buttons = []
         self.equipment_window_rect = None
@@ -4903,10 +4543,11 @@ class GameEngine:
         self.enchantment_selection_rect = None
 
         # Minigame state
-        self.current_minigame = None  # Active minigame instance
-        self.minigame_result = None  # Result after minigame completes
+        self.active_minigame = None  # Current minigame instance (SmithingMinigame, etc.)
+        self.minigame_type = None  # Station type: 'smithing', 'alchemy', 'refining', 'engineering', 'adornments'
         self.minigame_recipe = None  # Recipe being crafted with minigame
-        self.minigame_active = False  # Whether minigame is currently running
+        self.minigame_button_rect = None  # For click detection on minigame buttons
+        self.minigame_button_rect2 = None  # For secondary buttons (e.g., alchemy stabilize)
 
         self.keys_pressed = set()
         self.mouse_pos = (0, 0)
@@ -4933,7 +4574,7 @@ class GameEngine:
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
 
-                # Minigame input handling (priority)
+                # Minigame input handling (highest priority)
                 if self.active_minigame:
                     if event.key == pygame.K_ESCAPE:
                         # Cancel minigame (lose materials)
@@ -4942,17 +4583,8 @@ class GameEngine:
                         self.active_minigame = None
                         self.minigame_type = None
                         self.minigame_recipe = None
-                    elif self.minigame_type == 'smithing':
-                        if event.key == pygame.K_SPACE:
-                            self.active_minigame.handle_fan()
-                    elif self.minigame_type == 'alchemy':
-                        if event.key == pygame.K_c:
-                            self.active_minigame.chain()
-                        elif event.key == pygame.K_s:
-                            self.active_minigame.stabilize()
-                    elif self.minigame_type == 'refining':
-                        if event.key == pygame.K_SPACE:
-                            self.active_minigame.handle_attempt()
+                    elif self.minigame_type == 'smithing' and event.key == pygame.K_SPACE:
+                        self.active_minigame.handle_fan()
                     # Skip other key handling when minigame is active
                     continue
 
@@ -5024,22 +4656,12 @@ class GameEngine:
         if self.active_minigame:
             if hasattr(self, 'minigame_button_rect') and self.minigame_button_rect:
                 if self.minigame_button_rect.collidepoint(mouse_pos):
-                    # Handle smithing hammer button or engineering complete button
+                    # Handle smithing hammer button
                     if self.minigame_type == 'smithing':
                         self.active_minigame.handle_hammer()
-                    elif self.minigame_type == 'engineering':
-                        # Mark current puzzle as solved (placeholder)
-                        if hasattr(self.active_minigame, 'check_current_puzzle'):
-                            self.active_minigame.check_current_puzzle()
                     return
-
-            # Check second button (alchemy stabilize button)
-            if hasattr(self, 'minigame_button_rect2') and self.minigame_button_rect2:
-                if self.minigame_button_rect2.collidepoint(mouse_pos):
-                    if self.minigame_type == 'alchemy':
-                        self.active_minigame.stabilize()
-                    return
-            return  # Consume all clicks when minigame is active
+            # Consume all clicks when minigame is active (don't interact with world)
+            return
 
         # Enchantment selection UI (priority over other UIs)
         if self.enchantment_selection_active and self.enchantment_selection_rect:
@@ -5058,17 +4680,29 @@ class GameEngine:
             if self.stats_window_rect.collidepoint(mouse_pos):
                 self.handle_stats_click(mouse_pos)
                 return
+            # Click outside stats UI - close it
+            else:
+                self.character.toggle_stats_ui()
+                return
 
         # Equipment UI
         if self.character.equipment_ui_open and self.equipment_window_rect:
             if self.equipment_window_rect.collidepoint(mouse_pos):
                 self.handle_equipment_click(mouse_pos, shift_held)
                 return
+            # Click outside equipment UI - close it
+            else:
+                self.character.toggle_equipment_ui()
+                return
 
         # Crafting UI
         if self.character.crafting_ui_open and self.crafting_window_rect:
             if self.crafting_window_rect.collidepoint(mouse_pos):
                 self.handle_craft_click(mouse_pos)
+                return
+            # Click outside crafting UI - close it
+            else:
+                self.character.close_crafting_ui()
                 return
 
         # Inventory - check for equipment equipping
@@ -5164,6 +4798,9 @@ class GameEngine:
         station = self.world.get_station_at(world_pos)
         if station:
             self.character.interact_with_station(station)
+            self.active_station_tier = station.tier  # Capture tier for placement UI
+            self.user_placement = {}  # Clear any previous placement
+            self.selected_recipe = None  # Clear selected recipe
             return
 
         resource = self.world.get_resource_at(world_pos)
@@ -5275,6 +4912,300 @@ class GameEngine:
         }
         return crafter_map.get(station_type)
 
+    def _start_minigame(self, recipe: Recipe):
+        """Start the appropriate minigame for this recipe"""
+        crafter = self.get_crafter_for_station(recipe.station_type)
+        if not crafter:
+            self.add_notification("Invalid crafting station!", (255, 100, 100))
+            return
+
+        # Create minigame instance
+        minigame = crafter.create_minigame(recipe.recipe_id)
+        if not minigame:
+            self.add_notification("Minigame not available!", (255, 100, 100))
+            return
+
+        # Start minigame
+        minigame.start()
+
+        # Store minigame state
+        self.active_minigame = minigame
+        self.minigame_type = recipe.station_type
+        self.minigame_recipe = recipe
+
+        # Close crafting UI
+        self.character.close_crafting_ui()
+
+        print(f"🎮 Started {recipe.station_type} minigame for {recipe.recipe_id}")
+        self.add_notification(f"Minigame Started!", (255, 215, 0))
+
+    def _complete_minigame(self):
+        """Complete the active minigame and process results"""
+        if not self.active_minigame or not self.minigame_recipe:
+            return
+
+        print(f"\n{'='*80}")
+        print(f"🎮 MINIGAME COMPLETED")
+        print(f"Recipe: {self.minigame_recipe.recipe_id}")
+        print(f"Type: {self.minigame_type}")
+        print(f"Result: {self.active_minigame.result}")
+        print(f"{'='*80}\n")
+
+        recipe = self.minigame_recipe
+        result = self.active_minigame.result
+        crafter = self.get_crafter_for_station(self.minigame_type)
+
+        recipe_db = RecipeDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+        mat_db = MaterialDatabase.get_instance()
+
+        # Convert inventory to dict
+        inv_dict = self.inventory_to_dict()
+
+        # DEBUG MODE: Add infinite quantities of required materials (same as in craft_item)
+        if Config.DEBUG_INFINITE_RESOURCES:
+            print("🔧 DEBUG MODE: Adding infinite materials for minigame completion")
+            rarity_system.debug_mode = True
+            for inp in recipe.inputs:
+                mat_id = inp.get('materialId', '')
+                inv_dict[mat_id] = 999999
+        else:
+            rarity_system.debug_mode = False
+
+        # Use crafter to process minigame result
+        craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
+
+        if not craft_result.get('success'):
+            # Failure - materials may have been lost
+            message = craft_result.get('message', 'Crafting failed')
+            self.add_notification(message, (255, 100, 100))
+
+            # Sync inventory back (consume materials even on failure)
+            recipe_db.consume_materials(recipe, self.character.inventory)
+        else:
+            # Success - consume materials and add output
+            recipe_db.consume_materials(recipe, self.character.inventory)
+
+            # Record activity and XP
+            activity_map = {
+                'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
+                'engineering': 'engineering', 'adornments': 'enchanting'
+            }
+            activity_type = activity_map.get(self.minigame_type, 'smithing')
+            self.character.activities.record_activity(activity_type, 1)
+
+            # Minigame gives XP (50% bonus over instant craft)
+            xp_reward = int(20 * recipe.station_tier * 1.5)
+            self.character.leveling.add_exp(xp_reward)
+
+            new_title = self.character.titles.check_for_title(
+                activity_type, self.character.activities.get_count(activity_type)
+            )
+            if new_title:
+                self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+
+            # Add output to inventory with rarity and stats
+            output_id = craft_result.get('outputId', recipe.output_id)
+            output_qty = craft_result.get('quantity', recipe.output_qty)
+            rarity = craft_result.get('rarity', 'common')
+            stats = craft_result.get('stats')
+
+            self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
+
+            # Get proper name for notification
+            if equip_db.is_equipment(output_id):
+                equipment = equip_db.create_equipment_from_id(output_id)
+                out_name = equipment.name if equipment else output_id
+            else:
+                out_mat = mat_db.get_material(output_id)
+                out_name = out_mat.name if out_mat else output_id
+
+            message = craft_result.get('message', f"Crafted {out_name} x{output_qty}")
+            self.add_notification(message, (100, 255, 100))
+            print(f"✅ Minigame crafting complete: {out_name} x{output_qty}")
+
+        # Clear minigame state
+        self.active_minigame = None
+        self.minigame_type = None
+        self.minigame_recipe = None
+
+    def _render_minigame(self):
+        """Render the active minigame (dispatcher to specific renderers)"""
+        if not self.active_minigame or not self.minigame_type:
+            return
+
+        # Route to appropriate renderer based on minigame type
+        if self.minigame_type == 'smithing':
+            self._render_smithing_minigame()
+        elif self.minigame_type == 'alchemy':
+            self._render_alchemy_minigame()
+        elif self.minigame_type == 'refining':
+            self._render_refining_minigame()
+        elif self.minigame_type == 'engineering':
+            self._render_engineering_minigame()
+        elif self.minigame_type == 'adornments':
+            self._render_enchanting_minigame()
+
+    def _render_smithing_minigame(self):
+        """Render smithing minigame UI"""
+        state = self.active_minigame.get_state()
+
+        # Create overlay
+        ww, wh = 1000, 700
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        # Header
+        header_text = self.renderer.font.render("SMITHING MINIGAME", True, (255, 215, 0))
+        surf.blit(header_text, (ww//2 - header_text.get_width()//2, 20))
+        controls_text = self.renderer.small_font.render("[SPACE] Fan Flames | [CLICK HAMMER BUTTON] Strike", True, (180, 180, 180))
+        surf.blit(controls_text, (20, 50))
+
+        # Temperature bar
+        temp_x, temp_y = 50, 100
+        temp_width = 300
+        temp_height = 40
+
+        # Draw temp bar background
+        pygame.draw.rect(surf, (40, 40, 40), (temp_x, temp_y, temp_width, temp_height))
+
+        # Draw ideal range
+        ideal_min = state['temp_ideal_min']
+        ideal_max = state['temp_ideal_max']
+        ideal_start = int((ideal_min / 100) * temp_width)
+        ideal_width_px = int(((ideal_max - ideal_min) / 100) * temp_width)
+        pygame.draw.rect(surf, (60, 80, 60), (temp_x + ideal_start, temp_y, ideal_width_px, temp_height))
+
+        # Draw current temperature
+        temp_pct = state['temperature'] / 100
+        temp_fill = int(temp_pct * temp_width)
+        temp_color = (255, 100, 100) if temp_pct > 0.8 else (255, 165, 0) if temp_pct > 0.5 else (100, 150, 255)
+        pygame.draw.rect(surf, temp_color, (temp_x, temp_y, temp_fill, temp_height))
+
+        pygame.draw.rect(surf, (200, 200, 200), (temp_x, temp_y, temp_width, temp_height), 2)
+        temp_label = self.renderer.small_font.render(f"Temperature: {int(state['temperature'])}°C", True, (255, 255, 255))
+        surf.blit(temp_label, (temp_x, temp_y - 25))
+
+        # Hammer bar
+        hammer_x, hammer_y = 50, 200
+        hammer_width = state['hammer_bar_width']
+        hammer_height = 60
+
+        # Draw hammer bar background
+        pygame.draw.rect(surf, (40, 40, 40), (hammer_x, hammer_y, hammer_width, hammer_height))
+
+        # Draw target zone (center)
+        center = hammer_width / 2
+        target_start = int(center - state['target_width'] / 2)
+        pygame.draw.rect(surf, (80, 80, 60), (hammer_x + target_start, hammer_y, state['target_width'], hammer_height))
+
+        # Draw perfect zone (center of target)
+        perfect_start = int(center - state['perfect_width'] / 2)
+        pygame.draw.rect(surf, (100, 120, 60), (hammer_x + perfect_start, hammer_y, state['perfect_width'], hammer_height))
+
+        # Draw hammer indicator
+        hammer_pos = int(state['hammer_position'])
+        pygame.draw.circle(surf, (255, 215, 0), (hammer_x + hammer_pos, hammer_y + hammer_height // 2), 15)
+
+        pygame.draw.rect(surf, (200, 200, 200), (hammer_x, hammer_y, hammer_width, hammer_height), 2)
+        hammer_label = self.renderer.small_font.render(f"Hammer Timing: {state['hammer_hits']}/{state['required_hits']}", True, (255, 255, 255))
+        surf.blit(hammer_label, (hammer_x, hammer_y - 25))
+
+        # Hammer button
+        btn_w, btn_h = 200, 60
+        btn_x, btn_y = ww // 2 - btn_w // 2, 300
+        btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+        pygame.draw.rect(surf, (80, 60, 20), btn_rect)
+        pygame.draw.rect(surf, (255, 215, 0), btn_rect, 3)
+        btn_text = self.renderer.font.render("HAMMER", True, (255, 215, 0))
+        surf.blit(btn_text, (btn_x + 40, btn_y + 15))
+
+        # Timer and scores
+        time_text = self.renderer.font.render(f"Time Left: {int(state['time_left'])}s", True, (255, 255, 255))
+        surf.blit(time_text, (50, 400))
+
+        if state['hammer_scores']:
+            scores_label = self.renderer.small_font.render("Hammer Scores:", True, (200, 200, 200))
+            surf.blit(scores_label, (50, 450))
+            for i, score in enumerate(state['hammer_scores'][-5:]):  # Last 5 scores
+                color = (100, 255, 100) if score >= 90 else (255, 215, 0) if score >= 70 else (255, 100, 100)
+                score_text = self.renderer.small_font.render(f"Hit {i+1}: {score}", True, color)
+                surf.blit(score_text, (70, 480 + i * 25))
+
+        # Result (if completed)
+        if state['result']:
+            result = state['result']
+            result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
+            result_surf.fill((10, 10, 20, 240))
+            if result['success']:
+                success_text = self.renderer.font.render("SUCCESS!", True, (100, 255, 100))
+                result_surf.blit(success_text, (200, 50))
+                score_text = self.renderer.small_font.render(f"Score: {int(result['score'])}", True, (255, 255, 255))
+                result_surf.blit(score_text, (150, 120))
+                bonus_text = self.renderer.small_font.render(f"Bonus: +{result['bonus']}%", True, (255, 215, 0))
+                result_surf.blit(bonus_text, (150, 150))
+                msg_text = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(msg_text, (150, 200))
+            else:
+                fail_text = self.renderer.font.render("FAILED!", True, (255, 100, 100))
+                result_surf.blit(fail_text, (200, 50))
+                msg_text = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(msg_text, (150, 120))
+
+            surf.blit(result_surf, (200, 200))
+
+        self.screen.blit(surf, (wx, wy))
+
+        # Store button rect for click detection (relative to screen)
+        self.minigame_button_rect = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
+
+    def _render_alchemy_minigame(self):
+        """Render alchemy minigame UI - TODO: Implement full rendering"""
+        # Placeholder for now
+        surf = pygame.Surface((800, 600), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        text = self.renderer.font.render("ALCHEMY MINIGAME (Not Yet Implemented)", True, (255, 215, 0))
+        surf.blit(text, (100, 300))
+        wx = (Config.VIEWPORT_WIDTH - 800) // 2
+        wy = (Config.VIEWPORT_HEIGHT - 600) // 2
+        self.screen.blit(surf, (wx, wy))
+
+    def _render_refining_minigame(self):
+        """Render refining minigame UI - TODO: Implement full rendering"""
+        # Placeholder for now
+        surf = pygame.Surface((800, 600), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        text = self.renderer.font.render("REFINING MINIGAME (Not Yet Implemented)", True, (255, 215, 0))
+        surf.blit(text, (100, 300))
+        wx = (Config.VIEWPORT_WIDTH - 800) // 2
+        wy = (Config.VIEWPORT_HEIGHT - 600) // 2
+        self.screen.blit(surf, (wx, wy))
+
+    def _render_engineering_minigame(self):
+        """Render engineering minigame UI - TODO: Implement full rendering"""
+        # Placeholder for now
+        surf = pygame.Surface((800, 600), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        text = self.renderer.font.render("ENGINEERING MINIGAME (Not Yet Implemented)", True, (255, 215, 0))
+        surf.blit(text, (100, 300))
+        wx = (Config.VIEWPORT_WIDTH - 800) // 2
+        wy = (Config.VIEWPORT_HEIGHT - 600) // 2
+        self.screen.blit(surf, (wx, wy))
+
+    def _render_enchanting_minigame(self):
+        """Render enchanting minigame UI - TODO: Implement full rendering"""
+        # Placeholder for now
+        surf = pygame.Surface((800, 600), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        text = self.renderer.font.render("ENCHANTING MINIGAME (Not Yet Implemented)", True, (255, 215, 0))
+        surf.blit(text, (100, 300))
+        wx = (Config.VIEWPORT_WIDTH - 800) // 2
+        wy = (Config.VIEWPORT_HEIGHT - 600) // 2
+        self.screen.blit(surf, (wx, wy))
+
     def add_crafted_item_to_inventory(self, item_id: str, quantity: int,
                                      rarity: str = 'common', stats: Dict = None):
         """Add a crafted item to inventory with rarity and stats"""
@@ -5292,56 +5223,404 @@ class GameEngine:
             # Add to inventory with equipment data
             item_stack = ItemStack(item_id, quantity, equipment_data=equipment,
                                   rarity=rarity, crafted_stats=stats)
-            self.character.inventory.add_stack(item_stack)
+            empty_slot = self.character.inventory.get_empty_slot()
+            if empty_slot is not None:
+                self.character.inventory.slots[empty_slot] = item_stack
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
         else:
             # Material - add with rarity
             item_stack = ItemStack(item_id, quantity, rarity=rarity)
-            self.character.inventory.add_stack(item_stack)
+            empty_slot = self.character.inventory.get_empty_slot()
+            if empty_slot is not None:
+                self.character.inventory.slots[empty_slot] = item_stack
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
 
     def handle_craft_click(self, mouse_pos: Tuple[int, int]):
-        """Handle clicks in crafting UI - supports recipe selection and placement modes"""
-        if not self.crafting_window_rect:
-            return
-
-        # Check if we're in placement mode
-        if self.placement_mode and self.placement_recipe:
-            self._handle_placement_click(mouse_pos)
-        else:
-            self._handle_recipe_selection_click(mouse_pos)
-
-    def _handle_recipe_selection_click(self, mouse_pos: Tuple[int, int]):
-        """Handle clicks in recipe selection mode - click anywhere on recipe box"""
-        if not self.crafting_recipes:
+        """
+        Handle clicks in the new two-panel crafting UI
+        - Left panel: Click recipe to select it
+        - Right panel: Click Instant or Minigame buttons to craft
+        """
+        if not self.crafting_window_rect or not self.crafting_recipes:
             return
 
         rx = mouse_pos[0] - self.crafting_window_rect.x
         ry = mouse_pos[1] - self.crafting_window_rect.y
 
         recipe_db = RecipeDatabase.get_instance()
+
+        # Layout constants (matching render_crafting_ui)
+        left_panel_w = 450
+        right_panel_x = left_panel_w + 20 + 20  # separator + padding
+        right_panel_w = 700
+
+        # ======================
+        # LEFT PANEL: Recipe Selection
+        # ======================
+        if rx < left_panel_w:
+            # Click in left panel - select recipe
+            y_off = 70
+            for i, recipe in enumerate(self.crafting_recipes):
+                num_inputs = len(recipe.inputs)
+                btn_height = max(70, 35 + num_inputs * 16 + 5)
+
+                if y_off <= ry <= y_off + btn_height:
+                    # Recipe clicked - select it
+                    self.selected_recipe = recipe
+                    print(f"📋 Selected recipe: {recipe.recipe_id}")
+                    # Auto-load recipe placement
+                    self.load_recipe_placement(recipe)
+                    return
+
+                y_off += btn_height + 8
+
+        # ======================
+        # RIGHT PANEL: Grid Cells & Craft Buttons
+        # ======================
+        elif rx >= right_panel_x:
+            if not self.selected_recipe:
+                return  # No recipe selected, nothing to interact with
+
+            # First check for placement slot clicks (grid cells or hub slots)
+            for cell_rect, slot_data in self.placement_grid_rects:
+                if cell_rect.collidepoint(mouse_pos):
+                    # Slot clicked!
+                    # slot_data can be either (grid_x, grid_y) tuple for grids or "slot_id" string for others
+                    if isinstance(slot_data, tuple):
+                        # Grid-based (smithing, adornments)
+                        grid_x, grid_y = slot_data
+                        slot_key = f"{grid_x},{grid_y}"
+                        slot_display = f"({grid_x}, {grid_y})"
+                    else:
+                        # Slot-based (refining, alchemy, engineering)
+                        slot_key = slot_data
+                        slot_display = slot_key
+
+                    if slot_key in self.user_placement:
+                        # Slot already has material - remove it
+                        removed_mat = self.user_placement.pop(slot_key)
+                        print(f"🗑️ Removed {removed_mat} from {slot_display}")
+                    else:
+                        # Slot is empty - place first material from recipe inputs
+                        # This is a simple approach; later we can add material picker UI
+                        if self.selected_recipe.inputs:
+                            first_mat_id = self.selected_recipe.inputs[0].get('materialId', '')
+                            if first_mat_id:
+                                self.user_placement[slot_key] = first_mat_id
+                                print(f"✅ Placed {first_mat_id} in {slot_display}")
+                    return  # Slot click handled
+
+            # Then check for craft buttons
+            recipe = self.selected_recipe
+            can_craft = recipe_db.can_craft(recipe, self.character.inventory)
+
+            if not can_craft:
+                return  # Can't craft, buttons not shown
+
+            # Button positions (matching render_crafting_ui)
+            placement_h = 380
+            right_panel_y = 70
+            btn_y = right_panel_y + placement_h + 20
+
+            instant_btn_w, instant_btn_h = 120, 40
+            minigame_btn_w, minigame_btn_h = 120, 40
+
+            total_btn_w = instant_btn_w + minigame_btn_w + 20
+            start_x = right_panel_x + (right_panel_w - 40 - total_btn_w) // 2
+
+            instant_btn_x = start_x
+            minigame_btn_x = start_x + instant_btn_w + 20
+
+            # Convert to relative coordinates
+            instant_left = instant_btn_x
+            instant_right = instant_btn_x + instant_btn_w
+            minigame_left = minigame_btn_x
+            minigame_right = minigame_btn_x + minigame_btn_w
+            btn_top = btn_y
+            btn_bottom = btn_y + instant_btn_h
+
+            if instant_left <= rx <= instant_right and btn_top <= ry <= btn_bottom:
+                # Instant craft clicked
+                print(f"🔨 Instant craft clicked for {recipe.recipe_id}")
+                self.craft_item(recipe, use_minigame=False)
+            elif minigame_left <= rx <= minigame_right and btn_top <= ry <= btn_bottom:
+                # Minigame clicked
+                print(f"🎮 Minigame clicked for {recipe.recipe_id}")
+                self.craft_item(recipe, use_minigame=True)
+
+    def load_recipe_placement(self, recipe: Recipe):
+        """
+        Auto-load recipe placement into user_placement when recipe is selected.
+        This pre-fills the placement so user can craft immediately or modify as needed.
+        """
+        placement_db = PlacementDatabase.get_instance()
+        placement_data = placement_db.get_placement(recipe.recipe_id)
+
+        if not placement_data:
+            # No placement data - clear user placement
+            self.user_placement = {}
+            return
+
+        # Clear existing placement
+        self.user_placement = {}
+
+        # Load based on discipline
+        if placement_data.discipline == 'smithing' or placement_data.discipline == 'adornments':
+            # Grid-based: copy placement_map with offset for centering
+            recipe_grid_w, recipe_grid_h = 3, 3  # Default
+            if placement_data.grid_size:
+                parts = placement_data.grid_size.lower().split('x')
+                if len(parts) == 2:
+                    try:
+                        recipe_grid_w = int(parts[0])
+                        recipe_grid_h = int(parts[1])
+                    except ValueError:
+                        pass
+
+            # Calculate offset to center recipe on station grid
+            station_tier = self.active_station_tier
+            station_grid_w, station_grid_h = self._get_grid_size_for_tier(station_tier, placement_data.discipline)
+            offset_x = (station_grid_w - recipe_grid_w) // 2
+            offset_y = (station_grid_h - recipe_grid_h) // 2
+
+            # Copy placements with offset
+            for pos, mat_id in placement_data.placement_map.items():
+                parts = pos.split(',')
+                if len(parts) == 2:
+                    try:
+                        recipe_x = int(parts[0])
+                        recipe_y = int(parts[1])
+                        station_x = recipe_x + offset_x
+                        station_y = recipe_y + offset_y
+                        self.user_placement[f"{station_x},{station_y}"] = mat_id
+                    except ValueError:
+                        pass
+
+        elif placement_data.discipline == 'refining':
+            # Hub-and-spoke: copy core and surrounding inputs
+            for i, core_input in enumerate(placement_data.core_inputs):
+                mat_id = core_input.get('materialId', '')
+                if mat_id:
+                    self.user_placement[f"core_{i}"] = mat_id
+
+            for i, surrounding_input in enumerate(placement_data.surrounding_inputs):
+                mat_id = surrounding_input.get('materialId', '')
+                if mat_id:
+                    self.user_placement[f"surrounding_{i}"] = mat_id
+
+        elif placement_data.discipline == 'alchemy':
+            # Sequential: copy ingredients
+            for ingredient in placement_data.ingredients:
+                slot_num = ingredient.get('slot')
+                mat_id = ingredient.get('materialId', '')
+                if slot_num and mat_id:
+                    self.user_placement[f"seq_{slot_num}"] = mat_id
+
+        elif placement_data.discipline == 'engineering':
+            # Slot-type: copy slots
+            for i, slot in enumerate(placement_data.slots):
+                mat_id = slot.get('materialId', '')
+                if mat_id:
+                    self.user_placement[f"eng_slot_{i}"] = mat_id
+
+        print(f"✅ Loaded {len(self.user_placement)} placements for {recipe.recipe_id}")
+
+    def _get_grid_size_for_tier(self, tier: int, discipline: str) -> Tuple[int, int]:
+        """Get grid dimensions based on station tier (matches Renderer method)"""
+        if discipline not in ['smithing', 'adornments']:
+            return (3, 3)
+        tier_to_grid = {1: (3, 3), 2: (5, 5), 3: (7, 7), 4: (9, 9)}
+        return tier_to_grid.get(tier, (3, 3))
+
+    def validate_placement(self, recipe: Recipe, user_placement: Dict[str, str]) -> Tuple[bool, str]:
+        """
+        Validate user's material placement against recipe requirements
+
+        Args:
+            recipe: Recipe being crafted
+            user_placement: User's current placement (Dict[str, str] mapping "x,y" -> materialId)
+
+        Returns:
+            (is_valid, error_message): Tuple of validation result and error message
+        """
         placement_db = PlacementDatabase.get_instance()
 
-        # Updated for 450px sidebar width
-        for i, recipe in enumerate(self.crafting_recipes):
-            btn_top = 70 + (i * 100)
-            btn_height = 95
-            btn_width = 450 - 40  # Sidebar width - margins
-            btn_left = 20
-            btn_right = btn_left + btn_width
-            btn_bottom = btn_top + btn_height
+        # Get required placement data
+        placement_data = placement_db.get_placement(recipe.recipe_id)
+        if not placement_data:
+            # No placement data - placement not required
+            return (True, "")
 
-            # Check if anywhere on the recipe box is clicked
-            if btn_left <= rx <= btn_right and btn_top <= ry <= btn_bottom:
-                can_craft = recipe_db.can_craft(recipe, self.character.inventory)
-                if not can_craft:
-                    continue
+        discipline = placement_data.discipline
 
-                # Entire box clicked - enter placement mode
-                print(f"📋 Recipe selected: {recipe.recipe_id}")
-                self._enter_placement_mode(recipe)
-                break
+        if discipline == 'smithing' or discipline == 'adornments':
+            # Grid-based validation with centering offset
+            required_map = placement_data.placement_map
 
-    def craft_item(self, recipe: Recipe):
-        """Craft an item using the new crafting subdisciplines system"""
+            # Get recipe and station grid sizes
+            recipe_grid_w, recipe_grid_h = 3, 3
+            if placement_data.grid_size:
+                parts = placement_data.grid_size.lower().split('x')
+                if len(parts) == 2:
+                    try:
+                        recipe_grid_w = int(parts[0])
+                        recipe_grid_h = int(parts[1])
+                    except ValueError:
+                        pass
+
+            station_grid_w, station_grid_h = self._get_grid_size_for_tier(self.active_station_tier, discipline)
+            offset_x = (station_grid_w - recipe_grid_w) // 2
+            offset_y = (station_grid_h - recipe_grid_h) // 2
+
+            # Check if all required positions are filled (with offset)
+            for pos, required_mat in required_map.items():
+                parts = pos.split(',')
+                if len(parts) == 2:
+                    try:
+                        recipe_x = int(parts[0])
+                        recipe_y = int(parts[1])
+                        station_x = recipe_x + offset_x
+                        station_y = recipe_y + offset_y
+                        station_pos = f"{station_x},{station_y}"
+
+                        if station_pos not in user_placement:
+                            return (False, f"Missing material at {pos} ({required_mat})")
+
+                        user_mat = user_placement[station_pos]
+                        if user_mat != required_mat:
+                            return (False, f"Wrong material at {pos}: expected {required_mat}, got {user_mat}")
+                    except ValueError:
+                        pass
+
+            # Check for extra materials (allow placements within recipe bounds only)
+            expected_positions = set()
+            for pos in required_map.keys():
+                parts = pos.split(',')
+                if len(parts) == 2:
+                    try:
+                        recipe_x = int(parts[0])
+                        recipe_y = int(parts[1])
+                        station_x = recipe_x + offset_x
+                        station_y = recipe_y + offset_y
+                        expected_positions.add(f"{station_x},{station_y}")
+                    except ValueError:
+                        pass
+
+            for pos in user_placement.keys():
+                if pos not in expected_positions:
+                    return (False, f"Extra material at {pos} (not part of recipe)")
+
+            return (True, "Placement correct!")
+
+        elif discipline == 'refining':
+            # Hub-and-spoke validation
+            required_core = placement_data.core_inputs
+            required_surrounding = placement_data.surrounding_inputs
+
+            # Check core slots
+            for i, core_input in enumerate(required_core):
+                slot_id = f"core_{i}"
+                required_mat = core_input.get('materialId', '')
+
+                if slot_id not in user_placement:
+                    return (False, f"Missing core material: {required_mat}")
+
+                user_mat = user_placement[slot_id]
+                if user_mat != required_mat:
+                    return (False, f"Wrong core material: expected {required_mat}, got {user_mat}")
+
+            # Check surrounding slots
+            for i, surrounding_input in enumerate(required_surrounding):
+                slot_id = f"surrounding_{i}"
+                required_mat = surrounding_input.get('materialId', '')
+
+                if slot_id not in user_placement:
+                    return (False, f"Missing surrounding material: {required_mat}")
+
+                user_mat = user_placement[slot_id]
+                if user_mat != required_mat:
+                    return (False, f"Wrong surrounding material: expected {required_mat}, got {user_mat}")
+
+            # Check for extra materials in wrong slots
+            expected_slots = set(f"core_{i}" for i in range(len(required_core)))
+            expected_slots.update(f"surrounding_{i}" for i in range(len(required_surrounding)))
+
+            for slot_id in user_placement.keys():
+                if slot_id.startswith('core_') or slot_id.startswith('surrounding_'):
+                    if slot_id not in expected_slots:
+                        return (False, f"Extra material in {slot_id} (not required)")
+
+            return (True, "Refining placement correct!")
+
+        elif discipline == 'alchemy':
+            # Sequential validation
+            required_ingredients = placement_data.ingredients
+
+            # Check each sequential slot
+            for ingredient in required_ingredients:
+                slot_num = ingredient.get('slot')
+                slot_id = f"seq_{slot_num}"
+                required_mat = ingredient.get('materialId', '')
+
+                if slot_id not in user_placement:
+                    return (False, f"Missing ingredient in slot {slot_num}: {required_mat}")
+
+                user_mat = user_placement[slot_id]
+                if user_mat != required_mat:
+                    return (False, f"Wrong ingredient in slot {slot_num}: expected {required_mat}, got {user_mat}")
+
+            # Check for extra materials in wrong slots
+            expected_slots = set(f"seq_{ing.get('slot')}" for ing in required_ingredients)
+
+            for slot_id in user_placement.keys():
+                if slot_id.startswith('seq_'):
+                    if slot_id not in expected_slots:
+                        return (False, f"Extra ingredient in {slot_id} (not required)")
+
+            return (True, "Alchemy sequence correct!")
+
+        elif discipline == 'engineering':
+            # Slot-type validation
+            required_slots = placement_data.slots
+
+            # Check each slot
+            for i, slot_data in enumerate(required_slots):
+                slot_id = f"eng_slot_{i}"
+                required_mat = slot_data.get('materialId', '')
+
+                if slot_id not in user_placement:
+                    slot_type = slot_data.get('type', '')
+                    return (False, f"Missing material in {slot_type} slot: {required_mat}")
+
+                user_mat = user_placement[slot_id]
+                if user_mat != required_mat:
+                    slot_type = slot_data.get('type', '')
+                    return (False, f"Wrong material in {slot_type} slot: expected {required_mat}, got {user_mat}")
+
+            # Check for extra materials
+            expected_slots = set(f"eng_slot_{i}" for i in range(len(required_slots)))
+
+            for slot_id in user_placement.keys():
+                if slot_id.startswith('eng_slot_'):
+                    if slot_id not in expected_slots:
+                        return (False, f"Extra material in {slot_id} (not required)")
+
+            return (True, "Engineering placement correct!")
+
+        else:
+            # Unknown discipline
+            return (True, "")
+
+    def craft_item(self, recipe: Recipe, use_minigame: bool = False):
+        """
+        Craft an item either instantly or via minigame
+
+        Args:
+            recipe: Recipe to craft
+            use_minigame: If True, start minigame. If False, instant craft.
+        """
         recipe_db = RecipeDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
@@ -5360,6 +5639,38 @@ class GameEngine:
             print("❌ Cannot craft - not enough materials")
             return
 
+        # Validate placement (if required)
+        is_valid, error_msg = self.validate_placement(recipe, self.user_placement)
+        if not is_valid:
+            self.add_notification(f"Invalid placement: {error_msg}", (255, 100, 100))
+            print(f"❌ Cannot craft - invalid placement: {error_msg}")
+            return
+        elif error_msg:  # Valid with message
+            print(f"✓ Placement validated: {error_msg}")
+
+        # Handle enchanting recipes differently
+        if recipe.is_enchantment:
+            print("⚠ Enchantment recipe - using special handler")
+            # TODO: Implement enchantment UI selection
+            self.add_notification("Enchantment crafting not yet implemented", (255, 100, 100))
+            return
+
+        # Choose crafting method
+        if use_minigame:
+            print("🎮 Starting minigame...")
+            self._start_minigame(recipe)
+            return
+        else:
+            print("⚡ Using instant craft...")
+            self._instant_craft(recipe)
+            return
+
+    def _instant_craft(self, recipe: Recipe):
+        """Perform instant crafting (no minigame, 0 EXP)"""
+        recipe_db = RecipeDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+        mat_db = MaterialDatabase.get_instance()
+
         # Get the appropriate crafter for this discipline
         crafter = self.get_crafter_for_station(recipe.station_type)
 
@@ -5369,6 +5680,19 @@ class GameEngine:
 
             # Convert inventory to dict format
             inv_dict = self.inventory_to_dict()
+
+            # DEBUG MODE: Add infinite quantities of required materials
+            if Config.DEBUG_INFINITE_RESOURCES:
+                print("🔧 DEBUG MODE: Adding infinite materials and bypassing rarity checks")
+                # Enable debug mode in rarity system to bypass rarity uniformity checks
+                rarity_system.debug_mode = True
+                for inp in recipe.inputs:
+                    mat_id = inp.get('materialId', '')
+                    # Add huge quantity - rarity is checked from material database, not inventory
+                    inv_dict[mat_id] = 999999
+            else:
+                # Ensure debug mode is off
+                rarity_system.debug_mode = False
 
             # Check if crafter can craft (with rarity checks)
             can_craft_result = crafter.can_craft(recipe.recipe_id, inv_dict)
@@ -5564,12 +5888,11 @@ class GameEngine:
             self.character.update_attack_cooldown(dt)
         else:
             # Update active minigame
-            if self.active_minigame and not self.minigame_paused:
-                self.active_minigame.update(dt)
+            self.active_minigame.update(dt)
 
-                # Check if minigame completed
-                if hasattr(self.active_minigame, 'result') and self.active_minigame.result is not None:
-                    self._complete_minigame()
+            # Check if minigame completed
+            if hasattr(self.active_minigame, 'result') and self.active_minigame.result is not None:
+                self._complete_minigame()
 
         self.damage_numbers = [d for d in self.damage_numbers if d.update(dt)]
         self.notifications = [n for n in self.notifications if n.update(dt)]
@@ -5591,14 +5914,9 @@ class GameEngine:
             self.class_buttons = []
 
             if self.character.crafting_ui_open:
-                result = self.renderer.render_crafting_ui(
-                    self.character, self.mouse_pos,
-                    self.placement_mode, self.placement_recipe, self.placement_data,
-                    self.placed_materials_grid, self.placed_materials_hub,
-                    self.placed_materials_sequential, self.placed_materials_slots
-                )
+                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe, self.user_placement)
                 if result:
-                    self.crafting_window_rect, self.crafting_recipes = result
+                    self.crafting_window_rect, self.crafting_recipes, self.placement_grid_rects = result
             else:
                 self.crafting_window_rect = None
                 self.crafting_recipes = []
