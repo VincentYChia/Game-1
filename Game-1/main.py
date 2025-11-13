@@ -2814,13 +2814,11 @@ class Renderer:
         # Draw grid cells
         cell_rects = []  # Will store list of (pygame.Rect, (grid_x, grid_y)) for click detection
 
-        for gy in range(1, grid_h + 1):  # 1-indexed to match placement data
-            for gx in range(1, grid_w + 1):
-                # Flip Y axis: placement data uses bottom-up (y=1 at bottom), pygame uses top-down
-                render_y = (grid_h + 1) - gy  # Convert to render row (1 at top)
-
+        for gy in range(1, grid_h + 1):  # 1-indexed to match placement data (row)
+            for gx in range(1, grid_w + 1):  # 1-indexed (col)
+                # No Y axis flipping - row 1 is at top, like in crafting_tester.py
                 cell_x = grid_start_x + (gx - 1) * (cell_size + 4)
-                cell_y = grid_start_y + (render_y - 1) * (cell_size + 4)
+                cell_y = grid_start_y + (gy - 1) * (cell_size + 4)
                 cell_rect = pygame.Rect(cell_x, cell_y, cell_size, cell_size)
 
                 # Check if this cell corresponds to a recipe requirement (with offset for centering)
@@ -5826,10 +5824,9 @@ class GameEngine:
 
         # Handle enchanting recipes differently (apply to existing items)
         if recipe.is_enchantment:
-            print("⚠ Enchantment recipe - using special handler")
-            # For now, treat adornments like normal crafting (creates adornment items)
-            # TODO: Implement item selection UI for applying adornments to equipment
-            pass  # Continue to normal crafting flow
+            print("⚠ Enchantment recipe - opening item selection UI")
+            self._open_enchantment_selection(recipe)
+            return
 
         # Choose crafting method
         if use_minigame:
@@ -6005,6 +6002,36 @@ class GameEngine:
 
         self.add_notification(f"Applied {recipe.enchantment_name} to {equipment.name}!", (100, 255, 255))
         self._close_enchantment_selection()
+
+    def _open_enchantment_selection(self, recipe: Recipe):
+        """Open the item selection UI for applying enchantment"""
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Get all equipment from inventory and equipped slots
+        compatible_items = []
+
+        # From inventory
+        for slot_idx, stack in self.character.inventory.slots.items():
+            if stack and equip_db.is_equipment(stack.item_id):
+                equipment = equip_db.create_equipment_from_id(stack.item_id)
+                if equipment:
+                    compatible_items.append(('inventory', slot_idx, stack, equipment))
+
+        # From equipped slots
+        for slot_name, equipped_item in self.character.equipment.items():
+            if equipped_item:
+                compatible_items.append(('equipped', slot_name, None, equipped_item))
+
+        if not compatible_items:
+            self.add_notification("No equipment to enchant!", (255, 100, 100))
+            print("❌ No compatible items found for enchantment")
+            return
+
+        # Open the selection UI
+        self.enchantment_selection_active = True
+        self.enchantment_recipe = recipe
+        self.enchantment_compatible_items = compatible_items
+        print(f"✨ Opened enchantment selection UI ({len(compatible_items)} compatible items)")
 
     def _close_enchantment_selection(self):
         """Close the enchantment selection UI"""
@@ -6311,7 +6338,8 @@ class GameEngine:
             surf.blit(_temp_surf, (50, 450))
             for i, score in enumerate(state['hammer_scores'][-5:]):  # Last 5 scores
                 color = (100, 255, 100) if score >= 90 else (255, 215, 0) if score >= 70 else (255, 100, 100)
-                self.renderer.small_font.render_to(surf, (70, 480 + i * 25), f"Hit {i+1}: {score}", color)
+                _temp_surf = self.renderer.small_font.render(f"Hit {i+1}: {score}", True, color)
+                surf.blit(_temp_surf, (70, 480 + i * 25))
 
         # Result (if completed)
         if state['result']:
@@ -6319,13 +6347,19 @@ class GameEngine:
             result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
             result_surf.fill((10, 10, 20, 240))
             if result['success']:
-                self.renderer.font.render_to(result_surf, (200, 50), "SUCCESS!", (100, 255, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 120), f"Score: {int(result['score'])}", (255, 255, 255))
-                self.renderer.small_font.render_to(result_surf, (150, 150), f"Bonus: +{result['bonus']}%", (255, 215, 0))
-                self.renderer.small_font.render_to(result_surf, (150, 200), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render("SUCCESS!", True, (100, 255, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(f"Score: {int(result['score'])}", True, (255, 255, 255))
+                result_surf.blit(_temp_surf, (150, 120))
+                _temp_surf = self.renderer.small_font.render(f"Bonus: +{result['bonus']}%", True, (255, 215, 0))
+                result_surf.blit(_temp_surf, (150, 150))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 200))
             else:
-                self.renderer.font.render_to(result_surf, (200, 50), "FAILED!", (255, 100, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 120), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render("FAILED!", True, (255, 100, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 120))
 
             surf.blit(result_surf, (200, 200))
 
@@ -6380,7 +6414,8 @@ class GameEngine:
             stage_name = stage_names[stage_idx] if 0 <= stage_idx < len(stage_names) else "Unknown"
             stage_color = (255, 215, 0) if reaction['stage'] == 3 else (255, 100, 100) if reaction['stage'] >= 5 else (200, 200, 200)
 
-            self.renderer.font.render_to(surf, (rx, ry + 220), f"Stage: {stage_name}", stage_color)
+            _temp_surf = self.renderer.font.render(f"Stage: {stage_name}", True, stage_color)
+            surf.blit(_temp_surf, (rx, ry + 220))
             _temp_surf = self.renderer.small_font.render(f"Quality: {int(reaction['quality'] * 100)}%", True, (200, 200, 200))
             surf.blit(_temp_surf, (rx, ry + 250))
 
@@ -6413,12 +6448,17 @@ class GameEngine:
             result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
             result_surf.fill((10, 10, 20, 240))
             if result['success']:
-                self.renderer.font.render_to(result_surf, (200, 50), result['quality'], (100, 255, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 120), f"Progress: {int(result['progress'] * 100)}%", (255, 255, 255))
-                self.renderer.small_font.render_to(result_surf, (150, 150), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render(result['quality'], True, (100, 255, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(f"Progress: {int(result['progress'] * 100)}%", True, (255, 255, 255))
+                result_surf.blit(_temp_surf, (150, 120))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 150))
             else:
-                self.renderer.font.render_to(result_surf, (200, 50), "FAILED!", (255, 100, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 120), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render("FAILED!", True, (255, 100, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 120))
 
             surf.blit(result_surf, (200, 200))
 
@@ -6480,11 +6520,15 @@ class GameEngine:
             result_surf = pygame.Surface((600, 200), pygame.SRCALPHA)
             result_surf.fill((10, 10, 20, 240))
             if result['success']:
-                self.renderer.font.render_to(result_surf, (200, 50), "SUCCESS!", (100, 255, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 100), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render("SUCCESS!", True, (100, 255, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 100))
             else:
-                self.renderer.font.render_to(result_surf, (200, 50), "FAILED!", (255, 100, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 100), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render("FAILED!", True, (255, 100, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 100))
 
             surf.blit(result_surf, (200, 250))
 
@@ -6526,11 +6570,11 @@ class GameEngine:
             pygame.draw.rect(surf, (100, 100, 100), puzzle_rect, 2)
 
             if puzzle.get('grid_size'):
-                self.renderer.small_font.render_to(surf, (puzzle_rect.x + 20, puzzle_rect.y + 20),
-                                                   f"Rotation Puzzle ({puzzle['grid_size']}x{puzzle['grid_size']})", (200, 200, 200))
+                _temp_surf = self.renderer.small_font.render(f"Rotation Puzzle ({puzzle['grid_size']}x{puzzle['grid_size']})", True, (200, 200, 200))
+                surf.blit(_temp_surf, (puzzle_rect.x + 20, puzzle_rect.y + 20))
             elif puzzle.get('placeholder'):
-                self.renderer.small_font.render_to(surf, (puzzle_rect.x + 20, puzzle_rect.y + 20),
-                                                   "Puzzle placeholder - Click COMPLETE", (200, 200, 200))
+                _temp_surf = self.renderer.small_font.render("Puzzle placeholder - Click COMPLETE", True, (200, 200, 200))
+                surf.blit(_temp_surf, (puzzle_rect.x + 20, puzzle_rect.y + 20))
 
         # Complete button (for testing)
         btn_w, btn_h = 200, 50
@@ -6546,8 +6590,10 @@ class GameEngine:
             result = state['result']
             result_surf = pygame.Surface((600, 200), pygame.SRCALPHA)
             result_surf.fill((10, 10, 20, 240))
-            self.renderer.font.render_to(result_surf, (200, 50), "DEVICE CREATED!", (100, 255, 100))
-            self.renderer.small_font.render_to(result_surf, (150, 100), result['message'], (200, 200, 200))
+            _temp_surf = self.renderer.font.render("DEVICE CREATED!", True, (100, 255, 100))
+            result_surf.blit(_temp_surf, (200, 50))
+            _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+            result_surf.blit(_temp_surf, (150, 100))
             surf.blit(result_surf, (200, 250))
 
         self.screen.blit(surf, (wx, wy))
