@@ -5824,12 +5824,12 @@ class GameEngine:
         elif error_msg:  # Valid with message
             print(f"✓ Placement validated: {error_msg}")
 
-        # Handle enchanting recipes differently
+        # Handle enchanting recipes differently (apply to existing items)
         if recipe.is_enchantment:
             print("⚠ Enchantment recipe - using special handler")
-            # TODO: Implement enchantment UI selection
-            self.add_notification("Enchantment crafting not yet implemented", (255, 100, 100))
-            return
+            # For now, treat adornments like normal crafting (creates adornment items)
+            # TODO: Implement item selection UI for applying adornments to equipment
+            pass  # Continue to normal crafting flow
 
         # Choose crafting method
         if use_minigame:
