@@ -3623,6 +3623,11 @@ class Renderer:
         if not character.crafting_ui_open or not character.active_station:
             return None
 
+        # Store these temporarily so child methods can access them
+        # (Python scoping doesn't allow nested functions to see parameters)
+        self._temp_selected_recipe = selected_recipe
+        self._temp_user_placement = user_placement
+
         # Always render recipe list on the left
         recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos)
 
@@ -3674,7 +3679,7 @@ class Renderer:
                 can_craft = recipe_db.can_craft(recipe, character.inventory)
 
                 # Highlight selected recipe with gold border
-                is_selected = (selected_recipe and selected_recipe.recipe_id == recipe.recipe_id)
+                is_selected = (self._temp_selected_recipe and self._temp_selected_recipe.recipe_id == recipe.recipe_id)
 
                 btn_color = (60, 80, 60) if can_craft else (80, 60, 60)
                 if is_selected:
@@ -3725,9 +3730,9 @@ class Renderer:
         right_panel_x = separator_x + 20
         right_panel_y = 70
 
-        if selected_recipe:
+        if self._temp_selected_recipe:
             # Selected recipe - show placement and buttons
-            selected = selected_recipe
+            selected = self._temp_selected_recipe
             can_craft = recipe_db.can_craft(selected, character.inventory)
 
             # Placement visualization area
@@ -3743,19 +3748,19 @@ class Renderer:
 
             if station_type == 'smithing':
                 # Smithing: Grid-based placement
-                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
             elif station_type == 'refining':
                 # Refining: Hub-and-spoke
-                placement_grid_rects = self.render_refining_hub(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+                placement_grid_rects = self.render_refining_hub(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
             elif station_type == 'alchemy':
                 # Alchemy: Sequential
-                placement_grid_rects = self.render_alchemy_sequence(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+                placement_grid_rects = self.render_alchemy_sequence(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
             elif station_type == 'engineering':
                 # Engineering: Slot-type
-                placement_grid_rects = self.render_engineering_slots(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+                placement_grid_rects = self.render_engineering_slots(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
             elif station_type == 'adornments':
                 # Enchanting: Grid-based (reuses smithing grid renderer)
-                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
 
             # Craft buttons at bottom of right panel
             if can_craft:
@@ -3802,7 +3807,7 @@ class Renderer:
         self.screen.blit(surf, (wx, wy))
         # Return window rect, recipes, and grid cell rects for click handling
         grid_rects_absolute = []
-        if selected_recipe:
+        if self._temp_selected_recipe:
             # Convert relative grid rects to absolute screen coordinates
             for rect, grid_pos in placement_grid_rects:
                 abs_rect = rect.move(wx, wy)  # Offset by window position
