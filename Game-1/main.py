@@ -1458,16 +1458,29 @@ class WorldSystem:
         print(f"Generated {Config.WORLD_SIZE}x{Config.WORLD_SIZE} world, {len(self.resources)} resources")
 
     def spawn_starting_stations(self):
-        """Spawn crafting stations near player start (50, 50)"""
-        # Place stations in starting chunk around the player
-        for x, y, stype in [
-            (48, 48, StationType.SMITHING),
-            (52, 48, StationType.REFINING),
-            (48, 52, StationType.ALCHEMY),
-            (52, 52, StationType.ENGINEERING),
-            (50, 50, StationType.ADORNMENTS)  # Center station
-        ]:
-            self.crafting_stations.append(CraftingStation(Position(x, y, 0), stype, 1))
+        """Spawn all tiers of crafting stations near player start (50, 50)"""
+        # Place all 4 tiers of each station type in a grid layout
+        # Format: (base_x, base_y, station_type)
+        # Each station type gets T1-T4 arranged vertically
+
+        station_positions = [
+            # SMITHING - Far left column
+            (44, StationType.SMITHING),
+            # REFINING - Left column
+            (46, StationType.REFINING),
+            # ALCHEMY - Right column
+            (54, StationType.ALCHEMY),
+            # ENGINEERING - Far right column
+            (56, StationType.ENGINEERING),
+            # ADORNMENTS/ENCHANTING - Center column
+            (50, StationType.ADORNMENTS),
+        ]
+
+        # Spawn T1-T4 of each station type
+        for base_x, stype in station_positions:
+            for tier in range(1, 5):  # T1, T2, T3, T4
+                y = 46 + (tier - 1) * 2  # Vertical spacing: 46, 48, 50, 52
+                self.crafting_stations.append(CraftingStation(Position(base_x, y, 0), stype, tier))
 
     def get_tile(self, position: Position) -> Optional[WorldTile]:
         return self.tiles.get(position.snap_to_grid().to_key())
@@ -3552,11 +3565,19 @@ class GameEngine:
             # Add to inventory with equipment data
             item_stack = ItemStack(item_id, quantity, equipment_data=equipment,
                                   rarity=rarity, crafted_stats=stats)
-            self.character.inventory.add_stack(item_stack)
+            empty_slot = self.character.inventory.get_empty_slot()
+            if empty_slot is not None:
+                self.character.inventory.slots[empty_slot] = item_stack
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
         else:
             # Material - add with rarity
             item_stack = ItemStack(item_id, quantity, rarity=rarity)
-            self.character.inventory.add_stack(item_stack)
+            empty_slot = self.character.inventory.get_empty_slot()
+            if empty_slot is not None:
+                self.character.inventory.slots[empty_slot] = item_stack
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
 
     def handle_craft_click(self, mouse_pos: Tuple[int, int]):
         if not self.crafting_window_rect or not self.crafting_recipes:
