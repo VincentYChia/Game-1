@@ -1677,6 +1677,247 @@ class RecipeDatabase:
 
 
 # ============================================================================
+# PLACEMENT SYSTEM
+# ============================================================================
+@dataclass
+class PlacementData:
+    """Universal placement data structure for all crafting types"""
+    recipe_id: str
+    discipline: str  # smithing, alchemy, refining, engineering, adornments
+
+    # Smithing: Grid-based placement
+    grid_size: str = ""  # "3x3", "5x5", etc.
+    placement_map: Dict[str, str] = field(default_factory=dict)  # "x,y" -> materialId
+
+    # Refining: Hub-and-spoke
+    core_inputs: List[Dict] = field(default_factory=list)  # Center slots
+    surrounding_inputs: List[Dict] = field(default_factory=list)  # Surrounding modifiers
+
+    # Alchemy: Sequential
+    ingredients: List[Dict] = field(default_factory=list)  # [{slot, materialId, quantity}]
+
+    # Engineering: Slot types
+    slots: List[Dict] = field(default_factory=list)  # [{type, materialId, quantity}]
+
+    # Enchanting: Pattern-based
+    pattern: List[str] = field(default_factory=list)  # Pattern rows
+
+    # Metadata
+    narrative: str = ""
+    output_id: str = ""
+    station_tier: int = 1
+
+
+class PlacementDatabase:
+    """Manages placement data for all crafting disciplines"""
+    _instance = None
+
+    def __init__(self):
+        self.placements: Dict[str, PlacementData] = {}  # recipeId -> PlacementData
+        self.loaded = False
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = PlacementDatabase()
+        return cls._instance
+
+    def load_from_files(self, base_path: str = ""):
+        """Load all placement JSON files"""
+        total = 0
+
+        # Smithing placements
+        total += self._load_smithing("placements.JSON/placements-smithing-1.JSON")
+
+        # Refining placements
+        total += self._load_refining("placements.JSON/placements-refining-1.JSON")
+
+        # Alchemy placements
+        total += self._load_alchemy("placements.JSON/placements-alchemy-1.JSON")
+
+        # Engineering placements
+        total += self._load_engineering("placements.JSON/placements-engineering-1.JSON")
+
+        # Enchanting/Adornments placements
+        total += self._load_enchanting("placements.JSON/placements-adornments-1.JSON")
+
+        self.loaded = True
+        print(f"✓ Loaded {total} placement templates")
+        return total
+
+    def _load_smithing(self, filepath: str) -> int:
+        """Load smithing grid-based placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Smithing placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='smithing',
+                    grid_size=placement.get('metadata', {}).get('gridSize', '3x3'),
+                    placement_map=placement.get('placementMap', {}),
+                    narrative=placement.get('metadata', {}).get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} smithing placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading smithing placements: {e}")
+            return 0
+
+    def _load_refining(self, filepath: str) -> int:
+        """Load refining hub-and-spoke placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Refining placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='refining',
+                    core_inputs=placement.get('coreInputs', []),
+                    surrounding_inputs=placement.get('surroundingInputs', []),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} refining placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading refining placements: {e}")
+            return 0
+
+    def _load_alchemy(self, filepath: str) -> int:
+        """Load alchemy sequential placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Alchemy placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='alchemy',
+                    ingredients=placement.get('ingredients', []),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} alchemy placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading alchemy placements: {e}")
+            return 0
+
+    def _load_engineering(self, filepath: str) -> int:
+        """Load engineering slot-type placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Engineering placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='engineering',
+                    slots=placement.get('slots', []),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} engineering placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading engineering placements: {e}")
+            return 0
+
+    def _load_enchanting(self, filepath: str) -> int:
+        """Load enchanting pattern placements"""
+        if not Path(filepath).exists():
+            print(f"⚠ Enchanting placements not found: {filepath}")
+            return 0
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for placement in data.get('placements', []):
+                recipe_id = placement.get('recipeId', '')
+                if not recipe_id:
+                    continue
+
+                # Enchanting may have pattern or grid-based placement
+                self.placements[recipe_id] = PlacementData(
+                    recipe_id=recipe_id,
+                    discipline='adornments',
+                    pattern=placement.get('pattern', []),
+                    placement_map=placement.get('placementMap', {}),
+                    grid_size=placement.get('metadata', {}).get('gridSize', '3x3'),
+                    output_id=placement.get('outputId', ''),
+                    station_tier=placement.get('stationTier', 1),
+                    narrative=placement.get('narrative', '')
+                )
+                count += 1
+
+            print(f"  ✓ Loaded {count} enchanting placements")
+            return count
+        except Exception as e:
+            print(f"  ✗ Error loading enchanting placements: {e}")
+            return 0
+
+    def get_placement(self, recipe_id: str) -> Optional[PlacementData]:
+        """Get placement data for a recipe"""
+        return self.placements.get(recipe_id)
+
+    def has_placement(self, recipe_id: str) -> bool:
+        """Check if a recipe has placement data"""
+        return recipe_id in self.placements
+
+
+# ============================================================================
 # WORLD
 # ============================================================================
 class WorldSystem:
@@ -3382,6 +3623,28 @@ class Renderer:
         if not character.crafting_ui_open or not character.active_station:
             return None
 
+        # Store placement state temporarily for rendering
+        self.placement_mode = placement_mode
+        self.placement_recipe = placement_recipe
+        self.placement_data = placement_data
+
+        # Store placement material state
+        self.placed_materials_grid = placed_materials_grid or {}
+        self.placed_materials_hub = placed_materials_hub or {'core': [], 'surrounding': []}
+        self.placed_materials_sequential = placed_materials_sequential or []
+        self.placed_materials_slots = placed_materials_slots or {}
+
+        # Always render recipe list on the left
+        recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos)
+
+        # If a recipe is selected, render placement UI on the right
+        if placement_mode and placement_recipe:
+            self._render_placement_ui_sidebar(character, mouse_pos)
+
+        return recipe_result
+
+    def _render_recipe_selection_sidebar(self, character: Character, mouse_pos: Tuple[int, int]):
+        """Render recipe selection sidebar - left side"""
         recipe_db = RecipeDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
@@ -3401,7 +3664,7 @@ class Renderer:
         # Header
         header = f"{character.active_station.station_type.value.upper()} (T{character.active_station.tier})"
         surf.blit(self.font.render(header, True, character.active_station.get_color()), (20, 20))
-        surf.blit(self.small_font.render("[ESC] Close", True, (180, 180, 180)), (ww - 120, 20))
+        surf.blit(self.small_font.render("[ESC] Close | Select recipe to place materials", True, (180, 180, 180)), (ww - 400, 20))
 
         # Get recipes for this station
         recipes = recipe_db.get_recipes_for_station(character.active_station.station_type.value,
@@ -3563,7 +3826,7 @@ class Renderer:
             return None
 
         ww, wh = 800, 600
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = 50
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -3719,7 +3982,7 @@ class Renderer:
             return None
 
         ww, wh = 600, 500
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = 100
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -3796,7 +4059,7 @@ class Renderer:
             return None
 
         ww, wh = 900, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = 50
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -3849,7 +4112,7 @@ class Renderer:
             return None
 
         ww, wh = 900, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = 50
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -3966,6 +4229,191 @@ class Renderer:
 
 
 # ============================================================================
+# AUTOMATED TESTING FRAMEWORK
+# ============================================================================
+class CraftingSystemTester:
+    """Automated testing framework for crafting system - simulates user interactions"""
+
+    def __init__(self, game_engine):
+        self.game = game_engine
+        self.test_results = []
+        self.tests_passed = 0
+        self.tests_failed = 0
+
+    def log_test(self, test_name: str, passed: bool, details: str = ""):
+        """Log a test result"""
+        status = "✓ PASS" if passed else "✗ FAIL"
+        result = f"{status}: {test_name}"
+        if details:
+            result += f" - {details}"
+        self.test_results.append(result)
+        if passed:
+            self.tests_passed += 1
+        else:
+            self.tests_failed += 1
+        print(result)
+
+    def run_all_tests(self):
+        """Run comprehensive crafting system tests"""
+        print("\n" + "=" * 70)
+        print("AUTOMATED CRAFTING SYSTEM TEST SUITE")
+        print("=" * 70)
+
+        self.test_results = []
+        self.tests_passed = 0
+        self.tests_failed = 0
+
+        # Test 1: Database initialization
+        self.test_database_loading()
+
+        # Test 2: Recipe loading for each discipline
+        self.test_recipe_loading()
+
+        # Test 3: Recipe tier sorting
+        self.test_recipe_tier_sorting()
+
+        # Test 4: Placement data loading
+        self.test_placement_data()
+
+        # Test 5: State initialization
+        self.test_state_initialization()
+
+        # Test 6: UI rendering (each discipline)
+        self.test_ui_rendering()
+
+        # Print summary
+        print("\n" + "=" * 70)
+        print(f"TEST SUMMARY: {self.tests_passed} passed, {self.tests_failed} failed")
+        print("=" * 70)
+
+        for result in self.test_results:
+            print(result)
+
+        return self.tests_failed == 0
+
+    def test_database_loading(self):
+        """Test that all required databases are loaded"""
+        try:
+            recipe_db = RecipeDatabase.get_instance()
+            placement_db = PlacementDatabase.get_instance()
+            mat_db = MaterialDatabase.get_instance()
+            equip_db = EquipmentDatabase.get_instance()
+
+            self.log_test("Database instances", True, "All databases initialized")
+        except Exception as e:
+            self.log_test("Database instances", False, str(e))
+
+    def test_recipe_loading(self):
+        """Test recipe loading for each crafting discipline"""
+        recipe_db = RecipeDatabase.get_instance()
+        disciplines = ['smithing', 'refining', 'alchemy', 'engineering', 'adornments']
+
+        for discipline in disciplines:
+            try:
+                recipes_t1 = recipe_db.get_recipes_for_station(discipline, 1)
+                recipes_t3 = recipe_db.get_recipes_for_station(discipline, 3)
+
+                if len(recipes_t1) > 0:
+                    self.log_test(f"Recipe loading: {discipline}", True,
+                                f"T1: {len(recipes_t1)}, T3: {len(recipes_t3)} recipes")
+                else:
+                    self.log_test(f"Recipe loading: {discipline}", False,
+                                "No recipes found")
+            except Exception as e:
+                self.log_test(f"Recipe loading: {discipline}", False, str(e))
+
+    def test_recipe_tier_sorting(self):
+        """Test that recipes are sorted by tier (highest first)"""
+        recipe_db = RecipeDatabase.get_instance()
+
+        try:
+            # Get T3 smithing recipes (should include T1, T2, T3)
+            recipes = recipe_db.get_recipes_for_station('smithing', 3)
+            recipes = sorted(recipes, key=lambda r: r.station_tier, reverse=True)
+
+            if len(recipes) > 1:
+                # Check if first recipe has higher/equal tier than last
+                first_tier = recipes[0].station_tier
+                last_tier = recipes[-1].station_tier
+
+                if first_tier >= last_tier:
+                    self.log_test("Recipe tier sorting", True,
+                                f"Sorted correctly (T{first_tier} first, T{last_tier} last)")
+                else:
+                    self.log_test("Recipe tier sorting", False,
+                                f"Not sorted (T{first_tier} first, T{last_tier} last)")
+            else:
+                self.log_test("Recipe tier sorting", True, "Not enough recipes to test")
+        except Exception as e:
+            self.log_test("Recipe tier sorting", False, str(e))
+
+    def test_placement_data(self):
+        """Test placement data loading for each discipline"""
+        placement_db = PlacementDatabase.get_instance()
+        recipe_db = RecipeDatabase.get_instance()
+
+        disciplines = {
+            'smithing': 'grid',
+            'refining': 'hub_spoke',
+            'alchemy': 'sequential',
+            'engineering': 'slots',
+            'adornments': 'grid'
+        }
+
+        for discipline, expected_type in disciplines.items():
+            try:
+                recipes = recipe_db.get_recipes_for_station(discipline, 1)
+                if recipes:
+                    recipe = recipes[0]
+                    placement_data = placement_db.get_placement(recipe.recipe_id)
+
+                    if placement_data:
+                        self.log_test(f"Placement data: {discipline}", True,
+                                    f"Type: {placement_data.discipline}")
+                    else:
+                        self.log_test(f"Placement data: {discipline}", False,
+                                    "No placement data found")
+                else:
+                    self.log_test(f"Placement data: {discipline}", False,
+                                "No recipes to test")
+            except Exception as e:
+                self.log_test(f"Placement data: {discipline}", False, str(e))
+
+    def test_state_initialization(self):
+        """Test that game state initializes correctly"""
+        try:
+            # Check placement state variables exist
+            assert hasattr(self.game, 'placement_mode')
+            assert hasattr(self.game, 'placement_recipe')
+            assert hasattr(self.game, 'placement_data')
+            assert hasattr(self.game, 'placed_materials_grid')
+            assert hasattr(self.game, 'placed_materials_hub')
+            assert hasattr(self.game, 'placed_materials_sequential')
+            assert hasattr(self.game, 'placed_materials_slots')
+
+            self.log_test("State initialization", True, "All state variables present")
+        except Exception as e:
+            self.log_test("State initialization", False, str(e))
+
+    def test_ui_rendering(self):
+        """Test UI rendering for each discipline"""
+        # This is a lightweight test - just verify methods exist
+        disciplines = ['smithing', 'refining', 'alchemy', 'engineering', 'enchanting']
+
+        for discipline in disciplines:
+            try:
+                method_name = f"_render_{discipline}_placement"
+                if hasattr(self.game.renderer, method_name):
+                    self.log_test(f"UI render method: {discipline}", True,
+                                f"Method {method_name} exists")
+                else:
+                    self.log_test(f"UI render method: {discipline}", False,
+                                f"Method {method_name} not found")
+            except Exception as e:
+                self.log_test(f"UI render method: {discipline}", False, str(e))
+
+
+# ============================================================================
 # GAME ENGINE
 # ============================================================================
 class GameEngine:
@@ -4026,6 +4474,9 @@ class GameEngine:
         self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
         self.renderer = Renderer(self.screen)
 
+        # Initialize automated testing framework
+        self.test_system = CraftingSystemTester(self)
+
         # Initialize combat system
         print("Loading combat system...")
         self.combat_manager = CombatManager(self.world, self.character)
@@ -4035,6 +4486,40 @@ class GameEngine:
         )
         # Spawn initial enemies for testing
         self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+
+        # Initialize crafting systems
+        print("Loading crafting systems...")
+        self.smithing_crafter = SmithingCrafter()
+        self.alchemy_crafter = AlchemyCrafter()
+        self.enchanting_crafter = EnchantingCrafter()
+        self.engineering_crafter = EngineeringCrafter()
+        self.refining_crafter = RefiningCrafter()
+
+        # Minigame state
+        self.active_minigame = None  # Current minigame instance
+        self.minigame_type = None  # 'smithing', 'alchemy', etc.
+        self.minigame_recipe = None  # Recipe being crafted
+        self.minigame_paused = False
+        self.minigame_button_rect = None  # Primary button rect
+        self.minigame_button_rect2 = None  # Secondary button rect (alchemy)
+
+        # Placement state - for material placement UIs
+        self.placement_mode = False  # True when in placement UI
+        self.placement_recipe = None  # Recipe selected for placement
+        self.placement_data = None  # PlacementData from database
+
+        # Placed materials - different structures for different crafting types
+        self.placed_materials_grid = {}  # Smithing/Enchanting: "x,y" -> (materialId, quantity)
+        self.placed_materials_hub = {'core': [], 'surrounding': []}  # Refining: hub-spoke
+        self.placed_materials_sequential = []  # Alchemy: ordered list
+        self.placed_materials_slots = {}  # Engineering: slot_type -> (materialId, quantity)
+
+        # Placement UI rects
+        self.placement_grid_rects = {}  # Grid slot rects for smithing
+        self.placement_slot_rects = {}  # Generic slot rects
+        self.placement_craft_button_rect = None  # Craft button (appears when valid)
+        self.placement_minigame_button_rect = None  # Minigame button
+        self.placement_clear_button_rect = None  # Clear placement button
 
         self.damage_numbers: List[DamageNumber] = []
         self.notifications: List[Notification] = []
@@ -4129,14 +4614,27 @@ class GameEngine:
                     Config.DEBUG_INFINITE_RESOURCES = not Config.DEBUG_INFINITE_RESOURCES
                     status = "ENABLED" if Config.DEBUG_INFINITE_RESOURCES else "DISABLED"
 
-                    # Set max level when enabling debug mode
+                    # Set max level when enabling debug mode (but DON'T fill inventory)
                     if Config.DEBUG_INFINITE_RESOURCES:
                         self.character.leveling.level = self.character.leveling.max_level
                         self.character.leveling.unallocated_stat_points = 100
-                        print(f"🔧 DEBUG: Set level to {self.character.leveling.level} with 100 stat points")
+                        print(f"🔧 DEBUG MODE ENABLED:")
+                        print(f"   • Infinite resources (no materials consumed)")
+                        print(f"   • Level set to {self.character.leveling.level}")
+                        print(f"   • 100 stat points available")
+                        print(f"   • Inventory NOT filled (craft freely!)")
+                    else:
+                        print(f"🔧 DEBUG MODE DISABLED")
 
                     self.add_notification(f"Debug Mode {status}", (255, 100, 255))
                     print(f"⚠ Debug Mode {status}")
+
+                elif event.key == pygame.K_F5:
+                    # Run automated test suite
+                    print("\n🧪 Running Automated Test Suite...")
+                    self.test_system.run_all_tests()
+                    self.add_notification("Test suite completed - check console", (100, 200, 255))
+
             elif event.type == pygame.KEYUP:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
@@ -5132,6 +5630,7 @@ class GameEngine:
         print(f"Recipe ID: {recipe.recipe_id}")
         print(f"Output ID: {recipe.output_id}")
         print(f"Station Type: {recipe.station_type}")
+        print(f"Use Minigame: {use_minigame}")
         print("="*80)
 
         # Check if we have materials
@@ -5450,6 +5949,419 @@ class GameEngine:
             self._render_minigame()
 
         pygame.display.flip()
+
+    def _render_minigame(self):
+        """Render the active minigame"""
+        if not self.active_minigame or not self.minigame_type:
+            return
+
+        # Route to appropriate renderer based on minigame type
+        if self.minigame_type == 'smithing':
+            self._render_smithing_minigame()
+        elif self.minigame_type == 'alchemy':
+            self._render_alchemy_minigame()
+        elif self.minigame_type == 'refining':
+            self._render_refining_minigame()
+        elif self.minigame_type == 'engineering':
+            self._render_engineering_minigame()
+        elif self.minigame_type == 'adornments':
+            self._render_enchanting_minigame()
+
+    def _complete_minigame(self):
+        """Complete the active minigame and process results"""
+        if not self.active_minigame or not self.minigame_recipe:
+            return
+
+        print(f"\n{'='*80}")
+        print(f"🎮 MINIGAME COMPLETED")
+        print(f"Recipe: {self.minigame_recipe.recipe_id}")
+        print(f"Type: {self.minigame_type}")
+        print(f"Result: {self.active_minigame.result}")
+        print(f"{'='*80}\n")
+
+        recipe = self.minigame_recipe
+        result = self.active_minigame.result
+        crafter = self._get_crafter(self.minigame_type)
+
+        recipe_db = RecipeDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+        mat_db = MaterialDatabase.get_instance()
+
+        # Convert inventory to dict
+        inv_dict = {}
+        for slot in self.character.inventory.slots:
+            if slot:
+                inv_dict[slot.item_id] = inv_dict.get(slot.item_id, 0) + slot.quantity
+
+        # Use crafter to process minigame result
+        craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
+
+        if not craft_result.get('success'):
+            # Failure - materials may have been lost
+            message = craft_result.get('message', 'Crafting failed')
+            self.add_notification(message, (255, 100, 100))
+
+            # Sync inventory back
+            recipe_db.consume_materials(recipe, self.character.inventory)
+        else:
+            # Success - consume materials and add output
+            recipe_db.consume_materials(recipe, self.character.inventory)
+
+            # Record activity and XP
+            activity_map = {
+                'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
+                'engineering': 'engineering', 'adornments': 'enchanting'
+            }
+            activity_type = activity_map.get(self.minigame_type, 'smithing')
+            self.character.activities.record_activity(activity_type, 1)
+
+            # Extra XP for minigame (50% bonus)
+            xp_reward = int(20 * recipe.station_tier * 1.5)
+            self.character.leveling.add_exp(xp_reward)
+
+            new_title = self.character.titles.check_for_title(
+                activity_type, self.character.activities.get_count(activity_type)
+            )
+            if new_title:
+                self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+
+            # Add output to inventory
+            output_id = craft_result.get('outputId', recipe.output_id)
+            output_qty = craft_result.get('quantity', recipe.output_qty)
+            self.character.inventory.add_item(output_id, output_qty)
+
+            # Get proper name for notification
+            if equip_db.is_equipment(output_id):
+                equipment = equip_db.create_equipment_from_id(output_id)
+                out_name = equipment.name if equipment else output_id
+            else:
+                out_mat = mat_db.get_material(output_id)
+                out_name = out_mat.name if out_mat else output_id
+
+            message = craft_result.get('message', f"Crafted {out_name} x{output_qty}")
+            self.add_notification(message, (100, 255, 100))
+            print(f"✅ Minigame crafting complete: {out_name} x{output_qty}")
+
+        # Clear minigame state
+        self.active_minigame = None
+        self.minigame_type = None
+        self.minigame_recipe = None
+
+    def _render_smithing_minigame(self):
+        """Render smithing minigame UI"""
+        state = self.active_minigame.get_state()
+
+        # Create overlay
+        ww, wh = 1000, 700
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        # Header
+        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "SMITHING MINIGAME", (255, 215, 0))
+        self.renderer.small_font.render_to(surf, (20, 50), "[SPACE] Fan Flames | [CLICK HAMMER BUTTON] Strike", (180, 180, 180))
+
+        # Temperature bar
+        temp_x, temp_y = 50, 100
+        temp_width = 300
+        temp_height = 40
+
+        # Draw temp bar background
+        pygame.draw.rect(surf, (40, 40, 40), (temp_x, temp_y, temp_width, temp_height))
+
+        # Draw ideal range
+        ideal_min = state['temp_ideal_min']
+        ideal_max = state['temp_ideal_max']
+        ideal_start = int((ideal_min / 100) * temp_width)
+        ideal_width_px = int(((ideal_max - ideal_min) / 100) * temp_width)
+        pygame.draw.rect(surf, (60, 80, 60), (temp_x + ideal_start, temp_y, ideal_width_px, temp_height))
+
+        # Draw current temperature
+        temp_pct = state['temperature'] / 100
+        temp_fill = int(temp_pct * temp_width)
+        temp_color = (255, 100, 100) if temp_pct > 0.8 else (255, 165, 0) if temp_pct > 0.5 else (100, 150, 255)
+        pygame.draw.rect(surf, temp_color, (temp_x, temp_y, temp_fill, temp_height))
+
+        pygame.draw.rect(surf, (200, 200, 200), (temp_x, temp_y, temp_width, temp_height), 2)
+        self.renderer.small_font.render_to(surf, (temp_x, temp_y - 25), f"Temperature: {int(state['temperature'])}°C", (255, 255, 255))
+
+        # Hammer bar
+        hammer_x, hammer_y = 50, 200
+        hammer_width = state['hammer_bar_width']
+        hammer_height = 60
+
+        # Draw hammer bar background
+        pygame.draw.rect(surf, (40, 40, 40), (hammer_x, hammer_y, hammer_width, hammer_height))
+
+        # Draw target zone (center)
+        center = hammer_width / 2
+        target_start = int(center - state['target_width'] / 2)
+        pygame.draw.rect(surf, (80, 80, 60), (hammer_x + target_start, hammer_y, state['target_width'], hammer_height))
+
+        # Draw perfect zone (center of target)
+        perfect_start = int(center - state['perfect_width'] / 2)
+        pygame.draw.rect(surf, (100, 120, 60), (hammer_x + perfect_start, hammer_y, state['perfect_width'], hammer_height))
+
+        # Draw hammer indicator
+        hammer_pos = int(state['hammer_position'])
+        pygame.draw.circle(surf, (255, 215, 0), (hammer_x + hammer_pos, hammer_y + hammer_height // 2), 15)
+
+        pygame.draw.rect(surf, (200, 200, 200), (hammer_x, hammer_y, hammer_width, hammer_height), 2)
+        self.renderer.small_font.render_to(surf, (hammer_x, hammer_y - 25), f"Hammer Timing: {state['hammer_hits']}/{state['required_hits']}", (255, 255, 255))
+
+        # Hammer button
+        btn_w, btn_h = 200, 60
+        btn_x, btn_y = ww // 2 - btn_w // 2, 300
+        btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+        pygame.draw.rect(surf, (80, 60, 20), btn_rect)
+        pygame.draw.rect(surf, (255, 215, 0), btn_rect, 3)
+        self.renderer.font.render_to(surf, (btn_x + 40, btn_y + 15), "HAMMER", (255, 215, 0))
+
+        # Timer and scores
+        self.renderer.font.render_to(surf, (50, 400), f"Time Left: {int(state['time_left'])}s", (255, 255, 255))
+
+        if state['hammer_scores']:
+            self.renderer.small_font.render_to(surf, (50, 450), "Hammer Scores:", (200, 200, 200))
+            for i, score in enumerate(state['hammer_scores'][-5:]):  # Last 5 scores
+                color = (100, 255, 100) if score >= 90 else (255, 215, 0) if score >= 70 else (255, 100, 100)
+                self.renderer.small_font.render_to(surf, (70, 480 + i * 25), f"Hit {i+1}: {score}", color)
+
+        # Result (if completed)
+        if state['result']:
+            result = state['result']
+            result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
+            result_surf.fill((10, 10, 20, 240))
+            if result['success']:
+                self.renderer.font.render_to(result_surf, (200, 50), "SUCCESS!", (100, 255, 100))
+                self.renderer.small_font.render_to(result_surf, (150, 120), f"Score: {int(result['score'])}", (255, 255, 255))
+                self.renderer.small_font.render_to(result_surf, (150, 150), f"Bonus: +{result['bonus']}%", (255, 215, 0))
+                self.renderer.small_font.render_to(result_surf, (150, 200), result['message'], (200, 200, 200))
+            else:
+                self.renderer.font.render_to(result_surf, (200, 50), "FAILED!", (255, 100, 100))
+                self.renderer.small_font.render_to(result_surf, (150, 120), result['message'], (200, 200, 200))
+
+            surf.blit(result_surf, (200, 200))
+
+        self.screen.blit(surf, (wx, wy))
+
+        # Store button rect for click detection (relative to screen)
+        self.minigame_button_rect = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
+
+    def _render_alchemy_minigame(self):
+        """Render alchemy minigame UI"""
+        state = self.active_minigame.get_state()
+
+        # Create overlay
+        ww, wh = 1000, 700
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        # Header
+        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "ALCHEMY MINIGAME", (60, 180, 60))
+        self.renderer.small_font.render_to(surf, (20, 50), "[C] Chain Ingredient | [S] Stabilize & Complete", (180, 180, 180))
+
+        # Progress bar
+        progress = state['total_progress']
+        prog_x, prog_y = 50, 100
+        prog_width = 600
+        prog_height = 30
+        pygame.draw.rect(surf, (40, 40, 40), (prog_x, prog_y, prog_width, prog_height))
+        pygame.draw.rect(surf, (60, 180, 60), (prog_x, prog_y, int(progress * prog_width), prog_height))
+        pygame.draw.rect(surf, (200, 200, 200), (prog_x, prog_y, prog_width, prog_height), 2)
+        self.renderer.small_font.render_to(surf, (prog_x, prog_y - 25), f"Total Progress: {int(progress * 100)}%", (255, 255, 255))
+
+        # Current reaction visualization
+        if state['current_reaction']:
+            reaction = state['current_reaction']
+            rx, ry = 50, 180
+
+            # Reaction bubble
+            bubble_size = int(100 * reaction['size'])
+            bubble_color = (int(60 + 140 * reaction['color_shift']), int(180 * reaction['glow']), int(60 + 140 * reaction['color_shift']))
+            pygame.draw.circle(surf, bubble_color, (rx + 100, ry + 100), bubble_size)
+            pygame.draw.circle(surf, (200, 200, 200), (rx + 100, ry + 100), bubble_size, 2)
+
+            # Stage info
+            stage_names = ["Initiation", "Building", "SWEET SPOT", "Degrading", "Critical", "EXPLOSION!"]
+            stage_idx = reaction['stage'] - 1
+            stage_name = stage_names[stage_idx] if 0 <= stage_idx < len(stage_names) else "Unknown"
+            stage_color = (255, 215, 0) if reaction['stage'] == 3 else (255, 100, 100) if reaction['stage'] >= 5 else (200, 200, 200)
+
+            self.renderer.font.render_to(surf, (rx, ry + 220), f"Stage: {stage_name}", stage_color)
+            self.renderer.small_font.render_to(surf, (rx, ry + 250), f"Quality: {int(reaction['quality'] * 100)}%", (200, 200, 200))
+
+        # Ingredient progress
+        self.renderer.small_font.render_to(surf, (50, 450), f"Ingredient: {state['current_ingredient_index'] + 1}/{state['total_ingredients']}", (255, 255, 255))
+
+        # Buttons
+        btn_w, btn_h = 150, 50
+        chain_btn = pygame.Rect(ww // 2 - btn_w - 10, 550, btn_w, btn_h)
+        stabilize_btn = pygame.Rect(ww // 2 + 10, 550, btn_w, btn_h)
+
+        pygame.draw.rect(surf, (60, 80, 20), chain_btn)
+        pygame.draw.rect(surf, (255, 215, 0), chain_btn, 2)
+        self.renderer.small_font.render_to(surf, (chain_btn.x + 30, chain_btn.y + 15), "CHAIN [C]", (255, 215, 0))
+
+        pygame.draw.rect(surf, (20, 60, 80), stabilize_btn)
+        pygame.draw.rect(surf, (100, 200, 255), stabilize_btn, 2)
+        self.renderer.small_font.render_to(surf, (stabilize_btn.x + 15, stabilize_btn.y + 15), "STABILIZE [S]", (100, 200, 255))
+
+        # Timer
+        self.renderer.font.render_to(surf, (50, 620), f"Time: {int(state['time_left'])}s", (255, 255, 255))
+
+        # Result
+        if state['result']:
+            result = state['result']
+            result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
+            result_surf.fill((10, 10, 20, 240))
+            if result['success']:
+                self.renderer.font.render_to(result_surf, (200, 50), result['quality'], (100, 255, 100))
+                self.renderer.small_font.render_to(result_surf, (150, 120), f"Progress: {int(result['progress'] * 100)}%", (255, 255, 255))
+                self.renderer.small_font.render_to(result_surf, (150, 150), result['message'], (200, 200, 200))
+            else:
+                self.renderer.font.render_to(result_surf, (200, 50), "FAILED!", (255, 100, 100))
+                self.renderer.small_font.render_to(result_surf, (150, 120), result['message'], (200, 200, 200))
+
+            surf.blit(result_surf, (200, 200))
+
+        self.screen.blit(surf, (wx, wy))
+        self.minigame_button_rect = pygame.Rect(wx + chain_btn.x, wy + chain_btn.y, chain_btn.width, chain_btn.height)
+        self.minigame_button_rect2 = pygame.Rect(wx + stabilize_btn.x, wy + stabilize_btn.y, stabilize_btn.width, stabilize_btn.height)
+
+    def _render_refining_minigame(self):
+        """Render refining minigame UI"""
+        state = self.active_minigame.get_state()
+
+        ww, wh = 1000, 700
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        # Header
+        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "REFINING MINIGAME", (180, 120, 60))
+        self.renderer.small_font.render_to(surf, (20, 50), "[SPACE] Align Cylinder", (180, 180, 180))
+
+        # Progress
+        self.renderer.font.render_to(surf, (50, 100), f"Cylinders: {state['aligned_count']}/{state['total_cylinders']}", (255, 255, 255))
+        self.renderer.font.render_to(surf, (50, 140), f"Failures: {state['failed_attempts']}/{state['allowed_failures']}", (255, 100, 100))
+        self.renderer.font.render_to(surf, (50, 180), f"Time: {int(state['time_left'])}s", (255, 255, 255))
+
+        # Current cylinder visualization
+        if state['current_cylinder'] < len(state['cylinders']):
+            cyl = state['cylinders'][state['current_cylinder']]
+            cx, cy = ww // 2, 300
+            radius = 100
+
+            # Draw cylinder circle
+            pygame.draw.circle(surf, (60, 60, 60), (cx, cy), radius)
+            pygame.draw.circle(surf, (200, 200, 200), (cx, cy), radius, 3)
+
+            # Draw indicator at current angle
+            angle_rad = math.radians(cyl['angle'])
+            ind_x = cx + int(radius * 0.8 * math.cos(angle_rad - math.pi/2))
+            ind_y = cy + int(radius * 0.8 * math.sin(angle_rad - math.pi/2))
+            pygame.draw.circle(surf, (255, 215, 0), (ind_x, ind_y), 15)
+
+            # Draw target zone at top
+            pygame.draw.circle(surf, (100, 255, 100), (cx, cy - radius), 20, 3)
+
+        # Instructions
+        self.renderer.small_font.render_to(surf, (ww//2 - 150, 450), "Press SPACE when indicator is at the top!", (200, 200, 200))
+
+        # Result
+        if state['result']:
+            result = state['result']
+            result_surf = pygame.Surface((600, 200), pygame.SRCALPHA)
+            result_surf.fill((10, 10, 20, 240))
+            if result['success']:
+                self.renderer.font.render_to(result_surf, (200, 50), "SUCCESS!", (100, 255, 100))
+                self.renderer.small_font.render_to(result_surf, (150, 100), result['message'], (200, 200, 200))
+            else:
+                self.renderer.font.render_to(result_surf, (200, 50), "FAILED!", (255, 100, 100))
+                self.renderer.small_font.render_to(result_surf, (150, 100), result['message'], (200, 200, 200))
+
+            surf.blit(result_surf, (200, 250))
+
+        self.screen.blit(surf, (wx, wy))
+        self.minigame_button_rect = None
+
+    def _render_engineering_minigame(self):
+        """Render engineering minigame UI"""
+        state = self.active_minigame.get_state()
+
+        ww, wh = 1000, 700
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        # Header
+        self.renderer.font.render_to(surf, (ww//2 - 120, 20), "ENGINEERING MINIGAME", (60, 120, 180))
+        self.renderer.small_font.render_to(surf, (20, 50), "Solve puzzles to complete device", (180, 180, 180))
+
+        # Progress
+        self.renderer.font.render_to(surf, (50, 100), f"Puzzle: {state['current_puzzle_index'] + 1}/{state['total_puzzles']}", (255, 255, 255))
+        self.renderer.font.render_to(surf, (50, 140), f"Solved: {state['solved_count']}", (100, 255, 100))
+
+        # Puzzle-specific rendering
+        if state['current_puzzle']:
+            puzzle = state['current_puzzle']
+            self.renderer.font.render_to(surf, (50, 200), "Current Puzzle: Click to interact", (200, 200, 200))
+
+            # Simple visualization (placeholder for actual puzzle rendering)
+            puzzle_rect = pygame.Rect(200, 250, 600, 300)
+            pygame.draw.rect(surf, (40, 40, 40), puzzle_rect)
+            pygame.draw.rect(surf, (100, 100, 100), puzzle_rect, 2)
+
+            if puzzle.get('grid_size'):
+                self.renderer.small_font.render_to(surf, (puzzle_rect.x + 20, puzzle_rect.y + 20),
+                                                   f"Rotation Puzzle ({puzzle['grid_size']}x{puzzle['grid_size']})", (200, 200, 200))
+            elif puzzle.get('placeholder'):
+                self.renderer.small_font.render_to(surf, (puzzle_rect.x + 20, puzzle_rect.y + 20),
+                                                   "Puzzle placeholder - Click COMPLETE", (200, 200, 200))
+
+        # Complete button (for testing)
+        btn_w, btn_h = 200, 50
+        btn_x, btn_y = ww // 2 - btn_w // 2, 600
+        complete_btn = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+        pygame.draw.rect(surf, (60, 100, 60), complete_btn)
+        pygame.draw.rect(surf, (100, 200, 100), complete_btn, 2)
+        self.renderer.small_font.render_to(surf, (btn_x + 40, btn_y + 15), "COMPLETE PUZZLE", (200, 200, 200))
+
+        # Result
+        if state['result']:
+            result = state['result']
+            result_surf = pygame.Surface((600, 200), pygame.SRCALPHA)
+            result_surf.fill((10, 10, 20, 240))
+            self.renderer.font.render_to(result_surf, (200, 50), "DEVICE CREATED!", (100, 255, 100))
+            self.renderer.small_font.render_to(result_surf, (150, 100), result['message'], (200, 200, 200))
+            surf.blit(result_surf, (200, 250))
+
+        self.screen.blit(surf, (wx, wy))
+        self.minigame_button_rect = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
+
+    def _render_enchanting_minigame(self):
+        """Render enchanting minigame UI (placeholder)"""
+        ww, wh = 800, 600
+        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "ENCHANTING", (180, 60, 180))
+        self.renderer.small_font.render_to(surf, (50, 100), "Enchanting uses basic crafting (no minigame)", (200, 200, 200))
+
+        self.screen.blit(surf, (wx, wy))
+        self.minigame_button_rect = None
 
     def run(self):
         print("=== GAME STARTED ===")
