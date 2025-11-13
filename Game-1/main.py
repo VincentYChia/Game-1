@@ -2826,11 +2826,11 @@ class Renderer:
                 # Check if this cell corresponds to a recipe requirement (with offset for centering)
                 recipe_x = gx - offset_x
                 recipe_y = gy - offset_y
-                # NOTE: Placement data format is "row,col" where row=Y, col=X
-                # So we need to swap: recipe_key should be "{recipe_y},{recipe_x}"
+                # Placement data format is "row,col" where row=Y axis, col=X axis
+                # gy is the row (Y), gx is the col (X), so keys should be "{row},{col}" = "{gy},{gx}"
                 recipe_key = f"{recipe_y},{recipe_x}"
 
-                grid_key = f"{gx},{gy}"
+                grid_key = f"{gy},{gx}"
                 has_recipe_requirement = (1 <= recipe_x <= recipe_grid_w and
                                         1 <= recipe_y <= recipe_grid_h and
                                         recipe_key in recipe_placement_map)
@@ -6238,8 +6238,10 @@ class GameEngine:
         surf.fill((20, 20, 30, 250))
 
         # Header
-        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "SMITHING MINIGAME", (255, 215, 0))
-        self.renderer.small_font.render_to(surf, (20, 50), "[SPACE] Fan Flames | [CLICK HAMMER BUTTON] Strike", (180, 180, 180))
+        _temp_surf = self.renderer.font.render("SMITHING MINIGAME", True, (255, 215, 0))
+        surf.blit(_temp_surf, (ww//2 - 100, 20))
+        _temp_surf = self.renderer.small_font.render("[SPACE] Fan Flames | [CLICK HAMMER BUTTON] Strike", True, (180, 180, 180))
+        surf.blit(_temp_surf, (20, 50))
 
         # Temperature bar
         temp_x, temp_y = 50, 100
@@ -6263,7 +6265,8 @@ class GameEngine:
         pygame.draw.rect(surf, temp_color, (temp_x, temp_y, temp_fill, temp_height))
 
         pygame.draw.rect(surf, (200, 200, 200), (temp_x, temp_y, temp_width, temp_height), 2)
-        self.renderer.small_font.render_to(surf, (temp_x, temp_y - 25), f"Temperature: {int(state['temperature'])}°C", (255, 255, 255))
+        _temp_surf = self.renderer.small_font.render(f"Temperature: {int(state['temperature'])}°C", True, (255, 255, 255))
+        surf.blit(_temp_surf, (temp_x, temp_y - 25))
 
         # Hammer bar
         hammer_x, hammer_y = 50, 200
@@ -6287,7 +6290,8 @@ class GameEngine:
         pygame.draw.circle(surf, (255, 215, 0), (hammer_x + hammer_pos, hammer_y + hammer_height // 2), 15)
 
         pygame.draw.rect(surf, (200, 200, 200), (hammer_x, hammer_y, hammer_width, hammer_height), 2)
-        self.renderer.small_font.render_to(surf, (hammer_x, hammer_y - 25), f"Hammer Timing: {state['hammer_hits']}/{state['required_hits']}", (255, 255, 255))
+        _temp_surf = self.renderer.small_font.render(f"Hammer Timing: {state['hammer_hits']}/{state['required_hits']}", True, (255, 255, 255))
+        surf.blit(_temp_surf, (hammer_x, hammer_y - 25))
 
         # Hammer button
         btn_w, btn_h = 200, 60
@@ -6295,13 +6299,16 @@ class GameEngine:
         btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
         pygame.draw.rect(surf, (80, 60, 20), btn_rect)
         pygame.draw.rect(surf, (255, 215, 0), btn_rect, 3)
-        self.renderer.font.render_to(surf, (btn_x + 40, btn_y + 15), "HAMMER", (255, 215, 0))
+        _temp_surf = self.renderer.font.render("HAMMER", True, (255, 215, 0))
+        surf.blit(_temp_surf, (btn_x + 40, btn_y + 15))
 
         # Timer and scores
-        self.renderer.font.render_to(surf, (50, 400), f"Time Left: {int(state['time_left'])}s", (255, 255, 255))
+        _temp_surf = self.renderer.font.render(f"Time Left: {int(state['time_left'])}s", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 400))
 
         if state['hammer_scores']:
-            self.renderer.small_font.render_to(surf, (50, 450), "Hammer Scores:", (200, 200, 200))
+            _temp_surf = self.renderer.small_font.render("Hammer Scores:", True, (200, 200, 200))
+            surf.blit(_temp_surf, (50, 450))
             for i, score in enumerate(state['hammer_scores'][-5:]):  # Last 5 scores
                 color = (100, 255, 100) if score >= 90 else (255, 215, 0) if score >= 70 else (255, 100, 100)
                 self.renderer.small_font.render_to(surf, (70, 480 + i * 25), f"Hit {i+1}: {score}", color)
@@ -6340,8 +6347,10 @@ class GameEngine:
         surf.fill((20, 20, 30, 250))
 
         # Header
-        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "ALCHEMY MINIGAME", (60, 180, 60))
-        self.renderer.small_font.render_to(surf, (20, 50), "[C] Chain Ingredient | [S] Stabilize & Complete", (180, 180, 180))
+        _temp_surf = self.renderer.font.render("ALCHEMY MINIGAME", True, (60, 180, 60))
+        surf.blit(_temp_surf, (ww//2 - 100, 20))
+        _temp_surf = self.renderer.small_font.render("[C] Chain Ingredient | [S] Stabilize & Complete", True, (180, 180, 180))
+        surf.blit(_temp_surf, (20, 50))
 
         # Progress bar
         progress = state['total_progress']
@@ -6351,7 +6360,8 @@ class GameEngine:
         pygame.draw.rect(surf, (40, 40, 40), (prog_x, prog_y, prog_width, prog_height))
         pygame.draw.rect(surf, (60, 180, 60), (prog_x, prog_y, int(progress * prog_width), prog_height))
         pygame.draw.rect(surf, (200, 200, 200), (prog_x, prog_y, prog_width, prog_height), 2)
-        self.renderer.small_font.render_to(surf, (prog_x, prog_y - 25), f"Total Progress: {int(progress * 100)}%", (255, 255, 255))
+        _temp_surf = self.renderer.small_font.render(f"Total Progress: {int(progress * 100)}%", True, (255, 255, 255))
+        surf.blit(_temp_surf, (prog_x, prog_y - 25))
 
         # Current reaction visualization
         if state['current_reaction']:
@@ -6371,10 +6381,12 @@ class GameEngine:
             stage_color = (255, 215, 0) if reaction['stage'] == 3 else (255, 100, 100) if reaction['stage'] >= 5 else (200, 200, 200)
 
             self.renderer.font.render_to(surf, (rx, ry + 220), f"Stage: {stage_name}", stage_color)
-            self.renderer.small_font.render_to(surf, (rx, ry + 250), f"Quality: {int(reaction['quality'] * 100)}%", (200, 200, 200))
+            _temp_surf = self.renderer.small_font.render(f"Quality: {int(reaction['quality'] * 100)}%", True, (200, 200, 200))
+            surf.blit(_temp_surf, (rx, ry + 250))
 
         # Ingredient progress
-        self.renderer.small_font.render_to(surf, (50, 450), f"Ingredient: {state['current_ingredient_index'] + 1}/{state['total_ingredients']}", (255, 255, 255))
+        _temp_surf = self.renderer.small_font.render(f"Ingredient: {state['current_ingredient_index'] + 1}/{state['total_ingredients']}", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 450))
 
         # Buttons
         btn_w, btn_h = 150, 50
@@ -6383,14 +6395,17 @@ class GameEngine:
 
         pygame.draw.rect(surf, (60, 80, 20), chain_btn)
         pygame.draw.rect(surf, (255, 215, 0), chain_btn, 2)
-        self.renderer.small_font.render_to(surf, (chain_btn.x + 30, chain_btn.y + 15), "CHAIN [C]", (255, 215, 0))
+        _temp_surf = self.renderer.small_font.render("CHAIN [C]", True, (255, 215, 0))
+        surf.blit(_temp_surf, (chain_btn.x + 30, chain_btn.y + 15))
 
         pygame.draw.rect(surf, (20, 60, 80), stabilize_btn)
         pygame.draw.rect(surf, (100, 200, 255), stabilize_btn, 2)
-        self.renderer.small_font.render_to(surf, (stabilize_btn.x + 15, stabilize_btn.y + 15), "STABILIZE [S]", (100, 200, 255))
+        _temp_surf = self.renderer.small_font.render("STABILIZE [S]", True, (100, 200, 255))
+        surf.blit(_temp_surf, (stabilize_btn.x + 15, stabilize_btn.y + 15))
 
         # Timer
-        self.renderer.font.render_to(surf, (50, 620), f"Time: {int(state['time_left'])}s", (255, 255, 255))
+        _temp_surf = self.renderer.font.render(f"Time: {int(state['time_left'])}s", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 620))
 
         # Result
         if state['result']:
@@ -6423,13 +6438,18 @@ class GameEngine:
         surf.fill((20, 20, 30, 250))
 
         # Header
-        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "REFINING MINIGAME", (180, 120, 60))
-        self.renderer.small_font.render_to(surf, (20, 50), "[SPACE] Align Cylinder", (180, 180, 180))
+        _temp_surf = self.renderer.font.render("REFINING MINIGAME", True, (180, 120, 60))
+        surf.blit(_temp_surf, (ww//2 - 100, 20))
+        _temp_surf = self.renderer.small_font.render("[SPACE] Align Cylinder", True, (180, 180, 180))
+        surf.blit(_temp_surf, (20, 50))
 
         # Progress
-        self.renderer.font.render_to(surf, (50, 100), f"Cylinders: {state['aligned_count']}/{state['total_cylinders']}", (255, 255, 255))
-        self.renderer.font.render_to(surf, (50, 140), f"Failures: {state['failed_attempts']}/{state['allowed_failures']}", (255, 100, 100))
-        self.renderer.font.render_to(surf, (50, 180), f"Time: {int(state['time_left'])}s", (255, 255, 255))
+        _temp_surf = self.renderer.font.render(f"Cylinders: {state['aligned_count']}/{state['total_cylinders']}", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 100))
+        _temp_surf = self.renderer.font.render(f"Failures: {state['failed_attempts']}/{state['allowed_failures']}", True, (255, 100, 100))
+        surf.blit(_temp_surf, (50, 140))
+        _temp_surf = self.renderer.font.render(f"Time: {int(state['time_left'])}s", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 180))
 
         # Current cylinder visualization
         if state['current_cylinder'] < len(state['cylinders']):
@@ -6451,7 +6471,8 @@ class GameEngine:
             pygame.draw.circle(surf, (100, 255, 100), (cx, cy - radius), 20, 3)
 
         # Instructions
-        self.renderer.small_font.render_to(surf, (ww//2 - 150, 450), "Press SPACE when indicator is at the top!", (200, 200, 200))
+        _temp_surf = self.renderer.small_font.render("Press SPACE when indicator is at the top!", True, (200, 200, 200))
+        surf.blit(_temp_surf, (ww//2 - 150, 450))
 
         # Result
         if state['result']:
@@ -6482,17 +6503,22 @@ class GameEngine:
         surf.fill((20, 20, 30, 250))
 
         # Header
-        self.renderer.font.render_to(surf, (ww//2 - 120, 20), "ENGINEERING MINIGAME", (60, 120, 180))
-        self.renderer.small_font.render_to(surf, (20, 50), "Solve puzzles to complete device", (180, 180, 180))
+        _temp_surf = self.renderer.font.render("ENGINEERING MINIGAME", True, (60, 120, 180))
+        surf.blit(_temp_surf, (ww//2 - 120, 20))
+        _temp_surf = self.renderer.small_font.render("Solve puzzles to complete device", True, (180, 180, 180))
+        surf.blit(_temp_surf, (20, 50))
 
         # Progress
-        self.renderer.font.render_to(surf, (50, 100), f"Puzzle: {state['current_puzzle_index'] + 1}/{state['total_puzzles']}", (255, 255, 255))
-        self.renderer.font.render_to(surf, (50, 140), f"Solved: {state['solved_count']}", (100, 255, 100))
+        _temp_surf = self.renderer.font.render(f"Puzzle: {state['current_puzzle_index'] + 1}/{state['total_puzzles']}", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 100))
+        _temp_surf = self.renderer.font.render(f"Solved: {state['solved_count']}", True, (100, 255, 100))
+        surf.blit(_temp_surf, (50, 140))
 
         # Puzzle-specific rendering
         if state['current_puzzle']:
             puzzle = state['current_puzzle']
-            self.renderer.font.render_to(surf, (50, 200), "Current Puzzle: Click to interact", (200, 200, 200))
+            _temp_surf = self.renderer.font.render("Current Puzzle: Click to interact", True, (200, 200, 200))
+            surf.blit(_temp_surf, (50, 200))
 
             # Simple visualization (placeholder for actual puzzle rendering)
             puzzle_rect = pygame.Rect(200, 250, 600, 300)
@@ -6512,7 +6538,8 @@ class GameEngine:
         complete_btn = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
         pygame.draw.rect(surf, (60, 100, 60), complete_btn)
         pygame.draw.rect(surf, (100, 200, 100), complete_btn, 2)
-        self.renderer.small_font.render_to(surf, (btn_x + 40, btn_y + 15), "COMPLETE PUZZLE", (200, 200, 200))
+        _temp_surf = self.renderer.small_font.render("COMPLETE PUZZLE", True, (200, 200, 200))
+        surf.blit(_temp_surf, (btn_x + 40, btn_y + 15))
 
         # Result
         if state['result']:
@@ -6535,8 +6562,10 @@ class GameEngine:
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 250))
 
-        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "ENCHANTING", (180, 60, 180))
-        self.renderer.small_font.render_to(surf, (50, 100), "Enchanting uses basic crafting (no minigame)", (200, 200, 200))
+        _temp_surf = self.renderer.font.render("ENCHANTING", True, (180, 60, 180))
+        surf.blit(_temp_surf, (ww//2 - 100, 20))
+        _temp_surf = self.renderer.small_font.render("Enchanting uses basic crafting (no minigame)", True, (200, 200, 200))
+        surf.blit(_temp_surf, (50, 100))
 
         self.screen.blit(surf, (wx, wy))
         self.minigame_button_rect = None
