@@ -2918,7 +2918,9 @@ class Renderer:
         self.screen.blit(surf, (x, y))
 
     def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int],
-                           placement_mode: bool = False, placement_recipe = None, placement_data = None):
+                           placement_mode: bool = False, placement_recipe = None, placement_data = None,
+                           placed_materials_grid = None, placed_materials_hub = None,
+                           placed_materials_sequential = None, placed_materials_slots = None):
         """Main crafting UI dispatcher - shows recipe list and placement UI side-by-side"""
         if not character.crafting_ui_open or not character.active_station:
             return None
@@ -2927,6 +2929,12 @@ class Renderer:
         self.placement_mode = placement_mode
         self.placement_recipe = placement_recipe
         self.placement_data = placement_data
+
+        # Store placement material state
+        self.placed_materials_grid = placed_materials_grid or {}
+        self.placed_materials_hub = placed_materials_hub or {'core': [], 'surrounding': []}
+        self.placed_materials_sequential = placed_materials_sequential or []
+        self.placed_materials_slots = placed_materials_slots or {}
 
         # Always render recipe list on the left
         recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos)
@@ -2958,6 +2966,9 @@ class Renderer:
         recipes = recipe_db.get_recipes_for_station(character.active_station.station_type.value,
                                                     character.active_station.tier)
 
+        # Sort recipes by tier descending (highest tier first) so T3 benches show T3 recipes first
+        recipes = sorted(recipes, key=lambda r: r.station_tier, reverse=True)
+
         if not recipes:
             surf.blit(self.font.render("No recipes available", True, (200, 200, 200)), (20, 80))
         else:
@@ -2982,6 +2993,12 @@ class Renderer:
 
                 surf.blit(self.font.render(f"{out_name} x{recipe.output_qty}", True, color),
                           (btn.x + 10, btn.y + 10))
+
+                # Tier indicator badge (top-right corner)
+                tier_text = f"T{recipe.station_tier}"
+                tier_color = (100, 150, 255) if recipe.station_tier == 3 else (150, 150, 150) if recipe.station_tier == 2 else (180, 180, 140)
+                tier_surf = self.small_font.render(tier_text, True, tier_color)
+                surf.blit(tier_surf, (btn.right - 40, btn.y + 10))
 
                 # Material requirements
                 req_y = btn.y + 35
@@ -5644,8 +5661,12 @@ class GameEngine:
             self.class_buttons = []
 
             if self.character.crafting_ui_open:
-                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos,
-                                                          self.placement_mode, self.placement_recipe, self.placement_data)
+                result = self.renderer.render_crafting_ui(
+                    self.character, self.mouse_pos,
+                    self.placement_mode, self.placement_recipe, self.placement_data,
+                    self.placed_materials_grid, self.placed_materials_hub,
+                    self.placed_materials_sequential, self.placed_materials_slots
+                )
                 if result:
                     self.crafting_window_rect, self.crafting_recipes = result
             else:
