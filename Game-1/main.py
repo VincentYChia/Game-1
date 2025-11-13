@@ -2656,6 +2656,11 @@ class Renderer:
         self.screen.blit(surf, (x, y))
 
     def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int]):
+        """
+        Render crafting UI with two-panel layout:
+        - Left panel (450px): Recipe list
+        - Right panel (700px): Placement visualization + craft buttons
+        """
         if not character.crafting_ui_open or not character.active_station:
             return None
 
@@ -2663,36 +2668,55 @@ class Renderer:
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
-        ww, wh = 900, 600
+        # Window dimensions - expanded to fit two panels
+        ww, wh = 1200, 600
+        left_panel_w = 450
+        right_panel_w = 700
+        separator_x = left_panel_w + 20
+
         wx = (Config.VIEWPORT_WIDTH - ww) // 2
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 240))
 
+        # Header
         header = f"{character.active_station.station_type.value.upper()} (T{character.active_station.tier})"
         surf.blit(self.font.render(header, True, character.active_station.get_color()), (20, 20))
         surf.blit(self.small_font.render("[ESC] Close", True, (180, 180, 180)), (ww - 120, 20))
 
+        # Get recipes for this station
         recipes = recipe_db.get_recipes_for_station(character.active_station.station_type.value,
                                                     character.active_station.tier)
 
+        # ======================
+        # LEFT PANEL: Recipe List
+        # ======================
         if not recipes:
             surf.blit(self.font.render("No recipes available", True, (200, 200, 200)), (20, 80))
         else:
             y_off = 70
-            for i, recipe in enumerate(recipes[:6]):
-                # Dynamic button height based on number of inputs
+            for i, recipe in enumerate(recipes[:8]):  # Show up to 8 recipes
+                # Compact recipe display (no buttons, just info)
                 num_inputs = len(recipe.inputs)
-                btn_height = max(80, 35 + num_inputs * 18 + 10)  # Header + inputs + padding
+                btn_height = max(70, 35 + num_inputs * 16 + 5)
 
-                btn = pygame.Rect(20, y_off, ww - 40, btn_height)
+                btn = pygame.Rect(20, y_off, left_panel_w - 30, btn_height)
                 can_craft = recipe_db.can_craft(recipe, character.inventory)
-                btn_color = (40, 60, 40) if can_craft else (60, 40, 40)
-                pygame.draw.rect(surf, btn_color, btn)
-                pygame.draw.rect(surf, (100, 100, 100), btn, 2)
 
-                # Check if output is equipment or material
+                # Highlight selected recipe with gold border
+                is_selected = (self.selected_recipe and self.selected_recipe.recipe_id == recipe.recipe_id)
+
+                btn_color = (60, 80, 60) if can_craft else (80, 60, 60)
+                if is_selected:
+                    btn_color = (80, 70, 30)  # Gold tint for selected
+
+                pygame.draw.rect(surf, btn_color, btn)
+                border_color = (255, 215, 0) if is_selected else (100, 100, 100)
+                border_width = 3 if is_selected else 2
+                pygame.draw.rect(surf, border_color, btn, border_width)
+
+                # Output name
                 is_equipment = equip_db.is_equipment(recipe.output_id)
                 if is_equipment:
                     equip = equip_db.create_equipment_from_id(recipe.output_id)
@@ -2704,10 +2728,11 @@ class Renderer:
                     color = Config.RARITY_COLORS.get(out_mat.rarity, (200, 200, 200)) if out_mat else (200, 200, 200)
 
                 surf.blit(self.font.render(f"{out_name} x{recipe.output_qty}", True, color),
-                          (btn.x + 10, btn.y + 10))
+                          (btn.x + 10, btn.y + 8))
 
-                req_y = btn.y + 35
-                for inp in recipe.inputs:  # Show ALL inputs, not just first 3
+                # Material requirements (compact)
+                req_y = btn.y + 30
+                for inp in recipe.inputs:
                     mat_id = inp.get('materialId', '')
                     req = inp.get('quantity', 0)
                     avail = character.inventory.get_item_count(mat_id)
@@ -2715,37 +2740,87 @@ class Renderer:
                     mat_name = mat.name if mat else mat_id
                     req_color = (100, 255, 100) if avail >= req or Config.DEBUG_INFINITE_RESOURCES else (255, 100, 100)
                     surf.blit(self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color),
-                              (btn.x + 20, req_y))
-                    req_y += 18
+                              (btn.x + 15, req_y))
+                    req_y += 16
 
-                if can_craft:
-                    # Two craft buttons: Instant and Minigame
-                    instant_btn_w, instant_btn_h = 80, 25
-                    minigame_btn_w, minigame_btn_h = 80, 25
+                y_off += btn_height + 8
 
-                    instant_btn_x = btn.right - instant_btn_w - minigame_btn_w - 15
-                    instant_btn_y = btn.centery - instant_btn_h // 2
-                    minigame_btn_x = btn.right - minigame_btn_w - 5
-                    minigame_btn_y = btn.centery - minigame_btn_h // 2
+        # ======================
+        # DIVIDER
+        # ======================
+        pygame.draw.line(surf, (100, 100, 100), (separator_x, 60), (separator_x, wh - 20), 2)
 
-                    # Instant button (gray)
-                    instant_rect = pygame.Rect(instant_btn_x, instant_btn_y, instant_btn_w, instant_btn_h)
-                    pygame.draw.rect(surf, (60, 60, 60), instant_rect)
-                    pygame.draw.rect(surf, (120, 120, 120), instant_rect, 2)
-                    instant_text = self.small_font.render("Instant", True, (200, 200, 200))
-                    surf.blit(instant_text, (instant_btn_x + 15, instant_btn_y + 5))
+        # ======================
+        # RIGHT PANEL: Placement + Buttons
+        # ======================
+        right_panel_x = separator_x + 20
+        right_panel_y = 70
 
-                    # Minigame button (gold)
-                    minigame_rect = pygame.Rect(minigame_btn_x, minigame_btn_y, minigame_btn_w, minigame_btn_h)
-                    pygame.draw.rect(surf, (80, 60, 20), minigame_rect)
-                    pygame.draw.rect(surf, (255, 215, 0), minigame_rect, 2)
-                    minigame_text = self.small_font.render("Minigame", True, (255, 215, 0))
-                    surf.blit(minigame_text, (minigame_btn_x + 5, minigame_btn_y + 5))
+        if self.selected_recipe:
+            # Selected recipe - show placement and buttons
+            selected = self.selected_recipe
+            can_craft = recipe_db.can_craft(selected, character.inventory)
 
-                y_off += btn_height + 10  # Dynamic spacing based on button height
+            # Placement visualization (placeholder for now - will add visual grid later)
+            placement_h = 380
+            placement_rect = pygame.Rect(right_panel_x, right_panel_y, right_panel_w - 40, placement_h)
+            pygame.draw.rect(surf, (30, 30, 40), placement_rect)
+            pygame.draw.rect(surf, (80, 80, 90), placement_rect, 2)
+
+            # Placeholder text
+            placeholder_text = self.font.render("Placement Visualization", True, (150, 150, 150))
+            surf.blit(placeholder_text, (placement_rect.centerx - placeholder_text.get_width()//2, placement_rect.centery - 40))
+
+            grid_text = self.small_font.render(f"(Grid: {selected.grid_size})", True, (120, 120, 120))
+            surf.blit(grid_text, (placement_rect.centerx - grid_text.get_width()//2, placement_rect.centery))
+
+            todo_text = self.small_font.render("TODO: Load from placements.JSON", True, (100, 100, 100))
+            surf.blit(todo_text, (placement_rect.centerx - todo_text.get_width()//2, placement_rect.centery + 30))
+
+            # Craft buttons at bottom of right panel
+            if can_craft:
+                btn_y = placement_rect.bottom + 20
+                instant_btn_w, instant_btn_h = 120, 40
+                minigame_btn_w, minigame_btn_h = 120, 40
+
+                # Center the buttons horizontally in right panel
+                total_btn_w = instant_btn_w + minigame_btn_w + 20
+                start_x = right_panel_x + (right_panel_w - 40 - total_btn_w) // 2
+
+                instant_btn_x = start_x
+                minigame_btn_x = start_x + instant_btn_w + 20
+
+                # Instant button (gray)
+                instant_rect = pygame.Rect(instant_btn_x, btn_y, instant_btn_w, instant_btn_h)
+                pygame.draw.rect(surf, (60, 60, 60), instant_rect)
+                pygame.draw.rect(surf, (120, 120, 120), instant_rect, 2)
+                instant_text = self.font.render("Instant", True, (200, 200, 200))
+                surf.blit(instant_text, (instant_btn_x + 25, btn_y + 10))
+
+                instant_subtext = self.small_font.render("0 XP", True, (150, 150, 150))
+                surf.blit(instant_subtext, (instant_btn_x + 40, btn_y + 28))
+
+                # Minigame button (gold)
+                minigame_rect = pygame.Rect(minigame_btn_x, btn_y, minigame_btn_w, minigame_btn_h)
+                pygame.draw.rect(surf, (80, 60, 20), minigame_rect)
+                pygame.draw.rect(surf, (255, 215, 0), minigame_rect, 2)
+                minigame_text = self.font.render("Minigame", True, (255, 215, 0))
+                surf.blit(minigame_text, (minigame_btn_x + 10, btn_y + 10))
+
+                minigame_subtext = self.small_font.render("1.5x XP", True, (255, 200, 100))
+                surf.blit(minigame_subtext, (minigame_btn_x + 30, btn_y + 28))
+            else:
+                # Can't craft - show why
+                btn_y = placement_rect.bottom + 30
+                cannot_text = self.font.render("Insufficient Materials", True, (255, 100, 100))
+                surf.blit(cannot_text, (right_panel_x + (right_panel_w - 40 - cannot_text.get_width())//2, btn_y))
+        else:
+            # No recipe selected - show prompt
+            prompt_text = self.font.render("← Select a recipe to view details", True, (150, 150, 150))
+            surf.blit(prompt_text, (right_panel_x + 50, right_panel_y + 150))
 
         self.screen.blit(surf, (wx, wy))
-        return pygame.Rect(wx, wy, ww, wh), recipes[:6] if recipes else []
+        return pygame.Rect(wx, wy, ww, wh), recipes[:8] if recipes else []
 
     def render_equipment_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.equipment_ui_open:
@@ -3228,6 +3303,7 @@ class GameEngine:
         self.notifications: List[Notification] = []
         self.crafting_window_rect = None
         self.crafting_recipes = []
+        self.selected_recipe = None  # Currently selected recipe in crafting UI (for placement display)
         self.stats_window_rect = None
         self.stats_buttons = []
         self.equipment_window_rect = None
@@ -3645,6 +3721,16 @@ class GameEngine:
         # Convert inventory to dict
         inv_dict = self.inventory_to_dict()
 
+        # DEBUG MODE: Add infinite quantities of required materials (same as in craft_item)
+        if Config.DEBUG_INFINITE_RESOURCES:
+            print("🔧 DEBUG MODE: Adding infinite materials for minigame completion")
+            rarity_system.debug_mode = True
+            for inp in recipe.inputs:
+                mat_id = inp.get('materialId', '')
+                inv_dict[mat_id] = 999999
+        else:
+            rarity_system.debug_mode = False
+
         # Use crafter to process minigame result
         craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
 
@@ -3911,48 +3997,86 @@ class GameEngine:
                 self.add_notification("Inventory full!", (255, 100, 100))
 
     def handle_craft_click(self, mouse_pos: Tuple[int, int]):
+        """
+        Handle clicks in the new two-panel crafting UI
+        - Left panel: Click recipe to select it
+        - Right panel: Click Instant or Minigame buttons to craft
+        """
         if not self.crafting_window_rect or not self.crafting_recipes:
             return
+
         rx = mouse_pos[0] - self.crafting_window_rect.x
         ry = mouse_pos[1] - self.crafting_window_rect.y
 
         recipe_db = RecipeDatabase.get_instance()
 
-        # Calculate button positions for each recipe
-        y_off = 70
-        for i, recipe in enumerate(self.crafting_recipes):
-            # Dynamic button height based on number of inputs
-            num_inputs = len(recipe.inputs)
-            btn_height = max(80, 35 + num_inputs * 18 + 10)
+        # Layout constants (matching render_crafting_ui)
+        left_panel_w = 450
+        right_panel_x = left_panel_w + 20 + 20  # separator + padding
+        right_panel_w = 700
 
+        # ======================
+        # LEFT PANEL: Recipe Selection
+        # ======================
+        if rx < left_panel_w:
+            # Click in left panel - select recipe
+            y_off = 70
+            for i, recipe in enumerate(self.crafting_recipes):
+                num_inputs = len(recipe.inputs)
+                btn_height = max(70, 35 + num_inputs * 16 + 5)
+
+                if y_off <= ry <= y_off + btn_height:
+                    # Recipe clicked - select it
+                    self.selected_recipe = recipe
+                    print(f"📋 Selected recipe: {recipe.recipe_id}")
+                    return
+
+                y_off += btn_height + 8
+
+        # ======================
+        # RIGHT PANEL: Craft Buttons
+        # ======================
+        elif rx >= right_panel_x:
+            # Click in right panel - check for craft buttons
+            if not self.selected_recipe:
+                return  # No recipe selected, can't craft
+
+            recipe = self.selected_recipe
             can_craft = recipe_db.can_craft(recipe, self.character.inventory)
 
-            if y_off <= ry <= y_off + btn_height and can_craft:
-                # Check which button was clicked (Instant or Minigame)
-                ww = 900  # Crafting window width
-                instant_btn_w, minigame_btn_w = 80, 80
+            if not can_craft:
+                return  # Can't craft, buttons not shown
 
-                instant_left = ww - 40 - instant_btn_w - minigame_btn_w - 15
-                instant_right = instant_left + instant_btn_w
-                minigame_left = ww - 40 - minigame_btn_w - 5
-                minigame_right = minigame_left + minigame_btn_w
+            # Button positions (matching render_crafting_ui)
+            placement_h = 380
+            right_panel_y = 70
+            btn_y = right_panel_y + placement_h + 20
 
-                btn_y_center = y_off + btn_height // 2
-                btn_top = btn_y_center - 12
-                btn_bottom = btn_y_center + 13
+            instant_btn_w, instant_btn_h = 120, 40
+            minigame_btn_w, minigame_btn_h = 120, 40
 
-                if instant_left <= rx <= instant_right and btn_top <= ry <= btn_bottom:
-                    # Instant craft clicked
-                    print(f"🔨 Instant craft clicked for {recipe.recipe_id}")
-                    self.craft_item(recipe, use_minigame=False)
-                    break
-                elif minigame_left <= rx <= minigame_right and btn_top <= ry <= btn_bottom:
-                    # Minigame clicked
-                    print(f"🎮 Minigame clicked for {recipe.recipe_id}")
-                    self.craft_item(recipe, use_minigame=True)
-                    break
+            total_btn_w = instant_btn_w + minigame_btn_w + 20
+            start_x = right_panel_x + (right_panel_w - 40 - total_btn_w) // 2
 
-            y_off += btn_height + 10
+            instant_btn_x = start_x
+            minigame_btn_x = start_x + instant_btn_w + 20
+
+            # Convert to relative coordinates
+            instant_left = instant_btn_x
+            instant_right = instant_btn_x + instant_btn_w
+            minigame_left = minigame_btn_x
+            minigame_right = minigame_btn_x + minigame_btn_w
+            btn_top = btn_y
+            btn_bottom = btn_y + instant_btn_h
+
+            if instant_left <= rx <= instant_right and btn_top <= ry <= btn_bottom:
+                # Instant craft clicked
+                print(f"🔨 Instant craft clicked for {recipe.recipe_id}")
+                self.craft_item(recipe, use_minigame=False)
+            elif minigame_left <= rx <= minigame_right and btn_top <= ry <= btn_bottom:
+                # Minigame clicked
+                print(f"🎮 Minigame clicked for {recipe.recipe_id}")
+                self.craft_item(recipe, use_minigame=True)
 
     def craft_item(self, recipe: Recipe, use_minigame: bool = False):
         """
