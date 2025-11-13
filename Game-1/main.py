@@ -3623,23 +3623,11 @@ class Renderer:
         if not character.crafting_ui_open or not character.active_station:
             return None
 
-        # Store placement state temporarily for rendering
-        self.placement_mode = placement_mode
-        self.placement_recipe = placement_recipe
-        self.placement_data = placement_data
-
-        # Store placement material state
-        self.placed_materials_grid = placed_materials_grid or {}
-        self.placed_materials_hub = placed_materials_hub or {'core': [], 'surrounding': []}
-        self.placed_materials_sequential = placed_materials_sequential or []
-        self.placed_materials_slots = placed_materials_slots or {}
-
         # Always render recipe list on the left
         recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos)
 
         # If a recipe is selected, render placement UI on the right
-        if placement_mode and placement_recipe:
-            self._render_placement_ui_sidebar(character, mouse_pos)
+        # (Note: Placement UI rendering is handled by the recipe selection sidebar)
 
         return recipe_result
 
