@@ -3599,6 +3599,19 @@ class GameEngine:
             # Convert inventory to dict format
             inv_dict = self.inventory_to_dict()
 
+            # DEBUG MODE: Add infinite quantities of required materials
+            if Config.DEBUG_INFINITE_RESOURCES:
+                print("🔧 DEBUG MODE: Adding infinite materials and bypassing rarity checks")
+                # Enable debug mode in rarity system to bypass rarity uniformity checks
+                rarity_system.debug_mode = True
+                for inp in recipe.inputs:
+                    mat_id = inp.get('materialId', '')
+                    # Add huge quantity - rarity is checked from material database, not inventory
+                    inv_dict[mat_id] = 999999
+            else:
+                # Ensure debug mode is off
+                rarity_system.debug_mode = False
+
             # Check if crafter can craft (with rarity checks)
             can_craft_result = crafter.can_craft(recipe.recipe_id, inv_dict)
             if isinstance(can_craft_result, tuple):

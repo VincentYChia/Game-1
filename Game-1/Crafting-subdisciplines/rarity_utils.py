@@ -23,6 +23,7 @@ class RaritySystem:
         """Initialize rarity system by loading material rarities and modifiers"""
         self.material_rarities = {}
         self.rarity_modifiers = {}
+        self.debug_mode = False  # Can be set by main.py for infinite resources
         self._load_material_rarities()
         self._load_rarity_modifiers()
 
@@ -69,6 +70,10 @@ class RaritySystem:
             - rarity: The common rarity if uniform, None otherwise
             - error_message: Error description if not uniform
         """
+        # Debug mode: bypass rarity checks, treat everything as common
+        if self.debug_mode:
+            return True, 'common', None
+
         if not inputs:
             return True, 'common', None
 
