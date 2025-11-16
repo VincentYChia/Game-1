@@ -4708,11 +4708,11 @@ class GameEngine:
                         self.active_minigame.handle_fan()
                     elif self.minigame_type == 'alchemy':
                         if event.key == pygame.K_c:
-                            self.active_minigame.chain_ingredient()
+                            self.active_minigame.chain()
                         elif event.key == pygame.K_s:
                             self.active_minigame.stabilize()
                     elif self.minigame_type == 'refining' and event.key == pygame.K_SPACE:
-                        self.active_minigame.align_cylinder()
+                        self.active_minigame.handle_attempt()
                     # engineering uses button clicks, no keyboard input needed
                     # Skip other key handling when minigame is active
                     continue
@@ -4799,10 +4799,10 @@ class GameEngine:
                         self.active_minigame.handle_hammer()
                     elif self.minigame_type == 'alchemy':
                         # Chain button (minigame_button_rect is chain button)
-                        self.active_minigame.chain_ingredient()
+                        self.active_minigame.chain()
                     elif self.minigame_type == 'engineering':
-                        # Complete puzzle button
-                        self.active_minigame.complete_puzzle()
+                        # Check puzzle solution button
+                        self.active_minigame.check_current_puzzle()
                     return
             # Check secondary button (alchemy stabilize)
             if hasattr(self, 'minigame_button_rect2') and self.minigame_button_rect2:
@@ -5995,7 +5995,7 @@ class GameEngine:
                     compatible_items.append(('inventory', slot_idx, stack, equipment))
 
         # From equipped slots
-        for slot_name, equipped_item in self.character.equipment.items():
+        for slot_name, equipped_item in self.character.equipment.slots.items():
             if equipped_item:
                 compatible_items.append(('equipped', slot_name, None, equipped_item))
 
@@ -6067,8 +6067,9 @@ class GameEngine:
             self.combat_manager.update(dt)
             self.character.update_attack_cooldown(dt)
         else:
-            # Update active minigame
-            self.active_minigame.update(dt)
+            # Update active minigame (skip for engineering - it's turn-based)
+            if self.minigame_type != 'engineering':
+                self.active_minigame.update(dt)
 
             # Check if minigame completed
             if hasattr(self.active_minigame, 'result') and self.active_minigame.result is not None:
@@ -6174,6 +6175,13 @@ class GameEngine:
         for slot in self.character.inventory.slots:
             if slot:
                 inv_dict[slot.item_id] = inv_dict.get(slot.item_id, 0) + slot.quantity
+
+        # Add recipe inputs to inv_dict with 0 if missing (defensive programming)
+        for inp in recipe.inputs:
+            mat_id = inp.get('materialId') or inp.get('itemId')
+            if mat_id and mat_id not in inv_dict:
+                inv_dict[mat_id] = 0
+                print(f"⚠ Warning: Recipe material '{mat_id}' not in inventory!")
 
         # Use crafter to process minigame result
         craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)

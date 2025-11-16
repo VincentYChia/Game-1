@@ -384,7 +384,7 @@ class CombatManager:
         if enemy_died:
             print(f"   💀 Enemy killed!")
             exp_reward = self._calculate_exp_reward(enemy)
-            self.character.leveling.gain_exp(exp_reward)
+            self.character.leveling.add_exp(exp_reward)
             print(f"   +{exp_reward} EXP")
 
             # Track combat activity
