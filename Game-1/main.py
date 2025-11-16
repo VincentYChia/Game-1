@@ -2141,34 +2141,21 @@ class ItemStack:
     crafted_stats: Optional[Dict[str, Any]] = None  # Stats from minigame crafting with rarity modifiers
 
     def __post_init__(self):
-        print(f"      📦 ItemStack.__post_init__ called for '{self.item_id}'")
-        print(f"         - quantity: {self.quantity}")
-        print(f"         - max_stack: {self.max_stack}")
-        print(f"         - equipment_data before: {self.equipment_data}")
-
         mat_db = MaterialDatabase.get_instance()
         if mat_db.loaded:
             mat = mat_db.get_material(self.item_id)
             if mat:
                 self.max_stack = mat.max_stack
-                print(f"         - Updated max_stack from material: {self.max_stack}")
 
         # Equipment items don't stack
         equip_db = EquipmentDatabase.get_instance()
         is_equip = equip_db.is_equipment(self.item_id)
-        print(f"         - is_equipment: {is_equip}")
 
         if is_equip:
             self.max_stack = 1
             # Create equipment instance if not already set
             if self.equipment_data is None:
-                print(f"         - equipment_data is None, creating new instance...")
                 self.equipment_data = equip_db.create_equipment_from_id(self.item_id)
-                print(f"         - Created: {self.equipment_data}")
-            else:
-                print(f"         - equipment_data already set: {self.equipment_data.name}")
-
-        print(f"         - equipment_data after: {self.equipment_data}")
 
     def can_add(self, amount: int) -> bool:
         return self.quantity + amount <= self.max_stack
@@ -2206,51 +2193,31 @@ class Inventory:
         self.dragging_from_equipment: bool = False  # Track if dragging from equipment slot
 
     def add_item(self, item_id: str, quantity: int, equipment_instance: Optional['EquipmentItem'] = None) -> bool:
-        print(f"\n   🎒 ADD_ITEM called: item_id='{item_id}', quantity={quantity}, equipment_instance={equipment_instance}")
-
         remaining = quantity
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
         # Equipment doesn't stack
         is_equip = equip_db.is_equipment(item_id)
-        print(f"   🔍 is_equipment check: {is_equip}")
 
         if is_equip:
-            print(f"   ⚙️ Processing as equipment (non-stackable)")
             for i in range(quantity):
                 empty = self.get_empty_slot()
-                print(f"   📍 Empty slot found: {empty}")
                 if empty is None:
-                    print(f"   ❌ No empty slot available!")
                     return False
                 # Use provided equipment instance or create new one
-                print(f"   🔧 equipment_instance provided: {equipment_instance is not None}")
                 equip_data = equipment_instance if equipment_instance else equip_db.create_equipment_from_id(item_id)
-                print(f"   🔧 equip_data created: {equip_data}")
-                if equip_data:
-                    print(f"      - name: {equip_data.name}")
-                    print(f"      - tier: {equip_data.tier}")
-                    print(f"      - item_id: {equip_data.item_id}")
-                else:
-                    print(f"   ❌ WARNING: equip_data is None!")
+                if not equip_data:
+                    print(f"WARNING: Could not create equipment data for {item_id}")
+                    return False
 
                 stack = ItemStack(item_id, 1, 1, equip_data)
-                print(f"   📦 ItemStack created: {stack}")
-                print(f"      - item_id: {stack.item_id}")
-                print(f"      - quantity: {stack.quantity}")
-                print(f"      - equipment_data: {stack.equipment_data}")
-
                 self.slots[empty] = stack
-                print(f"   ✅ Added to slot {empty}")
             return True
 
         # Normal materials can stack
-        print(f"   📚 Processing as material (stackable)")
         mat = mat_db.get_material(item_id)
-        print(f"   📚 Material lookup: {mat}")
         max_stack = mat.max_stack if mat else 99
-        print(f"   📚 Max stack size: {max_stack}")
 
         for slot in self.slots:
             if slot and slot.item_id == item_id and remaining > 0:
@@ -2259,11 +2226,9 @@ class Inventory:
         while remaining > 0:
             empty = self.get_empty_slot()
             if empty is None:
-                print(f"   ❌ No empty slot available!")
                 return False
             stack_size = min(remaining, max_stack)
             self.slots[empty] = ItemStack(item_id, stack_size, max_stack)
-            print(f"   ✅ Added {stack_size} to slot {empty}")
             remaining -= stack_size
         return True
 
@@ -4649,14 +4614,6 @@ class GameEngine:
         )
         # Spawn initial enemies for testing
         self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
-
-        # Initialize crafting systems
-        print("Loading crafting systems...")
-        self.smithing_crafter = SmithingCrafter()
-        self.alchemy_crafter = AlchemyCrafter()
-        self.enchanting_crafter = EnchantingCrafter()
-        self.engineering_crafter = EngineeringCrafter()
-        self.refining_crafter = RefiningCrafter()
 
         # Minigame state
         self.active_minigame = None  # Current minigame instance
