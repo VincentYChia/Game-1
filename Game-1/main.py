@@ -2600,6 +2600,7 @@ class Character:
         self.crafting_ui_open = False
         self.stats_ui_open = False
         self.equipment_ui_open = False
+        self.skills_ui_open = False
         self.class_selection_open = False
 
         # Combat
@@ -2806,6 +2807,9 @@ class Character:
 
     def toggle_stats_ui(self):
         self.stats_ui_open = not self.stats_ui_open
+
+    def toggle_skills_ui(self):
+        self.skills_ui_open = not self.skills_ui_open
 
     def toggle_equipment_ui(self):
         self.equipment_ui_open = not self.equipment_ui_open
@@ -3783,6 +3787,7 @@ class Renderer:
             "1-5 - Use skills",
             "C - Stats",
             "E - Equipment",
+            "K - Skills menu",
             "F1 - Debug Mode",
             "F2/F3/F4 - Debug Skills/Titles/Stats",
             "ESC - Close/Quit"
@@ -3821,6 +3826,8 @@ class Renderer:
         start_y = Config.VIEWPORT_HEIGHT - slot_size - 20
 
         skill_db = SkillDatabase.get_instance()
+        hovered_skill = None
+        hovered_slot_rect = None
 
         for i in range(num_slots):
             x = start_x + i * (slot_size + slot_spacing)
@@ -3842,6 +3849,12 @@ class Renderer:
                 if player_skill:
                     skill_def = player_skill.get_definition()
                     if skill_def:
+                        # Check hover
+                        mouse_pos = pygame.mouse.get_pos()
+                        if slot_rect.collidepoint(mouse_pos):
+                            hovered_skill = (skill_def, player_skill)
+                            hovered_slot_rect = slot_rect
+
                         # Skill name (abbreviated)
                         name_parts = skill_def.name.split()
                         short_name = "".join(p[0] for p in name_parts[:2])  # First letters
@@ -3871,6 +3884,185 @@ class Renderer:
                 empty_text = self.tiny_font.render("Empty", True, (80, 80, 80))
                 empty_rect = empty_text.get_rect(center=(x + slot_size // 2, y + slot_size // 2))
                 self.screen.blit(empty_text, empty_rect)
+
+        # Render tooltip for hovered skill
+        if hovered_skill:
+            self._render_skill_tooltip(hovered_skill[0], hovered_skill[1], hovered_slot_rect, character)
+
+    def _render_skill_tooltip(self, skill_def, player_skill, slot_rect, character):
+        """Render tooltip for a skill"""
+        skill_db = SkillDatabase.get_instance()
+
+        # Tooltip dimensions
+        tooltip_width = 350
+        tooltip_height = 200
+        padding = 10
+
+        # Position above the slot
+        tooltip_x = slot_rect.centerx - tooltip_width // 2
+        tooltip_y = slot_rect.y - tooltip_height - 10
+
+        # Keep on screen
+        tooltip_x = max(10, min(tooltip_x, Config.VIEWPORT_WIDTH - tooltip_width - 10))
+        tooltip_y = max(10, tooltip_y)
+
+        # Background
+        surf = pygame.Surface((tooltip_width, tooltip_height), pygame.SRCALPHA)
+        surf.fill((25, 25, 35, 250))
+        pygame.draw.rect(surf, (100, 150, 200), surf.get_rect(), 2)
+
+        y = padding
+
+        # Skill name
+        name_surf = self.font.render(skill_def.name, True, (200, 220, 255))
+        surf.blit(name_surf, (padding, y))
+        y += 25
+
+        # Tier and rarity
+        tier_text = f"Tier {skill_def.tier} - {skill_def.rarity.upper()}"
+        tier_color = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}.get(skill_def.tier, (150, 150, 150))
+        surf.blit(self.small_font.render(tier_text, True, tier_color), (padding, y))
+        y += 20
+
+        # Cost and cooldown
+        mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+        cooldown = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
+        cost_text = f"Cost: {mana_cost} MP  |  Cooldown: {cooldown}s"
+        surf.blit(self.small_font.render(cost_text, True, (150, 200, 255)), (padding, y))
+        y += 25
+
+        # Effect
+        effect_text = f"{skill_def.effect.effect_type.capitalize()} - {skill_def.effect.category} ({skill_def.effect.magnitude})"
+        surf.blit(self.small_font.render(effect_text, True, (200, 200, 100)), (padding, y))
+        y += 20
+
+        # Description (word-wrapped)
+        desc_words = skill_def.description.split()
+        line = ""
+        for word in desc_words:
+            test_line = line + word + " "
+            if self.tiny_font.size(test_line)[0] > tooltip_width - 2 * padding:
+                surf.blit(self.tiny_font.render(line, True, (180, 180, 180)), (padding, y))
+                y += 16
+                line = word + " "
+            else:
+                line = test_line
+        if line:
+            surf.blit(self.tiny_font.render(line, True, (180, 180, 180)), (padding, y))
+
+        self.screen.blit(surf, (tooltip_x, tooltip_y))
+
+    def render_skills_menu_ui(self, character: Character, mouse_pos: Tuple[int, int]):
+        """Render skills menu for managing equipped skills"""
+        if not character.skills_ui_open:
+            return None
+
+        skill_db = SkillDatabase.get_instance()
+        if not skill_db.loaded:
+            return None
+
+        ww, wh = 1000, 700
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = 50
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 245))
+
+        # Title
+        surf.blit(self.font.render("SKILLS MANAGEMENT", True, (150, 200, 255)), (ww // 2 - 120, 20))
+        surf.blit(self.small_font.render("[ESC] Close | Click skill to see details | Right-click hotbar to unequip", True, (180, 180, 180)),
+                  (ww // 2 - 300, 50))
+
+        # Hotbar section (top)
+        y_pos = 90
+        surf.blit(self.small_font.render("SKILL HOTBAR (1-5):", True, (200, 200, 200)), (20, y_pos))
+        y_pos += 30
+
+        hotbar_rects = []
+        slot_size = 70
+        for i in range(5):
+            x = 30 + i * (slot_size + 10)
+            slot_rect = pygame.Rect(x, y_pos, slot_size, slot_size)
+
+            # Get skill in this slot
+            skill_id = character.skills.equipped_skills[i]
+            player_skill = character.skills.known_skills.get(skill_id) if skill_id else None
+            skill_def = player_skill.get_definition() if player_skill else None
+
+            # Slot background
+            bg_color = (50, 70, 90) if skill_def else (40, 40, 50)
+            pygame.draw.rect(surf, bg_color, slot_rect)
+            pygame.draw.rect(surf, (100, 150, 200), slot_rect, 2)
+
+            # Slot number
+            num_surf = self.small_font.render(str(i + 1), True, (150, 150, 150))
+            surf.blit(num_surf, (x + 4, y_pos + 4))
+
+            if skill_def:
+                # Skill abbreviation
+                name_parts = skill_def.name.split()
+                short_name = "".join(p[0] for p in name_parts[:2])
+                name_surf = self.font.render(short_name, True, (200, 220, 255))
+                name_rect = name_surf.get_rect(center=(x + slot_size // 2, y_pos + slot_size // 2))
+                surf.blit(name_surf, name_rect)
+
+            hotbar_rects.append((slot_rect, i, skill_id))
+
+        y_pos += slot_size + 30
+
+        # Learned skills section
+        surf.blit(self.small_font.render(f"LEARNED SKILLS ({len(character.skills.known_skills)}):", True, (200, 200, 200)), (20, y_pos))
+        y_pos += 30
+
+        skill_rects = []
+        max_visible = 10
+        for idx, (skill_id, player_skill) in enumerate(list(character.skills.known_skills.items())[:max_visible]):
+            skill_def = player_skill.get_definition()
+            if not skill_def:
+                continue
+
+            # Check if equipped
+            equipped_slot = None
+            for slot_idx, equipped_id in enumerate(character.skills.equipped_skills):
+                if equipped_id == skill_id:
+                    equipped_slot = slot_idx
+                    break
+
+            skill_rect = pygame.Rect(20, y_pos, ww - 40, 50)
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+            is_hovered = skill_rect.collidepoint(rx, ry)
+
+            # Background
+            bg_color = (70, 90, 60) if equipped_slot is not None else (50, 50, 70)
+            if is_hovered:
+                bg_color = tuple(min(255, c + 20) for c in bg_color)
+            pygame.draw.rect(surf, bg_color, skill_rect)
+            pygame.draw.rect(surf, (120, 140, 180) if is_hovered else (80, 80, 100), skill_rect, 2)
+
+            # Skill name
+            surf.blit(self.small_font.render(skill_def.name, True, (255, 255, 255)), (30, y_pos + 5))
+
+            # Tier and rarity
+            tier_color = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}.get(skill_def.tier, (150, 150, 150))
+            surf.blit(self.tiny_font.render(f"T{skill_def.tier} {skill_def.rarity.upper()}", True, tier_color), (30, y_pos + 25))
+
+            # Mana cost and cooldown
+            mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+            cooldown = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
+            surf.blit(self.tiny_font.render(f"{mana_cost}MP  |  {cooldown}s CD", True, (150, 200, 255)), (200, y_pos + 25))
+
+            # Equipped indicator
+            if equipped_slot is not None:
+                surf.blit(self.small_font.render(f"[Slot {equipped_slot + 1}]", True, (100, 255, 100)), (ww - 150, y_pos + 15))
+            else:
+                surf.blit(self.tiny_font.render("Click to equip", True, (120, 120, 150)), (ww - 150, y_pos + 18))
+
+            skill_rects.append((skill_rect, skill_id, player_skill, skill_def))
+            y_pos += 55
+
+        self.screen.blit(surf, (wx, wy))
+        window_rect = pygame.Rect(wx, wy, ww, wh)
+        return window_rect, hotbar_rects, skill_rects
 
     def render_notifications(self, notifications: List[Notification]):
         y = 50
@@ -4491,8 +4683,8 @@ class Renderer:
             y_pos += slot_size + 15
 
         self.screen.blit(surf, (wx, wy))
-        self.enchantment_selection_rect = pygame.Rect(wx, wy, ww, wh)
-        return item_rects
+        window_rect = pygame.Rect(wx, wy, ww, wh)
+        return window_rect, item_rects
 
     def render_class_selection_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.class_selection_open:
@@ -4971,6 +5163,9 @@ class GameEngine:
         self.stats_buttons = []
         self.equipment_window_rect = None
         self.equipment_rects = {}
+        self.skills_window_rect = None
+        self.skills_hotbar_rects = []
+        self.skills_list_rects = []
         self.class_selection_rect = None
         self.class_buttons = []
 
@@ -5045,6 +5240,8 @@ class GameEngine:
                         self.character.toggle_stats_ui()
                     elif self.character.equipment_ui_open:
                         self.character.toggle_equipment_ui()
+                    elif self.character.skills_ui_open:
+                        self.character.toggle_skills_ui()
                     elif self.character.class_selection_open:
                         pass
                     else:
@@ -5057,6 +5254,8 @@ class GameEngine:
                     self.character.toggle_stats_ui()
                 elif event.key == pygame.K_e:
                     self.character.toggle_equipment_ui()
+                elif event.key == pygame.K_k:
+                    self.character.toggle_skills_ui()
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
@@ -5230,6 +5429,16 @@ class GameEngine:
                 self.handle_class_selection_click(mouse_pos)
                 return
 
+        # Skills UI
+        if self.character.skills_ui_open and self.skills_window_rect:
+            if self.skills_window_rect.collidepoint(mouse_pos):
+                self.handle_skills_menu_click(mouse_pos)
+                return
+            # Click outside skills UI - close it
+            else:
+                self.character.toggle_skills_ui()
+                return
+
         # Stats UI
         if self.character.stats_ui_open and self.stats_window_rect:
             if self.stats_window_rect.collidepoint(mouse_pos):
@@ -5379,18 +5588,54 @@ class GameEngine:
 
     def handle_enchantment_selection_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on the enchantment selection UI"""
+        print(f"🔍 Enchantment click handler called at {mouse_pos}")
+
         if not self.enchantment_item_rects:
+            print(f"⚠️ No item rects available!")
             return
 
-        for item_rect, source_type, source_id, item_stack, equipment in self.enchantment_item_rects:
-            # Check if click is within this item's rect (already relative to window)
-            wx, wy = self.enchantment_selection_rect.x, self.enchantment_selection_rect.y
-            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+        print(f"📋 Checking {len(self.enchantment_item_rects)} item rects")
+        wx, wy = self.enchantment_selection_rect.x, self.enchantment_selection_rect.y
+        rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+        print(f"   Window at ({wx}, {wy}), relative click at ({rx}, {ry})")
+
+        for idx, (item_rect, source_type, source_id, item_stack, equipment) in enumerate(self.enchantment_item_rects):
+            print(f"   Rect {idx}: {item_rect}, contains? {item_rect.collidepoint(rx, ry)}")
 
             if item_rect.collidepoint(rx, ry):
                 print(f"✨ Selected {equipment.name} for enchantment")
                 self._complete_enchantment_application(source_type, source_id, item_stack, equipment)
                 break
+
+    def handle_skills_menu_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicks on the skills menu"""
+        wx, wy = self.skills_window_rect.x, self.skills_window_rect.y
+        rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+
+        # Check hotbar slots (right-click to unequip)
+        for slot_rect, slot_idx, skill_id in self.skills_hotbar_rects:
+            if slot_rect.collidepoint(rx, ry):
+                if skill_id:  # Right-click to unequip
+                    self.character.skills.unequip_skill(slot_idx)
+                    self.add_notification(f"Unequipped from slot {slot_idx + 1}", (255, 200, 100))
+                return
+
+        # Check skill list (click to equip)
+        for skill_rect, skill_id, player_skill, skill_def in self.skills_list_rects:
+            if skill_rect.collidepoint(rx, ry):
+                # Find first empty slot
+                empty_slot = None
+                for i in range(5):
+                    if not self.character.skills.equipped_skills[i]:
+                        empty_slot = i
+                        break
+
+                if empty_slot is not None:
+                    self.character.skills.equip_skill(skill_id, empty_slot)
+                    self.add_notification(f"Equipped {skill_def.name} to slot {empty_slot + 1}", (100, 255, 150))
+                else:
+                    self.add_notification("All hotbar slots full! Unequip a skill first.", (255, 150, 100))
+                return
 
     def handle_class_selection_click(self, mouse_pos: Tuple[int, int]):
         if not self.class_buttons:
@@ -6522,6 +6767,15 @@ class GameEngine:
                 self.stats_window_rect = None
                 self.stats_buttons = []
 
+            if self.character.skills_ui_open:
+                result = self.renderer.render_skills_menu_ui(self.character, self.mouse_pos)
+                if result:
+                    self.skills_window_rect, self.skills_hotbar_rects, self.skills_list_rects = result
+            else:
+                self.skills_window_rect = None
+                self.skills_hotbar_rects = []
+                self.skills_list_rects = []
+
             if self.character.equipment_ui_open:
                 result = self.renderer.render_equipment_ui(self.character, self.mouse_pos)
                 if result:
@@ -6532,9 +6786,12 @@ class GameEngine:
 
             # Enchantment selection UI (rendered on top of everything)
             if self.enchantment_selection_active:
-                self.enchantment_item_rects = self.renderer.render_enchantment_selection_ui(
+                result = self.renderer.render_enchantment_selection_ui(
                     self.mouse_pos, self.enchantment_recipe, self.enchantment_compatible_items)
+                if result:
+                    self.enchantment_selection_rect, self.enchantment_item_rects = result
             else:
+                self.enchantment_selection_rect = None
                 self.enchantment_item_rects = None
 
         # Minigame rendering (rendered on top of EVERYTHING)
