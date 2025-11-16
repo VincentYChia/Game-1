@@ -2814,21 +2814,21 @@ class Renderer:
         # Draw grid cells
         cell_rects = []  # Will store list of (pygame.Rect, (grid_x, grid_y)) for click detection
 
-        for gy in range(1, grid_h + 1):  # 1-indexed to match placement data
-            for gx in range(1, grid_w + 1):
-                # Flip Y axis: placement data uses bottom-up (y=1 at bottom), pygame uses top-down
-                render_y = (grid_h + 1) - gy  # Convert to render row (1 at top)
-
+        for gy in range(1, grid_h + 1):  # 1-indexed to match placement data (row)
+            for gx in range(1, grid_w + 1):  # 1-indexed (col)
+                # No Y axis flipping - row 1 is at top, like in crafting_tester.py
                 cell_x = grid_start_x + (gx - 1) * (cell_size + 4)
-                cell_y = grid_start_y + (render_y - 1) * (cell_size + 4)
+                cell_y = grid_start_y + (gy - 1) * (cell_size + 4)
                 cell_rect = pygame.Rect(cell_x, cell_y, cell_size, cell_size)
 
                 # Check if this cell corresponds to a recipe requirement (with offset for centering)
                 recipe_x = gx - offset_x
                 recipe_y = gy - offset_y
-                recipe_key = f"{recipe_x},{recipe_y}"
+                # Placement data format is "row,col" where row=Y axis, col=X axis
+                # gy is the row (Y), gx is the col (X), so keys should be "{row},{col}" = "{gy},{gx}"
+                recipe_key = f"{recipe_y},{recipe_x}"
 
-                grid_key = f"{gx},{gy}"
+                grid_key = f"{gy},{gx}"
                 has_recipe_requirement = (1 <= recipe_x <= recipe_grid_w and
                                         1 <= recipe_y <= recipe_grid_h and
                                         recipe_key in recipe_placement_map)
@@ -2883,6 +2883,149 @@ class Renderer:
         surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
 
         return cell_rects
+
+    def render_adornment_pattern(self, surf: pygame.Surface, placement_rect: pygame.Rect,
+                                 station_tier: int, selected_recipe: Optional[Recipe],
+                                 user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
+        """
+        Render adornment/enchanting pattern grid with vertices and shapes:
+        - Uses centered coordinate system (0,0 at center)
+        - Shows vertices as circles with material labels
+        - Draws connecting lines for shapes
+        - Supports different grid sizes (8x8, 10x10, 12x12, etc.)
+
+        Returns: List of (pygame.Rect, vertex_coord_str) for click handling
+        """
+        mat_db = MaterialDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        # Get placement data for selected recipe
+        vertices = {}
+        shapes = []
+        grid_size = 12  # Default grid size
+
+        if selected_recipe:
+            placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            if placement_data and placement_data.placement_map:
+                pmap = placement_data.placement_map
+                vertices = pmap.get('vertices', {})
+                shapes = pmap.get('shapes', [])
+                # Parse grid type (e.g., "square_12x12")
+                grid_type = pmap.get('gridType', 'square_12x12')
+                if 'x' in grid_type:
+                    try:
+                        grid_size = int(grid_type.split('_')[1].split('x')[0])
+                    except (IndexError, ValueError):
+                        pass
+
+        # Calculate cell size to fit grid in placement_rect
+        padding = 40
+        available = min(placement_rect.width, placement_rect.height) - 2 * padding
+        cell_size = available // grid_size
+
+        # Center the grid
+        grid_pixel_size = grid_size * cell_size
+        grid_start_x = placement_rect.x + (placement_rect.width - grid_pixel_size) // 2
+        grid_start_y = placement_rect.y + (placement_rect.height - grid_pixel_size) // 2
+
+        # Draw grid background
+        grid_rect = pygame.Rect(grid_start_x, grid_start_y, grid_pixel_size, grid_pixel_size)
+        pygame.draw.rect(surf, (25, 25, 35), grid_rect)
+
+        # Draw grid cells
+        for row in range(grid_size):
+            for col in range(grid_size):
+                x = grid_start_x + col * cell_size
+                y = grid_start_y + row * cell_size
+                cell_rect = pygame.Rect(x, y, cell_size - 1, cell_size - 1)
+                pygame.draw.rect(surf, (40, 40, 50), cell_rect, 1)
+
+        # Draw center axes
+        half = grid_size // 2
+        center_x = grid_start_x + half * cell_size
+        center_y = grid_start_y + half * cell_size
+        pygame.draw.line(surf, (60, 60, 70), (center_x, grid_start_y), (center_x, grid_start_y + grid_pixel_size), 2)
+        pygame.draw.line(surf, (60, 60, 70), (grid_start_x, center_y), (grid_start_x + grid_pixel_size, center_y), 2)
+
+        # Draw shape connecting lines first (behind vertices)
+        for shape in shapes:
+            shape_vertices = shape.get('vertices', [])
+            if len(shape_vertices) > 1:
+                for i in range(len(shape_vertices)):
+                    v1_str = shape_vertices[i]
+                    v2_str = shape_vertices[(i + 1) % len(shape_vertices)]
+
+                    if ',' in v1_str and ',' in v2_str:
+                        try:
+                            gx1, gy1 = map(int, v1_str.split(','))
+                            gx2, gy2 = map(int, v2_str.split(','))
+
+                            # Convert centered coords to screen position
+                            sx1 = grid_start_x + (gx1 + half) * cell_size + cell_size // 2
+                            sy1 = grid_start_y + (half - gy1) * cell_size + cell_size // 2
+                            sx2 = grid_start_x + (gx2 + half) * cell_size + cell_size // 2
+                            sy2 = grid_start_y + (half - gy2) * cell_size + cell_size // 2
+
+                            pygame.draw.line(surf, (100, 150, 255), (sx1, sy1), (sx2, sy2), 3)
+                        except (ValueError, IndexError):
+                            pass
+
+        # Draw vertices (material placement points)
+        vertex_rects = []
+        for coord_str, vertex_data in vertices.items():
+            if ',' in coord_str:
+                try:
+                    gx, gy = map(int, coord_str.split(','))
+
+                    # Convert centered coordinates to screen position
+                    screen_x = grid_start_x + (gx + half) * cell_size + cell_size // 2
+                    screen_y = grid_start_y + (half - gy) * cell_size + cell_size // 2
+
+                    material_id = vertex_data.get('materialId')
+                    is_key = vertex_data.get('isKey', False)
+
+                    # Determine color
+                    if material_id:
+                        mat = mat_db.get_material(material_id)
+                        if mat:
+                            mat_color = Config.RARITY_COLORS.get(mat.rarity, (100, 200, 200))
+                        else:
+                            mat_color = (255, 100, 100) if is_key else (100, 200, 200)
+                    else:
+                        mat_color = (255, 100, 100) if is_key else (100, 200, 200)
+
+                    # Draw larger, more visible circle
+                    pygame.draw.circle(surf, mat_color, (screen_x, screen_y), 10)
+                    pygame.draw.circle(surf, (255, 255, 255), (screen_x, screen_y), 10, 2)
+
+                    # Draw inner dot for key vertices
+                    if is_key:
+                        pygame.draw.circle(surf, (255, 255, 0), (screen_x, screen_y), 4)
+
+                    # Draw material label with shadow for visibility
+                    if material_id:
+                        mat_label = material_id[:4].upper()
+                        # Shadow
+                        label_shadow = self.tiny_font.render(mat_label, True, (0, 0, 0))
+                        surf.blit(label_shadow, (screen_x - 10, screen_y - 22))
+                        surf.blit(label_shadow, (screen_x - 8, screen_y - 20))
+                        # Main text
+                        label_text = self.tiny_font.render(mat_label, True, (255, 255, 255))
+                        surf.blit(label_text, (screen_x - 9, screen_y - 21))
+
+                    # Store for click handling
+                    vertex_rect = pygame.Rect(screen_x - 10, screen_y - 10, 20, 20)
+                    vertex_rects.append((vertex_rect, coord_str))
+
+                except (ValueError, IndexError):
+                    pass
+
+        # Draw grid label
+        grid_label = f"Adornment Pattern: {grid_size}x{grid_size} ({len(vertices)} vertices)"
+        label_surf = self.small_font.render(grid_label, True, (150, 150, 200))
+        surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
+
+        return vertex_rects
 
     def render_refining_hub(self, surf: pygame.Surface, placement_rect: pygame.Rect,
                           station_tier: int, selected_recipe: Optional[Recipe],
@@ -3623,28 +3766,24 @@ class Renderer:
         if not character.crafting_ui_open or not character.active_station:
             return None
 
-        # Store placement state temporarily for rendering
-        self.placement_mode = placement_mode
-        self.placement_recipe = placement_recipe
-        self.placement_data = placement_data
+        # Store these temporarily so child methods can access them
+        # (Python scoping doesn't allow nested functions to see parameters)
+        self._temp_selected_recipe = selected_recipe
+        self._temp_user_placement = user_placement
 
-        # Store placement material state
-        self.placed_materials_grid = placed_materials_grid or {}
-        self.placed_materials_hub = placed_materials_hub or {'core': [], 'surrounding': []}
-        self.placed_materials_sequential = placed_materials_sequential or []
-        self.placed_materials_slots = placed_materials_slots or {}
-
-        # Always render recipe list on the left
-        recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos)
+        # Always render recipe list on the left (pass scroll offset from game engine)
+        # Note: Renderer doesn't have direct access to game engine, so we need to get it via a hack
+        # Check if there's a scroll offset to use (this will be set by the caller)
+        scroll_offset = getattr(self, '_temp_scroll_offset', 0)
+        recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos, scroll_offset)
 
         # If a recipe is selected, render placement UI on the right
-        if placement_mode and placement_recipe:
-            self._render_placement_ui_sidebar(character, mouse_pos)
+        # (Note: Placement UI rendering is handled by the recipe selection sidebar)
 
         return recipe_result
 
-    def _render_recipe_selection_sidebar(self, character: Character, mouse_pos: Tuple[int, int]):
-        """Render recipe selection sidebar - left side"""
+    def _render_recipe_selection_sidebar(self, character: Character, mouse_pos: Tuple[int, int], scroll_offset: int = 0):
+        """Render recipe selection sidebar - left side with scrolling support"""
         recipe_db = RecipeDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
@@ -3671,13 +3810,35 @@ class Renderer:
                                                     character.active_station.tier)
 
         # ======================
-        # LEFT PANEL: Recipe List
+        # LEFT PANEL: Recipe List with Scrolling
         # ======================
+        visible_recipes = []  # Initialize to empty list
         if not recipes:
             surf.blit(self.font.render("No recipes available", True, (200, 200, 200)), (20, 80))
         else:
+            # Apply scroll offset and show 8 recipes at a time
+            total_recipes = len(recipes)
+            max_visible = 8
+            start_idx = min(scroll_offset, max(0, total_recipes - max_visible))
+            end_idx = min(start_idx + max_visible, total_recipes)
+            visible_recipes = recipes[start_idx:end_idx]
+
+            # Show scroll indicators if needed
+            if total_recipes > max_visible:
+                scroll_text = f"Recipes {start_idx + 1}-{end_idx} of {total_recipes}"
+                scroll_surf = self.small_font.render(scroll_text, True, (150, 150, 150))
+                surf.blit(scroll_surf, (20, 50))
+
+                # Show scroll arrows
+                if start_idx > 0:
+                    up_arrow = self.small_font.render("▲ Scroll Up", True, (100, 200, 100))
+                    surf.blit(up_arrow, (left_panel_w - 120, 50))
+                if end_idx < total_recipes:
+                    down_arrow = self.small_font.render("▼ Scroll Down", True, (100, 200, 100))
+                    surf.blit(down_arrow, (left_panel_w - 120, wh - 30))
+
             y_off = 70
-            for i, recipe in enumerate(recipes[:8]):  # Show up to 8 recipes
+            for i, recipe in enumerate(visible_recipes):
                 # Compact recipe display (no buttons, just info)
                 num_inputs = len(recipe.inputs)
                 btn_height = max(70, 35 + num_inputs * 16 + 5)
@@ -3686,7 +3847,7 @@ class Renderer:
                 can_craft = recipe_db.can_craft(recipe, character.inventory)
 
                 # Highlight selected recipe with gold border
-                is_selected = (selected_recipe and selected_recipe.recipe_id == recipe.recipe_id)
+                is_selected = (self._temp_selected_recipe and self._temp_selected_recipe.recipe_id == recipe.recipe_id)
 
                 btn_color = (60, 80, 60) if can_craft else (80, 60, 60)
                 if is_selected:
@@ -3737,9 +3898,9 @@ class Renderer:
         right_panel_x = separator_x + 20
         right_panel_y = 70
 
-        if selected_recipe:
+        if self._temp_selected_recipe:
             # Selected recipe - show placement and buttons
-            selected = selected_recipe
+            selected = self._temp_selected_recipe
             can_craft = recipe_db.can_craft(selected, character.inventory)
 
             # Placement visualization area
@@ -3755,19 +3916,19 @@ class Renderer:
 
             if station_type == 'smithing':
                 # Smithing: Grid-based placement
-                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
             elif station_type == 'refining':
                 # Refining: Hub-and-spoke
-                placement_grid_rects = self.render_refining_hub(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+                placement_grid_rects = self.render_refining_hub(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
             elif station_type == 'alchemy':
                 # Alchemy: Sequential
-                placement_grid_rects = self.render_alchemy_sequence(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+                placement_grid_rects = self.render_alchemy_sequence(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
             elif station_type == 'engineering':
                 # Engineering: Slot-type
-                placement_grid_rects = self.render_engineering_slots(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+                placement_grid_rects = self.render_engineering_slots(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
             elif station_type == 'adornments':
-                # Enchanting: Grid-based (reuses smithing grid renderer)
-                placement_grid_rects = self.render_smithing_grid(surf, placement_rect, station_tier, selected, user_placement, mouse_pos)
+                # Enchanting: Vertex-based pattern renderer
+                placement_grid_rects = self.render_adornment_pattern(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
 
             # Craft buttons at bottom of right panel
             if can_craft:
@@ -3814,12 +3975,14 @@ class Renderer:
         self.screen.blit(surf, (wx, wy))
         # Return window rect, recipes, and grid cell rects for click handling
         grid_rects_absolute = []
-        if selected_recipe:
+        if self._temp_selected_recipe:
             # Convert relative grid rects to absolute screen coordinates
             for rect, grid_pos in placement_grid_rects:
                 abs_rect = rect.move(wx, wy)  # Offset by window position
                 grid_rects_absolute.append((abs_rect, grid_pos))
-        return pygame.Rect(wx, wy, ww, wh), recipes[:8] if recipes else [], grid_rects_absolute
+        # Return visible recipes (affected by scroll offset)
+        return_recipes = visible_recipes if recipes else []
+        return pygame.Rect(wx, wy, ww, wh), return_recipes, grid_rects_absolute
 
     def render_equipment_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.equipment_ui_open:
@@ -4529,6 +4692,7 @@ class GameEngine:
         self.user_placement = {}  # User's current material placement: "x,y" -> materialId for grids, or other structures
         self.active_station_tier = 1  # Currently open crafting station's tier (determines grid size shown)
         self.placement_grid_rects = []  # Grid cell rects for click detection: list of (pygame.Rect, (grid_x, grid_y) or slot_id)
+        self.recipe_scroll_offset = 0  # Scroll offset for recipe list in crafting UI
         self.stats_window_rect = None
         self.stats_buttons = []
         self.equipment_window_rect = None
@@ -4585,6 +4749,14 @@ class GameEngine:
                         self.minigame_recipe = None
                     elif self.minigame_type == 'smithing' and event.key == pygame.K_SPACE:
                         self.active_minigame.handle_fan()
+                    elif self.minigame_type == 'alchemy':
+                        if event.key == pygame.K_c:
+                            self.active_minigame.chain_ingredient()
+                        elif event.key == pygame.K_s:
+                            self.active_minigame.stabilize()
+                    elif self.minigame_type == 'refining' and event.key == pygame.K_SPACE:
+                        self.active_minigame.align_cylinder()
+                    # engineering uses button clicks, no keyboard input needed
                     # Skip other key handling when minigame is active
                     continue
 
@@ -4639,6 +4811,15 @@ class GameEngine:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
                 self.mouse_pos = event.pos
+            elif event.type == pygame.MOUSEWHEEL:
+                # Handle mouse wheel scrolling for recipe list
+                if self.character.crafting_ui_open and self.crafting_window_rect:
+                    if self.crafting_window_rect.collidepoint(self.mouse_pos):
+                        # Scroll the recipe list
+                        self.recipe_scroll_offset -= event.y  # event.y is positive for scroll up
+                        # Clamp scroll offset to valid range
+                        max_scroll = max(0, len(self.crafting_recipes) - 8)
+                        self.recipe_scroll_offset = max(0, min(self.recipe_scroll_offset, max_scroll))
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.handle_mouse_click(event.pos)
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
@@ -4656,9 +4837,21 @@ class GameEngine:
         if self.active_minigame:
             if hasattr(self, 'minigame_button_rect') and self.minigame_button_rect:
                 if self.minigame_button_rect.collidepoint(mouse_pos):
-                    # Handle smithing hammer button
+                    # Handle minigame-specific buttons
                     if self.minigame_type == 'smithing':
                         self.active_minigame.handle_hammer()
+                    elif self.minigame_type == 'alchemy':
+                        # Chain button (minigame_button_rect is chain button)
+                        self.active_minigame.chain_ingredient()
+                    elif self.minigame_type == 'engineering':
+                        # Complete puzzle button
+                        self.active_minigame.complete_puzzle()
+                    return
+            # Check secondary button (alchemy stabilize)
+            if hasattr(self, 'minigame_button_rect2') and self.minigame_button_rect2:
+                if self.minigame_button_rect2.collidepoint(mouse_pos):
+                    if self.minigame_type == 'alchemy':
+                        self.active_minigame.stabilize()
                     return
             # Consume all clicks when minigame is active (don't interact with world)
             return
@@ -4801,6 +4994,7 @@ class GameEngine:
             self.active_station_tier = station.tier  # Capture tier for placement UI
             self.user_placement = {}  # Clear any previous placement
             self.selected_recipe = None  # Clear selected recipe
+            self.recipe_scroll_offset = 0  # Reset recipe list scroll
             return
 
         resource = self.world.get_resource_at(world_pos)
@@ -5648,11 +5842,10 @@ class GameEngine:
         elif error_msg:  # Valid with message
             print(f"✓ Placement validated: {error_msg}")
 
-        # Handle enchanting recipes differently
+        # Handle enchanting recipes differently (apply to existing items)
         if recipe.is_enchantment:
-            print("⚠ Enchantment recipe - using special handler")
-            # TODO: Implement enchantment UI selection
-            self.add_notification("Enchantment crafting not yet implemented", (255, 100, 100))
+            print("⚠ Enchantment recipe - opening item selection UI")
+            self._open_enchantment_selection(recipe)
             return
 
         # Choose crafting method
@@ -5830,6 +6023,36 @@ class GameEngine:
         self.add_notification(f"Applied {recipe.enchantment_name} to {equipment.name}!", (100, 255, 255))
         self._close_enchantment_selection()
 
+    def _open_enchantment_selection(self, recipe: Recipe):
+        """Open the item selection UI for applying enchantment"""
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Get all equipment from inventory and equipped slots
+        compatible_items = []
+
+        # From inventory
+        for slot_idx, stack in enumerate(self.character.inventory.slots):
+            if stack and equip_db.is_equipment(stack.item_id):
+                equipment = equip_db.create_equipment_from_id(stack.item_id)
+                if equipment:
+                    compatible_items.append(('inventory', slot_idx, stack, equipment))
+
+        # From equipped slots
+        for slot_name, equipped_item in self.character.equipment.items():
+            if equipped_item:
+                compatible_items.append(('equipped', slot_name, None, equipped_item))
+
+        if not compatible_items:
+            self.add_notification("No equipment to enchant!", (255, 100, 100))
+            print("❌ No compatible items found for enchantment")
+            return
+
+        # Open the selection UI
+        self.enchantment_selection_active = True
+        self.enchantment_recipe = recipe
+        self.enchantment_compatible_items = compatible_items
+        print(f"✨ Opened enchantment selection UI ({len(compatible_items)} compatible items)")
+
     def _close_enchantment_selection(self):
         """Close the enchantment selection UI"""
         self.enchantment_selection_active = False
@@ -5914,6 +6137,8 @@ class GameEngine:
             self.class_buttons = []
 
             if self.character.crafting_ui_open:
+                # Pass scroll offset via temporary attribute (renderer doesn't have direct access to game state)
+                self.renderer._temp_scroll_offset = self.recipe_scroll_offset
                 result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe, self.user_placement)
                 if result:
                     self.crafting_window_rect, self.crafting_recipes, self.placement_grid_rects = result
@@ -5981,7 +6206,7 @@ class GameEngine:
 
         recipe = self.minigame_recipe
         result = self.active_minigame.result
-        crafter = self._get_crafter(self.minigame_type)
+        crafter = self.get_crafter_for_station(self.minigame_type)
 
         recipe_db = RecipeDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
@@ -6060,8 +6285,10 @@ class GameEngine:
         surf.fill((20, 20, 30, 250))
 
         # Header
-        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "SMITHING MINIGAME", (255, 215, 0))
-        self.renderer.small_font.render_to(surf, (20, 50), "[SPACE] Fan Flames | [CLICK HAMMER BUTTON] Strike", (180, 180, 180))
+        _temp_surf = self.renderer.font.render("SMITHING MINIGAME", True, (255, 215, 0))
+        surf.blit(_temp_surf, (ww//2 - 100, 20))
+        _temp_surf = self.renderer.small_font.render("[SPACE] Fan Flames | [CLICK HAMMER BUTTON] Strike", True, (180, 180, 180))
+        surf.blit(_temp_surf, (20, 50))
 
         # Temperature bar
         temp_x, temp_y = 50, 100
@@ -6085,7 +6312,8 @@ class GameEngine:
         pygame.draw.rect(surf, temp_color, (temp_x, temp_y, temp_fill, temp_height))
 
         pygame.draw.rect(surf, (200, 200, 200), (temp_x, temp_y, temp_width, temp_height), 2)
-        self.renderer.small_font.render_to(surf, (temp_x, temp_y - 25), f"Temperature: {int(state['temperature'])}°C", (255, 255, 255))
+        _temp_surf = self.renderer.small_font.render(f"Temperature: {int(state['temperature'])}°C", True, (255, 255, 255))
+        surf.blit(_temp_surf, (temp_x, temp_y - 25))
 
         # Hammer bar
         hammer_x, hammer_y = 50, 200
@@ -6109,7 +6337,8 @@ class GameEngine:
         pygame.draw.circle(surf, (255, 215, 0), (hammer_x + hammer_pos, hammer_y + hammer_height // 2), 15)
 
         pygame.draw.rect(surf, (200, 200, 200), (hammer_x, hammer_y, hammer_width, hammer_height), 2)
-        self.renderer.small_font.render_to(surf, (hammer_x, hammer_y - 25), f"Hammer Timing: {state['hammer_hits']}/{state['required_hits']}", (255, 255, 255))
+        _temp_surf = self.renderer.small_font.render(f"Hammer Timing: {state['hammer_hits']}/{state['required_hits']}", True, (255, 255, 255))
+        surf.blit(_temp_surf, (hammer_x, hammer_y - 25))
 
         # Hammer button
         btn_w, btn_h = 200, 60
@@ -6117,16 +6346,20 @@ class GameEngine:
         btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
         pygame.draw.rect(surf, (80, 60, 20), btn_rect)
         pygame.draw.rect(surf, (255, 215, 0), btn_rect, 3)
-        self.renderer.font.render_to(surf, (btn_x + 40, btn_y + 15), "HAMMER", (255, 215, 0))
+        _temp_surf = self.renderer.font.render("HAMMER", True, (255, 215, 0))
+        surf.blit(_temp_surf, (btn_x + 40, btn_y + 15))
 
         # Timer and scores
-        self.renderer.font.render_to(surf, (50, 400), f"Time Left: {int(state['time_left'])}s", (255, 255, 255))
+        _temp_surf = self.renderer.font.render(f"Time Left: {int(state['time_left'])}s", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 400))
 
         if state['hammer_scores']:
-            self.renderer.small_font.render_to(surf, (50, 450), "Hammer Scores:", (200, 200, 200))
+            _temp_surf = self.renderer.small_font.render("Hammer Scores:", True, (200, 200, 200))
+            surf.blit(_temp_surf, (50, 450))
             for i, score in enumerate(state['hammer_scores'][-5:]):  # Last 5 scores
                 color = (100, 255, 100) if score >= 90 else (255, 215, 0) if score >= 70 else (255, 100, 100)
-                self.renderer.small_font.render_to(surf, (70, 480 + i * 25), f"Hit {i+1}: {score}", color)
+                _temp_surf = self.renderer.small_font.render(f"Hit {i+1}: {score}", True, color)
+                surf.blit(_temp_surf, (70, 480 + i * 25))
 
         # Result (if completed)
         if state['result']:
@@ -6134,13 +6367,19 @@ class GameEngine:
             result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
             result_surf.fill((10, 10, 20, 240))
             if result['success']:
-                self.renderer.font.render_to(result_surf, (200, 50), "SUCCESS!", (100, 255, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 120), f"Score: {int(result['score'])}", (255, 255, 255))
-                self.renderer.small_font.render_to(result_surf, (150, 150), f"Bonus: +{result['bonus']}%", (255, 215, 0))
-                self.renderer.small_font.render_to(result_surf, (150, 200), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render("SUCCESS!", True, (100, 255, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(f"Score: {int(result['score'])}", True, (255, 255, 255))
+                result_surf.blit(_temp_surf, (150, 120))
+                _temp_surf = self.renderer.small_font.render(f"Bonus: +{result['bonus']}%", True, (255, 215, 0))
+                result_surf.blit(_temp_surf, (150, 150))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 200))
             else:
-                self.renderer.font.render_to(result_surf, (200, 50), "FAILED!", (255, 100, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 120), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render("FAILED!", True, (255, 100, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 120))
 
             surf.blit(result_surf, (200, 200))
 
@@ -6162,8 +6401,10 @@ class GameEngine:
         surf.fill((20, 20, 30, 250))
 
         # Header
-        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "ALCHEMY MINIGAME", (60, 180, 60))
-        self.renderer.small_font.render_to(surf, (20, 50), "[C] Chain Ingredient | [S] Stabilize & Complete", (180, 180, 180))
+        _temp_surf = self.renderer.font.render("ALCHEMY MINIGAME", True, (60, 180, 60))
+        surf.blit(_temp_surf, (ww//2 - 100, 20))
+        _temp_surf = self.renderer.small_font.render("[C] Chain Ingredient | [S] Stabilize & Complete", True, (180, 180, 180))
+        surf.blit(_temp_surf, (20, 50))
 
         # Progress bar
         progress = state['total_progress']
@@ -6173,7 +6414,8 @@ class GameEngine:
         pygame.draw.rect(surf, (40, 40, 40), (prog_x, prog_y, prog_width, prog_height))
         pygame.draw.rect(surf, (60, 180, 60), (prog_x, prog_y, int(progress * prog_width), prog_height))
         pygame.draw.rect(surf, (200, 200, 200), (prog_x, prog_y, prog_width, prog_height), 2)
-        self.renderer.small_font.render_to(surf, (prog_x, prog_y - 25), f"Total Progress: {int(progress * 100)}%", (255, 255, 255))
+        _temp_surf = self.renderer.small_font.render(f"Total Progress: {int(progress * 100)}%", True, (255, 255, 255))
+        surf.blit(_temp_surf, (prog_x, prog_y - 25))
 
         # Current reaction visualization
         if state['current_reaction']:
@@ -6192,11 +6434,14 @@ class GameEngine:
             stage_name = stage_names[stage_idx] if 0 <= stage_idx < len(stage_names) else "Unknown"
             stage_color = (255, 215, 0) if reaction['stage'] == 3 else (255, 100, 100) if reaction['stage'] >= 5 else (200, 200, 200)
 
-            self.renderer.font.render_to(surf, (rx, ry + 220), f"Stage: {stage_name}", stage_color)
-            self.renderer.small_font.render_to(surf, (rx, ry + 250), f"Quality: {int(reaction['quality'] * 100)}%", (200, 200, 200))
+            _temp_surf = self.renderer.font.render(f"Stage: {stage_name}", True, stage_color)
+            surf.blit(_temp_surf, (rx, ry + 220))
+            _temp_surf = self.renderer.small_font.render(f"Quality: {int(reaction['quality'] * 100)}%", True, (200, 200, 200))
+            surf.blit(_temp_surf, (rx, ry + 250))
 
         # Ingredient progress
-        self.renderer.small_font.render_to(surf, (50, 450), f"Ingredient: {state['current_ingredient_index'] + 1}/{state['total_ingredients']}", (255, 255, 255))
+        _temp_surf = self.renderer.small_font.render(f"Ingredient: {state['current_ingredient_index'] + 1}/{state['total_ingredients']}", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 450))
 
         # Buttons
         btn_w, btn_h = 150, 50
@@ -6205,14 +6450,17 @@ class GameEngine:
 
         pygame.draw.rect(surf, (60, 80, 20), chain_btn)
         pygame.draw.rect(surf, (255, 215, 0), chain_btn, 2)
-        self.renderer.small_font.render_to(surf, (chain_btn.x + 30, chain_btn.y + 15), "CHAIN [C]", (255, 215, 0))
+        _temp_surf = self.renderer.small_font.render("CHAIN [C]", True, (255, 215, 0))
+        surf.blit(_temp_surf, (chain_btn.x + 30, chain_btn.y + 15))
 
         pygame.draw.rect(surf, (20, 60, 80), stabilize_btn)
         pygame.draw.rect(surf, (100, 200, 255), stabilize_btn, 2)
-        self.renderer.small_font.render_to(surf, (stabilize_btn.x + 15, stabilize_btn.y + 15), "STABILIZE [S]", (100, 200, 255))
+        _temp_surf = self.renderer.small_font.render("STABILIZE [S]", True, (100, 200, 255))
+        surf.blit(_temp_surf, (stabilize_btn.x + 15, stabilize_btn.y + 15))
 
         # Timer
-        self.renderer.font.render_to(surf, (50, 620), f"Time: {int(state['time_left'])}s", (255, 255, 255))
+        _temp_surf = self.renderer.font.render(f"Time: {int(state['time_left'])}s", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 620))
 
         # Result
         if state['result']:
@@ -6220,12 +6468,17 @@ class GameEngine:
             result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
             result_surf.fill((10, 10, 20, 240))
             if result['success']:
-                self.renderer.font.render_to(result_surf, (200, 50), result['quality'], (100, 255, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 120), f"Progress: {int(result['progress'] * 100)}%", (255, 255, 255))
-                self.renderer.small_font.render_to(result_surf, (150, 150), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render(result['quality'], True, (100, 255, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(f"Progress: {int(result['progress'] * 100)}%", True, (255, 255, 255))
+                result_surf.blit(_temp_surf, (150, 120))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 150))
             else:
-                self.renderer.font.render_to(result_surf, (200, 50), "FAILED!", (255, 100, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 120), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render("FAILED!", True, (255, 100, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 120))
 
             surf.blit(result_surf, (200, 200))
 
@@ -6245,13 +6498,18 @@ class GameEngine:
         surf.fill((20, 20, 30, 250))
 
         # Header
-        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "REFINING MINIGAME", (180, 120, 60))
-        self.renderer.small_font.render_to(surf, (20, 50), "[SPACE] Align Cylinder", (180, 180, 180))
+        _temp_surf = self.renderer.font.render("REFINING MINIGAME", True, (180, 120, 60))
+        surf.blit(_temp_surf, (ww//2 - 100, 20))
+        _temp_surf = self.renderer.small_font.render("[SPACE] Align Cylinder", True, (180, 180, 180))
+        surf.blit(_temp_surf, (20, 50))
 
         # Progress
-        self.renderer.font.render_to(surf, (50, 100), f"Cylinders: {state['aligned_count']}/{state['total_cylinders']}", (255, 255, 255))
-        self.renderer.font.render_to(surf, (50, 140), f"Failures: {state['failed_attempts']}/{state['allowed_failures']}", (255, 100, 100))
-        self.renderer.font.render_to(surf, (50, 180), f"Time: {int(state['time_left'])}s", (255, 255, 255))
+        _temp_surf = self.renderer.font.render(f"Cylinders: {state['aligned_count']}/{state['total_cylinders']}", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 100))
+        _temp_surf = self.renderer.font.render(f"Failures: {state['failed_attempts']}/{state['allowed_failures']}", True, (255, 100, 100))
+        surf.blit(_temp_surf, (50, 140))
+        _temp_surf = self.renderer.font.render(f"Time: {int(state['time_left'])}s", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 180))
 
         # Current cylinder visualization
         if state['current_cylinder'] < len(state['cylinders']):
@@ -6273,7 +6531,8 @@ class GameEngine:
             pygame.draw.circle(surf, (100, 255, 100), (cx, cy - radius), 20, 3)
 
         # Instructions
-        self.renderer.small_font.render_to(surf, (ww//2 - 150, 450), "Press SPACE when indicator is at the top!", (200, 200, 200))
+        _temp_surf = self.renderer.small_font.render("Press SPACE when indicator is at the top!", True, (200, 200, 200))
+        surf.blit(_temp_surf, (ww//2 - 150, 450))
 
         # Result
         if state['result']:
@@ -6281,11 +6540,15 @@ class GameEngine:
             result_surf = pygame.Surface((600, 200), pygame.SRCALPHA)
             result_surf.fill((10, 10, 20, 240))
             if result['success']:
-                self.renderer.font.render_to(result_surf, (200, 50), "SUCCESS!", (100, 255, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 100), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render("SUCCESS!", True, (100, 255, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 100))
             else:
-                self.renderer.font.render_to(result_surf, (200, 50), "FAILED!", (255, 100, 100))
-                self.renderer.small_font.render_to(result_surf, (150, 100), result['message'], (200, 200, 200))
+                _temp_surf = self.renderer.font.render("FAILED!", True, (255, 100, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 100))
 
             surf.blit(result_surf, (200, 250))
 
@@ -6304,17 +6567,22 @@ class GameEngine:
         surf.fill((20, 20, 30, 250))
 
         # Header
-        self.renderer.font.render_to(surf, (ww//2 - 120, 20), "ENGINEERING MINIGAME", (60, 120, 180))
-        self.renderer.small_font.render_to(surf, (20, 50), "Solve puzzles to complete device", (180, 180, 180))
+        _temp_surf = self.renderer.font.render("ENGINEERING MINIGAME", True, (60, 120, 180))
+        surf.blit(_temp_surf, (ww//2 - 120, 20))
+        _temp_surf = self.renderer.small_font.render("Solve puzzles to complete device", True, (180, 180, 180))
+        surf.blit(_temp_surf, (20, 50))
 
         # Progress
-        self.renderer.font.render_to(surf, (50, 100), f"Puzzle: {state['current_puzzle_index'] + 1}/{state['total_puzzles']}", (255, 255, 255))
-        self.renderer.font.render_to(surf, (50, 140), f"Solved: {state['solved_count']}", (100, 255, 100))
+        _temp_surf = self.renderer.font.render(f"Puzzle: {state['current_puzzle_index'] + 1}/{state['total_puzzles']}", True, (255, 255, 255))
+        surf.blit(_temp_surf, (50, 100))
+        _temp_surf = self.renderer.font.render(f"Solved: {state['solved_count']}", True, (100, 255, 100))
+        surf.blit(_temp_surf, (50, 140))
 
         # Puzzle-specific rendering
         if state['current_puzzle']:
             puzzle = state['current_puzzle']
-            self.renderer.font.render_to(surf, (50, 200), "Current Puzzle: Click to interact", (200, 200, 200))
+            _temp_surf = self.renderer.font.render("Current Puzzle: Click to interact", True, (200, 200, 200))
+            surf.blit(_temp_surf, (50, 200))
 
             # Simple visualization (placeholder for actual puzzle rendering)
             puzzle_rect = pygame.Rect(200, 250, 600, 300)
@@ -6322,11 +6590,11 @@ class GameEngine:
             pygame.draw.rect(surf, (100, 100, 100), puzzle_rect, 2)
 
             if puzzle.get('grid_size'):
-                self.renderer.small_font.render_to(surf, (puzzle_rect.x + 20, puzzle_rect.y + 20),
-                                                   f"Rotation Puzzle ({puzzle['grid_size']}x{puzzle['grid_size']})", (200, 200, 200))
+                _temp_surf = self.renderer.small_font.render(f"Rotation Puzzle ({puzzle['grid_size']}x{puzzle['grid_size']})", True, (200, 200, 200))
+                surf.blit(_temp_surf, (puzzle_rect.x + 20, puzzle_rect.y + 20))
             elif puzzle.get('placeholder'):
-                self.renderer.small_font.render_to(surf, (puzzle_rect.x + 20, puzzle_rect.y + 20),
-                                                   "Puzzle placeholder - Click COMPLETE", (200, 200, 200))
+                _temp_surf = self.renderer.small_font.render("Puzzle placeholder - Click COMPLETE", True, (200, 200, 200))
+                surf.blit(_temp_surf, (puzzle_rect.x + 20, puzzle_rect.y + 20))
 
         # Complete button (for testing)
         btn_w, btn_h = 200, 50
@@ -6334,15 +6602,18 @@ class GameEngine:
         complete_btn = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
         pygame.draw.rect(surf, (60, 100, 60), complete_btn)
         pygame.draw.rect(surf, (100, 200, 100), complete_btn, 2)
-        self.renderer.small_font.render_to(surf, (btn_x + 40, btn_y + 15), "COMPLETE PUZZLE", (200, 200, 200))
+        _temp_surf = self.renderer.small_font.render("COMPLETE PUZZLE", True, (200, 200, 200))
+        surf.blit(_temp_surf, (btn_x + 40, btn_y + 15))
 
         # Result
         if state['result']:
             result = state['result']
             result_surf = pygame.Surface((600, 200), pygame.SRCALPHA)
             result_surf.fill((10, 10, 20, 240))
-            self.renderer.font.render_to(result_surf, (200, 50), "DEVICE CREATED!", (100, 255, 100))
-            self.renderer.small_font.render_to(result_surf, (150, 100), result['message'], (200, 200, 200))
+            _temp_surf = self.renderer.font.render("DEVICE CREATED!", True, (100, 255, 100))
+            result_surf.blit(_temp_surf, (200, 50))
+            _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
+            result_surf.blit(_temp_surf, (150, 100))
             surf.blit(result_surf, (200, 250))
 
         self.screen.blit(surf, (wx, wy))
@@ -6357,8 +6628,10 @@ class GameEngine:
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 250))
 
-        self.renderer.font.render_to(surf, (ww//2 - 100, 20), "ENCHANTING", (180, 60, 180))
-        self.renderer.small_font.render_to(surf, (50, 100), "Enchanting uses basic crafting (no minigame)", (200, 200, 200))
+        _temp_surf = self.renderer.font.render("ENCHANTING", True, (180, 60, 180))
+        surf.blit(_temp_surf, (ww//2 - 100, 20))
+        _temp_surf = self.renderer.small_font.render("Enchanting uses basic crafting (no minigame)", True, (200, 200, 200))
+        surf.blit(_temp_surf, (50, 100))
 
         self.screen.blit(surf, (wx, wy))
         self.minigame_button_rect = None

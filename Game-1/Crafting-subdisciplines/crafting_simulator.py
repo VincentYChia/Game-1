@@ -1511,6 +1511,7 @@ class CraftingSimulator:
                 pygame.draw.rect(self.screen, LIGHT_GRAY, (x, y, cell_size - 1, cell_size - 1), 1)
 
         # Draw materials - placement format is "row,col" (1-indexed)
+        # NOTE: Due to grid designer orientation, we swap row/col for screen mapping
         for coord_str, material_id in placement_map.items():
             if coord_str != 'metadata' and ',' in coord_str:
                 try:
@@ -1519,8 +1520,9 @@ class CraftingSimulator:
                     col -= 1
 
                     if 0 <= row < grid_size and 0 <= col < grid_size:
-                        x = grid_start_x + col * cell_size
-                        y = grid_start_y + row * cell_size
+                        # Swap row and col to fix 90-degree rotation issue
+                        x = grid_start_x + row * cell_size
+                        y = grid_start_y + col * cell_size
 
                         # Draw material cell
                         mat_color = MATERIAL_COLORS.get(material_id, CYAN)
@@ -1805,28 +1807,49 @@ class CraftingSimulator:
 
         # Draw vertices from placement (on top of lines)
         vertices = placement.get('vertices', {})
+        vertex_count = 0
         for coord_str, vertex_data in vertices.items():
             if ',' in coord_str:
-                gx, gy = map(int, coord_str.split(','))
-                # Convert centered coordinates to screen position
-                screen_x = grid_x + (gx + half) * cell_size + cell_size // 2
-                screen_y = grid_y + (half - gy) * cell_size + cell_size // 2
+                try:
+                    gx, gy = map(int, coord_str.split(','))
+                    # Convert centered coordinates to screen position
+                    screen_x = grid_x + (gx + half) * cell_size + cell_size // 2
+                    screen_y = grid_y + (half - gy) * cell_size + cell_size // 2
 
-                # Draw material dot
-                material_id = vertex_data.get('materialId')
-                is_key = vertex_data.get('isKey', False)
-                color = RED if is_key else CYAN
-                pygame.draw.circle(self.screen, color, (screen_x, screen_y), 6)
-                pygame.draw.circle(self.screen, BLACK, (screen_x, screen_y), 6, 1)
+                    # Draw material dot - larger and more visible
+                    material_id = vertex_data.get('materialId')
+                    is_key = vertex_data.get('isKey', False)
 
-                # Draw material label
-                if material_id:
-                    mat_label = material_id[:4].upper()
-                    label_text = self.small_font.render(mat_label, True, WHITE)
-                    self.screen.blit(label_text, (screen_x - 12, screen_y - 25))
+                    # Get material color from MATERIAL_COLORS or use default
+                    if material_id:
+                        mat_color = MATERIAL_COLORS.get(material_id, CYAN if not is_key else RED)
+                    else:
+                        mat_color = RED if is_key else CYAN
 
-        # Grid title
-        grid_title = self.font.render(f"Pattern ({grid_type})", True, CYAN)
+                    # Draw outer circle (larger)
+                    pygame.draw.circle(self.screen, mat_color, (screen_x, screen_y), 10)
+                    pygame.draw.circle(self.screen, WHITE, (screen_x, screen_y), 10, 2)
+
+                    # Draw inner dot if it's a key vertex
+                    if is_key:
+                        pygame.draw.circle(self.screen, YELLOW, (screen_x, screen_y), 4)
+
+                    # Draw material label with background for better visibility
+                    if material_id:
+                        mat_label = material_id[:4].upper()
+                        label_text = self.small_font.render(mat_label, True, WHITE)
+                        label_bg = self.small_font.render(mat_label, True, BLACK)
+                        # Draw black shadow for better visibility
+                        self.screen.blit(label_bg, (screen_x - 11, screen_y - 24))
+                        self.screen.blit(label_bg, (screen_x - 13, screen_y - 26))
+                        self.screen.blit(label_text, (screen_x - 12, screen_y - 25))
+
+                    vertex_count += 1
+                except (ValueError, IndexError) as e:
+                    print(f"[Enchanting] Invalid coordinate {coord_str}: {e}")
+
+        # Grid title with vertex count for debugging
+        grid_title = self.font.render(f"Pattern ({grid_type}) - {vertex_count} vertices", True, CYAN)
         self.screen.blit(grid_title, (grid_x, grid_y - 30))
 
     def draw_enchantable_items(self, recipe):
