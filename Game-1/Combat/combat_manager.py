@@ -428,6 +428,9 @@ class CombatManager:
         self.character.take_damage(final_damage)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
+        # Reset health regen timer (damage taken)
+        self.character.time_since_last_damage_taken = 0.0
+
         # Update combat state
         self.player_last_combat_time = 0.0
         self.player_in_combat = True
