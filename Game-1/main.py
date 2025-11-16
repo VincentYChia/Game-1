@@ -2195,6 +2195,70 @@ class SkillManager:
             if skill.current_cooldown > 0:
                 skill.current_cooldown = max(0, skill.current_cooldown - dt)
 
+    def use_skill(self, slot: int, character) -> tuple[bool, str]:
+        """Use a skill from hotbar slot (0-4). Returns (success, message)"""
+        if not (0 <= slot < 6):
+            return False, "Invalid slot"
+
+        skill_id = self.equipped_skills[slot]
+        if not skill_id:
+            return False, "No skill in slot"
+
+        player_skill = self.known_skills.get(skill_id)
+        if not player_skill:
+            return False, "Skill not learned"
+
+        skill_def = player_skill.get_definition()
+        if not skill_def:
+            return False, "Skill definition not found"
+
+        # Check cooldown
+        if player_skill.current_cooldown > 0:
+            return False, f"On cooldown ({player_skill.current_cooldown:.1f}s)"
+
+        # Check mana cost
+        skill_db = SkillDatabase.get_instance()
+        mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+        if character.mana < mana_cost:
+            return False, f"Not enough mana ({mana_cost} required)"
+
+        # Consume mana
+        character.mana -= mana_cost
+
+        # Start cooldown
+        cooldown_duration = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
+        player_skill.current_cooldown = cooldown_duration
+
+        # Apply skill effect (basic implementation)
+        self._apply_skill_effect(skill_def, character)
+
+        return True, f"Used {skill_def.name}!"
+
+    def _apply_skill_effect(self, skill_def, character):
+        """Apply the skill's effect (simplified implementation)"""
+        effect = skill_def.effect
+
+        # For now, just print what the skill would do
+        # In a full implementation, this would modify stats, apply buffs, etc.
+        print(f"⚡ {skill_def.name}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
+
+        # Example implementations for common effects:
+        if effect.effect_type == "restore" and effect.category == "defense":
+            # Healing skill
+            if effect.magnitude == "moderate":
+                heal_amount = 50
+            elif effect.magnitude == "major":
+                heal_amount = 100
+            elif effect.magnitude == "extreme":
+                heal_amount = 200
+            else:
+                heal_amount = 25
+
+            character.health = min(character.max_health, character.health + heal_amount)
+            print(f"   Restored {heal_amount} HP")
+
+        # Add more effect implementations as needed
+
 
 class SkillDatabase:
     _instance = None
@@ -3716,9 +3780,11 @@ class Renderer:
             "WASD - Move",
             "CLICK - Harvest/Interact",
             "TAB - Switch tool",
+            "1-5 - Use skills",
             "C - Stats",
             "E - Equipment",
             "F1 - Debug Mode",
+            "F2/F3/F4 - Debug Skills/Titles/Stats",
             "ESC - Close/Quit"
         ]
         for ctrl in controls:
@@ -3742,6 +3808,69 @@ class Renderer:
         pygame.draw.rect(self.screen, Config.COLOR_TEXT, (x, y, w, h), 2)
         text = self.small_font.render(f"MP: {int(char.mana)}/{int(char.max_mana)}", True, Config.COLOR_TEXT)
         self.screen.blit(text, text.get_rect(center=(x + w // 2, y + h // 2)))
+
+    def render_skill_hotbar(self, character: Character):
+        """Render skill hotbar at bottom center of screen"""
+        slot_size = 60
+        slot_spacing = 10
+        num_slots = 5
+        total_width = num_slots * slot_size + (num_slots - 1) * slot_spacing
+
+        # Position at bottom center
+        start_x = (Config.VIEWPORT_WIDTH - total_width) // 2
+        start_y = Config.VIEWPORT_HEIGHT - slot_size - 20
+
+        skill_db = SkillDatabase.get_instance()
+
+        for i in range(num_slots):
+            x = start_x + i * (slot_size + slot_spacing)
+            y = start_y
+
+            # Slot background
+            slot_rect = pygame.Rect(x, y, slot_size, slot_size)
+            pygame.draw.rect(self.screen, (30, 30, 40), slot_rect)
+            pygame.draw.rect(self.screen, (100, 100, 120), slot_rect, 2)
+
+            # Key number
+            key_text = self.small_font.render(str(i + 1), True, (150, 150, 150))
+            self.screen.blit(key_text, (x + 4, y + 4))
+
+            # Get equipped skill in this slot
+            skill_id = character.skills.equipped_skills[i]
+            if skill_id:
+                player_skill = character.skills.known_skills.get(skill_id)
+                if player_skill:
+                    skill_def = player_skill.get_definition()
+                    if skill_def:
+                        # Skill name (abbreviated)
+                        name_parts = skill_def.name.split()
+                        short_name = "".join(p[0] for p in name_parts[:2])  # First letters
+                        name_surf = self.font.render(short_name, True, (200, 200, 255))
+                        name_rect = name_surf.get_rect(center=(x + slot_size // 2, y + slot_size // 2 - 5))
+                        self.screen.blit(name_surf, name_rect)
+
+                        # Cooldown overlay
+                        if player_skill.current_cooldown > 0:
+                            # Dark overlay
+                            overlay = pygame.Surface((slot_size, slot_size), pygame.SRCALPHA)
+                            overlay.fill((0, 0, 0, 180))
+                            self.screen.blit(overlay, (x, y))
+
+                            # Cooldown timer
+                            cd_text = self.small_font.render(f"{player_skill.current_cooldown:.1f}s", True, (255, 100, 100))
+                            cd_rect = cd_text.get_rect(center=(x + slot_size // 2, y + slot_size // 2))
+                            self.screen.blit(cd_text, cd_rect)
+                        else:
+                            # Mana cost
+                            mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+                            cost_color = (100, 200, 255) if character.mana >= mana_cost else (255, 100, 100)
+                            cost_text = self.tiny_font.render(f"{mana_cost}MP", True, cost_color)
+                            self.screen.blit(cost_text, (x + 4, y + slot_size - 14))
+            else:
+                # Empty slot
+                empty_text = self.tiny_font.render("Empty", True, (80, 80, 80))
+                empty_rect = empty_text.get_rect(center=(x + slot_size // 2, y + slot_size // 2))
+                self.screen.blit(empty_text, empty_rect)
 
     def render_notifications(self, notifications: List[Notification]):
         y = 50
@@ -4132,8 +4261,8 @@ class Renderer:
             for rect, grid_pos in placement_grid_rects:
                 abs_rect = rect.move(wx, wy)  # Offset by window position
                 grid_rects_absolute.append((abs_rect, grid_pos))
-        # Return visible recipes (affected by scroll offset)
-        return_recipes = visible_recipes if recipes else []
+        # Return full recipe list (not just visible) so scroll calculation works
+        return_recipes = recipes if recipes else []
         return pygame.Rect(wx, wy, ww, wh), return_recipes, grid_rects_absolute
 
     def render_equipment_ui(self, character: Character, mouse_pos: Tuple[int, int]):
@@ -4928,6 +5057,38 @@ class GameEngine:
                     self.character.toggle_stats_ui()
                 elif event.key == pygame.K_e:
                     self.character.toggle_equipment_ui()
+
+                # Skill hotbar (keys 1-5)
+                elif event.key == pygame.K_1:
+                    success, msg = self.character.skills.use_skill(0, self.character)
+                    if success:
+                        self.add_notification(msg, (150, 255, 150))
+                    else:
+                        self.add_notification(msg, (255, 150, 150))
+                elif event.key == pygame.K_2:
+                    success, msg = self.character.skills.use_skill(1, self.character)
+                    if success:
+                        self.add_notification(msg, (150, 255, 150))
+                    else:
+                        self.add_notification(msg, (255, 150, 150))
+                elif event.key == pygame.K_3:
+                    success, msg = self.character.skills.use_skill(2, self.character)
+                    if success:
+                        self.add_notification(msg, (150, 255, 150))
+                    else:
+                        self.add_notification(msg, (255, 150, 150))
+                elif event.key == pygame.K_4:
+                    success, msg = self.character.skills.use_skill(3, self.character)
+                    if success:
+                        self.add_notification(msg, (150, 255, 150))
+                    else:
+                        self.add_notification(msg, (255, 150, 150))
+                elif event.key == pygame.K_5:
+                    success, msg = self.character.skills.use_skill(4, self.character)
+                    if success:
+                        self.add_notification(msg, (150, 255, 150))
+                    else:
+                        self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_F1:
                     Config.DEBUG_INFINITE_RESOURCES = not Config.DEBUG_INFINITE_RESOURCES
                     status = "ENABLED" if Config.DEBUG_INFINITE_RESOURCES else "DISABLED"
@@ -6234,7 +6395,7 @@ class GameEngine:
         # From inventory
         for slot_idx, stack in enumerate(self.character.inventory.slots):
             if stack and equip_db.is_equipment(stack.item_id):
-                equipment = equip_db.create_equipment_from_id(stack.item_id)
+                equipment = stack.get_equipment()  # Use actual equipment instance from stack
                 if equipment:
                     compatible_items.append(('inventory', slot_idx, stack, equipment))
 
@@ -6329,6 +6490,9 @@ class GameEngine:
         self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
         self.renderer.render_ui(self.character, self.mouse_pos)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
+
+        # Render skill hotbar at bottom center (over viewport)
+        self.renderer.render_skill_hotbar(self.character)
 
         self.renderer.render_notifications(self.notifications)
 
