@@ -4662,6 +4662,7 @@ class GameEngine:
         self.enchantment_recipe = None
         self.enchantment_compatible_items = []
         self.enchantment_selection_rect = None
+        self.enchantment_item_rects = None  # Item rects for click detection
 
         # Minigame state
         self.active_minigame = None  # Current minigame instance (SmithingMinigame, etc.)
