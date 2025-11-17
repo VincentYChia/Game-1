@@ -411,29 +411,57 @@ class EquipmentItem:
         # This is allowed and expected behavior (e.g., Sharpness III overwrites Sharpness I)
         return True, "OK"
 
-    def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict):
-        """Apply an enchantment effect to this item, removing any conflicting enchantments first"""
-        # Remove any conflicting enchantments before applying the new one
+    def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict) -> Tuple[bool, str]:
+        """
+        Apply an enchantment effect to this item with comprehensive rules
+
+        Rules:
+        1. No duplicate enchantments (exact same enchantment_id)
+        2. Higher tier enchantments dominate (sharpness_3 can't be overridden by sharpness_2)
+        3. Same-family enchantments replace each other (sharpness_3 replaces sharpness_1)
+        4. Conflicting enchantments are removed before applying
+
+        Returns: (success: bool, message: str)
+        """
+        # Check for exact duplicate
+        if any(ench.get('enchantment_id') == enchantment_id for ench in self.enchantments):
+            return False, "This enchantment is already applied"
+
+        # Extract enchantment family and tier
+        def get_enchantment_info(ench_id: str) -> Tuple[str, int]:
+            """Extract family name and tier from enchantment_id (e.g., 'sharpness_3' → ('sharpness', 3))"""
+            parts = ench_id.rsplit('_', 1)
+            if len(parts) == 2 and parts[1].isdigit():
+                return parts[0], int(parts[1])
+            return ench_id, 1  # No tier suffix, assume tier 1
+
+        new_family, new_tier = get_enchantment_info(enchantment_id)
+
+        # Check if a higher tier of the same family already exists
+        for existing_ench in self.enchantments:
+            existing_id = existing_ench.get('enchantment_id', '')
+            existing_family, existing_tier = get_enchantment_info(existing_id)
+
+            if existing_family == new_family and existing_tier > new_tier:
+                return False, f"Cannot apply {enchantment_name} - {existing_ench.get('name')} (higher tier) is already applied"
+
+        # Remove conflicting enchantments (including lower tiers of same family)
         conflicts_with = effect.get('conflictsWith', [])
 
-        # Filter out enchantments that conflict with the new one
         self.enchantments = [
             ench for ench in self.enchantments
             if ench.get('enchantment_id', '') not in conflicts_with
+            and enchantment_id not in ench.get('effect', {}).get('conflictsWith', [])
         ]
 
-        # Also remove enchantments that list the new enchantment in their conflicts
-        self.enchantments = [
-            ench for ench in self.enchantments
-            if enchantment_id not in ench.get('effect', {}).get('conflictsWith', [])
-        ]
-
-        # Now apply the new enchantment
+        # Apply the new enchantment
         self.enchantments.append({
             'enchantment_id': enchantment_id,
             'name': enchantment_name,
             'effect': effect
         })
+
+        return True, "OK"
 
     def _get_item_type(self) -> str:
         """Determine the item type for enchantment compatibility"""
@@ -646,9 +674,13 @@ class EquipmentDatabase:
         # Old stats format (for placeholder items)
         stats = data.get('stats', {})
 
+        # Define weapon and armor types
+        weapon_types = {'weapon', 'sword', 'axe', 'mace', 'dagger', 'spear', 'bow', 'staff'}
+        armor_types = {'armor', 'helmet', 'chestplate', 'leggings', 'boots', 'gauntlets'}
+
         # Calculate damage for weapons
         damage = (0, 0)
-        if item_type == 'weapon':
+        if item_type in weapon_types:
             damage = self._calculate_weapon_damage(tier, item_type, subtype, stat_multipliers)
         elif 'damage' in stats:
             # Fallback for old format
@@ -671,7 +703,7 @@ class EquipmentDatabase:
         }
         mapped_slot = slot_mapping.get(json_slot, json_slot)
 
-        if item_type == 'armor':
+        if item_type in armor_types:
             defense = self._calculate_armor_defense(tier, mapped_slot, stat_multipliers)
         elif 'defense' in stats:
             defense = stats.get('defense', 0)
@@ -6922,14 +6954,44 @@ class GameEngine:
         recipe = self.enchantment_recipe
         recipe_db = RecipeDatabase.get_instance()
 
-        # Consume materials
+        # Check if enchantment can be applied BEFORE consuming materials
+        can_apply, reason = equipment.can_apply_enchantment(recipe.output_id, recipe.applicable_to, recipe.effect)
+        if not can_apply:
+            self.add_notification(f"❌ Cannot apply: {reason}", (255, 100, 100))
+            print(f"   ❌ Cannot apply enchantment: {reason}")
+            self._close_enchantment_selection()
+            return
+
+        # Pre-check for tier protection and duplicates (without modifying the item)
+        # Create a copy to test on
+        import copy as copy_module
+        test_enchantments = copy_module.deepcopy(equipment.enchantments)
+        test_success, test_message = equipment.apply_enchantment(recipe.output_id, recipe.enchantment_name, recipe.effect)
+
+        # Revert the test application
+        equipment.enchantments = test_enchantments
+
+        if not test_success:
+            self.add_notification(f"❌ {test_message}", (255, 100, 100))
+            print(f"   ❌ Enchantment blocked: {test_message}")
+            self._close_enchantment_selection()
+            return
+
+        # Now consume materials (after all checks pass)
         if not recipe_db.consume_materials(recipe, self.character.inventory):
             self.add_notification("Failed to consume materials!", (255, 100, 100))
             self._close_enchantment_selection()
             return
 
-        # Apply enchantment to the equipment instance
-        equipment.apply_enchantment(recipe.output_id, recipe.enchantment_name, recipe.effect)
+        # Apply enchantment to the equipment instance (for real this time)
+        success, message = equipment.apply_enchantment(recipe.output_id, recipe.enchantment_name, recipe.effect)
+
+        if not success:
+            # This shouldn't happen since we already checked, but handle it anyway
+            self.add_notification(f"❌ {message}", (255, 100, 100))
+            print(f"   ❌ Unexpected enchantment failure: {message}")
+            self.enchantment_selection_items = []
+            return
 
         # Record activity
         self.character.activities.record_activity('enchanting', 1)
