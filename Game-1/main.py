@@ -331,6 +331,7 @@ class EquipmentItem:
     durability_max: int = 100
     attack_speed: float = 1.0
     weight: float = 1.0
+    range: float = 1.0  # Weapon range stat
     requirements: Dict[str, Any] = field(default_factory=dict)
     bonuses: Dict[str, float] = field(default_factory=dict)
     # Enchantment system
@@ -374,6 +375,7 @@ class EquipmentItem:
             durability_max=self.durability_max,
             attack_speed=self.attack_speed,
             weight=self.weight,
+            range=self.range,
             requirements=self.requirements.copy(),
             bonuses=self.bonuses.copy(),
             enchantments=copy_module.deepcopy(self.enchantments)
@@ -386,22 +388,28 @@ class EquipmentItem:
         if item_type not in applicable_to:
             return False, f"Cannot apply to {item_type} items"
 
-        # Check for conflicts with existing enchantments
-        conflicts_with = effect.get('conflictsWith', [])
-        for existing_ench in self.enchantments:
-            existing_id = existing_ench.get('enchantment_id', '')
-            # Check if new enchantment conflicts with existing
-            if existing_id in conflicts_with:
-                return False, f"Conflicts with {existing_ench.get('name', 'existing enchantment')}"
-            # Check if existing conflicts with new
-            existing_conflicts = existing_ench.get('effect', {}).get('conflictsWith', [])
-            if enchantment_id in existing_conflicts:
-                return False, f"Conflicts with {existing_ench.get('name', 'existing enchantment')}"
-
+        # Enchantments with conflicts will overwrite existing conflicting enchantments
+        # This is allowed and expected behavior (e.g., Sharpness III overwrites Sharpness I)
         return True, "OK"
 
     def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict):
-        """Apply an enchantment effect to this item"""
+        """Apply an enchantment effect to this item, removing any conflicting enchantments first"""
+        # Remove any conflicting enchantments before applying the new one
+        conflicts_with = effect.get('conflictsWith', [])
+
+        # Filter out enchantments that conflict with the new one
+        self.enchantments = [
+            ench for ench in self.enchantments
+            if ench.get('enchantment_id', '') not in conflicts_with
+        ]
+
+        # Also remove enchantments that list the new enchantment in their conflicts
+        self.enchantments = [
+            ench for ench in self.enchantments
+            if enchantment_id not in ench.get('effect', {}).get('conflictsWith', [])
+        ]
+
+        # Now apply the new enchantment
         self.enchantments.append({
             'enchantment_id': enchantment_id,
             'name': enchantment_name,
@@ -607,6 +615,7 @@ class EquipmentDatabase:
             durability_max=dur_max,
             attack_speed=stats.get('attackSpeed', 1.0),
             weight=stats.get('weight', 1.0),
+            range=data.get('range', 1.0),  # Range is a top-level field in JSON
             requirements=data.get('requirements', {}),
             bonuses=stats.get('bonuses', {})
         )
@@ -4728,7 +4737,7 @@ class Renderer:
 
     def render_equipment_tooltip(self, item: EquipmentItem, mouse_pos: Tuple[int, int], character: Character,
                                  from_inventory: bool = False):
-        tw, th, pad = 320, 240, 10
+        tw, th, pad = 320, 340, 10  # Increased height for enchantments
         x, y = mouse_pos[0] + 15, mouse_pos[1] + 15
         if x + tw > Config.SCREEN_WIDTH:
             x = mouse_pos[0] - tw - 15
@@ -4752,6 +4761,11 @@ class Renderer:
             surf.blit(self.small_font.render(f"Damage: {dmg[0]}-{dmg[1]}", True, (200, 200, 200)), (pad, y_pos))
             y_pos += 20
 
+            # Show range for weapons
+            if item.range != 1.0:
+                surf.blit(self.small_font.render(f"Range: {item.range}", True, (200, 200, 200)), (pad, y_pos))
+                y_pos += 20
+
         if item.defense > 0:
             def_val = int(item.defense * item.get_effectiveness())
             surf.blit(self.small_font.render(f"Defense: {def_val}", True, (200, 200, 200)), (pad, y_pos))
@@ -4761,6 +4775,32 @@ class Renderer:
             surf.blit(self.small_font.render(f"Attack Speed: {item.attack_speed:.2f}x", True, (200, 200, 200)),
                       (pad, y_pos))
             y_pos += 20
+
+        # Display enchantments
+        if item.enchantments:
+            y_pos += 5
+            surf.blit(self.small_font.render("Enchantments:", True, (180, 140, 255)), (pad, y_pos))
+            y_pos += 20
+            for ench in item.enchantments:
+                ench_name = ench.get('name', 'Unknown')
+                effect = ench.get('effect', {})
+                effect_type = effect.get('type', '')
+                effect_value = effect.get('value', 0)
+
+                # Format the enchantment display
+                if effect_type == 'damage_multiplier':
+                    ench_text = f"  {ench_name}: +{int(effect_value * 100)}% Damage"
+                elif effect_type == 'durability_multiplier':
+                    ench_text = f"  {ench_name}: +{int(effect_value * 100)}% Durability"
+                elif effect_type == 'defense_multiplier':
+                    ench_text = f"  {ench_name}: +{int(effect_value * 100)}% Defense"
+                elif effect_type == 'speed_multiplier':
+                    ench_text = f"  {ench_name}: +{int(effect_value * 100)}% Speed"
+                else:
+                    ench_text = f"  {ench_name}"
+
+                surf.blit(self.tiny_font.render(ench_text, True, (200, 180, 255)), (pad, y_pos))
+                y_pos += 16
 
         dur_pct = (item.durability_current / item.durability_max) * 100
         dur_color = (100, 255, 100) if dur_pct > 50 else (255, 200, 100) if dur_pct > 25 else (255, 100, 100)
@@ -6250,8 +6290,15 @@ class GameEngine:
         # ======================
         if rx < left_panel_w:
             # Click in left panel - select recipe
+            # Apply scroll offset to show correct recipes
+            total_recipes = len(self.crafting_recipes)
+            max_visible = 8
+            start_idx = min(self.recipe_scroll_offset, max(0, total_recipes - max_visible))
+            end_idx = min(start_idx + max_visible, total_recipes)
+            visible_recipes = self.crafting_recipes[start_idx:end_idx]
+
             y_off = 70
-            for i, recipe in enumerate(self.crafting_recipes):
+            for i, recipe in enumerate(visible_recipes):
                 num_inputs = len(recipe.inputs)
                 btn_height = max(70, 35 + num_inputs * 16 + 5)
 
