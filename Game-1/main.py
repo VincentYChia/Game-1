@@ -2276,6 +2276,42 @@ class PlayerSkill:
         db = SkillDatabase.get_instance()
         return db.skills.get(self.skill_id, None)
 
+    def get_exp_for_next_level(self) -> int:
+        """Get EXP required to reach next level (exponential doubling)"""
+        if self.level >= 10:
+            return 0  # Max level
+        # Level 1→2 = 1000, Level 2→3 = 2000, Level 3→4 = 4000, etc.
+        return 1000 * (2 ** (self.level - 1))
+
+    def add_exp(self, amount: int) -> tuple[bool, int]:
+        """
+        Add skill EXP and check for level up.
+        Returns (leveled_up, new_level)
+        """
+        if self.level >= 10:
+            return False, self.level  # Max level
+
+        self.experience += amount
+        leveled_up = False
+        old_level = self.level
+
+        # Check for level ups (can level multiple times if enough EXP)
+        while self.level < 10:
+            exp_needed = self.get_exp_for_next_level()
+            if self.experience >= exp_needed:
+                self.experience -= exp_needed
+                self.level += 1
+                leveled_up = True
+                print(f"   🌟 Skill Level Up! {self.skill_id} → Level {self.level}")
+            else:
+                break
+
+        return leveled_up, self.level if leveled_up else old_level
+
+    def get_level_scaling_bonus(self) -> float:
+        """Get effectiveness bonus from skill level (+10% per level)"""
+        return 0.1 * (self.level - 1)  # Level 1 = +0%, Level 10 = +90%
+
 
 class SkillManager:
     def __init__(self):
@@ -2406,20 +2442,29 @@ class SkillManager:
         cooldown_duration = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
         player_skill.current_cooldown = cooldown_duration
 
-        # Apply skill effect (basic implementation)
-        self._apply_skill_effect(skill_def, character)
+        # Apply skill effect (with level scaling)
+        self._apply_skill_effect(skill_def, character, player_skill)
+
+        # Award skill EXP (100 EXP per activation)
+        leveled_up, new_level = player_skill.add_exp(100)
+        if leveled_up:
+            return True, f"Used {skill_def.name}! 🌟 Level {new_level}!"
 
         return True, f"Used {skill_def.name}!"
 
-    def _apply_skill_effect(self, skill_def, character):
-        """Apply the skill's effect"""
+    def _apply_skill_effect(self, skill_def, character, player_skill):
+        """Apply the skill's effect with level scaling"""
         effect = skill_def.effect
         skill_db = SkillDatabase.get_instance()
 
         # Get duration for buffs
-        duration = skill_db.get_duration_seconds(effect.duration)
+        base_duration = skill_db.get_duration_seconds(effect.duration)
 
-        # Magnitude-based bonus values
+        # Apply level scaling: +10% per level
+        level_bonus = player_skill.get_level_scaling_bonus()
+        duration = base_duration * (1.0 + level_bonus)
+
+        # Magnitude-based bonus values (base values)
         magnitude_values = {
             'minor': {'empower': 0.25, 'quicken': 0.15, 'fortify': 10, 'pierce': 0.10},
             'moderate': {'empower': 0.50, 'quicken': 0.30, 'fortify': 20, 'pierce': 0.15},
@@ -2427,11 +2472,17 @@ class SkillManager:
             'extreme': {'empower': 1.50, 'quicken': 0.75, 'fortify': 60, 'pierce': 0.35}
         }
 
-        print(f"⚡ {skill_def.name}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
+        # Apply level scaling to magnitude values (+10% per level)
+        def apply_level_scaling(base_value):
+            return base_value * (1.0 + level_bonus)
+
+        level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
+        print(f"⚡ {skill_def.name}{level_indicator}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
 
         # EMPOWER - Increases damage/output
         if effect.effect_type == "empower":
-            bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.5)
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.5)
+            bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_empower",
                 name=f"{skill_def.name} (Damage)",
@@ -2442,11 +2493,12 @@ class SkillManager:
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus*100)}% {effect.category} damage for {duration}s")
+            print(f"   +{int(bonus*100)}% {effect.category} damage for {int(duration)}s")
 
         # QUICKEN - Increases speed
         elif effect.effect_type == "quicken":
-            bonus = magnitude_values.get(effect.magnitude, {}).get('quicken', 0.3)
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('quicken', 0.3)
+            bonus = apply_level_scaling(base_bonus)
             category = "movement" if effect.category == "movement" else effect.category
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_quicken",
@@ -2458,11 +2510,12 @@ class SkillManager:
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus*100)}% {category} speed for {duration}s")
+            print(f"   +{int(bonus*100)}% {category} speed for {int(duration)}s")
 
         # FORTIFY - Increases defense
         elif effect.effect_type == "fortify":
-            bonus = magnitude_values.get(effect.magnitude, {}).get('fortify', 20)
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('fortify', 20)
+            bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_fortify",
                 name=f"{skill_def.name} (Defense)",
@@ -2477,7 +2530,8 @@ class SkillManager:
 
         # PIERCE - Increases critical chance
         elif effect.effect_type == "pierce":
-            bonus = magnitude_values.get(effect.magnitude, {}).get('pierce', 0.15)
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('pierce', 0.15)
+            bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_pierce",
                 name=f"{skill_def.name} (Crit)",
@@ -2505,7 +2559,8 @@ class SkillManager:
         # ENRICH - Bonus gathering yield
         elif effect.effect_type == "enrich":
             bonus_items = {'minor': 1, 'moderate': 2, 'major': 3, 'extreme': 5}
-            bonus = bonus_items.get(effect.magnitude, 2)
+            base_bonus = bonus_items.get(effect.magnitude, 2)
+            bonus = int(apply_level_scaling(base_bonus))  # Whole items only
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_enrich",
                 name=f"{skill_def.name} (Yield)",
@@ -2516,11 +2571,12 @@ class SkillManager:
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus)} bonus items from {effect.category} for {duration}s")
+            print(f"   +{int(bonus)} bonus items from {effect.category} for {int(duration)}s")
 
         # ELEVATE - Rarity upgrade chance
         elif effect.effect_type == "elevate":
-            bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.1)  # Reuse empower values
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.1)  # Reuse empower values
+            bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_elevate",
                 name=f"{skill_def.name} (Quality)",
