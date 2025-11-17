@@ -30,20 +30,29 @@ class SmithingMinigame:
     Goal: Maintain ideal temperature while hitting perfect timing on hammer strikes
     """
 
-    def __init__(self, recipe, tier=1):
+    def __init__(self, recipe, tier=1, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
         Initialize smithing minigame
 
         Args:
             recipe: Recipe dict from JSON
             tier: Recipe tier (1-4) - affects difficulty
+            buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
+            buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
         """
         self.recipe = recipe
         self.tier = tier
+        self.buff_time_bonus = buff_time_bonus
+        self.buff_quality_bonus = buff_quality_bonus
 
         # Difficulty scaling based on tier
         # NOTE: Future updates may include additional factors (tier + X + Y = difficulty)
         self._setup_difficulty()
+
+        # Apply skill buff bonuses to time limit
+        if self.buff_time_bonus > 0:
+            self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
+            print(f"⚡ Quicken buff applied: {self.time_limit}s minigame time")
 
         # Game state
         self.active = False
@@ -214,6 +223,11 @@ class SmithingMinigame:
         else:
             bonus = 0   # Base stats only
 
+        # Apply skill buff quality bonus (empower/elevate)
+        if self.buff_quality_bonus > 0:
+            bonus += int(self.buff_quality_bonus * 10)  # Convert 0.5 bonus to +5% stats
+            print(f"⚡ Quality buff applied: +{int(self.buff_quality_bonus * 10)}% bonus (total: {bonus}%)")
+
         self.result = {
             "success": True,
             "score": final_score,
@@ -377,12 +391,14 @@ class SmithingCrafter:
             "message": f"Crafted ({input_rarity})"
         }
 
-    def create_minigame(self, recipe_id):
+    def create_minigame(self, recipe_id, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
         Create a smithing minigame for this recipe
 
         Args:
             recipe_id: Recipe ID to craft
+            buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
+            buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
 
         Returns:
             SmithingMinigame instance or None if recipe not found
@@ -393,7 +409,7 @@ class SmithingCrafter:
         recipe = self.recipes[recipe_id]
         tier = recipe.get('stationTier', 1)
 
-        return SmithingMinigame(recipe, tier)
+        return SmithingMinigame(recipe, tier, buff_time_bonus, buff_quality_bonus)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result, item_metadata=None):
         """

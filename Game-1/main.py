@@ -402,11 +402,74 @@ class EquipmentItem:
 
     def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict):
         """Apply an enchantment effect to this item"""
+        # Store enchantment data
         self.enchantments.append({
             'enchantment_id': enchantment_id,
             'name': enchantment_name,
             'effect': effect
         })
+
+        # Apply stat modifications based on effect type
+        effect_type = effect.get('type', '')
+        value = effect.get('value', 0)
+
+        if effect_type == 'damage_multiplier':
+            # Increase weapon damage
+            if self.damage != (0, 0):
+                min_dmg, max_dmg = self.damage
+                self.damage = (
+                    int(min_dmg * (1.0 + value)),
+                    int(max_dmg * (1.0 + value))
+                )
+                print(f"   ✨ {enchantment_name}: Damage increased by {int(value*100)}% → {self.damage}")
+
+        elif effect_type == 'damage_reduction':
+            # Increase armor defense
+            self.defense = int(self.defense * (1.0 + value))
+            print(f"   ✨ {enchantment_name}: Defense increased by {int(value*100)}% → {self.defense}")
+
+        elif effect_type == 'durability_multiplier':
+            # Increase max durability
+            old_max = self.durability_max
+            self.durability_max = int(self.durability_max * (1.0 + value))
+            # Scale current durability proportionally
+            if old_max > 0:
+                ratio = self.durability_current / old_max
+                self.durability_current = int(self.durability_max * ratio)
+            print(f"   ✨ {enchantment_name}: Durability increased by {int(value*100)}% → {self.durability_max}")
+
+        elif effect_type == 'weight_multiplier':
+            # Modify weight (negative value = lighter)
+            self.weight *= (1.0 + value)
+            print(f"   ✨ {enchantment_name}: Weight modified by {int(value*100)}% → {self.weight:.2f}")
+
+        elif effect_type in ['gathering_speed_multiplier', 'movement_speed_multiplier', 'bonus_yield_chance']:
+            # Add to bonuses dict for special effects
+            bonus_key = effect_type.replace('_multiplier', '').replace('_', '_')
+            if bonus_key not in self.bonuses:
+                self.bonuses[bonus_key] = 0
+            self.bonuses[bonus_key] += value
+            print(f"   ✨ {enchantment_name}: +{int(value*100)}% {bonus_key}")
+
+        # Special effect types (stored in bonuses for later use in combat/gathering)
+        elif effect_type in ['lifesteal', 'reflect_damage', 'health_regeneration', 'durability_regeneration']:
+            self.bonuses[effect_type] = self.bonuses.get(effect_type, 0) + value
+            print(f"   ✨ {enchantment_name}: {effect_type} +{value}")
+
+        elif effect_type in ['chain_damage', 'damage_over_time', 'knockback', 'slow']:
+            # Combat effects stored for later application
+            self.bonuses[effect_type] = value
+            print(f"   ✨ {enchantment_name}: {effect_type} effect added")
+
+        elif effect_type == 'soulbound':
+            # Special flag effect
+            self.bonuses['soulbound'] = True
+            print(f"   ✨ {enchantment_name}: Item is now soulbound")
+
+        elif effect_type == 'harvest_original_form':
+            # Special gathering effect
+            self.bonuses['harvest_original_form'] = True
+            print(f"   ✨ {enchantment_name}: Harvest in original form enabled")
 
     def _get_item_type(self) -> str:
         """Determine the item type for enchantment compatibility"""
@@ -2213,18 +2276,113 @@ class PlayerSkill:
         db = SkillDatabase.get_instance()
         return db.skills.get(self.skill_id, None)
 
+    def get_exp_for_next_level(self) -> int:
+        """Get EXP required to reach next level (exponential doubling)"""
+        if self.level >= 10:
+            return 0  # Max level
+        # Level 1→2 = 1000, Level 2→3 = 2000, Level 3→4 = 4000, etc.
+        return 1000 * (2 ** (self.level - 1))
+
+    def add_exp(self, amount: int) -> tuple[bool, int]:
+        """
+        Add skill EXP and check for level up.
+        Returns (leveled_up, new_level)
+        """
+        if self.level >= 10:
+            return False, self.level  # Max level
+
+        self.experience += amount
+        leveled_up = False
+        old_level = self.level
+
+        # Check for level ups (can level multiple times if enough EXP)
+        while self.level < 10:
+            exp_needed = self.get_exp_for_next_level()
+            if self.experience >= exp_needed:
+                self.experience -= exp_needed
+                self.level += 1
+                leveled_up = True
+                print(f"   🌟 Skill Level Up! {self.skill_id} → Level {self.level}")
+            else:
+                break
+
+        return leveled_up, self.level if leveled_up else old_level
+
+    def get_level_scaling_bonus(self) -> float:
+        """Get effectiveness bonus from skill level (+10% per level)"""
+        return 0.1 * (self.level - 1)  # Level 1 = +0%, Level 10 = +90%
+
 
 class SkillManager:
     def __init__(self):
         self.known_skills: Dict[str, PlayerSkill] = {}
         self.equipped_skills: List[Optional[str]] = [None] * 5  # 5 hotbar slots
 
-    def learn_skill(self, skill_id: str) -> bool:
-        """Learn a new skill"""
-        if skill_id not in self.known_skills:
-            self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
-            return True
-        return False
+    def can_learn_skill(self, skill_id: str, character) -> tuple[bool, str]:
+        """
+        Check if character meets requirements to learn a skill.
+        Returns (can_learn, reason)
+        """
+        # Already known?
+        if skill_id in self.known_skills:
+            return False, "Already known"
+
+        # Get skill definition
+        skill_db = SkillDatabase.get_instance()
+        skill_def = skill_db.skills.get(skill_id)
+        if not skill_def:
+            return False, "Skill not found"
+
+        # Check character level
+        if character.leveling.level < skill_def.requirements.character_level:
+            return False, f"Requires level {skill_def.requirements.character_level}"
+
+        # Check stat requirements
+        for stat_name, required_value in skill_def.requirements.stats.items():
+            # Map stat names to character stats
+            stat_map = {
+                'STR': character.stats.strength,
+                'DEF': character.stats.defense,
+                'VIT': character.stats.vitality,
+                'LCK': character.stats.luck,
+                'AGI': character.stats.agility,
+                'INT': character.stats.intelligence,
+                'DEX': character.stats.agility  # DEX maps to AGI in this game
+            }
+            current_value = stat_map.get(stat_name.upper(), 0)
+            if current_value < required_value:
+                return False, f"Requires {stat_name} {required_value}"
+
+        # Check title requirements (if any)
+        if skill_def.requirements.titles:
+            # Get player's title IDs
+            player_titles = {title.title_id for title in character.titles.titles}
+            for required_title in skill_def.requirements.titles:
+                if required_title not in player_titles:
+                    return False, f"Requires title: {required_title}"
+
+        return True, "Requirements met"
+
+    def learn_skill(self, skill_id: str, character=None, skip_checks: bool = False) -> bool:
+        """
+        Learn a new skill.
+        If character is provided and skip_checks is False, requirements will be checked.
+        skip_checks=True bypasses requirement checks (for starting skills, admin commands, etc.)
+        """
+        # Check if already known
+        if skill_id in self.known_skills:
+            return False
+
+        # Check requirements if character provided and not skipping checks
+        if character and not skip_checks:
+            can_learn, reason = self.can_learn_skill(skill_id, character)
+            if not can_learn:
+                print(f"   ⚠ Cannot learn {skill_id}: {reason}")
+                return False
+
+        # Learn the skill
+        self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
+        return True
 
     def equip_skill(self, skill_id: str, slot: int) -> bool:
         """Equip a skill to a hotbar slot (0-4)"""
@@ -2284,20 +2442,29 @@ class SkillManager:
         cooldown_duration = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
         player_skill.current_cooldown = cooldown_duration
 
-        # Apply skill effect (basic implementation)
-        self._apply_skill_effect(skill_def, character)
+        # Apply skill effect (with level scaling)
+        self._apply_skill_effect(skill_def, character, player_skill)
+
+        # Award skill EXP (100 EXP per activation)
+        leveled_up, new_level = player_skill.add_exp(100)
+        if leveled_up:
+            return True, f"Used {skill_def.name}! 🌟 Level {new_level}!"
 
         return True, f"Used {skill_def.name}!"
 
-    def _apply_skill_effect(self, skill_def, character):
-        """Apply the skill's effect"""
+    def _apply_skill_effect(self, skill_def, character, player_skill):
+        """Apply the skill's effect with level scaling"""
         effect = skill_def.effect
         skill_db = SkillDatabase.get_instance()
 
         # Get duration for buffs
-        duration = skill_db.get_duration_seconds(effect.duration)
+        base_duration = skill_db.get_duration_seconds(effect.duration)
 
-        # Magnitude-based bonus values
+        # Apply level scaling: +10% per level
+        level_bonus = player_skill.get_level_scaling_bonus()
+        duration = base_duration * (1.0 + level_bonus)
+
+        # Magnitude-based bonus values (base values)
         magnitude_values = {
             'minor': {'empower': 0.25, 'quicken': 0.15, 'fortify': 10, 'pierce': 0.10},
             'moderate': {'empower': 0.50, 'quicken': 0.30, 'fortify': 20, 'pierce': 0.15},
@@ -2305,11 +2472,17 @@ class SkillManager:
             'extreme': {'empower': 1.50, 'quicken': 0.75, 'fortify': 60, 'pierce': 0.35}
         }
 
-        print(f"⚡ {skill_def.name}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
+        # Apply level scaling to magnitude values (+10% per level)
+        def apply_level_scaling(base_value):
+            return base_value * (1.0 + level_bonus)
+
+        level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
+        print(f"⚡ {skill_def.name}{level_indicator}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
 
         # EMPOWER - Increases damage/output
         if effect.effect_type == "empower":
-            bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.5)
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.5)
+            bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_empower",
                 name=f"{skill_def.name} (Damage)",
@@ -2320,11 +2493,12 @@ class SkillManager:
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus*100)}% {effect.category} damage for {duration}s")
+            print(f"   +{int(bonus*100)}% {effect.category} damage for {int(duration)}s")
 
         # QUICKEN - Increases speed
         elif effect.effect_type == "quicken":
-            bonus = magnitude_values.get(effect.magnitude, {}).get('quicken', 0.3)
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('quicken', 0.3)
+            bonus = apply_level_scaling(base_bonus)
             category = "movement" if effect.category == "movement" else effect.category
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_quicken",
@@ -2336,11 +2510,12 @@ class SkillManager:
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus*100)}% {category} speed for {duration}s")
+            print(f"   +{int(bonus*100)}% {category} speed for {int(duration)}s")
 
         # FORTIFY - Increases defense
         elif effect.effect_type == "fortify":
-            bonus = magnitude_values.get(effect.magnitude, {}).get('fortify', 20)
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('fortify', 20)
+            bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_fortify",
                 name=f"{skill_def.name} (Defense)",
@@ -2355,7 +2530,8 @@ class SkillManager:
 
         # PIERCE - Increases critical chance
         elif effect.effect_type == "pierce":
-            bonus = magnitude_values.get(effect.magnitude, {}).get('pierce', 0.15)
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('pierce', 0.15)
+            bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_pierce",
                 name=f"{skill_def.name} (Crit)",
@@ -2383,7 +2559,8 @@ class SkillManager:
         # ENRICH - Bonus gathering yield
         elif effect.effect_type == "enrich":
             bonus_items = {'minor': 1, 'moderate': 2, 'major': 3, 'extreme': 5}
-            bonus = bonus_items.get(effect.magnitude, 2)
+            base_bonus = bonus_items.get(effect.magnitude, 2)
+            bonus = int(apply_level_scaling(base_bonus))  # Whole items only
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_enrich",
                 name=f"{skill_def.name} (Yield)",
@@ -2394,11 +2571,12 @@ class SkillManager:
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus)} bonus items from {effect.category} for {duration}s")
+            print(f"   +{int(bonus)} bonus items from {effect.category} for {int(duration)}s")
 
         # ELEVATE - Rarity upgrade chance
         elif effect.effect_type == "elevate":
-            bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.1)  # Reuse empower values
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.1)  # Reuse empower values
+            bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_elevate",
                 name=f"{skill_def.name} (Quality)",
@@ -2895,8 +3073,20 @@ class Character:
         if depleted:
             loot = resource.get_loot()
             for item_id, qty in loot:
+                # Luck-based bonus
                 if random.random() < (self.stats.luck * 0.02 + self.class_system.get_bonus('resource_quality')):
                     qty += 1
+
+                # SKILL BUFF BONUSES: Check for enrich buffs (bonus items)
+                enrich_bonus = 0
+                if hasattr(self, 'buffs'):
+                    # Check for enrich buff on this activity (mining or forestry)
+                    enrich_bonus = int(self.buffs.get_total_bonus('enrich', activity))
+
+                if enrich_bonus > 0:
+                    qty += enrich_bonus
+                    print(f"   ⚡ Enrich buff: +{enrich_bonus} bonus {item_id}")
+
                 self.inventory.add_item(item_id, qty)
         return (loot, actual_damage, is_crit)
 
@@ -2988,6 +3178,44 @@ class Character:
         self.health = self.max_health
         self.mana = self.max_mana
         print(f"✓ Class selected: {class_def.name}")
+
+        # Grant starting skill if the class has one
+        if class_def.starting_skill:
+            # Map class skill names to actual skill IDs in skills-skills-1.JSON
+            skill_mapping = {
+                "battle_rage": "combat_strike",  # Warrior → Power Strike (T1 common)
+                "forestry_frenzy": "lumberjacks_rhythm",  # Ranger → Lumberjack's Rhythm
+                "alchemists_touch": "alchemists_insight",  # Scholar → Alchemist's Insight
+                "smithing_focus": "smiths_focus",  # Artisan → Smith's Focus
+                "treasure_hunters_luck": "treasure_sense",  # Scavenger → Treasure Sense (T2)
+                "versatile_start": None  # Adventurer → Player chooses (handled separately)
+            }
+
+            requested_skill = class_def.starting_skill
+            actual_skill_id = skill_mapping.get(requested_skill, requested_skill)
+
+            if actual_skill_id:
+                # Check if skill exists in database
+                skill_db = SkillDatabase.get_instance()
+                if actual_skill_id in skill_db.skills:
+                    # Learn the skill (skip requirement checks for starting skills)
+                    if self.skills.learn_skill(actual_skill_id, character=self, skip_checks=True):
+                        print(f"   ✓ Learned starting skill: {skill_db.skills[actual_skill_id].name}")
+                        # Auto-equip to slot 0
+                        self.skills.equip_skill(actual_skill_id, 0)
+                        print(f"   ✓ Equipped to hotbar slot 1")
+                    else:
+                        print(f"   ⚠ Skill {actual_skill_id} already known")
+                else:
+                    print(f"   ⚠ Warning: Starting skill '{actual_skill_id}' not found in skill database")
+            elif requested_skill == "versatile_start":
+                # Adventurer class - player should choose a T1 skill
+                # For now, we'll give them sprint as a default, but ideally this should open a choice dialog
+                default_skill = "sprint"
+                if self.skills.learn_skill(default_skill, character=self, skip_checks=True):
+                    print(f"   ✓ Learned starter skill: {skill_db.skills[default_skill].name}")
+                    self.skills.equip_skill(default_skill, 0)
+                    print(f"   ℹ Adventurer class: You can learn any skill! (Sprint given as default)")
 
     def try_equip_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
         """Try to equip item from inventory slot"""
@@ -5908,11 +6136,33 @@ class GameEngine:
             self.add_notification("Invalid crafting station!", (255, 100, 100))
             return
 
-        # Create minigame instance
-        minigame = crafter.create_minigame(recipe.recipe_id)
+        # Calculate skill buff bonuses for this crafting discipline
+        buff_time_bonus = 0.0
+        buff_quality_bonus = 0.0
+
+        if hasattr(self.character, 'buffs'):
+            # Quicken buff: Extends minigame time
+            quicken_general = self.character.buffs.get_total_bonus('quicken', recipe.station_type)
+            quicken_smithing_alt = self.character.buffs.get_total_bonus('quicken', 'smithing') if recipe.station_type in ['smithing', 'refining'] else 0
+            buff_time_bonus = max(quicken_general, quicken_smithing_alt)
+
+            # Empower/Elevate buff: Improves quality
+            empower_bonus = self.character.buffs.get_total_bonus('empower', recipe.station_type)
+            elevate_bonus = self.character.buffs.get_total_bonus('elevate', recipe.station_type)
+            buff_quality_bonus = max(empower_bonus, elevate_bonus)
+
+        # Create minigame instance with buff bonuses
+        minigame = crafter.create_minigame(recipe.recipe_id, buff_time_bonus, buff_quality_bonus)
         if not minigame:
             self.add_notification("Minigame not available!", (255, 100, 100))
             return
+
+        if buff_time_bonus > 0 or buff_quality_bonus > 0:
+            print(f"⚡ Skill buffs active:")
+            if buff_time_bonus > 0:
+                print(f"   +{buff_time_bonus*100:.0f}% minigame time")
+            if buff_quality_bonus > 0:
+                print(f"   +{buff_quality_bonus*100:.0f}% quality bonus")
 
         # Start minigame
         minigame.start()

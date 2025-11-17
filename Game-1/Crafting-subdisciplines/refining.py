@@ -32,20 +32,28 @@ class RefiningMinigame:
     - All-or-nothing success
     """
 
-    def __init__(self, recipe, tier=1):
+    def __init__(self, recipe, tier=1, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
         Initialize refining minigame
 
         Args:
             recipe: Recipe dict from JSON
             tier: Recipe tier (1-4) - affects difficulty
+            buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
+            buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
         """
         self.recipe = recipe
         self.tier = tier
+        self.buff_time_bonus = buff_time_bonus
+        self.buff_quality_bonus = buff_quality_bonus
 
         # Difficulty scaling based on tier
         # NOTE: Future updates may include additional factors
         self._setup_difficulty()
+
+        # Apply skill buff bonuses to time limit
+        if self.buff_time_bonus > 0:
+            self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
 
         # Game state
         self.active = False
@@ -214,7 +222,8 @@ class RefiningMinigame:
             self.result = {
                 "success": True,
                 "message": "Refinement successful!",
-                "attempts": self.current_cylinder + self.failed_attempts
+                "attempts": self.current_cylinder + self.failed_attempts,
+                "quality_bonus": self.buff_quality_bonus  # Store for rarity upgrade chance
             }
         else:
             self.result = {
@@ -405,12 +414,14 @@ class RefiningCrafter:
             "message": f"Refined to {output_rarity}!"
         }
 
-    def create_minigame(self, recipe_id):
+    def create_minigame(self, recipe_id, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
         Create a refining minigame for this recipe
 
         Args:
             recipe_id: Recipe ID to craft
+            buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
+            buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
 
         Returns:
             RefiningMinigame instance or None if recipe not found
@@ -421,7 +432,7 @@ class RefiningCrafter:
         recipe = self.recipes[recipe_id]
         tier = recipe.get('stationTier', 1)
 
-        return RefiningMinigame(recipe, tier)
+        return RefiningMinigame(recipe, tier, buff_time_bonus, buff_quality_bonus)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result):
         """

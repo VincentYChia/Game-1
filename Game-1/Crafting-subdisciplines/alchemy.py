@@ -205,20 +205,28 @@ class AlchemyMinigame:
     6. Total progress = sum of all locked reaction qualities
     """
 
-    def __init__(self, recipe, tier=1):
+    def __init__(self, recipe, tier=1, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
         Initialize alchemy minigame
 
         Args:
             recipe: Recipe dict from JSON
             tier: Recipe tier (1-4) - affects difficulty
+            buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
+            buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
         """
         self.recipe = recipe
         self.tier = tier
+        self.buff_time_bonus = buff_time_bonus
+        self.buff_quality_bonus = buff_quality_bonus
         self.ingredients = recipe.get('inputs', [])
 
         # Difficulty scaling
         self._setup_difficulty()
+
+        # Apply skill buff bonuses to time limit
+        if self.buff_time_bonus > 0:
+            self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
 
         # Game state
         self.active = False
@@ -410,6 +418,11 @@ class AlchemyMinigame:
             duration_mult = 1.5
             effect_mult = 1.25
 
+        # Apply skill buff quality bonus (empower/elevate)
+        if self.buff_quality_bonus > 0:
+            duration_mult *= (1.0 + self.buff_quality_bonus)
+            effect_mult *= (1.0 + self.buff_quality_bonus)
+
         self.result = {
             "success": success,
             "progress": progress,
@@ -559,7 +572,7 @@ class AlchemyCrafter:
             "message": f"Brewed ({input_rarity})"
         }
 
-    def create_minigame(self, recipe_id):
+    def create_minigame(self, recipe_id, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """Create an alchemy minigame for this recipe"""
         if recipe_id not in self.recipes:
             return None
@@ -567,7 +580,7 @@ class AlchemyCrafter:
         recipe = self.recipes[recipe_id]
         tier = recipe.get('stationTier', 1)
 
-        return AlchemyMinigame(recipe, tier)
+        return AlchemyMinigame(recipe, tier, buff_time_bonus, buff_quality_bonus)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result, item_metadata=None):
         """
