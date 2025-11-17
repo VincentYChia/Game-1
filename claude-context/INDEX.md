@@ -80,6 +80,82 @@ This directory contains curated developer context for AI assistants and human de
 
 ---
 
+### 4. **JSON_VALIDATION_REPORT.md**
+**Path**: `claude-context/JSON_VALIDATION_REPORT.md`
+**Purpose**: Comprehensive validation of JSON template system before mass generation
+**Contains**:
+- Executive summary of template system status
+- Detailed validation by JSON type (equipment, materials, recipes, placements)
+- Code expectations vs template documentation comparison
+- Critical and minor issues found with fixes
+- Common mistakes and pitfalls
+- Validation checklist for mass generation
+- Recommended fixes (all applied as of Nov 17)
+
+**When to Use**: Before starting mass JSON generation, when creating new JSON files, debugging JSON loading errors, understanding what fields are required vs optional.
+
+**Status**: ✅ Fully current (Nov 17, 2025)
+- All issues documented and fixed
+- Templates validated against code
+- System ready for mass generation
+
+**Key Findings**:
+- Enchanting template fixed ("enchanting" not "adornments")
+- Range field must be float (1.0 not 1)
+- Material template verified complete
+- Stat requirements guide added (AGI not DEX)
+
+---
+
+### 5. **JSON_GENERATION_CHECKLIST.md**
+**Path**: `claude-context/JSON_GENERATION_CHECKLIST.md`
+**Purpose**: Quick reference checklist for creating and validating JSON files
+**Contains**:
+- Pre-generation setup checklist
+- Required fields by JSON type (equipment, materials, recipes, placements)
+- Discipline-specific checklists (smithing, refining, alchemy, engineering, enchanting)
+- Common mistakes to avoid with correct examples
+- Quick reference values (tier multipliers, weapon ranges, stack sizes)
+- Validation workflow (create, cross-reference, syntax check, load test)
+- File organization guidelines
+
+**When to Use**: While creating each JSON file, before committing JSONs, when debugging loading errors, as a quick reference during mass generation.
+
+**Status**: ✅ Fully current (Nov 17, 2025)
+
+**Quick Reference**:
+- Weapon ranges: Dagger 0.5, Sword 1.0, Spear 2.0, Bow 10.0-15.0
+- Tier multipliers: T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x
+- Stack sizes: Raw 99, Processed 256, Equipment 1
+- Required category for equipment: "equipment" (case-sensitive!)
+
+---
+
+### 6. **MASS_GENERATION_RECOMMENDATIONS.md**
+**Path**: `claude-context/MASS_GENERATION_RECOMMENDATIONS.md`
+**Purpose**: Strategic guide for mass JSON generation workflow
+**Contains**:
+- Phase-by-phase generation workflow (Materials → Equipment → Recipes → Placements)
+- Recommended order and timeline (5-6 week plan)
+- Automation strategies (spreadsheet + script vs manual)
+- Quality assurance strategy per phase
+- Effort estimates (20-30 hours semi-automated vs 60-80 hours manual)
+- Common pitfalls and prevention strategies
+- Success criteria checklist
+
+**When to Use**: Before starting mass generation to plan approach, when deciding on automation strategy, for timeline and effort estimates, as a roadmap during generation.
+
+**Status**: ✅ Fully current (Nov 17, 2025)
+
+**Key Recommendations**:
+- Start with Phase 1: Materials (foundation)
+- Use semi-automated approach (spreadsheet + Python script)
+- Test after each phase, not at the end
+- Expected output: ~300 total JSONs (68 materials, 100 equipment, 190 recipes, 190 placements)
+- Timeline: 5-6 weeks with semi-automated approach
+
+---
+
 ## 📊 Related Documentation
 
 ### Archive Directory (`../archive/`)
@@ -161,10 +237,17 @@ This INDEX.md should be committed with meaningful messages like:
 2. Search codebase to verify current state
 3. Reference `NAMING_CONVENTIONS.md` for method names
 
+### Before Creating JSON Content:
+1. Read `JSON_VALIDATION_REPORT.md` (15 min) - Understand JSON system
+2. Keep `JSON_GENERATION_CHECKLIST.md` open while creating JSONs
+3. Follow `MASS_GENERATION_RECOMMENDATIONS.md` for large-scale generation
+4. Reference `Definitions.JSON/JSON Templates` for exact field formats
+
 ### When Debugging:
 1. Check `NAMING_CONVENTIONS.md` for common API mistakes
 2. Review `CRAFTING_INTEGRATION_QUICK_REFERENCE.md` for line references
-3. Consult `../archive/ERROR_ANALYSIS_AND_FIXES.md` for similar historical issues
+3. Consult `JSON_GENERATION_CHECKLIST.md` for JSON field validation
+4. Consult `../archive/ERROR_ANALYSIS_AND_FIXES.md` for similar historical issues
 
 ---
 

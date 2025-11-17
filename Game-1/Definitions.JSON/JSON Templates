@@ -68,6 +68,7 @@
       "stationTier": 1,
       "stationType": "alchemy",
       "sequenceLength": 3,
+      "sequenceLengthNote": "OPTIONAL - Not used by code, informational only",
       "inputs": [
         {
           "materialId": "herb_vitalis",
@@ -91,6 +92,7 @@
       "stationTier": 1,
       "stationType": "engineering",
       "slotCount": 3,
+      "slotCountNote": "OPTIONAL - Not used by code, informational only",
       "inputs": [
         {
           "materialId": "iron_ingot",
@@ -107,25 +109,24 @@
         "baseTime": 40
       }
     },
-    "adornments": {
+    "enchanting": {
+      "note": "CRITICAL: stationType must be 'enchanting' NOT 'adornments'. RecipeId should start with 'enchanting_'",
       "metadata": {
         "narrative": "Creates an enchantment that can be applied to equipment",
         "tags": ["enchanting", "weapon", "fire"]
       },
-      "recipeId": "adornments_fire_enchant_minor",
+      "recipeId": "enchanting_fire_enchant_minor",
       "enchantmentId": "fire_enchant_minor",
       "enchantmentName": "Minor Flame",
       "stationTier": 1,
-      "stationType": "adornments",
-      "gridSize": "3x3",
+      "stationType": "enchanting",
       "applicableTo": ["weapon", "tool"],
       "effect": {
-        "element": "fire",
-        "damageValue": [5, 10],
-        "damageOverTime": [2, 4],
-        "duration": 5,
-        "chance": 0.15,
-        "conflictsWith": ["ice_enchant_minor", "frost_enchant_minor"]
+        "type": "damage_multiplier",
+        "value": 0.15,
+        "stackable": false,
+        "conflictsWith": ["ice_enchant_minor", "frost_enchant_minor"],
+        "note": "Effect types: damage_multiplier, defense_multiplier. Value is percentage (0.15 = 15% increase)"
       },
       "inputs": [
         {
@@ -138,7 +139,7 @@
         }
       ],
       "miniGame": {
-        "type": "adornments",
+        "type": "enchanting",
         "difficulty": "easy",
         "baseTime": 30
       }
@@ -158,7 +159,8 @@
       "subtype": "sword",
       "tier": 1,
       "rarity": "common",
-      "range": 1,
+      "range": 1.0,
+      "rangeNote": "MUST be float. Tactical combat distance: Melee 1.0-1.5, Spears 2.0-3.0, Bows 10.0-15.0",
       "slot": "mainHand",
       "statMultipliers": {
         "damage": 1.0,
@@ -216,7 +218,8 @@
       "subtype": "pickaxe",
       "tier": 1,
       "rarity": "common",
-      "range": 1,
+      "range": 1.0,
+      "rangeNote": "Tools generally use range 1.0 unless they have special reach",
       "slot": "mainHand",
       "statMultipliers": {
         "damage": 1.0,
@@ -364,5 +367,62 @@
     "4. Is stationTier requirement met?",
     "5. Does item have all required fields (itemId, name, category, etc.)?",
     "6. Check for typos in IDs (underscores vs hyphens, singular vs plural)"
-  ]
+  ],
+
+  "STAT_REQUIREMENTS_GUIDE": {
+    "note": "Use these EXACT stat abbreviations in requirements.stats - case insensitive but AGI preferred over DEX",
+    "valid_stats": {
+      "strength": "STR or strength",
+      "defense": "DEF or defense",
+      "vitality": "VIT or vitality",
+      "luck": "LCK or luck",
+      "agility": "AGI or agility (PREFERRED - use this not DEX)",
+      "intelligence": "INT or intelligence"
+    },
+    "deprecated": {
+      "DEX": "LEGACY ONLY - Use AGI instead. DEX maps to agility for backward compatibility only",
+      "dexterity": "LEGACY ONLY - Use agility instead"
+    },
+    "example_correct": {
+      "requirements": {
+        "level": 10,
+        "stats": {
+          "AGI": 20,
+          "STR": 15
+        }
+      }
+    },
+    "example_deprecated": {
+      "note": "This still works but should not be used in new JSONs",
+      "requirements": {
+        "level": 10,
+        "stats": {
+          "DEX": 20,
+          "STR": 15
+        }
+      }
+    }
+  },
+
+  "WEAPON_RANGE_GUIDE": {
+    "note": "Range values from stats-calculations.JSON. Determines tactical combat distance.",
+    "default_ranges": {
+      "melee_1h": 1.0,
+      "melee_2h": 1.5,
+      "dagger": 0.5,
+      "shortsword": 1.0,
+      "longsword": 1.0,
+      "greatsword": 1.5,
+      "spear": 2.0,
+      "pike": 3.0,
+      "halberd": 2.5,
+      "shortbow": 10.0,
+      "longbow": 15.0,
+      "crossbow": 12.0,
+      "staff": 8.0,
+      "shield": 1.0,
+      "tools": 1.0
+    },
+    "implementation_note": "Range MUST be a float (1.0 not 1). This affects combat targeting distance."
+  }
 }
