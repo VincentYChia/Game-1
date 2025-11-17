@@ -351,12 +351,31 @@ class EquipmentItem:
 
     def can_equip(self, character) -> Tuple[bool, str]:
         """Check if character meets requirements, return (can_equip, reason)"""
+        # Stat abbreviation mapping to full names
+        stat_mapping = {
+            'str': 'strength',
+            'strength': 'strength',
+            'def': 'defense',
+            'defense': 'defense',
+            'vit': 'vitality',
+            'vitality': 'vitality',
+            'lck': 'luck',
+            'luck': 'luck',
+            'agi': 'agility',
+            'agility': 'agility',
+            'dex': 'agility',  # DEX maps to agility for backwards compatibility
+            'dexterity': 'agility',
+            'int': 'intelligence',
+            'intelligence': 'intelligence'
+        }
+
         reqs = self.requirements
         if 'level' in reqs and character.leveling.level < reqs['level']:
             return False, f"Requires level {reqs['level']}"
         if 'stats' in reqs:
             for stat, val in reqs['stats'].items():
-                if getattr(character.stats, stat.lower(), 0) < val:
+                stat_name = stat_mapping.get(stat.lower(), stat.lower())
+                if getattr(character.stats, stat_name, 0) < val:
                     return False, f"Requires {stat.upper()} {val}"
         return True, "OK"
 
@@ -561,56 +580,117 @@ class EquipmentDatabase:
         self.loaded = True
         print(f"✓ Created {len(self.items)} placeholder equipment")
 
+    def _calculate_weapon_damage(self, tier: int, item_type: str, subtype: str, stat_multipliers: Dict) -> Tuple[int, int]:
+        """Calculate weapon damage based on stats-calculations.JSON formula"""
+        # Formula: globalBase × tierMult × categoryMult × typeMult × subtypeMult × itemMult × variance
+        global_base = 10
+
+        tier_mults = {1: 1.0, 2: 2.0, 3: 4.0, 4: 8.0}
+        tier_mult = tier_mults.get(tier, 1.0)
+
+        category_mult = 1.0  # weapons are 1.0
+
+        type_mults = {
+            'sword': 1.0, 'axe': 1.1, 'spear': 1.05, 'mace': 1.15,
+            'dagger': 0.8, 'bow': 1.0, 'staff': 0.9, 'shield': 1.0
+        }
+        type_mult = type_mults.get(item_type, 1.0)
+
+        subtype_mults = {
+            'shortsword': 0.9, 'longsword': 1.0, 'greatsword': 1.4,
+            'dagger': 1.0, 'spear': 1.0, 'pike': 1.2, 'halberd': 1.4,
+            'mace': 1.0, 'warhammer': 1.3, 'maul': 1.5
+        }
+        subtype_mult = subtype_mults.get(subtype, 1.0)
+
+        item_mult = stat_multipliers.get('damage', 1.0)
+
+        base_damage = global_base * tier_mult * category_mult * type_mult * subtype_mult * item_mult
+
+        # Apply variance range (85%-115%)
+        min_damage = int(base_damage * 0.85)
+        max_damage = int(base_damage * 1.15)
+
+        return (min_damage, max_damage)
+
+    def _calculate_armor_defense(self, tier: int, slot: str, stat_multipliers: Dict) -> int:
+        """Calculate armor defense based on stats-calculations.JSON formula"""
+        # Formula: globalBase × tierMult × slotMult × itemMult
+        global_base = 10
+
+        tier_mults = {1: 1.0, 2: 2.0, 3: 4.0, 4: 8.0}
+        tier_mult = tier_mults.get(tier, 1.0)
+
+        slot_mults = {
+            'helmet': 0.8, 'chestplate': 1.5, 'leggings': 1.2,
+            'boots': 0.7, 'gauntlets': 0.6
+        }
+        slot_mult = slot_mults.get(slot, 1.0)
+
+        item_mult = stat_multipliers.get('defense', 1.0)
+
+        defense = int(global_base * tier_mult * slot_mult * item_mult)
+
+        return defense
+
     def create_equipment_from_id(self, item_id: str) -> Optional[EquipmentItem]:
         if item_id not in self.items:
             return None
 
         data = self.items[item_id]
+        tier = data.get('tier', 1)
+        item_type = data.get('type', '')
+        subtype = data.get('subtype', '')
+        stat_multipliers = data.get('statMultipliers', {})
+
+        # Old stats format (for placeholder items)
         stats = data.get('stats', {})
 
-        damage = stats.get('damage', [0, 0])
-        if isinstance(damage, list):
-            damage = tuple(damage)
-        elif isinstance(damage, (int, float)):
-            damage = (int(damage), int(damage))
-        else:
-            damage = (0, 0)
+        # Calculate damage for weapons
+        damage = (0, 0)
+        if item_type == 'weapon':
+            damage = self._calculate_weapon_damage(tier, item_type, subtype, stat_multipliers)
+        elif 'damage' in stats:
+            # Fallback for old format
+            old_damage = stats.get('damage', [0, 0])
+            if isinstance(old_damage, list):
+                damage = tuple(old_damage)
+            elif isinstance(old_damage, (int, float)):
+                damage = (int(old_damage), int(old_damage))
 
+        # Calculate defense for armor
+        defense = 0
+        json_slot = data.get('slot', 'mainHand')
+        slot_mapping = {
+            'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',
+            'feet': 'boots', 'hands': 'gauntlets',
+            'mainHand': 'mainHand', 'offHand': 'offHand',
+            'helmet': 'helmet', 'chestplate': 'chestplate',
+            'leggings': 'leggings', 'boots': 'boots',
+            'gauntlets': 'gauntlets', 'accessory': 'accessory',
+        }
+        mapped_slot = slot_mapping.get(json_slot, json_slot)
+
+        if item_type == 'armor':
+            defense = self._calculate_armor_defense(tier, mapped_slot, stat_multipliers)
+        elif 'defense' in stats:
+            defense = stats.get('defense', 0)
+
+        # Calculate durability
         durability = stats.get('durability', [100, 100])
         if isinstance(durability, list):
             dur_max = durability[1] if len(durability) > 1 else durability[0]
         else:
             dur_max = int(durability)
 
-        # Map JSON slot names to EquipmentManager slot names
-        slot_mapping = {
-            'head': 'helmet',
-            'chest': 'chestplate',
-            'legs': 'leggings',
-            'feet': 'boots',
-            'hands': 'gauntlets',
-            # These already match:
-            'mainHand': 'mainHand',
-            'offHand': 'offHand',
-            'helmet': 'helmet',
-            'chestplate': 'chestplate',
-            'leggings': 'leggings',
-            'boots': 'boots',
-            'gauntlets': 'gauntlets',
-            'accessory': 'accessory',
-        }
-
-        json_slot = data.get('slot', 'mainHand')
-        mapped_slot = slot_mapping.get(json_slot, json_slot)
-
         return EquipmentItem(
             item_id=item_id,
             name=data.get('name', item_id),
-            tier=data.get('tier', 1),
+            tier=tier,
             rarity=data.get('rarity', 'common'),
             slot=mapped_slot,
             damage=damage,
-            defense=stats.get('defense', 0),
+            defense=defense,
             durability_current=dur_max,
             durability_max=dur_max,
             attack_speed=stats.get('attackSpeed', 1.0),

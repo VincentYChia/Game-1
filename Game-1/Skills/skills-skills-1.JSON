@@ -409,7 +409,7 @@
 
       "requirements": {
         "characterLevel": 8,
-        "stats": {"LCK": 10, "DEX": 10},
+        "stats": {"LCK": 10, "AGI": 10},
         "titles": []
       }
     },
@@ -573,7 +573,7 @@
 
       "requirements": {
         "characterLevel": 9,
-        "stats": {"INT": 10, "DEX": 10},
+        "stats": {"INT": 10, "AGI": 10},
         "titles": []
       }
     },
@@ -856,7 +856,7 @@
 
       "requirements": {
         "characterLevel": 16,
-        "stats": {"STR": 20, "DEX": 15},
+        "stats": {"STR": 20, "AGI": 15},
         "titles": []
       }
     },
@@ -901,7 +901,7 @@
 
       "requirements": {
         "characterLevel": 20,
-        "stats": {"INT": 20, "DEX": 15},
+        "stats": {"INT": 20, "AGI": 15},
         "titles": []
       }
     },
@@ -1192,7 +1192,7 @@
 
       "requirements": {
         "characterLevel": 28,
-        "stats": {"STR": 30, "DEX": 25},
+        "stats": {"STR": 30, "AGI": 25},
         "titles": []
       }
     }
