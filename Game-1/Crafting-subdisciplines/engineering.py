@@ -220,7 +220,7 @@ class EngineeringMinigame:
     5. Can save and resume progress
     """
 
-    def __init__(self, recipe, tier=1, material_rarity="common"):
+    def __init__(self, recipe, tier=1, material_rarity="common", buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
         Initialize engineering minigame
 
@@ -228,10 +228,14 @@ class EngineeringMinigame:
             recipe: Recipe dict from JSON
             tier: Recipe tier (1-4)
             material_rarity: Highest material rarity (affects puzzle count)
+            buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
+            buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
         """
         self.recipe = recipe
         self.tier = tier
         self.material_rarity = material_rarity
+        self.buff_time_bonus = buff_time_bonus
+        self.buff_quality_bonus = buff_quality_bonus
 
         # Determine puzzle count based on tier and rarity
         self._setup_difficulty()
@@ -587,12 +591,14 @@ class EngineeringCrafter:
             "message": f"Device created ({input_rarity})"
         }
 
-    def create_minigame(self, recipe_id, material_rarity="common"):
+    def create_minigame(self, recipe_id, buff_time_bonus=0.0, buff_quality_bonus=0.0, material_rarity="common"):
         """
         Create an engineering minigame for this recipe
 
         Args:
             recipe_id: Recipe ID to craft
+            buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
+            buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
             material_rarity: Highest material rarity used
 
         Returns:
@@ -604,7 +610,7 @@ class EngineeringCrafter:
         recipe = self.recipes[recipe_id]
         tier = recipe.get('stationTier', 1)
 
-        return EngineeringMinigame(recipe, tier, material_rarity)
+        return EngineeringMinigame(recipe, tier, material_rarity, buff_time_bonus, buff_quality_bonus)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result, item_metadata=None):
         """
