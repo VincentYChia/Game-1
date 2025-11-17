@@ -219,13 +219,24 @@ class CombatManager:
                 if self.is_in_safe_zone(chunk_center_x, chunk_center_y):
                     continue
 
+                # Get chunk's danger level for tier spawning
+                danger_level = self.get_chunk_danger_level(chunk)
+                spawn_config = self.config.spawn_rates.get(danger_level, {})
+
                 # Spawn 1-2 enemies in this chunk
                 to_spawn = min(2, count - spawned)
                 for _ in range(to_spawn):
-                    # Spawn T1 enemy for testing
-                    enemy_def = self.enemy_db.get_random_enemy(1)
+                    # Pick tier based on chunk danger level and weights
+                    tier_weights = spawn_config.get('tierWeights', {'tier1': 1.0})
+                    tier = self._pick_weighted_tier(tier_weights)
+
+                    # Get random enemy of selected tier
+                    enemy_def = self.enemy_db.get_random_enemy(tier)
                     if not enemy_def:
-                        continue
+                        # Fallback to T1 if tier not available
+                        enemy_def = self.enemy_db.get_random_enemy(1)
+                        if not enemy_def:
+                            continue
 
                     # Random position in chunk
                     spawn_x = chunk_x * 16 + random.uniform(4, 12)
@@ -240,7 +251,7 @@ class CombatManager:
                     self.enemies[chunk_coords].append(enemy)
 
                     spawned += 1
-                    print(f"   ✓ Spawned {enemy_def.name} at ({spawn_x:.1f}, {spawn_y:.1f})")
+                    print(f"   ✓ Spawned T{tier} {enemy_def.name} at ({spawn_x:.1f}, {spawn_y:.1f})")
 
         print(f"✓ Spawned {spawned} initial enemies")
 

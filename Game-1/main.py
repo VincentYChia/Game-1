@@ -402,11 +402,74 @@ class EquipmentItem:
 
     def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict):
         """Apply an enchantment effect to this item"""
+        # Store enchantment data
         self.enchantments.append({
             'enchantment_id': enchantment_id,
             'name': enchantment_name,
             'effect': effect
         })
+
+        # Apply stat modifications based on effect type
+        effect_type = effect.get('type', '')
+        value = effect.get('value', 0)
+
+        if effect_type == 'damage_multiplier':
+            # Increase weapon damage
+            if self.damage != (0, 0):
+                min_dmg, max_dmg = self.damage
+                self.damage = (
+                    int(min_dmg * (1.0 + value)),
+                    int(max_dmg * (1.0 + value))
+                )
+                print(f"   ✨ {enchantment_name}: Damage increased by {int(value*100)}% → {self.damage}")
+
+        elif effect_type == 'damage_reduction':
+            # Increase armor defense
+            self.defense = int(self.defense * (1.0 + value))
+            print(f"   ✨ {enchantment_name}: Defense increased by {int(value*100)}% → {self.defense}")
+
+        elif effect_type == 'durability_multiplier':
+            # Increase max durability
+            old_max = self.durability_max
+            self.durability_max = int(self.durability_max * (1.0 + value))
+            # Scale current durability proportionally
+            if old_max > 0:
+                ratio = self.durability_current / old_max
+                self.durability_current = int(self.durability_max * ratio)
+            print(f"   ✨ {enchantment_name}: Durability increased by {int(value*100)}% → {self.durability_max}")
+
+        elif effect_type == 'weight_multiplier':
+            # Modify weight (negative value = lighter)
+            self.weight *= (1.0 + value)
+            print(f"   ✨ {enchantment_name}: Weight modified by {int(value*100)}% → {self.weight:.2f}")
+
+        elif effect_type in ['gathering_speed_multiplier', 'movement_speed_multiplier', 'bonus_yield_chance']:
+            # Add to bonuses dict for special effects
+            bonus_key = effect_type.replace('_multiplier', '').replace('_', '_')
+            if bonus_key not in self.bonuses:
+                self.bonuses[bonus_key] = 0
+            self.bonuses[bonus_key] += value
+            print(f"   ✨ {enchantment_name}: +{int(value*100)}% {bonus_key}")
+
+        # Special effect types (stored in bonuses for later use in combat/gathering)
+        elif effect_type in ['lifesteal', 'reflect_damage', 'health_regeneration', 'durability_regeneration']:
+            self.bonuses[effect_type] = self.bonuses.get(effect_type, 0) + value
+            print(f"   ✨ {enchantment_name}: {effect_type} +{value}")
+
+        elif effect_type in ['chain_damage', 'damage_over_time', 'knockback', 'slow']:
+            # Combat effects stored for later application
+            self.bonuses[effect_type] = value
+            print(f"   ✨ {enchantment_name}: {effect_type} effect added")
+
+        elif effect_type == 'soulbound':
+            # Special flag effect
+            self.bonuses['soulbound'] = True
+            print(f"   ✨ {enchantment_name}: Item is now soulbound")
+
+        elif effect_type == 'harvest_original_form':
+            # Special gathering effect
+            self.bonuses['harvest_original_form'] = True
+            print(f"   ✨ {enchantment_name}: Harvest in original form enabled")
 
     def _get_item_type(self) -> str:
         """Determine the item type for enchantment compatibility"""
