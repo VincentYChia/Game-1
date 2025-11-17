@@ -384,7 +384,7 @@ class CombatManager:
         if enemy_died:
             print(f"   💀 Enemy killed!")
             exp_reward = self._calculate_exp_reward(enemy)
-            self.character.leveling.gain_exp(exp_reward)
+            self.character.leveling.add_exp(exp_reward)
             print(f"   +{exp_reward} EXP")
 
             # Track combat activity
@@ -427,6 +427,9 @@ class CombatManager:
         # Apply to player
         self.character.take_damage(final_damage)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
+
+        # Reset health regen timer (damage taken)
+        self.character.time_since_last_damage_taken = 0.0
 
         # Update combat state
         self.player_last_combat_time = 0.0

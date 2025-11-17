@@ -412,8 +412,11 @@ class SmithingCrafter:
             # Failure - lose some materials (50% for now)
             recipe = self.recipes[recipe_id]
             for inp in recipe['inputs']:
+                mat_id = inp.get('materialId') or inp.get('itemId')
                 loss = inp['quantity'] // 2
-                inventory[inp['materialId']] = max(0, inventory[inp['materialId']] - loss)
+                if mat_id not in inventory:
+                    inventory[mat_id] = 0
+                inventory[mat_id] = max(0, inventory[mat_id] - loss)
 
             return {
                 "success": False,
@@ -424,7 +427,14 @@ class SmithingCrafter:
         # Success - deduct full materials
         recipe = self.recipes[recipe_id]
         for inp in recipe['inputs']:
-            inventory[inp['materialId']] -= inp['quantity']
+            mat_id = inp.get('materialId') or inp.get('itemId')
+            qty = inp['quantity']
+            if mat_id not in inventory:
+                print(f"⚠ ERROR: Material '{mat_id}' not in inventory dict!")
+                inventory[mat_id] = 0  # Add it with 0 so subtraction works
+            if inventory[mat_id] < qty:
+                print(f"⚠ WARNING: Insufficient '{mat_id}': have {inventory[mat_id]}, need {qty}")
+            inventory[mat_id] = max(0, inventory[mat_id] - qty)
 
         # Detect input rarity
         inputs = recipe.get('inputs', [])

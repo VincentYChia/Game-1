@@ -2091,32 +2091,185 @@ class ActivityTracker:
 # SKILL SYSTEM
 # ============================================================================
 @dataclass
+class SkillEffect:
+    """Represents a skill's effect"""
+    effect_type: str  # empower, quicken, fortify, etc.
+    category: str  # mining, combat, smithing, etc.
+    magnitude: str  # minor, moderate, major, extreme
+    target: str  # self, enemy, area, resource_node
+    duration: str  # instant, brief, moderate, long, extended
+    additional_effects: List[Dict] = None
+
+    def __post_init__(self):
+        if self.additional_effects is None:
+            self.additional_effects = []
+
+
+@dataclass
+class SkillCost:
+    """Represents skill costs"""
+    mana: str  # low, moderate, high, extreme
+    cooldown: str  # short, moderate, long, extreme
+
+
+@dataclass
+class SkillEvolution:
+    """Represents skill evolution data"""
+    can_evolve: bool
+    next_skill_id: Optional[str]
+    requirement: str
+
+
+@dataclass
+class SkillRequirements:
+    """Represents skill requirements"""
+    character_level: int
+    stats: Dict[str, int]
+    titles: List[str]
+
+
+@dataclass
+class SkillDefinition:
+    """Complete skill definition from JSON"""
+    skill_id: str
+    name: str
+    tier: int
+    rarity: str
+    categories: List[str]
+    description: str
+    narrative: str
+    tags: List[str]
+    effect: SkillEffect
+    cost: SkillCost
+    evolution: SkillEvolution
+    requirements: SkillRequirements
+
+
+@dataclass
 class PlayerSkill:
     skill_id: str
     level: int = 1
     experience: int = 0
+    current_cooldown: float = 0.0  # Cooldown remaining in seconds
     is_equipped: bool = False
 
-    def get_definition(self):
-        @dataclass
-        class FakeSkill:
-            name: str = "Unknown Skill"
-
-        return FakeSkill()
+    def get_definition(self) -> Optional[SkillDefinition]:
+        """Get the full definition from SkillDatabase"""
+        db = SkillDatabase.get_instance()
+        return db.skills.get(self.skill_id, None)
 
 
 class SkillManager:
     def __init__(self):
         self.known_skills: Dict[str, PlayerSkill] = {}
-        self.equipped_skills: List[str] = []
+        self.equipped_skills: List[Optional[str]] = [None] * 6  # 6 hotbar slots
+
+    def learn_skill(self, skill_id: str) -> bool:
+        """Learn a new skill"""
+        if skill_id not in self.known_skills:
+            self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
+            return True
+        return False
+
+    def equip_skill(self, skill_id: str, slot: int) -> bool:
+        """Equip a skill to a hotbar slot (0-5)"""
+        if 0 <= slot < 6 and skill_id in self.known_skills:
+            self.equipped_skills[slot] = skill_id
+            self.known_skills[skill_id].is_equipped = True
+            return True
+        return False
+
+    def unequip_skill(self, slot: int) -> bool:
+        """Unequip a skill from a hotbar slot"""
+        if 0 <= slot < 6 and self.equipped_skills[slot]:
+            skill_id = self.equipped_skills[slot]
+            self.equipped_skills[slot] = None
+            if skill_id in self.known_skills:
+                self.known_skills[skill_id].is_equipped = False
+            return True
+        return False
+
+    def update_cooldowns(self, dt: float):
+        """Update all skill cooldowns"""
+        for skill in self.known_skills.values():
+            if skill.current_cooldown > 0:
+                skill.current_cooldown = max(0, skill.current_cooldown - dt)
+
+    def use_skill(self, slot: int, character) -> tuple[bool, str]:
+        """Use a skill from hotbar slot (0-4). Returns (success, message)"""
+        if not (0 <= slot < 6):
+            return False, "Invalid slot"
+
+        skill_id = self.equipped_skills[slot]
+        if not skill_id:
+            return False, "No skill in slot"
+
+        player_skill = self.known_skills.get(skill_id)
+        if not player_skill:
+            return False, "Skill not learned"
+
+        skill_def = player_skill.get_definition()
+        if not skill_def:
+            return False, "Skill definition not found"
+
+        # Check cooldown
+        if player_skill.current_cooldown > 0:
+            return False, f"On cooldown ({player_skill.current_cooldown:.1f}s)"
+
+        # Check mana cost
+        skill_db = SkillDatabase.get_instance()
+        mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+        if character.mana < mana_cost:
+            return False, f"Not enough mana ({mana_cost} required)"
+
+        # Consume mana
+        character.mana -= mana_cost
+
+        # Start cooldown
+        cooldown_duration = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
+        player_skill.current_cooldown = cooldown_duration
+
+        # Apply skill effect (basic implementation)
+        self._apply_skill_effect(skill_def, character)
+
+        return True, f"Used {skill_def.name}!"
+
+    def _apply_skill_effect(self, skill_def, character):
+        """Apply the skill's effect (simplified implementation)"""
+        effect = skill_def.effect
+
+        # For now, just print what the skill would do
+        # In a full implementation, this would modify stats, apply buffs, etc.
+        print(f"⚡ {skill_def.name}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
+
+        # Example implementations for common effects:
+        if effect.effect_type == "restore" and effect.category == "defense":
+            # Healing skill
+            if effect.magnitude == "moderate":
+                heal_amount = 50
+            elif effect.magnitude == "major":
+                heal_amount = 100
+            elif effect.magnitude == "extreme":
+                heal_amount = 200
+            else:
+                heal_amount = 25
+
+            character.health = min(character.max_health, character.health + heal_amount)
+            print(f"   Restored {heal_amount} HP")
+
+        # Add more effect implementations as needed
 
 
 class SkillDatabase:
     _instance = None
 
     def __init__(self):
-        self.skills = {}
+        self.skills: Dict[str, SkillDefinition] = {}
         self.loaded = False
+        # Translation table for text values
+        self.mana_costs = {"low": 30, "moderate": 60, "high": 100, "extreme": 150}
+        self.cooldowns = {"short": 120, "moderate": 300, "long": 600, "extreme": 1200}
+        self.durations = {"instant": 0, "brief": 15, "moderate": 30, "long": 60, "extended": 120}
 
     @classmethod
     def get_instance(cls):
@@ -2125,7 +2278,84 @@ class SkillDatabase:
         return cls._instance
 
     def load_from_file(self, filepath: str = ""):
-        self.loaded = True
+        """Load skills from JSON file"""
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            for skill_data in data.get('skills', []):
+                # Parse effect
+                effect_data = skill_data.get('effect', {})
+                effect = SkillEffect(
+                    effect_type=effect_data.get('type', ''),
+                    category=effect_data.get('category', ''),
+                    magnitude=effect_data.get('magnitude', ''),
+                    target=effect_data.get('target', 'self'),
+                    duration=effect_data.get('duration', 'instant'),
+                    additional_effects=effect_data.get('additionalEffects', [])
+                )
+
+                # Parse cost
+                cost_data = skill_data.get('cost', {})
+                cost = SkillCost(
+                    mana=cost_data.get('mana', 'moderate'),
+                    cooldown=cost_data.get('cooldown', 'moderate')
+                )
+
+                # Parse evolution
+                evo_data = skill_data.get('evolution', {})
+                evolution = SkillEvolution(
+                    can_evolve=evo_data.get('canEvolve', False),
+                    next_skill_id=evo_data.get('nextSkillId'),
+                    requirement=evo_data.get('requirement', '')
+                )
+
+                # Parse requirements
+                req_data = skill_data.get('requirements', {})
+                requirements = SkillRequirements(
+                    character_level=req_data.get('characterLevel', 1),
+                    stats=req_data.get('stats', {}),
+                    titles=req_data.get('titles', [])
+                )
+
+                # Create skill definition
+                skill = SkillDefinition(
+                    skill_id=skill_data.get('skillId', ''),
+                    name=skill_data.get('name', ''),
+                    tier=skill_data.get('tier', 1),
+                    rarity=skill_data.get('rarity', 'common'),
+                    categories=skill_data.get('categories', []),
+                    description=skill_data.get('description', ''),
+                    narrative=skill_data.get('narrative', ''),
+                    tags=skill_data.get('tags', []),
+                    effect=effect,
+                    cost=cost,
+                    evolution=evolution,
+                    requirements=requirements
+                )
+
+                self.skills[skill.skill_id] = skill
+
+            self.loaded = True
+            print(f"✓ Loaded {len(self.skills)} skills from {filepath}")
+            return True
+
+        except Exception as e:
+            print(f"⚠ Error loading skills from {filepath}: {e}")
+            self.loaded = False
+            return False
+
+    def get_mana_cost(self, cost_text: str) -> int:
+        """Convert text mana cost to numeric value"""
+        return self.mana_costs.get(cost_text, 60)
+
+    def get_cooldown_seconds(self, cooldown_text: str) -> float:
+        """Convert text cooldown to seconds"""
+        return self.cooldowns.get(cooldown_text, 300)
+
+    def get_duration_seconds(self, duration_text: str) -> float:
+        """Convert text duration to seconds"""
+        return self.durations.get(duration_text, 0)
 
 
 # ============================================================================
@@ -2141,34 +2371,21 @@ class ItemStack:
     crafted_stats: Optional[Dict[str, Any]] = None  # Stats from minigame crafting with rarity modifiers
 
     def __post_init__(self):
-        print(f"      📦 ItemStack.__post_init__ called for '{self.item_id}'")
-        print(f"         - quantity: {self.quantity}")
-        print(f"         - max_stack: {self.max_stack}")
-        print(f"         - equipment_data before: {self.equipment_data}")
-
         mat_db = MaterialDatabase.get_instance()
         if mat_db.loaded:
             mat = mat_db.get_material(self.item_id)
             if mat:
                 self.max_stack = mat.max_stack
-                print(f"         - Updated max_stack from material: {self.max_stack}")
 
         # Equipment items don't stack
         equip_db = EquipmentDatabase.get_instance()
         is_equip = equip_db.is_equipment(self.item_id)
-        print(f"         - is_equipment: {is_equip}")
 
         if is_equip:
             self.max_stack = 1
             # Create equipment instance if not already set
             if self.equipment_data is None:
-                print(f"         - equipment_data is None, creating new instance...")
                 self.equipment_data = equip_db.create_equipment_from_id(self.item_id)
-                print(f"         - Created: {self.equipment_data}")
-            else:
-                print(f"         - equipment_data already set: {self.equipment_data.name}")
-
-        print(f"         - equipment_data after: {self.equipment_data}")
 
     def can_add(self, amount: int) -> bool:
         return self.quantity + amount <= self.max_stack
@@ -2206,51 +2423,31 @@ class Inventory:
         self.dragging_from_equipment: bool = False  # Track if dragging from equipment slot
 
     def add_item(self, item_id: str, quantity: int, equipment_instance: Optional['EquipmentItem'] = None) -> bool:
-        print(f"\n   🎒 ADD_ITEM called: item_id='{item_id}', quantity={quantity}, equipment_instance={equipment_instance}")
-
         remaining = quantity
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
         # Equipment doesn't stack
         is_equip = equip_db.is_equipment(item_id)
-        print(f"   🔍 is_equipment check: {is_equip}")
 
         if is_equip:
-            print(f"   ⚙️ Processing as equipment (non-stackable)")
             for i in range(quantity):
                 empty = self.get_empty_slot()
-                print(f"   📍 Empty slot found: {empty}")
                 if empty is None:
-                    print(f"   ❌ No empty slot available!")
                     return False
                 # Use provided equipment instance or create new one
-                print(f"   🔧 equipment_instance provided: {equipment_instance is not None}")
                 equip_data = equipment_instance if equipment_instance else equip_db.create_equipment_from_id(item_id)
-                print(f"   🔧 equip_data created: {equip_data}")
-                if equip_data:
-                    print(f"      - name: {equip_data.name}")
-                    print(f"      - tier: {equip_data.tier}")
-                    print(f"      - item_id: {equip_data.item_id}")
-                else:
-                    print(f"   ❌ WARNING: equip_data is None!")
+                if not equip_data:
+                    print(f"WARNING: Could not create equipment data for {item_id}")
+                    return False
 
                 stack = ItemStack(item_id, 1, 1, equip_data)
-                print(f"   📦 ItemStack created: {stack}")
-                print(f"      - item_id: {stack.item_id}")
-                print(f"      - quantity: {stack.quantity}")
-                print(f"      - equipment_data: {stack.equipment_data}")
-
                 self.slots[empty] = stack
-                print(f"   ✅ Added to slot {empty}")
             return True
 
         # Normal materials can stack
-        print(f"   📚 Processing as material (stackable)")
         mat = mat_db.get_material(item_id)
-        print(f"   📚 Material lookup: {mat}")
         max_stack = mat.max_stack if mat else 99
-        print(f"   📚 Max stack size: {max_stack}")
 
         for slot in self.slots:
             if slot and slot.item_id == item_id and remaining > 0:
@@ -2259,11 +2456,9 @@ class Inventory:
         while remaining > 0:
             empty = self.get_empty_slot()
             if empty is None:
-                print(f"   ❌ No empty slot available!")
                 return False
             stack_size = min(remaining, max_stack)
             self.slots[empty] = ItemStack(item_id, stack_size, max_stack)
-            print(f"   ✅ Added {stack_size} to slot {empty}")
             remaining -= stack_size
         return True
 
@@ -2405,11 +2600,18 @@ class Character:
         self.crafting_ui_open = False
         self.stats_ui_open = False
         self.equipment_ui_open = False
+        self.skills_ui_open = False
         self.class_selection_open = False
 
         # Combat
         self.attack_cooldown = 0.0
         self.last_attacked_enemy = None
+
+        # Health regeneration tracking
+        self.time_since_last_damage_taken = 0.0
+        self.time_since_last_damage_dealt = 0.0
+        self.health_regen_threshold = 5.0  # 5 seconds
+        self.health_regen_rate = 5.0  # 5 HP per second
 
         self._give_starting_tools()
         if Config.DEBUG_INFINITE_RESOURCES:
@@ -2530,6 +2732,9 @@ class Character:
 
         self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
 
+        # Reset damage dealt timer (harvesting counts as dealing damage)
+        self.time_since_last_damage_dealt = 0.0
+
         loot = None
         if depleted:
             loot = resource.get_loot()
@@ -2588,8 +2793,23 @@ class Character:
         self.active_station = None
         self.crafting_ui_open = False
 
+    def update_health_regen(self, dt: float):
+        """Update health regeneration - 5 HP/sec after 5 seconds of no combat"""
+        self.time_since_last_damage_taken += dt
+        self.time_since_last_damage_dealt += dt
+
+        # Check if we should regenerate
+        if (self.time_since_last_damage_taken >= self.health_regen_threshold and
+            self.time_since_last_damage_dealt >= self.health_regen_threshold):
+            if self.health < self.max_health:
+                regen_amount = self.health_regen_rate * dt
+                self.health = min(self.max_health, self.health + regen_amount)
+
     def toggle_stats_ui(self):
         self.stats_ui_open = not self.stats_ui_open
+
+    def toggle_skills_ui(self):
+        self.skills_ui_open = not self.skills_ui_open
 
     def toggle_equipment_ui(self):
         self.equipment_ui_open = not self.equipment_ui_open
@@ -3564,9 +3784,12 @@ class Renderer:
             "WASD - Move",
             "CLICK - Harvest/Interact",
             "TAB - Switch tool",
+            "1-5 - Use skills",
             "C - Stats",
             "E - Equipment",
+            "K - Skills menu",
             "F1 - Debug Mode",
+            "F2/F3/F4 - Debug Skills/Titles/Stats",
             "ESC - Close/Quit"
         ]
         for ctrl in controls:
@@ -3590,6 +3813,256 @@ class Renderer:
         pygame.draw.rect(self.screen, Config.COLOR_TEXT, (x, y, w, h), 2)
         text = self.small_font.render(f"MP: {int(char.mana)}/{int(char.max_mana)}", True, Config.COLOR_TEXT)
         self.screen.blit(text, text.get_rect(center=(x + w // 2, y + h // 2)))
+
+    def render_skill_hotbar(self, character: Character):
+        """Render skill hotbar at bottom center of screen"""
+        slot_size = 60
+        slot_spacing = 10
+        num_slots = 5
+        total_width = num_slots * slot_size + (num_slots - 1) * slot_spacing
+
+        # Position at bottom center
+        start_x = (Config.VIEWPORT_WIDTH - total_width) // 2
+        start_y = Config.VIEWPORT_HEIGHT - slot_size - 20
+
+        skill_db = SkillDatabase.get_instance()
+        hovered_skill = None
+        hovered_slot_rect = None
+
+        for i in range(num_slots):
+            x = start_x + i * (slot_size + slot_spacing)
+            y = start_y
+
+            # Slot background
+            slot_rect = pygame.Rect(x, y, slot_size, slot_size)
+            pygame.draw.rect(self.screen, (30, 30, 40), slot_rect)
+            pygame.draw.rect(self.screen, (100, 100, 120), slot_rect, 2)
+
+            # Key number
+            key_text = self.small_font.render(str(i + 1), True, (150, 150, 150))
+            self.screen.blit(key_text, (x + 4, y + 4))
+
+            # Get equipped skill in this slot
+            skill_id = character.skills.equipped_skills[i]
+            if skill_id:
+                player_skill = character.skills.known_skills.get(skill_id)
+                if player_skill:
+                    skill_def = player_skill.get_definition()
+                    if skill_def:
+                        # Check hover
+                        mouse_pos = pygame.mouse.get_pos()
+                        if slot_rect.collidepoint(mouse_pos):
+                            hovered_skill = (skill_def, player_skill)
+                            hovered_slot_rect = slot_rect
+
+                        # Skill name (abbreviated)
+                        name_parts = skill_def.name.split()
+                        short_name = "".join(p[0] for p in name_parts[:2])  # First letters
+                        name_surf = self.font.render(short_name, True, (200, 200, 255))
+                        name_rect = name_surf.get_rect(center=(x + slot_size // 2, y + slot_size // 2 - 5))
+                        self.screen.blit(name_surf, name_rect)
+
+                        # Cooldown overlay
+                        if player_skill.current_cooldown > 0:
+                            # Dark overlay
+                            overlay = pygame.Surface((slot_size, slot_size), pygame.SRCALPHA)
+                            overlay.fill((0, 0, 0, 180))
+                            self.screen.blit(overlay, (x, y))
+
+                            # Cooldown timer
+                            cd_text = self.small_font.render(f"{player_skill.current_cooldown:.1f}s", True, (255, 100, 100))
+                            cd_rect = cd_text.get_rect(center=(x + slot_size // 2, y + slot_size // 2))
+                            self.screen.blit(cd_text, cd_rect)
+                        else:
+                            # Mana cost
+                            mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+                            cost_color = (100, 200, 255) if character.mana >= mana_cost else (255, 100, 100)
+                            cost_text = self.tiny_font.render(f"{mana_cost}MP", True, cost_color)
+                            self.screen.blit(cost_text, (x + 4, y + slot_size - 14))
+            else:
+                # Empty slot
+                empty_text = self.tiny_font.render("Empty", True, (80, 80, 80))
+                empty_rect = empty_text.get_rect(center=(x + slot_size // 2, y + slot_size // 2))
+                self.screen.blit(empty_text, empty_rect)
+
+        # Render tooltip for hovered skill
+        if hovered_skill:
+            self._render_skill_tooltip(hovered_skill[0], hovered_skill[1], hovered_slot_rect, character)
+
+    def _render_skill_tooltip(self, skill_def, player_skill, slot_rect, character):
+        """Render tooltip for a skill"""
+        skill_db = SkillDatabase.get_instance()
+
+        # Tooltip dimensions
+        tooltip_width = 350
+        tooltip_height = 200
+        padding = 10
+
+        # Position above the slot
+        tooltip_x = slot_rect.centerx - tooltip_width // 2
+        tooltip_y = slot_rect.y - tooltip_height - 10
+
+        # Keep on screen
+        tooltip_x = max(10, min(tooltip_x, Config.VIEWPORT_WIDTH - tooltip_width - 10))
+        tooltip_y = max(10, tooltip_y)
+
+        # Background
+        surf = pygame.Surface((tooltip_width, tooltip_height), pygame.SRCALPHA)
+        surf.fill((25, 25, 35, 250))
+        pygame.draw.rect(surf, (100, 150, 200), surf.get_rect(), 2)
+
+        y = padding
+
+        # Skill name
+        name_surf = self.font.render(skill_def.name, True, (200, 220, 255))
+        surf.blit(name_surf, (padding, y))
+        y += 25
+
+        # Tier and rarity
+        tier_text = f"Tier {skill_def.tier} - {skill_def.rarity.upper()}"
+        tier_color = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}.get(skill_def.tier, (150, 150, 150))
+        surf.blit(self.small_font.render(tier_text, True, tier_color), (padding, y))
+        y += 20
+
+        # Cost and cooldown
+        mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+        cooldown = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
+        cost_text = f"Cost: {mana_cost} MP  |  Cooldown: {cooldown}s"
+        surf.blit(self.small_font.render(cost_text, True, (150, 200, 255)), (padding, y))
+        y += 25
+
+        # Effect
+        effect_text = f"{skill_def.effect.effect_type.capitalize()} - {skill_def.effect.category} ({skill_def.effect.magnitude})"
+        surf.blit(self.small_font.render(effect_text, True, (200, 200, 100)), (padding, y))
+        y += 20
+
+        # Description (word-wrapped)
+        desc_words = skill_def.description.split()
+        line = ""
+        for word in desc_words:
+            test_line = line + word + " "
+            if self.tiny_font.size(test_line)[0] > tooltip_width - 2 * padding:
+                surf.blit(self.tiny_font.render(line, True, (180, 180, 180)), (padding, y))
+                y += 16
+                line = word + " "
+            else:
+                line = test_line
+        if line:
+            surf.blit(self.tiny_font.render(line, True, (180, 180, 180)), (padding, y))
+
+        self.screen.blit(surf, (tooltip_x, tooltip_y))
+
+    def render_skills_menu_ui(self, character: Character, mouse_pos: Tuple[int, int]):
+        """Render skills menu for managing equipped skills"""
+        if not character.skills_ui_open:
+            return None
+
+        skill_db = SkillDatabase.get_instance()
+        if not skill_db.loaded:
+            return None
+
+        ww, wh = 1000, 700
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = 50
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 245))
+
+        # Title
+        surf.blit(self.font.render("SKILLS MANAGEMENT", True, (150, 200, 255)), (ww // 2 - 120, 20))
+        surf.blit(self.small_font.render("[ESC] Close | Click skill to see details | Right-click hotbar to unequip", True, (180, 180, 180)),
+                  (ww // 2 - 300, 50))
+
+        # Hotbar section (top)
+        y_pos = 90
+        surf.blit(self.small_font.render("SKILL HOTBAR (1-5):", True, (200, 200, 200)), (20, y_pos))
+        y_pos += 30
+
+        hotbar_rects = []
+        slot_size = 70
+        for i in range(5):
+            x = 30 + i * (slot_size + 10)
+            slot_rect = pygame.Rect(x, y_pos, slot_size, slot_size)
+
+            # Get skill in this slot
+            skill_id = character.skills.equipped_skills[i]
+            player_skill = character.skills.known_skills.get(skill_id) if skill_id else None
+            skill_def = player_skill.get_definition() if player_skill else None
+
+            # Slot background
+            bg_color = (50, 70, 90) if skill_def else (40, 40, 50)
+            pygame.draw.rect(surf, bg_color, slot_rect)
+            pygame.draw.rect(surf, (100, 150, 200), slot_rect, 2)
+
+            # Slot number
+            num_surf = self.small_font.render(str(i + 1), True, (150, 150, 150))
+            surf.blit(num_surf, (x + 4, y_pos + 4))
+
+            if skill_def:
+                # Skill abbreviation
+                name_parts = skill_def.name.split()
+                short_name = "".join(p[0] for p in name_parts[:2])
+                name_surf = self.font.render(short_name, True, (200, 220, 255))
+                name_rect = name_surf.get_rect(center=(x + slot_size // 2, y_pos + slot_size // 2))
+                surf.blit(name_surf, name_rect)
+
+            hotbar_rects.append((slot_rect, i, skill_id))
+
+        y_pos += slot_size + 30
+
+        # Learned skills section
+        surf.blit(self.small_font.render(f"LEARNED SKILLS ({len(character.skills.known_skills)}):", True, (200, 200, 200)), (20, y_pos))
+        y_pos += 30
+
+        skill_rects = []
+        max_visible = 10
+        for idx, (skill_id, player_skill) in enumerate(list(character.skills.known_skills.items())[:max_visible]):
+            skill_def = player_skill.get_definition()
+            if not skill_def:
+                continue
+
+            # Check if equipped
+            equipped_slot = None
+            for slot_idx, equipped_id in enumerate(character.skills.equipped_skills):
+                if equipped_id == skill_id:
+                    equipped_slot = slot_idx
+                    break
+
+            skill_rect = pygame.Rect(20, y_pos, ww - 40, 50)
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+            is_hovered = skill_rect.collidepoint(rx, ry)
+
+            # Background
+            bg_color = (70, 90, 60) if equipped_slot is not None else (50, 50, 70)
+            if is_hovered:
+                bg_color = tuple(min(255, c + 20) for c in bg_color)
+            pygame.draw.rect(surf, bg_color, skill_rect)
+            pygame.draw.rect(surf, (120, 140, 180) if is_hovered else (80, 80, 100), skill_rect, 2)
+
+            # Skill name
+            surf.blit(self.small_font.render(skill_def.name, True, (255, 255, 255)), (30, y_pos + 5))
+
+            # Tier and rarity
+            tier_color = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}.get(skill_def.tier, (150, 150, 150))
+            surf.blit(self.tiny_font.render(f"T{skill_def.tier} {skill_def.rarity.upper()}", True, tier_color), (30, y_pos + 25))
+
+            # Mana cost and cooldown
+            mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+            cooldown = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
+            surf.blit(self.tiny_font.render(f"{mana_cost}MP  |  {cooldown}s CD", True, (150, 200, 255)), (200, y_pos + 25))
+
+            # Equipped indicator
+            if equipped_slot is not None:
+                surf.blit(self.small_font.render(f"[Slot {equipped_slot + 1}]", True, (100, 255, 100)), (ww - 150, y_pos + 15))
+            else:
+                surf.blit(self.tiny_font.render("Click to equip", True, (120, 120, 150)), (ww - 150, y_pos + 18))
+
+            skill_rects.append((skill_rect, skill_id, player_skill, skill_def))
+            y_pos += 55
+
+        self.screen.blit(surf, (wx, wy))
+        window_rect = pygame.Rect(wx, wy, ww, wh)
+        return window_rect, hotbar_rects, skill_rects
 
     def render_notifications(self, notifications: List[Notification]):
         y = 50
@@ -3980,8 +4453,8 @@ class Renderer:
             for rect, grid_pos in placement_grid_rects:
                 abs_rect = rect.move(wx, wy)  # Offset by window position
                 grid_rects_absolute.append((abs_rect, grid_pos))
-        # Return visible recipes (affected by scroll offset)
-        return_recipes = visible_recipes if recipes else []
+        # Return full recipe list (not just visible) so scroll calculation works
+        return_recipes = recipes if recipes else []
         return pygame.Rect(wx, wy, ww, wh), return_recipes, grid_rects_absolute
 
     def render_equipment_ui(self, character: Character, mouse_pos: Tuple[int, int]):
@@ -4210,8 +4683,8 @@ class Renderer:
             y_pos += slot_size + 15
 
         self.screen.blit(surf, (wx, wy))
-        self.enchantment_selection_rect = pygame.Rect(wx, wy, ww, wh)
-        return item_rects
+        window_rect = pygame.Rect(wx, wy, ww, wh)
+        return window_rect, item_rects
 
     def render_class_selection_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.class_selection_open:
@@ -4614,6 +5087,7 @@ class GameEngine:
 
         TitleDatabase.get_instance().load_from_file("progression/titles-1.JSON")
         ClassDatabase.get_instance().load_from_file("progression/classes-1.JSON")
+        SkillDatabase.get_instance().load_from_file("Skills/skills-skills-1.JSON")
 
         # Initialize crafting subdisciplines (minigames)
         if CRAFTING_MODULES_LOADED:
@@ -4649,14 +5123,6 @@ class GameEngine:
         )
         # Spawn initial enemies for testing
         self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
-
-        # Initialize crafting systems
-        print("Loading crafting systems...")
-        self.smithing_crafter = SmithingCrafter()
-        self.alchemy_crafter = AlchemyCrafter()
-        self.enchanting_crafter = EnchantingCrafter()
-        self.engineering_crafter = EngineeringCrafter()
-        self.refining_crafter = RefiningCrafter()
 
         # Minigame state
         self.active_minigame = None  # Current minigame instance
@@ -4697,6 +5163,9 @@ class GameEngine:
         self.stats_buttons = []
         self.equipment_window_rect = None
         self.equipment_rects = {}
+        self.skills_window_rect = None
+        self.skills_hotbar_rects = []
+        self.skills_list_rects = []
         self.class_selection_rect = None
         self.class_buttons = []
 
@@ -4705,6 +5174,7 @@ class GameEngine:
         self.enchantment_recipe = None
         self.enchantment_compatible_items = []
         self.enchantment_selection_rect = None
+        self.enchantment_item_rects = None  # Item rects for click detection
 
         # Minigame state
         self.active_minigame = None  # Current minigame instance (SmithingMinigame, etc.)
@@ -4751,11 +5221,11 @@ class GameEngine:
                         self.active_minigame.handle_fan()
                     elif self.minigame_type == 'alchemy':
                         if event.key == pygame.K_c:
-                            self.active_minigame.chain_ingredient()
+                            self.active_minigame.chain()
                         elif event.key == pygame.K_s:
                             self.active_minigame.stabilize()
                     elif self.minigame_type == 'refining' and event.key == pygame.K_SPACE:
-                        self.active_minigame.align_cylinder()
+                        self.active_minigame.handle_attempt()
                     # engineering uses button clicks, no keyboard input needed
                     # Skip other key handling when minigame is active
                     continue
@@ -4770,6 +5240,8 @@ class GameEngine:
                         self.character.toggle_stats_ui()
                     elif self.character.equipment_ui_open:
                         self.character.toggle_equipment_ui()
+                    elif self.character.skills_ui_open:
+                        self.character.toggle_skills_ui()
                     elif self.character.class_selection_open:
                         pass
                     else:
@@ -4782,6 +5254,40 @@ class GameEngine:
                     self.character.toggle_stats_ui()
                 elif event.key == pygame.K_e:
                     self.character.toggle_equipment_ui()
+                elif event.key == pygame.K_k:
+                    self.character.toggle_skills_ui()
+
+                # Skill hotbar (keys 1-5)
+                elif event.key == pygame.K_1:
+                    success, msg = self.character.skills.use_skill(0, self.character)
+                    if success:
+                        self.add_notification(msg, (150, 255, 150))
+                    else:
+                        self.add_notification(msg, (255, 150, 150))
+                elif event.key == pygame.K_2:
+                    success, msg = self.character.skills.use_skill(1, self.character)
+                    if success:
+                        self.add_notification(msg, (150, 255, 150))
+                    else:
+                        self.add_notification(msg, (255, 150, 150))
+                elif event.key == pygame.K_3:
+                    success, msg = self.character.skills.use_skill(2, self.character)
+                    if success:
+                        self.add_notification(msg, (150, 255, 150))
+                    else:
+                        self.add_notification(msg, (255, 150, 150))
+                elif event.key == pygame.K_4:
+                    success, msg = self.character.skills.use_skill(3, self.character)
+                    if success:
+                        self.add_notification(msg, (150, 255, 150))
+                    else:
+                        self.add_notification(msg, (255, 150, 150))
+                elif event.key == pygame.K_5:
+                    success, msg = self.character.skills.use_skill(4, self.character)
+                    if success:
+                        self.add_notification(msg, (150, 255, 150))
+                    else:
+                        self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_F1:
                     Config.DEBUG_INFINITE_RESOURCES = not Config.DEBUG_INFINITE_RESOURCES
                     status = "ENABLED" if Config.DEBUG_INFINITE_RESOURCES else "DISABLED"
@@ -4800,6 +5306,61 @@ class GameEngine:
 
                     self.add_notification(f"Debug Mode {status}", (255, 100, 255))
                     print(f"⚠ Debug Mode {status}")
+
+                elif event.key == pygame.K_F2:
+                    # Debug: Learn all skills from JSON
+                    skill_db = SkillDatabase.get_instance()
+                    if skill_db.loaded and skill_db.skills:
+                        skills_learned = 0
+                        for skill_id in skill_db.skills.keys():
+                            if self.character.skills.learn_skill(skill_id):
+                                skills_learned += 1
+
+                        # Equip first 6 skills to hotbar
+                        skills_equipped = 0
+                        for i, skill_id in enumerate(list(skill_db.skills.keys())[:6]):
+                            if self.character.skills.equip_skill(skill_id, i):
+                                skills_equipped += 1
+
+                        print(f"🔧 DEBUG: Learned {skills_learned} skills, equipped {skills_equipped} to hotbar")
+                        self.add_notification(f"Debug: Learned {skills_learned} skills!", (255, 215, 0))
+                    else:
+                        print(f"⚠ WARNING: Skill database not loaded or empty!")
+                        self.add_notification("Skill DB not loaded!", (255, 100, 100))
+
+                elif event.key == pygame.K_F3:
+                    # Debug: Grant all titles from JSON
+                    title_db = TitleDatabase.get_instance()
+                    if title_db.loaded and title_db.titles:
+                        titles_granted = 0
+                        for title in title_db.titles.values():
+                            if title not in self.character.titles.earned_titles:
+                                self.character.titles.earned_titles.append(title)
+                                titles_granted += 1
+
+                        print(f"🔧 DEBUG: Granted {titles_granted} titles!")
+                        self.add_notification(f"Debug: Granted {titles_granted} titles!", (255, 215, 0))
+                    else:
+                        print(f"⚠ WARNING: Title database not loaded or empty!")
+                        self.add_notification("Title DB not loaded!", (255, 100, 100))
+
+                elif event.key == pygame.K_F4:
+                    # Debug: Max out level and stats
+                    self.character.leveling.level = 30
+                    self.character.leveling.unallocated_stat_points = 30
+                    self.character.stats.strength = 30
+                    self.character.stats.defense = 30
+                    self.character.stats.vitality = 30
+                    self.character.stats.luck = 30
+                    self.character.stats.agility = 30
+                    self.character.stats.intelligence = 30
+                    self.character.recalculate_stats()
+
+                    print(f"🔧 DEBUG: Max level & stats!")
+                    print(f"   • Level: 30")
+                    print(f"   • All stats: 30")
+                    print(f"   • Unallocated points: 30")
+                    self.add_notification("Debug: Max level & stats!", (255, 215, 0))
 
                 elif event.key == pygame.K_F5:
                     # Run automated test suite
@@ -4842,10 +5403,10 @@ class GameEngine:
                         self.active_minigame.handle_hammer()
                     elif self.minigame_type == 'alchemy':
                         # Chain button (minigame_button_rect is chain button)
-                        self.active_minigame.chain_ingredient()
+                        self.active_minigame.chain()
                     elif self.minigame_type == 'engineering':
-                        # Complete puzzle button
-                        self.active_minigame.complete_puzzle()
+                        # Check puzzle solution button
+                        self.active_minigame.check_current_puzzle()
                     return
             # Check secondary button (alchemy stabilize)
             if hasattr(self, 'minigame_button_rect2') and self.minigame_button_rect2:
@@ -4866,6 +5427,16 @@ class GameEngine:
         if self.character.class_selection_open and self.class_selection_rect:
             if self.class_selection_rect.collidepoint(mouse_pos):
                 self.handle_class_selection_click(mouse_pos)
+                return
+
+        # Skills UI
+        if self.character.skills_ui_open and self.skills_window_rect:
+            if self.skills_window_rect.collidepoint(mouse_pos):
+                self.handle_skills_menu_click(mouse_pos)
+                return
+            # Click outside skills UI - close it
+            else:
+                self.character.toggle_skills_ui()
                 return
 
         # Stats UI
@@ -5017,18 +5588,54 @@ class GameEngine:
 
     def handle_enchantment_selection_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on the enchantment selection UI"""
+        print(f"🔍 Enchantment click handler called at {mouse_pos}")
+
         if not self.enchantment_item_rects:
+            print(f"⚠️ No item rects available!")
             return
 
-        for item_rect, source_type, source_id, item_stack, equipment in self.enchantment_item_rects:
-            # Check if click is within this item's rect (already relative to window)
-            wx, wy = self.enchantment_selection_rect.x, self.enchantment_selection_rect.y
-            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+        print(f"📋 Checking {len(self.enchantment_item_rects)} item rects")
+        wx, wy = self.enchantment_selection_rect.x, self.enchantment_selection_rect.y
+        rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+        print(f"   Window at ({wx}, {wy}), relative click at ({rx}, {ry})")
+
+        for idx, (item_rect, source_type, source_id, item_stack, equipment) in enumerate(self.enchantment_item_rects):
+            print(f"   Rect {idx}: {item_rect}, contains? {item_rect.collidepoint(rx, ry)}")
 
             if item_rect.collidepoint(rx, ry):
                 print(f"✨ Selected {equipment.name} for enchantment")
                 self._complete_enchantment_application(source_type, source_id, item_stack, equipment)
                 break
+
+    def handle_skills_menu_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicks on the skills menu"""
+        wx, wy = self.skills_window_rect.x, self.skills_window_rect.y
+        rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+
+        # Check hotbar slots (right-click to unequip)
+        for slot_rect, slot_idx, skill_id in self.skills_hotbar_rects:
+            if slot_rect.collidepoint(rx, ry):
+                if skill_id:  # Right-click to unequip
+                    self.character.skills.unequip_skill(slot_idx)
+                    self.add_notification(f"Unequipped from slot {slot_idx + 1}", (255, 200, 100))
+                return
+
+        # Check skill list (click to equip)
+        for skill_rect, skill_id, player_skill, skill_def in self.skills_list_rects:
+            if skill_rect.collidepoint(rx, ry):
+                # Find first empty slot
+                empty_slot = None
+                for i in range(5):
+                    if not self.character.skills.equipped_skills[i]:
+                        empty_slot = i
+                        break
+
+                if empty_slot is not None:
+                    self.character.skills.equip_skill(skill_id, empty_slot)
+                    self.add_notification(f"Equipped {skill_def.name} to slot {empty_slot + 1}", (100, 255, 150))
+                else:
+                    self.add_notification("All hotbar slots full! Unequip a skill first.", (255, 150, 100))
+                return
 
     def handle_class_selection_click(self, mouse_pos: Tuple[int, int]):
         if not self.class_buttons:
@@ -6033,12 +6640,12 @@ class GameEngine:
         # From inventory
         for slot_idx, stack in enumerate(self.character.inventory.slots):
             if stack and equip_db.is_equipment(stack.item_id):
-                equipment = equip_db.create_equipment_from_id(stack.item_id)
+                equipment = stack.get_equipment()  # Use actual equipment instance from stack
                 if equipment:
                     compatible_items.append(('inventory', slot_idx, stack, equipment))
 
         # From equipped slots
-        for slot_name, equipped_item in self.character.equipment.items():
+        for slot_name, equipped_item in self.character.equipment.slots.items():
             if equipped_item:
                 compatible_items.append(('equipped', slot_name, None, equipped_item))
 
@@ -6109,9 +6716,12 @@ class GameEngine:
             self.world.update(dt)
             self.combat_manager.update(dt)
             self.character.update_attack_cooldown(dt)
+            self.character.update_health_regen(dt)
+            self.character.skills.update_cooldowns(dt)
         else:
-            # Update active minigame
-            self.active_minigame.update(dt)
+            # Update active minigame (skip for engineering - it's turn-based)
+            if self.minigame_type != 'engineering':
+                self.active_minigame.update(dt)
 
             # Check if minigame completed
             if hasattr(self.active_minigame, 'result') and self.active_minigame.result is not None:
@@ -6125,6 +6735,9 @@ class GameEngine:
         self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
         self.renderer.render_ui(self.character, self.mouse_pos)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
+
+        # Render skill hotbar at bottom center (over viewport)
+        self.renderer.render_skill_hotbar(self.character)
 
         self.renderer.render_notifications(self.notifications)
 
@@ -6154,6 +6767,15 @@ class GameEngine:
                 self.stats_window_rect = None
                 self.stats_buttons = []
 
+            if self.character.skills_ui_open:
+                result = self.renderer.render_skills_menu_ui(self.character, self.mouse_pos)
+                if result:
+                    self.skills_window_rect, self.skills_hotbar_rects, self.skills_list_rects = result
+            else:
+                self.skills_window_rect = None
+                self.skills_hotbar_rects = []
+                self.skills_list_rects = []
+
             if self.character.equipment_ui_open:
                 result = self.renderer.render_equipment_ui(self.character, self.mouse_pos)
                 if result:
@@ -6164,9 +6786,12 @@ class GameEngine:
 
             # Enchantment selection UI (rendered on top of everything)
             if self.enchantment_selection_active:
-                self.enchantment_item_rects = self.renderer.render_enchantment_selection_ui(
+                result = self.renderer.render_enchantment_selection_ui(
                     self.mouse_pos, self.enchantment_recipe, self.enchantment_compatible_items)
+                if result:
+                    self.enchantment_selection_rect, self.enchantment_item_rects = result
             else:
+                self.enchantment_selection_rect = None
                 self.enchantment_item_rects = None
 
         # Minigame rendering (rendered on top of EVERYTHING)
@@ -6217,6 +6842,13 @@ class GameEngine:
         for slot in self.character.inventory.slots:
             if slot:
                 inv_dict[slot.item_id] = inv_dict.get(slot.item_id, 0) + slot.quantity
+
+        # Add recipe inputs to inv_dict with 0 if missing (defensive programming)
+        for inp in recipe.inputs:
+            mat_id = inp.get('materialId') or inp.get('itemId')
+            if mat_id and mat_id not in inv_dict:
+                inv_dict[mat_id] = 0
+                print(f"⚠ Warning: Recipe material '{mat_id}' not in inventory!")
 
         # Use crafter to process minigame result
         craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)

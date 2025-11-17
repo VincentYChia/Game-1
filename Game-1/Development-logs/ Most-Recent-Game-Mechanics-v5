@@ -1,8 +1,10 @@
 # GAME MECHANICS V5 - MASTER DEVELOPER DOCUMENT
 
-**Version:** 5.0  
-**Last Updated:** October 22, 2025  
+**Version:** 5.0
+**Last Updated:** October 22, 2025
 **Status:** Living Document - Structure Final, Values Flexible
+
+**IMPORTANT:** See `NAMING_CONVENTIONS.md` for API standards and naming patterns to prevent bugs.
 
 ## Latest Updates (v4 → v5)
 
