@@ -2219,12 +2219,71 @@ class SkillManager:
         self.known_skills: Dict[str, PlayerSkill] = {}
         self.equipped_skills: List[Optional[str]] = [None] * 5  # 5 hotbar slots
 
-    def learn_skill(self, skill_id: str) -> bool:
-        """Learn a new skill"""
-        if skill_id not in self.known_skills:
-            self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
-            return True
-        return False
+    def can_learn_skill(self, skill_id: str, character) -> tuple[bool, str]:
+        """
+        Check if character meets requirements to learn a skill.
+        Returns (can_learn, reason)
+        """
+        # Already known?
+        if skill_id in self.known_skills:
+            return False, "Already known"
+
+        # Get skill definition
+        skill_db = SkillDatabase.get_instance()
+        skill_def = skill_db.skills.get(skill_id)
+        if not skill_def:
+            return False, "Skill not found"
+
+        # Check character level
+        if character.leveling.level < skill_def.requirements.character_level:
+            return False, f"Requires level {skill_def.requirements.character_level}"
+
+        # Check stat requirements
+        for stat_name, required_value in skill_def.requirements.stats.items():
+            # Map stat names to character stats
+            stat_map = {
+                'STR': character.stats.strength,
+                'DEF': character.stats.defense,
+                'VIT': character.stats.vitality,
+                'LCK': character.stats.luck,
+                'AGI': character.stats.agility,
+                'INT': character.stats.intelligence,
+                'DEX': character.stats.agility  # DEX maps to AGI in this game
+            }
+            current_value = stat_map.get(stat_name.upper(), 0)
+            if current_value < required_value:
+                return False, f"Requires {stat_name} {required_value}"
+
+        # Check title requirements (if any)
+        if skill_def.requirements.titles:
+            # Get player's title IDs
+            player_titles = {title.title_id for title in character.titles.titles}
+            for required_title in skill_def.requirements.titles:
+                if required_title not in player_titles:
+                    return False, f"Requires title: {required_title}"
+
+        return True, "Requirements met"
+
+    def learn_skill(self, skill_id: str, character=None, skip_checks: bool = False) -> bool:
+        """
+        Learn a new skill.
+        If character is provided and skip_checks is False, requirements will be checked.
+        skip_checks=True bypasses requirement checks (for starting skills, admin commands, etc.)
+        """
+        # Check if already known
+        if skill_id in self.known_skills:
+            return False
+
+        # Check requirements if character provided and not skipping checks
+        if character and not skip_checks:
+            can_learn, reason = self.can_learn_skill(skill_id, character)
+            if not can_learn:
+                print(f"   ⚠ Cannot learn {skill_id}: {reason}")
+                return False
+
+        # Learn the skill
+        self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
+        return True
 
     def equip_skill(self, skill_id: str, slot: int) -> bool:
         """Equip a skill to a hotbar slot (0-4)"""
@@ -2988,6 +3047,44 @@ class Character:
         self.health = self.max_health
         self.mana = self.max_mana
         print(f"✓ Class selected: {class_def.name}")
+
+        # Grant starting skill if the class has one
+        if class_def.starting_skill:
+            # Map class skill names to actual skill IDs in skills-skills-1.JSON
+            skill_mapping = {
+                "battle_rage": "combat_strike",  # Warrior → Power Strike (T1 common)
+                "forestry_frenzy": "lumberjacks_rhythm",  # Ranger → Lumberjack's Rhythm
+                "alchemists_touch": "alchemists_insight",  # Scholar → Alchemist's Insight
+                "smithing_focus": "smiths_focus",  # Artisan → Smith's Focus
+                "treasure_hunters_luck": "treasure_sense",  # Scavenger → Treasure Sense (T2)
+                "versatile_start": None  # Adventurer → Player chooses (handled separately)
+            }
+
+            requested_skill = class_def.starting_skill
+            actual_skill_id = skill_mapping.get(requested_skill, requested_skill)
+
+            if actual_skill_id:
+                # Check if skill exists in database
+                skill_db = SkillDatabase.get_instance()
+                if actual_skill_id in skill_db.skills:
+                    # Learn the skill (skip requirement checks for starting skills)
+                    if self.skills.learn_skill(actual_skill_id, character=self, skip_checks=True):
+                        print(f"   ✓ Learned starting skill: {skill_db.skills[actual_skill_id].name}")
+                        # Auto-equip to slot 0
+                        self.skills.equip_skill(actual_skill_id, 0)
+                        print(f"   ✓ Equipped to hotbar slot 1")
+                    else:
+                        print(f"   ⚠ Skill {actual_skill_id} already known")
+                else:
+                    print(f"   ⚠ Warning: Starting skill '{actual_skill_id}' not found in skill database")
+            elif requested_skill == "versatile_start":
+                # Adventurer class - player should choose a T1 skill
+                # For now, we'll give them sprint as a default, but ideally this should open a choice dialog
+                default_skill = "sprint"
+                if self.skills.learn_skill(default_skill, character=self, skip_checks=True):
+                    print(f"   ✓ Learned starter skill: {skill_db.skills[default_skill].name}")
+                    self.skills.equip_skill(default_skill, 0)
+                    print(f"   ℹ Adventurer class: You can learn any skill! (Sprint given as default)")
 
     def try_equip_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
         """Try to equip item from inventory slot"""
