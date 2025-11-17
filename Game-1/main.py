@@ -2088,6 +2088,61 @@ class ActivityTracker:
 
 
 # ============================================================================
+# BUFF SYSTEM
+# ============================================================================
+@dataclass
+class ActiveBuff:
+    """Represents an active buff on the character"""
+    buff_id: str
+    name: str
+    effect_type: str  # empower, quicken, fortify, etc.
+    category: str  # mining, combat, smithing, movement, etc.
+    magnitude: str  # minor, moderate, major, extreme
+    bonus_value: float  # The actual numerical bonus
+    duration_remaining: float  # Time remaining in seconds
+    source: str = "skill"  # skill, potion, equipment, etc.
+
+    def update(self, dt: float) -> bool:
+        """Update buff timer. Returns True if buff is still active."""
+        self.duration_remaining -= dt
+        return self.duration_remaining > 0
+
+
+class BuffManager:
+    """Manages active buffs on a character"""
+    def __init__(self):
+        self.active_buffs: List[ActiveBuff] = []
+
+    def add_buff(self, buff: ActiveBuff):
+        """Add a new buff (stacks with existing buffs)"""
+        self.active_buffs.append(buff)
+
+    def update(self, dt: float):
+        """Update all buffs and remove expired ones"""
+        self.active_buffs = [buff for buff in self.active_buffs if buff.update(dt)]
+
+    def get_total_bonus(self, effect_type: str, category: str) -> float:
+        """Get total bonus from all matching buffs"""
+        total = 0.0
+        for buff in self.active_buffs:
+            if buff.effect_type == effect_type and buff.category == category:
+                total += buff.bonus_value
+        return total
+
+    def get_movement_speed_bonus(self) -> float:
+        """Get total movement speed bonus"""
+        return self.get_total_bonus("quicken", "movement")
+
+    def get_damage_bonus(self, category: str) -> float:
+        """Get damage bonus for a specific category (mining, combat, etc.)"""
+        return self.get_total_bonus("empower", category)
+
+    def get_defense_bonus(self) -> float:
+        """Get defense bonus"""
+        return self.get_total_bonus("fortify", "defense")
+
+
+# ============================================================================
 # SKILL SYSTEM
 # ============================================================================
 @dataclass
@@ -2162,7 +2217,7 @@ class PlayerSkill:
 class SkillManager:
     def __init__(self):
         self.known_skills: Dict[str, PlayerSkill] = {}
-        self.equipped_skills: List[Optional[str]] = [None] * 6  # 6 hotbar slots
+        self.equipped_skills: List[Optional[str]] = [None] * 5  # 5 hotbar slots
 
     def learn_skill(self, skill_id: str) -> bool:
         """Learn a new skill"""
@@ -2172,8 +2227,8 @@ class SkillManager:
         return False
 
     def equip_skill(self, skill_id: str, slot: int) -> bool:
-        """Equip a skill to a hotbar slot (0-5)"""
-        if 0 <= slot < 6 and skill_id in self.known_skills:
+        """Equip a skill to a hotbar slot (0-4)"""
+        if 0 <= slot < 5 and skill_id in self.known_skills:
             self.equipped_skills[slot] = skill_id
             self.known_skills[skill_id].is_equipped = True
             return True
@@ -2181,7 +2236,7 @@ class SkillManager:
 
     def unequip_skill(self, slot: int) -> bool:
         """Unequip a skill from a hotbar slot"""
-        if 0 <= slot < 6 and self.equipped_skills[slot]:
+        if 0 <= slot < 5 and self.equipped_skills[slot]:
             skill_id = self.equipped_skills[slot]
             self.equipped_skills[slot] = None
             if skill_id in self.known_skills:
@@ -2197,7 +2252,7 @@ class SkillManager:
 
     def use_skill(self, slot: int, character) -> tuple[bool, str]:
         """Use a skill from hotbar slot (0-4). Returns (success, message)"""
-        if not (0 <= slot < 6):
+        if not (0 <= slot < 5):
             return False, "Invalid slot"
 
         skill_id = self.equipped_skills[slot]
@@ -2235,29 +2290,126 @@ class SkillManager:
         return True, f"Used {skill_def.name}!"
 
     def _apply_skill_effect(self, skill_def, character):
-        """Apply the skill's effect (simplified implementation)"""
+        """Apply the skill's effect"""
         effect = skill_def.effect
+        skill_db = SkillDatabase.get_instance()
 
-        # For now, just print what the skill would do
-        # In a full implementation, this would modify stats, apply buffs, etc.
+        # Get duration for buffs
+        duration = skill_db.get_duration_seconds(effect.duration)
+
+        # Magnitude-based bonus values
+        magnitude_values = {
+            'minor': {'empower': 0.25, 'quicken': 0.15, 'fortify': 10, 'pierce': 0.10},
+            'moderate': {'empower': 0.50, 'quicken': 0.30, 'fortify': 20, 'pierce': 0.15},
+            'major': {'empower': 1.00, 'quicken': 0.50, 'fortify': 40, 'pierce': 0.25},
+            'extreme': {'empower': 1.50, 'quicken': 0.75, 'fortify': 60, 'pierce': 0.35}
+        }
+
         print(f"⚡ {skill_def.name}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
 
-        # Example implementations for common effects:
-        if effect.effect_type == "restore" and effect.category == "defense":
-            # Healing skill
-            if effect.magnitude == "moderate":
-                heal_amount = 50
-            elif effect.magnitude == "major":
-                heal_amount = 100
-            elif effect.magnitude == "extreme":
-                heal_amount = 200
-            else:
-                heal_amount = 25
+        # EMPOWER - Increases damage/output
+        if effect.effect_type == "empower":
+            bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.5)
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_empower",
+                name=f"{skill_def.name} (Damage)",
+                effect_type="empower",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus*100)}% {effect.category} damage for {duration}s")
 
-            character.health = min(character.max_health, character.health + heal_amount)
-            print(f"   Restored {heal_amount} HP")
+        # QUICKEN - Increases speed
+        elif effect.effect_type == "quicken":
+            bonus = magnitude_values.get(effect.magnitude, {}).get('quicken', 0.3)
+            category = "movement" if effect.category == "movement" else effect.category
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_quicken",
+                name=f"{skill_def.name} (Speed)",
+                effect_type="quicken",
+                category=category,
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus*100)}% {category} speed for {duration}s")
 
-        # Add more effect implementations as needed
+        # FORTIFY - Increases defense
+        elif effect.effect_type == "fortify":
+            bonus = magnitude_values.get(effect.magnitude, {}).get('fortify', 20)
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_fortify",
+                name=f"{skill_def.name} (Defense)",
+                effect_type="fortify",
+                category="defense",
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus)} flat damage reduction for {duration}s")
+
+        # PIERCE - Increases critical chance
+        elif effect.effect_type == "pierce":
+            bonus = magnitude_values.get(effect.magnitude, {}).get('pierce', 0.15)
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_pierce",
+                name=f"{skill_def.name} (Crit)",
+                effect_type="pierce",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus*100)}% critical chance for {duration}s")
+
+        # RESTORE - Instant restoration
+        elif effect.effect_type == "restore":
+            restore_amounts = {'minor': 50, 'moderate': 100, 'major': 200, 'extreme': 400}
+            amount = restore_amounts.get(effect.magnitude, 100)
+
+            if "health" in effect.category or "defense" in effect.category:
+                character.health = min(character.max_health, character.health + amount)
+                print(f"   Restored {amount} HP")
+            elif "mana" in effect.category:
+                character.mana = min(character.max_mana, character.mana + amount)
+                print(f"   Restored {amount} MP")
+
+        # ENRICH - Bonus gathering yield
+        elif effect.effect_type == "enrich":
+            bonus_items = {'minor': 1, 'moderate': 2, 'major': 3, 'extreme': 5}
+            bonus = bonus_items.get(effect.magnitude, 2)
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_enrich",
+                name=f"{skill_def.name} (Yield)",
+                effect_type="enrich",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus)} bonus items from {effect.category} for {duration}s")
+
+        # ELEVATE - Rarity upgrade chance
+        elif effect.effect_type == "elevate":
+            bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.1)  # Reuse empower values
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_elevate",
+                name=f"{skill_def.name} (Quality)",
+                effect_type="elevate",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus*100)}% rarity upgrade chance for {duration}s")
 
 
 class SkillDatabase:
@@ -2579,6 +2731,7 @@ class Character:
         self.stats = CharacterStats()
         self.leveling = LevelingSystem()
         self.skills = SkillManager()
+        self.buffs = BuffManager()
         self.titles = TitleSystem()
         self.class_system = ClassSystem()
         self.activities = ActivityTracker()
@@ -2601,6 +2754,7 @@ class Character:
         self.stats_ui_open = False
         self.equipment_ui_open = False
         self.skills_ui_open = False
+        self.skills_menu_scroll_offset = 0  # For scrolling in skills menu
         self.class_selection_open = False
 
         # Combat
@@ -2678,7 +2832,8 @@ class Character:
         return False
 
     def move(self, dx: float, dy: float, world: WorldSystem) -> bool:
-        speed_mult = 1.0 + self.stats.get_bonus('agility') * 0.02 + self.class_system.get_bonus('movement_speed')
+        # Calculate movement speed from stats, class, and active buffs
+        speed_mult = 1.0 + self.stats.get_bonus('agility') * 0.02 + self.class_system.get_bonus('movement_speed') + self.buffs.get_movement_speed_bonus()
         new_pos = Position(self.position.x + dx * speed_mult, self.position.y + dy * speed_mult, self.position.z)
         if new_pos.x < 0 or new_pos.x >= Config.WORLD_SIZE or new_pos.y < 0 or new_pos.y >= Config.WORLD_SIZE:
             return False
@@ -2715,9 +2870,10 @@ class Character:
         activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
         stat_bonus = self.stats.get_bonus('strength' if activity == 'mining' else 'agility')
         title_bonus = self.titles.get_total_bonus(f'{activity}_damage')
-        damage_mult = 1.0 + stat_bonus + title_bonus
+        buff_bonus = self.buffs.get_damage_bonus(activity)
+        damage_mult = 1.0 + stat_bonus + title_bonus + buff_bonus
 
-        crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance')
+        crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance') + self.buffs.get_total_bonus('pierce', activity)
         is_crit = random.random() < crit_chance
         damage = int(base_damage * effectiveness * damage_mult)
         actual_damage, depleted = resource.take_damage(damage, is_crit)
@@ -2794,22 +2950,34 @@ class Character:
         self.crafting_ui_open = False
 
     def update_health_regen(self, dt: float):
-        """Update health regeneration - 5 HP/sec after 5 seconds of no combat"""
+        """Update health and mana regeneration"""
         self.time_since_last_damage_taken += dt
         self.time_since_last_damage_dealt += dt
 
-        # Check if we should regenerate
+        # Health regeneration - 5 HP/sec after 5 seconds of no combat
         if (self.time_since_last_damage_taken >= self.health_regen_threshold and
             self.time_since_last_damage_dealt >= self.health_regen_threshold):
             if self.health < self.max_health:
                 regen_amount = self.health_regen_rate * dt
                 self.health = min(self.max_health, self.health + regen_amount)
 
+        # Mana regeneration - 1% per second (always active)
+        if self.mana < self.max_mana:
+            mana_regen_amount = self.max_mana * 0.01 * dt  # 1% of max mana per second
+            self.mana = min(self.max_mana, self.mana + mana_regen_amount)
+
+    def update_buffs(self, dt: float):
+        """Update all active buffs"""
+        self.buffs.update(dt)
+        self.skills.update_cooldowns(dt)
+
     def toggle_stats_ui(self):
         self.stats_ui_open = not self.stats_ui_open
 
     def toggle_skills_ui(self):
         self.skills_ui_open = not self.skills_ui_open
+        if not self.skills_ui_open:
+            self.skills_menu_scroll_offset = 0  # Reset scroll when closing
 
     def toggle_equipment_ui(self):
         self.equipment_ui_open = not self.equipment_ui_open
@@ -3970,8 +4138,8 @@ class Renderer:
 
         # Title
         surf.blit(self.font.render("SKILLS MANAGEMENT", True, (150, 200, 255)), (ww // 2 - 120, 20))
-        surf.blit(self.small_font.render("[ESC] Close | Click skill to see details | Right-click hotbar to unequip", True, (180, 180, 180)),
-                  (ww // 2 - 300, 50))
+        surf.blit(self.small_font.render("[ESC] Close | [Mouse Wheel] Scroll | Click to equip | Right-click to unequip", True, (180, 180, 180)),
+                  (ww // 2 - 330, 50))
 
         # Hotbar section (top)
         y_pos = 90
@@ -4011,12 +4179,27 @@ class Renderer:
         y_pos += slot_size + 30
 
         # Learned skills section
-        surf.blit(self.small_font.render(f"LEARNED SKILLS ({len(character.skills.known_skills)}):", True, (200, 200, 200)), (20, y_pos))
+        total_skills = len(character.skills.known_skills)
+        surf.blit(self.small_font.render(f"LEARNED SKILLS ({total_skills}):", True, (200, 200, 200)), (20, y_pos))
         y_pos += 30
 
         skill_rects = []
         max_visible = 10
-        for idx, (skill_id, player_skill) in enumerate(list(character.skills.known_skills.items())[:max_visible]):
+
+        # Calculate scroll bounds
+        max_scroll = max(0, total_skills - max_visible)
+        character.skills_menu_scroll_offset = max(0, min(character.skills_menu_scroll_offset, max_scroll))
+
+        # Get skills to display based on scroll offset
+        all_skills = list(character.skills.known_skills.items())
+        visible_skills = all_skills[character.skills_menu_scroll_offset:character.skills_menu_scroll_offset + max_visible]
+
+        # Show scroll indicator if needed
+        if total_skills > max_visible:
+            scroll_text = f"[Scroll: {character.skills_menu_scroll_offset + 1}-{min(character.skills_menu_scroll_offset + max_visible, total_skills)} of {total_skills}]"
+            surf.blit(self.tiny_font.render(scroll_text, True, (150, 150, 200)), (ww - 280, y_pos - 25))
+
+        for idx, (skill_id, player_skill) in enumerate(visible_skills):
             skill_def = player_skill.get_definition()
             if not skill_def:
                 continue
@@ -5381,6 +5564,11 @@ class GameEngine:
                         # Clamp scroll offset to valid range
                         max_scroll = max(0, len(self.crafting_recipes) - 8)
                         self.recipe_scroll_offset = max(0, min(self.recipe_scroll_offset, max_scroll))
+                # Handle mouse wheel scrolling for skills menu
+                elif self.character.skills_ui_open:
+                    # Scroll the skills list
+                    self.character.skills_menu_scroll_offset -= event.y  # event.y is positive for scroll up
+                    # Clamp is handled in render_skills_menu_ui
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.handle_mouse_click(event.pos)
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
@@ -6717,7 +6905,7 @@ class GameEngine:
             self.combat_manager.update(dt)
             self.character.update_attack_cooldown(dt)
             self.character.update_health_regen(dt)
-            self.character.skills.update_cooldowns(dt)
+            self.character.update_buffs(dt)
         else:
             # Update active minigame (skip for engineering - it's turn-based)
             if self.minigame_type != 'engineering':
