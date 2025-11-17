@@ -31,7 +31,7 @@ class CombatConfig:
         self.spawn_rates = {}
         self.respawn_times = {}
 
-        self.player_attack_range = 2.0
+        # Attack ranges are now determined by equipped weapon
         self.base_attack_cooldown = 1.0
         self.tool_attack_cooldown = 0.5
         self.corpse_lifetime = 60.0
@@ -75,7 +75,7 @@ class CombatConfig:
 
             # Load mechanics
             mechanics = data.get('combatMechanics', {})
-            self.player_attack_range = mechanics.get('playerAttackRange', 2.0)
+            # Note: player_attack_range is now determined by equipped weapon
             self.base_attack_cooldown = mechanics.get('baseAttackCooldown', 1.0)
             self.tool_attack_cooldown = mechanics.get('toolAttackCooldown', 0.5)
             self.corpse_lifetime = mechanics.get('enemyCorpseLifetime', 60)

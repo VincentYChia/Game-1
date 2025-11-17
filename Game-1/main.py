@@ -346,8 +346,31 @@ class EquipmentItem:
         return 1.0 if dur_pct >= 0.5 else 1.0 - (0.5 - dur_pct) * 0.5
 
     def get_actual_damage(self) -> Tuple[int, int]:
+        """Get actual damage including durability and enchantment effects"""
         eff = self.get_effectiveness()
-        return (int(self.damage[0] * eff), int(self.damage[1] * eff))
+        base_damage = (self.damage[0] * eff, self.damage[1] * eff)
+
+        # Apply enchantment damage multipliers
+        damage_mult = 1.0
+        for ench in self.enchantments:
+            effect = ench.get('effect', {})
+            if effect.get('type') == 'damage_multiplier':
+                damage_mult += effect.get('value', 0.0)
+
+        return (int(base_damage[0] * damage_mult), int(base_damage[1] * damage_mult))
+
+    def get_defense_with_enchantments(self) -> int:
+        """Get defense value including enchantment effects"""
+        base_defense = self.defense * self.get_effectiveness()
+
+        # Apply enchantment defense multipliers
+        defense_mult = 1.0
+        for ench in self.enchantments:
+            effect = ench.get('effect', {})
+            if effect.get('type') == 'defense_multiplier':
+                defense_mult += effect.get('value', 0.0)
+
+        return int(base_defense * defense_mult)
 
     def can_equip(self, character) -> Tuple[bool, str]:
         """Check if character meets requirements, return (can_equip, reason)"""
@@ -813,12 +836,13 @@ class EquipmentManager:
         return False
 
     def get_total_defense(self) -> int:
+        """Get total defense from all armor pieces including enchantment effects"""
         total = 0
         armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
         for slot in armor_slots:
             item = self.slots.get(slot)
             if item:
-                total += int(item.defense * item.get_effectiveness())
+                total += item.get_defense_with_enchantments()
         return total
 
     def get_weapon_damage(self) -> Tuple[int, int]:
@@ -826,6 +850,13 @@ class EquipmentManager:
         if weapon:
             return weapon.get_actual_damage()
         return (1, 2)
+
+    def get_weapon_range(self) -> float:
+        """Get range of equipped weapon, default to 1.0 for unarmed"""
+        weapon = self.slots.get('mainHand')
+        if weapon:
+            return weapon.range
+        return 1.0  # Unarmed/default range
 
     def get_stat_bonuses(self) -> Dict[str, float]:
         bonuses = {}
@@ -5871,10 +5902,13 @@ class GameEngine:
             if not self.character.can_attack():
                 return  # Still on cooldown
 
-            # Check if in range
+            # Check if in range (using equipped weapon's range)
+            weapon_range = self.character.equipment.get_weapon_range()
             dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-            if dist > self.combat_manager.config.player_attack_range:
-                self.add_notification("Enemy too far away", (255, 100, 100))
+            if dist > weapon_range:
+                weapon_name = self.character.equipment.slots.get('mainHand')
+                range_msg = f"Enemy too far (range: {weapon_range})" if weapon_name else "Enemy too far away"
+                self.add_notification(range_msg, (255, 100, 100))
                 return
 
             # Attack enemy
