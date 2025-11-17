@@ -17,3 +17,8 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Game-specific
+*.log
+*.db
+.pytest_cache/
