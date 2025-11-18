@@ -434,8 +434,29 @@ class Enemy:
             self.ai_state = AIState.WANDER
             self.in_combat = False
 
+    def _is_within_chunk_bounds(self, x: float, y: float) -> bool:
+        """Check if position is within the enemy's spawn chunk boundaries"""
+        # Each chunk is 16x16 tiles
+        chunk_min_x = self.chunk_coords[0] * 16
+        chunk_max_x = (self.chunk_coords[0] + 1) * 16
+        chunk_min_y = self.chunk_coords[1] * 16
+        chunk_max_y = (self.chunk_coords[1] + 1) * 16
+
+        return chunk_min_x <= x <= chunk_max_x and chunk_min_y <= y <= chunk_max_y
+
+    def _clamp_to_chunk_bounds(self, x: float, y: float) -> Tuple[float, float]:
+        """Clamp position to chunk boundaries"""
+        chunk_min_x = self.chunk_coords[0] * 16
+        chunk_max_x = (self.chunk_coords[0] + 1) * 16
+        chunk_min_y = self.chunk_coords[1] * 16
+        chunk_max_y = (self.chunk_coords[1] + 1) * 16
+
+        x = max(chunk_min_x, min(x, chunk_max_x))
+        y = max(chunk_min_y, min(y, chunk_max_y))
+        return (x, y)
+
     def _move_towards(self, target: Tuple[float, float], dt: float):
-        """Move towards a target position"""
+        """Move towards a target position, restricted to chunk boundaries"""
         dx = target[0] - self.position[0]
         dy = target[1] - self.position[1]
         dist = (dx * dx + dy * dy) ** 0.5
@@ -443,8 +464,14 @@ class Enemy:
         if dist > 0.1:
             # Normalize and move
             move_speed = self.definition.speed * dt * 2  # Reduced from 10 to 2 for slower movement
-            self.position[0] += (dx / dist) * move_speed
-            self.position[1] += (dy / dist) * move_speed
+            new_x = self.position[0] + (dx / dist) * move_speed
+            new_y = self.position[1] + (dy / dist) * move_speed
+
+            # Clamp to chunk boundaries
+            new_x, new_y = self._clamp_to_chunk_bounds(new_x, new_y)
+
+            self.position[0] = new_x
+            self.position[1] = new_y
 
     def can_attack(self) -> bool:
         """Check if enemy can attack (cooldown ready)"""
