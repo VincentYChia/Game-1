@@ -219,13 +219,24 @@ class CombatManager:
                 if self.is_in_safe_zone(chunk_center_x, chunk_center_y):
                     continue
 
+                # Get chunk's danger level for tier spawning
+                danger_level = self.get_chunk_danger_level(chunk)
+                spawn_config = self.config.spawn_rates.get(danger_level, {})
+
                 # Spawn 1-2 enemies in this chunk
                 to_spawn = min(2, count - spawned)
                 for _ in range(to_spawn):
-                    # Spawn T1 enemy for testing
-                    enemy_def = self.enemy_db.get_random_enemy(1)
+                    # Pick tier based on chunk danger level and weights
+                    tier_weights = spawn_config.get('tierWeights', {'tier1': 1.0})
+                    tier = self._pick_weighted_tier(tier_weights)
+
+                    # Get random enemy of selected tier
+                    enemy_def = self.enemy_db.get_random_enemy(tier)
                     if not enemy_def:
-                        continue
+                        # Fallback to T1 if tier not available
+                        enemy_def = self.enemy_db.get_random_enemy(1)
+                        if not enemy_def:
+                            continue
 
                     # Random position in chunk
                     spawn_x = chunk_x * 16 + random.uniform(4, 12)
@@ -240,7 +251,7 @@ class CombatManager:
                     self.enemies[chunk_coords].append(enemy)
 
                     spawned += 1
-                    print(f"   ✓ Spawned {enemy_def.name} at ({spawn_x:.1f}, {spawn_y:.1f})")
+                    print(f"   ✓ Spawned T{tier} {enemy_def.name} at ({spawn_x:.1f}, {spawn_y:.1f})")
 
         print(f"✓ Spawned {spawned} initial enemies")
 
@@ -363,9 +374,34 @@ class CombatManager:
         base_damage = weapon_damage * str_multiplier * title_multiplier
         print(f"   Base damage: {base_damage:.1f}")
 
+        # SKILL BUFF BONUSES: Check for active damage buffs (empower)
+        skill_damage_bonus = 0.0
+        if hasattr(self.character, 'buffs'):
+            # Check for empower buffs on damage or combat category
+            empower_damage = self.character.buffs.get_damage_bonus('damage')
+            empower_combat = self.character.buffs.get_damage_bonus('combat')
+            skill_damage_bonus = max(empower_damage, empower_combat)
+
+            if skill_damage_bonus > 0:
+                base_damage *= (1.0 + skill_damage_bonus)
+                print(f"   ⚡ Skill buff: +{skill_damage_bonus*100:.0f}% damage (total: {base_damage:.1f})")
+
         # Check for critical hit
         is_crit = False
-        crit_chance = 0.02 * self.character.stats.luck  # 2% per luck point
+        base_crit_chance = 0.02 * self.character.stats.luck  # 2% per luck point
+
+        # SKILL BUFF BONUSES: Check for pierce buffs (critical chance)
+        pierce_bonus = 0.0
+        if hasattr(self.character, 'buffs'):
+            pierce_bonus = self.character.buffs.get_total_bonus('pierce', 'damage')
+            if pierce_bonus == 0:
+                pierce_bonus = self.character.buffs.get_total_bonus('pierce', 'combat')
+
+        crit_chance = base_crit_chance + pierce_bonus
+
+        if pierce_bonus > 0:
+            print(f"   ⚡ Pierce buff: +{pierce_bonus*100:.0f}% crit chance (total: {crit_chance*100:.1f}%)")
+
         if random.random() < crit_chance:
             is_crit = True
             base_damage *= 2.0
@@ -419,8 +455,18 @@ class CombatManager:
 
         armor_multiplier = 1.0 - (armor_bonus * 0.01)
 
-        # Final damage
+        # Apply multipliers
         final_damage = damage * def_multiplier * armor_multiplier
+
+        # SKILL BUFF BONUSES: Check for fortify buffs (flat damage reduction)
+        fortify_reduction = 0.0
+        if hasattr(self.character, 'buffs'):
+            fortify_reduction = self.character.buffs.get_defense_bonus()
+
+            if fortify_reduction > 0:
+                final_damage = max(0, final_damage - fortify_reduction)
+                print(f"   ⚡ Fortify buff: -{fortify_reduction:.1f} flat damage reduction")
+
         final_damage = max(1, final_damage)  # Minimum 1 damage
         print(f"   ➜ Final damage to player: {final_damage:.1f}")
 
