@@ -716,16 +716,24 @@ class EquipmentDatabase:
 
         # Calculate defense for armor
         defense = 0
-        json_slot = data.get('slot', 'mainHand')
-        slot_mapping = {
-            'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',
-            'feet': 'boots', 'hands': 'gauntlets',
-            'mainHand': 'mainHand', 'offHand': 'offHand',
-            'helmet': 'helmet', 'chestplate': 'chestplate',
-            'leggings': 'leggings', 'boots': 'boots',
-            'gauntlets': 'gauntlets', 'accessory': 'accessory',
-        }
-        mapped_slot = slot_mapping.get(json_slot, json_slot)
+
+        # Determine slot - tools use their subtype as slot
+        if item_type == 'tool':
+            if subtype in ['axe', 'pickaxe']:
+                mapped_slot = subtype  # 'axe' or 'pickaxe' slot
+            else:
+                mapped_slot = 'mainHand'  # Fallback for other tools
+        else:
+            json_slot = data.get('slot', 'mainHand')
+            slot_mapping = {
+                'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',
+                'feet': 'boots', 'hands': 'gauntlets',
+                'mainHand': 'mainHand', 'offHand': 'offHand',
+                'helmet': 'helmet', 'chestplate': 'chestplate',
+                'leggings': 'leggings', 'boots': 'boots',
+                'gauntlets': 'gauntlets', 'accessory': 'accessory',
+            }
+            mapped_slot = slot_mapping.get(json_slot, json_slot)
 
         if item_type in armor_types:
             defense = self._calculate_armor_defense(tier, mapped_slot, stat_multipliers)
@@ -779,6 +787,8 @@ class EquipmentManager:
             'boots': None,
             'gauntlets': None,
             'accessory': None,
+            'axe': None,  # Tool slot for axes
+            'pickaxe': None,  # Tool slot for pickaxes
         }
 
     def equip(self, item: EquipmentItem, character) -> Tuple[Optional[EquipmentItem], str]:
@@ -1088,35 +1098,56 @@ class QuestDefinition:
 
 class Quest:
     """Active quest instance for a character"""
-    def __init__(self, quest_def: QuestDefinition):
+    def __init__(self, quest_def: QuestDefinition, character=None):
         self.quest_def = quest_def
         self.status = "in_progress"  # in_progress, completed, turned_in
         self.progress = {}  # Track progress: {"item_id": current_quantity} or {"enemies_killed": count}
 
+        # Track baselines to only count progress AFTER quest acceptance
+        self.baseline_combat_kills = 0
+        self.baseline_inventory = {}
+
+        # Initialize baselines if character provided
+        if character:
+            self._initialize_baselines(character)
+
+    def _initialize_baselines(self, character):
+        """Snapshot current state when quest is accepted"""
+        if self.quest_def.objectives.objective_type == "combat":
+            self.baseline_combat_kills = character.activities.get_count('combat')
+        elif self.quest_def.objectives.objective_type == "gather":
+            # Snapshot current inventory counts for quest items
+            for required_item in self.quest_def.objectives.items:
+                item_id = required_item["item_id"]
+                current_count = character.inventory.get_item_count(item_id)
+                self.baseline_inventory[item_id] = current_count
+
     def check_completion(self, character) -> bool:
-        """Check if quest objectives are met based on character state"""
+        """Check if quest objectives are met based on character state (only counting progress AFTER quest acceptance)"""
         if self.quest_def.objectives.objective_type == "gather":
-            # Check if character has required items in inventory
+            # Check if character has gathered required items SINCE quest acceptance
             for required_item in self.quest_def.objectives.items:
                 item_id = required_item["item_id"]
                 required_qty = required_item["quantity"]
 
-                # Count items in inventory
-                current_qty = 0
-                for item_stack in character.inventory.slots:
-                    if item_stack and item_stack.item_id == item_id:
-                        current_qty += item_stack.quantity
+                # Count current items in inventory
+                current_qty = character.inventory.get_item_count(item_id)
 
-                if current_qty < required_qty:
+                # Calculate items gathered since quest start
+                baseline_qty = self.baseline_inventory.get(item_id, 0)
+                gathered_since_start = current_qty - baseline_qty
+
+                # Check if we've gathered enough NEW items
+                if gathered_since_start < required_qty:
                     return False
             return True
 
         elif self.quest_def.objectives.objective_type == "combat":
-            # Check enemy kill count from activity tracker
+            # Check enemy kills SINCE quest acceptance
             required_kills = self.quest_def.objectives.enemies_killed
             current_kills = character.activities.get_count('combat')
-            # For simplicity, we track total combat kills. In a full system, we'd track quest-specific kills
-            return current_kills >= required_kills
+            kills_since_start = current_kills - self.baseline_combat_kills
+            return kills_since_start >= required_kills
 
         return False
 
@@ -1151,8 +1182,10 @@ class Quest:
 
         # Experience
         if rewards.experience > 0:
-            character.leveling.gain_xp(rewards.experience)
+            leveled_up = character.leveling.add_exp(rewards.experience)
             messages.append(f"+{rewards.experience} XP")
+            if leveled_up:
+                messages.append(f"Level up! Now level {character.leveling.level}")
 
         # Health restore
         if rewards.health_restore > 0:
@@ -1178,12 +1211,14 @@ class Quest:
             quantity = item_reward["quantity"]
 
             # Try to add to inventory
-            if item_id in mat_db.materials:
-                item_stack = ItemStack(item_id, quantity, rarity="common", equipment_data=None)
-                if character.inventory.add_item(item_stack):
-                    messages.append(f"+{quantity}x {item_id}")
-                else:
-                    messages.append(f"Inventory full! Lost {quantity}x {item_id}")
+            if character.inventory.add_item(item_id, quantity):
+                item_def = mat_db.get_material(item_id)
+                item_name = item_def.name if item_def else item_id
+                messages.append(f"+{quantity}x {item_name}")
+            else:
+                item_def = mat_db.get_material(item_id)
+                item_name = item_def.name if item_def else item_id
+                messages.append(f"Inventory full! Lost {quantity}x {item_name}")
 
         # Title
         if rewards.title:
@@ -1201,12 +1236,12 @@ class QuestManager:
         self.active_quests: Dict[str, Quest] = {}  # quest_id -> Quest
         self.completed_quests: List[str] = []  # quest_ids that have been turned in
 
-    def start_quest(self, quest_def: QuestDefinition) -> bool:
-        """Start a new quest"""
+    def start_quest(self, quest_def: QuestDefinition, character) -> bool:
+        """Start a new quest (with character to track baselines)"""
         if quest_def.quest_id in self.active_quests or quest_def.quest_id in self.completed_quests:
             return False  # Already have this quest
 
-        self.active_quests[quest_def.quest_id] = Quest(quest_def)
+        self.active_quests[quest_def.quest_id] = Quest(quest_def, character)
         return True
 
     def complete_quest(self, quest_id: str, character) -> Tuple[bool, List[str]]:
@@ -1660,9 +1695,12 @@ class ResourceType(Enum):
 
 
 RESOURCE_TIERS = {
-    ResourceType.OAK_TREE: 1, ResourceType.BIRCH_TREE: 2, ResourceType.MAPLE_TREE: 3, ResourceType.IRONWOOD_TREE: 4,
-    ResourceType.COPPER_ORE: 1, ResourceType.IRON_ORE: 1, ResourceType.STEEL_ORE: 2, ResourceType.MITHRIL_ORE: 3,
-    ResourceType.LIMESTONE: 1, ResourceType.GRANITE: 2, ResourceType.OBSIDIAN: 3, ResourceType.STAR_CRYSTAL: 4
+    # Wood - oak/pine/ash are T1, birch/maple are T2, ironwood/ebony are T3, worldtree is T4
+    ResourceType.OAK_TREE: 1, ResourceType.BIRCH_TREE: 2, ResourceType.MAPLE_TREE: 2, ResourceType.IRONWOOD_TREE: 3,
+    # Ore - copper/iron/tin are T1, steel/mithril are T2, adamantine/orichalcum are T3, etherion is T4
+    ResourceType.COPPER_ORE: 1, ResourceType.IRON_ORE: 1, ResourceType.STEEL_ORE: 2, ResourceType.MITHRIL_ORE: 2,
+    # Stone - limestone/granite/shale are T1, basalt/marble/quartz are T2, obsidian/voidstone/diamond are T3, eternity_stone/etc are T4
+    ResourceType.LIMESTONE: 1, ResourceType.GRANITE: 1, ResourceType.OBSIDIAN: 3, ResourceType.STAR_CRYSTAL: 4
 }
 
 
@@ -3605,11 +3643,20 @@ class Character:
             self._give_debug_items()
 
     def _give_starting_tools(self):
-        self.tools = [
-            Tool("copper_axe", "Copper Axe", "axe", 1, 10, 500, 500),
-            Tool("copper_pickaxe", "Copper Pickaxe", "pickaxe", 1, 10, 500, 500)
-        ]
-        self.selected_tool = self.tools[0]
+        # Give starting tools as equipped items in tool slots
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Equip copper axe
+        copper_axe = equip_db.create_equipment_from_id("copper_axe")
+        if copper_axe:
+            self.equipment.slots['axe'] = copper_axe
+            print(f"✓ Starting tool equipped: {copper_axe.name} in axe slot")
+
+        # Equip copper pickaxe
+        copper_pickaxe = equip_db.create_equipment_from_id("copper_pickaxe")
+        if copper_pickaxe:
+            self.equipment.slots['pickaxe'] = copper_pickaxe
+            print(f"✓ Starting tool equipped: {copper_pickaxe.name} in pickaxe slot")
 
     def _give_debug_items(self):
         """Give starter items in debug mode"""
@@ -3831,17 +3878,28 @@ class Character:
     def is_in_range(self, target_position: Position) -> bool:
         return self.position.distance_to(target_position) <= self.interaction_range
 
+    def get_equipped_tool(self, tool_type: str) -> Optional[EquipmentItem]:
+        """Get the equipped tool of the specified type ('axe' or 'pickaxe') from equipment slots"""
+        if tool_type in ['axe', 'pickaxe']:
+            equipped_tool = self.equipment.slots.get(tool_type)
+            if equipped_tool:
+                return equipped_tool
+        return None
+
     def can_harvest_resource(self, resource: NaturalResource) -> Tuple[bool, str]:
-        if not self.selected_tool:
-            return False, "No tool selected"
+        # Get equipped tool for this resource type
+        equipped_tool = self.get_equipped_tool(resource.required_tool)
+
+        if not equipped_tool:
+            tool_name = "axe" if resource.required_tool == "axe" else "pickaxe"
+            return False, f"No {tool_name} equipped"
         if not self.is_in_range(resource.position):
             return False, "Too far away"
-        if self.selected_tool.tool_type != resource.required_tool:
-            tool_name = "axe" if resource.required_tool == "axe" else "pickaxe"
-            return False, f"Need {tool_name}"
-        if not self.selected_tool.can_harvest(resource.tier):
+
+        # Check tool tier
+        if equipped_tool.tier < resource.tier:
             return False, f"Tool tier too low (need T{resource.tier})"
-        if self.selected_tool.durability_current <= 0 and not Config.DEBUG_INFINITE_RESOURCES:
+        if equipped_tool.durability_current <= 0 and not Config.DEBUG_INFINITE_RESOURCES:
             return False, "Tool broken"
         return True, "OK"
 
@@ -3850,8 +3908,18 @@ class Character:
         if not can_harvest:
             return None
 
-        base_damage = self.selected_tool.damage
-        effectiveness = self.selected_tool.get_effectiveness()
+        # Get equipped tool
+        equipped_tool = self.get_equipped_tool(resource.required_tool)
+        if not equipped_tool:
+            return None
+
+        # Calculate base damage from tool's damage stat
+        if isinstance(equipped_tool.damage, tuple):
+            base_damage = (equipped_tool.damage[0] + equipped_tool.damage[1]) // 2
+        else:
+            base_damage = equipped_tool.damage
+
+        effectiveness = equipped_tool.get_effectiveness()
         activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
         stat_bonus = self.stats.get_bonus('strength' if activity == 'mining' else 'agility')
         title_bonus = self.titles.get_total_bonus(f'{activity}_damage')
@@ -3863,8 +3931,11 @@ class Character:
         damage = int(base_damage * effectiveness * damage_mult)
         actual_damage, depleted = resource.take_damage(damage, is_crit)
 
-        if not self.selected_tool.use():
-            print("⚠ Tool broke!")
+        # Reduce tool durability
+        if not Config.DEBUG_INFINITE_RESOURCES:
+            equipped_tool.durability_current = max(0, equipped_tool.durability_current - 1)
+            if equipped_tool.durability_current <= 0:
+                print("⚠ Tool broke!")
 
         self.activities.record_activity(activity, 1)
         new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
@@ -4104,73 +4175,6 @@ class Character:
 
         print(f"   ✅ SUCCESS - Equipped {equipment.name}")
         return True, "OK"
-
-    def try_equip_tool_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
-        """Try to equip a tool from inventory slot"""
-        print(f"\n🔧 try_equip_tool_from_inventory called for slot {slot_index}")
-
-        if slot_index < 0 or slot_index >= self.inventory.max_slots:
-            return False, "Invalid slot"
-
-        item_stack = self.inventory.slots[slot_index]
-        if not item_stack:
-            return False, "Empty slot"
-
-        # Check if it's equipment
-        if not item_stack.is_equipment():
-            return False, "Not a tool"
-
-        equipment = item_stack.get_equipment()
-        if not equipment:
-            return False, "Invalid equipment data"
-
-        # Check if it's a tool (axe or pickaxe)
-        eq_type = getattr(equipment, 'type', '').lower()
-        subtype = getattr(equipment, 'subtype', '').lower()
-
-        print(f"   Type: {eq_type}, Subtype: {subtype}")
-
-        if eq_type != 'tool' or subtype not in ['axe', 'pickaxe']:
-            return False, "Not a tool"
-
-        # Create Tool object from equipment
-        durability = equipment.durability_current if hasattr(equipment, 'durability_current') else equipment.durability_max
-        damage = equipment.damage if hasattr(equipment, 'damage') else 0
-
-        new_tool = Tool(
-            tool_id=equipment.item_id,
-            name=equipment.name,
-            tool_type=subtype,
-            tier=equipment.tier,
-            damage=damage,
-            durability_current=durability,
-            durability_max=equipment.durability_max
-        )
-
-        # Check if we already have this exact tool (same ID and tier)
-        existing_tool_idx = None
-        for i, tool in enumerate(self.tools):
-            if tool.tool_id == new_tool.tool_id:
-                existing_tool_idx = i
-                break
-
-        # Replace or add the tool
-        if existing_tool_idx is not None:
-            self.tools[existing_tool_idx] = new_tool
-            print(f"   ♻️  Replaced existing {new_tool.name}")
-        else:
-            self.tools.append(new_tool)
-            print(f"   ➕ Added {new_tool.name} to tools")
-
-        # Select the tool
-        self.selected_tool = new_tool
-        self._selected_weapon = None
-
-        # Remove from inventory
-        self.inventory.slots[slot_index] = None
-        print(f"   ✅ Equipped {new_tool.name} as active tool")
-
-        return True, f"Equipped {new_tool.name}"
 
     def try_unequip_to_inventory(self, slot_name: str) -> Tuple[bool, str]:
         """Try to unequip item to inventory"""
@@ -7857,7 +7861,7 @@ class GameEngine:
                     # Accept quest
                     if quest_id in npc_db.quests:
                         quest_def = npc_db.quests[quest_id]
-                        if self.character.quests.start_quest(quest_def):
+                        if self.character.quests.start_quest(quest_def, self.character):
                             print(f"📜 Quest accepted: {quest_def.title}")
                             self.add_notification(f"Quest accepted: {quest_def.title}", (100, 255, 100))
                             # Update dialogue state
@@ -8119,25 +8123,11 @@ class GameEngine:
                                     equipment = item_stack.get_equipment()
                                     print(f"   get_equipment(): {equipment}")
                                     if equipment:
-                                        # Check if it's a tool
-                                        eq_type = getattr(equipment, 'type', '').lower()
-                                        subtype = getattr(equipment, 'subtype', '').lower()
-                                        is_tool = (eq_type == 'tool' and subtype in ['axe', 'pickaxe'])
-                                        print(f"   Type: {eq_type}, Subtype: {subtype}, is_tool: {is_tool}")
-
-                                        if is_tool:
-                                            # Equip as tool
-                                            success, msg = self.character.try_equip_tool_from_inventory(idx)
-                                            if success:
-                                                self.add_notification(msg, (100, 255, 100))
-                                            else:
-                                                self.add_notification(f"Cannot equip tool: {msg}", (255, 100, 100))
+                                        # Equip all equipment (including tools) using standard equipment system
+                                        success, msg = self.character.try_equip_from_inventory(idx)
+                                        if success:
+                                            self.add_notification(f"Equipped {equipment.name}", (100, 255, 100))
                                         else:
-                                            # Equip as regular equipment
-                                            success, msg = self.character.try_equip_from_inventory(idx)
-                                            if success:
-                                                self.add_notification(f"Equipped {equipment.name}", (100, 255, 100))
-                                            else:
                                                 self.add_notification(f"Cannot equip: {msg}", (255, 100, 100))
                                     else:
                                         print(f"   ❌ equipment is None!")
