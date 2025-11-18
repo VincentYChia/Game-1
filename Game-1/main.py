@@ -1056,6 +1056,322 @@ class TitleSystem:
 
 
 # ============================================================================
+# NPC AND QUEST SYSTEM
+# ============================================================================
+@dataclass
+class QuestObjective:
+    """Quest objective definition"""
+    objective_type: str  # 'gather' or 'combat'
+    items: List[Dict[str, Any]] = field(default_factory=list)  # For gather: [{"item_id": str, "quantity": int}]
+    enemies_killed: int = 0  # For combat: number of enemies to kill
+
+@dataclass
+class QuestRewards:
+    """Quest rewards"""
+    experience: int = 0
+    health_restore: int = 0
+    mana_restore: int = 0
+    skills: List[str] = field(default_factory=list)
+    items: List[Dict[str, Any]] = field(default_factory=list)  # [{"item_id": str, "quantity": int}]
+    title: str = ""  # Optional title reward
+
+@dataclass
+class QuestDefinition:
+    """Quest template from JSON"""
+    quest_id: str
+    title: str
+    description: str
+    npc_id: str
+    objectives: QuestObjective
+    rewards: QuestRewards
+    completion_dialogue: List[str] = field(default_factory=list)
+
+class Quest:
+    """Active quest instance for a character"""
+    def __init__(self, quest_def: QuestDefinition):
+        self.quest_def = quest_def
+        self.status = "in_progress"  # in_progress, completed, turned_in
+        self.progress = {}  # Track progress: {"item_id": current_quantity} or {"enemies_killed": count}
+
+    def check_completion(self, character) -> bool:
+        """Check if quest objectives are met based on character state"""
+        if self.quest_def.objectives.objective_type == "gather":
+            # Check if character has required items in inventory
+            for required_item in self.quest_def.objectives.items:
+                item_id = required_item["item_id"]
+                required_qty = required_item["quantity"]
+
+                # Count items in inventory
+                current_qty = 0
+                for item_stack in character.inventory.items:
+                    if item_stack and item_stack.item_id == item_id:
+                        current_qty += item_stack.quantity
+
+                if current_qty < required_qty:
+                    return False
+            return True
+
+        elif self.quest_def.objectives.objective_type == "combat":
+            # Check enemy kill count from activity tracker
+            required_kills = self.quest_def.objectives.enemies_killed
+            current_kills = character.activities.combat
+            # For simplicity, we track total combat kills. In a full system, we'd track quest-specific kills
+            return current_kills >= required_kills
+
+        return False
+
+    def consume_items(self, character) -> bool:
+        """Remove quest items from inventory (for gather quests)"""
+        if self.quest_def.objectives.objective_type != "gather":
+            return True
+
+        # Remove required items from inventory
+        for required_item in self.quest_def.objectives.items:
+            item_id = required_item["item_id"]
+            required_qty = required_item["quantity"]
+            remaining = required_qty
+
+            for i, item_stack in enumerate(character.inventory.items):
+                if item_stack and item_stack.item_id == item_id and remaining > 0:
+                    if item_stack.quantity <= remaining:
+                        remaining -= item_stack.quantity
+                        character.inventory.items[i] = None
+                    else:
+                        item_stack.quantity -= remaining
+                        remaining = 0
+
+            if remaining > 0:
+                return False  # Failed to consume all items
+        return True
+
+    def grant_rewards(self, character) -> List[str]:
+        """Grant quest rewards to character. Returns list of reward messages."""
+        messages = []
+        rewards = self.quest_def.rewards
+
+        # Experience
+        if rewards.experience > 0:
+            character.leveling.gain_xp(rewards.experience)
+            messages.append(f"+{rewards.experience} XP")
+
+        # Health restore
+        if rewards.health_restore > 0:
+            character.health = min(character.max_health, character.health + rewards.health_restore)
+            messages.append(f"+{rewards.health_restore} HP")
+
+        # Mana restore
+        if rewards.mana_restore > 0:
+            character.mana = min(character.max_mana, character.mana + rewards.mana_restore)
+            messages.append(f"+{rewards.mana_restore} Mana")
+
+        # Skills
+        for skill_id in rewards.skills:
+            if character.skills.learn_skill(skill_id, character=character, skip_checks=True):
+                skill_db = SkillDatabase.get_instance()
+                skill_name = skill_db.skills[skill_id].name if skill_id in skill_db.skills else skill_id
+                messages.append(f"Learned skill: {skill_name}")
+
+        # Items
+        mat_db = MaterialDatabase.get_instance()
+        for item_reward in rewards.items:
+            item_id = item_reward["item_id"]
+            quantity = item_reward["quantity"]
+
+            # Try to add to inventory
+            if item_id in mat_db.materials:
+                item_stack = ItemStack(item_id, quantity, rarity="common", equipment_data=None)
+                if character.inventory.add_item(item_stack):
+                    messages.append(f"+{quantity}x {item_id}")
+                else:
+                    messages.append(f"Inventory full! Lost {quantity}x {item_id}")
+
+        # Title
+        if rewards.title:
+            title_db = TitleDatabase.get_instance()
+            if rewards.title in title_db.titles:
+                title_def = title_db.titles[rewards.title]
+                if character.titles.award_title(title_def):
+                    messages.append(f"Earned title: {title_def.name}")
+
+        return messages
+
+class QuestManager:
+    """Manages active quests for a character"""
+    def __init__(self):
+        self.active_quests: Dict[str, Quest] = {}  # quest_id -> Quest
+        self.completed_quests: List[str] = []  # quest_ids that have been turned in
+
+    def start_quest(self, quest_def: QuestDefinition) -> bool:
+        """Start a new quest"""
+        if quest_def.quest_id in self.active_quests or quest_def.quest_id in self.completed_quests:
+            return False  # Already have this quest
+
+        self.active_quests[quest_def.quest_id] = Quest(quest_def)
+        return True
+
+    def complete_quest(self, quest_id: str, character) -> Tuple[bool, List[str]]:
+        """Complete a quest and grant rewards. Returns (success, reward_messages)"""
+        if quest_id not in self.active_quests:
+            return False, ["Quest not active"]
+
+        quest = self.active_quests[quest_id]
+
+        # Check if completed
+        if not quest.check_completion(character):
+            return False, ["Quest objectives not met"]
+
+        # Consume quest items if needed
+        if not quest.consume_items(character):
+            return False, ["Failed to consume quest items"]
+
+        # Grant rewards
+        messages = quest.grant_rewards(character)
+
+        # Mark as completed
+        quest.status = "turned_in"
+        self.completed_quests.append(quest_id)
+        del self.active_quests[quest_id]
+
+        return True, messages
+
+    def has_completed(self, quest_id: str) -> bool:
+        """Check if quest has been completed and turned in"""
+        return quest_id in self.completed_quests
+
+@dataclass
+class NPCDefinition:
+    """NPC template from JSON"""
+    npc_id: str
+    name: str
+    position: Position
+    sprite_color: Tuple[int, int, int]
+    interaction_radius: float
+    dialogue_lines: List[str]
+    quests: List[str]  # quest_ids this NPC offers
+
+class NPC:
+    """Active NPC instance in the world"""
+    def __init__(self, npc_def: NPCDefinition):
+        self.npc_def = npc_def
+        self.position = npc_def.position
+        self.current_dialogue_index = 0
+
+    def is_near(self, player_pos: Position) -> bool:
+        """Check if player is within interaction radius"""
+        dx = self.position.x - player_pos.x
+        dy = self.position.y - player_pos.y
+        distance = math.sqrt(dx * dx + dy * dy)
+        return distance <= self.npc_def.interaction_radius
+
+    def get_next_dialogue(self) -> str:
+        """Get next dialogue line (cycles through)"""
+        if not self.npc_def.dialogue_lines:
+            return "..."
+
+        dialogue = self.npc_def.dialogue_lines[self.current_dialogue_index]
+        self.current_dialogue_index = (self.current_dialogue_index + 1) % len(self.npc_def.dialogue_lines)
+        return dialogue
+
+    def get_available_quests(self, quest_manager: QuestManager) -> List[str]:
+        """Get list of quest_ids this NPC offers that player hasn't completed"""
+        available = []
+        for quest_id in self.npc_def.quests:
+            if quest_id not in quest_manager.active_quests and quest_id not in quest_manager.completed_quests:
+                available.append(quest_id)
+        return available
+
+    def has_quest_to_turn_in(self, quest_manager: QuestManager, character) -> Optional[str]:
+        """Check if player has a completable quest from this NPC"""
+        for quest_id in self.npc_def.quests:
+            if quest_id in quest_manager.active_quests:
+                quest = quest_manager.active_quests[quest_id]
+                if quest.check_completion(character):
+                    return quest_id
+        return None
+
+class NPCDatabase:
+    """Singleton database of all NPCs"""
+    _instance = None
+
+    def __init__(self):
+        self.npcs: Dict[str, NPCDefinition] = {}
+        self.quests: Dict[str, QuestDefinition] = {}
+        self.loaded = False
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    def load_from_files(self):
+        """Load NPCs and quests from JSON files"""
+        try:
+            # Load NPCs
+            npc_path = Path(__file__).parent / "progression" / "npcs-1.JSON"
+            if npc_path.exists():
+                with open(npc_path, 'r') as f:
+                    data = json.load(f)
+                    for npc_data in data.get("npcs", []):
+                        pos_data = npc_data["position"]
+                        position = Position(pos_data["x"], pos_data["y"], pos_data["z"])
+
+                        npc_def = NPCDefinition(
+                            npc_id=npc_data["npc_id"],
+                            name=npc_data["name"],
+                            position=position,
+                            sprite_color=tuple(npc_data["sprite_color"]),
+                            interaction_radius=npc_data["interaction_radius"],
+                            dialogue_lines=npc_data["dialogue_lines"],
+                            quests=npc_data["quests"]
+                        )
+                        self.npcs[npc_def.npc_id] = npc_def
+                print(f"✓ Loaded {len(self.npcs)} NPCs")
+
+            # Load Quests
+            quest_path = Path(__file__).parent / "progression" / "quests-1.JSON"
+            if quest_path.exists():
+                with open(quest_path, 'r') as f:
+                    data = json.load(f)
+                    for quest_data in data.get("quests", []):
+                        # Parse objectives
+                        obj_data = quest_data["objectives"]
+                        objective = QuestObjective(
+                            objective_type=obj_data["type"],
+                            items=obj_data.get("items", []),
+                            enemies_killed=obj_data.get("enemies_killed", 0)
+                        )
+
+                        # Parse rewards
+                        rew_data = quest_data["rewards"]
+                        rewards = QuestRewards(
+                            experience=rew_data.get("experience", 0),
+                            health_restore=rew_data.get("health_restore", 0),
+                            mana_restore=rew_data.get("mana_restore", 0),
+                            skills=rew_data.get("skills", []),
+                            items=rew_data.get("items", []),
+                            title=rew_data.get("title", "")
+                        )
+
+                        quest_def = QuestDefinition(
+                            quest_id=quest_data["quest_id"],
+                            title=quest_data["title"],
+                            description=quest_data["description"],
+                            npc_id=quest_data["npc_id"],
+                            objectives=objective,
+                            rewards=rewards,
+                            completion_dialogue=quest_data.get("completion_dialogue", [])
+                        )
+                        self.quests[quest_def.quest_id] = quest_def
+                print(f"✓ Loaded {len(self.quests)} quests")
+
+            self.loaded = True
+        except Exception as e:
+            print(f"⚠ Failed to load NPCs/Quests: {e}")
+            self.loaded = False
+
+
+# ============================================================================
 # ENCYCLOPEDIA / COMPENDIUM SYSTEM
 # ============================================================================
 class Encyclopedia:
@@ -3179,6 +3495,7 @@ class Character:
         self.activities = ActivityTracker()
         self.equipment = EquipmentManager()
         self.encyclopedia = Encyclopedia()
+        self.quests = QuestManager()
 
         self.base_max_health = 100
         self.base_max_mana = 100
@@ -6363,6 +6680,7 @@ class GameEngine:
         TitleDatabase.get_instance().load_from_file("progression/titles-1.JSON")
         ClassDatabase.get_instance().load_from_file("progression/classes-1.JSON")
         SkillDatabase.get_instance().load_from_file("Skills/skills-skills-1.JSON")
+        NPCDatabase.get_instance().load_from_files()  # Load NPCs and Quests
 
         # Initialize crafting subdisciplines (minigames)
         if CRAFTING_MODULES_LOADED:
@@ -6416,6 +6734,24 @@ class GameEngine:
         # Only spawn initial enemies if we have a real character
         if self.character:
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+
+        # Initialize NPC system
+        print("Loading NPCs...")
+        self.npcs: List[NPC] = []
+        npc_db = NPCDatabase.get_instance()
+        if npc_db.loaded:
+            for npc_def in npc_db.npcs.values():
+                npc = NPC(npc_def)
+                self.npcs.append(npc)
+            print(f"✓ Spawned {len(self.npcs)} NPCs in the world")
+
+        # NPC interaction state
+        self.npc_dialogue_open = False
+        self.active_npc: Optional[NPC] = None
+        self.npc_dialogue_lines: List[str] = []
+        self.npc_available_quests: List[str] = []
+        self.npc_quest_to_turn_in: Optional[str] = None
+        self.npc_dialogue_window_rect = None
 
         # Minigame state
         self.active_minigame = None  # Current minigame instance
