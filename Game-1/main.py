@@ -882,6 +882,7 @@ class TitleDefinition:
     bonuses: Dict[str, float]
     prerequisites: List[str] = field(default_factory=list)
     hidden: bool = False
+    acquisition_method: str = "guaranteed_milestone"  # or "random_drop", "hidden_discovery"
 
 
 class TitleDatabase:
@@ -918,7 +919,8 @@ class TitleDatabase:
                     bonus_description=self._create_bonus_description(bonuses),
                     bonuses=bonuses,
                     prerequisites=prereq_titles,
-                    hidden=title_data.get('isHidden', False)
+                    hidden=title_data.get('isHidden', False),
+                    acquisition_method=title_data.get('acquisitionMethod', 'guaranteed_milestone')
                 )
                 self.titles[title.title_id] = title
             self.loaded = True
@@ -999,6 +1001,8 @@ class TitleSystem:
         self.title_db = TitleDatabase.get_instance()
 
     def check_for_title(self, activity_type: str, count: int) -> Optional[TitleDefinition]:
+        import random
+
         for title_id, title_def in self.title_db.titles.items():
             if any(t.title_id == title_id for t in self.earned_titles):
                 continue
@@ -1013,8 +1017,30 @@ class TitleSystem:
                 )
                 if not has_prereqs:
                     continue
-            self.earned_titles.append(title_def)
-            return title_def
+
+            # Check acquisition method
+            if title_def.acquisition_method == "guaranteed_milestone":
+                # Automatically granted
+                self.earned_titles.append(title_def)
+                return title_def
+            elif title_def.acquisition_method == "random_drop":
+                # RNG-based acquisition with tier-based chances
+                tier_chances = {
+                    'novice': 1.0,      # 100% (shouldn't use random_drop)
+                    'apprentice': 0.20,  # 20%
+                    'journeyman': 0.10,  # 10%
+                    'expert': 0.05,      # 5%
+                    'master': 0.02       # 2%
+                }
+                chance = tier_chances.get(title_def.tier, 0.10)
+                if random.random() < chance:
+                    self.earned_titles.append(title_def)
+                    return title_def
+            elif title_def.acquisition_method == "hidden_discovery":
+                # Hidden titles auto-granted when conditions met (like guaranteed but hidden)
+                self.earned_titles.append(title_def)
+                return title_def
+
         return None
 
     def get_total_bonus(self, bonus_type: str) -> float:
@@ -1026,6 +1052,69 @@ class TitleSystem:
 
     def has_title(self, title_id: str) -> bool:
         return any(t.title_id == title_id for t in self.earned_titles)
+
+
+# ============================================================================
+# ENCYCLOPEDIA / COMPENDIUM SYSTEM
+# ============================================================================
+class Encyclopedia:
+    """
+    Encyclopedia/Compendium that displays information about skills, titles, and game mechanics.
+    This helps players understand progression and hidden systems.
+    """
+    def __init__(self):
+        self.is_open = False
+        self.current_tab = "guide"  # guide, skills, titles
+        self.scroll_offset = 0
+
+    def toggle(self):
+        self.is_open = not self.is_open
+        if self.is_open:
+            self.scroll_offset = 0
+
+    def get_game_guide_text(self) -> List[str]:
+        """Returns the game guide/tutorial text as a list of paragraphs"""
+        return [
+            "=== WELCOME TO THE GAME ===",
+            "",
+            "CONTROLS:",
+            "• WASD - Move your character",
+            "• TAB - Cycle through tools and weapons",
+            "• Left Click - Harvest resources, attack enemies, interact",
+            "• C - Open character stats",
+            "• E - Open equipment menu",
+            "• K - Open skills menu",
+            "• L - Open this encyclopedia",
+            "• 1-5 - Use equipped skills",
+            "• Mouse Wheel - Scroll in menus",
+            "",
+            "PROGRESSION:",
+            "• Mine ores and chop trees to gather materials",
+            "• Craft tools, weapons, and armor at stations",
+            "• Gain experience to level up and unlock skills",
+            "• Earn titles by completing activities",
+            "• Defeat enemies to gain combat experience",
+            "",
+            "CRAFTING:",
+            "• Approach a crafting station and click to open",
+            "• Choose between instant craft (no XP) or minigame (1.5x XP)",
+            "• Each discipline has a unique minigame mechanic",
+            "• Higher quality outcomes give better stats and rarity",
+            "",
+            "SKILLS:",
+            "• Skills are unlocked when you meet level and stat requirements",
+            "• Open the Skills menu (K) to learn and equip skills",
+            "• Equip up to 5 skills on your hotbar (keys 1-5)",
+            "• Skills consume mana and have cooldowns",
+            "• Skills level up as you use them (max level 10)",
+            "",
+            "TITLES:",
+            "• Titles are earned by performing activities",
+            "• Novice titles are guaranteed at thresholds",
+            "• Higher tier titles have chance-based acquisition",
+            "• Titles provide permanent stat bonuses",
+            "• Check this encyclopedia to see all title requirements!",
+        ]
 
 
 # ============================================================================
@@ -2473,6 +2562,28 @@ class SkillManager:
         self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
         return True
 
+    def get_available_skills(self, character) -> List[str]:
+        """
+        Get list of skill IDs that the character can learn but hasn't yet.
+        Returns list of skill IDs that meet requirements.
+        """
+        available = []
+        skill_db = SkillDatabase.get_instance()
+        if not skill_db.loaded:
+            return available
+
+        for skill_id in skill_db.skills.keys():
+            # Skip if already known
+            if skill_id in self.known_skills:
+                continue
+
+            # Check if requirements are met
+            can_learn, _ = self.can_learn_skill(skill_id, character)
+            if can_learn:
+                available.append(skill_id)
+
+        return available
+
     def equip_skill(self, skill_id: str, slot: int) -> bool:
         """Equip a skill to a hotbar slot (0-4)"""
         if 0 <= slot < 5 and skill_id in self.known_skills:
@@ -3003,6 +3114,7 @@ class Character:
         self.class_system = ClassSystem()
         self.activities = ActivityTracker()
         self.equipment = EquipmentManager()
+        self.encyclopedia = Encyclopedia()
 
         self.base_max_health = 100
         self.base_max_mana = 100
@@ -3153,7 +3265,9 @@ class Character:
         if new_title:
             print(f"🏆 TITLE EARNED: {new_title.name} - {new_title.bonus_description}")
 
-        self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
+        leveled_up = self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
+        if leveled_up:
+            self.check_and_notify_new_skills()
 
         # Reset damage dealt timer (harvesting counts as dealing damage)
         self.time_since_last_damage_dealt = 0.0
@@ -3305,6 +3419,23 @@ class Character:
                     print(f"   ✓ Learned starter skill: {skill_db.skills[default_skill].name}")
                     self.skills.equip_skill(default_skill, 0)
                     print(f"   ℹ Adventurer class: You can learn any skill! (Sprint given as default)")
+
+    def check_and_notify_new_skills(self) -> List[str]:
+        """
+        Check if any new skills are available for the character to learn.
+        Returns list of newly available skill IDs.
+        """
+        available_skills = self.skills.get_available_skills(self)
+        if available_skills:
+            skill_db = SkillDatabase.get_instance()
+            print(f"📚 {len(available_skills)} new skill(s) available! Check Skills menu (K) to learn.")
+            for skill_id in available_skills[:3]:  # Show first 3
+                skill_def = skill_db.skills.get(skill_id)
+                if skill_def:
+                    print(f"   - {skill_def.name} (Tier {skill_def.tier})")
+            if len(available_skills) > 3:
+                print(f"   ... and {len(available_skills) - 3} more!")
+        return available_skills
 
     def try_equip_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
         """Try to equip item from inventory slot"""
@@ -4560,9 +4691,291 @@ class Renderer:
             skill_rects.append((skill_rect, skill_id, player_skill, skill_def))
             y_pos += 55
 
+        # Available skills section (skills that can be learned but haven't been yet)
+        y_pos += 10
+        available_skill_ids = character.skills.get_available_skills(character)
+        available_skill_rects = []
+
+        if available_skill_ids:
+            surf.blit(self.small_font.render(f"AVAILABLE TO LEARN ({len(available_skill_ids)}):", True, (100, 255, 100)), (20, y_pos))
+            y_pos += 25
+
+            for skill_id in available_skill_ids[:3]:  # Show first 3 available skills
+                skill_def = skill_db.skills.get(skill_id)
+                if not skill_def:
+                    continue
+
+                skill_rect = pygame.Rect(20, y_pos, ww - 40, 45)
+                rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+                is_hovered = skill_rect.collidepoint(rx, ry)
+
+                # Background
+                bg_color = (40, 80, 40)
+                if is_hovered:
+                    bg_color = (60, 120, 60)
+                pygame.draw.rect(surf, bg_color, skill_rect)
+                pygame.draw.rect(surf, (100, 255, 100) if is_hovered else (80, 150, 80), skill_rect, 2)
+
+                # Skill name
+                surf.blit(self.small_font.render(skill_def.name, True, (200, 255, 200)), (30, y_pos + 5))
+
+                # Tier
+                tier_color = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}.get(skill_def.tier, (150, 150, 150))
+                surf.blit(self.tiny_font.render(f"T{skill_def.tier}", True, tier_color), (30, y_pos + 25))
+
+                # Learn button
+                surf.blit(self.tiny_font.render("Click to learn", True, (150, 255, 150)), (ww - 150, y_pos + 15))
+
+                available_skill_rects.append((skill_rect, skill_id, skill_def))
+                y_pos += 50
+
+            if len(available_skill_ids) > 3:
+                surf.blit(self.tiny_font.render(f"...and {len(available_skill_ids) - 3} more available", True, (120, 200, 120)), (30, y_pos))
+
         self.screen.blit(surf, (wx, wy))
         window_rect = pygame.Rect(wx, wy, ww, wh)
-        return window_rect, hotbar_rects, skill_rects
+        return window_rect, hotbar_rects, skill_rects, available_skill_rects
+
+    def render_encyclopedia_ui(self, character: Character, mouse_pos: Tuple[int, int]):
+        """Render encyclopedia/compendium UI"""
+        if not character.encyclopedia.is_open:
+            return None
+
+        ww, wh = 1100, 750
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = 40
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+
+        # Title
+        surf.blit(self.font.render("ENCYCLOPEDIA", True, (255, 215, 0)), (ww // 2 - 80, 20))
+        surf.blit(self.small_font.render("[L or ESC] Close | [Mouse Wheel] Scroll", True, (180, 180, 180)),
+                  (ww // 2 - 160, 50))
+
+        # Tabs
+        tab_y = 80
+        tab_width = 140
+        tab_height = 40
+        tab_spacing = 10
+        tabs = [
+            ("guide", "GAME GUIDE"),
+            ("skills", "SKILLS"),
+            ("titles", "TITLES")
+        ]
+
+        tab_rects = []
+        for idx, (tab_id, tab_name) in enumerate(tabs):
+            tab_x = 30 + idx * (tab_width + tab_spacing)
+            tab_rect = pygame.Rect(tab_x, tab_y, tab_width, tab_height)
+
+            is_active = character.encyclopedia.current_tab == tab_id
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+            is_hovered = tab_rect.collidepoint(rx, ry)
+
+            # Tab background
+            if is_active:
+                bg_color = (80, 80, 120)
+                border_color = (150, 150, 200)
+            elif is_hovered:
+                bg_color = (60, 60, 90)
+                border_color = (120, 120, 160)
+            else:
+                bg_color = (40, 40, 60)
+                border_color = (80, 80, 100)
+
+            pygame.draw.rect(surf, bg_color, tab_rect)
+            pygame.draw.rect(surf, border_color, tab_rect, 2)
+
+            # Tab text
+            text_surf = self.small_font.render(tab_name, True, (220, 220, 240) if is_active else (160, 160, 180))
+            text_rect = text_surf.get_rect(center=tab_rect.center)
+            surf.blit(text_surf, text_rect)
+
+            tab_rects.append((tab_rect, tab_id))
+
+        # Content area
+        content_y = tab_y + tab_height + 20
+        content_height = wh - content_y - 20
+        content_rect = pygame.Rect(20, content_y, ww - 40, content_height)
+        pygame.draw.rect(surf, (30, 30, 40), content_rect)
+        pygame.draw.rect(surf, (80, 80, 100), content_rect, 2)
+
+        # Render content based on current tab
+        if character.encyclopedia.current_tab == "guide":
+            self._render_guide_content(surf, content_rect, character)
+        elif character.encyclopedia.current_tab == "skills":
+            self._render_skills_content(surf, content_rect, character)
+        elif character.encyclopedia.current_tab == "titles":
+            self._render_titles_content(surf, content_rect, character)
+
+        self.screen.blit(surf, (wx, wy))
+        window_rect = pygame.Rect(wx, wy, ww, wh)
+        return window_rect, tab_rects
+
+    def _render_guide_content(self, surf, content_rect, character):
+        """Render game guide content"""
+        lines = character.encyclopedia.get_game_guide_text()
+        y = content_rect.y + 20
+        x = content_rect.x + 20
+
+        for line in lines:
+            if y > content_rect.bottom - 30:
+                break
+            if line.startswith("==="):
+                surf.blit(self.font.render(line, True, (255, 215, 0)), (x, y))
+                y += 30
+            elif line.startswith("•"):
+                surf.blit(self.small_font.render(line, True, (200, 200, 220)), (x, y))
+                y += 20
+            elif line == "":
+                y += 10
+            elif line.endswith(":"):
+                surf.blit(self.small_font.render(line, True, (150, 200, 255)), (x, y))
+                y += 25
+            else:
+                surf.blit(self.tiny_font.render(line, True, (180, 180, 200)), (x, y))
+                y += 18
+
+    def _render_skills_content(self, surf, content_rect, character):
+        """Render skills reference content"""
+        skill_db = SkillDatabase.get_instance()
+        if not skill_db.loaded:
+            return
+
+        y = content_rect.y + 15
+        x = content_rect.x + 15
+
+        # Header
+        surf.blit(self.small_font.render(f"All Skills ({len(skill_db.skills)} total)", True, (150, 200, 255)), (x, y))
+        y += 30
+
+        # Group skills by tier
+        skills_by_tier = {}
+        for skill_id, skill_def in skill_db.skills.items():
+            tier = skill_def.tier
+            if tier not in skills_by_tier:
+                skills_by_tier[tier] = []
+            skills_by_tier[tier].append((skill_id, skill_def))
+
+        # Render each tier
+        for tier in sorted(skills_by_tier.keys()):
+            if y > content_rect.bottom - 40:
+                break
+
+            # Tier header
+            tier_colors = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}
+            surf.blit(self.small_font.render(f"━━ TIER {tier} ━━", True, tier_colors.get(tier, (150, 150, 150))), (x, y))
+            y += 25
+
+            for skill_id, skill_def in skills_by_tier[tier]:
+                if y > content_rect.bottom - 40:
+                    break
+
+                # Check if player knows this skill
+                has_skill = skill_id in character.skills.known_skills
+                can_learn = not has_skill and character.skills.can_learn_skill(skill_id, character)[0]
+
+                # Skill name
+                name_color = (100, 255, 100) if has_skill else ((200, 200, 100) if can_learn else (150, 150, 150))
+                status_text = " [KNOWN]" if has_skill else (" [AVAILABLE]" if can_learn else "")
+                surf.blit(self.tiny_font.render(f"• {skill_def.name}{status_text}", True, name_color), (x + 10, y))
+                y += 16
+
+                # Requirements
+                req_text = f"   Requires: Lvl {skill_def.requirements.character_level}"
+                if skill_def.requirements.stats:
+                    stat_reqs = ", ".join(f"{k} {v}" for k, v in skill_def.requirements.stats.items())
+                    req_text += f", {stat_reqs}"
+                surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + 10, y))
+                y += 16
+
+                # Effect description
+                effect_desc = f"   {skill_def.effect.effect_type.capitalize()} - {skill_def.effect.category} ({skill_def.effect.magnitude})"
+                surf.blit(self.tiny_font.render(effect_desc, True, (100, 150, 200)), (x + 10, y))
+                y += 20
+
+            y += 10
+
+    def _render_titles_content(self, surf, content_rect, character):
+        """Render titles reference content"""
+        title_db = TitleDatabase.get_instance()
+        if not title_db.loaded:
+            return
+
+        y = content_rect.y + 15
+        x = content_rect.x + 15
+
+        # Header
+        surf.blit(self.small_font.render(f"All Titles ({len(title_db.titles)} total)", True, (255, 215, 0)), (x, y))
+        y += 30
+
+        # Group titles by tier
+        titles_by_tier = {}
+        for title_id, title_def in title_db.titles.items():
+            tier = title_def.tier
+            if tier not in titles_by_tier:
+                titles_by_tier[tier] = []
+            titles_by_tier[tier].append((title_id, title_def))
+
+        # Tier order
+        tier_order = ['novice', 'apprentice', 'journeyman', 'expert', 'master']
+        tier_colors = {
+            'novice': (150, 150, 150),
+            'apprentice': (100, 200, 100),
+            'journeyman': (100, 150, 255),
+            'expert': (200, 100, 255),
+            'master': (255, 200, 50)
+        }
+
+        for tier_name in tier_order:
+            if tier_name not in titles_by_tier:
+                continue
+            if y > content_rect.bottom - 40:
+                break
+
+            # Tier header
+            surf.blit(self.small_font.render(f"━━ {tier_name.upper()} ━━", True, tier_colors.get(tier_name, (150, 150, 150))), (x, y))
+            y += 25
+
+            for title_id, title_def in titles_by_tier[tier_name]:
+                if y > content_rect.bottom - 40:
+                    break
+
+                # Check if player has this title
+                has_title = character.titles.has_title(title_id)
+                name_color = (255, 215, 0) if has_title else (150, 150, 150)
+                status_text = " [EARNED]" if has_title else ""
+
+                # Title name
+                surf.blit(self.tiny_font.render(f"• {title_def.name}{status_text}", True, name_color), (x + 10, y))
+                y += 16
+
+                # Requirement
+                activity_names = {
+                    'mining': 'Ores Mined',
+                    'forestry': 'Trees Chopped',
+                    'smithing': 'Items Smithed',
+                    'refining': 'Materials Refined',
+                    'alchemy': 'Potions Brewed',
+                    'enchanting': 'Items Enchanted',
+                    'engineering': 'Devices Created',
+                    'combat': 'Enemies Defeated'
+                }
+                activity_name = activity_names.get(title_def.activity_type, title_def.activity_type.capitalize())
+                req_text = f"   Requires: {title_def.acquisition_threshold} {activity_name}"
+                if title_def.acquisition_method == "random_drop":
+                    tier_chances = {'apprentice': '20%', 'journeyman': '10%', 'expert': '5%', 'master': '2%'}
+                    chance = tier_chances.get(tier_name, '?%')
+                    req_text += f" ({chance} chance)"
+                surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + 10, y))
+                y += 16
+
+                # Bonus
+                surf.blit(self.tiny_font.render(f"   {title_def.bonus_description}", True, (100, 200, 100)), (x + 10, y))
+                y += 20
+
+            y += 10
 
     def render_notifications(self, notifications: List[Notification]):
         y = 50
@@ -5697,6 +6110,9 @@ class GameEngine:
         self.skills_window_rect = None
         self.skills_hotbar_rects = []
         self.skills_list_rects = []
+        self.skills_available_rects = []
+        self.encyclopedia_window_rect = None
+        self.encyclopedia_tab_rects = []
         self.class_selection_rect = None
         self.class_buttons = []
 
@@ -5773,6 +6189,8 @@ class GameEngine:
                         self.character.toggle_equipment_ui()
                     elif self.character.skills_ui_open:
                         self.character.toggle_skills_ui()
+                    elif self.character.encyclopedia.is_open:
+                        self.character.encyclopedia.toggle()
                     elif self.character.class_selection_open:
                         pass
                     else:
@@ -5787,6 +6205,8 @@ class GameEngine:
                     self.character.toggle_equipment_ui()
                 elif event.key == pygame.K_k:
                     self.character.toggle_skills_ui()
+                elif event.key == pygame.K_l:
+                    self.character.encyclopedia.toggle()
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
@@ -5985,6 +6405,16 @@ class GameEngine:
                 self.character.toggle_stats_ui()
                 return
 
+        # Encyclopedia UI
+        if self.character.encyclopedia.is_open and self.encyclopedia_window_rect:
+            if self.encyclopedia_window_rect.collidepoint(mouse_pos):
+                self.handle_encyclopedia_click(mouse_pos)
+                return
+            # Click outside encyclopedia UI - close it
+            else:
+                self.character.encyclopedia.toggle()
+                return
+
         # Equipment UI
         if self.character.equipment_ui_open and self.equipment_window_rect:
             if self.equipment_window_rect.collidepoint(mouse_pos):
@@ -6176,6 +6606,16 @@ class GameEngine:
                     self.add_notification("All hotbar slots full! Unequip a skill first.", (255, 150, 100))
                 return
 
+        # Check available skills (click to learn)
+        for skill_rect, skill_id, skill_def in self.skills_available_rects:
+            if skill_rect.collidepoint(rx, ry):
+                if self.character.skills.learn_skill(skill_id, character=self.character, skip_checks=False):
+                    self.add_notification(f"Learned {skill_def.name}!", (100, 255, 100))
+                    print(f"✅ Learned skill: {skill_def.name}")
+                else:
+                    self.add_notification("Failed to learn skill!", (255, 100, 100))
+                return
+
     def handle_class_selection_click(self, mouse_pos: Tuple[int, int]):
         if not self.class_buttons:
             return
@@ -6221,6 +6661,20 @@ class GameEngine:
                 if self.character.allocate_stat_point(stat_name):
                     self.add_notification(f"+1 {stat_name.upper()}", (100, 255, 100))
                     print(f"✓ +1 {stat_name.upper()}")
+                break
+
+    def handle_encyclopedia_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicks in encyclopedia UI"""
+        if not self.encyclopedia_window_rect or not self.encyclopedia_tab_rects:
+            return
+        wx, wy = self.encyclopedia_window_rect.x, self.encyclopedia_window_rect.y
+        rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+
+        # Check tab clicks
+        for tab_rect, tab_id in self.encyclopedia_tab_rects:
+            if tab_rect.collidepoint(rx, ry):
+                self.character.encyclopedia.current_tab = tab_id
+                print(f"📚 Switched to {tab_id} tab")
                 break
 
     # ========================================================================
@@ -6358,7 +6812,9 @@ class GameEngine:
 
             # Minigame gives XP (50% bonus over instant craft)
             xp_reward = int(20 * recipe.station_tier * 1.5)
-            self.character.leveling.add_exp(xp_reward)
+            leveled_up = self.character.leveling.add_exp(xp_reward)
+            if leveled_up:
+                self.character.check_and_notify_new_skills()
 
             new_title = self.character.titles.check_for_title(
                 activity_type, self.character.activities.get_count(activity_type)
@@ -7217,7 +7673,9 @@ class GameEngine:
         # Record activity
         self.character.activities.record_activity('enchanting', 1)
         xp_reward = 20 * recipe.station_tier
-        self.character.leveling.add_exp(xp_reward)
+        leveled_up = self.character.leveling.add_exp(xp_reward)
+        if leveled_up:
+            self.character.check_and_notify_new_skills()
 
         new_title = self.character.titles.check_for_title(
             'enchanting', self.character.activities.get_count('enchanting')
@@ -7368,11 +7826,12 @@ class GameEngine:
             if self.character.skills_ui_open:
                 result = self.renderer.render_skills_menu_ui(self.character, self.mouse_pos)
                 if result:
-                    self.skills_window_rect, self.skills_hotbar_rects, self.skills_list_rects = result
+                    self.skills_window_rect, self.skills_hotbar_rects, self.skills_list_rects, self.skills_available_rects = result
             else:
                 self.skills_window_rect = None
                 self.skills_hotbar_rects = []
                 self.skills_list_rects = []
+                self.skills_available_rects = []
 
             if self.character.equipment_ui_open:
                 result = self.renderer.render_equipment_ui(self.character, self.mouse_pos)
@@ -7380,6 +7839,14 @@ class GameEngine:
                     self.equipment_window_rect, self.equipment_rects = result
             else:
                 self.equipment_window_rect = None
+
+            if self.character.encyclopedia.is_open:
+                result = self.renderer.render_encyclopedia_ui(self.character, self.mouse_pos)
+                if result:
+                    self.encyclopedia_window_rect, self.encyclopedia_tab_rects = result
+            else:
+                self.encyclopedia_window_rect = None
+                self.encyclopedia_tab_rects = []
                 self.equipment_rects = {}
 
             # Enchantment selection UI (rendered on top of everything)
@@ -7472,7 +7939,9 @@ class GameEngine:
 
             # Extra XP for minigame (50% bonus)
             xp_reward = int(20 * recipe.station_tier * 1.5)
-            self.character.leveling.add_exp(xp_reward)
+            leveled_up = self.character.leveling.add_exp(xp_reward)
+            if leveled_up:
+                self.character.check_and_notify_new_skills()
 
             new_title = self.character.titles.check_for_title(
                 activity_type, self.character.activities.get_count(activity_type)
