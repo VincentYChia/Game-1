@@ -4090,6 +4090,252 @@ class Character:
             # Tool attack cooldown (faster)
             self.attack_cooldown = 0.5
 
+    def use_consumable(self, item_id: str) -> Tuple[bool, str]:
+        """
+        Use a consumable item from inventory
+        Returns (success, message)
+        """
+        # Get item from database
+        item_db = ItemDatabase.get_instance()
+        item_def = item_db.get_item(item_id)
+
+        if not item_def:
+            return False, f"Unknown item: {item_id}"
+
+        # Check if item is consumable
+        if item_def.category != "consumable":
+            return False, f"{item_def.name} is not consumable"
+
+        # Check if player has the item
+        if not self.inventory.has_item(item_id, 1):
+            return False, f"You don't have any {item_def.name}"
+
+        # Parse and apply effect based on item type
+        success = False
+        message = ""
+
+        # HEALING POTIONS (instant HP restoration)
+        if item_id == "minor_health_potion":
+            heal_amount = min(50, self.max_health - self.health)
+            self.health += heal_amount
+            success = True
+            message = f"Restored {heal_amount:.0f} HP"
+
+        elif item_id == "health_potion":
+            heal_amount = min(100, self.max_health - self.health)
+            self.health += heal_amount
+            success = True
+            message = f"Restored {heal_amount:.0f} HP"
+
+        elif item_id == "greater_health_potion":
+            heal_amount = min(200, self.max_health - self.health)
+            self.health += heal_amount
+            success = True
+            message = f"Restored {heal_amount:.0f} HP"
+
+        # MANA POTIONS (instant mana restoration)
+        elif item_id == "minor_mana_potion":
+            mana_amount = min(50, self.max_mana - self.mana)
+            self.mana += mana_amount
+            success = True
+            message = f"Restored {mana_amount:.0f} Mana"
+
+        elif item_id == "mana_potion":
+            mana_amount = min(100, self.max_mana - self.mana)
+            self.mana += mana_amount
+            success = True
+            message = f"Restored {mana_amount:.0f} Mana"
+
+        elif item_id == "greater_mana_potion":
+            mana_amount = min(200, self.max_mana - self.mana)
+            self.mana += mana_amount
+            success = True
+            message = f"Restored {mana_amount:.0f} Mana"
+
+        # REGENERATION (heal over time buff)
+        elif item_id == "regeneration_tonic":
+            buff = ActiveBuff(
+                buff_id="potion_regen",
+                name="Regeneration",
+                effect_type="regenerate",
+                category="health",
+                magnitude="minor",
+                bonus_value=5.0,
+                duration_remaining=60.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff)
+            success = True
+            message = "Regenerating 5 HP/sec for 60 seconds"
+
+        # STRENGTH BUFFS
+        elif item_id == "strength_elixir" or item_id == "minor_strength_potion":
+            buff = ActiveBuff(
+                buff_id="potion_strength",
+                name="Strength",
+                effect_type="empower",
+                category="combat",
+                magnitude="moderate",
+                bonus_value=0.20,
+                duration_remaining=300.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff)
+            success = True
+            message = "+20% damage for 5 minutes"
+
+        # DEFENSE BUFFS
+        elif item_id == "iron_skin_potion":
+            buff = ActiveBuff(
+                buff_id="potion_iron_skin",
+                name="Iron Skin",
+                effect_type="fortify",
+                category="defense",
+                magnitude="moderate",
+                bonus_value=10.0,
+                duration_remaining=300.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff)
+            success = True
+            message = "+10 defense for 5 minutes"
+
+        # SPEED BUFFS
+        elif item_id == "swiftness_draught":
+            buff = ActiveBuff(
+                buff_id="potion_swiftness",
+                name="Swiftness",
+                effect_type="quicken",
+                category="movement",
+                magnitude="moderate",
+                bonus_value=0.25,
+                duration_remaining=240.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff)
+            success = True
+            message = "+25% speed for 4 minutes"
+
+        # TITAN'S BREW (multi-stat buff)
+        elif item_id == "titans_brew":
+            # +40% damage
+            buff1 = ActiveBuff(
+                buff_id="potion_titans_strength",
+                name="Titan's Strength",
+                effect_type="empower",
+                category="combat",
+                magnitude="major",
+                bonus_value=0.40,
+                duration_remaining=480.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff1)
+            success = True
+            message = "+40% damage for 8 minutes"
+
+        # RESISTANCE POTIONS
+        elif item_id == "fire_resistance_potion":
+            buff = ActiveBuff(
+                buff_id="potion_fire_resist",
+                name="Fire Resistance",
+                effect_type="resist",
+                category="fire",
+                magnitude="moderate",
+                bonus_value=0.5,
+                duration_remaining=360.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff)
+            success = True
+            message = "50% fire resistance for 6 minutes"
+
+        elif item_id == "frost_resistance_potion":
+            buff = ActiveBuff(
+                buff_id="potion_frost_resist",
+                name="Frost Resistance",
+                effect_type="resist",
+                category="frost",
+                magnitude="moderate",
+                bonus_value=0.5,
+                duration_remaining=360.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff)
+            success = True
+            message = "50% frost resistance for 6 minutes"
+
+        elif item_id == "elemental_harmony_potion":
+            buff = ActiveBuff(
+                buff_id="potion_elemental_harmony",
+                name="Elemental Harmony",
+                effect_type="resist",
+                category="elemental",
+                magnitude="moderate",
+                bonus_value=0.3,
+                duration_remaining=600.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff)
+            success = True
+            message = "30% all elemental resistance for 10 minutes"
+
+        # UTILITY OILS
+        elif item_id == "efficiency_oil":
+            buff = ActiveBuff(
+                buff_id="oil_efficiency",
+                name="Efficiency",
+                effect_type="quicken",
+                category="gathering",
+                magnitude="minor",
+                bonus_value=0.15,
+                duration_remaining=3600.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff)
+            success = True
+            message = "+15% gathering speed for 1 hour"
+
+        elif item_id == "armor_polish":
+            buff = ActiveBuff(
+                buff_id="oil_armor_polish",
+                name="Armor Polish",
+                effect_type="fortify",
+                category="defense",
+                magnitude="minor",
+                bonus_value=5.0,
+                duration_remaining=7200.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff)
+            success = True
+            message = "+5 defense for 2 hours"
+
+        elif item_id == "weapon_oil":
+            buff = ActiveBuff(
+                buff_id="oil_weapon",
+                name="Weapon Oil",
+                effect_type="empower",
+                category="combat",
+                magnitude="minor",
+                bonus_value=0.10,
+                duration_remaining=7200.0,
+                source="potion"
+            )
+            self.buffs.add_buff(buff)
+            success = True
+            message = "+10% damage for 2 hours"
+
+        else:
+            # Generic consumable (not yet implemented)
+            return False, f"Effect for {item_def.name} not yet implemented"
+
+        # If successful, consume the item
+        if success:
+            self.inventory.remove_item(item_id, 1)
+            print(f"✓ Used {item_def.name}: {message}")
+
+        return success, message
+
 
 # ============================================================================
 # CAMERA
@@ -4733,6 +4979,58 @@ class Renderer:
 
         return slot_rects
 
+    def render_npcs(self, camera: Camera, character: Character):
+        """Render NPCs in the world with interaction indicators"""
+        # Get NPCs from game engine (passed via temporary attribute)
+        if not hasattr(self, '_temp_npcs'):
+            return
+
+        npcs = self._temp_npcs
+
+        for npc in npcs:
+            nx, ny = camera.world_to_screen(npc.position)
+
+            # Check if NPC is visible on screen
+            if not (-Config.TILE_SIZE <= nx <= Config.VIEWPORT_WIDTH + Config.TILE_SIZE and
+                    -Config.TILE_SIZE <= ny <= Config.VIEWPORT_HEIGHT + Config.TILE_SIZE):
+                continue
+
+            # Check if player is in interaction range
+            is_near = npc.is_near(character.position)
+
+            # NPC body (square sprite)
+            size = Config.TILE_SIZE - 4
+            npc_rect = pygame.Rect(nx - size // 2, ny - size // 2, size, size)
+
+            # Draw NPC with sprite color
+            pygame.draw.rect(self.screen, npc.npc_def.sprite_color, npc_rect)
+
+            # Border color based on proximity
+            if is_near:
+                border_color = (255, 255, 100)  # Yellow when in range
+                border_width = 3
+            else:
+                border_color = (0, 0, 0)
+                border_width = 2
+
+            pygame.draw.rect(self.screen, border_color, npc_rect, border_width)
+
+            # NPC name above sprite
+            name_surf = self.tiny_font.render(npc.npc_def.name, True, (255, 255, 255))
+            name_bg = pygame.Rect(nx - name_surf.get_width() // 2 - 2, ny - size // 2 - 16,
+                                name_surf.get_width() + 4, name_surf.get_height() + 2)
+            pygame.draw.rect(self.screen, (0, 0, 0, 180), name_bg)
+            self.screen.blit(name_surf, (nx - name_surf.get_width() // 2, ny - size // 2 - 15))
+
+            # Interaction indicator when player is nearby
+            if is_near:
+                indicator_text = "[F] Talk"
+                indicator_surf = self.tiny_font.render(indicator_text, True, (255, 255, 100))
+                indicator_bg = pygame.Rect(nx - indicator_surf.get_width() // 2 - 2, ny + size // 2 + 4,
+                                         indicator_surf.get_width() + 4, indicator_surf.get_height() + 2)
+                pygame.draw.rect(self.screen, (0, 0, 0, 200), indicator_bg)
+                self.screen.blit(indicator_surf, (nx - indicator_surf.get_width() // 2, ny + size // 2 + 5))
+
     def render_world(self, world: WorldSystem, camera: Camera, character: Character,
                      damage_numbers: List[DamageNumber], combat_manager=None):
         pygame.draw.rect(self.screen, Config.COLOR_BACKGROUND, (0, 0, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT))
@@ -4848,6 +5146,9 @@ class Renderer:
                     loot_text = self.tiny_font.render("LOOT", True, (255, 255, 0))
                     self.screen.blit(loot_text, (ex - loot_text.get_width() // 2, ey - 10))
 
+        # Render NPCs
+        self.render_npcs(camera, character)
+
         # Render player
         center_x, center_y = camera.world_to_screen(character.position)
         pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
@@ -4902,7 +5203,11 @@ class Renderer:
         self.render_health_bar(character, Config.VIEWPORT_WIDTH + 20, y)
         y += 35
         self.render_mana_bar(character, Config.VIEWPORT_WIDTH + 20, y)
-        y += 50
+        y += 30
+
+        # Render active buffs
+        y = self.render_active_buffs(character, Config.VIEWPORT_WIDTH + 20, y)
+        y += 10
 
         self.render_text("SELECTED TOOL", Config.VIEWPORT_WIDTH + 20, y, bold=True)
         y += 30
@@ -4964,6 +5269,50 @@ class Renderer:
         pygame.draw.rect(self.screen, Config.COLOR_TEXT, (x, y, w, h), 2)
         text = self.small_font.render(f"MP: {int(char.mana)}/{int(char.max_mana)}", True, Config.COLOR_TEXT)
         self.screen.blit(text, text.get_rect(center=(x + w // 2, y + h // 2)))
+
+    def render_active_buffs(self, character: Character, x: int, y: int) -> int:
+        """
+        Render active buffs with icons and timers
+        Returns the Y position after rendering all buffs
+        """
+        if not character.buffs.active_buffs:
+            return y
+
+        # Title
+        self.render_text("ACTIVE BUFFS", x, y, bold=True)
+        y += 25
+
+        for buff in character.buffs.active_buffs:
+            # Buff name and timer
+            time_left = buff.remaining_duration
+            mins = int(time_left // 60)
+            secs = int(time_left % 60)
+            time_str = f"{mins}:{secs:02d}" if mins > 0 else f"{secs}s"
+
+            # Color based on buff category
+            color = (100, 255, 100) if buff.category == "combat" else (100, 200, 255)
+
+            # Draw buff bar
+            bar_width = 300
+            bar_height = 18
+            pygame.draw.rect(self.screen, (40, 40, 50), (x, y, bar_width, bar_height))
+
+            # Fill based on remaining time
+            fill_width = int(bar_width * (buff.remaining_duration / buff.duration))
+            pygame.draw.rect(self.screen, color, (x, y, fill_width, bar_height))
+            pygame.draw.rect(self.screen, (150, 150, 150), (x, y, bar_width, bar_height), 1)
+
+            # Buff name and time
+            buff_text = self.tiny_font.render(f"{buff.name}: {time_str}", True, (255, 255, 255))
+            # Black outline for readability
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                self.screen.blit(self.tiny_font.render(f"{buff.name}: {time_str}", True, (0, 0, 0)),
+                                (x + 5 + dx, y + 2 + dy))
+            self.screen.blit(buff_text, (x + 5, y + 2))
+
+            y += bar_height + 3
+
+        return y + 10
 
     def render_skill_hotbar(self, character: Character):
         """Render skill hotbar at bottom center of screen"""
@@ -5348,6 +5697,110 @@ class Renderer:
         window_rect = pygame.Rect(wx, wy, ww, wh)
         self.encyclopedia_window_rect = window_rect  # Store for mouse wheel scrolling
         return window_rect, tab_rects
+
+    def render_npc_dialogue_ui(self, npc: NPC, dialogue_lines: List[str], available_quests: List[str],
+                               quest_to_turn_in: Optional[str], mouse_pos: Tuple[int, int]):
+        """Render NPC dialogue UI with quest options"""
+        # Window dimensions
+        ww, wh = 800, 500
+        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        # Create dialogue surface
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        pygame.draw.rect(surf, (100, 100, 120), surf.get_rect(), 3)
+
+        # NPC name header
+        header_bg = pygame.Rect(0, 0, ww, 50)
+        pygame.draw.rect(surf, (40, 40, 60), header_bg)
+        pygame.draw.rect(surf, (100, 100, 120), header_bg, 2)
+
+        name_surf = self.font.render(npc.npc_def.name, True, (255, 215, 0))
+        surf.blit(name_surf, (ww // 2 - name_surf.get_width() // 2, 15))
+
+        # Close hint
+        close_surf = self.tiny_font.render("[F or ESC] Close", True, (180, 180, 200))
+        surf.blit(close_surf, (ww - close_surf.get_width() - 10, 20))
+
+        # Dialogue text
+        y = 70
+        for line in dialogue_lines:
+            line_surf = self.small_font.render(line, True, (220, 220, 240))
+            surf.blit(line_surf, (30, y))
+            y += 25
+
+        y += 20
+
+        # Quest section
+        button_rects = []
+
+        # Turn in quest (highest priority)
+        if quest_to_turn_in:
+            npc_db = NPCDatabase.get_instance()
+            if quest_to_turn_in in npc_db.quests:
+                quest_def = npc_db.quests[quest_to_turn_in]
+
+                # Quest title
+                quest_title_surf = self.small_font.render(f"✅ Quest Complete: {quest_def.title}", True, (100, 255, 100))
+                surf.blit(quest_title_surf, (30, y))
+                y += 30
+
+                # Turn in button
+                button_rect = pygame.Rect(30, y, ww - 60, 40)
+                rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+                is_hovered = button_rect.collidepoint(rx, ry)
+
+                button_color = (60, 120, 60) if is_hovered else (40, 100, 40)
+                pygame.draw.rect(surf, button_color, button_rect)
+                pygame.draw.rect(surf, (100, 200, 100), button_rect, 2)
+
+                button_text = self.small_font.render("Turn In Quest", True, (255, 255, 255))
+                surf.blit(button_text, (button_rect.centerx - button_text.get_width() // 2, button_rect.y + 12))
+
+                button_rects.append(('turn_in', quest_to_turn_in, pygame.Rect(wx + button_rect.x, wy + button_rect.y, button_rect.width, button_rect.height)))
+                y += 50
+
+        # Available quests
+        if available_quests:
+            quest_header_surf = self.small_font.render("📜 Available Quests:", True, (200, 200, 255))
+            surf.blit(quest_header_surf, (30, y))
+            y += 30
+
+            npc_db = NPCDatabase.get_instance()
+            for quest_id in available_quests[:3]:  # Show up to 3 quests
+                if quest_id in npc_db.quests:
+                    quest_def = npc_db.quests[quest_id]
+
+                    # Quest button
+                    button_rect = pygame.Rect(30, y, ww - 60, 60)
+                    rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+                    is_hovered = button_rect.collidepoint(rx, ry)
+
+                    button_color = (60, 80, 120) if is_hovered else (40, 60, 100)
+                    pygame.draw.rect(surf, button_color, button_rect)
+                    pygame.draw.rect(surf, (100, 150, 200), button_rect, 2)
+
+                    # Quest title
+                    title_surf = self.small_font.render(quest_def.title, True, (220, 220, 255))
+                    surf.blit(title_surf, (button_rect.x + 10, button_rect.y + 8))
+
+                    # Quest description (truncated)
+                    desc = quest_def.description[:60] + "..." if len(quest_def.description) > 60 else quest_def.description
+                    desc_surf = self.tiny_font.render(desc, True, (180, 180, 200))
+                    surf.blit(desc_surf, (button_rect.x + 10, button_rect.y + 30))
+
+                    button_rects.append(('accept', quest_id, pygame.Rect(wx + button_rect.x, wy + button_rect.y, button_rect.width, button_rect.height)))
+                    y += 70
+
+        # If no quests
+        if not quest_to_turn_in and not available_quests:
+            no_quest_surf = self.small_font.render("No quests available at this time.", True, (150, 150, 150))
+            surf.blit(no_quest_surf, (30, y))
+
+        self.screen.blit(surf, (wx, wy))
+        window_rect = pygame.Rect(wx, wy, ww, wh)
+        return window_rect, button_rects
 
     def _render_guide_content(self, surf, content_rect, character):
         """Render game guide content"""
@@ -6908,6 +7361,9 @@ class GameEngine:
                     self.character.toggle_skills_ui()
                 elif event.key == pygame.K_l:
                     self.character.encyclopedia.toggle()
+                elif event.key == pygame.K_f:
+                    # NPC interaction
+                    self.handle_npc_interaction()
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
@@ -7075,6 +7531,124 @@ class GameEngine:
                 self.handle_mouse_click(event.pos)
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 self.handle_mouse_release(event.pos)
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                # Right-click handler (for consumables)
+                self.handle_right_click(event.pos)
+
+    def handle_right_click(self, mouse_pos: Tuple[int, int]):
+        """Handle right-click events (mainly for using consumables)"""
+        # Only handle inventory right-clicks for now
+        if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
+            start_x, start_y = 20, Config.INVENTORY_PANEL_Y + 50
+            slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
+            rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
+
+            if rel_x >= 0 and rel_y >= 0:
+                col, row = rel_x // (slot_size + spacing), rel_y // (slot_size + spacing)
+                in_x = rel_x % (slot_size + spacing) < slot_size
+                in_y = rel_y % (slot_size + spacing) < slot_size
+
+                if in_x and in_y:
+                    idx = row * Config.INVENTORY_SLOTS_PER_ROW + col
+                    if 0 <= idx < self.character.inventory.max_slots:
+                        item_stack = self.character.inventory.slots[idx]
+                        if item_stack:
+                            # Check if item is consumable
+                            item_db = ItemDatabase.get_instance()
+                            item_def = item_db.get_item(item_stack.item_id)
+                            if item_def and item_def.category == "consumable":
+                                # Use the consumable
+                                success, message = self.character.use_consumable(item_stack.item_id)
+                                if success:
+                                    self.add_notification(message, (100, 255, 100))
+                                else:
+                                    self.add_notification(message, (255, 100, 100))
+
+    def handle_npc_dialogue_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicks on NPC dialogue buttons (accept/turn in quests)"""
+        for button_info in self.npc_dialogue_buttons:
+            action, quest_id, button_rect = button_info
+            if button_rect.collidepoint(mouse_pos):
+                npc_db = NPCDatabase.get_instance()
+
+                if action == 'accept':
+                    # Accept quest
+                    if quest_id in npc_db.quests:
+                        quest_def = npc_db.quests[quest_id]
+                        if self.character.quests.start_quest(quest_def):
+                            print(f"📜 Quest accepted: {quest_def.title}")
+                            self.add_notification(f"Quest accepted: {quest_def.title}", (100, 255, 100))
+                            # Update dialogue state
+                            self.npc_available_quests.remove(quest_id)
+                            # Refresh NPC dialogue to show updated quest list
+                            self.npc_dialogue_lines = [self.active_npc.get_next_dialogue()]
+                            self.npc_available_quests = self.active_npc.get_available_quests(self.character.quests)
+                            self.npc_quest_to_turn_in = self.active_npc.has_quest_to_turn_in(self.character.quests, self.character)
+                        else:
+                            self.add_notification("Already have this quest!", (255, 100, 100))
+
+                elif action == 'turn_in':
+                    # Turn in quest
+                    success, messages = self.character.quests.complete_quest(quest_id, self.character)
+                    if success:
+                        print(f"✅ Quest completed: {quest_id}")
+                        for msg in messages:
+                            print(f"   {msg}")
+                            self.add_notification(msg, (100, 255, 100))
+
+                        # Show completion dialogue
+                        if quest_id in npc_db.quests:
+                            quest_def = npc_db.quests[quest_id]
+                            self.npc_dialogue_lines = quest_def.completion_dialogue
+
+                        # Update quest state
+                        self.npc_quest_to_turn_in = None
+                        self.npc_available_quests = self.active_npc.get_available_quests(self.character.quests)
+                    else:
+                        print(f"❌ Failed to turn in quest: {messages}")
+                        for msg in messages:
+                            self.add_notification(msg, (255, 100, 100))
+                break
+
+    def handle_npc_interaction(self):
+        """Handle F key press to interact with nearby NPCs"""
+        # If dialogue is already open, close it
+        if self.npc_dialogue_open:
+            self.npc_dialogue_open = False
+            self.active_npc = None
+            self.npc_dialogue_lines = []
+            self.npc_available_quests = []
+            self.npc_quest_to_turn_in = None
+            return
+
+        # Find nearby NPC
+        nearby_npc = None
+        for npc in self.npcs:
+            if npc.is_near(self.character.position):
+                nearby_npc = npc
+                break
+
+        if nearby_npc:
+            # Open dialogue with this NPC
+            self.npc_dialogue_open = True
+            self.active_npc = nearby_npc
+
+            # Get dialogue lines
+            self.npc_dialogue_lines = [nearby_npc.get_next_dialogue()]
+
+            # Check for available quests
+            self.npc_available_quests = nearby_npc.get_available_quests(self.character.quests)
+
+            # Check for completable quests
+            self.npc_quest_to_turn_in = nearby_npc.has_quest_to_turn_in(self.character.quests, self.character)
+
+            print(f"💬 Talking to {nearby_npc.npc_def.name}")
+            if self.npc_available_quests:
+                print(f"   📜 {len(self.npc_available_quests)} quest(s) available")
+            if self.npc_quest_to_turn_in:
+                print(f"   ✅ Quest ready to turn in: {self.npc_quest_to_turn_in}")
+        else:
+            self.add_notification("No one nearby to talk to", (200, 200, 200))
 
     def handle_start_menu_selection(self, option_index: int):
         """Handle start menu option selection (0=New World, 1=Load World, 2=Temporary World)"""
@@ -7205,6 +7779,16 @@ class GameEngine:
             # Click outside encyclopedia UI - close it
             else:
                 self.character.encyclopedia.toggle()
+                return
+
+        # NPC Dialogue UI
+        if self.npc_dialogue_open and self.npc_dialogue_window_rect:
+            if self.npc_dialogue_window_rect.collidepoint(mouse_pos):
+                self.handle_npc_dialogue_click(mouse_pos)
+                return
+            # Click outside dialogue UI - close it
+            else:
+                self.handle_npc_interaction()  # Close dialogue
                 return
 
         # Equipment UI
@@ -8598,6 +9182,8 @@ class GameEngine:
             pygame.display.flip()
             return
 
+        # Pass NPCs to renderer via temporary attribute
+        self.renderer._temp_npcs = self.npcs
         self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
         self.renderer.render_ui(self.character, self.mouse_pos)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
@@ -8658,6 +9244,17 @@ class GameEngine:
                 self.encyclopedia_window_rect = None
                 self.encyclopedia_tab_rects = []
                 self.equipment_rects = {}
+
+            # NPC dialogue UI
+            if self.npc_dialogue_open and self.active_npc:
+                result = self.renderer.render_npc_dialogue_ui(
+                    self.active_npc, self.npc_dialogue_lines, self.npc_available_quests,
+                    self.npc_quest_to_turn_in, self.mouse_pos)
+                if result:
+                    self.npc_dialogue_window_rect, self.npc_dialogue_buttons = result
+            else:
+                self.npc_dialogue_window_rect = None
+                self.npc_dialogue_buttons = []
 
             # Enchantment selection UI (rendered on top of everything)
             if self.enchantment_selection_active:
