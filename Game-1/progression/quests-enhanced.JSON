@@ -15,8 +15,8 @@
       "tier": 1,
 
       "description": {
-        "short": "Gather 5 wood for the Elder Sage",
-        "long": "The Elder Sage wants you to gather 5 wood to prove your resourcefulness. Approach trees and use your axe to gather wood.",
+        "short": "Gather 5 oak logs for the Elder Sage",
+        "long": "The Elder Sage wants you to gather 5 oak logs to prove your resourcefulness. Approach oak trees and use your axe to gather wood.",
         "narrative": "Every journey begins with a single step. Show me you can gather what nature provides."
       },
 
@@ -29,11 +29,11 @@
         "objective_type": "gather",
         "items": [
           {
-            "objectiveId": "obj_tutorial_gather_wood",
-            "item_id": "wood",
-            "materialId": "wood",
+            "objectiveId": "obj_tutorial_gather_oak",
+            "item_id": "oak_log",
+            "materialId": "oak_log",
             "quantity": 5,
-            "description": "Gather Wood",
+            "description": "Gather Oak Logs",
             "optional": false
           }
         ]

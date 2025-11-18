@@ -1661,7 +1661,7 @@ class ResourceType(Enum):
 
 RESOURCE_TIERS = {
     ResourceType.OAK_TREE: 1, ResourceType.BIRCH_TREE: 2, ResourceType.MAPLE_TREE: 3, ResourceType.IRONWOOD_TREE: 4,
-    ResourceType.COPPER_ORE: 1, ResourceType.IRON_ORE: 2, ResourceType.STEEL_ORE: 3, ResourceType.MITHRIL_ORE: 4,
+    ResourceType.COPPER_ORE: 1, ResourceType.IRON_ORE: 1, ResourceType.STEEL_ORE: 2, ResourceType.MITHRIL_ORE: 3,
     ResourceType.LIMESTONE: 1, ResourceType.GRANITE: 2, ResourceType.OBSIDIAN: 3, ResourceType.STAR_CRYSTAL: 4
 }
 
@@ -4104,6 +4104,73 @@ class Character:
 
         print(f"   ✅ SUCCESS - Equipped {equipment.name}")
         return True, "OK"
+
+    def try_equip_tool_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
+        """Try to equip a tool from inventory slot"""
+        print(f"\n🔧 try_equip_tool_from_inventory called for slot {slot_index}")
+
+        if slot_index < 0 or slot_index >= self.inventory.max_slots:
+            return False, "Invalid slot"
+
+        item_stack = self.inventory.slots[slot_index]
+        if not item_stack:
+            return False, "Empty slot"
+
+        # Check if it's equipment
+        if not item_stack.is_equipment():
+            return False, "Not a tool"
+
+        equipment = item_stack.get_equipment()
+        if not equipment:
+            return False, "Invalid equipment data"
+
+        # Check if it's a tool (axe or pickaxe)
+        eq_type = getattr(equipment, 'type', '').lower()
+        subtype = getattr(equipment, 'subtype', '').lower()
+
+        print(f"   Type: {eq_type}, Subtype: {subtype}")
+
+        if eq_type != 'tool' or subtype not in ['axe', 'pickaxe']:
+            return False, "Not a tool"
+
+        # Create Tool object from equipment
+        durability = equipment.durability_current if hasattr(equipment, 'durability_current') else equipment.durability_max
+        damage = equipment.damage if hasattr(equipment, 'damage') else 0
+
+        new_tool = Tool(
+            tool_id=equipment.item_id,
+            name=equipment.name,
+            tool_type=subtype,
+            tier=equipment.tier,
+            damage=damage,
+            durability_current=durability,
+            durability_max=equipment.durability_max
+        )
+
+        # Check if we already have this exact tool (same ID and tier)
+        existing_tool_idx = None
+        for i, tool in enumerate(self.tools):
+            if tool.tool_id == new_tool.tool_id:
+                existing_tool_idx = i
+                break
+
+        # Replace or add the tool
+        if existing_tool_idx is not None:
+            self.tools[existing_tool_idx] = new_tool
+            print(f"   ♻️  Replaced existing {new_tool.name}")
+        else:
+            self.tools.append(new_tool)
+            print(f"   ➕ Added {new_tool.name} to tools")
+
+        # Select the tool
+        self.selected_tool = new_tool
+        self._selected_weapon = None
+
+        # Remove from inventory
+        self.inventory.slots[slot_index] = None
+        print(f"   ✅ Equipped {new_tool.name} as active tool")
+
+        return True, f"Equipped {new_tool.name}"
 
     def try_unequip_to_inventory(self, slot_name: str) -> Tuple[bool, str]:
         """Try to unequip item to inventory"""
@@ -8040,7 +8107,7 @@ class GameEngine:
                 if in_x and in_y:
                     idx = row * Config.INVENTORY_SLOTS_PER_ROW + col
                     if 0 <= idx < self.character.inventory.max_slots:
-                        # Double-click to equip equipment
+                        # Double-click to equip equipment or tools
                         if is_double_click and self.last_clicked_slot == idx:
                             item_stack = self.character.inventory.slots[idx]
                             print(f"\n🖱️  Double-click detected on slot {idx}")
@@ -8051,12 +8118,27 @@ class GameEngine:
                                 if is_equip:
                                     equipment = item_stack.get_equipment()
                                     print(f"   get_equipment(): {equipment}")
-                                    if equipment:  # FIX #4: Check equipment exists before trying to equip
-                                        success, msg = self.character.try_equip_from_inventory(idx)
-                                        if success:
-                                            self.add_notification(f"Equipped {equipment.name}", (100, 255, 100))
+                                    if equipment:
+                                        # Check if it's a tool
+                                        eq_type = getattr(equipment, 'type', '').lower()
+                                        subtype = getattr(equipment, 'subtype', '').lower()
+                                        is_tool = (eq_type == 'tool' and subtype in ['axe', 'pickaxe'])
+                                        print(f"   Type: {eq_type}, Subtype: {subtype}, is_tool: {is_tool}")
+
+                                        if is_tool:
+                                            # Equip as tool
+                                            success, msg = self.character.try_equip_tool_from_inventory(idx)
+                                            if success:
+                                                self.add_notification(msg, (100, 255, 100))
+                                            else:
+                                                self.add_notification(f"Cannot equip tool: {msg}", (255, 100, 100))
                                         else:
-                                            self.add_notification(f"Cannot equip: {msg}", (255, 100, 100))
+                                            # Equip as regular equipment
+                                            success, msg = self.character.try_equip_from_inventory(idx)
+                                            if success:
+                                                self.add_notification(f"Equipped {equipment.name}", (100, 255, 100))
+                                            else:
+                                                self.add_notification(f"Cannot equip: {msg}", (255, 100, 100))
                                     else:
                                         print(f"   ❌ equipment is None!")
                                         self.add_notification("Invalid equipment data", (255, 100, 100))
