@@ -1,0 +1,82 @@
+{
+  "quests": [
+    {
+      "quest_id": "tutorial_quest",
+      "title": "First Steps",
+      "description": "The Elder Sage wants you to gather 5 wood to prove your resourcefulness.",
+      "npc_id": "tutorial_guide",
+      "objectives": {
+        "type": "gather",
+        "items": [
+          {"item_id": "wood", "quantity": 5}
+        ]
+      },
+      "rewards": {
+        "experience": 100,
+        "health_restore": 50,
+        "skills": ["sprint"],
+        "items": [
+          {"item_id": "minor_health_potion", "quantity": 2}
+        ],
+        "title": "novice_forester"
+      },
+      "completion_dialogue": [
+        "Excellent work! You've proven yourself capable.",
+        "Take these rewards as a token of my gratitude.",
+        "May your journey be prosperous!"
+      ]
+    },
+    {
+      "quest_id": "gathering_quest",
+      "title": "Material Research",
+      "description": "The Wandering Trader needs 3 copper ore and 3 iron ore for his studies.",
+      "npc_id": "mysterious_trader",
+      "objectives": {
+        "type": "gather",
+        "items": [
+          {"item_id": "copper_ore", "quantity": 3},
+          {"item_id": "iron_ore", "quantity": 3}
+        ]
+      },
+      "rewards": {
+        "experience": 200,
+        "mana_restore": 50,
+        "skills": ["miners_endurance"],
+        "items": [
+          {"item_id": "minor_mana_potion", "quantity": 2},
+          {"item_id": "iron_ingot", "quantity": 1}
+        ]
+      },
+      "completion_dialogue": [
+        "Marvelous! These ores will be perfect for my research.",
+        "You have my deepest thanks, adventurer.",
+        "Here, take these as payment."
+      ]
+    },
+    {
+      "quest_id": "combat_quest",
+      "title": "Prove Your Worth",
+      "description": "The Battle Master challenges you to defeat 3 enemies to prove your combat prowess.",
+      "npc_id": "combat_trainer",
+      "objectives": {
+        "type": "combat",
+        "enemies_killed": 3
+      },
+      "rewards": {
+        "experience": 300,
+        "health_restore": 100,
+        "skills": ["combat_strike", "fortify"],
+        "items": [
+          {"item_id": "minor_health_potion", "quantity": 3},
+          {"item_id": "minor_strength_potion", "quantity": 1}
+        ],
+        "title": "apprentice_warrior"
+      },
+      "completion_dialogue": [
+        "Impressive! You fight with the skill of a seasoned warrior.",
+        "I'm honored to grant you these rewards.",
+        "Continue honing your skills, and you'll become legendary!"
+      ]
+    }
+  ]
+}

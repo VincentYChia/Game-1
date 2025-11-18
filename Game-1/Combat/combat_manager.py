@@ -137,6 +137,33 @@ class CombatManager:
             return "rare"
         return "normal"
 
+    def _get_allowed_tiers_for_danger_level(self, danger_level: str) -> set:
+        """Get allowed tiers for a given danger level (tier caps)"""
+        if danger_level == "peaceful":
+            return {1}  # Only T1 enemies
+        elif danger_level == "dangerous":
+            return {1, 2, 3}  # T1-T3 enemies
+        elif danger_level == "rare":
+            return {1, 2, 3, 4}  # T1-T4 enemies (including bosses)
+        else:
+            return {1}  # Default to safest tier
+
+    def _filter_tier_weights_for_danger(self, tier_weights: Dict[str, float], danger_level: str) -> Dict[str, float]:
+        """Filter tier weights based on danger level restrictions"""
+        allowed_tiers = self._get_allowed_tiers_for_danger_level(danger_level)
+
+        filtered = {}
+        for tier_name, weight in tier_weights.items():
+            tier_num = int(tier_name.replace('tier', ''))
+            if tier_num in allowed_tiers and weight > 0:
+                filtered[tier_name] = weight
+
+        # If no valid tiers, allow T1 as fallback
+        if not filtered:
+            filtered = {'tier1': 1.0}
+
+        return filtered
+
     def spawn_enemies_in_chunk(self, chunk, initial_spawn=False):
         """Spawn enemies in a chunk based on its danger level"""
         chunk_coords = (chunk.chunk_x, chunk.chunk_y)
@@ -172,9 +199,10 @@ class CombatManager:
 
         # Spawn enemies
         for _ in range(to_spawn):
-            # Pick tier based on weights
+            # Pick tier based on weights, filtered by danger level restrictions
             tier_weights = spawn_config.get('tierWeights', {'tier1': 1.0})
-            tier = self._pick_weighted_tier(tier_weights)
+            filtered_weights = self._filter_tier_weights_for_danger(tier_weights, danger_level)
+            tier = self._pick_weighted_tier(filtered_weights)
 
             # Get random enemy of that tier
             enemy_def = self.enemy_db.get_random_enemy(tier)
@@ -226,9 +254,10 @@ class CombatManager:
                 # Spawn 1-2 enemies in this chunk
                 to_spawn = min(2, count - spawned)
                 for _ in range(to_spawn):
-                    # Pick tier based on chunk danger level and weights
+                    # Pick tier based on chunk danger level and weights, with tier restrictions
                     tier_weights = spawn_config.get('tierWeights', {'tier1': 1.0})
-                    tier = self._pick_weighted_tier(tier_weights)
+                    filtered_weights = self._filter_tier_weights_for_danger(tier_weights, danger_level)
+                    tier = self._pick_weighted_tier(filtered_weights)
 
                     # Get random enemy of selected tier
                     enemy_def = self.enemy_db.get_random_enemy(tier)
