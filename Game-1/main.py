@@ -1432,7 +1432,7 @@ class Encyclopedia:
     """
     def __init__(self):
         self.is_open = False
-        self.current_tab = "guide"  # guide, skills, titles
+        self.current_tab = "guide"  # guide, quests, skills, titles
         self.scroll_offset = 0
 
     def toggle(self):
@@ -3469,6 +3469,28 @@ class Inventory:
         self.dragging_stack = None
         self.dragging_from_equipment = False
 
+    def has_item(self, item_id: str, quantity: int = 1) -> bool:
+        """Check if inventory has at least quantity of item_id"""
+        return self.get_item_count(item_id) >= quantity
+
+    def remove_item(self, item_id: str, quantity: int = 1) -> bool:
+        """Remove quantity of item_id from inventory. Returns True if successful."""
+        if not self.has_item(item_id, quantity):
+            return False
+
+        remaining = quantity
+        for i, slot in enumerate(self.slots):
+            if slot and slot.item_id == item_id and remaining > 0:
+                if slot.quantity <= remaining:
+                    remaining -= slot.quantity
+                    self.slots[i] = None
+                else:
+                    slot.quantity -= remaining
+                    remaining = 0
+                    break
+
+        return remaining == 0
+
 
 # ============================================================================
 # TOOL
@@ -4147,8 +4169,8 @@ class Character:
         Returns (success, message)
         """
         # Get item from database
-        item_db = ItemDatabase.get_instance()
-        item_def = item_db.get_item(item_id)
+        mat_db = MaterialDatabase.get_instance()
+        item_def = mat_db.get_material(item_id)
 
         if not item_def:
             return False, f"Unknown item: {item_id}"
@@ -5695,6 +5717,7 @@ class Renderer:
         tab_spacing = 10
         tabs = [
             ("guide", "GAME GUIDE"),
+            ("quests", "QUESTS"),
             ("skills", "SKILLS"),
             ("titles", "TITLES")
         ]
@@ -5739,6 +5762,8 @@ class Renderer:
         # Render content based on current tab
         if character.encyclopedia.current_tab == "guide":
             self._render_guide_content(surf, content_rect, character)
+        elif character.encyclopedia.current_tab == "quests":
+            self._render_quests_content(surf, content_rect, character)
         elif character.encyclopedia.current_tab == "skills":
             self._render_skills_content(surf, content_rect, character)
         elif character.encyclopedia.current_tab == "titles":
@@ -5886,6 +5911,145 @@ class Renderer:
                 if y >= content_rect.y - 18 and y < content_rect.bottom:
                     surf.blit(self.tiny_font.render(line, True, (180, 180, 200)), (x, y))
                 y += 18
+
+    def _render_quests_content(self, surf, content_rect, character):
+        """Render quest tracking and status content"""
+        npc_db = NPCDatabase.get_instance()
+        if not npc_db.loaded:
+            return
+
+        # Apply scroll offset
+        scroll_offset = character.encyclopedia.scroll_offset
+        y = content_rect.y + 15 - scroll_offset
+        x = content_rect.x + 15
+
+        # Header
+        if y >= content_rect.y and y < content_rect.bottom:
+            surf.blit(self.font.render("QUEST LOG", True, (255, 215, 0)), (x, y))
+        y += 35
+
+        # Active Quests Section
+        if y >= content_rect.y and y < content_rect.bottom:
+            surf.blit(self.small_font.render("ACTIVE QUESTS:", True, (150, 200, 255)), (x, y))
+        y += 25
+
+        if character.quests.active_quests:
+            for quest_id, quest in character.quests.active_quests.items():
+                # Quest Title
+                if y >= content_rect.y - 25 and y < content_rect.bottom:
+                    title_text = f"📜 {quest.quest_def.title}"
+                    surf.blit(self.small_font.render(title_text, True, (220, 220, 255)), (x + 10, y))
+                y += 25
+
+                # Quest Description
+                if y >= content_rect.y - 20 and y < content_rect.bottom:
+                    desc_text = quest.quest_def.description[:80] + "..." if len(quest.quest_def.description) > 80 else quest.quest_def.description
+                    surf.blit(self.tiny_font.render(desc_text, True, (180, 180, 200)), (x + 20, y))
+                y += 20
+
+                # Quest Objectives
+                if quest.quest_def.objectives.objective_type == "gather":
+                    if y >= content_rect.y - 20 and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render("Objectives:", True, (200, 200, 220)), (x + 20, y))
+                    y += 18
+
+                    for item_req in quest.quest_def.objectives.items:
+                        item_id = item_req["item_id"]
+                        required_qty = item_req["quantity"]
+                        current_qty = character.inventory.get_item_count(item_id)
+
+                        # Get item name
+                        mat_db = MaterialDatabase.get_instance()
+                        item_def = mat_db.get_material(item_id)
+                        item_name = item_def.name if item_def else item_id
+
+                        # Progress indicator
+                        is_complete = current_qty >= required_qty
+                        status_color = (100, 255, 100) if is_complete else (255, 255, 100)
+                        check_mark = "✓" if is_complete else "○"
+
+                        if y >= content_rect.y - 18 and y < content_rect.bottom:
+                            obj_text = f"  {check_mark} Gather {item_name}: {current_qty}/{required_qty}"
+                            surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + 30, y))
+                        y += 18
+
+                elif quest.quest_def.objectives.objective_type == "combat":
+                    required_kills = quest.quest_def.objectives.enemies_killed
+                    current_kills = character.activities.get_count('combat')
+
+                    is_complete = current_kills >= required_kills
+                    status_color = (100, 255, 100) if is_complete else (255, 255, 100)
+                    check_mark = "✓" if is_complete else "○"
+
+                    if y >= content_rect.y - 20 and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render("Objectives:", True, (200, 200, 220)), (x + 20, y))
+                    y += 18
+
+                    if y >= content_rect.y - 18 and y < content_rect.bottom:
+                        obj_text = f"  {check_mark} Defeat enemies: {current_kills}/{required_kills}"
+                        surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + 30, y))
+                    y += 18
+
+                # Quest completion status
+                can_complete = quest.check_completion(character)
+                if can_complete:
+                    if y >= content_rect.y - 20 and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render("✅ Ready to turn in!", True, (100, 255, 100)), (x + 20, y))
+                    y += 20
+
+                # Rewards preview
+                if y >= content_rect.y - 18 and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render("Rewards:", True, (200, 200, 220)), (x + 20, y))
+                y += 18
+
+                rewards_parts = []
+                if quest.quest_def.rewards.experience > 0:
+                    rewards_parts.append(f"{quest.quest_def.rewards.experience} XP")
+                if quest.quest_def.rewards.skills:
+                    rewards_parts.append(f"Skills: {', '.join(quest.quest_def.rewards.skills)}")
+                if quest.quest_def.rewards.items:
+                    item_names = []
+                    for item_req in quest.quest_def.rewards.items:
+                        qty = item_req.get("quantity", 1)
+                        item_id = item_req.get("item_id", "")
+                        mat_db = MaterialDatabase.get_instance()
+                        item_def = mat_db.get_material(item_id)
+                        item_name = item_def.name if item_def else item_id
+                        item_names.append(f"{qty}x {item_name}")
+                    if item_names:
+                        rewards_parts.append(f"Items: {', '.join(item_names)}")
+
+                for reward_text in rewards_parts:
+                    if y >= content_rect.y - 16 and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render(f"  • {reward_text}", True, (180, 180, 200)), (x + 30, y))
+                    y += 16
+
+                y += 15  # Space between quests
+
+        else:
+            if y >= content_rect.y and y < content_rect.bottom:
+                surf.blit(self.small_font.render("No active quests", True, (150, 150, 150)), (x + 10, y))
+            y += 30
+
+        y += 20
+
+        # Completed Quests Section
+        if y >= content_rect.y and y < content_rect.bottom:
+            surf.blit(self.small_font.render("COMPLETED QUESTS:", True, (150, 200, 255)), (x, y))
+        y += 25
+
+        if character.quests.completed_quests:
+            for quest_id in character.quests.completed_quests:
+                if quest_id in npc_db.quests:
+                    quest_def = npc_db.quests[quest_id]
+                    if y >= content_rect.y - 20 and y < content_rect.bottom:
+                        completed_text = f"✓ {quest_def.title}"
+                        surf.blit(self.tiny_font.render(completed_text, True, (100, 255, 100)), (x + 10, y))
+                    y += 20
+        else:
+            if y >= content_rect.y and y < content_rect.bottom:
+                surf.blit(self.small_font.render("No completed quests yet", True, (150, 150, 150)), (x + 10, y))
+            y += 30
 
     def _render_skills_content(self, surf, content_rect, character):
         """Render skills reference content"""
