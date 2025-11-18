@@ -1,6 +1,7 @@
 from __future__ import annotations
 import pygame
 import sys
+import os
 import math
 import random
 import json
@@ -3612,9 +3613,11 @@ class Character:
             requested_skill = class_def.starting_skill
             actual_skill_id = skill_mapping.get(requested_skill, requested_skill)
 
+            # Get skill database instance (used by both paths below)
+            skill_db = SkillDatabase.get_instance()
+
             if actual_skill_id:
                 # Check if skill exists in database
-                skill_db = SkillDatabase.get_instance()
                 if actual_skill_id in skill_db.skills:
                     # Learn the skill (skip requirement checks for starting skills)
                     if self.skills.learn_skill(actual_skill_id, character=self, skip_checks=True):
@@ -5026,30 +5029,41 @@ class Renderer:
 
         self.screen.blit(surf, (wx, wy))
         window_rect = pygame.Rect(wx, wy, ww, wh)
+        self.encyclopedia_window_rect = window_rect  # Store for mouse wheel scrolling
         return window_rect, tab_rects
 
     def _render_guide_content(self, surf, content_rect, character):
         """Render game guide content"""
         lines = character.encyclopedia.get_game_guide_text()
-        y = content_rect.y + 20
+
+        # Apply scroll offset
+        scroll_offset = character.encyclopedia.scroll_offset
+        y = content_rect.y + 20 - scroll_offset
         x = content_rect.x + 20
 
         for line in lines:
-            if y > content_rect.bottom - 30:
+            # Stop if entirely below visible area
+            if y > content_rect.bottom:
                 break
+
+            # Only render if within visible area
             if line.startswith("==="):
-                surf.blit(self.font.render(line, True, (255, 215, 0)), (x, y))
+                if y >= content_rect.y - 30 and y < content_rect.bottom:
+                    surf.blit(self.font.render(line, True, (255, 215, 0)), (x, y))
                 y += 30
             elif line.startswith("•"):
-                surf.blit(self.small_font.render(line, True, (200, 200, 220)), (x, y))
+                if y >= content_rect.y - 20 and y < content_rect.bottom:
+                    surf.blit(self.small_font.render(line, True, (200, 200, 220)), (x, y))
                 y += 20
             elif line == "":
                 y += 10
             elif line.endswith(":"):
-                surf.blit(self.small_font.render(line, True, (150, 200, 255)), (x, y))
+                if y >= content_rect.y - 25 and y < content_rect.bottom:
+                    surf.blit(self.small_font.render(line, True, (150, 200, 255)), (x, y))
                 y += 25
             else:
-                surf.blit(self.tiny_font.render(line, True, (180, 180, 200)), (x, y))
+                if y >= content_rect.y - 18 and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(line, True, (180, 180, 200)), (x, y))
                 y += 18
 
     def _render_skills_content(self, surf, content_rect, character):
@@ -5058,11 +5072,14 @@ class Renderer:
         if not skill_db.loaded:
             return
 
-        y = content_rect.y + 15
+        # Apply scroll offset
+        scroll_offset = character.encyclopedia.scroll_offset
+        y = content_rect.y + 15 - scroll_offset
         x = content_rect.x + 15
 
         # Header
-        surf.blit(self.small_font.render(f"All Skills ({len(skill_db.skills)} total)", True, (150, 200, 255)), (x, y))
+        if y >= content_rect.y and y < content_rect.bottom:
+            surf.blit(self.small_font.render(f"All Skills ({len(skill_db.skills)} total)", True, (150, 200, 255)), (x, y))
         y += 30
 
         # Group skills by tier
@@ -5075,16 +5092,19 @@ class Renderer:
 
         # Render each tier
         for tier in sorted(skills_by_tier.keys()):
-            if y > content_rect.bottom - 40:
-                break
-
             # Tier header
             tier_colors = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}
-            surf.blit(self.small_font.render(f"━━ TIER {tier} ━━", True, tier_colors.get(tier, (150, 150, 150))), (x, y))
+            if y >= content_rect.y and y < content_rect.bottom:
+                surf.blit(self.small_font.render(f"━━ TIER {tier} ━━", True, tier_colors.get(tier, (150, 150, 150))), (x, y))
             y += 25
 
             for skill_id, skill_def in skills_by_tier[tier]:
-                if y > content_rect.bottom - 40:
+                # Skip if entirely above visible area
+                if y + 52 < content_rect.y:
+                    y += 52
+                    continue
+                # Stop if entirely below visible area
+                if y > content_rect.bottom:
                     break
 
                 # Check if player knows this skill
@@ -5094,7 +5114,8 @@ class Renderer:
                 # Skill name
                 name_color = (100, 255, 100) if has_skill else ((200, 200, 100) if can_learn else (150, 150, 150))
                 status_text = " [KNOWN]" if has_skill else (" [AVAILABLE]" if can_learn else "")
-                surf.blit(self.tiny_font.render(f"• {skill_def.name}{status_text}", True, name_color), (x + 10, y))
+                if y >= content_rect.y and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(f"• {skill_def.name}{status_text}", True, name_color), (x + 10, y))
                 y += 16
 
                 # Requirements
@@ -5102,12 +5123,14 @@ class Renderer:
                 if skill_def.requirements.stats:
                     stat_reqs = ", ".join(f"{k} {v}" for k, v in skill_def.requirements.stats.items())
                     req_text += f", {stat_reqs}"
-                surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + 10, y))
+                if y >= content_rect.y and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + 10, y))
                 y += 16
 
                 # Effect description
                 effect_desc = f"   {skill_def.effect.effect_type.capitalize()} - {skill_def.effect.category} ({skill_def.effect.magnitude})"
-                surf.blit(self.tiny_font.render(effect_desc, True, (100, 150, 200)), (x + 10, y))
+                if y >= content_rect.y and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(effect_desc, True, (100, 150, 200)), (x + 10, y))
                 y += 20
 
             y += 10
@@ -5118,11 +5141,14 @@ class Renderer:
         if not title_db.loaded:
             return
 
-        y = content_rect.y + 15
+        # Apply scroll offset
+        scroll_offset = character.encyclopedia.scroll_offset
+        y = content_rect.y + 15 - scroll_offset
         x = content_rect.x + 15
 
         # Header
-        surf.blit(self.small_font.render(f"All Titles ({len(title_db.titles)} total)", True, (255, 215, 0)), (x, y))
+        if y >= content_rect.y and y < content_rect.bottom:
+            surf.blit(self.small_font.render(f"All Titles ({len(title_db.titles)} total)", True, (255, 215, 0)), (x, y))
         y += 30
 
         # Group titles by tier
@@ -5146,15 +5172,19 @@ class Renderer:
         for tier_name in tier_order:
             if tier_name not in titles_by_tier:
                 continue
-            if y > content_rect.bottom - 40:
-                break
 
             # Tier header
-            surf.blit(self.small_font.render(f"━━ {tier_name.upper()} ━━", True, tier_colors.get(tier_name, (150, 150, 150))), (x, y))
+            if y >= content_rect.y and y < content_rect.bottom:
+                surf.blit(self.small_font.render(f"━━ {tier_name.upper()} ━━", True, tier_colors.get(tier_name, (150, 150, 150))), (x, y))
             y += 25
 
             for title_id, title_def in titles_by_tier[tier_name]:
-                if y > content_rect.bottom - 40:
+                # Skip if entirely above visible area
+                if y + 52 < content_rect.y:
+                    y += 52
+                    continue
+                # Stop if entirely below visible area
+                if y > content_rect.bottom:
                     break
 
                 # Check if player has this title
@@ -5163,7 +5193,8 @@ class Renderer:
                 status_text = " [EARNED]" if has_title else ""
 
                 # Title name
-                surf.blit(self.tiny_font.render(f"• {title_def.name}{status_text}", True, name_color), (x + 10, y))
+                if y >= content_rect.y and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(f"• {title_def.name}{status_text}", True, name_color), (x + 10, y))
                 y += 16
 
                 # Requirement
@@ -5183,11 +5214,13 @@ class Renderer:
                     tier_chances = {'apprentice': '20%', 'journeyman': '10%', 'expert': '5%', 'master': '2%'}
                     chance = tier_chances.get(tier_name, '?%')
                     req_text += f" ({chance} chance)"
-                surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + 10, y))
+                if y >= content_rect.y and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + 10, y))
                 y += 16
 
                 # Bonus
-                surf.blit(self.tiny_font.render(f"   {title_def.bonus_description}", True, (100, 200, 100)), (x + 10, y))
+                if y >= content_rect.y and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(f"   {title_def.bonus_description}", True, (100, 200, 100)), (x + 10, y))
                 y += 20
 
             y += 10
@@ -5845,6 +5878,89 @@ class Renderer:
         window_rect = pygame.Rect(wx, wy, ww, wh)
         return window_rect, item_rects
 
+    def render_start_menu(self, selected_option: int, mouse_pos: Tuple[int, int]):
+        """Render the start menu with New World / Load World / Temporary World options"""
+        # Menu dimensions
+        ww, wh = 600, 500
+        wx = (Config.SCREEN_WIDTH - ww) // 2
+        wy = (Config.SCREEN_HEIGHT - wh) // 2
+
+        # Create menu surface
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 250))
+        pygame.draw.rect(surf, (100, 100, 120), surf.get_rect(), 3)
+
+        # Title
+        title_text = self.font.render("WELCOME TO THE GAME", True, (255, 215, 0))
+        title_rect = title_text.get_rect(centerx=ww // 2, y=40)
+        surf.blit(title_text, title_rect)
+
+        # Subtitle
+        subtitle_text = self.small_font.render("Select an option to begin", True, (180, 180, 200))
+        subtitle_rect = subtitle_text.get_rect(centerx=ww // 2, y=80)
+        surf.blit(subtitle_text, subtitle_rect)
+
+        # Menu options
+        options = [
+            ("New World", "Start a new adventure"),
+            ("Load World", "Continue from a saved game"),
+            ("Temporary World", "Practice mode (no saves)")
+        ]
+
+        button_rects = []
+        y_offset = 150
+        button_height = 80
+
+        for idx, (option_name, option_desc) in enumerate(options):
+            button_rect = pygame.Rect(50, y_offset + idx * (button_height + 20), ww - 100, button_height)
+
+            # Check hover and selection
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+            is_hovered = button_rect.collidepoint(rx, ry)
+            is_selected = (idx == selected_option)
+
+            # Button background
+            if is_hovered:
+                bg_color = (80, 100, 140)
+                border_color = (150, 180, 220)
+            elif is_selected:
+                bg_color = (60, 80, 120)
+                border_color = (120, 140, 180)
+            else:
+                bg_color = (40, 50, 70)
+                border_color = (80, 90, 110)
+
+            pygame.draw.rect(surf, bg_color, button_rect)
+            pygame.draw.rect(surf, border_color, button_rect, 2)
+
+            # Button text
+            name_text = self.font.render(option_name, True, (220, 220, 240))
+            name_rect = name_text.get_rect(centerx=button_rect.centerx, y=button_rect.y + 15)
+            surf.blit(name_text, name_rect)
+
+            desc_text = self.small_font.render(option_desc, True, (160, 160, 180))
+            desc_rect = desc_text.get_rect(centerx=button_rect.centerx, y=button_rect.y + 45)
+            surf.blit(desc_text, desc_rect)
+
+            # Store button rect (in screen coordinates)
+            button_rects.append(pygame.Rect(wx + button_rect.x, wy + button_rect.y, button_rect.width, button_rect.height))
+
+        # Controls hint
+        controls_text = self.small_font.render("[UP/DOWN] Navigate  [ENTER] Select  [MOUSE] Click", True, (140, 140, 160))
+        controls_rect = controls_text.get_rect(centerx=ww // 2, y=wh - 40)
+        surf.blit(controls_text, controls_rect)
+
+        # Check for existing saves
+        if os.path.exists("saves"):
+            save_files = [f for f in os.listdir("saves") if f.endswith(".json")]
+            if save_files:
+                save_count_text = self.tiny_font.render(f"Found {len(save_files)} save file(s)", True, (100, 200, 100))
+                save_count_rect = save_count_text.get_rect(centerx=ww // 2, y=wh - 70)
+                surf.blit(save_count_text, save_count_rect)
+
+        self.screen.blit(surf, (wx, wy))
+        return button_rects
+
     def render_class_selection_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.class_selection_open:
             return None
@@ -6271,26 +6387,35 @@ class GameEngine:
         import sys
         self.temporary_world = "--temp" in sys.argv or "-t" in sys.argv
 
-        # Try to load existing save or create new character
-        if not self.temporary_world and os.path.exists("saves/autosave.json"):
-            print("📂 Found autosave, press F9 to load or any key to start new...")
+        # Start menu state
+        self.start_menu_open = not self.temporary_world  # Show menu unless using --temp flag
+        self.start_menu_selected_option = 0  # 0=New World, 1=Load World, 2=Temporary World
 
-        self.character = Character(Position(50.0, 50.0, 0.0))
+        # Initialize character to None (will be created after menu selection)
+        self.character = None
         self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
         self.renderer = Renderer(self.screen)
+
+        # If temporary world flag is set, create character immediately
+        if self.temporary_world:
+            print("🌍 Starting in temporary world mode (no saves)")
+            self.character = Character(Position(50.0, 50.0, 0.0))
+            self.start_menu_open = False
 
         # Initialize automated testing framework
         self.test_system = CraftingSystemTester(self)
 
-        # Initialize combat system
+        # Initialize combat system (with temporary character if needed for loading)
         print("Loading combat system...")
-        self.combat_manager = CombatManager(self.world, self.character)
+        temp_char = self.character if self.character else Character(Position(50.0, 50.0, 0.0))
+        self.combat_manager = CombatManager(self.world, temp_char)
         self.combat_manager.load_config(
             "Definitions.JSON/combat-config.JSON",
             "Definitions.JSON/hostiles-1.JSON"
         )
-        # Spawn initial enemies for testing
-        self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+        # Only spawn initial enemies if we have a real character
+        if self.character:
+            self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
         # Minigame state
         self.active_minigame = None  # Current minigame instance
@@ -6360,7 +6485,11 @@ class GameEngine:
         self.last_click_time = 0
         self.last_clicked_slot = None
 
-        if not self.character.class_system.current_class:
+        # Start menu UI rects
+        self.start_menu_buttons = []
+
+        # Open class selection if character exists and has no class
+        if self.character and not self.character.class_system.current_class:
             self.character.class_selection_open = True
 
         print("\n" + "=" * 60)
@@ -6378,6 +6507,18 @@ class GameEngine:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
+
+                # Start menu event handling (highest priority)
+                if self.start_menu_open:
+                    if event.key == pygame.K_UP:
+                        self.start_menu_selected_option = (self.start_menu_selected_option - 1) % 3
+                    elif event.key == pygame.K_DOWN:
+                        self.start_menu_selected_option = (self.start_menu_selected_option + 1) % 3
+                    elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                        self.handle_start_menu_selection(self.start_menu_selected_option)
+                    elif event.key == pygame.K_ESCAPE:
+                        self.running = False
+                    continue  # Skip other event handling
 
                 # Minigame input handling (highest priority)
                 if self.active_minigame:
@@ -6582,6 +6723,13 @@ class GameEngine:
                         # Clamp scroll offset to valid range
                         max_scroll = max(0, len(self.crafting_recipes) - 8)
                         self.recipe_scroll_offset = max(0, min(self.recipe_scroll_offset, max_scroll))
+                # Handle mouse wheel scrolling for encyclopedia
+                elif self.character.encyclopedia.is_open and hasattr(self, 'encyclopedia_window_rect') and self.encyclopedia_window_rect:
+                    if self.encyclopedia_window_rect.collidepoint(self.mouse_pos):
+                        # Scroll the encyclopedia content
+                        self.character.encyclopedia.scroll_offset -= event.y * 20  # Scroll by 20 pixels per wheel notch
+                        # Clamp to valid range (min 0, max handled in render)
+                        self.character.encyclopedia.scroll_offset = max(0, self.character.encyclopedia.scroll_offset)
                 # Handle mouse wheel scrolling for skills menu
                 elif self.character.skills_ui_open:
                     # Scroll the skills list
@@ -6592,7 +6740,65 @@ class GameEngine:
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 self.handle_mouse_release(event.pos)
 
+    def handle_start_menu_selection(self, option_index: int):
+        """Handle start menu option selection (0=New World, 1=Load World, 2=Temporary World)"""
+        if option_index == 0:
+            # New World - Create new character
+            print("🌍 Starting new world...")
+            self.start_menu_open = False
+            self.temporary_world = False
+            self.character = Character(Position(50.0, 50.0, 0.0))
+            # Update combat manager with new character
+            self.combat_manager.character = self.character
+            # Spawn initial enemies
+            self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+            self.add_notification("Welcome to your new world!", (100, 255, 100))
+
+        elif option_index == 1:
+            # Load World - Show load menu (for now, load from autosave.json)
+            print("📂 Loading saved world...")
+            save_path = "saves/autosave.json"
+            if os.path.exists(save_path):
+                loaded_char = Character.load_from_file(save_path)
+                if loaded_char:
+                    self.start_menu_open = False
+                    self.temporary_world = False
+                    self.character = loaded_char
+                    # Update combat manager with loaded character
+                    self.combat_manager.character = self.character
+                    # Spawn enemies near loaded position
+                    self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+                    print(f"✓ Loaded character: Level {self.character.leveling.level}")
+                    self.add_notification("World loaded successfully!", (100, 255, 100))
+                else:
+                    print("❌ Failed to load save file")
+                    self.add_notification("Failed to load save file!", (255, 100, 100))
+            else:
+                print("❌ No save file found")
+                self.add_notification("No save file found!", (255, 100, 100))
+
+        elif option_index == 2:
+            # Temporary World - Create character but prevent saving
+            print("🌍 Starting temporary world (no saves)...")
+            self.start_menu_open = False
+            self.temporary_world = True
+            self.character = Character(Position(50.0, 50.0, 0.0))
+            # Update combat manager with new character
+            self.combat_manager.character = self.character
+            # Spawn initial enemies
+            self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+            self.add_notification("Temporary world started (no saves)", (255, 215, 0))
+
     def handle_mouse_click(self, mouse_pos: Tuple[int, int]):
+        # Start menu clicks (highest priority)
+        if self.start_menu_open:
+            if hasattr(self, 'start_menu_buttons') and self.start_menu_buttons:
+                for idx, button_rect in enumerate(self.start_menu_buttons):
+                    if button_rect.collidepoint(mouse_pos):
+                        self.handle_start_menu_selection(idx)
+                        return
+            return  # Ignore all other clicks when start menu is open
+
         shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
 
         # Check double-click
@@ -7993,6 +8199,10 @@ class GameEngine:
             self.character.inventory.cancel_drag()
 
     def update(self):
+        # Skip updates if in start menu or no character
+        if self.start_menu_open or self.character is None:
+            return
+
         curr = pygame.time.get_ticks()
         dt = (curr - self.last_tick) / 1000.0
         self.last_tick = curr
@@ -8038,6 +8248,20 @@ class GameEngine:
 
     def render(self):
         self.screen.fill(Config.COLOR_BACKGROUND)
+
+        # Show start menu if open
+        if self.start_menu_open:
+            result = self.renderer.render_start_menu(self.start_menu_selected_option, self.mouse_pos)
+            if result:
+                self.start_menu_buttons = result
+            pygame.display.flip()
+            return
+
+        # Skip rendering if no character
+        if self.character is None:
+            pygame.display.flip()
+            return
+
         self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
         self.renderer.render_ui(self.character, self.mouse_pos)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
