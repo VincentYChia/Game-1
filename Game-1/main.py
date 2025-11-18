@@ -2358,8 +2358,19 @@ class BuffManager:
         """Add a new buff (stacks with existing buffs)"""
         self.active_buffs.append(buff)
 
-    def update(self, dt: float):
-        """Update all buffs and remove expired ones"""
+    def update(self, dt: float, character=None):
+        """Update all buffs and remove expired ones. Apply regenerate effects if character provided."""
+        # Apply regenerate effects if character is provided
+        if character:
+            for buff in self.active_buffs:
+                if buff.effect_type == "regenerate":
+                    amount = buff.bonus_value * dt
+                    if "health" in buff.category or "defense" in buff.category:
+                        character.health = min(character.max_health, character.health + amount)
+                    elif "mana" in buff.category:
+                        character.mana = min(character.max_mana, character.mana + amount)
+
+        # Update buff durations and remove expired ones
         self.active_buffs = [buff for buff in self.active_buffs if buff.update(dt)]
 
     def get_total_bonus(self, effect_type: str, category: str) -> float:
@@ -2789,6 +2800,58 @@ class SkillManager:
             character.buffs.add_buff(buff)
             print(f"   +{int(bonus*100)}% rarity upgrade chance for {duration}s")
 
+        # REGENERATE - Restore resources over time
+        elif effect.effect_type == "regenerate":
+            regen_amounts = {'minor': 3, 'moderate': 5, 'major': 10, 'extreme': 20}
+            base_amount = regen_amounts.get(effect.magnitude, 5)
+            amount = apply_level_scaling(base_amount)
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_regenerate",
+                name=f"{skill_def.name} (Regen)",
+                effect_type="regenerate",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=amount,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            resource_type = "HP" if "health" in effect.category or "defense" in effect.category else "MP"
+            print(f"   Regenerating {amount:.1f} {resource_type}/s for {int(duration)}s")
+
+        # DEVASTATE - Area of effect
+        elif effect.effect_type == "devastate":
+            radius_sizes = {'minor': 3, 'moderate': 5, 'major': 7, 'extreme': 10}
+            base_radius = radius_sizes.get(effect.magnitude, 5)
+            radius = int(apply_level_scaling(base_radius))
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_devastate",
+                name=f"{skill_def.name} (AoE)",
+                effect_type="devastate",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=radius,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   {effect.category.capitalize()} affects {radius}-tile radius for {int(duration)}s")
+
+        # TRANSCEND - Bypass tier restrictions
+        elif effect.effect_type == "transcend":
+            tier_bypass = {'minor': 1, 'moderate': 2, 'major': 3, 'extreme': 4}
+            base_bypass = tier_bypass.get(effect.magnitude, 1)
+            bypass = int(apply_level_scaling(base_bypass))
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_transcend",
+                name=f"{skill_def.name} (Transcend)",
+                effect_type="transcend",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=bypass,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   Bypass {bypass} tier restriction(s) for {effect.category} for {int(duration)}s")
+
 
 class SkillDatabase:
     _instance = None
@@ -3170,6 +3233,158 @@ class Character:
         self.inventory.add_item("oak_log", 50)
         self.inventory.add_item("birch_log", 50)
 
+    def save_to_file(self, filename: str) -> bool:
+        """Save character data to a JSON file"""
+        import json
+        import os
+
+        try:
+            save_data = {
+                "version": "1.0",
+                "position": {"x": self.position.x, "y": self.position.y, "z": self.position.z},
+                "stats": {
+                    "strength": self.stats.strength,
+                    "defense": self.stats.defense,
+                    "vitality": self.stats.vitality,
+                    "luck": self.stats.luck,
+                    "agility": self.stats.agility,
+                    "intelligence": self.stats.intelligence
+                },
+                "leveling": {
+                    "level": self.leveling.level,
+                    "current_exp": self.leveling.current_exp,
+                    "unallocated_stat_points": self.leveling.unallocated_stat_points
+                },
+                "health": self.health,
+                "mana": self.mana,
+                "class": self.class_system.current_class.class_id if self.class_system.current_class else None,
+                "inventory": [
+                    {"item_id": slot.item_id, "quantity": slot.quantity} if slot else None
+                    for slot in self.inventory.slots
+                ],
+                "equipped_skills": self.skills.equipped_skills,
+                "known_skills": {
+                    skill_id: {"level": skill.level, "experience": skill.experience}
+                    for skill_id, skill in self.skills.known_skills.items()
+                },
+                "titles": [title.title_id for title in self.titles.earned_titles],
+                "activities": dict(self.activities.activity_counts),
+                "equipment": {
+                    slot_name: item.item_id if item else None
+                    for slot_name, item in self.equipment.slots.items()
+                }
+            }
+
+            # Create saves directory if it doesn't exist
+            os.makedirs("saves", exist_ok=True)
+
+            with open(f"saves/{filename}", 'w') as f:
+                json.dump(save_data, f, indent=2)
+
+            print(f"✓ Game saved to saves/{filename}")
+            return True
+
+        except Exception as e:
+            print(f"⚠ Error saving game: {e}")
+            return False
+
+    @staticmethod
+    def load_from_file(filename: str):
+        """Load character data from a JSON file and create a Character instance"""
+        import json
+        import os
+
+        try:
+            with open(f"saves/{filename}", 'r') as f:
+                save_data = json.load(f)
+
+            # Create character at saved position
+            pos_data = save_data.get("position", {"x": 0, "y": 0, "z": 0})
+            character = Character(Position(pos_data["x"], pos_data["y"], pos_data["z"]))
+
+            # Restore stats
+            stats_data = save_data.get("stats", {})
+            character.stats.strength = stats_data.get("strength", 0)
+            character.stats.defense = stats_data.get("defense", 0)
+            character.stats.vitality = stats_data.get("vitality", 0)
+            character.stats.luck = stats_data.get("luck", 0)
+            character.stats.agility = stats_data.get("agility", 0)
+            character.stats.intelligence = stats_data.get("intelligence", 0)
+
+            # Restore leveling
+            leveling_data = save_data.get("leveling", {})
+            character.leveling.level = leveling_data.get("level", 1)
+            character.leveling.current_exp = leveling_data.get("current_exp", 0)
+            character.leveling.unallocated_stat_points = leveling_data.get("unallocated_stat_points", 0)
+
+            # Restore health and mana
+            character.recalculate_stats()
+            character.health = save_data.get("health", character.max_health)
+            character.mana = save_data.get("mana", character.max_mana)
+
+            # Restore class
+            class_id = save_data.get("class")
+            if class_id:
+                class_db = ClassDatabase.get_instance()
+                if class_id in class_db.classes:
+                    character.class_system.set_class(class_db.classes[class_id])
+                    character.class_selection_open = False
+
+            # Restore inventory
+            inv_data = save_data.get("inventory", [])
+            for idx, item_data in enumerate(inv_data):
+                if item_data and idx < character.inventory.max_slots:
+                    character.inventory.add_item(item_data["item_id"], item_data["quantity"])
+
+            # Restore skills
+            known_skills_data = save_data.get("known_skills", {})
+            for skill_id, skill_info in known_skills_data.items():
+                character.skills.learn_skill(skill_id, skip_checks=True)
+                if skill_id in character.skills.known_skills:
+                    character.skills.known_skills[skill_id].level = skill_info.get("level", 1)
+                    character.skills.known_skills[skill_id].experience = skill_info.get("experience", 0)
+
+            # Restore equipped skills
+            equipped_data = save_data.get("equipped_skills", [None] * 5)
+            for slot_idx, skill_id in enumerate(equipped_data):
+                if skill_id:
+                    character.skills.equip_skill(skill_id, slot_idx)
+
+            # Restore titles
+            title_db = TitleDatabase.get_instance()
+            titles_data = save_data.get("titles", [])
+            for title_id in titles_data:
+                if title_id in title_db.titles:
+                    title = title_db.titles[title_id]
+                    if title not in character.titles.earned_titles:
+                        character.titles.earned_titles.append(title)
+
+            # Restore activities
+            activities_data = save_data.get("activities", {})
+            for activity_type, count in activities_data.items():
+                character.activities.activity_counts[activity_type] = count
+
+            # Restore equipment
+            equipment_db = EquipmentDatabase.get_instance()
+            equipment_data = save_data.get("equipment", {})
+            for slot_name, item_id in equipment_data.items():
+                if item_id and equipment_db.is_equipment(item_id):
+                    equipment_item = equipment_db.create_equipment(item_id)
+                    character.equipment.slots[slot_name] = equipment_item
+
+            character.recalculate_stats()
+            print(f"✓ Game loaded from saves/{filename}")
+            return character
+
+        except FileNotFoundError:
+            print(f"⚠ Save file not found: saves/{filename}")
+            return None
+        except Exception as e:
+            print(f"⚠ Error loading game: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
     def recalculate_stats(self):
         """Recalculate character stats based on equipment, class, titles, etc."""
         # Start with base + stat bonuses
@@ -3361,7 +3576,7 @@ class Character:
 
     def update_buffs(self, dt: float):
         """Update all active buffs"""
-        self.buffs.update(dt)
+        self.buffs.update(dt, character=self)
         self.skills.update_cooldowns(dt)
 
     def toggle_stats_ui(self):
@@ -6051,6 +6266,15 @@ class GameEngine:
 
         print("\nInitializing systems...")
         self.world = WorldSystem()
+
+        # Check for command line args for temporary world
+        import sys
+        self.temporary_world = "--temp" in sys.argv or "-t" in sys.argv
+
+        # Try to load existing save or create new character
+        if not self.temporary_world and os.path.exists("saves/autosave.json"):
+            print("📂 Found autosave, press F9 to load or any key to start new...")
+
         self.character = Character(Position(50.0, 50.0, 0.0))
         self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
         self.renderer = Renderer(self.screen)
@@ -6314,6 +6538,32 @@ class GameEngine:
                     self.add_notification("Debug: Max level & stats!", (255, 215, 0))
 
                 elif event.key == pygame.K_F5:
+                    # Save game (only if not temporary world)
+                    if self.temporary_world:
+                        self.add_notification("Cannot save in temporary world!", (255, 200, 100))
+                    else:
+                        if self.character.save_to_file("autosave.json"):
+                            self.add_notification("Game saved!", (100, 255, 100))
+
+                elif event.key == pygame.K_F6:
+                    # Quick save with timestamp
+                    if not self.temporary_world:
+                        import datetime
+                        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                        if self.character.save_to_file(f"save_{timestamp}.json"):
+                            self.add_notification(f"Saved!", (100, 255, 100))
+
+                elif event.key == pygame.K_F9:
+                    # Load game
+                    loaded_char = Character.load_from_file("autosave.json")
+                    if loaded_char:
+                        self.character = loaded_char
+                        self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
+                        self.add_notification("Game loaded!", (100, 255, 100))
+                    else:
+                        self.add_notification("No save file found!", (255, 100, 100))
+
+                elif event.key == pygame.K_F10:
                     # Run automated test suite
                     print("\n🧪 Running Automated Test Suite...")
                     self.test_system.run_all_tests()
