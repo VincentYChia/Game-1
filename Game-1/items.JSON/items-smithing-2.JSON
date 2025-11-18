@@ -180,7 +180,7 @@
       },
       "requirements": {
         "level": 1,
-        "stats": {"DEX": 8}
+        "stats": {"AGI": 8}
       },
       "flags": {
         "stackable": false,
@@ -210,7 +210,7 @@
       },
       "requirements": {
         "level": 9,
-        "stats": {"DEX": 14}
+        "stats": {"AGI": 14}
       },
       "flags": {
         "stackable": false,
@@ -308,7 +308,7 @@
 	  },
 	  "requirements": {
 		"level": 16,
-		"stats": {"DEX": 20}
+		"stats": {"AGI": 20}
 	  },
 	  "flags": {
 		"stackable": false,
@@ -338,7 +338,7 @@
   },
   "requirements": {
     "level": 1,
-    "stats": {"DEX": 6}
+    "stats": {"AGI": 6}
   },
   "flags": {
     "stackable": false,

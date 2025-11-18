@@ -331,6 +331,7 @@ class EquipmentItem:
     durability_max: int = 100
     attack_speed: float = 1.0
     weight: float = 1.0
+    range: float = 1.0  # Weapon range stat
     requirements: Dict[str, Any] = field(default_factory=dict)
     bonuses: Dict[str, float] = field(default_factory=dict)
     # Enchantment system
@@ -345,17 +346,59 @@ class EquipmentItem:
         return 1.0 if dur_pct >= 0.5 else 1.0 - (0.5 - dur_pct) * 0.5
 
     def get_actual_damage(self) -> Tuple[int, int]:
+        """Get actual damage including durability and enchantment effects"""
         eff = self.get_effectiveness()
-        return (int(self.damage[0] * eff), int(self.damage[1] * eff))
+        base_damage = (self.damage[0] * eff, self.damage[1] * eff)
+
+        # Apply enchantment damage multipliers
+        damage_mult = 1.0
+        for ench in self.enchantments:
+            effect = ench.get('effect', {})
+            if effect.get('type') == 'damage_multiplier':
+                damage_mult += effect.get('value', 0.0)
+
+        return (int(base_damage[0] * damage_mult), int(base_damage[1] * damage_mult))
+
+    def get_defense_with_enchantments(self) -> int:
+        """Get defense value including enchantment effects"""
+        base_defense = self.defense * self.get_effectiveness()
+
+        # Apply enchantment defense multipliers
+        defense_mult = 1.0
+        for ench in self.enchantments:
+            effect = ench.get('effect', {})
+            if effect.get('type') == 'defense_multiplier':
+                defense_mult += effect.get('value', 0.0)
+
+        return int(base_defense * defense_mult)
 
     def can_equip(self, character) -> Tuple[bool, str]:
         """Check if character meets requirements, return (can_equip, reason)"""
+        # Stat abbreviation mapping to full names
+        stat_mapping = {
+            'str': 'strength',
+            'strength': 'strength',
+            'def': 'defense',
+            'defense': 'defense',
+            'vit': 'vitality',
+            'vitality': 'vitality',
+            'lck': 'luck',
+            'luck': 'luck',
+            'agi': 'agility',
+            'agility': 'agility',
+            'dex': 'agility',  # DEX maps to agility for backwards compatibility
+            'dexterity': 'agility',
+            'int': 'intelligence',
+            'intelligence': 'intelligence'
+        }
+
         reqs = self.requirements
         if 'level' in reqs and character.leveling.level < reqs['level']:
             return False, f"Requires level {reqs['level']}"
         if 'stats' in reqs:
             for stat, val in reqs['stats'].items():
-                if getattr(character.stats, stat.lower(), 0) < val:
+                stat_name = stat_mapping.get(stat.lower(), stat.lower())
+                if getattr(character.stats, stat_name, 0) < val:
                     return False, f"Requires {stat.upper()} {val}"
         return True, "OK"
 
@@ -374,6 +417,7 @@ class EquipmentItem:
             durability_max=self.durability_max,
             attack_speed=self.attack_speed,
             weight=self.weight,
+            range=self.range,
             requirements=self.requirements.copy(),
             bonuses=self.bonuses.copy(),
             enchantments=copy_module.deepcopy(self.enchantments)
@@ -386,90 +430,61 @@ class EquipmentItem:
         if item_type not in applicable_to:
             return False, f"Cannot apply to {item_type} items"
 
-        # Check for conflicts with existing enchantments
-        conflicts_with = effect.get('conflictsWith', [])
-        for existing_ench in self.enchantments:
-            existing_id = existing_ench.get('enchantment_id', '')
-            # Check if new enchantment conflicts with existing
-            if existing_id in conflicts_with:
-                return False, f"Conflicts with {existing_ench.get('name', 'existing enchantment')}"
-            # Check if existing conflicts with new
-            existing_conflicts = existing_ench.get('effect', {}).get('conflictsWith', [])
-            if enchantment_id in existing_conflicts:
-                return False, f"Conflicts with {existing_ench.get('name', 'existing enchantment')}"
-
+        # Enchantments with conflicts will overwrite existing conflicting enchantments
+        # This is allowed and expected behavior (e.g., Sharpness III overwrites Sharpness I)
         return True, "OK"
 
-    def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict):
-        """Apply an enchantment effect to this item"""
-        # Store enchantment data
+    def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict) -> Tuple[bool, str]:
+        """
+        Apply an enchantment effect to this item with comprehensive rules
+
+        Rules:
+        1. No duplicate enchantments (exact same enchantment_id)
+        2. Higher tier enchantments dominate (sharpness_3 can't be overridden by sharpness_2)
+        3. Same-family enchantments replace each other (sharpness_3 replaces sharpness_1)
+        4. Conflicting enchantments are removed before applying
+
+        Returns: (success: bool, message: str)
+        """
+        # Check for exact duplicate
+        if any(ench.get('enchantment_id') == enchantment_id for ench in self.enchantments):
+            return False, "This enchantment is already applied"
+
+        # Extract enchantment family and tier
+        def get_enchantment_info(ench_id: str) -> Tuple[str, int]:
+            """Extract family name and tier from enchantment_id (e.g., 'sharpness_3' → ('sharpness', 3))"""
+            parts = ench_id.rsplit('_', 1)
+            if len(parts) == 2 and parts[1].isdigit():
+                return parts[0], int(parts[1])
+            return ench_id, 1  # No tier suffix, assume tier 1
+
+        new_family, new_tier = get_enchantment_info(enchantment_id)
+
+        # Check if a higher tier of the same family already exists
+        for existing_ench in self.enchantments:
+            existing_id = existing_ench.get('enchantment_id', '')
+            existing_family, existing_tier = get_enchantment_info(existing_id)
+
+            if existing_family == new_family and existing_tier > new_tier:
+                return False, f"Cannot apply {enchantment_name} - {existing_ench.get('name')} (higher tier) is already applied"
+
+        # Remove conflicting enchantments (including lower tiers of same family)
+        conflicts_with = effect.get('conflictsWith', [])
+
+        self.enchantments = [
+            ench for ench in self.enchantments
+            if ench.get('enchantment_id', '') not in conflicts_with
+            and enchantment_id not in ench.get('effect', {}).get('conflictsWith', [])
+        ]
+
+        # Apply the new enchantment
         self.enchantments.append({
             'enchantment_id': enchantment_id,
             'name': enchantment_name,
             'effect': effect
         })
 
-        # Apply stat modifications based on effect type
-        effect_type = effect.get('type', '')
-        value = effect.get('value', 0)
-
-        if effect_type == 'damage_multiplier':
-            # Increase weapon damage
-            if self.damage != (0, 0):
-                min_dmg, max_dmg = self.damage
-                self.damage = (
-                    int(min_dmg * (1.0 + value)),
-                    int(max_dmg * (1.0 + value))
-                )
-                print(f"   ✨ {enchantment_name}: Damage increased by {int(value*100)}% → {self.damage}")
-
-        elif effect_type == 'damage_reduction':
-            # Increase armor defense
-            self.defense = int(self.defense * (1.0 + value))
-            print(f"   ✨ {enchantment_name}: Defense increased by {int(value*100)}% → {self.defense}")
-
-        elif effect_type == 'durability_multiplier':
-            # Increase max durability
-            old_max = self.durability_max
-            self.durability_max = int(self.durability_max * (1.0 + value))
-            # Scale current durability proportionally
-            if old_max > 0:
-                ratio = self.durability_current / old_max
-                self.durability_current = int(self.durability_max * ratio)
-            print(f"   ✨ {enchantment_name}: Durability increased by {int(value*100)}% → {self.durability_max}")
-
-        elif effect_type == 'weight_multiplier':
-            # Modify weight (negative value = lighter)
-            self.weight *= (1.0 + value)
-            print(f"   ✨ {enchantment_name}: Weight modified by {int(value*100)}% → {self.weight:.2f}")
-
-        elif effect_type in ['gathering_speed_multiplier', 'movement_speed_multiplier', 'bonus_yield_chance']:
-            # Add to bonuses dict for special effects
-            bonus_key = effect_type.replace('_multiplier', '').replace('_', '_')
-            if bonus_key not in self.bonuses:
-                self.bonuses[bonus_key] = 0
-            self.bonuses[bonus_key] += value
-            print(f"   ✨ {enchantment_name}: +{int(value*100)}% {bonus_key}")
-
-        # Special effect types (stored in bonuses for later use in combat/gathering)
-        elif effect_type in ['lifesteal', 'reflect_damage', 'health_regeneration', 'durability_regeneration']:
-            self.bonuses[effect_type] = self.bonuses.get(effect_type, 0) + value
-            print(f"   ✨ {enchantment_name}: {effect_type} +{value}")
-
-        elif effect_type in ['chain_damage', 'damage_over_time', 'knockback', 'slow']:
-            # Combat effects stored for later application
-            self.bonuses[effect_type] = value
-            print(f"   ✨ {enchantment_name}: {effect_type} effect added")
-
-        elif effect_type == 'soulbound':
-            # Special flag effect
-            self.bonuses['soulbound'] = True
-            print(f"   ✨ {enchantment_name}: Item is now soulbound")
-
-        elif effect_type == 'harvest_original_form':
-            # Special gathering effect
-            self.bonuses['harvest_original_form'] = True
-            print(f"   ✨ {enchantment_name}: Harvest in original form enabled")
+        return True, "OK"
 
     def _get_item_type(self) -> str:
         """Determine the item type for enchantment compatibility"""
@@ -616,60 +631,126 @@ class EquipmentDatabase:
         self.loaded = True
         print(f"✓ Created {len(self.items)} placeholder equipment")
 
+    def _calculate_weapon_damage(self, tier: int, item_type: str, subtype: str, stat_multipliers: Dict) -> Tuple[int, int]:
+        """Calculate weapon damage based on stats-calculations.JSON formula"""
+        # Formula: globalBase × tierMult × categoryMult × typeMult × subtypeMult × itemMult × variance
+        global_base = 10
+
+        tier_mults = {1: 1.0, 2: 2.0, 3: 4.0, 4: 8.0}
+        tier_mult = tier_mults.get(tier, 1.0)
+
+        category_mult = 1.0  # weapons are 1.0
+
+        type_mults = {
+            'sword': 1.0, 'axe': 1.1, 'spear': 1.05, 'mace': 1.15,
+            'dagger': 0.8, 'bow': 1.0, 'staff': 0.9, 'shield': 1.0
+        }
+        type_mult = type_mults.get(item_type, 1.0)
+
+        subtype_mults = {
+            'shortsword': 0.9, 'longsword': 1.0, 'greatsword': 1.4,
+            'dagger': 1.0, 'spear': 1.0, 'pike': 1.2, 'halberd': 1.4,
+            'mace': 1.0, 'warhammer': 1.3, 'maul': 1.5
+        }
+        subtype_mult = subtype_mults.get(subtype, 1.0)
+
+        item_mult = stat_multipliers.get('damage', 1.0)
+
+        base_damage = global_base * tier_mult * category_mult * type_mult * subtype_mult * item_mult
+
+        # Apply variance range (85%-115%)
+        min_damage = int(base_damage * 0.85)
+        max_damage = int(base_damage * 1.15)
+
+        return (min_damage, max_damage)
+
+    def _calculate_armor_defense(self, tier: int, slot: str, stat_multipliers: Dict) -> int:
+        """Calculate armor defense based on stats-calculations.JSON formula"""
+        # Formula: globalBase × tierMult × slotMult × itemMult
+        global_base = 10
+
+        tier_mults = {1: 1.0, 2: 2.0, 3: 4.0, 4: 8.0}
+        tier_mult = tier_mults.get(tier, 1.0)
+
+        slot_mults = {
+            'helmet': 0.8, 'chestplate': 1.5, 'leggings': 1.2,
+            'boots': 0.7, 'gauntlets': 0.6
+        }
+        slot_mult = slot_mults.get(slot, 1.0)
+
+        item_mult = stat_multipliers.get('defense', 1.0)
+
+        defense = int(global_base * tier_mult * slot_mult * item_mult)
+
+        return defense
+
     def create_equipment_from_id(self, item_id: str) -> Optional[EquipmentItem]:
         if item_id not in self.items:
             return None
 
         data = self.items[item_id]
+        tier = data.get('tier', 1)
+        item_type = data.get('type', '')
+        subtype = data.get('subtype', '')
+        stat_multipliers = data.get('statMultipliers', {})
+
+        # Old stats format (for placeholder items)
         stats = data.get('stats', {})
 
-        damage = stats.get('damage', [0, 0])
-        if isinstance(damage, list):
-            damage = tuple(damage)
-        elif isinstance(damage, (int, float)):
-            damage = (int(damage), int(damage))
-        else:
-            damage = (0, 0)
+        # Define weapon and armor types
+        weapon_types = {'weapon', 'sword', 'axe', 'mace', 'dagger', 'spear', 'bow', 'staff'}
+        armor_types = {'armor', 'helmet', 'chestplate', 'leggings', 'boots', 'gauntlets'}
 
+        # Calculate damage for weapons
+        damage = (0, 0)
+        if item_type in weapon_types:
+            damage = self._calculate_weapon_damage(tier, item_type, subtype, stat_multipliers)
+        elif 'damage' in stats:
+            # Fallback for old format
+            old_damage = stats.get('damage', [0, 0])
+            if isinstance(old_damage, list):
+                damage = tuple(old_damage)
+            elif isinstance(old_damage, (int, float)):
+                damage = (int(old_damage), int(old_damage))
+
+        # Calculate defense for armor
+        defense = 0
+        json_slot = data.get('slot', 'mainHand')
+        slot_mapping = {
+            'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',
+            'feet': 'boots', 'hands': 'gauntlets',
+            'mainHand': 'mainHand', 'offHand': 'offHand',
+            'helmet': 'helmet', 'chestplate': 'chestplate',
+            'leggings': 'leggings', 'boots': 'boots',
+            'gauntlets': 'gauntlets', 'accessory': 'accessory',
+        }
+        mapped_slot = slot_mapping.get(json_slot, json_slot)
+
+        if item_type in armor_types:
+            defense = self._calculate_armor_defense(tier, mapped_slot, stat_multipliers)
+        elif 'defense' in stats:
+            defense = stats.get('defense', 0)
+
+        # Calculate durability
         durability = stats.get('durability', [100, 100])
         if isinstance(durability, list):
             dur_max = durability[1] if len(durability) > 1 else durability[0]
         else:
             dur_max = int(durability)
 
-        # Map JSON slot names to EquipmentManager slot names
-        slot_mapping = {
-            'head': 'helmet',
-            'chest': 'chestplate',
-            'legs': 'leggings',
-            'feet': 'boots',
-            'hands': 'gauntlets',
-            # These already match:
-            'mainHand': 'mainHand',
-            'offHand': 'offHand',
-            'helmet': 'helmet',
-            'chestplate': 'chestplate',
-            'leggings': 'leggings',
-            'boots': 'boots',
-            'gauntlets': 'gauntlets',
-            'accessory': 'accessory',
-        }
-
-        json_slot = data.get('slot', 'mainHand')
-        mapped_slot = slot_mapping.get(json_slot, json_slot)
-
         return EquipmentItem(
             item_id=item_id,
             name=data.get('name', item_id),
-            tier=data.get('tier', 1),
+            tier=tier,
             rarity=data.get('rarity', 'common'),
             slot=mapped_slot,
             damage=damage,
-            defense=stats.get('defense', 0),
+            defense=defense,
             durability_current=dur_max,
             durability_max=dur_max,
             attack_speed=stats.get('attackSpeed', 1.0),
             weight=stats.get('weight', 1.0),
+            range=data.get('range', 1.0),  # Range is a top-level field in JSON
             requirements=data.get('requirements', {}),
             bonuses=stats.get('bonuses', {})
         )
@@ -755,12 +836,13 @@ class EquipmentManager:
         return False
 
     def get_total_defense(self) -> int:
+        """Get total defense from all armor pieces including enchantment effects"""
         total = 0
         armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
         for slot in armor_slots:
             item = self.slots.get(slot)
             if item:
-                total += int(item.defense * item.get_effectiveness())
+                total += item.get_defense_with_enchantments()
         return total
 
     def get_weapon_damage(self) -> Tuple[int, int]:
@@ -768,6 +850,13 @@ class EquipmentManager:
         if weapon:
             return weapon.get_actual_damage()
         return (1, 2)
+
+    def get_weapon_range(self) -> float:
+        """Get range of equipped weapon, default to 1.0 for unarmed"""
+        weapon = self.slots.get('mainHand')
+        if weapon:
+            return weapon.range
+        return 1.0  # Unarmed/default range
 
     def get_stat_bonuses(self) -> Dict[str, float]:
         bonuses = {}
@@ -4956,7 +5045,7 @@ class Renderer:
 
     def render_equipment_tooltip(self, item: EquipmentItem, mouse_pos: Tuple[int, int], character: Character,
                                  from_inventory: bool = False):
-        tw, th, pad = 320, 240, 10
+        tw, th, pad = 320, 340, 10  # Increased height for enchantments
         x, y = mouse_pos[0] + 15, mouse_pos[1] + 15
         if x + tw > Config.SCREEN_WIDTH:
             x = mouse_pos[0] - tw - 15
@@ -4980,6 +5069,11 @@ class Renderer:
             surf.blit(self.small_font.render(f"Damage: {dmg[0]}-{dmg[1]}", True, (200, 200, 200)), (pad, y_pos))
             y_pos += 20
 
+            # Show range for weapons
+            if item.range != 1.0:
+                surf.blit(self.small_font.render(f"Range: {item.range}", True, (200, 200, 200)), (pad, y_pos))
+                y_pos += 20
+
         if item.defense > 0:
             def_val = int(item.defense * item.get_effectiveness())
             surf.blit(self.small_font.render(f"Defense: {def_val}", True, (200, 200, 200)), (pad, y_pos))
@@ -4989,6 +5083,32 @@ class Renderer:
             surf.blit(self.small_font.render(f"Attack Speed: {item.attack_speed:.2f}x", True, (200, 200, 200)),
                       (pad, y_pos))
             y_pos += 20
+
+        # Display enchantments
+        if item.enchantments:
+            y_pos += 5
+            surf.blit(self.small_font.render("Enchantments:", True, (180, 140, 255)), (pad, y_pos))
+            y_pos += 20
+            for ench in item.enchantments:
+                ench_name = ench.get('name', 'Unknown')
+                effect = ench.get('effect', {})
+                effect_type = effect.get('type', '')
+                effect_value = effect.get('value', 0)
+
+                # Format the enchantment display
+                if effect_type == 'damage_multiplier':
+                    ench_text = f"  {ench_name}: +{int(effect_value * 100)}% Damage"
+                elif effect_type == 'durability_multiplier':
+                    ench_text = f"  {ench_name}: +{int(effect_value * 100)}% Durability"
+                elif effect_type == 'defense_multiplier':
+                    ench_text = f"  {ench_name}: +{int(effect_value * 100)}% Defense"
+                elif effect_type == 'speed_multiplier':
+                    ench_text = f"  {ench_name}: +{int(effect_value * 100)}% Speed"
+                else:
+                    ench_text = f"  {ench_name}"
+
+                surf.blit(self.tiny_font.render(ench_text, True, (200, 180, 255)), (pad, y_pos))
+                y_pos += 16
 
         dur_pct = (item.durability_current / item.durability_max) * 100
         dur_color = (100, 255, 100) if dur_pct > 50 else (255, 200, 100) if dur_pct > 25 else (255, 100, 100)
@@ -5947,10 +6067,13 @@ class GameEngine:
             if not self.character.can_attack():
                 return  # Still on cooldown
 
-            # Check if in range
+            # Check if in range (using equipped weapon's range)
+            weapon_range = self.character.equipment.get_weapon_range()
             dist = enemy.distance_to((self.character.position.x, self.character.position.y))
-            if dist > self.combat_manager.config.player_attack_range:
-                self.add_notification("Enemy too far away", (255, 100, 100))
+            if dist > weapon_range:
+                weapon_name = self.character.equipment.slots.get('mainHand')
+                range_msg = f"Enemy too far (range: {weapon_range})" if weapon_name else "Enemy too far away"
+                self.add_notification(range_msg, (255, 100, 100))
                 return
 
             # Attack enemy
@@ -6500,8 +6623,15 @@ class GameEngine:
         # ======================
         if rx < left_panel_w:
             # Click in left panel - select recipe
+            # Apply scroll offset to show correct recipes
+            total_recipes = len(self.crafting_recipes)
+            max_visible = 8
+            start_idx = min(self.recipe_scroll_offset, max(0, total_recipes - max_visible))
+            end_idx = min(start_idx + max_visible, total_recipes)
+            visible_recipes = self.crafting_recipes[start_idx:end_idx]
+
             y_off = 70
-            for i, recipe in enumerate(self.crafting_recipes):
+            for i, recipe in enumerate(visible_recipes):
                 num_inputs = len(recipe.inputs)
                 btn_height = max(70, 35 + num_inputs * 16 + 5)
 
@@ -7045,14 +7175,44 @@ class GameEngine:
         recipe = self.enchantment_recipe
         recipe_db = RecipeDatabase.get_instance()
 
-        # Consume materials
+        # Check if enchantment can be applied BEFORE consuming materials
+        can_apply, reason = equipment.can_apply_enchantment(recipe.output_id, recipe.applicable_to, recipe.effect)
+        if not can_apply:
+            self.add_notification(f"❌ Cannot apply: {reason}", (255, 100, 100))
+            print(f"   ❌ Cannot apply enchantment: {reason}")
+            self._close_enchantment_selection()
+            return
+
+        # Pre-check for tier protection and duplicates (without modifying the item)
+        # Create a copy to test on
+        import copy as copy_module
+        test_enchantments = copy_module.deepcopy(equipment.enchantments)
+        test_success, test_message = equipment.apply_enchantment(recipe.output_id, recipe.enchantment_name, recipe.effect)
+
+        # Revert the test application
+        equipment.enchantments = test_enchantments
+
+        if not test_success:
+            self.add_notification(f"❌ {test_message}", (255, 100, 100))
+            print(f"   ❌ Enchantment blocked: {test_message}")
+            self._close_enchantment_selection()
+            return
+
+        # Now consume materials (after all checks pass)
         if not recipe_db.consume_materials(recipe, self.character.inventory):
             self.add_notification("Failed to consume materials!", (255, 100, 100))
             self._close_enchantment_selection()
             return
 
-        # Apply enchantment to the equipment instance
-        equipment.apply_enchantment(recipe.output_id, recipe.enchantment_name, recipe.effect)
+        # Apply enchantment to the equipment instance (for real this time)
+        success, message = equipment.apply_enchantment(recipe.output_id, recipe.enchantment_name, recipe.effect)
+
+        if not success:
+            # This shouldn't happen since we already checked, but handle it anyway
+            self.add_notification(f"❌ {message}", (255, 100, 100))
+            print(f"   ❌ Unexpected enchantment failure: {message}")
+            self.enchantment_selection_items = []
+            return
 
         # Record activity
         self.character.activities.record_activity('enchanting', 1)
