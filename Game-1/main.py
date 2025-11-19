@@ -6527,7 +6527,7 @@ class Renderer:
 
         # Render equipped tools section
         tools_y = Config.INVENTORY_PANEL_Y + 35
-        self.render_text("Equipped Tools:", 20, tools_y, size="small")
+        self.render_text("Equipped Tools:", 20, tools_y, small=True)
         tools_y += 20
 
         slot_size = 50
