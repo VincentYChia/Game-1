@@ -151,7 +151,7 @@ class RecipeDatabase:
     def can_craft(self, recipe: Recipe, inventory) -> bool:
         # Import Config here to avoid circular import
         try:
-            from config import Config
+            from core.config import Config
             if Config.DEBUG_INFINITE_RESOURCES:
                 return True
         except ImportError:
@@ -165,7 +165,7 @@ class RecipeDatabase:
     def consume_materials(self, recipe: Recipe, inventory) -> bool:
         # Import Config here to avoid circular import
         try:
-            from config import Config
+            from core.config import Config
             if Config.DEBUG_INFINITE_RESOURCES:
                 return True
         except ImportError:
