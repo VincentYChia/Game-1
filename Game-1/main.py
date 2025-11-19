@@ -2860,20 +2860,31 @@ class ActivityTracker:
 # ============================================================================
 @dataclass
 class ActiveBuff:
-    """Represents an active buff on the character"""
-    buff_id: str
-    name: str
-    effect_type: str  # empower, quicken, fortify, etc.
-    category: str  # mining, combat, smithing, movement, etc.
-    magnitude: str  # minor, moderate, major, extreme
-    bonus_value: float  # The actual numerical bonus
-    duration_remaining: float  # Time remaining in seconds
-    source: str = "skill"  # skill, potion, equipment, etc.
+    """Represents an active buff on the character
+
+    Buffs are temporary enhancements that modify character stats or abilities.
+    They can come from skills, potions, equipment, or other sources.
+    """
+    buff_id: str                    # Unique identifier for this buff
+    name: str                       # Display name
+    effect_type: str                # empower, quicken, fortify, etc.
+    category: str                   # mining, combat, smithing, movement, etc.
+    magnitude: str                  # minor, moderate, major, extreme
+    bonus_value: float              # The actual numerical bonus (multiplier or flat value)
+    duration: float                 # Original duration in seconds (for UI progress bar)
+    duration_remaining: float       # Time remaining in seconds (countdown)
+    source: str = "skill"           # skill, potion, equipment, etc.
 
     def update(self, dt: float) -> bool:
         """Update buff timer. Returns True if buff is still active."""
         self.duration_remaining -= dt
         return self.duration_remaining > 0
+
+    def get_progress_percent(self) -> float:
+        """Get the percentage of duration remaining (0.0 to 1.0) for UI display"""
+        if self.duration <= 0:
+            return 0.0
+        return max(0.0, min(1.0, self.duration_remaining / self.duration))
 
 
 class BuffManager:
@@ -3228,6 +3239,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3245,6 +3257,7 @@ class SkillManager:
                 category=category,
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3261,6 +3274,7 @@ class SkillManager:
                 category="defense",
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3277,6 +3291,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3306,6 +3321,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3322,6 +3338,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3339,6 +3356,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=amount,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3357,6 +3375,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=radius,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3374,6 +3393,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=bypass,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -4007,6 +4027,49 @@ class Character:
                 return equipped_tool
         return None
 
+    def get_tool_effectiveness_for_action(self, equipment_item: EquipmentItem, action_type: str) -> float:
+        """
+        Calculate effectiveness multiplier based on tool/weapon type vs action.
+
+        Tools and weapons are optimized for specific purposes and suffer penalties outside their domain:
+        - Axes: 100% on trees, 25% on ore/enemies
+        - Pickaxes: 100% on ore, 25% on trees/enemies
+        - Weapons: 100% on enemies, 25% on trees/ore
+
+        Args:
+            equipment_item: The tool or weapon being used
+            action_type: 'forestry', 'mining', or 'combat'
+
+        Returns:
+            float: Effectiveness multiplier (1.0 for optimal, 0.25 for sub-optimal)
+        """
+        # Get the slot to determine tool type
+        tool_slot = equipment_item.slot
+
+        # Axes are optimal for forestry
+        if tool_slot == 'axe':
+            if action_type == 'forestry':
+                return 1.0  # Perfect for chopping trees
+            else:
+                return 0.25  # Poor for mining/combat
+
+        # Pickaxes are optimal for mining
+        elif tool_slot == 'pickaxe':
+            if action_type == 'mining':
+                return 1.0  # Perfect for mining ore
+            else:
+                return 0.25  # Poor for forestry/combat
+
+        # Weapons (swords, daggers, etc.) are optimal for combat
+        elif tool_slot in ['mainHand', 'offHand']:
+            if action_type == 'combat':
+                return 1.0  # Perfect for fighting
+            else:
+                return 0.25  # Poor for harvesting
+
+        # Unknown tool type - assume full effectiveness
+        return 1.0
+
     def can_harvest_resource(self, resource: NaturalResource) -> Tuple[bool, str]:
         # Get equipped tool for this resource type
         equipped_tool = self.get_equipped_tool(resource.required_tool)
@@ -4040,8 +4103,16 @@ class Character:
         else:
             base_damage = equipped_tool.damage
 
-        effectiveness = equipped_tool.get_effectiveness()
+        # Durability-based effectiveness (0.5 to 1.0 based on condition)
+        durability_effectiveness = equipped_tool.get_effectiveness()
+
+        # Tool type effectiveness (1.0 if right tool, 0.25 if wrong tool)
         activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
+        tool_type_effectiveness = self.get_tool_effectiveness_for_action(equipped_tool, activity)
+
+        # Combine effectiveness multipliers
+        total_effectiveness = durability_effectiveness * tool_type_effectiveness
+
         stat_bonus = self.stats.get_bonus('strength' if activity == 'mining' else 'agility')
         title_bonus = self.titles.get_total_bonus(f'{activity}_damage')
         buff_bonus = self.buffs.get_damage_bonus(activity)
@@ -4049,7 +4120,7 @@ class Character:
 
         crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance') + self.buffs.get_total_bonus('pierce', activity)
         is_crit = random.random() < crit_chance
-        damage = int(base_damage * effectiveness * damage_mult)
+        damage = int(base_damage * total_effectiveness * damage_mult)
         actual_damage, depleted = resource.take_damage(damage, is_crit)
 
         # Reduce tool durability
@@ -4435,6 +4506,7 @@ class Character:
                 category="health",
                 magnitude="minor",
                 bonus_value=5.0,
+                duration=60.0,
                 duration_remaining=60.0,
                 source="potion"
             )
@@ -4451,6 +4523,7 @@ class Character:
                 category="combat",
                 magnitude="moderate",
                 bonus_value=0.20,
+                duration=300.0,
                 duration_remaining=300.0,
                 source="potion"
             )
@@ -4467,6 +4540,7 @@ class Character:
                 category="defense",
                 magnitude="moderate",
                 bonus_value=10.0,
+                duration=300.0,
                 duration_remaining=300.0,
                 source="potion"
             )
@@ -4483,6 +4557,7 @@ class Character:
                 category="movement",
                 magnitude="moderate",
                 bonus_value=0.25,
+                duration=240.0,
                 duration_remaining=240.0,
                 source="potion"
             )
@@ -4500,6 +4575,7 @@ class Character:
                 category="combat",
                 magnitude="major",
                 bonus_value=0.40,
+                duration=480.0,
                 duration_remaining=480.0,
                 source="potion"
             )
@@ -4516,6 +4592,7 @@ class Character:
                 category="fire",
                 magnitude="moderate",
                 bonus_value=0.5,
+                duration=360.0,
                 duration_remaining=360.0,
                 source="potion"
             )
@@ -4531,6 +4608,7 @@ class Character:
                 category="frost",
                 magnitude="moderate",
                 bonus_value=0.5,
+                duration=360.0,
                 duration_remaining=360.0,
                 source="potion"
             )
@@ -4546,6 +4624,7 @@ class Character:
                 category="elemental",
                 magnitude="moderate",
                 bonus_value=0.3,
+                duration=600.0,
                 duration_remaining=600.0,
                 source="potion"
             )
@@ -4562,6 +4641,7 @@ class Character:
                 category="gathering",
                 magnitude="minor",
                 bonus_value=0.15,
+                duration=3600.0,
                 duration_remaining=3600.0,
                 source="potion"
             )
@@ -4577,6 +4657,7 @@ class Character:
                 category="defense",
                 magnitude="minor",
                 bonus_value=5.0,
+                duration=7200.0,
                 duration_remaining=7200.0,
                 source="potion"
             )
@@ -4592,6 +4673,7 @@ class Character:
                 category="combat",
                 magnitude="minor",
                 bonus_value=0.10,
+                duration=7200.0,
                 duration_remaining=7200.0,
                 source="potion"
             )
@@ -5557,8 +5639,8 @@ class Renderer:
         y += 25
 
         for buff in character.buffs.active_buffs:
-            # Buff name and timer
-            time_left = buff.remaining_duration
+            # Buff name and timer - FIXED: use duration_remaining (not remaining_duration)
+            time_left = buff.duration_remaining
             mins = int(time_left // 60)
             secs = int(time_left % 60)
             time_str = f"{mins}:{secs:02d}" if mins > 0 else f"{secs}s"
@@ -5571,8 +5653,8 @@ class Renderer:
             bar_height = 18
             pygame.draw.rect(self.screen, (40, 40, 50), (x, y, bar_width, bar_height))
 
-            # Fill based on remaining time
-            fill_width = int(bar_width * (buff.remaining_duration / buff.duration))
+            # Fill based on remaining time - FIXED: use get_progress_percent() method
+            fill_width = int(bar_width * buff.get_progress_percent())
             pygame.draw.rect(self.screen, color, (x, y, fill_width, bar_height))
             pygame.draw.rect(self.screen, (150, 150, 150), (x, y, bar_width, bar_height), 1)
 
@@ -6443,7 +6525,51 @@ class Renderer:
         pygame.draw.rect(self.screen, Config.COLOR_UI_BG, panel_rect)
         self.render_text("INVENTORY", 20, Config.INVENTORY_PANEL_Y + 10, bold=True)
 
-        start_x, start_y = 20, Config.INVENTORY_PANEL_Y + 50
+        # Render equipped tools section
+        tools_y = Config.INVENTORY_PANEL_Y + 35
+        self.render_text("Equipped Tools:", 20, tools_y, size="small")
+        tools_y += 20
+
+        slot_size = 50
+        spacing = 10
+
+        # Render axe slot
+        axe_x = 20
+        axe_rect = pygame.Rect(axe_x, tools_y, slot_size, slot_size)
+        equipped_axe = character.equipment.slots.get('axe')
+        pygame.draw.rect(self.screen, Config.COLOR_SLOT_FILLED if equipped_axe else Config.COLOR_SLOT_EMPTY, axe_rect)
+        pygame.draw.rect(self.screen, Config.COLOR_EQUIPPED if equipped_axe else Config.COLOR_SLOT_BORDER, axe_rect, 2)
+
+        if equipped_axe:
+            # Show tier and name
+            tier_surf = self.tiny_font.render(f"T{equipped_axe.tier}", True, (255, 255, 255))
+            self.screen.blit(tier_surf, (axe_x + 5, tools_y + 5))
+            name_surf = self.tiny_font.render("Axe", True, (255, 255, 255))
+            self.screen.blit(name_surf, (axe_x + 5, tools_y + slot_size - 15))
+        else:
+            # Show empty slot label
+            label_surf = self.tiny_font.render("Axe", True, (100, 100, 100))
+            self.screen.blit(label_surf, (axe_x + 10, tools_y + 18))
+
+        # Render pickaxe slot
+        pick_x = axe_x + slot_size + spacing
+        pick_rect = pygame.Rect(pick_x, tools_y, slot_size, slot_size)
+        equipped_pick = character.equipment.slots.get('pickaxe')
+        pygame.draw.rect(self.screen, Config.COLOR_SLOT_FILLED if equipped_pick else Config.COLOR_SLOT_EMPTY, pick_rect)
+        pygame.draw.rect(self.screen, Config.COLOR_EQUIPPED if equipped_pick else Config.COLOR_SLOT_BORDER, pick_rect, 2)
+
+        if equipped_pick:
+            # Show tier and name
+            tier_surf = self.tiny_font.render(f"T{equipped_pick.tier}", True, (255, 255, 255))
+            self.screen.blit(tier_surf, (pick_x + 5, tools_y + 5))
+            name_surf = self.tiny_font.render("Pick", True, (255, 255, 255))
+            self.screen.blit(name_surf, (pick_x + 5, tools_y + slot_size - 15))
+        else:
+            # Show empty slot label
+            label_surf = self.tiny_font.render("Pick", True, (100, 100, 100))
+            self.screen.blit(label_surf, (pick_x + 8, tools_y + 18))
+
+        start_x, start_y = 20, tools_y + slot_size + 20
         slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
         slots_per_row = Config.INVENTORY_SLOTS_PER_ROW
         hovered_slot = None

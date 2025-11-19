@@ -380,12 +380,24 @@ class CombatManager:
         """
         print(f"\n⚔️ PLAYER ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
 
-        # Get weapon damage
+        # Get weapon damage and check tool type effectiveness
         weapon_damage = self.character.get_weapon_damage()
         print(f"   Weapon damage: {weapon_damage}")
+
+        # Check if using a tool (axe/pickaxe) for combat - apply effectiveness penalty
+        tool_type_effectiveness = 1.0  # Default to full effectiveness
+        equipped_weapon = self.character.equipment.slots.get('mainHand')
+        if equipped_weapon:
+            tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
+            if tool_type_effectiveness < 1.0:
+                print(f"   ⚠ Using {equipped_weapon.name} for combat: {int(tool_type_effectiveness*100)}% effectiveness")
+
         if weapon_damage == 0:
             weapon_damage = 5  # Unarmed damage
             print(f"   Using unarmed damage: {weapon_damage}")
+
+        # Apply tool type effectiveness penalty
+        weapon_damage = int(weapon_damage * tool_type_effectiveness)
 
         # Calculate multipliers
         str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
