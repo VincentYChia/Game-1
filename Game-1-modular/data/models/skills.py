@@ -69,10 +69,47 @@ class PlayerSkill:
     is_equipped: bool = False  # Whether this skill is equipped to hotbar
     hotbar_slot: Optional[int] = None  # Which hotbar slot (1-5) or None
 
-    def get_skill_def(self):
-        """Get the skill definition from the database"""
+    def get_definition(self) -> Optional['SkillDefinition']:
+        """Get the full definition from SkillDatabase"""
         from data.databases.skill_db import SkillDatabase
-        return SkillDatabase.get_instance().get_skill(self.skill_id)
+        db = SkillDatabase.get_instance()
+        return db.skills.get(self.skill_id, None)
+
+    def get_exp_for_next_level(self) -> int:
+        """Get EXP required to reach next level (exponential doubling)"""
+        if self.level >= 10:
+            return 0  # Max level
+        # Level 1→2 = 1000, Level 2→3 = 2000, Level 3→4 = 4000, etc.
+        return 1000 * (2 ** (self.level - 1))
+
+    def add_exp(self, amount: int) -> tuple:
+        """
+        Add skill EXP and check for level up.
+        Returns (leveled_up, new_level)
+        """
+        if self.level >= 10:
+            return False, self.level  # Max level
+
+        self.experience += amount
+        leveled_up = False
+        old_level = self.level
+
+        # Check for level ups (can level multiple times if enough EXP)
+        while self.level < 10:
+            exp_needed = self.get_exp_for_next_level()
+            if self.experience >= exp_needed:
+                self.experience -= exp_needed
+                self.level += 1
+                leveled_up = True
+                print(f"   🌟 Skill Level Up! {self.skill_id} → Level {self.level}")
+            else:
+                break
+
+        return leveled_up, self.level if leveled_up else old_level
+
+    def get_level_scaling_bonus(self) -> float:
+        """Get effectiveness bonus from skill level (+10% per level)"""
+        return 0.1 * (self.level - 1)  # Level 1 = +0%, Level 10 = +90%
 
     def can_use(self) -> bool:
         """Check if skill is off cooldown"""
