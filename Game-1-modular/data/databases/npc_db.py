@@ -28,8 +28,8 @@ class NPCDatabase:
         try:
             # Try loading enhanced NPCs first, fallback to v1.0
             npc_files = [
-                Path(__file__).parent / "progression" / "npcs-enhanced.JSON",
-                Path(__file__).parent / "progression" / "npcs-1.JSON"
+                Path("progression/npcs-enhanced.JSON"),
+                Path("progression/npcs-1.JSON")
             ]
 
             for npc_path in npc_files:
@@ -76,8 +76,8 @@ class NPCDatabase:
 
             # Try loading enhanced quests first, fallback to v1.0
             quest_files = [
-                Path(__file__).parent / "progression" / "quests-enhanced.JSON",
-                Path(__file__).parent / "progression" / "quests-1.JSON"
+                Path("progression/quests-enhanced.JSON"),
+                Path("progression/quests-1.JSON")
             ]
 
             for quest_path in quest_files:

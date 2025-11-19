@@ -678,9 +678,9 @@ class GameEngine:
 
         shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
 
-        # Check double-click
+        # Check double-click (increased from 300ms to 500ms for better reliability)
         current_time = pygame.time.get_ticks()
-        is_double_click = (current_time - self.last_click_time < 300)
+        is_double_click = (current_time - self.last_click_time < 500)
         self.last_click_time = current_time
 
         # Minigame button clicks (highest priority)
@@ -830,6 +830,8 @@ class GameEngine:
                                     self.character.inventory.slots[idx] = item_stack
                             else:
                                 print(f"   ⚠️  item_stack is None")
+                            # Reset last_clicked_slot to prevent repeated double-clicks
+                            self.last_clicked_slot = None
                             return
 
                         self.last_clicked_slot = idx
