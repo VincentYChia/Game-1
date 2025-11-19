@@ -3,12 +3,12 @@
     {
       "quest_id": "tutorial_quest",
       "title": "First Steps",
-      "description": "The Elder Sage wants you to gather 5 wood to prove your resourcefulness.",
+      "description": "The Elder Sage wants you to gather 5 oak logs to prove your resourcefulness.",
       "npc_id": "tutorial_guide",
       "objectives": {
         "type": "gather",
         "items": [
-          {"item_id": "wood", "quantity": 5}
+          {"item_id": "oak_log", "quantity": 5}
         ]
       },
       "rewards": {

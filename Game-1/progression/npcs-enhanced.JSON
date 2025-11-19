@@ -1,0 +1,177 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "description": "Enhanced NPC system - includes services, behavior, and unlock conditions",
+    "note": "Backwards compatible with v1.0 format"
+  },
+
+  "npcs": [
+    {
+      "npc_id": "tutorial_guide",
+      "name": "Elder Sage",
+      "title": "Ancient Mentor",
+
+      "position": {
+        "x": 48.0,
+        "y": 48.0,
+        "z": 0.0
+      },
+
+      "sprite_color": [200, 150, 255],
+
+      "behavior": {
+        "isStatic": true,
+        "wanderRadius": 0,
+        "interactionRange": 3.0
+      },
+
+      "dialogue": {
+        "greeting": {
+          "default": "Welcome, traveler! I sense great potential within you.",
+          "questInProgress": "How goes your task? The forest awaits your efforts.",
+          "questComplete": "Well done! Return to me when ready to claim your rewards.",
+          "allComplete": "You've learned all I can teach. Go forth and explore!"
+        },
+        "dialogue_lines": [
+          "Welcome, traveler! I sense great potential within you.",
+          "These lands are filled with resources to gather and enemies to defeat.",
+          "I have a small task for you, if you're willing to help."
+        ],
+        "farewell": "May your path be blessed with fortune!"
+      },
+
+      "quests": ["tutorial_quest"],
+
+      "services": {
+        "canTrade": false,
+        "canRepair": false,
+        "canTeach": true,
+        "teachableSkills": ["sprint"],
+        "specialServices": []
+      },
+
+      "unlockConditions": {
+        "alwaysAvailable": true,
+        "characterLevel": 0,
+        "completedQuests": []
+      },
+
+      "metadata": {
+        "narrative": "The Elder Sage has guided countless travelers on their first steps. His wisdom is freely given to all who seek it.",
+        "tags": ["tutorial", "starter", "essential"]
+      }
+    },
+
+    {
+      "npc_id": "mysterious_trader",
+      "name": "Wandering Trader",
+      "title": "Collector of Rarities",
+
+      "position": {
+        "x": 65.0,
+        "y": 52.0,
+        "z": 0.0
+      },
+
+      "sprite_color": [255, 215, 0],
+
+      "behavior": {
+        "isStatic": false,
+        "wanderRadius": 5.0,
+        "interactionRange": 3.0
+      },
+
+      "dialogue": {
+        "greeting": {
+          "default": "Greetings! I've traveled far and wide seeking rare materials.",
+          "questInProgress": "Have you found those materials yet? I await eagerly!",
+          "questComplete": "Excellent! Those will serve my research perfectly.",
+          "allComplete": "Your aid has been invaluable, friend."
+        },
+        "dialogue_lines": [
+          "Greetings! I've traveled far and wide.",
+          "I seek brave adventurers to help with my research.",
+          "Perhaps you could assist me?"
+        ],
+        "farewell": "Safe travels, and may you find rare treasures!"
+      },
+
+      "quests": ["gathering_quest"],
+
+      "services": {
+        "canTrade": true,
+        "canRepair": false,
+        "canTeach": true,
+        "teachableSkills": ["miners_endurance"],
+        "specialServices": ["identify_items"]
+      },
+
+      "unlockConditions": {
+        "alwaysAvailable": true,
+        "characterLevel": 0,
+        "completedQuests": []
+      },
+
+      "metadata": {
+        "narrative": "A mysterious figure who wanders the lands collecting rare materials. His true purpose remains unknown.",
+        "tags": ["trader", "wandering", "minerals"]
+      }
+    },
+
+    {
+      "npc_id": "combat_trainer",
+      "name": "Battle Master",
+      "title": "Weapons Instructor",
+
+      "position": {
+        "x": 52.0,
+        "y": 58.0,
+        "z": 0.0
+      },
+
+      "sprite_color": [255, 100, 100],
+
+      "behavior": {
+        "isStatic": true,
+        "wanderRadius": 0,
+        "interactionRange": 3.0
+      },
+
+      "dialogue": {
+        "greeting": {
+          "default": "Ho there, warrior! Ready to test your mettle?",
+          "questInProgress": "Go forth and prove yourself in battle!",
+          "questComplete": "Impressive! You've earned my respect and rewards.",
+          "allComplete": "You are now a true warrior. Continue your training!"
+        },
+        "dialogue_lines": [
+          "Ho there, warrior! Ready to test your mettle?",
+          "The wilds are dangerous, but I can help you prepare.",
+          "Defeat some enemies, and I'll reward your bravery."
+        ],
+        "farewell": "Fight with honor!"
+      },
+
+      "quests": ["combat_quest"],
+
+      "services": {
+        "canTrade": false,
+        "canRepair": true,
+        "canTeach": true,
+        "teachableSkills": ["combat_strike", "fortify"],
+        "specialServices": ["skill_training"]
+      },
+
+      "unlockConditions": {
+        "alwaysAvailable": true,
+        "characterLevel": 0,
+        "completedQuests": []
+      },
+
+      "metadata": {
+        "narrative": "A veteran warrior who trains adventurers in the art of combat. His scars tell stories of countless battles.",
+        "tags": ["combat", "trainer", "essential"]
+      }
+    }
+  ]
+}

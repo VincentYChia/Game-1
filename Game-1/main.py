@@ -716,16 +716,24 @@ class EquipmentDatabase:
 
         # Calculate defense for armor
         defense = 0
-        json_slot = data.get('slot', 'mainHand')
-        slot_mapping = {
-            'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',
-            'feet': 'boots', 'hands': 'gauntlets',
-            'mainHand': 'mainHand', 'offHand': 'offHand',
-            'helmet': 'helmet', 'chestplate': 'chestplate',
-            'leggings': 'leggings', 'boots': 'boots',
-            'gauntlets': 'gauntlets', 'accessory': 'accessory',
-        }
-        mapped_slot = slot_mapping.get(json_slot, json_slot)
+
+        # Determine slot - tools use their subtype as slot
+        if item_type == 'tool':
+            if subtype in ['axe', 'pickaxe']:
+                mapped_slot = subtype  # 'axe' or 'pickaxe' slot
+            else:
+                mapped_slot = 'mainHand'  # Fallback for other tools
+        else:
+            json_slot = data.get('slot', 'mainHand')
+            slot_mapping = {
+                'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',
+                'feet': 'boots', 'hands': 'gauntlets',
+                'mainHand': 'mainHand', 'offHand': 'offHand',
+                'helmet': 'helmet', 'chestplate': 'chestplate',
+                'leggings': 'leggings', 'boots': 'boots',
+                'gauntlets': 'gauntlets', 'accessory': 'accessory',
+            }
+            mapped_slot = slot_mapping.get(json_slot, json_slot)
 
         if item_type in armor_types:
             defense = self._calculate_armor_defense(tier, mapped_slot, stat_multipliers)
@@ -779,6 +787,8 @@ class EquipmentManager:
             'boots': None,
             'gauntlets': None,
             'accessory': None,
+            'axe': None,  # Tool slot for axes
+            'pickaxe': None,  # Tool slot for pickaxes
         }
 
     def equip(self, item: EquipmentItem, character) -> Tuple[Optional[EquipmentItem], str]:
@@ -1088,35 +1098,56 @@ class QuestDefinition:
 
 class Quest:
     """Active quest instance for a character"""
-    def __init__(self, quest_def: QuestDefinition):
+    def __init__(self, quest_def: QuestDefinition, character=None):
         self.quest_def = quest_def
         self.status = "in_progress"  # in_progress, completed, turned_in
         self.progress = {}  # Track progress: {"item_id": current_quantity} or {"enemies_killed": count}
 
+        # Track baselines to only count progress AFTER quest acceptance
+        self.baseline_combat_kills = 0
+        self.baseline_inventory = {}
+
+        # Initialize baselines if character provided
+        if character:
+            self._initialize_baselines(character)
+
+    def _initialize_baselines(self, character):
+        """Snapshot current state when quest is accepted"""
+        if self.quest_def.objectives.objective_type == "combat":
+            self.baseline_combat_kills = character.activities.get_count('combat')
+        elif self.quest_def.objectives.objective_type == "gather":
+            # Snapshot current inventory counts for quest items
+            for required_item in self.quest_def.objectives.items:
+                item_id = required_item["item_id"]
+                current_count = character.inventory.get_item_count(item_id)
+                self.baseline_inventory[item_id] = current_count
+
     def check_completion(self, character) -> bool:
-        """Check if quest objectives are met based on character state"""
+        """Check if quest objectives are met based on character state (only counting progress AFTER quest acceptance)"""
         if self.quest_def.objectives.objective_type == "gather":
-            # Check if character has required items in inventory
+            # Check if character has gathered required items SINCE quest acceptance
             for required_item in self.quest_def.objectives.items:
                 item_id = required_item["item_id"]
                 required_qty = required_item["quantity"]
 
-                # Count items in inventory
-                current_qty = 0
-                for item_stack in character.inventory.items:
-                    if item_stack and item_stack.item_id == item_id:
-                        current_qty += item_stack.quantity
+                # Count current items in inventory
+                current_qty = character.inventory.get_item_count(item_id)
 
-                if current_qty < required_qty:
+                # Calculate items gathered since quest start
+                baseline_qty = self.baseline_inventory.get(item_id, 0)
+                gathered_since_start = current_qty - baseline_qty
+
+                # Check if we've gathered enough NEW items
+                if gathered_since_start < required_qty:
                     return False
             return True
 
         elif self.quest_def.objectives.objective_type == "combat":
-            # Check enemy kill count from activity tracker
+            # Check enemy kills SINCE quest acceptance
             required_kills = self.quest_def.objectives.enemies_killed
-            current_kills = character.activities.combat
-            # For simplicity, we track total combat kills. In a full system, we'd track quest-specific kills
-            return current_kills >= required_kills
+            current_kills = character.activities.get_count('combat')
+            kills_since_start = current_kills - self.baseline_combat_kills
+            return kills_since_start >= required_kills
 
         return False
 
@@ -1131,11 +1162,11 @@ class Quest:
             required_qty = required_item["quantity"]
             remaining = required_qty
 
-            for i, item_stack in enumerate(character.inventory.items):
+            for i, item_stack in enumerate(character.inventory.slots):
                 if item_stack and item_stack.item_id == item_id and remaining > 0:
                     if item_stack.quantity <= remaining:
                         remaining -= item_stack.quantity
-                        character.inventory.items[i] = None
+                        character.inventory.slots[i] = None
                     else:
                         item_stack.quantity -= remaining
                         remaining = 0
@@ -1151,8 +1182,10 @@ class Quest:
 
         # Experience
         if rewards.experience > 0:
-            character.leveling.gain_xp(rewards.experience)
+            leveled_up = character.leveling.add_exp(rewards.experience)
             messages.append(f"+{rewards.experience} XP")
+            if leveled_up:
+                messages.append(f"Level up! Now level {character.leveling.level}")
 
         # Health restore
         if rewards.health_restore > 0:
@@ -1178,12 +1211,14 @@ class Quest:
             quantity = item_reward["quantity"]
 
             # Try to add to inventory
-            if item_id in mat_db.materials:
-                item_stack = ItemStack(item_id, quantity, rarity="common", equipment_data=None)
-                if character.inventory.add_item(item_stack):
-                    messages.append(f"+{quantity}x {item_id}")
-                else:
-                    messages.append(f"Inventory full! Lost {quantity}x {item_id}")
+            if character.inventory.add_item(item_id, quantity):
+                item_def = mat_db.get_material(item_id)
+                item_name = item_def.name if item_def else item_id
+                messages.append(f"+{quantity}x {item_name}")
+            else:
+                item_def = mat_db.get_material(item_id)
+                item_name = item_def.name if item_def else item_id
+                messages.append(f"Inventory full! Lost {quantity}x {item_name}")
 
         # Title
         if rewards.title:
@@ -1201,12 +1236,12 @@ class QuestManager:
         self.active_quests: Dict[str, Quest] = {}  # quest_id -> Quest
         self.completed_quests: List[str] = []  # quest_ids that have been turned in
 
-    def start_quest(self, quest_def: QuestDefinition) -> bool:
-        """Start a new quest"""
+    def start_quest(self, quest_def: QuestDefinition, character) -> bool:
+        """Start a new quest (with character to track baselines)"""
         if quest_def.quest_id in self.active_quests or quest_def.quest_id in self.completed_quests:
             return False  # Already have this quest
 
-        self.active_quests[quest_def.quest_id] = Quest(quest_def)
+        self.active_quests[quest_def.quest_id] = Quest(quest_def, character)
         return True
 
     def complete_quest(self, quest_id: str, character) -> Tuple[bool, List[str]]:
@@ -1305,69 +1340,120 @@ class NPCDatabase:
         return cls._instance
 
     def load_from_files(self):
-        """Load NPCs and quests from JSON files"""
+        """Load NPCs and quests from JSON files (supports both v1.0 and v2.0 formats)"""
         try:
-            # Load NPCs
-            npc_path = Path(__file__).parent / "progression" / "npcs-1.JSON"
-            if npc_path.exists():
-                with open(npc_path, 'r') as f:
-                    data = json.load(f)
-                    for npc_data in data.get("npcs", []):
-                        pos_data = npc_data["position"]
-                        position = Position(pos_data["x"], pos_data["y"], pos_data["z"])
+            # Try loading enhanced NPCs first, fallback to v1.0
+            npc_files = [
+                Path(__file__).parent / "progression" / "npcs-enhanced.JSON",
+                Path(__file__).parent / "progression" / "npcs-1.JSON"
+            ]
 
-                        npc_def = NPCDefinition(
-                            npc_id=npc_data["npc_id"],
-                            name=npc_data["name"],
-                            position=position,
-                            sprite_color=tuple(npc_data["sprite_color"]),
-                            interaction_radius=npc_data["interaction_radius"],
-                            dialogue_lines=npc_data["dialogue_lines"],
-                            quests=npc_data["quests"]
-                        )
-                        self.npcs[npc_def.npc_id] = npc_def
-                print(f"✓ Loaded {len(self.npcs)} NPCs")
+            for npc_path in npc_files:
+                if npc_path.exists():
+                    with open(npc_path, 'r') as f:
+                        data = json.load(f)
+                        for npc_data in data.get("npcs", []):
+                            pos_data = npc_data["position"]
+                            position = Position(pos_data["x"], pos_data["y"], pos_data["z"])
 
-            # Load Quests
-            quest_path = Path(__file__).parent / "progression" / "quests-1.JSON"
-            if quest_path.exists():
-                with open(quest_path, 'r') as f:
-                    data = json.load(f)
-                    for quest_data in data.get("quests", []):
-                        # Parse objectives
-                        obj_data = quest_data["objectives"]
-                        objective = QuestObjective(
-                            objective_type=obj_data["type"],
-                            items=obj_data.get("items", []),
-                            enemies_killed=obj_data.get("enemies_killed", 0)
-                        )
+                            # Support both old and new formats for dialogue
+                            dialogue_lines = npc_data.get("dialogue_lines", [])
+                            if not dialogue_lines and "dialogue" in npc_data:
+                                # Enhanced format - extract dialogue_lines from dialogue object
+                                dialogue_obj = npc_data["dialogue"]
+                                if "dialogue_lines" in dialogue_obj:
+                                    dialogue_lines = dialogue_obj["dialogue_lines"]
+                                else:
+                                    # Fallback to greeting messages
+                                    greeting = dialogue_obj.get("greeting", {})
+                                    dialogue_lines = [
+                                        greeting.get("default", "Hello!"),
+                                        greeting.get("questInProgress", "How goes your task?"),
+                                        greeting.get("questComplete", "Well done!")
+                                    ]
 
-                        # Parse rewards
-                        rew_data = quest_data["rewards"]
-                        rewards = QuestRewards(
-                            experience=rew_data.get("experience", 0),
-                            health_restore=rew_data.get("health_restore", 0),
-                            mana_restore=rew_data.get("mana_restore", 0),
-                            skills=rew_data.get("skills", []),
-                            items=rew_data.get("items", []),
-                            title=rew_data.get("title", "")
-                        )
+                            # Support both old and new interaction radius
+                            interaction_radius = npc_data.get("interaction_radius", 3.0)
+                            if "behavior" in npc_data:
+                                interaction_radius = npc_data["behavior"].get("interactionRange", interaction_radius)
 
-                        quest_def = QuestDefinition(
-                            quest_id=quest_data["quest_id"],
-                            title=quest_data["title"],
-                            description=quest_data["description"],
-                            npc_id=quest_data["npc_id"],
-                            objectives=objective,
-                            rewards=rewards,
-                            completion_dialogue=quest_data.get("completion_dialogue", [])
-                        )
-                        self.quests[quest_def.quest_id] = quest_def
-                print(f"✓ Loaded {len(self.quests)} quests")
+                            npc_def = NPCDefinition(
+                                npc_id=npc_data["npc_id"],
+                                name=npc_data["name"],
+                                position=position,
+                                sprite_color=tuple(npc_data["sprite_color"]),
+                                interaction_radius=interaction_radius,
+                                dialogue_lines=dialogue_lines,
+                                quests=npc_data["quests"]
+                            )
+                            self.npcs[npc_def.npc_id] = npc_def
+                    print(f"✓ Loaded {len(self.npcs)} NPCs from {npc_path.name}")
+                    break
+
+            # Try loading enhanced quests first, fallback to v1.0
+            quest_files = [
+                Path(__file__).parent / "progression" / "quests-enhanced.JSON",
+                Path(__file__).parent / "progression" / "quests-1.JSON"
+            ]
+
+            for quest_path in quest_files:
+                if quest_path.exists():
+                    with open(quest_path, 'r') as f:
+                        data = json.load(f)
+                        for quest_data in data.get("quests", []):
+                            # Parse objectives (support both formats)
+                            obj_data = quest_data["objectives"]
+
+                            # Support both "type" and "objective_type"
+                            obj_type = obj_data.get("type", obj_data.get("objective_type", "gather"))
+
+                            objective = QuestObjective(
+                                objective_type=obj_type,
+                                items=obj_data.get("items", []),
+                                enemies_killed=obj_data.get("enemies_killed", 0)
+                            )
+
+                            # Parse rewards (support both formats)
+                            rew_data = quest_data["rewards"]
+                            rewards = QuestRewards(
+                                experience=rew_data.get("experience", 0),
+                                health_restore=rew_data.get("health_restore", 0),
+                                mana_restore=rew_data.get("mana_restore", 0),
+                                skills=rew_data.get("skills", []),
+                                items=rew_data.get("items", []),
+                                title=rew_data.get("title", "")
+                            )
+
+                            # Support both "quest_id" and "questId", "title" and "name"
+                            quest_id = quest_data.get("quest_id", quest_data.get("questId", ""))
+                            title = quest_data.get("title", quest_data.get("name", "Untitled Quest"))
+
+                            # Support both simple and complex description formats
+                            description = quest_data.get("description", "")
+                            if isinstance(description, dict):
+                                description = description.get("long", description.get("short", ""))
+
+                            # Support both "npc_id" and "givenBy"
+                            npc_id = quest_data.get("npc_id", quest_data.get("givenBy", ""))
+
+                            quest_def = QuestDefinition(
+                                quest_id=quest_id,
+                                title=title,
+                                description=description,
+                                npc_id=npc_id,
+                                objectives=objective,
+                                rewards=rewards,
+                                completion_dialogue=quest_data.get("completion_dialogue", [])
+                            )
+                            self.quests[quest_def.quest_id] = quest_def
+                    print(f"✓ Loaded {len(self.quests)} quests from {quest_path.name}")
+                    break
 
             self.loaded = True
         except Exception as e:
             print(f"⚠ Failed to load NPCs/Quests: {e}")
+            import traceback
+            traceback.print_exc()
             self.loaded = False
 
 
@@ -1381,7 +1467,7 @@ class Encyclopedia:
     """
     def __init__(self):
         self.is_open = False
-        self.current_tab = "guide"  # guide, skills, titles
+        self.current_tab = "guide"  # guide, quests, skills, titles
         self.scroll_offset = 0
 
     def toggle(self):
@@ -1609,9 +1695,12 @@ class ResourceType(Enum):
 
 
 RESOURCE_TIERS = {
-    ResourceType.OAK_TREE: 1, ResourceType.BIRCH_TREE: 2, ResourceType.MAPLE_TREE: 3, ResourceType.IRONWOOD_TREE: 4,
-    ResourceType.COPPER_ORE: 1, ResourceType.IRON_ORE: 2, ResourceType.STEEL_ORE: 3, ResourceType.MITHRIL_ORE: 4,
-    ResourceType.LIMESTONE: 1, ResourceType.GRANITE: 2, ResourceType.OBSIDIAN: 3, ResourceType.STAR_CRYSTAL: 4
+    # Wood - oak/pine/ash are T1, birch/maple are T2, ironwood/ebony are T3, worldtree is T4
+    ResourceType.OAK_TREE: 1, ResourceType.BIRCH_TREE: 2, ResourceType.MAPLE_TREE: 2, ResourceType.IRONWOOD_TREE: 3,
+    # Ore - copper/iron/tin are T1, steel/mithril are T2, adamantine/orichalcum are T3, etherion is T4
+    ResourceType.COPPER_ORE: 1, ResourceType.IRON_ORE: 1, ResourceType.STEEL_ORE: 2, ResourceType.MITHRIL_ORE: 2,
+    # Stone - limestone/granite/shale are T1, basalt/marble/quartz are T2, obsidian/voidstone/diamond are T3, eternity_stone/etc are T4
+    ResourceType.LIMESTONE: 1, ResourceType.GRANITE: 1, ResourceType.OBSIDIAN: 3, ResourceType.STAR_CRYSTAL: 4
 }
 
 
@@ -2634,7 +2723,7 @@ class ActivityTracker:
     def __init__(self):
         self.activity_counts = {
             'mining': 0, 'forestry': 0, 'smithing': 0, 'refining': 0, 'alchemy': 0,
-            'engineering': 0, 'enchanting': 0
+            'engineering': 0, 'enchanting': 0, 'combat': 0
         }
 
     def record_activity(self, activity_type: str, amount: int = 1):
@@ -3418,6 +3507,28 @@ class Inventory:
         self.dragging_stack = None
         self.dragging_from_equipment = False
 
+    def has_item(self, item_id: str, quantity: int = 1) -> bool:
+        """Check if inventory has at least quantity of item_id"""
+        return self.get_item_count(item_id) >= quantity
+
+    def remove_item(self, item_id: str, quantity: int = 1) -> bool:
+        """Remove quantity of item_id from inventory. Returns True if successful."""
+        if not self.has_item(item_id, quantity):
+            return False
+
+        remaining = quantity
+        for i, slot in enumerate(self.slots):
+            if slot and slot.item_id == item_id and remaining > 0:
+                if slot.quantity <= remaining:
+                    remaining -= slot.quantity
+                    self.slots[i] = None
+                else:
+                    slot.quantity -= remaining
+                    remaining = 0
+                    break
+
+        return remaining == 0
+
 
 # ============================================================================
 # TOOL
@@ -3532,11 +3643,20 @@ class Character:
             self._give_debug_items()
 
     def _give_starting_tools(self):
-        self.tools = [
-            Tool("copper_axe", "Copper Axe", "axe", 1, 10, 500, 500),
-            Tool("copper_pickaxe", "Copper Pickaxe", "pickaxe", 1, 10, 500, 500)
-        ]
-        self.selected_tool = self.tools[0]
+        # Give starting tools as equipped items in tool slots
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Equip copper axe
+        copper_axe = equip_db.create_equipment_from_id("copper_axe")
+        if copper_axe:
+            self.equipment.slots['axe'] = copper_axe
+            print(f"✓ Starting tool equipped: {copper_axe.name} in axe slot")
+
+        # Equip copper pickaxe
+        copper_pickaxe = equip_db.create_equipment_from_id("copper_pickaxe")
+        if copper_pickaxe:
+            self.equipment.slots['pickaxe'] = copper_pickaxe
+            print(f"✓ Starting tool equipped: {copper_pickaxe.name} in pickaxe slot")
 
     def _give_debug_items(self):
         """Give starter items in debug mode"""
@@ -3758,17 +3878,28 @@ class Character:
     def is_in_range(self, target_position: Position) -> bool:
         return self.position.distance_to(target_position) <= self.interaction_range
 
+    def get_equipped_tool(self, tool_type: str) -> Optional[EquipmentItem]:
+        """Get the equipped tool of the specified type ('axe' or 'pickaxe') from equipment slots"""
+        if tool_type in ['axe', 'pickaxe']:
+            equipped_tool = self.equipment.slots.get(tool_type)
+            if equipped_tool:
+                return equipped_tool
+        return None
+
     def can_harvest_resource(self, resource: NaturalResource) -> Tuple[bool, str]:
-        if not self.selected_tool:
-            return False, "No tool selected"
+        # Get equipped tool for this resource type
+        equipped_tool = self.get_equipped_tool(resource.required_tool)
+
+        if not equipped_tool:
+            tool_name = "axe" if resource.required_tool == "axe" else "pickaxe"
+            return False, f"No {tool_name} equipped"
         if not self.is_in_range(resource.position):
             return False, "Too far away"
-        if self.selected_tool.tool_type != resource.required_tool:
-            tool_name = "axe" if resource.required_tool == "axe" else "pickaxe"
-            return False, f"Need {tool_name}"
-        if not self.selected_tool.can_harvest(resource.tier):
+
+        # Check tool tier
+        if equipped_tool.tier < resource.tier:
             return False, f"Tool tier too low (need T{resource.tier})"
-        if self.selected_tool.durability_current <= 0 and not Config.DEBUG_INFINITE_RESOURCES:
+        if equipped_tool.durability_current <= 0 and not Config.DEBUG_INFINITE_RESOURCES:
             return False, "Tool broken"
         return True, "OK"
 
@@ -3777,8 +3908,18 @@ class Character:
         if not can_harvest:
             return None
 
-        base_damage = self.selected_tool.damage
-        effectiveness = self.selected_tool.get_effectiveness()
+        # Get equipped tool
+        equipped_tool = self.get_equipped_tool(resource.required_tool)
+        if not equipped_tool:
+            return None
+
+        # Calculate base damage from tool's damage stat
+        if isinstance(equipped_tool.damage, tuple):
+            base_damage = (equipped_tool.damage[0] + equipped_tool.damage[1]) // 2
+        else:
+            base_damage = equipped_tool.damage
+
+        effectiveness = equipped_tool.get_effectiveness()
         activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
         stat_bonus = self.stats.get_bonus('strength' if activity == 'mining' else 'agility')
         title_bonus = self.titles.get_total_bonus(f'{activity}_damage')
@@ -3790,8 +3931,11 @@ class Character:
         damage = int(base_damage * effectiveness * damage_mult)
         actual_damage, depleted = resource.take_damage(damage, is_crit)
 
-        if not self.selected_tool.use():
-            print("⚠ Tool broke!")
+        # Reduce tool durability
+        if not Config.DEBUG_INFINITE_RESOURCES:
+            equipped_tool.durability_current = max(0, equipped_tool.durability_current - 1)
+            if equipped_tool.durability_current <= 0:
+                print("⚠ Tool broke!")
 
         self.activities.record_activity(activity, 1)
         new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
@@ -4096,8 +4240,8 @@ class Character:
         Returns (success, message)
         """
         # Get item from database
-        item_db = ItemDatabase.get_instance()
-        item_def = item_db.get_item(item_id)
+        mat_db = MaterialDatabase.get_instance()
+        item_def = mat_db.get_material(item_id)
 
         if not item_def:
             return False, f"Unknown item: {item_id}"
@@ -5644,6 +5788,7 @@ class Renderer:
         tab_spacing = 10
         tabs = [
             ("guide", "GAME GUIDE"),
+            ("quests", "QUESTS"),
             ("skills", "SKILLS"),
             ("titles", "TITLES")
         ]
@@ -5688,6 +5833,8 @@ class Renderer:
         # Render content based on current tab
         if character.encyclopedia.current_tab == "guide":
             self._render_guide_content(surf, content_rect, character)
+        elif character.encyclopedia.current_tab == "quests":
+            self._render_quests_content(surf, content_rect, character)
         elif character.encyclopedia.current_tab == "skills":
             self._render_skills_content(surf, content_rect, character)
         elif character.encyclopedia.current_tab == "titles":
@@ -5835,6 +5982,145 @@ class Renderer:
                 if y >= content_rect.y - 18 and y < content_rect.bottom:
                     surf.blit(self.tiny_font.render(line, True, (180, 180, 200)), (x, y))
                 y += 18
+
+    def _render_quests_content(self, surf, content_rect, character):
+        """Render quest tracking and status content"""
+        npc_db = NPCDatabase.get_instance()
+        if not npc_db.loaded:
+            return
+
+        # Apply scroll offset
+        scroll_offset = character.encyclopedia.scroll_offset
+        y = content_rect.y + 15 - scroll_offset
+        x = content_rect.x + 15
+
+        # Header
+        if y >= content_rect.y and y < content_rect.bottom:
+            surf.blit(self.font.render("QUEST LOG", True, (255, 215, 0)), (x, y))
+        y += 35
+
+        # Active Quests Section
+        if y >= content_rect.y and y < content_rect.bottom:
+            surf.blit(self.small_font.render("ACTIVE QUESTS:", True, (150, 200, 255)), (x, y))
+        y += 25
+
+        if character.quests.active_quests:
+            for quest_id, quest in character.quests.active_quests.items():
+                # Quest Title
+                if y >= content_rect.y - 25 and y < content_rect.bottom:
+                    title_text = f"📜 {quest.quest_def.title}"
+                    surf.blit(self.small_font.render(title_text, True, (220, 220, 255)), (x + 10, y))
+                y += 25
+
+                # Quest Description
+                if y >= content_rect.y - 20 and y < content_rect.bottom:
+                    desc_text = quest.quest_def.description[:80] + "..." if len(quest.quest_def.description) > 80 else quest.quest_def.description
+                    surf.blit(self.tiny_font.render(desc_text, True, (180, 180, 200)), (x + 20, y))
+                y += 20
+
+                # Quest Objectives
+                if quest.quest_def.objectives.objective_type == "gather":
+                    if y >= content_rect.y - 20 and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render("Objectives:", True, (200, 200, 220)), (x + 20, y))
+                    y += 18
+
+                    for item_req in quest.quest_def.objectives.items:
+                        item_id = item_req["item_id"]
+                        required_qty = item_req["quantity"]
+                        current_qty = character.inventory.get_item_count(item_id)
+
+                        # Get item name
+                        mat_db = MaterialDatabase.get_instance()
+                        item_def = mat_db.get_material(item_id)
+                        item_name = item_def.name if item_def else item_id
+
+                        # Progress indicator
+                        is_complete = current_qty >= required_qty
+                        status_color = (100, 255, 100) if is_complete else (255, 255, 100)
+                        check_mark = "✓" if is_complete else "○"
+
+                        if y >= content_rect.y - 18 and y < content_rect.bottom:
+                            obj_text = f"  {check_mark} Gather {item_name}: {current_qty}/{required_qty}"
+                            surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + 30, y))
+                        y += 18
+
+                elif quest.quest_def.objectives.objective_type == "combat":
+                    required_kills = quest.quest_def.objectives.enemies_killed
+                    current_kills = character.activities.get_count('combat')
+
+                    is_complete = current_kills >= required_kills
+                    status_color = (100, 255, 100) if is_complete else (255, 255, 100)
+                    check_mark = "✓" if is_complete else "○"
+
+                    if y >= content_rect.y - 20 and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render("Objectives:", True, (200, 200, 220)), (x + 20, y))
+                    y += 18
+
+                    if y >= content_rect.y - 18 and y < content_rect.bottom:
+                        obj_text = f"  {check_mark} Defeat enemies: {current_kills}/{required_kills}"
+                        surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + 30, y))
+                    y += 18
+
+                # Quest completion status
+                can_complete = quest.check_completion(character)
+                if can_complete:
+                    if y >= content_rect.y - 20 and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render("✅ Ready to turn in!", True, (100, 255, 100)), (x + 20, y))
+                    y += 20
+
+                # Rewards preview
+                if y >= content_rect.y - 18 and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render("Rewards:", True, (200, 200, 220)), (x + 20, y))
+                y += 18
+
+                rewards_parts = []
+                if quest.quest_def.rewards.experience > 0:
+                    rewards_parts.append(f"{quest.quest_def.rewards.experience} XP")
+                if quest.quest_def.rewards.skills:
+                    rewards_parts.append(f"Skills: {', '.join(quest.quest_def.rewards.skills)}")
+                if quest.quest_def.rewards.items:
+                    item_names = []
+                    for item_req in quest.quest_def.rewards.items:
+                        qty = item_req.get("quantity", 1)
+                        item_id = item_req.get("item_id", "")
+                        mat_db = MaterialDatabase.get_instance()
+                        item_def = mat_db.get_material(item_id)
+                        item_name = item_def.name if item_def else item_id
+                        item_names.append(f"{qty}x {item_name}")
+                    if item_names:
+                        rewards_parts.append(f"Items: {', '.join(item_names)}")
+
+                for reward_text in rewards_parts:
+                    if y >= content_rect.y - 16 and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render(f"  • {reward_text}", True, (180, 180, 200)), (x + 30, y))
+                    y += 16
+
+                y += 15  # Space between quests
+
+        else:
+            if y >= content_rect.y and y < content_rect.bottom:
+                surf.blit(self.small_font.render("No active quests", True, (150, 150, 150)), (x + 10, y))
+            y += 30
+
+        y += 20
+
+        # Completed Quests Section
+        if y >= content_rect.y and y < content_rect.bottom:
+            surf.blit(self.small_font.render("COMPLETED QUESTS:", True, (150, 200, 255)), (x, y))
+        y += 25
+
+        if character.quests.completed_quests:
+            for quest_id in character.quests.completed_quests:
+                if quest_id in npc_db.quests:
+                    quest_def = npc_db.quests[quest_id]
+                    if y >= content_rect.y - 20 and y < content_rect.bottom:
+                        completed_text = f"✓ {quest_def.title}"
+                        surf.blit(self.tiny_font.render(completed_text, True, (100, 255, 100)), (x + 10, y))
+                    y += 20
+        else:
+            if y >= content_rect.y and y < content_rect.bottom:
+                surf.blit(self.small_font.render("No completed quests yet", True, (150, 150, 150)), (x + 10, y))
+            y += 30
 
     def _render_skills_content(self, surf, content_rect, character):
         """Render skills reference content"""
@@ -7554,8 +7840,8 @@ class GameEngine:
                         item_stack = self.character.inventory.slots[idx]
                         if item_stack:
                             # Check if item is consumable
-                            item_db = ItemDatabase.get_instance()
-                            item_def = item_db.get_item(item_stack.item_id)
+                            mat_db = MaterialDatabase.get_instance()
+                            item_def = mat_db.get_material(item_stack.item_id)
                             if item_def and item_def.category == "consumable":
                                 # Use the consumable
                                 success, message = self.character.use_consumable(item_stack.item_id)
@@ -7575,7 +7861,7 @@ class GameEngine:
                     # Accept quest
                     if quest_id in npc_db.quests:
                         quest_def = npc_db.quests[quest_id]
-                        if self.character.quests.start_quest(quest_def):
+                        if self.character.quests.start_quest(quest_def, self.character):
                             print(f"📜 Quest accepted: {quest_def.title}")
                             self.add_notification(f"Quest accepted: {quest_def.title}", (100, 255, 100))
                             # Update dialogue state
@@ -7825,7 +8111,7 @@ class GameEngine:
                 if in_x and in_y:
                     idx = row * Config.INVENTORY_SLOTS_PER_ROW + col
                     if 0 <= idx < self.character.inventory.max_slots:
-                        # Double-click to equip equipment
+                        # Double-click to equip equipment or tools
                         if is_double_click and self.last_clicked_slot == idx:
                             item_stack = self.character.inventory.slots[idx]
                             print(f"\n🖱️  Double-click detected on slot {idx}")
@@ -7836,12 +8122,13 @@ class GameEngine:
                                 if is_equip:
                                     equipment = item_stack.get_equipment()
                                     print(f"   get_equipment(): {equipment}")
-                                    if equipment:  # FIX #4: Check equipment exists before trying to equip
+                                    if equipment:
+                                        # Equip all equipment (including tools) using standard equipment system
                                         success, msg = self.character.try_equip_from_inventory(idx)
                                         if success:
                                             self.add_notification(f"Equipped {equipment.name}", (100, 255, 100))
                                         else:
-                                            self.add_notification(f"Cannot equip: {msg}", (255, 100, 100))
+                                                self.add_notification(f"Cannot equip: {msg}", (255, 100, 100))
                                     else:
                                         print(f"   ❌ equipment is None!")
                                         self.add_notification("Invalid equipment data", (255, 100, 100))
@@ -7889,6 +8176,7 @@ class GameEngine:
 
             if not enemy.is_alive:
                 self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
+                self.character.activities.record_activity('combat', 1)
             return
 
         # Check for corpse click (looting)
