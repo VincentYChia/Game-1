@@ -1,0 +1,654 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "totalPlacements": 37
+  },
+  "placements": [
+    {
+      "recipeId": "smithing_alchemy_table_t1",
+      "placementMap": {
+        "1,1": "water_crystal",
+        "1,3": "water_crystal",
+        "2,1": "granite",
+        "3,1": "granite",
+        "3,2": "granite",
+        "3,3": "granite",
+        "2,3": "granite",
+        "2,2": "oak_plank",
+        "1,2": "oak_plank"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Basic alchemy table with mortar, pestle, and glassware."
+      }
+    },
+    {
+      "recipeId": "smithing_bamboo_fishing_rod",
+      "placementMap": {
+        "2,2": "oak_log",
+        "1,3": "oak_log",
+        "3,1": "copper_ingot",
+        "2,3": "spectral_thread",
+        "3,3": "spectral_thread"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Flexible bamboo rod with silk line and bronze hook. Patience and the right tool can pull dinner from any water."
+      }
+    },
+    {
+      "recipeId": "smithing_composite_longbow",
+      "placementMap": {
+        "1,3": "slime_gel",
+        "5,3": "slime_gel",
+        "2,4": "ash_plank",
+        "4,4": "ash_plank",
+        "3,4": "ash_plank",
+        "1,2": "spectral_thread",
+        "2,2": "spectral_thread",
+        "3,2": "spectral_thread",
+        "4,2": "spectral_thread",
+        "5,2": "spectral_thread"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Crafting a composite bow requires laminating different materials - wood for flexibility, sinew for power, silk for the string. Patience yields deadly accuracy."
+      }
+    },
+    {
+      "recipeId": "smithing_copper_axe",
+      "placementMap": {
+        "3,2": "pine_log",
+        "2,2": "pine_log",
+        "1,2": "copper_ingot",
+        "1,3": "copper_ingot",
+        "2,3": "copper_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Basic axe for woodcutting. Simple but essential for any aspiring adventurer."
+      }
+    },
+    {
+      "recipeId": "smithing_copper_dagger",
+      "placementMap": {
+        "3,1": "wolf_pelt",
+        "2,2": "copper_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "A dagger is deceptively simple - just a blade and a grip. But the balance must be perfect for quick, precise strikes."
+      }
+    },
+    {
+      "recipeId": "smithing_copper_fire_ring",
+      "placementMap": {
+        "2,2": "fire_crystal",
+        "2,1": "copper_ingot",
+        "2,3": "copper_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Simple copper band with fire crystal. Radiates gentle warmth."
+      }
+    },
+    {
+      "recipeId": "smithing_copper_pickaxe",
+      "placementMap": {
+        "3,1": "oak_log",
+        "2,2": "oak_log",
+        "1,2": "copper_ingot",
+        "1,3": "copper_ingot",
+        "2,3": "copper_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Your first pickaxe. The gateway to greater resources and deeper discoveries."
+      }
+    },
+    {
+      "recipeId": "smithing_copper_spear",
+      "placementMap": {
+        "1,3": "copper_ingot",
+        "2,2": "ash_log",
+        "3,1": "ash_log"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Simple spear with copper tip. Keep your enemies at a distance."
+      }
+    },
+    {
+      "recipeId": "smithing_engineering_bench_t1",
+      "placementMap": {
+        "2,1": "iron_ingot",
+        "2,3": "iron_ingot",
+        "1,1": "beetle_carapace",
+        "1,2": "beetle_carapace",
+        "1,3": "beetle_carapace",
+        "2,2": "birch_plank",
+        "3,1": "birch_plank",
+        "3,2": "birch_plank",
+        "3,3": "birch_plank"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Basic workbench for assembling mechanical devices."
+      }
+    },
+    {
+      "recipeId": "smithing_fire_crystal_staff",
+      "placementMap": {
+        "1,7": "fire_crystal",
+        "2,6": "fire_crystal",
+        "2,5": "fire_crystal",
+        "3,6": "fire_crystal",
+        "6,2": "ironwood_plank",
+        "5,3": "ironwood_plank",
+        "4,4": "ironwood_plank",
+        "7,1": "phoenix_ash",
+        "3,5": "ironwood_plank",
+        "4,6": "fire_crystal",
+        "3,7": "fire_crystal",
+        "1,5": "fire_crystal",
+        "2,4": "fire_crystal",
+        "1,6": "mithril_ingot",
+        "2,7": "mithril_ingot",
+        "5,6": "phoenix_ash",
+        "2,3": "phoenix_ash"
+      },
+      "metadata": {
+        "gridSize": "7x7",
+        "narrative": "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis."
+      }
+    },
+    {
+      "recipeId": "smithing_forge_t1",
+      "placementMap": {
+        "2,1": "granite",
+        "3,1": "granite",
+        "3,2": "granite",
+        "3,3": "granite",
+        "2,3": "granite",
+        "1,1": "iron_ingot",
+        "1,2": "iron_ingot",
+        "1,3": "iron_ingot",
+        "2,2": "iron_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Basic stone forge suitable for working copper and iron. The foundation of smithing."
+      }
+    },
+    {
+      "recipeId": "smithing_forge_t2",
+      "placementMap": {
+        "2,1": "basalt",
+        "3,1": "basalt",
+        "3,2": "basalt",
+        "3,3": "basalt",
+        "2,3": "basalt",
+        "2,2": "fire_crystal",
+        "1,1": "steel_ingot",
+        "1,2": "steel_ingot",
+        "1,3": "steel_ingot"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Improved forge with better heat retention. Can work steel reliably."
+      }
+    },
+    {
+      "recipeId": "smithing_forge_t3",
+      "placementMap": {
+        "3,2": "phoenix_ash",
+        "3,4": "phoenix_ash",
+        "2,4": "phoenix_ash",
+        "2,2": "phoenix_ash",
+        "1,1": "mithril_ingot",
+        "1,2": "mithril_ingot",
+        "1,3": "mithril_ingot",
+        "1,4": "mithril_ingot",
+        "1,5": "mithril_ingot",
+        "2,3": "obsidian",
+        "2,5": "obsidian",
+        "2,1": "obsidian",
+        "3,3": "storm_heart",
+        "3,1": "obsidian",
+        "4,1": "obsidian",
+        "4,2": "obsidian",
+        "4,3": "obsidian",
+        "4,4": "obsidian",
+        "4,5": "obsidian",
+        "3,5": "obsidian"
+      },
+      "metadata": {
+        "gridSize": "7x7",
+        "narrative": "Master forge with crystal enhancement. Can reach extreme temperatures."
+      }
+    },
+    {
+      "recipeId": "smithing_iron_axe",
+      "placementMap": {
+        "1,2": "iron_ingot",
+        "1,3": "iron_ingot",
+        "2,3": "iron_ingot",
+        "2,2": "birch_plank",
+        "3,2": "birch_plank"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Solid iron axe for serious forestry work. Bites deep and true."
+      }
+    },
+    {
+      "recipeId": "smithing_iron_boots",
+      "placementMap": {
+        "2,1": "wolf_pelt",
+        "2,3": "wolf_pelt",
+        "3,1": "iron_ingot",
+        "3,3": "iron_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Reinforced leather boots with iron caps. Protects your feet without slowing you down."
+      }
+    },
+    {
+      "recipeId": "smithing_iron_chestplate",
+      "placementMap": {
+        "2,2": "beetle_carapace",
+        "3,2": "iron_ingot",
+        "2,4": "beetle_carapace",
+        "3,4": "iron_ingot",
+        "1,2": "wolf_pelt",
+        "1,4": "wolf_pelt",
+        "3,3": "iron_ingot",
+        "2,3": "iron_ingot",
+        "4,2": "iron_ingot",
+        "4,4": "iron_ingot",
+        "4,3": "iron_ingot",
+        "5,2": "wolf_pelt",
+        "5,4": "wolf_pelt",
+        "5,3": "wolf_pelt",
+        "3,5": "beetle_carapace",
+        "4,5": "beetle_carapace",
+        "3,1": "beetle_carapace",
+        "4,1": "beetle_carapace"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Iron plates protect vital organs. Heavy but reliable."
+      }
+    },
+    {
+      "recipeId": "smithing_iron_pickaxe",
+      "placementMap": {
+        "2,3": "iron_ingot",
+        "1,3": "iron_ingot",
+        "1,2": "iron_ingot",
+        "2,2": "ash_plank",
+        "3,1": "ash_plank"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Upgraded pickaxe that can tackle tougher deposits. Iron reliability meets practical design."
+      }
+    },
+    {
+      "recipeId": "smithing_iron_round_shield",
+      "placementMap": {
+        "2,2": "iron_ingot",
+        "2,1": "wolf_pelt",
+        "1,2": "oak_plank",
+        "2,3": "oak_plank",
+        "3,2": "oak_plank"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "A simple round shield - iron face with oak backing. Protects and strikes in equal measure."
+      }
+    },
+    {
+      "recipeId": "smithing_iron_shortsword",
+      "placementMap": {
+        "3,1": "oak_plank",
+        "2,2": "iron_ingot",
+        "1,3": "iron_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "The foundational smithing technique - blade, tang, handle. Simple in concept, demanding in execution. Every smith remembers their first sword."
+      }
+    },
+    {
+      "recipeId": "smithing_iron_studded_gauntlets",
+      "placementMap": {
+        "1,2": "iron_ingot",
+        "2,3": "iron_ingot",
+        "2,1": "wolf_pelt",
+        "3,2": "wolf_pelt",
+        "2,2": "wolf_pelt"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Reinforced leather gloves with iron studs across the knuckles. Your hands are your tools - protect them properly."
+      }
+    },
+    {
+      "recipeId": "smithing_iron_warhammer",
+      "placementMap": {
+        "5,1": "granite",
+        "4,2": "oak_plank",
+        "3,3": "oak_plank",
+        "2,3": "iron_ingot",
+        "3,4": "iron_ingot",
+        "2,5": "iron_ingot",
+        "1,4": "iron_ingot",
+        "1,3": "iron_ingot",
+        "3,5": "iron_ingot",
+        "2,4": "granite"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Crafting a warhammer is about managing weight distribution. The crushing head must be perfectly balanced on the shaft, or it becomes a liability rather than a weapon."
+      }
+    },
+    {
+      "recipeId": "smithing_iron_water_amulet",
+      "placementMap": {
+        "5,3": "water_crystal",
+        "4,2": "water_crystal",
+        "4,4": "water_crystal",
+        "3,1": "iron_ingot",
+        "2,2": "iron_ingot",
+        "2,4": "iron_ingot",
+        "3,5": "iron_ingot",
+        "2,3": "iron_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Iron amulet holding a water crystal. Feels cool against your skin."
+      }
+    },
+    {
+      "recipeId": "smithing_leather_tunic",
+      "placementMap": {
+        "2,1": "slime_gel",
+        "2,3": "slime_gel",
+        "3,3": "wolf_pelt",
+        "3,1": "wolf_pelt",
+        "2,2": "wolf_pelt",
+        "3,2": "wolf_pelt",
+        "1,3": "wolf_pelt",
+        "1,1": "wolf_pelt"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Basic leather protection. Better than nothing, lighter than metal."
+      }
+    },
+    {
+      "recipeId": "smithing_mithril_axe",
+      "placementMap": {
+        "6,2": "ebony_plank",
+        "5,3": "ebony_plank",
+        "7,1": "ebony_plank",
+        "4,4": "ebony_plank",
+        "2,6": "mithril_ingot",
+        "2,5": "mithril_ingot",
+        "3,5": "golem_core",
+        "4,6": "mithril_ingot",
+        "4,5": "mithril_ingot",
+        "3,4": "mithril_ingot",
+        "2,4": "mithril_ingot",
+        "3,6": "mithril_ingot",
+        "4,7": "mithril_ingot",
+        "5,6": "mithril_ingot",
+        "5,5": "mithril_ingot",
+        "3,7": "mithril_ingot"
+      },
+      "metadata": {
+        "gridSize": "7x7",
+        "narrative": "Ethereal mithril axe that phases through wood fibers. Cuts with minimal resistance."
+      }
+    },
+    {
+      "recipeId": "smithing_mithril_dagger",
+      "placementMap": {
+        "5,3": "ebony_plank",
+        "4,4": "mithril_ingot",
+        "3,5": "mithril_ingot",
+        "4,2": "ebony_plank",
+        "6,4": "ebony_plank",
+        "6,2": "ebony_plank",
+        "7,1": "essence_blood",
+        "2,6": "mithril_ingot"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Mithril dagger that seems to shimmer out of existence. Wickedly sharp, impossibly light."
+      }
+    },
+    {
+      "recipeId": "smithing_mithril_pickaxe",
+      "placementMap": {
+        "7,1": "ebony_plank",
+        "6,2": "ebony_plank",
+        "5,3": "ebony_plank",
+        "4,4": "ebony_plank",
+        "4,7": "mithril_ingot",
+        "3,5": "ebony_plank",
+        "2,6": "mithril_ingot",
+        "3,7": "mithril_ingot",
+        "1,4": "mithril_ingot",
+        "1,5": "mithril_ingot",
+        "1,6": "mithril_ingot",
+        "2,7": "mithril_ingot",
+        "2,5": "mithril_ingot",
+        "3,6": "mithril_ingot"
+      },
+      "metadata": {
+        "gridSize": "7x7",
+        "narrative": "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective."
+      }
+    },
+    {
+      "recipeId": "smithing_pine_shortbow",
+      "placementMap": {
+        "1,2": "pine_plank",
+        "2,3": "pine_plank",
+        "3,2": "pine_plank",
+        "1,1": "slime_gel",
+        "3,1": "slime_gel",
+        "2,1": "air_crystal"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Simple pine bow strung with treated sinew. Not powerful, but reliable."
+      }
+    },
+    {
+      "recipeId": "smithing_refinery_t1",
+      "placementMap": {
+        "2,1": "copper_ingot",
+        "3,1": "copper_ingot",
+        "3,2": "limestone",
+        "2,3": "copper_ingot",
+        "1,1": "limestone",
+        "1,3": "limestone",
+        "3,3": "copper_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Basic refinery for turning raw ores into usable ingots. Essential for any metalworker."
+      }
+    },
+    {
+      "recipeId": "smithing_refinery_t2",
+      "placementMap": {
+        "1,1": "granite",
+        "2,1": "granite",
+        "2,3": "granite",
+        "1,3": "granite",
+        "3,2": "granite",
+        "3,1": "earth_crystal",
+        "3,3": "earth_crystal"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Advanced refinery with better efficiency and heat control."
+      }
+    },
+    {
+      "recipeId": "smithing_steel_axe",
+      "placementMap": {
+        "2,3": "steel_ingot",
+        "1,4": "steel_ingot",
+        "2,4": "steel_ingot",
+        "3,4": "steel_ingot",
+        "2,5": "steel_ingot",
+        "3,5": "steel_ingot",
+        "3,3": "ironwood_plank",
+        "4,2": "ironwood_plank",
+        "5,1": "ironwood_plank"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Razor-edged steel axe. Ancient trees fall before it."
+      }
+    },
+    {
+      "recipeId": "smithing_steel_battleaxe",
+      "placementMap": {
+        "4,2": "ironwood_plank",
+        "3,3": "ironwood_plank",
+        "2,3": "steel_ingot",
+        "1,4": "steel_ingot",
+        "2,5": "steel_ingot",
+        "3,4": "steel_ingot",
+        "5,1": "dire_fang",
+        "2,4": "ironwood_plank",
+        "1,3": "steel_ingot",
+        "3,5": "steel_ingot",
+        "1,5": "dire_fang"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Forging a steel battleaxe requires balance - too heavy and it's unwieldy, too light and it lacks impact. This versatile weapon can devastate with two hands or still threaten with one."
+      }
+    },
+    {
+      "recipeId": "smithing_steel_helm",
+      "placementMap": {
+        "3,1": "steel_ingot",
+        "2,1": "steel_ingot",
+        "1,1": "steel_ingot",
+        "1,2": "steel_ingot",
+        "1,3": "steel_ingot",
+        "2,3": "steel_ingot",
+        "1,4": "steel_ingot",
+        "1,5": "steel_ingot",
+        "2,5": "steel_ingot",
+        "3,5": "steel_ingot",
+        "4,1": "wolf_pelt",
+        "4,5": "wolf_pelt",
+        "3,3": "wolf_pelt"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Steel helm with full face protection. Your head stays attached, which is nice."
+      }
+    },
+    {
+      "recipeId": "smithing_steel_leggings",
+      "placementMap": {
+        "5,4": "wolf_pelt",
+        "5,2": "wolf_pelt",
+        "4,2": "steel_ingot",
+        "3,2": "steel_ingot",
+        "2,2": "steel_ingot",
+        "2,4": "steel_ingot",
+        "3,4": "steel_ingot",
+        "4,4": "steel_ingot",
+        "1,2": "wolf_pelt",
+        "1,4": "wolf_pelt",
+        "2,3": "steel_ingot",
+        "1,3": "wolf_pelt"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor."
+      }
+    },
+    {
+      "recipeId": "smithing_steel_lightning_bracelet",
+      "placementMap": {
+        "4,3": "steel_ingot",
+        "3,4": "lightning_shard",
+        "4,4": "lightning_shard",
+        "4,2": "steel_ingot",
+        "4,6": "steel_ingot",
+        "4,1": "spectral_thread",
+        "4,7": "spectral_thread",
+        "4,5": "steel_ingot",
+        "5,4": "lightning_shard"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Steel bracelet with lightning shard. Crackles with stored static."
+      }
+    },
+    {
+      "recipeId": "smithing_steel_longsword",
+      "placementMap": {
+        "4,2": "steel_ingot",
+        "3,3": "steel_ingot",
+        "2,4": "steel_ingot",
+        "1,5": "steel_ingot",
+        "5,1": "maple_plank",
+        "4,1": "dire_fang",
+        "5,2": "dire_fang"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Balanced steel longsword. The blade flows like water, strikes like thunder."
+      }
+    },
+    {
+      "recipeId": "smithing_steel_pickaxe",
+      "placementMap": {
+        "5,1": "ironwood_plank",
+        "4,2": "ironwood_plank",
+        "3,3": "ironwood_plank",
+        "1,2": "ironwood_plank",
+        "1,3": "ironwood_plank",
+        "1,4": "ironwood_plank",
+        "2,5": "ironwood_plank",
+        "3,5": "ironwood_plank",
+        "4,5": "ironwood_plank",
+        "2,4": "ironwood_plank"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Steel pickaxe with perfect balance. Makes hard rock feel like clay."
+      }
+    },
+    {
+      "recipeId": "smithing_steel_sickle",
+      "placementMap": {
+        "5,3": "birch_plank",
+        "4,3": "birch_plank",
+        "3,2": "steel_ingot",
+        "2,2": "steel_ingot",
+        "1,3": "steel_ingot",
+        "1,4": "steel_ingot",
+        "2,5": "steel_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Curved steel blade perfect for harvesting delicate plants. Clean cuts preserve quality and maximize yield."
+      }
+    }
+  ]
+}
