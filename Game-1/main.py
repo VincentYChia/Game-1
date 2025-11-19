@@ -1077,13 +1077,24 @@ class QuestObjective:
 
 @dataclass
 class QuestRewards:
-    """Quest rewards"""
+    """Comprehensive quest rewards - supports multiple reward types for future expansion"""
+    # Core rewards
     experience: int = 0
+    gold: int = 0
+
+    # Restoration rewards
     health_restore: int = 0
     mana_restore: int = 0
+
+    # Progression rewards
     skills: List[str] = field(default_factory=list)
     items: List[Dict[str, Any]] = field(default_factory=list)  # [{"item_id": str, "quantity": int}]
     title: str = ""  # Optional title reward
+    stat_points: int = 0  # Free stat points to allocate
+
+    # Future expansion - status effects, buffs, etc.
+    status_effects: List[Dict[str, Any]] = field(default_factory=list)  # [{"effect_id": str, "duration": int}]
+    buffs: List[Dict[str, Any]] = field(default_factory=list)  # [{"stat": str, "amount": int, "duration": int}]
 
 @dataclass
 class QuestDefinition:
@@ -1180,38 +1191,60 @@ class Quest:
         messages = []
         rewards = self.quest_def.rewards
 
+        print(f"[REWARD DEBUG] Granting rewards for quest: {self.quest_def.quest_id}")
+        print(f"[REWARD DEBUG] Character before: HP={character.health}/{character.max_health}, XP={character.leveling.current_xp}, Level={character.leveling.level}")
+
         # Experience
         if rewards.experience > 0:
+            old_xp = character.leveling.current_xp
+            old_level = character.leveling.level
             leveled_up = character.leveling.add_exp(rewards.experience)
+            new_xp = character.leveling.current_xp
+            print(f"[REWARD DEBUG] XP: {old_xp} + {rewards.experience} = {new_xp}")
             messages.append(f"+{rewards.experience} XP")
             if leveled_up:
                 messages.append(f"Level up! Now level {character.leveling.level}")
+                print(f"[REWARD DEBUG] Level up: {old_level} -> {character.leveling.level}")
 
         # Health restore
         if rewards.health_restore > 0:
+            old_health = character.health
             character.health = min(character.max_health, character.health + rewards.health_restore)
+            print(f"[REWARD DEBUG] Health: {old_health} + {rewards.health_restore} = {character.health}")
             messages.append(f"+{rewards.health_restore} HP")
 
         # Mana restore
         if rewards.mana_restore > 0:
+            old_mana = character.mana
             character.mana = min(character.max_mana, character.mana + rewards.mana_restore)
+            print(f"[REWARD DEBUG] Mana: {old_mana} + {rewards.mana_restore} = {character.mana}")
             messages.append(f"+{rewards.mana_restore} Mana")
 
         # Skills
+        print(f"[REWARD DEBUG] Processing {len(rewards.skills)} skills: {rewards.skills}")
         for skill_id in rewards.skills:
-            if character.skills.learn_skill(skill_id, character=character, skip_checks=True):
+            print(f"[REWARD DEBUG] Attempting to learn skill: {skill_id}")
+            learned = character.skills.learn_skill(skill_id, character=character, skip_checks=True)
+            print(f"[REWARD DEBUG] Skill {skill_id} learn result: {learned}")
+            if learned:
                 skill_db = SkillDatabase.get_instance()
                 skill_name = skill_db.skills[skill_id].name if skill_id in skill_db.skills else skill_id
                 messages.append(f"Learned skill: {skill_name}")
+            else:
+                print(f"[REWARD DEBUG] Failed to learn skill {skill_id} - may already be known")
 
         # Items
         mat_db = MaterialDatabase.get_instance()
+        print(f"[REWARD DEBUG] Processing {len(rewards.items)} item rewards")
         for item_reward in rewards.items:
             item_id = item_reward["item_id"]
             quantity = item_reward["quantity"]
+            print(f"[REWARD DEBUG] Adding item: {item_id} x{quantity}")
 
             # Try to add to inventory
-            if character.inventory.add_item(item_id, quantity):
+            added = character.inventory.add_item(item_id, quantity)
+            print(f"[REWARD DEBUG] Item add result: {added}")
+            if added:
                 item_def = mat_db.get_material(item_id)
                 item_name = item_def.name if item_def else item_id
                 messages.append(f"+{quantity}x {item_name}")
@@ -1220,14 +1253,71 @@ class Quest:
                 item_name = item_def.name if item_def else item_id
                 messages.append(f"Inventory full! Lost {quantity}x {item_name}")
 
+        # Gold
+        if rewards.gold > 0:
+            # Check if character has a gold/currency attribute
+            if hasattr(character, 'gold'):
+                old_gold = character.gold
+                character.gold += rewards.gold
+                print(f"[REWARD DEBUG] Gold: {old_gold} + {rewards.gold} = {character.gold}")
+                messages.append(f"+{rewards.gold} Gold")
+            else:
+                print(f"[REWARD DEBUG] Character has no gold attribute - skipping gold reward")
+
+        # Stat Points
+        if rewards.stat_points > 0:
+            # Check if character has stat points system
+            if hasattr(character, 'stat_points'):
+                old_points = character.stat_points
+                character.stat_points += rewards.stat_points
+                print(f"[REWARD DEBUG] Stat Points: {old_points} + {rewards.stat_points} = {character.stat_points}")
+                messages.append(f"+{rewards.stat_points} Stat Points")
+            elif hasattr(character, 'unallocated_points'):
+                old_points = character.unallocated_points
+                character.unallocated_points += rewards.stat_points
+                print(f"[REWARD DEBUG] Unallocated Points: {old_points} + {rewards.stat_points} = {character.unallocated_points}")
+                messages.append(f"+{rewards.stat_points} Stat Points")
+            else:
+                print(f"[REWARD DEBUG] Character has no stat points attribute - skipping stat point reward")
+
         # Title
         if rewards.title:
+            print(f"[REWARD DEBUG] Granting title: {rewards.title}")
             title_db = TitleDatabase.get_instance()
             if rewards.title in title_db.titles:
                 title_def = title_db.titles[rewards.title]
-                if character.titles.award_title(title_def):
+                awarded = character.titles.award_title(title_def)
+                print(f"[REWARD DEBUG] Title award result: {awarded}")
+                if awarded:
                     messages.append(f"Earned title: {title_def.name}")
 
+        # Status Effects (future expansion)
+        if rewards.status_effects:
+            print(f"[REWARD DEBUG] Processing {len(rewards.status_effects)} status effects")
+            for effect in rewards.status_effects:
+                effect_id = effect.get("effect_id", "")
+                duration = effect.get("duration", 0)
+                print(f"[REWARD DEBUG] Status effect: {effect_id} for {duration}s - NOT YET IMPLEMENTED")
+                # TODO: Implement status effect system
+                # if hasattr(character, 'status_effects'):
+                #     character.status_effects.add(effect_id, duration)
+                #     messages.append(f"Gained effect: {effect_id}")
+
+        # Buffs (future expansion)
+        if rewards.buffs:
+            print(f"[REWARD DEBUG] Processing {len(rewards.buffs)} buffs")
+            for buff in rewards.buffs:
+                stat = buff.get("stat", "")
+                amount = buff.get("amount", 0)
+                duration = buff.get("duration", 0)
+                print(f"[REWARD DEBUG] Buff: +{amount} {stat} for {duration}s - NOT YET IMPLEMENTED")
+                # TODO: Implement buff system
+                # if hasattr(character, 'buffs'):
+                #     character.buffs.add(stat, amount, duration)
+                #     messages.append(f"Buff: +{amount} {stat}")
+
+        print(f"[REWARD DEBUG] Character after: HP={character.health}/{character.max_health}, XP={character.leveling.current_xp}, Level={character.leveling.level}")
+        print(f"[REWARD DEBUG] Generated {len(messages)} reward messages")
         return messages
 
 class QuestManager:
@@ -1417,11 +1507,15 @@ class NPCDatabase:
                             rew_data = quest_data["rewards"]
                             rewards = QuestRewards(
                                 experience=rew_data.get("experience", 0),
+                                gold=rew_data.get("gold", 0),
                                 health_restore=rew_data.get("health_restore", 0),
                                 mana_restore=rew_data.get("mana_restore", 0),
                                 skills=rew_data.get("skills", []),
                                 items=rew_data.get("items", []),
-                                title=rew_data.get("title", "")
+                                title=rew_data.get("title", ""),
+                                stat_points=rew_data.get("statPoints", rew_data.get("stat_points", 0)),
+                                status_effects=rew_data.get("status_effects", []),
+                                buffs=rew_data.get("buffs", [])
                             )
 
                             # Support both "quest_id" and "questId", "title" and "name"
@@ -6029,18 +6123,22 @@ class Renderer:
                         required_qty = item_req["quantity"]
                         current_qty = character.inventory.get_item_count(item_id)
 
+                        # Calculate progress since quest acceptance (using baseline)
+                        baseline_qty = quest.baseline_inventory.get(item_id, 0)
+                        gathered_since_start = current_qty - baseline_qty
+
                         # Get item name
                         mat_db = MaterialDatabase.get_instance()
                         item_def = mat_db.get_material(item_id)
                         item_name = item_def.name if item_def else item_id
 
-                        # Progress indicator
-                        is_complete = current_qty >= required_qty
+                        # Progress indicator (compare gathered since start vs required)
+                        is_complete = gathered_since_start >= required_qty
                         status_color = (100, 255, 100) if is_complete else (255, 255, 100)
                         check_mark = "✓" if is_complete else "○"
 
                         if y >= content_rect.y - 18 and y < content_rect.bottom:
-                            obj_text = f"  {check_mark} Gather {item_name}: {current_qty}/{required_qty}"
+                            obj_text = f"  {check_mark} Gather {item_name}: {gathered_since_start}/{required_qty}"
                             surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + 30, y))
                         y += 18
 
@@ -6048,7 +6146,10 @@ class Renderer:
                     required_kills = quest.quest_def.objectives.enemies_killed
                     current_kills = character.activities.get_count('combat')
 
-                    is_complete = current_kills >= required_kills
+                    # Calculate kills since quest acceptance (using baseline)
+                    kills_since_start = current_kills - quest.baseline_combat_kills
+
+                    is_complete = kills_since_start >= required_kills
                     status_color = (100, 255, 100) if is_complete else (255, 255, 100)
                     check_mark = "✓" if is_complete else "○"
 
@@ -6057,7 +6158,7 @@ class Renderer:
                     y += 18
 
                     if y >= content_rect.y - 18 and y < content_rect.bottom:
-                        obj_text = f"  {check_mark} Defeat enemies: {current_kills}/{required_kills}"
+                        obj_text = f"  {check_mark} Defeat enemies: {kills_since_start}/{required_kills}"
                         surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + 30, y))
                     y += 18
 
@@ -6076,6 +6177,10 @@ class Renderer:
                 rewards_parts = []
                 if quest.quest_def.rewards.experience > 0:
                     rewards_parts.append(f"{quest.quest_def.rewards.experience} XP")
+                if quest.quest_def.rewards.gold > 0:
+                    rewards_parts.append(f"{quest.quest_def.rewards.gold} Gold")
+                if quest.quest_def.rewards.stat_points > 0:
+                    rewards_parts.append(f"{quest.quest_def.rewards.stat_points} Stat Points")
                 if quest.quest_def.rewards.skills:
                     rewards_parts.append(f"Skills: {', '.join(quest.quest_def.rewards.skills)}")
                 if quest.quest_def.rewards.items:
