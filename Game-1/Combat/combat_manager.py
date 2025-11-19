@@ -490,8 +490,8 @@ class CombatManager:
 
         # Armor bonus from equipment
         armor_bonus = 0.0
-        if hasattr(self.character, 'equipment_manager'):
-            armor_bonus = self.character.equipment_manager.get_total_defense()
+        if hasattr(self.character, 'equipment'):
+            armor_bonus = self.character.equipment.get_total_defense()
         print(f"   Armor bonus: {armor_bonus}")
 
         armor_multiplier = 1.0 - (armor_bonus * 0.01)
