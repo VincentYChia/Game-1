@@ -1,0 +1,652 @@
+Take a look around the project. You will be working on the crafting subdisciplines. Here is a general guide, but your priority should be familiarization with the GitHub for proper integration. Don't code anything yet, just look around
+
+Crafting Subdisciplines Implementation Guide
+Purpose: Streamline development of the 5 crafting systems (Smithing ✅, Alchemy, Refining, Engineering, Enchanting)
+
+0. TASK DEFINITION - WHAT WE'RE BUILDING
+Project Goal
+Create 5 standalone Pygame testing applications (one per crafting discipline) that allow isolated testing of each crafting system before integration into the main game.
+
+What Each Tester Must Do
+Primary Functions:
+Load Recipe Data - Read recipes and placements from JSON files
+Display UI - Show materials, crafting area, and output information
+Basic Crafting Mode - Select recipe → materials auto-fill → instant craft
+Manual Placement Mode - Manually place materials → detect recipe match
+Minigame System - Interactive crafting challenge for bonus stats
+Track Inventory - Material consumption and crafted item accumulation
+Verify Correctness - Display crafted items so we can confirm systems work
+Why We Need Testers:
+Isolated Testing: Test each crafting system independently without main game complexity
+Rapid Iteration: Quickly test recipe balance and minigame mechanics
+JSON Validation: Verify recipe and placement data is correct
+Visual Debugging: See exactly what's happening during crafting
+Pre-Integration: Catch bugs before adding to main game
+Success Criteria for Each Tester:
+✅ Data Loading
+
+Loads all recipes from JSON without errors
+Loads all placements from JSON without errors
+Handles missing materials gracefully
+Shows count of loaded recipes in console
+✅ Basic Crafting Mode
+
+Recipe list displays all available recipes
+Shows material requirements (red if insufficient, green if sufficient)
+Auto-fills placement when recipe selected
+Instant craft button works and deducts materials
+Crafted item appears in inventory display
+✅ Manual Placement Mode
+
+Can select and place materials in crafting area
+Spacebar reselects last material
+Can remove materials by clicking placed cells
+Recipe detection works when pattern matches
+Start minigame button appears when recipe detected
+✅ Minigame
+
+Discipline-specific mechanics implemented
+Configurable parameters (duration, difficulty, etc.)
+Score calculation based on performance
+Success adds item with bonuses
+Failure handles gracefully (material loss message)
+✅ Inventory & Display
+
+Materials inventory shows current amounts
+Crafted items panel shows all crafted items with quantities
+Materials properly deducted after crafting
+Output quantities match recipe specifications
+✅ User Experience
+
+Recipe/material lists are scrollable if needed
+Visual feedback for selection and placement
+Clear mode switching (Basic/Manual)
+Result screen shows craft success/failure
+No crashes on normal usage
+The 5 Testers to Build:
+| Discipline | Status | Placement System | Minigame Type | |------------|--------|------------------|---------------| | Smithing | ✅ DONE | Grid (3x3-9x9) | Temperature + Hammer Timing | | Alchemy | 🔨 TODO | Sequential Slots (3-9) | Reaction Stage Timing | | Refining | 🔨 TODO | Hub-and-Spoke | Cylinder Alignment | | Engineering | 🔨 TODO | Typed Slots (3-7) | Assembly/Alignment | | Enchanting | 🔨 TODO | Pattern Grid | Geometric Pattern Matching |
+
+Development Approach:
+Use Smithing as template - Copy structure, adapt to discipline
+Focus on one at a time - Complete each before starting next
+Test with 3-5 recipes first - Verify core functionality before loading all
+Consult reference docs - Use Game Mechanics V5 and templates for specs
+Ask design questions - Developer available for discipline-specific decisions
+Not Included in Testers:
+❌ Full game integration
+❌ Save/load system
+❌ Multiplayer functionality
+❌ Sound effects
+❌ Advanced animations
+❌ Equipment stats tracking
+❌ Player progression systems
+End Goal:
+When all 5 testers are complete, we'll have:
+
+Validated recipe and placement data for all disciplines
+Working minigame implementations for each system
+Confidence that crafting mechanics work correctly
+Clear understanding of what needs integration into main game
+Debug tools for future balance adjustments
+1. PROJECT STRUCTURE & FILE LOCATIONS
+JSON Data Files
+All crafting data is stored in JSON files at these locations:
+
+Game-1/
+├── recipes.JSON/
+│   ├── recipes-smithing-3.json          ✅ COMPLETED
+│   ├── recipes-alchemy-1.json           🔨 TODO
+│   ├── recipes-refining-1.json          🔨 TODO
+│   ├── recipes-engineering-1.json       🔨 TODO
+│   └── recipes-adornments-1.json        🔨 TODO (Enchanting)
+│
+├── placements.JSON/
+│   ├── placements-smithing-1.JSON       ✅ COMPLETED
+│   ├── placements-alchemy-1.JSON        🔨 TODO
+│   ├── placements-refining-1.JSON       🔨 TODO
+│   ├── placements-engineering-1.JSON    🔨 TODO
+│   └── placements-adornments-1.JSON     🔨 TODO
+│
+└── Definitions.JSON/
+    ├── items-materials-1.JSON           📖 Material reference
+    └── templates-crafting-1.JSON        📖 System specifications
+Key Reference Documents
+Game Mechanics V5: Development-logs/Most-Recent-Game-Mechanics-v5 - Complete system design
+Templates Doc: templates-crafting-1.JSON - Detailed specs for each discipline
+2. COMMON ARCHITECTURE (All Disciplines)
+Core Components (Same for All)
+A. Data Loading
+def load_recipes(self):
+    """Load recipes from JSON"""
+    # Try multiple paths for flexibility
+    possible_paths = [
+        "recipes-{discipline}-X.json",
+        "recipes.JSON/recipes-{discipline}-X.json",
+        "../recipes.JSON/recipes-{discipline}-X.json",
+    ]
+    
+    recipes = {}
+    for path in possible_paths:
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+                recipe_list = data.get('recipes', [])
+                for recipe in recipe_list:
+                    recipes[recipe['recipeId']] = recipe
+                return recipes
+        except FileNotFoundError:
+            continue
+    
+    # Fallback to hardcoded test data if no files found
+    return {...}
+B. Recipe Structure (Universal)
+{
+  "recipeId": "discipline_item_name",
+  "outputId": "item_name",
+  "outputQty": 1,
+  "stationTier": 1,
+  "stationType": "discipline",
+  "gridSize": "3x3",  // or equivalent for that discipline
+  "inputs": [
+    {"materialId": "material_name", "quantity": 2}
+  ],
+  "metadata": {
+    "narrative": "Description text"
+  },
+  "miniGame": {
+    "type": "discipline",
+    "difficulty": "easy",
+    "baseTime": 30
+  }
+}
+C. Inventory System (Universal)
+# Material inventory (inputs)
+self.inventory = {
+    "material_id": quantity,
+    # ... populated with 50 of common materials for testing
+}
+
+# Crafted items inventory (outputs)
+self.crafted_items = {
+    "output_id": quantity
+}
+
+def can_craft_recipe(self, recipe_id):
+    """Check if player has materials"""
+    recipe = self.recipes[recipe_id]
+    for inp in recipe['inputs']:
+        if self.inventory.get(inp['materialId'], 0) < inp['quantity']:
+            return False
+    return True
+D. Core Game Loop
+def run(self):
+    while self.running:
+        self.handle_events()      # Input handling
+        
+        if self.minigame_active:
+            self.update_minigame()  # Minigame logic
+        
+        self.draw()               # Render everything
+        self.clock.tick(FPS)
+3. UI STRUCTURE (Common Layout)
+Standard Layout Template
+┌─────────────────────────────────────────────────────────────┐
+│  TITLE: [Discipline] Station - Tester          Mode Buttons │
+├──────────┬───────────────────────────┬───────────────────────┤
+│          │                           │                       │
+│ RECIPE   │    CRAFTING AREA         │   OUTPUT PANEL        │
+│ LIST /   │    (Discipline-specific)  │   - Recipe info       │
+│ MATERIAL │                           │   - Materials needed  │
+│ PALETTE  │    • Grid (Smithing)      │   - Craft buttons     │
+│          │    • Slots (Alchemy)      │                       │
+│ Scrollable│    • Hub (Refining)      │                       │
+│          │    • Canvas (Engineering) │                       │
+│          │    • Pattern (Enchanting) │                       │
+├──────────┴───────────────────────────┴───────────────────────┤
+│  CRAFTED ITEMS INVENTORY (Bottom Panel)                      │
+│  Shows all items crafted with quantities                     │
+└─────────────────────────────────────────────────────────────┘
+Two Modes (Universal)
+Basic Mode: Select recipe → auto-fill → instant craft or minigame
+Manual Mode: Place materials → detect recipe → craft
+4. DISCIPLINE-SPECIFIC SYSTEMS
+A. SMITHING ✅ (Reference Implementation)
+Placement System: Grid-based (3x3 to 9x9)
+
+Coordinates: "row,col" format (1-indexed)
+Recipe centering: Smaller recipes auto-center in larger grids
+Example: "3,2": "iron_ingot"
+Minigame:
+
+Temperature bar (fan with spacebar)
+Hammer timing slider (click to hit)
+30 seconds, 5 required hits
+B. ALCHEMY 🔨
+From Game Mechanics V5 & Templates:
+
+Placement System: Sequential slots (3-9 slots)
+
+"placementMap": {
+  "ingredients": [
+    {"slot": 1, "materialId": "healing_herb"},
+    {"slot": 2, "materialId": "water_crystal"},
+    {"slot": 3, "materialId": "slime_gel"}
+  ]
+}
+Key Points:
+
+Order matters! Slot 1 → 2 → 3 is different from 3 → 2 → 1
+No volatility field (removed from design)
+3-9 slots depending on recipe complexity
+Data structure: Array with slot numbers
+Minigame (from Mechanics Doc):
+
+Reaction Stages: Watch bubbling cauldron progress through 5 stages
+Stage 1: Initiation (early, 5% progress)
+Stage 2: Building (false peaks, 15-20%)
+Stage 3: SWEET SPOT (optimal, 30-35%) ⭐
+Stage 4: Degrading (late, 20-25%)
+Stage 5: Critical (explosion risk, 5-10%)
+Player Action: Click "CHAIN" (add next ingredient) or "STABILIZE" (end)
+Timing Challenge: Must click during sweet spot for best results
+Ingredient Behavior:
+Stable = slow, forgiving
+Volatile = fast, narrow window
+Must complete all ingredients in 30-60 seconds
+UI Considerations:
+
+Display current slot being added
+Visual feedback for reaction stages (color, size, animation)
+Progress bar showing cumulative quality
+Ingredient queue showing what's next
+C. REFINING 🔨
+From Templates Doc:
+
+Placement System: Hub-and-spoke (core + surrounding)
+
+"placementMap": {
+  "coreInputs": [
+    {"materialId": "iron_ore", "quantity": 2}
+  ],
+  "surroundingInputs": [
+    {"materialId": "fire_crystal", "quantity": 1, "position": "N"},
+    {"materialId": "limestone", "quantity": 1, "position": "S"}
+  ]
+}
+Key Points:
+
+Core: 1-4 materials in center (fuel/primary material)
+Surrounding: 4-8 materials around core (catalysts/modifiers)
+Multi-core recipes must have equal quantities
+Position codes: N, NE, E, SE, S, SW, W, NW
+Minigame (from Mechanics Doc):
+
+Cylinder Alignment: 2-15 rotating cylinders
+Player Action: Click when alignment indicators match
+All-or-Nothing: Success = full output, Failure = 50% material loss
+Variables:
+Time allowed: 10-60 seconds
+Timing window: 0.1-1.0 seconds per cylinder
+Allowed failures: 0-3 before total failure
+Rotation speed, direction changes, visual obscuration
+UI Considerations:
+
+Hub in center (larger cell)
+8 positions around hub in circular layout
+Show rotation/alignment animations for minigame
+Multiple difficulty tiers with increasing cylinders
+D. ENGINEERING 🔨
+From Templates Doc:
+
+Placement System: Slot-type canvas (3-7 slots)
+
+"placementMap": {
+  "slots": [
+    {"type": "FUNCTION", "materialId": "golem_core"},
+    {"type": "POWER", "materialId": "fire_crystal"},
+    {"type": "CHASSIS", "materialId": "iron_ingot"},
+    {"type": "UTILITY", "materialId": "spectral_thread"}
+  ]
+}
+Slot Types:
+
+FUNCTION: Determines device type (1 required)
+POWER: Energy source (1-2 slots)
+CHASSIS: Structural frame (1-3 slots)
+UTILITY: Special features (0-3 slots, optional)
+Key Points:
+
+3-7 total slots depending on complexity
+FUNCTION slot is mandatory and defines output type
+Use simple material IDs (not categories)
+Each UTILITY adds complexity but grants features
+Minigame:
+
+Similar to Refining (cylinder alignment)
+Or unique mechanical assembly challenge
+Complexity scales with number of slots
+UI Considerations:
+
+Labeled slots showing type
+Visual distinction between slot types (colors)
+Clear indication of which slots are required vs optional
+E. ENCHANTING/ADORNMENTS 🔨
+From Templates Doc:
+
+Placement System: Pattern-based grid (centered coordinate system)
+
+"placementMap": {
+  "gridType": "square_8x8",  // or hexagonal
+  "vertices": {
+    "0,2": {"materialId": "fire_crystal", "isKey": true},
+    "1,1": {"materialId": "iron_ingot", "isKey": false},
+    "-1,1": {"materialId": "iron_ingot", "isKey": false}
+  },
+  "shapes": [
+    {
+      "type": "triangle",
+      "vertices": [[0,2], [1,1], [-1,1]],
+      "rotation": 0
+    }
+  ]
+}
+Key Points:
+
+Centered coordinate system: (0,0) is center
+Vertices: Material placement points
+Shapes: Connect vertices to form patterns (triangles, squares, pentagons, etc.)
+Key Vertices: Special materials that define enchantment type
+Pattern complexity = bonus magnitude
+Pattern precision = bonus strength
+Minigame:
+
+Pattern matching challenge
+Place materials to form geometric shapes
+Quality based on precision and symmetry
+Could involve rotation/alignment
+UI Considerations:
+
+Centered grid with (0,0) at middle
+Shape drawing between vertices
+Visual feedback for pattern quality
+Distinction between key and normal vertices
+5. MINIGAME CONFIGURATION
+Make Everything Configurable
+# Example from Smithing
+MINIGAME_CONFIG = {
+    "duration": 30,              # Total time in seconds
+    "required_hits": 5,          # Number of successful actions
+    "temperature": {             # Discipline-specific mechanics
+        "idealMin": 60,
+        "idealMax": 80,
+        "startTemp": 50,
+        "fanIncrement": 3,
+        "naturalDecay": 0.5,
+        "updateInterval": 100    # ms
+    },
+    "hammer": {
+        "sliderSpeed": 2,        # Movement speed
+        "targetWidth": 80,       # Good zone size
+        "perfectWidth": 30,      # Perfect zone size
+        "barWidth": 400
+    }
+}
+Apply this pattern to each discipline with relevant mechanics
+
+6. CENTERING LOGIC (For Smaller Recipes)
+Universal Centering Function
+def center_placement_map(self, placement_map, recipe_size, display_size):
+    """Center smaller recipes in larger grids/areas"""
+    offset = (display_size - recipe_size) // 2
+    centered = {}
+    
+    # Adjust based on coordinate system:
+    # - Grid systems (Smithing): Add offset to row/col
+    # - Sequential systems (Alchemy): No centering needed
+    # - Hub systems (Refining): Center the hub
+    # - Centered systems (Enchanting): Already centered
+    
+    for key, value in placement_map.items():
+        # Parse coordinates based on discipline format
+        # Apply offset
+        # Store in centered map
+        pass
+    
+    return centered
+When to use:
+
+T1 recipe (3x3) in T2+ station (5x5+)
+Visual feedback: Dim cells outside recipe area
+Detection must account for offset
+7. DETECTION SYSTEM (Manual Mode)
+Recipe Detection Template
+def detect_recipe(self, current_state):
+    """Match current state against all known recipes"""
+    for recipe_id, recipe in self.recipes.items():
+        placement = self.placements.get(recipe_id, {})
+        
+        # Get recipe size and center it if needed
+        recipe_size = self.get_recipe_size(recipe)
+        centered_placement = self.center_placement_map(placement, recipe_size)
+        
+        # Compare current state to centered placement
+        if self.matches_placement(current_state, centered_placement):
+            return recipe_id
+    
+    return None
+
+def matches_placement(self, current, expected):
+    """Compare two placement states (discipline-specific)"""
+    # For grids: Compare all coordinates
+    # For sequences: Compare order and materials
+    # For hubs: Compare core and surrounding
+    # For slots: Compare slot assignments
+    # For patterns: Compare vertices and connections
+    pass
+8. CRAFTING RESULT HANDLING
+Universal Crafting Flow
+def complete_craft(self, recipe_id, is_minigame=False, score=None):
+    """Handle crafting completion"""
+    recipe = self.recipes[recipe_id]
+    
+    # 1. Deduct input materials
+    for inp in recipe['inputs']:
+        self.inventory[inp['materialId']] -= inp['quantity']
+    
+    # 2. Add output to crafted items
+    output_id = recipe['outputId']
+    output_qty = recipe['outputQty']
+    self.crafted_items[output_id] = self.crafted_items.get(output_id, 0) + output_qty
+    
+    # 3. Calculate bonuses if minigame
+    bonus = "Base stats only"
+    if is_minigame and score:
+        if score >= 140:
+            bonus = "+15% bonus stats"
+        elif score >= 100:
+            bonus = "+10% bonus stats"
+        elif score >= 70:
+            bonus = "+5% bonus stats"
+    
+    # 4. Log for verification
+    print(f"Crafted {output_qty}x {output_id} - {bonus}")
+    
+    # 5. Show result screen
+    self.show_result(recipe, bonus, score)
+9. MATERIALS DATABASE
+Load All Materials Needed
+def load_materials(self):
+    """Load from items-materials-1.JSON or hardcode for testing"""
+    # Try loading from JSON first
+    try:
+        with open('items-materials-1.JSON', 'r') as f:
+            data = json.load(f)
+            materials = {}
+            for mat in data.get('materials', []):
+                materials[mat['materialId']] = {
+                    'name': mat['name'],
+                    'tier': mat['tier'],
+                    'category': mat.get('category', 'unknown')
+                }
+            return materials
+    except:
+        # Fallback: Hardcode materials used in your recipes
+        return {
+            "material_id": {"name": "Display Name", "tier": 1},
+            # Add all materials from your recipes
+        }
+Material Colors (Visual Feedback)
+MATERIAL_COLORS = {
+    "iron_ingot": (176, 176, 176),
+    "fire_crystal": (255, 69, 0),
+    "healing_herb": (50, 205, 50),
+    # Add colors for visual distinction in UI
+}
+10. TESTING INVENTORY SETUP
+Generous Starting Inventory
+# Give 50 of each material needed for recipes
+self.inventory = {
+    "iron_ingot": 50,
+    "oak_plank": 50,
+    # ... all materials from your recipes
+}
+Why 50? Allows testing multiple recipes without running out
+
+11. PYGAME CONSTANTS & SETUP
+Standard Setup (Adjust as needed)
+import pygame
+import json
+import sys
+
+pygame.init()
+
+# Screen dimensions (adjust for discipline needs)
+SCREEN_WIDTH = 1400
+SCREEN_HEIGHT = 920
+FPS = 60
+
+# Colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GRAY = (50, 50, 50)
+LIGHT_GRAY = (100, 100, 100)
+DARK_GRAY = (30, 30, 30)
+ORANGE = (255, 140, 0)
+GREEN = (0, 200, 0)
+RED = (200, 0, 0)
+YELLOW = (255, 255, 0)
+BLUE = (100, 150, 255)
+
+# Fonts
+self.font = pygame.font.Font(None, 24)
+self.small_font = pygame.font.Font(None, 18)
+self.large_font = pygame.font.Font(None, 36)
+12. KEY DIFFERENCES SUMMARY
+| Discipline | Placement Type | Key Feature | Minigame Focus | |------------|----------------|-------------|----------------| | Smithing | Grid (3x3-9x9) | Diagonal preference | Temp + Timing | | Alchemy | Sequential (3-9 slots) | Order matters | Reaction timing | | Refining | Hub-spoke | Core + surrounding | Cylinder align | | Engineering | Typed slots (3-7) | FUNCTION determines output | Assembly/align | | Enchanting | Pattern grid | Geometric shapes | Pattern precision |
+
+13. DEVELOPMENT CHECKLIST
+For each new discipline:
+
+Phase 1: Data Loading
+
+Create recipe JSON loading with fallback paths
+
+Create placement JSON loading
+
+Load materials database
+
+Test that all materials in recipes are in database
+Phase 2: Basic Crafting
+
+Implement recipe list UI (scrollable)
+
+Auto-fill placement when recipe selected
+
+Implement instant craft button
+
+Verify materials deducted correctly
+
+Verify output added to crafted items
+Phase 3: Manual Placement
+
+Implement placement UI (discipline-specific)
+
+Handle material selection
+
+Handle placement interaction (click/drag)
+
+Implement recipe detection
+
+Test with 3-5 recipes
+Phase 4: Minigame
+
+Design minigame mechanics (configurable)
+
+Implement game loop and timer
+
+Implement player interactions
+
+Implement scoring system
+
+Test difficulty scaling
+Phase 5: Polish
+
+Add crafted items display
+
+Add result screen with bonuses
+
+Add visual feedback (colors, animations)
+
+Add scroll indicators for long lists
+
+Add keyboard shortcuts (Space, 1, 2, ESC)
+14. COMMON PITFALLS & SOLUTIONS
+Problem: Recipe name missing in JSON
+Solution:
+
+def get_recipe_name(self, recipe):
+    if 'name' in recipe:
+        return recipe['name']
+    # Fallback: prettify recipeId
+    recipe_id = recipe.get('recipeId', 'Unknown')
+    parts = recipe_id.replace('discipline_', '').split('_')
+    return ' '.join(word.capitalize() for word in parts)
+Problem: Missing materials crash the game
+Solution:
+
+mat_info = self.materials_db.get(mat_id, {
+    "name": mat_id,  # Use ID as name
+    "tier": 1        # Default tier
+})
+Problem: Placements don't match grid size
+Solution: Always center smaller recipes in larger grids with offset calculation
+
+Problem: Manual detection not working
+Solution: Ensure centering logic is applied to both display AND detection
+
+15. CODE REUSE TEMPLATE
+Start with Smithing, Replace These:
+Class name: SmithingTester → AlchemyTester
+File paths: recipes-smithing-3.json → recipes-alchemy-1.json
+Placement structure: Grid coordinates → Slot numbers / Hub positions / etc.
+Minigame mechanics: Temperature+Hammer → Reaction timing / Cylinder align / etc.
+UI layout: Grid display → Slots display / Hub display / etc.
+Keep These Unchanged:
+Data loading pattern
+Inventory system
+Recipe detection flow
+Crafting result handling
+Mode switching (Basic/Manual)
+Crafted items display
+16. QUICK REFERENCE: Where to Look
+| Need Info About | Look Here | |-----------------|-----------| | Recipe structure | recipes-smithing-3.json (example) | | Placement format | placements-smithing-1.JSON (example) | | System specs | templates-crafting-1.JSON | | Game mechanics | Development-logs/Most-Recent-Game-Mechanics-v5 | | All materials | items-materials-1.JSON | | Working code | crafting_tester.py (Smithing) |
+
+17. FINAL TIPS
+Start simple: Get basic crafting working before minigame
+Test incrementally: Load 3-5 recipes first, then expand
+Hardcode fallbacks: If JSON loading fails, have test data
+Print debugging: Log everything during development
+Copy smartly: Reuse Smithing structure but adapt to discipline
+Make it visual: Good visual feedback = easier debugging
+Configurable always: Put numbers in config dicts, not hardcoded
+This guide should answer ~80% of questions. For discipline-specific design decisions, consult the developer.

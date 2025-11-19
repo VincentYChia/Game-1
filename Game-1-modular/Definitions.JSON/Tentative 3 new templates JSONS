@@ -1,0 +1,696 @@
+Skill Unlock Tempalte:
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Skill unlock system - defines HOW skills become available to players",
+    "note": "Works alongside skills.json. Skills have requirements, this defines unlock methods."
+  },
+
+  "skillUnlocks": [
+    {
+      "unlockId": "unlock_miners_fury",
+      "skillId": "miners_fury",
+      "unlockMethod": "automatic",
+      
+      "conditions": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": [],
+        "completedQuests": [],
+        "activityMilestones": []
+      },
+
+      "unlockTrigger": {
+        "type": "level_up",
+        "triggerValue": 1,
+        "message": "You've unlocked the skill: Miner's Fury!"
+      },
+
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skillPoints": 0
+      },
+
+      "metadata": {
+        "narrative": "Given freely to all who begin their journey.",
+        "category": "starter_skill"
+      }
+    },
+
+    {
+      "unlockId": "unlock_smiths_focus",
+      "skillId": "smiths_focus",
+      "unlockMethod": "quest_reward",
+      
+      "conditions": {
+        "characterLevel": 2,
+        "completedQuests": ["quest_tutorial_002"]
+      },
+
+      "unlockTrigger": {
+        "type": "quest_complete",
+        "triggerValue": "quest_tutorial_002",
+        "message": "The Mentor teaches you Smith's Focus!"
+      },
+
+      "cost": {
+        "gold": 0,
+        "materials": []
+      },
+
+      "metadata": {
+        "narrative": "Granted by the Mentor as reward for building your first forge.",
+        "category": "quest_reward"
+      }
+    },
+
+    {
+      "unlockId": "unlock_treasure_sense",
+      "skillId": "treasure_sense",
+      "unlockMethod": "npc_purchase",
+      
+      "conditions": {
+        "characterLevel": 10,
+        "stats": {"LCK": 15},
+        "completedQuests": ["quest_discovery_001"]
+      },
+
+      "unlockTrigger": {
+        "type": "npc_interaction",
+        "triggerValue": "npc_wanderer_001",
+        "message": "The Wanderer offers to teach you Treasure Sense."
+      },
+
+      "cost": {
+        "gold": 5000,
+        "materials": [
+          {"materialId": "crystal_quartz", "quantity": 10},
+          {"materialId": "dragon_scales", "quantity": 3}
+        ]
+      },
+
+      "metadata": {
+        "narrative": "Rare skill taught only by the Wanderer to worthy explorers.",
+        "category": "npc_taught"
+      }
+    },
+
+    {
+      "unlockId": "unlock_alchemists_insight",
+      "skillId": "alchemists_insight",
+      "unlockMethod": "milestone_unlock",
+      
+      "conditions": {
+        "characterLevel": 6,
+        "stats": {"INT": 8},
+        "activityMilestones": [
+          {
+            "type": "craft_count",
+            "discipline": "alchemy",
+            "count": 50
+          }
+        ]
+      },
+
+      "unlockTrigger": {
+        "type": "activity_threshold",
+        "triggerValue": 50,
+        "message": "Through countless experiments, you've developed Alchemist's Insight!"
+      },
+
+      "cost": {
+        "gold": 0,
+        "materials": []
+      },
+
+      "metadata": {
+        "narrative": "Discovered through dedication. Only brewers of many potions gain this.",
+        "category": "milestone_unlock"
+      }
+    },
+
+    {
+      "unlockId": "unlock_titans_excavation",
+      "skillId": "titans_excavation",
+      "unlockMethod": "skill_evolution",
+      
+      "conditions": {
+        "characterLevel": 10,
+        "parentSkill": {
+          "skillId": "miners_fury",
+          "requiredLevel": 10,
+          "activityCount": 1000
+        }
+      },
+
+      "unlockTrigger": {
+        "type": "skill_evolution_ready",
+        "triggerValue": "npc_interaction",
+        "message": "Miner's Fury can evolve! Visit an NPC to unlock its potential."
+      },
+
+      "cost": {
+        "gold": 2000,
+        "materials": [
+          {"materialId": "mithril_ingot", "quantity": 5}
+        ]
+      },
+
+      "metadata": {
+        "narrative": "Skills evolve at level 10 through gameplay moments.",
+        "category": "skill_evolution"
+      }
+    }
+  ],
+
+  "FIELD_DOCUMENTATION": {
+    "unlockId": {
+      "description": "Unique identifier for this unlock definition",
+      "format": "unlock_{skill_name}",
+      "required": true
+    },
+
+    "skillId": {
+      "description": "References skillId from skills.json",
+      "required": true,
+      "note": "This is the skill being unlocked"
+    },
+
+    "unlockMethod": {
+      "description": "How this skill is unlocked",
+      "options": "See UNLOCK_METHODS section below",
+      "required": true
+    },
+
+    "conditions": {
+      "characterLevel": "Minimum level required",
+      "stats": "Object like {STR: 5, LCK: 10}",
+      "titles": "Array of titleIds required",
+      "completedQuests": "Array of questIds required",
+      "activityMilestones": "Array of activity requirements (see MILESTONES)",
+      "parentSkill": "For evolutions: {skillId, requiredLevel, activityCount}"
+    },
+
+    "unlockTrigger": {
+      "type": "When/how the unlock actually happens",
+      "triggerValue": "Context-specific value (questId, npcId, level, etc)",
+      "message": "Notification shown to player when unlocked"
+    },
+
+    "cost": {
+      "gold": "Gold required to unlock",
+      "materials": "Array of {materialId, quantity}",
+      "skillPoints": "Special skill points if system uses them",
+      "note": "Cost is paid AFTER conditions met"
+    }
+  },
+
+  "UNLOCK_METHODS": {
+    "automatic": {
+      "description": "Unlocks automatically when conditions met",
+      "typical_use": "Starter skills, level-based unlocks",
+      "example": "Miner's Fury at level 1"
+    },
+
+    "quest_reward": {
+      "description": "Granted as quest completion reward",
+      "typical_use": "Tutorial and story quests",
+      "example": "Smith's Focus from tutorial"
+    },
+
+    "npc_purchase": {
+      "description": "Buy from NPC once conditions met",
+      "typical_use": "Advanced skills, gold sink",
+      "example": "Treasure Sense from Wanderer"
+    },
+
+    "milestone_unlock": {
+      "description": "Unlock by reaching activity thresholds",
+      "typical_use": "Mastery skills through practice",
+      "example": "Alchemist's Insight after 50 potions"
+    },
+
+    "title_unlock": {
+      "description": "Automatically granted when earning title",
+      "typical_use": "Elite skills for masters",
+      "example": "Chain Harvest from Master Miner title"
+    },
+
+    "skill_evolution": {
+      "description": "Evolve parent skill at level 10",
+      "typical_use": "Upgrading existing skills",
+      "example": "Miner's Fury → Titan's Excavation",
+      "note": "NOT automatic, triggered by NPC/event"
+    },
+
+    "discovery": {
+      "description": "Found through exploration/combinations",
+      "typical_use": "Hidden/secret skills",
+      "example": "Reality Breach from ancient ruins"
+    },
+
+    "class_specific": {
+      "description": "Granted based on class choice",
+      "typical_use": "Class-defining skills",
+      "example": "Combat Rush for warriors"
+    },
+
+    "random_drop": {
+      "description": "Low chance loot from enemies/chests",
+      "typical_use": "Rare bonus skills",
+      "example": "Fortune's Favor scroll"
+    },
+
+    "procedural_generation": {
+      "description": "LLM generates based on player profile",
+      "typical_use": "Endgame personalization",
+      "example": "Custom skills for unique playstyles"
+    }
+  },
+
+  "ACTIVITY_MILESTONES": {
+    "craft_count": {
+      "description": "Number of items crafted",
+      "format": {"type": "craft_count", "discipline": "alchemy", "count": 50}
+    },
+
+    "gather_count": {
+      "description": "Materials gathered",
+      "format": {"type": "gather_count", "count": 500}
+    },
+
+    "kill_count": {
+      "description": "Enemies defeated",
+      "format": {"type": "kill_count", "enemyType": "boss", "count": 10}
+    },
+
+    "mine_count": {
+      "description": "Mining-specific actions",
+      "format": {"type": "mine_count", "count": 1000}
+    },
+
+    "perfect_craft_count": {
+      "description": "Perfect quality crafts",
+      "format": {"type": "perfect_craft_count", "count": 25}
+    },
+
+    "rare_material_discovered": {
+      "description": "Rare+ materials found",
+      "format": {"type": "rare_material_discovered", "materialRarity": "mythic", "count": 5}
+    }
+  },
+
+  "SKILL_EVOLUTION_NOTES": {
+    "when": "Skill reaches level 10 AND activity count met",
+    "trigger": "NPC interaction, special location, or major event",
+    "not_automatic": "Level 10 makes ELIGIBLE, doesn't auto-evolve",
+    "unlimited": "Can continue evolving through rarity tiers",
+    "llm_role": "Determines evolution path based on usage patterns"
+  },
+
+  "USAGE_NOTES": {
+    "flow": "Conditions met → Trigger occurs → Cost paid → Skill unlocked",
+    "tracking": "Game constantly checks conditions, marks skills as 'unlockable'",
+    "notifications": "UI shows unlock messages when skills become available",
+    "multiple_paths": "Same skill can have multiple unlock methods for different players",
+    "integration": "Works with quest rewards, NPC services, and title systems"
+  }
+}
+
+Quest JSON Templates:
+
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Quest system template - defines objectives, rewards, and progression",
+    "note": "Quests are referenced by NPCs. See footer for field documentation."
+  },
+
+  "quests": [
+    {
+      "questId": "quest_tutorial_001",
+      "name": "Gather the Basics",
+      "questType": "tutorial",
+      "tier": 1,
+      
+      "description": {
+        "short": "Collect 20 Oak Logs and 10 Limestone",
+        "long": "The Mentor needs basic materials to teach you crafting fundamentals. Gather wood from oak trees and mine limestone from rocks.",
+        "narrative": "Every craftsman starts with the basics. Show me you can gather what we need."
+      },
+
+      "givenBy": "npc_mentor_001",
+      "returnTo": "npc_mentor_001",
+
+      "objectives": [
+        {
+          "objectiveId": "obj_001_gather_oak",
+          "type": "gather",
+          "description": "Gather Oak Logs",
+          "target": {
+            "materialId": "oak_log",
+            "quantity": 20
+          },
+          "optional": false
+        },
+        {
+          "objectiveId": "obj_001_gather_limestone",
+          "type": "gather",
+          "description": "Mine Limestone",
+          "target": {
+            "materialId": "limestone",
+            "quantity": 10
+          },
+          "optional": false
+        }
+      ],
+
+      "rewards": {
+        "experience": 200,
+        "gold": 0,
+        "items": [],
+        "recipes": [],
+        "titles": [],
+        "unlocks": ["quest_tutorial_002"],
+        "statPoints": 0
+      },
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": [],
+        "completedQuests": []
+      },
+
+      "progression": {
+        "isRepeatable": false,
+        "cooldown": null,
+        "nextQuest": "quest_tutorial_002",
+        "questChain": "tutorial_chain"
+      },
+
+      "metadata": {
+        "narrative": "The first step - learning to gather raw materials.",
+        "tags": ["tutorial", "gathering", "starter"],
+        "difficulty": "easy",
+        "estimatedTime": "5-10 minutes"
+      }
+    }
+  ],
+
+  "FIELD_DOCUMENTATION": {
+    "questId": {
+      "description": "Unique identifier for this quest",
+      "format": "quest_{type}_{number}",
+      "required": true
+    },
+
+    "questType": {
+      "options": ["tutorial", "main", "side", "exploration", "combat", "crafting"],
+      "description": "Category of quest for organization"
+    },
+
+    "tier": {
+      "description": "Quest difficulty/level tier (1-4)",
+      "note": "Typically matches material/enemy tier requirements"
+    },
+
+    "description": {
+      "short": "Brief summary for quest log",
+      "long": "Detailed instructions for player",
+      "narrative": "Flavor text from quest giver"
+    },
+
+    "givenBy": {
+      "description": "npcId of NPC who gives this quest",
+      "required": true
+    },
+
+    "returnTo": {
+      "description": "npcId of NPC to return to (can be same or different)",
+      "note": "Some quests auto-complete without return"
+    },
+
+    "objectives": {
+      "objectiveId": "Unique ID for this objective",
+      "type": "See OBJECTIVE_TYPES below",
+      "description": "Display text for objective",
+      "target": "Type-specific target data (see examples)",
+      "optional": "If true, quest can complete without this objective"
+    },
+
+    "rewards": {
+      "experience": "Character EXP gained",
+      "gold": "Gold currency gained",
+      "items": "Array of {itemId, quantity}",
+      "recipes": "Array of recipeIds unlocked",
+      "titles": "Array of titleIds granted",
+      "unlocks": "Array of questIds or system features unlocked",
+      "statPoints": "Bonus stat points granted (rare)"
+    },
+
+    "requirements": {
+      "characterLevel": "Minimum level to accept quest",
+      "stats": "Object like {STR: 5, DEX: 3}",
+      "titles": "Array of titleIds required",
+      "completedQuests": "Array of questIds that must be done first"
+    },
+
+    "progression": {
+      "isRepeatable": "Can quest be done multiple times",
+      "cooldown": "Seconds before can repeat (null if not repeatable)",
+      "nextQuest": "questId that unlocks after this",
+      "questChain": "Name of chain this quest belongs to"
+    }
+  },
+
+  "OBJECTIVE_TYPES": {
+    "gather": {
+      "description": "Collect materials from resource nodes",
+      "target": {"materialId": "oak_log", "quantity": 20}
+    },
+
+    "craft": {
+      "description": "Create items using recipes",
+      "target": {
+        "recipeId": "recipe_forge_t1",
+        "itemId": "forge_t1",
+        "quantity": 1,
+        "mustUseMiniGame": false
+      }
+    },
+
+    "kill": {
+      "description": "Defeat enemies",
+      "target": {
+        "enemyId": "enemy_wolf",
+        "quantity": 10,
+        "specificLocation": null
+      }
+    },
+
+    "explore": {
+      "description": "Discover new map chunks",
+      "target": {
+        "chunksToDiscover": 5,
+        "anyChunk": true
+      }
+    },
+
+    "discover": {
+      "description": "Find new materials or recipes",
+      "target": {
+        "materialRarity": "rare",
+        "quantity": 3
+      }
+    },
+
+    "place": {
+      "description": "Place structures in world",
+      "target": {
+        "itemId": "forge_t1",
+        "inTerritory": true
+      }
+    },
+
+    "choice": {
+      "description": "Make a decision",
+      "target": {
+        "choices": ["alchemy", "engineering", "enchanting"],
+        "exclusive": true
+      }
+    },
+
+    "interact": {
+      "description": "Interact with object or NPC",
+      "target": {
+        "entityId": "ancient_shrine",
+        "interactionType": "activate"
+      }
+    }
+  },
+
+  "CONDITIONAL_REWARDS": {
+    "description": "Rewards can be conditional based on choices",
+    "example": {
+      "items": [
+        {
+          "conditional": "if_alchemy_chosen",
+          "itemId": "alchemy_station_t1",
+          "quantity": 1
+        }
+      ]
+    },
+    "note": "Game system evaluates conditions and grants appropriate rewards"
+  },
+
+  "USAGE_NOTES": {
+    "idReferences": "givenBy/returnTo reference NPCs, rewards reference items/recipes/skills/titles",
+    "objectiveTracking": "Game systems auto-increment progress as player performs actions",
+    "autoComplete": "Some quests complete automatically without returning to NPC",
+    "questChains": "Use questChain field to group related quests",
+    "branching": "Use choice objectives to create branching quest paths"
+  }
+}
+
+NPC Templates:
+
+
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "NPC system template - defines NPCs, locations, and quest offerings",
+    "note": "NPCs reference quests via questId. See footer for field documentation."
+  },
+
+  "npcs": [
+    {
+      "npcId": "npc_mentor_001",
+      "name": "The Mentor",
+      "title": "Tutorial Guide",
+      
+      "location": {
+        "x": 35,
+        "y": 40,
+        "z": 0,
+        "region": "spawn_area"
+      },
+
+      "behavior": {
+        "isStatic": true,
+        "wanderRadius": 0,
+        "interactionRange": 3.0
+      },
+
+      "dialogue": {
+        "greeting": {
+          "default": "Ah, a new face! Welcome to our world, traveler.",
+          "questInProgress": "How goes your task?",
+          "questComplete": "Well done! Return to me when ready.",
+          "allComplete": "You've learned all I can teach."
+        },
+        "farewell": "May your crafts be true!"
+      },
+
+      "questsOffered": [
+        "quest_tutorial_001",
+        "quest_tutorial_002"
+      ],
+
+      "services": {
+        "canTrade": false,
+        "canRepair": false,
+        "canTeach": true,
+        "teachableSkills": ["smiths_focus"],
+        "specialServices": ["stat_respec"]
+      },
+
+      "unlockConditions": {
+        "alwaysAvailable": true,
+        "characterLevel": 0,
+        "completedQuests": []
+      },
+
+      "metadata": {
+        "narrative": "Your first guide in this world. An old smith who trains newcomers.",
+        "tags": ["tutorial", "starter", "essential"]
+      }
+    }
+  ],
+
+  "FIELD_DOCUMENTATION": {
+    "npcId": {
+      "description": "Unique identifier for this NPC",
+      "format": "npc_{name}_{number}",
+      "required": true
+    },
+
+    "name": {
+      "description": "Display name of the NPC",
+      "required": true
+    },
+
+    "title": {
+      "description": "Subtitle/role description",
+      "required": false
+    },
+
+    "location": {
+      "x": "World X coordinate (float)",
+      "y": "World Y coordinate (float)", 
+      "z": "World Z coordinate (currently 0 for 2D)",
+      "region": "Optional region name for narrative purposes"
+    },
+
+    "behavior": {
+      "isStatic": "true = stays in place, false = can move",
+      "wanderRadius": "If > 0, NPC randomly moves within this radius from base location",
+      "interactionRange": "Distance player must be within to interact (typically 3.0)"
+    },
+
+    "dialogue": {
+      "greeting": {
+        "default": "First time meeting this NPC",
+        "questInProgress": "Player has active quest from this NPC",
+        "questComplete": "Player completed quest, needs to turn in",
+        "allComplete": "All quests from this NPC are done"
+      },
+      "farewell": "Said when ending conversation"
+    },
+
+    "questsOffered": {
+      "description": "Array of questIds this NPC can give",
+      "format": ["quest_id_1", "quest_id_2"],
+      "note": "References quests from quest system"
+    },
+
+    "services": {
+      "canTrade": "Boolean - opens vendor UI",
+      "canRepair": "Boolean - opens repair UI",
+      "canTeach": "Boolean - can teach skills",
+      "teachableSkills": "Array of skillIds this NPC teaches",
+      "specialServices": "Array of special functions: ['stat_respec', 'class_switch', 'skill_evolution']"
+    },
+
+    "unlockConditions": {
+      "alwaysAvailable": "If true, NPC visible from start",
+      "characterLevel": "Minimum level to see this NPC",
+      "completedQuests": "Array of questIds that must be complete",
+      "note": "Can also check stats and titles like skill requirements"
+    },
+
+    "metadata": {
+      "narrative": "Lore description of this NPC",
+      "tags": "Array for filtering/categorization"
+    }
+  },
+
+  "USAGE_NOTES": {
+    "idReferences": "questsOffered references quest system, teachableSkills references skill system",
+    "positioning": "Uses same Position{x,y,z} system as all game entities",
+    "unlocking": "NPCs can be hidden until player meets conditions",
+    "dialogue": "System automatically chooses appropriate dialogue based on quest state",
+    "wandering": "NPCs with wanderRadius > 0 move randomly but stay near their base location"
+  }
+}

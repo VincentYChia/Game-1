@@ -1,0 +1,237 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Hardcoded lookup tables for qualitative descriptors used in resource nodes and other systems",
+    "note": "These values are PLACEHOLDERS and subject to balance changes"
+  },
+
+  "yieldTranslations": {
+    "few": {
+      "min": 1,
+      "max": 2,
+      "description": "Minimal yield, barely worth gathering"
+    },
+    "several": {
+      "min": 3,
+      "max": 5,
+      "description": "Standard low yield"
+    },
+    "many": {
+      "min": 6,
+      "max": 9,
+      "description": "Good yield, efficient gathering"
+    },
+    "abundant": {
+      "min": 10,
+      "max": 15,
+      "description": "High yield, very efficient"
+    },
+    "plentiful": {
+      "min": 16,
+      "max": 25,
+      "description": "Exceptional yield, rare occurrence"
+    }
+  },
+
+  "respawnTranslations": {
+    "null": {
+      "seconds": null,
+      "description": "Does not respawn (finite resource)"
+    },
+    "quick": {
+      "seconds": 120,
+      "description": "2 minutes - fast renewable"
+    },
+    "normal": {
+      "seconds": 300,
+      "description": "5 minutes - standard renewable"
+    },
+    "slow": {
+      "seconds": 600,
+      "description": "10 minutes - slow renewable"
+    },
+    "very_slow": {
+      "seconds": 1200,
+      "description": "20 minutes - very slow renewable"
+    }
+  },
+
+  "chanceTranslations": {
+    "guaranteed": {
+      "probability": 1.0,
+      "percentage": 100,
+      "description": "Always drops"
+    },
+    "high": {
+      "probability": 0.75,
+      "percentage": 75,
+      "description": "Very likely to drop"
+    },
+    "moderate": {
+      "probability": 0.5,
+      "percentage": 50,
+      "description": "50/50 chance"
+    },
+    "low": {
+      "probability": 0.25,
+      "percentage": 25,
+      "description": "Unlikely but possible"
+    },
+    "rare": {
+      "probability": 0.1,
+      "percentage": 10,
+      "description": "Rare drop"
+    },
+    "improbable": {
+      "probability": 0.03,
+      "percentage": 3,
+      "description": "Very rare drop"
+    }
+  },
+
+  "densityTranslations": {
+    "none": {
+      "count": [0, 0],
+      "description": "Does not spawn in this chunk type"
+    },
+    "very_low": {
+      "count": [1, 2],
+      "description": "Scarce presence"
+    },
+    "low": {
+      "count": [3, 5],
+      "description": "Light presence"
+    },
+    "moderate": {
+      "count": [6, 10],
+      "description": "Standard presence"
+    },
+    "high": {
+      "count": [11, 16],
+      "description": "Common presence"
+    },
+    "very_high": {
+      "count": [17, 24],
+      "description": "Abundant presence"
+    }
+  },
+
+  "tierBiasTranslations": {
+    "low": {
+      "t1Weight": 0.70,
+      "t2Weight": 0.25,
+      "t3Weight": 0.05,
+      "t4Weight": 0.0,
+      "description": "Heavily favors T1 resources"
+    },
+    "mid": {
+      "t1Weight": 0.30,
+      "t2Weight": 0.50,
+      "t3Weight": 0.18,
+      "t4Weight": 0.02,
+      "description": "Favors T2 resources"
+    },
+    "high": {
+      "t1Weight": 0.10,
+      "t2Weight": 0.30,
+      "t3Weight": 0.50,
+      "t4Weight": 0.10,
+      "description": "Favors T3 resources"
+    },
+    "legendary": {
+      "t1Weight": 0.0,
+      "t2Weight": 0.10,
+      "t3Weight": 0.40,
+      "t4Weight": 0.50,
+      "description": "Favors T4 resources"
+    }
+  },
+
+  "sizeMultipliers": {
+    "small": {
+      "multiplier": 0.8,
+      "hpModifier": 0.7,
+      "yieldModifier": 0.6,
+      "description": "Smaller node, less HP and yield"
+    },
+    "normal": {
+      "multiplier": 1.0,
+      "hpModifier": 1.0,
+      "yieldModifier": 1.0,
+      "description": "Standard size baseline"
+    },
+    "large": {
+      "multiplier": 1.5,
+      "hpModifier": 1.5,
+      "yieldModifier": 1.4,
+      "description": "Larger node, more HP and yield"
+    },
+    "huge": {
+      "multiplier": 2.5,
+      "hpModifier": 2.5,
+      "yieldModifier": 2.0,
+      "description": "Massive node, significantly more HP and yield"
+    }
+  },
+
+  "toolEfficiency": {
+    "sameTier": {
+      "multiplier": 1.0,
+      "description": "100% efficiency - optimal"
+    },
+    "oneTierHigher": {
+      "multiplier": 0.5,
+      "description": "50% efficiency - slow but viable"
+    },
+    "twoTiersHigher": {
+      "multiplier": 0.1,
+      "description": "10% efficiency - impractical"
+    },
+    "lowerTier": {
+      "multiplier": 1.5,
+      "description": "150% efficiency - overkill"
+    }
+  },
+
+  "resourceHealthByTier": {
+    "tier1": {
+      "baseHP": 100,
+      "description": "T1 baseline health"
+    },
+    "tier2": {
+      "baseHP": 200,
+      "description": "T2 doubled health"
+    },
+    "tier3": {
+      "baseHP": 400,
+      "description": "T3 quadrupled health"
+    },
+    "tier4": {
+      "baseHP": 800,
+      "description": "T4 octupled health"
+    }
+  },
+
+  "toolDamageByTier": {
+    "tier1": {
+      "baseDamage": 10,
+      "durability": 500,
+      "description": "T1 tool baseline"
+    },
+    "tier2": {
+      "baseDamage": 20,
+      "durability": 1000,
+      "description": "T2 tool doubled"
+    },
+    "tier3": {
+      "baseDamage": 40,
+      "durability": 2000,
+      "description": "T3 tool quadrupled"
+    },
+    "tier4": {
+      "baseDamage": 80,
+      "durability": 4000,
+      "description": "T4 tool octupled"
+    }
+  }
+}

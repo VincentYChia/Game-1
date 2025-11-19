@@ -1,0 +1,4044 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "totalPlacements": 25
+  },
+  "placements": [
+    {
+      "recipeId": "enchanting_durability_advanced",
+      "placementMap": {
+        "gridType": "square_12x12",
+        "vertices": {
+          "0,0": {
+            "materialId": "golem_core",
+            "isKey": false
+          },
+          "3,3": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "6,0": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "3,-3": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "-3,3": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "0,6": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "-6,0": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "-3,-3": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "0,-6": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "0,3": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "1,5": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-1,5": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "0,-3": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-1,-1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-3,0": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "-5,1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-5,-1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "3,0": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-1,-5": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "1,-5": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "5,-1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "5,1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_large",
+            "vertices": [
+              "0,0",
+              "3,3",
+              "6,0",
+              "3,-3"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "-3,3",
+              "0,6",
+              "3,3",
+              "0,0"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "-6,0",
+              "-3,3",
+              "0,0",
+              "-3,-3"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "-3,-3",
+              "0,0",
+              "3,-3",
+              "0,-6"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,3",
+              "1,5",
+              "-1,5"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-3",
+              "1,-1",
+              "-1,-1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,0",
+              "-5,1",
+              "-5,-1"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,0",
+              "1,1",
+              "1,-1"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-3",
+              "-1,-5",
+              "1,-5"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,3",
+              "-1,1",
+              "1,1"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,0",
+              "-1,-1",
+              "-1,1"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,0",
+              "5,-1",
+              "5,1"
+            ],
+            "rotation": 90
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_durability_basic",
+      "placementMap": {
+        "gridType": "square_8x8",
+        "vertices": {
+          "1,1": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "-1,-1": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "0,3": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          },
+          "0,-3": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          },
+          "3,0": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          },
+          "-3,0": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,1",
+              "1,-1",
+              "-1,-1",
+              "-1,1"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,3",
+              "-1,1",
+              "1,1"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-3",
+              "1,-1",
+              "-1,-1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,0",
+              "1,1",
+              "1,-1"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,0",
+              "-1,-1",
+              "-1,1"
+            ],
+            "rotation": 90
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_efficiency_advanced",
+      "placementMap": {
+        "gridType": "square_12x12",
+        "vertices": {
+          "0,-5": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "2,-2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-2,-2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-3,2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-6,-1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "6,-1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "3,2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "0,4": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-3,6": {
+            "materialId": "ironwood_plank",
+            "isKey": false
+          },
+          "3,6": {
+            "materialId": "ironwood_plank",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "0,-2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "0,-5",
+              "2,-2",
+              "-2,-2"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "-2,-2",
+              "-3,2",
+              "-6,-1"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "2,-2",
+              "6,-1",
+              "3,2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "0,4",
+              "-3,6",
+              "-3,2"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "0,4",
+              "3,2",
+              "3,6"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,4",
+              "-1,1",
+              "1,1"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,-2",
+              "1,1",
+              "-1,1"
+            ],
+            "rotation": 180
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_efficiency_basic",
+      "placementMap": {
+        "gridType": "square_8x8",
+        "vertices": {
+          "0,-3": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "-1,-2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "0,0": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "1,-2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "ash_plank",
+            "isKey": false
+          },
+          "0,3": {
+            "materialId": "ash_plank",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "ash_plank",
+            "isKey": false
+          },
+          "2,0": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "-2,0": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "2,3": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-2,3": {
+            "materialId": "air_crystal",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,-3",
+              "-1,-2",
+              "0,0",
+              "1,-2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,0",
+              "-1,1",
+              "0,3",
+              "1,1"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,1",
+              "2,0",
+              "1,-2",
+              "0,0"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-1,1",
+              "0,0",
+              "-1,-2",
+              "-2,0"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "1,1",
+              "2,3",
+              "0,3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-1,1",
+              "0,3",
+              "-2,3"
+            ],
+            "rotation": 180
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_fire_aspect",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "-3,-3": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "-1,-3": {
+            "materialId": "steel_ingot",
+            "isKey": false
+          },
+          "-1,-5": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "-3,-5": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "1,-3": {
+            "materialId": "steel_ingot",
+            "isKey": false
+          },
+          "3,-3": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "3,-5": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "1,-5": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "0,-4": {
+            "materialId": "steel_ingot",
+            "isKey": false
+          },
+          "0,-1": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "-2,0": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "2,0": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "0,2": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "0,0": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "-3,-3",
+              "-1,-3",
+              "-1,-5",
+              "-3,-5"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,-3",
+              "3,-3",
+              "3,-5",
+              "1,-5"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,-4",
+              "-1,-3",
+              "0,-1",
+              "1,-3"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-2,0",
+              "-3,-3",
+              "-1,-3"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "2,0",
+              "1,-3",
+              "3,-3"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,2",
+              "1,1",
+              "0,-1",
+              "-1,1"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-1,-3",
+              "0,0",
+              "-2,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "1,-3",
+              "2,0",
+              "0,0"
+            ],
+            "rotation": 180
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_fortune_advanced",
+      "placementMap": {
+        "gridType": "square_14x14",
+        "vertices": {
+          "3,-4": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "0,-7": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-3,-4": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "0,-1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-3,4": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "3,4": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-4,5": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-3,7": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-2,5": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "2,5": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "3,7": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "4,5": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "5,4": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "4,2": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-4,2": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-5,4": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-5,3": {
+            "materialId": null,
+            "isKey": false
+          },
+          "-5,0": {
+            "materialId": null,
+            "isKey": false
+          },
+          "-6,2": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "5,3": {
+            "materialId": null,
+            "isKey": false
+          },
+          "6,2": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "5,0": {
+            "materialId": null,
+            "isKey": false
+          },
+          "6,-1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "5,-3": {
+            "materialId": null,
+            "isKey": false
+          },
+          "4,-1": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "6,-4": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "5,-5": {
+            "materialId": null,
+            "isKey": false
+          },
+          "-6,-4": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "-5,-3": {
+            "materialId": null,
+            "isKey": false
+          },
+          "-5,-5": {
+            "materialId": null,
+            "isKey": false
+          },
+          "-4,-1": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-6,-1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "0,2": {
+            "materialId": "chaos_matrix",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "chaos_matrix",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "chaos_matrix",
+            "isKey": false
+          },
+          "-1,3": {
+            "materialId": null,
+            "isKey": false
+          },
+          "0,5": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "1,3": {
+            "materialId": null,
+            "isKey": false
+          },
+          "-1,-3": {
+            "materialId": "genesis_lattice",
+            "isKey": false
+          },
+          "1,-3": {
+            "materialId": "genesis_lattice",
+            "isKey": false
+          },
+          "1,-5": {
+            "materialId": "genesis_lattice",
+            "isKey": false
+          },
+          "-1,-5": {
+            "materialId": "genesis_lattice",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_large",
+            "vertices": [
+              "3,-4",
+              "0,-7",
+              "-3,-4",
+              "0,-1"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-3,4",
+              "-4,5",
+              "-3,7",
+              "-2,5"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "3,4",
+              "2,5",
+              "3,7",
+              "4,5"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "4,5",
+              "5,4",
+              "4,2",
+              "3,4"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-4,5",
+              "-3,4",
+              "-4,2",
+              "-5,4"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-5,3",
+              "-4,2",
+              "-5,0",
+              "-6,2"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "5,3",
+              "6,2",
+              "5,0",
+              "4,2"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "5,0",
+              "6,-1",
+              "5,-3",
+              "4,-1"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "6,-4",
+              "5,-5",
+              "3,-4",
+              "5,-3"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-6,-4",
+              "-5,-3",
+              "-3,-4",
+              "-5,-5"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-5,0",
+              "-4,-1",
+              "-5,-3",
+              "-6,-1"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,2",
+              "1,1",
+              "0,-1",
+              "-1,1"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,2",
+              "-1,3",
+              "0,5",
+              "1,3"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-1,3",
+              "-2,5",
+              "-3,4"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "1,3",
+              "3,4",
+              "2,5"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-1",
+              "-1,-3",
+              "1,-3"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-7",
+              "1,-5",
+              "-1,-5"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,-5",
+              "-1,-5",
+              "-1,-3",
+              "1,-3"
+            ],
+            "rotation": 180
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_fortune_basic",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "1,-5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "-1,-5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "-1,-3": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "1,-3": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-2,-1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-3,-2": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "3,-2": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "2,-1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-2,0": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-4,0": {
+            "materialId": null,
+            "isKey": false
+          },
+          "4,0": {
+            "materialId": null,
+            "isKey": false
+          },
+          "2,0": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-3,2": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "3,2": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-1,3": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-2,4": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "2,4": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "1,3": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "1,5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "-1,5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,-5",
+              "-1,-5",
+              "-1,-3",
+              "1,-3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-1,-3",
+              "-2,-1",
+              "-3,-2"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "1,-3",
+              "3,-2",
+              "2,-1"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,-2",
+              "-2,0",
+              "-4,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,-2",
+              "4,0",
+              "2,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,2",
+              "-4,0",
+              "-2,0"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,2",
+              "2,0",
+              "4,0"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,2",
+              "-1,3",
+              "-2,4"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,2",
+              "2,4",
+              "1,3"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,5",
+              "1,3",
+              "-1,3",
+              "-1,5"
+            ],
+            "rotation": 270
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_frost_touch",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "-1,3": {
+            "materialId": "frost_essence",
+            "isKey": false
+          },
+          "-3,3": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "-3,5": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "-1,5": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "3,3": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "1,3": {
+            "materialId": "frost_essence",
+            "isKey": false
+          },
+          "1,5": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "3,5": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "-2,0": {
+            "materialId": "water_crystal",
+            "isKey": false
+          },
+          "2,0": {
+            "materialId": "water_crystal",
+            "isKey": false
+          },
+          "0,4": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "0,1": {
+            "materialId": "frost_essence",
+            "isKey": false
+          },
+          "0,-2": {
+            "materialId": "frost_essence",
+            "isKey": false
+          },
+          "-1,-1": {
+            "materialId": "water_crystal",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "water_crystal",
+            "isKey": false
+          },
+          "0,0": {
+            "materialId": "frost_essence",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "-1,3",
+              "-3,3",
+              "-3,5",
+              "-1,5"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "3,3",
+              "1,3",
+              "1,5",
+              "3,5"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-2,0",
+              "-1,3",
+              "-3,3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "2,0",
+              "3,3",
+              "1,3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,4",
+              "1,3",
+              "0,1",
+              "-1,3"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,-2",
+              "-1,-1",
+              "0,1",
+              "1,-1"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,0",
+              "1,3",
+              "-1,3"
+            ],
+            "rotation": 180
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_knockback",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "0,1": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "1,4": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-1,4": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-3,2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-3,0": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "3,0": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "3,2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "1,-5": {
+            "materialId": "shale",
+            "isKey": false
+          },
+          "-1,-5": {
+            "materialId": "shale",
+            "isKey": false
+          },
+          "-1,-3": {
+            "materialId": "shale",
+            "isKey": false
+          },
+          "1,-3": {
+            "materialId": "shale",
+            "isKey": false
+          },
+          "-1,-1": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "maple_plank",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,1",
+              "1,4",
+              "-1,4"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,1",
+              "-1,4",
+              "-3,2"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,1",
+              "-3,2",
+              "-3,0"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,1",
+              "3,0",
+              "3,2"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,1",
+              "3,2",
+              "1,4"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,-5",
+              "-1,-5",
+              "-1,-3",
+              "1,-3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,-3",
+              "-1,-3",
+              "-1,-1",
+              "1,-1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,1",
+              "-1,-1",
+              "1,-1"
+            ],
+            "rotation": 0
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_lifesteal",
+      "placementMap": {
+        "gridType": "square_12x12",
+        "vertices": {
+          "0,2": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "2,5": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-2,5": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "3,1": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-3,1": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-1,-1": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "2,-5": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "5,-2": {
+            "materialId": "shadow_core",
+            "isKey": false
+          },
+          "-5,-2": {
+            "materialId": "shadow_core",
+            "isKey": false
+          },
+          "-2,-5": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "0,0": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "0,-3": {
+            "materialId": "essence_blood",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "0,2",
+              "2,5",
+              "-2,5"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,2",
+              "1,-1",
+              "3,1"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,2",
+              "-3,1",
+              "-1,-1"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "1,-1",
+              "2,-5",
+              "5,-2"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "-1,-1",
+              "-5,-2",
+              "-2,-5"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,0",
+              "1,-1",
+              "0,-3",
+              "-1,-1"
+            ],
+            "rotation": 315
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_lightning_strike",
+      "placementMap": {
+        "gridType": "square_12x12",
+        "vertices": {
+          "-1,3": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "0,6": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "-2,6": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "1,3": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "2,6": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "4,2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "4,4": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "3,-1": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "6,0": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-4,4": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "-4,2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-3,-1": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-6,0": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "4,-2": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "3,-4": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "2,-2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-2,-2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-3,-4": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "-4,-2": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "-2,-3": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-1,-4": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "-2,-6": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "2,-3": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "2,-6": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "1,-4": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "0,-6": {
+            "materialId": "marble",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-1,3",
+              "0,6",
+              "-2,6"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "1,3",
+              "2,6",
+              "0,6"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "1,3",
+              "4,2",
+              "4,4"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "3,-1",
+              "6,0",
+              "4,2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-1,3",
+              "-4,4",
+              "-4,2"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-3,-1",
+              "-4,2",
+              "-6,0"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "3,-1",
+              "4,-2",
+              "3,-4",
+              "2,-2"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-3,-1",
+              "-2,-2",
+              "-3,-4",
+              "-4,-2"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-2,-3",
+              "-1,-4",
+              "-2,-6",
+              "-3,-4"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "2,-3",
+              "3,-4",
+              "2,-6",
+              "1,-4"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-6",
+              "1,-4",
+              "-1,-4"
+            ],
+            "rotation": 180
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_poison",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "0,0": {
+            "materialId": "shadow_core",
+            "isKey": false
+          },
+          "1,2": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "-1,2": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "-2,-1": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "-1,-2": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "1,-2": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "2,-1": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "1,-3": {
+            "materialId": "shadow_core",
+            "isKey": false
+          },
+          "3,-1": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "1,3": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "-1,3": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "-3,-1": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "-1,-3": {
+            "materialId": "shadow_core",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,0",
+              "1,2",
+              "-1,2"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,0",
+              "-2,-1",
+              "-1,-2"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,0",
+              "1,-2",
+              "2,-1"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,0",
+              "1,-3",
+              "3,-1"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,0",
+              "1,3",
+              "-1,3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,0",
+              "-3,-1",
+              "-1,-3"
+            ],
+            "rotation": 315
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_protection_advanced",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "-5,5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "-4,2": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "-2,4": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "-5,-5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "-2,-4": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "-4,-2": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "5,-5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "4,-2": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "2,-4": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "5,5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "2,4": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "4,2": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "-5,0": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "-3,0": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "5,0": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "3,0": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "0,5": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "0,3": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "0,-3": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "0,-5": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-5,5",
+              "-4,2",
+              "-2,4"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-5,-5",
+              "-2,-4",
+              "-4,-2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "5,-5",
+              "4,-2",
+              "2,-4"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "5,5",
+              "2,4",
+              "4,2"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-4,2",
+              "-5,0",
+              "-3,0"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-4,-2",
+              "-3,0",
+              "-5,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "4,-2",
+              "5,0",
+              "3,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "4,2",
+              "3,0",
+              "5,0"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,4",
+              "0,5",
+              "0,3"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,-4",
+              "0,-3",
+              "0,-5"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,-4",
+              "0,-5",
+              "0,-3"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,4",
+              "0,3",
+              "0,5"
+            ],
+            "rotation": 90
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_protection_basic",
+      "placementMap": {
+        "gridType": "square_8x8",
+        "vertices": {
+          "4,-4": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "3,-2": {
+            "materialId": "iron_ore",
+            "isKey": false
+          },
+          "2,-3": {
+            "materialId": "iron_ore",
+            "isKey": false
+          },
+          "4,4": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "2,3": {
+            "materialId": "iron_ore",
+            "isKey": false
+          },
+          "3,2": {
+            "materialId": "iron_ore",
+            "isKey": false
+          },
+          "-4,4": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "-3,2": {
+            "materialId": "iron_ore",
+            "isKey": false
+          },
+          "-2,3": {
+            "materialId": "iron_ore",
+            "isKey": false
+          },
+          "-4,-4": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "-2,-3": {
+            "materialId": "iron_ore",
+            "isKey": false
+          },
+          "-3,-2": {
+            "materialId": "iron_ore",
+            "isKey": false
+          },
+          "-2,0": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "-4,0": {
+            "materialId": "granite",
+            "isKey": false
+          },
+          "0,2": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "0,4": {
+            "materialId": "granite",
+            "isKey": false
+          },
+          "0,-4": {
+            "materialId": "granite",
+            "isKey": false
+          },
+          "0,-2": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "4,0": {
+            "materialId": "granite",
+            "isKey": false
+          },
+          "2,0": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "4,-4",
+              "3,-2",
+              "2,-3"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "4,4",
+              "2,3",
+              "3,2"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-4,4",
+              "-3,2",
+              "-2,3"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-4,-4",
+              "-2,-3",
+              "-3,-2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,-2",
+              "-2,0",
+              "-4,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,2",
+              "-4,0",
+              "-2,0"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,3",
+              "0,2",
+              "0,4"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,3",
+              "0,4",
+              "0,2"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,-3",
+              "0,-4",
+              "0,-2"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,-3",
+              "0,-2",
+              "0,-4"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,-2",
+              "4,0",
+              "2,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,2",
+              "2,0",
+              "4,0"
+            ],
+            "rotation": 0
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_protection_master",
+      "placementMap": {
+        "gridType": "square_12x12",
+        "vertices": {
+          "-6,-6": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-2,-5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "-5,-2": {
+            "materialId": "orichalcum_ingot",
+            "isKey": false
+          },
+          "6,-6": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "5,-2": {
+            "materialId": "orichalcum_ingot",
+            "isKey": false
+          },
+          "2,-5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "6,6": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "2,5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "5,2": {
+            "materialId": "orichalcum_ingot",
+            "isKey": false
+          },
+          "-6,6": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-5,2": {
+            "materialId": "orichalcum_ingot",
+            "isKey": false
+          },
+          "-2,5": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "-6,0": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "-4,0": {
+            "materialId": "void_essence",
+            "isKey": false
+          },
+          "6,0": {
+            "materialId": "crystal_quartz",
+            "isKey": false
+          },
+          "4,0": {
+            "materialId": "void_essence",
+            "isKey": false
+          },
+          "0,6": {
+            "materialId": "orichalcum_ingot",
+            "isKey": false
+          },
+          "0,4": {
+            "materialId": "golem_core",
+            "isKey": false
+          },
+          "0,-4": {
+            "materialId": "golem_core",
+            "isKey": false
+          },
+          "0,-6": {
+            "materialId": "orichalcum_ingot",
+            "isKey": false
+          },
+          "1,2": {
+            "materialId": "void_essence",
+            "isKey": false
+          },
+          "1,-2": {
+            "materialId": "void_essence",
+            "isKey": false
+          },
+          "-1,-2": {
+            "materialId": "void_essence",
+            "isKey": false
+          },
+          "-1,2": {
+            "materialId": "void_essence",
+            "isKey": false
+          },
+          "0,-1": {
+            "materialId": "golem_core",
+            "isKey": false
+          },
+          "0,1": {
+            "materialId": "golem_core",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "-6,-6",
+              "-2,-5",
+              "-5,-2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "6,-6",
+              "5,-2",
+              "2,-5"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "6,6",
+              "2,5",
+              "5,2"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "-6,6",
+              "-5,2",
+              "-2,5"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-5,2",
+              "-6,0",
+              "-4,0"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-5,-2",
+              "-4,0",
+              "-6,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "5,-2",
+              "6,0",
+              "4,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "5,2",
+              "4,0",
+              "6,0"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,5",
+              "0,6",
+              "0,4"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,-5",
+              "0,-4",
+              "0,-6"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,-5",
+              "0,-6",
+              "0,-4"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,5",
+              "0,4",
+              "0,6"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "4,0",
+              "1,2",
+              "1,-2"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "-4,0",
+              "-1,-2",
+              "-1,2"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,-1",
+              "1,-2",
+              "0,-4",
+              "-1,-2"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,1",
+              "-1,2",
+              "0,4",
+              "1,2"
+            ],
+            "rotation": 135
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_regeneration",
+      "placementMap": {
+        "gridType": "square_12x12",
+        "vertices": {
+          "0,-3": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "-3,0": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "0,3": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "3,0": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "2,-2": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "-2,-2": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "-2,2": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "2,2": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "0,0": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "-4,0": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-4,4": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "0,4": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "4,0": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "4,4": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "4,-4": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "0,-4": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-4,-4": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "-4,-3": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-3,-4": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "3,-4": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "4,-3": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "4,3": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "3,4": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-3,4": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-4,3": {
+            "materialId": "living_ichor",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_large",
+            "vertices": [
+              "0,-3",
+              "-3,0",
+              "0,3",
+              "3,0"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "2,-2",
+              "-2,-2",
+              "-2,2",
+              "2,2"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "0,0",
+              "-4,0",
+              "-4,4",
+              "0,4"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "4,0",
+              "0,0",
+              "0,4",
+              "4,4"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "4,-4",
+              "0,-4",
+              "0,0",
+              "4,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "0,-4",
+              "-4,-4",
+              "-4,0",
+              "0,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,-2",
+              "-4,-3",
+              "-3,-4"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,-2",
+              "3,-4",
+              "4,-3"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,2",
+              "4,3",
+              "3,4"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,2",
+              "-3,4",
+              "-4,3"
+            ],
+            "rotation": 225
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_self_repair",
+      "placementMap": {
+        "gridType": "square_12x12",
+        "vertices": {
+          "3,2": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "0,-1": {
+            "materialId": "golem_core",
+            "isKey": false
+          },
+          "-3,2": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "0,5": {
+            "materialId": "ebony_plank",
+            "isKey": false
+          },
+          "3,-2": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "0,-5": {
+            "materialId": "ebony_log",
+            "isKey": false
+          },
+          "-3,-2": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "0,1": {
+            "materialId": "golem_core",
+            "isKey": false
+          },
+          "4,-1": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "6,1": {
+            "materialId": "ebony_plank",
+            "isKey": false
+          },
+          "-6,1": {
+            "materialId": "ebony_plank",
+            "isKey": false
+          },
+          "-4,-1": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-5,-3": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "5,-3": {
+            "materialId": "light_gem",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_large",
+            "vertices": [
+              "3,2",
+              "0,-1",
+              "-3,2",
+              "0,5"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "3,-2",
+              "0,-5",
+              "-3,-2",
+              "0,1"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "3,2",
+              "4,-1",
+              "6,1"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-3,2",
+              "-6,1",
+              "-4,-1"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-5,-3",
+              "-3,-2",
+              "-4,-1"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "5,-3",
+              "4,-1",
+              "3,-2"
+            ],
+            "rotation": 225
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_sharpness_advanced",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "0,5": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "-1,2": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "1,2": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "0,0": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "frost_essence",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "frost_essence",
+            "isKey": false
+          },
+          "2,0": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "1,-2": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "-1,-2": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "-2,0": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "-1,-4": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "1,-4": {
+            "materialId": "marble",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,5",
+              "-1,2",
+              "1,2"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-1,2",
+              "0,0",
+              "1,1"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "1,2",
+              "-1,1",
+              "0,0"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,1",
+              "2,0",
+              "1,-2",
+              "0,0"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-1,1",
+              "0,0",
+              "-1,-2",
+              "-2,0"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-1,-4",
+              "-1,-2",
+              "1,-2",
+              "1,-4"
+            ],
+            "rotation": 90
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_sharpness_basic",
+      "placementMap": {
+        "gridType": "square_8x8",
+        "vertices": {
+          "0,1": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "-1,2": {
+            "materialId": "iron_ingot",
+            "isKey": false
+          },
+          "0,4": {
+            "materialId": "iron_ingot",
+            "isKey": false
+          },
+          "1,2": {
+            "materialId": "iron_ingot",
+            "isKey": false
+          },
+          "2,0": {
+            "materialId": "tin_ore",
+            "isKey": false
+          },
+          "-2,0": {
+            "materialId": "tin_ore",
+            "isKey": false
+          },
+          "1,0": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "0,-2": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "-1,0": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "-1,-4": {
+            "materialId": "granite",
+            "isKey": false
+          },
+          "1,-4": {
+            "materialId": "granite",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,1",
+              "-1,2",
+              "0,4",
+              "1,2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,0",
+              "1,2",
+              "0,1"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,0",
+              "0,1",
+              "-1,2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,1",
+              "1,0",
+              "0,-2",
+              "-1,0"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-2",
+              "-1,-4",
+              "1,-4"
+            ],
+            "rotation": 0
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_sharpness_master",
+      "placementMap": {
+        "gridType": "square_12x12",
+        "vertices": {
+          "0,6": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-1,3": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "1,3": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "2,1": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "0,2": {
+            "materialId": "phoenix_ash",
+            "isKey": false
+          },
+          "-2,1": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "0,-2": {
+            "materialId": "marble",
+            "isKey": false
+          },
+          "1,-3": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "0,-5": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "-1,-3": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "phoenix_ash",
+            "isKey": false
+          },
+          "3,-2": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-3,-2": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-1,-1": {
+            "materialId": "phoenix_ash",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,6",
+              "-1,3",
+              "1,3"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,1",
+              "1,3",
+              "0,2"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,1",
+              "0,2",
+              "-1,3"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "0,-2",
+              "2,1",
+              "-2,1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,-2",
+              "1,-3",
+              "0,-5",
+              "-1,-3"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,-2",
+              "1,-1",
+              "3,-2",
+              "1,-3"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,-2",
+              "-1,-3",
+              "-3,-2",
+              "-1,-1"
+            ],
+            "rotation": 225
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_silk_touch",
+      "placementMap": {
+        "gridType": "square_12x12",
+        "vertices": {
+          "-1,0": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-2,4": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "-5,1": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "1,0": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "5,1": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "2,4": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "0,-2": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "-1,-5": {
+            "materialId": "void_essence",
+            "isKey": false
+          },
+          "1,-5": {
+            "materialId": "void_essence",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "-1,0",
+              "-2,4",
+              "-5,1"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "1,0",
+              "5,1",
+              "2,4"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-2",
+              "1,0",
+              "-1,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,-2",
+              "-1,-5",
+              "1,-5"
+            ],
+            "rotation": 0
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_soulbound",
+      "placementMap": {
+        "gridType": "square_14x14",
+        "vertices": {
+          "0,-2": {
+            "materialId": "worldtree_plank",
+            "isKey": false
+          },
+          "-1,-7": {
+            "materialId": "worldtree_plank",
+            "isKey": false
+          },
+          "1,-7": {
+            "materialId": "worldtree_plank",
+            "isKey": false
+          },
+          "3,-6": {
+            "materialId": "chaos_matrix",
+            "isKey": false
+          },
+          "4,-5": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "5,-3": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "5,-1": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "-5,-1": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "-5,-3": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "-4,-5": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "-3,-6": {
+            "materialId": "chaos_matrix",
+            "isKey": false
+          },
+          "-3,1": {
+            "materialId": "worldtree_plank",
+            "isKey": false
+          },
+          "0,4": {
+            "materialId": "primordial_crystal",
+            "isKey": false
+          },
+          "3,1": {
+            "materialId": "worldtree_plank",
+            "isKey": false
+          },
+          "-5,1": {
+            "materialId": "voidstone",
+            "isKey": false
+          },
+          "-3,-1": {
+            "materialId": "primordial_crystal",
+            "isKey": false
+          },
+          "3,-1": {
+            "materialId": "primordial_crystal",
+            "isKey": false
+          },
+          "5,1": {
+            "materialId": "voidstone",
+            "isKey": false
+          },
+          "-4,3": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "-6,3": {
+            "materialId": "voidstone",
+            "isKey": false
+          },
+          "6,3": {
+            "materialId": "voidstone",
+            "isKey": false
+          },
+          "4,3": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "0,6": {
+            "materialId": "voidstone",
+            "isKey": false
+          },
+          "-1,7": {
+            "materialId": "eternity_stone",
+            "isKey": false
+          },
+          "1,7": {
+            "materialId": "eternity_stone",
+            "isKey": false
+          },
+          "7,5": {
+            "materialId": "chaos_matrix",
+            "isKey": false
+          },
+          "5,5": {
+            "materialId": "eternity_stone",
+            "isKey": false
+          },
+          "-5,5": {
+            "materialId": "eternity_stone",
+            "isKey": false
+          },
+          "-7,5": {
+            "materialId": "chaos_matrix",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_isosceles_large",
+            "vertices": [
+              "0,-2",
+              "-1,-7",
+              "1,-7"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_isosceles_large",
+            "vertices": [
+              "0,-2",
+              "3,-6",
+              "4,-5"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_isosceles_large",
+            "vertices": [
+              "0,-2",
+              "5,-3",
+              "5,-1"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_isosceles_large",
+            "vertices": [
+              "0,-2",
+              "-5,-1",
+              "-5,-3"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_isosceles_large",
+            "vertices": [
+              "0,-2",
+              "-4,-5",
+              "-3,-6"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "-3,1",
+              "0,4",
+              "3,1",
+              "0,-2"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-5,-1",
+              "-5,1",
+              "-3,1",
+              "-3,-1"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "3,-1",
+              "3,1",
+              "5,1",
+              "5,-1"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-5,1",
+              "-4,3",
+              "-6,3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "5,1",
+              "6,3",
+              "4,3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_large",
+            "vertices": [
+              "-4,3",
+              "0,6",
+              "-1,7"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_isosceles_large",
+            "vertices": [
+              "4,3",
+              "1,7",
+              "0,6"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "6,3",
+              "7,5",
+              "5,5"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-6,3",
+              "-5,5",
+              "-7,5"
+            ],
+            "rotation": 180
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_swiftness",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "-5,1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-4,2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-2,1": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-4,0": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-5,-1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-2,-1": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "-4,-2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-3,0": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "0,0": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "3,0": {
+            "materialId": "lightning_shard",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "5,-1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "5,1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "-5,1",
+              "-4,2",
+              "-2,1",
+              "-4,0"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-5,-1",
+              "-4,0",
+              "-2,-1",
+              "-4,-2"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-3,0",
+              "-2,1",
+              "0,0",
+              "-2,-1"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,0",
+              "1,1",
+              "3,0",
+              "1,-1"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,0",
+              "5,-1",
+              "5,1"
+            ],
+            "rotation": 90
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_thorns",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "-1,-1": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          },
+          "0,3": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "-3,0": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "0,-3": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "3,0": {
+            "materialId": "iron_scales",
+            "isKey": false
+          },
+          "0,4": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "0,-4": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "4,0": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "-4,0": {
+            "materialId": "dire_fang",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "-1,-1",
+              "-1,1",
+              "1,1",
+              "1,-1"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,3",
+              "-1,1",
+              "1,1"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,0",
+              "-1,-1",
+              "-1,1"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-3",
+              "1,-1",
+              "-1,-1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,0",
+              "1,1",
+              "1,-1"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,4",
+              "-1,1",
+              "1,1"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,-4",
+              "1,-1",
+              "-1,-1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "4,0",
+              "1,1",
+              "1,-1"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-4,0",
+              "-1,-1",
+              "-1,1"
+            ],
+            "rotation": 90
+          }
+        ]
+      }
+    },
+    {
+      "recipeId": "enchanting_weightless",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "-2,-1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-3,2": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "-5,0": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "2,-1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "5,0": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "3,2": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "-1,-4": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "0,-1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "1,-4": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "3,5": {
+            "materialId": "ash_plank",
+            "isKey": false
+          },
+          "4,4": {
+            "materialId": "ash_plank",
+            "isKey": false
+          },
+          "2,4": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "-3,5": {
+            "materialId": "ash_plank",
+            "isKey": false
+          },
+          "-2,4": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "-4,4": {
+            "materialId": "ash_plank",
+            "isKey": false
+          },
+          "0,3": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "0,5": {
+            "materialId": "ash_plank",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-2,-1",
+              "-3,2",
+              "-5,0"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "2,-1",
+              "5,0",
+              "3,2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-1,-4",
+              "0,-1",
+              "-2,-1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "1,-4",
+              "2,-1",
+              "0,-1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "3,5",
+              "4,4",
+              "3,2",
+              "2,4"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-3,5",
+              "-2,4",
+              "-3,2",
+              "-4,4"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-2,4",
+              "0,3",
+              "0,5"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "2,4",
+              "0,5",
+              "0,3"
+            ],
+            "rotation": 270
+          }
+        ]
+      }
+    }
+  ]
+}

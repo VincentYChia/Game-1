@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Combat system configuration",
+    "note": "All values are PLACEHOLDERS for balance testing"
+  },
+
+  "experienceRewards": {
+    "tier1": 100,
+    "tier2": 400,
+    "tier3": 1600,
+    "tier4": 6400,
+    "bossMultiplier": 10.0
+  },
+
+  "safeZone": {
+    "centerX": 50,
+    "centerY": 50,
+    "radius": 15,
+    "noSpawning": true,
+    "comment": "No enemies spawn within this radius of spawn point"
+  },
+
+  "spawnRates": {
+    "peaceful": {
+      "minEnemies": 0,
+      "maxEnemies": 2,
+      "spawnInterval": 120,
+      "tierWeights": {"tier1": 0.9, "tier2": 0.1, "tier3": 0.0, "tier4": 0.0}
+    },
+    "normal": {
+      "minEnemies": 2,
+      "maxEnemies": 5,
+      "spawnInterval": 90,
+      "tierWeights": {"tier1": 0.7, "tier2": 0.25, "tier3": 0.05, "tier4": 0.0}
+    },
+    "dangerous": {
+      "minEnemies": 4,
+      "maxEnemies": 8,
+      "spawnInterval": 60,
+      "tierWeights": {"tier1": 0.4, "tier2": 0.4, "tier3": 0.15, "tier4": 0.05}
+    },
+    "rare": {
+      "minEnemies": 1,
+      "maxEnemies": 3,
+      "spawnInterval": 180,
+      "tierWeights": {"tier1": 0.2, "tier2": 0.3, "tier3": 0.3, "tier4": 0.2},
+      "comment": "Rare chunks have fewer but higher tier enemies"
+    }
+  },
+
+  "enemyRespawn": {
+    "baseRespawnTime": 300,
+    "tierMultipliers": {
+      "tier1": 1.0,
+      "tier2": 1.5,
+      "tier3": 2.0,
+      "tier4": 3.0
+    },
+    "bossRespawnTime": 1800,
+    "comment": "Respawn times in seconds"
+  },
+
+  "combatMechanics": {
+    "playerAttackRange": 2.0,
+    "baseAttackCooldown": 1.0,
+    "toolAttackCooldown": 0.5,
+    "enemyCorpseLifetime": 60,
+    "combatTimeout": 5.0,
+    "comment": "Combat timeout = seconds of no damage before regen starts"
+  },
+
+  "damageFormulas": {
+    "playerDamage": "weaponDamage * (1 + STR * 0.05) * titleBonus * equipmentBonus",
+    "enemyDamage": "enemyBaseDamage * (1 - (DEF * 0.02 + armorBonus))",
+    "critMultiplier": 2.0,
+    "comment": "Formulas are for reference, implemented in code"
+  }
+}
