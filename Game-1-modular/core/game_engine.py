@@ -29,8 +29,10 @@ from data import (
     TitleDatabase,
     ClassDatabase,
     NPCDatabase,
-    Position,
 )
+
+from data.models import Position, Recipe
+from entities.components import ItemStack
 
 # Systems
 from systems import WorldSystem, NPC

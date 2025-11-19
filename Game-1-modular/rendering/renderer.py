@@ -14,6 +14,7 @@ from data.models import (
     Recipe, PlacementData,
     EquipmentItem,
     NPCDefinition,
+    Position,
 )
 
 # Data databases
