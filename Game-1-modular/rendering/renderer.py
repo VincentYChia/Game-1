@@ -24,6 +24,9 @@ from data.databases import (
     EquipmentDatabase,
     RecipeDatabase,
     SkillDatabase,
+    TitleDatabase,
+    ClassDatabase,
+    NPCDatabase,
 )
 
 # Entities
