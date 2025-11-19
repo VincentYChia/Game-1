@@ -84,17 +84,28 @@ This will check that all imports work correctly.
 
 ## Debug Mode
 
-Debug mode gives you:
-- Level 30
-- 100 stat points
-- 50 copper ore
-- 50 iron ore
-- 50 oak logs
-- 50 birch logs
+**Press F1 during gameplay to toggle debug mode!**
 
-To enable debug mode, modify `core/config.py`:
+When debug mode is enabled:
+- **Infinite Materials**: Craft anything without consuming materials
+- **Level 30**: Automatically set to max level
+- **100 Stat Points**: Ready to allocate
+- **No Material Requirements**: All recipes show as craftable (green)
+- **Instant Resources**: Trees/ores respawn in 1 second instead of 60
+- **Infinite Durability**: Tools never break
+
+**How to use:**
+1. Run the game: `python main.py`
+2. Press **F1** to enable debug mode
+3. You'll see: "🔧 DEBUG MODE ENABLED"
+4. Now you can craft anything without materials!
+5. Press **F1** again to disable
+
+**Note:** Debug mode does NOT fill your inventory with items. Instead, it lets you craft freely without needing materials. This is better for testing crafting recipes.
+
+You can also enable it by default in `core/config.py`:
 ```python
-DEBUG_INFINITE_RESOURCES = True
+DEBUG_INFINITE_RESOURCES = True  # Set to True for always-on debug mode
 ```
 
 ## Troubleshooting
