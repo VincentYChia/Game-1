@@ -794,7 +794,14 @@ class GameEngine:
                     if 0 <= idx < self.character.inventory.max_slots:
                         # Double-click to equip equipment or tools
                         if is_double_click and self.last_clicked_slot == idx:
-                            item_stack = self.character.inventory.slots[idx]
+                            # Check if item is being dragged (first click started drag)
+                            # If so, cancel drag and use the dragging_stack
+                            if self.character.inventory.dragging_slot == idx:
+                                item_stack = self.character.inventory.dragging_stack
+                                self.character.inventory.cancel_drag()
+                            else:
+                                item_stack = self.character.inventory.slots[idx]
+
                             print(f"\n🖱️  Double-click detected on slot {idx}")
                             if item_stack:
                                 print(f"   Item: {item_stack.item_id}")
@@ -804,6 +811,8 @@ class GameEngine:
                                     equipment = item_stack.get_equipment()
                                     print(f"   get_equipment(): {equipment}")
                                     if equipment:
+                                        # Put item back in slot before equipping
+                                        self.character.inventory.slots[idx] = item_stack
                                         # Equip all equipment (including tools) using standard equipment system
                                         success, msg = self.character.try_equip_from_inventory(idx)
                                         if success:
@@ -813,8 +822,12 @@ class GameEngine:
                                     else:
                                         print(f"   ❌ equipment is None!")
                                         self.add_notification("Invalid equipment data", (255, 100, 100))
+                                        # Put item back if equipping failed
+                                        self.character.inventory.slots[idx] = item_stack
                                 else:
                                     print(f"   ⚠️  Not equipment, skipping")
+                                    # Put non-equipment item back in slot
+                                    self.character.inventory.slots[idx] = item_stack
                             else:
                                 print(f"   ⚠️  item_stack is None")
                             return
