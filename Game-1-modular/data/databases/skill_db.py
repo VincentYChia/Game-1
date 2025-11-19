@@ -90,6 +90,10 @@ class SkillDatabase:
             self.loaded = False
             return False
 
+    def get_skill(self, skill_id: str):
+        """Get a skill definition by ID"""
+        return self.skills.get(skill_id)
+
     def get_mana_cost(self, cost_text: str) -> int:
         """Convert text mana cost to numeric value"""
         return self.mana_costs.get(cost_text, 60)
