@@ -1077,13 +1077,24 @@ class QuestObjective:
 
 @dataclass
 class QuestRewards:
-    """Quest rewards"""
+    """Comprehensive quest rewards - supports multiple reward types for future expansion"""
+    # Core rewards
     experience: int = 0
+    gold: int = 0
+
+    # Restoration rewards
     health_restore: int = 0
     mana_restore: int = 0
+
+    # Progression rewards
     skills: List[str] = field(default_factory=list)
     items: List[Dict[str, Any]] = field(default_factory=list)  # [{"item_id": str, "quantity": int}]
     title: str = ""  # Optional title reward
+    stat_points: int = 0  # Free stat points to allocate
+
+    # Future expansion - status effects, buffs, etc.
+    status_effects: List[Dict[str, Any]] = field(default_factory=list)  # [{"effect_id": str, "duration": int}]
+    buffs: List[Dict[str, Any]] = field(default_factory=list)  # [{"stat": str, "amount": int, "duration": int}]
 
 @dataclass
 class QuestDefinition:
@@ -1137,8 +1148,11 @@ class Quest:
                 baseline_qty = self.baseline_inventory.get(item_id, 0)
                 gathered_since_start = current_qty - baseline_qty
 
+                print(f"[QUEST DEBUG] Gather check for {item_id}: current={current_qty}, baseline={baseline_qty}, gathered={gathered_since_start}, required={required_qty}")
+
                 # Check if we've gathered enough NEW items
                 if gathered_since_start < required_qty:
+                    print(f"[QUEST DEBUG] Not enough {item_id} gathered!")
                     return False
             return True
 
@@ -1147,32 +1161,42 @@ class Quest:
             required_kills = self.quest_def.objectives.enemies_killed
             current_kills = character.activities.get_count('combat')
             kills_since_start = current_kills - self.baseline_combat_kills
-            return kills_since_start >= required_kills
+            print(f"[QUEST DEBUG] Combat check: current_kills={current_kills}, baseline={self.baseline_combat_kills}, since_start={kills_since_start}, required={required_kills}")
+            result = kills_since_start >= required_kills
+            print(f"[QUEST DEBUG] Combat quest complete: {result}")
+            return result
 
         return False
 
     def consume_items(self, character) -> bool:
         """Remove quest items from inventory (for gather quests)"""
         if self.quest_def.objectives.objective_type != "gather":
+            print(f"[QUEST DEBUG] Quest type is {self.quest_def.objectives.objective_type}, skipping item consumption")
             return True
 
+        print(f"[QUEST DEBUG] Consuming items for gather quest")
         # Remove required items from inventory
         for required_item in self.quest_def.objectives.items:
             item_id = required_item["item_id"]
             required_qty = required_item["quantity"]
             remaining = required_qty
+            print(f"[QUEST DEBUG] Need to consume {required_qty}x {item_id}")
 
             for i, item_stack in enumerate(character.inventory.slots):
                 if item_stack and item_stack.item_id == item_id and remaining > 0:
                     if item_stack.quantity <= remaining:
+                        print(f"[QUEST DEBUG] Removing {item_stack.quantity}x {item_id} from slot {i}")
                         remaining -= item_stack.quantity
                         character.inventory.slots[i] = None
                     else:
+                        print(f"[QUEST DEBUG] Reducing {item_id} in slot {i} by {remaining}")
                         item_stack.quantity -= remaining
                         remaining = 0
 
             if remaining > 0:
+                print(f"[QUEST DEBUG] Failed to consume all items! Still need {remaining}x {item_id}")
                 return False  # Failed to consume all items
+            print(f"[QUEST DEBUG] Successfully consumed {required_qty}x {item_id}")
         return True
 
     def grant_rewards(self, character) -> List[str]:
@@ -1180,38 +1204,60 @@ class Quest:
         messages = []
         rewards = self.quest_def.rewards
 
+        print(f"[REWARD DEBUG] Granting rewards for quest: {self.quest_def.quest_id}")
+        print(f"[REWARD DEBUG] Character before: HP={character.health}/{character.max_health}, XP={character.leveling.current_exp}, Level={character.leveling.level}")
+
         # Experience
         if rewards.experience > 0:
+            old_xp = character.leveling.current_exp
+            old_level = character.leveling.level
             leveled_up = character.leveling.add_exp(rewards.experience)
+            new_xp = character.leveling.current_exp
+            print(f"[REWARD DEBUG] XP: {old_xp} + {rewards.experience} = {new_xp}")
             messages.append(f"+{rewards.experience} XP")
             if leveled_up:
                 messages.append(f"Level up! Now level {character.leveling.level}")
+                print(f"[REWARD DEBUG] Level up: {old_level} -> {character.leveling.level}")
 
         # Health restore
         if rewards.health_restore > 0:
+            old_health = character.health
             character.health = min(character.max_health, character.health + rewards.health_restore)
+            print(f"[REWARD DEBUG] Health: {old_health} + {rewards.health_restore} = {character.health}")
             messages.append(f"+{rewards.health_restore} HP")
 
         # Mana restore
         if rewards.mana_restore > 0:
+            old_mana = character.mana
             character.mana = min(character.max_mana, character.mana + rewards.mana_restore)
+            print(f"[REWARD DEBUG] Mana: {old_mana} + {rewards.mana_restore} = {character.mana}")
             messages.append(f"+{rewards.mana_restore} Mana")
 
         # Skills
+        print(f"[REWARD DEBUG] Processing {len(rewards.skills)} skills: {rewards.skills}")
         for skill_id in rewards.skills:
-            if character.skills.learn_skill(skill_id, character=character, skip_checks=True):
+            print(f"[REWARD DEBUG] Attempting to learn skill: {skill_id}")
+            learned = character.skills.learn_skill(skill_id, character=character, skip_checks=True)
+            print(f"[REWARD DEBUG] Skill {skill_id} learn result: {learned}")
+            if learned:
                 skill_db = SkillDatabase.get_instance()
                 skill_name = skill_db.skills[skill_id].name if skill_id in skill_db.skills else skill_id
                 messages.append(f"Learned skill: {skill_name}")
+            else:
+                print(f"[REWARD DEBUG] Failed to learn skill {skill_id} - may already be known")
 
         # Items
         mat_db = MaterialDatabase.get_instance()
+        print(f"[REWARD DEBUG] Processing {len(rewards.items)} item rewards")
         for item_reward in rewards.items:
             item_id = item_reward["item_id"]
             quantity = item_reward["quantity"]
+            print(f"[REWARD DEBUG] Adding item: {item_id} x{quantity}")
 
             # Try to add to inventory
-            if character.inventory.add_item(item_id, quantity):
+            added = character.inventory.add_item(item_id, quantity)
+            print(f"[REWARD DEBUG] Item add result: {added}")
+            if added:
                 item_def = mat_db.get_material(item_id)
                 item_name = item_def.name if item_def else item_id
                 messages.append(f"+{quantity}x {item_name}")
@@ -1220,14 +1266,71 @@ class Quest:
                 item_name = item_def.name if item_def else item_id
                 messages.append(f"Inventory full! Lost {quantity}x {item_name}")
 
+        # Gold
+        if rewards.gold > 0:
+            # Check if character has a gold/currency attribute
+            if hasattr(character, 'gold'):
+                old_gold = character.gold
+                character.gold += rewards.gold
+                print(f"[REWARD DEBUG] Gold: {old_gold} + {rewards.gold} = {character.gold}")
+                messages.append(f"+{rewards.gold} Gold")
+            else:
+                print(f"[REWARD DEBUG] Character has no gold attribute - skipping gold reward")
+
+        # Stat Points
+        if rewards.stat_points > 0:
+            # Check if character has stat points system
+            if hasattr(character, 'stat_points'):
+                old_points = character.stat_points
+                character.stat_points += rewards.stat_points
+                print(f"[REWARD DEBUG] Stat Points: {old_points} + {rewards.stat_points} = {character.stat_points}")
+                messages.append(f"+{rewards.stat_points} Stat Points")
+            elif hasattr(character, 'unallocated_points'):
+                old_points = character.unallocated_points
+                character.unallocated_points += rewards.stat_points
+                print(f"[REWARD DEBUG] Unallocated Points: {old_points} + {rewards.stat_points} = {character.unallocated_points}")
+                messages.append(f"+{rewards.stat_points} Stat Points")
+            else:
+                print(f"[REWARD DEBUG] Character has no stat points attribute - skipping stat point reward")
+
         # Title
         if rewards.title:
+            print(f"[REWARD DEBUG] Granting title: {rewards.title}")
             title_db = TitleDatabase.get_instance()
             if rewards.title in title_db.titles:
                 title_def = title_db.titles[rewards.title]
-                if character.titles.award_title(title_def):
+                awarded = character.titles.award_title(title_def)
+                print(f"[REWARD DEBUG] Title award result: {awarded}")
+                if awarded:
                     messages.append(f"Earned title: {title_def.name}")
 
+        # Status Effects (future expansion)
+        if rewards.status_effects:
+            print(f"[REWARD DEBUG] Processing {len(rewards.status_effects)} status effects")
+            for effect in rewards.status_effects:
+                effect_id = effect.get("effect_id", "")
+                duration = effect.get("duration", 0)
+                print(f"[REWARD DEBUG] Status effect: {effect_id} for {duration}s - NOT YET IMPLEMENTED")
+                # TODO: Implement status effect system
+                # if hasattr(character, 'status_effects'):
+                #     character.status_effects.add(effect_id, duration)
+                #     messages.append(f"Gained effect: {effect_id}")
+
+        # Buffs (future expansion)
+        if rewards.buffs:
+            print(f"[REWARD DEBUG] Processing {len(rewards.buffs)} buffs")
+            for buff in rewards.buffs:
+                stat = buff.get("stat", "")
+                amount = buff.get("amount", 0)
+                duration = buff.get("duration", 0)
+                print(f"[REWARD DEBUG] Buff: +{amount} {stat} for {duration}s - NOT YET IMPLEMENTED")
+                # TODO: Implement buff system
+                # if hasattr(character, 'buffs'):
+                #     character.buffs.add(stat, amount, duration)
+                #     messages.append(f"Buff: +{amount} {stat}")
+
+        print(f"[REWARD DEBUG] Character after: HP={character.health}/{character.max_health}, XP={character.leveling.current_exp}, Level={character.leveling.level}")
+        print(f"[REWARD DEBUG] Generated {len(messages)} reward messages")
         return messages
 
 class QuestManager:
@@ -1246,26 +1349,40 @@ class QuestManager:
 
     def complete_quest(self, quest_id: str, character) -> Tuple[bool, List[str]]:
         """Complete a quest and grant rewards. Returns (success, reward_messages)"""
+        print(f"[QUEST DEBUG] ========== COMPLETING QUEST: {quest_id} ==========")
+
         if quest_id not in self.active_quests:
+            print(f"[QUEST DEBUG] Quest not found in active quests!")
             return False, ["Quest not active"]
 
         quest = self.active_quests[quest_id]
+        print(f"[QUEST DEBUG] Quest found: {quest.quest_def.title}")
 
         # Check if completed
+        print(f"[QUEST DEBUG] Checking if quest objectives are met...")
         if not quest.check_completion(character):
+            print(f"[QUEST DEBUG] Quest objectives NOT met!")
             return False, ["Quest objectives not met"]
+        print(f"[QUEST DEBUG] Quest objectives ARE met!")
 
         # Consume quest items if needed
+        print(f"[QUEST DEBUG] Consuming quest items...")
         if not quest.consume_items(character):
+            print(f"[QUEST DEBUG] Failed to consume quest items!")
             return False, ["Failed to consume quest items"]
+        print(f"[QUEST DEBUG] Quest items consumed successfully!")
 
         # Grant rewards
+        print(f"[QUEST DEBUG] Granting quest rewards...")
         messages = quest.grant_rewards(character)
+        print(f"[QUEST DEBUG] Rewards granted! Generated {len(messages)} messages")
 
         # Mark as completed
         quest.status = "turned_in"
         self.completed_quests.append(quest_id)
         del self.active_quests[quest_id]
+        print(f"[QUEST DEBUG] Quest marked as complete and moved to completed list")
+        print(f"[QUEST DEBUG] ========== QUEST COMPLETION FINISHED ==========")
 
         return True, messages
 
@@ -1417,11 +1534,15 @@ class NPCDatabase:
                             rew_data = quest_data["rewards"]
                             rewards = QuestRewards(
                                 experience=rew_data.get("experience", 0),
+                                gold=rew_data.get("gold", 0),
                                 health_restore=rew_data.get("health_restore", 0),
                                 mana_restore=rew_data.get("mana_restore", 0),
                                 skills=rew_data.get("skills", []),
                                 items=rew_data.get("items", []),
-                                title=rew_data.get("title", "")
+                                title=rew_data.get("title", ""),
+                                stat_points=rew_data.get("statPoints", rew_data.get("stat_points", 0)),
+                                status_effects=rew_data.get("status_effects", []),
+                                buffs=rew_data.get("buffs", [])
                             )
 
                             # Support both "quest_id" and "questId", "title" and "name"
@@ -2739,20 +2860,31 @@ class ActivityTracker:
 # ============================================================================
 @dataclass
 class ActiveBuff:
-    """Represents an active buff on the character"""
-    buff_id: str
-    name: str
-    effect_type: str  # empower, quicken, fortify, etc.
-    category: str  # mining, combat, smithing, movement, etc.
-    magnitude: str  # minor, moderate, major, extreme
-    bonus_value: float  # The actual numerical bonus
-    duration_remaining: float  # Time remaining in seconds
-    source: str = "skill"  # skill, potion, equipment, etc.
+    """Represents an active buff on the character
+
+    Buffs are temporary enhancements that modify character stats or abilities.
+    They can come from skills, potions, equipment, or other sources.
+    """
+    buff_id: str                    # Unique identifier for this buff
+    name: str                       # Display name
+    effect_type: str                # empower, quicken, fortify, etc.
+    category: str                   # mining, combat, smithing, movement, etc.
+    magnitude: str                  # minor, moderate, major, extreme
+    bonus_value: float              # The actual numerical bonus (multiplier or flat value)
+    duration: float                 # Original duration in seconds (for UI progress bar)
+    duration_remaining: float       # Time remaining in seconds (countdown)
+    source: str = "skill"           # skill, potion, equipment, etc.
 
     def update(self, dt: float) -> bool:
         """Update buff timer. Returns True if buff is still active."""
         self.duration_remaining -= dt
         return self.duration_remaining > 0
+
+    def get_progress_percent(self) -> float:
+        """Get the percentage of duration remaining (0.0 to 1.0) for UI display"""
+        if self.duration <= 0:
+            return 0.0
+        return max(0.0, min(1.0, self.duration_remaining / self.duration))
 
 
 class BuffManager:
@@ -3107,6 +3239,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3124,6 +3257,7 @@ class SkillManager:
                 category=category,
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3140,6 +3274,7 @@ class SkillManager:
                 category="defense",
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3156,6 +3291,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3185,6 +3321,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3201,6 +3338,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3218,6 +3356,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=amount,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3236,6 +3375,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=radius,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3253,6 +3393,7 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=bypass,
+                duration=duration,
                 duration_remaining=duration
             )
             character.buffs.add_buff(buff)
@@ -3886,6 +4027,49 @@ class Character:
                 return equipped_tool
         return None
 
+    def get_tool_effectiveness_for_action(self, equipment_item: EquipmentItem, action_type: str) -> float:
+        """
+        Calculate effectiveness multiplier based on tool/weapon type vs action.
+
+        Tools and weapons are optimized for specific purposes and suffer penalties outside their domain:
+        - Axes: 100% on trees, 25% on ore/enemies
+        - Pickaxes: 100% on ore, 25% on trees/enemies
+        - Weapons: 100% on enemies, 25% on trees/ore
+
+        Args:
+            equipment_item: The tool or weapon being used
+            action_type: 'forestry', 'mining', or 'combat'
+
+        Returns:
+            float: Effectiveness multiplier (1.0 for optimal, 0.25 for sub-optimal)
+        """
+        # Get the slot to determine tool type
+        tool_slot = equipment_item.slot
+
+        # Axes are optimal for forestry
+        if tool_slot == 'axe':
+            if action_type == 'forestry':
+                return 1.0  # Perfect for chopping trees
+            else:
+                return 0.25  # Poor for mining/combat
+
+        # Pickaxes are optimal for mining
+        elif tool_slot == 'pickaxe':
+            if action_type == 'mining':
+                return 1.0  # Perfect for mining ore
+            else:
+                return 0.25  # Poor for forestry/combat
+
+        # Weapons (swords, daggers, etc.) are optimal for combat
+        elif tool_slot in ['mainHand', 'offHand']:
+            if action_type == 'combat':
+                return 1.0  # Perfect for fighting
+            else:
+                return 0.25  # Poor for harvesting
+
+        # Unknown tool type - assume full effectiveness
+        return 1.0
+
     def can_harvest_resource(self, resource: NaturalResource) -> Tuple[bool, str]:
         # Get equipped tool for this resource type
         equipped_tool = self.get_equipped_tool(resource.required_tool)
@@ -3919,8 +4103,16 @@ class Character:
         else:
             base_damage = equipped_tool.damage
 
-        effectiveness = equipped_tool.get_effectiveness()
+        # Durability-based effectiveness (0.5 to 1.0 based on condition)
+        durability_effectiveness = equipped_tool.get_effectiveness()
+
+        # Tool type effectiveness (1.0 if right tool, 0.25 if wrong tool)
         activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
+        tool_type_effectiveness = self.get_tool_effectiveness_for_action(equipped_tool, activity)
+
+        # Combine effectiveness multipliers
+        total_effectiveness = durability_effectiveness * tool_type_effectiveness
+
         stat_bonus = self.stats.get_bonus('strength' if activity == 'mining' else 'agility')
         title_bonus = self.titles.get_total_bonus(f'{activity}_damage')
         buff_bonus = self.buffs.get_damage_bonus(activity)
@@ -3928,7 +4120,7 @@ class Character:
 
         crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance') + self.buffs.get_total_bonus('pierce', activity)
         is_crit = random.random() < crit_chance
-        damage = int(base_damage * effectiveness * damage_mult)
+        damage = int(base_damage * total_effectiveness * damage_mult)
         actual_damage, depleted = resource.take_damage(damage, is_crit)
 
         # Reduce tool durability
@@ -3971,42 +4163,51 @@ class Character:
         return (loot, actual_damage, is_crit)
 
     def switch_tool(self):
-        """Cycle through tools and equipped weapons"""
-        # Build list of available items (tools + equipped weapons)
-        available_items = list(self.tools)
+        """Cycle through equipped tools and weapons"""
+        # Build list of available items from equipment slots
+        available_items = []
+
+        # Add equipped tools (axe and pickaxe from equipment slots)
+        axe_tool = self.equipment.slots.get('axe')
+        if axe_tool:
+            available_items.append(('axe', axe_tool))
+
+        pickaxe_tool = self.equipment.slots.get('pickaxe')
+        if pickaxe_tool:
+            available_items.append(('pickaxe', pickaxe_tool))
 
         # Add equipped weapons
         main_weapon = self.equipment.slots.get('mainHand')
-        off_weapon = self.equipment.slots.get('offHand')
         if main_weapon:
-            available_items.append(main_weapon)
+            available_items.append(('mainHand', main_weapon))
+
+        off_weapon = self.equipment.slots.get('offHand')
         if off_weapon:
-            available_items.append(off_weapon)
+            available_items.append(('offHand', off_weapon))
 
         if not available_items:
             return None
 
-        # Find current index
+        # Find current index based on what's currently selected
         current_idx = -1
-        if self.selected_tool:
-            for i, item in enumerate(available_items):
-                if isinstance(item, Tool) and item == self.selected_tool:
-                    current_idx = i
-                    break
-                elif isinstance(item, EquipmentItem) and hasattr(self, '_selected_weapon') and item == self._selected_weapon:
+        if hasattr(self, '_selected_slot') and self._selected_slot:
+            for i, (slot_name, item) in enumerate(available_items):
+                if slot_name == self._selected_slot:
                     current_idx = i
                     break
 
         # Cycle to next
         next_idx = (current_idx + 1) % len(available_items)
-        next_item = available_items[next_idx]
+        slot_name, next_item = available_items[next_idx]
 
-        if isinstance(next_item, Tool):
-            self.selected_tool = next_item
+        # Store the selected slot
+        self._selected_slot = slot_name
+
+        # Update selected tool/weapon for backward compatibility
+        if slot_name in ['axe', 'pickaxe']:
             self._selected_weapon = None
             return f"{next_item.name} (Tool)"
-        else:  # EquipmentItem (weapon)
-            self.selected_tool = None
+        else:  # weapon
             self._selected_weapon = next_item
             return f"{next_item.name} (Weapon)"
 
@@ -4305,6 +4506,7 @@ class Character:
                 category="health",
                 magnitude="minor",
                 bonus_value=5.0,
+                duration=60.0,
                 duration_remaining=60.0,
                 source="potion"
             )
@@ -4321,6 +4523,7 @@ class Character:
                 category="combat",
                 magnitude="moderate",
                 bonus_value=0.20,
+                duration=300.0,
                 duration_remaining=300.0,
                 source="potion"
             )
@@ -4337,6 +4540,7 @@ class Character:
                 category="defense",
                 magnitude="moderate",
                 bonus_value=10.0,
+                duration=300.0,
                 duration_remaining=300.0,
                 source="potion"
             )
@@ -4353,6 +4557,7 @@ class Character:
                 category="movement",
                 magnitude="moderate",
                 bonus_value=0.25,
+                duration=240.0,
                 duration_remaining=240.0,
                 source="potion"
             )
@@ -4370,6 +4575,7 @@ class Character:
                 category="combat",
                 magnitude="major",
                 bonus_value=0.40,
+                duration=480.0,
                 duration_remaining=480.0,
                 source="potion"
             )
@@ -4386,6 +4592,7 @@ class Character:
                 category="fire",
                 magnitude="moderate",
                 bonus_value=0.5,
+                duration=360.0,
                 duration_remaining=360.0,
                 source="potion"
             )
@@ -4401,6 +4608,7 @@ class Character:
                 category="frost",
                 magnitude="moderate",
                 bonus_value=0.5,
+                duration=360.0,
                 duration_remaining=360.0,
                 source="potion"
             )
@@ -4416,6 +4624,7 @@ class Character:
                 category="elemental",
                 magnitude="moderate",
                 bonus_value=0.3,
+                duration=600.0,
                 duration_remaining=600.0,
                 source="potion"
             )
@@ -4432,6 +4641,7 @@ class Character:
                 category="gathering",
                 magnitude="minor",
                 bonus_value=0.15,
+                duration=3600.0,
                 duration_remaining=3600.0,
                 source="potion"
             )
@@ -4447,6 +4657,7 @@ class Character:
                 category="defense",
                 magnitude="minor",
                 bonus_value=5.0,
+                duration=7200.0,
                 duration_remaining=7200.0,
                 source="potion"
             )
@@ -4462,6 +4673,7 @@ class Character:
                 category="combat",
                 magnitude="minor",
                 bonus_value=0.10,
+                duration=7200.0,
                 duration_remaining=7200.0,
                 source="potion"
             )
@@ -5427,8 +5639,8 @@ class Renderer:
         y += 25
 
         for buff in character.buffs.active_buffs:
-            # Buff name and timer
-            time_left = buff.remaining_duration
+            # Buff name and timer - FIXED: use duration_remaining (not remaining_duration)
+            time_left = buff.duration_remaining
             mins = int(time_left // 60)
             secs = int(time_left % 60)
             time_str = f"{mins}:{secs:02d}" if mins > 0 else f"{secs}s"
@@ -5441,8 +5653,8 @@ class Renderer:
             bar_height = 18
             pygame.draw.rect(self.screen, (40, 40, 50), (x, y, bar_width, bar_height))
 
-            # Fill based on remaining time
-            fill_width = int(bar_width * (buff.remaining_duration / buff.duration))
+            # Fill based on remaining time - FIXED: use get_progress_percent() method
+            fill_width = int(bar_width * buff.get_progress_percent())
             pygame.draw.rect(self.screen, color, (x, y, fill_width, bar_height))
             pygame.draw.rect(self.screen, (150, 150, 150), (x, y, bar_width, bar_height), 1)
 
@@ -6029,18 +6241,22 @@ class Renderer:
                         required_qty = item_req["quantity"]
                         current_qty = character.inventory.get_item_count(item_id)
 
+                        # Calculate progress since quest acceptance (using baseline)
+                        baseline_qty = quest.baseline_inventory.get(item_id, 0)
+                        gathered_since_start = current_qty - baseline_qty
+
                         # Get item name
                         mat_db = MaterialDatabase.get_instance()
                         item_def = mat_db.get_material(item_id)
                         item_name = item_def.name if item_def else item_id
 
-                        # Progress indicator
-                        is_complete = current_qty >= required_qty
+                        # Progress indicator (compare gathered since start vs required)
+                        is_complete = gathered_since_start >= required_qty
                         status_color = (100, 255, 100) if is_complete else (255, 255, 100)
                         check_mark = "✓" if is_complete else "○"
 
                         if y >= content_rect.y - 18 and y < content_rect.bottom:
-                            obj_text = f"  {check_mark} Gather {item_name}: {current_qty}/{required_qty}"
+                            obj_text = f"  {check_mark} Gather {item_name}: {gathered_since_start}/{required_qty}"
                             surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + 30, y))
                         y += 18
 
@@ -6048,7 +6264,10 @@ class Renderer:
                     required_kills = quest.quest_def.objectives.enemies_killed
                     current_kills = character.activities.get_count('combat')
 
-                    is_complete = current_kills >= required_kills
+                    # Calculate kills since quest acceptance (using baseline)
+                    kills_since_start = current_kills - quest.baseline_combat_kills
+
+                    is_complete = kills_since_start >= required_kills
                     status_color = (100, 255, 100) if is_complete else (255, 255, 100)
                     check_mark = "✓" if is_complete else "○"
 
@@ -6057,7 +6276,7 @@ class Renderer:
                     y += 18
 
                     if y >= content_rect.y - 18 and y < content_rect.bottom:
-                        obj_text = f"  {check_mark} Defeat enemies: {current_kills}/{required_kills}"
+                        obj_text = f"  {check_mark} Defeat enemies: {kills_since_start}/{required_kills}"
                         surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + 30, y))
                     y += 18
 
@@ -6076,6 +6295,10 @@ class Renderer:
                 rewards_parts = []
                 if quest.quest_def.rewards.experience > 0:
                     rewards_parts.append(f"{quest.quest_def.rewards.experience} XP")
+                if quest.quest_def.rewards.gold > 0:
+                    rewards_parts.append(f"{quest.quest_def.rewards.gold} Gold")
+                if quest.quest_def.rewards.stat_points > 0:
+                    rewards_parts.append(f"{quest.quest_def.rewards.stat_points} Stat Points")
                 if quest.quest_def.rewards.skills:
                     rewards_parts.append(f"Skills: {', '.join(quest.quest_def.rewards.skills)}")
                 if quest.quest_def.rewards.items:
@@ -6302,7 +6525,51 @@ class Renderer:
         pygame.draw.rect(self.screen, Config.COLOR_UI_BG, panel_rect)
         self.render_text("INVENTORY", 20, Config.INVENTORY_PANEL_Y + 10, bold=True)
 
-        start_x, start_y = 20, Config.INVENTORY_PANEL_Y + 50
+        # Render equipped tools section
+        tools_y = Config.INVENTORY_PANEL_Y + 35
+        self.render_text("Equipped Tools:", 20, tools_y, size="small")
+        tools_y += 20
+
+        slot_size = 50
+        spacing = 10
+
+        # Render axe slot
+        axe_x = 20
+        axe_rect = pygame.Rect(axe_x, tools_y, slot_size, slot_size)
+        equipped_axe = character.equipment.slots.get('axe')
+        pygame.draw.rect(self.screen, Config.COLOR_SLOT_FILLED if equipped_axe else Config.COLOR_SLOT_EMPTY, axe_rect)
+        pygame.draw.rect(self.screen, Config.COLOR_EQUIPPED if equipped_axe else Config.COLOR_SLOT_BORDER, axe_rect, 2)
+
+        if equipped_axe:
+            # Show tier and name
+            tier_surf = self.tiny_font.render(f"T{equipped_axe.tier}", True, (255, 255, 255))
+            self.screen.blit(tier_surf, (axe_x + 5, tools_y + 5))
+            name_surf = self.tiny_font.render("Axe", True, (255, 255, 255))
+            self.screen.blit(name_surf, (axe_x + 5, tools_y + slot_size - 15))
+        else:
+            # Show empty slot label
+            label_surf = self.tiny_font.render("Axe", True, (100, 100, 100))
+            self.screen.blit(label_surf, (axe_x + 10, tools_y + 18))
+
+        # Render pickaxe slot
+        pick_x = axe_x + slot_size + spacing
+        pick_rect = pygame.Rect(pick_x, tools_y, slot_size, slot_size)
+        equipped_pick = character.equipment.slots.get('pickaxe')
+        pygame.draw.rect(self.screen, Config.COLOR_SLOT_FILLED if equipped_pick else Config.COLOR_SLOT_EMPTY, pick_rect)
+        pygame.draw.rect(self.screen, Config.COLOR_EQUIPPED if equipped_pick else Config.COLOR_SLOT_BORDER, pick_rect, 2)
+
+        if equipped_pick:
+            # Show tier and name
+            tier_surf = self.tiny_font.render(f"T{equipped_pick.tier}", True, (255, 255, 255))
+            self.screen.blit(tier_surf, (pick_x + 5, tools_y + 5))
+            name_surf = self.tiny_font.render("Pick", True, (255, 255, 255))
+            self.screen.blit(name_surf, (pick_x + 5, tools_y + slot_size - 15))
+        else:
+            # Show empty slot label
+            label_surf = self.tiny_font.render("Pick", True, (100, 100, 100))
+            self.screen.blit(label_surf, (pick_x + 8, tools_y + 18))
+
+        start_x, start_y = 20, tools_y + slot_size + 20
         slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
         slots_per_row = Config.INVENTORY_SLOTS_PER_ROW
         hovered_slot = None
