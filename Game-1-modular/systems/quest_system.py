@@ -47,11 +47,8 @@ class Quest:
                 baseline_qty = self.baseline_inventory.get(item_id, 0)
                 gathered_since_start = current_qty - baseline_qty
 
-                print(f"[QUEST DEBUG] Gather check for {item_id}: current={current_qty}, baseline={baseline_qty}, gathered={gathered_since_start}, required={required_qty}")
-
                 # Check if we've gathered enough NEW items
                 if gathered_since_start < required_qty:
-                    print(f"[QUEST DEBUG] Not enough {item_id} gathered!")
                     return False
             return True
 
@@ -60,42 +57,33 @@ class Quest:
             required_kills = self.quest_def.objectives.enemies_killed
             current_kills = character.activities.get_count('combat')
             kills_since_start = current_kills - self.baseline_combat_kills
-            print(f"[QUEST DEBUG] Combat check: current_kills={current_kills}, baseline={self.baseline_combat_kills}, since_start={kills_since_start}, required={required_kills}")
-            result = kills_since_start >= required_kills
-            print(f"[QUEST DEBUG] Combat quest complete: {result}")
-            return result
+            return kills_since_start >= required_kills
 
         return False
 
     def consume_items(self, character) -> bool:
         """Remove quest items from inventory (for gather quests)"""
         if self.quest_def.objectives.objective_type != "gather":
-            print(f"[QUEST DEBUG] Quest type is {self.quest_def.objectives.objective_type}, skipping item consumption")
             return True
 
-        print(f"[QUEST DEBUG] Consuming items for gather quest")
         # Remove required items from inventory
         for required_item in self.quest_def.objectives.items:
             item_id = required_item["item_id"]
             required_qty = required_item["quantity"]
             remaining = required_qty
-            print(f"[QUEST DEBUG] Need to consume {required_qty}x {item_id}")
 
             for i, item_stack in enumerate(character.inventory.slots):
                 if item_stack and item_stack.item_id == item_id and remaining > 0:
                     if item_stack.quantity <= remaining:
-                        print(f"[QUEST DEBUG] Removing {item_stack.quantity}x {item_id} from slot {i}")
                         remaining -= item_stack.quantity
                         character.inventory.slots[i] = None
                     else:
-                        print(f"[QUEST DEBUG] Reducing {item_id} in slot {i} by {remaining}")
                         item_stack.quantity -= remaining
                         remaining = 0
 
             if remaining > 0:
-                print(f"[QUEST DEBUG] Failed to consume all items! Still need {remaining}x {item_id}")
+                print(f"⚠️  Quest failed to consume items! Still need {remaining}x {item_id}")
                 return False  # Failed to consume all items
-            print(f"[QUEST DEBUG] Successfully consumed {required_qty}x {item_id}")
         return True
 
     def grant_rewards(self, character) -> List[str]:
@@ -103,59 +91,40 @@ class Quest:
         messages = []
         rewards = self.quest_def.rewards
 
-        print(f"[REWARD DEBUG] Granting rewards for quest: {self.quest_def.quest_id}")
-        print(f"[REWARD DEBUG] Character before: HP={character.health}/{character.max_health}, XP={character.leveling.current_exp}, Level={character.leveling.level}")
-
         # Experience
         if rewards.experience > 0:
-            old_xp = character.leveling.current_exp
             old_level = character.leveling.level
             leveled_up = character.leveling.add_exp(rewards.experience)
-            new_xp = character.leveling.current_exp
-            print(f"[REWARD DEBUG] XP: {old_xp} + {rewards.experience} = {new_xp}")
             messages.append(f"+{rewards.experience} XP")
             if leveled_up:
                 messages.append(f"Level up! Now level {character.leveling.level}")
-                print(f"[REWARD DEBUG] Level up: {old_level} -> {character.leveling.level}")
 
         # Health restore
         if rewards.health_restore > 0:
-            old_health = character.health
             character.health = min(character.max_health, character.health + rewards.health_restore)
-            print(f"[REWARD DEBUG] Health: {old_health} + {rewards.health_restore} = {character.health}")
             messages.append(f"+{rewards.health_restore} HP")
 
         # Mana restore
         if rewards.mana_restore > 0:
-            old_mana = character.mana
             character.mana = min(character.max_mana, character.mana + rewards.mana_restore)
-            print(f"[REWARD DEBUG] Mana: {old_mana} + {rewards.mana_restore} = {character.mana}")
             messages.append(f"+{rewards.mana_restore} Mana")
 
         # Skills
-        print(f"[REWARD DEBUG] Processing {len(rewards.skills)} skills: {rewards.skills}")
         for skill_id in rewards.skills:
-            print(f"[REWARD DEBUG] Attempting to learn skill: {skill_id}")
             learned = character.skills.learn_skill(skill_id, character=character, skip_checks=True)
-            print(f"[REWARD DEBUG] Skill {skill_id} learn result: {learned}")
             if learned:
                 skill_db = SkillDatabase.get_instance()
                 skill_name = skill_db.skills[skill_id].name if skill_id in skill_db.skills else skill_id
                 messages.append(f"Learned skill: {skill_name}")
-            else:
-                print(f"[REWARD DEBUG] Failed to learn skill {skill_id} - may already be known")
 
         # Items
         mat_db = MaterialDatabase.get_instance()
-        print(f"[REWARD DEBUG] Processing {len(rewards.items)} item rewards")
         for item_reward in rewards.items:
             item_id = item_reward["item_id"]
             quantity = item_reward["quantity"]
-            print(f"[REWARD DEBUG] Adding item: {item_id} x{quantity}")
 
             # Try to add to inventory
             added = character.inventory.add_item(item_id, quantity)
-            print(f"[REWARD DEBUG] Item add result: {added}")
             if added:
                 item_def = mat_db.get_material(item_id)
                 item_name = item_def.name if item_def else item_id

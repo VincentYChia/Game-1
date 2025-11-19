@@ -506,7 +506,7 @@ class GameEngine:
         """Handle right-click events (mainly for using consumables)"""
         # Only handle inventory right-clicks for now
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            start_x, start_y = 20, Config.INVENTORY_PANEL_Y + 50
+            start_x, start_y = 20, Config.INVENTORY_GRID_Y
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -780,7 +780,7 @@ class GameEngine:
 
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            start_x, start_y = 20, Config.INVENTORY_PANEL_Y + 50
+            start_x, start_y = 20, Config.INVENTORY_GRID_Y
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -2086,7 +2086,7 @@ class GameEngine:
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
         if self.character.inventory.dragging_stack:
             if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-                start_x, start_y = 20, Config.INVENTORY_PANEL_Y + 50
+                start_x, start_y = 20, Config.INVENTORY_GRID_Y
                 slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
                 rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 

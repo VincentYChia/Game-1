@@ -26,6 +26,9 @@ class Config:
     INVENTORY_PANEL_HEIGHT = 300
     INVENTORY_SLOT_SIZE = 50
     INVENTORY_SLOTS_PER_ROW = 10
+    # Inventory grid Y position (accounts for tool slots above)
+    # = INVENTORY_PANEL_Y + 35 (label) + 20 (spacing) + 50 (tool slots) + 20 (spacing)
+    INVENTORY_GRID_Y = 725  # INVENTORY_PANEL_Y + 125
 
     # Character/Movement
     PLAYER_SPEED = 0.15
