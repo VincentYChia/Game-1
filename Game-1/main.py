@@ -1148,8 +1148,11 @@ class Quest:
                 baseline_qty = self.baseline_inventory.get(item_id, 0)
                 gathered_since_start = current_qty - baseline_qty
 
+                print(f"[QUEST DEBUG] Gather check for {item_id}: current={current_qty}, baseline={baseline_qty}, gathered={gathered_since_start}, required={required_qty}")
+
                 # Check if we've gathered enough NEW items
                 if gathered_since_start < required_qty:
+                    print(f"[QUEST DEBUG] Not enough {item_id} gathered!")
                     return False
             return True
 
@@ -1158,32 +1161,42 @@ class Quest:
             required_kills = self.quest_def.objectives.enemies_killed
             current_kills = character.activities.get_count('combat')
             kills_since_start = current_kills - self.baseline_combat_kills
-            return kills_since_start >= required_kills
+            print(f"[QUEST DEBUG] Combat check: current_kills={current_kills}, baseline={self.baseline_combat_kills}, since_start={kills_since_start}, required={required_kills}")
+            result = kills_since_start >= required_kills
+            print(f"[QUEST DEBUG] Combat quest complete: {result}")
+            return result
 
         return False
 
     def consume_items(self, character) -> bool:
         """Remove quest items from inventory (for gather quests)"""
         if self.quest_def.objectives.objective_type != "gather":
+            print(f"[QUEST DEBUG] Quest type is {self.quest_def.objectives.objective_type}, skipping item consumption")
             return True
 
+        print(f"[QUEST DEBUG] Consuming items for gather quest")
         # Remove required items from inventory
         for required_item in self.quest_def.objectives.items:
             item_id = required_item["item_id"]
             required_qty = required_item["quantity"]
             remaining = required_qty
+            print(f"[QUEST DEBUG] Need to consume {required_qty}x {item_id}")
 
             for i, item_stack in enumerate(character.inventory.slots):
                 if item_stack and item_stack.item_id == item_id and remaining > 0:
                     if item_stack.quantity <= remaining:
+                        print(f"[QUEST DEBUG] Removing {item_stack.quantity}x {item_id} from slot {i}")
                         remaining -= item_stack.quantity
                         character.inventory.slots[i] = None
                     else:
+                        print(f"[QUEST DEBUG] Reducing {item_id} in slot {i} by {remaining}")
                         item_stack.quantity -= remaining
                         remaining = 0
 
             if remaining > 0:
+                print(f"[QUEST DEBUG] Failed to consume all items! Still need {remaining}x {item_id}")
                 return False  # Failed to consume all items
+            print(f"[QUEST DEBUG] Successfully consumed {required_qty}x {item_id}")
         return True
 
     def grant_rewards(self, character) -> List[str]:
@@ -1192,14 +1205,14 @@ class Quest:
         rewards = self.quest_def.rewards
 
         print(f"[REWARD DEBUG] Granting rewards for quest: {self.quest_def.quest_id}")
-        print(f"[REWARD DEBUG] Character before: HP={character.health}/{character.max_health}, XP={character.leveling.current_xp}, Level={character.leveling.level}")
+        print(f"[REWARD DEBUG] Character before: HP={character.health}/{character.max_health}, XP={character.leveling.current_exp}, Level={character.leveling.level}")
 
         # Experience
         if rewards.experience > 0:
-            old_xp = character.leveling.current_xp
+            old_xp = character.leveling.current_exp
             old_level = character.leveling.level
             leveled_up = character.leveling.add_exp(rewards.experience)
-            new_xp = character.leveling.current_xp
+            new_xp = character.leveling.current_exp
             print(f"[REWARD DEBUG] XP: {old_xp} + {rewards.experience} = {new_xp}")
             messages.append(f"+{rewards.experience} XP")
             if leveled_up:
@@ -1316,7 +1329,7 @@ class Quest:
                 #     character.buffs.add(stat, amount, duration)
                 #     messages.append(f"Buff: +{amount} {stat}")
 
-        print(f"[REWARD DEBUG] Character after: HP={character.health}/{character.max_health}, XP={character.leveling.current_xp}, Level={character.leveling.level}")
+        print(f"[REWARD DEBUG] Character after: HP={character.health}/{character.max_health}, XP={character.leveling.current_exp}, Level={character.leveling.level}")
         print(f"[REWARD DEBUG] Generated {len(messages)} reward messages")
         return messages
 
@@ -1336,26 +1349,40 @@ class QuestManager:
 
     def complete_quest(self, quest_id: str, character) -> Tuple[bool, List[str]]:
         """Complete a quest and grant rewards. Returns (success, reward_messages)"""
+        print(f"[QUEST DEBUG] ========== COMPLETING QUEST: {quest_id} ==========")
+
         if quest_id not in self.active_quests:
+            print(f"[QUEST DEBUG] Quest not found in active quests!")
             return False, ["Quest not active"]
 
         quest = self.active_quests[quest_id]
+        print(f"[QUEST DEBUG] Quest found: {quest.quest_def.title}")
 
         # Check if completed
+        print(f"[QUEST DEBUG] Checking if quest objectives are met...")
         if not quest.check_completion(character):
+            print(f"[QUEST DEBUG] Quest objectives NOT met!")
             return False, ["Quest objectives not met"]
+        print(f"[QUEST DEBUG] Quest objectives ARE met!")
 
         # Consume quest items if needed
+        print(f"[QUEST DEBUG] Consuming quest items...")
         if not quest.consume_items(character):
+            print(f"[QUEST DEBUG] Failed to consume quest items!")
             return False, ["Failed to consume quest items"]
+        print(f"[QUEST DEBUG] Quest items consumed successfully!")
 
         # Grant rewards
+        print(f"[QUEST DEBUG] Granting quest rewards...")
         messages = quest.grant_rewards(character)
+        print(f"[QUEST DEBUG] Rewards granted! Generated {len(messages)} messages")
 
         # Mark as completed
         quest.status = "turned_in"
         self.completed_quests.append(quest_id)
         del self.active_quests[quest_id]
+        print(f"[QUEST DEBUG] Quest marked as complete and moved to completed list")
+        print(f"[QUEST DEBUG] ========== QUEST COMPLETION FINISHED ==========")
 
         return True, messages
 
@@ -4065,42 +4092,51 @@ class Character:
         return (loot, actual_damage, is_crit)
 
     def switch_tool(self):
-        """Cycle through tools and equipped weapons"""
-        # Build list of available items (tools + equipped weapons)
-        available_items = list(self.tools)
+        """Cycle through equipped tools and weapons"""
+        # Build list of available items from equipment slots
+        available_items = []
+
+        # Add equipped tools (axe and pickaxe from equipment slots)
+        axe_tool = self.equipment.slots.get('axe')
+        if axe_tool:
+            available_items.append(('axe', axe_tool))
+
+        pickaxe_tool = self.equipment.slots.get('pickaxe')
+        if pickaxe_tool:
+            available_items.append(('pickaxe', pickaxe_tool))
 
         # Add equipped weapons
         main_weapon = self.equipment.slots.get('mainHand')
-        off_weapon = self.equipment.slots.get('offHand')
         if main_weapon:
-            available_items.append(main_weapon)
+            available_items.append(('mainHand', main_weapon))
+
+        off_weapon = self.equipment.slots.get('offHand')
         if off_weapon:
-            available_items.append(off_weapon)
+            available_items.append(('offHand', off_weapon))
 
         if not available_items:
             return None
 
-        # Find current index
+        # Find current index based on what's currently selected
         current_idx = -1
-        if self.selected_tool:
-            for i, item in enumerate(available_items):
-                if isinstance(item, Tool) and item == self.selected_tool:
-                    current_idx = i
-                    break
-                elif isinstance(item, EquipmentItem) and hasattr(self, '_selected_weapon') and item == self._selected_weapon:
+        if hasattr(self, '_selected_slot') and self._selected_slot:
+            for i, (slot_name, item) in enumerate(available_items):
+                if slot_name == self._selected_slot:
                     current_idx = i
                     break
 
         # Cycle to next
         next_idx = (current_idx + 1) % len(available_items)
-        next_item = available_items[next_idx]
+        slot_name, next_item = available_items[next_idx]
 
-        if isinstance(next_item, Tool):
-            self.selected_tool = next_item
+        # Store the selected slot
+        self._selected_slot = slot_name
+
+        # Update selected tool/weapon for backward compatibility
+        if slot_name in ['axe', 'pickaxe']:
             self._selected_weapon = None
             return f"{next_item.name} (Tool)"
-        else:  # EquipmentItem (weapon)
-            self.selected_tool = None
+        else:  # weapon
             self._selected_weapon = next_item
             return f"{next_item.name} (Weapon)"
 
