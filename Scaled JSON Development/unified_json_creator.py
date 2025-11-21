@@ -546,7 +546,8 @@ class DataLoader:
     def __init__(self, base_path: str = None):
         if base_path is None:
             # Auto-detect from current file location
-            base_path = Path(__file__).parent.parent.parent
+            # File is in "Scaled JSON Development", need to go to Game-1-modular
+            base_path = Path(__file__).parent.parent / "Game-1-modular"
         self.base_path = Path(base_path)
         self.data_cache: Dict[str, List[Dict]] = {}
         self.file_mapping: Dict[str, List[str]] = {}  # Maps JSON type to file paths
