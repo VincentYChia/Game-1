@@ -1,0 +1,322 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Crafting station definitions - placeable items that enable crafting",
+    "note": "Stations are just items with placeable flag, no special structure needed"
+  },
+
+  "stations": [
+    {
+      "metadata": {
+        "narrative": "Simple stone forge with basic bellows. Hot enough for copper and iron work, but struggles with harder metals.",
+        "tags": ["station", "smithing", "starter"]
+      },
+      "itemId": "forge_t1",
+      "name": "Basic Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 50.0
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Improved forge with reinforced stone and efficient airflow. Reaches temperatures needed for steel.",
+        "tags": ["station", "smithing", "standard"]
+      },
+      "itemId": "forge_t2",
+      "name": "Reinforced Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 75.0
+      },
+      "requirements": {
+        "level": 8
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master forge with crystal-enhanced heating. Can reach temperatures that would melt lesser furnaces.",
+        "tags": ["station", "smithing", "quality"]
+      },
+      "itemId": "forge_t3",
+      "name": "Master Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 100.0
+      },
+      "requirements": {
+        "level": 15
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary forge that bends reality itself. Can work metals that shouldn't exist.",
+        "tags": ["station", "smithing", "legendary"]
+      },
+      "itemId": "forge_t4",
+      "name": "Eternal Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 150.0
+      },
+      "requirements": {
+        "level": 25
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Basic stone furnace for refining raw ores into usable materials. Essential for any aspiring metalworker.",
+        "tags": ["station", "refining", "starter"]
+      },
+      "itemId": "refinery_t1",
+      "name": "Basic Refinery",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "refining",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 45.0
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Advanced refinery with better heat retention. Processes materials more efficiently with less waste.",
+        "tags": ["station", "refining", "standard"]
+      },
+      "itemId": "refinery_t2",
+      "name": "Advanced Refinery",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "refining",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 65.0
+      },
+      "requirements": {
+        "level": 8
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Simple alchemy table with mortar, pestle, and basic glassware. Sufficient for brewing basic potions.",
+        "tags": ["station", "alchemy", "starter"]
+      },
+      "itemId": "alchemy_table_t1",
+      "name": "Basic Alchemy Table",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "alchemy",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 30.0
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Professional alchemy setup with distillation equipment and precise measuring tools.",
+        "tags": ["station", "alchemy", "quality"]
+      },
+      "itemId": "alchemy_table_t2",
+      "name": "Advanced Alchemy Table",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "alchemy",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 50.0
+      },
+      "requirements": {
+        "level": 8
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Basic workbench with simple tools for assembling mechanical devices.",
+        "tags": ["station", "engineering", "starter"]
+      },
+      "itemId": "engineering_bench_t1",
+      "name": "Basic Engineering Bench",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "engineering",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 35.0
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Precision engineering station with specialized tools for complex device assembly.",
+        "tags": ["station", "engineering", "quality"]
+      },
+      "itemId": "engineering_bench_t2",
+      "name": "Advanced Engineering Bench",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "engineering",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 55.0
+      },
+      "requirements": {
+        "level": 8
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Simple enchanting table with basic rune-carving tools. Sufficient for minor enchantments.",
+        "tags": ["station", "enchanting", "starter"]
+      },
+      "itemId": "enchanting_table_t1",
+      "name": "Basic Enchanting Table",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "enchanting",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 40.0
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Arcane enchanting table surrounded by floating crystals. Channels magical energies precisely.",
+        "tags": ["station", "enchanting", "quality"]
+      },
+      "itemId": "enchanting_table_t2",
+      "name": "Arcane Enchanting Table",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "enchanting",
+      "tier": 2,
+      "rarity": "rare",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 60.0
+      },
+      "requirements": {
+        "level": 10
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  ]
+}

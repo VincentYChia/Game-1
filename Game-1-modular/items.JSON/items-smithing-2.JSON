@@ -1,0 +1,968 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "discipline": "smithing",
+    "description": "Items crafted through smithing discipline",
+    "totalItems": 29,
+    "note": "Excludes tools already defined in tools.json (8 tools: copper/iron/steel/mithril pickaxe and axe)"
+  },
+
+  "weapons": [
+    {
+      "metadata": {
+        "narrative": "A simple iron blade with a wooden handle. Every warrior's first step on the path to mastery. The weight feels right in your hand - not perfect, but yours.",
+        "tags": ["melee", "sword", "versatile", "starter"]
+      },
+      "itemId": "iron_shortsword",
+      "name": "Iron Shortsword",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "shortsword",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Simple copper-tipped spear with ash wood shaft. The extra reach keeps danger at arm's length. Perfect for those who prefer distance over direct confrontation.",
+        "tags": ["melee", "spear", "versatile", "reach"]
+      },
+      "itemId": "copper_spear",
+      "name": "Copper Spear",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "spear",
+      "tier": 1,
+      "rarity": "common",
+      "range": 2,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.0,
+        "durability": 1.0,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Balanced steel longsword that flows like water and strikes like thunder. The blade sings when it cuts through air, a testament to its quality.",
+        "tags": ["melee", "sword", "versatile", "quality"]
+      },
+      "itemId": "steel_longsword",
+      "name": "Steel Longsword",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "longsword",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 1.0,
+        "durability": 1.1,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {"STR": 10}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Steel battleaxe with brutal cleaving power. Grip it with both hands and watch enemies fall like timber. Equally deadly in one hand for those strong enough to wield it.",
+        "tags": ["melee", "axe", "versatile", "cleaving"]
+      },
+      "itemId": "steel_battleaxe",
+      "name": "Steel Battleaxe",
+      "category": "equipment",
+      "type": "axe",
+      "subtype": "battleaxe",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 0.95,
+        "durability": 1.1,
+        "weight": 1.2
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {"STR": 12}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Heavy iron warhammer that crushes armor and bone alike. The weight demands both hands, but the devastation it delivers makes that trade worthwhile. Favored by those who prefer decisive, crushing blows.",
+        "tags": ["melee", "mace", "2H", "crushing", "armor_breaker"]
+      },
+      "itemId": "iron_warhammer",
+      "name": "Iron Warhammer",
+      "category": "equipment",
+      "type": "mace",
+      "subtype": "warhammer",
+      "tier": 2,
+      "rarity": "common",
+      "range": 1.5,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 1.3,
+        "attackSpeed": 0.75,
+        "durability": 1.3,
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {"STR": 15}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Simple copper dagger, light and quick. Not much reach, but what it lacks in power it makes up for in speed. Perfect for those who value precision over brute force.",
+        "tags": ["melee", "dagger", "1H", "fast", "precision"]
+      },
+      "itemId": "copper_dagger",
+      "name": "Copper Dagger",
+      "category": "equipment",
+      "type": "dagger",
+      "subtype": "dagger",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0.5,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.9,
+        "attackSpeed": 1.3,
+        "durability": 0.8,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {"AGI": 8}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Composite longbow of ash wood and sinew, strung with silk-spider thread. The draw is heavy, demanding both hands and steady arms, but arrows fly true and far. Distance is your advantage.",
+        "tags": ["ranged", "bow", "2H", "precision"]
+      },
+      "itemId": "composite_longbow",
+      "name": "Composite Longbow",
+      "category": "equipment",
+      "type": "bow",
+      "subtype": "longbow",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 15,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 0.85,
+        "durability": 0.9,
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 9,
+        "stats": {"AGI": 14}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
+        "tags": ["melee", "staff", "versatile", "elemental", "fire"]
+      },
+      "itemId": "fire_crystal_staff",
+      "name": "Fire Crystal Staff",
+      "category": "equipment",
+      "type": "staff",
+      "subtype": "staff",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 8,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.85,
+        "attackSpeed": 1.1,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 15,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 15,
+        "stats": {"WIS": 18}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Round iron shield with oak backing. Not just for blocking - bash enemies with the rim or use it to create openings. Defense and offense in one hand.",
+        "tags": ["melee", "shield", "1H", "defensive", "bash"]
+      },
+      "itemId": "iron_round_shield",
+      "name": "Iron Round Shield",
+      "category": "equipment",
+      "type": "shield",
+      "subtype": "buckler",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.6,
+        "attackSpeed": 1.1,
+        "durability": 1.8,
+        "weight": 1.3
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {"STR": 8}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+	{
+	"metadata": {
+		"narrative": "Mithril dagger that seems to shimmer out of existence. Wickedly sharp and impossibly light, it strikes faster than the eye can follow. The blade whispers through air and flesh alike.",
+		"tags": ["melee", "dagger", "1H", "fast", "precision", "legendary"]
+	},
+	"itemId": "mithril_dagger",
+	"name": "Mithril Dagger",
+	"category": "equipment",
+	"type": "weapon",
+	"subtype": "dagger",
+	"tier": 3,
+	"rarity": "rare",
+	"range": 0.5,
+	"slot": "mainHand",
+	  "statMultipliers": {
+		"damage": 1.1,
+		"attackSpeed": 1.2,
+		"durability": 1.5,
+		"weight": 0.5
+	  },
+	  "requirements": {
+		"level": 16,
+		"stats": {"AGI": 20}
+	  },
+	  "flags": {
+		"stackable": false,
+		"equippable": true,
+		"repairable": true
+		}
+	},
+{
+  "metadata": {
+    "narrative": "Simple pine shortbow strung with treated slime gel. Not powerful, but reliable and easy to maintain. Perfect for learning the basics of archery.",
+    "tags": ["ranged", "bow", "2H", "starter"]
+  },
+  "itemId": "pine_shortbow",
+  "name": "Pine Shortbow",
+  "category": "equipment",
+  "type": "weapon",
+  "subtype": "shortbow",
+  "tier": 1,
+  "rarity": "common",
+  "range": 10,
+  "slot": "mainHand",
+  "statMultipliers": {
+    "damage": 1.0,
+    "attackSpeed": 1.0,
+    "durability": 0.8,
+    "weight": 0.7
+  },
+  "requirements": {
+    "level": 1,
+    "stats": {"AGI": 6}
+  },
+  "flags": {
+    "stackable": false,
+    "equippable": true,
+    "repairable": true
+  }
+}
+	
+  ],
+
+  "armor": [
+    {
+      "metadata": {
+        "narrative": "Basic leather protection stitched from wolf pelts and bound with slime gel. Better than nothing, lighter than metal, and it might just save your life.",
+        "tags": ["armor", "chest", "light", "starter"]
+      },
+      "itemId": "leather_tunic",
+      "name": "Leather Tunic",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "tunic",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "chest",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Reinforced leather boots with iron caps. Protects your feet without slowing you down. Essential for anyone who values both mobility and survival.",
+        "tags": ["armor", "feet", "light", "starter"]
+      },
+      "itemId": "iron_boots",
+      "name": "Iron Boots",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "boots",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "feet",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Iron plates protecting vital organs with beetle carapace reinforcement. Heavy but reliable. When arrows fly and blades swing, you'll appreciate every ounce of protection.",
+        "tags": ["armor", "chest", "heavy", "standard"]
+      },
+      "itemId": "iron_chestplate",
+      "name": "Iron Chestplate",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "chestplate",
+      "tier": 2,
+      "rarity": "common",
+      "slot": "chest",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Steel helm with full face protection and wolf pelt padding. Your head stays attached, which is nice. The padding reduces the ringing when you take a hit.",
+        "tags": ["armor", "head", "heavy", "quality"]
+      },
+      "itemId": "steel_helm",
+      "name": "Steel Helm",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "helmet",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "head",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Steel plate leggings with articulated joints. Heavy but protective, they guard your legs without restricting movement. Every smith's second major armor piece after the chestplate.",
+        "tags": ["armor", "legs", "metal", "heavy"]
+      },
+      "itemId": "steel_leggings",
+      "name": "Steel Leggings",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "leggings",
+      "tier": 2,
+      "rarity": "common",
+      "slot": "legs",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Leather gloves reinforced with iron studs across the knuckles. Light enough for dexterity, strong enough to turn a blade. Your hands are tools - protect them.",
+        "tags": ["armor", "hands", "light", "flexible"]
+      },
+      "itemId": "iron_studded_gauntlets",
+      "name": "Iron-Studded Gauntlets",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "gauntlets",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "hands",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  ],
+
+  "tools": [
+    {
+      "metadata": {
+        "narrative": "Flexible bamboo rod with silk line and bronze hook. Patient hands pull dinner from rivers and lakes. Not much use in a fight, but starvation kills just as surely as swords.",
+        "tags": ["tool", "fishing", "gathering"]
+      },
+      "itemId": "bamboo_fishing_rod",
+      "name": "Bamboo Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 1,
+      "rarity": "common",
+      "range": 5,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.5,
+        "gathering": 1.0,
+        "durability": 0.8,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Curved steel blade designed for harvesting herbs, grains, and fibrous plants. The razor edge cuts clean without bruising delicate materials. Adequate for self-defense in a pinch.",
+        "tags": ["tool", "harvesting", "gathering", "herbs"]
+      },
+      "itemId": "steel_sickle",
+      "name": "Steel Sickle",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "sickle",
+      "tier": 2,
+      "rarity": "common",
+      "range": 0.5,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.7,
+        "gathering": 1.0,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  ],
+
+  "accessories": [
+    {
+      "metadata": {
+        "narrative": "Simple copper band holding a fire crystal. Radiates gentle warmth against your skin. The crystal pulses with contained flames, never dimming, never burning.",
+        "tags": ["accessory", "ring", "fire", "elemental"]
+      },
+      "itemId": "copper_fire_ring",
+      "name": "Copper Fire Ring",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "ring",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.1
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 5,
+          "effect": "Adds fire damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Iron amulet cradling water crystals. Feels cool against your skin, like a gentle stream running across your chest. The crystals shimmer with captured tides.",
+        "tags": ["accessory", "amulet", "water", "elemental"]
+      },
+      "itemId": "iron_water_amulet",
+      "name": "Iron Water Amulet",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "amulet",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "water",
+          "value": 10,
+          "effect": "Adds water damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Steel bracelet woven with lightning shards and spectral thread. Crackles with stored static electricity. Touch it and feel the power humming beneath the surface.",
+        "tags": ["accessory", "bracelet", "lightning", "elemental"]
+      },
+      "itemId": "steel_lightning_bracelet",
+      "name": "Steel Lightning Bracelet",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "bracelet",
+      "tier": 3,
+      "rarity": "rare",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 20,
+          "effect": "Adds lightning damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  ],
+
+  "stations": [
+    {
+      "metadata": {
+        "narrative": "Basic stone forge suitable for working copper and iron. The foundation of smithing - crude but functional. Every master started with a forge like this.",
+        "tags": ["station", "forge", "smithing", "starter"]
+      },
+      "itemId": "forge_t1",
+      "name": "Basic Stone Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Improved forge with better heat retention and basalt construction. Can work steel reliably. Fire crystals enhance the heat, pushing temperatures higher.",
+        "tags": ["station", "forge", "smithing", "standard"]
+      },
+      "itemId": "forge_t2",
+      "name": "Steel Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master forge with obsidian construction and crystal enhancement. Can reach extreme temperatures needed for legendary metals. Phoenix ash ensures the flames never die.",
+        "tags": ["station", "forge", "smithing", "master"]
+      },
+      "itemId": "forge_t3",
+      "name": "Master Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Basic limestone refinery for turning raw ores into usable ingots. Essential for any metalworker. The crucible glows red-hot as impurities burn away.",
+        "tags": ["station", "refinery", "forging", "starter"]
+      },
+      "itemId": "refinery_t1",
+      "name": "Basic Refinery",
+      "category": "station",
+      "type": "forging",
+      "subtype": "refinery",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Advanced refinery with improved efficiency and heat control. Can process higher-grade ores and create complex alloys. The granite construction handles intense heat without cracking.",
+        "tags": ["station", "refinery", "forging", "standard"]
+      },
+      "itemId": "refinery_t2",
+      "name": "Steel Refinery",
+      "category": "station",
+      "type": "forging",
+      "subtype": "refinery",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master refinery capable of processing legendary materials. Obsidian crucibles contain temperatures that would vaporize lesser equipment. Mithril chambers prevent contamination.",
+        "tags": ["station", "refinery", "forging", "master"]
+      },
+      "itemId": "refinery_t3",
+      "name": "Master Refinery",
+      "category": "station",
+      "type": "forging",
+      "subtype": "refinery",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Wooden workbench fitted with glass vials, copper cauldrons, and measuring instruments. This is where plants become potions and careful mixing creates powerful effects.",
+        "tags": ["station", "alchemy", "brewing", "starter"]
+      },
+      "itemId": "alchemy_table_t1",
+      "name": "Basic Alchemy Table",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Advanced alchemy station with steel vessels and crystal-infused apparatus. Handles volatile reactions with ease. The fire crystals maintain precise temperature control.",
+        "tags": ["station", "alchemy", "brewing", "standard"]
+      },
+      "itemId": "alchemy_table_t2",
+      "name": "Steel Alchemy Table",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Sturdy iron workbench equipped with precision tools, vises, and gear assemblies. Here mechanisms take shape - springs tension, gears mesh, devices come to life.",
+        "tags": ["station", "engineering", "mechanical", "starter"]
+      },
+      "itemId": "engineering_bench_t1",
+      "name": "Basic Engineering Bench",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Advanced engineering station with steel construction and precision measuring tools. Complex mechanisms and intricate devices are possible here. Lightning crystals power automated tools.",
+        "tags": ["station", "engineering", "mechanical", "standard"]
+      },
+      "itemId": "engineering_bench_t2",
+      "name": "Steel Engineering Bench",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Stone pedestal inlaid with crystalline channels that pulse with latent energy. Place items here and inscribe patterns of power to enhance them. Where mundane becomes magical.",
+        "tags": ["station", "enchanting", "enhancement", "starter"]
+      },
+      "itemId": "enchanting_table_t1",
+      "name": "Basic Enchanting Altar",
+      "category": "station",
+      "type": "enchanting",
+      "subtype": "altar",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  ]
+}

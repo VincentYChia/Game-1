@@ -1,0 +1,1200 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Initial skill library - 30 foundational skills for alpha testing",
+    "totalSkills": 30,
+    "note": "Covers all major game systems and effect types"
+  },
+
+  "skills": [
+    {
+      "skillId": "miners_fury",
+      "name": "Miner's Fury",
+      "tier": 1,
+      "rarity": "common",
+      "categories": ["gathering", "mining"],
+      "description": "Channel raw strength into your pickaxe, doubling mining damage for a sustained period.",
+      "narrative": "The mountain yields to those who show it proper respect. Or, failing that, overwhelming force.",
+      "tags": ["damage_boost", "gathering", "basic"],
+      
+      "effect": {
+        "type": "empower",
+        "category": "mining",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "moderate",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "titans_excavation",
+        "requirement": "Reach level 10 and mine 1000 ore nodes"
+      },
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "lumberjacks_rhythm",
+      "name": "Lumberjack's Rhythm",
+      "tier": 1,
+      "rarity": "common",
+      "categories": ["gathering", "forestry"],
+      "description": "Fall into a steady rhythm, chopping wood much faster than normal.",
+      "narrative": "Listen to the forest. Find the heartbeat. Match your swing to the ancient pulse.",
+      "tags": ["speed_boost", "gathering", "basic"],
+      
+      "effect": {
+        "type": "quicken",
+        "category": "forestry",
+        "magnitude": "moderate",
+        "target": "self",
+        "duration": "moderate",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "natures_tempo",
+        "requirement": "Reach level 10 and harvest 500 trees"
+      },
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "battle_stance",
+      "name": "Battle Stance",
+      "tier": 1,
+      "rarity": "uncommon",
+      "categories": ["combat", "defense"],
+      "description": "Brace yourself against incoming attacks, reducing damage taken significantly.",
+      "narrative": "Plant your feet. Lower your center. Become the immovable object.",
+      "tags": ["defense", "damage_reduction", "combat"],
+      
+      "effect": {
+        "type": "fortify",
+        "category": "defense",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "long",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "long"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "iron_fortress",
+        "requirement": "Reach level 10 and block 5000 damage"
+      },
+
+      "requirements": {
+        "characterLevel": 3,
+        "stats": {"DEF": 5},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "combat_strike",
+      "name": "Power Strike",
+      "tier": 1,
+      "rarity": "common",
+      "categories": ["combat"],
+      "description": "Your next attack hits with devastating force, dealing massive damage.",
+      "narrative": "Sometimes subtlety fails. Sometimes you just need to hit something really, really hard.",
+      "tags": ["damage", "single_hit", "combat"],
+      
+      "effect": {
+        "type": "empower",
+        "category": "damage",
+        "magnitude": "extreme",
+        "target": "enemy",
+        "duration": "instant",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "high",
+        "cooldown": "short"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "decimating_blow",
+        "requirement": "Reach level 10 and deal 10000 damage"
+      },
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "quick_repair",
+      "name": "Quick Repair",
+      "tier": 1,
+      "rarity": "common",
+      "categories": ["utility", "durability"],
+      "description": "Instantly restore durability to your equipped tools and weapons.",
+      "narrative": "A warrior who maintains their tools never finds themselves defenseless.",
+      "tags": ["durability", "repair", "instant"],
+      
+      "effect": {
+        "type": "restore",
+        "category": "durability",
+        "magnitude": "moderate",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "low",
+        "cooldown": "long"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "master_maintenance",
+        "requirement": "Reach level 10 and repair 50000 durability"
+      },
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "bountiful_harvest",
+      "name": "Bountiful Harvest",
+      "tier": 1,
+      "rarity": "uncommon",
+      "categories": ["gathering"],
+      "description": "Gather extra materials from each resource node you harvest.",
+      "narrative": "The generous earth rewards those who know where to look. And how to ask nicely.",
+      "tags": ["yield", "gathering", "bonus"],
+      
+      "effect": {
+        "type": "enrich",
+        "category": "mining",
+        "magnitude": "moderate",
+        "target": "resource_node",
+        "duration": "extended",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "natures_bounty",
+        "requirement": "Reach level 10 and gather 5000 materials"
+      },
+
+      "requirements": {
+        "characterLevel": 2,
+        "stats": {"LCK": 5},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "sprint",
+      "name": "Sprint",
+      "tier": 1,
+      "rarity": "common",
+      "categories": ["movement"],
+      "description": "Move significantly faster for a brief period.",
+      "narrative": "Sometimes the best strategy is running away. Fast.",
+      "tags": ["movement", "speed", "mobility"],
+      
+      "effect": {
+        "type": "quicken",
+        "category": "movement",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "brief",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "low",
+        "cooldown": "short"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "wind_runner",
+        "requirement": "Reach level 10 and travel 100000 tiles"
+      },
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "smiths_focus",
+      "name": "Smith's Focus",
+      "tier": 1,
+      "rarity": "uncommon",
+      "categories": ["crafting", "smithing"],
+      "description": "Extend your smithing mini-game timer, giving more time for perfect strikes.",
+      "narrative": "Master smiths don't rush. They breathe. They focus. They strike true.",
+      "tags": ["crafting", "time", "smithing"],
+      
+      "effect": {
+        "type": "quicken",
+        "category": "smithing",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "timeless_forge",
+        "requirement": "Reach level 10 and craft 100 smithed items"
+      },
+
+      "requirements": {
+        "characterLevel": 2,
+        "stats": {},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "combat_rush",
+      "name": "Combat Rush",
+      "tier": 1,
+      "rarity": "common",
+      "categories": ["combat"],
+      "description": "Attack much faster for a short burst of time.",
+      "narrative": "Precision is overrated when you can just hit them twelve times before they blink.",
+      "tags": ["attack_speed", "combat", "burst"],
+      
+      "effect": {
+        "type": "quicken",
+        "category": "combat",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "brief",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "whirlwind_fury",
+        "requirement": "Reach level 10 and land 1000 attacks"
+      },
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "field_medic",
+      "name": "Field Medic",
+      "tier": 1,
+      "rarity": "uncommon",
+      "categories": ["combat", "utility"],
+      "description": "Instantly restore a moderate amount of health.",
+      "narrative": "Bandages are for people with time. This is for people who don't.",
+      "tags": ["healing", "instant", "survival"],
+      
+      "effect": {
+        "type": "restore",
+        "category": "defense",
+        "magnitude": "moderate",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "long"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "miracle_cure",
+        "requirement": "Reach level 10 and heal 50000 HP"
+      },
+
+      "requirements": {
+        "characterLevel": 2,
+        "stats": {"VIT": 5},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "keen_eye",
+      "name": "Keen Eye",
+      "tier": 2,
+      "rarity": "rare",
+      "categories": ["gathering", "combat"],
+      "description": "Significantly increase critical hit chance for all actions.",
+      "narrative": "See the weaknesses others miss. Strike where it matters most.",
+      "tags": ["critical", "precision", "multi_purpose"],
+      
+      "effect": {
+        "type": "pierce",
+        "category": "damage",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "moderate",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "high",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "eagle_vision",
+        "requirement": "Reach level 10 and land 500 critical hits"
+      },
+
+      "requirements": {
+        "characterLevel": 8,
+        "stats": {"LCK": 10, "AGI": 10},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "alchemists_insight",
+      "name": "Alchemist's Insight",
+      "tier": 2,
+      "rarity": "uncommon",
+      "categories": ["crafting", "alchemy"],
+      "description": "Gain extra time for your alchemy mini-game and increase potion quality.",
+      "narrative": "The brew reveals its secrets to those patient enough to watch. And lucky enough to not explode.",
+      "tags": ["crafting", "alchemy", "quality"],
+      
+      "effect": {
+        "type": "quicken",
+        "category": "alchemy",
+        "magnitude": "moderate",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": [
+          {
+            "type": "empower",
+            "category": "alchemy",
+            "magnitude": "minor",
+            "target": "self",
+            "duration": "instant"
+          }
+        ]
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "master_alchemist",
+        "requirement": "Reach level 10 and brew 150 potions"
+      },
+
+      "requirements": {
+        "characterLevel": 6,
+        "stats": {"INT": 8},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "treasure_sense",
+      "name": "Treasure Sense",
+      "tier": 2,
+      "rarity": "rare",
+      "categories": ["gathering"],
+      "description": "Dramatically increase the chance of finding rare materials while gathering.",
+      "narrative": "Some call it luck. Some call it intuition. Mostly it's just knowing where to dig.",
+      "tags": ["rarity", "luck", "gathering"],
+      
+      "effect": {
+        "type": "elevate",
+        "category": "mining",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "extended",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "high",
+        "cooldown": "long"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "legendary_prospector",
+        "requirement": "Reach level 10 and find 50 rare+ materials"
+      },
+
+      "requirements": {
+        "characterLevel": 10,
+        "stats": {"LCK": 15},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "regenerative_aura",
+      "name": "Regenerative Aura",
+      "tier": 2,
+      "rarity": "uncommon",
+      "categories": ["combat", "defense"],
+      "description": "Slowly restore health over time while active.",
+      "narrative": "Wounds close. Bones knit. Given enough time, everything heals.",
+      "tags": ["healing", "over_time", "sustain"],
+      
+      "effect": {
+        "type": "regenerate",
+        "category": "defense",
+        "magnitude": "moderate",
+        "target": "self",
+        "duration": "extended",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "long"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "phoenix_rebirth",
+        "requirement": "Reach level 10 and regenerate 100000 HP"
+      },
+
+      "requirements": {
+        "characterLevel": 7,
+        "stats": {"VIT": 12},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "engineers_precision",
+      "name": "Engineer's Precision",
+      "tier": 2,
+      "rarity": "rare",
+      "categories": ["crafting", "engineering"],
+      "description": "Extend engineering puzzle time and improve device quality significantly.",
+      "narrative": "Complex mechanisms demand careful attention. Rush the gears, get your fingers caught.",
+      "tags": ["crafting", "engineering", "quality"],
+      
+      "effect": {
+        "type": "quicken",
+        "category": "engineering",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": [
+          {
+            "type": "empower",
+            "category": "engineering",
+            "magnitude": "moderate",
+            "target": "self",
+            "duration": "instant"
+          }
+        ]
+      },
+
+      "cost": {
+        "mana": "high",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "master_mechanic",
+        "requirement": "Reach level 10 and craft 100 devices"
+      },
+
+      "requirements": {
+        "characterLevel": 9,
+        "stats": {"INT": 10, "AGI": 10},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "tool_preservation",
+      "name": "Tool Preservation",
+      "tier": 2,
+      "rarity": "uncommon",
+      "categories": ["gathering", "utility"],
+      "description": "Your tools consume durability much more slowly.",
+      "narrative": "A well-maintained tool is an investment. A broken tool is an expensive lesson.",
+      "tags": ["durability", "efficiency", "gathering"],
+      
+      "effect": {
+        "type": "fortify",
+        "category": "durability",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "extended",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "eternal_edge",
+        "requirement": "Reach level 10 and save 50000 durability"
+      },
+
+      "requirements": {
+        "characterLevel": 5,
+        "stats": {},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "refiners_touch",
+      "name": "Refiner's Touch",
+      "tier": 2,
+      "rarity": "uncommon",
+      "categories": ["crafting", "refining"],
+      "description": "Improve your refining mini-game time and material quality output.",
+      "narrative": "Impurities burn away when you know exactly how hot, exactly how long.",
+      "tags": ["crafting", "refining", "quality"],
+      
+      "effect": {
+        "type": "quicken",
+        "category": "refining",
+        "magnitude": "moderate",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": [
+          {
+            "type": "elevate",
+            "category": "refining",
+            "magnitude": "minor",
+            "target": "self",
+            "duration": "instant"
+          }
+        ]
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "master_refiner",
+        "requirement": "Reach level 10 and refine 200 materials"
+      },
+
+      "requirements": {
+        "characterLevel": 6,
+        "stats": {"INT": 8},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "battle_fury",
+      "name": "Battle Fury",
+      "tier": 2,
+      "rarity": "rare",
+      "categories": ["combat"],
+      "description": "Dramatically increase attack damage and speed simultaneously.",
+      "narrative": "Rage is a weapon. Control it, channel it, unleash it.",
+      "tags": ["combat", "damage", "speed", "berserker"],
+      
+      "effect": {
+        "type": "empower",
+        "category": "damage",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "moderate",
+        "additionalEffects": [
+          {
+            "type": "quicken",
+            "category": "combat",
+            "magnitude": "moderate",
+            "target": "self",
+            "duration": "moderate"
+          }
+        ]
+      },
+
+      "cost": {
+        "mana": "high",
+        "cooldown": "long"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "berserker_rage",
+        "requirement": "Reach level 10 and defeat 500 enemies"
+      },
+
+      "requirements": {
+        "characterLevel": 10,
+        "stats": {"STR": 15},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "enchanters_grace",
+      "name": "Enchanter's Grace",
+      "tier": 2,
+      "rarity": "rare",
+      "categories": ["crafting", "enchanting"],
+      "description": "Gain increased chance for perfect enchantment patterns and rarity upgrades.",
+      "narrative": "Magic flows where intention directs it. Unless you sneeze. Then it flows everywhere.",
+      "tags": ["crafting", "enchanting", "rarity", "critical"],
+      
+      "effect": {
+        "type": "pierce",
+        "category": "enchanting",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": [
+          {
+            "type": "elevate",
+            "category": "enchanting",
+            "magnitude": "moderate",
+            "target": "self",
+            "duration": "instant"
+          }
+        ]
+      },
+
+      "cost": {
+        "mana": "high",
+        "cooldown": "moderate"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "archmage_mastery",
+        "requirement": "Reach level 10 and enchant 100 items"
+      },
+
+      "requirements": {
+        "characterLevel": 8,
+        "stats": {"INT": 12, "LCK": 8},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "second_wind",
+      "name": "Second Wind",
+      "tier": 2,
+      "rarity": "uncommon",
+      "categories": ["combat", "utility"],
+      "description": "Restore health and mana simultaneously when you need it most.",
+      "narrative": "You're not done yet. Get up.",
+      "tags": ["healing", "mana", "recovery", "survival"],
+      
+      "effect": {
+        "type": "restore",
+        "category": "defense",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "low",
+        "cooldown": "extreme"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "undying_resolve",
+        "requirement": "Reach level 10 and survive at <10% HP 50 times"
+      },
+
+      "requirements": {
+        "characterLevel": 8,
+        "stats": {"VIT": 10},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "chain_harvest",
+      "name": "Chain Harvest",
+      "tier": 3,
+      "rarity": "epic",
+      "categories": ["gathering"],
+      "description": "Gather from multiple resource nodes in a small area simultaneously.",
+      "narrative": "Why harvest one at a time when you can harvest all of them?",
+      "tags": ["aoe", "gathering", "efficiency"],
+      
+      "effect": {
+        "type": "devastate",
+        "category": "mining",
+        "magnitude": "minor",
+        "target": "area",
+        "duration": "instant",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "long"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": null,
+        "requirement": "Reach level 10 - LLM generates evolution"
+      },
+
+      "requirements": {
+        "characterLevel": 15,
+        "stats": {"STR": 20},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "whirlwind_strike",
+      "name": "Whirlwind Strike",
+      "tier": 3,
+      "rarity": "epic",
+      "categories": ["combat"],
+      "description": "Attack all enemies in a wide radius around you.",
+      "narrative": "Spin. Strike. Repeat. Simple tactics are often the deadliest.",
+      "tags": ["aoe", "combat", "damage"],
+      
+      "effect": {
+        "type": "devastate",
+        "category": "damage",
+        "magnitude": "moderate",
+        "target": "area",
+        "duration": "instant",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "long"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": null,
+        "requirement": "Reach level 10 - LLM generates evolution"
+      },
+
+      "requirements": {
+        "characterLevel": 16,
+        "stats": {"STR": 20, "AGI": 15},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "master_craftsman",
+      "name": "Master Craftsman",
+      "tier": 3,
+      "rarity": "legendary",
+      "categories": ["crafting", "smithing", "refining"],
+      "description": "Dramatically boost crafted item quality and gain massive rarity upgrade chance.",
+      "narrative": "Mastery isn't a destination. It's a standard you refuse to compromise.",
+      "tags": ["crafting", "quality", "rarity", "mastery"],
+      
+      "effect": {
+        "type": "empower",
+        "category": "smithing",
+        "magnitude": "extreme",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": [
+          {
+            "type": "elevate",
+            "category": "smithing",
+            "magnitude": "major",
+            "target": "self",
+            "duration": "instant"
+          }
+        ]
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": null,
+        "requirement": "Reach level 10 - LLM generates evolution"
+      },
+
+      "requirements": {
+        "characterLevel": 20,
+        "stats": {"INT": 20, "AGI": 15},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "fortunes_favor",
+      "name": "Fortune's Favor",
+      "tier": 3,
+      "rarity": "epic",
+      "categories": ["gathering", "combat", "crafting"],
+      "description": "Massively increase critical chance and rarity for all actions.",
+      "narrative": "Luck is what happens when preparation meets opportunity. This is what happens when luck meets steroids.",
+      "tags": ["luck", "critical", "rarity", "universal"],
+      
+      "effect": {
+        "type": "pierce",
+        "category": "damage",
+        "magnitude": "extreme",
+        "target": "self",
+        "duration": "long",
+        "additionalEffects": [
+          {
+            "type": "elevate",
+            "category": "mining",
+            "magnitude": "major",
+            "target": "self",
+            "duration": "long"
+          }
+        ]
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": null,
+        "requirement": "Reach level 10 - LLM generates evolution"
+      },
+
+      "requirements": {
+        "characterLevel": 18,
+        "stats": {"LCK": 25},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "phoenix_resurrection",
+      "name": "Phoenix Resurrection",
+      "tier": 3,
+      "rarity": "legendary",
+      "categories": ["combat", "defense"],
+      "description": "Continuously regenerate massive health and repair equipment durability.",
+      "narrative": "From ashes, rise. From wounds, strength. Death is merely an inconvenience.",
+      "tags": ["healing", "regeneration", "durability", "sustain"],
+      
+      "effect": {
+        "type": "regenerate",
+        "category": "defense",
+        "magnitude": "extreme",
+        "target": "self",
+        "duration": "extended",
+        "additionalEffects": [
+          {
+            "type": "regenerate",
+            "category": "durability",
+            "magnitude": "major",
+            "target": "self",
+            "duration": "extended"
+          }
+        ]
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": null,
+        "requirement": "Reach level 10 - LLM generates evolution"
+      },
+
+      "requirements": {
+        "characterLevel": 22,
+        "stats": {"VIT": 25},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "absolute_destruction",
+      "name": "Absolute Destruction",
+      "tier": 3,
+      "rarity": "epic",
+      "categories": ["combat"],
+      "description": "Unleash catastrophic damage in a massive area, obliterating everything.",
+      "narrative": "Subtlety is for people who can't level mountains.",
+      "tags": ["aoe", "damage", "destruction", "ultimate"],
+      
+      "effect": {
+        "type": "devastate",
+        "category": "damage",
+        "magnitude": "extreme",
+        "target": "area",
+        "duration": "instant",
+        "additionalEffects": [
+          {
+            "type": "empower",
+            "category": "damage",
+            "magnitude": "major",
+            "target": "area",
+            "duration": "instant"
+          }
+        ]
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": null,
+        "requirement": "Reach level 10 - LLM generates evolution"
+      },
+
+      "requirements": {
+        "characterLevel": 20,
+        "stats": {"STR": 25, "INT": 15},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "endless_bounty",
+      "name": "Endless Bounty",
+      "tier": 3,
+      "rarity": "rare",
+      "categories": ["gathering"],
+      "description": "Gain massive bonus materials from every gather for an extended period.",
+      "narrative": "The earth provides for those who know its secrets. And sometimes, it just really likes you.",
+      "tags": ["yield", "gathering", "abundance"],
+      
+      "effect": {
+        "type": "enrich",
+        "category": "mining",
+        "magnitude": "extreme",
+        "target": "self",
+        "duration": "extended",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "high",
+        "cooldown": "extreme"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": null,
+        "requirement": "Reach level 10 - LLM generates evolution"
+      },
+
+      "requirements": {
+        "characterLevel": 17,
+        "stats": {"LCK": 20},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "time_dilation",
+      "name": "Time Dilation",
+      "tier": 3,
+      "rarity": "epic",
+      "categories": ["crafting"],
+      "description": "Massively extend all mini-game timers, giving you all the time you need.",
+      "narrative": "Time is relative. Especially when you're cheating.",
+      "tags": ["time", "crafting", "universal", "mastery"],
+      
+      "effect": {
+        "type": "quicken",
+        "category": "smithing",
+        "magnitude": "extreme",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "long"
+      },
+
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": null,
+        "requirement": "Reach level 10 - LLM generates evolution"
+      },
+
+      "requirements": {
+        "characterLevel": 19,
+        "stats": {"INT": 22},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "reality_breach",
+      "name": "Reality Breach",
+      "tier": 4,
+      "rarity": "mythic",
+      "categories": ["utility"],
+      "description": "Temporarily ignore all tier restrictions and requirements. Use any tool on any material, craft at any station.",
+      "narrative": "Rules are for people who lack imagination. And sufficient mana reserves.",
+      "tags": ["bypass", "tier", "ultimate", "transcendence"],
+      
+      "effect": {
+        "type": "transcend",
+        "category": "mining",
+        "magnitude": "extreme",
+        "target": "self",
+        "duration": "moderate",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+
+      "evolution": {
+        "canEvolve": false,
+        "nextSkillId": null,
+        "requirement": "Maximum evolution - cannot evolve further"
+      },
+
+      "requirements": {
+        "characterLevel": 25,
+        "stats": {"INT": 30},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "omega_strike",
+      "name": "Omega Strike",
+      "tier": 4,
+      "rarity": "legendary",
+      "categories": ["combat"],
+      "description": "A single attack of unimaginable power that ignores defenses and deals catastrophic damage.",
+      "narrative": "One strike. One chance. One ending.",
+      "tags": ["damage", "ultimate", "single_target", "finisher"],
+      
+      "effect": {
+        "type": "empower",
+        "category": "damage",
+        "magnitude": "extreme",
+        "target": "enemy",
+        "duration": "instant",
+        "additionalEffects": [
+          {
+            "type": "pierce",
+            "category": "damage",
+            "magnitude": "extreme",
+            "target": "enemy",
+            "duration": "instant"
+          }
+        ]
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+
+      "evolution": {
+        "canEvolve": false,
+        "nextSkillId": null,
+        "requirement": "Maximum evolution - cannot evolve further"
+      },
+
+      "requirements": {
+        "characterLevel": 28,
+        "stats": {"STR": 30, "AGI": 25},
+        "titles": []
+      }
+    }
+  ]
+}

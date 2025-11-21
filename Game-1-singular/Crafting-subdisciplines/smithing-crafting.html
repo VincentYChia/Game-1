@@ -1,0 +1,857 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Hammer, Package, Sparkles, Flame, AlertCircle } from 'lucide-react';
+
+// Real recipes from recipes-smithing-3.json
+const RECIPES = {
+  smithing_iron_shortsword: {
+    recipeId: "smithing_iron_shortsword",
+    name: "Iron Shortsword",
+    tier: 1,
+    gridSize: 3,
+    outputId: "iron_shortsword",
+    outputQty: 1,
+    inputs: [
+      { materialId: "iron_ingot", quantity: 2 },
+      { materialId: "oak_plank", quantity: 1 }
+    ],
+    placementMap: {
+      "3,1": "oak_plank",
+      "2,2": "iron_ingot",
+      "1,3": "iron_ingot"
+    },
+    narrative: "The foundational smithing technique - blade, tang, handle. Simple in concept, demanding in execution.",
+    baseStats: { damage: "8-12", durability: 100, attackSpeed: 1.2 }
+  },
+  smithing_iron_pickaxe: {
+    recipeId: "smithing_iron_pickaxe",
+    name: "Iron Pickaxe",
+    tier: 1,
+    gridSize: 3,
+    outputId: "iron_pickaxe",
+    outputQty: 1,
+    inputs: [
+      { materialId: "iron_ingot", quantity: 3 },
+      { materialId: "ash_plank", quantity: 2 }
+    ],
+    placementMap: {
+      "2,3": "iron_ingot",
+      "1,3": "iron_ingot",
+      "1,2": "iron_ingot",
+      "2,2": "ash_plank",
+      "3,1": "ash_plank"
+    },
+    narrative: "Upgraded pickaxe that can tackle tougher deposits. Iron reliability meets practical design.",
+    baseStats: { miningPower: 15, durability: 120, efficiency: 1.0 }
+  },
+  smithing_steel_longsword: {
+    recipeId: "smithing_steel_longsword",
+    name: "Steel Longsword",
+    tier: 2,
+    gridSize: 5,
+    outputId: "steel_longsword",
+    outputQty: 1,
+    inputs: [
+      { materialId: "steel_ingot", quantity: 4 },
+      { materialId: "maple_plank", quantity: 1 },
+      { materialId: "dire_fang", quantity: 2 }
+    ],
+    placementMap: {
+      "4,2": "steel_ingot",
+      "3,3": "steel_ingot",
+      "2,4": "steel_ingot",
+      "1,5": "steel_ingot",
+      "5,1": "maple_plank",
+      "4,1": "dire_fang",
+      "5,2": "dire_fang"
+    },
+    narrative: "Balanced steel longsword. The blade flows like water, strikes like thunder.",
+    baseStats: { damage: "18-24", durability: 150, attackSpeed: 1.0 }
+  }
+};
+
+const MATERIALS_DB = {
+  iron_ingot: { name: "Iron Ingot", tier: 1, color: "#B0B0B0" },
+  oak_plank: { name: "Oak Plank", tier: 1, color: "#8B4513" },
+  ash_plank: { name: "Ash Plank", tier: 1, color: "#A0826D" },
+  steel_ingot: { name: "Steel Ingot", tier: 2, color: "#778899" },
+  maple_plank: { name: "Maple Plank", tier: 2, color: "#D2691E" },
+  dire_fang: { name: "Dire Fang", tier: 2, color: "#F5F5DC" }
+};
+
+// Minigame configuration (easily modifiable)
+const MINIGAME_CONFIG = {
+  duration: 30, // seconds
+  requiredHits: 5,
+  temperature: {
+    idealMin: 60,
+    idealMax: 80,
+    startTemp: 50,
+    fanIncrement: 3,
+    naturalDecay: 0.5, // per update
+    updateInterval: 100 // ms
+  },
+  hammer: {
+    sliderSpeed: 2, // pixels per frame at 60fps
+    targetWidth: 80, // width of good zone
+    perfectWidth: 30, // width of perfect zone
+    barWidth: 400
+  }
+};
+
+const SmithingStation = () => {
+  const [mode, setMode] = useState('basic'); // 'basic', 'manual', 'minigame'
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [currentGrid, setCurrentGrid] = useState({});
+  const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [lastSelectedMaterial, setLastSelectedMaterial] = useState(null);
+  const [inventory, setInventory] = useState({
+    iron_ingot: 10,
+    oak_plank: 10,
+    ash_plank: 10,
+    steel_ingot: 6,
+    maple_plank: 6,
+    dire_fang: 4
+  });
+  const [detectedRecipe, setDetectedRecipe] = useState(null);
+  
+  // Minigame state
+  const [temperature, setTemperature] = useState(50);
+  const [hammerHits, setHammerHits] = useState(0);
+  const [hammerPosition, setHammerPosition] = useState(0);
+  const [hammerDirection, setHammerDirection] = useState(1);
+  const [hammerScores, setHammerScores] = useState([]);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [minigameActive, setMinigameActive] = useState(false);
+  const [craftingResult, setCraftingResult] = useState(null);
+  
+  const tempIntervalRef = useRef(null);
+  const hammerIntervalRef = useRef(null);
+  const timerIntervalRef = useRef(null);
+
+  const recipe = selectedRecipe ? RECIPES[selectedRecipe] : null;
+  const gridSize = 5; // Always use max grid size for flexibility
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.code === 'Space' && mode === 'manual' && !minigameActive) {
+        e.preventDefault();
+        if (lastSelectedMaterial) {
+          setSelectedMaterial(lastSelectedMaterial);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [mode, lastSelectedMaterial, minigameActive]);
+
+  // Auto-fill grid in basic mode with centering
+  useEffect(() => {
+    if (mode === 'basic' && recipe) {
+      const centeredMap = centerPlacementMap(recipe.placementMap, recipe.gridSize, gridSize);
+      setCurrentGrid(centeredMap);
+    }
+  }, [selectedRecipe, mode]);
+
+  // Detect recipe in manual mode
+  useEffect(() => {
+    if (mode === 'manual') {
+      const matched = detectRecipe(currentGrid);
+      setDetectedRecipe(matched);
+    }
+  }, [currentGrid, mode]);
+
+  // Temperature decay
+  useEffect(() => {
+    if (minigameActive) {
+      tempIntervalRef.current = setInterval(() => {
+        setTemperature(prev => Math.max(0, prev - MINIGAME_CONFIG.temperature.naturalDecay));
+      }, MINIGAME_CONFIG.temperature.updateInterval);
+    }
+    return () => {
+      if (tempIntervalRef.current) clearInterval(tempIntervalRef.current);
+    };
+  }, [minigameActive]);
+
+  // Hammer slider movement
+  useEffect(() => {
+    if (minigameActive && hammerHits < MINIGAME_CONFIG.requiredHits) {
+      hammerIntervalRef.current = setInterval(() => {
+        setHammerPosition(prev => {
+          const newPos = prev + (hammerDirection * MINIGAME_CONFIG.hammer.sliderSpeed);
+          if (newPos <= 0 || newPos >= MINIGAME_CONFIG.hammer.barWidth) {
+            setHammerDirection(d => -d);
+            return Math.max(0, Math.min(MINIGAME_CONFIG.hammer.barWidth, newPos));
+          }
+          return newPos;
+        });
+      }, 16); // ~60fps
+    }
+    return () => {
+      if (hammerIntervalRef.current) clearInterval(hammerIntervalRef.current);
+    };
+  }, [minigameActive, hammerHits, hammerDirection]);
+
+  // Timer
+  useEffect(() => {
+    if (minigameActive) {
+      timerIntervalRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            endMinigame(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    };
+  }, [minigameActive]);
+
+  const detectRecipe = (grid) => {
+    for (const recipeId in RECIPES) {
+      const r = RECIPES[recipeId];
+      const offset = Math.floor((gridSize - r.gridSize) / 2);
+      
+      // Create centered placement map for this recipe
+      const centeredPm = centerPlacementMap(r.placementMap, r.gridSize, gridSize);
+      
+      const gridKeys = Object.keys(grid).sort();
+      const pmKeys = Object.keys(centeredPm).sort();
+      
+      if (gridKeys.length !== pmKeys.length) continue;
+      
+      let matches = true;
+      for (let i = 0; i < gridKeys.length; i++) {
+        if (gridKeys[i] !== pmKeys[i] || grid[gridKeys[i]] !== centeredPm[pmKeys[i]]) {
+          matches = false;
+          break;
+        }
+      }
+      
+      if (matches) return recipeId;
+    }
+    return null;
+  };
+
+  const centerPlacementMap = (placementMap, recipeSize, displaySize) => {
+    const offset = Math.floor((displaySize - recipeSize) / 2);
+    const centeredMap = {};
+    
+    for (const [key, material] of Object.entries(placementMap)) {
+      const [row, col] = key.split(',').map(Number);
+      const newRow = row + offset;
+      const newCol = col + offset;
+      centeredMap[`${newRow},${newCol}`] = material;
+    }
+    
+    return centeredMap;
+  };
+
+  const getGridKey = (row, col) => `${row},${col}`;
+
+  const handleCellClick = (row, col) => {
+    if (mode !== 'manual' || minigameActive) return;
+    const key = getGridKey(row, col);
+    
+    if (selectedMaterial) {
+      if (inventory[selectedMaterial] > 0) {
+        const materialInCell = currentGrid[key];
+        if (materialInCell) {
+          setInventory(prev => ({ ...prev, [materialInCell]: prev[materialInCell] + 1 }));
+        }
+        setCurrentGrid(prev => ({ ...prev, [key]: selectedMaterial }));
+        setInventory(prev => ({ ...prev, [selectedMaterial]: prev[selectedMaterial] - 1 }));
+        setLastSelectedMaterial(selectedMaterial);
+        setSelectedMaterial(null);
+      }
+    } else if (currentGrid[key]) {
+      const material = currentGrid[key];
+      setInventory(prev => ({ ...prev, [material]: prev[material] + 1 }));
+      const newGrid = { ...currentGrid };
+      delete newGrid[key];
+      setCurrentGrid(newGrid);
+    }
+  };
+
+  const canCraftRecipe = (recipeId) => {
+    const r = RECIPES[recipeId];
+    for (const input of r.inputs) {
+      if (inventory[input.materialId] < input.quantity) return false;
+    }
+    return true;
+  };
+
+  const handleBasicCraft = () => {
+    if (!recipe) return;
+    const newInventory = { ...inventory };
+    for (const input of recipe.inputs) {
+      newInventory[input.materialId] -= input.quantity;
+    }
+    setInventory(newInventory);
+    setCurrentGrid({});
+    setSelectedRecipe(null);
+    alert(`Crafted ${recipe.name}!\n\nBase stats (no bonuses applied)`);
+  };
+
+  const startMinigame = () => {
+    setMode('minigame');
+    setMinigameActive(true);
+    setTemperature(MINIGAME_CONFIG.temperature.startTemp);
+    setHammerHits(0);
+    setHammerPosition(0);
+    setHammerDirection(1);
+    setHammerScores([]);
+    setTimeLeft(MINIGAME_CONFIG.duration);
+    setCraftingResult(null);
+  };
+
+  const handleFan = () => {
+    if (!minigameActive) return;
+    setTemperature(prev => Math.min(100, prev + MINIGAME_CONFIG.temperature.fanIncrement));
+  };
+
+  const handleHammer = () => {
+    if (!minigameActive || hammerHits >= MINIGAME_CONFIG.requiredHits) return;
+    
+    const center = MINIGAME_CONFIG.hammer.barWidth / 2;
+    const distance = Math.abs(hammerPosition - center);
+    
+    let score;
+    if (distance <= MINIGAME_CONFIG.hammer.perfectWidth / 2) {
+      score = 100; // Perfect hit
+    } else if (distance <= MINIGAME_CONFIG.hammer.targetWidth / 2) {
+      score = 70; // Good hit
+    } else {
+      score = 30; // Poor hit
+    }
+    
+    setHammerScores(prev => [...prev, score]);
+    setHammerHits(prev => prev + 1);
+    
+    if (hammerHits + 1 >= MINIGAME_CONFIG.requiredHits) {
+      endMinigame(true);
+    }
+  };
+
+  const endMinigame = (completed) => {
+    setMinigameActive(false);
+    if (tempIntervalRef.current) clearInterval(tempIntervalRef.current);
+    if (hammerIntervalRef.current) clearInterval(hammerIntervalRef.current);
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    
+    if (!completed) {
+      setCraftingResult({ success: false, message: "Time's up! Craft failed." });
+      return;
+    }
+    
+    // Calculate score
+    const avgHammerScore = hammerScores.reduce((a, b) => a + b, 0) / hammerScores.length;
+    const tempMultiplier = temperature >= MINIGAME_CONFIG.temperature.idealMin && 
+                          temperature <= MINIGAME_CONFIG.temperature.idealMax ? 1.5 : 1.0;
+    const finalScore = avgHammerScore * tempMultiplier;
+    
+    let bonusText = '';
+    if (finalScore >= 140) bonusText = '+15% bonus stats (Perfect craft!)';
+    else if (finalScore >= 100) bonusText = '+10% bonus stats (Excellent)';
+    else if (finalScore >= 70) bonusText = '+5% bonus stats (Good)';
+    else bonusText = 'Base stats only';
+    
+    // Deduct materials
+    const newInventory = { ...inventory };
+    for (const input of recipe.inputs) {
+      newInventory[input.materialId] -= input.quantity;
+    }
+    setInventory(newInventory);
+    
+    setCraftingResult({
+      success: true,
+      score: finalScore.toFixed(1),
+      bonus: bonusText,
+      tempMultiplier: tempMultiplier.toFixed(1)
+    });
+  };
+
+  const renderGrid = () => {
+    const cells = [];
+    const offset = recipe ? Math.floor((gridSize - recipe.gridSize) / 2) : 0;
+    const recipeStart = offset + 1;
+    const recipeEnd = offset + (recipe ? recipe.gridSize : gridSize);
+    
+    for (let row = 1; row <= gridSize; row++) {
+      for (let col = 1; col <= gridSize; col++) {
+        const key = getGridKey(row, col);
+        const material = currentGrid[key];
+        const isInRecipeArea = recipe && row >= recipeStart && row <= recipeEnd && 
+                               col >= recipeStart && col <= recipeEnd;
+        
+        cells.push(
+          <div
+            key={key}
+            onClick={() => handleCellClick(row, col)}
+            className={`
+              border-2 rounded transition-all
+              flex items-center justify-center text-xs font-bold
+              ${mode === 'manual' && !minigameActive ? 'cursor-pointer hover:border-yellow-500 hover:scale-105' : 'cursor-default'}
+              ${material ? 'shadow-inner' : 'bg-gray-800'}
+              ${isInRecipeArea ? 'border-gray-600' : 'border-gray-700 opacity-60'}
+            `}
+            style={{
+              backgroundColor: material ? MATERIALS_DB[material]?.color : undefined,
+              aspectRatio: '1/1'
+            }}
+            title={material ? MATERIALS_DB[material]?.name : 'Empty'}
+          />
+        );
+      }
+    }
+    return cells;
+  };
+
+  const renderRecipeList = () => {
+    return Object.values(RECIPES).map(r => {
+      const canCraft = canCraftRecipe(r.recipeId);
+      
+      return (
+        <button
+          key={r.recipeId}
+          onClick={() => {
+            setSelectedRecipe(r.recipeId);
+            setMode('basic');
+          }}
+          disabled={!canCraft}
+          className={`
+            w-full p-3 rounded-lg text-left transition-all text-sm
+            ${selectedRecipe === r.recipeId && mode === 'basic'
+              ? 'bg-orange-600 ring-2 ring-orange-400'
+              : canCraft
+                ? 'bg-gray-700 hover:bg-gray-600'
+                : 'bg-gray-800 opacity-50 cursor-not-allowed'
+            }
+          `}
+        >
+          <div className="flex justify-between items-start mb-1">
+            <span className="font-bold">{r.name}</span>
+            <span className="text-xs bg-gray-900 px-2 py-0.5 rounded">T{r.tier}</span>
+          </div>
+          <div className="text-xs text-gray-300 space-y-0.5">
+            {r.inputs.map(input => {
+              const material = MATERIALS_DB[input.materialId];
+              const hasEnough = inventory[input.materialId] >= input.quantity;
+              return (
+                <div key={input.materialId} className={hasEnough ? 'text-green-400' : 'text-red-400'}>
+                  • {material.name}: {inventory[input.materialId]}/{input.quantity}
+                </div>
+              );
+            })}
+          </div>
+        </button>
+      );
+    });
+  };
+
+  const renderOutputSlot = () => {
+    const recipeId = mode === 'basic' ? selectedRecipe : detectedRecipe;
+    if (!recipeId) {
+      return (
+        <div className="h-full flex items-center justify-center text-gray-500">
+          <div className="text-center">
+            <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p className="text-sm">No recipe selected</p>
+          </div>
+        </div>
+      );
+    }
+    
+    const r = RECIPES[recipeId];
+    const canCraft = canCraftRecipe(recipeId);
+    
+    return (
+      <div className="space-y-3">
+        <div className="bg-gray-700 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-orange-800 rounded flex items-center justify-center">
+              <Hammer className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">{r.name}</h3>
+              <p className="text-xs text-gray-400">Tier {r.tier} • Qty: {r.outputQty}</p>
+            </div>
+          </div>
+          
+          <p className="text-xs text-gray-300 mb-2">{r.narrative}</p>
+          
+          <div className="bg-gray-800 rounded p-2 space-y-1">
+            <p className="text-xs text-gray-400 font-bold">BASE STATS:</p>
+            {Object.entries(r.baseStats).map(([stat, value]) => (
+              <div key={stat} className="text-xs flex justify-between">
+                <span className="text-gray-400 capitalize">{stat.replace(/([A-Z])/g, ' $1')}:</span>
+                <span className="text-white font-bold">{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {mode === 'basic' && (
+          <div className="space-y-2">
+            <button
+              onClick={handleBasicCraft}
+              disabled={!canCraft}
+              className={`
+                w-full py-3 rounded-lg font-bold transition-all
+                ${canCraft ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 cursor-not-allowed opacity-50'}
+              `}
+            >
+              CRAFT (Instant - No Bonus)
+            </button>
+            <button
+              onClick={startMinigame}
+              disabled={!canCraft}
+              className={`
+                w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2
+                ${canCraft ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-700 cursor-not-allowed opacity-50'}
+              `}
+            >
+              <Sparkles className="w-5 h-5" />
+              CRAFT WITH MINIGAME (+X Bonus)
+            </button>
+          </div>
+        )}
+        
+        {mode === 'manual' && detectedRecipe && (
+          <button
+            onClick={() => {
+              setSelectedRecipe(detectedRecipe);
+              startMinigame();
+            }}
+            className="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-bold flex items-center justify-center gap-2"
+          >
+            <Sparkles className="w-5 h-5" />
+            START MINIGAME
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const renderMinigame = () => {
+    if (!minigameActive && !craftingResult) return null;
+    
+    if (craftingResult) {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-8 rounded-lg max-w-md text-center">
+            {craftingResult.success ? (
+              <>
+                <div className="text-green-500 text-6xl mb-4">✓</div>
+                <h2 className="text-2xl font-bold text-green-500 mb-2">SUCCESS!</h2>
+                <p className="text-xl mb-2">Crafted: {recipe.name}</p>
+                <div className="bg-gray-700 p-4 rounded mb-4">
+                  <p className="text-sm text-gray-300">Final Score: <span className="font-bold text-white">{craftingResult.score}</span></p>
+                  <p className="text-sm text-gray-300">Temperature Multiplier: <span className="font-bold text-orange-400">{craftingResult.tempMultiplier}x</span></p>
+                  <p className="text-lg text-yellow-400 font-bold mt-2">{craftingResult.bonus}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setCraftingResult(null);
+                    setMode('basic');
+                    setSelectedRecipe(null);
+                    setCurrentGrid({});
+                  }}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded font-bold"
+                >
+                  Continue
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="text-red-500 text-6xl mb-4">✗</div>
+                <h2 className="text-2xl font-bold text-red-500 mb-4">FAILED!</h2>
+                <p className="text-gray-300 mb-6">{craftingResult.message}</p>
+                <button
+                  onClick={() => {
+                    setCraftingResult(null);
+                    setMode('basic');
+                  }}
+                  className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded font-bold"
+                >
+                  Try Again
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    const targetCenter = MINIGAME_CONFIG.hammer.barWidth / 2;
+    const tempInIdealRange = temperature >= MINIGAME_CONFIG.temperature.idealMin && 
+                             temperature <= MINIGAME_CONFIG.temperature.idealMax;
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+        <div className="bg-gray-800 p-8 rounded-lg max-w-2xl w-full">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Smithing: {recipe.name}</h2>
+            <div className="text-2xl font-bold text-orange-500">{timeLeft}s</div>
+          </div>
+          
+          {/* Temperature Bar */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Flame className={`w-6 h-6 ${tempInIdealRange ? 'text-orange-500' : 'text-gray-500'}`} />
+                <span className="font-bold">Temperature</span>
+              </div>
+              <span className={`font-bold ${tempInIdealRange ? 'text-green-400' : 'text-red-400'}`}>
+                {temperature.toFixed(0)}°
+              </span>
+            </div>
+            
+            <div className="relative h-8 bg-gray-700 rounded-lg overflow-hidden">
+              {/* Ideal range indicator */}
+              <div 
+                className="absolute h-full bg-green-900 opacity-50"
+                style={{
+                  left: `${MINIGAME_CONFIG.temperature.idealMin}%`,
+                  width: `${MINIGAME_CONFIG.temperature.idealMax - MINIGAME_CONFIG.temperature.idealMin}%`
+                }}
+              />
+              {/* Current temperature */}
+              <div 
+                className="absolute h-full bg-gradient-to-r from-orange-600 to-red-600 transition-all"
+                style={{ width: `${temperature}%` }}
+              />
+            </div>
+            
+            <button
+              onClick={handleFan}
+              className="mt-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded font-bold w-full"
+            >
+              FAN FLAMES (Spacebar)
+            </button>
+            <p className="text-xs text-gray-400 mt-1 text-center">
+              Keep temperature in green zone for {MINIGAME_CONFIG.temperature.idealMin}-{MINIGAME_CONFIG.temperature.idealMax}° (1.5x multiplier)
+            </p>
+          </div>
+          
+          {/* Hammer Bar */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Hammer className="w-6 h-6 text-gray-300" />
+                <span className="font-bold">Hammer Hits: {hammerHits}/{MINIGAME_CONFIG.requiredHits}</span>
+              </div>
+              {hammerScores.length > 0 && (
+                <span className="text-sm">
+                  Last: <span className="font-bold text-yellow-400">{hammerScores[hammerScores.length - 1]}</span>
+                </span>
+              )}
+            </div>
+            
+            <div className="relative h-12 bg-gray-700 rounded-lg overflow-hidden" style={{ width: `${MINIGAME_CONFIG.hammer.barWidth}px` }}>
+              {/* Perfect zone */}
+              <div 
+                className="absolute h-full bg-yellow-600"
+                style={{
+                  left: `${targetCenter - MINIGAME_CONFIG.hammer.perfectWidth / 2}px`,
+                  width: `${MINIGAME_CONFIG.hammer.perfectWidth}px`
+                }}
+              />
+              {/* Good zone */}
+              <div 
+                className="absolute h-full bg-green-700"
+                style={{
+                  left: `${targetCenter - MINIGAME_CONFIG.hammer.targetWidth / 2}px`,
+                  width: `${MINIGAME_CONFIG.hammer.targetWidth}px`
+                }}
+              />
+              {/* Hammer indicator */}
+              <div 
+                className="absolute h-full w-1 bg-white shadow-lg"
+                style={{ left: `${hammerPosition}px` }}
+              />
+            </div>
+            
+            <button
+              onClick={handleHammer}
+              disabled={hammerHits >= MINIGAME_CONFIG.requiredHits}
+              className="mt-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded font-bold w-full text-lg"
+            >
+              HAMMER! (Click)
+            </button>
+            <p className="text-xs text-gray-400 mt-1 text-center">
+              Yellow = Perfect (100pts) | Green = Good (70pts) | Gray = Poor (30pts)
+            </p>
+          </div>
+          
+          {/* Scores */}
+          {hammerScores.length > 0 && (
+            <div className="flex gap-2 justify-center">
+              {hammerScores.map((score, i) => (
+                <div key={i} className={`
+                  px-3 py-1 rounded font-bold
+                  ${score === 100 ? 'bg-yellow-600' : score === 70 ? 'bg-green-600' : 'bg-gray-600'}
+                `}>
+                  {score}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Handle spacebar for fanning in minigame
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.code === 'Space' && minigameActive) {
+        e.preventDefault();
+        handleFan();
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [minigameActive]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-6">
+      {renderMinigame()}
+      
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <Hammer className="w-10 h-10 text-orange-500" />
+            <h1 className="text-3xl font-bold">Smithing Station</h1>
+          </div>
+          <p className="text-gray-400 text-sm">Craft equipment and tools from raw materials</p>
+        </div>
+
+        <div className="flex justify-center gap-3 mb-4">
+          <button
+            onClick={() => { setMode('basic'); setCurrentGrid({}); setSelectedMaterial(null); }}
+            className={`px-6 py-2 rounded-lg font-bold transition-all ${mode === 'basic' ? 'bg-orange-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+          >
+            Basic Crafting
+          </button>
+          <button
+            onClick={() => { setMode('manual'); setCurrentGrid({}); setSelectedRecipe(null); }}
+            className={`px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2 ${mode === 'manual' ? 'bg-purple-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+          >
+            <Sparkles className="w-4 h-4" />
+            Manual Placement
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-3 space-y-3">
+            <div className="bg-gray-800 p-3 rounded-lg shadow-xl max-h-[600px] overflow-y-auto">
+              <h2 className="text-lg font-bold mb-3">
+                {mode === 'basic' ? 'Recipes' : 'Materials'}
+              </h2>
+              
+              {mode === 'basic' ? (
+                <div className="space-y-2">{renderRecipeList()}</div>
+              ) : (
+                <>
+                  <select
+                    value={selectedMaterial || ''}
+                    onChange={(e) => {
+                      const mat = e.target.value;
+                      setSelectedMaterial(mat);
+                      if (mat) setLastSelectedMaterial(mat);
+                    }}
+                    className="w-full p-2 bg-gray-700 rounded mb-2 text-sm"
+                  >
+                    <option value="">Select material...</option>
+                    {Object.entries(MATERIALS_DB).map(([id, mat]) => (
+                      <option key={id} value={id} disabled={inventory[id] === 0}>
+                        {mat.name} ({inventory[id]})
+                      </option>
+                    ))}
+                  </select>
+                  
+                  <div className="space-y-2">
+                    {Object.entries(MATERIALS_DB).map(([matId, material]) => (
+                      <button
+                        key={matId}
+                        onClick={() => {
+                          setSelectedMaterial(matId);
+                          setLastSelectedMaterial(matId);
+                        }}
+                        disabled={inventory[matId] === 0}
+                        className={`
+                          w-full p-2 rounded font-bold transition-all text-left text-sm
+                          ${selectedMaterial === matId ? 'ring-2 ring-yellow-500' : ''}
+                          ${inventory[matId] === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:brightness-110'}
+                        `}
+                        style={{ backgroundColor: material.color }}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="text-white drop-shadow-lg text-xs">{material.name}</span>
+                          <span className="text-white drop-shadow-lg bg-black bg-opacity-40 px-2 py-0.5 rounded text-xs">
+                            {inventory[matId]}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {selectedMaterial && (
+                    <div className="mt-3 p-2 bg-yellow-900 border border-yellow-600 rounded">
+                      <p className="text-xs text-yellow-200">
+                        <span className="font-bold">{MATERIALS_DB[selectedMaterial].name}</span> selected
+                        <br />Click grid or press SPACE to reselect
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="lg:col-span-5">
+            <div className="bg-gray-800 p-4 rounded-lg shadow-xl">
+              <h3 className="text-lg font-bold mb-3 text-center">
+                {mode === 'basic' ? 'Recipe Preview' : 'Crafting Grid'}
+                {recipe && recipe.gridSize < gridSize && (
+                  <div className="text-xs text-gray-400 font-normal mt-1">
+                    {recipe.gridSize}×{recipe.gridSize} recipe centered in {gridSize}×{gridSize} station
+                  </div>
+                )}
+              </h3>
+              
+              <div 
+                className="grid gap-1.5 mx-auto"
+                style={{
+                  gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
+                  maxWidth: `${gridSize * 60}px`
+                }}
+              >
+                {renderGrid()}
+              </div>
+              
+              {mode === 'manual' && detectedRecipe && (
+                <div className="mt-3 p-3 bg-green-900 border-2 border-green-600 rounded-lg">
+                  <p className="text-green-300 font-bold text-sm">✓ Recipe Detected: {RECIPES[detectedRecipe].name}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="lg:col-span-4">
+            <div className="bg-gray-800 p-4 rounded-lg shadow-xl">
+              <h3 className="text-lg font-bold mb-3 text-center">Output</h3>
+              {renderOutputSlot()}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SmithingStation;

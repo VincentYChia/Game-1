@@ -1,0 +1,260 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Category-based rarity modifiers for crafted items",
+    "note": "Modifiers are additive percentages applied to base stats"
+  },
+
+  "weapon": {
+    "common": {
+      "description": "Basic weapon with no bonuses",
+      "modifiers": {}
+    },
+    "uncommon": {
+      "description": "Improved weapon with modest bonuses",
+      "modifiers": {
+        "damage": 0.10,
+        "durability": 0.05
+      }
+    },
+    "rare": {
+      "description": "High-quality weapon with significant bonuses",
+      "modifiers": {
+        "damage": 0.20,
+        "durability": 0.10,
+        "critical_chance": 0.05
+      }
+    },
+    "epic": {
+      "description": "Exceptional weapon with major bonuses",
+      "modifiers": {
+        "damage": 0.35,
+        "durability": 0.20,
+        "critical_chance": 0.10,
+        "attack_speed": 0.05
+      }
+    },
+    "legendary": {
+      "description": "Legendary weapon with massive bonuses and lifesteal",
+      "modifiers": {
+        "damage": 1.00,
+        "durability": 0.30,
+        "critical_chance": 0.15,
+        "attack_speed": 0.10,
+        "lifesteal": 0.05
+      },
+      "special_effects": {
+        "lifesteal": true
+      }
+    }
+  },
+
+  "armor": {
+    "common": {
+      "description": "Basic armor with no bonuses",
+      "modifiers": {}
+    },
+    "uncommon": {
+      "description": "Improved armor with modest protection",
+      "modifiers": {
+        "defense": 0.10,
+        "durability": 0.05
+      }
+    },
+    "rare": {
+      "description": "High-quality armor with significant protection",
+      "modifiers": {
+        "defense": 0.20,
+        "durability": 0.10,
+        "resistance": 0.05
+      }
+    },
+    "epic": {
+      "description": "Exceptional armor with knockback resistance and enhanced durability",
+      "modifiers": {
+        "defense": 0.35,
+        "durability": 0.20,
+        "resistance": 0.10,
+        "damage_reduction": 0.05
+      },
+      "special_effects": {
+        "enhanced_durability": true,
+        "knockback_resistance": true
+      }
+    },
+    "legendary": {
+      "description": "Legendary armor with damage boost and thorns effect",
+      "modifiers": {
+        "defense": 1.00,
+        "durability": 0.30,
+        "resistance": 0.15,
+        "damage_reduction": 0.10,
+        "thorns": 0.05
+      },
+      "special_effects": {
+        "enhanced_durability": true,
+        "knockback_resistance": true,
+        "damage_boost": true,
+        "thorns": true
+      }
+    }
+  },
+
+  "tool": {
+    "common": {
+      "description": "Basic tool with no bonuses",
+      "modifiers": {}
+    },
+    "uncommon": {
+      "description": "Improved tool with better efficiency",
+      "modifiers": {
+        "efficiency": 0.10,
+        "durability": 0.05
+      }
+    },
+    "rare": {
+      "description": "High-quality tool with significant efficiency",
+      "modifiers": {
+        "efficiency": 0.20,
+        "durability": 0.10,
+        "gathering_speed": 0.05
+      }
+    },
+    "epic": {
+      "description": "Exceptional tool with major efficiency",
+      "modifiers": {
+        "efficiency": 0.35,
+        "durability": 0.20,
+        "gathering_speed": 0.10,
+        "yield_bonus": 0.05
+      }
+    },
+    "legendary": {
+      "description": "Legendary tool with auto-smelt capability",
+      "modifiers": {
+        "efficiency": 1.00,
+        "durability": 0.30,
+        "gathering_speed": 0.15,
+        "yield_bonus": 0.10
+      },
+      "special_effects": {
+        "auto_smelt": true
+      }
+    }
+  },
+
+  "consumable": {
+    "common": {
+      "description": "Basic consumable",
+      "modifiers": {}
+    },
+    "uncommon": {
+      "description": "Improved consumable",
+      "modifiers": {
+        "potency": 0.15,
+        "duration": 0.10
+      }
+    },
+    "rare": {
+      "description": "High-quality consumable",
+      "modifiers": {
+        "potency": 0.30,
+        "duration": 0.20
+      }
+    },
+    "epic": {
+      "description": "Exceptional consumable with additional effect",
+      "modifiers": {
+        "potency": 0.50,
+        "duration": 0.35
+      },
+      "special_effects": {
+        "effect_count": 1
+      }
+    },
+    "legendary": {
+      "description": "Legendary consumable with multiple effects",
+      "modifiers": {
+        "potency": 1.00,
+        "duration": 0.50
+      },
+      "special_effects": {
+        "effect_count": 2
+      }
+    }
+  },
+
+  "device": {
+    "common": {
+      "description": "Basic device",
+      "modifiers": {}
+    },
+    "uncommon": {
+      "description": "Improved device",
+      "modifiers": {
+        "power": 0.10,
+        "durability": 0.05
+      }
+    },
+    "rare": {
+      "description": "High-quality device",
+      "modifiers": {
+        "power": 0.20,
+        "durability": 0.10,
+        "range": 0.05
+      }
+    },
+    "epic": {
+      "description": "Exceptional device with reduced cooldown",
+      "modifiers": {
+        "power": 0.35,
+        "durability": 0.20,
+        "range": 0.10,
+        "cooldown": -0.10
+      }
+    },
+    "legendary": {
+      "description": "Legendary device with auto-reload",
+      "modifiers": {
+        "power": 1.00,
+        "durability": 0.30,
+        "range": 0.15,
+        "cooldown": -0.20
+      },
+      "special_effects": {
+        "auto_reload": true
+      }
+    }
+  },
+
+  "station": {
+    "common": {
+      "description": "Basic crafting station",
+      "modifiers": {}
+    },
+    "uncommon": {
+      "description": "Improved crafting station",
+      "modifiers": {
+        "durability": 0.10
+      }
+    },
+    "rare": {
+      "description": "High-quality crafting station",
+      "modifiers": {
+        "durability": 0.20
+      }
+    },
+    "epic": {
+      "description": "Exceptional crafting station",
+      "modifiers": {
+        "durability": 0.35
+      }
+    },
+    "legendary": {
+      "description": "Legendary crafting station",
+      "modifiers": {
+        "durability": 0.50
+      }
+    }
+  }
+}

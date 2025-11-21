@@ -1,0 +1,143 @@
+"""Material Database - manages stackable materials, consumables, and devices"""
+
+import json
+from pathlib import Path
+from typing import Dict, Optional
+from data.models.materials import MaterialDefinition
+
+
+class MaterialDatabase:
+    _instance = None
+
+    def __init__(self):
+        self.materials: Dict[str, MaterialDefinition] = {}
+        self.loaded = False
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = MaterialDatabase()
+        return cls._instance
+
+    def load_from_file(self, filepath: str):
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+            for mat_data in data.get('materials', []):
+                mat = MaterialDefinition(
+                    material_id=mat_data.get('materialId', ''),
+                    name=mat_data.get('name', ''),
+                    tier=mat_data.get('tier', 1),
+                    category=mat_data.get('category', 'unknown'),
+                    rarity=mat_data.get('rarity', 'common'),
+                    description=mat_data.get('description', ''),
+                    max_stack=mat_data.get('maxStack', 99),
+                    properties=mat_data.get('properties', {})
+                )
+                self.materials[mat.material_id] = mat
+            self.loaded = True
+            print(f"✓ Loaded {len(self.materials)} materials")
+            return True
+        except Exception as e:
+            print(f"⚠ Error loading materials: {e}")
+            self._create_placeholders()
+            return False
+
+    def _create_placeholders(self):
+        for mat_id, name, tier, cat, rarity in [
+            ("oak_log", "Oak Log", 1, "wood", "common"), ("birch_log", "Birch Log", 2, "wood", "common"),
+            ("maple_log", "Maple Log", 3, "wood", "uncommon"), ("ironwood_log", "Ironwood Log", 4, "wood", "rare"),
+            ("copper_ore", "Copper Ore", 1, "ore", "common"), ("iron_ore", "Iron Ore", 2, "ore", "common"),
+            ("steel_ore", "Steel Ore", 3, "ore", "uncommon"), ("mithril_ore", "Mithril Ore", 4, "ore", "rare"),
+            ("limestone", "Limestone", 1, "stone", "common"), ("granite", "Granite", 2, "stone", "common"),
+            ("obsidian", "Obsidian", 3, "stone", "uncommon"), ("star_crystal", "Star Crystal", 4, "stone", "legendary"),
+            ("copper_ingot", "Copper Ingot", 1, "metal", "common"), ("iron_ingot", "Iron Ingot", 2, "metal", "common"),
+            ("steel_ingot", "Steel Ingot", 3, "metal", "uncommon"),
+            ("mithril_ingot", "Mithril Ingot", 4, "metal", "rare"),
+        ]:
+            self.materials[mat_id] = MaterialDefinition(mat_id, name, tier, cat, rarity,
+                                                        f"A {rarity} {cat} material (Tier {tier})")
+        self.loaded = True
+        print(f"✓ Created {len(self.materials)} placeholder materials")
+
+    def get_material(self, material_id: str) -> Optional[MaterialDefinition]:
+        return self.materials.get(material_id)
+
+    def load_refining_items(self, filepath: str):
+        """Load additional material items from items-refining-1.JSON"""
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for section in ['basic_ingots', 'alloys', 'wood_planks']:
+                if section in data:
+                    for item_data in data[section]:
+                        mat = MaterialDefinition(
+                            material_id=item_data.get('itemId', ''),  # Note: refining JSON uses itemId!
+                            name=item_data.get('name', ''),
+                            tier=item_data.get('tier', 1),
+                            category=item_data.get('type', 'unknown'),
+                            rarity=item_data.get('rarity', 'common'),
+                            description=item_data.get('metadata', {}).get('narrative', ''),
+                            max_stack=item_data.get('stackSize', 256),
+                            properties={}
+                        )
+                        if mat.material_id and mat.material_id not in self.materials:
+                            self.materials[mat.material_id] = mat
+                            count += 1
+
+            print(f"✓ Loaded {count} additional materials from refining")
+            return True
+        except Exception as e:
+            print(f"⚠ Error loading refining items: {e}")
+            return False
+
+    def load_stackable_items(self, filepath: str, categories: list = None):
+        """Load stackable items (consumables, devices, etc.) from item files
+
+        Args:
+            filepath: Path to the JSON file
+            categories: List of categories to load (e.g., ['consumable', 'device'])
+                       If None, loads all items with stackable=True flag
+        """
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            count = 0
+            for section, section_data in data.items():
+                if section == 'metadata':
+                    continue
+
+                if isinstance(section_data, list):
+                    for item_data in section_data:
+                        category = item_data.get('category', '')
+                        flags = item_data.get('flags', {})
+                        is_stackable = flags.get('stackable', False)
+
+                        # Load if category matches (or no filter) AND item is stackable
+                        should_load = is_stackable and (
+                            categories is None or category in categories
+                        )
+
+                        if should_load:
+                            mat = MaterialDefinition(
+                                material_id=item_data.get('itemId', ''),
+                                name=item_data.get('name', ''),
+                                tier=item_data.get('tier', 1),
+                                category=category,
+                                rarity=item_data.get('rarity', 'common'),
+                                description=item_data.get('metadata', {}).get('narrative', ''),
+                                max_stack=item_data.get('stackSize', 99),
+                                properties={}
+                            )
+                            if mat.material_id and mat.material_id not in self.materials:
+                                self.materials[mat.material_id] = mat
+                                count += 1
+
+            print(f"✓ Loaded {count} stackable items from {filepath} (categories: {categories})")
+            return True
+        except Exception as e:
+            print(f"⚠ Error loading stackable items from {filepath}: {e}")
+            return False

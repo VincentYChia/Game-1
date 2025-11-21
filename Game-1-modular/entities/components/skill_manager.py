@@ -1,0 +1,367 @@
+"""Skill management component"""
+
+from typing import Dict, List, Optional
+
+from data.models import PlayerSkill
+from data.databases import SkillDatabase
+from .buffs import ActiveBuff
+
+
+class SkillManager:
+    def __init__(self):
+        self.known_skills: Dict[str, PlayerSkill] = {}
+        self.equipped_skills: List[Optional[str]] = [None] * 5  # 5 hotbar slots
+
+    def can_learn_skill(self, skill_id: str, character) -> tuple[bool, str]:
+        """
+        Check if character meets requirements to learn a skill.
+        Returns (can_learn, reason)
+        """
+        # Already known?
+        if skill_id in self.known_skills:
+            return False, "Already known"
+
+        # Get skill definition
+        skill_db = SkillDatabase.get_instance()
+        skill_def = skill_db.skills.get(skill_id)
+        if not skill_def:
+            return False, "Skill not found"
+
+        # Check character level
+        if character.leveling.level < skill_def.requirements.character_level:
+            return False, f"Requires level {skill_def.requirements.character_level}"
+
+        # Check stat requirements
+        for stat_name, required_value in skill_def.requirements.stats.items():
+            # Map stat names to character stats
+            stat_map = {
+                'STR': character.stats.strength,
+                'DEF': character.stats.defense,
+                'VIT': character.stats.vitality,
+                'LCK': character.stats.luck,
+                'AGI': character.stats.agility,
+                'INT': character.stats.intelligence,
+                'DEX': character.stats.agility  # DEX maps to AGI in this game
+            }
+            current_value = stat_map.get(stat_name.upper(), 0)
+            if current_value < required_value:
+                return False, f"Requires {stat_name} {required_value}"
+
+        # Check title requirements (if any)
+        if skill_def.requirements.titles:
+            # Get player's title IDs
+            player_titles = {title.title_id for title in character.titles.titles}
+            for required_title in skill_def.requirements.titles:
+                if required_title not in player_titles:
+                    return False, f"Requires title: {required_title}"
+
+        return True, "Requirements met"
+
+    def learn_skill(self, skill_id: str, character=None, skip_checks: bool = False) -> bool:
+        """
+        Learn a new skill.
+        If character is provided and skip_checks is False, requirements will be checked.
+        skip_checks=True bypasses requirement checks (for starting skills, admin commands, etc.)
+        """
+        # Check if already known
+        if skill_id in self.known_skills:
+            return False
+
+        # Check requirements if character provided and not skipping checks
+        if character and not skip_checks:
+            can_learn, reason = self.can_learn_skill(skill_id, character)
+            if not can_learn:
+                print(f"   ⚠ Cannot learn {skill_id}: {reason}")
+                return False
+
+        # Learn the skill
+        self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
+        return True
+
+    def get_available_skills(self, character) -> List[str]:
+        """
+        Get list of skill IDs that the character can learn but hasn't yet.
+        Returns list of skill IDs that meet requirements.
+        """
+        available = []
+        skill_db = SkillDatabase.get_instance()
+        if not skill_db.loaded:
+            return available
+
+        for skill_id in skill_db.skills.keys():
+            # Skip if already known
+            if skill_id in self.known_skills:
+                continue
+
+            # Check if requirements are met
+            can_learn, _ = self.can_learn_skill(skill_id, character)
+            if can_learn:
+                available.append(skill_id)
+
+        return available
+
+    def equip_skill(self, skill_id: str, slot: int) -> bool:
+        """Equip a skill to a hotbar slot (0-4)"""
+        if 0 <= slot < 5 and skill_id in self.known_skills:
+            self.equipped_skills[slot] = skill_id
+            self.known_skills[skill_id].is_equipped = True
+            return True
+        return False
+
+    def unequip_skill(self, slot: int) -> bool:
+        """Unequip a skill from a hotbar slot"""
+        if 0 <= slot < 5 and self.equipped_skills[slot]:
+            skill_id = self.equipped_skills[slot]
+            self.equipped_skills[slot] = None
+            if skill_id in self.known_skills:
+                self.known_skills[skill_id].is_equipped = False
+            return True
+        return False
+
+    def update_cooldowns(self, dt: float):
+        """Update all skill cooldowns"""
+        for skill in self.known_skills.values():
+            if skill.current_cooldown > 0:
+                skill.current_cooldown = max(0, skill.current_cooldown - dt)
+
+    def use_skill(self, slot: int, character) -> tuple[bool, str]:
+        """Use a skill from hotbar slot (0-4). Returns (success, message)"""
+        if not (0 <= slot < 5):
+            return False, "Invalid slot"
+
+        skill_id = self.equipped_skills[slot]
+        if not skill_id:
+            return False, "No skill in slot"
+
+        player_skill = self.known_skills.get(skill_id)
+        if not player_skill:
+            return False, "Skill not learned"
+
+        skill_def = player_skill.get_definition()
+        if not skill_def:
+            return False, "Skill definition not found"
+
+        # Check cooldown
+        if player_skill.current_cooldown > 0:
+            return False, f"On cooldown ({player_skill.current_cooldown:.1f}s)"
+
+        # Check mana cost
+        skill_db = SkillDatabase.get_instance()
+        mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+        if character.mana < mana_cost:
+            return False, f"Not enough mana ({mana_cost} required)"
+
+        # Consume mana
+        character.mana -= mana_cost
+
+        # Start cooldown
+        cooldown_duration = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
+        player_skill.current_cooldown = cooldown_duration
+
+        # Apply skill effect (with level scaling)
+        self._apply_skill_effect(skill_def, character, player_skill)
+
+        # Award skill EXP (100 EXP per activation)
+        leveled_up, new_level = player_skill.add_exp(100)
+        if leveled_up:
+            return True, f"Used {skill_def.name}! 🌟 Level {new_level}!"
+
+        return True, f"Used {skill_def.name}!"
+
+    def _apply_skill_effect(self, skill_def, character, player_skill):
+        """Apply the skill's effect with level scaling"""
+        effect = skill_def.effect
+        skill_db = SkillDatabase.get_instance()
+
+        # Get duration for buffs
+        base_duration = skill_db.get_duration_seconds(effect.duration)
+
+        # Apply level scaling: +10% per level
+        level_bonus = player_skill.get_level_scaling_bonus()
+        duration = base_duration * (1.0 + level_bonus)
+
+        # Magnitude-based bonus values (base values)
+        magnitude_values = {
+            'minor': {'empower': 0.25, 'quicken': 0.15, 'fortify': 10, 'pierce': 0.10},
+            'moderate': {'empower': 0.50, 'quicken': 0.30, 'fortify': 20, 'pierce': 0.15},
+            'major': {'empower': 1.00, 'quicken': 0.50, 'fortify': 40, 'pierce': 0.25},
+            'extreme': {'empower': 1.50, 'quicken': 0.75, 'fortify': 60, 'pierce': 0.35}
+        }
+
+        # Apply level scaling to magnitude values (+10% per level)
+        def apply_level_scaling(base_value):
+            return base_value * (1.0 + level_bonus)
+
+        level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
+        print(f"⚡ {skill_def.name}{level_indicator}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
+
+        # EMPOWER - Increases damage/output
+        if effect.effect_type == "empower":
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.5)
+            bonus = apply_level_scaling(base_bonus)
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_empower",
+                name=f"{skill_def.name} (Damage)",
+                effect_type="empower",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration=duration,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus*100)}% {effect.category} damage for {int(duration)}s")
+
+        # QUICKEN - Increases speed
+        elif effect.effect_type == "quicken":
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('quicken', 0.3)
+            bonus = apply_level_scaling(base_bonus)
+            category = "movement" if effect.category == "movement" else effect.category
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_quicken",
+                name=f"{skill_def.name} (Speed)",
+                effect_type="quicken",
+                category=category,
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration=duration,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus*100)}% {category} speed for {int(duration)}s")
+
+        # FORTIFY - Increases defense
+        elif effect.effect_type == "fortify":
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('fortify', 20)
+            bonus = apply_level_scaling(base_bonus)
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_fortify",
+                name=f"{skill_def.name} (Defense)",
+                effect_type="fortify",
+                category="defense",
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration=duration,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus)} flat damage reduction for {duration}s")
+
+        # PIERCE - Increases critical chance
+        elif effect.effect_type == "pierce":
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('pierce', 0.15)
+            bonus = apply_level_scaling(base_bonus)
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_pierce",
+                name=f"{skill_def.name} (Crit)",
+                effect_type="pierce",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration=duration,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus*100)}% critical chance for {duration}s")
+
+        # RESTORE - Instant restoration
+        elif effect.effect_type == "restore":
+            restore_amounts = {'minor': 50, 'moderate': 100, 'major': 200, 'extreme': 400}
+            amount = restore_amounts.get(effect.magnitude, 100)
+
+            if "health" in effect.category or "defense" in effect.category:
+                character.health = min(character.max_health, character.health + amount)
+                print(f"   Restored {amount} HP")
+            elif "mana" in effect.category:
+                character.mana = min(character.max_mana, character.mana + amount)
+                print(f"   Restored {amount} MP")
+
+        # ENRICH - Bonus gathering yield
+        elif effect.effect_type == "enrich":
+            bonus_items = {'minor': 1, 'moderate': 2, 'major': 3, 'extreme': 5}
+            base_bonus = bonus_items.get(effect.magnitude, 2)
+            bonus = int(apply_level_scaling(base_bonus))  # Whole items only
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_enrich",
+                name=f"{skill_def.name} (Yield)",
+                effect_type="enrich",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration=duration,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus)} bonus items from {effect.category} for {int(duration)}s")
+
+        # ELEVATE - Rarity upgrade chance
+        elif effect.effect_type == "elevate":
+            base_bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.1)  # Reuse empower values
+            bonus = apply_level_scaling(base_bonus)
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_elevate",
+                name=f"{skill_def.name} (Quality)",
+                effect_type="elevate",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=bonus,
+                duration=duration,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   +{int(bonus*100)}% rarity upgrade chance for {duration}s")
+
+        # REGENERATE - Restore resources over time
+        elif effect.effect_type == "regenerate":
+            regen_amounts = {'minor': 3, 'moderate': 5, 'major': 10, 'extreme': 20}
+            base_amount = regen_amounts.get(effect.magnitude, 5)
+            amount = apply_level_scaling(base_amount)
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_regenerate",
+                name=f"{skill_def.name} (Regen)",
+                effect_type="regenerate",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=amount,
+                duration=duration,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            resource_type = "HP" if "health" in effect.category or "defense" in effect.category else "MP"
+            print(f"   Regenerating {amount:.1f} {resource_type}/s for {int(duration)}s")
+
+        # DEVASTATE - Area of effect
+        elif effect.effect_type == "devastate":
+            radius_sizes = {'minor': 3, 'moderate': 5, 'major': 7, 'extreme': 10}
+            base_radius = radius_sizes.get(effect.magnitude, 5)
+            radius = int(apply_level_scaling(base_radius))
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_devastate",
+                name=f"{skill_def.name} (AoE)",
+                effect_type="devastate",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=radius,
+                duration=duration,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   {effect.category.capitalize()} affects {radius}-tile radius for {int(duration)}s")
+
+        # TRANSCEND - Bypass tier restrictions
+        elif effect.effect_type == "transcend":
+            tier_bypass = {'minor': 1, 'moderate': 2, 'major': 3, 'extreme': 4}
+            base_bypass = tier_bypass.get(effect.magnitude, 1)
+            bypass = int(apply_level_scaling(base_bypass))
+            buff = ActiveBuff(
+                buff_id=f"{skill_def.skill_id}_transcend",
+                name=f"{skill_def.name} (Transcend)",
+                effect_type="transcend",
+                category=effect.category,
+                magnitude=effect.magnitude,
+                bonus_value=bypass,
+                duration=duration,
+                duration_remaining=duration
+            )
+            character.buffs.add_buff(buff)
+            print(f"   Bypass {bypass} tier restriction(s) for {effect.category} for {int(duration)}s")
