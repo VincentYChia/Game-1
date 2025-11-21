@@ -2,12 +2,6 @@
 """
 Unified JSON Creator - Comprehensive tool for creating and validating all JSON types
 Supports all 13 JSON types with cross-reference validation and smart linking
-
-CORRECTED VERSION - Loads only game-used files (~492 items, not 900+)
-CRITICAL FIX: Uses "adornments" station type, NOT "enchanting"!
-
-Run with: python3 unified_json_creator.py
-(Note: Requires tkinter - may not work in some environments)
 """
 
 import tkinter as tk
@@ -217,7 +211,7 @@ class JSONSchemas:
             "stationType": FieldDefinition(
                 "stationType", FieldType.ENUM, required=True,
                 enum_values=["smithing", "alchemy", "refining", "engineering", "adornments"],
-                description="CRITICAL: Use 'adornments' NOT 'enchanting'!"
+                description="Use 'adornments' NOT 'enchanting'"
             ),
             "stationTier": FieldDefinition(
                 "stationTier", FieldType.INTEGER, required=True,
@@ -597,27 +591,19 @@ class DataLoader:
         return []
 
     def _load_items(self):
-        """Load all item files - ONLY the files the game actually loads"""
+        """Load all item files"""
         items_dir = self.base_path / "items.JSON"
         all_items = []
         files = []
 
         if items_dir.exists():
-            # Load ONLY the specific files the game uses (from game_engine.py)
-            game_item_files = [
-                "items-smithing-2.JSON",  # Version 2 for equipment
-                "items-tools-1.JSON",
-                "items-alchemy-1.JSON",
-                "items-materials-1.JSON",
-                "items-refining-1.JSON",
-            ]
-
-            for filename in game_item_files:
-                file_path = items_dir / filename
-                if file_path.exists():
+            # Handle both .JSON and .json extensions
+            for pattern in ["items-*.JSON", "items-*.json"]:
+                for file_path in items_dir.glob(pattern):
                     items = self._load_json_file(file_path)
                     all_items.extend(items)
-                    files.append(str(file_path))
+                    if str(file_path) not in files:
+                        files.append(str(file_path))
 
         self.data_cache["items"] = all_items
         self.file_mapping["items"] = files
@@ -657,70 +643,53 @@ class DataLoader:
         self.file_mapping["materials"] = []
 
     def _load_recipes(self):
-        """Load all recipe files - ONLY the files the game actually loads"""
+        """Load all recipe files"""
         recipes_dir = self.base_path / "recipes.JSON"
         all_recipes = []
         files = []
 
         if recipes_dir.exists():
-            # Load ONLY the specific files the game uses (from recipe_db.py)
-            game_recipe_files = [
-                "recipes-smithing-3.JSON",      # Version 3!
-                "recipes-alchemy-1.JSON",
-                "recipes-refining-1.JSON",
-                "recipes-engineering-1.JSON",
-                "recipes-adornments-1.json",    # adornments NOT enchanting!
-            ]
-
-            for filename in game_recipe_files:
-                file_path = recipes_dir / filename
-                if file_path.exists():
+            # Handle both .JSON and .json extensions
+            for pattern in ["recipes-*.JSON", "recipes-*.json"]:
+                for file_path in recipes_dir.glob(pattern):
                     recipes = self._load_json_file(file_path)
                     all_recipes.extend(recipes)
-                    files.append(str(file_path))
+                    if str(file_path) not in files:
+                        files.append(str(file_path))
 
         self.data_cache["recipes"] = all_recipes
         self.file_mapping["recipes"] = files
 
     def _load_placements(self):
-        """Load all placement files - ONLY the files the game actually loads"""
+        """Load all placement files"""
         placements_dir = self.base_path / "placements.JSON"
         all_placements = []
         files = []
 
         if placements_dir.exists():
-            # Load ONLY the specific files the game uses (from placement_db.py)
-            game_placement_files = [
-                "placements-smithing-1.JSON",
-                "placements-alchemy-1.JSON",
-                "placements-refining-1.JSON",
-                "placements-engineering-1.JSON",
-                "placements-adornments-1.JSON",  # adornments NOT enchanting!
-            ]
-
-            for filename in game_placement_files:
-                file_path = placements_dir / filename
-                if file_path.exists():
+            for pattern in ["placements-*.JSON", "placements-*.json"]:
+                for file_path in placements_dir.glob(pattern):
                     placements = self._load_json_file(file_path)
                     all_placements.extend(placements)
-                    files.append(str(file_path))
+                    if str(file_path) not in files:
+                        files.append(str(file_path))
 
         self.data_cache["placements"] = all_placements
         self.file_mapping["placements"] = files
 
     def _load_skills(self):
-        """Load skill files - ONLY the file the game actually loads"""
+        """Load skill files"""
         skills_dir = self.base_path / "Skills"
         all_skills = []
         files = []
 
         if skills_dir.exists():
-            # Load ONLY the specific file the game uses (from game_engine.py)
-            skill_file = skills_dir / "skills-skills-1.JSON"
-            if skill_file.exists():
-                skills = self._load_json_file(skill_file)
-                all_skills.extend(skills)
-                files.append(str(skill_file))
+            for pattern in ["*.JSON", "*.json"]:
+                for file_path in skills_dir.glob(pattern):
+                    skills = self._load_json_file(file_path)
+                    all_skills.extend(skills)
+                    if str(file_path) not in files:
+                        files.append(str(file_path))
 
         self.data_cache["skills"] = all_skills
         self.file_mapping["skills"] = files
@@ -1002,14 +971,15 @@ class ValidationEngine:
                                 "Create this material/item first"
                             ))
 
-            # Adornments/Enchanting specific validation
+            # Station type validation - reject "enchanting"
             if data.get("stationType") == "enchanting":
                 issues.append(ValidationIssue(
                     "error", "stationType",
-                    "Invalid station type 'enchanting' - use 'adornments' instead!",
+                    "Invalid stationType 'enchanting' - use 'adornments' instead!",
                     "Change stationType to 'adornments'"
                 ))
 
+            # Adornments specific validation
             if data.get("stationType") == "adornments":
                 if "enchantmentId" not in data:
                     issues.append(ValidationIssue(
