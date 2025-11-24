@@ -866,27 +866,25 @@ class GameEngine:
                 return
 
             # Attack enemy
-            damage, is_crit = self.combat_manager.player_attack_enemy(enemy)
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy)
             self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
             self.character.reset_attack_cooldown(is_weapon=True)
 
             if not enemy.is_alive:
                 self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
                 self.character.activities.record_activity('combat', 1)
+
+                # Show loot notifications (auto-looted)
+                if loot:
+                    mat_db = MaterialDatabase.get_instance()
+                    for material_id, qty in loot:
+                        mat = mat_db.get_material(material_id)
+                        item_name = mat.name if mat else material_id
+                        self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
             return
 
-        # Check for corpse click (looting)
-        corpse = self.combat_manager.get_corpse_at_position((wx, wy))
-        if corpse:
-            loot = self.combat_manager.loot_corpse(corpse, self.character.inventory)
-            if loot:
-                mat_db = MaterialDatabase.get_instance()
-                for material_id, qty in loot:
-                    mat = mat_db.get_material(material_id)
-                    item_name = mat.name if mat else material_id
-                    self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
-                self.add_notification(f"Looted {corpse.definition.name}", (150, 200, 255))
-            return
+        # Note: Corpse looting is now automatic when enemy dies
+        # Manual corpse looting has been removed as loot is auto-added to inventory
 
         station = self.world.get_station_at(world_pos)
         if station:
