@@ -472,6 +472,15 @@ class GameEngine:
                     self.test_system.run_all_tests()
                     self.add_notification("Test suite completed - check console", (100, 200, 255))
 
+                elif event.key == pygame.K_F11:
+                    # Toggle fullscreen
+                    flags = Config.toggle_fullscreen()
+                    self.screen = pygame.display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT), flags)
+                    self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
+                    mode = "Fullscreen" if Config.FULLSCREEN else "Windowed"
+                    self.add_notification(f"Switched to {mode} mode", (100, 200, 255))
+                    print(f"🖥️  Switched to {mode}: {Config.SCREEN_WIDTH}x{Config.SCREEN_HEIGHT}")
+
             elif event.type == pygame.KEYUP:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:

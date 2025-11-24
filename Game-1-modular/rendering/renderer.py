@@ -2271,27 +2271,28 @@ class Renderer:
         if not character.equipment_ui_open:
             return None
 
-        ww, wh = 800, 600
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
-        wy = 50
+        ww, wh = Config.MENU_MEDIUM_W, Config.MENU_MEDIUM_H
+        wx = Config.VIEWPORT_WIDTH - ww - Config.scale(20)  # Right-aligned with margin
+        wy = Config.scale(50)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 240))
 
-        surf.blit(self.font.render("EQUIPMENT", True, (255, 215, 0)), (20, 20))
+        surf.blit(self.font.render("EQUIPMENT", True, (255, 215, 0)), (Config.scale(20), Config.scale(20)))
         surf.blit(self.small_font.render("[E or ESC] Close | [SHIFT+CLICK] to unequip", True, (180, 180, 180)),
-                  (ww - 350, 20))
+                  (ww - Config.scale(350), Config.scale(20)))
 
-        slot_size = 80
+        slot_size = Config.scale(80)
+        s = Config.scale  # Shorthand for readability
         slots_layout = {
-            'helmet': (ww // 2 - slot_size // 2, 70),
-            'mainHand': (ww // 2 - slot_size - 20, 170),
-            'chestplate': (ww // 2 - slot_size // 2, 170),
-            'offHand': (ww // 2 + 20, 170),
-            'gauntlets': (ww // 2 - slot_size - 20, 270),
-            'leggings': (ww // 2 - slot_size // 2, 270),
-            'boots': (ww // 2 - slot_size // 2, 370),
-            'accessory': (ww // 2 + 20, 270),
+            'helmet': (ww // 2 - slot_size // 2, s(70)),
+            'mainHand': (ww // 2 - slot_size - s(20), s(170)),
+            'chestplate': (ww // 2 - slot_size // 2, s(170)),
+            'offHand': (ww // 2 + s(20), s(170)),
+            'gauntlets': (ww // 2 - slot_size - s(20), s(270)),
+            'leggings': (ww // 2 - slot_size // 2, s(270)),
+            'boots': (ww // 2 - slot_size // 2, s(370)),
+            'accessory': (ww // 2 + s(20), s(270)),
         }
 
         hovered_slot = None
