@@ -66,6 +66,9 @@ except ImportError as e:
 # ============================================================================
 class GameEngine:
     def __init__(self):
+        # Initialize screen settings first (auto-detects resolution or uses custom)
+        Config.init_screen_settings()
+
         pygame.init()
         self.screen = pygame.display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
         pygame.display.set_caption("2D RPG Game - Equipment System v2.2")

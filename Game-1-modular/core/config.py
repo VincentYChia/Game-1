@@ -1,24 +1,33 @@
 """Game configuration constants"""
 
+import pygame
+
 
 class Config:
     """Global configuration constants for game settings"""
 
-    # Window
+    # Base resolution (1600x900 is the design baseline)
+    BASE_WIDTH = 1600
+    BASE_HEIGHT = 900
+
+    # Actual window size (will be set during init)
     SCREEN_WIDTH = 1600
     SCREEN_HEIGHT = 900
     FPS = 60
+
+    # UI Scale factor (calculated based on actual screen size)
+    UI_SCALE = 1.0
 
     # World
     WORLD_SIZE = 100
     CHUNK_SIZE = 16
     TILE_SIZE = 32
 
-    # Viewport (FIXED)
+    # Viewport (scales with screen width, 75% of screen width)
     VIEWPORT_WIDTH = 1200
     VIEWPORT_HEIGHT = 900
 
-    # UI Layout
+    # UI Layout (Base values at 1600x900)
     UI_PANEL_WIDTH = 400
     INVENTORY_PANEL_X = 0
     INVENTORY_PANEL_Y = 600
@@ -26,9 +35,65 @@ class Config:
     INVENTORY_PANEL_HEIGHT = 300
     INVENTORY_SLOT_SIZE = 50
     INVENTORY_SLOTS_PER_ROW = 10
-    # Inventory grid Y position (accounts for tool slots above)
-    # = INVENTORY_PANEL_Y + 35 (label) + 20 (spacing) + 50 (tool slots) + 20 (spacing)
+    # Inventory grid Y position - DEPRECATED, calculate dynamically instead
     INVENTORY_GRID_Y = 725  # INVENTORY_PANEL_Y + 125
+
+    @classmethod
+    def init_screen_settings(cls, width=None, height=None):
+        """Initialize screen settings based on display or custom size
+
+        Args:
+            width: Custom width (None = use display info)
+            height: Custom height (None = use display info)
+        """
+        if width is None or height is None:
+            # Auto-detect display size
+            pygame.init()
+            display_info = pygame.display.Info()
+            # Use 90% of screen to leave room for taskbar/etc
+            width = width or int(display_info.current_w * 0.9)
+            height = height or int(display_info.current_h * 0.9)
+
+            # Clamp to minimum size
+            width = max(1280, width)
+            height = max(720, height)
+
+            # Clamp to maximum size (don't go above 4K)
+            width = min(3840, width)
+            height = min(2160, height)
+
+        cls.SCREEN_WIDTH = width
+        cls.SCREEN_HEIGHT = height
+
+        # Calculate UI scale based on height (vertical space is usually the constraint)
+        cls.UI_SCALE = height / cls.BASE_HEIGHT
+
+        # Scale viewport (75% of width for game view)
+        cls.VIEWPORT_WIDTH = int(width * 0.75)
+        cls.VIEWPORT_HEIGHT = height
+
+        # Scale UI elements
+        cls.UI_PANEL_WIDTH = width - cls.VIEWPORT_WIDTH
+        cls.INVENTORY_PANEL_Y = int(600 * cls.UI_SCALE)
+        cls.INVENTORY_PANEL_WIDTH = cls.VIEWPORT_WIDTH
+        cls.INVENTORY_PANEL_HEIGHT = height - cls.INVENTORY_PANEL_Y
+        cls.INVENTORY_SLOT_SIZE = int(50 * cls.UI_SCALE)
+
+        # Calculate slots per row based on available width
+        slot_spacing = 5
+        available_width = cls.INVENTORY_PANEL_WIDTH - 40  # 20px margin on each side
+        cls.INVENTORY_SLOTS_PER_ROW = max(8, available_width // (cls.INVENTORY_SLOT_SIZE + slot_spacing))
+
+        print(f"🖥️  Screen: {width}x{height} (scale: {cls.UI_SCALE:.2f}x)")
+        print(f"   Viewport: {cls.VIEWPORT_WIDTH}x{cls.VIEWPORT_HEIGHT}")
+        print(f"   UI Panel: {cls.UI_PANEL_WIDTH}px wide")
+        print(f"   Slot size: {cls.INVENTORY_SLOT_SIZE}px")
+        print(f"   Slots per row: {cls.INVENTORY_SLOTS_PER_ROW}")
+
+    @classmethod
+    def scale(cls, value):
+        """Scale a value by UI_SCALE"""
+        return int(value * cls.UI_SCALE)
 
     # Character/Movement
     PLAYER_SPEED = 0.15
