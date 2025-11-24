@@ -43,9 +43,10 @@ from systems import (
 class Renderer:
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
-        self.font = pygame.font.Font(None, 24)
-        self.small_font = pygame.font.Font(None, 18)
-        self.tiny_font = pygame.font.Font(None, 14)
+        # Scaled fonts for responsive UI
+        self.font = pygame.font.Font(None, Config.scale(24))
+        self.small_font = pygame.font.Font(None, Config.scale(18))
+        self.tiny_font = pygame.font.Font(None, Config.scale(14))
 
     def _get_grid_size_for_tier(self, tier: int, discipline: str) -> Tuple[int, int]:
         """Get grid dimensions based on station tier for grid-based disciplines (smithing, adornments)"""
@@ -2314,38 +2315,38 @@ class Renderer:
 
             if item:
                 rarity_color = Config.RARITY_COLORS.get(item.rarity, (200, 200, 200))
-                inner_rect = pygame.Rect(sx + 5, sy + 5, slot_size - 10, slot_size - 10)
+                inner_rect = pygame.Rect(sx + s(5), sy + s(5), slot_size - s(10), slot_size - s(10))
                 pygame.draw.rect(surf, rarity_color, inner_rect)
 
                 tier_text = f"T{item.tier}"
                 tier_surf = self.small_font.render(tier_text, True, (0, 0, 0))
-                surf.blit(tier_surf, (sx + 8, sy + 8))
+                surf.blit(tier_surf, (sx + s(8), sy + s(8)))
 
             label_surf = self.tiny_font.render(slot_name, True, (150, 150, 150))
-            surf.blit(label_surf, (sx + slot_size // 2 - label_surf.get_width() // 2, sy + slot_size + 3))
+            surf.blit(label_surf, (sx + slot_size // 2 - label_surf.get_width() // 2, sy + slot_size + s(3)))
 
-        stats_x = 20
-        stats_y = 470
+        stats_x = s(20)
+        stats_y = s(470)
         surf.blit(self.font.render("Equipment Stats:", True, (200, 200, 200)), (stats_x, stats_y))
-        stats_y += 30
+        stats_y += s(30)
 
         weapon_dmg = character.equipment.get_weapon_damage()
         surf.blit(self.small_font.render(f"Weapon Damage: {weapon_dmg[0]}-{weapon_dmg[1]}", True, (200, 200, 200)),
                   (stats_x, stats_y))
-        stats_y += 20
+        stats_y += s(20)
 
         total_defense = character.equipment.get_total_defense()
         surf.blit(self.small_font.render(f"Total Defense: {total_defense}", True, (200, 200, 200)), (stats_x, stats_y))
-        stats_y += 20
+        stats_y += s(20)
 
         stat_bonuses = character.equipment.get_stat_bonuses()
         if stat_bonuses:
             surf.blit(self.small_font.render("Bonuses:", True, (150, 150, 150)), (stats_x, stats_y))
-            stats_y += 18
+            stats_y += s(18)
             for stat, value in stat_bonuses.items():
                 surf.blit(self.tiny_font.render(f"  +{value:.1f}% {stat}", True, (100, 200, 100)),
-                          (stats_x + 10, stats_y))
-                stats_y += 16
+                          (stats_x + s(10), stats_y))
+                stats_y += s(16)
 
         if hovered_slot:
             slot_name, item = hovered_slot
@@ -2356,12 +2357,13 @@ class Renderer:
 
     def render_equipment_tooltip(self, item: EquipmentItem, mouse_pos: Tuple[int, int], character: Character,
                                  from_inventory: bool = False):
-        tw, th, pad = 320, 340, 10  # Increased height for enchantments
-        x, y = mouse_pos[0] + 15, mouse_pos[1] + 15
+        s = Config.scale
+        tw, th, pad = s(320), s(340), s(10)  # Increased height for enchantments
+        x, y = mouse_pos[0] + s(15), mouse_pos[1] + s(15)
         if x + tw > Config.SCREEN_WIDTH:
-            x = mouse_pos[0] - tw - 15
+            x = mouse_pos[0] - tw - s(15)
         if y + th > Config.SCREEN_HEIGHT:
-            y = mouse_pos[1] - th - 15
+            y = mouse_pos[1] - th - s(15)
 
         surf = pygame.Surface((tw, th), pygame.SRCALPHA)
         surf.fill(Config.COLOR_TOOLTIP_BG)
@@ -2370,36 +2372,36 @@ class Renderer:
         color = Config.RARITY_COLORS.get(item.rarity, (200, 200, 200))
 
         surf.blit(self.font.render(item.name, True, color), (pad, y_pos))
-        y_pos += 25
+        y_pos += s(25)
         surf.blit(self.small_font.render(f"Tier {item.tier} | {item.rarity.capitalize()} | {item.slot}", True, color),
                   (pad, y_pos))
-        y_pos += 25
+        y_pos += s(25)
 
         if item.damage[0] > 0:
             dmg = item.get_actual_damage()
             surf.blit(self.small_font.render(f"Damage: {dmg[0]}-{dmg[1]}", True, (200, 200, 200)), (pad, y_pos))
-            y_pos += 20
+            y_pos += s(20)
 
             # Show range for weapons
             if item.range != 1.0:
                 surf.blit(self.small_font.render(f"Range: {item.range}", True, (200, 200, 200)), (pad, y_pos))
-                y_pos += 20
+                y_pos += s(20)
 
         if item.defense > 0:
             def_val = int(item.defense * item.get_effectiveness())
             surf.blit(self.small_font.render(f"Defense: {def_val}", True, (200, 200, 200)), (pad, y_pos))
-            y_pos += 20
+            y_pos += s(20)
 
         if item.attack_speed != 1.0:
             surf.blit(self.small_font.render(f"Attack Speed: {item.attack_speed:.2f}x", True, (200, 200, 200)),
                       (pad, y_pos))
-            y_pos += 20
+            y_pos += s(20)
 
         # Display enchantments
         if item.enchantments:
-            y_pos += 5
+            y_pos += s(5)
             surf.blit(self.small_font.render("Enchantments:", True, (180, 140, 255)), (pad, y_pos))
-            y_pos += 20
+            y_pos += s(20)
             for ench in item.enchantments:
                 ench_name = ench.get('name', 'Unknown')
                 effect = ench.get('effect', {})
@@ -2419,7 +2421,7 @@ class Renderer:
                     ench_text = f"  {ench_name}"
 
                 surf.blit(self.tiny_font.render(ench_text, True, (200, 180, 255)), (pad, y_pos))
-                y_pos += 16
+                y_pos += s(16)
 
         dur_pct = (item.durability_current / item.durability_max) * 100
         dur_color = (100, 255, 100) if dur_pct > 50 else (255, 200, 100) if dur_pct > 25 else (255, 100, 100)
@@ -2427,12 +2429,12 @@ class Renderer:
         if Config.DEBUG_INFINITE_RESOURCES:
             dur_text += " (∞)"
         surf.blit(self.small_font.render(dur_text, True, dur_color), (pad, y_pos))
-        y_pos += 20
+        y_pos += s(20)
 
         if item.requirements:
-            y_pos += 5
+            y_pos += s(5)
             surf.blit(self.tiny_font.render("Requirements:", True, (150, 150, 150)), (pad, y_pos))
-            y_pos += 15
+            y_pos += s(15)
             can_equip, reason = item.can_equip(character)
             req_color = (100, 255, 100) if can_equip else (255, 100, 100)
             if 'level' in item.requirements:
