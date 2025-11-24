@@ -54,7 +54,7 @@ class Config:
             width = width or int(display_info.current_w * 0.9)
             height = height or int(display_info.current_h * 0.9)
 
-            # Clamp to minimum size
+            # Clamp to minimum size (keep 16:9 ratio)
             width = max(1280, width)
             height = max(720, height)
 
@@ -65,15 +65,15 @@ class Config:
         cls.SCREEN_WIDTH = width
         cls.SCREEN_HEIGHT = height
 
-        # Calculate UI scale based on height (vertical space is usually the constraint)
+        # Calculate UI scale for INVENTORY/HUD only (not popup windows)
         cls.UI_SCALE = height / cls.BASE_HEIGHT
 
-        # Scale viewport (75% of width for game view)
+        # Scale main layout: viewport (75% width) and UI panel (25% width)
         cls.VIEWPORT_WIDTH = int(width * 0.75)
         cls.VIEWPORT_HEIGHT = height
-
-        # Scale UI elements
         cls.UI_PANEL_WIDTH = width - cls.VIEWPORT_WIDTH
+
+        # Scale inventory panel (bottom of screen)
         cls.INVENTORY_PANEL_Y = int(600 * cls.UI_SCALE)
         cls.INVENTORY_PANEL_WIDTH = cls.VIEWPORT_WIDTH
         cls.INVENTORY_PANEL_HEIGHT = height - cls.INVENTORY_PANEL_Y
@@ -81,14 +81,13 @@ class Config:
 
         # Calculate slots per row based on available width
         slot_spacing = 5
-        available_width = cls.INVENTORY_PANEL_WIDTH - 40  # 20px margin on each side
+        available_width = cls.INVENTORY_PANEL_WIDTH - 40  # 20px margin each side
         cls.INVENTORY_SLOTS_PER_ROW = max(8, available_width // (cls.INVENTORY_SLOT_SIZE + slot_spacing))
 
         print(f"🖥️  Screen: {width}x{height} (scale: {cls.UI_SCALE:.2f}x)")
         print(f"   Viewport: {cls.VIEWPORT_WIDTH}x{cls.VIEWPORT_HEIGHT}")
-        print(f"   UI Panel: {cls.UI_PANEL_WIDTH}px wide")
-        print(f"   Slot size: {cls.INVENTORY_SLOT_SIZE}px")
-        print(f"   Slots per row: {cls.INVENTORY_SLOTS_PER_ROW}")
+        print(f"   Inventory slots: {cls.INVENTORY_SLOT_SIZE}px ({cls.INVENTORY_SLOTS_PER_ROW} per row)")
+        print(f"   Note: Popup menus remain fixed-size for consistency")
 
     @classmethod
     def scale(cls, value):
