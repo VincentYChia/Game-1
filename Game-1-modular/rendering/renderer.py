@@ -1146,7 +1146,7 @@ class Renderer:
 
         s = Config.scale  # Shorthand for readability
         ww, wh = Config.MENU_LARGE_W, Config.MENU_LARGE_H
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)  # Clamp to prevent off-screen
         wy = s(50)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -1310,8 +1310,8 @@ class Renderer:
             return None
 
         s = Config.scale  # Shorthand for scaling
-        ww, wh = Config.MENU_XLARGE_W, Config.MENU_XLARGE_H
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
+        ww, wh = Config.MENU_LARGE_W, Config.MENU_LARGE_H
+        wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)  # Clamp to prevent off-screen
         wy = s(40)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -1392,8 +1392,8 @@ class Renderer:
         s = Config.scale
         # Window dimensions
         ww, wh = Config.MENU_MEDIUM_W, Config.MENU_MEDIUM_H
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+        wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)  # Clamp to prevent off-screen
+        wy = max(0, (Config.VIEWPORT_HEIGHT - wh) // 2)
 
         # Create dialogue surface
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -2081,13 +2081,13 @@ class Renderer:
 
         s = Config.scale  # Shorthand for readability
         # Window dimensions - expanded to fit two panels
-        ww, wh = Config.MENU_XLARGE_W, Config.MENU_MEDIUM_H
+        ww, wh = Config.MENU_LARGE_W, Config.MENU_MEDIUM_H
         left_panel_w = s(450)
-        right_panel_w = s(700)
+        right_panel_w = s(500)  # Reduced to fit in LARGE menu
         separator_x = left_panel_w + s(20)
 
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+        wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)  # Clamp to prevent off-screen
+        wy = max(0, (Config.VIEWPORT_HEIGHT - wh) // 2)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 240))
@@ -2543,8 +2543,8 @@ class Renderer:
         s = Config.scale
         # Menu dimensions
         ww, wh = Config.MENU_SMALL_W, Config.MENU_SMALL_H
-        wx = (Config.SCREEN_WIDTH - ww) // 2
-        wy = (Config.SCREEN_HEIGHT - wh) // 2
+        wx = max(0, (Config.SCREEN_WIDTH - ww) // 2)  # Clamp to prevent off-screen
+        wy = max(0, (Config.SCREEN_HEIGHT - wh) // 2)
 
         # Create menu surface
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -2632,7 +2632,7 @@ class Renderer:
 
         s = Config.scale
         ww, wh = Config.MENU_LARGE_W, Config.MENU_LARGE_H
-        wx = Config.VIEWPORT_WIDTH - ww - s(20)  # Right-aligned with margin
+        wx = max(0, Config.VIEWPORT_WIDTH - ww - s(20))  # Right-aligned with margin, clamped
         wy = s(50)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
@@ -2686,7 +2686,7 @@ class Renderer:
 
         s = Config.scale
         ww, wh = Config.MENU_LARGE_W, Config.MENU_LARGE_H
-        wx = Config.VIEWPORT_WIDTH - ww - s(20)  # Right-aligned with margin
+        wx = max(0, Config.VIEWPORT_WIDTH - ww - s(20))  # Right-aligned with margin, clamped
         wy = s(50)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
