@@ -32,7 +32,8 @@ class MaterialDatabase:
                     rarity=mat_data.get('rarity', 'common'),
                     description=mat_data.get('description', ''),
                     max_stack=mat_data.get('maxStack', 99),
-                    properties=mat_data.get('properties', {})
+                    properties=mat_data.get('properties', {}),
+                    icon_path=mat_data.get('iconPath')  # Optional image path
                 )
                 self.materials[mat.material_id] = mat
             self.loaded = True
@@ -81,7 +82,8 @@ class MaterialDatabase:
                             rarity=item_data.get('rarity', 'common'),
                             description=item_data.get('metadata', {}).get('narrative', ''),
                             max_stack=item_data.get('stackSize', 256),
-                            properties={}
+                            properties={},
+                            icon_path=item_data.get('iconPath')  # Optional image path
                         )
                         if mat.material_id and mat.material_id not in self.materials:
                             self.materials[mat.material_id] = mat
@@ -130,7 +132,8 @@ class MaterialDatabase:
                                 rarity=item_data.get('rarity', 'common'),
                                 description=item_data.get('metadata', {}).get('narrative', ''),
                                 max_stack=item_data.get('stackSize', 99),
-                                properties={}
+                                properties={},
+                                icon_path=item_data.get('iconPath')  # Optional image path
                             )
                             if mat.material_id and mat.material_id not in self.materials:
                                 self.materials[mat.material_id] = mat

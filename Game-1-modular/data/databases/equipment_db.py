@@ -262,7 +262,8 @@ class EquipmentDatabase:
             weight=stats.get('weight', 1.0),
             range=data.get('range', 1.0),  # Range is a top-level field in JSON
             requirements=data.get('requirements', {}),
-            bonuses=stats.get('bonuses', {})
+            bonuses=stats.get('bonuses', {}),
+            icon_path=data.get('iconPath')  # Optional image path
         )
 
     def is_equipment(self, item_id: str) -> bool:

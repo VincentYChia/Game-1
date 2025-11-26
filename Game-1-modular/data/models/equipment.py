@@ -22,6 +22,7 @@ class EquipmentItem:
     requirements: Dict[str, Any] = field(default_factory=dict)
     bonuses: Dict[str, float] = field(default_factory=dict)
     enchantments: List[Dict[str, Any]] = field(default_factory=list)  # Applied enchantments
+    icon_path: Optional[str] = None  # Optional path to item icon image (PNG/JPG)
 
     def get_effectiveness(self) -> float:
         """Get effectiveness multiplier based on durability (for CONFIG check - imported later)"""
@@ -106,7 +107,8 @@ class EquipmentItem:
             range=self.range,
             requirements=self.requirements.copy(),
             bonuses=self.bonuses.copy(),
-            enchantments=copy_module.deepcopy(self.enchantments)
+            enchantments=copy_module.deepcopy(self.enchantments),
+            icon_path=self.icon_path
         )
 
     def can_apply_enchantment(self, enchantment_id: str, applicable_to: List[str], effect: Dict) -> Tuple[bool, str]:

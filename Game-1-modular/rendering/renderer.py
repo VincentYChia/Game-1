@@ -29,6 +29,9 @@ from data.databases import (
     NPCDatabase,
 )
 
+# Image cache
+from rendering.image_cache import ImageCache
+
 # Entities
 from entities import Character, Tool, DamageNumber
 from entities.components import ItemStack
@@ -1951,58 +1954,80 @@ class Renderer:
             self.render_item_tooltip(item_stack, mouse_pos, character)
 
     def render_item_in_slot(self, item_stack: ItemStack, rect: pygame.Rect, is_equipped: bool = False):
-        # Check if it's equipment
+        """
+        Render an item in an inventory slot with optional image support.
+        Falls back to colored rectangles if no image is available.
+        """
+        image_cache = ImageCache.get_instance()
+        inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
+
+        # Determine item properties
+        icon_path = None
+        name = ""
+        tier = 1
+        rarity = "common"
+
         if item_stack.is_equipment():
             equipment = item_stack.get_equipment()
             if equipment:
-                color = Config.RARITY_COLORS.get(equipment.rarity, (200, 200, 200))
-                inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
-                pygame.draw.rect(self.screen, color, inner)
+                icon_path = equipment.icon_path
+                name = equipment.name
+                tier = equipment.tier
+                rarity = equipment.rarity
+        else:
+            mat = item_stack.get_material()
+            if mat:
+                icon_path = mat.icon_path
+                name = mat.name
+                tier = mat.tier
+                rarity = mat.rarity
 
-                # Show "E" for equipped items
-                if is_equipped:
-                    e_surf = self.font.render("E", True, (255, 255, 255))
-                    e_rect = e_surf.get_rect(center=inner.center)
-                    # Black outline
-                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
-                        self.screen.blit(self.font.render("E", True, (0, 0, 0)), (e_rect.x + dx, e_rect.y + dy))
-                    self.screen.blit(e_surf, e_rect)
-                else:
-                    tier_surf = self.small_font.render(f"T{equipment.tier}", True, (0, 0, 0))
-                    self.screen.blit(tier_surf, (rect.x + 6, rect.y + 6))
+        # Try to load image from cache
+        image = image_cache.get_image(icon_path, (inner.width, inner.height)) if icon_path else None
 
-                # Add item name label
-                name_surf = self.tiny_font.render(equipment.name[:8], True, (255, 255, 255))
-                name_rect = name_surf.get_rect(centerx=rect.centerx, bottom=rect.bottom - 2)
-                # Black outline for readability
-                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                    self.screen.blit(self.tiny_font.render(equipment.name[:8], True, (0, 0, 0)),
-                                     (name_rect.x + dx, name_rect.y + dy))
-                self.screen.blit(name_surf, name_rect)
-                return
-
-        # Regular material
-        mat = item_stack.get_material()
-        if mat:
-            color = Config.RARITY_COLORS.get(mat.rarity, (200, 200, 200))
-            inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
+        if image:
+            # Render image
+            self.screen.blit(image, inner.topleft)
+        else:
+            # Fallback: Render colored rectangle
+            color = Config.RARITY_COLORS.get(rarity, (200, 200, 200))
             pygame.draw.rect(self.screen, color, inner)
-            tier_surf = self.small_font.render(f"T{mat.tier}", True, (0, 0, 0))
-            self.screen.blit(tier_surf, (rect.x + 6, rect.y + 6))
 
-            # Add item name label
-            name_surf = self.tiny_font.render(mat.name[:8], True, (255, 255, 255))
+        # Overlay text elements (always shown)
+        # Show "E" for equipped items OR tier for unequipped
+        if is_equipped:
+            e_surf = self.font.render("E", True, (255, 255, 255))
+            e_rect = e_surf.get_rect(center=inner.center)
+            # Black outline
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
+                self.screen.blit(self.font.render("E", True, (0, 0, 0)), (e_rect.x + dx, e_rect.y + dy))
+            self.screen.blit(e_surf, e_rect)
+        else:
+            # Show tier in top-left
+            tier_surf = self.small_font.render(f"T{tier}", True, (255, 255, 255))
+            tier_rect = tier_surf.get_rect(topleft=(rect.x + 6, rect.y + 6))
+            # Black outline
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                self.screen.blit(self.small_font.render(f"T{tier}", True, (0, 0, 0)),
+                                (tier_rect.x + dx, tier_rect.y + dy))
+            self.screen.blit(tier_surf, tier_rect)
+
+        # Show item name at bottom
+        if name:
+            name_surf = self.tiny_font.render(name[:8], True, (255, 255, 255))
             name_rect = name_surf.get_rect(centerx=rect.centerx, bottom=rect.bottom - 2)
             # Black outline for readability
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                self.screen.blit(self.tiny_font.render(mat.name[:8], True, (0, 0, 0)),
+                self.screen.blit(self.tiny_font.render(name[:8], True, (0, 0, 0)),
                                  (name_rect.x + dx, name_rect.y + dy))
             self.screen.blit(name_surf, name_rect)
 
+        # Show quantity for stackable items
         if item_stack.quantity > 1:
             qty_text = str(item_stack.quantity)
             qty_surf = self.small_font.render(qty_text, True, (255, 255, 255))
             qty_rect = qty_surf.get_rect(bottomright=(rect.right - 3, rect.bottom - 3))
+            # Black outline
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                 self.screen.blit(self.small_font.render(qty_text, True, (0, 0, 0)),
                                  (qty_rect.x + dx, qty_rect.y + dy))
