@@ -518,7 +518,7 @@ class GameEngine:
         """Handle right-click events (mainly for using consumables)"""
         # Only handle inventory right-clicks for now
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            start_x, start_y = 20, Config.INVENTORY_GRID_Y
+            start_x, start_y = 20, Config.INVENTORY_PANEL_Y
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -792,7 +792,7 @@ class GameEngine:
 
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            start_x, start_y = 20, Config.INVENTORY_GRID_Y
+            start_x, start_y = 20, Config.INVENTORY_PANEL_Y
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -1439,10 +1439,11 @@ class GameEngine:
 
         recipe_db = RecipeDatabase.get_instance()
 
-        # Layout constants (matching render_crafting_ui)
-        left_panel_w = 450
-        right_panel_x = left_panel_w + 20 + 20  # separator + padding
-        right_panel_w = 700
+        # Layout constants (matching render_crafting_ui) - MUST use Config.scale()!
+        s = Config.scale
+        left_panel_w = s(450)
+        right_panel_x = left_panel_w + s(20) + s(20)  # separator + padding
+        right_panel_w = s(500)  # Must match renderer
 
         # ======================
         # LEFT PANEL: Recipe Selection
@@ -1456,10 +1457,10 @@ class GameEngine:
             end_idx = min(start_idx + max_visible, total_recipes)
             visible_recipes = self.crafting_recipes[start_idx:end_idx]
 
-            y_off = 70
+            y_off = s(70)
             for i, recipe in enumerate(visible_recipes):
                 num_inputs = len(recipe.inputs)
-                btn_height = max(70, 35 + num_inputs * 16 + 5)
+                btn_height = max(s(70), s(35) + num_inputs * s(16) + s(5))
 
                 if y_off <= ry <= y_off + btn_height:
                     # Recipe clicked - select it
@@ -1469,7 +1470,7 @@ class GameEngine:
                     self.load_recipe_placement(recipe)
                     return
 
-                y_off += btn_height + 8
+                y_off += btn_height + s(8)
 
         # ======================
         # RIGHT PANEL: Grid Cells & Craft Buttons
@@ -1514,19 +1515,19 @@ class GameEngine:
             if not can_craft:
                 return  # Can't craft, buttons not shown
 
-            # Button positions (matching render_crafting_ui)
-            placement_h = 380
-            right_panel_y = 70
-            btn_y = right_panel_y + placement_h + 20
+            # Button positions (matching render_crafting_ui) - MUST use Config.scale()!
+            placement_h = s(380)
+            right_panel_y = s(70)
+            btn_y = right_panel_y + placement_h + s(20)
 
-            instant_btn_w, instant_btn_h = 120, 40
-            minigame_btn_w, minigame_btn_h = 120, 40
+            instant_btn_w, instant_btn_h = s(120), s(40)
+            minigame_btn_w, minigame_btn_h = s(120), s(40)
 
-            total_btn_w = instant_btn_w + minigame_btn_w + 20
-            start_x = right_panel_x + (right_panel_w - 40 - total_btn_w) // 2
+            total_btn_w = instant_btn_w + minigame_btn_w + s(20)
+            start_x = right_panel_x + (right_panel_w - s(40) - total_btn_w) // 2
 
             instant_btn_x = start_x
-            minigame_btn_x = start_x + instant_btn_w + 20
+            minigame_btn_x = start_x + instant_btn_w + s(20)
 
             # Convert to relative coordinates
             instant_left = instant_btn_x
@@ -2096,7 +2097,7 @@ class GameEngine:
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
         if self.character.inventory.dragging_stack:
             if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-                start_x, start_y = 20, Config.INVENTORY_GRID_Y
+                start_x, start_y = 20, Config.INVENTORY_PANEL_Y
                 slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
                 rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
