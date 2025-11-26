@@ -66,6 +66,9 @@ except ImportError as e:
 # ============================================================================
 class GameEngine:
     def __init__(self):
+        # Initialize screen settings first (auto-detects resolution or uses custom)
+        Config.init_screen_settings()
+
         pygame.init()
         self.screen = pygame.display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
         pygame.display.set_caption("2D RPG Game - Equipment System v2.2")
@@ -469,6 +472,15 @@ class GameEngine:
                     self.test_system.run_all_tests()
                     self.add_notification("Test suite completed - check console", (100, 200, 255))
 
+                elif event.key == pygame.K_F11:
+                    # Toggle fullscreen
+                    flags = Config.toggle_fullscreen()
+                    self.screen = pygame.display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT), flags)
+                    self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
+                    mode = "Fullscreen" if Config.FULLSCREEN else "Windowed"
+                    self.add_notification(f"Switched to {mode} mode", (100, 200, 255))
+                    print(f"🖥️  Switched to {mode}: {Config.SCREEN_WIDTH}x{Config.SCREEN_HEIGHT}")
+
             elif event.type == pygame.KEYUP:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
@@ -866,27 +878,25 @@ class GameEngine:
                 return
 
             # Attack enemy
-            damage, is_crit = self.combat_manager.player_attack_enemy(enemy)
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy)
             self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
             self.character.reset_attack_cooldown(is_weapon=True)
 
             if not enemy.is_alive:
                 self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
                 self.character.activities.record_activity('combat', 1)
+
+                # Show loot notifications (auto-looted)
+                if loot:
+                    mat_db = MaterialDatabase.get_instance()
+                    for material_id, qty in loot:
+                        mat = mat_db.get_material(material_id)
+                        item_name = mat.name if mat else material_id
+                        self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
             return
 
-        # Check for corpse click (looting)
-        corpse = self.combat_manager.get_corpse_at_position((wx, wy))
-        if corpse:
-            loot = self.combat_manager.loot_corpse(corpse, self.character.inventory)
-            if loot:
-                mat_db = MaterialDatabase.get_instance()
-                for material_id, qty in loot:
-                    mat = mat_db.get_material(material_id)
-                    item_name = mat.name if mat else material_id
-                    self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
-                self.add_notification(f"Looted {corpse.definition.name}", (150, 200, 255))
-            return
+        # Note: Corpse looting is now automatic when enemy dies
+        # Manual corpse looting has been removed as loot is auto-added to inventory
 
         station = self.world.get_station_at(world_pos)
         if station:

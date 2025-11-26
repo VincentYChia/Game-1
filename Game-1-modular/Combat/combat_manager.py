@@ -373,10 +373,10 @@ class CombatManager:
                     self.spawn_enemies_in_chunk(chunk)
                     self.spawn_timers[chunk_coords] = 0.0
 
-    def player_attack_enemy(self, enemy: Enemy) -> Tuple[float, bool]:
+    def player_attack_enemy(self, enemy: Enemy) -> Tuple[float, bool, List[Tuple[str, int]]]:
         """
         Calculate player damage to enemy
-        Returns (damage, is_crit)
+        Returns (damage, is_crit, loot) where loot is empty list if enemy didn't die
         """
         print(f"\n⚔️ PLAYER ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
 
@@ -457,12 +457,29 @@ class CombatManager:
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
+        # Initialize loot list
+        loot = []
+
         # Grant EXP if killed
         if enemy_died:
             print(f"   💀 Enemy killed!")
             exp_reward = self._calculate_exp_reward(enemy)
             self.character.leveling.add_exp(exp_reward)
             print(f"   +{exp_reward} EXP")
+
+            # Auto-loot: Generate and add loot to inventory automatically
+            loot = enemy.generate_loot()
+            if loot:
+                print(f"   💰 Auto-looting {len(loot)} item type(s):")
+                for material_id, quantity in loot:
+                    # Add to character's inventory
+                    success = self.character.inventory.add_item(material_id, quantity)
+                    if success:
+                        print(f"      +{quantity}x {material_id}")
+                    else:
+                        print(f"      ⚠️ Inventory full! Could not add {quantity}x {material_id}")
+            else:
+                print(f"   No loot dropped")
 
             # Track combat activity
             if hasattr(self.character, 'activity_tracker'):
@@ -474,7 +491,7 @@ class CombatManager:
         self.player_last_combat_time = 0.0
         self.player_in_combat = True
 
-        return (final_damage, is_crit)
+        return (final_damage, is_crit, loot)
 
     def _enemy_attack_player(self, enemy: Enemy):
         """Enemy attacks player"""
