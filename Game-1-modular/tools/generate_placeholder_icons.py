@@ -144,7 +144,7 @@ def generate_item_placeholders(base_path: Path):
 
     # Process equipment files
     equipment_files = [
-        'items-smithing-1.JSON',
+        'items-engineering-1.JSON',
         'items-smithing-2.JSON',
         'items-tools-1.JSON',
         'items-alchemy-1.JSON',

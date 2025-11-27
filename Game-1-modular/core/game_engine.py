@@ -86,10 +86,13 @@ class GameEngine:
         # Load stackable consumables (potions, oils, etc.)
         MaterialDatabase.get_instance().load_stackable_items(
             "items.JSON/items-alchemy-1.JSON", categories=['consumable'])
-        # Load stackable devices (turrets, etc.)
+        # Load stackable devices (turrets, traps, bombs, utility devices)
         MaterialDatabase.get_instance().load_stackable_items(
-            "items.JSON/items-smithing-1.JSON", categories=['device'])
-        # Load placeable crafting stations
+            "items.JSON/items-engineering-1.JSON", categories=['device'])
+        # Load placeable crafting stations from items-smithing-2.JSON
+        MaterialDatabase.get_instance().load_stackable_items(
+            "items.JSON/items-smithing-2.JSON", categories=['station'])
+        # Load placeable crafting stations from legacy file (backup)
         MaterialDatabase.get_instance().load_stackable_items(
             "Definitions.JSON/crafting-stations-1.JSON", categories=['station'])
         TranslationDatabase.get_instance().load_from_files()
@@ -99,7 +102,7 @@ class GameEngine:
 
         # Load equipment from all item files
         equip_db = EquipmentDatabase.get_instance()
-        equip_db.load_from_file("items.JSON/items-smithing-1.JSON")
+        equip_db.load_from_file("items.JSON/items-engineering-1.JSON")
         equip_db.load_from_file("items.JSON/items-smithing-2.JSON")
         equip_db.load_from_file("items.JSON/items-tools-1.JSON")
         equip_db.load_from_file("items.JSON/items-alchemy-1.JSON")
@@ -1010,6 +1013,28 @@ class GameEngine:
                 # Convert placed entity to a CraftingStation for interaction
                 # Determine station type from item_id
                 station_type_map = {
+                    # New format from items-smithing-2.JSON
+                    'forge_t1': StationType.SMITHING,
+                    'forge_t2': StationType.SMITHING,
+                    'forge_t3': StationType.SMITHING,
+                    'forge_t4': StationType.SMITHING,
+                    'alchemy_table_t1': StationType.ALCHEMY,
+                    'alchemy_table_t2': StationType.ALCHEMY,
+                    'alchemy_table_t3': StationType.ALCHEMY,
+                    'alchemy_table_t4': StationType.ALCHEMY,
+                    'refinery_t1': StationType.REFINING,
+                    'refinery_t2': StationType.REFINING,
+                    'refinery_t3': StationType.REFINING,
+                    'refinery_t4': StationType.REFINING,
+                    'engineering_bench_t1': StationType.ENGINEERING,
+                    'engineering_bench_t2': StationType.ENGINEERING,
+                    'engineering_bench_t3': StationType.ENGINEERING,
+                    'engineering_bench_t4': StationType.ENGINEERING,
+                    'enchanting_table_t1': StationType.ADORNMENTS,
+                    'enchanting_table_t2': StationType.ADORNMENTS,
+                    'enchanting_table_t3': StationType.ADORNMENTS,
+                    'enchanting_table_t4': StationType.ADORNMENTS,
+                    # Legacy format from crafting-stations-1.JSON (for backward compatibility)
                     'tier_1_forge': StationType.SMITHING,
                     'tier_2_forge': StationType.SMITHING,
                     'tier_3_forge': StationType.SMITHING,

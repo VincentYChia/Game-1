@@ -126,12 +126,12 @@ class MaterialDatabase:
             return False
 
     def load_stackable_items(self, filepath: str, categories: list = None):
-        """Load stackable items (consumables, devices, etc.) from item files
+        """Load stackable and placeable items (consumables, devices, stations, etc.) from item files
 
         Args:
             filepath: Path to the JSON file
-            categories: List of categories to load (e.g., ['consumable', 'device'])
-                       If None, loads all items with stackable=True flag
+            categories: List of categories to load (e.g., ['consumable', 'device', 'station'])
+                       If None, loads all items with stackable=True or placeable=True flag
         """
         try:
             with open(filepath, 'r') as f:
@@ -147,9 +147,10 @@ class MaterialDatabase:
                         category = item_data.get('category', '')
                         flags = item_data.get('flags', {})
                         is_stackable = flags.get('stackable', False)
+                        is_placeable = flags.get('placeable', False)
 
-                        # Load if category matches (or no filter) AND item is stackable
-                        should_load = is_stackable and (
+                        # Load if category matches (or no filter) AND (item is stackable OR placeable)
+                        should_load = (is_stackable or is_placeable) and (
                             categories is None or category in categories
                         )
 
