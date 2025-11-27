@@ -29,6 +29,9 @@ from data.databases import (
     NPCDatabase,
 )
 
+# Image cache
+from rendering.image_cache import ImageCache
+
 # Entities
 from entities import Character, Tool, DamageNumber
 from entities.components import ItemStack
@@ -750,10 +753,24 @@ class Renderer:
 
             can_harvest, reason = character.can_harvest_resource(resource) if in_range else (False, "")
 
-            color = resource.get_color() if in_range else tuple(max(0, c - 50) for c in resource.get_color())
             size = Config.TILE_SIZE - 4
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
-            pygame.draw.rect(self.screen, color, rect)
+
+            # Auto-generate icon path from resource type
+            resource_icon_path = f"resources/{resource.resource_type.value}.png"
+
+            # Try to load resource icon (only if image cache exists)
+            if 'image_cache' not in locals():
+                image_cache = ImageCache.get_instance()
+            icon = image_cache.get_image(resource_icon_path, (size, size))
+
+            if icon:
+                # Render icon
+                self.screen.blit(icon, rect.topleft)
+            else:
+                # Fallback: colored rectangle
+                color = resource.get_color() if in_range else tuple(max(0, c - 50) for c in resource.get_color())
+                pygame.draw.rect(self.screen, color, rect)
 
             if in_range:
                 border_color = Config.COLOR_CAN_HARVEST if can_harvest else Config.COLOR_CANNOT_HARVEST
@@ -790,21 +807,30 @@ class Renderer:
                 pygame.draw.rect(self.screen, Config.COLOR_HP_BAR, (sx - bar_w // 2, bar_y, hp_w, bar_h))
 
         # Render enemies
+        image_cache = ImageCache.get_instance()
         if combat_manager:
             for enemy in combat_manager.get_all_active_enemies():
                 ex, ey = camera.world_to_screen(Position(enemy.position[0], enemy.position[1], 0))
 
                 # Enemy body
                 if enemy.is_alive:
-                    # Color based on tier
-                    tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
-                    enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
-                    if enemy.is_boss:
-                        enemy_color = (255, 215, 0)  # Gold for bosses
-
+                    # Try to load enemy icon
                     size = Config.TILE_SIZE // 2
-                    pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
-                    pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
+                    icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2)) if enemy.definition.icon_path else None
+
+                    if icon:
+                        # Render icon centered on enemy position
+                        icon_rect = icon.get_rect(center=(ex, ey))
+                        self.screen.blit(icon, icon_rect)
+                    else:
+                        # Fallback: Color based on tier
+                        tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
+                        enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                        if enemy.is_boss:
+                            enemy_color = (255, 215, 0)  # Gold for bosses
+
+                        pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
+                        pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
 
                     # Health bar
                     health_percent = enemy.current_health / enemy.max_health
@@ -1951,58 +1977,80 @@ class Renderer:
             self.render_item_tooltip(item_stack, mouse_pos, character)
 
     def render_item_in_slot(self, item_stack: ItemStack, rect: pygame.Rect, is_equipped: bool = False):
-        # Check if it's equipment
+        """
+        Render an item in an inventory slot with optional image support.
+        Falls back to colored rectangles if no image is available.
+        """
+        image_cache = ImageCache.get_instance()
+        inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
+
+        # Determine item properties
+        icon_path = None
+        name = ""
+        tier = 1
+        rarity = "common"
+
         if item_stack.is_equipment():
             equipment = item_stack.get_equipment()
             if equipment:
-                color = Config.RARITY_COLORS.get(equipment.rarity, (200, 200, 200))
-                inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
-                pygame.draw.rect(self.screen, color, inner)
+                icon_path = equipment.icon_path
+                name = equipment.name
+                tier = equipment.tier
+                rarity = equipment.rarity
+        else:
+            mat = item_stack.get_material()
+            if mat:
+                icon_path = mat.icon_path
+                name = mat.name
+                tier = mat.tier
+                rarity = mat.rarity
 
-                # Show "E" for equipped items
-                if is_equipped:
-                    e_surf = self.font.render("E", True, (255, 255, 255))
-                    e_rect = e_surf.get_rect(center=inner.center)
-                    # Black outline
-                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
-                        self.screen.blit(self.font.render("E", True, (0, 0, 0)), (e_rect.x + dx, e_rect.y + dy))
-                    self.screen.blit(e_surf, e_rect)
-                else:
-                    tier_surf = self.small_font.render(f"T{equipment.tier}", True, (0, 0, 0))
-                    self.screen.blit(tier_surf, (rect.x + 6, rect.y + 6))
+        # Try to load image from cache
+        image = image_cache.get_image(icon_path, (inner.width, inner.height)) if icon_path else None
 
-                # Add item name label
-                name_surf = self.tiny_font.render(equipment.name[:8], True, (255, 255, 255))
-                name_rect = name_surf.get_rect(centerx=rect.centerx, bottom=rect.bottom - 2)
-                # Black outline for readability
-                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                    self.screen.blit(self.tiny_font.render(equipment.name[:8], True, (0, 0, 0)),
-                                     (name_rect.x + dx, name_rect.y + dy))
-                self.screen.blit(name_surf, name_rect)
-                return
-
-        # Regular material
-        mat = item_stack.get_material()
-        if mat:
-            color = Config.RARITY_COLORS.get(mat.rarity, (200, 200, 200))
-            inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
+        if image:
+            # Render image
+            self.screen.blit(image, inner.topleft)
+        else:
+            # Fallback: Render colored rectangle
+            color = Config.RARITY_COLORS.get(rarity, (200, 200, 200))
             pygame.draw.rect(self.screen, color, inner)
-            tier_surf = self.small_font.render(f"T{mat.tier}", True, (0, 0, 0))
-            self.screen.blit(tier_surf, (rect.x + 6, rect.y + 6))
 
-            # Add item name label
-            name_surf = self.tiny_font.render(mat.name[:8], True, (255, 255, 255))
+        # Overlay text elements (always shown)
+        # Show "E" for equipped items OR tier for unequipped
+        if is_equipped:
+            e_surf = self.font.render("E", True, (255, 255, 255))
+            e_rect = e_surf.get_rect(center=inner.center)
+            # Black outline
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
+                self.screen.blit(self.font.render("E", True, (0, 0, 0)), (e_rect.x + dx, e_rect.y + dy))
+            self.screen.blit(e_surf, e_rect)
+        else:
+            # Show tier in top-left
+            tier_surf = self.small_font.render(f"T{tier}", True, (255, 255, 255))
+            tier_rect = tier_surf.get_rect(topleft=(rect.x + 6, rect.y + 6))
+            # Black outline
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                self.screen.blit(self.small_font.render(f"T{tier}", True, (0, 0, 0)),
+                                (tier_rect.x + dx, tier_rect.y + dy))
+            self.screen.blit(tier_surf, tier_rect)
+
+        # Show item name at bottom
+        if name:
+            name_surf = self.tiny_font.render(name[:8], True, (255, 255, 255))
             name_rect = name_surf.get_rect(centerx=rect.centerx, bottom=rect.bottom - 2)
             # Black outline for readability
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                self.screen.blit(self.tiny_font.render(mat.name[:8], True, (0, 0, 0)),
+                self.screen.blit(self.tiny_font.render(name[:8], True, (0, 0, 0)),
                                  (name_rect.x + dx, name_rect.y + dy))
             self.screen.blit(name_surf, name_rect)
 
+        # Show quantity for stackable items
         if item_stack.quantity > 1:
             qty_text = str(item_stack.quantity)
             qty_surf = self.small_font.render(qty_text, True, (255, 255, 255))
             qty_rect = qty_surf.get_rect(bottomright=(rect.right - 3, rect.bottom - 3))
+            # Black outline
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                 self.screen.blit(self.small_font.render(qty_text, True, (0, 0, 0)),
                                  (qty_rect.x + dx, qty_rect.y + dy))

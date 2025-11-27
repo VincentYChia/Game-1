@@ -248,6 +248,24 @@ class EquipmentDatabase:
         else:
             dur_max = int(durability)
 
+        # Auto-generate icon path if not provided
+        icon_path = data.get('iconPath')
+        if not icon_path and item_id:
+            # Determine subdirectory based on slot/type
+            if mapped_slot in ['mainHand', 'offHand'] and damage != (0, 0):
+                subdir = 'weapons'
+            elif mapped_slot in ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']:
+                subdir = 'armor'
+            elif mapped_slot in ['tool', 'axe', 'pickaxe'] or item_type == 'tool':
+                subdir = 'tools'
+            elif mapped_slot == 'accessory' or item_type == 'accessory':
+                subdir = 'accessories'
+            elif item_type == 'station':
+                subdir = 'stations'
+            else:
+                subdir = 'weapons'  # Default fallback
+            icon_path = f"{subdir}/{item_id}.png"
+
         return EquipmentItem(
             item_id=item_id,
             name=data.get('name', item_id),
@@ -262,7 +280,8 @@ class EquipmentDatabase:
             weight=stats.get('weight', 1.0),
             range=data.get('range', 1.0),  # Range is a top-level field in JSON
             requirements=data.get('requirements', {}),
-            bonuses=stats.get('bonuses', {})
+            bonuses=stats.get('bonuses', {}),
+            icon_path=icon_path
         )
 
     def is_equipment(self, item_id: str) -> bool:
