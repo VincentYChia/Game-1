@@ -764,12 +764,19 @@ class Renderer:
             pygame.draw.rect(self.screen, (0, 0, 0, 180), tier_bg)
             self.screen.blit(tier_surf, (sx - size // 2 + 4, sy - size // 2 + 2))
 
-            # Render health bar
+            # Render lifetime bar (like health bar)
             bar_w, bar_h = size - 4, 4
             bar_y = sy + size // 2 + 4
             pygame.draw.rect(self.screen, (100, 100, 100), (sx - bar_w // 2, bar_y, bar_w, bar_h))
-            hp_w = int(bar_w * (entity.health / 100.0))
-            pygame.draw.rect(self.screen, (0, 255, 0), (sx - bar_w // 2, bar_y, hp_w, bar_h))
+            lifetime_w = int(bar_w * (entity.time_remaining / entity.lifetime))
+            # Color based on time remaining (green -> yellow -> red)
+            if entity.time_remaining > entity.lifetime * 0.5:
+                bar_color = (0, 255, 0)  # Green
+            elif entity.time_remaining > entity.lifetime * 0.25:
+                bar_color = (255, 255, 0)  # Yellow
+            else:
+                bar_color = (255, 0, 0)  # Red
+            pygame.draw.rect(self.screen, bar_color, (sx - bar_w // 2, bar_y, lifetime_w, bar_h))
 
             # Draw range circle for turrets (semi-transparent)
             if hasattr(entity, 'range') and entity.range > 0:

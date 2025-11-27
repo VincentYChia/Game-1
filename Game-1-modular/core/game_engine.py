@@ -967,6 +967,40 @@ class GameEngine:
         # Note: Corpse looting is now automatic when enemy dies
         # Manual corpse looting has been removed as loot is auto-added to inventory
 
+        # Check for placed entity pickup (turrets, traps, etc.)
+        if is_double_click:
+            placed_entity = self.world.get_entity_at(world_pos)
+            if placed_entity:
+                # Check if entity is pickupable (not crafting stations)
+                pickupable_types = [
+                    PlacedEntityType.TURRET,
+                    PlacedEntityType.TRAP,
+                    PlacedEntityType.BOMB,
+                    PlacedEntityType.UTILITY_DEVICE
+                ]
+                if placed_entity.entity_type in pickupable_types:
+                    # Check if player is in range (use 2.0 units as pickup range)
+                    dist = self.character.position.distance_to(placed_entity.position)
+                    if dist <= 2.0:
+                        # Add item back to inventory
+                        mat_db = MaterialDatabase.get_instance()
+                        mat_def = mat_db.get_material(placed_entity.item_id)
+                        if mat_def:
+                            # Try to add to inventory
+                            success = self.character.inventory.add_item(placed_entity.item_id, 1)
+                            if success:
+                                # Remove from world
+                                self.world.placed_entities.remove(placed_entity)
+                                self.add_notification(f"Picked up {mat_def.name}", (100, 255, 100))
+                                print(f"✓ Picked up {mat_def.name}")
+                                return
+                            else:
+                                self.add_notification("Inventory full!", (255, 100, 100))
+                                return
+                    else:
+                        self.add_notification("Too far to pick up", (255, 100, 100))
+                        return
+
         station = self.world.get_station_at(world_pos)
 
         # Also check placed entities for crafting stations

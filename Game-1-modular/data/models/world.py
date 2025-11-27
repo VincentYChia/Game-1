@@ -163,6 +163,9 @@ class PlacedEntity:
     attack_speed: float = 1.0  # Attacks per second
     last_attack_time: float = 0.0
     target_enemy: Optional[any] = None  # Will be Enemy type
+    # Lifetime management
+    lifetime: float = 300.0  # Total lifetime in seconds (5 minutes default)
+    time_remaining: float = 300.0  # Time remaining before despawn
 
     def get_color(self) -> Tuple[int, int, int]:
         """Get display color for this entity"""

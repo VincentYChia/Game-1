@@ -22,8 +22,16 @@ class TurretSystem:
         # Get all active enemies from combat manager
         all_enemies = combat_manager.get_all_active_enemies() if combat_manager else []
 
+        entities_to_remove = []
+
         for entity in placed_entities:
-            # Only process turrets
+            # Update lifetime for all placed entities
+            entity.time_remaining -= dt
+            if entity.time_remaining <= 0:
+                entities_to_remove.append(entity)
+                continue
+
+            # Only process turrets for combat
             if entity.entity_type != PlacedEntityType.TURRET:
                 continue
 
@@ -43,6 +51,10 @@ class TurretSystem:
                     entity.last_attack_time = current_time
             else:
                 entity.target_enemy = None
+
+        # Remove expired entities
+        for entity in entities_to_remove:
+            placed_entities.remove(entity)
 
     def _find_nearest_enemy(self, turret: PlacedEntity, all_enemies: List) -> Optional:
         """Find the nearest alive enemy within turret's range"""
@@ -68,12 +80,12 @@ class TurretSystem:
     def _attack_enemy(self, turret: PlacedEntity, enemy: 'Enemy'):
         """Turret attacks an enemy"""
         # Apply damage to enemy
-        enemy.current_hp -= turret.damage
+        enemy.hp -= turret.damage
 
         # Check if enemy died
-        if enemy.current_hp <= 0:
+        if enemy.hp <= 0:
             enemy.is_alive = False
-            enemy.current_hp = 0
+            enemy.hp = 0
 
     def get_turret_target_line(self, turret: PlacedEntity) -> Optional[tuple]:
         """Get line from turret to its target for rendering"""
