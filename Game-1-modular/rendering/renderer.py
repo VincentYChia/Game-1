@@ -753,10 +753,24 @@ class Renderer:
 
             can_harvest, reason = character.can_harvest_resource(resource) if in_range else (False, "")
 
-            color = resource.get_color() if in_range else tuple(max(0, c - 50) for c in resource.get_color())
             size = Config.TILE_SIZE - 4
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
-            pygame.draw.rect(self.screen, color, rect)
+
+            # Auto-generate icon path from resource type
+            resource_icon_path = f"resources/{resource.resource_type.value}.png"
+
+            # Try to load resource icon (only if image cache exists)
+            if 'image_cache' not in locals():
+                image_cache = ImageCache.get_instance()
+            icon = image_cache.get_image(resource_icon_path, (size, size))
+
+            if icon:
+                # Render icon
+                self.screen.blit(icon, rect.topleft)
+            else:
+                # Fallback: colored rectangle
+                color = resource.get_color() if in_range else tuple(max(0, c - 50) for c in resource.get_color())
+                pygame.draw.rect(self.screen, color, rect)
 
             if in_range:
                 border_color = Config.COLOR_CAN_HARVEST if can_harvest else Config.COLOR_CANNOT_HARVEST
@@ -793,21 +807,30 @@ class Renderer:
                 pygame.draw.rect(self.screen, Config.COLOR_HP_BAR, (sx - bar_w // 2, bar_y, hp_w, bar_h))
 
         # Render enemies
+        image_cache = ImageCache.get_instance()
         if combat_manager:
             for enemy in combat_manager.get_all_active_enemies():
                 ex, ey = camera.world_to_screen(Position(enemy.position[0], enemy.position[1], 0))
 
                 # Enemy body
                 if enemy.is_alive:
-                    # Color based on tier
-                    tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
-                    enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
-                    if enemy.is_boss:
-                        enemy_color = (255, 215, 0)  # Gold for bosses
-
+                    # Try to load enemy icon
                     size = Config.TILE_SIZE // 2
-                    pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
-                    pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
+                    icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2)) if enemy.definition.icon_path else None
+
+                    if icon:
+                        # Render icon centered on enemy position
+                        icon_rect = icon.get_rect(center=(ex, ey))
+                        self.screen.blit(icon, icon_rect)
+                    else:
+                        # Fallback: Color based on tier
+                        tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
+                        enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                        if enemy.is_boss:
+                            enemy_color = (255, 215, 0)  # Gold for bosses
+
+                        pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
+                        pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
 
                     # Health bar
                     health_percent = enemy.current_health / enemy.max_health

@@ -166,22 +166,36 @@ def generate_item_placeholders(base_path: Path):
                     category_type = item.get('category', '')
                     item_type = item.get('type', '')
                     slot = item.get('slot', '')
+                    flags = item.get('flags', {})
+                    is_stackable = flags.get('stackable', False)
 
-                    if not item_id or category_type != 'equipment':
+                    if not item_id:
                         continue
 
-                    # Determine subdirectory
-                    if item_type in ['weapon', 'sword', 'axe', 'mace', 'dagger', 'spear', 'bow', 'staff'] or \
-                       (slot in ['mainHand', 'offHand'] and item.get('stats', {}).get('damage')):
-                        subdir = 'weapons'
-                    elif item_type == 'armor' or slot in ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']:
-                        subdir = 'armor'
-                    elif item_type == 'tool' or slot in ['tool', 'axe', 'pickaxe']:
-                        subdir = 'tools'
-                    elif item_type == 'accessory':
-                        subdir = 'accessories'
-                    elif item_type == 'station' or category_type == 'station':
-                        subdir = 'stations'
+                    # Determine subdirectory - check stackable items first
+                    if is_stackable or category_type in ['consumable', 'device', 'station']:
+                        # Stackable items by category
+                        if category_type == 'consumable' or item_type == 'potion':
+                            subdir = 'consumables'
+                        elif category_type == 'device' or item_type in ['turret', 'bomb', 'trap', 'utility']:
+                            subdir = 'devices'
+                        elif category_type == 'station' or item_type == 'station':
+                            subdir = 'stations'
+                        else:
+                            subdir = 'materials'
+                    elif category_type == 'equipment':
+                        # Equipment items
+                        if item_type in ['weapon', 'sword', 'axe', 'mace', 'dagger', 'spear', 'bow', 'staff'] or \
+                           (slot in ['mainHand', 'offHand'] and item.get('stats', {}).get('damage')):
+                            subdir = 'weapons'
+                        elif item_type == 'armor' or slot in ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']:
+                            subdir = 'armor'
+                        elif item_type == 'tool' or slot in ['tool', 'axe', 'pickaxe']:
+                            subdir = 'tools'
+                        elif item_type == 'accessory':
+                            subdir = 'accessories'
+                        else:
+                            subdir = 'weapons'  # Default for equipment
                     else:
                         subdir = 'materials'  # Fallback
 

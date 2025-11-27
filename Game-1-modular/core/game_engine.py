@@ -792,7 +792,13 @@ class GameEngine:
 
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            start_x, start_y = 20, Config.INVENTORY_PANEL_Y
+            # CRITICAL: These values MUST match the renderer exactly!
+            # Renderer: tools_y = INVENTORY_PANEL_Y + 35 + 20 = +55
+            # Renderer: start_y = tools_y + 50 (tool slot) + 20 = INVENTORY_PANEL_Y + 125
+            tools_y = Config.INVENTORY_PANEL_Y + 55
+            tool_slot_size = 50
+            start_x = 20
+            start_y = tools_y + tool_slot_size + 20  # = INVENTORY_PANEL_Y + 125
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
