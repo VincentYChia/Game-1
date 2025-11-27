@@ -137,3 +137,39 @@ class CraftingStation:
             StationType.ENGINEERING: (60, 120, 180),
             StationType.ADORNMENTS: (180, 60, 180)
         }.get(self.station_type, (150, 150, 150))
+
+
+class PlacedEntityType(Enum):
+    """Types of placed entities"""
+    TURRET = "turret"
+    TRAP = "trap"
+    BOMB = "bomb"
+    UTILITY_DEVICE = "utility_device"
+    CRAFTING_STATION = "crafting_station"
+
+
+@dataclass
+class PlacedEntity:
+    """A player-placed entity in the world (turret, trap, station, etc.)"""
+    position: Position
+    item_id: str  # Reference to item definition
+    entity_type: PlacedEntityType
+    tier: int = 1
+    health: float = 100.0
+    owner: Optional[str] = None
+    # Turret-specific fields
+    range: float = 5.0  # Detection/attack range
+    damage: float = 20.0
+    attack_speed: float = 1.0  # Attacks per second
+    last_attack_time: float = 0.0
+    target_enemy: Optional[any] = None  # Will be Enemy type
+
+    def get_color(self) -> Tuple[int, int, int]:
+        """Get display color for this entity"""
+        return {
+            PlacedEntityType.TURRET: (255, 140, 0),  # Dark orange
+            PlacedEntityType.TRAP: (160, 82, 45),  # Sienna
+            PlacedEntityType.BOMB: (178, 34, 34),  # Firebrick
+            PlacedEntityType.UTILITY_DEVICE: (60, 180, 180),  # Cyan
+            PlacedEntityType.CRAFTING_STATION: (105, 105, 105)  # Gray
+        }.get(self.entity_type, (150, 150, 150))

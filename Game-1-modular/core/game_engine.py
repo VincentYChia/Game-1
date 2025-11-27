@@ -31,11 +31,12 @@ from data import (
     NPCDatabase,
 )
 
-from data.models import Position, Recipe
+from data.models import Position, Recipe, PlacedEntityType
 from entities.components import ItemStack
 
 # Systems
 from systems import WorldSystem, NPC
+from systems.turret_system import TurretSystem
 
 # Rendering
 from rendering import Renderer
@@ -88,6 +89,9 @@ class GameEngine:
         # Load stackable devices (turrets, etc.)
         MaterialDatabase.get_instance().load_stackable_items(
             "items.JSON/items-smithing-1.JSON", categories=['device'])
+        # Load placeable crafting stations
+        MaterialDatabase.get_instance().load_stackable_items(
+            "Definitions.JSON/crafting-stations-1.JSON", categories=['station'])
         TranslationDatabase.get_instance().load_from_files()
         SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
@@ -194,6 +198,15 @@ class GameEngine:
         self.placed_materials_hub = {'core': [], 'surrounding': []}  # Refining: hub-spoke
         self.placed_materials_sequential = []  # Alchemy: ordered list
         self.placed_materials_slots = {}  # Engineering: slot_type -> (materialId, quantity)
+
+        # World item placement state (for placing turrets, stations, etc.)
+        self.world_placement_mode = False  # True when placing an item in the world
+        self.world_placement_item_id = None  # Item being placed
+        self.world_placement_slot_index = None  # Inventory slot of item being placed
+        self.world_placement_preview_pos = None  # Preview position for placement
+
+        # Turret system
+        self.turret_system = TurretSystem()
 
         # Placement UI rects
         self.placement_grid_rects = {}  # Grid slot rects for smithing
@@ -302,7 +315,14 @@ class GameEngine:
                     continue
 
                 if event.key == pygame.K_ESCAPE:
-                    if self.enchantment_selection_active:
+                    if self.world_placement_mode:
+                        # Cancel world item placement
+                        self.world_placement_mode = False
+                        self.world_placement_item_id = None
+                        self.world_placement_slot_index = None
+                        self.world_placement_preview_pos = None
+                        self.add_notification("Placement cancelled", (255, 200, 100))
+                    elif self.enchantment_selection_active:
                         self._close_enchantment_selection()
                         print("🚫 Enchantment selection cancelled")
                     elif self.character.crafting_ui_open:
@@ -485,6 +505,10 @@ class GameEngine:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
                 self.mouse_pos = event.pos
+                # Track mouse position for placement preview
+                if self.world_placement_mode:
+                    world_pos = self.camera.screen_to_world(event.pos)
+                    self.world_placement_preview_pos = world_pos
             elif event.type == pygame.MOUSEWHEEL:
                 # Handle mouse wheel scrolling for recipe list
                 if self.character.crafting_ui_open and self.crafting_window_rect:
@@ -515,7 +539,7 @@ class GameEngine:
                 self.handle_right_click(event.pos)
 
     def handle_right_click(self, mouse_pos: Tuple[int, int]):
-        """Handle right-click events (mainly for using consumables)"""
+        """Handle right-click events (consumables and placeable items)"""
         # Only handle inventory right-clicks for now
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             start_x, start_y = 20, Config.INVENTORY_PANEL_Y
@@ -532,16 +556,26 @@ class GameEngine:
                     if 0 <= idx < self.character.inventory.max_slots:
                         item_stack = self.character.inventory.slots[idx]
                         if item_stack:
-                            # Check if item is consumable
                             mat_db = MaterialDatabase.get_instance()
                             item_def = mat_db.get_material(item_stack.item_id)
-                            if item_def and item_def.category == "consumable":
-                                # Use the consumable
-                                success, message = self.character.use_consumable(item_stack.item_id)
-                                if success:
-                                    self.add_notification(message, (100, 255, 100))
-                                else:
-                                    self.add_notification(message, (255, 100, 100))
+                            if item_def:
+                                # Check if item is placeable (turrets, traps, stations)
+                                if item_def.placeable:
+                                    # Enter world placement mode
+                                    self.world_placement_mode = True
+                                    self.world_placement_item_id = item_stack.item_id
+                                    self.world_placement_slot_index = idx
+                                    self.add_notification(f"Placing {item_def.name}... (ESC to cancel)", (100, 200, 255))
+                                    return
+
+                                # Check if item is consumable
+                                if item_def.category == "consumable":
+                                    # Use the consumable
+                                    success, message = self.character.use_consumable(item_stack.item_id)
+                                    if success:
+                                        self.add_notification(message, (100, 255, 100))
+                                    else:
+                                        self.add_notification(message, (255, 100, 100))
 
     def handle_npc_dialogue_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on NPC dialogue buttons (accept/turn in quests)"""
@@ -687,6 +721,58 @@ class GameEngine:
                         self.handle_start_menu_selection(idx)
                         return
             return  # Ignore all other clicks when start menu is open
+
+        # World item placement (high priority - place items before other world interactions)
+        if self.world_placement_mode:
+            # Convert screen pos to world pos
+            world_pos = self.camera.screen_to_world(mouse_pos)
+
+            # Get item definition
+            mat_def = MaterialDatabase.get_instance().get_material(self.world_placement_item_id)
+            if mat_def:
+                # Determine entity type from item type
+                entity_type_map = {
+                    'turret': PlacedEntityType.TURRET,
+                    'trap': PlacedEntityType.TRAP,
+                    'bomb': PlacedEntityType.BOMB,
+                    'utility': PlacedEntityType.UTILITY_DEVICE,
+                    'station': PlacedEntityType.CRAFTING_STATION
+                }
+                entity_type = entity_type_map.get(mat_def.item_type, PlacedEntityType.TURRET)
+
+                # Parse stats from effect string (simplified - could be improved)
+                # Effect format: "Fires arrows at enemies, 20 damage, 5 unit range"
+                range_val = 5.0
+                damage_val = 20.0
+                if mat_def.effect:
+                    import re
+                    range_match = re.search(r'(\d+)\s*unit range', mat_def.effect)
+                    damage_match = re.search(r'(\d+)\s*damage', mat_def.effect)
+                    if range_match:
+                        range_val = float(range_match.group(1))
+                    if damage_match:
+                        damage_val = float(damage_match.group(1))
+
+                # Place the entity
+                self.world.place_entity(
+                    world_pos,
+                    self.world_placement_item_id,
+                    entity_type,
+                    tier=mat_def.tier,
+                    range=range_val,
+                    damage=damage_val
+                )
+
+                # Remove item from inventory
+                self.character.inventory.remove_item_at_slot(self.world_placement_slot_index, 1)
+
+                # Exit placement mode
+                self.world_placement_mode = False
+                self.add_notification(f"Placed {mat_def.name}", (100, 255, 100))
+                self.world_placement_item_id = None
+                self.world_placement_slot_index = None
+                self.world_placement_preview_pos = None
+            return
 
         shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
 
@@ -2155,6 +2241,9 @@ class GameEngine:
             self.character.update_attack_cooldown(dt)
             self.character.update_health_regen(dt)
             self.character.update_buffs(dt)
+
+            # Update turret system
+            self.turret_system.update(self.world.placed_entities, self.combat_manager.enemies, dt)
         else:
             # Update active minigame (skip for engineering - it's turn-based)
             if self.minigame_type != 'engineering':
@@ -2186,6 +2275,11 @@ class GameEngine:
         # Pass NPCs to renderer via temporary attribute
         self.renderer._temp_npcs = self.npcs
         self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
+
+        # Render placement preview if in placement mode
+        if self.world_placement_mode and self.world_placement_preview_pos:
+            self.renderer.render_placement_preview(self.camera, self.world_placement_preview_pos)
+
         self.renderer.render_ui(self.character, self.mouse_pos)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
 
