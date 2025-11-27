@@ -44,6 +44,8 @@ CATEGORY_COLORS = {
     'consumables': (147, 112, 219),  # Medium purple
     'enemies': (178, 34, 34),        # Firebrick
     'resources': (34, 139, 34),      # Forest green
+    'titles': (138, 43, 226),        # Blue violet
+    'skills': (255, 215, 0),         # Gold
 }
 
 
@@ -142,7 +144,7 @@ def generate_item_placeholders(base_path: Path):
 
     # Process equipment files
     equipment_files = [
-        'items-smithing-1.JSON',
+        'items-engineering-1.JSON',
         'items-smithing-2.JSON',
         'items-tools-1.JSON',
         'items-alchemy-1.JSON',
@@ -261,6 +263,63 @@ def generate_resource_placeholders(base_path: Path):
     return generated
 
 
+def generate_title_placeholders(base_path: Path):
+    """Generate placeholder images for titles"""
+    titles_file = base_path / 'progression' / 'titles-1.JSON'
+    if not titles_file.exists():
+        return 0
+
+    generated = 0
+    titles_dir = base_path / 'assets' / 'titles'
+    titles_dir.mkdir(parents=True, exist_ok=True)
+
+    with open(titles_file, 'r') as f:
+        data = json.load(f)
+        for title in data.get('titles', []):
+            title_id = title.get('titleId', '')
+            # Map difficulty tier to numeric tier
+            tier_map = {'novice': 1, 'apprentice': 2, 'journeyman': 3, 'expert': 4, 'master': 5, 'special': 5}
+            tier_str = title.get('difficultyTier', 'novice')
+            tier = tier_map.get(tier_str, 1)
+
+            if title_id:
+                icon_path = titles_dir / f"{title_id}.png"
+                if not icon_path.exists():
+                    surface = create_placeholder_image(title_id, 'titles', tier)
+                    pygame.image.save(surface, str(icon_path))
+                    generated += 1
+                    print(f"  Created: titles/{title_id}.png")
+
+    return generated
+
+
+def generate_skill_placeholders(base_path: Path):
+    """Generate placeholder images for skills"""
+    skills_file = base_path / 'Skills' / 'skills-skills-1.JSON'
+    if not skills_file.exists():
+        return 0
+
+    generated = 0
+    skills_dir = base_path / 'assets' / 'skills'
+    skills_dir.mkdir(parents=True, exist_ok=True)
+
+    with open(skills_file, 'r') as f:
+        data = json.load(f)
+        for skill in data.get('skills', []):
+            skill_id = skill.get('skillId', '')
+            tier = skill.get('tier', 1)
+
+            if skill_id:
+                icon_path = skills_dir / f"{skill_id}.png"
+                if not icon_path.exists():
+                    surface = create_placeholder_image(skill_id, 'skills', tier)
+                    pygame.image.save(surface, str(icon_path))
+                    generated += 1
+                    print(f"  Created: skills/{skill_id}.png")
+
+    return generated
+
+
 def main():
     """Main entry point"""
     print("=" * 60)
@@ -280,19 +339,27 @@ def main():
         (assets_items / subdir).mkdir(parents=True, exist_ok=True)
 
     # Generate placeholders
-    print("\n[1/3] Generating item placeholders...")
+    print("\n[1/5] Generating item placeholders...")
     items_count = generate_item_placeholders(base_path)
     print(f"      Generated {items_count} item placeholders")
 
-    print("\n[2/3] Generating enemy placeholders...")
+    print("\n[2/5] Generating enemy placeholders...")
     enemies_count = generate_enemy_placeholders(base_path)
     print(f"      Generated {enemies_count} enemy placeholders")
 
-    print("\n[3/3] Generating resource placeholders...")
+    print("\n[3/5] Generating resource placeholders...")
     resources_count = generate_resource_placeholders(base_path)
     print(f"      Generated {resources_count} resource placeholders")
 
-    total = items_count + enemies_count + resources_count
+    print("\n[4/5] Generating title placeholders...")
+    titles_count = generate_title_placeholders(base_path)
+    print(f"      Generated {titles_count} title placeholders")
+
+    print("\n[5/5] Generating skill placeholders...")
+    skills_count = generate_skill_placeholders(base_path)
+    print(f"      Generated {skills_count} skill placeholders")
+
+    total = items_count + enemies_count + resources_count + titles_count + skills_count
     print("\n" + "=" * 60)
     print(f"✓ COMPLETE: Generated {total} total placeholder icons")
     print("=" * 60)
@@ -305,6 +372,8 @@ def main():
     print(f"  - {assets_items}/tools/          ({len(list((assets_items / 'tools').glob('*.png')))} files)")
     print(f"  - {base_path}/assets/enemies/    ({len(list((base_path / 'assets' / 'enemies').glob('*.png')))} files)")
     print(f"  - {base_path}/assets/resources/  ({len(list((base_path / 'assets' / 'resources').glob('*.png')))} files)")
+    print(f"  - {base_path}/assets/titles/     ({len(list((base_path / 'assets' / 'titles').glob('*.png')))} files)")
+    print(f"  - {base_path}/assets/skills/     ({len(list((base_path / 'assets' / 'skills').glob('*.png')))} files)")
 
 
 if __name__ == '__main__':

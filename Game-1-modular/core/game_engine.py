@@ -31,11 +31,12 @@ from data import (
     NPCDatabase,
 )
 
-from data.models import Position, Recipe
+from data.models import Position, Recipe, PlacedEntityType, StationType
 from entities.components import ItemStack
 
 # Systems
 from systems import WorldSystem, NPC
+from systems.turret_system import TurretSystem
 
 # Rendering
 from rendering import Renderer
@@ -85,9 +86,15 @@ class GameEngine:
         # Load stackable consumables (potions, oils, etc.)
         MaterialDatabase.get_instance().load_stackable_items(
             "items.JSON/items-alchemy-1.JSON", categories=['consumable'])
-        # Load stackable devices (turrets, etc.)
+        # Load stackable devices (turrets, traps, bombs, utility devices)
         MaterialDatabase.get_instance().load_stackable_items(
-            "items.JSON/items-smithing-1.JSON", categories=['device'])
+            "items.JSON/items-engineering-1.JSON", categories=['device'])
+        # Load placeable crafting stations from items-smithing-2.JSON
+        MaterialDatabase.get_instance().load_stackable_items(
+            "items.JSON/items-smithing-2.JSON", categories=['station'])
+        # Load placeable crafting stations from legacy file (backup)
+        MaterialDatabase.get_instance().load_stackable_items(
+            "Definitions.JSON/crafting-stations-1.JSON", categories=['station'])
         TranslationDatabase.get_instance().load_from_files()
         SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
@@ -95,7 +102,7 @@ class GameEngine:
 
         # Load equipment from all item files
         equip_db = EquipmentDatabase.get_instance()
-        equip_db.load_from_file("items.JSON/items-smithing-1.JSON")
+        equip_db.load_from_file("items.JSON/items-engineering-1.JSON")
         equip_db.load_from_file("items.JSON/items-smithing-2.JSON")
         equip_db.load_from_file("items.JSON/items-tools-1.JSON")
         equip_db.load_from_file("items.JSON/items-alchemy-1.JSON")
@@ -194,6 +201,9 @@ class GameEngine:
         self.placed_materials_hub = {'core': [], 'surrounding': []}  # Refining: hub-spoke
         self.placed_materials_sequential = []  # Alchemy: ordered list
         self.placed_materials_slots = {}  # Engineering: slot_type -> (materialId, quantity)
+
+        # Turret system
+        self.turret_system = TurretSystem()
 
         # Placement UI rects
         self.placement_grid_rects = {}  # Grid slot rects for smithing
@@ -511,11 +521,11 @@ class GameEngine:
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 self.handle_mouse_release(event.pos)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                # Right-click handler (for consumables)
+                # Right-click handler (for consumables only)
                 self.handle_right_click(event.pos)
 
     def handle_right_click(self, mouse_pos: Tuple[int, int]):
-        """Handle right-click events (mainly for using consumables)"""
+        """Handle right-click events (consumables only)"""
         # Only handle inventory right-clicks for now
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             start_x, start_y = 20, Config.INVENTORY_PANEL_Y
@@ -532,16 +542,17 @@ class GameEngine:
                     if 0 <= idx < self.character.inventory.max_slots:
                         item_stack = self.character.inventory.slots[idx]
                         if item_stack:
-                            # Check if item is consumable
                             mat_db = MaterialDatabase.get_instance()
                             item_def = mat_db.get_material(item_stack.item_id)
-                            if item_def and item_def.category == "consumable":
-                                # Use the consumable
-                                success, message = self.character.use_consumable(item_stack.item_id)
-                                if success:
-                                    self.add_notification(message, (100, 255, 100))
-                                else:
-                                    self.add_notification(message, (255, 100, 100))
+                            if item_def:
+                                # Check if item is consumable
+                                if item_def.category == "consumable":
+                                    # Use the consumable
+                                    success, message = self.character.use_consumable(item_stack.item_id)
+                                    if success:
+                                        self.add_notification(message, (100, 255, 100))
+                                    else:
+                                        self.add_notification(message, (255, 100, 100))
 
     def handle_npc_dialogue_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on NPC dialogue buttons (accept/turn in quests)"""
@@ -843,9 +854,66 @@ class GameEngine:
                                         # Put item back if equipping failed
                                         self.character.inventory.slots[idx] = item_stack
                                 else:
-                                    print(f"   ⚠️  Not equipment, skipping")
-                                    # Put non-equipment item back in slot
-                                    self.character.inventory.slots[idx] = item_stack
+                                    # Check if it's a placeable item (turret, trap, station)
+                                    mat_def = MaterialDatabase.get_instance().get_material(item_stack.item_id)
+                                    if mat_def and mat_def.placeable:
+                                        # Place item at player's position (snapped to grid)
+                                        player_pos = self.character.position.snap_to_grid()
+
+                                        # Check if square is already occupied
+                                        existing_entity = self.world.get_entity_at(player_pos)
+                                        if existing_entity:
+                                            self.add_notification("Square already occupied!", (255, 100, 100))
+                                            self.character.inventory.slots[idx] = item_stack
+                                            return
+
+                                        # Determine entity type based on category or item_type
+                                        if mat_def.category == 'station':
+                                            entity_type = PlacedEntityType.CRAFTING_STATION
+                                        else:
+                                            entity_type_map = {
+                                                'turret': PlacedEntityType.TURRET,
+                                                'trap': PlacedEntityType.TRAP,
+                                                'bomb': PlacedEntityType.BOMB,
+                                                'utility': PlacedEntityType.UTILITY_DEVICE,
+                                            }
+                                            entity_type = entity_type_map.get(mat_def.item_type, PlacedEntityType.TURRET)
+
+                                        # Parse stats from effect string (only for combat entities)
+                                        range_val = 5.0
+                                        damage_val = 20.0
+                                        if entity_type != PlacedEntityType.CRAFTING_STATION and mat_def.effect:
+                                            import re
+                                            range_match = re.search(r'(\d+)\s*unit range', mat_def.effect)
+                                            damage_match = re.search(r'(\d+)\s*damage', mat_def.effect)
+                                            if range_match:
+                                                range_val = float(range_match.group(1))
+                                            if damage_match:
+                                                damage_val = float(damage_match.group(1))
+
+                                        # Place the entity
+                                        self.world.place_entity(
+                                            player_pos,
+                                            item_stack.item_id,
+                                            entity_type,
+                                            tier=mat_def.tier,
+                                            range=range_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0,
+                                            damage=damage_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0
+                                        )
+
+                                        # Remove one item from inventory
+                                        if item_stack.quantity > 1:
+                                            item_stack.quantity -= 1
+                                            self.character.inventory.slots[idx] = item_stack
+                                        else:
+                                            self.character.inventory.slots[idx] = None
+
+                                        self.add_notification(f"Placed {mat_def.name}", (100, 255, 100))
+                                        print(f"✓ Placed {mat_def.name} at player position")
+                                    else:
+                                        print(f"   ⚠️  Not equipment or placeable, skipping")
+                                        # Put non-equipment item back in slot
+                                        self.character.inventory.slots[idx] = item_stack
                             else:
                                 print(f"   ⚠️  item_stack is None")
                             # Reset last_clicked_slot to prevent repeated double-clicks
@@ -904,7 +972,100 @@ class GameEngine:
         # Note: Corpse looting is now automatic when enemy dies
         # Manual corpse looting has been removed as loot is auto-added to inventory
 
+        # Check for placed entity pickup (turrets, traps, etc.)
+        if is_double_click:
+            placed_entity = self.world.get_entity_at(world_pos)
+            if placed_entity:
+                # Check if entity is pickupable (not crafting stations)
+                pickupable_types = [
+                    PlacedEntityType.TURRET,
+                    PlacedEntityType.TRAP,
+                    PlacedEntityType.BOMB,
+                    PlacedEntityType.UTILITY_DEVICE
+                ]
+                if placed_entity.entity_type in pickupable_types:
+                    # Check if player is in range (use 2.0 units as pickup range)
+                    dist = self.character.position.distance_to(placed_entity.position)
+                    if dist <= 2.0:
+                        # Add item back to inventory
+                        mat_db = MaterialDatabase.get_instance()
+                        mat_def = mat_db.get_material(placed_entity.item_id)
+                        if mat_def:
+                            # Try to add to inventory
+                            success = self.character.inventory.add_item(placed_entity.item_id, 1)
+                            if success:
+                                # Remove from world
+                                self.world.placed_entities.remove(placed_entity)
+                                self.add_notification(f"Picked up {mat_def.name}", (100, 255, 100))
+                                print(f"✓ Picked up {mat_def.name}")
+                                return
+                            else:
+                                self.add_notification("Inventory full!", (255, 100, 100))
+                                return
+                    else:
+                        self.add_notification("Too far to pick up", (255, 100, 100))
+                        return
+
         station = self.world.get_station_at(world_pos)
+
+        # Also check placed entities for crafting stations
+        if not station:
+            placed_entity = self.world.get_entity_at(world_pos)
+            if placed_entity and placed_entity.entity_type == PlacedEntityType.CRAFTING_STATION:
+                # Convert placed entity to a CraftingStation for interaction
+                # Determine station type from item_id
+                station_type_map = {
+                    # New format from items-smithing-2.JSON
+                    'forge_t1': StationType.SMITHING,
+                    'forge_t2': StationType.SMITHING,
+                    'forge_t3': StationType.SMITHING,
+                    'forge_t4': StationType.SMITHING,
+                    'alchemy_table_t1': StationType.ALCHEMY,
+                    'alchemy_table_t2': StationType.ALCHEMY,
+                    'alchemy_table_t3': StationType.ALCHEMY,
+                    'alchemy_table_t4': StationType.ALCHEMY,
+                    'refinery_t1': StationType.REFINING,
+                    'refinery_t2': StationType.REFINING,
+                    'refinery_t3': StationType.REFINING,
+                    'refinery_t4': StationType.REFINING,
+                    'engineering_bench_t1': StationType.ENGINEERING,
+                    'engineering_bench_t2': StationType.ENGINEERING,
+                    'engineering_bench_t3': StationType.ENGINEERING,
+                    'engineering_bench_t4': StationType.ENGINEERING,
+                    'enchanting_table_t1': StationType.ADORNMENTS,
+                    'enchanting_table_t2': StationType.ADORNMENTS,
+                    'enchanting_table_t3': StationType.ADORNMENTS,
+                    'enchanting_table_t4': StationType.ADORNMENTS,
+                    # Legacy format from crafting-stations-1.JSON (for backward compatibility)
+                    'tier_1_forge': StationType.SMITHING,
+                    'tier_2_forge': StationType.SMITHING,
+                    'tier_3_forge': StationType.SMITHING,
+                    'tier_4_forge': StationType.SMITHING,
+                    'tier_1_alchemy_table': StationType.ALCHEMY,
+                    'tier_2_alchemy_table': StationType.ALCHEMY,
+                    'tier_3_alchemy_table': StationType.ALCHEMY,
+                    'tier_4_alchemy_table': StationType.ALCHEMY,
+                    'tier_1_refinery': StationType.REFINING,
+                    'tier_2_refinery': StationType.REFINING,
+                    'tier_3_refinery': StationType.REFINING,
+                    'tier_4_refinery': StationType.REFINING,
+                    'tier_1_engineering_bench': StationType.ENGINEERING,
+                    'tier_2_engineering_bench': StationType.ENGINEERING,
+                    'tier_3_engineering_bench': StationType.ENGINEERING,
+                    'tier_4_engineering_bench': StationType.ENGINEERING,
+                    'tier_1_enchanting_table': StationType.ADORNMENTS,
+                    'tier_2_enchanting_table': StationType.ADORNMENTS,
+                    'tier_3_enchanting_table': StationType.ADORNMENTS,
+                    'tier_4_enchanting_table': StationType.ADORNMENTS,
+                }
+                station_type = station_type_map.get(placed_entity.item_id, StationType.SMITHING)
+                from data.models import CraftingStation
+                station = CraftingStation(
+                    position=placed_entity.position,
+                    station_type=station_type,
+                    tier=placed_entity.tier
+                )
+
         if station:
             self.character.interact_with_station(station)
             self.active_station_tier = station.tier  # Capture tier for placement UI
@@ -2155,6 +2316,9 @@ class GameEngine:
             self.character.update_attack_cooldown(dt)
             self.character.update_health_regen(dt)
             self.character.update_buffs(dt)
+
+            # Update turret system
+            self.turret_system.update(self.world.placed_entities, self.combat_manager, dt)
         else:
             # Update active minigame (skip for engineering - it's turn-based)
             if self.minigame_type != 'engineering':

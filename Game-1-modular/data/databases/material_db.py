@@ -41,6 +41,7 @@ class MaterialDatabase:
                         subdir = 'materials'
                     icon_path = f"{subdir}/{material_id}.png"
 
+                flags = mat_data.get('flags', {})
                 mat = MaterialDefinition(
                     material_id=material_id,
                     name=mat_data.get('name', ''),
@@ -50,7 +51,11 @@ class MaterialDatabase:
                     description=mat_data.get('description', ''),
                     max_stack=mat_data.get('maxStack', 99),
                     properties=mat_data.get('properties', {}),
-                    icon_path=icon_path
+                    icon_path=icon_path,
+                    placeable=flags.get('placeable', False),
+                    item_type=mat_data.get('type', ''),
+                    item_subtype=mat_data.get('subtype', ''),
+                    effect=mat_data.get('effect', '')
                 )
                 self.materials[mat.material_id] = mat
             self.loaded = True
@@ -121,12 +126,12 @@ class MaterialDatabase:
             return False
 
     def load_stackable_items(self, filepath: str, categories: list = None):
-        """Load stackable items (consumables, devices, etc.) from item files
+        """Load stackable and placeable items (consumables, devices, stations, etc.) from item files
 
         Args:
             filepath: Path to the JSON file
-            categories: List of categories to load (e.g., ['consumable', 'device'])
-                       If None, loads all items with stackable=True flag
+            categories: List of categories to load (e.g., ['consumable', 'device', 'station'])
+                       If None, loads all items with stackable=True or placeable=True flag
         """
         try:
             with open(filepath, 'r') as f:
@@ -142,9 +147,10 @@ class MaterialDatabase:
                         category = item_data.get('category', '')
                         flags = item_data.get('flags', {})
                         is_stackable = flags.get('stackable', False)
+                        is_placeable = flags.get('placeable', False)
 
-                        # Load if category matches (or no filter) AND item is stackable
-                        should_load = is_stackable and (
+                        # Load if category matches (or no filter) AND (item is stackable OR placeable)
+                        should_load = (is_stackable or is_placeable) and (
                             categories is None or category in categories
                         )
 
@@ -175,7 +181,11 @@ class MaterialDatabase:
                                 description=item_data.get('metadata', {}).get('narrative', ''),
                                 max_stack=item_data.get('stackSize', 99),
                                 properties={},
-                                icon_path=icon_path
+                                icon_path=icon_path,
+                                placeable=flags.get('placeable', False),
+                                item_type=item_data.get('type', ''),
+                                item_subtype=item_data.get('subtype', ''),
+                                effect=item_data.get('effect', '')
                             )
                             if mat.material_id and mat.material_id not in self.materials:
                                 self.materials[mat.material_id] = mat

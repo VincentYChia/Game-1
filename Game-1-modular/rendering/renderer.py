@@ -745,6 +745,52 @@ class Renderer:
                                      (tier_rect.x + dx, tier_rect.y + dy))
                 self.screen.blit(tier_surf, tier_rect)
 
+        # Render placed entities (turrets, traps, crafting stations, etc.)
+        from data.models import PlacedEntityType
+        for entity in world.get_visible_placed_entities(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
+            sx, sy = camera.world_to_screen(entity.position)
+            size = Config.TILE_SIZE
+            rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
+
+            # Render entity (turret icon or colored square)
+            color = entity.get_color()
+            pygame.draw.rect(self.screen, color, rect)
+            pygame.draw.rect(self.screen, (0, 0, 0), rect, 2)
+
+            # Render tier indicator
+            tier_text = f"T{entity.tier}"
+            tier_surf = self.tiny_font.render(tier_text, True, (255, 255, 255))
+            tier_bg = pygame.Rect(sx - size // 2 + 2, sy - size // 2 + 2,
+                                  tier_surf.get_width() + 4, tier_surf.get_height() + 2)
+            pygame.draw.rect(self.screen, (0, 0, 0, 180), tier_bg)
+            self.screen.blit(tier_surf, (sx - size // 2 + 4, sy - size // 2 + 2))
+
+            # Render lifetime bar (only for combat entities, not crafting stations)
+            if entity.entity_type != PlacedEntityType.CRAFTING_STATION:
+                bar_w, bar_h = size - 4, 4
+                bar_y = sy + size // 2 + 4
+                pygame.draw.rect(self.screen, (100, 100, 100), (sx - bar_w // 2, bar_y, bar_w, bar_h))
+                lifetime_w = int(bar_w * (entity.time_remaining / entity.lifetime))
+                # Color based on time remaining (green -> yellow -> red)
+                if entity.time_remaining > entity.lifetime * 0.5:
+                    bar_color = (0, 255, 0)  # Green
+                elif entity.time_remaining > entity.lifetime * 0.25:
+                    bar_color = (255, 255, 0)  # Yellow
+                else:
+                    bar_color = (255, 0, 0)  # Red
+                pygame.draw.rect(self.screen, bar_color, (sx - bar_w // 2, bar_y, lifetime_w, bar_h))
+
+            # Draw range circle for turrets only (semi-transparent)
+            if entity.entity_type == PlacedEntityType.TURRET and hasattr(entity, 'range') and entity.range > 0:
+                range_radius = int(entity.range * Config.TILE_SIZE)
+                # Draw a faint circle showing turret range
+                pygame.draw.circle(self.screen, (255, 100, 100, 50), (sx, sy), range_radius, 1)
+
+            # Draw targeting line if turret has a target
+            if entity.entity_type == PlacedEntityType.TURRET and entity.target_enemy and entity.target_enemy.is_alive:
+                tx, ty = camera.world_to_screen(Position(entity.target_enemy.position[0], entity.target_enemy.position[1], 0))
+                pygame.draw.line(self.screen, (255, 0, 0), (sx, sy), (tx, ty), 2)
+
         for resource in world.get_visible_resources(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             if resource.depleted and not resource.respawns:
                 continue
@@ -870,6 +916,21 @@ class Renderer:
             surf = (self.font if dmg.is_crit else self.small_font).render(text, True, color)
             surf.set_alpha(alpha)
             self.screen.blit(surf, surf.get_rect(center=(sx, sy)))
+
+    def render_placement_preview(self, camera: Camera, preview_pos):
+        """Render placement preview for world item placement mode"""
+        if preview_pos:
+            sx, sy = camera.world_to_screen(preview_pos)
+            size = Config.TILE_SIZE
+            rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
+
+            # Draw semi-transparent preview
+            preview_surface = pygame.Surface((size, size), pygame.SRCALPHA)
+            preview_surface.fill((100, 255, 100, 100))  # Green with alpha
+            self.screen.blit(preview_surface, rect.topleft)
+
+            # Draw border
+            pygame.draw.rect(self.screen, (0, 255, 0), rect, 2)
 
     def render_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         ui_rect = pygame.Rect(Config.VIEWPORT_WIDTH, 0, Config.UI_PANEL_WIDTH, Config.VIEWPORT_HEIGHT)

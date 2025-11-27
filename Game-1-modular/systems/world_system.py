@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Optional, Tuple
 
-from data.models import Position, WorldTile, TileType, StationType, CraftingStation
+from data.models import Position, WorldTile, TileType, StationType, CraftingStation, PlacedEntity, PlacedEntityType
 from systems.natural_resource import NaturalResource
 from systems.chunk import Chunk
 from core.config import Config
@@ -14,6 +14,7 @@ class WorldSystem:
         self.chunks: Dict[Tuple[int, int], Chunk] = {}
         self.resources: List[NaturalResource] = []
         self.crafting_stations: List[CraftingStation] = []
+        self.placed_entities: List[PlacedEntity] = []  # Player-placed turrets, traps, stations, etc.
         self.generate_world()
         self.spawn_starting_stations()
 
@@ -100,6 +101,43 @@ class WorldSystem:
             if dx <= tolerance and dy <= tolerance:
                 return s
         return None
+
+    def place_entity(self, position: Position, item_id: str, entity_type: PlacedEntityType,
+                     tier: int = 1, range: float = 5.0, damage: float = 20.0) -> PlacedEntity:
+        """Place an entity (turret, trap, station, etc.) in the world"""
+        entity = PlacedEntity(
+            position=position.snap_to_grid(),
+            item_id=item_id,
+            entity_type=entity_type,
+            tier=tier,
+            range=range,
+            damage=damage
+        )
+        self.placed_entities.append(entity)
+        return entity
+
+    def remove_entity(self, entity: PlacedEntity) -> bool:
+        """Remove a placed entity from the world"""
+        if entity in self.placed_entities:
+            self.placed_entities.remove(entity)
+            return True
+        return False
+
+    def get_entity_at(self, position: Position, tolerance: float = 0.8) -> Optional[PlacedEntity]:
+        """Get placed entity at position with tolerance for easier clicking"""
+        for entity in self.placed_entities:
+            dx = abs(entity.position.x - position.x)
+            dy = abs(entity.position.y - position.y)
+            if dx <= tolerance and dy <= tolerance:
+                return entity
+        return None
+
+    def get_visible_placed_entities(self, camera_pos: Position, vw: int, vh: int) -> List[PlacedEntity]:
+        """Get all placed entities visible in the camera viewport"""
+        tw, th = vw // Config.TILE_SIZE + 2, vh // Config.TILE_SIZE + 2
+        sx, sy = camera_pos.x - tw // 2, camera_pos.y - th // 2
+        ex, ey = camera_pos.x + tw // 2, camera_pos.y + tw // 2
+        return [e for e in self.placed_entities if sx <= e.position.x <= ex and sy <= e.position.y <= ey]
 
     def update(self, dt: float):
         for r in self.resources:
