@@ -80,12 +80,12 @@ class TurretSystem:
     def _attack_enemy(self, turret: PlacedEntity, enemy: 'Enemy'):
         """Turret attacks an enemy"""
         # Apply damage to enemy
-        enemy.hp -= turret.damage
+        enemy.current_health -= turret.damage
 
         # Check if enemy died
-        if enemy.hp <= 0:
+        if enemy.current_health <= 0:
             enemy.is_alive = False
-            enemy.hp = 0
+            enemy.current_health = 0
 
     def get_turret_target_line(self, turret: PlacedEntity) -> Optional[tuple]:
         """Get line from turret to its target for rendering"""
