@@ -31,7 +31,7 @@ from data import (
     NPCDatabase,
 )
 
-from data.models import Position, Recipe, PlacedEntityType
+from data.models import Position, Recipe, PlacedEntityType, StationType
 from entities.components import ItemStack
 
 # Systems
