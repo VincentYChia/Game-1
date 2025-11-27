@@ -4,7 +4,6 @@ from typing import List, Optional
 import time
 
 from data.models import PlacedEntity, PlacedEntityType, Position
-from Combat.enemy import Enemy
 
 
 class TurretSystem:
@@ -13,9 +12,12 @@ class TurretSystem:
     def __init__(self):
         pass
 
-    def update(self, placed_entities: List[PlacedEntity], enemies: List[Enemy], dt: float):
+    def update(self, placed_entities: List[PlacedEntity], combat_manager, dt: float):
         """Update all turrets - find targets and attack"""
         current_time = time.time()
+
+        # Get all active enemies from combat manager
+        all_enemies = combat_manager.get_all_active_enemies() if combat_manager else []
 
         for entity in placed_entities:
             # Only process turrets
@@ -23,7 +25,7 @@ class TurretSystem:
                 continue
 
             # Find nearest enemy in range
-            target = self._find_nearest_enemy(entity, enemies)
+            target = self._find_nearest_enemy(entity, all_enemies)
 
             if target:
                 entity.target_enemy = target
@@ -39,17 +41,20 @@ class TurretSystem:
             else:
                 entity.target_enemy = None
 
-    def _find_nearest_enemy(self, turret: PlacedEntity, enemies: List[Enemy]) -> Optional[Enemy]:
+    def _find_nearest_enemy(self, turret: PlacedEntity, all_enemies: List) -> Optional:
         """Find the nearest alive enemy within turret's range"""
         nearest = None
         nearest_dist = float('inf')
 
-        for enemy in enemies:
+        for enemy in all_enemies:
             if not enemy.is_alive:
                 continue
 
-            # Calculate distance
-            dist = turret.position.distance_to(enemy.position)
+            # Calculate distance - enemy.position is a tuple (x, y)
+            enemy_x, enemy_y = enemy.position[0], enemy.position[1]
+            dx = turret.position.x - enemy_x
+            dy = turret.position.y - enemy_y
+            dist = (dx * dx + dy * dy) ** 0.5
 
             if dist <= turret.range and dist < nearest_dist:
                 nearest = enemy
