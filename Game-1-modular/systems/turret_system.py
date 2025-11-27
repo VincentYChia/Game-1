@@ -1,9 +1,12 @@
 """Turret system for managing placed turret AI and behavior"""
 
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 import time
 
 from data.models import PlacedEntity, PlacedEntityType, Position
+
+if TYPE_CHECKING:
+    from Combat.enemy import Enemy
 
 
 class TurretSystem:
@@ -62,7 +65,7 @@ class TurretSystem:
 
         return nearest
 
-    def _attack_enemy(self, turret: PlacedEntity, enemy: Enemy):
+    def _attack_enemy(self, turret: PlacedEntity, enemy: 'Enemy'):
         """Turret attacks an enemy"""
         # Apply damage to enemy
         enemy.current_hp -= turret.damage
