@@ -745,7 +745,8 @@ class Renderer:
                                      (tier_rect.x + dx, tier_rect.y + dy))
                 self.screen.blit(tier_surf, tier_rect)
 
-        # Render placed entities (turrets, traps, etc.)
+        # Render placed entities (turrets, traps, crafting stations, etc.)
+        from data.models import PlacedEntityType
         for entity in world.get_visible_placed_entities(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(entity.position)
             size = Config.TILE_SIZE
@@ -764,30 +765,29 @@ class Renderer:
             pygame.draw.rect(self.screen, (0, 0, 0, 180), tier_bg)
             self.screen.blit(tier_surf, (sx - size // 2 + 4, sy - size // 2 + 2))
 
-            # Render lifetime bar (like health bar)
-            bar_w, bar_h = size - 4, 4
-            bar_y = sy + size // 2 + 4
-            pygame.draw.rect(self.screen, (100, 100, 100), (sx - bar_w // 2, bar_y, bar_w, bar_h))
-            lifetime_w = int(bar_w * (entity.time_remaining / entity.lifetime))
-            # Color based on time remaining (green -> yellow -> red)
-            if entity.time_remaining > entity.lifetime * 0.5:
-                bar_color = (0, 255, 0)  # Green
-            elif entity.time_remaining > entity.lifetime * 0.25:
-                bar_color = (255, 255, 0)  # Yellow
-            else:
-                bar_color = (255, 0, 0)  # Red
-            pygame.draw.rect(self.screen, bar_color, (sx - bar_w // 2, bar_y, lifetime_w, bar_h))
+            # Render lifetime bar (only for combat entities, not crafting stations)
+            if entity.entity_type != PlacedEntityType.CRAFTING_STATION:
+                bar_w, bar_h = size - 4, 4
+                bar_y = sy + size // 2 + 4
+                pygame.draw.rect(self.screen, (100, 100, 100), (sx - bar_w // 2, bar_y, bar_w, bar_h))
+                lifetime_w = int(bar_w * (entity.time_remaining / entity.lifetime))
+                # Color based on time remaining (green -> yellow -> red)
+                if entity.time_remaining > entity.lifetime * 0.5:
+                    bar_color = (0, 255, 0)  # Green
+                elif entity.time_remaining > entity.lifetime * 0.25:
+                    bar_color = (255, 255, 0)  # Yellow
+                else:
+                    bar_color = (255, 0, 0)  # Red
+                pygame.draw.rect(self.screen, bar_color, (sx - bar_w // 2, bar_y, lifetime_w, bar_h))
 
-            # Draw range circle for turrets (semi-transparent)
-            if hasattr(entity, 'range') and entity.range > 0:
-                from data.models import PlacedEntityType
-                if entity.entity_type == PlacedEntityType.TURRET:
-                    range_radius = int(entity.range * Config.TILE_SIZE)
-                    # Draw a faint circle showing turret range
-                    pygame.draw.circle(self.screen, (255, 100, 100, 50), (sx, sy), range_radius, 1)
+            # Draw range circle for turrets only (semi-transparent)
+            if entity.entity_type == PlacedEntityType.TURRET and hasattr(entity, 'range') and entity.range > 0:
+                range_radius = int(entity.range * Config.TILE_SIZE)
+                # Draw a faint circle showing turret range
+                pygame.draw.circle(self.screen, (255, 100, 100, 50), (sx, sy), range_radius, 1)
 
             # Draw targeting line if turret has a target
-            if entity.target_enemy and entity.target_enemy.is_alive:
+            if entity.entity_type == PlacedEntityType.TURRET and entity.target_enemy and entity.target_enemy.is_alive:
                 tx, ty = camera.world_to_screen(Position(entity.target_enemy.position[0], entity.target_enemy.position[1], 0))
                 pygame.draw.line(self.screen, (255, 0, 0), (sx, sy), (tx, ty), 2)
 

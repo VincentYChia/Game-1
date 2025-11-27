@@ -867,20 +867,22 @@ class GameEngine:
                                             self.character.inventory.slots[idx] = item_stack
                                             return
 
-                                        # Determine entity type
-                                        entity_type_map = {
-                                            'turret': PlacedEntityType.TURRET,
-                                            'trap': PlacedEntityType.TRAP,
-                                            'bomb': PlacedEntityType.BOMB,
-                                            'utility': PlacedEntityType.UTILITY_DEVICE,
-                                            'station': PlacedEntityType.CRAFTING_STATION
-                                        }
-                                        entity_type = entity_type_map.get(mat_def.item_type, PlacedEntityType.TURRET)
+                                        # Determine entity type based on category or item_type
+                                        if mat_def.category == 'station':
+                                            entity_type = PlacedEntityType.CRAFTING_STATION
+                                        else:
+                                            entity_type_map = {
+                                                'turret': PlacedEntityType.TURRET,
+                                                'trap': PlacedEntityType.TRAP,
+                                                'bomb': PlacedEntityType.BOMB,
+                                                'utility': PlacedEntityType.UTILITY_DEVICE,
+                                            }
+                                            entity_type = entity_type_map.get(mat_def.item_type, PlacedEntityType.TURRET)
 
-                                        # Parse stats from effect string
+                                        # Parse stats from effect string (only for combat entities)
                                         range_val = 5.0
                                         damage_val = 20.0
-                                        if mat_def.effect:
+                                        if entity_type != PlacedEntityType.CRAFTING_STATION and mat_def.effect:
                                             import re
                                             range_match = re.search(r'(\d+)\s*unit range', mat_def.effect)
                                             damage_match = re.search(r'(\d+)\s*damage', mat_def.effect)
@@ -895,8 +897,8 @@ class GameEngine:
                                             item_stack.item_id,
                                             entity_type,
                                             tier=mat_def.tier,
-                                            range=range_val,
-                                            damage=damage_val
+                                            range=range_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0,
+                                            damage=damage_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0
                                         )
 
                                         # Remove one item from inventory
