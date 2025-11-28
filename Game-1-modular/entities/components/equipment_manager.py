@@ -39,10 +39,12 @@ class EquipmentManager:
 
         # HAND TYPE VALIDATION
         if slot == 'mainHand':
-            # If equipping a 2H weapon to mainhand, must unequip offhand
+            # Note: 2H weapon offhand unequip is handled by try_equip_from_inventory
+            # This validation is just a safety check
             if item.hand_type == "2H":
                 if self.slots['offHand'] is not None:
-                    return None, "Cannot equip 2H weapon - offhand occupied"
+                    print(f"         ⚠️ Warning: 2H weapon equipped with offhand still occupied")
+                    print(f"            This should have been auto-unequipped by caller")
         elif slot == 'offHand':
             # Check if mainhand allows offhand
             mainhand = self.slots['mainHand']

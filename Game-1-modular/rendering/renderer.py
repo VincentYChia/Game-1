@@ -2494,6 +2494,12 @@ class Renderer:
                   (pad, y_pos))
         y_pos += s(25)
 
+        # Display tags if present
+        if hasattr(item, 'tags') and item.tags:
+            tags_text = ", ".join(item.tags)
+            surf.blit(self.tiny_font.render(f"Tags: {tags_text}", True, (150, 200, 255)), (pad, y_pos))
+            y_pos += s(18)
+
         if item.damage[0] > 0:
             dmg = item.get_actual_damage()
             surf.blit(self.small_font.render(f"Damage: {dmg[0]}-{dmg[1]}", True, (200, 200, 200)), (pad, y_pos))

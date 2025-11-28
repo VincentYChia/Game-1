@@ -309,7 +309,8 @@ class EquipmentDatabase:
             icon_path=icon_path,
             hand_type=hand_type,
             item_type=parsed_item_type,
-            stat_multipliers=stat_multipliers
+            stat_multipliers=stat_multipliers,
+            tags=tags  # Pass the tags from metadata
         )
 
     def is_equipment(self, item_id: str) -> bool:

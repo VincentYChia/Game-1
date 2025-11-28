@@ -1243,13 +1243,19 @@ class GameEngine:
 
         for slot_name, (rect, _, _) in self.equipment_rects.items():
             if rect.collidepoint(rx, ry):
+                print(f"🎯 Equipment slot clicked: {slot_name}, shift_held: {shift_held}")
                 if shift_held:
                     # Unequip
+                    print(f"   Attempting to unequip from {slot_name}")
                     success, msg = self.character.try_unequip_to_inventory(slot_name)
                     if success:
                         self.add_notification(f"Unequipped item", (100, 255, 100))
+                        print(f"   ✅ Unequipped successfully")
                     else:
                         self.add_notification(f"Cannot unequip: {msg}", (255, 100, 100))
+                        print(f"   ❌ Failed: {msg}")
+                else:
+                    print(f"   Regular click (no shift), no action")
                 break
 
     def handle_stats_click(self, mouse_pos: Tuple[int, int]):

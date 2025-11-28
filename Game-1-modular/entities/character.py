@@ -635,7 +635,14 @@ class Character:
         return available_skills
 
     def _determine_best_slot(self, equipment) -> str:
-        """Intelligently determine which slot to equip an item to"""
+        """Intelligently determine which slot to equip an item to
+
+        Rules:
+        - 2H weapons: Always mainhand (will auto-unequip offhand)
+        - Shields: Prefer offhand, replace shields
+        - Weapons (1H/versatile): Prefer offhand if empty, but never replace shields
+        - Default weapons: Always mainhand
+        """
         # For non-weapon items, use their designated slot
         if equipment.slot not in ['mainHand', 'offHand']:
             return equipment.slot
@@ -644,36 +651,57 @@ class Character:
         mainhand = self.equipment.slots.get('mainHand')
         offhand = self.equipment.slots.get('offHand')
 
-        # If mainhand is empty, equip there
+        print(f"   🎯 _determine_best_slot for {equipment.name}")
+        print(f"      - equipment.hand_type: {equipment.hand_type}")
+        print(f"      - equipment.item_type: {equipment.item_type}")
+        print(f"      - mainhand: {mainhand.name if mainhand else None} ({mainhand.hand_type if mainhand else None})")
+        print(f"      - offhand: {offhand.name if offhand else None} ({offhand.item_type if offhand else None})")
+
+        # If mainhand is empty, always equip there first
         if mainhand is None:
+            print(f"      → mainHand (empty)")
             return 'mainHand'
 
-        # If mainhand is occupied, check if we can equip to offhand
+        # 2H weapons always go to mainhand (caller will handle offhand unequip)
         if equipment.hand_type == "2H":
-            # 2H weapons must go to mainhand (will require offhand to be empty)
+            print(f"      → mainHand (2H weapon)")
             return 'mainHand'
 
         # Check if mainhand allows offhand
         if mainhand.hand_type == "2H":
             # Mainhand is 2H, must replace it
+            print(f"      → mainHand (replacing 2H mainhand)")
             return 'mainHand'
 
-        # Mainhand allows offhand - decide based on item type and offhand state
-        if equipment.item_type == "shield" or equipment.hand_type == "1H" or equipment.hand_type == "versatile":
-            # This item can go in offhand
+        # Mainhand allows dual-wielding, decide based on item type
+        if equipment.item_type == "shield":
+            # Shields always prefer offhand
             if offhand is None:
-                # Offhand is empty, use it
+                print(f"      → offHand (shield, empty offhand)")
                 return 'offHand'
             else:
-                # Offhand is occupied
-                # If trying to equip same item type as offhand, replace offhand
-                # Otherwise replace mainhand
-                if equipment.item_type == offhand.item_type:
-                    return 'offHand'
-                else:
-                    return 'mainHand'
+                # Replace whatever is in offhand (shield or weapon)
+                print(f"      → offHand (shield replacing {offhand.item_type})")
+                return 'offHand'
 
-        # Default: replace mainhand
+        # Equipping a weapon (1H or versatile)
+        if equipment.hand_type in ["1H", "versatile"]:
+            if offhand is None:
+                # Offhand is empty, use it
+                print(f"      → offHand (weapon, empty offhand)")
+                return 'offHand'
+            elif offhand.item_type == "shield":
+                # Don't replace shield with weapon - replace mainhand weapon instead
+                print(f"      → mainHand (weapon, shield in offhand)")
+                return 'mainHand'
+            else:
+                # Offhand has a weapon, replace mainhand weapon
+                # (User likely wants to replace what they're holding, not offhand)
+                print(f"      → mainHand (weapon, weapon in offhand)")
+                return 'mainHand'
+
+        # Default weapons can't dual-wield, always mainhand
+        print(f"      → mainHand (default weapon)")
         return 'mainHand'
 
     def try_equip_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
@@ -718,6 +746,20 @@ class Character:
         # Update equipment slot to target slot
         equipment.slot = target_slot
 
+        # Auto-unequip offhand if equipping 2H weapon to mainhand
+        offhand_item = None
+        if target_slot == 'mainHand' and equipment.hand_type == "2H":
+            offhand_item = self.equipment.slots.get('offHand')
+            if offhand_item:
+                print(f"   🔄 Auto-unequipping offhand for 2H weapon: {offhand_item.name}")
+                # Try to add offhand to inventory first
+                if not self.inventory.add_item(offhand_item.item_id, 1, offhand_item):
+                    print(f"   ❌ Inventory full, cannot equip 2H weapon")
+                    return False, "Inventory full (need space for offhand)"
+                # Unequip offhand
+                self.equipment.slots['offHand'] = None
+                print(f"   ✅ Offhand unequipped and moved to inventory")
+
         # Try to equip
         print(f"   🔄 Calling equipment.equip()...")
         old_item, status = self.equipment.equip(equipment, self)
@@ -725,6 +767,14 @@ class Character:
 
         if status != "OK":
             print(f"   ❌ Equip failed with status: {status}")
+            # If we unequipped offhand, put it back
+            if offhand_item:
+                self.equipment.slots['offHand'] = offhand_item
+                # Try to remove from inventory (may fail if inventory was modified)
+                for i, stack in enumerate(self.inventory.slots):
+                    if stack and stack.item_id == offhand_item.item_id and hasattr(stack, '_equipment_data'):
+                        self.inventory.slots[i] = None
+                        break
             return False, status
 
         # Remove from inventory
