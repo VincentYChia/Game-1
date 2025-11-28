@@ -634,6 +634,48 @@ class Character:
                 print(f"   ... and {len(available_skills) - 3} more!")
         return available_skills
 
+    def _determine_best_slot(self, equipment) -> str:
+        """Intelligently determine which slot to equip an item to"""
+        # For non-weapon items, use their designated slot
+        if equipment.slot not in ['mainHand', 'offHand']:
+            return equipment.slot
+
+        # For weapons/shields, determine best hand slot
+        mainhand = self.equipment.slots.get('mainHand')
+        offhand = self.equipment.slots.get('offHand')
+
+        # If mainhand is empty, equip there
+        if mainhand is None:
+            return 'mainHand'
+
+        # If mainhand is occupied, check if we can equip to offhand
+        if equipment.hand_type == "2H":
+            # 2H weapons must go to mainhand (will require offhand to be empty)
+            return 'mainHand'
+
+        # Check if mainhand allows offhand
+        if mainhand.hand_type == "2H":
+            # Mainhand is 2H, must replace it
+            return 'mainHand'
+
+        # Mainhand allows offhand - decide based on item type and offhand state
+        if equipment.item_type == "shield" or equipment.hand_type == "1H" or equipment.hand_type == "versatile":
+            # This item can go in offhand
+            if offhand is None:
+                # Offhand is empty, use it
+                return 'offHand'
+            else:
+                # Offhand is occupied
+                # If trying to equip same item type as offhand, replace offhand
+                # Otherwise replace mainhand
+                if equipment.item_type == offhand.item_type:
+                    return 'offHand'
+                else:
+                    return 'mainHand'
+
+        # Default: replace mainhand
+        return 'mainHand'
+
     def try_equip_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
         """Try to equip item from inventory slot"""
         print(f"\n🎯 try_equip_from_inventory called for slot {slot_index}")
@@ -665,7 +707,16 @@ class Character:
         print(f"   📋 Equipment details:")
         print(f"      - name: {equipment.name}")
         print(f"      - slot: {equipment.slot}")
+        print(f"      - hand_type: {equipment.hand_type}")
+        print(f"      - item_type: {equipment.item_type}")
         print(f"      - tier: {equipment.tier}")
+
+        # Intelligently determine best slot for weapons/shields
+        target_slot = self._determine_best_slot(equipment)
+        print(f"   🎯 Target slot determined: {target_slot}")
+
+        # Update equipment slot to target slot
+        equipment.slot = target_slot
 
         # Try to equip
         print(f"   🔄 Calling equipment.equip()...")
@@ -684,14 +735,14 @@ class Character:
         if old_item:
             if not self.inventory.add_item(old_item.item_id, 1, old_item):
                 # Inventory full, swap back
-                self.equipment.slots[equipment.slot] = old_item
+                self.equipment.slots[target_slot] = old_item
                 self.inventory.slots[slot_index] = item_stack
                 self.recalculate_stats()
                 print(f"   ❌ Inventory full, swapped back")
                 return False, "Inventory full"
             print(f"   ↩️  Returned old item to inventory")
 
-        print(f"   ✅ SUCCESS - Equipped {equipment.name}")
+        print(f"   ✅ SUCCESS - Equipped {equipment.name} to {target_slot}")
         return True, "OK"
 
     def try_unequip_to_inventory(self, slot_name: str) -> Tuple[bool, str]:

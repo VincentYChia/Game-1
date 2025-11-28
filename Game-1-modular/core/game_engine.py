@@ -2378,8 +2378,46 @@ class GameEngine:
         if not self.active_minigame:
             self.world.update(dt)
 
-            # Check if player is blocking with shield (right mouse held)
-            shield_blocking = 3 in self.mouse_buttons_pressed and self.character.is_shield_active()
+            # Check if player is blocking with shield (right mouse held OR X key held)
+            shield_blocking = (3 in self.mouse_buttons_pressed or pygame.K_x in self.keys_pressed) and self.character.is_shield_active()
+
+            # Handle X key for offhand attacks (when not blocking)
+            if pygame.K_x in self.keys_pressed and not shield_blocking:
+                # Get offhand weapon
+                offhand_weapon = self.character.equipment.slots.get('offHand')
+                if offhand_weapon and offhand_weapon.item_type != "shield":
+                    # Try to attack enemy at mouse position
+                    mouse_pos = pygame.mouse.get_pos()
+                    if mouse_pos[0] < Config.VIEWPORT_WIDTH:  # In viewport
+                        # Convert to world coordinates
+                        wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
+                        wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
+
+                        # Check for enemy at position
+                        enemy = self.combat_manager.get_enemy_at_position((wx, wy))
+                        if enemy and enemy.is_alive:
+                            # Check if offhand can attack
+                            if self.character.can_attack('offHand'):
+                                # Check if in range
+                                weapon_range = self.character.equipment.get_weapon_range('offHand')
+                                dist = enemy.distance_to((self.character.position.x, self.character.position.y))
+                                if dist <= weapon_range:
+                                    # Attack with offhand
+                                    damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='offHand')
+                                    self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
+                                    self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
+
+                                    if not enemy.is_alive:
+                                        self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
+                                        self.character.activities.record_activity('combat', 1)
+
+                                        # Show loot notifications
+                                        if loot:
+                                            mat_db = MaterialDatabase.get_instance()
+                                            for material_id, qty in loot:
+                                                mat = mat_db.get_material(material_id)
+                                                item_name = mat.name if mat else material_id
+                                                self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
 
             self.combat_manager.update(dt, shield_blocking=shield_blocking)
             self.character.update_attack_cooldown(dt)
