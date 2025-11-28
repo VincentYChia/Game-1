@@ -92,6 +92,8 @@ class Character:
 
         # Combat
         self.attack_cooldown = 0.0
+        self.mainhand_cooldown = 0.0
+        self.offhand_cooldown = 0.0
         self.last_attacked_enemy = None
 
         # Health regeneration tracking
@@ -632,6 +634,76 @@ class Character:
                 print(f"   ... and {len(available_skills) - 3} more!")
         return available_skills
 
+    def _determine_best_slot(self, equipment) -> str:
+        """Intelligently determine which slot to equip an item to
+
+        Rules:
+        - 2H weapons: Always mainhand (will auto-unequip offhand)
+        - Shields: Prefer offhand, replace shields
+        - Weapons (1H/versatile): Prefer offhand if empty, but never replace shields
+        - Default weapons: Always mainhand
+        """
+        # For non-weapon items, use their designated slot
+        if equipment.slot not in ['mainHand', 'offHand']:
+            return equipment.slot
+
+        # For weapons/shields, determine best hand slot
+        mainhand = self.equipment.slots.get('mainHand')
+        offhand = self.equipment.slots.get('offHand')
+
+        print(f"   🎯 _determine_best_slot for {equipment.name}")
+        print(f"      - equipment.hand_type: {equipment.hand_type}")
+        print(f"      - equipment.item_type: {equipment.item_type}")
+        print(f"      - mainhand: {mainhand.name if mainhand else None} ({mainhand.hand_type if mainhand else None})")
+        print(f"      - offhand: {offhand.name if offhand else None} ({offhand.item_type if offhand else None})")
+
+        # If mainhand is empty, always equip there first
+        if mainhand is None:
+            print(f"      → mainHand (empty)")
+            return 'mainHand'
+
+        # 2H weapons always go to mainhand (caller will handle offhand unequip)
+        if equipment.hand_type == "2H":
+            print(f"      → mainHand (2H weapon)")
+            return 'mainHand'
+
+        # Check if mainhand allows offhand
+        if mainhand.hand_type == "2H":
+            # Mainhand is 2H, must replace it
+            print(f"      → mainHand (replacing 2H mainhand)")
+            return 'mainHand'
+
+        # Mainhand allows dual-wielding, decide based on item type
+        if equipment.item_type == "shield":
+            # Shields always prefer offhand
+            if offhand is None:
+                print(f"      → offHand (shield, empty offhand)")
+                return 'offHand'
+            else:
+                # Replace whatever is in offhand (shield or weapon)
+                print(f"      → offHand (shield replacing {offhand.item_type})")
+                return 'offHand'
+
+        # Equipping a weapon (1H or versatile)
+        if equipment.hand_type in ["1H", "versatile"]:
+            if offhand is None:
+                # Offhand is empty, use it
+                print(f"      → offHand (weapon, empty offhand)")
+                return 'offHand'
+            elif offhand.item_type == "shield":
+                # Don't replace shield with weapon - replace mainhand weapon instead
+                print(f"      → mainHand (weapon, shield in offhand)")
+                return 'mainHand'
+            else:
+                # Offhand has a weapon, replace mainhand weapon
+                # (User likely wants to replace what they're holding, not offhand)
+                print(f"      → mainHand (weapon, weapon in offhand)")
+                return 'mainHand'
+
+        # Default weapons can't dual-wield, always mainhand
+        print(f"      → mainHand (default weapon)")
+        return 'mainHand'
+
     def try_equip_from_inventory(self, slot_index: int) -> Tuple[bool, str]:
         """Try to equip item from inventory slot"""
         print(f"\n🎯 try_equip_from_inventory called for slot {slot_index}")
@@ -663,7 +735,30 @@ class Character:
         print(f"   📋 Equipment details:")
         print(f"      - name: {equipment.name}")
         print(f"      - slot: {equipment.slot}")
+        print(f"      - hand_type: {equipment.hand_type}")
+        print(f"      - item_type: {equipment.item_type}")
         print(f"      - tier: {equipment.tier}")
+
+        # Intelligently determine best slot for weapons/shields
+        target_slot = self._determine_best_slot(equipment)
+        print(f"   🎯 Target slot determined: {target_slot}")
+
+        # Update equipment slot to target slot
+        equipment.slot = target_slot
+
+        # Auto-unequip offhand if equipping 2H weapon to mainhand
+        offhand_item = None
+        if target_slot == 'mainHand' and equipment.hand_type == "2H":
+            offhand_item = self.equipment.slots.get('offHand')
+            if offhand_item:
+                print(f"   🔄 Auto-unequipping offhand for 2H weapon: {offhand_item.name}")
+                # Try to add offhand to inventory first
+                if not self.inventory.add_item(offhand_item.item_id, 1, offhand_item):
+                    print(f"   ❌ Inventory full, cannot equip 2H weapon")
+                    return False, "Inventory full (need space for offhand)"
+                # Unequip offhand
+                self.equipment.slots['offHand'] = None
+                print(f"   ✅ Offhand unequipped and moved to inventory")
 
         # Try to equip
         print(f"   🔄 Calling equipment.equip()...")
@@ -672,6 +767,14 @@ class Character:
 
         if status != "OK":
             print(f"   ❌ Equip failed with status: {status}")
+            # If we unequipped offhand, put it back
+            if offhand_item:
+                self.equipment.slots['offHand'] = offhand_item
+                # Try to remove from inventory (may fail if inventory was modified)
+                for i, stack in enumerate(self.inventory.slots):
+                    if stack and stack.item_id == offhand_item.item_id and hasattr(stack, '_equipment_data'):
+                        self.inventory.slots[i] = None
+                        break
             return False, status
 
         # Remove from inventory
@@ -682,14 +785,14 @@ class Character:
         if old_item:
             if not self.inventory.add_item(old_item.item_id, 1, old_item):
                 # Inventory full, swap back
-                self.equipment.slots[equipment.slot] = old_item
+                self.equipment.slots[target_slot] = old_item
                 self.inventory.slots[slot_index] = item_stack
                 self.recalculate_stats()
                 print(f"   ❌ Inventory full, swapped back")
                 return False, "Inventory full"
             print(f"   ↩️  Returned old item to inventory")
 
-        print(f"   ✅ SUCCESS - Equipped {equipment.name}")
+        print(f"   ✅ SUCCESS - Equipped {equipment.name} to {target_slot}")
         return True, "OK"
 
     def try_unequip_to_inventory(self, slot_name: str) -> Tuple[bool, str]:
@@ -730,25 +833,66 @@ class Character:
         # Return average damage
         return (damage_range[0] + damage_range[1]) / 2.0
 
+    def is_shield_active(self) -> bool:
+        """Check if player has a shield equipped in offhand"""
+        offhand = self.equipment.slots.get('offHand')
+        return offhand is not None and offhand.item_type == 'shield'
+
+    def get_shield_damage_reduction(self) -> float:
+        """Get damage reduction multiplier from active shield (0.0-1.0)"""
+        if not self.is_shield_active():
+            return 0.0
+
+        offhand = self.equipment.slots.get('offHand')
+        # Shield uses its damage stat multiplier as damage reduction
+        # E.g., if shield has damage multiplier 0.6, it reduces incoming damage by 40%
+        damage_multiplier = offhand.stat_multipliers.get('damage', 1.0)
+
+        # Convert to damage reduction (lower damage multiplier = higher reduction)
+        # damage_multiplier of 0.6 means 40% reduction
+        reduction = 1.0 - damage_multiplier
+        return max(0.0, min(0.75, reduction))  # Cap at 75% reduction
+
     def update_attack_cooldown(self, dt: float):
         """Update attack cooldown timer"""
         if self.attack_cooldown > 0:
             self.attack_cooldown -= dt
+        if self.mainhand_cooldown > 0:
+            self.mainhand_cooldown -= dt
+        if self.offhand_cooldown > 0:
+            self.offhand_cooldown -= dt
 
-    def can_attack(self) -> bool:
-        """Check if player can attack (cooldown ready)"""
-        return self.attack_cooldown <= 0
+    def can_attack(self, hand: str = 'mainHand') -> bool:
+        """Check if player can attack with specified hand (cooldown ready)"""
+        if hand == 'mainHand':
+            return self.mainhand_cooldown <= 0
+        elif hand == 'offHand':
+            return self.offhand_cooldown <= 0
+        return self.attack_cooldown <= 0  # Legacy fallback
 
-    def reset_attack_cooldown(self, is_weapon: bool = True):
-        """Reset attack cooldown based on attack speed"""
+    def reset_attack_cooldown(self, is_weapon: bool = True, hand: str = 'mainHand'):
+        """Reset attack cooldown based on attack speed and hand"""
         if is_weapon:
-            # Weapon attack cooldown based on attack speed stat
+            # Get weapon-specific attack speed
+            weapon_attack_speed = self.equipment.get_weapon_attack_speed(hand)
+
+            # Weapon attack cooldown based on attack speed stat and weapon speed
             base_cooldown = 1.0
             attack_speed_bonus = self.stats.agility * 0.03  # 3% faster per AGI
-            self.attack_cooldown = base_cooldown / (1.0 + attack_speed_bonus)
+            cooldown = (base_cooldown / weapon_attack_speed) / (1.0 + attack_speed_bonus)
+
+            if hand == 'mainHand':
+                self.mainhand_cooldown = cooldown
+            elif hand == 'offHand':
+                self.offhand_cooldown = cooldown
+            else:
+                self.attack_cooldown = cooldown  # Legacy fallback
         else:
             # Tool attack cooldown (faster)
-            self.attack_cooldown = 0.5
+            if hand == 'mainHand':
+                self.mainhand_cooldown = 0.5
+            else:
+                self.attack_cooldown = 0.5
 
     def use_consumable(self, item_id: str) -> Tuple[bool, str]:
         """

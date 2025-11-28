@@ -299,8 +299,10 @@ class CombatManager:
 
         return random.choices(tiers, weights=weights)[0]
 
-    def update(self, dt: float):
-        """Update all enemies and combat logic"""
+    def update(self, dt: float, shield_blocking: bool = False):
+        """Update all enemies and combat logic
+        shield_blocking: True if player is actively blocking with shield
+        """
         player_pos = (self.character.position.x, self.character.position.y)
 
         # Update spawn timers
@@ -319,7 +321,7 @@ class CombatManager:
                     if enemy.can_attack():
                         dist = enemy.distance_to(player_pos)
                         if dist <= 1.5:  # Melee range
-                            self._enemy_attack_player(enemy)
+                            self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
 
                 else:
                     # Enemy is dead - handle corpse
@@ -373,20 +375,22 @@ class CombatManager:
                     self.spawn_enemies_in_chunk(chunk)
                     self.spawn_timers[chunk_coords] = 0.0
 
-    def player_attack_enemy(self, enemy: Enemy) -> Tuple[float, bool, List[Tuple[str, int]]]:
+    def player_attack_enemy(self, enemy: Enemy, hand: str = 'mainHand') -> Tuple[float, bool, List[Tuple[str, int]]]:
         """
         Calculate player damage to enemy
         Returns (damage, is_crit, loot) where loot is empty list if enemy didn't die
+        hand: 'mainHand' or 'offHand' to specify which hand is attacking
         """
-        print(f"\n⚔️ PLAYER ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
+        hand_label = "MAINHAND" if hand == 'mainHand' else "OFFHAND"
+        print(f"\n⚔️ PLAYER {hand_label} ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
 
-        # Get weapon damage and check tool type effectiveness
-        weapon_damage = self.character.get_weapon_damage()
+        # Get weapon damage from specified hand
+        weapon_damage = self.character.get_weapon_damage()  # Get average damage
         print(f"   Weapon damage: {weapon_damage}")
 
         # Check if using a tool (axe/pickaxe) for combat - apply effectiveness penalty
         tool_type_effectiveness = 1.0  # Default to full effectiveness
-        equipped_weapon = self.character.equipment.slots.get('mainHand')
+        equipped_weapon = self.character.equipment.slots.get(hand)
         if equipped_weapon:
             tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
             if tool_type_effectiveness < 1.0:
@@ -493,8 +497,10 @@ class CombatManager:
 
         return (final_damage, is_crit, loot)
 
-    def _enemy_attack_player(self, enemy: Enemy):
-        """Enemy attacks player"""
+    def _enemy_attack_player(self, enemy: Enemy, shield_blocking: bool = False):
+        """Enemy attacks player
+        shield_blocking: True if player is actively blocking with shield (right mouse held)
+        """
         print(f"\n👹 ENEMY ATTACK: {enemy.definition.name}")
 
         # Calculate damage
@@ -515,6 +521,12 @@ class CombatManager:
 
         # Apply multipliers
         final_damage = damage * def_multiplier * armor_multiplier
+
+        # SHIELD BLOCKING: Apply shield damage reduction if actively blocking
+        if shield_blocking and self.character.is_shield_active():
+            shield_reduction = self.character.get_shield_damage_reduction()
+            final_damage = final_damage * (1.0 - shield_reduction)
+            print(f"   🛡️ Shield blocking: -{shield_reduction*100:.0f}% damage reduction")
 
         # SKILL BUFF BONUSES: Check for fortify buffs (flat damage reduction)
         fortify_reduction = 0.0

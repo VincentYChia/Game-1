@@ -2151,6 +2151,51 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
+    def _group_recipes_by_type(self, recipes, equip_db, mat_db):
+        """Group recipes by their output type for organized display"""
+        from collections import defaultdict
+
+        # Define type categories and their order
+        type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Consumables', 'Materials', 'Stations', 'Other']
+        grouped = defaultdict(list)
+
+        for recipe in recipes:
+            # Determine type based on output
+            output_type = 'Other'
+
+            if equip_db.is_equipment(recipe.output_id):
+                equip = equip_db.create_equipment_from_id(recipe.output_id)
+                if equip:
+                    if equip.item_type == 'weapon':
+                        output_type = 'Weapons'
+                    elif equip.item_type == 'shield':
+                        output_type = 'Weapons'  # Shields with weapons
+                    elif equip.item_type == 'armor':
+                        output_type = 'Armor'
+                    elif equip.item_type == 'tool':
+                        output_type = 'Tools'
+                    elif equip.item_type == 'accessory':
+                        output_type = 'Accessories'
+                    elif equip.item_type == 'station':
+                        output_type = 'Stations'
+            else:
+                mat = mat_db.get_material(recipe.output_id)
+                if mat:
+                    if mat.category == 'consumable':
+                        output_type = 'Consumables'
+                    elif mat.category in ['material', 'resource', 'component']:
+                        output_type = 'Materials'
+
+            grouped[output_type].append(recipe)
+
+        # Return as ordered list of tuples
+        result = []
+        for type_name in type_order:
+            if type_name in grouped and grouped[type_name]:
+                result.append((type_name, grouped[type_name]))
+
+        return result
+
     def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int], selected_recipe=None, user_placement=None):
         """
         Render crafting UI with two-panel layout:
@@ -2211,22 +2256,33 @@ class Renderer:
                                                     character.active_station.tier)
 
         # ======================
-        # LEFT PANEL: Recipe List with Scrolling
+        # LEFT PANEL: Recipe List with Scrolling (ORGANIZED BY TYPE)
         # ======================
         visible_recipes = []  # Initialize to empty list
         if not recipes:
             surf.blit(self.font.render("No recipes available", True, (200, 200, 200)), (s(20), s(80)))
         else:
-            # Apply scroll offset and show 8 recipes at a time
-            total_recipes = len(recipes)
-            max_visible = 8
-            start_idx = min(scroll_offset, max(0, total_recipes - max_visible))
-            end_idx = min(start_idx + max_visible, total_recipes)
-            visible_recipes = recipes[start_idx:end_idx]
+            # Group recipes by type
+            grouped_recipes = self._group_recipes_by_type(recipes, equip_db, mat_db)
+
+            # Flatten grouped recipes into a list with headers
+            # Format: [('header', 'Weapons'), ('recipe', recipe_obj), ('recipe', recipe_obj), ('header', 'Tools'), ...]
+            flat_list = []
+            for type_name, type_recipes in grouped_recipes:
+                flat_list.append(('header', type_name))
+                for recipe in type_recipes:
+                    flat_list.append(('recipe', recipe))
+
+            # Apply scroll offset and show items
+            total_items = len(flat_list)
+            max_visible = 12  # Increased to account for headers
+            start_idx = min(scroll_offset, max(0, total_items - max_visible))
+            end_idx = min(start_idx + max_visible, total_items)
+            visible_items = flat_list[start_idx:end_idx]
 
             # Show scroll indicators if needed
-            if total_recipes > max_visible:
-                scroll_text = f"Recipes {start_idx + 1}-{end_idx} of {total_recipes}"
+            if total_items > max_visible:
+                scroll_text = f"Showing {start_idx + 1}-{end_idx} of {total_items}"
                 scroll_surf = self.small_font.render(scroll_text, True, (150, 150, 150))
                 surf.blit(scroll_surf, (s(20), s(50)))
 
@@ -2234,59 +2290,76 @@ class Renderer:
                 if start_idx > 0:
                     up_arrow = self.small_font.render("▲ Scroll Up", True, (100, 200, 100))
                     surf.blit(up_arrow, (left_panel_w - s(120), s(50)))
-                if end_idx < total_recipes:
+                if end_idx < total_items:
                     down_arrow = self.small_font.render("▼ Scroll Down", True, (100, 200, 100))
                     surf.blit(down_arrow, (left_panel_w - s(120), wh - s(30)))
 
             y_off = s(70)
-            for i, recipe in enumerate(visible_recipes):
-                # Compact recipe display (no buttons, just info)
-                num_inputs = len(recipe.inputs)
-                btn_height = max(s(70), s(35) + num_inputs * s(16) + s(5))
+            for i, item in enumerate(visible_items):
+                item_type, item_data = item
 
-                btn = pygame.Rect(s(20), y_off, left_panel_w - s(30), btn_height)
-                can_craft = recipe_db.can_craft(recipe, character.inventory)
+                if item_type == 'header':
+                    # Render type header
+                    header_text = item_data
+                    header_color = (255, 215, 0)  # Gold
+                    header_surf = self.font.render(header_text, True, header_color)
+                    surf.blit(header_surf, (s(25), y_off))
 
-                # Highlight selected recipe with gold border
-                is_selected = (self._temp_selected_recipe and self._temp_selected_recipe.recipe_id == recipe.recipe_id)
+                    # Underline
+                    underline_y = y_off + s(22)
+                    pygame.draw.line(surf, header_color, (s(25), underline_y), (left_panel_w - s(35), underline_y), 1)
 
-                btn_color = (60, 80, 60) if can_craft else (80, 60, 60)
-                if is_selected:
-                    btn_color = (80, 70, 30)  # Gold tint for selected
+                    y_off += s(28)
 
-                pygame.draw.rect(surf, btn_color, btn)
-                border_color = (255, 215, 0) if is_selected else (100, 100, 100)
-                border_width = 3 if is_selected else 2
-                pygame.draw.rect(surf, border_color, btn, border_width)
+                elif item_type == 'recipe':
+                    recipe = item_data
+                    # Compact recipe display (no buttons, just info)
+                    num_inputs = len(recipe.inputs)
+                    btn_height = max(s(70), s(35) + num_inputs * s(16) + s(5))
 
-                # Output name
-                is_equipment = equip_db.is_equipment(recipe.output_id)
-                if is_equipment:
-                    equip = equip_db.create_equipment_from_id(recipe.output_id)
-                    out_name = equip.name if equip else recipe.output_id
-                    color = Config.RARITY_COLORS.get(equip.rarity, (200, 200, 200)) if equip else (200, 200, 200)
-                else:
-                    out_mat = mat_db.get_material(recipe.output_id)
-                    out_name = out_mat.name if out_mat else recipe.output_id
-                    color = Config.RARITY_COLORS.get(out_mat.rarity, (200, 200, 200)) if out_mat else (200, 200, 200)
+                    btn = pygame.Rect(s(20), y_off, left_panel_w - s(30), btn_height)
+                    can_craft = recipe_db.can_craft(recipe, character.inventory)
 
-                surf.blit(self.font.render(f"{out_name} x{recipe.output_qty}", True, color),
-                          (btn.x + s(10), btn.y + s(8)))
+                    # Highlight selected recipe with gold border
+                    is_selected = (self._temp_selected_recipe and self._temp_selected_recipe.recipe_id == recipe.recipe_id)
 
-                # Material requirements (compact)
-                req_y = btn.y + s(30)
-                for inp in recipe.inputs:
-                    mat_id = inp.get('materialId', '')
-                    req = inp.get('quantity', 0)
-                    avail = character.inventory.get_item_count(mat_id)
-                    mat = mat_db.get_material(mat_id)
-                    mat_name = mat.name if mat else mat_id
-                    req_color = (100, 255, 100) if avail >= req or Config.DEBUG_INFINITE_RESOURCES else (255, 100, 100)
-                    surf.blit(self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color),
-                              (btn.x + s(15), req_y))
-                    req_y += s(16)
+                    btn_color = (60, 80, 60) if can_craft else (80, 60, 60)
+                    if is_selected:
+                        btn_color = (80, 70, 30)  # Gold tint for selected
 
-                y_off += btn_height + s(8)
+                    pygame.draw.rect(surf, btn_color, btn)
+                    border_color = (255, 215, 0) if is_selected else (100, 100, 100)
+                    border_width = 3 if is_selected else 2
+                    pygame.draw.rect(surf, border_color, btn, border_width)
+
+                    # Output name
+                    is_equipment = equip_db.is_equipment(recipe.output_id)
+                    if is_equipment:
+                        equip = equip_db.create_equipment_from_id(recipe.output_id)
+                        out_name = equip.name if equip else recipe.output_id
+                        color = Config.RARITY_COLORS.get(equip.rarity, (200, 200, 200)) if equip else (200, 200, 200)
+                    else:
+                        out_mat = mat_db.get_material(recipe.output_id)
+                        out_name = out_mat.name if out_mat else recipe.output_id
+                        color = Config.RARITY_COLORS.get(out_mat.rarity, (200, 200, 200)) if out_mat else (200, 200, 200)
+
+                    surf.blit(self.font.render(f"{out_name} x{recipe.output_qty}", True, color),
+                              (btn.x + s(10), btn.y + s(8)))
+
+                    # Material requirements (compact)
+                    req_y = btn.y + s(30)
+                    for inp in recipe.inputs:
+                        mat_id = inp.get('materialId', '')
+                        req = inp.get('quantity', 0)
+                        avail = character.inventory.get_item_count(mat_id)
+                        mat = mat_db.get_material(mat_id)
+                        mat_name = mat.name if mat else mat_id
+                        req_color = (100, 255, 100) if avail >= req or Config.DEBUG_INFINITE_RESOURCES else (255, 100, 100)
+                        surf.blit(self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color),
+                                  (btn.x + s(15), req_y))
+                        req_y += s(16)
+
+                    y_off += btn_height + s(8)
 
         # ======================
         # DIVIDER
@@ -2493,6 +2566,12 @@ class Renderer:
         surf.blit(self.small_font.render(f"Tier {item.tier} | {item.rarity.capitalize()} | {item.slot}", True, color),
                   (pad, y_pos))
         y_pos += s(25)
+
+        # Display tags if present
+        if hasattr(item, 'tags') and item.tags:
+            tags_text = ", ".join(item.tags)
+            surf.blit(self.tiny_font.render(f"Tags: {tags_text}", True, (150, 200, 255)), (pad, y_pos))
+            y_pos += s(18)
 
         if item.damage[0] > 0:
             dmg = item.get_actual_damage()
