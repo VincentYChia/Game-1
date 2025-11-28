@@ -1691,31 +1691,52 @@ class GameEngine:
         right_panel_w = s(500)  # Must match renderer
 
         # ======================
-        # LEFT PANEL: Recipe Selection
+        # LEFT PANEL: Recipe Selection (WITH GROUPED HEADERS)
         # ======================
         if rx < left_panel_w:
             # Click in left panel - select recipe
-            # Apply scroll offset to show correct recipes
-            total_recipes = len(self.crafting_recipes)
-            max_visible = 8
-            start_idx = min(self.recipe_scroll_offset, max(0, total_recipes - max_visible))
-            end_idx = min(start_idx + max_visible, total_recipes)
-            visible_recipes = self.crafting_recipes[start_idx:end_idx]
+            # Need to use the same grouping logic as the renderer
+            mat_db = MaterialDatabase.get_instance()
+            equip_db = EquipmentDatabase.get_instance()
+
+            # Group recipes by type (same as renderer)
+            grouped_recipes = self.renderer._group_recipes_by_type(self.crafting_recipes, equip_db, mat_db)
+
+            # Flatten grouped recipes with headers
+            flat_list = []
+            for type_name, type_recipes in grouped_recipes:
+                flat_list.append(('header', type_name))
+                for recipe in type_recipes:
+                    flat_list.append(('recipe', recipe))
+
+            # Apply scroll offset
+            total_items = len(flat_list)
+            max_visible = 12  # Match renderer's max_visible
+            start_idx = min(self.recipe_scroll_offset, max(0, total_items - max_visible))
+            end_idx = min(start_idx + max_visible, total_items)
+            visible_items = flat_list[start_idx:end_idx]
 
             y_off = s(70)
-            for i, recipe in enumerate(visible_recipes):
-                num_inputs = len(recipe.inputs)
-                btn_height = max(s(70), s(35) + num_inputs * s(16) + s(5))
+            for i, item in enumerate(visible_items):
+                item_type, item_data = item
 
-                if y_off <= ry <= y_off + btn_height:
-                    # Recipe clicked - select it
-                    self.selected_recipe = recipe
-                    print(f"📋 Selected recipe: {recipe.recipe_id}")
-                    # Auto-load recipe placement
-                    self.load_recipe_placement(recipe)
-                    return
+                if item_type == 'header':
+                    # Header - just skip over it (height = 28)
+                    y_off += s(28)
+                elif item_type == 'recipe':
+                    recipe = item_data
+                    num_inputs = len(recipe.inputs)
+                    btn_height = max(s(70), s(35) + num_inputs * s(16) + s(5))
 
-                y_off += btn_height + s(8)
+                    if y_off <= ry <= y_off + btn_height:
+                        # Recipe clicked - select it
+                        self.selected_recipe = recipe
+                        print(f"📋 Selected recipe: {recipe.recipe_id}")
+                        # Auto-load recipe placement
+                        self.load_recipe_placement(recipe)
+                        return
+
+                    y_off += btn_height + s(8)
 
         # ======================
         # RIGHT PANEL: Grid Cells & Craft Buttons
