@@ -266,6 +266,31 @@ class EquipmentDatabase:
                 subdir = 'weapons'  # Default fallback
             icon_path = f"{subdir}/{item_id}.png"
 
+        # Parse hand_type from metadata tags
+        hand_type = "default"  # Default: mainhand only
+        metadata = data.get('metadata', {})
+        tags = metadata.get('tags', [])
+
+        if '1H' in tags:
+            hand_type = "1H"  # Can be equipped in either hand
+        elif '2H' in tags:
+            hand_type = "2H"  # Requires both hands (blocks offhand)
+        elif 'versatile' in tags:
+            hand_type = "versatile"  # Can have offhand, but not required
+
+        # Determine item_type (weapon, shield, tool, etc.)
+        parsed_item_type = "weapon"  # Default
+        if item_type == 'shield':
+            parsed_item_type = "shield"
+        elif item_type == 'tool':
+            parsed_item_type = "tool"
+        elif item_type == 'armor':
+            parsed_item_type = "armor"
+        elif item_type == 'accessory':
+            parsed_item_type = "accessory"
+        elif item_type == 'station':
+            parsed_item_type = "station"
+
         return EquipmentItem(
             item_id=item_id,
             name=data.get('name', item_id),
@@ -281,7 +306,10 @@ class EquipmentDatabase:
             range=data.get('range', 1.0),  # Range is a top-level field in JSON
             requirements=data.get('requirements', {}),
             bonuses=stats.get('bonuses', {}),
-            icon_path=icon_path
+            icon_path=icon_path,
+            hand_type=hand_type,
+            item_type=parsed_item_type,
+            stat_multipliers=stat_multipliers
         )
 
     def is_equipment(self, item_id: str) -> bool:

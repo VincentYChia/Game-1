@@ -92,6 +92,8 @@ class Character:
 
         # Combat
         self.attack_cooldown = 0.0
+        self.mainhand_cooldown = 0.0
+        self.offhand_cooldown = 0.0
         self.last_attacked_enemy = None
 
         # Health regeneration tracking
@@ -730,25 +732,66 @@ class Character:
         # Return average damage
         return (damage_range[0] + damage_range[1]) / 2.0
 
+    def is_shield_active(self) -> bool:
+        """Check if player has a shield equipped in offhand"""
+        offhand = self.equipment.slots.get('offHand')
+        return offhand is not None and offhand.item_type == 'shield'
+
+    def get_shield_damage_reduction(self) -> float:
+        """Get damage reduction multiplier from active shield (0.0-1.0)"""
+        if not self.is_shield_active():
+            return 0.0
+
+        offhand = self.equipment.slots.get('offHand')
+        # Shield uses its damage stat multiplier as damage reduction
+        # E.g., if shield has damage multiplier 0.6, it reduces incoming damage by 40%
+        damage_multiplier = offhand.stat_multipliers.get('damage', 1.0)
+
+        # Convert to damage reduction (lower damage multiplier = higher reduction)
+        # damage_multiplier of 0.6 means 40% reduction
+        reduction = 1.0 - damage_multiplier
+        return max(0.0, min(0.75, reduction))  # Cap at 75% reduction
+
     def update_attack_cooldown(self, dt: float):
         """Update attack cooldown timer"""
         if self.attack_cooldown > 0:
             self.attack_cooldown -= dt
+        if self.mainhand_cooldown > 0:
+            self.mainhand_cooldown -= dt
+        if self.offhand_cooldown > 0:
+            self.offhand_cooldown -= dt
 
-    def can_attack(self) -> bool:
-        """Check if player can attack (cooldown ready)"""
-        return self.attack_cooldown <= 0
+    def can_attack(self, hand: str = 'mainHand') -> bool:
+        """Check if player can attack with specified hand (cooldown ready)"""
+        if hand == 'mainHand':
+            return self.mainhand_cooldown <= 0
+        elif hand == 'offHand':
+            return self.offhand_cooldown <= 0
+        return self.attack_cooldown <= 0  # Legacy fallback
 
-    def reset_attack_cooldown(self, is_weapon: bool = True):
-        """Reset attack cooldown based on attack speed"""
+    def reset_attack_cooldown(self, is_weapon: bool = True, hand: str = 'mainHand'):
+        """Reset attack cooldown based on attack speed and hand"""
         if is_weapon:
-            # Weapon attack cooldown based on attack speed stat
+            # Get weapon-specific attack speed
+            weapon_attack_speed = self.equipment.get_weapon_attack_speed(hand)
+
+            # Weapon attack cooldown based on attack speed stat and weapon speed
             base_cooldown = 1.0
             attack_speed_bonus = self.stats.agility * 0.03  # 3% faster per AGI
-            self.attack_cooldown = base_cooldown / (1.0 + attack_speed_bonus)
+            cooldown = (base_cooldown / weapon_attack_speed) / (1.0 + attack_speed_bonus)
+
+            if hand == 'mainHand':
+                self.mainhand_cooldown = cooldown
+            elif hand == 'offHand':
+                self.offhand_cooldown = cooldown
+            else:
+                self.attack_cooldown = cooldown  # Legacy fallback
         else:
             # Tool attack cooldown (faster)
-            self.attack_cooldown = 0.5
+            if hand == 'mainHand':
+                self.mainhand_cooldown = 0.5
+            else:
+                self.attack_cooldown = 0.5
 
     def use_consumable(self, item_id: str) -> Tuple[bool, str]:
         """

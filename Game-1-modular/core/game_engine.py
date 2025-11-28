@@ -249,6 +249,7 @@ class GameEngine:
         self.minigame_button_rect2 = None  # For secondary buttons (e.g., alchemy stabilize)
 
         self.keys_pressed = set()
+        self.mouse_buttons_pressed = set()  # Track which mouse buttons are held down
         self.mouse_pos = (0, 0)
         self.last_tick = pygame.time.get_ticks()
         self.last_click_time = 0
@@ -517,16 +518,35 @@ class GameEngine:
                     self.character.skills_menu_scroll_offset -= event.y  # event.y is positive for scroll up
                     # Clamp is handled in render_skills_menu_ui
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                self.mouse_buttons_pressed.add(1)
                 self.handle_mouse_click(event.pos)
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                self.mouse_buttons_pressed.discard(1)
                 self.handle_mouse_release(event.pos)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                # Right-click handler (for consumables only)
+                # Right-click handler (for consumables and offhand attacks)
+                self.mouse_buttons_pressed.add(3)
                 self.handle_right_click(event.pos)
+            elif event.type == pygame.MOUSEBUTTONUP and event.button == 3:
+                # Right mouse button released
+                self.mouse_buttons_pressed.discard(3)
 
     def handle_right_click(self, mouse_pos: Tuple[int, int]):
-        """Handle right-click events (consumables only)"""
-        # Only handle inventory right-clicks for now
+        """Handle right-click events (consumables and offhand attacks)"""
+        # Check if clicking on UI elements first (high priority)
+        if self.start_menu_open or self.active_minigame or self.enchantment_selection_active:
+            return  # Don't handle right-click on UI
+
+        if self.character.class_selection_open or self.character.skills_ui_open:
+            return  # Don't handle right-click on UI
+
+        if self.character.stats_ui_open or self.character.encyclopedia.is_open:
+            return  # Don't handle right-click on UI
+
+        if self.npc_dialogue_open or self.character.equipment_ui_open:
+            return  # Don't handle right-click on UI
+
+        # Handle inventory right-clicks for consumables
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             start_x, start_y = 20, Config.INVENTORY_PANEL_Y
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
@@ -553,6 +573,51 @@ class GameEngine:
                                         self.add_notification(message, (100, 255, 100))
                                     else:
                                         self.add_notification(message, (255, 100, 100))
+            return  # Don't process world clicks if clicking on inventory
+
+        # Handle world right-clicks for offhand attacks
+        if mouse_pos[0] >= Config.VIEWPORT_WIDTH:
+            return  # Don't attack outside viewport
+
+        # Get offhand weapon
+        offhand_weapon = self.character.equipment.slots.get('offHand')
+        if not offhand_weapon:
+            return  # No offhand equipped
+
+        # Convert to world coordinates
+        wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
+        wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
+
+        # Check for enemy at position
+        enemy = self.combat_manager.get_enemy_at_position((wx, wy))
+        if enemy and enemy.is_alive:
+            # Check if offhand can attack
+            if not self.character.can_attack('offHand'):
+                return  # Still on cooldown
+
+            # Check if in range (using offhand weapon's range)
+            weapon_range = self.character.equipment.get_weapon_range('offHand')
+            dist = enemy.distance_to((self.character.position.x, self.character.position.y))
+            if dist > weapon_range:
+                self.add_notification(f"Enemy too far (offhand range: {weapon_range})", (255, 100, 100))
+                return
+
+            # Attack with offhand
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='offHand')
+            self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
+            self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
+
+            if not enemy.is_alive:
+                self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
+                self.character.activities.record_activity('combat', 1)
+
+                # Show loot notifications (auto-looted)
+                if loot:
+                    mat_db = MaterialDatabase.get_instance()
+                    for material_id, qty in loot:
+                        mat = mat_db.get_material(material_id)
+                        item_name = mat.name if mat else material_id
+                        self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
 
     def handle_npc_dialogue_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on NPC dialogue buttons (accept/turn in quests)"""
@@ -938,12 +1003,12 @@ class GameEngine:
         # Check for enemy click (living enemies)
         enemy = self.combat_manager.get_enemy_at_position((wx, wy))
         if enemy and enemy.is_alive:
-            # Check if player can attack
-            if not self.character.can_attack():
+            # Check if player can attack with mainhand
+            if not self.character.can_attack('mainHand'):
                 return  # Still on cooldown
 
-            # Check if in range (using equipped weapon's range)
-            weapon_range = self.character.equipment.get_weapon_range()
+            # Check if in range (using mainhand weapon's range)
+            weapon_range = self.character.equipment.get_weapon_range('mainHand')
             dist = enemy.distance_to((self.character.position.x, self.character.position.y))
             if dist > weapon_range:
                 weapon_name = self.character.equipment.slots.get('mainHand')
@@ -951,10 +1016,10 @@ class GameEngine:
                 self.add_notification(range_msg, (255, 100, 100))
                 return
 
-            # Attack enemy
-            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy)
+            # Attack enemy with mainhand
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='mainHand')
             self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-            self.character.reset_attack_cooldown(is_weapon=True)
+            self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
 
             if not enemy.is_alive:
                 self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
@@ -2312,7 +2377,11 @@ class GameEngine:
         # Only update world/combat if minigame isn't active
         if not self.active_minigame:
             self.world.update(dt)
-            self.combat_manager.update(dt)
+
+            # Check if player is blocking with shield (right mouse held)
+            shield_blocking = 3 in self.mouse_buttons_pressed and self.character.is_shield_active()
+
+            self.combat_manager.update(dt, shield_blocking=shield_blocking)
             self.character.update_attack_cooldown(dt)
             self.character.update_health_regen(dt)
             self.character.update_buffs(dt)
