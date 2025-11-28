@@ -1236,14 +1236,19 @@ class GameEngine:
 
     def handle_equipment_click(self, mouse_pos: Tuple[int, int], shift_held: bool):
         if not self.equipment_rects:
+            print(f"   ⚠️ equipment_rects is empty")
             return
 
         wx, wy = self.equipment_window_rect.x, self.equipment_window_rect.y
         rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+        print(f"   🖱️ Equipment click: mouse_pos={mouse_pos}, relative=({rx}, {ry}), shift={shift_held}")
 
         for slot_name, (rect, _, _) in self.equipment_rects.items():
             if rect.collidepoint(rx, ry):
                 print(f"🎯 Equipment slot clicked: {slot_name}, shift_held: {shift_held}")
+                item = self.character.equipment.slots.get(slot_name)
+                print(f"   Item in slot: {item.name if item else 'None'}")
+
                 if shift_held:
                     # Unequip
                     print(f"   Attempting to unequip from {slot_name}")
@@ -1257,6 +1262,8 @@ class GameEngine:
                 else:
                     print(f"   Regular click (no shift), no action")
                 break
+        else:
+            print(f"   No slot matched the click position")
 
     def handle_stats_click(self, mouse_pos: Tuple[int, int]):
         if not self.stats_window_rect or not self.stats_buttons:
