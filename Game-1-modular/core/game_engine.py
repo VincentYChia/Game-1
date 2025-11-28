@@ -2541,6 +2541,7 @@ class GameEngine:
                     self.equipment_window_rect, self.equipment_rects = result
             else:
                 self.equipment_window_rect = None
+                self.equipment_rects = {}
 
             if self.character.encyclopedia.is_open:
                 result = self.renderer.render_encyclopedia_ui(self.character, self.mouse_pos)
@@ -2549,7 +2550,6 @@ class GameEngine:
             else:
                 self.encyclopedia_window_rect = None
                 self.encyclopedia_tab_rects = []
-                self.equipment_rects = {}
 
             # NPC dialogue UI
             if self.npc_dialogue_open and self.active_npc:
