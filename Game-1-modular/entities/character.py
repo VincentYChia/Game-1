@@ -281,6 +281,150 @@ class Character:
             traceback.print_exc()
             return None
 
+    def restore_from_save(self, player_data: dict):
+        """
+        Restore character state from save data (new SaveManager format).
+
+        Args:
+            player_data: Dictionary containing player data from save file
+        """
+        from data.databases import ClassDatabase, EquipmentDatabase, TitleDatabase
+
+        # Restore position
+        pos_data = player_data.get("position", {"x": 0, "y": 0, "z": 0})
+        self.position.x = pos_data["x"]
+        self.position.y = pos_data["y"]
+        self.position.z = pos_data["z"]
+        self.facing = player_data.get("facing", "down")
+
+        # Restore stats
+        stats_data = player_data.get("stats", {})
+        self.stats.strength = stats_data.get("strength", 0)
+        self.stats.defense = stats_data.get("defense", 0)
+        self.stats.vitality = stats_data.get("vitality", 0)
+        self.stats.luck = stats_data.get("luck", 0)
+        self.stats.agility = stats_data.get("agility", 0)
+        self.stats.intelligence = stats_data.get("intelligence", 0)
+
+        # Restore leveling
+        leveling_data = player_data.get("leveling", {})
+        self.leveling.level = leveling_data.get("level", 1)
+        self.leveling.current_exp = leveling_data.get("current_exp", 0)
+        self.leveling.unallocated_stat_points = leveling_data.get("unallocated_stat_points", 0)
+
+        # Restore class
+        class_id = player_data.get("class")
+        if class_id:
+            class_db = ClassDatabase.get_instance()
+            if class_id in class_db.classes:
+                self.class_system.set_class(class_db.classes[class_id])
+                self.class_selection_open = False
+
+        # Recalculate stats to get correct max health/mana
+        self.recalculate_stats()
+
+        # Restore health and mana AFTER recalculation
+        self.health = player_data.get("health", self.max_health)
+        self.mana = player_data.get("mana", self.max_mana)
+
+        # Restore inventory
+        self.inventory.slots = [None] * self.inventory.max_slots
+        inv_data = player_data.get("inventory", [])
+        for idx, item_data in enumerate(inv_data):
+            if item_data and idx < self.inventory.max_slots:
+                from entities.components.inventory import ItemStack
+                from data.models.equipment import EquipmentItem
+
+                # Restore basic item stack
+                item_stack = ItemStack(
+                    item_id=item_data["item_id"],
+                    quantity=item_data["quantity"],
+                    max_stack=item_data.get("max_stack", 99),
+                    rarity=item_data.get("rarity", "common")
+                )
+
+                # Restore equipment data if present
+                if "equipment_data" in item_data:
+                    eq_data = item_data["equipment_data"]
+                    item_stack.equipment_data = EquipmentItem(
+                        item_id=eq_data["item_id"],
+                        rarity=eq_data.get("rarity", "common"),
+                        attack_power=eq_data.get("attack_power", 0),
+                        defense_power=eq_data.get("defense_power", 0),
+                        durability=eq_data.get("durability", 100),
+                        max_durability=eq_data.get("max_durability", 100),
+                        equipment_type=eq_data.get("equipment_type", "weapon"),
+                        slot=eq_data.get("slot", "mainHand"),
+                        tier=eq_data.get("tier", 1)
+                    )
+
+                    # Restore bonus stats if present
+                    if "bonus_stats" in eq_data:
+                        item_stack.equipment_data.bonus_stats = eq_data["bonus_stats"]
+
+                # Restore crafted stats if present
+                if "crafted_stats" in item_data:
+                    item_stack.crafted_stats = item_data["crafted_stats"]
+
+                self.inventory.slots[idx] = item_stack
+
+        # Restore equipment
+        self.equipment.equipment_slots = {slot: None for slot in self.equipment.equipment_slots.keys()}
+        equipment_data = player_data.get("equipment", {})
+        equipment_db = EquipmentDatabase.get_instance()
+
+        for slot_name, item_id in equipment_data.items():
+            if item_id and equipment_db.is_equipment(item_id):
+                # Find the equipment in inventory to preserve stats
+                found_in_inventory = False
+                for inv_slot in self.inventory.slots:
+                    if inv_slot and inv_slot.item_id == item_id and inv_slot.equipment_data:
+                        # Use the equipment data from inventory
+                        self.equipment.equipment_slots[slot_name] = inv_slot.equipment_data
+                        found_in_inventory = True
+                        break
+
+                # If not found in inventory, create new equipment
+                if not found_in_inventory:
+                    equipment_item = equipment_db.create_equipment(item_id)
+                    self.equipment.equipment_slots[slot_name] = equipment_item
+
+        # Restore skills
+        self.skills.known_skills.clear()
+        known_skills_data = player_data.get("known_skills", {})
+        for skill_id, skill_info in known_skills_data.items():
+            self.skills.learn_skill(skill_id, character=self, skip_checks=True)
+            if skill_id in self.skills.known_skills:
+                self.skills.known_skills[skill_id].level = skill_info.get("level", 1)
+                self.skills.known_skills[skill_id].experience = skill_info.get("experience", 0)
+
+        # Restore equipped skills
+        self.skills.equipped_skills = [None] * 5
+        equipped_data = player_data.get("equipped_skills", [None] * 5)
+        for slot_idx, skill_id in enumerate(equipped_data):
+            if skill_id and slot_idx < 5:
+                self.skills.equip_skill(skill_id, slot_idx, character=self)
+
+        # Restore titles
+        title_db = TitleDatabase.get_instance()
+        self.titles.earned_titles.clear()
+        titles_data = player_data.get("titles", [])
+        for title_id in titles_data:
+            if title_id in title_db.titles:
+                title = title_db.titles[title_id]
+                if title not in self.titles.earned_titles:
+                    self.titles.earned_titles.append(title)
+
+        # Restore activities
+        activities_data = player_data.get("activities", {})
+        for activity_type, count in activities_data.items():
+            self.activities.activity_counts[activity_type] = count
+
+        # Final recalculation after all equipment and stats are restored
+        self.recalculate_stats()
+
+        print(f"✓ Character state restored: Level {self.leveling.level}, HP {self.health}/{self.max_health}")
+
     def recalculate_stats(self):
         """Recalculate character stats based on equipment, class, titles, etc."""
         # Start with base + stat bonuses

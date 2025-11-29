@@ -37,6 +37,7 @@ from entities.components import ItemStack
 # Systems
 from systems import WorldSystem, NPC
 from systems.turret_system import TurretSystem
+from systems.save_manager import SaveManager
 
 # Rendering
 from rendering import Renderer
@@ -130,6 +131,7 @@ class GameEngine:
 
         print("\nInitializing systems...")
         self.world = WorldSystem()
+        self.save_manager = SaveManager()
 
         # Check for command line args for temporary world
         import sys
@@ -456,7 +458,13 @@ class GameEngine:
                     if self.temporary_world:
                         self.add_notification("Cannot save in temporary world!", (255, 200, 100))
                     else:
-                        if self.character.save_to_file("autosave.json"):
+                        if self.save_manager.save_game(
+                            self.character,
+                            self.world,
+                            self.character.quests,
+                            self.npcs,
+                            "autosave.json"
+                        ):
                             self.add_notification("Game saved!", (100, 255, 100))
 
                 elif event.key == pygame.K_F6:
@@ -464,14 +472,32 @@ class GameEngine:
                     if not self.temporary_world:
                         import datetime
                         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                        if self.character.save_to_file(f"save_{timestamp}.json"):
+                        if self.save_manager.save_game(
+                            self.character,
+                            self.world,
+                            self.character.quests,
+                            self.npcs,
+                            f"save_{timestamp}.json"
+                        ):
                             self.add_notification(f"Saved!", (100, 255, 100))
 
                 elif event.key == pygame.K_F9:
                     # Load game
-                    loaded_char = Character.load_from_file("autosave.json")
-                    if loaded_char:
-                        self.character = loaded_char
+                    save_data = self.save_manager.load_game("autosave.json")
+                    if save_data:
+                        # Restore character state
+                        self.character.restore_from_save(save_data["player"])
+
+                        # Restore world state
+                        self.world.restore_from_save(save_data["world_state"])
+
+                        # Restore quest state
+                        self.character.quests.restore_from_save(save_data["quest_state"])
+
+                        # Restore NPC state
+                        SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
+
+                        # Reset camera
                         self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
                         self.add_notification("Game loaded!", (100, 255, 100))
                     else:
@@ -720,26 +746,38 @@ class GameEngine:
             self.add_notification("Welcome to your new world!", (100, 255, 100))
 
         elif option_index == 1:
-            # Load World - Show load menu (for now, load from autosave.json)
+            # Load World - Load from autosave.json using new SaveManager
             print("📂 Loading saved world...")
-            save_path = "saves/autosave.json"
-            if os.path.exists(save_path):
-                loaded_char = Character.load_from_file(save_path)
-                if loaded_char:
-                    self.start_menu_open = False
-                    self.temporary_world = False
-                    self.character = loaded_char
-                    # Update combat manager with loaded character
-                    self.combat_manager.character = self.character
-                    # Spawn enemies near loaded position
-                    self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
-                    print(f"✓ Loaded character: Level {self.character.leveling.level}")
-                    self.add_notification("World loaded successfully!", (100, 255, 100))
-                else:
-                    print("❌ Failed to load save file")
-                    self.add_notification("Failed to load save file!", (255, 100, 100))
+            save_data = self.save_manager.load_game("autosave.json")
+            if save_data:
+                self.start_menu_open = False
+                self.temporary_world = False
+
+                # Create character at starting position first
+                self.character = Character(Position(50.0, 50.0, 0.0))
+
+                # Restore character state from save
+                self.character.restore_from_save(save_data["player"])
+
+                # Restore world state (placed entities, modified resources)
+                self.world.restore_from_save(save_data["world_state"])
+
+                # Restore quest state
+                self.character.quests.restore_from_save(save_data["quest_state"])
+
+                # Restore NPC state
+                SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
+
+                # Update combat manager with loaded character
+                self.combat_manager.character = self.character
+
+                # Spawn enemies near loaded position
+                self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+
+                print(f"✓ Loaded character: Level {self.character.leveling.level}")
+                self.add_notification("World loaded successfully!", (100, 255, 100))
             else:
-                print("❌ No save file found")
+                print("❌ No save file found or failed to load")
                 self.add_notification("No save file found!", (255, 100, 100))
 
         elif option_index == 2:

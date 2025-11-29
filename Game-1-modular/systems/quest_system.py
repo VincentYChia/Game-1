@@ -257,3 +257,42 @@ class QuestManager:
     def has_completed(self, quest_id: str) -> bool:
         """Check if quest has been completed and turned in"""
         return quest_id in self.completed_quests
+
+    def restore_from_save(self, quest_state: dict):
+        """
+        Restore quest state from save data.
+
+        Args:
+            quest_state: Dictionary containing quest state data from save file
+        """
+        from data.databases import QuestDatabase
+
+        # Clear existing state
+        self.active_quests.clear()
+        self.completed_quests.clear()
+
+        # Restore completed quests
+        self.completed_quests = list(quest_state.get("completed_quests", []))
+
+        # Restore active quests
+        quest_db = QuestDatabase.get_instance()
+        for quest_id, quest_data in quest_state.get("active_quests", {}).items():
+            # Get quest definition
+            if quest_id not in quest_db.quests:
+                print(f"Warning: Quest {quest_id} not found in database, skipping")
+                continue
+
+            quest_def = quest_db.quests[quest_id]
+
+            # Create quest instance (without character, we'll set baselines manually)
+            quest = Quest(quest_def, character=None)
+
+            # Restore quest state
+            quest.status = quest_data.get("status", "in_progress")
+            quest.progress = quest_data.get("progress", {})
+            quest.baseline_combat_kills = quest_data.get("baseline_combat_kills", 0)
+            quest.baseline_inventory = quest_data.get("baseline_inventory", {})
+
+            self.active_quests[quest_id] = quest
+
+        print(f"Restored {len(self.active_quests)} active quests and {len(self.completed_quests)} completed quests")
