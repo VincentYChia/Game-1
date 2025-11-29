@@ -172,7 +172,7 @@ class SaveManager:
         """Serialize equipped items."""
         return {
             slot_name: item.item_id if item else None
-            for slot_name, item in equipment_manager.equipment_slots.items()
+            for slot_name, item in equipment_manager.slots.items()
         }
 
     def _serialize_world_state(self, world_system) -> Dict[str, Any]:

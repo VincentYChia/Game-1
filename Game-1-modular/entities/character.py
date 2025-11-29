@@ -388,7 +388,7 @@ class Character:
                 self.inventory.slots[idx] = item_stack
 
         # Restore equipment
-        self.equipment.equipment_slots = {slot: None for slot in self.equipment.equipment_slots.keys()}
+        self.equipment.slots = {slot: None for slot in self.equipment.slots.keys()}
         equipment_data = player_data.get("equipment", {})
         equipment_db = EquipmentDatabase.get_instance()
 
@@ -399,14 +399,14 @@ class Character:
                 for inv_slot in self.inventory.slots:
                     if inv_slot and inv_slot.item_id == item_id and inv_slot.equipment_data:
                         # Use the equipment data from inventory
-                        self.equipment.equipment_slots[slot_name] = inv_slot.equipment_data
+                        self.equipment.slots[slot_name] = inv_slot.equipment_data
                         found_in_inventory = True
                         break
 
                 # If not found in inventory, create new equipment
                 if not found_in_inventory:
-                    equipment_item = equipment_db.create_equipment(item_id)
-                    self.equipment.equipment_slots[slot_name] = equipment_item
+                    equipment_item = equipment_db.create_equipment_from_id(item_id)
+                    self.equipment.slots[slot_name] = equipment_item
 
         # Restore skills
         self.skills.known_skills.clear()

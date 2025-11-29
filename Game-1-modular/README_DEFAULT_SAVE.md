@@ -41,19 +41,22 @@ This will create `saves/default_save.json` with the following setup:
 - Minor Mana Potion (5)
 
 **Equipment (in inventory):**
-- Iron Sword (Tier 2, 25 ATK)
-- Iron Helmet (Tier 2, 15 DEF)
+- Iron Shortsword (Tier 1, mainHand)
+- Steel Helm (Tier 2, helmet)
 
 **Devices:**
 - Basic Turret (3)
 - Spike Trap (5)
 
 ### Equipped Items
-- **Main Hand:** Copper Sword
-- **Helmet:** Copper Helmet
-- **Chestplate:** Copper Chestplate
-- **Axe:** Copper Axe
-- **Pickaxe:** Copper Pickaxe
+- **Main Hand:** Steel Longsword (Tier 2)
+- **Helmet:** Steel Helm (Tier 2)
+- **Chestplate:** Iron Chestplate (Tier 2)
+- **Leggings:** Steel Leggings (Tier 2)
+- **Boots:** Iron Boots (Tier 1)
+- **Gauntlets:** Iron-Studded Gauntlets (Tier 1)
+- **Axe:** Iron Axe (Tier 2)
+- **Pickaxe:** Iron Pickaxe (Tier 2)
 
 ### Skills
 **Known Skills (5):**
