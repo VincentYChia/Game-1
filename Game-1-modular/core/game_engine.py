@@ -207,6 +207,20 @@ class GameEngine:
         # Turret system
         self.turret_system = TurretSystem()
 
+        # Debug mode state tracking (for reverting when toggled off)
+        self.debug_saved_state = {
+            'f1': None,  # Saved state for F1 (level/stat points)
+            'f2': None,  # Saved state for F2 (skills)
+            'f3': None,  # Saved state for F3 (titles)
+            'f4': None   # Saved state for F4 (level/stats)
+        }
+        self.debug_mode_active = {
+            'f1': False,
+            'f2': False,
+            'f3': False,
+            'f4': False
+        }
+
         # Placement UI rects
         self.placement_grid_rects = {}  # Grid slot rects for smithing
         self.placement_slot_rects = {}  # Generic slot rects
@@ -314,6 +328,10 @@ class GameEngine:
                     # Skip other key handling when minigame is active
                     continue
 
+                # Skip character-dependent input if no character exists yet
+                if self.character is None:
+                    continue
+
                 if event.key == pygame.K_ESCAPE:
                     if self.enchantment_selection_active:
                         self._close_enchantment_selection()
@@ -380,78 +398,150 @@ class GameEngine:
                     else:
                         self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_F1:
-                    Config.DEBUG_INFINITE_RESOURCES = not Config.DEBUG_INFINITE_RESOURCES
-                    status = "ENABLED" if Config.DEBUG_INFINITE_RESOURCES else "DISABLED"
-
-                    # Set max level when enabling debug mode (but DON'T fill inventory)
-                    if Config.DEBUG_INFINITE_RESOURCES:
+                    # Toggle infinite resources + level/stat points
+                    if not self.debug_mode_active['f1']:
+                        # ENABLE: Save original state and apply debug changes
+                        self.debug_saved_state['f1'] = {
+                            'level': self.character.leveling.level,
+                            'unallocated_stat_points': self.character.leveling.unallocated_stat_points
+                        }
+                        Config.DEBUG_INFINITE_RESOURCES = True
                         self.character.leveling.level = self.character.leveling.max_level
                         self.character.leveling.unallocated_stat_points = 100
-                        print(f"🔧 DEBUG MODE ENABLED:")
+                        self.debug_mode_active['f1'] = True
+
+                        print(f"🔧 DEBUG MODE F1 ENABLED:")
                         print(f"   • Infinite resources (no materials consumed)")
                         print(f"   • Level set to {self.character.leveling.level}")
                         print(f"   • 100 stat points available")
-                        print(f"   • Inventory NOT filled (craft freely!)")
+                        self.add_notification("Debug F1: ENABLED", (100, 255, 100))
                     else:
-                        print(f"🔧 DEBUG MODE DISABLED")
+                        # DISABLE: Restore original state
+                        Config.DEBUG_INFINITE_RESOURCES = False
+                        if self.debug_saved_state['f1']:
+                            self.character.leveling.level = self.debug_saved_state['f1']['level']
+                            self.character.leveling.unallocated_stat_points = self.debug_saved_state['f1']['unallocated_stat_points']
+                        self.debug_mode_active['f1'] = False
 
-                    self.add_notification(f"Debug Mode {status}", (255, 100, 255))
-                    print(f"⚠ Debug Mode {status}")
+                        print(f"🔧 DEBUG MODE F1 DISABLED (restored original state)")
+                        self.add_notification("Debug F1: DISABLED", (255, 100, 100))
 
                 elif event.key == pygame.K_F2:
-                    # Debug: Learn all skills from JSON
-                    skill_db = SkillDatabase.get_instance()
-                    if skill_db.loaded and skill_db.skills:
-                        skills_learned = 0
-                        for skill_id in skill_db.skills.keys():
-                            if self.character.skills.learn_skill(skill_id):
-                                skills_learned += 1
+                    # Toggle: Learn all skills
+                    if not self.debug_mode_active['f2']:
+                        # ENABLE: Save original state and learn all skills
+                        self.debug_saved_state['f2'] = {
+                            'known_skills': dict(self.character.skills.known_skills),
+                            'equipped_skills': list(self.character.skills.equipped_skills)
+                        }
 
-                        # Equip first 6 skills to hotbar
-                        skills_equipped = 0
-                        for i, skill_id in enumerate(list(skill_db.skills.keys())[:6]):
-                            if self.character.skills.equip_skill(skill_id, i):
-                                skills_equipped += 1
+                        skill_db = SkillDatabase.get_instance()
+                        if skill_db.loaded and skill_db.skills:
+                            skills_learned = 0
+                            for skill_id in skill_db.skills.keys():
+                                if self.character.skills.learn_skill(skill_id, character=self, skip_checks=True):
+                                    skills_learned += 1
 
-                        print(f"🔧 DEBUG: Learned {skills_learned} skills, equipped {skills_equipped} to hotbar")
-                        self.add_notification(f"Debug: Learned {skills_learned} skills!", (255, 215, 0))
+                            # Equip first 5 skills to hotbar
+                            skills_equipped = 0
+                            for i, skill_id in enumerate(list(skill_db.skills.keys())[:5]):
+                                if self.character.skills.equip_skill(skill_id, i, character=self):
+                                    skills_equipped += 1
+
+                            self.debug_mode_active['f2'] = True
+                            print(f"🔧 DEBUG F2 ENABLED: Learned {skills_learned} skills, equipped {skills_equipped}")
+                            self.add_notification(f"Debug F2: Learned {skills_learned} skills!", (100, 255, 100))
+                        else:
+                            print(f"⚠ WARNING: Skill database not loaded!")
+                            self.add_notification("Skill DB not loaded!", (255, 100, 100))
                     else:
-                        print(f"⚠ WARNING: Skill database not loaded or empty!")
-                        self.add_notification("Skill DB not loaded!", (255, 100, 100))
+                        # DISABLE: Restore original skills
+                        if self.debug_saved_state['f2']:
+                            self.character.skills.known_skills = self.debug_saved_state['f2']['known_skills']
+                            self.character.skills.equipped_skills = self.debug_saved_state['f2']['equipped_skills']
+                        self.debug_mode_active['f2'] = False
+
+                        print(f"🔧 DEBUG F2 DISABLED (restored original skills)")
+                        self.add_notification("Debug F2: DISABLED", (255, 100, 100))
 
                 elif event.key == pygame.K_F3:
-                    # Debug: Grant all titles from JSON
-                    title_db = TitleDatabase.get_instance()
-                    if title_db.loaded and title_db.titles:
-                        titles_granted = 0
-                        for title in title_db.titles.values():
-                            if title not in self.character.titles.earned_titles:
-                                self.character.titles.earned_titles.append(title)
-                                titles_granted += 1
+                    # Toggle: Grant all titles
+                    if not self.debug_mode_active['f3']:
+                        # ENABLE: Save original state and grant all titles
+                        self.debug_saved_state['f3'] = {
+                            'earned_titles': list(self.character.titles.earned_titles)
+                        }
 
-                        print(f"🔧 DEBUG: Granted {titles_granted} titles!")
-                        self.add_notification(f"Debug: Granted {titles_granted} titles!", (255, 215, 0))
+                        title_db = TitleDatabase.get_instance()
+                        if title_db.loaded and title_db.titles:
+                            titles_granted = 0
+                            for title in title_db.titles.values():
+                                if title not in self.character.titles.earned_titles:
+                                    self.character.titles.earned_titles.append(title)
+                                    titles_granted += 1
+
+                            self.debug_mode_active['f3'] = True
+                            print(f"🔧 DEBUG F3 ENABLED: Granted {titles_granted} titles!")
+                            self.add_notification(f"Debug F3: Granted {titles_granted} titles!", (100, 255, 100))
+                        else:
+                            print(f"⚠ WARNING: Title database not loaded!")
+                            self.add_notification("Title DB not loaded!", (255, 100, 100))
                     else:
-                        print(f"⚠ WARNING: Title database not loaded or empty!")
-                        self.add_notification("Title DB not loaded!", (255, 100, 100))
+                        # DISABLE: Restore original titles
+                        if self.debug_saved_state['f3']:
+                            self.character.titles.earned_titles = self.debug_saved_state['f3']['earned_titles']
+                        self.debug_mode_active['f3'] = False
+
+                        print(f"🔧 DEBUG F3 DISABLED (restored original titles)")
+                        self.add_notification("Debug F3: DISABLED", (255, 100, 100))
 
                 elif event.key == pygame.K_F4:
-                    # Debug: Max out level and stats
-                    self.character.leveling.level = 30
-                    self.character.leveling.unallocated_stat_points = 30
-                    self.character.stats.strength = 30
-                    self.character.stats.defense = 30
-                    self.character.stats.vitality = 30
-                    self.character.stats.luck = 30
-                    self.character.stats.agility = 30
-                    self.character.stats.intelligence = 30
-                    self.character.recalculate_stats()
+                    # Toggle: Max out level and stats
+                    if not self.debug_mode_active['f4']:
+                        # ENABLE: Save original state and max everything
+                        self.debug_saved_state['f4'] = {
+                            'level': self.character.leveling.level,
+                            'unallocated_stat_points': self.character.leveling.unallocated_stat_points,
+                            'strength': self.character.stats.strength,
+                            'defense': self.character.stats.defense,
+                            'vitality': self.character.stats.vitality,
+                            'luck': self.character.stats.luck,
+                            'agility': self.character.stats.agility,
+                            'intelligence': self.character.stats.intelligence
+                        }
 
-                    print(f"🔧 DEBUG: Max level & stats!")
-                    print(f"   • Level: 30")
-                    print(f"   • All stats: 30")
-                    print(f"   • Unallocated points: 30")
-                    self.add_notification("Debug: Max level & stats!", (255, 215, 0))
+                        self.character.leveling.level = 30
+                        self.character.leveling.unallocated_stat_points = 30
+                        self.character.stats.strength = 30
+                        self.character.stats.defense = 30
+                        self.character.stats.vitality = 30
+                        self.character.stats.luck = 30
+                        self.character.stats.agility = 30
+                        self.character.stats.intelligence = 30
+                        self.character.recalculate_stats()
+
+                        self.debug_mode_active['f4'] = True
+                        print(f"🔧 DEBUG F4 ENABLED: Max level & stats!")
+                        print(f"   • Level: 30")
+                        print(f"   • All stats: 30")
+                        print(f"   • Unallocated points: 30")
+                        self.add_notification("Debug F4: Max level & stats!", (100, 255, 100))
+                    else:
+                        # DISABLE: Restore original stats
+                        if self.debug_saved_state['f4']:
+                            self.character.leveling.level = self.debug_saved_state['f4']['level']
+                            self.character.leveling.unallocated_stat_points = self.debug_saved_state['f4']['unallocated_stat_points']
+                            self.character.stats.strength = self.debug_saved_state['f4']['strength']
+                            self.character.stats.defense = self.debug_saved_state['f4']['defense']
+                            self.character.stats.vitality = self.debug_saved_state['f4']['vitality']
+                            self.character.stats.luck = self.debug_saved_state['f4']['luck']
+                            self.character.stats.agility = self.debug_saved_state['f4']['agility']
+                            self.character.stats.intelligence = self.debug_saved_state['f4']['intelligence']
+                            self.character.recalculate_stats()
+
+                        self.debug_mode_active['f4'] = False
+                        print(f"🔧 DEBUG F4 DISABLED (restored original stats)")
+                        self.add_notification("Debug F4: DISABLED", (255, 100, 100))
 
                 elif event.key == pygame.K_F5:
                     # Save game (only if not temporary world)
@@ -523,6 +613,10 @@ class GameEngine:
             elif event.type == pygame.MOUSEMOTION:
                 self.mouse_pos = event.pos
             elif event.type == pygame.MOUSEWHEEL:
+                # Skip if no character exists yet
+                if self.character is None:
+                    continue
+
                 # Handle mouse wheel scrolling for recipe list
                 if self.character.crafting_ui_open and self.crafting_window_rect:
                     if self.crafting_window_rect.collidepoint(self.mouse_pos):
@@ -562,6 +656,10 @@ class GameEngine:
         # Check if clicking on UI elements first (high priority)
         if self.start_menu_open or self.active_minigame or self.enchantment_selection_active:
             return  # Don't handle right-click on UI
+
+        # Skip if no character exists yet
+        if self.character is None:
+            return
 
         if self.character.class_selection_open or self.character.skills_ui_open:
             return  # Don't handle right-click on UI
@@ -777,8 +875,9 @@ class GameEngine:
                 print(f"✓ Loaded character: Level {self.character.leveling.level}")
                 self.add_notification("World loaded successfully!", (100, 255, 100))
             else:
+                # Keep menu open and show notification
                 print("❌ No save file found or failed to load")
-                self.add_notification("No save file found!", (255, 100, 100))
+                self.add_notification("No save file found! Create a new world or use Temporary World.", (255, 100, 100))
 
         elif option_index == 2:
             # Temporary World - Create character but prevent saving
@@ -830,6 +929,10 @@ class GameEngine:
                         self.active_minigame.stabilize()
                     return
             # Consume all clicks when minigame is active (don't interact with world)
+            return
+
+        # Skip character-dependent clicks if no character exists yet
+        if self.character is None:
             return
 
         # Enchantment selection UI (priority over other UIs)
@@ -2399,6 +2502,10 @@ class GameEngine:
         self.enchantment_selection_rect = None
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
+        # Skip if no character exists yet (e.g., still in start menu)
+        if self.character is None:
+            return
+
         if self.character.inventory.dragging_stack:
             if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
                 start_x, start_y = 20, Config.INVENTORY_PANEL_Y
