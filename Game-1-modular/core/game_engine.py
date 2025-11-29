@@ -2676,6 +2676,8 @@ class GameEngine:
             result = self.renderer.render_start_menu(self.start_menu_selected_option, self.mouse_pos)
             if result:
                 self.start_menu_buttons = result
+            # Render notifications even when menu is open
+            self.renderer.render_notifications(self.notifications)
             pygame.display.flip()
             return
 

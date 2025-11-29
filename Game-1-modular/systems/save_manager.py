@@ -133,19 +133,32 @@ class SaveManager:
                 if slot.equipment_data:
                     slot_data["equipment_data"] = {
                         "item_id": slot.equipment_data.item_id,
+                        "name": slot.equipment_data.name,
+                        "tier": slot.equipment_data.tier,
                         "rarity": slot.equipment_data.rarity,
-                        "attack_power": slot.equipment_data.attack_power,
-                        "defense_power": slot.equipment_data.defense_power,
-                        "durability": slot.equipment_data.durability,
-                        "max_durability": slot.equipment_data.max_durability,
-                        "equipment_type": slot.equipment_data.equipment_type,
                         "slot": slot.equipment_data.slot,
-                        "tier": slot.equipment_data.tier
+                        "damage": list(slot.equipment_data.damage) if isinstance(slot.equipment_data.damage, tuple) else slot.equipment_data.damage,
+                        "defense": slot.equipment_data.defense,
+                        "durability_current": slot.equipment_data.durability_current,
+                        "durability_max": slot.equipment_data.durability_max,
+                        "attack_speed": slot.equipment_data.attack_speed,
+                        "weight": slot.equipment_data.weight,
+                        "range": slot.equipment_data.range,
+                        "hand_type": slot.equipment_data.hand_type,
+                        "item_type": slot.equipment_data.item_type
                     }
 
-                    # Save bonus stats if present
-                    if slot.equipment_data.bonus_stats:
-                        slot_data["equipment_data"]["bonus_stats"] = slot.equipment_data.bonus_stats
+                    # Save bonuses if present
+                    if slot.equipment_data.bonuses:
+                        slot_data["equipment_data"]["bonuses"] = slot.equipment_data.bonuses
+
+                    # Save enchantments if present
+                    if slot.equipment_data.enchantments:
+                        slot_data["equipment_data"]["enchantments"] = slot.equipment_data.enchantments
+
+                    # Save requirements if present
+                    if slot.equipment_data.requirements:
+                        slot_data["equipment_data"]["requirements"] = slot.equipment_data.requirements
 
                 # Save crafted stats if present
                 if slot.crafted_stats:

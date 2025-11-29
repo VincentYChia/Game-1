@@ -346,21 +346,40 @@ class Character:
                 # Restore equipment data if present
                 if "equipment_data" in item_data:
                     eq_data = item_data["equipment_data"]
+
+                    # Convert damage list back to tuple if needed
+                    damage = eq_data.get("damage", [0, 0])
+                    if isinstance(damage, list):
+                        damage = tuple(damage)
+
                     item_stack.equipment_data = EquipmentItem(
                         item_id=eq_data["item_id"],
+                        name=eq_data.get("name", eq_data["item_id"]),
+                        tier=eq_data.get("tier", 1),
                         rarity=eq_data.get("rarity", "common"),
-                        attack_power=eq_data.get("attack_power", 0),
-                        defense_power=eq_data.get("defense_power", 0),
-                        durability=eq_data.get("durability", 100),
-                        max_durability=eq_data.get("max_durability", 100),
-                        equipment_type=eq_data.get("equipment_type", "weapon"),
                         slot=eq_data.get("slot", "mainHand"),
-                        tier=eq_data.get("tier", 1)
+                        damage=damage,
+                        defense=eq_data.get("defense", 0),
+                        durability_current=eq_data.get("durability_current", 100),
+                        durability_max=eq_data.get("durability_max", 100),
+                        attack_speed=eq_data.get("attack_speed", 1.0),
+                        weight=eq_data.get("weight", 1.0),
+                        range=eq_data.get("range", 1.0),
+                        hand_type=eq_data.get("hand_type", "default"),
+                        item_type=eq_data.get("item_type", "weapon")
                     )
 
-                    # Restore bonus stats if present
-                    if "bonus_stats" in eq_data:
-                        item_stack.equipment_data.bonus_stats = eq_data["bonus_stats"]
+                    # Restore bonuses if present
+                    if "bonuses" in eq_data:
+                        item_stack.equipment_data.bonuses = eq_data["bonuses"]
+
+                    # Restore enchantments if present
+                    if "enchantments" in eq_data:
+                        item_stack.equipment_data.enchantments = eq_data["enchantments"]
+
+                    # Restore requirements if present
+                    if "requirements" in eq_data:
+                        item_stack.equipment_data.requirements = eq_data["requirements"]
 
                 # Restore crafted stats if present
                 if "crafted_stats" in item_data:

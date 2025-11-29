@@ -2727,10 +2727,11 @@ class Renderer:
         return window_rect, item_rects
 
     def render_start_menu(self, selected_option: int, mouse_pos: Tuple[int, int]):
-        """Render the start menu with New World / Load World / Temporary World options"""
+        """Render the start menu with New World / Load World / Load Default Save / Temporary World options"""
         s = Config.scale
-        # Menu dimensions
-        ww, wh = Config.MENU_SMALL_W, Config.MENU_SMALL_H
+        # Menu dimensions (increased height for 4 options)
+        ww = Config.MENU_SMALL_W
+        wh = s(650)  # Increased from MENU_SMALL_H to fit 4 options
         wx = max(0, (Config.SCREEN_WIDTH - ww) // 2)  # Clamp to prevent off-screen
         wy = max(0, (Config.SCREEN_HEIGHT - wh) // 2)
 
@@ -2758,11 +2759,12 @@ class Renderer:
         ]
 
         button_rects = []
-        y_offset = s(150)
-        button_height = s(80)
+        y_offset = s(120)  # Start buttons higher
+        button_height = s(75)  # Slightly smaller buttons
+        button_spacing = s(15)  # Tighter spacing
 
         for idx, (option_name, option_desc) in enumerate(options):
-            button_rect = pygame.Rect(s(50), y_offset + idx * (button_height + s(20)), ww - s(100), button_height)
+            button_rect = pygame.Rect(s(50), y_offset + idx * (button_height + button_spacing), ww - s(100), button_height)
 
             # Check hover and selection
             rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy

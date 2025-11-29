@@ -66,14 +66,19 @@ def create_default_save():
                     "rarity": "uncommon",
                     "equipment_data": {
                         "item_id": "iron_sword",
+                        "name": "Iron Sword",
+                        "tier": 2,
                         "rarity": "uncommon",
-                        "attack_power": 25,
-                        "defense_power": 0,
-                        "durability": 150,
-                        "max_durability": 150,
-                        "equipment_type": "weapon",
                         "slot": "mainHand",
-                        "tier": 2
+                        "damage": [20, 30],
+                        "defense": 0,
+                        "durability_current": 150,
+                        "durability_max": 150,
+                        "attack_speed": 1.0,
+                        "weight": 3.0,
+                        "range": 1.0,
+                        "hand_type": "1H",
+                        "item_type": "weapon"
                     }
                 },
                 {
@@ -83,14 +88,19 @@ def create_default_save():
                     "rarity": "uncommon",
                     "equipment_data": {
                         "item_id": "iron_helmet",
+                        "name": "Iron Helmet",
+                        "tier": 2,
                         "rarity": "uncommon",
-                        "attack_power": 0,
-                        "defense_power": 15,
-                        "durability": 120,
-                        "max_durability": 120,
-                        "equipment_type": "armor",
                         "slot": "helmet",
-                        "tier": 2
+                        "damage": [0, 0],
+                        "defense": 15,
+                        "durability_current": 120,
+                        "durability_max": 120,
+                        "attack_speed": 1.0,
+                        "weight": 2.0,
+                        "range": 1.0,
+                        "hand_type": "default",
+                        "item_type": "armor"
                     }
                 },
 
