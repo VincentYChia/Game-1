@@ -2753,6 +2753,7 @@ class Renderer:
         options = [
             ("New World", "Start a new adventure"),
             ("Load World", "Continue from a saved game"),
+            ("Load Default Save", "Testing save with items & progress"),
             ("Temporary World", "Practice mode (no saves)")
         ]
 

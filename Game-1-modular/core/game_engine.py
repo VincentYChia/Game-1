@@ -139,7 +139,7 @@ class GameEngine:
 
         # Start menu state
         self.start_menu_open = not self.temporary_world  # Show menu unless using --temp flag
-        self.start_menu_selected_option = 0  # 0=New World, 1=Load World, 2=Temporary World
+        self.start_menu_selected_option = 0  # 0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World
 
         # Initialize character to None (will be created after menu selection)
         self.character = None
@@ -297,9 +297,9 @@ class GameEngine:
                 # Start menu event handling (highest priority)
                 if self.start_menu_open:
                     if event.key == pygame.K_UP:
-                        self.start_menu_selected_option = (self.start_menu_selected_option - 1) % 3
+                        self.start_menu_selected_option = (self.start_menu_selected_option - 1) % 4
                     elif event.key == pygame.K_DOWN:
-                        self.start_menu_selected_option = (self.start_menu_selected_option + 1) % 3
+                        self.start_menu_selected_option = (self.start_menu_selected_option + 1) % 4
                     elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
                         self.handle_start_menu_selection(self.start_menu_selected_option)
                     elif event.key == pygame.K_ESCAPE:
@@ -572,8 +572,19 @@ class GameEngine:
                             self.add_notification(f"Saved!", (100, 255, 100))
 
                 elif event.key == pygame.K_F9:
-                    # Load game
-                    save_data = self.save_manager.load_game("autosave.json")
+                    # Load game (Shift+F9 for default save, F9 for autosave)
+                    shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
+
+                    if shift_held:
+                        # Load default save
+                        save_filename = "default_save.json"
+                        load_message = "Default save loaded!"
+                    else:
+                        # Load autosave
+                        save_filename = "autosave.json"
+                        load_message = "Game loaded!"
+
+                    save_data = self.save_manager.load_game(save_filename)
                     if save_data:
                         # Restore character state
                         self.character.restore_from_save(save_data["player"])
@@ -589,9 +600,12 @@ class GameEngine:
 
                         # Reset camera
                         self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
-                        self.add_notification("Game loaded!", (100, 255, 100))
+                        self.add_notification(load_message, (100, 255, 100))
                     else:
-                        self.add_notification("No save file found!", (255, 100, 100))
+                        if shift_held:
+                            self.add_notification("Default save not found! Run create_default_save.py", (255, 100, 100))
+                        else:
+                            self.add_notification("No save file found!", (255, 100, 100))
 
                 elif event.key == pygame.K_F10:
                     # Run automated test suite
@@ -830,7 +844,7 @@ class GameEngine:
             self.add_notification("No one nearby to talk to", (200, 200, 200))
 
     def handle_start_menu_selection(self, option_index: int):
-        """Handle start menu option selection (0=New World, 1=Load World, 2=Temporary World)"""
+        """Handle start menu option selection (0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World)"""
         if option_index == 0:
             # New World - Create new character
             print("🌍 Starting new world...")
@@ -880,6 +894,43 @@ class GameEngine:
                 self.add_notification("No save file found! Create a new world or use Temporary World.", (255, 100, 100))
 
         elif option_index == 2:
+            # Load Default Save - Load from default_save.json
+            print("📂 Loading default save...")
+            save_data = self.save_manager.load_game("default_save.json")
+            if save_data:
+                self.start_menu_open = False
+                self.temporary_world = False
+
+                # Create character at starting position first
+                self.character = Character(Position(50.0, 50.0, 0.0))
+
+                # Restore character state from save
+                self.character.restore_from_save(save_data["player"])
+
+                # Restore world state (placed entities, modified resources)
+                self.world.restore_from_save(save_data["world_state"])
+
+                # Restore quest state
+                self.character.quests.restore_from_save(save_data["quest_state"])
+
+                # Restore NPC state
+                SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
+
+                # Update combat manager with loaded character
+                self.combat_manager.character = self.character
+
+                # Spawn enemies near loaded position
+                self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+
+                print(f"✓ Loaded default save: Level {self.character.leveling.level}")
+                self.add_notification("Default save loaded successfully!", (100, 255, 100))
+            else:
+                # Keep menu open and show notification
+                print("❌ Default save file not found!")
+                print("   Run 'python create_default_save.py' to create it.")
+                self.add_notification("Default save not found! Run create_default_save.py first.", (255, 100, 100))
+
+        elif option_index == 3:
             # Temporary World - Create character but prevent saving
             print("🌍 Starting temporary world (no saves)...")
             self.start_menu_open = False
