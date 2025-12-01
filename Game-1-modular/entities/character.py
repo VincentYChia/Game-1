@@ -81,6 +81,7 @@ class Character:
         self.tools: List[Tool] = []
         self.selected_tool: Optional[Tool] = None
         self._selected_weapon: Optional[EquipmentItem] = None  # For Tab cycling through weapons
+        self._selected_slot: str = 'mainHand'  # Default to mainHand until player presses TAB
 
         self.active_station: Optional[CraftingStation] = None
         self.crafting_ui_open = False
@@ -441,6 +442,10 @@ class Character:
 
         # Final recalculation after all equipment and stats are restored
         self.recalculate_stats()
+
+        # Initialize _selected_slot if not already set (for saves from before this feature)
+        if not hasattr(self, '_selected_slot'):
+            self._selected_slot = 'mainHand'
 
         print(f"✓ Character state restored: Level {self.leveling.level}, HP {self.health}/{self.max_health}")
 
