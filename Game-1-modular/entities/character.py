@@ -500,11 +500,35 @@ class Character:
         return self.position.distance_to(target_position) <= self.interaction_range
 
     def get_equipped_tool(self, tool_type: str) -> Optional[EquipmentItem]:
-        """Get the equipped tool of the specified type ('axe' or 'pickaxe') from equipment slots"""
+        """
+        Get the currently selected tool/weapon for use.
+
+        If player has selected a specific slot via TAB, use that.
+        Otherwise, default to the correct tool type (backward compatibility).
+
+        Args:
+            tool_type: The optimal tool type for this action ('axe' or 'pickaxe')
+
+        Returns:
+            The equipped item from the selected slot, or None if nothing equipped
+        """
+        # If player has explicitly selected a slot via TAB, use that
+        if hasattr(self, '_selected_slot') and self._selected_slot:
+            selected_item = self.equipment.slots.get(self._selected_slot)
+            if selected_item:
+                return selected_item
+
+        # Otherwise, default to the correct tool type (backward compatibility)
         if tool_type in ['axe', 'pickaxe']:
             equipped_tool = self.equipment.slots.get(tool_type)
             if equipped_tool:
                 return equipped_tool
+
+        # Fallback to mainHand weapon if no tool equipped
+        main_weapon = self.equipment.slots.get('mainHand')
+        if main_weapon:
+            return main_weapon
+
         return None
 
     def get_tool_effectiveness_for_action(self, equipment_item: EquipmentItem, action_type: str) -> float:
@@ -643,20 +667,12 @@ class Character:
         return (loot, actual_damage, is_crit)
 
     def switch_tool(self):
-        """Cycle through equipped tools and weapons"""
+        """Cycle through equipped tools and weapons (mainHand/offHand → axe → pickaxe)"""
         # Build list of available items from equipment slots
+        # Order: mainHand/offHand first (weapons), then tools (axe, pickaxe)
         available_items = []
 
-        # Add equipped tools (axe and pickaxe from equipment slots)
-        axe_tool = self.equipment.slots.get('axe')
-        if axe_tool:
-            available_items.append(('axe', axe_tool))
-
-        pickaxe_tool = self.equipment.slots.get('pickaxe')
-        if pickaxe_tool:
-            available_items.append(('pickaxe', pickaxe_tool))
-
-        # Add equipped weapons
+        # Add equipped weapons first
         main_weapon = self.equipment.slots.get('mainHand')
         if main_weapon:
             available_items.append(('mainHand', main_weapon))
@@ -664,6 +680,15 @@ class Character:
         off_weapon = self.equipment.slots.get('offHand')
         if off_weapon:
             available_items.append(('offHand', off_weapon))
+
+        # Add equipped tools after weapons
+        axe_tool = self.equipment.slots.get('axe')
+        if axe_tool:
+            available_items.append(('axe', axe_tool))
+
+        pickaxe_tool = self.equipment.slots.get('pickaxe')
+        if pickaxe_tool:
+            available_items.append(('pickaxe', pickaxe_tool))
 
         if not available_items:
             return None
@@ -683,12 +708,10 @@ class Character:
         # Store the selected slot
         self._selected_slot = slot_name
 
-        # Update selected tool/weapon for backward compatibility
+        # Return descriptive name
         if slot_name in ['axe', 'pickaxe']:
-            self._selected_weapon = None
             return f"{next_item.name} (Tool)"
         else:  # weapon
-            self._selected_weapon = next_item
             return f"{next_item.name} (Weapon)"
 
     def interact_with_station(self, station: CraftingStation):
@@ -991,7 +1014,22 @@ class Character:
         # Keep all items and equipment (no death penalty)
 
     def get_weapon_damage(self) -> float:
-        """Get average weapon damage from equipped weapon"""
+        """
+        Get average weapon damage from currently selected weapon/tool.
+
+        If player has selected a slot via TAB, use that slot's damage.
+        Otherwise, use mainHand (backward compatibility).
+        """
+        # If player has selected a specific slot, get damage from that
+        if hasattr(self, '_selected_slot') and self._selected_slot:
+            selected_item = self.equipment.slots.get(self._selected_slot)
+            if selected_item and selected_item.damage:
+                if isinstance(selected_item.damage, tuple):
+                    return (selected_item.damage[0] + selected_item.damage[1]) / 2.0
+                else:
+                    return float(selected_item.damage)
+
+        # Otherwise, default to mainHand (backward compatibility)
         damage_range = self.equipment.get_weapon_damage()
         # Return average damage
         return (damage_range[0] + damage_range[1]) / 2.0

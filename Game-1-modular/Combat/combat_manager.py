@@ -384,13 +384,22 @@ class CombatManager:
         hand_label = "MAINHAND" if hand == 'mainHand' else "OFFHAND"
         print(f"\n⚔️ PLAYER {hand_label} ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
 
-        # Get weapon damage from specified hand
+        # Get weapon damage from currently selected slot (via TAB)
         weapon_damage = self.character.get_weapon_damage()  # Get average damage
         print(f"   Weapon damage: {weapon_damage}")
 
         # Check if using a tool (axe/pickaxe) for combat - apply effectiveness penalty
+        # Use the currently selected slot instead of the hand parameter
         tool_type_effectiveness = 1.0  # Default to full effectiveness
-        equipped_weapon = self.character.equipment.slots.get(hand)
+        equipped_weapon = None
+
+        # Get the currently selected weapon/tool
+        if hasattr(self.character, '_selected_slot') and self.character._selected_slot:
+            equipped_weapon = self.character.equipment.slots.get(self.character._selected_slot)
+        else:
+            # Backward compatibility: use specified hand
+            equipped_weapon = self.character.equipment.slots.get(hand)
+
         if equipped_weapon:
             tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
             if tool_type_effectiveness < 1.0:
