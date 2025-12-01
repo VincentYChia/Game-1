@@ -290,6 +290,16 @@ class GameEngine:
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                # Autosave on quit (unless temporary world)
+                if self.character and not self.temporary_world:
+                    if self.save_manager.save_game(
+                        self.character,
+                        self.world,
+                        self.character.quests,
+                        self.npcs,
+                        "autosave.json"
+                    ):
+                        print("💾 Autosaved on quit")
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
@@ -303,6 +313,16 @@ class GameEngine:
                     elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
                         self.handle_start_menu_selection(self.start_menu_selected_option)
                     elif event.key == pygame.K_ESCAPE:
+                        # Autosave on quit from start menu (if character exists and not temporary world)
+                        if self.character and not self.temporary_world:
+                            if self.save_manager.save_game(
+                                self.character,
+                                self.world,
+                                self.character.quests,
+                                self.npcs,
+                                "autosave.json"
+                            ):
+                                print("💾 Autosaved on start menu quit")
                         self.running = False
                     continue  # Skip other event handling
 
@@ -349,6 +369,16 @@ class GameEngine:
                     elif self.character.class_selection_open:
                         pass
                     else:
+                        # Autosave on quit (unless temporary world)
+                        if not self.temporary_world:
+                            if self.save_manager.save_game(
+                                self.character,
+                                self.world,
+                                self.character.quests,
+                                self.npcs,
+                                "autosave.json"
+                            ):
+                                print("💾 Autosaved on ESC quit")
                         self.running = False
                 elif event.key == pygame.K_TAB:
                     tool_name = self.character.switch_tool()
@@ -445,7 +475,7 @@ class GameEngine:
                             # Equip first 5 skills to hotbar
                             skills_equipped = 0
                             for i, skill_id in enumerate(list(skill_db.skills.keys())[:5]):
-                                if self.character.skills.equip_skill(skill_id, i, character=self):
+                                if self.character.skills.equip_skill(skill_id, i):
                                     skills_equipped += 1
 
                             self.debug_mode_active['f2'] = True
