@@ -81,6 +81,7 @@ class Character:
         self.tools: List[Tool] = []
         self.selected_tool: Optional[Tool] = None
         self._selected_weapon: Optional[EquipmentItem] = None  # For Tab cycling through weapons
+        self._selected_slot: str = 'mainHand'  # Default to mainHand until player presses TAB
 
         self.active_station: Optional[CraftingStation] = None
         self.crafting_ui_open = False
@@ -265,7 +266,7 @@ class Character:
             equipment_data = save_data.get("equipment", {})
             for slot_name, item_id in equipment_data.items():
                 if item_id and equipment_db.is_equipment(item_id):
-                    equipment_item = equipment_db.create_equipment(item_id)
+                    equipment_item = equipment_db.create_equipment_from_id(item_id)
                     character.equipment.slots[slot_name] = equipment_item
 
             character.recalculate_stats()
@@ -280,6 +281,173 @@ class Character:
             import traceback
             traceback.print_exc()
             return None
+
+    def restore_from_save(self, player_data: dict):
+        """
+        Restore character state from save data (new SaveManager format).
+
+        Args:
+            player_data: Dictionary containing player data from save file
+        """
+        from data.databases import ClassDatabase, EquipmentDatabase, TitleDatabase
+
+        # Restore position
+        pos_data = player_data.get("position", {"x": 0, "y": 0, "z": 0})
+        self.position.x = pos_data["x"]
+        self.position.y = pos_data["y"]
+        self.position.z = pos_data["z"]
+        self.facing = player_data.get("facing", "down")
+
+        # Restore stats
+        stats_data = player_data.get("stats", {})
+        self.stats.strength = stats_data.get("strength", 0)
+        self.stats.defense = stats_data.get("defense", 0)
+        self.stats.vitality = stats_data.get("vitality", 0)
+        self.stats.luck = stats_data.get("luck", 0)
+        self.stats.agility = stats_data.get("agility", 0)
+        self.stats.intelligence = stats_data.get("intelligence", 0)
+
+        # Restore leveling
+        leveling_data = player_data.get("leveling", {})
+        self.leveling.level = leveling_data.get("level", 1)
+        self.leveling.current_exp = leveling_data.get("current_exp", 0)
+        self.leveling.unallocated_stat_points = leveling_data.get("unallocated_stat_points", 0)
+
+        # Restore class
+        class_id = player_data.get("class")
+        if class_id:
+            class_db = ClassDatabase.get_instance()
+            if class_id in class_db.classes:
+                self.class_system.set_class(class_db.classes[class_id])
+                self.class_selection_open = False
+
+        # Recalculate stats to get correct max health/mana
+        self.recalculate_stats()
+
+        # Restore health and mana AFTER recalculation
+        self.health = player_data.get("health", self.max_health)
+        self.mana = player_data.get("mana", self.max_mana)
+
+        # Restore inventory
+        self.inventory.slots = [None] * self.inventory.max_slots
+        inv_data = player_data.get("inventory", [])
+        for idx, item_data in enumerate(inv_data):
+            if item_data and idx < self.inventory.max_slots:
+                from entities.components.inventory import ItemStack
+                from data.models.equipment import EquipmentItem
+
+                # Restore basic item stack
+                item_stack = ItemStack(
+                    item_id=item_data["item_id"],
+                    quantity=item_data["quantity"],
+                    max_stack=item_data.get("max_stack", 99),
+                    rarity=item_data.get("rarity", "common")
+                )
+
+                # Restore equipment data if present
+                if "equipment_data" in item_data:
+                    eq_data = item_data["equipment_data"]
+
+                    # Convert damage list back to tuple if needed
+                    damage = eq_data.get("damage", [0, 0])
+                    if isinstance(damage, list):
+                        damage = tuple(damage)
+
+                    item_stack.equipment_data = EquipmentItem(
+                        item_id=eq_data["item_id"],
+                        name=eq_data.get("name", eq_data["item_id"]),
+                        tier=eq_data.get("tier", 1),
+                        rarity=eq_data.get("rarity", "common"),
+                        slot=eq_data.get("slot", "mainHand"),
+                        damage=damage,
+                        defense=eq_data.get("defense", 0),
+                        durability_current=eq_data.get("durability_current", 100),
+                        durability_max=eq_data.get("durability_max", 100),
+                        attack_speed=eq_data.get("attack_speed", 1.0),
+                        weight=eq_data.get("weight", 1.0),
+                        range=eq_data.get("range", 1.0),
+                        hand_type=eq_data.get("hand_type", "default"),
+                        item_type=eq_data.get("item_type", "weapon")
+                    )
+
+                    # Restore bonuses if present
+                    if "bonuses" in eq_data:
+                        item_stack.equipment_data.bonuses = eq_data["bonuses"]
+
+                    # Restore enchantments if present
+                    if "enchantments" in eq_data:
+                        item_stack.equipment_data.enchantments = eq_data["enchantments"]
+
+                    # Restore requirements if present
+                    if "requirements" in eq_data:
+                        item_stack.equipment_data.requirements = eq_data["requirements"]
+
+                # Restore crafted stats if present
+                if "crafted_stats" in item_data:
+                    item_stack.crafted_stats = item_data["crafted_stats"]
+
+                self.inventory.slots[idx] = item_stack
+
+        # Restore equipment
+        self.equipment.slots = {slot: None for slot in self.equipment.slots.keys()}
+        equipment_data = player_data.get("equipment", {})
+        equipment_db = EquipmentDatabase.get_instance()
+
+        for slot_name, item_id in equipment_data.items():
+            if item_id and equipment_db.is_equipment(item_id):
+                # Find the equipment in inventory to preserve stats
+                found_in_inventory = False
+                for inv_slot in self.inventory.slots:
+                    if inv_slot and inv_slot.item_id == item_id and inv_slot.equipment_data:
+                        # Use the equipment data from inventory
+                        self.equipment.slots[slot_name] = inv_slot.equipment_data
+                        found_in_inventory = True
+                        break
+
+                # If not found in inventory, create new equipment
+                if not found_in_inventory:
+                    equipment_item = equipment_db.create_equipment_from_id(item_id)
+                    self.equipment.slots[slot_name] = equipment_item
+
+        # Restore skills
+        self.skills.known_skills.clear()
+        known_skills_data = player_data.get("known_skills", {})
+        for skill_id, skill_info in known_skills_data.items():
+            self.skills.learn_skill(skill_id, character=self, skip_checks=True)
+            if skill_id in self.skills.known_skills:
+                self.skills.known_skills[skill_id].level = skill_info.get("level", 1)
+                self.skills.known_skills[skill_id].experience = skill_info.get("experience", 0)
+
+        # Restore equipped skills
+        self.skills.equipped_skills = [None] * 5
+        equipped_data = player_data.get("equipped_skills", [None] * 5)
+        for slot_idx, skill_id in enumerate(equipped_data):
+            if skill_id and slot_idx < 5:
+                self.skills.equip_skill(skill_id, slot_idx)
+
+        # Restore titles
+        title_db = TitleDatabase.get_instance()
+        self.titles.earned_titles.clear()
+        titles_data = player_data.get("titles", [])
+        for title_id in titles_data:
+            if title_id in title_db.titles:
+                title = title_db.titles[title_id]
+                if title not in self.titles.earned_titles:
+                    self.titles.earned_titles.append(title)
+
+        # Restore activities
+        activities_data = player_data.get("activities", {})
+        for activity_type, count in activities_data.items():
+            self.activities.activity_counts[activity_type] = count
+
+        # Final recalculation after all equipment and stats are restored
+        self.recalculate_stats()
+
+        # Initialize _selected_slot if not already set (for saves from before this feature)
+        if not hasattr(self, '_selected_slot'):
+            self._selected_slot = 'mainHand'
+
+        print(f"✓ Character state restored: Level {self.leveling.level}, HP {self.health}/{self.max_health}")
 
     def recalculate_stats(self):
         """Recalculate character stats based on equipment, class, titles, etc."""
@@ -337,11 +505,35 @@ class Character:
         return self.position.distance_to(target_position) <= self.interaction_range
 
     def get_equipped_tool(self, tool_type: str) -> Optional[EquipmentItem]:
-        """Get the equipped tool of the specified type ('axe' or 'pickaxe') from equipment slots"""
+        """
+        Get the currently selected tool/weapon for use.
+
+        If player has selected a specific slot via TAB, use that.
+        Otherwise, default to the correct tool type (backward compatibility).
+
+        Args:
+            tool_type: The optimal tool type for this action ('axe' or 'pickaxe')
+
+        Returns:
+            The equipped item from the selected slot, or None if nothing equipped
+        """
+        # If player has explicitly selected a slot via TAB, use that
+        if hasattr(self, '_selected_slot') and self._selected_slot:
+            selected_item = self.equipment.slots.get(self._selected_slot)
+            if selected_item:
+                return selected_item
+
+        # Otherwise, default to the correct tool type (backward compatibility)
         if tool_type in ['axe', 'pickaxe']:
             equipped_tool = self.equipment.slots.get(tool_type)
             if equipped_tool:
                 return equipped_tool
+
+        # Fallback to mainHand weapon if no tool equipped
+        main_weapon = self.equipment.slots.get('mainHand')
+        if main_weapon:
+            return main_weapon
+
         return None
 
     def get_tool_effectiveness_for_action(self, equipment_item: EquipmentItem, action_type: str) -> float:
@@ -480,20 +672,12 @@ class Character:
         return (loot, actual_damage, is_crit)
 
     def switch_tool(self):
-        """Cycle through equipped tools and weapons"""
+        """Cycle through equipped tools and weapons (mainHand/offHand → axe → pickaxe)"""
         # Build list of available items from equipment slots
+        # Order: mainHand/offHand first (weapons), then tools (axe, pickaxe)
         available_items = []
 
-        # Add equipped tools (axe and pickaxe from equipment slots)
-        axe_tool = self.equipment.slots.get('axe')
-        if axe_tool:
-            available_items.append(('axe', axe_tool))
-
-        pickaxe_tool = self.equipment.slots.get('pickaxe')
-        if pickaxe_tool:
-            available_items.append(('pickaxe', pickaxe_tool))
-
-        # Add equipped weapons
+        # Add equipped weapons first
         main_weapon = self.equipment.slots.get('mainHand')
         if main_weapon:
             available_items.append(('mainHand', main_weapon))
@@ -501,6 +685,15 @@ class Character:
         off_weapon = self.equipment.slots.get('offHand')
         if off_weapon:
             available_items.append(('offHand', off_weapon))
+
+        # Add equipped tools after weapons
+        axe_tool = self.equipment.slots.get('axe')
+        if axe_tool:
+            available_items.append(('axe', axe_tool))
+
+        pickaxe_tool = self.equipment.slots.get('pickaxe')
+        if pickaxe_tool:
+            available_items.append(('pickaxe', pickaxe_tool))
 
         if not available_items:
             return None
@@ -520,12 +713,10 @@ class Character:
         # Store the selected slot
         self._selected_slot = slot_name
 
-        # Update selected tool/weapon for backward compatibility
+        # Return descriptive name
         if slot_name in ['axe', 'pickaxe']:
-            self._selected_weapon = None
             return f"{next_item.name} (Tool)"
         else:  # weapon
-            self._selected_weapon = next_item
             return f"{next_item.name} (Weapon)"
 
     def interact_with_station(self, station: CraftingStation):
@@ -828,7 +1019,22 @@ class Character:
         # Keep all items and equipment (no death penalty)
 
     def get_weapon_damage(self) -> float:
-        """Get average weapon damage from equipped weapon"""
+        """
+        Get average weapon damage from currently selected weapon/tool.
+
+        If player has selected a slot via TAB, use that slot's damage.
+        Otherwise, use mainHand (backward compatibility).
+        """
+        # If player has selected a specific slot, get damage from that
+        if hasattr(self, '_selected_slot') and self._selected_slot:
+            selected_item = self.equipment.slots.get(self._selected_slot)
+            if selected_item and selected_item.damage:
+                if isinstance(selected_item.damage, tuple):
+                    return (selected_item.damage[0] + selected_item.damage[1]) / 2.0
+                else:
+                    return float(selected_item.damage)
+
+        # Otherwise, default to mainHand (backward compatibility)
         damage_range = self.equipment.get_weapon_damage()
         # Return average damage
         return (damage_range[0] + damage_range[1]) / 2.0

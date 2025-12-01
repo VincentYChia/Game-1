@@ -142,3 +142,93 @@ class WorldSystem:
     def update(self, dt: float):
         for r in self.resources:
             r.update(dt)
+
+    def restore_from_save(self, world_state: dict):
+        """
+        Restore world state from save data.
+
+        This includes:
+        - Placed entities (turrets, traps, devices, player-placed stations)
+        - Modified resources (harvested nodes with HP changes)
+        - Player-placed crafting stations (if any)
+
+        Args:
+            world_state: Dictionary containing world state data from save file
+        """
+        # Clear existing placed entities
+        self.placed_entities.clear()
+
+        # Restore placed entities
+        for entity_data in world_state.get("placed_entities", []):
+            position = Position(
+                entity_data["position"]["x"],
+                entity_data["position"]["y"],
+                entity_data["position"]["z"]
+            )
+
+            # Convert string entity type back to enum
+            from data.models.world import PlacedEntityType
+            entity_type = PlacedEntityType[entity_data["entity_type"]]
+
+            # Create the placed entity
+            entity = PlacedEntity(
+                position=position,
+                item_id=entity_data["item_id"],
+                entity_type=entity_type,
+                tier=entity_data.get("tier", 1),
+                health=entity_data.get("health", 100.0),
+                owner=entity_data.get("owner"),
+                time_remaining=entity_data.get("time_remaining", 300.0)
+            )
+
+            # Restore turret-specific properties
+            if "range" in entity_data:
+                entity.range = entity_data["range"]
+                entity.damage = entity_data["damage"]
+                entity.attack_speed = entity_data["attack_speed"]
+
+            self.placed_entities.append(entity)
+
+        # Restore modified resources
+        # Create a mapping of position -> saved resource data for quick lookup
+        modified_resources_map = {}
+        for resource_data in world_state.get("modified_resources", []):
+            pos_key = f"{resource_data['position']['x']},{resource_data['position']['y']},{resource_data['position']['z']}"
+            modified_resources_map[pos_key] = resource_data
+
+        # Apply modifications to existing resources
+        for resource in self.resources:
+            pos_key = f"{resource.position.x},{resource.position.y},{resource.position.z}"
+            if pos_key in modified_resources_map:
+                resource_data = modified_resources_map[pos_key]
+
+                # Restore resource state
+                resource.current_hp = resource_data.get("current_hp", resource.max_hp)
+                resource.depleted = resource_data.get("depleted", False)
+                resource.time_until_respawn = resource_data.get("time_until_respawn", 0.0)
+
+        # Restore player-placed crafting stations (if different from default spawns)
+        # For now, we'll keep the default stations and only add extras
+        saved_stations = world_state.get("crafting_stations", [])
+        if saved_stations:
+            # Clear and restore all stations from save
+            self.crafting_stations.clear()
+            for station_data in saved_stations:
+                position = Position(
+                    station_data["position"]["x"],
+                    station_data["position"]["y"],
+                    station_data["position"]["z"]
+                )
+
+                # Convert string station type back to enum
+                station_type = StationType[station_data["station_type"]]
+
+                station = CraftingStation(
+                    position=position,
+                    station_type=station_type,
+                    tier=station_data.get("tier", 1)
+                )
+
+                self.crafting_stations.append(station)
+
+        print(f"Restored {len(self.placed_entities)} placed entities and {len(modified_resources_map)} modified resources")
