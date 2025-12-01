@@ -70,6 +70,7 @@ class EnemyDefinition:
     # Metadata
     narrative: str = ""
     tags: List[str] = field(default_factory=list)
+    icon_path: Optional[str] = None  # Optional path to enemy icon image (PNG/JPG)
 
 
 # ============================================================================
@@ -139,9 +140,15 @@ class EnemyDatabase:
                 # Parse metadata
                 metadata = enemy_data.get('metadata', {})
 
+                # Auto-generate icon path if not provided
+                enemy_id = enemy_data.get('enemyId', '')
+                icon_path = enemy_data.get('iconPath')
+                if not icon_path and enemy_id:
+                    icon_path = f"enemies/{enemy_id}.png"
+
                 # Create definition
                 enemy_def = EnemyDefinition(
-                    enemy_id=enemy_data.get('enemyId', ''),
+                    enemy_id=enemy_id,
                     name=enemy_data.get('name', 'Unknown Enemy'),
                     tier=enemy_data.get('tier', 1),
                     category=enemy_data.get('category', 'beast'),
@@ -156,7 +163,8 @@ class EnemyDatabase:
                     drops=drops,
                     ai_pattern=ai_pattern,
                     narrative=metadata.get('narrative', ''),
-                    tags=metadata.get('tags', [])
+                    tags=metadata.get('tags', []),
+                    icon_path=icon_path
                 )
 
                 self.enemies[enemy_def.enemy_id] = enemy_def

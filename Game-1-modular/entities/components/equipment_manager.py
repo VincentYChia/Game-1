@@ -23,7 +23,7 @@ class EquipmentManager:
     def equip(self, item: EquipmentItem, character) -> Tuple[Optional[EquipmentItem], str]:
         """Equip an item, returns (previously_equipped_item, status_message)"""
         print(f"      🔧 EquipmentManager.equip() called")
-        print(f"         - item: {item.name} (slot: {item.slot})")
+        print(f"         - item: {item.name} (slot: {item.slot}, hand_type: {item.hand_type})")
 
         can_equip, reason = item.can_equip(character)
         print(f"         - can_equip: {can_equip}, reason: {reason}")
@@ -36,6 +36,29 @@ class EquipmentManager:
         if slot not in self.slots:
             print(f"         ❌ Invalid slot '{slot}' not in {list(self.slots.keys())}")
             return None, f"Invalid slot: {slot}"
+
+        # HAND TYPE VALIDATION
+        if slot == 'mainHand':
+            # Note: 2H weapon offhand unequip is handled by try_equip_from_inventory
+            # This validation is just a safety check
+            if item.hand_type == "2H":
+                if self.slots['offHand'] is not None:
+                    print(f"         ⚠️ Warning: 2H weapon equipped with offhand still occupied")
+                    print(f"            This should have been auto-unequipped by caller")
+        elif slot == 'offHand':
+            # Check if mainhand allows offhand
+            mainhand = self.slots['mainHand']
+            if mainhand is not None:
+                if mainhand.hand_type == "2H":
+                    return None, "Cannot equip offhand - mainhand is 2H weapon"
+                elif mainhand.hand_type == "default":
+                    # Default weapons can't have offhand unless this is a shield
+                    if item.item_type != "shield":
+                        return None, "Mainhand weapon doesn't support offhand"
+
+            # Offhand can only equip 1H items or shields
+            if item.hand_type not in ["1H", "versatile"] and item.item_type != "shield":
+                return None, "Item cannot be equipped in offhand"
 
         old_item = self.slots[slot]
         self.slots[slot] = item
@@ -85,18 +108,30 @@ class EquipmentManager:
                 total += item.get_defense_with_enchantments()
         return total
 
-    def get_weapon_damage(self) -> Tuple[int, int]:
-        weapon = self.slots.get('mainHand')
+    def get_weapon_damage(self, hand: str = 'mainHand') -> Tuple[int, int]:
+        """Get damage from specified hand (mainHand or offHand)"""
+        weapon = self.slots.get(hand)
         if weapon:
             return weapon.get_actual_damage()
-        return (1, 2)
+        if hand == 'mainHand':
+            return (1, 2)  # Unarmed damage for mainhand
+        return (0, 0)  # No offhand
 
-    def get_weapon_range(self) -> float:
-        """Get range of equipped weapon, default to 1.0 for unarmed"""
-        weapon = self.slots.get('mainHand')
+    def get_weapon_range(self, hand: str = 'mainHand') -> float:
+        """Get range of equipped weapon in specified hand, default to 1.0 for unarmed"""
+        weapon = self.slots.get(hand)
         if weapon:
             return weapon.range
-        return 1.0  # Unarmed/default range
+        if hand == 'mainHand':
+            return 1.0  # Unarmed/default range
+        return 0.0  # No offhand range
+
+    def get_weapon_attack_speed(self, hand: str = 'mainHand') -> float:
+        """Get attack speed multiplier of weapon in specified hand"""
+        weapon = self.slots.get(hand)
+        if weapon:
+            return weapon.attack_speed
+        return 1.0  # Default attack speed
 
     def get_stat_bonuses(self) -> Dict[str, float]:
         bonuses = {}

@@ -24,15 +24,38 @@ class MaterialDatabase:
             with open(filepath, 'r') as f:
                 data = json.load(f)
             for mat_data in data.get('materials', []):
+                material_id = mat_data.get('materialId', '')
+                category = mat_data.get('category', 'unknown')
+
+                # Auto-generate icon path if not provided
+                icon_path = mat_data.get('iconPath')
+                if not icon_path and material_id:
+                    # Determine subdirectory based on category
+                    if category in ['consumable']:
+                        subdir = 'consumables'
+                    elif category in ['device']:
+                        subdir = 'devices'
+                    elif category in ['station']:
+                        subdir = 'stations'
+                    else:
+                        subdir = 'materials'
+                    icon_path = f"{subdir}/{material_id}.png"
+
+                flags = mat_data.get('flags', {})
                 mat = MaterialDefinition(
-                    material_id=mat_data.get('materialId', ''),
+                    material_id=material_id,
                     name=mat_data.get('name', ''),
                     tier=mat_data.get('tier', 1),
-                    category=mat_data.get('category', 'unknown'),
+                    category=category,
                     rarity=mat_data.get('rarity', 'common'),
                     description=mat_data.get('description', ''),
                     max_stack=mat_data.get('maxStack', 99),
-                    properties=mat_data.get('properties', {})
+                    properties=mat_data.get('properties', {}),
+                    icon_path=icon_path,
+                    placeable=flags.get('placeable', False),
+                    item_type=mat_data.get('type', ''),
+                    item_subtype=mat_data.get('subtype', ''),
+                    effect=mat_data.get('effect', '')
                 )
                 self.materials[mat.material_id] = mat
             self.loaded = True
@@ -73,15 +96,24 @@ class MaterialDatabase:
             for section in ['basic_ingots', 'alloys', 'wood_planks']:
                 if section in data:
                     for item_data in data[section]:
+                        material_id = item_data.get('itemId', '')  # Note: refining JSON uses itemId!
+                        category = item_data.get('type', 'unknown')
+
+                        # Auto-generate icon path if not provided
+                        icon_path = item_data.get('iconPath')
+                        if not icon_path and material_id:
+                            icon_path = f"materials/{material_id}.png"
+
                         mat = MaterialDefinition(
-                            material_id=item_data.get('itemId', ''),  # Note: refining JSON uses itemId!
+                            material_id=material_id,
                             name=item_data.get('name', ''),
                             tier=item_data.get('tier', 1),
-                            category=item_data.get('type', 'unknown'),
+                            category=category,
                             rarity=item_data.get('rarity', 'common'),
                             description=item_data.get('metadata', {}).get('narrative', ''),
                             max_stack=item_data.get('stackSize', 256),
-                            properties={}
+                            properties={},
+                            icon_path=icon_path
                         )
                         if mat.material_id and mat.material_id not in self.materials:
                             self.materials[mat.material_id] = mat
@@ -94,12 +126,12 @@ class MaterialDatabase:
             return False
 
     def load_stackable_items(self, filepath: str, categories: list = None):
-        """Load stackable items (consumables, devices, etc.) from item files
+        """Load stackable and placeable items (consumables, devices, stations, etc.) from item files
 
         Args:
             filepath: Path to the JSON file
-            categories: List of categories to load (e.g., ['consumable', 'device'])
-                       If None, loads all items with stackable=True flag
+            categories: List of categories to load (e.g., ['consumable', 'device', 'station'])
+                       If None, loads all items with stackable=True or placeable=True flag
         """
         try:
             with open(filepath, 'r') as f:
@@ -115,22 +147,45 @@ class MaterialDatabase:
                         category = item_data.get('category', '')
                         flags = item_data.get('flags', {})
                         is_stackable = flags.get('stackable', False)
+                        is_placeable = flags.get('placeable', False)
 
-                        # Load if category matches (or no filter) AND item is stackable
-                        should_load = is_stackable and (
+                        # Load if category matches (or no filter) AND (item is stackable OR placeable)
+                        should_load = (is_stackable or is_placeable) and (
                             categories is None or category in categories
                         )
 
                         if should_load:
+                            material_id = item_data.get('itemId', '')
+                            category = item_data.get('category', '')
+
+                            # Auto-generate icon path if not provided
+                            icon_path = item_data.get('iconPath')
+                            if not icon_path and material_id:
+                                # Determine subdirectory based on category
+                                if category in ['consumable']:
+                                    subdir = 'consumables'
+                                elif category in ['device']:
+                                    subdir = 'devices'
+                                elif category in ['station']:
+                                    subdir = 'stations'
+                                else:
+                                    subdir = 'materials'
+                                icon_path = f"{subdir}/{material_id}.png"
+
                             mat = MaterialDefinition(
-                                material_id=item_data.get('itemId', ''),
+                                material_id=material_id,
                                 name=item_data.get('name', ''),
                                 tier=item_data.get('tier', 1),
                                 category=category,
                                 rarity=item_data.get('rarity', 'common'),
                                 description=item_data.get('metadata', {}).get('narrative', ''),
                                 max_stack=item_data.get('stackSize', 99),
-                                properties={}
+                                properties={},
+                                icon_path=icon_path,
+                                placeable=flags.get('placeable', False),
+                                item_type=item_data.get('type', ''),
+                                item_subtype=item_data.get('subtype', ''),
+                                effect=item_data.get('effect', '')
                             )
                             if mat.material_id and mat.material_id not in self.materials:
                                 self.materials[mat.material_id] = mat

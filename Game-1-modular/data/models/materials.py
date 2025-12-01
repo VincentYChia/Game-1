@@ -1,7 +1,7 @@
 """Material definition data model"""
 
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, Optional
 
 
 @dataclass
@@ -15,3 +15,8 @@ class MaterialDefinition:
     description: str = ""
     max_stack: int = 99
     properties: Dict = field(default_factory=dict)
+    icon_path: Optional[str] = None  # Optional path to item icon image (PNG/JPG)
+    placeable: bool = False  # Can this item be placed in the world?
+    item_type: str = ""  # turret, trap, bomb, utility, station, etc.
+    item_subtype: str = ""  # projectile, area, elemental, etc.
+    effect: str = ""  # Description of what the item does when used/placed

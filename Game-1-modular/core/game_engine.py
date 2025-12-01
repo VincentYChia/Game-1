@@ -31,11 +31,13 @@ from data import (
     NPCDatabase,
 )
 
-from data.models import Position, Recipe
+from data.models import Position, Recipe, PlacedEntityType, StationType
 from entities.components import ItemStack
 
 # Systems
 from systems import WorldSystem, NPC
+from systems.turret_system import TurretSystem
+from systems.save_manager import SaveManager
 
 # Rendering
 from rendering import Renderer
@@ -66,6 +68,9 @@ except ImportError as e:
 # ============================================================================
 class GameEngine:
     def __init__(self):
+        # Initialize screen settings first (auto-detects resolution or uses custom)
+        Config.init_screen_settings()
+
         pygame.init()
         self.screen = pygame.display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
         pygame.display.set_caption("2D RPG Game - Equipment System v2.2")
@@ -82,9 +87,15 @@ class GameEngine:
         # Load stackable consumables (potions, oils, etc.)
         MaterialDatabase.get_instance().load_stackable_items(
             "items.JSON/items-alchemy-1.JSON", categories=['consumable'])
-        # Load stackable devices (turrets, etc.)
+        # Load stackable devices (turrets, traps, bombs, utility devices)
         MaterialDatabase.get_instance().load_stackable_items(
-            "items.JSON/items-smithing-1.JSON", categories=['device'])
+            "items.JSON/items-engineering-1.JSON", categories=['device'])
+        # Load placeable crafting stations from items-smithing-2.JSON
+        MaterialDatabase.get_instance().load_stackable_items(
+            "items.JSON/items-smithing-2.JSON", categories=['station'])
+        # Load placeable crafting stations from legacy file (backup)
+        MaterialDatabase.get_instance().load_stackable_items(
+            "Definitions.JSON/crafting-stations-1.JSON", categories=['station'])
         TranslationDatabase.get_instance().load_from_files()
         SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
@@ -92,7 +103,7 @@ class GameEngine:
 
         # Load equipment from all item files
         equip_db = EquipmentDatabase.get_instance()
-        equip_db.load_from_file("items.JSON/items-smithing-1.JSON")
+        equip_db.load_from_file("items.JSON/items-engineering-1.JSON")
         equip_db.load_from_file("items.JSON/items-smithing-2.JSON")
         equip_db.load_from_file("items.JSON/items-tools-1.JSON")
         equip_db.load_from_file("items.JSON/items-alchemy-1.JSON")
@@ -120,6 +131,7 @@ class GameEngine:
 
         print("\nInitializing systems...")
         self.world = WorldSystem()
+        self.save_manager = SaveManager()
 
         # Check for command line args for temporary world
         import sys
@@ -127,7 +139,7 @@ class GameEngine:
 
         # Start menu state
         self.start_menu_open = not self.temporary_world  # Show menu unless using --temp flag
-        self.start_menu_selected_option = 0  # 0=New World, 1=Load World, 2=Temporary World
+        self.start_menu_selected_option = 0  # 0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World
 
         # Initialize character to None (will be created after menu selection)
         self.character = None
@@ -192,6 +204,23 @@ class GameEngine:
         self.placed_materials_sequential = []  # Alchemy: ordered list
         self.placed_materials_slots = {}  # Engineering: slot_type -> (materialId, quantity)
 
+        # Turret system
+        self.turret_system = TurretSystem()
+
+        # Debug mode state tracking (for reverting when toggled off)
+        self.debug_saved_state = {
+            'f1': None,  # Saved state for F1 (level/stat points)
+            'f2': None,  # Saved state for F2 (skills)
+            'f3': None,  # Saved state for F3 (titles)
+            'f4': None   # Saved state for F4 (level/stats)
+        }
+        self.debug_mode_active = {
+            'f1': False,
+            'f2': False,
+            'f3': False,
+            'f4': False
+        }
+
         # Placement UI rects
         self.placement_grid_rects = {}  # Grid slot rects for smithing
         self.placement_slot_rects = {}  # Generic slot rects
@@ -236,6 +265,7 @@ class GameEngine:
         self.minigame_button_rect2 = None  # For secondary buttons (e.g., alchemy stabilize)
 
         self.keys_pressed = set()
+        self.mouse_buttons_pressed = set()  # Track which mouse buttons are held down
         self.mouse_pos = (0, 0)
         self.last_tick = pygame.time.get_ticks()
         self.last_click_time = 0
@@ -260,6 +290,16 @@ class GameEngine:
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                # Autosave on quit (unless temporary world)
+                if self.character and not self.temporary_world:
+                    if self.save_manager.save_game(
+                        self.character,
+                        self.world,
+                        self.character.quests,
+                        self.npcs,
+                        "autosave.json"
+                    ):
+                        print("💾 Autosaved on quit")
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
@@ -267,12 +307,22 @@ class GameEngine:
                 # Start menu event handling (highest priority)
                 if self.start_menu_open:
                     if event.key == pygame.K_UP:
-                        self.start_menu_selected_option = (self.start_menu_selected_option - 1) % 3
+                        self.start_menu_selected_option = (self.start_menu_selected_option - 1) % 4
                     elif event.key == pygame.K_DOWN:
-                        self.start_menu_selected_option = (self.start_menu_selected_option + 1) % 3
+                        self.start_menu_selected_option = (self.start_menu_selected_option + 1) % 4
                     elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
                         self.handle_start_menu_selection(self.start_menu_selected_option)
                     elif event.key == pygame.K_ESCAPE:
+                        # Autosave on quit from start menu (if character exists and not temporary world)
+                        if self.character and not self.temporary_world:
+                            if self.save_manager.save_game(
+                                self.character,
+                                self.world,
+                                self.character.quests,
+                                self.npcs,
+                                "autosave.json"
+                            ):
+                                print("💾 Autosaved on start menu quit")
                         self.running = False
                     continue  # Skip other event handling
 
@@ -298,6 +348,10 @@ class GameEngine:
                     # Skip other key handling when minigame is active
                     continue
 
+                # Skip character-dependent input if no character exists yet
+                if self.character is None:
+                    continue
+
                 if event.key == pygame.K_ESCAPE:
                     if self.enchantment_selection_active:
                         self._close_enchantment_selection()
@@ -315,6 +369,16 @@ class GameEngine:
                     elif self.character.class_selection_open:
                         pass
                     else:
+                        # Autosave on quit (unless temporary world)
+                        if not self.temporary_world:
+                            if self.save_manager.save_game(
+                                self.character,
+                                self.world,
+                                self.character.quests,
+                                self.npcs,
+                                "autosave.json"
+                            ):
+                                print("💾 Autosaved on ESC quit")
                         self.running = False
                 elif event.key == pygame.K_TAB:
                     tool_name = self.character.switch_tool()
@@ -364,85 +428,163 @@ class GameEngine:
                     else:
                         self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_F1:
-                    Config.DEBUG_INFINITE_RESOURCES = not Config.DEBUG_INFINITE_RESOURCES
-                    status = "ENABLED" if Config.DEBUG_INFINITE_RESOURCES else "DISABLED"
-
-                    # Set max level when enabling debug mode (but DON'T fill inventory)
-                    if Config.DEBUG_INFINITE_RESOURCES:
+                    # Toggle infinite resources + level/stat points
+                    if not self.debug_mode_active['f1']:
+                        # ENABLE: Save original state and apply debug changes
+                        self.debug_saved_state['f1'] = {
+                            'level': self.character.leveling.level,
+                            'unallocated_stat_points': self.character.leveling.unallocated_stat_points
+                        }
+                        Config.DEBUG_INFINITE_RESOURCES = True
                         self.character.leveling.level = self.character.leveling.max_level
                         self.character.leveling.unallocated_stat_points = 100
-                        print(f"🔧 DEBUG MODE ENABLED:")
+                        self.debug_mode_active['f1'] = True
+
+                        print(f"🔧 DEBUG MODE F1 ENABLED:")
                         print(f"   • Infinite resources (no materials consumed)")
                         print(f"   • Level set to {self.character.leveling.level}")
                         print(f"   • 100 stat points available")
-                        print(f"   • Inventory NOT filled (craft freely!)")
+                        self.add_notification("Debug F1: ENABLED", (100, 255, 100))
                     else:
-                        print(f"🔧 DEBUG MODE DISABLED")
+                        # DISABLE: Restore original state
+                        Config.DEBUG_INFINITE_RESOURCES = False
+                        if self.debug_saved_state['f1']:
+                            self.character.leveling.level = self.debug_saved_state['f1']['level']
+                            self.character.leveling.unallocated_stat_points = self.debug_saved_state['f1']['unallocated_stat_points']
+                        self.debug_mode_active['f1'] = False
 
-                    self.add_notification(f"Debug Mode {status}", (255, 100, 255))
-                    print(f"⚠ Debug Mode {status}")
+                        print(f"🔧 DEBUG MODE F1 DISABLED (restored original state)")
+                        self.add_notification("Debug F1: DISABLED", (255, 100, 100))
 
                 elif event.key == pygame.K_F2:
-                    # Debug: Learn all skills from JSON
-                    skill_db = SkillDatabase.get_instance()
-                    if skill_db.loaded and skill_db.skills:
-                        skills_learned = 0
-                        for skill_id in skill_db.skills.keys():
-                            if self.character.skills.learn_skill(skill_id):
-                                skills_learned += 1
+                    # Toggle: Learn all skills
+                    if not self.debug_mode_active['f2']:
+                        # ENABLE: Save original state and learn all skills
+                        self.debug_saved_state['f2'] = {
+                            'known_skills': dict(self.character.skills.known_skills),
+                            'equipped_skills': list(self.character.skills.equipped_skills)
+                        }
 
-                        # Equip first 6 skills to hotbar
-                        skills_equipped = 0
-                        for i, skill_id in enumerate(list(skill_db.skills.keys())[:6]):
-                            if self.character.skills.equip_skill(skill_id, i):
-                                skills_equipped += 1
+                        skill_db = SkillDatabase.get_instance()
+                        if skill_db.loaded and skill_db.skills:
+                            skills_learned = 0
+                            for skill_id in skill_db.skills.keys():
+                                if self.character.skills.learn_skill(skill_id, character=self, skip_checks=True):
+                                    skills_learned += 1
 
-                        print(f"🔧 DEBUG: Learned {skills_learned} skills, equipped {skills_equipped} to hotbar")
-                        self.add_notification(f"Debug: Learned {skills_learned} skills!", (255, 215, 0))
+                            # Equip first 5 skills to hotbar
+                            skills_equipped = 0
+                            for i, skill_id in enumerate(list(skill_db.skills.keys())[:5]):
+                                if self.character.skills.equip_skill(skill_id, i):
+                                    skills_equipped += 1
+
+                            self.debug_mode_active['f2'] = True
+                            print(f"🔧 DEBUG F2 ENABLED: Learned {skills_learned} skills, equipped {skills_equipped}")
+                            self.add_notification(f"Debug F2: Learned {skills_learned} skills!", (100, 255, 100))
+                        else:
+                            print(f"⚠ WARNING: Skill database not loaded!")
+                            self.add_notification("Skill DB not loaded!", (255, 100, 100))
                     else:
-                        print(f"⚠ WARNING: Skill database not loaded or empty!")
-                        self.add_notification("Skill DB not loaded!", (255, 100, 100))
+                        # DISABLE: Restore original skills
+                        if self.debug_saved_state['f2']:
+                            self.character.skills.known_skills = self.debug_saved_state['f2']['known_skills']
+                            self.character.skills.equipped_skills = self.debug_saved_state['f2']['equipped_skills']
+                        self.debug_mode_active['f2'] = False
+
+                        print(f"🔧 DEBUG F2 DISABLED (restored original skills)")
+                        self.add_notification("Debug F2: DISABLED", (255, 100, 100))
 
                 elif event.key == pygame.K_F3:
-                    # Debug: Grant all titles from JSON
-                    title_db = TitleDatabase.get_instance()
-                    if title_db.loaded and title_db.titles:
-                        titles_granted = 0
-                        for title in title_db.titles.values():
-                            if title not in self.character.titles.earned_titles:
-                                self.character.titles.earned_titles.append(title)
-                                titles_granted += 1
+                    # Toggle: Grant all titles
+                    if not self.debug_mode_active['f3']:
+                        # ENABLE: Save original state and grant all titles
+                        self.debug_saved_state['f3'] = {
+                            'earned_titles': list(self.character.titles.earned_titles)
+                        }
 
-                        print(f"🔧 DEBUG: Granted {titles_granted} titles!")
-                        self.add_notification(f"Debug: Granted {titles_granted} titles!", (255, 215, 0))
+                        title_db = TitleDatabase.get_instance()
+                        if title_db.loaded and title_db.titles:
+                            titles_granted = 0
+                            for title in title_db.titles.values():
+                                if title not in self.character.titles.earned_titles:
+                                    self.character.titles.earned_titles.append(title)
+                                    titles_granted += 1
+
+                            self.debug_mode_active['f3'] = True
+                            print(f"🔧 DEBUG F3 ENABLED: Granted {titles_granted} titles!")
+                            self.add_notification(f"Debug F3: Granted {titles_granted} titles!", (100, 255, 100))
+                        else:
+                            print(f"⚠ WARNING: Title database not loaded!")
+                            self.add_notification("Title DB not loaded!", (255, 100, 100))
                     else:
-                        print(f"⚠ WARNING: Title database not loaded or empty!")
-                        self.add_notification("Title DB not loaded!", (255, 100, 100))
+                        # DISABLE: Restore original titles
+                        if self.debug_saved_state['f3']:
+                            self.character.titles.earned_titles = self.debug_saved_state['f3']['earned_titles']
+                        self.debug_mode_active['f3'] = False
+
+                        print(f"🔧 DEBUG F3 DISABLED (restored original titles)")
+                        self.add_notification("Debug F3: DISABLED", (255, 100, 100))
 
                 elif event.key == pygame.K_F4:
-                    # Debug: Max out level and stats
-                    self.character.leveling.level = 30
-                    self.character.leveling.unallocated_stat_points = 30
-                    self.character.stats.strength = 30
-                    self.character.stats.defense = 30
-                    self.character.stats.vitality = 30
-                    self.character.stats.luck = 30
-                    self.character.stats.agility = 30
-                    self.character.stats.intelligence = 30
-                    self.character.recalculate_stats()
+                    # Toggle: Max out level and stats
+                    if not self.debug_mode_active['f4']:
+                        # ENABLE: Save original state and max everything
+                        self.debug_saved_state['f4'] = {
+                            'level': self.character.leveling.level,
+                            'unallocated_stat_points': self.character.leveling.unallocated_stat_points,
+                            'strength': self.character.stats.strength,
+                            'defense': self.character.stats.defense,
+                            'vitality': self.character.stats.vitality,
+                            'luck': self.character.stats.luck,
+                            'agility': self.character.stats.agility,
+                            'intelligence': self.character.stats.intelligence
+                        }
 
-                    print(f"🔧 DEBUG: Max level & stats!")
-                    print(f"   • Level: 30")
-                    print(f"   • All stats: 30")
-                    print(f"   • Unallocated points: 30")
-                    self.add_notification("Debug: Max level & stats!", (255, 215, 0))
+                        self.character.leveling.level = 30
+                        self.character.leveling.unallocated_stat_points = 30
+                        self.character.stats.strength = 30
+                        self.character.stats.defense = 30
+                        self.character.stats.vitality = 30
+                        self.character.stats.luck = 30
+                        self.character.stats.agility = 30
+                        self.character.stats.intelligence = 30
+                        self.character.recalculate_stats()
+
+                        self.debug_mode_active['f4'] = True
+                        print(f"🔧 DEBUG F4 ENABLED: Max level & stats!")
+                        print(f"   • Level: 30")
+                        print(f"   • All stats: 30")
+                        print(f"   • Unallocated points: 30")
+                        self.add_notification("Debug F4: Max level & stats!", (100, 255, 100))
+                    else:
+                        # DISABLE: Restore original stats
+                        if self.debug_saved_state['f4']:
+                            self.character.leveling.level = self.debug_saved_state['f4']['level']
+                            self.character.leveling.unallocated_stat_points = self.debug_saved_state['f4']['unallocated_stat_points']
+                            self.character.stats.strength = self.debug_saved_state['f4']['strength']
+                            self.character.stats.defense = self.debug_saved_state['f4']['defense']
+                            self.character.stats.vitality = self.debug_saved_state['f4']['vitality']
+                            self.character.stats.luck = self.debug_saved_state['f4']['luck']
+                            self.character.stats.agility = self.debug_saved_state['f4']['agility']
+                            self.character.stats.intelligence = self.debug_saved_state['f4']['intelligence']
+                            self.character.recalculate_stats()
+
+                        self.debug_mode_active['f4'] = False
+                        print(f"🔧 DEBUG F4 DISABLED (restored original stats)")
+                        self.add_notification("Debug F4: DISABLED", (255, 100, 100))
 
                 elif event.key == pygame.K_F5:
                     # Save game (only if not temporary world)
                     if self.temporary_world:
                         self.add_notification("Cannot save in temporary world!", (255, 200, 100))
                     else:
-                        if self.character.save_to_file("autosave.json"):
+                        if self.save_manager.save_game(
+                            self.character,
+                            self.world,
+                            self.character.quests,
+                            self.npcs,
+                            "autosave.json"
+                        ):
                             self.add_notification("Game saved!", (100, 255, 100))
 
                 elif event.key == pygame.K_F6:
@@ -450,18 +592,50 @@ class GameEngine:
                     if not self.temporary_world:
                         import datetime
                         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                        if self.character.save_to_file(f"save_{timestamp}.json"):
+                        if self.save_manager.save_game(
+                            self.character,
+                            self.world,
+                            self.character.quests,
+                            self.npcs,
+                            f"save_{timestamp}.json"
+                        ):
                             self.add_notification(f"Saved!", (100, 255, 100))
 
                 elif event.key == pygame.K_F9:
-                    # Load game
-                    loaded_char = Character.load_from_file("autosave.json")
-                    if loaded_char:
-                        self.character = loaded_char
-                        self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
-                        self.add_notification("Game loaded!", (100, 255, 100))
+                    # Load game (Shift+F9 for default save, F9 for autosave)
+                    shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
+
+                    if shift_held:
+                        # Load default save
+                        save_filename = "default_save.json"
+                        load_message = "Default save loaded!"
                     else:
-                        self.add_notification("No save file found!", (255, 100, 100))
+                        # Load autosave
+                        save_filename = "autosave.json"
+                        load_message = "Game loaded!"
+
+                    save_data = self.save_manager.load_game(save_filename)
+                    if save_data:
+                        # Restore character state
+                        self.character.restore_from_save(save_data["player"])
+
+                        # Restore world state
+                        self.world.restore_from_save(save_data["world_state"])
+
+                        # Restore quest state
+                        self.character.quests.restore_from_save(save_data["quest_state"])
+
+                        # Restore NPC state
+                        SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
+
+                        # Reset camera
+                        self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
+                        self.add_notification(load_message, (100, 255, 100))
+                    else:
+                        if shift_held:
+                            self.add_notification("Default save not found! Run create_default_save.py", (255, 100, 100))
+                        else:
+                            self.add_notification("No save file found!", (255, 100, 100))
 
                 elif event.key == pygame.K_F10:
                     # Run automated test suite
@@ -469,11 +643,24 @@ class GameEngine:
                     self.test_system.run_all_tests()
                     self.add_notification("Test suite completed - check console", (100, 200, 255))
 
+                elif event.key == pygame.K_F11:
+                    # Toggle fullscreen
+                    flags = Config.toggle_fullscreen()
+                    self.screen = pygame.display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT), flags)
+                    self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
+                    mode = "Fullscreen" if Config.FULLSCREEN else "Windowed"
+                    self.add_notification(f"Switched to {mode} mode", (100, 200, 255))
+                    print(f"🖥️  Switched to {mode}: {Config.SCREEN_WIDTH}x{Config.SCREEN_HEIGHT}")
+
             elif event.type == pygame.KEYUP:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
                 self.mouse_pos = event.pos
             elif event.type == pygame.MOUSEWHEEL:
+                # Skip if no character exists yet
+                if self.character is None:
+                    continue
+
                 # Handle mouse wheel scrolling for recipe list
                 if self.character.crafting_ui_open and self.crafting_window_rect:
                     if self.crafting_window_rect.collidepoint(self.mouse_pos):
@@ -495,18 +682,41 @@ class GameEngine:
                     self.character.skills_menu_scroll_offset -= event.y  # event.y is positive for scroll up
                     # Clamp is handled in render_skills_menu_ui
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                self.mouse_buttons_pressed.add(1)
                 self.handle_mouse_click(event.pos)
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                self.mouse_buttons_pressed.discard(1)
                 self.handle_mouse_release(event.pos)
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                # Right-click handler (for consumables)
+                # Right-click handler (for consumables and offhand attacks)
+                self.mouse_buttons_pressed.add(3)
                 self.handle_right_click(event.pos)
+            elif event.type == pygame.MOUSEBUTTONUP and event.button == 3:
+                # Right mouse button released
+                self.mouse_buttons_pressed.discard(3)
 
     def handle_right_click(self, mouse_pos: Tuple[int, int]):
-        """Handle right-click events (mainly for using consumables)"""
-        # Only handle inventory right-clicks for now
+        """Handle right-click events (consumables and offhand attacks)"""
+        # Check if clicking on UI elements first (high priority)
+        if self.start_menu_open or self.active_minigame or self.enchantment_selection_active:
+            return  # Don't handle right-click on UI
+
+        # Skip if no character exists yet
+        if self.character is None:
+            return
+
+        if self.character.class_selection_open or self.character.skills_ui_open:
+            return  # Don't handle right-click on UI
+
+        if self.character.stats_ui_open or self.character.encyclopedia.is_open:
+            return  # Don't handle right-click on UI
+
+        if self.npc_dialogue_open or self.character.equipment_ui_open:
+            return  # Don't handle right-click on UI
+
+        # Handle inventory right-clicks for consumables
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            start_x, start_y = 20, Config.INVENTORY_GRID_Y
+            start_x, start_y = 20, Config.INVENTORY_PANEL_Y
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -520,16 +730,62 @@ class GameEngine:
                     if 0 <= idx < self.character.inventory.max_slots:
                         item_stack = self.character.inventory.slots[idx]
                         if item_stack:
-                            # Check if item is consumable
                             mat_db = MaterialDatabase.get_instance()
                             item_def = mat_db.get_material(item_stack.item_id)
-                            if item_def and item_def.category == "consumable":
-                                # Use the consumable
-                                success, message = self.character.use_consumable(item_stack.item_id)
-                                if success:
-                                    self.add_notification(message, (100, 255, 100))
-                                else:
-                                    self.add_notification(message, (255, 100, 100))
+                            if item_def:
+                                # Check if item is consumable
+                                if item_def.category == "consumable":
+                                    # Use the consumable
+                                    success, message = self.character.use_consumable(item_stack.item_id)
+                                    if success:
+                                        self.add_notification(message, (100, 255, 100))
+                                    else:
+                                        self.add_notification(message, (255, 100, 100))
+            return  # Don't process world clicks if clicking on inventory
+
+        # Handle world right-clicks for offhand attacks
+        if mouse_pos[0] >= Config.VIEWPORT_WIDTH:
+            return  # Don't attack outside viewport
+
+        # Get offhand weapon
+        offhand_weapon = self.character.equipment.slots.get('offHand')
+        if not offhand_weapon:
+            return  # No offhand equipped
+
+        # Convert to world coordinates
+        wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
+        wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
+
+        # Check for enemy at position
+        enemy = self.combat_manager.get_enemy_at_position((wx, wy))
+        if enemy and enemy.is_alive:
+            # Check if offhand can attack
+            if not self.character.can_attack('offHand'):
+                return  # Still on cooldown
+
+            # Check if in range (using offhand weapon's range)
+            weapon_range = self.character.equipment.get_weapon_range('offHand')
+            dist = enemy.distance_to((self.character.position.x, self.character.position.y))
+            if dist > weapon_range:
+                self.add_notification(f"Enemy too far (offhand range: {weapon_range})", (255, 100, 100))
+                return
+
+            # Attack with offhand
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='offHand')
+            self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
+            self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
+
+            if not enemy.is_alive:
+                self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
+                self.character.activities.record_activity('combat', 1)
+
+                # Show loot notifications (auto-looted)
+                if loot:
+                    mat_db = MaterialDatabase.get_instance()
+                    for material_id, qty in loot:
+                        mat = mat_db.get_material(material_id)
+                        item_name = mat.name if mat else material_id
+                        self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
 
     def handle_npc_dialogue_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on NPC dialogue buttons (accept/turn in quests)"""
@@ -618,7 +874,7 @@ class GameEngine:
             self.add_notification("No one nearby to talk to", (200, 200, 200))
 
     def handle_start_menu_selection(self, option_index: int):
-        """Handle start menu option selection (0=New World, 1=Load World, 2=Temporary World)"""
+        """Handle start menu option selection (0=New World, 1=Load World, 2=Load Default Save, 3=Temporary World)"""
         if option_index == 0:
             # New World - Create new character
             print("🌍 Starting new world...")
@@ -632,29 +888,79 @@ class GameEngine:
             self.add_notification("Welcome to your new world!", (100, 255, 100))
 
         elif option_index == 1:
-            # Load World - Show load menu (for now, load from autosave.json)
+            # Load World - Load from autosave.json using new SaveManager
             print("📂 Loading saved world...")
-            save_path = "saves/autosave.json"
-            if os.path.exists(save_path):
-                loaded_char = Character.load_from_file(save_path)
-                if loaded_char:
-                    self.start_menu_open = False
-                    self.temporary_world = False
-                    self.character = loaded_char
-                    # Update combat manager with loaded character
-                    self.combat_manager.character = self.character
-                    # Spawn enemies near loaded position
-                    self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
-                    print(f"✓ Loaded character: Level {self.character.leveling.level}")
-                    self.add_notification("World loaded successfully!", (100, 255, 100))
-                else:
-                    print("❌ Failed to load save file")
-                    self.add_notification("Failed to load save file!", (255, 100, 100))
+            save_data = self.save_manager.load_game("autosave.json")
+            if save_data:
+                self.start_menu_open = False
+                self.temporary_world = False
+
+                # Create character at starting position first
+                self.character = Character(Position(50.0, 50.0, 0.0))
+
+                # Restore character state from save
+                self.character.restore_from_save(save_data["player"])
+
+                # Restore world state (placed entities, modified resources)
+                self.world.restore_from_save(save_data["world_state"])
+
+                # Restore quest state
+                self.character.quests.restore_from_save(save_data["quest_state"])
+
+                # Restore NPC state
+                SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
+
+                # Update combat manager with loaded character
+                self.combat_manager.character = self.character
+
+                # Spawn enemies near loaded position
+                self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+
+                print(f"✓ Loaded character: Level {self.character.leveling.level}")
+                self.add_notification("World loaded successfully!", (100, 255, 100))
             else:
-                print("❌ No save file found")
-                self.add_notification("No save file found!", (255, 100, 100))
+                # Keep menu open and show notification
+                print("❌ No save file found or failed to load")
+                self.add_notification("No save file found! Create a new world or use Temporary World.", (255, 100, 100))
 
         elif option_index == 2:
+            # Load Default Save - Load from default_save.json
+            print("📂 Loading default save...")
+            save_data = self.save_manager.load_game("default_save.json")
+            if save_data:
+                self.start_menu_open = False
+                self.temporary_world = False
+
+                # Create character at starting position first
+                self.character = Character(Position(50.0, 50.0, 0.0))
+
+                # Restore character state from save
+                self.character.restore_from_save(save_data["player"])
+
+                # Restore world state (placed entities, modified resources)
+                self.world.restore_from_save(save_data["world_state"])
+
+                # Restore quest state
+                self.character.quests.restore_from_save(save_data["quest_state"])
+
+                # Restore NPC state
+                SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
+
+                # Update combat manager with loaded character
+                self.combat_manager.character = self.character
+
+                # Spawn enemies near loaded position
+                self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+
+                print(f"✓ Loaded default save: Level {self.character.leveling.level}")
+                self.add_notification("Default save loaded successfully!", (100, 255, 100))
+            else:
+                # Keep menu open and show notification
+                print("❌ Default save file not found!")
+                print("   Run 'python create_default_save.py' to create it.")
+                self.add_notification("Default save not found! Run create_default_save.py first.", (255, 100, 100))
+
+        elif option_index == 3:
             # Temporary World - Create character but prevent saving
             print("🌍 Starting temporary world (no saves)...")
             self.start_menu_open = False
@@ -704,6 +1010,10 @@ class GameEngine:
                         self.active_minigame.stabilize()
                     return
             # Consume all clicks when minigame is active (don't interact with world)
+            return
+
+        # Skip character-dependent clicks if no character exists yet
+        if self.character is None:
             return
 
         # Enchantment selection UI (priority over other UIs)
@@ -780,7 +1090,13 @@ class GameEngine:
 
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-            start_x, start_y = 20, Config.INVENTORY_GRID_Y
+            # CRITICAL: These values MUST match the renderer exactly!
+            # Renderer: tools_y = INVENTORY_PANEL_Y + 35 + 20 = +55
+            # Renderer: start_y = tools_y + 50 (tool slot) + 20 = INVENTORY_PANEL_Y + 125
+            tools_y = Config.INVENTORY_PANEL_Y + 55
+            tool_slot_size = 50
+            start_x = 20
+            start_y = tools_y + tool_slot_size + 20  # = INVENTORY_PANEL_Y + 125
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -825,9 +1141,66 @@ class GameEngine:
                                         # Put item back if equipping failed
                                         self.character.inventory.slots[idx] = item_stack
                                 else:
-                                    print(f"   ⚠️  Not equipment, skipping")
-                                    # Put non-equipment item back in slot
-                                    self.character.inventory.slots[idx] = item_stack
+                                    # Check if it's a placeable item (turret, trap, station)
+                                    mat_def = MaterialDatabase.get_instance().get_material(item_stack.item_id)
+                                    if mat_def and mat_def.placeable:
+                                        # Place item at player's position (snapped to grid)
+                                        player_pos = self.character.position.snap_to_grid()
+
+                                        # Check if square is already occupied
+                                        existing_entity = self.world.get_entity_at(player_pos)
+                                        if existing_entity:
+                                            self.add_notification("Square already occupied!", (255, 100, 100))
+                                            self.character.inventory.slots[idx] = item_stack
+                                            return
+
+                                        # Determine entity type based on category or item_type
+                                        if mat_def.category == 'station':
+                                            entity_type = PlacedEntityType.CRAFTING_STATION
+                                        else:
+                                            entity_type_map = {
+                                                'turret': PlacedEntityType.TURRET,
+                                                'trap': PlacedEntityType.TRAP,
+                                                'bomb': PlacedEntityType.BOMB,
+                                                'utility': PlacedEntityType.UTILITY_DEVICE,
+                                            }
+                                            entity_type = entity_type_map.get(mat_def.item_type, PlacedEntityType.TURRET)
+
+                                        # Parse stats from effect string (only for combat entities)
+                                        range_val = 5.0
+                                        damage_val = 20.0
+                                        if entity_type != PlacedEntityType.CRAFTING_STATION and mat_def.effect:
+                                            import re
+                                            range_match = re.search(r'(\d+)\s*unit range', mat_def.effect)
+                                            damage_match = re.search(r'(\d+)\s*damage', mat_def.effect)
+                                            if range_match:
+                                                range_val = float(range_match.group(1))
+                                            if damage_match:
+                                                damage_val = float(damage_match.group(1))
+
+                                        # Place the entity
+                                        self.world.place_entity(
+                                            player_pos,
+                                            item_stack.item_id,
+                                            entity_type,
+                                            tier=mat_def.tier,
+                                            range=range_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0,
+                                            damage=damage_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0
+                                        )
+
+                                        # Remove one item from inventory
+                                        if item_stack.quantity > 1:
+                                            item_stack.quantity -= 1
+                                            self.character.inventory.slots[idx] = item_stack
+                                        else:
+                                            self.character.inventory.slots[idx] = None
+
+                                        self.add_notification(f"Placed {mat_def.name}", (100, 255, 100))
+                                        print(f"✓ Placed {mat_def.name} at player position")
+                                    else:
+                                        print(f"   ⚠️  Not equipment or placeable, skipping")
+                                        # Put non-equipment item back in slot
+                                        self.character.inventory.slots[idx] = item_stack
                             else:
                                 print(f"   ⚠️  item_stack is None")
                             # Reset last_clicked_slot to prevent repeated double-clicks
@@ -852,12 +1225,12 @@ class GameEngine:
         # Check for enemy click (living enemies)
         enemy = self.combat_manager.get_enemy_at_position((wx, wy))
         if enemy and enemy.is_alive:
-            # Check if player can attack
-            if not self.character.can_attack():
+            # Check if player can attack with mainhand
+            if not self.character.can_attack('mainHand'):
                 return  # Still on cooldown
 
-            # Check if in range (using equipped weapon's range)
-            weapon_range = self.character.equipment.get_weapon_range()
+            # Check if in range (using mainhand weapon's range)
+            weapon_range = self.character.equipment.get_weapon_range('mainHand')
             dist = enemy.distance_to((self.character.position.x, self.character.position.y))
             if dist > weapon_range:
                 weapon_name = self.character.equipment.slots.get('mainHand')
@@ -865,30 +1238,121 @@ class GameEngine:
                 self.add_notification(range_msg, (255, 100, 100))
                 return
 
-            # Attack enemy
-            damage, is_crit = self.combat_manager.player_attack_enemy(enemy)
+            # Attack enemy with mainhand
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='mainHand')
             self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
-            self.character.reset_attack_cooldown(is_weapon=True)
+            self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
 
             if not enemy.is_alive:
                 self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
                 self.character.activities.record_activity('combat', 1)
+
+                # Show loot notifications (auto-looted)
+                if loot:
+                    mat_db = MaterialDatabase.get_instance()
+                    for material_id, qty in loot:
+                        mat = mat_db.get_material(material_id)
+                        item_name = mat.name if mat else material_id
+                        self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
             return
 
-        # Check for corpse click (looting)
-        corpse = self.combat_manager.get_corpse_at_position((wx, wy))
-        if corpse:
-            loot = self.combat_manager.loot_corpse(corpse, self.character.inventory)
-            if loot:
-                mat_db = MaterialDatabase.get_instance()
-                for material_id, qty in loot:
-                    mat = mat_db.get_material(material_id)
-                    item_name = mat.name if mat else material_id
-                    self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
-                self.add_notification(f"Looted {corpse.definition.name}", (150, 200, 255))
-            return
+        # Note: Corpse looting is now automatic when enemy dies
+        # Manual corpse looting has been removed as loot is auto-added to inventory
+
+        # Check for placed entity pickup (turrets, traps, etc.)
+        if is_double_click:
+            placed_entity = self.world.get_entity_at(world_pos)
+            if placed_entity:
+                # Check if entity is pickupable (not crafting stations)
+                pickupable_types = [
+                    PlacedEntityType.TURRET,
+                    PlacedEntityType.TRAP,
+                    PlacedEntityType.BOMB,
+                    PlacedEntityType.UTILITY_DEVICE
+                ]
+                if placed_entity.entity_type in pickupable_types:
+                    # Check if player is in range (use 2.0 units as pickup range)
+                    dist = self.character.position.distance_to(placed_entity.position)
+                    if dist <= 2.0:
+                        # Add item back to inventory
+                        mat_db = MaterialDatabase.get_instance()
+                        mat_def = mat_db.get_material(placed_entity.item_id)
+                        if mat_def:
+                            # Try to add to inventory
+                            success = self.character.inventory.add_item(placed_entity.item_id, 1)
+                            if success:
+                                # Remove from world
+                                self.world.placed_entities.remove(placed_entity)
+                                self.add_notification(f"Picked up {mat_def.name}", (100, 255, 100))
+                                print(f"✓ Picked up {mat_def.name}")
+                                return
+                            else:
+                                self.add_notification("Inventory full!", (255, 100, 100))
+                                return
+                    else:
+                        self.add_notification("Too far to pick up", (255, 100, 100))
+                        return
 
         station = self.world.get_station_at(world_pos)
+
+        # Also check placed entities for crafting stations
+        if not station:
+            placed_entity = self.world.get_entity_at(world_pos)
+            if placed_entity and placed_entity.entity_type == PlacedEntityType.CRAFTING_STATION:
+                # Convert placed entity to a CraftingStation for interaction
+                # Determine station type from item_id
+                station_type_map = {
+                    # New format from items-smithing-2.JSON
+                    'forge_t1': StationType.SMITHING,
+                    'forge_t2': StationType.SMITHING,
+                    'forge_t3': StationType.SMITHING,
+                    'forge_t4': StationType.SMITHING,
+                    'alchemy_table_t1': StationType.ALCHEMY,
+                    'alchemy_table_t2': StationType.ALCHEMY,
+                    'alchemy_table_t3': StationType.ALCHEMY,
+                    'alchemy_table_t4': StationType.ALCHEMY,
+                    'refinery_t1': StationType.REFINING,
+                    'refinery_t2': StationType.REFINING,
+                    'refinery_t3': StationType.REFINING,
+                    'refinery_t4': StationType.REFINING,
+                    'engineering_bench_t1': StationType.ENGINEERING,
+                    'engineering_bench_t2': StationType.ENGINEERING,
+                    'engineering_bench_t3': StationType.ENGINEERING,
+                    'engineering_bench_t4': StationType.ENGINEERING,
+                    'enchanting_table_t1': StationType.ADORNMENTS,
+                    'enchanting_table_t2': StationType.ADORNMENTS,
+                    'enchanting_table_t3': StationType.ADORNMENTS,
+                    'enchanting_table_t4': StationType.ADORNMENTS,
+                    # Legacy format from crafting-stations-1.JSON (for backward compatibility)
+                    'tier_1_forge': StationType.SMITHING,
+                    'tier_2_forge': StationType.SMITHING,
+                    'tier_3_forge': StationType.SMITHING,
+                    'tier_4_forge': StationType.SMITHING,
+                    'tier_1_alchemy_table': StationType.ALCHEMY,
+                    'tier_2_alchemy_table': StationType.ALCHEMY,
+                    'tier_3_alchemy_table': StationType.ALCHEMY,
+                    'tier_4_alchemy_table': StationType.ALCHEMY,
+                    'tier_1_refinery': StationType.REFINING,
+                    'tier_2_refinery': StationType.REFINING,
+                    'tier_3_refinery': StationType.REFINING,
+                    'tier_4_refinery': StationType.REFINING,
+                    'tier_1_engineering_bench': StationType.ENGINEERING,
+                    'tier_2_engineering_bench': StationType.ENGINEERING,
+                    'tier_3_engineering_bench': StationType.ENGINEERING,
+                    'tier_4_engineering_bench': StationType.ENGINEERING,
+                    'tier_1_enchanting_table': StationType.ADORNMENTS,
+                    'tier_2_enchanting_table': StationType.ADORNMENTS,
+                    'tier_3_enchanting_table': StationType.ADORNMENTS,
+                    'tier_4_enchanting_table': StationType.ADORNMENTS,
+                }
+                station_type = station_type_map.get(placed_entity.item_id, StationType.SMITHING)
+                from data.models import CraftingStation
+                station = CraftingStation(
+                    position=placed_entity.position,
+                    station_type=station_type,
+                    tier=placed_entity.tier
+                )
+
         if station:
             self.character.interact_with_station(station)
             self.active_station_tier = station.tier  # Capture tier for placement UI
@@ -994,21 +1458,34 @@ class GameEngine:
 
     def handle_equipment_click(self, mouse_pos: Tuple[int, int], shift_held: bool):
         if not self.equipment_rects:
+            print(f"   ⚠️ equipment_rects is empty")
             return
 
         wx, wy = self.equipment_window_rect.x, self.equipment_window_rect.y
         rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+        print(f"   🖱️ Equipment click: mouse_pos={mouse_pos}, relative=({rx}, {ry}), shift={shift_held}")
 
         for slot_name, (rect, _, _) in self.equipment_rects.items():
             if rect.collidepoint(rx, ry):
+                print(f"🎯 Equipment slot clicked: {slot_name}, shift_held: {shift_held}")
+                item = self.character.equipment.slots.get(slot_name)
+                print(f"   Item in slot: {item.name if item else 'None'}")
+
                 if shift_held:
                     # Unequip
+                    print(f"   Attempting to unequip from {slot_name}")
                     success, msg = self.character.try_unequip_to_inventory(slot_name)
                     if success:
                         self.add_notification(f"Unequipped item", (100, 255, 100))
+                        print(f"   ✅ Unequipped successfully")
                     else:
                         self.add_notification(f"Cannot unequip: {msg}", (255, 100, 100))
+                        print(f"   ❌ Failed: {msg}")
+                else:
+                    print(f"   Regular click (no shift), no action")
                 break
+        else:
+            print(f"   No slot matched the click position")
 
     def handle_stats_click(self, mouse_pos: Tuple[int, int]):
         if not self.stats_window_rect or not self.stats_buttons:
@@ -1429,37 +1906,59 @@ class GameEngine:
 
         recipe_db = RecipeDatabase.get_instance()
 
-        # Layout constants (matching render_crafting_ui)
-        left_panel_w = 450
-        right_panel_x = left_panel_w + 20 + 20  # separator + padding
-        right_panel_w = 700
+        # Layout constants (matching render_crafting_ui) - MUST use Config.scale()!
+        s = Config.scale
+        left_panel_w = s(450)
+        right_panel_x = left_panel_w + s(20) + s(20)  # separator + padding
+        right_panel_w = s(500)  # Must match renderer
 
         # ======================
-        # LEFT PANEL: Recipe Selection
+        # LEFT PANEL: Recipe Selection (WITH GROUPED HEADERS)
         # ======================
         if rx < left_panel_w:
             # Click in left panel - select recipe
-            # Apply scroll offset to show correct recipes
-            total_recipes = len(self.crafting_recipes)
-            max_visible = 8
-            start_idx = min(self.recipe_scroll_offset, max(0, total_recipes - max_visible))
-            end_idx = min(start_idx + max_visible, total_recipes)
-            visible_recipes = self.crafting_recipes[start_idx:end_idx]
+            # Need to use the same grouping logic as the renderer
+            mat_db = MaterialDatabase.get_instance()
+            equip_db = EquipmentDatabase.get_instance()
 
-            y_off = 70
-            for i, recipe in enumerate(visible_recipes):
-                num_inputs = len(recipe.inputs)
-                btn_height = max(70, 35 + num_inputs * 16 + 5)
+            # Group recipes by type (same as renderer)
+            grouped_recipes = self.renderer._group_recipes_by_type(self.crafting_recipes, equip_db, mat_db)
 
-                if y_off <= ry <= y_off + btn_height:
-                    # Recipe clicked - select it
-                    self.selected_recipe = recipe
-                    print(f"📋 Selected recipe: {recipe.recipe_id}")
-                    # Auto-load recipe placement
-                    self.load_recipe_placement(recipe)
-                    return
+            # Flatten grouped recipes with headers
+            flat_list = []
+            for type_name, type_recipes in grouped_recipes:
+                flat_list.append(('header', type_name))
+                for recipe in type_recipes:
+                    flat_list.append(('recipe', recipe))
 
-                y_off += btn_height + 8
+            # Apply scroll offset
+            total_items = len(flat_list)
+            max_visible = 12  # Match renderer's max_visible
+            start_idx = min(self.recipe_scroll_offset, max(0, total_items - max_visible))
+            end_idx = min(start_idx + max_visible, total_items)
+            visible_items = flat_list[start_idx:end_idx]
+
+            y_off = s(70)
+            for i, item in enumerate(visible_items):
+                item_type, item_data = item
+
+                if item_type == 'header':
+                    # Header - just skip over it (height = 28)
+                    y_off += s(28)
+                elif item_type == 'recipe':
+                    recipe = item_data
+                    num_inputs = len(recipe.inputs)
+                    btn_height = max(s(70), s(35) + num_inputs * s(16) + s(5))
+
+                    if y_off <= ry <= y_off + btn_height:
+                        # Recipe clicked - select it
+                        self.selected_recipe = recipe
+                        print(f"📋 Selected recipe: {recipe.recipe_id}")
+                        # Auto-load recipe placement
+                        self.load_recipe_placement(recipe)
+                        return
+
+                    y_off += btn_height + s(8)
 
         # ======================
         # RIGHT PANEL: Grid Cells & Craft Buttons
@@ -1504,19 +2003,19 @@ class GameEngine:
             if not can_craft:
                 return  # Can't craft, buttons not shown
 
-            # Button positions (matching render_crafting_ui)
-            placement_h = 380
-            right_panel_y = 70
-            btn_y = right_panel_y + placement_h + 20
+            # Button positions (matching render_crafting_ui) - MUST use Config.scale()!
+            placement_h = s(380)
+            right_panel_y = s(70)
+            btn_y = right_panel_y + placement_h + s(20)
 
-            instant_btn_w, instant_btn_h = 120, 40
-            minigame_btn_w, minigame_btn_h = 120, 40
+            instant_btn_w, instant_btn_h = s(120), s(40)
+            minigame_btn_w, minigame_btn_h = s(120), s(40)
 
-            total_btn_w = instant_btn_w + minigame_btn_w + 20
-            start_x = right_panel_x + (right_panel_w - 40 - total_btn_w) // 2
+            total_btn_w = instant_btn_w + minigame_btn_w + s(20)
+            start_x = right_panel_x + (right_panel_w - s(40) - total_btn_w) // 2
 
             instant_btn_x = start_x
-            minigame_btn_x = start_x + instant_btn_w + 20
+            minigame_btn_x = start_x + instant_btn_w + s(20)
 
             # Convert to relative coordinates
             instant_left = instant_btn_x
@@ -2084,9 +2583,13 @@ class GameEngine:
         self.enchantment_selection_rect = None
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
+        # Skip if no character exists yet (e.g., still in start menu)
+        if self.character is None:
+            return
+
         if self.character.inventory.dragging_stack:
             if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
-                start_x, start_y = 20, Config.INVENTORY_GRID_Y
+                start_x, start_y = 20, Config.INVENTORY_PANEL_Y
                 slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
                 rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
 
@@ -2134,10 +2637,55 @@ class GameEngine:
         # Only update world/combat if minigame isn't active
         if not self.active_minigame:
             self.world.update(dt)
-            self.combat_manager.update(dt)
+
+            # Check if player is blocking with shield (right mouse held OR X key held)
+            shield_blocking = (3 in self.mouse_buttons_pressed or pygame.K_x in self.keys_pressed) and self.character.is_shield_active()
+
+            # Handle X key for offhand attacks (when not blocking)
+            if pygame.K_x in self.keys_pressed and not shield_blocking:
+                # Get offhand weapon
+                offhand_weapon = self.character.equipment.slots.get('offHand')
+                if offhand_weapon and offhand_weapon.item_type != "shield":
+                    # Try to attack enemy at mouse position
+                    mouse_pos = pygame.mouse.get_pos()
+                    if mouse_pos[0] < Config.VIEWPORT_WIDTH:  # In viewport
+                        # Convert to world coordinates
+                        wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
+                        wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
+
+                        # Check for enemy at position
+                        enemy = self.combat_manager.get_enemy_at_position((wx, wy))
+                        if enemy and enemy.is_alive:
+                            # Check if offhand can attack
+                            if self.character.can_attack('offHand'):
+                                # Check if in range
+                                weapon_range = self.character.equipment.get_weapon_range('offHand')
+                                dist = enemy.distance_to((self.character.position.x, self.character.position.y))
+                                if dist <= weapon_range:
+                                    # Attack with offhand
+                                    damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='offHand')
+                                    self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
+                                    self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
+
+                                    if not enemy.is_alive:
+                                        self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
+                                        self.character.activities.record_activity('combat', 1)
+
+                                        # Show loot notifications
+                                        if loot:
+                                            mat_db = MaterialDatabase.get_instance()
+                                            for material_id, qty in loot:
+                                                mat = mat_db.get_material(material_id)
+                                                item_name = mat.name if mat else material_id
+                                                self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+
+            self.combat_manager.update(dt, shield_blocking=shield_blocking)
             self.character.update_attack_cooldown(dt)
             self.character.update_health_regen(dt)
             self.character.update_buffs(dt)
+
+            # Update turret system
+            self.turret_system.update(self.world.placed_entities, self.combat_manager, dt)
         else:
             # Update active minigame (skip for engineering - it's turn-based)
             if self.minigame_type != 'engineering':
@@ -2158,6 +2706,8 @@ class GameEngine:
             result = self.renderer.render_start_menu(self.start_menu_selected_option, self.mouse_pos)
             if result:
                 self.start_menu_buttons = result
+            # Render notifications even when menu is open
+            self.renderer.render_notifications(self.notifications)
             pygame.display.flip()
             return
 
@@ -2219,6 +2769,7 @@ class GameEngine:
                     self.equipment_window_rect, self.equipment_rects = result
             else:
                 self.equipment_window_rect = None
+                self.equipment_rects = {}
 
             if self.character.encyclopedia.is_open:
                 result = self.renderer.render_encyclopedia_ui(self.character, self.mouse_pos)
@@ -2227,7 +2778,6 @@ class GameEngine:
             else:
                 self.encyclopedia_window_rect = None
                 self.encyclopedia_tab_rects = []
-                self.equipment_rects = {}
 
             # NPC dialogue UI
             if self.npc_dialogue_open and self.active_npc:

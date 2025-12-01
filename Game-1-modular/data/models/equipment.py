@@ -22,6 +22,11 @@ class EquipmentItem:
     requirements: Dict[str, Any] = field(default_factory=dict)
     bonuses: Dict[str, float] = field(default_factory=dict)
     enchantments: List[Dict[str, Any]] = field(default_factory=list)  # Applied enchantments
+    icon_path: Optional[str] = None  # Optional path to item icon image (PNG/JPG)
+    hand_type: str = "default"  # "1H", "2H", "versatile", or "default" (mainhand only)
+    item_type: str = "weapon"  # "weapon", "shield", "tool", etc.
+    stat_multipliers: Dict[str, float] = field(default_factory=dict)  # Original stat multipliers from JSON
+    tags: List[str] = field(default_factory=list)  # Metadata tags from JSON
 
     def get_effectiveness(self) -> float:
         """Get effectiveness multiplier based on durability (for CONFIG check - imported later)"""
@@ -106,7 +111,12 @@ class EquipmentItem:
             range=self.range,
             requirements=self.requirements.copy(),
             bonuses=self.bonuses.copy(),
-            enchantments=copy_module.deepcopy(self.enchantments)
+            enchantments=copy_module.deepcopy(self.enchantments),
+            icon_path=self.icon_path,
+            hand_type=self.hand_type,
+            item_type=self.item_type,
+            stat_multipliers=self.stat_multipliers.copy(),
+            tags=self.tags.copy()
         )
 
     def can_apply_enchantment(self, enchantment_id: str, applicable_to: List[str], effect: Dict) -> Tuple[bool, str]:

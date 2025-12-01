@@ -29,6 +29,9 @@ from data.databases import (
     NPCDatabase,
 )
 
+# Image cache
+from rendering.image_cache import ImageCache
+
 # Entities
 from entities import Character, Tool, DamageNumber
 from entities.components import ItemStack
@@ -43,9 +46,10 @@ from systems import (
 class Renderer:
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
-        self.font = pygame.font.Font(None, 24)
-        self.small_font = pygame.font.Font(None, 18)
-        self.tiny_font = pygame.font.Font(None, 14)
+        # Scaled fonts for responsive UI
+        self.font = pygame.font.Font(None, Config.scale(24))
+        self.small_font = pygame.font.Font(None, Config.scale(18))
+        self.tiny_font = pygame.font.Font(None, Config.scale(14))
 
     def _get_grid_size_for_tier(self, tier: int, discipline: str) -> Tuple[int, int]:
         """Get grid dimensions based on station tier for grid-based disciplines (smithing, adornments)"""
@@ -741,6 +745,52 @@ class Renderer:
                                      (tier_rect.x + dx, tier_rect.y + dy))
                 self.screen.blit(tier_surf, tier_rect)
 
+        # Render placed entities (turrets, traps, crafting stations, etc.)
+        from data.models import PlacedEntityType
+        for entity in world.get_visible_placed_entities(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
+            sx, sy = camera.world_to_screen(entity.position)
+            size = Config.TILE_SIZE
+            rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
+
+            # Render entity (turret icon or colored square)
+            color = entity.get_color()
+            pygame.draw.rect(self.screen, color, rect)
+            pygame.draw.rect(self.screen, (0, 0, 0), rect, 2)
+
+            # Render tier indicator
+            tier_text = f"T{entity.tier}"
+            tier_surf = self.tiny_font.render(tier_text, True, (255, 255, 255))
+            tier_bg = pygame.Rect(sx - size // 2 + 2, sy - size // 2 + 2,
+                                  tier_surf.get_width() + 4, tier_surf.get_height() + 2)
+            pygame.draw.rect(self.screen, (0, 0, 0, 180), tier_bg)
+            self.screen.blit(tier_surf, (sx - size // 2 + 4, sy - size // 2 + 2))
+
+            # Render lifetime bar (only for combat entities, not crafting stations)
+            if entity.entity_type != PlacedEntityType.CRAFTING_STATION:
+                bar_w, bar_h = size - 4, 4
+                bar_y = sy + size // 2 + 4
+                pygame.draw.rect(self.screen, (100, 100, 100), (sx - bar_w // 2, bar_y, bar_w, bar_h))
+                lifetime_w = int(bar_w * (entity.time_remaining / entity.lifetime))
+                # Color based on time remaining (green -> yellow -> red)
+                if entity.time_remaining > entity.lifetime * 0.5:
+                    bar_color = (0, 255, 0)  # Green
+                elif entity.time_remaining > entity.lifetime * 0.25:
+                    bar_color = (255, 255, 0)  # Yellow
+                else:
+                    bar_color = (255, 0, 0)  # Red
+                pygame.draw.rect(self.screen, bar_color, (sx - bar_w // 2, bar_y, lifetime_w, bar_h))
+
+            # Draw range circle for turrets only (semi-transparent)
+            if entity.entity_type == PlacedEntityType.TURRET and hasattr(entity, 'range') and entity.range > 0:
+                range_radius = int(entity.range * Config.TILE_SIZE)
+                # Draw a faint circle showing turret range
+                pygame.draw.circle(self.screen, (255, 100, 100, 50), (sx, sy), range_radius, 1)
+
+            # Draw targeting line if turret has a target
+            if entity.entity_type == PlacedEntityType.TURRET and entity.target_enemy and entity.target_enemy.is_alive:
+                tx, ty = camera.world_to_screen(Position(entity.target_enemy.position[0], entity.target_enemy.position[1], 0))
+                pygame.draw.line(self.screen, (255, 0, 0), (sx, sy), (tx, ty), 2)
+
         for resource in world.get_visible_resources(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             if resource.depleted and not resource.respawns:
                 continue
@@ -749,10 +799,24 @@ class Renderer:
 
             can_harvest, reason = character.can_harvest_resource(resource) if in_range else (False, "")
 
-            color = resource.get_color() if in_range else tuple(max(0, c - 50) for c in resource.get_color())
             size = Config.TILE_SIZE - 4
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
-            pygame.draw.rect(self.screen, color, rect)
+
+            # Auto-generate icon path from resource type
+            resource_icon_path = f"resources/{resource.resource_type.value}.png"
+
+            # Try to load resource icon (only if image cache exists)
+            if 'image_cache' not in locals():
+                image_cache = ImageCache.get_instance()
+            icon = image_cache.get_image(resource_icon_path, (size, size))
+
+            if icon:
+                # Render icon
+                self.screen.blit(icon, rect.topleft)
+            else:
+                # Fallback: colored rectangle
+                color = resource.get_color() if in_range else tuple(max(0, c - 50) for c in resource.get_color())
+                pygame.draw.rect(self.screen, color, rect)
 
             if in_range:
                 border_color = Config.COLOR_CAN_HARVEST if can_harvest else Config.COLOR_CANNOT_HARVEST
@@ -789,21 +853,30 @@ class Renderer:
                 pygame.draw.rect(self.screen, Config.COLOR_HP_BAR, (sx - bar_w // 2, bar_y, hp_w, bar_h))
 
         # Render enemies
+        image_cache = ImageCache.get_instance()
         if combat_manager:
             for enemy in combat_manager.get_all_active_enemies():
                 ex, ey = camera.world_to_screen(Position(enemy.position[0], enemy.position[1], 0))
 
                 # Enemy body
                 if enemy.is_alive:
-                    # Color based on tier
-                    tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
-                    enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
-                    if enemy.is_boss:
-                        enemy_color = (255, 215, 0)  # Gold for bosses
-
+                    # Try to load enemy icon
                     size = Config.TILE_SIZE // 2
-                    pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
-                    pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
+                    icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2)) if enemy.definition.icon_path else None
+
+                    if icon:
+                        # Render icon centered on enemy position
+                        icon_rect = icon.get_rect(center=(ex, ey))
+                        self.screen.blit(icon, icon_rect)
+                    else:
+                        # Fallback: Color based on tier
+                        tier_colors = {1: (200, 100, 100), 2: (255, 150, 0), 3: (200, 100, 255), 4: (255, 50, 50)}
+                        enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                        if enemy.is_boss:
+                            enemy_color = (255, 215, 0)  # Gold for bosses
+
+                        pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
+                        pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
 
                     # Health bar
                     health_percent = enemy.current_health / enemy.max_health
@@ -843,6 +916,21 @@ class Renderer:
             surf = (self.font if dmg.is_crit else self.small_font).render(text, True, color)
             surf.set_alpha(alpha)
             self.screen.blit(surf, surf.get_rect(center=(sx, sy)))
+
+    def render_placement_preview(self, camera: Camera, preview_pos):
+        """Render placement preview for world item placement mode"""
+        if preview_pos:
+            sx, sy = camera.world_to_screen(preview_pos)
+            size = Config.TILE_SIZE
+            rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
+
+            # Draw semi-transparent preview
+            preview_surface = pygame.Surface((size, size), pygame.SRCALPHA)
+            preview_surface.fill((100, 255, 100, 100))  # Green with alpha
+            self.screen.blit(preview_surface, rect.topleft)
+
+            # Draw border
+            pygame.draw.rect(self.screen, (0, 255, 0), rect, 2)
 
     def render_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         ui_rect = pygame.Rect(Config.VIEWPORT_WIDTH, 0, Config.UI_PANEL_WIDTH, Config.VIEWPORT_HEIGHT)
@@ -1143,27 +1231,28 @@ class Renderer:
         if not skill_db.loaded:
             return None
 
-        ww, wh = 1000, 700
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
-        wy = 50
+        s = Config.scale  # Shorthand for readability
+        ww, wh = Config.MENU_LARGE_W, Config.MENU_LARGE_H
+        wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)  # Clamp to prevent off-screen
+        wy = s(50)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 245))
 
         # Title
-        surf.blit(self.font.render("SKILLS MANAGEMENT", True, (150, 200, 255)), (ww // 2 - 120, 20))
+        surf.blit(self.font.render("SKILLS MANAGEMENT", True, (150, 200, 255)), (ww // 2 - s(120), s(20)))
         surf.blit(self.small_font.render("[ESC] Close | [Mouse Wheel] Scroll | Click to equip | Right-click to unequip", True, (180, 180, 180)),
-                  (ww // 2 - 330, 50))
+                  (ww // 2 - s(330), s(50)))
 
         # Hotbar section (top)
-        y_pos = 90
-        surf.blit(self.small_font.render("SKILL HOTBAR (1-5):", True, (200, 200, 200)), (20, y_pos))
-        y_pos += 30
+        y_pos = s(90)
+        surf.blit(self.small_font.render("SKILL HOTBAR (1-5):", True, (200, 200, 200)), (s(20), y_pos))
+        y_pos += s(30)
 
         hotbar_rects = []
-        slot_size = 70
+        slot_size = s(70)
         for i in range(5):
-            x = 30 + i * (slot_size + 10)
+            x = s(30) + i * (slot_size + s(10))
             slot_rect = pygame.Rect(x, y_pos, slot_size, slot_size)
 
             # Get skill in this slot
@@ -1178,7 +1267,7 @@ class Renderer:
 
             # Slot number
             num_surf = self.small_font.render(str(i + 1), True, (150, 150, 150))
-            surf.blit(num_surf, (x + 4, y_pos + 4))
+            surf.blit(num_surf, (x + s(4), y_pos + s(4)))
 
             if skill_def:
                 # Skill abbreviation
@@ -1190,12 +1279,12 @@ class Renderer:
 
             hotbar_rects.append((slot_rect, i, skill_id))
 
-        y_pos += slot_size + 30
+        y_pos += slot_size + s(30)
 
         # Learned skills section
         total_skills = len(character.skills.known_skills)
-        surf.blit(self.small_font.render(f"LEARNED SKILLS ({total_skills}):", True, (200, 200, 200)), (20, y_pos))
-        y_pos += 30
+        surf.blit(self.small_font.render(f"LEARNED SKILLS ({total_skills}):", True, (200, 200, 200)), (s(20), y_pos))
+        y_pos += s(30)
 
         skill_rects = []
         max_visible = 10
@@ -1211,7 +1300,7 @@ class Renderer:
         # Show scroll indicator if needed
         if total_skills > max_visible:
             scroll_text = f"[Scroll: {character.skills_menu_scroll_offset + 1}-{min(character.skills_menu_scroll_offset + max_visible, total_skills)} of {total_skills}]"
-            surf.blit(self.tiny_font.render(scroll_text, True, (150, 150, 200)), (ww - 280, y_pos - 25))
+            surf.blit(self.tiny_font.render(scroll_text, True, (150, 150, 200)), (ww - s(280), y_pos - s(25)))
 
         for idx, (skill_id, player_skill) in enumerate(visible_skills):
             skill_def = player_skill.get_definition()
@@ -1225,7 +1314,7 @@ class Renderer:
                     equipped_slot = slot_idx
                     break
 
-            skill_rect = pygame.Rect(20, y_pos, ww - 40, 50)
+            skill_rect = pygame.Rect(s(20), y_pos, ww - s(40), s(50))
             rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
             is_hovered = skill_rect.collidepoint(rx, ry)
 
@@ -1237,41 +1326,41 @@ class Renderer:
             pygame.draw.rect(surf, (120, 140, 180) if is_hovered else (80, 80, 100), skill_rect, 2)
 
             # Skill name
-            surf.blit(self.small_font.render(skill_def.name, True, (255, 255, 255)), (30, y_pos + 5))
+            surf.blit(self.small_font.render(skill_def.name, True, (255, 255, 255)), (s(30), y_pos + s(5)))
 
             # Tier and rarity
             tier_color = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}.get(skill_def.tier, (150, 150, 150))
-            surf.blit(self.tiny_font.render(f"T{skill_def.tier} {skill_def.rarity.upper()}", True, tier_color), (30, y_pos + 25))
+            surf.blit(self.tiny_font.render(f"T{skill_def.tier} {skill_def.rarity.upper()}", True, tier_color), (s(30), y_pos + s(25)))
 
             # Mana cost and cooldown
             mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
             cooldown = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
-            surf.blit(self.tiny_font.render(f"{mana_cost}MP  |  {cooldown}s CD", True, (150, 200, 255)), (200, y_pos + 25))
+            surf.blit(self.tiny_font.render(f"{mana_cost}MP  |  {cooldown}s CD", True, (150, 200, 255)), (s(200), y_pos + s(25)))
 
             # Equipped indicator
             if equipped_slot is not None:
-                surf.blit(self.small_font.render(f"[Slot {equipped_slot + 1}]", True, (100, 255, 100)), (ww - 150, y_pos + 15))
+                surf.blit(self.small_font.render(f"[Slot {equipped_slot + 1}]", True, (100, 255, 100)), (ww - s(150), y_pos + s(15)))
             else:
-                surf.blit(self.tiny_font.render("Click to equip", True, (120, 120, 150)), (ww - 150, y_pos + 18))
+                surf.blit(self.tiny_font.render("Click to equip", True, (120, 120, 150)), (ww - s(150), y_pos + s(18)))
 
             skill_rects.append((skill_rect, skill_id, player_skill, skill_def))
-            y_pos += 55
+            y_pos += s(55)
 
         # Available skills section (skills that can be learned but haven't been yet)
-        y_pos += 10
+        y_pos += s(10)
         available_skill_ids = character.skills.get_available_skills(character)
         available_skill_rects = []
 
         if available_skill_ids:
-            surf.blit(self.small_font.render(f"AVAILABLE TO LEARN ({len(available_skill_ids)}):", True, (100, 255, 100)), (20, y_pos))
-            y_pos += 25
+            surf.blit(self.small_font.render(f"AVAILABLE TO LEARN ({len(available_skill_ids)}):", True, (100, 255, 100)), (s(20), y_pos))
+            y_pos += s(25)
 
             for skill_id in available_skill_ids[:3]:  # Show first 3 available skills
                 skill_def = skill_db.skills.get(skill_id)
                 if not skill_def:
                     continue
 
-                skill_rect = pygame.Rect(20, y_pos, ww - 40, 45)
+                skill_rect = pygame.Rect(s(20), y_pos, ww - s(40), s(45))
                 rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
                 is_hovered = skill_rect.collidepoint(rx, ry)
 
@@ -1283,20 +1372,20 @@ class Renderer:
                 pygame.draw.rect(surf, (100, 255, 100) if is_hovered else (80, 150, 80), skill_rect, 2)
 
                 # Skill name
-                surf.blit(self.small_font.render(skill_def.name, True, (200, 255, 200)), (30, y_pos + 5))
+                surf.blit(self.small_font.render(skill_def.name, True, (200, 255, 200)), (s(30), y_pos + s(5)))
 
                 # Tier
                 tier_color = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}.get(skill_def.tier, (150, 150, 150))
-                surf.blit(self.tiny_font.render(f"T{skill_def.tier}", True, tier_color), (30, y_pos + 25))
+                surf.blit(self.tiny_font.render(f"T{skill_def.tier}", True, tier_color), (s(30), y_pos + s(25)))
 
                 # Learn button
-                surf.blit(self.tiny_font.render("Click to learn", True, (150, 255, 150)), (ww - 150, y_pos + 15))
+                surf.blit(self.tiny_font.render("Click to learn", True, (150, 255, 150)), (ww - s(150), y_pos + s(15)))
 
                 available_skill_rects.append((skill_rect, skill_id, skill_def))
-                y_pos += 50
+                y_pos += s(50)
 
             if len(available_skill_ids) > 3:
-                surf.blit(self.tiny_font.render(f"...and {len(available_skill_ids) - 3} more available", True, (120, 200, 120)), (30, y_pos))
+                surf.blit(self.tiny_font.render(f"...and {len(available_skill_ids) - 3} more available", True, (120, 200, 120)), (s(30), y_pos))
 
         self.screen.blit(surf, (wx, wy))
         window_rect = pygame.Rect(wx, wy, ww, wh)
@@ -1307,23 +1396,24 @@ class Renderer:
         if not character.encyclopedia.is_open:
             return None
 
-        ww, wh = 1100, 750
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
-        wy = 40
+        s = Config.scale  # Shorthand for scaling
+        ww, wh = Config.MENU_LARGE_W, Config.MENU_LARGE_H
+        wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)  # Clamp to prevent off-screen
+        wy = s(40)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 250))
 
         # Title
-        surf.blit(self.font.render("ENCYCLOPEDIA", True, (255, 215, 0)), (ww // 2 - 80, 20))
+        surf.blit(self.font.render("ENCYCLOPEDIA", True, (255, 215, 0)), (ww // 2 - s(80), s(20)))
         surf.blit(self.small_font.render("[L or ESC] Close | [Mouse Wheel] Scroll", True, (180, 180, 180)),
-                  (ww // 2 - 160, 50))
+                  (ww // 2 - s(160), s(50)))
 
         # Tabs
-        tab_y = 80
-        tab_width = 140
-        tab_height = 40
-        tab_spacing = 10
+        tab_y = s(80)
+        tab_width = s(140)
+        tab_height = s(40)
+        tab_spacing = s(10)
         tabs = [
             ("guide", "GAME GUIDE"),
             ("quests", "QUESTS"),
@@ -1333,7 +1423,7 @@ class Renderer:
 
         tab_rects = []
         for idx, (tab_id, tab_name) in enumerate(tabs):
-            tab_x = 30 + idx * (tab_width + tab_spacing)
+            tab_x = s(30) + idx * (tab_width + tab_spacing)
             tab_rect = pygame.Rect(tab_x, tab_y, tab_width, tab_height)
 
             is_active = character.encyclopedia.current_tab == tab_id
@@ -1352,7 +1442,7 @@ class Renderer:
                 border_color = (80, 80, 100)
 
             pygame.draw.rect(surf, bg_color, tab_rect)
-            pygame.draw.rect(surf, border_color, tab_rect, 2)
+            pygame.draw.rect(surf, border_color, tab_rect, s(2))
 
             # Tab text
             text_surf = self.small_font.render(tab_name, True, (220, 220, 240) if is_active else (160, 160, 180))
@@ -1362,11 +1452,11 @@ class Renderer:
             tab_rects.append((tab_rect, tab_id))
 
         # Content area
-        content_y = tab_y + tab_height + 20
-        content_height = wh - content_y - 20
-        content_rect = pygame.Rect(20, content_y, ww - 40, content_height)
+        content_y = tab_y + tab_height + s(20)
+        content_height = wh - content_y - s(20)
+        content_rect = pygame.Rect(s(20), content_y, ww - s(40), content_height)
         pygame.draw.rect(surf, (30, 30, 40), content_rect)
-        pygame.draw.rect(surf, (80, 80, 100), content_rect, 2)
+        pygame.draw.rect(surf, (80, 80, 100), content_rect, s(2))
 
         # Render content based on current tab
         if character.encyclopedia.current_tab == "guide":
@@ -1386,36 +1476,37 @@ class Renderer:
     def render_npc_dialogue_ui(self, npc: NPC, dialogue_lines: List[str], available_quests: List[str],
                                quest_to_turn_in: Optional[str], mouse_pos: Tuple[int, int]):
         """Render NPC dialogue UI with quest options"""
+        s = Config.scale
         # Window dimensions
-        ww, wh = 800, 500
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+        ww, wh = Config.MENU_MEDIUM_W, Config.MENU_MEDIUM_H
+        wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)  # Clamp to prevent off-screen
+        wy = max(0, (Config.VIEWPORT_HEIGHT - wh) // 2)
 
         # Create dialogue surface
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 250))
-        pygame.draw.rect(surf, (100, 100, 120), surf.get_rect(), 3)
+        pygame.draw.rect(surf, (100, 100, 120), surf.get_rect(), s(3))
 
         # NPC name header
-        header_bg = pygame.Rect(0, 0, ww, 50)
+        header_bg = pygame.Rect(0, 0, ww, s(50))
         pygame.draw.rect(surf, (40, 40, 60), header_bg)
-        pygame.draw.rect(surf, (100, 100, 120), header_bg, 2)
+        pygame.draw.rect(surf, (100, 100, 120), header_bg, s(2))
 
         name_surf = self.font.render(npc.npc_def.name, True, (255, 215, 0))
-        surf.blit(name_surf, (ww // 2 - name_surf.get_width() // 2, 15))
+        surf.blit(name_surf, (ww // 2 - name_surf.get_width() // 2, s(15)))
 
         # Close hint
         close_surf = self.tiny_font.render("[F or ESC] Close", True, (180, 180, 200))
-        surf.blit(close_surf, (ww - close_surf.get_width() - 10, 20))
+        surf.blit(close_surf, (ww - close_surf.get_width() - s(10), s(20)))
 
         # Dialogue text
-        y = 70
+        y = s(70)
         for line in dialogue_lines:
             line_surf = self.small_font.render(line, True, (220, 220, 240))
-            surf.blit(line_surf, (30, y))
-            y += 25
+            surf.blit(line_surf, (s(30), y))
+            y += s(25)
 
-        y += 20
+        y += s(20)
 
         # Quest section
         button_rects = []
@@ -1428,29 +1519,29 @@ class Renderer:
 
                 # Quest title
                 quest_title_surf = self.small_font.render(f"✅ Quest Complete: {quest_def.title}", True, (100, 255, 100))
-                surf.blit(quest_title_surf, (30, y))
-                y += 30
+                surf.blit(quest_title_surf, (s(30), y))
+                y += s(30)
 
                 # Turn in button
-                button_rect = pygame.Rect(30, y, ww - 60, 40)
+                button_rect = pygame.Rect(s(30), y, ww - s(60), s(40))
                 rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
                 is_hovered = button_rect.collidepoint(rx, ry)
 
                 button_color = (60, 120, 60) if is_hovered else (40, 100, 40)
                 pygame.draw.rect(surf, button_color, button_rect)
-                pygame.draw.rect(surf, (100, 200, 100), button_rect, 2)
+                pygame.draw.rect(surf, (100, 200, 100), button_rect, s(2))
 
                 button_text = self.small_font.render("Turn In Quest", True, (255, 255, 255))
-                surf.blit(button_text, (button_rect.centerx - button_text.get_width() // 2, button_rect.y + 12))
+                surf.blit(button_text, (button_rect.centerx - button_text.get_width() // 2, button_rect.y + s(12)))
 
                 button_rects.append(('turn_in', quest_to_turn_in, pygame.Rect(wx + button_rect.x, wy + button_rect.y, button_rect.width, button_rect.height)))
-                y += 50
+                y += s(50)
 
         # Available quests
         if available_quests:
             quest_header_surf = self.small_font.render("📜 Available Quests:", True, (200, 200, 255))
-            surf.blit(quest_header_surf, (30, y))
-            y += 30
+            surf.blit(quest_header_surf, (s(30), y))
+            y += s(30)
 
             npc_db = NPCDatabase.get_instance()
             for quest_id in available_quests[:3]:  # Show up to 3 quests
@@ -1458,30 +1549,30 @@ class Renderer:
                     quest_def = npc_db.quests[quest_id]
 
                     # Quest button
-                    button_rect = pygame.Rect(30, y, ww - 60, 60)
+                    button_rect = pygame.Rect(s(30), y, ww - s(60), s(60))
                     rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
                     is_hovered = button_rect.collidepoint(rx, ry)
 
                     button_color = (60, 80, 120) if is_hovered else (40, 60, 100)
                     pygame.draw.rect(surf, button_color, button_rect)
-                    pygame.draw.rect(surf, (100, 150, 200), button_rect, 2)
+                    pygame.draw.rect(surf, (100, 150, 200), button_rect, s(2))
 
                     # Quest title
                     title_surf = self.small_font.render(quest_def.title, True, (220, 220, 255))
-                    surf.blit(title_surf, (button_rect.x + 10, button_rect.y + 8))
+                    surf.blit(title_surf, (button_rect.x + s(10), button_rect.y + s(8)))
 
                     # Quest description (truncated)
                     desc = quest_def.description[:60] + "..." if len(quest_def.description) > 60 else quest_def.description
                     desc_surf = self.tiny_font.render(desc, True, (180, 180, 200))
-                    surf.blit(desc_surf, (button_rect.x + 10, button_rect.y + 30))
+                    surf.blit(desc_surf, (button_rect.x + s(10), button_rect.y + s(30)))
 
                     button_rects.append(('accept', quest_id, pygame.Rect(wx + button_rect.x, wy + button_rect.y, button_rect.width, button_rect.height)))
-                    y += 70
+                    y += s(70)
 
         # If no quests
         if not quest_to_turn_in and not available_quests:
             no_quest_surf = self.small_font.render("No quests available at this time.", True, (150, 150, 150))
-            surf.blit(no_quest_surf, (30, y))
+            surf.blit(no_quest_surf, (s(30), y))
 
         self.screen.blit(surf, (wx, wy))
         window_rect = pygame.Rect(wx, wy, ww, wh)
@@ -1489,12 +1580,13 @@ class Renderer:
 
     def _render_guide_content(self, surf, content_rect, character):
         """Render game guide content"""
+        s = Config.scale
         lines = character.encyclopedia.get_game_guide_text()
 
         # Apply scroll offset
         scroll_offset = character.encyclopedia.scroll_offset
-        y = content_rect.y + 20 - scroll_offset
-        x = content_rect.x + 20
+        y = content_rect.y + s(20) - scroll_offset
+        x = content_rect.x + s(20)
 
         for line in lines:
             # Stop if entirely below visible area
@@ -1503,64 +1595,65 @@ class Renderer:
 
             # Only render if within visible area
             if line.startswith("==="):
-                if y >= content_rect.y - 30 and y < content_rect.bottom:
+                if y >= content_rect.y - s(30) and y < content_rect.bottom:
                     surf.blit(self.font.render(line, True, (255, 215, 0)), (x, y))
-                y += 30
+                y += s(30)
             elif line.startswith("•"):
-                if y >= content_rect.y - 20 and y < content_rect.bottom:
+                if y >= content_rect.y - s(20) and y < content_rect.bottom:
                     surf.blit(self.small_font.render(line, True, (200, 200, 220)), (x, y))
-                y += 20
+                y += s(20)
             elif line == "":
-                y += 10
+                y += s(10)
             elif line.endswith(":"):
-                if y >= content_rect.y - 25 and y < content_rect.bottom:
+                if y >= content_rect.y - s(25) and y < content_rect.bottom:
                     surf.blit(self.small_font.render(line, True, (150, 200, 255)), (x, y))
-                y += 25
+                y += s(25)
             else:
-                if y >= content_rect.y - 18 and y < content_rect.bottom:
+                if y >= content_rect.y - s(18) and y < content_rect.bottom:
                     surf.blit(self.tiny_font.render(line, True, (180, 180, 200)), (x, y))
-                y += 18
+                y += s(18)
 
     def _render_quests_content(self, surf, content_rect, character):
         """Render quest tracking and status content"""
+        s = Config.scale
         npc_db = NPCDatabase.get_instance()
         if not npc_db.loaded:
             return
 
         # Apply scroll offset
         scroll_offset = character.encyclopedia.scroll_offset
-        y = content_rect.y + 15 - scroll_offset
-        x = content_rect.x + 15
+        y = content_rect.y + s(15) - scroll_offset
+        x = content_rect.x + s(15)
 
         # Header
         if y >= content_rect.y and y < content_rect.bottom:
             surf.blit(self.font.render("QUEST LOG", True, (255, 215, 0)), (x, y))
-        y += 35
+        y += s(35)
 
         # Active Quests Section
         if y >= content_rect.y and y < content_rect.bottom:
             surf.blit(self.small_font.render("ACTIVE QUESTS:", True, (150, 200, 255)), (x, y))
-        y += 25
+        y += s(25)
 
         if character.quests.active_quests:
             for quest_id, quest in character.quests.active_quests.items():
                 # Quest Title
-                if y >= content_rect.y - 25 and y < content_rect.bottom:
+                if y >= content_rect.y - s(25) and y < content_rect.bottom:
                     title_text = f"📜 {quest.quest_def.title}"
-                    surf.blit(self.small_font.render(title_text, True, (220, 220, 255)), (x + 10, y))
-                y += 25
+                    surf.blit(self.small_font.render(title_text, True, (220, 220, 255)), (x + s(10), y))
+                y += s(25)
 
                 # Quest Description
-                if y >= content_rect.y - 20 and y < content_rect.bottom:
+                if y >= content_rect.y - s(20) and y < content_rect.bottom:
                     desc_text = quest.quest_def.description[:80] + "..." if len(quest.quest_def.description) > 80 else quest.quest_def.description
-                    surf.blit(self.tiny_font.render(desc_text, True, (180, 180, 200)), (x + 20, y))
-                y += 20
+                    surf.blit(self.tiny_font.render(desc_text, True, (180, 180, 200)), (x + s(20), y))
+                y += s(20)
 
                 # Quest Objectives
                 if quest.quest_def.objectives.objective_type == "gather":
-                    if y >= content_rect.y - 20 and y < content_rect.bottom:
-                        surf.blit(self.tiny_font.render("Objectives:", True, (200, 200, 220)), (x + 20, y))
-                    y += 18
+                    if y >= content_rect.y - s(20) and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render("Objectives:", True, (200, 200, 220)), (x + s(20), y))
+                    y += s(18)
 
                     for item_req in quest.quest_def.objectives.items:
                         item_id = item_req["item_id"]
@@ -1581,10 +1674,10 @@ class Renderer:
                         status_color = (100, 255, 100) if is_complete else (255, 255, 100)
                         check_mark = "✓" if is_complete else "○"
 
-                        if y >= content_rect.y - 18 and y < content_rect.bottom:
+                        if y >= content_rect.y - s(18) and y < content_rect.bottom:
                             obj_text = f"  {check_mark} Gather {item_name}: {gathered_since_start}/{required_qty}"
-                            surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + 30, y))
-                        y += 18
+                            surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + s(30), y))
+                        y += s(18)
 
                 elif quest.quest_def.objectives.objective_type == "combat":
                     required_kills = quest.quest_def.objectives.enemies_killed
@@ -1597,26 +1690,26 @@ class Renderer:
                     status_color = (100, 255, 100) if is_complete else (255, 255, 100)
                     check_mark = "✓" if is_complete else "○"
 
-                    if y >= content_rect.y - 20 and y < content_rect.bottom:
-                        surf.blit(self.tiny_font.render("Objectives:", True, (200, 200, 220)), (x + 20, y))
-                    y += 18
+                    if y >= content_rect.y - s(20) and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render("Objectives:", True, (200, 200, 220)), (x + s(20), y))
+                    y += s(18)
 
-                    if y >= content_rect.y - 18 and y < content_rect.bottom:
+                    if y >= content_rect.y - s(18) and y < content_rect.bottom:
                         obj_text = f"  {check_mark} Defeat enemies: {kills_since_start}/{required_kills}"
-                        surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + 30, y))
-                    y += 18
+                        surf.blit(self.tiny_font.render(obj_text, True, status_color), (x + s(30), y))
+                    y += s(18)
 
                 # Quest completion status
                 can_complete = quest.check_completion(character)
                 if can_complete:
-                    if y >= content_rect.y - 20 and y < content_rect.bottom:
-                        surf.blit(self.tiny_font.render("✅ Ready to turn in!", True, (100, 255, 100)), (x + 20, y))
-                    y += 20
+                    if y >= content_rect.y - s(20) and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render("✅ Ready to turn in!", True, (100, 255, 100)), (x + s(20), y))
+                    y += s(20)
 
                 # Rewards preview
-                if y >= content_rect.y - 18 and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render("Rewards:", True, (200, 200, 220)), (x + 20, y))
-                y += 18
+                if y >= content_rect.y - s(18) and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render("Rewards:", True, (200, 200, 220)), (x + s(20), y))
+                y += s(18)
 
                 rewards_parts = []
                 if quest.quest_def.rewards.experience > 0:
@@ -1640,52 +1733,53 @@ class Renderer:
                         rewards_parts.append(f"Items: {', '.join(item_names)}")
 
                 for reward_text in rewards_parts:
-                    if y >= content_rect.y - 16 and y < content_rect.bottom:
-                        surf.blit(self.tiny_font.render(f"  • {reward_text}", True, (180, 180, 200)), (x + 30, y))
-                    y += 16
+                    if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                        surf.blit(self.tiny_font.render(f"  • {reward_text}", True, (180, 180, 200)), (x + s(30), y))
+                    y += s(16)
 
-                y += 15  # Space between quests
+                y += s(15)  # Space between quests
 
         else:
             if y >= content_rect.y and y < content_rect.bottom:
-                surf.blit(self.small_font.render("No active quests", True, (150, 150, 150)), (x + 10, y))
-            y += 30
+                surf.blit(self.small_font.render("No active quests", True, (150, 150, 150)), (x + s(10), y))
+            y += s(30)
 
-        y += 20
+        y += s(20)
 
         # Completed Quests Section
         if y >= content_rect.y and y < content_rect.bottom:
             surf.blit(self.small_font.render("COMPLETED QUESTS:", True, (150, 200, 255)), (x, y))
-        y += 25
+        y += s(25)
 
         if character.quests.completed_quests:
             for quest_id in character.quests.completed_quests:
                 if quest_id in npc_db.quests:
                     quest_def = npc_db.quests[quest_id]
-                    if y >= content_rect.y - 20 and y < content_rect.bottom:
+                    if y >= content_rect.y - s(20) and y < content_rect.bottom:
                         completed_text = f"✓ {quest_def.title}"
-                        surf.blit(self.tiny_font.render(completed_text, True, (100, 255, 100)), (x + 10, y))
-                    y += 20
+                        surf.blit(self.tiny_font.render(completed_text, True, (100, 255, 100)), (x + s(10), y))
+                    y += s(20)
         else:
             if y >= content_rect.y and y < content_rect.bottom:
-                surf.blit(self.small_font.render("No completed quests yet", True, (150, 150, 150)), (x + 10, y))
-            y += 30
+                surf.blit(self.small_font.render("No completed quests yet", True, (150, 150, 150)), (x + s(10), y))
+            y += s(30)
 
     def _render_skills_content(self, surf, content_rect, character):
         """Render skills reference content"""
+        s = Config.scale
         skill_db = SkillDatabase.get_instance()
         if not skill_db.loaded:
             return
 
         # Apply scroll offset
         scroll_offset = character.encyclopedia.scroll_offset
-        y = content_rect.y + 15 - scroll_offset
-        x = content_rect.x + 15
+        y = content_rect.y + s(15) - scroll_offset
+        x = content_rect.x + s(15)
 
         # Header
         if y >= content_rect.y and y < content_rect.bottom:
             surf.blit(self.small_font.render(f"All Skills ({len(skill_db.skills)} total)", True, (150, 200, 255)), (x, y))
-        y += 30
+        y += s(30)
 
         # Group skills by tier
         skills_by_tier = {}
@@ -1701,12 +1795,12 @@ class Renderer:
             tier_colors = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}
             if y >= content_rect.y and y < content_rect.bottom:
                 surf.blit(self.small_font.render(f"━━ TIER {tier} ━━", True, tier_colors.get(tier, (150, 150, 150))), (x, y))
-            y += 25
+            y += s(25)
 
             for skill_id, skill_def in skills_by_tier[tier]:
                 # Skip if entirely above visible area
-                if y + 52 < content_rect.y:
-                    y += 52
+                if y + s(52) < content_rect.y:
+                    y += s(52)
                     continue
                 # Stop if entirely below visible area
                 if y > content_rect.bottom:
@@ -1720,8 +1814,8 @@ class Renderer:
                 name_color = (100, 255, 100) if has_skill else ((200, 200, 100) if can_learn else (150, 150, 150))
                 status_text = " [KNOWN]" if has_skill else (" [AVAILABLE]" if can_learn else "")
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(f"• {skill_def.name}{status_text}", True, name_color), (x + 10, y))
-                y += 16
+                    surf.blit(self.tiny_font.render(f"• {skill_def.name}{status_text}", True, name_color), (x + s(10), y))
+                y += s(16)
 
                 # Requirements
                 req_text = f"   Requires: Lvl {skill_def.requirements.character_level}"
@@ -1729,32 +1823,33 @@ class Renderer:
                     stat_reqs = ", ".join(f"{k} {v}" for k, v in skill_def.requirements.stats.items())
                     req_text += f", {stat_reqs}"
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + 10, y))
-                y += 16
+                    surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + s(10), y))
+                y += s(16)
 
                 # Effect description
                 effect_desc = f"   {skill_def.effect.effect_type.capitalize()} - {skill_def.effect.category} ({skill_def.effect.magnitude})"
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(effect_desc, True, (100, 150, 200)), (x + 10, y))
-                y += 20
+                    surf.blit(self.tiny_font.render(effect_desc, True, (100, 150, 200)), (x + s(10), y))
+                y += s(20)
 
-            y += 10
+            y += s(10)
 
     def _render_titles_content(self, surf, content_rect, character):
         """Render titles reference content"""
+        s = Config.scale
         title_db = TitleDatabase.get_instance()
         if not title_db.loaded:
             return
 
         # Apply scroll offset
         scroll_offset = character.encyclopedia.scroll_offset
-        y = content_rect.y + 15 - scroll_offset
-        x = content_rect.x + 15
+        y = content_rect.y + s(15) - scroll_offset
+        x = content_rect.x + s(15)
 
         # Header
         if y >= content_rect.y and y < content_rect.bottom:
             surf.blit(self.small_font.render(f"All Titles ({len(title_db.titles)} total)", True, (255, 215, 0)), (x, y))
-        y += 30
+        y += s(30)
 
         # Group titles by tier
         titles_by_tier = {}
@@ -1781,12 +1876,12 @@ class Renderer:
             # Tier header
             if y >= content_rect.y and y < content_rect.bottom:
                 surf.blit(self.small_font.render(f"━━ {tier_name.upper()} ━━", True, tier_colors.get(tier_name, (150, 150, 150))), (x, y))
-            y += 25
+            y += s(25)
 
             for title_id, title_def in titles_by_tier[tier_name]:
                 # Skip if entirely above visible area
-                if y + 52 < content_rect.y:
-                    y += 52
+                if y + s(52) < content_rect.y:
+                    y += s(52)
                     continue
                 # Stop if entirely below visible area
                 if y > content_rect.bottom:
@@ -1799,8 +1894,8 @@ class Renderer:
 
                 # Title name
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(f"• {title_def.name}{status_text}", True, name_color), (x + 10, y))
-                y += 16
+                    surf.blit(self.tiny_font.render(f"• {title_def.name}{status_text}", True, name_color), (x + s(10), y))
+                y += s(16)
 
                 # Requirement
                 activity_names = {
@@ -1820,15 +1915,15 @@ class Renderer:
                     chance = tier_chances.get(tier_name, '?%')
                     req_text += f" ({chance} chance)"
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + 10, y))
-                y += 16
+                    surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + s(10), y))
+                y += s(16)
 
                 # Bonus
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(f"   {title_def.bonus_description}", True, (100, 200, 100)), (x + 10, y))
-                y += 20
+                    surf.blit(self.tiny_font.render(f"   {title_def.bonus_description}", True, (100, 200, 100)), (x + s(10), y))
+                y += s(20)
 
-            y += 10
+            y += s(10)
 
     def render_notifications(self, notifications: List[Notification]):
         y = 50
@@ -1943,58 +2038,80 @@ class Renderer:
             self.render_item_tooltip(item_stack, mouse_pos, character)
 
     def render_item_in_slot(self, item_stack: ItemStack, rect: pygame.Rect, is_equipped: bool = False):
-        # Check if it's equipment
+        """
+        Render an item in an inventory slot with optional image support.
+        Falls back to colored rectangles if no image is available.
+        """
+        image_cache = ImageCache.get_instance()
+        inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
+
+        # Determine item properties
+        icon_path = None
+        name = ""
+        tier = 1
+        rarity = "common"
+
         if item_stack.is_equipment():
             equipment = item_stack.get_equipment()
             if equipment:
-                color = Config.RARITY_COLORS.get(equipment.rarity, (200, 200, 200))
-                inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
-                pygame.draw.rect(self.screen, color, inner)
+                icon_path = equipment.icon_path
+                name = equipment.name
+                tier = equipment.tier
+                rarity = equipment.rarity
+        else:
+            mat = item_stack.get_material()
+            if mat:
+                icon_path = mat.icon_path
+                name = mat.name
+                tier = mat.tier
+                rarity = mat.rarity
 
-                # Show "E" for equipped items
-                if is_equipped:
-                    e_surf = self.font.render("E", True, (255, 255, 255))
-                    e_rect = e_surf.get_rect(center=inner.center)
-                    # Black outline
-                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
-                        self.screen.blit(self.font.render("E", True, (0, 0, 0)), (e_rect.x + dx, e_rect.y + dy))
-                    self.screen.blit(e_surf, e_rect)
-                else:
-                    tier_surf = self.small_font.render(f"T{equipment.tier}", True, (0, 0, 0))
-                    self.screen.blit(tier_surf, (rect.x + 6, rect.y + 6))
+        # Try to load image from cache
+        image = image_cache.get_image(icon_path, (inner.width, inner.height)) if icon_path else None
 
-                # Add item name label
-                name_surf = self.tiny_font.render(equipment.name[:8], True, (255, 255, 255))
-                name_rect = name_surf.get_rect(centerx=rect.centerx, bottom=rect.bottom - 2)
-                # Black outline for readability
-                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                    self.screen.blit(self.tiny_font.render(equipment.name[:8], True, (0, 0, 0)),
-                                     (name_rect.x + dx, name_rect.y + dy))
-                self.screen.blit(name_surf, name_rect)
-                return
-
-        # Regular material
-        mat = item_stack.get_material()
-        if mat:
-            color = Config.RARITY_COLORS.get(mat.rarity, (200, 200, 200))
-            inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
+        if image:
+            # Render image
+            self.screen.blit(image, inner.topleft)
+        else:
+            # Fallback: Render colored rectangle
+            color = Config.RARITY_COLORS.get(rarity, (200, 200, 200))
             pygame.draw.rect(self.screen, color, inner)
-            tier_surf = self.small_font.render(f"T{mat.tier}", True, (0, 0, 0))
-            self.screen.blit(tier_surf, (rect.x + 6, rect.y + 6))
 
-            # Add item name label
-            name_surf = self.tiny_font.render(mat.name[:8], True, (255, 255, 255))
+        # Overlay text elements (always shown)
+        # Show "E" for equipped items OR tier for unequipped
+        if is_equipped:
+            e_surf = self.font.render("E", True, (255, 255, 255))
+            e_rect = e_surf.get_rect(center=inner.center)
+            # Black outline
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
+                self.screen.blit(self.font.render("E", True, (0, 0, 0)), (e_rect.x + dx, e_rect.y + dy))
+            self.screen.blit(e_surf, e_rect)
+        else:
+            # Show tier in top-left
+            tier_surf = self.small_font.render(f"T{tier}", True, (255, 255, 255))
+            tier_rect = tier_surf.get_rect(topleft=(rect.x + 6, rect.y + 6))
+            # Black outline
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                self.screen.blit(self.small_font.render(f"T{tier}", True, (0, 0, 0)),
+                                (tier_rect.x + dx, tier_rect.y + dy))
+            self.screen.blit(tier_surf, tier_rect)
+
+        # Show item name at bottom
+        if name:
+            name_surf = self.tiny_font.render(name[:8], True, (255, 255, 255))
             name_rect = name_surf.get_rect(centerx=rect.centerx, bottom=rect.bottom - 2)
             # Black outline for readability
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                self.screen.blit(self.tiny_font.render(mat.name[:8], True, (0, 0, 0)),
+                self.screen.blit(self.tiny_font.render(name[:8], True, (0, 0, 0)),
                                  (name_rect.x + dx, name_rect.y + dy))
             self.screen.blit(name_surf, name_rect)
 
+        # Show quantity for stackable items
         if item_stack.quantity > 1:
             qty_text = str(item_stack.quantity)
             qty_surf = self.small_font.render(qty_text, True, (255, 255, 255))
             qty_rect = qty_surf.get_rect(bottomright=(rect.right - 3, rect.bottom - 3))
+            # Black outline
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                 self.screen.blit(self.small_font.render(qty_text, True, (0, 0, 0)),
                                  (qty_rect.x + dx, qty_rect.y + dy))
@@ -2034,6 +2151,51 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
+    def _group_recipes_by_type(self, recipes, equip_db, mat_db):
+        """Group recipes by their output type for organized display"""
+        from collections import defaultdict
+
+        # Define type categories and their order
+        type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Consumables', 'Materials', 'Stations', 'Other']
+        grouped = defaultdict(list)
+
+        for recipe in recipes:
+            # Determine type based on output
+            output_type = 'Other'
+
+            if equip_db.is_equipment(recipe.output_id):
+                equip = equip_db.create_equipment_from_id(recipe.output_id)
+                if equip:
+                    if equip.item_type == 'weapon':
+                        output_type = 'Weapons'
+                    elif equip.item_type == 'shield':
+                        output_type = 'Weapons'  # Shields with weapons
+                    elif equip.item_type == 'armor':
+                        output_type = 'Armor'
+                    elif equip.item_type == 'tool':
+                        output_type = 'Tools'
+                    elif equip.item_type == 'accessory':
+                        output_type = 'Accessories'
+                    elif equip.item_type == 'station':
+                        output_type = 'Stations'
+            else:
+                mat = mat_db.get_material(recipe.output_id)
+                if mat:
+                    if mat.category == 'consumable':
+                        output_type = 'Consumables'
+                    elif mat.category in ['material', 'resource', 'component']:
+                        output_type = 'Materials'
+
+            grouped[output_type].append(recipe)
+
+        # Return as ordered list of tuples
+        result = []
+        for type_name in type_order:
+            if type_name in grouped and grouped[type_name]:
+                result.append((type_name, grouped[type_name]))
+
+        return result
+
     def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int], selected_recipe=None, user_placement=None):
         """
         Render crafting UI with two-panel layout:
@@ -2071,115 +2233,144 @@ class Renderer:
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
+        s = Config.scale  # Shorthand for readability
         # Window dimensions - expanded to fit two panels
-        ww, wh = 1200, 600
-        left_panel_w = 450
-        right_panel_w = 700
-        separator_x = left_panel_w + 20
+        ww, wh = Config.MENU_LARGE_W, Config.MENU_MEDIUM_H
+        left_panel_w = s(450)
+        right_panel_w = s(500)  # Reduced to fit in LARGE menu
+        separator_x = left_panel_w + s(20)
 
-        wx = (Config.VIEWPORT_WIDTH - ww) // 2
-        wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+        wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)  # Clamp to prevent off-screen
+        wy = max(0, (Config.VIEWPORT_HEIGHT - wh) // 2)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 240))
 
         # Header
         header = f"{character.active_station.station_type.value.upper()} (T{character.active_station.tier})"
-        surf.blit(self.font.render(header, True, character.active_station.get_color()), (20, 20))
-        surf.blit(self.small_font.render("[ESC] Close | Select recipe to place materials", True, (180, 180, 180)), (ww - 400, 20))
+        surf.blit(self.font.render(header, True, character.active_station.get_color()), (s(20), s(20)))
+        surf.blit(self.small_font.render("[ESC] Close | Select recipe to place materials", True, (180, 180, 180)), (ww - s(400), s(20)))
 
         # Get recipes for this station
         recipes = recipe_db.get_recipes_for_station(character.active_station.station_type.value,
                                                     character.active_station.tier)
 
         # ======================
-        # LEFT PANEL: Recipe List with Scrolling
+        # LEFT PANEL: Recipe List with Scrolling (ORGANIZED BY TYPE)
         # ======================
         visible_recipes = []  # Initialize to empty list
         if not recipes:
-            surf.blit(self.font.render("No recipes available", True, (200, 200, 200)), (20, 80))
+            surf.blit(self.font.render("No recipes available", True, (200, 200, 200)), (s(20), s(80)))
         else:
-            # Apply scroll offset and show 8 recipes at a time
-            total_recipes = len(recipes)
-            max_visible = 8
-            start_idx = min(scroll_offset, max(0, total_recipes - max_visible))
-            end_idx = min(start_idx + max_visible, total_recipes)
-            visible_recipes = recipes[start_idx:end_idx]
+            # Group recipes by type
+            grouped_recipes = self._group_recipes_by_type(recipes, equip_db, mat_db)
+
+            # Flatten grouped recipes into a list with headers
+            # Format: [('header', 'Weapons'), ('recipe', recipe_obj), ('recipe', recipe_obj), ('header', 'Tools'), ...]
+            flat_list = []
+            for type_name, type_recipes in grouped_recipes:
+                flat_list.append(('header', type_name))
+                for recipe in type_recipes:
+                    flat_list.append(('recipe', recipe))
+
+            # Apply scroll offset and show items
+            total_items = len(flat_list)
+            max_visible = 12  # Increased to account for headers
+            start_idx = min(scroll_offset, max(0, total_items - max_visible))
+            end_idx = min(start_idx + max_visible, total_items)
+            visible_items = flat_list[start_idx:end_idx]
 
             # Show scroll indicators if needed
-            if total_recipes > max_visible:
-                scroll_text = f"Recipes {start_idx + 1}-{end_idx} of {total_recipes}"
+            if total_items > max_visible:
+                scroll_text = f"Showing {start_idx + 1}-{end_idx} of {total_items}"
                 scroll_surf = self.small_font.render(scroll_text, True, (150, 150, 150))
-                surf.blit(scroll_surf, (20, 50))
+                surf.blit(scroll_surf, (s(20), s(50)))
 
                 # Show scroll arrows
                 if start_idx > 0:
                     up_arrow = self.small_font.render("▲ Scroll Up", True, (100, 200, 100))
-                    surf.blit(up_arrow, (left_panel_w - 120, 50))
-                if end_idx < total_recipes:
+                    surf.blit(up_arrow, (left_panel_w - s(120), s(50)))
+                if end_idx < total_items:
                     down_arrow = self.small_font.render("▼ Scroll Down", True, (100, 200, 100))
-                    surf.blit(down_arrow, (left_panel_w - 120, wh - 30))
+                    surf.blit(down_arrow, (left_panel_w - s(120), wh - s(30)))
 
-            y_off = 70
-            for i, recipe in enumerate(visible_recipes):
-                # Compact recipe display (no buttons, just info)
-                num_inputs = len(recipe.inputs)
-                btn_height = max(70, 35 + num_inputs * 16 + 5)
+            y_off = s(70)
+            for i, item in enumerate(visible_items):
+                item_type, item_data = item
 
-                btn = pygame.Rect(20, y_off, left_panel_w - 30, btn_height)
-                can_craft = recipe_db.can_craft(recipe, character.inventory)
+                if item_type == 'header':
+                    # Render type header
+                    header_text = item_data
+                    header_color = (255, 215, 0)  # Gold
+                    header_surf = self.font.render(header_text, True, header_color)
+                    surf.blit(header_surf, (s(25), y_off))
 
-                # Highlight selected recipe with gold border
-                is_selected = (self._temp_selected_recipe and self._temp_selected_recipe.recipe_id == recipe.recipe_id)
+                    # Underline
+                    underline_y = y_off + s(22)
+                    pygame.draw.line(surf, header_color, (s(25), underline_y), (left_panel_w - s(35), underline_y), 1)
 
-                btn_color = (60, 80, 60) if can_craft else (80, 60, 60)
-                if is_selected:
-                    btn_color = (80, 70, 30)  # Gold tint for selected
+                    y_off += s(28)
 
-                pygame.draw.rect(surf, btn_color, btn)
-                border_color = (255, 215, 0) if is_selected else (100, 100, 100)
-                border_width = 3 if is_selected else 2
-                pygame.draw.rect(surf, border_color, btn, border_width)
+                elif item_type == 'recipe':
+                    recipe = item_data
+                    # Compact recipe display (no buttons, just info)
+                    num_inputs = len(recipe.inputs)
+                    btn_height = max(s(70), s(35) + num_inputs * s(16) + s(5))
 
-                # Output name
-                is_equipment = equip_db.is_equipment(recipe.output_id)
-                if is_equipment:
-                    equip = equip_db.create_equipment_from_id(recipe.output_id)
-                    out_name = equip.name if equip else recipe.output_id
-                    color = Config.RARITY_COLORS.get(equip.rarity, (200, 200, 200)) if equip else (200, 200, 200)
-                else:
-                    out_mat = mat_db.get_material(recipe.output_id)
-                    out_name = out_mat.name if out_mat else recipe.output_id
-                    color = Config.RARITY_COLORS.get(out_mat.rarity, (200, 200, 200)) if out_mat else (200, 200, 200)
+                    btn = pygame.Rect(s(20), y_off, left_panel_w - s(30), btn_height)
+                    can_craft = recipe_db.can_craft(recipe, character.inventory)
 
-                surf.blit(self.font.render(f"{out_name} x{recipe.output_qty}", True, color),
-                          (btn.x + 10, btn.y + 8))
+                    # Highlight selected recipe with gold border
+                    is_selected = (self._temp_selected_recipe and self._temp_selected_recipe.recipe_id == recipe.recipe_id)
 
-                # Material requirements (compact)
-                req_y = btn.y + 30
-                for inp in recipe.inputs:
-                    mat_id = inp.get('materialId', '')
-                    req = inp.get('quantity', 0)
-                    avail = character.inventory.get_item_count(mat_id)
-                    mat = mat_db.get_material(mat_id)
-                    mat_name = mat.name if mat else mat_id
-                    req_color = (100, 255, 100) if avail >= req or Config.DEBUG_INFINITE_RESOURCES else (255, 100, 100)
-                    surf.blit(self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color),
-                              (btn.x + 15, req_y))
-                    req_y += 16
+                    btn_color = (60, 80, 60) if can_craft else (80, 60, 60)
+                    if is_selected:
+                        btn_color = (80, 70, 30)  # Gold tint for selected
 
-                y_off += btn_height + 8
+                    pygame.draw.rect(surf, btn_color, btn)
+                    border_color = (255, 215, 0) if is_selected else (100, 100, 100)
+                    border_width = 3 if is_selected else 2
+                    pygame.draw.rect(surf, border_color, btn, border_width)
+
+                    # Output name
+                    is_equipment = equip_db.is_equipment(recipe.output_id)
+                    if is_equipment:
+                        equip = equip_db.create_equipment_from_id(recipe.output_id)
+                        out_name = equip.name if equip else recipe.output_id
+                        color = Config.RARITY_COLORS.get(equip.rarity, (200, 200, 200)) if equip else (200, 200, 200)
+                    else:
+                        out_mat = mat_db.get_material(recipe.output_id)
+                        out_name = out_mat.name if out_mat else recipe.output_id
+                        color = Config.RARITY_COLORS.get(out_mat.rarity, (200, 200, 200)) if out_mat else (200, 200, 200)
+
+                    surf.blit(self.font.render(f"{out_name} x{recipe.output_qty}", True, color),
+                              (btn.x + s(10), btn.y + s(8)))
+
+                    # Material requirements (compact)
+                    req_y = btn.y + s(30)
+                    for inp in recipe.inputs:
+                        mat_id = inp.get('materialId', '')
+                        req = inp.get('quantity', 0)
+                        avail = character.inventory.get_item_count(mat_id)
+                        mat = mat_db.get_material(mat_id)
+                        mat_name = mat.name if mat else mat_id
+                        req_color = (100, 255, 100) if avail >= req or Config.DEBUG_INFINITE_RESOURCES else (255, 100, 100)
+                        surf.blit(self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color),
+                                  (btn.x + s(15), req_y))
+                        req_y += s(16)
+
+                    y_off += btn_height + s(8)
 
         # ======================
         # DIVIDER
         # ======================
-        pygame.draw.line(surf, (100, 100, 100), (separator_x, 60), (separator_x, wh - 20), 2)
+        pygame.draw.line(surf, (100, 100, 100), (separator_x, s(60)), (separator_x, wh - s(20)), 2)
 
         # ======================
         # RIGHT PANEL: Placement + Buttons
         # ======================
-        right_panel_x = separator_x + 20
-        right_panel_y = 70
+        right_panel_x = separator_x + s(20)
+        right_panel_y = s(70)
 
         if self._temp_selected_recipe:
             # Selected recipe - show placement and buttons
@@ -2187,8 +2378,8 @@ class Renderer:
             can_craft = recipe_db.can_craft(selected, character.inventory)
 
             # Placement visualization area
-            placement_h = 380
-            placement_rect = pygame.Rect(right_panel_x, right_panel_y, right_panel_w - 40, placement_h)
+            placement_h = s(380)
+            placement_rect = pygame.Rect(right_panel_x, right_panel_y, right_panel_w - s(40), placement_h)
             pygame.draw.rect(surf, (30, 30, 40), placement_rect)
             pygame.draw.rect(surf, (80, 80, 90), placement_rect, 2)
 
@@ -2215,45 +2406,45 @@ class Renderer:
 
             # Craft buttons at bottom of right panel
             if can_craft:
-                btn_y = placement_rect.bottom + 20
-                instant_btn_w, instant_btn_h = 120, 40
-                minigame_btn_w, minigame_btn_h = 120, 40
+                btn_y = placement_rect.bottom + s(20)
+                instant_btn_w, instant_btn_h = s(120), s(40)
+                minigame_btn_w, minigame_btn_h = s(120), s(40)
 
                 # Center the buttons horizontally in right panel
-                total_btn_w = instant_btn_w + minigame_btn_w + 20
-                start_x = right_panel_x + (right_panel_w - 40 - total_btn_w) // 2
+                total_btn_w = instant_btn_w + minigame_btn_w + s(20)
+                start_x = right_panel_x + (right_panel_w - s(40) - total_btn_w) // 2
 
                 instant_btn_x = start_x
-                minigame_btn_x = start_x + instant_btn_w + 20
+                minigame_btn_x = start_x + instant_btn_w + s(20)
 
                 # Instant button (gray)
                 instant_rect = pygame.Rect(instant_btn_x, btn_y, instant_btn_w, instant_btn_h)
                 pygame.draw.rect(surf, (60, 60, 60), instant_rect)
                 pygame.draw.rect(surf, (120, 120, 120), instant_rect, 2)
                 instant_text = self.font.render("Instant", True, (200, 200, 200))
-                surf.blit(instant_text, (instant_btn_x + 25, btn_y + 10))
+                surf.blit(instant_text, (instant_btn_x + s(25), btn_y + s(10)))
 
                 instant_subtext = self.small_font.render("0 XP", True, (150, 150, 150))
-                surf.blit(instant_subtext, (instant_btn_x + 40, btn_y + 28))
+                surf.blit(instant_subtext, (instant_btn_x + s(40), btn_y + s(28)))
 
                 # Minigame button (gold)
                 minigame_rect = pygame.Rect(minigame_btn_x, btn_y, minigame_btn_w, minigame_btn_h)
                 pygame.draw.rect(surf, (80, 60, 20), minigame_rect)
                 pygame.draw.rect(surf, (255, 215, 0), minigame_rect, 2)
                 minigame_text = self.font.render("Minigame", True, (255, 215, 0))
-                surf.blit(minigame_text, (minigame_btn_x + 10, btn_y + 10))
+                surf.blit(minigame_text, (minigame_btn_x + s(10), btn_y + s(10)))
 
                 minigame_subtext = self.small_font.render("1.5x XP", True, (255, 200, 100))
-                surf.blit(minigame_subtext, (minigame_btn_x + 30, btn_y + 28))
+                surf.blit(minigame_subtext, (minigame_btn_x + s(30), btn_y + s(28)))
             else:
                 # Can't craft - show why
-                btn_y = placement_rect.bottom + 30
+                btn_y = placement_rect.bottom + s(30)
                 cannot_text = self.font.render("Insufficient Materials", True, (255, 100, 100))
-                surf.blit(cannot_text, (right_panel_x + (right_panel_w - 40 - cannot_text.get_width())//2, btn_y))
+                surf.blit(cannot_text, (right_panel_x + (right_panel_w - s(40) - cannot_text.get_width())//2, btn_y))
         else:
             # No recipe selected - show prompt
             prompt_text = self.font.render("← Select a recipe to view details", True, (150, 150, 150))
-            surf.blit(prompt_text, (right_panel_x + 50, right_panel_y + 150))
+            surf.blit(prompt_text, (right_panel_x + s(50), right_panel_y + s(150)))
 
         self.screen.blit(surf, (wx, wy))
         # Return window rect, recipes, and grid cell rects for click handling
@@ -2271,27 +2462,28 @@ class Renderer:
         if not character.equipment_ui_open:
             return None
 
-        ww, wh = 800, 600
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
-        wy = 50
+        ww, wh = Config.MENU_MEDIUM_W, Config.MENU_MEDIUM_H
+        wx = Config.VIEWPORT_WIDTH - ww - Config.scale(20)  # Right-aligned with margin
+        wy = Config.scale(50)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 240))
 
-        surf.blit(self.font.render("EQUIPMENT", True, (255, 215, 0)), (20, 20))
+        surf.blit(self.font.render("EQUIPMENT", True, (255, 215, 0)), (Config.scale(20), Config.scale(20)))
         surf.blit(self.small_font.render("[E or ESC] Close | [SHIFT+CLICK] to unequip", True, (180, 180, 180)),
-                  (ww - 350, 20))
+                  (ww - Config.scale(350), Config.scale(20)))
 
-        slot_size = 80
+        slot_size = Config.scale(80)
+        s = Config.scale  # Shorthand for readability
         slots_layout = {
-            'helmet': (ww // 2 - slot_size // 2, 70),
-            'mainHand': (ww // 2 - slot_size - 20, 170),
-            'chestplate': (ww // 2 - slot_size // 2, 170),
-            'offHand': (ww // 2 + 20, 170),
-            'gauntlets': (ww // 2 - slot_size - 20, 270),
-            'leggings': (ww // 2 - slot_size // 2, 270),
-            'boots': (ww // 2 - slot_size // 2, 370),
-            'accessory': (ww // 2 + 20, 270),
+            'helmet': (ww // 2 - slot_size // 2, s(70)),
+            'mainHand': (ww // 2 - slot_size - s(20), s(170)),
+            'chestplate': (ww // 2 - slot_size // 2, s(170)),
+            'offHand': (ww // 2 + s(20), s(170)),
+            'gauntlets': (ww // 2 - slot_size - s(20), s(270)),
+            'leggings': (ww // 2 - slot_size // 2, s(270)),
+            'boots': (ww // 2 - slot_size // 2, s(370)),
+            'accessory': (ww // 2 + s(20), s(270)),
         }
 
         hovered_slot = None
@@ -2313,38 +2505,38 @@ class Renderer:
 
             if item:
                 rarity_color = Config.RARITY_COLORS.get(item.rarity, (200, 200, 200))
-                inner_rect = pygame.Rect(sx + 5, sy + 5, slot_size - 10, slot_size - 10)
+                inner_rect = pygame.Rect(sx + s(5), sy + s(5), slot_size - s(10), slot_size - s(10))
                 pygame.draw.rect(surf, rarity_color, inner_rect)
 
                 tier_text = f"T{item.tier}"
                 tier_surf = self.small_font.render(tier_text, True, (0, 0, 0))
-                surf.blit(tier_surf, (sx + 8, sy + 8))
+                surf.blit(tier_surf, (sx + s(8), sy + s(8)))
 
             label_surf = self.tiny_font.render(slot_name, True, (150, 150, 150))
-            surf.blit(label_surf, (sx + slot_size // 2 - label_surf.get_width() // 2, sy + slot_size + 3))
+            surf.blit(label_surf, (sx + slot_size // 2 - label_surf.get_width() // 2, sy + slot_size + s(3)))
 
-        stats_x = 20
-        stats_y = 470
+        stats_x = s(20)
+        stats_y = s(470)
         surf.blit(self.font.render("Equipment Stats:", True, (200, 200, 200)), (stats_x, stats_y))
-        stats_y += 30
+        stats_y += s(30)
 
         weapon_dmg = character.equipment.get_weapon_damage()
         surf.blit(self.small_font.render(f"Weapon Damage: {weapon_dmg[0]}-{weapon_dmg[1]}", True, (200, 200, 200)),
                   (stats_x, stats_y))
-        stats_y += 20
+        stats_y += s(20)
 
         total_defense = character.equipment.get_total_defense()
         surf.blit(self.small_font.render(f"Total Defense: {total_defense}", True, (200, 200, 200)), (stats_x, stats_y))
-        stats_y += 20
+        stats_y += s(20)
 
         stat_bonuses = character.equipment.get_stat_bonuses()
         if stat_bonuses:
             surf.blit(self.small_font.render("Bonuses:", True, (150, 150, 150)), (stats_x, stats_y))
-            stats_y += 18
+            stats_y += s(18)
             for stat, value in stat_bonuses.items():
                 surf.blit(self.tiny_font.render(f"  +{value:.1f}% {stat}", True, (100, 200, 100)),
-                          (stats_x + 10, stats_y))
-                stats_y += 16
+                          (stats_x + s(10), stats_y))
+                stats_y += s(16)
 
         if hovered_slot:
             slot_name, item = hovered_slot
@@ -2355,12 +2547,13 @@ class Renderer:
 
     def render_equipment_tooltip(self, item: EquipmentItem, mouse_pos: Tuple[int, int], character: Character,
                                  from_inventory: bool = False):
-        tw, th, pad = 320, 340, 10  # Increased height for enchantments
-        x, y = mouse_pos[0] + 15, mouse_pos[1] + 15
+        s = Config.scale
+        tw, th, pad = s(320), s(340), s(10)  # Increased height for enchantments
+        x, y = mouse_pos[0] + s(15), mouse_pos[1] + s(15)
         if x + tw > Config.SCREEN_WIDTH:
-            x = mouse_pos[0] - tw - 15
+            x = mouse_pos[0] - tw - s(15)
         if y + th > Config.SCREEN_HEIGHT:
-            y = mouse_pos[1] - th - 15
+            y = mouse_pos[1] - th - s(15)
 
         surf = pygame.Surface((tw, th), pygame.SRCALPHA)
         surf.fill(Config.COLOR_TOOLTIP_BG)
@@ -2369,36 +2562,42 @@ class Renderer:
         color = Config.RARITY_COLORS.get(item.rarity, (200, 200, 200))
 
         surf.blit(self.font.render(item.name, True, color), (pad, y_pos))
-        y_pos += 25
+        y_pos += s(25)
         surf.blit(self.small_font.render(f"Tier {item.tier} | {item.rarity.capitalize()} | {item.slot}", True, color),
                   (pad, y_pos))
-        y_pos += 25
+        y_pos += s(25)
+
+        # Display tags if present
+        if hasattr(item, 'tags') and item.tags:
+            tags_text = ", ".join(item.tags)
+            surf.blit(self.tiny_font.render(f"Tags: {tags_text}", True, (150, 200, 255)), (pad, y_pos))
+            y_pos += s(18)
 
         if item.damage[0] > 0:
             dmg = item.get_actual_damage()
             surf.blit(self.small_font.render(f"Damage: {dmg[0]}-{dmg[1]}", True, (200, 200, 200)), (pad, y_pos))
-            y_pos += 20
+            y_pos += s(20)
 
             # Show range for weapons
             if item.range != 1.0:
                 surf.blit(self.small_font.render(f"Range: {item.range}", True, (200, 200, 200)), (pad, y_pos))
-                y_pos += 20
+                y_pos += s(20)
 
         if item.defense > 0:
             def_val = int(item.defense * item.get_effectiveness())
             surf.blit(self.small_font.render(f"Defense: {def_val}", True, (200, 200, 200)), (pad, y_pos))
-            y_pos += 20
+            y_pos += s(20)
 
         if item.attack_speed != 1.0:
             surf.blit(self.small_font.render(f"Attack Speed: {item.attack_speed:.2f}x", True, (200, 200, 200)),
                       (pad, y_pos))
-            y_pos += 20
+            y_pos += s(20)
 
         # Display enchantments
         if item.enchantments:
-            y_pos += 5
+            y_pos += s(5)
             surf.blit(self.small_font.render("Enchantments:", True, (180, 140, 255)), (pad, y_pos))
-            y_pos += 20
+            y_pos += s(20)
             for ench in item.enchantments:
                 ench_name = ench.get('name', 'Unknown')
                 effect = ench.get('effect', {})
@@ -2418,7 +2617,7 @@ class Renderer:
                     ench_text = f"  {ench_name}"
 
                 surf.blit(self.tiny_font.render(ench_text, True, (200, 180, 255)), (pad, y_pos))
-                y_pos += 16
+                y_pos += s(16)
 
         dur_pct = (item.durability_current / item.durability_max) * 100
         dur_color = (100, 255, 100) if dur_pct > 50 else (255, 200, 100) if dur_pct > 25 else (255, 100, 100)
@@ -2426,12 +2625,12 @@ class Renderer:
         if Config.DEBUG_INFINITE_RESOURCES:
             dur_text += " (∞)"
         surf.blit(self.small_font.render(dur_text, True, dur_color), (pad, y_pos))
-        y_pos += 20
+        y_pos += s(20)
 
         if item.requirements:
-            y_pos += 5
+            y_pos += s(5)
             surf.blit(self.tiny_font.render("Requirements:", True, (150, 150, 150)), (pad, y_pos))
-            y_pos += 15
+            y_pos += s(15)
             can_equip, reason = item.can_equip(character)
             req_color = (100, 255, 100) if can_equip else (255, 100, 100)
             if 'level' in item.requirements:
@@ -2528,40 +2727,44 @@ class Renderer:
         return window_rect, item_rects
 
     def render_start_menu(self, selected_option: int, mouse_pos: Tuple[int, int]):
-        """Render the start menu with New World / Load World / Temporary World options"""
-        # Menu dimensions
-        ww, wh = 600, 500
-        wx = (Config.SCREEN_WIDTH - ww) // 2
-        wy = (Config.SCREEN_HEIGHT - wh) // 2
+        """Render the start menu with New World / Load World / Load Default Save / Temporary World options"""
+        s = Config.scale
+        # Menu dimensions (increased height for 4 options)
+        ww = Config.MENU_SMALL_W
+        wh = s(650)  # Increased from MENU_SMALL_H to fit 4 options
+        wx = max(0, (Config.SCREEN_WIDTH - ww) // 2)  # Clamp to prevent off-screen
+        wy = max(0, (Config.SCREEN_HEIGHT - wh) // 2)
 
         # Create menu surface
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 250))
-        pygame.draw.rect(surf, (100, 100, 120), surf.get_rect(), 3)
+        pygame.draw.rect(surf, (100, 100, 120), surf.get_rect(), s(3))
 
         # Title
         title_text = self.font.render("WELCOME TO THE GAME", True, (255, 215, 0))
-        title_rect = title_text.get_rect(centerx=ww // 2, y=40)
+        title_rect = title_text.get_rect(centerx=ww // 2, y=s(40))
         surf.blit(title_text, title_rect)
 
         # Subtitle
         subtitle_text = self.small_font.render("Select an option to begin", True, (180, 180, 200))
-        subtitle_rect = subtitle_text.get_rect(centerx=ww // 2, y=80)
+        subtitle_rect = subtitle_text.get_rect(centerx=ww // 2, y=s(80))
         surf.blit(subtitle_text, subtitle_rect)
 
         # Menu options
         options = [
             ("New World", "Start a new adventure"),
             ("Load World", "Continue from a saved game"),
+            ("Load Default Save", "Testing save with items & progress"),
             ("Temporary World", "Practice mode (no saves)")
         ]
 
         button_rects = []
-        y_offset = 150
-        button_height = 80
+        y_offset = s(120)  # Start buttons higher
+        button_height = s(75)  # Slightly smaller buttons
+        button_spacing = s(15)  # Tighter spacing
 
         for idx, (option_name, option_desc) in enumerate(options):
-            button_rect = pygame.Rect(50, y_offset + idx * (button_height + 20), ww - 100, button_height)
+            button_rect = pygame.Rect(s(50), y_offset + idx * (button_height + button_spacing), ww - s(100), button_height)
 
             # Check hover and selection
             rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
@@ -2580,15 +2783,15 @@ class Renderer:
                 border_color = (80, 90, 110)
 
             pygame.draw.rect(surf, bg_color, button_rect)
-            pygame.draw.rect(surf, border_color, button_rect, 2)
+            pygame.draw.rect(surf, border_color, button_rect, s(2))
 
             # Button text
             name_text = self.font.render(option_name, True, (220, 220, 240))
-            name_rect = name_text.get_rect(centerx=button_rect.centerx, y=button_rect.y + 15)
+            name_rect = name_text.get_rect(centerx=button_rect.centerx, y=button_rect.y + s(15))
             surf.blit(name_text, name_rect)
 
             desc_text = self.small_font.render(option_desc, True, (160, 160, 180))
-            desc_rect = desc_text.get_rect(centerx=button_rect.centerx, y=button_rect.y + 45)
+            desc_rect = desc_text.get_rect(centerx=button_rect.centerx, y=button_rect.y + s(45))
             surf.blit(desc_text, desc_rect)
 
             # Store button rect (in screen coordinates)
@@ -2596,7 +2799,7 @@ class Renderer:
 
         # Controls hint
         controls_text = self.small_font.render("[UP/DOWN] Navigate  [ENTER] Select  [MOUSE] Click", True, (140, 140, 160))
-        controls_rect = controls_text.get_rect(centerx=ww // 2, y=wh - 40)
+        controls_rect = controls_text.get_rect(centerx=ww // 2, y=wh - s(40))
         surf.blit(controls_text, controls_rect)
 
         # Check for existing saves
@@ -2604,7 +2807,7 @@ class Renderer:
             save_files = [f for f in os.listdir("saves") if f.endswith(".json")]
             if save_files:
                 save_count_text = self.tiny_font.render(f"Found {len(save_files)} save file(s)", True, (100, 200, 100))
-                save_count_rect = save_count_text.get_rect(centerx=ww // 2, y=wh - 70)
+                save_count_rect = save_count_text.get_rect(centerx=ww // 2, y=wh - s(70))
                 surf.blit(save_count_text, save_count_rect)
 
         self.screen.blit(surf, (wx, wy))
@@ -2618,49 +2821,50 @@ class Renderer:
         if not class_db.loaded or not class_db.classes:
             return None
 
-        ww, wh = 900, 700
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
-        wy = 50
+        s = Config.scale
+        ww, wh = Config.MENU_LARGE_W, Config.MENU_LARGE_H
+        wx = max(0, Config.VIEWPORT_WIDTH - ww - s(20))  # Right-aligned with margin, clamped
+        wy = s(50)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 250))
 
-        surf.blit(self.font.render("SELECT YOUR CLASS", True, (255, 215, 0)), (ww // 2 - 100, 20))
+        surf.blit(self.font.render("SELECT YOUR CLASS", True, (255, 215, 0)), (ww // 2 - s(100), s(20)))
         surf.blit(self.small_font.render("Choose wisely - this defines your playstyle", True, (180, 180, 180)),
-                  (ww // 2 - 150, 50))
+                  (ww // 2 - s(150), s(50)))
 
         classes_list = list(class_db.classes.values())
-        col_width = (ww - 60) // 2
-        card_height = 90
+        col_width = (ww - s(60)) // 2
+        card_height = s(90)
 
         class_buttons = []
         for idx, class_def in enumerate(classes_list):
             col = idx % 2
             row = idx // 2
 
-            x = 20 + col * (col_width + 20)
-            y = 100 + row * (card_height + 10)
+            x = s(20) + col * (col_width + s(20))
+            y = s(100) + row * (card_height + s(10))
 
             card_rect = pygame.Rect(x, y, col_width, card_height)
             is_hovered = card_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
 
             card_color = (60, 80, 100) if is_hovered else (40, 50, 60)
             pygame.draw.rect(surf, card_color, card_rect)
-            pygame.draw.rect(surf, (100, 120, 140) if is_hovered else (80, 90, 100), card_rect, 2)
+            pygame.draw.rect(surf, (100, 120, 140) if is_hovered else (80, 90, 100), card_rect, s(2))
 
             name_surf = self.font.render(class_def.name, True, (255, 215, 0))
-            surf.blit(name_surf, (x + 10, y + 8))
+            surf.blit(name_surf, (x + s(10), y + s(8)))
 
-            bonus_y = y + 35
+            bonus_y = y + s(35)
             for bonus_type, value in list(class_def.bonuses.items())[:2]:
                 bonus_text = f"+{value if isinstance(value, int) else f'{value * 100:.0f}%'} {bonus_type.replace('_', ' ')}"
                 bonus_surf = self.tiny_font.render(bonus_text, True, (100, 200, 100))
-                surf.blit(bonus_surf, (x + 15, bonus_y))
-                bonus_y += 14
+                surf.blit(bonus_surf, (x + s(15), bonus_y))
+                bonus_y += s(14)
 
             if is_hovered:
                 select_surf = self.small_font.render("[CLICK] Select", True, (100, 255, 100))
-                surf.blit(select_surf, (x + col_width - select_surf.get_width() - 10, y + card_height - 25))
+                surf.blit(select_surf, (x + col_width - select_surf.get_width() - s(10), y + card_height - s(25)))
 
             class_buttons.append((card_rect, class_def))
 
@@ -2671,27 +2875,28 @@ class Renderer:
         if not character.stats_ui_open:
             return None
 
-        ww, wh = 900, 700
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
-        wy = 50
+        s = Config.scale
+        ww, wh = Config.MENU_LARGE_W, Config.MENU_LARGE_H
+        wx = max(0, Config.VIEWPORT_WIDTH - ww - s(20))  # Right-aligned with margin, clamped
+        wy = s(50)
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 240))
 
-        surf.blit(self.font.render(f"CHARACTER - Level {character.leveling.level}", True, (255, 215, 0)), (20, 20))
-        surf.blit(self.small_font.render("[C or ESC] Close", True, (180, 180, 180)), (ww - 150, 20))
+        surf.blit(self.font.render(f"CHARACTER - Level {character.leveling.level}", True, (255, 215, 0)), (s(20), s(20)))
+        surf.blit(self.small_font.render("[C or ESC] Close", True, (180, 180, 180)), (ww - s(150), s(20)))
 
-        col1_x, col2_x, col3_x = 20, 320, 620
-        y_start = 70
+        col1_x, col2_x, col3_x = s(20), s(320), s(620)
+        y_start = s(70)
 
         y = y_start
         surf.blit(self.font.render("STATS", True, (255, 255, 255)), (col1_x, y))
-        y += 35
+        y += s(35)
 
         if character.leveling.unallocated_stat_points > 0:
             surf.blit(self.small_font.render(f"Points: {character.leveling.unallocated_stat_points}",
                                              True, (0, 255, 0)), (col1_x, y))
-            y += 25
+            y += s(25)
 
         stat_buttons = []
         for stat_name, label in [('strength', 'STR'), ('defense', 'DEF'), ('vitality', 'VIT'),
@@ -2702,20 +2907,20 @@ class Renderer:
                       (col1_x, y))
 
             if character.leveling.unallocated_stat_points > 0:
-                btn = pygame.Rect(col1_x + 150, y - 2, 40, 20)
+                btn = pygame.Rect(col1_x + s(150), y - s(2), s(40), s(20))
                 pygame.draw.rect(surf, (50, 100, 50), btn)
-                pygame.draw.rect(surf, (100, 200, 100), btn, 2)
+                pygame.draw.rect(surf, (100, 200, 100), btn, s(2))
                 plus = self.small_font.render("+1", True, (255, 255, 255))
                 surf.blit(plus, plus.get_rect(center=btn.center))
                 stat_buttons.append((btn, stat_name))
-            y += 28
+            y += s(28)
 
         y = y_start
         surf.blit(self.font.render("TITLES", True, (255, 255, 255)), (col2_x, y))
-        y += 35
+        y += s(35)
         surf.blit(self.small_font.render(f"Earned: {len(character.titles.earned_titles)}",
                                          True, (200, 200, 200)), (col2_x, y))
-        y += 30
+        y += s(30)
 
         for title in character.titles.earned_titles[-8:]:
             tier_color = {
@@ -2724,16 +2929,16 @@ class Renderer:
             }.get(title.tier, (200, 200, 200))
 
             surf.blit(self.small_font.render(f"• {title.name}", True, tier_color), (col2_x, y))
-            y += 18
+            y += s(18)
             surf.blit(self.tiny_font.render(f"  {title.bonus_description}", True, (100, 200, 100)), (col2_x, y))
-            y += 20
+            y += s(20)
 
         if len(character.titles.earned_titles) == 0:
             surf.blit(self.small_font.render("Keep playing to earn titles!", True, (150, 150, 150)), (col2_x, y))
 
         y = y_start
         surf.blit(self.font.render("PROGRESS", True, (255, 255, 255)), (col3_x, y))
-        y += 35
+        y += s(35)
 
         title_db = TitleDatabase.get_instance()
         activities_shown = set()
@@ -2754,23 +2959,23 @@ class Renderer:
                     progress = count / next_title.acquisition_threshold
                     surf.blit(self.small_font.render(f"{activity_type.capitalize()}:", True, (180, 180, 180)),
                               (col3_x, y))
-                    y += 18
+                    y += s(18)
 
-                    bar_w, bar_h = 220, 12
+                    bar_w, bar_h = s(220), s(12)
                     bar_rect = pygame.Rect(col3_x, y, bar_w, bar_h)
                     pygame.draw.rect(surf, (40, 40, 40), bar_rect)
                     prog_w = int(bar_w * min(1.0, progress))
                     pygame.draw.rect(surf, (100, 200, 100), pygame.Rect(col3_x, y, prog_w, bar_h))
-                    pygame.draw.rect(surf, (100, 100, 100), bar_rect, 1)
+                    pygame.draw.rect(surf, (100, 100, 100), bar_rect, s(1))
 
                     prog_text = f"{count}/{next_title.acquisition_threshold}"
                     prog_surf = self.tiny_font.render(prog_text, True, (255, 255, 255))
-                    surf.blit(prog_surf, (col3_x + bar_w // 2 - prog_surf.get_width() // 2, y + 1))
-                    y += 18
+                    surf.blit(prog_surf, (col3_x + bar_w // 2 - prog_surf.get_width() // 2, y + s(1)))
+                    y += s(18)
 
                     next_surf = self.tiny_font.render(f"Next: {next_title.name}", True, (150, 150, 150))
                     surf.blit(next_surf, (col3_x, y))
-                    y += 22
+                    y += s(22)
 
         if len(activities_shown) == 0:
             surf.blit(self.small_font.render("Start gathering and crafting!", True, (150, 150, 150)), (col3_x, y))

@@ -257,3 +257,36 @@ class QuestManager:
     def has_completed(self, quest_id: str) -> bool:
         """Check if quest has been completed and turned in"""
         return quest_id in self.completed_quests
+
+    def restore_from_save(self, quest_state: dict):
+        """
+        Restore quest state from save data.
+
+        Args:
+            quest_state: Dictionary containing quest state data from save file
+        """
+        # Clear existing state
+        self.active_quests.clear()
+        self.completed_quests.clear()
+
+        # Restore completed quests
+        self.completed_quests = list(quest_state.get("completed_quests", []))
+
+        # Restore active quests (if any)
+        active_quests_data = quest_state.get("active_quests", {})
+
+        # If there are no active quests, skip quest restoration
+        if not active_quests_data:
+            print(f"Restored 0 active quests and {len(self.completed_quests)} completed quests")
+            return
+
+        # Try to load quest database if we have active quests
+        try:
+            # Note: QuestDatabase may not exist yet - quest system is not fully implemented
+            # For now, we'll just skip restoring active quests if the database doesn't exist
+            # This allows saves to work even without a quest system
+            print(f"⚠ Quest database not implemented - skipping {len(active_quests_data)} active quests")
+            print(f"Restored 0 active quests and {len(self.completed_quests)} completed quests")
+        except ImportError:
+            print(f"⚠ Quest database not available - skipping quest restoration")
+            print(f"Restored 0 active quests and {len(self.completed_quests)} completed quests")

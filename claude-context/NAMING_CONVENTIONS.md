@@ -229,6 +229,7 @@ grep -n "method_name(" calling_module.py
   "recipeId": "smithing_iron_sword_001",
   "outputId": "iron_sword",
   "outputQty": 1,
+  "stationType": "smithing",  // CRITICAL: Use "adornments" NOT "enchanting"!
   "stationTier": 1,
   "inputs": [
     {
@@ -238,6 +239,12 @@ grep -n "method_name(" calling_module.py
   ]
 }
 ```
+
+**⚠️ CRITICAL RULE: Station Type Naming**
+- Use `"stationType": "adornments"` for enchanting/adornment recipes
+- **NEVER** use `"stationType": "enchanting"` - the game does not recognize this!
+- Valid station types: `"smithing"`, `"alchemy"`, `"refining"`, `"engineering"`, `"adornments"`
+- Files use "adornments" naming: `recipes-adornments-1.json`, `placements-adornments-1.JSON`
 
 ### Minigame Result Format
 
