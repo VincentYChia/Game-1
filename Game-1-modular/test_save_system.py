@@ -50,7 +50,7 @@ def test_save_data_structure():
             'max_mana': 100.0,
             'class_system': type('obj', (object,), {'current_class': None})(),
             'inventory': type('obj', (object,), {'slots': [None] * 30})(),
-            'equipment': type('obj', (object,), {'equipment_slots': {}})(),
+            'equipment': type('obj', (object,), {'slots': {}})(),
             'skills': type('obj', (object,), {
                 'equipped_skills': [None] * 5,
                 'known_skills': {}
@@ -130,7 +130,7 @@ def test_json_serialization():
             'max_mana': 100.0,
             'class_system': type('obj', (object,), {'current_class': None})(),
             'inventory': type('obj', (object,), {'slots': [None] * 30})(),
-            'equipment': type('obj', (object,), {'equipment_slots': {}})(),
+            'equipment': type('obj', (object,), {'slots': {}})(),
             'skills': type('obj', (object,), {
                 'equipped_skills': [None] * 5,
                 'known_skills': {}

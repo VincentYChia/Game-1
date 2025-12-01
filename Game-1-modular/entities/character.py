@@ -265,7 +265,7 @@ class Character:
             equipment_data = save_data.get("equipment", {})
             for slot_name, item_id in equipment_data.items():
                 if item_id and equipment_db.is_equipment(item_id):
-                    equipment_item = equipment_db.create_equipment(item_id)
+                    equipment_item = equipment_db.create_equipment_from_id(item_id)
                     character.equipment.slots[slot_name] = equipment_item
 
             character.recalculate_stats()
@@ -422,7 +422,7 @@ class Character:
         equipped_data = player_data.get("equipped_skills", [None] * 5)
         for slot_idx, skill_id in enumerate(equipped_data):
             if skill_id and slot_idx < 5:
-                self.skills.equip_skill(skill_id, slot_idx, character=self)
+                self.skills.equip_skill(skill_id, slot_idx)
 
         # Restore titles
         title_db = TitleDatabase.get_instance()

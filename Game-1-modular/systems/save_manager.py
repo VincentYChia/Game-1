@@ -94,10 +94,7 @@ class SaveManager:
             "class": character.class_system.current_class.class_id if character.class_system.current_class else None,
             "inventory": self._serialize_inventory(character.inventory),
             "equipment": self._serialize_equipment(character.equipment),
-            "equipped_skills": [
-                skill.skill_id if skill else None
-                for skill in character.skills.equipped_skills
-            ],
+            "equipped_skills": list(character.skills.equipped_skills),
             "known_skills": {
                 skill_id: {
                     "level": skill_data.level,
@@ -105,7 +102,7 @@ class SaveManager:
                 }
                 for skill_id, skill_data in character.skills.known_skills.items()
             },
-            "titles": list(character.titles.earned_titles),
+            "titles": [title.title_id for title in character.titles.earned_titles],
             "activities": {
                 activity: count
                 for activity, count in character.activities.activity_counts.items()
