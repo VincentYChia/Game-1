@@ -38,14 +38,14 @@ This will create `saves/default_save.json` with the following setup:
 
 **Consumables:**
 - Minor Health Potion (5)
-- Minor Mana Potion (5)
+- Health Potion (3)
 
 **Equipment (in inventory):**
 - Iron Shortsword (Tier 1, mainHand)
 - Steel Helm (Tier 2, helmet)
 
 **Devices:**
-- Basic Turret (3)
+- Basic Arrow Turret (3)
 - Spike Trap (5)
 
 ### Equipped Items
@@ -86,9 +86,8 @@ This will create `saves/default_save.json` with the following setup:
 - Enchanting: 5
 
 ### World State
-- 1 Basic Turret placed at (48, 48)
+- 1 Basic Arrow Turret placed at (48, 48)
 - 1 Partially harvested Oak Tree at (45, 45)
-- All crafting stations (Tiers 1-4) at default positions
 
 ### Quest Progress
 - Completed: Tutorial Quest

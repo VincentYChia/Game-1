@@ -55,8 +55,8 @@ def create_default_save():
                 {"item_id": "birch_plank", "quantity": 15, "max_stack": 99, "rarity": "common"},
 
                 # Some consumables
-                {"item_id": "health_potion_minor", "quantity": 5, "max_stack": 99, "rarity": "common"},
-                {"item_id": "mana_potion_minor", "quantity": 5, "max_stack": 99, "rarity": "common"},
+                {"item_id": "minor_health_potion", "quantity": 5, "max_stack": 99, "rarity": "common"},
+                {"item_id": "health_potion", "quantity": 3, "max_stack": 99, "rarity": "common"},
 
                 # Equipment pieces in inventory (not equipped) - using items that actually exist
                 {
@@ -105,7 +105,7 @@ def create_default_save():
                 },
 
                 # Some devices for placement
-                {"item_id": "basic_turret", "quantity": 3, "max_stack": 10, "rarity": "uncommon"},
+                {"item_id": "basic_arrow_turret", "quantity": 3, "max_stack": 10, "rarity": "uncommon"},
                 {"item_id": "spike_trap", "quantity": 5, "max_stack": 10, "rarity": "common"},
 
                 # Empty slots
@@ -156,7 +156,7 @@ def create_default_save():
             "placed_entities": [
                 {
                     "position": {"x": 48.0, "y": 48.0, "z": 0.0},
-                    "item_id": "basic_turret",
+                    "item_id": "basic_arrow_turret",
                     "entity_type": "TURRET",
                     "tier": 1,
                     "health": 100.0,

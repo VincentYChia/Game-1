@@ -100,14 +100,14 @@
         "rarity": "common"
       },
       {
-        "item_id": "health_potion_minor",
+        "item_id": "minor_health_potion",
         "quantity": 5,
         "max_stack": 99,
         "rarity": "common"
       },
       {
-        "item_id": "mana_potion_minor",
-        "quantity": 5,
+        "item_id": "health_potion",
+        "quantity": 3,
         "max_stack": 99,
         "rarity": "common"
       },
@@ -162,7 +162,7 @@
         }
       },
       {
-        "item_id": "basic_turret",
+        "item_id": "basic_arrow_turret",
         "quantity": 3,
         "max_stack": 10,
         "rarity": "uncommon"
@@ -250,7 +250,7 @@
           "y": 48.0,
           "z": 0.0
         },
-        "item_id": "basic_turret",
+        "item_id": "basic_arrow_turret",
         "entity_type": "TURRET",
         "tier": 1,
         "health": 100.0,
