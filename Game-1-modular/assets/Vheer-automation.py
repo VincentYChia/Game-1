@@ -56,6 +56,7 @@ CATALOG_PATH = SCRIPT_DIR.parent.parent / "Scaled JSON Development" / "ITEM_CATA
 
 GENERATION_TIMEOUT = 180
 WAIT_BETWEEN_ITEMS = 25
+VERSIONS_TO_GENERATE = 3  # Generate 3 versions of each icon
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -167,6 +168,63 @@ def setup_driver():
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
+
+def safe_driver_get(driver, url, max_retries=3):
+    """Safely navigate to URL with connection retry logic
+
+    Args:
+        driver: Selenium WebDriver instance
+        url: URL to navigate to
+        max_retries: Maximum number of retry attempts
+
+    Returns:
+        True if successful, False otherwise
+    """
+    for attempt in range(max_retries):
+        try:
+            driver.get(url)
+            return True
+        except Exception as e:
+            print(f"  ⚠ Connection error (attempt {attempt+1}/{max_retries}): {type(e).__name__}")
+            if attempt < max_retries - 1:
+                wait_time = 10 * (attempt + 1)  # Increasing wait: 10s, 20s, 30s
+                print(f"  → Waiting {wait_time}s before retry...")
+                time.sleep(wait_time)
+            else:
+                print(f"  ✗ Failed after {max_retries} attempts")
+                return False
+    return False
+
+def restart_driver(old_driver):
+    """Restart the driver after a crash or connection error
+
+    Args:
+        old_driver: The driver instance to restart
+
+    Returns:
+        New driver instance
+    """
+    print("\n🔄 Browser connection lost - restarting...")
+
+    try:
+        old_driver.quit()
+    except:
+        pass
+
+    time.sleep(5)
+
+    new_driver = setup_driver()
+
+    if not safe_driver_get(new_driver, "https://vheer.com/app/game-assets-generator"):
+        raise Exception("Failed to restart driver - check internet connection")
+
+    print("  → Waiting for page to load...")
+    time.sleep(8)
+
+    select_cel_shaded_style(new_driver)
+    print("✓ Browser restarted and ready\n")
+
+    return new_driver
 
 def fill_textareas(driver, prompt1, prompt2):
     """Fill the two textareas with prompts"""
@@ -335,13 +393,14 @@ def screenshot_with_crop(driver, save_path):
 # MAIN GENERATION
 # ============================================================================
 
-def generate_item(driver, item, timeout=None):
+def generate_item(driver, item, timeout=None, version=1):
     """Generate one item icon
 
     Args:
         driver: Selenium WebDriver instance
         item: Item dictionary with name, category, etc.
         timeout: Optional timeout override (default: GENERATION_TIMEOUT)
+        version: Version number (1, 2, 3, etc.) for multiple generations
 
     Returns:
         (success, skipped) tuple
@@ -353,21 +412,31 @@ def generate_item(driver, item, timeout=None):
     base_folder = item.get('base_folder', 'items')
     subfolder = item.get('subfolder')
 
+    # Modify output directory and filename based on version
+    if version == 1:
+        output_base = OUTPUT_DIR
+        filename = f"{name}.png"
+        version_label = ""
+    else:
+        output_base = OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{version}"
+        filename = f"{name}-{version}.png"
+        version_label = f" [v{version}]"
+
     # Build display path and save path
     if subfolder:
-        display_path = f"{base_folder}/{subfolder}/{name}"
-        save_dir = OUTPUT_DIR / base_folder / subfolder
+        display_path = f"{base_folder}/{subfolder}/{filename}"
+        save_dir = output_base / base_folder / subfolder
     else:
-        display_path = f"{base_folder}/{name}"
-        save_dir = OUTPUT_DIR / base_folder
+        display_path = f"{base_folder}/{filename}"
+        save_dir = output_base / base_folder
 
     print(f"\n{'='*70}")
-    print(f"Entity: {name}")
-    print(f"Path: {display_path}.png")
+    print(f"Entity: {name}{version_label}")
+    print(f"Path: {display_path}")
     print(f"{'='*70}")
 
     # Check if already exists in output folder (simple & robust)
-    save_path = save_dir / f"{name}.png"
+    save_path = save_dir / filename
 
     if save_path.exists() and save_path.stat().st_size > 10000:
         print("  ✓ Already exists (resuming)")
@@ -427,7 +496,7 @@ def generate_item(driver, item, timeout=None):
         print(f"  ✗ Error: {e}")
         return False, False
 
-def generate_item_with_retry(driver, item):
+def generate_item_with_retry(driver, item, version=1):
     """Generate item with escalating retry logic
 
     Retry strategy:
@@ -435,25 +504,33 @@ def generate_item_with_retry(driver, item):
     2. Second attempt: 1.5x timeout
     3. Third attempt: refresh page, wait 20s, retry
 
+    Args:
+        driver: Selenium WebDriver instance
+        item: Item dictionary
+        version: Version number for multi-generation
+
     Returns:
         (success, skipped) tuple
     """
     # Attempt 1: Normal timeout
-    ok, skip = generate_item(driver, item, timeout=GENERATION_TIMEOUT)
+    ok, skip = generate_item(driver, item, timeout=GENERATION_TIMEOUT, version=version)
     if ok or skip:
         return ok, skip
 
     # Attempt 2: Extended timeout (1.5x)
     print("\n  ⚠ RETRY 1/2: Extending timeout to 1.5x...")
     extended_timeout = int(GENERATION_TIMEOUT * 1.5)
-    ok, skip = generate_item(driver, item, timeout=extended_timeout)
+    ok, skip = generate_item(driver, item, timeout=extended_timeout, version=version)
     if ok or skip:
         return ok, skip
 
     # Attempt 3: Refresh page and retry
     print("\n  ⚠ RETRY 2/2: Refreshing page...")
     try:
-        driver.get("https://vheer.com/app/game-assets-generator")
+        if not safe_driver_get(driver, "https://vheer.com/app/game-assets-generator"):
+            print("  ✗ Could not reload page")
+            return False, False
+
         print("  → Waiting 20s for page to settle...")
         time.sleep(20)
 
@@ -461,7 +538,7 @@ def generate_item_with_retry(driver, item):
         select_cel_shaded_style(driver)
         print("  → Retrying generation...")
 
-        ok, skip = generate_item(driver, item, timeout=GENERATION_TIMEOUT)
+        ok, skip = generate_item(driver, item, timeout=GENERATION_TIMEOUT, version=version)
         return ok, skip
 
     except Exception as e:
@@ -509,7 +586,10 @@ def main():
 
     try:
         print("\n🌐 Opening Vheer...")
-        driver.get("https://vheer.com/app/game-assets-generator")
+        if not safe_driver_get(driver, "https://vheer.com/app/game-assets-generator"):
+            print("\n❌ Could not connect to Vheer - check internet connection")
+            return
+
         time.sleep(8)
         print("✓ Page loaded")
 
@@ -517,44 +597,112 @@ def main():
         select_cel_shaded_style(driver)
         print("✓ Ready\n")
 
-        success = 0
-        failed = 0
-        skipped = 0
-        failed_list = []
+        # Track totals across all versions
+        total_success = 0
+        total_failed = 0
+        total_skipped = 0
+        all_failed_items = []
 
-        for i, item in enumerate(items, 1):
-            print(f"\n[{i}/{len(items)}]")
+        # Loop through all versions
+        for version in range(1, VERSIONS_TO_GENERATE + 1):
+            print("\n" + "="*70)
+            print(f"GENERATING VERSION {version} of {VERSIONS_TO_GENERATE}")
+            print("="*70)
 
-            ok, skip = generate_item_with_retry(driver, item)
-
-            if skip:
-                skipped += 1
-            elif ok:
-                success += 1
+            if version > 1:
+                output_folder = OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{version}"
+                print(f"📁 Output: {output_folder}")
             else:
-                failed += 1
-                failed_list.append(item['name'])
+                print(f"📁 Output: {OUTPUT_DIR}")
 
-            print(f"\nTotals: ✓{success}  ✗{failed}  ⊘{skipped}")
+            success = 0
+            failed = 0
+            skipped = 0
+            failed_list = []
 
-            if i < len(items) and not skip:
-                print(f"⏱ Waiting {WAIT_BETWEEN_ITEMS}s...")
-                time.sleep(WAIT_BETWEEN_ITEMS)
+            for i, item in enumerate(items, 1):
+                print(f"\n[{i}/{len(items)}] Version {version}")
 
+                # Try to generate with connection error recovery
+                try:
+                    ok, skip = generate_item_with_retry(driver, item, version=version)
+
+                    if skip:
+                        skipped += 1
+                    elif ok:
+                        success += 1
+                    else:
+                        failed += 1
+                        failed_list.append(item['name'])
+
+                except Exception as e:
+                    # Check if it's a connection error
+                    error_str = str(e).lower()
+                    if "connection" in error_str or "timeout" in error_str or "read timed out" in error_str:
+                        print(f"  ⚠ Driver connection error: {type(e).__name__}")
+
+                        try:
+                            # Restart driver and retry this item
+                            driver = restart_driver(driver)
+
+                            print(f"  → Retrying item after restart...")
+                            ok, skip = generate_item_with_retry(driver, item, version=version)
+
+                            if skip:
+                                skipped += 1
+                            elif ok:
+                                success += 1
+                            else:
+                                failed += 1
+                                failed_list.append(item['name'])
+
+                        except Exception as restart_error:
+                            print(f"  ✗ Failed to restart driver: {restart_error}")
+                            failed += 1
+                            failed_list.append(item['name'])
+                    else:
+                        # Not a connection error - re-raise
+                        raise
+
+                print(f"\nVersion {version} Totals: ✓{success}  ✗{failed}  ⊘{skipped}")
+
+                if i < len(items) and not skip:
+                    print(f"⏱ Waiting {WAIT_BETWEEN_ITEMS}s...")
+                    time.sleep(WAIT_BETWEEN_ITEMS)
+
+            # Update totals
+            total_success += success
+            total_failed += failed
+            total_skipped += skipped
+            if failed_list:
+                all_failed_items.extend([(version, name) for name in failed_list])
+
+            print(f"\n✓ Version {version} complete: {success} generated, {skipped} skipped, {failed} failed")
+
+            # Wait before next version
+            if version < VERSIONS_TO_GENERATE:
+                print(f"\n⏱ Waiting 30s before starting version {version + 1}...")
+                time.sleep(30)
+
+        # Final summary
         print("\n" + "="*70)
-        print("COMPLETE!")
+        print("ALL VERSIONS COMPLETE!")
         print("="*70)
-        print(f"✓ Success: {success}")
-        print(f"✗ Failed: {failed}")
-        print(f"⊘ Skipped: {skipped}")
+        print(f"✓ Total Success: {total_success}")
+        print(f"✗ Total Failed: {total_failed}")
+        print(f"⊘ Total Skipped: {total_skipped}")
 
-        if success > 0:
-            print(f"\n📁 Saved to: {OUTPUT_DIR.absolute()}")
+        if total_success > 0:
+            print(f"\n📁 Base output: {OUTPUT_DIR.absolute()}")
+            if VERSIONS_TO_GENERATE > 1:
+                for v in range(2, VERSIONS_TO_GENERATE + 1):
+                    versioned_dir = OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{v}"
+                    print(f"📁 Version {v}: {versioned_dir.absolute()}")
 
-        if failed_list:
-            print(f"\n⚠ Failed:")
-            for name in failed_list:
-                print(f"  - {name}")
+        if all_failed_items:
+            print(f"\n⚠ Failed items:")
+            for version, name in all_failed_items:
+                print(f"  - v{version}: {name}")
 
         print("="*70)
 
