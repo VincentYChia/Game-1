@@ -57,10 +57,48 @@ CATALOG_PATH = SCRIPT_DIR.parent.parent / "Scaled JSON Development" / "ITEM_CATA
 GENERATION_TIMEOUT = 180
 WAIT_BETWEEN_ITEMS = 25
 VERSIONS_TO_GENERATE = 3  # Generate 3 versions of each icon
+DEBUG_MODE = False  # Set to True to see detailed element detection info
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
+def debug_page_elements(driver):
+    """Debug helper: Print all potential download-related elements"""
+    if not DEBUG_MODE:
+        return
+
+    print("\n  [DEBUG] Page elements:")
+
+    # Check buttons
+    try:
+        buttons = driver.find_elements(By.TAG_NAME, 'button')
+        print(f"  - Buttons: {len(buttons)}")
+        for i, btn in enumerate(buttons[:10]):  # First 10
+            text = btn.text[:30] if btn.text else ""
+            aria = btn.get_attribute('aria-label') or ""
+            print(f"    [{i}] text='{text}' aria='{aria}'")
+    except Exception as e:
+        print(f"  - Buttons error: {e}")
+
+    # Check SVGs
+    try:
+        svgs = driver.find_elements(By.TAG_NAME, 'svg')
+        print(f"  - SVGs: {len(svgs)}")
+        download_svgs = [s for s in svgs
+                        if 'download' in (s.get_attribute('aria-label') or '').lower() or
+                           'download' in (s.get_attribute('class') or '').lower()]
+        print(f"    - With 'download': {len(download_svgs)}")
+    except Exception as e:
+        print(f"  - SVGs error: {e}")
+
+    # Check images
+    try:
+        imgs = driver.find_elements(By.TAG_NAME, 'img')
+        blob_imgs = [img for img in imgs if 'blob:' in (img.get_attribute('src') or '')]
+        print(f"  - Images: {len(imgs)} total, {len(blob_imgs)} with blob URLs")
+    except Exception as e:
+        print(f"  - Images error: {e}")
 
 def categorize_item(item):
     """Determine subfolder based on item properties
@@ -298,23 +336,92 @@ def click_generate_button(driver):
     return False
 
 def wait_for_download_button(driver, timeout=180):
-    """Wait for download SVG button to appear"""
+    """Wait for download button to appear (robust multi-method detection)"""
     print(f"    Waiting for generation (up to {timeout}s)...", end="", flush=True)
 
     start = time.time()
     last_check = 0
 
     while time.time() - start < timeout:
-        svgs = driver.find_elements(By.TAG_NAME, 'svg')
-
-        for svg in svgs:
-            paths = svg.find_elements(By.TAG_NAME, 'path')
-            for path in paths:
-                d = path.get_attribute('d') or ''
-                if 'M12 13L12 3M12 13C' in d or 'M3.09502 10C' in d:
+        # METHOD 1: Look for buttons with "download" text
+        try:
+            buttons = driver.find_elements(By.TAG_NAME, 'button')
+            for btn in buttons:
+                text = (btn.text or '').lower()
+                aria_label = (btn.get_attribute('aria-label') or '').lower()
+                if 'download' in text or 'download' in aria_label:
                     elapsed = time.time() - start
-                    print(f" {elapsed:.0f}s ✓")
+                    print(f" {elapsed:.0f}s ✓ (text)")
+                    return btn
+        except:
+            pass
+
+        # METHOD 2: Look for SVG download icons (flexible path matching)
+        try:
+            svgs = driver.find_elements(By.TAG_NAME, 'svg')
+            for svg in svgs:
+                # Check SVG attributes
+                aria_label = (svg.get_attribute('aria-label') or '').lower()
+                class_name = (svg.get_attribute('class') or '').lower()
+
+                if 'download' in aria_label or 'download' in class_name:
+                    elapsed = time.time() - start
+                    print(f" {elapsed:.0f}s ✓ (svg-attr)")
                     return svg
+
+                # Check path data for download-like patterns
+                paths = svg.find_elements(By.TAG_NAME, 'path')
+                for path in paths:
+                    d = (path.get_attribute('d') or '').strip()
+                    # Common download icon patterns:
+                    # - Arrow pointing down: M12 (vertical line or arrow)
+                    # - Download tray: M3, M4, M5 (horizontal base)
+                    if d and len(d) > 20:  # Valid path data
+                        # Check for known download icon patterns
+                        if ('M12' in d and 'L12' in d) or \
+                           ('M3' in d and ('M21' in d or 'H21' in d)) or \
+                           ('M4' in d and 'M20' in d) or \
+                           'M12 13L12 3M12 13C' in d or \
+                           'M3.09502 10C' in d:
+                            elapsed = time.time() - start
+                            print(f" {elapsed:.0f}s ✓ (svg-path)")
+                            return svg
+        except:
+            pass
+
+        # METHOD 3: Look for generated images (blob URLs or large images)
+        try:
+            imgs = driver.find_elements(By.TAG_NAME, 'img')
+            for img in imgs:
+                src = img.get_attribute('src') or ''
+                # Look for blob URLs (generated content) or data URLs
+                if ('blob:' in src or 'data:image' in src):
+                    # Check if image is reasonably large (generated icon, not UI element)
+                    try:
+                        size = img.size
+                        if size['width'] > 300 and size['height'] > 300:
+                            elapsed = time.time() - start
+                            print(f" {elapsed:.0f}s ✓ (image)")
+                            # Return a dummy element that signals success
+                            return img
+                    except:
+                        pass
+        except:
+            pass
+
+        # METHOD 4: Look for specific download button classes/IDs
+        try:
+            # Common patterns for download buttons
+            download_elements = driver.find_elements(By.XPATH,
+                "//*[contains(@class, 'download') or contains(@id, 'download') or "
+                "contains(@data-action, 'download') or contains(@title, 'Download')]")
+
+            if download_elements:
+                elapsed = time.time() - start
+                print(f" {elapsed:.0f}s ✓ (xpath)")
+                return download_elements[0]
+        except:
+            pass
 
         # Progress update every 10 seconds
         current = int(time.time() - start)
@@ -325,23 +432,64 @@ def wait_for_download_button(driver, timeout=180):
         time.sleep(1)
 
     print(f"\n    ⚠ Timeout after {timeout}s")
+
+    # Debug: Show what elements are present at timeout
+    if DEBUG_MODE:
+        debug_page_elements(driver)
+
     return None
 
-def click_download_button(driver, download_svg):
-    """Click the download button (SVG's parent)"""
+def click_download_button(driver, download_element):
+    """Click the download button (handles various element types)"""
     try:
-        # Try to find clickable parent
-        parent = download_svg
-        for _ in range(3):
-            parent = parent.find_element(By.XPATH, './..')
-            if parent.tag_name.lower() in ['button', 'a', 'div']:
-                parent.click()
-                return True
+        element_tag = download_element.tag_name.lower()
 
-        # Fallback: click SVG itself
-        download_svg.click()
+        # If it's already a button, click it directly
+        if element_tag == 'button':
+            download_element.click()
+            return True
+
+        # If it's an image, look for download button nearby
+        if element_tag == 'img':
+            # Try to find download button in the page
+            try:
+                buttons = driver.find_elements(By.TAG_NAME, 'button')
+                for btn in buttons:
+                    text = (btn.text or '').lower()
+                    aria = (btn.get_attribute('aria-label') or '').lower()
+                    if 'download' in text or 'download' in aria:
+                        btn.click()
+                        return True
+            except:
+                pass
+
+        # For SVG or other elements, try to find clickable parent
+        parent = download_element
+        for _ in range(4):
+            try:
+                parent = parent.find_element(By.XPATH, './..')
+                parent_tag = parent.tag_name.lower()
+
+                # Check if parent looks clickable
+                onclick = parent.get_attribute('onclick')
+                role = parent.get_attribute('role')
+                cursor = parent.value_of_css_property('cursor')
+
+                if parent_tag in ['button', 'a'] or \
+                   onclick or \
+                   role == 'button' or \
+                   cursor == 'pointer':
+                    parent.click()
+                    return True
+            except:
+                break
+
+        # Fallback: click element itself
+        download_element.click()
         return True
-    except:
+
+    except Exception as e:
+        print(f"  ⚠ Click error: {e}")
         return False
 
 def get_downloaded_file(timeout=10):
