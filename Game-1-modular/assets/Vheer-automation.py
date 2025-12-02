@@ -29,9 +29,32 @@ import shutil
 
 PERSISTENT_PROMPT = "Simple cel-shaded 3d stylized fantasy exploration item icons. Clean render, distinct details, transparent background."
 
+# Version-specific prompts (replaces entire persistent prompt for that version)
+# Empty dict means use default PERSISTENT_PROMPT for all versions
+VERSION_PROMPTS = {
+    # 1: "First version prompt here",
+    # 2: "Second version with different style",
+    # 3: "Third version experimental style",
+}
+
+# Category-specific additions (appends to detail prompt for matching categories)
+# Keys: category names from catalog (equipment, consumable, enemy, resource, etc.)
+CATEGORY_ADDITIONS = {
+    # 'equipment': 'Make it look heroic and battle-worn',
+    # 'consumable': 'Add a magical glow effect',
+}
+
+# Type-specific additions (appends to detail prompt for matching types)
+# Keys: type names from catalog (weapon, potion, sword, etc.)
+TYPE_ADDITIONS = {
+    # 'potion': 'Show liquid sloshing inside glass vial',
+    # 'sword': 'Add gleaming metal reflections',
+}
+
 TEST_ITEMS = [
     {
         'name': 'Iron_Sword',
+        'base_folder': 'items',
         'subfolder': 'weapons',
         'category': 'equipment',
         'type': 'weapon',
@@ -40,6 +63,7 @@ TEST_ITEMS = [
     },
     {
         'name': 'Health_Potion',
+        'base_folder': 'items',
         'subfolder': 'consumables',
         'category': 'consumable',
         'type': 'potion',
@@ -54,31 +78,54 @@ CATALOG_PATH = SCRIPT_DIR.parent.parent / "Scaled JSON Development" / "ITEM_CATA
 
 GENERATION_TIMEOUT = 180
 WAIT_BETWEEN_ITEMS = 25
+VERSIONS_TO_GENERATE = 3  # Generate 3 versions of each icon
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
 
 def categorize_item(item):
-    """Determine subfolder based on item properties"""
+    """Determine subfolder based on item properties
+
+    Returns tuple: (base_folder, subfolder)
+    - base_folder: 'items', 'enemies', 'resources', 'titles', or 'skills'
+    - subfolder: specific category within base folder (or None for non-items)
+    """
     category = item.get('category', '').lower()
     item_type = item.get('type', '').lower()
 
-    if category == 'equipment' and item_type == 'weapon':
-        return 'weapons'
-    if category == 'equipment' and item_type == 'armor':
-        return 'armor'
-    if category == 'equipment' and item_type == 'tool':
-        return 'tools'
-    if category == 'equipment' and item_type == 'accessory':
-        return 'accessories'
+    # Non-item entities
+    if category == 'enemy':
+        return ('enemies', None)
+    if category == 'resource':
+        return ('resources', None)
+    if category == 'title':
+        return ('titles', None)
+    if category == 'skill':
+        return ('skills', None)
+
+    # Item entities - all go under 'items' base folder
+    if category == 'equipment':
+        if item_type in ['weapon', 'sword', 'axe', 'mace', 'dagger', 'spear', 'bow', 'staff', 'shield']:
+            return ('items', 'weapons')
+        elif item_type in ['armor']:
+            return ('items', 'armor')
+        elif item_type in ['tool']:
+            return ('items', 'tools')
+        elif item_type in ['accessory']:
+            return ('items', 'accessories')
+        else:
+            return ('items', 'weapons')  # Default for equipment
+
     if category == 'station':
-        return 'stations'
+        return ('items', 'stations')
     if category == 'device':
-        return 'devices'
+        return ('items', 'devices')
     if category == 'consumable':
-        return 'consumables'
-    return 'materials'
+        return ('items', 'consumables')
+
+    # Default: materials
+    return ('items', 'materials')
 
 def parse_catalog(filepath):
     """Parse ITEM_CATALOG_FOR_ICONS.md"""
@@ -111,18 +158,137 @@ def parse_catalog(filepath):
             item_data.setdefault('subtype', item_data.get('type', 'unknown'))
             item_data.setdefault('category', 'material')
             item_data.setdefault('type', 'unknown')
-            item_data['subfolder'] = categorize_item(item_data)
+
+            # Get folder structure from categorize_item
+            base_folder, subfolder = categorize_item(item_data)
+            item_data['base_folder'] = base_folder
+            item_data['subfolder'] = subfolder
+
             items.append(item_data)
 
     return items
 
 def build_detail_prompt(item):
-    """Build detail prompt from item data"""
-    return f"""Generate an icon image off of the item description:
+    """Build detail prompt from item data with optional additions
+
+    Applies CATEGORY_ADDITIONS and TYPE_ADDITIONS if matching
+    """
+    base_prompt = f"""Generate an icon image off of the item description:
 Category: {item['category']}
 Type: {item['type']}
 Subtype: {item['subtype']}
 Narrative: {item['narrative']}"""
+
+    # Apply category-specific additions
+    category = item.get('category', '').lower()
+    if category in CATEGORY_ADDITIONS:
+        base_prompt += f"\n\nAdditional guidance: {CATEGORY_ADDITIONS[category]}"
+
+    # Apply type-specific additions (more specific than category)
+    item_type = item.get('type', '').lower()
+    if item_type in TYPE_ADDITIONS:
+        base_prompt += f"\n\nType-specific: {TYPE_ADDITIONS[item_type]}"
+
+    return base_prompt
+
+def get_persistent_prompt_for_version(version):
+    """Get the persistent prompt for a specific version
+
+    Returns VERSION_PROMPTS[version] if set, otherwise default PERSISTENT_PROMPT
+    """
+    return VERSION_PROMPTS.get(version, PERSISTENT_PROMPT)
+
+def pre_scan_directories(items, versions_to_generate):
+    """Scan output directories before browser opens
+
+    Shows summary of existing vs missing files for each version
+    Only counts files > 5KB (excludes tiny placeholders)
+
+    Args:
+        items: List of item dictionaries
+        versions_to_generate: Number of versions to check
+    """
+    print("\n" + "="*70)
+    print("PRE-SCAN: Checking existing files")
+    print("="*70)
+
+    MIN_FILE_SIZE = 5000  # 5KB minimum
+
+    # Track overall stats
+    all_version_stats = []
+
+    for version in range(1, versions_to_generate + 1):
+        # Determine output base for this version
+        if version == 1:
+            output_base = OUTPUT_DIR
+        else:
+            output_base = OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{version}"
+
+        existing_files = []
+        missing_items = []
+
+        # Check each item
+        for item in items:
+            name = item['name']
+            base_folder = item.get('base_folder', 'items')
+            subfolder = item.get('subfolder')
+
+            # Build file path (same logic as generate_item)
+            if version == 1:
+                filename = f"{name}.png"
+            else:
+                filename = f"{name}-{version}.png"
+
+            if subfolder:
+                save_dir = output_base / base_folder / subfolder
+            else:
+                save_dir = output_base / base_folder
+
+            save_path = save_dir / filename
+
+            # Check if exists and has valid size
+            if save_path.exists() and save_path.stat().st_size > MIN_FILE_SIZE:
+                existing_files.append({
+                    'name': name,
+                    'path': save_path,
+                    'size': save_path.stat().st_size
+                })
+            else:
+                missing_items.append(name)
+
+        # Store stats
+        existing_count = len(existing_files)
+        missing_count = len(missing_items)
+        total_count = len(items)
+
+        all_version_stats.append({
+            'version': version,
+            'existing': existing_count,
+            'missing': missing_count,
+            'total': total_count,
+            'existing_files': existing_files,
+            'missing_items': missing_items
+        })
+
+        # Print summary for this version
+        print(f"\nVersion {version}: {existing_count}/{total_count} existing, {missing_count} missing")
+
+    # Ask if user wants detailed view
+    if sum(stats['existing'] for stats in all_version_stats) > 0:
+        print("\n" + "-"*70)
+        show_details = input("Show detailed file list? [y/N]: ").strip().lower()
+
+        if show_details == 'y':
+            for stats in all_version_stats:
+                if stats['existing'] > 0:
+                    print(f"\n--- Version {stats['version']} - First 5 existing files ---")
+                    for file_info in stats['existing_files'][:5]:
+                        size_kb = file_info['size'] / 1024
+                        rel_path = file_info['path'].relative_to(SCRIPT_DIR)
+                        print(f"  ✓ {file_info['name']}: {rel_path} ({size_kb:.1f} KB)")
+
+    print("="*70)
+    return all_version_stats
 
 # ============================================================================
 # SELENIUM FUNCTIONS
@@ -306,28 +472,57 @@ def screenshot_with_crop(driver, save_path):
 # MAIN GENERATION
 # ============================================================================
 
-def generate_item(driver, item):
-    """Generate one item icon"""
+def generate_item(driver, item, version=1):
+    """Generate one item icon
+
+    Args:
+        driver: Selenium WebDriver instance
+        item: Item dictionary with name, category, etc.
+        version: Version number (1, 2, 3, etc.) for multiple generations
+
+    Returns:
+        (success, skipped) tuple
+    """
     name = item['name']
-    subfolder = item['subfolder']
+    base_folder = item.get('base_folder', 'items')
+    subfolder = item.get('subfolder')
+
+    # Modify output directory and filename based on version
+    if version == 1:
+        output_base = OUTPUT_DIR
+        filename = f"{name}.png"
+        version_label = ""
+    else:
+        output_base = OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{version}"
+        filename = f"{name}-{version}.png"
+        version_label = f" [v{version}]"
+
+    # Build display path and save path
+    if subfolder:
+        display_path = f"{base_folder}/{subfolder}/{filename}"
+        save_dir = output_base / base_folder / subfolder
+    else:
+        display_path = f"{base_folder}/{filename}"
+        save_dir = output_base / base_folder
 
     print(f"\n{'='*70}")
-    print(f"Item: {name} → {subfolder}/")
+    print(f"Entity: {name}{version_label}")
+    print(f"Path: {display_path}")
     print(f"{'='*70}")
 
-    # Check if already exists
-    save_dir = OUTPUT_DIR / subfolder
-    save_path = save_dir / f"{name}.png"
+    # Check if already exists in output folder (simple & robust)
+    save_path = save_dir / filename
 
     if save_path.exists() and save_path.stat().st_size > 10000:
-        print("  ✓ Already exists")
+        print("  ✓ Already exists (resuming)")
         return True, True
 
     try:
-        # Fill textareas
+        # Fill textareas with version-specific persistent prompt
         print("  → Filling prompts...")
+        persistent_prompt = get_persistent_prompt_for_version(version)
         detail_prompt = build_detail_prompt(item)
-        if not fill_textareas(driver, PERSISTENT_PROMPT, detail_prompt):
+        if not fill_textareas(driver, persistent_prompt, detail_prompt):
             print("  ✗ Could not find textareas")
             return False, False
 
@@ -410,8 +605,12 @@ def main():
     print(f"\nItems: {len(items)}")
     print(f"Timeout: {GENERATION_TIMEOUT}s")
     print(f"Wait between: {WAIT_BETWEEN_ITEMS}s")
+    print(f"Versions: {VERSIONS_TO_GENERATE}")
 
-    input("\nPress Enter to start...")
+    # Pre-scan directories before opening browser
+    pre_scan_directories(items, VERSIONS_TO_GENERATE)
+
+    input("\nPress Enter to start browser and begin generation...")
 
     driver = setup_driver()
 
@@ -425,44 +624,81 @@ def main():
         select_cel_shaded_style(driver)
         print("✓ Ready\n")
 
-        success = 0
-        failed = 0
-        skipped = 0
-        failed_list = []
+        # Track totals across all versions
+        total_success = 0
+        total_failed = 0
+        total_skipped = 0
+        all_failed_items = []
 
-        for i, item in enumerate(items, 1):
-            print(f"\n[{i}/{len(items)}]")
+        # Loop through all versions
+        for version in range(1, VERSIONS_TO_GENERATE + 1):
+            print("\n" + "="*70)
+            print(f"GENERATING VERSION {version} of {VERSIONS_TO_GENERATE}")
+            print("="*70)
 
-            ok, skip = generate_item(driver, item)
-
-            if skip:
-                skipped += 1
-            elif ok:
-                success += 1
+            if version > 1:
+                output_folder = OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{version}"
+                print(f"📁 Output: {output_folder}")
             else:
-                failed += 1
-                failed_list.append(item['name'])
+                print(f"📁 Output: {OUTPUT_DIR}")
 
-            print(f"\nTotals: ✓{success}  ✗{failed}  ⊘{skipped}")
+            success = 0
+            failed = 0
+            skipped = 0
+            failed_list = []
 
-            if i < len(items) and not skip:
-                print(f"⏱ Waiting {WAIT_BETWEEN_ITEMS}s...")
-                time.sleep(WAIT_BETWEEN_ITEMS)
+            for i, item in enumerate(items, 1):
+                print(f"\n[{i}/{len(items)}] Version {version}")
 
+                ok, skip = generate_item(driver, item, version=version)
+
+                if skip:
+                    skipped += 1
+                elif ok:
+                    success += 1
+                else:
+                    failed += 1
+                    failed_list.append(item['name'])
+
+                print(f"\nVersion {version} Totals: ✓{success}  ✗{failed}  ⊘{skipped}")
+
+                if i < len(items) and not skip:
+                    print(f"⏱ Waiting {WAIT_BETWEEN_ITEMS}s...")
+                    time.sleep(WAIT_BETWEEN_ITEMS)
+
+            # Update totals
+            total_success += success
+            total_failed += failed
+            total_skipped += skipped
+            if failed_list:
+                all_failed_items.extend([(version, name) for name in failed_list])
+
+            print(f"\n✓ Version {version} complete: {success} generated, {skipped} skipped, {failed} failed")
+
+            # Wait before next version
+            if version < VERSIONS_TO_GENERATE:
+                print(f"\n⏱ Waiting 30s before starting version {version + 1}...")
+                time.sleep(30)
+
+        # Final summary
         print("\n" + "="*70)
-        print("COMPLETE!")
+        print("ALL VERSIONS COMPLETE!")
         print("="*70)
-        print(f"✓ Success: {success}")
-        print(f"✗ Failed: {failed}")
-        print(f"⊘ Skipped: {skipped}")
+        print(f"✓ Total Success: {total_success}")
+        print(f"✗ Total Failed: {total_failed}")
+        print(f"⊘ Total Skipped: {total_skipped}")
 
-        if success > 0:
-            print(f"\n📁 Saved to: {OUTPUT_DIR.absolute()}")
+        if total_success > 0:
+            print(f"\n📁 Base output: {OUTPUT_DIR.absolute()}")
+            if VERSIONS_TO_GENERATE > 1:
+                for v in range(2, VERSIONS_TO_GENERATE + 1):
+                    versioned_dir = OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{v}"
+                    print(f"📁 Version {v}: {versioned_dir.absolute()}")
 
-        if failed_list:
-            print(f"\n⚠ Failed:")
-            for name in failed_list:
-                print(f"  - {name}")
+        if all_failed_items:
+            print(f"\n⚠ Failed items:")
+            for version, name in all_failed_items:
+                print(f"  - v{version}: {name}")
 
         print("="*70)
 
