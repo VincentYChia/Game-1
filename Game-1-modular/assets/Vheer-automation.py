@@ -376,7 +376,7 @@ def wait_for_download_button(driver, timeout=180):
                     # Common download icon patterns:
                     # - Arrow pointing down: M12 (vertical line or arrow)
                     # - Download tray: M3, M4, M5 (horizontal base)
-                    if d and len(d) > 20:  # Valid path data
+                    if d:  # Has path data
                         # Check for known download icon patterns
                         if ('M12' in d and 'L12' in d) or \
                            ('M3' in d and ('M21' in d or 'H21' in d)) or \
