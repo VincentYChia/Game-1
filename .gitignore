@@ -22,3 +22,8 @@ Thumbs.db
 *.log
 *.db
 .pytest_cache/
+
+# Test outputs and generated files
+**/test_output/
+**/generated_icons/
+**/__pycache__/
