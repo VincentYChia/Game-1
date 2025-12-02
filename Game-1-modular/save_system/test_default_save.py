@@ -3,8 +3,14 @@ Test script to validate the default save file.
 Verifies that all equipment items referenced in the save actually exist.
 """
 
+import sys
 import json
 import os
+from pathlib import Path
+
+# Add the parent directory (Game-1-modular) to path so we can import from data/
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from data.databases.equipment_db import EquipmentDatabase
 
 def test_default_save():

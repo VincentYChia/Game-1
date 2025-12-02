@@ -7,8 +7,8 @@ import sys
 import json
 from pathlib import Path
 
-# Add the current directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add the parent directory (Game-1-modular) to path so we can import from systems/
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 def test_save_manager_import():
     """Test that SaveManager can be imported"""
