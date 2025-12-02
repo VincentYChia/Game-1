@@ -1,8 +1,13 @@
 # Comprehensive Icon Requirements - All Game Entities
 
+> **NOTE**: This document is now maintained automatically by `tools/unified_icon_generator.py`.
+> The authoritative catalog is at `Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md`.
+> See `tools/README_ICON_AUTOMATION.md` for the complete workflow.
+
 **Purpose**: Complete inventory of all visual entities requiring icon images
-**Generated**: November 26, 2025
-**Total Entities**: 200+ items
+**Original Created**: November 26, 2025
+**Last Updated**: December 2, 2025 (Automated via unified_icon_generator.py)
+**Total Entities**: 219 items (previously 200+ estimated)
 
 ---
 
@@ -10,10 +15,12 @@
 
 | Category | Count | Subdirectories |
 |----------|-------|----------------|
-| **Items** | 165+ | materials, weapons, armor, tools, accessories, stations, devices, consumables |
-| **Enemies** | 11 | enemies |
+| **Items** | 154 | materials, weapons, armor, tools, accessories, stations, devices, consumables |
+| **Enemies** | 13 | enemies |
 | **Resources** | 12 | resources |
-| **TOTAL** | 188+ | 9 subdirectories |
+| **Titles** | 10 | titles |
+| **Skills** | 30 | skills |
+| **TOTAL** | 219 | 11 subdirectories |
 
 ---
 
