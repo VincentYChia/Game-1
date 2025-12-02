@@ -335,8 +335,20 @@ def screenshot_with_crop(driver, save_path):
 # MAIN GENERATION
 # ============================================================================
 
-def generate_item(driver, item):
-    """Generate one item icon"""
+def generate_item(driver, item, timeout=None):
+    """Generate one item icon
+
+    Args:
+        driver: Selenium WebDriver instance
+        item: Item dictionary with name, category, etc.
+        timeout: Optional timeout override (default: GENERATION_TIMEOUT)
+
+    Returns:
+        (success, skipped) tuple
+    """
+    if timeout is None:
+        timeout = GENERATION_TIMEOUT
+
     name = item['name']
     base_folder = item.get('base_folder', 'items')
     subfolder = item.get('subfolder')
@@ -354,11 +366,11 @@ def generate_item(driver, item):
     print(f"Path: {display_path}.png")
     print(f"{'='*70}")
 
-    # Check if already exists
+    # Check if already exists in output folder (simple & robust)
     save_path = save_dir / f"{name}.png"
 
     if save_path.exists() and save_path.stat().st_size > 10000:
-        print("  ✓ Already exists")
+        print("  ✓ Already exists (resuming)")
         return True, True
 
     try:
@@ -377,8 +389,8 @@ def generate_item(driver, item):
 
         time.sleep(2)
 
-        # Wait for download button to appear
-        download_svg = wait_for_download_button(driver, GENERATION_TIMEOUT)
+        # Wait for download button to appear (use passed timeout)
+        download_svg = wait_for_download_button(driver, timeout)
 
         if not download_svg:
             print("  ✗ Generation timeout")
@@ -414,6 +426,48 @@ def generate_item(driver, item):
     except Exception as e:
         print(f"  ✗ Error: {e}")
         return False, False
+
+def generate_item_with_retry(driver, item):
+    """Generate item with escalating retry logic
+
+    Retry strategy:
+    1. First attempt: normal timeout
+    2. Second attempt: 1.5x timeout
+    3. Third attempt: refresh page, wait 20s, retry
+
+    Returns:
+        (success, skipped) tuple
+    """
+    # Attempt 1: Normal timeout
+    ok, skip = generate_item(driver, item, timeout=GENERATION_TIMEOUT)
+    if ok or skip:
+        return ok, skip
+
+    # Attempt 2: Extended timeout (1.5x)
+    print("\n  ⚠ RETRY 1/2: Extending timeout to 1.5x...")
+    extended_timeout = int(GENERATION_TIMEOUT * 1.5)
+    ok, skip = generate_item(driver, item, timeout=extended_timeout)
+    if ok or skip:
+        return ok, skip
+
+    # Attempt 3: Refresh page and retry
+    print("\n  ⚠ RETRY 2/2: Refreshing page...")
+    try:
+        driver.get("https://vheer.com/app/game-assets-generator")
+        print("  → Waiting 20s for page to settle...")
+        time.sleep(20)
+
+        # Re-select cel-shaded style
+        select_cel_shaded_style(driver)
+        print("  → Retrying generation...")
+
+        ok, skip = generate_item(driver, item, timeout=GENERATION_TIMEOUT)
+        return ok, skip
+
+    except Exception as e:
+        print(f"  ✗ Refresh failed: {e}")
+        return False, False
+
 
 # ============================================================================
 # MAIN
@@ -471,7 +525,7 @@ def main():
         for i, item in enumerate(items, 1):
             print(f"\n[{i}/{len(items)}]")
 
-            ok, skip = generate_item(driver, item)
+            ok, skip = generate_item_with_retry(driver, item)
 
             if skip:
                 skipped += 1
