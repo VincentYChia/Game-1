@@ -1,0 +1,299 @@
+{
+  "version": "2.0",
+  "save_timestamp": "2025-11-30T21:50:26.247394",
+  "player": {
+    "position": {
+      "x": 38.437579999999976,
+      "y": 52.22425999999999,
+      "z": 0.0
+    },
+    "facing": "down",
+    "stats": {
+      "strength": 0,
+      "defense": 0,
+      "vitality": 0,
+      "luck": 0,
+      "agility": 0,
+      "intelligence": 0
+    },
+    "leveling": {
+      "level": 1,
+      "current_exp": 100,
+      "unallocated_stat_points": 0
+    },
+    "health": 100.0,
+    "max_health": 100.0,
+    "mana": 100.0,
+    "max_mana": 100.0,
+    "class": null,
+    "inventory": [
+      {
+        "item_id": "oak_log",
+        "quantity": 4,
+        "max_stack": 99,
+        "rarity": "common"
+      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "equipment": {
+      "mainHand": null,
+      "offHand": null,
+      "helmet": null,
+      "chestplate": null,
+      "leggings": null,
+      "boots": null,
+      "gauntlets": null,
+      "accessory": null,
+      "axe": "copper_axe",
+      "pickaxe": "copper_pickaxe"
+    },
+    "equipped_skills": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "known_skills": {},
+    "titles": [],
+    "activities": {
+      "mining": 0,
+      "forestry": 10,
+      "smithing": 0,
+      "refining": 0,
+      "alchemy": 0,
+      "engineering": 0,
+      "enchanting": 0,
+      "combat": 0
+    }
+  },
+  "world_state": {
+    "placed_entities": [],
+    "modified_resources": [],
+    "crafting_stations": [
+      {
+        "position": {
+          "x": 44,
+          "y": 46,
+          "z": 0
+        },
+        "station_type": "SMITHING",
+        "tier": 1
+      },
+      {
+        "position": {
+          "x": 44,
+          "y": 48,
+          "z": 0
+        },
+        "station_type": "SMITHING",
+        "tier": 2
+      },
+      {
+        "position": {
+          "x": 44,
+          "y": 50,
+          "z": 0
+        },
+        "station_type": "SMITHING",
+        "tier": 3
+      },
+      {
+        "position": {
+          "x": 44,
+          "y": 52,
+          "z": 0
+        },
+        "station_type": "SMITHING",
+        "tier": 4
+      },
+      {
+        "position": {
+          "x": 46,
+          "y": 46,
+          "z": 0
+        },
+        "station_type": "REFINING",
+        "tier": 1
+      },
+      {
+        "position": {
+          "x": 46,
+          "y": 48,
+          "z": 0
+        },
+        "station_type": "REFINING",
+        "tier": 2
+      },
+      {
+        "position": {
+          "x": 46,
+          "y": 50,
+          "z": 0
+        },
+        "station_type": "REFINING",
+        "tier": 3
+      },
+      {
+        "position": {
+          "x": 46,
+          "y": 52,
+          "z": 0
+        },
+        "station_type": "REFINING",
+        "tier": 4
+      },
+      {
+        "position": {
+          "x": 54,
+          "y": 46,
+          "z": 0
+        },
+        "station_type": "ALCHEMY",
+        "tier": 1
+      },
+      {
+        "position": {
+          "x": 54,
+          "y": 48,
+          "z": 0
+        },
+        "station_type": "ALCHEMY",
+        "tier": 2
+      },
+      {
+        "position": {
+          "x": 54,
+          "y": 50,
+          "z": 0
+        },
+        "station_type": "ALCHEMY",
+        "tier": 3
+      },
+      {
+        "position": {
+          "x": 54,
+          "y": 52,
+          "z": 0
+        },
+        "station_type": "ALCHEMY",
+        "tier": 4
+      },
+      {
+        "position": {
+          "x": 56,
+          "y": 46,
+          "z": 0
+        },
+        "station_type": "ENGINEERING",
+        "tier": 1
+      },
+      {
+        "position": {
+          "x": 56,
+          "y": 48,
+          "z": 0
+        },
+        "station_type": "ENGINEERING",
+        "tier": 2
+      },
+      {
+        "position": {
+          "x": 56,
+          "y": 50,
+          "z": 0
+        },
+        "station_type": "ENGINEERING",
+        "tier": 3
+      },
+      {
+        "position": {
+          "x": 56,
+          "y": 52,
+          "z": 0
+        },
+        "station_type": "ENGINEERING",
+        "tier": 4
+      },
+      {
+        "position": {
+          "x": 50,
+          "y": 46,
+          "z": 0
+        },
+        "station_type": "ADORNMENTS",
+        "tier": 1
+      },
+      {
+        "position": {
+          "x": 50,
+          "y": 48,
+          "z": 0
+        },
+        "station_type": "ADORNMENTS",
+        "tier": 2
+      },
+      {
+        "position": {
+          "x": 50,
+          "y": 50,
+          "z": 0
+        },
+        "station_type": "ADORNMENTS",
+        "tier": 3
+      },
+      {
+        "position": {
+          "x": 50,
+          "y": 52,
+          "z": 0
+        },
+        "station_type": "ADORNMENTS",
+        "tier": 4
+      }
+    ]
+  },
+  "quest_state": {
+    "active_quests": {},
+    "completed_quests": []
+  },
+  "npc_state": {
+    "tutorial_guide": {
+      "current_dialogue_index": 0
+    },
+    "mysterious_trader": {
+      "current_dialogue_index": 0
+    },
+    "combat_trainer": {
+      "current_dialogue_index": 0
+    }
+  }
+}

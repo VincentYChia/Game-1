@@ -8,7 +8,7 @@
 
 ---
 
-## EQUIPMENT - WEAPONS (11 items)
+## EQUIPMENT - WEAPONS (11 items)``````
 
 ### iron_shortsword
 - **Category**: equipment
