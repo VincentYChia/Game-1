@@ -32,6 +32,7 @@ PERSISTENT_PROMPT = "Simple cel-shaded 3d stylized fantasy exploration item icon
 TEST_ITEMS = [
     {
         'name': 'Iron_Sword',
+        'base_folder': 'items',
         'subfolder': 'weapons',
         'category': 'equipment',
         'type': 'weapon',
@@ -40,6 +41,7 @@ TEST_ITEMS = [
     },
     {
         'name': 'Health_Potion',
+        'base_folder': 'items',
         'subfolder': 'consumables',
         'category': 'consumable',
         'type': 'potion',
@@ -60,25 +62,47 @@ WAIT_BETWEEN_ITEMS = 25
 # ============================================================================
 
 def categorize_item(item):
-    """Determine subfolder based on item properties"""
+    """Determine subfolder based on item properties
+
+    Returns tuple: (base_folder, subfolder)
+    - base_folder: 'items', 'enemies', 'resources', 'titles', or 'skills'
+    - subfolder: specific category within base folder (or None for non-items)
+    """
     category = item.get('category', '').lower()
     item_type = item.get('type', '').lower()
 
-    if category == 'equipment' and item_type == 'weapon':
-        return 'weapons'
-    if category == 'equipment' and item_type == 'armor':
-        return 'armor'
-    if category == 'equipment' and item_type == 'tool':
-        return 'tools'
-    if category == 'equipment' and item_type == 'accessory':
-        return 'accessories'
+    # Non-item entities
+    if category == 'enemy':
+        return ('enemies', None)
+    if category == 'resource':
+        return ('resources', None)
+    if category == 'title':
+        return ('titles', None)
+    if category == 'skill':
+        return ('skills', None)
+
+    # Item entities - all go under 'items' base folder
+    if category == 'equipment':
+        if item_type in ['weapon', 'sword', 'axe', 'mace', 'dagger', 'spear', 'bow', 'staff', 'shield']:
+            return ('items', 'weapons')
+        elif item_type in ['armor']:
+            return ('items', 'armor')
+        elif item_type in ['tool']:
+            return ('items', 'tools')
+        elif item_type in ['accessory']:
+            return ('items', 'accessories')
+        else:
+            return ('items', 'weapons')  # Default for equipment
+
     if category == 'station':
-        return 'stations'
+        return ('items', 'stations')
     if category == 'device':
-        return 'devices'
+        return ('items', 'devices')
     if category == 'consumable':
-        return 'consumables'
-    return 'materials'
+        return ('items', 'consumables')
+
+    # Default: materials
+    return ('items', 'materials')
 
 def parse_catalog(filepath):
     """Parse ITEM_CATALOG_FOR_ICONS.md"""
@@ -111,7 +135,12 @@ def parse_catalog(filepath):
             item_data.setdefault('subtype', item_data.get('type', 'unknown'))
             item_data.setdefault('category', 'material')
             item_data.setdefault('type', 'unknown')
-            item_data['subfolder'] = categorize_item(item_data)
+
+            # Get folder structure from categorize_item
+            base_folder, subfolder = categorize_item(item_data)
+            item_data['base_folder'] = base_folder
+            item_data['subfolder'] = subfolder
+
             items.append(item_data)
 
     return items
@@ -309,14 +338,23 @@ def screenshot_with_crop(driver, save_path):
 def generate_item(driver, item):
     """Generate one item icon"""
     name = item['name']
-    subfolder = item['subfolder']
+    base_folder = item.get('base_folder', 'items')
+    subfolder = item.get('subfolder')
+
+    # Build display path and save path
+    if subfolder:
+        display_path = f"{base_folder}/{subfolder}/{name}"
+        save_dir = OUTPUT_DIR / base_folder / subfolder
+    else:
+        display_path = f"{base_folder}/{name}"
+        save_dir = OUTPUT_DIR / base_folder
 
     print(f"\n{'='*70}")
-    print(f"Item: {name} → {subfolder}/")
+    print(f"Entity: {name}")
+    print(f"Path: {display_path}.png")
     print(f"{'='*70}")
 
     # Check if already exists
-    save_dir = OUTPUT_DIR / subfolder
     save_path = save_dir / f"{name}.png"
 
     if save_path.exists() and save_path.stat().st_size > 10000:
