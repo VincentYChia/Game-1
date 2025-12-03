@@ -32,9 +32,9 @@ PERSISTENT_PROMPT = "Simple cel-shaded 3d stylized fantasy exploration item icon
 # Version-specific prompts (replaces entire persistent prompt for that version)
 # Empty dict means use default PERSISTENT_PROMPT for all versions
 VERSION_PROMPTS = {
-    # 1: "First version prompt here",
-    # 2: "Second version with different style",
-    # 3: "Third version experimental style",
+    1: "3D rendered item icon in illustrative fantasy style. Item large in frame (70-80% coverage), slight diagonal positioning. Neutral background with gradient, clean three-point lighting, soft shadow beneath. Focus on representing the idea of the item through an idealized fantasy illustration. Smooth, detailed, and brighter.",
+    2: "3D rendered item icon in illustrative fantasy style. Render EXACTLY the item described - verify item type, form, and state before generating. Item large in frame (70-80% coverage), slight diagonal positioning. Neutral background with gradient, clean three-point lighting, soft shadow beneath. Focus on representing the precise idea of the item through idealized fantasy illustration. Smooth, detailed, and brighter.",
+    3: "3D rendered item icon in illustrative fantasy style. Read full item description carefully - distinguish between similar items (axe vs pickaxe, ore vs ingot vs node, dagger vs sword). Render the specific form described. Item fills 70-80% of frame, diagonal angle. Neutral gradient background, clean three-point lighting, soft shadow. Represent the idealized archetypal form with smooth detail and enhanced brightness. Accuracy to description is critical.",
 }
 
 # Category-specific additions (appends to detail prompt for matching categories)
@@ -42,13 +42,13 @@ VERSION_PROMPTS = {
 CATEGORY_ADDITIONS = {
     # 'equipment': 'Additional guidance for equipment',
     # 'consumable': 'Additional guidance for consumables',
-    # 'enemy': 'Additional guidance for enemies',
-    # 'resource': 'Additional guidance for resources',
-    # 'title': 'Additional guidance for titles',
-    # 'skill': 'Additional guidance for skills',
-    # 'station': 'Additional guidance for stations',
-    # 'device': 'Additional guidance for devices',
-    # 'material': 'Additional guidance for materials',
+    'enemy': 'Focus on stylized enemies. Avoid excessive realism or any elements that may disgust users',
+    'resource': 'This is a node for resources not the actual resource, your illustration should reflect that',
+    'title': 'This is an icon for a in-game title. So it should be a representative icon based on the idea not an illustration',
+    'skill': 'This is an icon for a in-game skill. So it should be a representative icon based on the idea not an illustration',
+    'station': 't1, t2, t3, and t4 represent tiers 1 through 4. 4 is the most advanced and should have the most detail. 1 is the simplest and should be simplest in design',
+    'device': 'Adhere closely to the type as the largest distinction for design.',
+    'material': 'For less specific and documented materials adhering to the style is more important. Use the narrative as the most important description',
 }
 
 # Type-specific additions (appends to detail prompt for matching types)
@@ -71,6 +71,7 @@ TYPE_ADDITIONS = {
     # 'potion': 'Additional guidance for potions',
     # 'food': 'Additional guidance for food',
     # 'scroll': 'Additional guidance for scrolls',
+    'turret': 'Turrets require a base'
     # Other types as needed...
 }
 
