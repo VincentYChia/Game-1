@@ -340,6 +340,47 @@ def setup_driver():
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
 
+def safe_driver_get(driver, url, max_retries=3):
+    """Safely navigate to URL with connection retry logic"""
+    for attempt in range(max_retries):
+        try:
+            driver.get(url)
+            return True
+        except Exception as e:
+            print(f"  ⚠ Connection error (attempt {attempt+1}/{max_retries}): {type(e).__name__}")
+            if attempt < max_retries - 1:
+                wait_time = 10 * (attempt + 1)
+                print(f"  → Waiting {wait_time}s before retry...")
+                time.sleep(wait_time)
+            else:
+                print(f"  ✗ Failed after {max_retries} attempts")
+                return False
+    return False
+
+def restart_driver(old_driver):
+    """Restart the driver after a crash or connection error"""
+    print("\n🔄 Browser connection lost - restarting...")
+
+    try:
+        old_driver.quit()
+    except:
+        pass
+
+    time.sleep(5)
+
+    new_driver = setup_driver()
+
+    if not safe_driver_get(new_driver, "https://vheer.com/app/game-assets-generator"):
+        raise Exception("Failed to restart driver - check internet connection")
+
+    print("  → Waiting for page to load...")
+    time.sleep(8)
+
+    select_cel_shaded_style(new_driver)
+    print("✓ Browser restarted and ready\n")
+
+    return new_driver
+
 def fill_textareas(driver, prompt1, prompt2):
     """Fill the two textareas with prompts"""
     try:
