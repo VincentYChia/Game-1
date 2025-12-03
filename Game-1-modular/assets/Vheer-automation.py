@@ -379,6 +379,13 @@ def fill_textareas(driver, prompt1, prompt2):
 
     except Exception as e:
         print(f"  [DEBUG] EXCEPTION in fill_textareas: {type(e).__name__}: {e}")
+
+        # If it's a connection/timeout error, re-raise it so driver can be restarted
+        error_str = str(e).lower()
+        if "timeout" in error_str or "connection" in error_str or "read timed out" in error_str:
+            print(f"  [DEBUG] Connection error detected - will restart driver")
+            raise  # Re-raise to trigger driver restart
+
         import traceback
         traceback.print_exc()
         return False
@@ -658,6 +665,12 @@ def generate_item(driver, item, version=1):
                 return False, False
 
     except Exception as e:
+        # Check if it's a connection/timeout error - re-raise for driver restart
+        error_str = str(e).lower()
+        if "timeout" in error_str or "connection" in error_str or "read timed out" in error_str:
+            print(f"  ✗ Connection error: {type(e).__name__}")
+            raise  # Re-raise to trigger driver restart in main loop
+
         print(f"  ✗ Error: {e}")
         return False, False
 
@@ -739,15 +752,46 @@ def main():
             for i, item in enumerate(items, 1):
                 print(f"\n[{i}/{len(items)}] Version {version}")
 
-                ok, skip = generate_item(driver, item, version=version)
+                # Try to generate with connection error recovery
+                try:
+                    ok, skip = generate_item(driver, item, version=version)
 
-                if skip:
-                    skipped += 1
-                elif ok:
-                    success += 1
-                else:
-                    failed += 1
-                    failed_list.append(item['name'])
+                    if skip:
+                        skipped += 1
+                    elif ok:
+                        success += 1
+                    else:
+                        failed += 1
+                        failed_list.append(item['name'])
+
+                except Exception as e:
+                    # Check if it's a connection/timeout error
+                    error_str = str(e).lower()
+                    if "connection" in error_str or "timeout" in error_str or "read timed out" in error_str:
+                        print(f"  ⚠ Driver connection error: {type(e).__name__}")
+
+                        try:
+                            # Restart driver and retry this item
+                            driver = restart_driver(driver)
+
+                            print(f"  → Retrying item after restart...")
+                            ok, skip = generate_item(driver, item, version=version)
+
+                            if skip:
+                                skipped += 1
+                            elif ok:
+                                success += 1
+                            else:
+                                failed += 1
+                                failed_list.append(item['name'])
+
+                        except Exception as restart_error:
+                            print(f"  ✗ Failed to restart driver: {restart_error}")
+                            failed += 1
+                            failed_list.append(item['name'])
+                    else:
+                        # Not a connection error - re-raise
+                        raise
 
                 print(f"\nVersion {version} Totals: ✓{success}  ✗{failed}  ⊘{skipped}")
 
