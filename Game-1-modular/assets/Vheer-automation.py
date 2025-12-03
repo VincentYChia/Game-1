@@ -38,17 +38,40 @@ VERSION_PROMPTS = {
 }
 
 # Category-specific additions (appends to detail prompt for matching categories)
-# Keys: category names from catalog (equipment, consumable, enemy, resource, etc.)
+# All available categories from catalog:
 CATEGORY_ADDITIONS = {
-    # 'equipment': 'Make it look heroic and battle-worn',
-    # 'consumable': 'Add a magical glow effect',
+    # 'equipment': 'Additional guidance for equipment',
+    # 'consumable': 'Additional guidance for consumables',
+    # 'enemy': 'Additional guidance for enemies',
+    # 'resource': 'Additional guidance for resources',
+    # 'title': 'Additional guidance for titles',
+    # 'skill': 'Additional guidance for skills',
+    # 'station': 'Additional guidance for stations',
+    # 'device': 'Additional guidance for devices',
+    # 'material': 'Additional guidance for materials',
 }
 
 # Type-specific additions (appends to detail prompt for matching types)
-# Keys: type names from catalog (weapon, potion, sword, etc.)
+# All available types from catalog:
 TYPE_ADDITIONS = {
-    # 'potion': 'Show liquid sloshing inside glass vial',
-    # 'sword': 'Add gleaming metal reflections',
+    # Equipment types:
+    # 'weapon': 'Additional guidance for weapons',
+    # 'sword': 'Additional guidance for swords',
+    # 'axe': 'Additional guidance for axes',
+    # 'mace': 'Additional guidance for maces',
+    # 'dagger': 'Additional guidance for daggers',
+    # 'spear': 'Additional guidance for spears',
+    # 'bow': 'Additional guidance for bows',
+    # 'staff': 'Additional guidance for staves',
+    # 'shield': 'Additional guidance for shields',
+    # 'armor': 'Additional guidance for armor',
+    # 'tool': 'Additional guidance for tools',
+    # 'accessory': 'Additional guidance for accessories',
+    # Consumable types:
+    # 'potion': 'Additional guidance for potions',
+    # 'food': 'Additional guidance for food',
+    # 'scroll': 'Additional guidance for scrolls',
+    # Other types as needed...
 }
 
 TEST_ITEMS = [
@@ -174,6 +197,7 @@ def build_detail_prompt(item):
     Applies CATEGORY_ADDITIONS and TYPE_ADDITIONS if matching
     """
     base_prompt = f"""Generate an icon image off of the item description:
+Icon_name: {item['name']}
 Category: {item['category']}
 Type: {item['type']}
 Subtype: {item['subtype']}
