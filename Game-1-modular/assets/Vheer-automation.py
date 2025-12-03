@@ -197,24 +197,34 @@ def build_detail_prompt(item):
 
     Applies CATEGORY_ADDITIONS and TYPE_ADDITIONS if matching
     """
-    base_prompt = f"""Generate an icon image off of the item description:
+    try:
+        base_prompt = f"""Generate an icon image off of the item description:
 Icon_name: {item['name']}
 Category: {item['category']}
 Type: {item['type']}
 Subtype: {item['subtype']}
 Narrative: {item['narrative']}"""
 
-    # Apply category-specific additions
-    category = item.get('category', '').lower()
-    if category in CATEGORY_ADDITIONS:
-        base_prompt += f"\n\nAdditional guidance: {CATEGORY_ADDITIONS[category]}"
+        # Apply category-specific additions
+        category = item.get('category', '').lower()
+        if category in CATEGORY_ADDITIONS:
+            print(f"  [DEBUG] Adding category guidance for: {category}")
+            base_prompt += f"\n\nAdditional guidance: {CATEGORY_ADDITIONS[category]}"
 
-    # Apply type-specific additions (more specific than category)
-    item_type = item.get('type', '').lower()
-    if item_type in TYPE_ADDITIONS:
-        base_prompt += f"\n\nType-specific: {TYPE_ADDITIONS[item_type]}"
+        # Apply type-specific additions (more specific than category)
+        item_type = item.get('type', '').lower()
+        if item_type in TYPE_ADDITIONS:
+            print(f"  [DEBUG] Adding type guidance for: {item_type}")
+            base_prompt += f"\n\nType-specific: {TYPE_ADDITIONS[item_type]}"
 
-    return base_prompt
+        return base_prompt
+
+    except Exception as e:
+        print(f"  [DEBUG] EXCEPTION in build_detail_prompt: {type(e).__name__}: {e}")
+        print(f"  [DEBUG] Item data: {item}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 def get_persistent_prompt_for_version(version):
     """Get the persistent prompt for a specific version
@@ -332,28 +342,46 @@ def setup_driver():
 
 def fill_textareas(driver, prompt1, prompt2):
     """Fill the two textareas with prompts"""
-    textareas = driver.find_elements(By.TAG_NAME, 'textarea')
+    try:
+        textareas = driver.find_elements(By.TAG_NAME, 'textarea')
 
-    if len(textareas) < 2:
+        print(f"  [DEBUG] Found {len(textareas)} textareas")
+
+        if len(textareas) < 2:
+            print(f"  [DEBUG] ERROR: Need 2 textareas, found {len(textareas)}")
+            return False
+
+        # Debug: Show prompt lengths
+        print(f"  [DEBUG] Persistent prompt length: {len(prompt1)} chars")
+        print(f"  [DEBUG] Detail prompt length: {len(prompt2)} chars")
+
+        # Fill first textarea
+        print(f"  [DEBUG] Filling textarea 1...")
+        textareas[0].click()
+        time.sleep(0.2)
+        textareas[0].send_keys(Keys.CONTROL + 'a')
+        time.sleep(0.1)
+        textareas[0].send_keys(prompt1)
+        time.sleep(0.2)
+        print(f"  [DEBUG] Textarea 1 filled")
+
+        # Fill second textarea
+        print(f"  [DEBUG] Filling textarea 2...")
+        textareas[1].click()
+        time.sleep(0.2)
+        textareas[1].send_keys(Keys.CONTROL + 'a')
+        time.sleep(0.1)
+        textareas[1].send_keys(prompt2)
+        time.sleep(0.2)
+        print(f"  [DEBUG] Textarea 2 filled")
+
+        return True
+
+    except Exception as e:
+        print(f"  [DEBUG] EXCEPTION in fill_textareas: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         return False
-
-    # Fill first textarea
-    textareas[0].click()
-    time.sleep(0.2)
-    textareas[0].send_keys(Keys.CONTROL + 'a')
-    time.sleep(0.1)
-    textareas[0].send_keys(prompt1)
-    time.sleep(0.2)
-
-    # Fill second textarea
-    textareas[1].click()
-    time.sleep(0.2)
-    textareas[1].send_keys(Keys.CONTROL + 'a')
-    time.sleep(0.1)
-    textareas[1].send_keys(prompt2)
-    time.sleep(0.2)
-
-    return True
 
 def select_cel_shaded_style(driver):
     """Click the Cel-Shaded style option"""
