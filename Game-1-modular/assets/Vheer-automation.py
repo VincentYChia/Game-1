@@ -481,6 +481,8 @@ def get_downloaded_file(timeout=10):
     downloads = Path.home() / 'Downloads'
     start = time.time()
 
+    print(f"  [DEBUG] Checking Downloads folder: {downloads}")
+
     while time.time() - start < timeout:
         image_files = []
         for ext in ['*.png', '*.jpg', '*.jpeg', '*.webp']:
@@ -488,37 +490,56 @@ def get_downloaded_file(timeout=10):
 
         image_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
 
+        print(f"  [DEBUG] Found {len(image_files)} image files, checking most recent 5...")
+
         for file in image_files[:5]:
             age = time.time() - file.stat().st_mtime
+            print(f"  [DEBUG]   {file.name}: {age:.1f}s old")
             if age < 15:
+                print(f"  [DEBUG] ✓ Found recent file: {file.name}")
                 return file
 
         time.sleep(1)
 
+    print(f"  [DEBUG] ✗ No recent files found after {timeout}s")
     return None
 
 def screenshot_with_crop(driver, save_path):
     """Screenshot image and crop 30px from all sides"""
     try:
+        print(f"  [DEBUG] Attempting screenshot fallback...")
         imgs = driver.find_elements(By.TAG_NAME, 'img')
+        print(f"  [DEBUG] Found {len(imgs)} images on page")
 
         for img in imgs:
             src = img.get_attribute('src') or ''
-            if 'blob:' in src or (img.size['width'] > 400 and img.size['height'] > 400):
+            size = img.size
+            print(f"  [DEBUG]   Checking image: src={src[:50]}... size={size['width']}x{size['height']}")
+
+            if 'blob:' in src or (size['width'] > 400 and size['height'] > 400):
+                print(f"  [DEBUG]   ✓ Found suitable image for screenshot")
                 temp_path = save_path.parent / f"temp_{save_path.name}"
+
                 img.screenshot(str(temp_path))
+                print(f"  [DEBUG]   Screenshot taken: {temp_path}")
 
                 # Crop 30px from all sides
                 image = Image.open(temp_path)
                 width, height = image.size
+                print(f"  [DEBUG]   Cropping from {width}x{height}...")
                 cropped = image.crop((30, 30, width - 30, height - 30))
                 cropped.save(save_path)
                 temp_path.unlink()
+                print(f"  [DEBUG]   ✓ Screenshot saved and cropped")
 
                 return True
 
+        print(f"  [DEBUG] ✗ No suitable images found for screenshot")
         return False
-    except:
+    except Exception as e:
+        print(f"  [DEBUG] ✗ Screenshot failed: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 # ============================================================================
@@ -605,16 +626,31 @@ def generate_item(driver, item, version=1):
         print("  → Checking Downloads folder...")
         downloaded_file = get_downloaded_file()
 
+        print(f"  [DEBUG] Creating directory: {save_dir}")
         save_dir.mkdir(parents=True, exist_ok=True)
+        print(f"  [DEBUG] Directory ready")
 
         if downloaded_file:
             print(f"  ✓ Downloaded: {downloaded_file.name}")
-            shutil.move(str(downloaded_file), str(save_path))
-            print(f"  ✓ Saved to: {save_path.relative_to(SCRIPT_DIR)}")
-            return True, False
+            print(f"  [DEBUG] Moving from: {downloaded_file}")
+            print(f"  [DEBUG] Moving to: {save_path}")
+            try:
+                shutil.move(str(downloaded_file), str(save_path))
+                print(f"  [DEBUG] ✓ File moved successfully")
+                final_size = save_path.stat().st_size
+                print(f"  [DEBUG] Final file size: {final_size} bytes ({final_size/1024:.1f} KB)")
+                print(f"  ✓ Saved to: {save_path.relative_to(SCRIPT_DIR)}")
+                return True, False
+            except Exception as e:
+                print(f"  [DEBUG] ✗ Move failed: {type(e).__name__}: {e}")
+                import traceback
+                traceback.print_exc()
+                return False, False
         else:
             print("  ⚠ Download not found, using screenshot...")
             if screenshot_with_crop(driver, save_path):
+                final_size = save_path.stat().st_size
+                print(f"  [DEBUG] Screenshot file size: {final_size} bytes ({final_size/1024:.1f} KB)")
                 print(f"  ✓ Screenshot saved: {save_path.relative_to(SCRIPT_DIR)}")
                 return True, False
             else:
