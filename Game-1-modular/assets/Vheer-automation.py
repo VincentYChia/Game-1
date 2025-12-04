@@ -373,6 +373,10 @@ def setup_driver():
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
 
+    # Use 'eager' page load strategy - don't wait for all resources (ads, images, etc.)
+    # This prevents timeouts when pages have slow-loading ads
+    chrome_options.page_load_strategy = 'eager'
+
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
