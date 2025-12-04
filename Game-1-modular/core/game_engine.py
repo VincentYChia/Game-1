@@ -633,7 +633,7 @@ class GameEngine:
                         self.add_notification(load_message, (100, 255, 100))
                     else:
                         if shift_held:
-                            self.add_notification("Default save not found! Run create_default_save.py", (255, 100, 100))
+                            self.add_notification("Default save not found! Run: python save_system/create_default_save.py", (255, 100, 100))
                         else:
                             self.add_notification("No save file found!", (255, 100, 100))
 
@@ -957,8 +957,8 @@ class GameEngine:
             else:
                 # Keep menu open and show notification
                 print("❌ Default save file not found!")
-                print("   Run 'python create_default_save.py' to create it.")
-                self.add_notification("Default save not found! Run create_default_save.py first.", (255, 100, 100))
+                print("   Run 'python save_system/create_default_save.py' to create it.")
+                self.add_notification("Default save not found! Run: python save_system/create_default_save.py", (255, 100, 100))
 
         elif option_index == 3:
             # Temporary World - Create character but prevent saving
