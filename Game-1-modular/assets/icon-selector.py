@@ -33,9 +33,12 @@ DEFERRED_DECISIONS_FILE = SCRIPT_DIR / "deferred_icon_decisions.json"
 PLACEHOLDER_BASE = SCRIPT_DIR
 
 # Generation cycle directories to scan
+# Scan for ALL generation cycle patterns
 GENERATION_CYCLES = []
-for cycle_dir in SCRIPT_DIR.glob("icons-generation-cycle-*"):
-    GENERATION_CYCLES.append(cycle_dir)
+for pattern in ["icons-generation-cycle-*", "icons-generated-cycle-*"]:
+    for cycle_dir in SCRIPT_DIR.glob(pattern):
+        GENERATION_CYCLES.append(cycle_dir)
+GENERATION_CYCLES = sorted(set(GENERATION_CYCLES))  # Remove duplicates and sort
 
 # ============================================================================
 # CATALOG PARSING
@@ -381,13 +384,33 @@ class IconSelectorApp:
         if version_info in self.selected_versions:
             # Deselect
             self.selected_versions.remove(version_info)
+            # Reset to default styling
             tile_frame.config(relief=tk.RAISED, borderwidth=2)
+            # Remove highlight canvas if it exists
+            if hasattr(tile_frame, '_highlight_canvas'):
+                tile_frame._highlight_canvas.destroy()
+                delattr(tile_frame, '_highlight_canvas')
         else:
             # Select
             self.selected_versions.append(version_info)
-            tile_frame.config(relief=tk.SOLID, borderwidth=4)
+            # Make selection VERY visible
+            tile_frame.config(relief=tk.SOLID, borderwidth=6)
+            # Add bright background using a Canvas overlay
+            self._highlight_tile(tile_frame)
 
         self.update_buttons()
+
+    def _highlight_tile(self, tile_frame):
+        """Add visual highlight to selected tile"""
+        # Create a bright border effect
+        canvas = tk.Canvas(tile_frame, highlightthickness=0, bd=0,
+                          highlightbackground="#00FF00", highlightcolor="#00FF00",
+                          background="#90EE90", width=0, height=0)
+        canvas.place(x=0, y=0, relwidth=1, relheight=1)
+        canvas.lower()  # Send to back so images show on top
+
+        # Store reference so we can remove it later
+        tile_frame._highlight_canvas = canvas
 
     def update_buttons(self):
         """Update button states based on selection"""
