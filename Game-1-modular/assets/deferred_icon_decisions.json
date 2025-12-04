@@ -1,0 +1,22 @@
+{
+  "copper_dagger": {
+    "item_data": {
+      "name": "copper_dagger",
+      "category": "equipment",
+      "type": "dagger",
+      "subtype": "dagger",
+      "narrative": "Simple copper dagger, light and quick. Not much reach, but what it lacks in power it makes up for in speed. Perfect for those who value precision over brute force."
+    },
+    "options": [
+      {
+        "path": "icons-generation-cycle-1\\generated_icons\\items\\weapons\\copper_dagger.png",
+        "label": "icons-generation-cycle-1/v1"
+      },
+      {
+        "path": "icons-generated-cycle-2\\generated_icons\\items\\weapons\\copper_dagger.png",
+        "label": "icons-generated-cycle-2/v1"
+      }
+    ],
+    "timestamp": "2025-12-04T11:46:53.880472"
+  }
+}
