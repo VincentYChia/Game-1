@@ -164,18 +164,53 @@ class Renderer:
                     # Show user's placement
                     mat_id = user_placement[grid_key]
                     mat = mat_db.get_material(mat_id)
-                    mat_name = (mat.name[:6] if mat else mat_id[:6])  # Truncate to fit
-                    text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
-                    text_rect = text_surf.get_rect(center=cell_rect.center)
-                    surf.blit(text_surf, text_rect)
+                    # Try to show icon first
+                    if mat and mat.icon_path:
+                        image_cache = ImageCache.get_instance()
+                        icon_size = max(cell_size - 8, 16)  # Leave 4px padding on each side, min 16px
+                        icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+                        if icon:
+                            icon_rect = icon.get_rect(center=cell_rect.center)
+                            surf.blit(icon, icon_rect)
+                        else:
+                            # Fallback to text
+                            mat_name = mat.name[:6]
+                            text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                            text_rect = text_surf.get_rect(center=cell_rect.center)
+                            surf.blit(text_surf, text_rect)
+                    else:
+                        # Fallback to text
+                        mat_name = (mat.name[:6] if mat else mat_id[:6])
+                        text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                        text_rect = text_surf.get_rect(center=cell_rect.center)
+                        surf.blit(text_surf, text_rect)
                 elif has_recipe_requirement:
                     # Show what recipe requires (semi-transparent hint)
                     req_mat_id = recipe_placement_map[recipe_key]
                     mat = mat_db.get_material(req_mat_id)
-                    mat_name = (mat.name[:6] if mat else req_mat_id[:6])
-                    text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
-                    text_rect = text_surf.get_rect(center=cell_rect.center)
-                    surf.blit(text_surf, text_rect)
+                    # Try to show icon first (slightly dimmed for hint)
+                    if mat and mat.icon_path:
+                        image_cache = ImageCache.get_instance()
+                        icon_size = max(cell_size - 8, 16)
+                        icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+                        if icon:
+                            # Create dimmed version for hint
+                            dimmed_icon = icon.copy()
+                            dimmed_icon.set_alpha(128)
+                            icon_rect = dimmed_icon.get_rect(center=cell_rect.center)
+                            surf.blit(dimmed_icon, icon_rect)
+                        else:
+                            # Fallback to text
+                            mat_name = mat.name[:6]
+                            text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                            text_rect = text_surf.get_rect(center=cell_rect.center)
+                            surf.blit(text_surf, text_rect)
+                    else:
+                        # Fallback to text
+                        mat_name = (mat.name[:6] if mat else req_mat_id[:6])
+                        text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                        text_rect = text_surf.get_rect(center=cell_rect.center)
+                        surf.blit(text_surf, text_rect)
 
                 # Store rect for click handling
                 cell_rects.append((cell_rect, (gx, gy)))
@@ -392,17 +427,51 @@ class Renderer:
         if has_user_core:
             mat_id = user_placement["core_0"]
             mat = mat_db.get_material(mat_id)
-            mat_name = (mat.name[:8] if mat else mat_id[:8])
-            text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
-            text_rect = text_surf.get_rect(center=(center_x, center_y))
-            surf.blit(text_surf, text_rect)
+            # Try to show icon first
+            if mat and mat.icon_path:
+                image_cache = ImageCache.get_instance()
+                icon_size = core_radius * 2 - 16  # Leave some padding
+                icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+                if icon:
+                    icon_rect = icon.get_rect(center=(center_x, center_y))
+                    surf.blit(icon, icon_rect)
+                else:
+                    # Fallback to text
+                    mat_name = mat.name[:8]
+                    text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                    text_rect = text_surf.get_rect(center=(center_x, center_y))
+                    surf.blit(text_surf, text_rect)
+            else:
+                # Fallback to text
+                mat_name = (mat.name[:8] if mat else mat_id[:8])
+                text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                text_rect = text_surf.get_rect(center=(center_x, center_y))
+                surf.blit(text_surf, text_rect)
         elif has_required_core:
             req_mat_id = required_core[0].get('materialId', '')
             mat = mat_db.get_material(req_mat_id)
-            mat_name = (mat.name[:8] if mat else req_mat_id[:8])
-            text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
-            text_rect = text_surf.get_rect(center=(center_x, center_y))
-            surf.blit(text_surf, text_rect)
+            # Try to show icon first (dimmed for hint)
+            if mat and mat.icon_path:
+                image_cache = ImageCache.get_instance()
+                icon_size = core_radius * 2 - 16
+                icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+                if icon:
+                    dimmed_icon = icon.copy()
+                    dimmed_icon.set_alpha(128)
+                    icon_rect = dimmed_icon.get_rect(center=(center_x, center_y))
+                    surf.blit(dimmed_icon, icon_rect)
+                else:
+                    # Fallback to text
+                    mat_name = mat.name[:8]
+                    text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                    text_rect = text_surf.get_rect(center=(center_x, center_y))
+                    surf.blit(text_surf, text_rect)
+            else:
+                # Fallback to text
+                mat_name = (mat.name[:8] if mat else req_mat_id[:8])
+                text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                text_rect = text_surf.get_rect(center=(center_x, center_y))
+                surf.blit(text_surf, text_rect)
 
         slot_rects.append((core_rect, "core_0"))
 
@@ -436,17 +505,51 @@ class Renderer:
             if has_user_surrounding:
                 mat_id = user_placement[slot_id]
                 mat = mat_db.get_material(mat_id)
-                mat_name = (mat.name[:6] if mat else mat_id[:6])
-                text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
-                text_rect = text_surf.get_rect(center=(slot_x, slot_y))
-                surf.blit(text_surf, text_rect)
+                # Try to show icon first
+                if mat and mat.icon_path:
+                    image_cache = ImageCache.get_instance()
+                    icon_size = surrounding_radius * 2 - 12  # Leave some padding
+                    icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+                    if icon:
+                        icon_rect = icon.get_rect(center=(slot_x, slot_y))
+                        surf.blit(icon, icon_rect)
+                    else:
+                        # Fallback to text
+                        mat_name = mat.name[:6]
+                        text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                        text_rect = text_surf.get_rect(center=(slot_x, slot_y))
+                        surf.blit(text_surf, text_rect)
+                else:
+                    # Fallback to text
+                    mat_name = (mat.name[:6] if mat else mat_id[:6])
+                    text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                    text_rect = text_surf.get_rect(center=(slot_x, slot_y))
+                    surf.blit(text_surf, text_rect)
             elif has_required_surrounding:
                 req_mat_id = required_surrounding[i].get('materialId', '')
                 mat = mat_db.get_material(req_mat_id)
-                mat_name = (mat.name[:6] if mat else req_mat_id[:6])
-                text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
-                text_rect = text_surf.get_rect(center=(slot_x, slot_y))
-                surf.blit(text_surf, text_rect)
+                # Try to show icon first (dimmed for hint)
+                if mat and mat.icon_path:
+                    image_cache = ImageCache.get_instance()
+                    icon_size = surrounding_radius * 2 - 12
+                    icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+                    if icon:
+                        dimmed_icon = icon.copy()
+                        dimmed_icon.set_alpha(128)
+                        icon_rect = dimmed_icon.get_rect(center=(slot_x, slot_y))
+                        surf.blit(dimmed_icon, icon_rect)
+                    else:
+                        # Fallback to text
+                        mat_name = mat.name[:6]
+                        text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                        text_rect = text_surf.get_rect(center=(slot_x, slot_y))
+                        surf.blit(text_surf, text_rect)
+                else:
+                    # Fallback to text
+                    mat_name = (mat.name[:6] if mat else req_mat_id[:6])
+                    text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                    text_rect = text_surf.get_rect(center=(slot_x, slot_y))
+                    surf.blit(text_surf, text_rect)
 
             slot_rects.append((slot_rect, slot_id))
 
@@ -525,21 +628,63 @@ class Renderer:
             num_rect = num_surf.get_rect(topleft=(slot_x + 5, slot_y + 5))
             surf.blit(num_surf, num_rect)
 
-            # Draw material name
+            # Draw material icon/name
             if has_user_material:
                 mat_id = user_placement[slot_id]
                 mat = mat_db.get_material(mat_id)
-                mat_name = (mat.name[:10] if mat else mat_id[:10])
-                text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
-                text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
-                surf.blit(text_surf, text_rect)
+                # Try to show icon first
+                if mat and mat.icon_path:
+                    image_cache = ImageCache.get_instance()
+                    icon_size = min(slot_width - 20, slot_height - 40)  # Leave room for slot number and name
+                    icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+                    if icon:
+                        icon_rect = icon.get_rect(center=(slot_rect.centerx, slot_rect.centery + 5))
+                        surf.blit(icon, icon_rect)
+                        # Show small name below icon
+                        name_surf = self.tiny_font.render(mat.name[:10], True, (200, 255, 200))
+                        name_rect = name_surf.get_rect(center=(slot_rect.centerx, slot_rect.bottom - 8))
+                        surf.blit(name_surf, name_rect)
+                    else:
+                        # Fallback to text only
+                        mat_name = mat.name[:10]
+                        text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                        text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
+                        surf.blit(text_surf, text_rect)
+                else:
+                    # Fallback to text only
+                    mat_name = (mat.name[:10] if mat else mat_id[:10])
+                    text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                    text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
+                    surf.blit(text_surf, text_rect)
             elif has_requirement:
                 req_mat_id = required_for_slot.get('materialId', '')
                 mat = mat_db.get_material(req_mat_id)
-                mat_name = (mat.name[:10] if mat else req_mat_id[:10])
-                text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
-                text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
-                surf.blit(text_surf, text_rect)
+                # Try to show icon first (dimmed for hint)
+                if mat and mat.icon_path:
+                    image_cache = ImageCache.get_instance()
+                    icon_size = min(slot_width - 20, slot_height - 40)
+                    icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+                    if icon:
+                        dimmed_icon = icon.copy()
+                        dimmed_icon.set_alpha(128)
+                        icon_rect = dimmed_icon.get_rect(center=(slot_rect.centerx, slot_rect.centery + 5))
+                        surf.blit(dimmed_icon, icon_rect)
+                        # Show small name below icon
+                        name_surf = self.tiny_font.render(mat.name[:10], True, (180, 160, 120))
+                        name_rect = name_surf.get_rect(center=(slot_rect.centerx, slot_rect.bottom - 8))
+                        surf.blit(name_surf, name_rect)
+                    else:
+                        # Fallback to text only
+                        mat_name = mat.name[:10]
+                        text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                        text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
+                        surf.blit(text_surf, text_rect)
+                else:
+                    # Fallback to text only
+                    mat_name = (mat.name[:10] if mat else req_mat_id[:10])
+                    text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
+                    text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
+                    surf.blit(text_surf, text_rect)
 
             slot_rects.append((slot_rect, slot_id))
 
@@ -634,7 +779,7 @@ class Renderer:
                 type_surf = self.small_font.render(slot_type, True, type_color)
                 surf.blit(type_surf, (slot_rect.x + 10, slot_rect.y + 10))
 
-                # Draw material name (right side)
+                # Draw material icon/name (right side)
                 mat_id = required_slot.get('materialId', '')
                 mat = mat_db.get_material(mat_id)
                 mat_name = mat.name if mat else mat_id
@@ -643,13 +788,48 @@ class Renderer:
                     # Show user's material (green)
                     user_mat_id = user_placement[slot_id]
                     user_mat = mat_db.get_material(user_mat_id)
-                    user_mat_name = user_mat.name if user_mat else user_mat_id
-                    mat_surf = self.small_font.render(user_mat_name, True, (200, 255, 200))
+                    # Try to show icon first
+                    if user_mat and user_mat.icon_path:
+                        image_cache = ImageCache.get_instance()
+                        icon_size = slot_height - 16
+                        icon = image_cache.get_image(user_mat.icon_path, (icon_size, icon_size))
+                        if icon:
+                            surf.blit(icon, (slot_rect.x + 120, slot_rect.y + 8))
+                            # Show name next to icon
+                            user_mat_name = user_mat.name if user_mat else user_mat_id
+                            mat_surf = self.small_font.render(user_mat_name, True, (200, 255, 200))
+                            surf.blit(mat_surf, (slot_rect.x + 170, slot_rect.y + 15))
+                        else:
+                            # Fallback to text only
+                            user_mat_name = user_mat.name if user_mat else user_mat_id
+                            mat_surf = self.small_font.render(user_mat_name, True, (200, 255, 200))
+                            surf.blit(mat_surf, (slot_rect.x + 120, slot_rect.y + 10))
+                    else:
+                        # Fallback to text only
+                        user_mat_name = user_mat.name if user_mat else user_mat_id
+                        mat_surf = self.small_font.render(user_mat_name, True, (200, 255, 200))
+                        surf.blit(mat_surf, (slot_rect.x + 120, slot_rect.y + 10))
                 else:
-                    # Show required material (gold hint)
-                    mat_surf = self.small_font.render(mat_name, True, (180, 160, 120))
-
-                surf.blit(mat_surf, (slot_rect.x + 120, slot_rect.y + 10))
+                    # Show required material (gold hint) with dimmed icon
+                    if mat and mat.icon_path:
+                        image_cache = ImageCache.get_instance()
+                        icon_size = slot_height - 16
+                        icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+                        if icon:
+                            dimmed_icon = icon.copy()
+                            dimmed_icon.set_alpha(128)
+                            surf.blit(dimmed_icon, (slot_rect.x + 120, slot_rect.y + 8))
+                            # Show name next to icon
+                            mat_surf = self.small_font.render(mat_name, True, (180, 160, 120))
+                            surf.blit(mat_surf, (slot_rect.x + 170, slot_rect.y + 15))
+                        else:
+                            # Fallback to text only
+                            mat_surf = self.small_font.render(mat_name, True, (180, 160, 120))
+                            surf.blit(mat_surf, (slot_rect.x + 120, slot_rect.y + 10))
+                    else:
+                        # Fallback to text only
+                        mat_surf = self.small_font.render(mat_name, True, (180, 160, 120))
+                        surf.blit(mat_surf, (slot_rect.x + 120, slot_rect.y + 10))
 
                 # Draw quantity
                 qty = required_slot.get('quantity', 1)
@@ -983,8 +1163,23 @@ class Renderer:
         y += 30
         if character.selected_tool:
             tool = character.selected_tool
-            self.render_text(f"{tool.name} (T{tool.tier})", Config.VIEWPORT_WIDTH + 20, y, small=True)
-            y += 20
+            # Try to show tool icon (tools are equipment items)
+            from data.databases import EquipmentDatabase
+            equip_db = EquipmentDatabase.get_instance()
+            equipment = equip_db.create_equipment_from_id(tool.tool_id)
+            if equipment and equipment.icon_path:
+                image_cache = ImageCache.get_instance()
+                icon = image_cache.get_image(equipment.icon_path, (32, 32))
+                if icon:
+                    self.screen.blit(icon, (Config.VIEWPORT_WIDTH + 20, y - 2))
+                    self.render_text(f"{tool.name} (T{tool.tier})", Config.VIEWPORT_WIDTH + 58, y, small=True)
+                    y += 20
+                else:
+                    self.render_text(f"{tool.name} (T{tool.tier})", Config.VIEWPORT_WIDTH + 20, y, small=True)
+                    y += 20
+            else:
+                self.render_text(f"{tool.name} (T{tool.tier})", Config.VIEWPORT_WIDTH + 20, y, small=True)
+                y += 20
             dur_text = f"Durability: {tool.durability_current}/{tool.durability_max}"
             if Config.DEBUG_INFINITE_RESOURCES:
                 dur_text += " (∞)"
@@ -997,12 +1192,24 @@ class Renderer:
         title_count = len(character.titles.earned_titles)
         self.render_text(f"TITLES: {title_count}", Config.VIEWPORT_WIDTH + 20, y, bold=True)
         y += 30
-        for title in character.titles.earned_titles[-2:]:
-            self.render_text(f"• {title.name}", Config.VIEWPORT_WIDTH + 20, y, small=True)
-            y += 18
+
+        # Show last 3 earned titles with icons
+        image_cache = ImageCache.get_instance()
+        for title in character.titles.earned_titles[-3:]:
+            # Try to render icon
+            if title.icon_path:
+                icon = image_cache.get_image(title.icon_path, (24, 24))
+                if icon:
+                    self.screen.blit(icon, (Config.VIEWPORT_WIDTH + 20, y - 2))
+                    self.render_text(title.name, Config.VIEWPORT_WIDTH + 50, y, small=True)
+                else:
+                    self.render_text(f"• {title.name}", Config.VIEWPORT_WIDTH + 20, y, small=True)
+            else:
+                self.render_text(f"• {title.name}", Config.VIEWPORT_WIDTH + 20, y, small=True)
+            y += 28
 
         if title_count > 0:
-            y += 10
+            y += 5
 
         self.render_text("CONTROLS", Config.VIEWPORT_WIDTH + 20, y, bold=True)
         y += 30
@@ -1270,12 +1477,28 @@ class Renderer:
             surf.blit(num_surf, (x + s(4), y_pos + s(4)))
 
             if skill_def:
-                # Skill abbreviation
-                name_parts = skill_def.name.split()
-                short_name = "".join(p[0] for p in name_parts[:2])
-                name_surf = self.font.render(short_name, True, (200, 220, 255))
-                name_rect = name_surf.get_rect(center=(x + slot_size // 2, y_pos + slot_size // 2))
-                surf.blit(name_surf, name_rect)
+                # Try to load skill icon
+                if skill_def.icon_path:
+                    image_cache = ImageCache.get_instance()
+                    icon = image_cache.get_image(skill_def.icon_path, (slot_size - s(16), slot_size - s(16)))
+                    if icon:
+                        icon_x = x + s(8)
+                        icon_y = y_pos + s(8)
+                        surf.blit(icon, (icon_x, icon_y))
+                    else:
+                        # Fallback: Skill abbreviation
+                        name_parts = skill_def.name.split()
+                        short_name = "".join(p[0] for p in name_parts[:2])
+                        name_surf = self.font.render(short_name, True, (200, 220, 255))
+                        name_rect = name_surf.get_rect(center=(x + slot_size // 2, y_pos + slot_size // 2))
+                        surf.blit(name_surf, name_rect)
+                else:
+                    # Fallback: Skill abbreviation
+                    name_parts = skill_def.name.split()
+                    short_name = "".join(p[0] for p in name_parts[:2])
+                    name_surf = self.font.render(short_name, True, (200, 220, 255))
+                    name_rect = name_surf.get_rect(center=(x + slot_size // 2, y_pos + slot_size // 2))
+                    surf.blit(name_surf, name_rect)
 
             hotbar_rects.append((slot_rect, i, skill_id))
 
@@ -1325,12 +1548,21 @@ class Renderer:
             pygame.draw.rect(surf, bg_color, skill_rect)
             pygame.draw.rect(surf, (120, 140, 180) if is_hovered else (80, 80, 100), skill_rect, 2)
 
+            # Skill icon (if available)
+            text_x_offset = s(30)
+            if skill_def.icon_path:
+                image_cache = ImageCache.get_instance()
+                icon = image_cache.get_image(skill_def.icon_path, (s(40), s(40)))
+                if icon:
+                    surf.blit(icon, (s(25), y_pos + s(5)))
+                    text_x_offset = s(70)
+
             # Skill name
-            surf.blit(self.small_font.render(skill_def.name, True, (255, 255, 255)), (s(30), y_pos + s(5)))
+            surf.blit(self.small_font.render(skill_def.name, True, (255, 255, 255)), (text_x_offset, y_pos + s(5)))
 
             # Tier and rarity
             tier_color = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}.get(skill_def.tier, (150, 150, 150))
-            surf.blit(self.tiny_font.render(f"T{skill_def.tier} {skill_def.rarity.upper()}", True, tier_color), (s(30), y_pos + s(25)))
+            surf.blit(self.tiny_font.render(f"T{skill_def.tier} {skill_def.rarity.upper()}", True, tier_color), (text_x_offset, y_pos + s(25)))
 
             # Mana cost and cooldown
             mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
@@ -1371,12 +1603,21 @@ class Renderer:
                 pygame.draw.rect(surf, bg_color, skill_rect)
                 pygame.draw.rect(surf, (100, 255, 100) if is_hovered else (80, 150, 80), skill_rect, 2)
 
+                # Skill icon (if available) - with greyscale effect for unlearned
+                text_x_offset = s(30)
+                if skill_def.icon_path:
+                    image_cache = ImageCache.get_instance()
+                    icon = image_cache.get_image(skill_def.icon_path, (s(35), s(35)))
+                    if icon:
+                        surf.blit(icon, (s(25), y_pos + s(5)))
+                        text_x_offset = s(65)
+
                 # Skill name
-                surf.blit(self.small_font.render(skill_def.name, True, (200, 255, 200)), (s(30), y_pos + s(5)))
+                surf.blit(self.small_font.render(skill_def.name, True, (200, 255, 200)), (text_x_offset, y_pos + s(5)))
 
                 # Tier
                 tier_color = {1: (150, 150, 150), 2: (100, 200, 100), 3: (200, 100, 200), 4: (255, 200, 50)}.get(skill_def.tier, (150, 150, 150))
-                surf.blit(self.tiny_font.render(f"T{skill_def.tier}", True, tier_color), (s(30), y_pos + s(25)))
+                surf.blit(self.tiny_font.render(f"T{skill_def.tier}", True, tier_color), (text_x_offset, y_pos + s(25)))
 
                 # Learn button
                 surf.blit(self.tiny_font.render("Click to learn", True, (150, 255, 150)), (ww - s(150), y_pos + s(15)))
@@ -1810,26 +2051,35 @@ class Renderer:
                 has_skill = skill_id in character.skills.known_skills
                 can_learn = not has_skill and character.skills.can_learn_skill(skill_id, character)[0]
 
+                # Skill icon (if available)
+                icon_offset = s(10)
+                if skill_def.icon_path and y >= content_rect.y - s(24) and y < content_rect.bottom:
+                    image_cache = ImageCache.get_instance()
+                    icon = image_cache.get_image(skill_def.icon_path, (s(24), s(24)))
+                    if icon:
+                        surf.blit(icon, (x + s(10), y))
+                        icon_offset = s(40)
+
                 # Skill name
                 name_color = (100, 255, 100) if has_skill else ((200, 200, 100) if can_learn else (150, 150, 150))
                 status_text = " [KNOWN]" if has_skill else (" [AVAILABLE]" if can_learn else "")
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(f"• {skill_def.name}{status_text}", True, name_color), (x + s(10), y))
+                    surf.blit(self.tiny_font.render(f"{skill_def.name}{status_text}", True, name_color), (x + icon_offset, y + s(4)))
                 y += s(16)
 
                 # Requirements
-                req_text = f"   Requires: Lvl {skill_def.requirements.character_level}"
+                req_text = f"Requires: Lvl {skill_def.requirements.character_level}"
                 if skill_def.requirements.stats:
                     stat_reqs = ", ".join(f"{k} {v}" for k, v in skill_def.requirements.stats.items())
                     req_text += f", {stat_reqs}"
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + s(10), y))
+                    surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + icon_offset, y))
                 y += s(16)
 
                 # Effect description
-                effect_desc = f"   {skill_def.effect.effect_type.capitalize()} - {skill_def.effect.category} ({skill_def.effect.magnitude})"
+                effect_desc = f"{skill_def.effect.effect_type.capitalize()} - {skill_def.effect.category} ({skill_def.effect.magnitude})"
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(effect_desc, True, (100, 150, 200)), (x + s(10), y))
+                    surf.blit(self.tiny_font.render(effect_desc, True, (100, 150, 200)), (x + icon_offset, y))
                 y += s(20)
 
             y += s(10)
@@ -1892,9 +2142,18 @@ class Renderer:
                 name_color = (255, 215, 0) if has_title else (150, 150, 150)
                 status_text = " [EARNED]" if has_title else ""
 
+                # Title icon (if available)
+                icon_offset = s(10)
+                if title_def.icon_path and y >= content_rect.y - s(24) and y < content_rect.bottom:
+                    image_cache = ImageCache.get_instance()
+                    icon = image_cache.get_image(title_def.icon_path, (s(24), s(24)))
+                    if icon:
+                        surf.blit(icon, (x + s(10), y))
+                        icon_offset = s(40)
+
                 # Title name
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(f"• {title_def.name}{status_text}", True, name_color), (x + s(10), y))
+                    surf.blit(self.tiny_font.render(f"{title_def.name}{status_text}", True, name_color), (x + icon_offset, y + s(4)))
                 y += s(16)
 
                 # Requirement
@@ -1909,18 +2168,18 @@ class Renderer:
                     'combat': 'Enemies Defeated'
                 }
                 activity_name = activity_names.get(title_def.activity_type, title_def.activity_type.capitalize())
-                req_text = f"   Requires: {title_def.acquisition_threshold} {activity_name}"
+                req_text = f"Requires: {title_def.acquisition_threshold} {activity_name}"
                 if title_def.acquisition_method == "random_drop":
                     tier_chances = {'apprentice': '20%', 'journeyman': '10%', 'expert': '5%', 'master': '2%'}
                     chance = tier_chances.get(tier_name, '?%')
                     req_text += f" ({chance} chance)"
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + s(10), y))
+                    surf.blit(self.tiny_font.render(req_text, True, (120, 120, 140)), (x + icon_offset, y))
                 y += s(16)
 
                 # Bonus
                 if y >= content_rect.y and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(f"   {title_def.bonus_description}", True, (100, 200, 100)), (x + s(10), y))
+                    surf.blit(self.tiny_font.render(f"{title_def.bonus_description}", True, (100, 200, 100)), (x + icon_offset, y))
                 y += s(20)
 
             y += s(10)
@@ -2377,9 +2636,52 @@ class Renderer:
             selected = self._temp_selected_recipe
             can_craft = recipe_db.can_craft(selected, character.inventory)
 
-            # Placement visualization area
-            placement_h = s(380)
-            placement_rect = pygame.Rect(right_panel_x, right_panel_y, right_panel_w - s(40), placement_h)
+            # ======================
+            # OUTPUT PREVIEW PANEL
+            # ======================
+            preview_h = s(100)
+            preview_rect = pygame.Rect(right_panel_x, right_panel_y, right_panel_w - s(40), preview_h)
+            pygame.draw.rect(surf, (40, 50, 40), preview_rect)
+            pygame.draw.rect(surf, (100, 150, 100), preview_rect, 2)
+
+            # Title
+            surf.blit(self.small_font.render("OUTPUT PREVIEW", True, (150, 200, 150)), (preview_rect.x + s(10), preview_rect.y + s(8)))
+
+            # Get output item info
+            is_equipment = equip_db.is_equipment(selected.output_id)
+            if is_equipment:
+                output_item = equip_db.create_equipment_from_id(selected.output_id)
+                output_name = output_item.name if output_item else selected.output_id
+                output_color = Config.RARITY_COLORS.get(output_item.rarity, (200, 200, 200)) if output_item else (200, 200, 200)
+                output_icon_path = output_item.icon_path if output_item else None
+            else:
+                output_item = mat_db.get_material(selected.output_id)
+                output_name = output_item.name if output_item else selected.output_id
+                output_color = Config.RARITY_COLORS.get(output_item.rarity, (200, 200, 200)) if output_item else (200, 200, 200)
+                output_icon_path = output_item.icon_path if output_item else None
+
+            # Draw output icon (large)
+            if output_icon_path:
+                image_cache = ImageCache.get_instance()
+                icon = image_cache.get_image(output_icon_path, (s(70), s(70)))
+                if icon:
+                    surf.blit(icon, (preview_rect.x + s(15), preview_rect.y + s(25)))
+
+            # Draw output name and quantity
+            name_text = f"{output_name}"
+            qty_text = f"x{selected.output_qty}"
+            surf.blit(self.font.render(name_text, True, output_color), (preview_rect.x + s(95), preview_rect.y + s(35)))
+            surf.blit(self.small_font.render(qty_text, True, (200, 200, 200)), (preview_rect.x + s(95), preview_rect.y + s(60)))
+
+            # Tier badge (if equipment)
+            if is_equipment and output_item:
+                tier_text = f"T{output_item.tier}"
+                tier_color = {1: (150, 150, 150), 2: (100, 200, 100), 3: (100, 150, 255), 4: (200, 100, 255), 5: (255, 200, 50)}.get(output_item.tier, (150, 150, 150))
+                surf.blit(self.small_font.render(tier_text, True, tier_color), (preview_rect.x + s(95), preview_rect.y + s(78)))
+
+            # Placement visualization area (moved down to make room for preview)
+            placement_h = s(270)  # Reduced from 380 to fit preview
+            placement_rect = pygame.Rect(right_panel_x, right_panel_y + preview_h + s(10), right_panel_w - s(40), placement_h)
             pygame.draw.rect(surf, (30, 30, 40), placement_rect)
             pygame.draw.rect(surf, (80, 80, 90), placement_rect, 2)
 

@@ -1,7 +1,7 @@
 """Title definition data model"""
 
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -18,3 +18,4 @@ class TitleDefinition:
     prerequisites: List[str] = field(default_factory=list)
     hidden: bool = False
     acquisition_method: str = "guaranteed_milestone"  # or "random_drop", "hidden_discovery"
+    icon_path: Optional[str] = None
