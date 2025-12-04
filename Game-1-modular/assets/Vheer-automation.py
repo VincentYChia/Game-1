@@ -759,7 +759,10 @@ def main():
 
     try:
         print("\n🌐 Opening Vheer...")
-        driver.get("https://vheer.com/app/game-assets-generator")
+        if not safe_driver_get(driver, "https://vheer.com/app/game-assets-generator"):
+            print("✗ Failed to open Vheer after multiple retries")
+            driver.quit()
+            return
         time.sleep(8)
         print("✓ Page loaded")
 
