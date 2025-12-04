@@ -16,6 +16,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import (
+    TimeoutException,
+    WebDriverException,
+    InvalidSessionIdException,
+    NoSuchWindowException
+)
 from webdriver_manager.chrome import ChromeDriverManager
 from PIL import Image
 from pathlib import Path
@@ -107,6 +113,37 @@ VERSIONS_TO_GENERATE = 3  # Generate 3 versions of each icon
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
+def is_connection_error(exception):
+    """Check if an exception is a connection/session error that requires driver restart
+
+    Args:
+        exception: The exception to check
+
+    Returns:
+        bool: True if this is a connection error requiring restart
+    """
+    # Check exception type
+    if isinstance(exception, (
+        InvalidSessionIdException,
+        NoSuchWindowException,
+        TimeoutException
+    )):
+        return True
+
+    # Check exception message for timeout/connection keywords
+    error_str = str(exception).lower()
+    if any(keyword in error_str for keyword in [
+        'timeout',
+        'connection',
+        'read timed out',
+        'invalid session',
+        'no such window',
+        'chrome not reachable'
+    ]):
+        return True
+
+    return False
 
 def categorize_item(item):
     """Determine subfolder based on item properties
@@ -422,8 +459,7 @@ def fill_textareas(driver, prompt1, prompt2):
         print(f"  [DEBUG] EXCEPTION in fill_textareas: {type(e).__name__}: {e}")
 
         # If it's a connection/timeout error, re-raise it so driver can be restarted
-        error_str = str(e).lower()
-        if "timeout" in error_str or "connection" in error_str or "read timed out" in error_str:
+        if is_connection_error(e):
             print(f"  [DEBUG] Connection error detected - will restart driver")
             raise  # Re-raise to trigger driver restart
 
@@ -707,8 +743,7 @@ def generate_item(driver, item, version=1):
 
     except Exception as e:
         # Check if it's a connection/timeout error - re-raise for driver restart
-        error_str = str(e).lower()
-        if "timeout" in error_str or "connection" in error_str or "read timed out" in error_str:
+        if is_connection_error(e):
             print(f"  ✗ Connection error: {type(e).__name__}")
             raise  # Re-raise to trigger driver restart in main loop
 
@@ -810,8 +845,7 @@ def main():
 
                 except Exception as e:
                     # Check if it's a connection/timeout error
-                    error_str = str(e).lower()
-                    if "connection" in error_str or "timeout" in error_str or "read timed out" in error_str:
+                    if is_connection_error(e):
                         print(f"  ⚠ Driver connection error: {type(e).__name__}")
 
                         try:
