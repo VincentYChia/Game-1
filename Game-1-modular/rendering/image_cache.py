@@ -14,7 +14,12 @@ class ImageCache:
         """Initialize the image cache"""
         self.cache: Dict[str, pygame.Surface] = {}
         self.failed_paths: set = set()  # Track failed loads to avoid repeated attempts
-        self.base_path = "Game-1-modular/assets/items"
+
+        # Get the absolute path to the assets directory
+        # Assumes this file is in Game-1-modular/rendering/
+        import pathlib
+        module_dir = pathlib.Path(__file__).parent.parent  # Go up to Game-1-modular/
+        self.base_path = str(module_dir / "assets")
 
     @classmethod
     def get_instance(cls) -> 'ImageCache':
@@ -28,7 +33,7 @@ class ImageCache:
         Load and cache an image, returning a scaled Surface or None if not found.
 
         Args:
-            icon_path: Relative path to the image (e.g., "materials/copper_ore.png")
+            icon_path: Relative path to the image (e.g., "materials/copper_ore.png" or "enemies/wolf_grey.png")
             target_size: Tuple of (width, height) to scale the image to
 
         Returns:
@@ -48,8 +53,15 @@ class ImageCache:
         if cache_key in self.cache:
             return self.cache[cache_key]
 
-        # Try to load the image
-        full_path = os.path.join(self.base_path, icon_path)
+        # Build full path - handle both items and non-items
+        # Items use paths like "materials/copper_ore.png" (need items/ prefix)
+        # Others use paths like "enemies/wolf_grey.png" (no items/ prefix needed)
+        if icon_path.startswith(('enemies/', 'resources/', 'skills/', 'titles/')):
+            # Direct asset path (enemies, resources, etc.)
+            full_path = os.path.join(self.base_path, icon_path)
+        else:
+            # Item path (needs items/ prefix)
+            full_path = os.path.join(self.base_path, 'items', icon_path)
 
         try:
             # Load the image
