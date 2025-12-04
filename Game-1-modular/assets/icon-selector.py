@@ -402,15 +402,15 @@ class IconSelectorApp:
 
     def _highlight_tile(self, tile_frame):
         """Add visual highlight to selected tile"""
-        # Create a bright border effect
-        canvas = tk.Canvas(tile_frame, highlightthickness=0, bd=0,
-                          highlightbackground="#00FF00", highlightcolor="#00FF00",
-                          background="#90EE90", width=0, height=0)
-        canvas.place(x=0, y=0, relwidth=1, relheight=1)
-        canvas.lower()  # Send to back so images show on top
+        # Create a bright background frame
+        highlight_frame = tk.Frame(tile_frame, background="#90EE90", bd=0)
+        highlight_frame.place(x=0, y=0, relwidth=1, relheight=1)
+
+        # Send to back so images show on top
+        highlight_frame.lower()
 
         # Store reference so we can remove it later
-        tile_frame._highlight_canvas = canvas
+        tile_frame._highlight_canvas = highlight_frame
 
     def update_buttons(self):
         """Update button states based on selection"""
