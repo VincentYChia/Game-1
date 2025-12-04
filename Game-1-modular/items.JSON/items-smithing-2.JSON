@@ -248,7 +248,7 @@
       ],
       "requirements": {
         "level": 15,
-        "stats": {"WIS": 18}
+        "stats": {"INT": 18}
       },
       "flags": {
         "stackable": false,

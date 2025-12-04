@@ -656,6 +656,19 @@ class Renderer:
                     text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
                     text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
                     surf.blit(text_surf, text_rect)
+
+                # Draw quantity if available (from requirements)
+                if has_requirement:
+                    qty = required_for_slot.get('quantity', 1)
+                    if qty > 1:
+                        qty_text = f"x{qty}"
+                        qty_surf = self.tiny_font.render(qty_text, True, (255, 255, 255))
+                        qty_x = slot_rect.right - qty_surf.get_width() - 5
+                        qty_y = slot_rect.top + 5
+                        # Draw semi-transparent black background
+                        qty_bg = pygame.Rect(qty_x - 2, qty_y - 2, qty_surf.get_width() + 4, qty_surf.get_height() + 4)
+                        pygame.draw.rect(surf, (0, 0, 0, 180), qty_bg)
+                        surf.blit(qty_surf, (qty_x, qty_y))
             elif has_requirement:
                 req_mat_id = required_for_slot.get('materialId', '')
                 mat = mat_db.get_material(req_mat_id)
@@ -685,6 +698,18 @@ class Renderer:
                     text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
                     text_rect = text_surf.get_rect(center=(slot_rect.centerx, slot_rect.centery + 15))
                     surf.blit(text_surf, text_rect)
+
+                # Draw quantity (dimmed hint)
+                qty = required_for_slot.get('quantity', 1)
+                if qty > 1:
+                    qty_text = f"x{qty}"
+                    qty_surf = self.tiny_font.render(qty_text, True, (200, 200, 200))
+                    qty_x = slot_rect.right - qty_surf.get_width() - 5
+                    qty_y = slot_rect.top + 5
+                    # Draw semi-transparent black background
+                    qty_bg = pygame.Rect(qty_x - 2, qty_y - 2, qty_surf.get_width() + 4, qty_surf.get_height() + 4)
+                    pygame.draw.rect(surf, (0, 0, 0, 128), qty_bg)
+                    surf.blit(qty_surf, (qty_x, qty_y))
 
             slot_rects.append((slot_rect, slot_id))
 
@@ -831,12 +856,13 @@ class Renderer:
                         mat_surf = self.small_font.render(mat_name, True, (180, 160, 120))
                         surf.blit(mat_surf, (slot_rect.x + 120, slot_rect.y + 10))
 
-                # Draw quantity with background for better visibility
+                # Draw quantity with background for better visibility (far right)
                 qty = required_slot.get('quantity', 1)
                 qty_text = f"x{qty}"
                 qty_surf = self.font.render(qty_text, True, (255, 255, 255))
-                qty_x = slot_rect.x + slot_width - 65
-                qty_y = slot_rect.y + 8
+                # Position at far right of slot with some padding
+                qty_x = slot_rect.x + slot_width - qty_surf.get_width() - 15
+                qty_y = slot_rect.y + slot_height // 2 - qty_surf.get_height() // 2
                 # Draw semi-transparent black background
                 qty_bg = pygame.Rect(qty_x - 2, qty_y - 2, qty_surf.get_width() + 4, qty_surf.get_height() + 4)
                 pygame.draw.rect(surf, (0, 0, 0, 180), qty_bg)
@@ -2261,11 +2287,23 @@ class Renderer:
         pygame.draw.rect(self.screen, Config.COLOR_EQUIPPED if equipped_axe else Config.COLOR_SLOT_BORDER, axe_rect, 2)
 
         if equipped_axe:
-            # Show tier and name
-            tier_surf = self.tiny_font.render(f"T{equipped_axe.tier}", True, (255, 255, 255))
-            self.screen.blit(tier_surf, (axe_x + 5, tools_y + 5))
-            name_surf = self.tiny_font.render("Axe", True, (255, 255, 255))
-            self.screen.blit(name_surf, (axe_x + 5, tools_y + slot_size - 15))
+            # Try to display axe icon
+            from rendering.image_cache import ImageCache
+            icon_displayed = False
+            if hasattr(equipped_axe, 'item_id') and equipped_axe.item_id:
+                icon_path = f"items/{equipped_axe.item_id}.png"
+                image_cache = ImageCache.get_instance()
+                icon = image_cache.get_image(icon_path, (slot_size - 10, slot_size - 10))
+                if icon:
+                    self.screen.blit(icon, (axe_x + 5, tools_y + 5))
+                    icon_displayed = True
+
+            # Fallback to text if no icon
+            if not icon_displayed:
+                tier_surf = self.tiny_font.render(f"T{equipped_axe.tier}", True, (255, 255, 255))
+                self.screen.blit(tier_surf, (axe_x + 5, tools_y + 5))
+                name_surf = self.tiny_font.render("Axe", True, (255, 255, 255))
+                self.screen.blit(name_surf, (axe_x + 5, tools_y + slot_size - 15))
         else:
             # Show empty slot label
             label_surf = self.tiny_font.render("Axe", True, (100, 100, 100))
@@ -2279,11 +2317,23 @@ class Renderer:
         pygame.draw.rect(self.screen, Config.COLOR_EQUIPPED if equipped_pick else Config.COLOR_SLOT_BORDER, pick_rect, 2)
 
         if equipped_pick:
-            # Show tier and name
-            tier_surf = self.tiny_font.render(f"T{equipped_pick.tier}", True, (255, 255, 255))
-            self.screen.blit(tier_surf, (pick_x + 5, tools_y + 5))
-            name_surf = self.tiny_font.render("Pick", True, (255, 255, 255))
-            self.screen.blit(name_surf, (pick_x + 5, tools_y + slot_size - 15))
+            # Try to display pickaxe icon
+            from rendering.image_cache import ImageCache
+            icon_displayed = False
+            if hasattr(equipped_pick, 'item_id') and equipped_pick.item_id:
+                icon_path = f"items/{equipped_pick.item_id}.png"
+                image_cache = ImageCache.get_instance()
+                icon = image_cache.get_image(icon_path, (slot_size - 10, slot_size - 10))
+                if icon:
+                    self.screen.blit(icon, (pick_x + 5, tools_y + 5))
+                    icon_displayed = True
+
+            # Fallback to text if no icon
+            if not icon_displayed:
+                tier_surf = self.tiny_font.render(f"T{equipped_pick.tier}", True, (255, 255, 255))
+                self.screen.blit(tier_surf, (pick_x + 5, tools_y + 5))
+                name_surf = self.tiny_font.render("Pick", True, (255, 255, 255))
+                self.screen.blit(name_surf, (pick_x + 5, tools_y + slot_size - 15))
         else:
             # Show empty slot label
             label_surf = self.tiny_font.render("Pick", True, (100, 100, 100))
@@ -2812,7 +2862,7 @@ class Renderer:
         if not character.equipment_ui_open:
             return None
 
-        ww, wh = Config.MENU_MEDIUM_W, Config.MENU_MEDIUM_H
+        ww, wh = Config.MENU_LARGE_W, Config.MENU_MEDIUM_H  # Increased width from MEDIUM to LARGE
         wx = Config.VIEWPORT_WIDTH - ww - Config.scale(20)  # Right-aligned with margin
         wy = Config.scale(50)
 
@@ -2855,12 +2905,32 @@ class Renderer:
 
             if item:
                 rarity_color = Config.RARITY_COLORS.get(item.rarity, (200, 200, 200))
-                inner_rect = pygame.Rect(sx + s(5), sy + s(5), slot_size - s(10), slot_size - s(10))
-                pygame.draw.rect(surf, rarity_color, inner_rect)
 
+                # Try to display equipment icon
+                from rendering.image_cache import ImageCache
+                icon_displayed = False
+                if hasattr(item, 'item_id') and item.item_id:
+                    icon_path = f"items/{item.item_id}.png"
+                    image_cache = ImageCache.get_instance()
+                    icon_size = slot_size - s(12)
+                    icon = image_cache.get_image(icon_path, (icon_size, icon_size))
+                    if icon:
+                        icon_x = sx + s(6)
+                        icon_y = sy + s(6)
+                        surf.blit(icon, (icon_x, icon_y))
+                        icon_displayed = True
+
+                # Fallback to colored rectangle if no icon
+                if not icon_displayed:
+                    inner_rect = pygame.Rect(sx + s(5), sy + s(5), slot_size - s(10), slot_size - s(10))
+                    pygame.draw.rect(surf, rarity_color, inner_rect)
+
+                # Draw tier badge (smaller, in corner)
                 tier_text = f"T{item.tier}"
-                tier_surf = self.small_font.render(tier_text, True, (0, 0, 0))
-                surf.blit(tier_surf, (sx + s(8), sy + s(8)))
+                tier_surf = self.small_font.render(tier_text, True, (255, 255, 255))
+                tier_bg = pygame.Rect(sx + s(5), sy + s(5), tier_surf.get_width() + s(4), tier_surf.get_height() + s(2))
+                pygame.draw.rect(surf, (0, 0, 0, 180), tier_bg)
+                surf.blit(tier_surf, (sx + s(7), sy + s(6)))
 
             label_surf = self.tiny_font.render(slot_name, True, (150, 150, 150))
             surf.blit(label_surf, (sx + slot_size // 2 - label_surf.get_width() // 2, sy + slot_size + s(3)))
