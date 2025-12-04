@@ -2304,10 +2304,16 @@ class Renderer:
             if is_hovered and item_stack:
                 hovered_slot = (i, item_stack, slot_rect)
 
-            # Check if item is equipped
+            # Check if THIS SPECIFIC item instance is equipped (not just any item with same ID)
             is_equipped = False
             if item_stack and item_stack.is_equipment():
-                is_equipped = character.equipment.is_equipped(item_stack.item_id)
+                equipment = item_stack.get_equipment()
+                if equipment:
+                    # Check if this specific equipment instance is in any slot
+                    for slot_item in character.equipment.slots.values():
+                        if slot_item is equipment:  # Object identity check
+                            is_equipped = True
+                            break
 
             pygame.draw.rect(self.screen, Config.COLOR_SLOT_FILLED if item_stack else Config.COLOR_SLOT_EMPTY,
                              slot_rect)

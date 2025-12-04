@@ -1868,28 +1868,23 @@ class GameEngine:
 
         if equip_db.is_equipment(item_id):
             # Equipment - create with stats if provided
-            equipment = equip_db.create_equipment_from_id(item_id)
-            if equipment and stats:
-                # Apply crafted stats to equipment
-                for stat_name, stat_value in stats.items():
-                    if hasattr(equipment, stat_name):
-                        setattr(equipment, stat_name, stat_value)
+            for i in range(quantity):
+                equipment = equip_db.create_equipment_from_id(item_id)
+                if equipment and stats:
+                    # Apply crafted stats to equipment
+                    for stat_name, stat_value in stats.items():
+                        if hasattr(equipment, stat_name):
+                            setattr(equipment, stat_name, stat_value)
 
-            # Add to inventory with equipment data
-            item_stack = ItemStack(item_id, quantity, equipment_data=equipment,
-                                  rarity=rarity, crafted_stats=stats)
-            empty_slot = self.character.inventory.get_empty_slot()
-            if empty_slot is not None:
-                self.character.inventory.slots[empty_slot] = item_stack
-            else:
-                self.add_notification("Inventory full!", (255, 100, 100))
+                # Use add_item which handles equipment properly (doesn't stack)
+                success = self.character.inventory.add_item(item_id, 1, equipment_instance=equipment)
+                if not success:
+                    self.add_notification("Inventory full!", (255, 100, 100))
+                    break
         else:
-            # Material - add with rarity
-            item_stack = ItemStack(item_id, quantity, rarity=rarity)
-            empty_slot = self.character.inventory.get_empty_slot()
-            if empty_slot is not None:
-                self.character.inventory.slots[empty_slot] = item_stack
-            else:
+            # Material - use add_item which handles stacking properly
+            success = self.character.inventory.add_item(item_id, quantity)
+            if not success:
                 self.add_notification("Inventory full!", (255, 100, 100))
 
     def handle_craft_click(self, mouse_pos: Tuple[int, int]):
