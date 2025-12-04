@@ -831,10 +831,16 @@ class Renderer:
                         mat_surf = self.small_font.render(mat_name, True, (180, 160, 120))
                         surf.blit(mat_surf, (slot_rect.x + 120, slot_rect.y + 10))
 
-                # Draw quantity
+                # Draw quantity with background for better visibility
                 qty = required_slot.get('quantity', 1)
-                qty_surf = self.small_font.render(f"x{qty}", True, (150, 150, 150))
-                surf.blit(qty_surf, (slot_rect.x + slot_width - 60, slot_rect.y + 10))
+                qty_text = f"x{qty}"
+                qty_surf = self.font.render(qty_text, True, (255, 255, 255))
+                qty_x = slot_rect.x + slot_width - 65
+                qty_y = slot_rect.y + 8
+                # Draw semi-transparent black background
+                qty_bg = pygame.Rect(qty_x - 2, qty_y - 2, qty_surf.get_width() + 4, qty_surf.get_height() + 4)
+                pygame.draw.rect(surf, (0, 0, 0, 180), qty_bg)
+                surf.blit(qty_surf, (qty_x, qty_y))
 
             slot_rects.append((slot_rect, slot_id))
 
@@ -911,15 +917,42 @@ class Renderer:
         for station in world.get_visible_stations(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(station.position)
             in_range = character.is_in_range(station.position)
-            color = station.get_color() if in_range else tuple(max(0, c - 50) for c in station.get_color())
             size = Config.TILE_SIZE + 8  # Larger than before (was - 8, now + 8)
-            pts = [(sx, sy - size // 2), (sx + size // 2, sy), (sx, sy + size // 2), (sx - size // 2, sy)]
-            pygame.draw.polygon(self.screen, color, pts)
-            pygame.draw.polygon(self.screen, (0, 0, 0), pts, 3)
+
+            # Map station type to icon name
+            station_icon_map = {
+                'smithing': 'forge',
+                'alchemy': 'alchemy_table',
+                'refining': 'refinery',
+                'engineering': 'engineering_bench',
+                'adornments': 'enchanting_table'
+            }
+            station_name = station_icon_map.get(station.station_type.value, station.station_type.value)
+            station_icon_path = f"stations/{station_name}_t{station.tier}.png"
+
+            # Try to load station icon
+            image_cache = ImageCache.get_instance()
+            icon = image_cache.get_image(station_icon_path, (size, size))
+
+            if icon:
+                # Render icon
+                icon_rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
+                self.screen.blit(icon, icon_rect.topleft)
+                # Border
+                border_color = (100, 200, 100) if in_range else (80, 80, 80)
+                pygame.draw.rect(self.screen, border_color, icon_rect, 3)
+            else:
+                # Fallback: colored diamond
+                color = station.get_color() if in_range else tuple(max(0, c - 50) for c in station.get_color())
+                pts = [(sx, sy - size // 2), (sx + size // 2, sy), (sx, sy + size // 2), (sx - size // 2, sy)]
+                pygame.draw.polygon(self.screen, color, pts)
+                pygame.draw.polygon(self.screen, (0, 0, 0), pts, 3)
+
             if in_range:
                 tier_text = f"T{station.tier}"
                 tier_surf = self.small_font.render(tier_text, True, (255, 255, 255))
-                tier_rect = tier_surf.get_rect(center=(sx, sy))
+                tier_rect = tier_surf.get_rect(center=(sx, sy - size // 2 - 10))
+                # Draw text with black outline
                 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     self.screen.blit(self.small_font.render(tier_text, True, (0, 0, 0)),
                                      (tier_rect.x + dx, tier_rect.y + dy))
@@ -983,7 +1016,14 @@ class Renderer:
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
             # Auto-generate icon path from resource type
-            resource_icon_path = f"resources/{resource.resource_type.value}.png"
+            # Trees use their resource_type directly (e.g., oak_tree.png)
+            # Ores and stones need "_node" suffix (e.g., copper_ore_node.png, limestone_node.png)
+            resource_value = resource.resource_type.value
+            if "tree" not in resource_value:
+                # Add _node suffix for ores and stones
+                resource_icon_path = f"resources/{resource_value}_node.png"
+            else:
+                resource_icon_path = f"resources/{resource_value}.png"
 
             # Try to load resource icon (only if image cache exists)
             if 'image_cache' not in locals():
@@ -2250,7 +2290,8 @@ class Renderer:
             self.screen.blit(label_surf, (pick_x + 8, tools_y + 18))
 
         start_x, start_y = 20, tools_y + slot_size + 20
-        slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
+        slot_size = Config.INVENTORY_SLOT_SIZE
+        spacing = 10  # Increased from 5 to 10 for better icon visibility
         slots_per_row = Config.INVENTORY_SLOTS_PER_ROW
         hovered_slot = None
 
@@ -2302,7 +2343,8 @@ class Renderer:
         Falls back to colored rectangles if no image is available.
         """
         image_cache = ImageCache.get_instance()
-        inner = pygame.Rect(rect.x + 5, rect.y + 5, rect.width - 10, rect.height - 10)
+        # Increased padding from 5 to 8 for better icon visibility
+        inner = pygame.Rect(rect.x + 8, rect.y + 8, rect.width - 16, rect.height - 16)
 
         # Determine item properties
         icon_path = None
@@ -2348,7 +2390,7 @@ class Renderer:
         else:
             # Show tier in top-left
             tier_surf = self.small_font.render(f"T{tier}", True, (255, 255, 255))
-            tier_rect = tier_surf.get_rect(topleft=(rect.x + 6, rect.y + 6))
+            tier_rect = tier_surf.get_rect(topleft=(rect.x + 4, rect.y + 4))
             # Black outline
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                 self.screen.blit(self.small_font.render(f"T{tier}", True, (0, 0, 0)),
