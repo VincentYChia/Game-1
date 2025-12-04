@@ -123,24 +123,32 @@ def is_connection_error(exception):
     Returns:
         bool: True if this is a connection error requiring restart
     """
-    # Check exception type
+    # These exception types ALWAYS mean connection issues
     if isinstance(exception, (
         InvalidSessionIdException,
-        NoSuchWindowException,
-        TimeoutException
+        NoSuchWindowException
     )):
         return True
 
-    # Check exception message for timeout/connection keywords
+    # For other exceptions, check the message content
     error_str = str(exception).lower()
-    if any(keyword in error_str for keyword in [
-        'timeout',
-        'connection',
-        'read timed out',
+
+    # Connection-related keywords that indicate driver communication failure
+    connection_keywords = [
         'invalid session',
         'no such window',
-        'chrome not reachable'
-    ]):
+        'chrome not reachable',
+        'connection refused',
+        'connection reset',
+        'broken pipe'
+    ]
+
+    if any(keyword in error_str for keyword in connection_keywords):
+        return True
+
+    # ReadTimeoutError is tricky - only treat as connection error if it's during driver communication
+    # Check if the error mentions localhost (ChromeDriver port) which means driver communication failed
+    if 'read timed out' in error_str and 'localhost' in error_str:
         return True
 
     return False
@@ -518,23 +526,34 @@ def click_generate_button(driver):
     return False
 
 def wait_for_download_button(driver, timeout=180):
-    """Wait for download SVG button to appear"""
+    """Wait for download SVG button to appear
+
+    Wraps selenium calls to catch connection errors separately from timeouts
+    """
     print(f"    Waiting for generation (up to {timeout}s)...", end="", flush=True)
 
     start = time.time()
     last_check = 0
 
     while time.time() - start < timeout:
-        svgs = driver.find_elements(By.TAG_NAME, 'svg')
+        try:
+            # Wrap selenium calls to catch connection errors
+            svgs = driver.find_elements(By.TAG_NAME, 'svg')
 
-        for svg in svgs:
-            paths = svg.find_elements(By.TAG_NAME, 'path')
-            for path in paths:
-                d = path.get_attribute('d') or ''
-                if 'M12 13L12 3M12 13C' in d or 'M3.09502 10C' in d:
-                    elapsed = time.time() - start
-                    print(f" {elapsed:.0f}s ✓")
-                    return svg
+            for svg in svgs:
+                paths = svg.find_elements(By.TAG_NAME, 'path')
+                for path in paths:
+                    d = path.get_attribute('d') or ''
+                    if 'M12 13L12 3M12 13C' in d or 'M3.09502 10C' in d:
+                        elapsed = time.time() - start
+                        print(f" {elapsed:.0f}s ✓")
+                        return svg
+
+        except Exception as e:
+            # If selenium operation fails, it's likely a connection issue
+            print(f"\n    [DEBUG] Error during wait loop: {type(e).__name__}")
+            # Re-raise so generate_item can handle it
+            raise
 
         # Progress update every 10 seconds
         current = int(time.time() - start)
@@ -544,7 +563,7 @@ def wait_for_download_button(driver, timeout=180):
 
         time.sleep(1)
 
-    print(f"\n    ⚠ Timeout after {timeout}s")
+    print(f"\n    ⚠ Timeout after {timeout}s (this is normal for slow generations)")
     return None
 
 def click_download_button(driver, download_svg):
@@ -682,6 +701,7 @@ def generate_item(driver, item, version=1):
     try:
         # Fill textareas with version-specific persistent prompt
         print("  → Filling prompts...")
+        print("  [DEBUG] Operation: fill_textareas")
         persistent_prompt = get_persistent_prompt_for_version(version)
         detail_prompt = build_detail_prompt(item)
         if not fill_textareas(driver, persistent_prompt, detail_prompt):
@@ -690,6 +710,7 @@ def generate_item(driver, item, version=1):
 
         # Click Generate
         print("  → Clicking Generate...")
+        print("  [DEBUG] Operation: click_generate_button")
         if not click_generate_button(driver):
             print("  ✗ Could not find Generate button")
             return False, False
@@ -697,10 +718,21 @@ def generate_item(driver, item, version=1):
         time.sleep(2)
 
         # Wait for download button to appear
-        download_svg = wait_for_download_button(driver, GENERATION_TIMEOUT)
+        print("  [DEBUG] Operation: wait_for_download_button (may take up to 180s)")
+        try:
+            download_svg = wait_for_download_button(driver, GENERATION_TIMEOUT)
 
-        if not download_svg:
-            print("  ✗ Generation timeout")
+            if not download_svg:
+                print("  ✗ Generation timeout (no download button appeared)")
+                return False, False
+        except Exception as wait_error:
+            print(f"  [DEBUG] Exception during wait_for_download_button: {type(wait_error).__name__}")
+            # If it's a connection error during the wait, re-raise it
+            if is_connection_error(wait_error):
+                print(f"  [DEBUG] Connection error during generation wait - restarting driver")
+                raise
+            # Otherwise, treat as generation failure (not connection issue)
+            print(f"  ✗ Generation failed with error: {wait_error}")
             return False, False
 
         # Click download button
@@ -746,12 +778,19 @@ def generate_item(driver, item, version=1):
                 return False, False
 
     except Exception as e:
+        # Log detailed error information
+        print(f"  [DEBUG] Exception caught in generate_item: {type(e).__name__}")
+        print(f"  [DEBUG] Error details: {str(e)[:200]}")
+
         # Check if it's a connection/timeout error - re-raise for driver restart
         if is_connection_error(e):
-            print(f"  ✗ Connection error: {type(e).__name__}")
+            print(f"  ✗ Connection error detected: {type(e).__name__}")
+            print(f"  [DEBUG] This error requires driver restart")
             raise  # Re-raise to trigger driver restart in main loop
+        else:
+            print(f"  ✗ Operation error (not connection): {type(e).__name__}")
+            print(f"  [DEBUG] This error does not require driver restart, continuing...")
 
-        print(f"  ✗ Error: {e}")
         return False, False
 
 # ============================================================================
