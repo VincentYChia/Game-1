@@ -528,17 +528,22 @@ def click_generate_button(driver):
 def wait_for_download_button(driver, timeout=180):
     """Wait for download SVG button to appear
 
-    Wraps selenium calls to catch connection errors separately from timeouts
+    Handles transient ReadTimeoutErrors during polling
     """
     print(f"    Waiting for generation (up to {timeout}s)...", end="", flush=True)
 
     start = time.time()
     last_check = 0
+    consecutive_errors = 0
+    max_consecutive_errors = 3
 
     while time.time() - start < timeout:
         try:
             # Wrap selenium calls to catch connection errors
             svgs = driver.find_elements(By.TAG_NAME, 'svg')
+
+            # Reset error counter on successful operation
+            consecutive_errors = 0
 
             for svg in svgs:
                 paths = svg.find_elements(By.TAG_NAME, 'path')
@@ -550,10 +555,29 @@ def wait_for_download_button(driver, timeout=180):
                         return svg
 
         except Exception as e:
-            # If selenium operation fails, it's likely a connection issue
-            print(f"\n    [DEBUG] Error during wait loop: {type(e).__name__}")
-            # Re-raise so generate_item can handle it
-            raise
+            consecutive_errors += 1
+            error_name = type(e).__name__
+
+            # Check if it's a genuine connection error (session lost)
+            if isinstance(e, (InvalidSessionIdException, NoSuchWindowException)):
+                print(f"\n    [DEBUG] Fatal error: {error_name} - session lost")
+                raise
+
+            # For ReadTimeoutError, retry a few times before giving up
+            if 'timeout' in str(e).lower():
+                print(f"\n    [DEBUG] Timeout during poll (attempt {consecutive_errors}/{max_consecutive_errors})", end="", flush=True)
+
+                if consecutive_errors >= max_consecutive_errors:
+                    print(f"\n    [DEBUG] Too many consecutive timeouts - connection unstable")
+                    raise
+
+                # Wait a bit before retry
+                time.sleep(2)
+                continue
+            else:
+                # Other unexpected errors
+                print(f"\n    [DEBUG] Unexpected error: {error_name}")
+                raise
 
         # Progress update every 10 seconds
         current = int(time.time() - start)
