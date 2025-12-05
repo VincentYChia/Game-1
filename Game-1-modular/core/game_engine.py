@@ -1904,6 +1904,10 @@ class GameEngine:
         if not self.crafting_window_rect or not self.crafting_recipes:
             return
 
+        # Prevent crafting while minigame is active
+        if self.active_minigame:
+            return
+
         rx = mouse_pos[0] - self.crafting_window_rect.x
         ry = mouse_pos[1] - self.crafting_window_rect.y
 
@@ -2308,6 +2312,12 @@ class GameEngine:
             recipe: Recipe to craft
             use_minigame: If True, start minigame. If False, instant craft.
         """
+        # Prevent crafting while minigame is already active (prevents double crafting)
+        if self.active_minigame:
+            self.add_notification("Minigame already in progress!", (255, 100, 100))
+            print("❌ Cannot craft - minigame already active")
+            return
+
         recipe_db = RecipeDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
@@ -2741,7 +2751,7 @@ class GameEngine:
             if self.character.crafting_ui_open:
                 # Pass scroll offset via temporary attribute (renderer doesn't have direct access to game state)
                 self.renderer._temp_scroll_offset = self.recipe_scroll_offset
-                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe, self.user_placement)
+                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe, self.user_placement, self.active_minigame is not None)
                 if result:
                     self.crafting_window_rect, self.crafting_recipes, self.placement_grid_rects = result
             else:

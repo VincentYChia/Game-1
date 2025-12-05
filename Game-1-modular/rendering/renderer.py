@@ -2571,7 +2571,7 @@ class Renderer:
 
         return result
 
-    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int], selected_recipe=None, user_placement=None):
+    def render_crafting_ui(self, character: Character, mouse_pos: Tuple[int, int], selected_recipe=None, user_placement=None, minigame_active=False):
         """
         Render crafting UI with two-panel layout:
         - Left panel (450px): Recipe list
@@ -2580,6 +2580,7 @@ class Renderer:
         Args:
             selected_recipe: Currently selected recipe (to highlight in UI)
             user_placement: User's current material placement (Dict[str, str])
+            minigame_active: Whether a minigame is currently active (hides craft buttons)
         """
         if user_placement is None:
             user_placement = {}
@@ -2590,6 +2591,7 @@ class Renderer:
         # (Python scoping doesn't allow nested functions to see parameters)
         self._temp_selected_recipe = selected_recipe
         self._temp_user_placement = user_placement
+        self._temp_minigame_active = minigame_active
 
         # Always render recipe list on the left (pass scroll offset from game engine)
         # Note: Renderer doesn't have direct access to game engine, so we need to get it via a hack
@@ -2822,8 +2824,8 @@ class Renderer:
                 # Enchanting: Vertex-based pattern renderer
                 placement_grid_rects = self.render_adornment_pattern(surf, placement_rect, station_tier, selected, self._temp_user_placement, mouse_pos)
 
-            # Craft buttons at bottom of right panel
-            if can_craft:
+            # Craft buttons at bottom of right panel (hide if minigame active)
+            if can_craft and not self._temp_minigame_active:
                 btn_y = placement_rect.bottom + s(20)
                 instant_btn_w, instant_btn_h = s(120), s(40)
                 minigame_btn_w, minigame_btn_h = s(120), s(40)
@@ -2854,6 +2856,11 @@ class Renderer:
 
                 minigame_subtext = self.small_font.render("1.5x XP", True, (255, 200, 100))
                 surf.blit(minigame_subtext, (minigame_btn_x + s(30), btn_y + s(28)))
+            elif self._temp_minigame_active:
+                # Show "Minigame in progress" message
+                btn_y = placement_rect.bottom + s(30)
+                progress_text = self.font.render("Minigame in Progress...", True, (255, 215, 0))
+                surf.blit(progress_text, (right_panel_x + (right_panel_w - s(40) - progress_text.get_width())//2, btn_y))
             else:
                 # Can't craft - show why
                 btn_y = placement_rect.bottom + s(30)
