@@ -690,13 +690,14 @@ class GameEngine:
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 # Right-click handler (for consumables and offhand attacks)
                 self.mouse_buttons_pressed.add(3)
-                self.handle_right_click(event.pos)
+                shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
+                self.handle_right_click(event.pos, shift_held)
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 3:
                 # Right mouse button released
                 self.mouse_buttons_pressed.discard(3)
 
-    def handle_right_click(self, mouse_pos: Tuple[int, int]):
-        """Handle right-click events (consumables and offhand attacks)"""
+    def handle_right_click(self, mouse_pos: Tuple[int, int], shift_held: bool = False):
+        """Handle right-click events (SHIFT+right for consumables, right-click for offhand attacks)"""
         # Check if clicking on UI elements first (high priority)
         if self.start_menu_open or self.active_minigame or self.enchantment_selection_active:
             return  # Don't handle right-click on UI
@@ -714,8 +715,8 @@ class GameEngine:
         if self.npc_dialogue_open or self.character.equipment_ui_open:
             return  # Don't handle right-click on UI
 
-        # Handle inventory right-clicks for consumables
-        if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
+        # Handle inventory SHIFT+right-clicks for consumables
+        if shift_held and mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             start_x, start_y = 20, Config.INVENTORY_PANEL_Y
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
@@ -735,13 +736,13 @@ class GameEngine:
                             if item_def:
                                 # Check if item is consumable
                                 if item_def.category == "consumable":
-                                    # Use the consumable
+                                    # Use ONE consumable from the stack
                                     success, message = self.character.use_consumable(item_stack.item_id)
                                     if success:
                                         self.add_notification(message, (100, 255, 100))
                                     else:
                                         self.add_notification(message, (255, 100, 100))
-            return  # Don't process world clicks if clicking on inventory
+            return  # Don't process world clicks if SHIFT+clicking on inventory
 
         # Handle world right-clicks for offhand attacks
         if mouse_pos[0] >= Config.VIEWPORT_WIDTH:
@@ -1197,9 +1198,16 @@ class GameEngine:
 
                                         self.add_notification(f"Placed {mat_def.name}", (100, 255, 100))
                                         print(f"✓ Placed {mat_def.name} at player position")
+                                    elif mat_def and mat_def.category == "consumable":
+                                        # Double-click to use consumable (use ONE from stack)
+                                        success, message = self.character.use_consumable(item_stack.item_id)
+                                        if success:
+                                            self.add_notification(message, (100, 255, 100))
+                                        else:
+                                            self.add_notification(message, (255, 100, 100))
                                     else:
-                                        print(f"   ⚠️  Not equipment or placeable, skipping")
-                                        # Put non-equipment item back in slot
+                                        print(f"   ⚠️  Not equipment, placeable, or consumable, skipping")
+                                        # Put non-actionable item back in slot
                                         self.character.inventory.slots[idx] = item_stack
                             else:
                                 print(f"   ⚠️  item_stack is None")

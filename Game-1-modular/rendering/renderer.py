@@ -856,12 +856,12 @@ class Renderer:
                         mat_surf = self.small_font.render(mat_name, True, (180, 160, 120))
                         surf.blit(mat_surf, (slot_rect.x + 120, slot_rect.y + 10))
 
-                # Draw quantity with background for better visibility (far right)
+                # Draw quantity with background for better visibility (LEFT SIDE, outside green box)
                 qty = required_slot.get('quantity', 1)
                 qty_text = f"x{qty}"
                 qty_surf = self.font.render(qty_text, True, (255, 255, 255))
-                # Position at far right of slot with some padding
-                qty_x = slot_rect.x + slot_width - qty_surf.get_width() - 15
+                # Position to the LEFT of the slot, outside the placement box
+                qty_x = slot_rect.x - qty_surf.get_width() - 15
                 qty_y = slot_rect.y + slot_height // 2 - qty_surf.get_height() // 2
                 # Draw semi-transparent black background
                 qty_bg = pygame.Rect(qty_x - 2, qty_y - 2, qty_surf.get_width() + 4, qty_surf.get_height() + 4)
@@ -2291,7 +2291,7 @@ class Renderer:
             from rendering.image_cache import ImageCache
             icon_displayed = False
             if hasattr(equipped_axe, 'item_id') and equipped_axe.item_id:
-                icon_path = f"items/{equipped_axe.item_id}.png"
+                icon_path = f"tools/{equipped_axe.item_id}.png"  # ImageCache adds items/ prefix
                 image_cache = ImageCache.get_instance()
                 icon = image_cache.get_image(icon_path, (slot_size - 10, slot_size - 10))
                 if icon:
@@ -2321,7 +2321,7 @@ class Renderer:
             from rendering.image_cache import ImageCache
             icon_displayed = False
             if hasattr(equipped_pick, 'item_id') and equipped_pick.item_id:
-                icon_path = f"items/{equipped_pick.item_id}.png"
+                icon_path = f"tools/{equipped_pick.item_id}.png"  # ImageCache adds items/ prefix
                 image_cache = ImageCache.get_instance()
                 icon = image_cache.get_image(icon_path, (slot_size - 10, slot_size - 10))
                 if icon:
@@ -2513,7 +2513,9 @@ class Renderer:
         from collections import defaultdict
 
         # Define type categories and their order
-        type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Consumables', 'Materials', 'Stations', 'Other']
+        type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Consumables',
+                      'Tier 1 Materials', 'Tier 2 Materials', 'Tier 3 Materials', 'Tier 4 Materials',
+                      'Components', 'Resources', 'Stations', 'Other']
         grouped = defaultdict(list)
 
         for recipe in recipes:
@@ -2541,7 +2543,23 @@ class Renderer:
                     if mat.category == 'consumable':
                         output_type = 'Consumables'
                     elif mat.category in ['material', 'resource', 'component']:
-                        output_type = 'Materials'
+                        # Group materials by tier for better organization
+                        if mat.tier == 1:
+                            output_type = 'Tier 1 Materials'
+                        elif mat.tier == 2:
+                            output_type = 'Tier 2 Materials'
+                        elif mat.tier == 3:
+                            output_type = 'Tier 3 Materials'
+                        elif mat.tier >= 4:
+                            output_type = 'Tier 4 Materials'
+                        else:
+                            # Fallback by category
+                            if mat.category == 'component':
+                                output_type = 'Components'
+                            elif mat.category == 'resource':
+                                output_type = 'Resources'
+                            else:
+                                output_type = 'Other'
 
             grouped[output_type].append(recipe)
 
@@ -2875,15 +2893,17 @@ class Renderer:
 
         slot_size = Config.scale(80)
         s = Config.scale  # Shorthand for readability
+        # Increased horizontal spacing to prevent overlap
+        horizontal_offset = s(110)  # Increased from s(20) to prevent overlap
         slots_layout = {
             'helmet': (ww // 2 - slot_size // 2, s(70)),
-            'mainHand': (ww // 2 - slot_size - s(20), s(170)),
+            'mainHand': (ww // 2 - horizontal_offset - slot_size // 2, s(170)),
             'chestplate': (ww // 2 - slot_size // 2, s(170)),
-            'offHand': (ww // 2 + s(20), s(170)),
-            'gauntlets': (ww // 2 - slot_size - s(20), s(270)),
+            'offHand': (ww // 2 + horizontal_offset - slot_size // 2, s(170)),
+            'gauntlets': (ww // 2 - horizontal_offset - slot_size // 2, s(270)),
             'leggings': (ww // 2 - slot_size // 2, s(270)),
             'boots': (ww // 2 - slot_size // 2, s(370)),
-            'accessory': (ww // 2 + s(20), s(270)),
+            'accessory': (ww // 2 + horizontal_offset - slot_size // 2, s(270)),
         }
 
         hovered_slot = None
@@ -2909,8 +2929,18 @@ class Renderer:
                 # Try to display equipment icon
                 from rendering.image_cache import ImageCache
                 icon_displayed = False
-                if hasattr(item, 'item_id') and item.item_id:
-                    icon_path = f"items/{item.item_id}.png"
+                if hasattr(item, 'item_id') and item.item_id and hasattr(item, 'item_type'):
+                    # Determine subfolder based on item type
+                    subfolder_map = {
+                        'weapon': 'weapons',
+                        'shield': 'weapons',
+                        'armor': 'armor',
+                        'tool': 'tools',
+                        'accessory': 'accessories',
+                        'station': 'stations'
+                    }
+                    subfolder = subfolder_map.get(item.item_type, 'weapons')
+                    icon_path = f"{subfolder}/{item.item_id}.png"  # ImageCache adds items/ prefix
                     image_cache = ImageCache.get_instance()
                     icon_size = slot_size - s(12)
                     icon = image_cache.get_image(icon_path, (icon_size, icon_size))
