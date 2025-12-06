@@ -32,76 +32,220 @@ class RotationPipePuzzle:
     - Grid of pipe pieces
     - Click to rotate 90 degrees
     - All pieces must connect (no loose ends)
+
+    Piece types:
+    0 = empty
+    1 = straight (2 connections: 0°=horizontal, 90°=vertical)
+    2 = L-bend (2 connections: rotatable 90° increments)
+    3 = T-junction (3 connections: rotatable)
+    4 = cross (4 connections: doesn't need rotation)
     """
 
-    def __init__(self, grid_size=3, difficulty="easy"):
-        """
-        Initialize rotation pipe puzzle
+    # Connection maps: for each piece type, which sides connect at each rotation
+    # Sides: 0=top, 1=right, 2=bottom, 3=left
+    CONNECTIONS = {
+        0: {0: [], 90: [], 180: [], 270: []},  # Empty
+        1: {0: [1, 3], 90: [0, 2], 180: [1, 3], 270: [0, 2]},  # Straight
+        2: {0: [0, 1], 90: [1, 2], 180: [2, 3], 270: [3, 0]},  # L-bend
+        3: {0: [0, 1, 3], 90: [0, 1, 2], 180: [1, 2, 3], 270: [0, 2, 3]},  # T-junction
+        4: {0: [0, 1, 2, 3], 90: [0, 1, 2, 3], 180: [0, 1, 2, 3], 270: [0, 1, 2, 3]}  # Cross
+    }
 
-        Args:
-            grid_size: Grid size (3, 4, or 5)
-            difficulty: Difficulty level (easy, medium, hard)
-        """
+    def __init__(self, grid_size=3, difficulty="easy"):
+        """Initialize rotation pipe puzzle"""
         self.grid_size = grid_size
         self.difficulty = difficulty
-
-        # Piece types:
-        # 0 = empty
-        # 1 = straight horizontal/vertical (rotatable)
-        # 2 = L-bend (rotatable)
-        # 3 = T-junction (rotatable)
-        # 4 = cross (doesn't need rotation)
-
         self.grid = []
-        self.rotations = []  # Rotation state (0, 90, 180, 270)
-        self.input_pos = (0, 0)
-        self.output_pos = (grid_size - 1, grid_size - 1)
-
+        self.rotations = []
+        self.solution_rotations = []  # Store the solution for checking
+        self.input_pos = (0, random.randint(0, grid_size - 1))
+        self.output_pos = (grid_size - 1, random.randint(0, grid_size - 1))
         self._generate_puzzle()
 
     def _generate_puzzle(self):
-        """Generate puzzle with solution, then randomize rotations"""
-        # Simple generation: create a path, then randomize rotations
+        """Generate solvable puzzle by creating path then scrambling"""
         self.grid = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
         self.rotations = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+        self.solution_rotations = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
 
-        # Create simple path from input to output
-        # For now, just fill with random pieces
-        for r in range(self.grid_size):
-            for c in range(self.grid_size):
-                self.grid[r][c] = random.choice([1, 1, 2, 2, 3])
+        # Create path from input to output using BFS-like generation
+        current = list(self.input_pos)
+        path = [tuple(current)]
+        visited = {tuple(current)}
 
-        # Randomize initial rotations
-        for r in range(self.grid_size):
-            for c in range(self.grid_size):
+        # Build a winding path to output
+        while tuple(current) != self.output_pos:
+            # Get valid neighbors
+            neighbors = []
+            for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+                nr, nc = current[0] + dr, current[1] + dc
+                if 0 <= nr < self.grid_size and 0 <= nc < self.grid_size and (nr, nc) not in visited:
+                    # Prefer moving towards output
+                    dist = abs(nr - self.output_pos[0]) + abs(nc - self.output_pos[1])
+                    neighbors.append(((nr, nc), dist))
+
+            if not neighbors:
+                # Backtrack if stuck
+                if len(path) > 1:
+                    path.pop()
+                    current = list(path[-1])
+                    continue
+                else:
+                    break
+
+            # Choose next cell (biased towards output)
+            neighbors.sort(key=lambda x: x[1])
+            next_pos = neighbors[0][0] if random.random() < 0.7 else random.choice(neighbors)[0]
+            current = list(next_pos)
+            path.append(tuple(current))
+            visited.add(tuple(current))
+
+        # Convert path to pipe pieces
+        for i, (r, c) in enumerate(path):
+            if i == 0:
+                # Input piece
+                next_r, next_c = path[i + 1]
+                self.grid[r][c], self.rotations[r][c] = self._get_piece_for_connection(r, c, next_r, next_c)
+            elif i == len(path) - 1:
+                # Output piece
+                prev_r, prev_c = path[i - 1]
+                self.grid[r][c], self.rotations[r][c] = self._get_piece_for_connection(r, c, prev_r, prev_c)
+            else:
+                # Middle pieces
+                prev_r, prev_c = path[i - 1]
+                next_r, next_c = path[i + 1]
+                self.grid[r][c], self.rotations[r][c] = self._get_piece_for_two_connections(r, c, prev_r, prev_c, next_r, next_c)
+
+        # Add some extra pieces for difficulty (based on difficulty level)
+        extra_pieces = {"easy": 2, "medium": 4, "hard": 6}.get(self.difficulty, 2)
+        for _ in range(extra_pieces):
+            r, c = random.randint(0, self.grid_size - 1), random.randint(0, self.grid_size - 1)
+            if self.grid[r][c] == 0:  # Only place in empty cells
+                self.grid[r][c] = random.choice([1, 2])
                 self.rotations[r][c] = random.choice([0, 90, 180, 270])
 
+        # Save solution
+        self.solution_rotations = [row[:] for row in self.rotations]
+
+        # Scramble by rotating pieces randomly
+        scramble_count = self.grid_size * 2
+        for _ in range(scramble_count):
+            r, c = random.randint(0, self.grid_size - 1), random.randint(0, self.grid_size - 1)
+            if self.grid[r][c] not in [0, 4]:  # Don't rotate empty or cross pieces
+                self.rotations[r][c] = random.choice([0, 90, 180, 270])
+
+    def _get_piece_for_connection(self, r, c, target_r, target_c):
+        """Get piece type and rotation for connecting to one neighbor"""
+        # Determine direction to target
+        if target_r < r:  # target above
+            return 1, 90  # Straight vertical
+        elif target_r > r:  # target below
+            return 1, 90
+        elif target_c < c:  # target left
+            return 1, 0  # Straight horizontal
+        else:  # target right
+            return 1, 0
+
+    def _get_piece_for_two_connections(self, r, c, prev_r, prev_c, next_r, next_c):
+        """Get piece type and rotation for connecting to two neighbors"""
+        # Determine directions
+        dirs = []
+        if prev_r < r or next_r < r:
+            dirs.append(0)  # top
+        if prev_c > c or next_c > c:
+            dirs.append(1)  # right
+        if prev_r > r or next_r > r:
+            dirs.append(2)  # bottom
+        if prev_c < c or next_c < c:
+            dirs.append(3)  # left
+
+        # If straight line, use straight piece
+        if set(dirs) == {0, 2} or set(dirs) == {1, 3}:
+            return 1, 90 if 0 in dirs else 0
+
+        # Otherwise use L-bend and find correct rotation
+        for rot in [0, 90, 180, 270]:
+            connections = self.CONNECTIONS[2][rot]
+            if set(connections) == set(dirs):
+                return 2, rot
+
+        return 2, 0  # Fallback
+
     def rotate_piece(self, row, col):
-        """
-        Rotate piece at position
-
-        Args:
-            row, col: Grid position
-
-        Returns:
-            bool: True if rotated successfully
-        """
+        """Rotate piece at position clockwise 90°"""
         if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
-            if self.grid[row][col] != 0:  # Can't rotate empty
+            if self.grid[row][col] not in [0, 4]:  # Can't rotate empty or cross
                 self.rotations[row][col] = (self.rotations[row][col] + 90) % 360
                 return True
         return False
 
     def check_solution(self):
-        """
-        Check if puzzle is solved
+        """Check if all pieces are correctly connected"""
+        # Check each piece has matching connections with neighbors
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
+                if self.grid[r][c] == 0:
+                    continue
 
-        Returns:
-            bool: True if all pieces connected properly
-        """
-        # TODO: Implement proper connection checking
-        # For now, simple placeholder
-        return False
+                piece_type = self.grid[r][c]
+                rotation = self.rotations[r][c]
+                connections = self.CONNECTIONS[piece_type][rotation]
+
+                # Check each connection direction
+                for side in connections:
+                    nr, nc = r, c
+                    if side == 0:  # top
+                        nr -= 1
+                        opposite = 2
+                    elif side == 1:  # right
+                        nc += 1
+                        opposite = 3
+                    elif side == 2:  # bottom
+                        nr += 1
+                        opposite = 0
+                    else:  # left
+                        nc -= 1
+                        opposite = 1
+
+                    # Check if neighbor exists and connects back
+                    if 0 <= nr < self.grid_size and 0 <= nc < self.grid_size:
+                        neighbor_type = self.grid[nr][nc]
+                        if neighbor_type == 0:
+                            return False  # Connection to empty space
+                        neighbor_rot = self.rotations[nr][nc]
+                        neighbor_connections = self.CONNECTIONS[neighbor_type][neighbor_rot]
+                        if opposite not in neighbor_connections:
+                            return False  # Neighbor doesn't connect back
+                    else:
+                        # Edge connection only allowed at input/output
+                        if (r, c) not in [self.input_pos, self.output_pos]:
+                            return False
+
+                # Check that piece doesn't have unconnected sides (except at edges)
+                for side in range(4):
+                    if side in connections:
+                        continue
+                    nr, nc = r, c
+                    if side == 0:
+                        nr -= 1
+                    elif side == 1:
+                        nc += 1
+                    elif side == 2:
+                        nr += 1
+                    else:
+                        nc -= 1
+
+                    # If there's a neighbor with a connection pointing to us, fail
+                    if 0 <= nr < self.grid_size and 0 <= nc < self.grid_size:
+                        neighbor_type = self.grid[nr][nc]
+                        if neighbor_type != 0:
+                            opposite = (side + 2) % 4
+                            neighbor_rot = self.rotations[nr][nc]
+                            neighbor_connections = self.CONNECTIONS[neighbor_type][neighbor_rot]
+                            if opposite in neighbor_connections:
+                                return False
+
+        return True
 
     def get_state(self):
         """Get puzzle state for rendering"""
