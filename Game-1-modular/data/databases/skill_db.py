@@ -63,9 +63,15 @@ class SkillDatabase:
                     titles=req_data.get('titles', [])
                 )
 
+                # Get or auto-generate icon path
+                skill_id = skill_data.get('skillId', '')
+                icon_path = skill_data.get('iconPath')
+                if not icon_path and skill_id:
+                    icon_path = f"skills/{skill_id}.png"
+
                 # Create skill definition
                 skill = SkillDefinition(
-                    skill_id=skill_data.get('skillId', ''),
+                    skill_id=skill_id,
                     name=skill_data.get('name', ''),
                     tier=skill_data.get('tier', 1),
                     rarity=skill_data.get('rarity', 'common'),
@@ -76,7 +82,8 @@ class SkillDatabase:
                     effect=effect,
                     cost=cost,
                     evolution=evolution,
-                    requirements=requirements
+                    requirements=requirements,
+                    icon_path=icon_path
                 )
 
                 self.skills[skill.skill_id] = skill

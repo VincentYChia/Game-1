@@ -29,8 +29,14 @@ class TitleDatabase:
                 prereq_titles = prereqs.get('requiredTitles', [])
                 bonuses = self._map_title_bonuses(title_data.get('bonuses', {}))
 
+                # Get or auto-generate icon path
+                title_id = title_data.get('titleId', '')
+                icon_path = title_data.get('iconPath')
+                if not icon_path and title_id:
+                    icon_path = f"titles/{title_id}.png"
+
                 title = TitleDefinition(
-                    title_id=title_data.get('titleId', ''),
+                    title_id=title_id,
                     name=title_data.get('name', ''),
                     tier=title_data.get('difficultyTier', 'novice'),
                     category=title_data.get('titleType', 'general'),
@@ -40,7 +46,8 @@ class TitleDatabase:
                     bonuses=bonuses,
                     prerequisites=prereq_titles,
                     hidden=title_data.get('isHidden', False),
-                    acquisition_method=title_data.get('acquisitionMethod', 'guaranteed_milestone')
+                    acquisition_method=title_data.get('acquisitionMethod', 'guaranteed_milestone'),
+                    icon_path=icon_path
                 )
                 self.titles[title.title_id] = title
             self.loaded = True
@@ -99,15 +106,15 @@ class TitleDatabase:
     def _create_placeholders(self):
         novice_titles = [
             TitleDefinition('novice_miner', 'Novice Miner', 'novice', 'gathering', 'mining', 100,
-                            '+10% mining damage', {'mining_damage': 0.10}),
+                            '+10% mining damage', {'mining_damage': 0.10}, [], False, 'guaranteed_milestone', 'titles/novice_miner.png'),
             TitleDefinition('novice_lumberjack', 'Novice Lumberjack', 'novice', 'gathering', 'forestry', 100,
-                            '+10% forestry damage', {'forestry_damage': 0.10}),
+                            '+10% forestry damage', {'forestry_damage': 0.10}, [], False, 'guaranteed_milestone', 'titles/novice_lumberjack.png'),
             TitleDefinition('novice_smith', 'Novice Smith', 'novice', 'crafting', 'smithing', 50,
-                            '+10% smithing speed', {'smithing_speed': 0.10}),
+                            '+10% smithing speed', {'smithing_speed': 0.10}, [], False, 'guaranteed_milestone', 'titles/novice_smith.png'),
             TitleDefinition('novice_refiner', 'Novice Refiner', 'novice', 'crafting', 'refining', 50,
-                            '+10% refining speed', {'refining_speed': 0.10}),
+                            '+10% refining speed', {'refining_speed': 0.10}, [], False, 'guaranteed_milestone', 'titles/novice_refiner.png'),
             TitleDefinition('novice_alchemist', 'Novice Alchemist', 'novice', 'crafting', 'alchemy', 50,
-                            '+10% alchemy speed', {'alchemy_speed': 0.10}),
+                            '+10% alchemy speed', {'alchemy_speed': 0.10}, [], False, 'guaranteed_milestone', 'titles/novice_alchemist.png'),
         ]
         for title in novice_titles:
             self.titles[title.title_id] = title

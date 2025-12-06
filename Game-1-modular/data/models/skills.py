@@ -57,6 +57,7 @@ class SkillDefinition:
     cost: SkillCost
     evolution: SkillEvolution
     requirements: SkillRequirements
+    icon_path: Optional[str] = None
 
 
 @dataclass

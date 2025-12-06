@@ -20,7 +20,8 @@ from selenium.common.exceptions import (
     TimeoutException,
     WebDriverException,
     InvalidSessionIdException,
-    NoSuchWindowException
+    NoSuchWindowException,
+    StaleElementReferenceException
 )
 from webdriver_manager.chrome import ChromeDriverManager
 from PIL import Image
@@ -35,51 +36,132 @@ import shutil
 
 PERSISTENT_PROMPT = "Simple cel-shaded 3d stylized fantasy exploration item icons. Clean render, distinct details, transparent background."
 
-# Version-specific prompts (replaces entire persistent prompt for that version)
-# Empty dict means use default PERSISTENT_PROMPT for all versions
+# Version-specific prompts
 VERSION_PROMPTS = {
-    1: "3D rendered item icon in illustrative fantasy style. Item large in frame (70-80% coverage), slight diagonal positioning. Neutral background with gradient, clean three-point lighting, soft shadow beneath. Focus on representing the idea of the item through an idealized fantasy illustration. Smooth, detailed, and brighter.",
-    2: "3D rendered item icon in illustrative fantasy style. Render EXACTLY the item described - verify item type, form, and state before generating. Item large in frame (70-80% coverage), slight diagonal positioning. Neutral background with gradient, clean three-point lighting, soft shadow beneath. Focus on representing the precise idea of the item through idealized fantasy illustration. Smooth, detailed, and brighter.",
-    3: "3D rendered item icon in illustrative fantasy style. Read full item description carefully - distinguish between similar items (axe vs pickaxe, ore vs ingot vs node, dagger vs sword). Render the specific form described. Item fills 70-80% of frame, diagonal angle. Neutral gradient background, clean three-point lighting, soft shadow. Represent the idealized archetypal form with smooth detail and enhanced brightness. Accuracy to description is critical.",
+    1: "3D rendered item icon in bold illustrative fantasy style. CRITICAL: Items must be visually distinct from similar items through form, proportion, and design language. Item fills 70-80% of frame at dynamic angle. Materials must be clearly represented through texture, sheen, and visual effects. Gradient background, dramatic three-point lighting with colored rim lights, soft ground shadow. Emphasize archetypal fantasy design with enhanced brightness and saturation.",
+
+    2: "3D rendered item icon in bold illustrative fantasy style. VERIFY item type completely before generating - distinguish axes from pickaxes, ores from ingots, nodes from processed materials. Form and function must be immediately recognizable. Materials MUST show distinct visual properties (metallic sheen, texture, color temperature, magical effects). Item 70-80% frame coverage, compelling diagonal angle. Gradient background, dramatic lighting with material-appropriate highlights. Push visual distinction aggressively.",
+
+    3: "3D rendered item icon in bold illustrative fantasy style with MAXIMUM DISTINCTION. Read full description and verify: tool function (mining/chopping/combat), item state (raw node/ore/ingot/crafted), material properties. Each item category needs unique silhouette and design language. Materials must be exaggerated for clarity: copper=warm orange, steel=cool blue-grey, iron=neutral grey, wood types with signature effects. Reject realistic ambiguity - embrace fantasy symbolism. 70-80% coverage, dynamic angle, dramatic gradient background, bold three-point lighting with colored accents.",
 }
 
-# Category-specific additions (appends to detail prompt for matching categories)
-# All available categories from catalog:
+# Category-specific additions
 CATEGORY_ADDITIONS = {
-    # 'equipment': 'Additional guidance for equipment',
-    # 'consumable': 'Additional guidance for consumables',
-    'enemy': 'Focus on stylized enemies. Avoid excessive realism or any elements that may disgust users',
-    'resource': 'This is a node for resources not the actual resource, your illustration should reflect that',
-    'title': 'This is an icon for a in-game title. So it should be a representative icon based on the idea not an illustration',
-    'skill': 'This is an icon for a in-game skill. So it should be a representative icon based on the idea not an illustration',
-    'station': 't1, t2, t3, and t4 represent tiers 1 through 4. 4 is the most advanced and should have the most detail. 1 is the simplest and should be simplest in design',
-    'device': 'Adhere closely to the type as the largest distinction for design.',
-    'material': 'For less specific and documented materials adhering to the style is more important. Use the narrative as the most important description',
+    'enemy': 'Stylized creature design with bold silhouette. Emphasize character and threat level through form, not gore. Clear visual storytelling.',
+
+    'resource': 'This is a RESOURCE NODE (in-ground deposit, tree, quarry vein) NOT the harvested material. Show the source in natural context - rock formations, tree bark, ore veins in stone matrix. Must be clearly a gatherable environmental object, not a processed item.',
+
+    'title': 'Symbolic emblem representing achievement concept. Use heraldic/medallion design language - shields, crests, symbolic icons, decorative frames. NOT literal illustrations. Think coat of arms meeting fantasy badge.',
+
+    'skill': 'Abstract symbolic icon representing the skill concept through visual metaphor. Use bold graphic design language - geometric shapes, energy effects, elemental symbols, mystical sigils. Prioritize instant recognition over literal representation. Reference ability scroll/tome aesthetic.',
+
+    'station': 'Crafting station with clear tier progression. T1: Simple, rustic, basic materials. T2: Refined, metal reinforcements, modest detail. T3: Advanced, complex mechanisms, magical accents. T4: Masterwork, intricate detail, glowing runes, premium materials. Each tier should be visually distinct at thumbnail size.',
+
+    'device': 'Functional fantasy device. Type determines form factor - distinguish turrets, traps, gadgets clearly. Show purpose through design. Adhere to type as primary design driver.',
+
+    'material': 'Processed material icon - ingots, refined components, drops. HIGHLY SYMBOLIC representation. Ingots = stylized bars with material signature (copper glow, steel sheen). Drops = crystallized essence with thematic effects. Prioritize instant material recognition over realism.',
+
+    'consumable': 'Container design tells the story. Bottle/vial shape, liquid color, AND container details indicate effect. Health = round flask, red liquid, warm glow. Mana = elegant vial, blue liquid, mystical sparkles. Buff = geometric bottle with effect-colored liquid and atmospheric effects. Make containers creative and distinct.',
+
+    'equipment': 'Equipment items must show material properties clearly. Metal type affects color temperature, sheen, and edge highlights. Copper = warm orange-gold. Iron = neutral grey. Steel = cool blue-grey. Bronze = rich amber. Ensure material is unmistakable.',
 }
 
-# Type-specific additions (appends to detail prompt for matching types)
-# All available types from catalog:
+# Type-specific additions
 TYPE_ADDITIONS = {
-    # Equipment types:
-    # 'weapon': 'Additional guidance for weapons',
-    # 'sword': 'Additional guidance for swords',
-    # 'axe': 'Additional guidance for axes',
-    # 'mace': 'Additional guidance for maces',
-    # 'dagger': 'Additional guidance for daggers',
-    # 'spear': 'Additional guidance for spears',
-    # 'bow': 'Additional guidance for bows',
-    # 'staff': 'Additional guidance for staves',
-    # 'shield': 'Additional guidance for shields',
-    # 'armor': 'Additional guidance for armor',
-    # 'tool': 'Additional guidance for tools',
-    # 'accessory': 'Additional guidance for accessories',
-    # Consumable types:
-    # 'potion': 'Additional guidance for potions',
-    # 'food': 'Additional guidance for food',
-    # 'scroll': 'Additional guidance for scrolls',
-    'turret': 'Turrets require a base'
-    # Other types as needed...
+    # TOOLS - Critical distinction from weapons
+    'tool': 'TOOL not weapon. Tools have utilitarian design - reinforced heads, practical grip wrapping, wear marks from use. Less elegant than weapons, more robust construction.',
+
+    'axe': 'WOODCUTTING AXE. Wide, straight-edged blade optimized for chopping wood. Thick spine, broad cutting surface. Utilitarian handle with practical grip. NOT a battle axe - no spikes, curves, or aggressive styling.',
+
+    'pickaxe': 'MINING PICKAXE. Distinctive pointed pick on one side, flat chisel on other (or dual picks). Narrow profile, long reach design. Reinforced shaft. Head angled for breaking rock. COMPLETELY different silhouette from axe - emphasize the pointed pick shape.',
+
+    'hatchet': 'Small one-handed forestry hatchet. Compact axe head, short handle. Clearly smaller and lighter than full axe.',
+
+    # WEAPONS - Aggressive elegant design
+    'weapon': 'Combat weapon with elegant, aggressive design. Sharp lines, balanced proportions, decorative elements. Designed to look deadly and prestigious.',
+
+    'battleaxe': 'COMBAT AXE. Curved aggressive blade, often asymmetric or double-headed. Sharp edges, intimidating design. Decorative elements, balanced for fighting. More elegant and deadly than tool axe.',
+
+    'sword': 'Sword with clear blade profile. Material affects color, sheen, and edge glow.',
+
+    'bow': 'Elegant bow with VISIBLE STRING. String must be rendered as fine line connecting limb tips, slightly curved under tension. If string is hard to see, add subtle glow or highlights. Emphasize recurve or longbow shape clearly.',
+
+    'staff': 'Magical or combat staff. Ornate head design with crystals, orbs, or elemental effects. Carved shaft with runes or wrappings.',
+
+    'dagger': 'Short blade, often curved or dual-edged. Distinct from sword by size and proportion. Emphasize compact lethality.',
+
+    'spear': 'Long shaft with pointed head. Clear spearhead design - leaf-shaped, barbed, or angular. Shaft details like wrapping or metal bands.',
+
+    'mace': 'Blunt weapon with distinctive head - spiked ball, flanged cylinder, or geometric shape. Heavy, intimidating appearance.',
+
+    # MATERIALS
+    'ingot': 'Stylized metal bar with beveled edges. Material signature is CRITICAL: Copper = warm orange-amber glow. Iron = neutral grey with subtle shine. Steel = cool blue-grey with high sheen. Gold = rich yellow with warm highlights. Bronze = deep amber-orange. Silver = bright white-grey with sharp highlights. Show material through color temperature and reflectivity.',
+
+    'ore': 'Unrefined ore chunk - rough crystalline rock. Material shows as veins, crystals, or deposits in host stone. Copper ore = green malachite crystals. Iron ore = reddish-brown hematite. Gold ore = bright yellow veins in quartz. Emphasize raw, unprocessed state with natural crystal formations.',
+
+    'wood': 'Processed lumber or wood resource. Different wood types need signature visual effects: Oak = rich brown, solid grain. Pine = lighter tan, visible knots. Ironwood = grey with metallic vein patterns. Ebony = deep black with subtle purple sheen. Crimson = red tinted with flame-like grain. Make wood types immediately distinguishable through color, effects, and character.',
+
+    'node': 'Resource node - environmental deposit. Add terms: QUARRY for stone deposits, VEIN for ore deposits, TREE for wood sources. Show in natural environmental context - mineral vein in rock face, quarry stone formation, standing tree bark. Must be clearly different from refined materials.',
+
+    # SPECIFIC ITEMS
+    'potion': 'Fantasy potion in distinctive container. Round flask, decorative bottle, or vial. Liquid color indicates type. Container itself should have character - cork stopper, wax seal, etched glass, glowing effects.',
+
+    'forge': 'Forge station with CLEAR tier progression: T1 = simple stone hearth, basic bellows, primitive anvil. T2 = brick forge, metal bellows, proper anvil, coal pile. T3 = reinforced forge with chimney, mechanical bellows, tool racks, mystical accents. T4 = masterwork forge with intricate metalwork, glowing runes, ethereal flames, magical anvil, premium materials throughout. Each tier must be dramatically more impressive.',
+
+    'turret': 'Defensive turret with clear base. Mounted weapon system on stable platform. Show firing mechanism, ammunition, and sturdy foundation.',
 }
+
+# # ============================================================================
+# # CONFIGURATION
+# # ============================================================================
+#
+# PERSISTENT_PROMPT = "Simple cel-shaded 3d stylized fantasy exploration item icons. Clean render, distinct details, transparent background."
+#
+# # Version-specific prompts (replaces entire persistent prompt for that version)
+# # Empty dict means use default PERSISTENT_PROMPT for all versions
+# VERSION_PROMPTS = {
+#     1: "3D rendered item icon in illustrative fantasy style. Item large in frame (70-80% coverage), slight diagonal positioning. Neutral background with gradient, clean three-point lighting, soft shadow beneath. Focus on representing the idea of the item through an idealized fantasy illustration. Smooth, detailed, and brighter.",
+#     2: "3D rendered item icon in illustrative fantasy style. Render EXACTLY the item described - verify item type, form, and state before generating. Item large in frame (70-80% coverage), slight diagonal positioning. Neutral background with gradient, clean three-point lighting, soft shadow beneath. Focus on representing the precise idea of the item through idealized fantasy illustration. Smooth, detailed, and brighter.",
+#     3: "3D rendered item icon in illustrative fantasy style. Read full item description carefully - distinguish between similar items (axe vs pickaxe, ore vs ingot vs node, dagger vs sword). Render the specific form described. Item fills 70-80% of frame, diagonal angle. Neutral gradient background, clean three-point lighting, soft shadow. Represent the idealized archetypal form with smooth detail and enhanced brightness. Accuracy to description is critical.",
+# }
+#
+# # Category-specific additions (appends to detail prompt for matching categories)
+# # All available categories from catalog:
+# CATEGORY_ADDITIONS = {
+#     # 'equipment': 'Additional guidance for equipment',
+#     # 'consumable': 'Additional guidance for consumables',
+#     'enemy': 'Focus on stylized enemies. Avoid excessive realism or any elements that may disgust users',
+#     'resource': 'This is a node for resources not the actual resource, your illustration should reflect that',
+#     'title': 'This is an icon for a in-game title. So it should be a representative icon based on the idea not an illustration',
+#     'skill': 'This is an icon for a in-game skill. So it should be a representative icon based on the idea not an illustration',
+#     'station': 't1, t2, t3, and t4 represent tiers 1 through 4. 4 is the most advanced and should have the most detail. 1 is the simplest and should be simplest in design',
+#     'device': 'Adhere closely to the type as the largest distinction for design.',
+#     'material': 'For less specific and documented materials adhering to the style is more important. Use the narrative as the most important description',
+# }
+#
+# # Type-specific additions (appends to detail prompt for matching types)
+# # All available types from catalog:
+# TYPE_ADDITIONS = {
+#     # Equipment types:
+#     # 'weapon': 'Additional guidance for weapons',
+#     # 'sword': 'Additional guidance for swords',
+#     # 'axe': 'Additional guidance for axes',
+#     # 'mace': 'Additional guidance for maces',
+#     # 'dagger': 'Additional guidance for daggers',
+#     # 'spear': 'Additional guidance for spears',
+#     # 'bow': 'Additional guidance for bows',
+#     # 'staff': 'Additional guidance for staves',
+#     # 'shield': 'Additional guidance for shields',
+#     # 'armor': 'Additional guidance for armor',
+#     # 'tool': 'Additional guidance for tools',
+#     # 'accessory': 'Additional guidance for accessories',
+#     # Consumable types:
+#     # 'potion': 'Additional guidance for potions',
+#     # 'food': 'Additional guidance for food',
+#     # 'scroll': 'Additional guidance for scrolls',
+#     'turret': 'Turrets require a base'
+#     # Other types as needed...
+# }
 
 TEST_ITEMS = [
     {
@@ -108,62 +190,36 @@ CATALOG_PATH = SCRIPT_DIR.parent.parent / "Scaled JSON Development" / "ITEM_CATA
 
 GENERATION_TIMEOUT = 180
 WAIT_BETWEEN_ITEMS = 25
-VERSIONS_TO_GENERATE = 3  # Generate 3 versions of each icon
+VERSIONS_TO_GENERATE = 3
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
 
 def is_connection_error(exception):
-    """Check if an exception is a connection/session error that requires driver restart
-
-    Args:
-        exception: The exception to check
-
-    Returns:
-        bool: True if this is a connection error requiring restart
-    """
-    # These exception types ALWAYS mean connection issues
-    if isinstance(exception, (
-        InvalidSessionIdException,
-        NoSuchWindowException
-    )):
+    """Check if an exception is a connection/session error that requires driver restart"""
+    if isinstance(exception, (InvalidSessionIdException, NoSuchWindowException)):
         return True
 
-    # For other exceptions, check the message content
     error_str = str(exception).lower()
-
-    # Connection-related keywords that indicate driver communication failure
     connection_keywords = [
-        'invalid session',
-        'no such window',
-        'chrome not reachable',
-        'connection refused',
-        'connection reset',
-        'broken pipe'
+        'invalid session', 'no such window', 'chrome not reachable',
+        'connection refused', 'connection reset', 'broken pipe'
     ]
 
     if any(keyword in error_str for keyword in connection_keywords):
         return True
 
-    # ReadTimeoutError is tricky - only treat as connection error if it's during driver communication
-    # Check if the error mentions localhost (ChromeDriver port) which means driver communication failed
     if 'read timed out' in error_str and 'localhost' in error_str:
         return True
 
     return False
 
 def categorize_item(item):
-    """Determine subfolder based on item properties
-
-    Returns tuple: (base_folder, subfolder)
-    - base_folder: 'items', 'enemies', 'resources', 'titles', or 'skills'
-    - subfolder: specific category within base folder (or None for non-items)
-    """
+    """Determine subfolder based on item properties"""
     category = item.get('category', '').lower()
     item_type = item.get('type', '').lower()
 
-    # Non-item entities
     if category == 'enemy':
         return ('enemies', None)
     if category == 'resource':
@@ -173,7 +229,6 @@ def categorize_item(item):
     if category == 'skill':
         return ('skills', None)
 
-    # Item entities - all go under 'items' base folder
     if category == 'equipment':
         if item_type in ['weapon', 'sword', 'axe', 'mace', 'dagger', 'spear', 'bow', 'staff', 'shield']:
             return ('items', 'weapons')
@@ -184,7 +239,7 @@ def categorize_item(item):
         elif item_type in ['accessory']:
             return ('items', 'accessories')
         else:
-            return ('items', 'weapons')  # Default for equipment
+            return ('items', 'weapons')
 
     if category == 'station':
         return ('items', 'stations')
@@ -193,7 +248,6 @@ def categorize_item(item):
     if category == 'consumable':
         return ('items', 'consumables')
 
-    # Default: materials
     return ('items', 'materials')
 
 def parse_catalog(filepath):
@@ -228,7 +282,6 @@ def parse_catalog(filepath):
             item_data.setdefault('category', 'material')
             item_data.setdefault('type', 'unknown')
 
-            # Get folder structure from categorize_item
             base_folder, subfolder = categorize_item(item_data)
             item_data['base_folder'] = base_folder
             item_data['subfolder'] = subfolder
@@ -238,10 +291,7 @@ def parse_catalog(filepath):
     return items
 
 def build_detail_prompt(item):
-    """Build detail prompt from item data with optional additions
-
-    Applies CATEGORY_ADDITIONS and TYPE_ADDITIONS if matching
-    """
+    """Build detail prompt from item data with optional additions"""
     try:
         base_prompt = f"""Generate an icon image off of the item description:
 Icon_name: {item['name']}
@@ -250,13 +300,11 @@ Type: {item['type']}
 Subtype: {item['subtype']}
 Narrative: {item['narrative']}"""
 
-        # Apply category-specific additions
         category = item.get('category', '').lower()
         if category in CATEGORY_ADDITIONS:
             print(f"  [DEBUG] Adding category guidance for: {category}")
             base_prompt += f"\n\nAdditional guidance: {CATEGORY_ADDITIONS[category]}"
 
-        # Apply type-specific additions (more specific than category)
         item_type = item.get('type', '').lower()
         if item_type in TYPE_ADDITIONS:
             print(f"  [DEBUG] Adding type guidance for: {item_type}")
@@ -272,33 +320,20 @@ Narrative: {item['narrative']}"""
         raise
 
 def get_persistent_prompt_for_version(version):
-    """Get the persistent prompt for a specific version
-
-    Returns VERSION_PROMPTS[version] if set, otherwise default PERSISTENT_PROMPT
-    """
+    """Get the persistent prompt for a specific version"""
     return VERSION_PROMPTS.get(version, PERSISTENT_PROMPT)
 
 def pre_scan_directories(items, versions_to_generate):
-    """Scan output directories before browser opens
-
-    Shows summary of existing vs missing files for each version
-    Only counts files > 5KB (excludes tiny placeholders)
-
-    Args:
-        items: List of item dictionaries
-        versions_to_generate: Number of versions to check
-    """
+    """Scan output directories before browser opens"""
     print("\n" + "="*70)
     print("PRE-SCAN: Checking existing files")
     print("="*70)
 
-    MIN_FILE_SIZE = 5000  # 5KB minimum
+    MIN_FILE_SIZE = 5000
 
-    # Track overall stats
     all_version_stats = []
 
     for version in range(1, versions_to_generate + 1):
-        # Determine output base for this version
         if version == 1:
             output_base = OUTPUT_DIR
         else:
@@ -307,13 +342,11 @@ def pre_scan_directories(items, versions_to_generate):
         existing_files = []
         missing_items = []
 
-        # Check each item
         for item in items:
             name = item['name']
             base_folder = item.get('base_folder', 'items')
             subfolder = item.get('subfolder')
 
-            # Build file path (same logic as generate_item)
             if version == 1:
                 filename = f"{name}.png"
             else:
@@ -326,7 +359,6 @@ def pre_scan_directories(items, versions_to_generate):
 
             save_path = save_dir / filename
 
-            # Check if exists and has valid size
             if save_path.exists() and save_path.stat().st_size > MIN_FILE_SIZE:
                 existing_files.append({
                     'name': name,
@@ -336,7 +368,6 @@ def pre_scan_directories(items, versions_to_generate):
             else:
                 missing_items.append(name)
 
-        # Store stats
         existing_count = len(existing_files)
         missing_count = len(missing_items)
         total_count = len(items)
@@ -350,10 +381,8 @@ def pre_scan_directories(items, versions_to_generate):
             'missing_items': missing_items
         })
 
-        # Print summary for this version
         print(f"\nVersion {version}: {existing_count}/{total_count} existing, {missing_count} missing")
 
-    # Ask if user wants detailed view
     if sum(stats['existing'] for stats in all_version_stats) > 0:
         print("\n" + "-"*70)
         show_details = input("Show detailed file list? [y/N]: ").strip().lower()
@@ -380,9 +409,6 @@ def setup_driver():
     chrome_options.add_argument('--start-maximized')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
-
-    # Use 'eager' page load strategy - don't wait for all resources (ads, images, etc.)
-    # This prevents timeouts when pages have slow-loading ads
     chrome_options.page_load_strategy = 'eager'
 
     service = Service(ChromeDriverManager().install())
@@ -423,7 +449,7 @@ def restart_driver(old_driver):
         raise Exception("Failed to restart driver - check internet connection")
 
     print("  → Waiting for page to load...")
-    time.sleep(8)
+    time.sleep(16)
 
     select_cel_shaded_style(new_driver)
     print("✓ Browser restarted and ready\n")
@@ -441,11 +467,9 @@ def fill_textareas(driver, prompt1, prompt2):
             print(f"  [DEBUG] ERROR: Need 2 textareas, found {len(textareas)}")
             return False
 
-        # Debug: Show prompt lengths
         print(f"  [DEBUG] Persistent prompt length: {len(prompt1)} chars")
         print(f"  [DEBUG] Detail prompt length: {len(prompt2)} chars")
 
-        # Fill first textarea
         print(f"  [DEBUG] Filling textarea 1...")
         textareas[0].click()
         time.sleep(0.2)
@@ -455,7 +479,6 @@ def fill_textareas(driver, prompt1, prompt2):
         time.sleep(0.2)
         print(f"  [DEBUG] Textarea 1 filled")
 
-        # Fill second textarea
         print(f"  [DEBUG] Filling textarea 2...")
         textareas[1].click()
         time.sleep(0.2)
@@ -470,10 +493,9 @@ def fill_textareas(driver, prompt1, prompt2):
     except Exception as e:
         print(f"  [DEBUG] EXCEPTION in fill_textareas: {type(e).__name__}: {e}")
 
-        # If it's a connection/timeout error, re-raise it so driver can be restarted
         if is_connection_error(e):
             print(f"  [DEBUG] Connection error detected - will restart driver")
-            raise  # Re-raise to trigger driver restart
+            raise
 
         import traceback
         traceback.print_exc()
@@ -484,7 +506,6 @@ def select_cel_shaded_style(driver):
     try:
         print("  → Selecting Cel-Shaded style...")
 
-        # Find image with alt="Cel-Shaded"
         imgs = driver.find_elements(By.TAG_NAME, 'img')
 
         for img in imgs:
@@ -492,27 +513,24 @@ def select_cel_shaded_style(driver):
             src = img.get_attribute('src') or ''
 
             if 'cel-shaded' in alt.lower() or 'Cel-Shaded' in src:
-                # Click the image (or its parent container)
                 try:
-                    # Try clicking parent first (usually a button/div)
                     parent = img.find_element(By.XPATH, './..')
                     parent.click()
                     print("  ✓ Cel-Shaded style selected")
                     time.sleep(1)
                     return True
                 except:
-                    # Fallback: click image itself
                     img.click()
                     print("  ✓ Cel-Shaded style selected")
                     time.sleep(1)
                     return True
 
         print("  ⚠ Cel-Shaded style not found (may already be default)")
-        return True  # Don't fail if not found
+        return True
 
     except Exception as e:
         print(f"  ⚠ Could not select style: {e}")
-        return True  # Don't fail the whole process
+        return True
 
 def click_generate_button(driver):
     """Find and click Generate button"""
@@ -525,75 +543,86 @@ def click_generate_button(driver):
 
     return False
 
-def wait_for_download_button(driver, timeout=180):
-    """Wait for download SVG button to appear
+def wait_for_generation_complete(driver, timeout=180):
+    """Wait for download button to appear - ROBUST VERSION
 
-    Handles transient ReadTimeoutErrors during polling
+    Checks every 5 seconds, with detailed logging and stale element handling
     """
-    print(f"    Waiting for generation (up to {timeout}s)...", end="", flush=True)
+    print(f"    Waiting for generation (up to {timeout}s)...")
 
     start = time.time()
-    last_check = 0
-    consecutive_errors = 0
-    max_consecutive_errors = 3
+    check_count = 0
 
     while time.time() - start < timeout:
+        check_count += 1
+        elapsed = int(time.time() - start)
+
+        # Progress every 15 seconds
+        if check_count % 3 == 1:
+            print(f"    [{elapsed}s] Checking...", flush=True)
+
         try:
-            # Wrap selenium calls to catch connection errors
+            # Get fresh list of SVGs each time
             svgs = driver.find_elements(By.TAG_NAME, 'svg')
 
-            # Reset error counter on successful operation
-            consecutive_errors = 0
+            # Check each SVG
+            for svg_index, svg in enumerate(svgs):
+                try:
+                    # Get paths for this SVG - handle stale elements
+                    paths = svg.find_elements(By.TAG_NAME, 'path')
 
-            for svg in svgs:
-                paths = svg.find_elements(By.TAG_NAME, 'path')
-                for path in paths:
-                    d = path.get_attribute('d') or ''
-                    if 'M12 13L12 3M12 13C' in d or 'M3.09502 10C' in d:
-                        elapsed = time.time() - start
-                        print(f" {elapsed:.0f}s ✓")
-                        return svg
+                    for path_index, path in enumerate(paths):
+                        try:
+                            # Get the 'd' attribute - this is where we often fail
+                            d = path.get_attribute('d')
 
+                            if not d:
+                                continue
+
+                            # Check for download button signatures
+                            # Arc path (top of download arrow)
+                            if 'M3.09502 10C' in d and '21 11.4' in d:
+                                print(f"    [{elapsed}s] ✓ Found download button (arc path)!")
+                                return svg
+
+                            # Arrow path (main shaft and chevron)
+                            if 'M12 13L12 3' in d and 'M12 13C' in d:
+                                print(f"    [{elapsed}s] ✓ Found download button (arrow path)!")
+                                return svg
+
+                        except StaleElementReferenceException:
+                            # Path became stale, continue to next
+                            continue
+                        except Exception as path_err:
+                            # Log unexpected path errors in first few checks
+                            if check_count <= 2:
+                                print(f"    [DEBUG] Path {path_index} error: {type(path_err).__name__}")
+                            continue
+
+                except StaleElementReferenceException:
+                    # SVG became stale, continue to next
+                    continue
+                except Exception as svg_err:
+                    # Log unexpected SVG errors in first few checks
+                    if check_count <= 2:
+                        print(f"    [DEBUG] SVG {svg_index} error: {type(svg_err).__name__}")
+                    continue
+
+        except (InvalidSessionIdException, NoSuchWindowException):
+            # Fatal connection errors - re-raise
+            raise
         except Exception as e:
-            consecutive_errors += 1
-            error_name = type(e).__name__
+            print(f"    [DEBUG] Check error: {type(e).__name__}")
 
-            # Check if it's a genuine connection error (session lost)
-            if isinstance(e, (InvalidSessionIdException, NoSuchWindowException)):
-                print(f"\n    [DEBUG] Fatal error: {error_name} - session lost")
-                raise
+        # Wait 5 seconds before next check
+        time.sleep(5)
 
-            # For ReadTimeoutError, retry a few times before giving up
-            if 'timeout' in str(e).lower():
-                print(f"\n    [DEBUG] Timeout during poll (attempt {consecutive_errors}/{max_consecutive_errors})", end="", flush=True)
-
-                if consecutive_errors >= max_consecutive_errors:
-                    print(f"\n    [DEBUG] Too many consecutive timeouts - connection unstable")
-                    raise
-
-                # Wait a bit before retry
-                time.sleep(2)
-                continue
-            else:
-                # Other unexpected errors
-                print(f"\n    [DEBUG] Unexpected error: {error_name}")
-                raise
-
-        # Progress update every 10 seconds
-        current = int(time.time() - start)
-        if current >= last_check + 10:
-            last_check = current
-            print(f"\n    [{current}s] Generating...", end="", flush=True)
-
-        time.sleep(1)
-
-    print(f"\n    ⚠ Timeout after {timeout}s (this is normal for slow generations)")
+    print(f"    ✗ Timeout after {timeout}s - button never detected")
     return None
 
 def click_download_button(driver, download_svg):
     """Click the download button (SVG's parent)"""
     try:
-        # Try to find clickable parent
         parent = download_svg
         for _ in range(3):
             parent = parent.find_element(By.XPATH, './..')
@@ -601,7 +630,6 @@ def click_download_button(driver, download_svg):
                 parent.click()
                 return True
 
-        # Fallback: click SVG itself
         download_svg.click()
         return True
     except:
@@ -654,7 +682,6 @@ def screenshot_with_crop(driver, save_path):
                 img.screenshot(str(temp_path))
                 print(f"  [DEBUG]   Screenshot taken: {temp_path}")
 
-                # Crop 30px from all sides
                 image = Image.open(temp_path)
                 width, height = image.size
                 print(f"  [DEBUG]   Cropping from {width}x{height}...")
@@ -678,21 +705,11 @@ def screenshot_with_crop(driver, save_path):
 # ============================================================================
 
 def generate_item(driver, item, version=1):
-    """Generate one item icon
-
-    Args:
-        driver: Selenium WebDriver instance
-        item: Item dictionary with name, category, etc.
-        version: Version number (1, 2, 3, etc.) for multiple generations
-
-    Returns:
-        (success, skipped) tuple
-    """
+    """Generate one item icon"""
     name = item['name']
     base_folder = item.get('base_folder', 'items')
     subfolder = item.get('subfolder')
 
-    # Modify output directory and filename based on version
     if version == 1:
         output_base = OUTPUT_DIR
         filename = f"{name}.png"
@@ -702,7 +719,6 @@ def generate_item(driver, item, version=1):
         filename = f"{name}-{version}.png"
         version_label = f" [v{version}]"
 
-    # Build display path and save path
     if subfolder:
         display_path = f"{base_folder}/{subfolder}/{filename}"
         save_dir = output_base / base_folder / subfolder
@@ -715,7 +731,6 @@ def generate_item(driver, item, version=1):
     print(f"Path: {display_path}")
     print(f"{'='*70}")
 
-    # Check if already exists in output folder (simple & robust)
     save_path = save_dir / filename
 
     if save_path.exists() and save_path.stat().st_size > 10000:
@@ -723,7 +738,6 @@ def generate_item(driver, item, version=1):
         return True, True
 
     try:
-        # Fill textareas with version-specific persistent prompt
         print("  → Filling prompts...")
         print("  [DEBUG] Operation: fill_textareas")
         persistent_prompt = get_persistent_prompt_for_version(version)
@@ -732,7 +746,6 @@ def generate_item(driver, item, version=1):
             print("  ✗ Could not find textareas")
             return False, False
 
-        # Click Generate
         print("  → Clicking Generate...")
         print("  [DEBUG] Operation: click_generate_button")
         if not click_generate_button(driver):
@@ -741,32 +754,33 @@ def generate_item(driver, item, version=1):
 
         time.sleep(2)
 
-        # Wait for download button to appear
-        print("  [DEBUG] Operation: wait_for_download_button (may take up to 180s)")
+        print("  [DEBUG] Operation: wait_for_generation_complete (may take up to 180s)")
         try:
-            download_svg = wait_for_download_button(driver, GENERATION_TIMEOUT)
+            result = wait_for_generation_complete(driver, GENERATION_TIMEOUT)
 
-            if not download_svg:
-                print("  ✗ Generation timeout (no download button appeared)")
+            if not result:
+                print("  ✗ Generation timeout (no completion signal)")
                 return False, False
+
+            download_svg = result if hasattr(result, 'tag_name') else None
+
         except Exception as wait_error:
-            print(f"  [DEBUG] Exception during wait_for_download_button: {type(wait_error).__name__}")
-            # If it's a connection error during the wait, re-raise it
+            print(f"  [DEBUG] Exception during wait_for_generation_complete: {type(wait_error).__name__}")
             if is_connection_error(wait_error):
                 print(f"  [DEBUG] Connection error during generation wait - restarting driver")
                 raise
-            # Otherwise, treat as generation failure (not connection issue)
             print(f"  ✗ Generation failed with error: {wait_error}")
             return False, False
 
-        # Click download button
-        print("  → Clicking download button...")
-        if not click_download_button(driver, download_svg):
-            print("  ⚠ Could not click download button")
+        if download_svg:
+            print("  → Clicking download button...")
+            if not click_download_button(driver, download_svg):
+                print("  ⚠ Could not click download button")
+        else:
+            print("  → Image detected, attempting download...")
 
         time.sleep(4)
 
-        # Check for downloaded file
         print("  → Checking Downloads folder...")
         downloaded_file = get_downloaded_file()
 
@@ -802,15 +816,13 @@ def generate_item(driver, item, version=1):
                 return False, False
 
     except Exception as e:
-        # Log detailed error information
         print(f"  [DEBUG] Exception caught in generate_item: {type(e).__name__}")
         print(f"  [DEBUG] Error details: {str(e)[:200]}")
 
-        # Check if it's a connection/timeout error - re-raise for driver restart
         if is_connection_error(e):
             print(f"  ✗ Connection error detected: {type(e).__name__}")
             print(f"  [DEBUG] This error requires driver restart")
-            raise  # Re-raise to trigger driver restart in main loop
+            raise
         else:
             print(f"  ✗ Operation error (not connection): {type(e).__name__}")
             print(f"  [DEBUG] This error does not require driver restart, continuing...")
@@ -829,7 +841,6 @@ def main():
     print(f"\n📁 Script: {SCRIPT_DIR}")
     print(f"💾 Output: {OUTPUT_DIR}")
 
-    # Choose mode
     print("\nMode:")
     print("  [1] Test (2 items)")
     print("  [2] Full catalog")
@@ -852,7 +863,6 @@ def main():
     print(f"Wait between: {WAIT_BETWEEN_ITEMS}s")
     print(f"Versions: {VERSIONS_TO_GENERATE}")
 
-    # Pre-scan directories before opening browser
     pre_scan_directories(items, VERSIONS_TO_GENERATE)
 
     input("\nPress Enter to start browser and begin generation...")
@@ -861,24 +871,26 @@ def main():
 
     try:
         print("\n🌐 Opening Vheer...")
+<<<<<<< Updated upstream
         if not safe_driver_get(driver, "https://vheer.com/app/game-assets-generator"):
             print("✗ Failed to open Vheer after multiple retries")
             driver.quit()
             return
+        time.sleep(16)
+=======
+        driver.get("https://vheer.com/app/game-assets-generator")
         time.sleep(8)
+>>>>>>> Stashed changes
         print("✓ Page loaded")
 
-        # Select Cel-Shaded style (once at start)
         select_cel_shaded_style(driver)
         print("✓ Ready\n")
 
-        # Track totals across all versions
         total_success = 0
         total_failed = 0
         total_skipped = 0
         all_failed_items = []
 
-        # Loop through all versions
         for version in range(1, VERSIONS_TO_GENERATE + 1):
             print("\n" + "="*70)
             print(f"GENERATING VERSION {version} of {VERSIONS_TO_GENERATE}")
@@ -898,7 +910,6 @@ def main():
             for i, item in enumerate(items, 1):
                 print(f"\n[{i}/{len(items)}] Version {version}")
 
-                # Try to generate with connection error recovery
                 try:
                     ok, skip = generate_item(driver, item, version=version)
 
@@ -911,12 +922,10 @@ def main():
                         failed_list.append(item['name'])
 
                 except Exception as e:
-                    # Check if it's a connection/timeout error
                     if is_connection_error(e):
                         print(f"  ⚠ Driver connection error: {type(e).__name__}")
 
                         try:
-                            # Restart driver and retry this item
                             driver = restart_driver(driver)
 
                             print(f"  → Retrying item after restart...")
@@ -935,7 +944,6 @@ def main():
                             failed += 1
                             failed_list.append(item['name'])
                     else:
-                        # Not a connection error - re-raise
                         raise
 
                 print(f"\nVersion {version} Totals: ✓{success}  ✗{failed}  ⊘{skipped}")
@@ -944,7 +952,6 @@ def main():
                     print(f"⏱ Waiting {WAIT_BETWEEN_ITEMS}s...")
                     time.sleep(WAIT_BETWEEN_ITEMS)
 
-            # Update totals
             total_success += success
             total_failed += failed
             total_skipped += skipped
@@ -953,12 +960,10 @@ def main():
 
             print(f"\n✓ Version {version} complete: {success} generated, {skipped} skipped, {failed} failed")
 
-            # Wait before next version
             if version < VERSIONS_TO_GENERATE:
                 print(f"\n⏱ Waiting 30s before starting version {version + 1}...")
                 time.sleep(30)
 
-        # Final summary
         print("\n" + "="*70)
         print("ALL VERSIONS COMPLETE!")
         print("="*70)

@@ -690,13 +690,14 @@ class GameEngine:
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 # Right-click handler (for consumables and offhand attacks)
                 self.mouse_buttons_pressed.add(3)
-                self.handle_right_click(event.pos)
+                shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
+                self.handle_right_click(event.pos, shift_held)
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 3:
                 # Right mouse button released
                 self.mouse_buttons_pressed.discard(3)
 
-    def handle_right_click(self, mouse_pos: Tuple[int, int]):
-        """Handle right-click events (consumables and offhand attacks)"""
+    def handle_right_click(self, mouse_pos: Tuple[int, int], shift_held: bool = False):
+        """Handle right-click events (SHIFT+right for consumables, right-click for offhand attacks)"""
         # Check if clicking on UI elements first (high priority)
         if self.start_menu_open or self.active_minigame or self.enchantment_selection_active:
             return  # Don't handle right-click on UI
@@ -714,8 +715,8 @@ class GameEngine:
         if self.npc_dialogue_open or self.character.equipment_ui_open:
             return  # Don't handle right-click on UI
 
-        # Handle inventory right-clicks for consumables
-        if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
+        # Handle inventory SHIFT+right-clicks for consumables
+        if shift_held and mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             start_x, start_y = 20, Config.INVENTORY_PANEL_Y
             slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
             rel_x, rel_y = mouse_pos[0] - start_x, mouse_pos[1] - start_y
@@ -735,13 +736,13 @@ class GameEngine:
                             if item_def:
                                 # Check if item is consumable
                                 if item_def.category == "consumable":
-                                    # Use the consumable
+                                    # Use ONE consumable from the stack
                                     success, message = self.character.use_consumable(item_stack.item_id)
                                     if success:
                                         self.add_notification(message, (100, 255, 100))
                                     else:
                                         self.add_notification(message, (255, 100, 100))
-            return  # Don't process world clicks if clicking on inventory
+            return  # Don't process world clicks if SHIFT+clicking on inventory
 
         # Handle world right-clicks for offhand attacks
         if mouse_pos[0] >= Config.VIEWPORT_WIDTH:
@@ -1197,9 +1198,16 @@ class GameEngine:
 
                                         self.add_notification(f"Placed {mat_def.name}", (100, 255, 100))
                                         print(f"✓ Placed {mat_def.name} at player position")
+                                    elif mat_def and mat_def.category == "consumable":
+                                        # Double-click to use consumable (use ONE from stack)
+                                        success, message = self.character.use_consumable(item_stack.item_id)
+                                        if success:
+                                            self.add_notification(message, (100, 255, 100))
+                                        else:
+                                            self.add_notification(message, (255, 100, 100))
                                     else:
-                                        print(f"   ⚠️  Not equipment or placeable, skipping")
-                                        # Put non-equipment item back in slot
+                                        print(f"   ⚠️  Not equipment, placeable, or consumable, skipping")
+                                        # Put non-actionable item back in slot
                                         self.character.inventory.slots[idx] = item_stack
                             else:
                                 print(f"   ⚠️  item_stack is None")
@@ -1868,28 +1876,23 @@ class GameEngine:
 
         if equip_db.is_equipment(item_id):
             # Equipment - create with stats if provided
-            equipment = equip_db.create_equipment_from_id(item_id)
-            if equipment and stats:
-                # Apply crafted stats to equipment
-                for stat_name, stat_value in stats.items():
-                    if hasattr(equipment, stat_name):
-                        setattr(equipment, stat_name, stat_value)
+            for i in range(quantity):
+                equipment = equip_db.create_equipment_from_id(item_id)
+                if equipment and stats:
+                    # Apply crafted stats to equipment
+                    for stat_name, stat_value in stats.items():
+                        if hasattr(equipment, stat_name):
+                            setattr(equipment, stat_name, stat_value)
 
-            # Add to inventory with equipment data
-            item_stack = ItemStack(item_id, quantity, equipment_data=equipment,
-                                  rarity=rarity, crafted_stats=stats)
-            empty_slot = self.character.inventory.get_empty_slot()
-            if empty_slot is not None:
-                self.character.inventory.slots[empty_slot] = item_stack
-            else:
-                self.add_notification("Inventory full!", (255, 100, 100))
+                # Use add_item which handles equipment properly (doesn't stack)
+                success = self.character.inventory.add_item(item_id, 1, equipment_instance=equipment)
+                if not success:
+                    self.add_notification("Inventory full!", (255, 100, 100))
+                    break
         else:
-            # Material - add with rarity
-            item_stack = ItemStack(item_id, quantity, rarity=rarity)
-            empty_slot = self.character.inventory.get_empty_slot()
-            if empty_slot is not None:
-                self.character.inventory.slots[empty_slot] = item_stack
-            else:
+            # Material - use add_item which handles stacking properly
+            success = self.character.inventory.add_item(item_id, quantity)
+            if not success:
                 self.add_notification("Inventory full!", (255, 100, 100))
 
     def handle_craft_click(self, mouse_pos: Tuple[int, int]):
@@ -1899,6 +1902,10 @@ class GameEngine:
         - Right panel: Click Instant or Minigame buttons to craft
         """
         if not self.crafting_window_rect or not self.crafting_recipes:
+            return
+
+        # Prevent crafting while minigame is active
+        if self.active_minigame:
             return
 
         rx = mouse_pos[0] - self.crafting_window_rect.x
@@ -2305,6 +2312,12 @@ class GameEngine:
             recipe: Recipe to craft
             use_minigame: If True, start minigame. If False, instant craft.
         """
+        # Prevent crafting while minigame is already active (prevents double crafting)
+        if self.active_minigame:
+            self.add_notification("Minigame already in progress!", (255, 100, 100))
+            print("❌ Cannot craft - minigame already active")
+            return
+
         recipe_db = RecipeDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
         mat_db = MaterialDatabase.get_instance()
@@ -2738,7 +2751,7 @@ class GameEngine:
             if self.character.crafting_ui_open:
                 # Pass scroll offset via temporary attribute (renderer doesn't have direct access to game state)
                 self.renderer._temp_scroll_offset = self.recipe_scroll_offset
-                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe, self.user_placement)
+                result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe, self.user_placement, self.active_minigame is not None)
                 if result:
                     self.crafting_window_rect, self.crafting_recipes, self.placement_grid_rects = result
             else:
@@ -2890,10 +2903,15 @@ class GameEngine:
             if new_title:
                 self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
-            # Add output to inventory
+            # Add output to inventory with minigame bonuses
             output_id = craft_result.get('outputId', recipe.output_id)
             output_qty = craft_result.get('quantity', recipe.output_qty)
-            self.character.inventory.add_item(output_id, output_qty)
+            rarity = craft_result.get('rarity', 'common')
+            stats = craft_result.get('stats', {})
+            bonus_pct = craft_result.get('bonus', 0)
+
+            # Use add_crafted_item_to_inventory to apply enhanced stats
+            self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
 
             # Get proper name for notification
             if equip_db.is_equipment(output_id):
@@ -2903,9 +2921,14 @@ class GameEngine:
                 out_mat = mat_db.get_material(output_id)
                 out_name = out_mat.name if out_mat else output_id
 
-            message = craft_result.get('message', f"Crafted {out_name} x{output_qty}")
+            # Enhanced message showing rarity and bonus
+            if bonus_pct > 0:
+                message = f"Crafted {rarity.capitalize()} {out_name} x{output_qty} (+{bonus_pct}% bonus)!"
+            else:
+                message = f"Crafted {rarity.capitalize()} {out_name} x{output_qty}"
+
             self.add_notification(message, (100, 255, 100))
-            print(f"✅ Minigame crafting complete: {out_name} x{output_qty}")
+            print(f"✅ Minigame crafting complete: {rarity} {out_name} x{output_qty} with stats: {stats}")
 
         # Clear minigame state
         self.active_minigame = None
