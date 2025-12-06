@@ -992,6 +992,38 @@ class GameEngine:
 
         # Minigame button clicks (highest priority)
         if self.active_minigame:
+            # Check enchanting workspace clicks (Phase 1: placement, Phase 2: connections)
+            if self.minigame_type == 'adornments' and hasattr(self, 'enchanting_workspace_rect'):
+                state = self.active_minigame.get_state()
+                phase = state.get('phase', 1)
+
+                if phase == 1:
+                    # Phase 1: Click in workspace to place material
+                    if self.enchanting_workspace_rect.collidepoint(mouse_pos):
+                        # Check if click is within circle
+                        dx = mouse_pos[0] - self.enchanting_workspace_center[0]
+                        dy = mouse_pos[1] - self.enchanting_workspace_center[1]
+                        dist = math.sqrt(dx * dx + dy * dy)
+
+                        if dist <= self.enchanting_workspace_radius:
+                            # Place material at this position
+                            self.active_minigame.place_material("material_placeholder", mouse_pos[0], mouse_pos[1])
+                            return
+
+                elif phase == 2:
+                    # Phase 2: Click on materials to connect them
+                    if hasattr(self, 'enchanting_material_rects'):
+                        for rect, idx in self.enchanting_material_rects:
+                            if rect.collidepoint(mouse_pos):
+                                # Handle material click for connection
+                                if not hasattr(self, '_enchanting_first_click'):
+                                    self._enchanting_first_click = idx
+                                else:
+                                    # Connect to previously clicked material
+                                    self.active_minigame.connect_materials(self._enchanting_first_click, idx)
+                                    delattr(self, '_enchanting_first_click')
+                                return
+
             # Check engineering puzzle cells first (rotation/sliding)
             if self.minigame_type == 'engineering' and hasattr(self, 'engineering_puzzle_rects'):
                 for rect, action_data in self.engineering_puzzle_rects:
@@ -1022,6 +1054,9 @@ class GameEngine:
                     elif self.minigame_type == 'engineering':
                         # Complete button for placeholder puzzles
                         self.active_minigame.check_current_puzzle()
+                    elif self.minigame_type == 'adornments':
+                        # Phase advancement button
+                        self.active_minigame.advance_phase()
                     return
             # Check secondary button (alchemy stabilize)
             if hasattr(self, 'minigame_button_rect2') and self.minigame_button_rect2:
@@ -2780,7 +2815,7 @@ class GameEngine:
         self.minigame_recipe = None
 
     def _render_smithing_minigame(self):
-        """Render smithing minigame UI"""
+        """Render smithing minigame UI with enhanced visuals"""
         state = self.active_minigame.get_state()
 
         # Create overlay
@@ -2791,36 +2826,60 @@ class GameEngine:
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 250))
 
-        # Header
+        # Header with glow effect
         _temp_surf = self.renderer.font.render("SMITHING MINIGAME", True, (255, 215, 0))
         surf.blit(_temp_surf, (ww//2 - 100, 20))
         _temp_surf = self.renderer.small_font.render("[SPACE] Fan Flames | [CLICK HAMMER BUTTON] Strike", True, (180, 180, 180))
         surf.blit(_temp_surf, (20, 50))
 
-        # Temperature bar
+        # Temperature bar with enhanced visuals
         temp_x, temp_y = 50, 100
         temp_width = 300
         temp_height = 40
 
-        # Draw temp bar background
+        # Draw temp bar background with gradient
         pygame.draw.rect(surf, (40, 40, 40), (temp_x, temp_y, temp_width, temp_height))
 
-        # Draw ideal range
+        # Draw ideal range with pulse effect
         ideal_min = state['temp_ideal_min']
         ideal_max = state['temp_ideal_max']
         ideal_start = int((ideal_min / 100) * temp_width)
         ideal_width_px = int(((ideal_max - ideal_min) / 100) * temp_width)
-        pygame.draw.rect(surf, (60, 80, 60), (temp_x + ideal_start, temp_y, ideal_width_px, temp_height))
+        pulse = abs(math.sin(pygame.time.get_ticks() / 500.0)) * 20
+        ideal_color = (60 + int(pulse), 80 + int(pulse), 60)
+        pygame.draw.rect(surf, ideal_color, (temp_x + ideal_start, temp_y, ideal_width_px, temp_height))
 
-        # Draw current temperature
+        # Draw current temperature with gradient
         temp_pct = state['temperature'] / 100
         temp_fill = int(temp_pct * temp_width)
-        temp_color = (255, 100, 100) if temp_pct > 0.8 else (255, 165, 0) if temp_pct > 0.5 else (100, 150, 255)
+
+        # Enhanced color gradient based on temperature
+        if temp_pct > 0.8:
+            temp_color = (255, 100 + int((1 - temp_pct) * 500), 100)  # Hot red-white
+        elif temp_pct > 0.5:
+            temp_color = (255, 165, int((temp_pct - 0.5) * 400))  # Orange
+        else:
+            temp_color = (100, 150, 200 + int((0.5 - temp_pct) * 110))  # Cool blue
+
         pygame.draw.rect(surf, temp_color, (temp_x, temp_y, temp_fill, temp_height))
 
+        # Add glow effect if in ideal range
+        in_ideal = ideal_min <= state['temperature'] <= ideal_max
+        if in_ideal:
+            glow_surf = pygame.Surface((temp_width + 10, temp_height + 10), pygame.SRCALPHA)
+            pygame.draw.rect(glow_surf, (100, 255, 100, 60), (0, 0, temp_width + 10, temp_height + 10), border_radius=8)
+            surf.blit(glow_surf, (temp_x - 5, temp_y - 5))
+
         pygame.draw.rect(surf, (200, 200, 200), (temp_x, temp_y, temp_width, temp_height), 2)
-        _temp_surf = self.renderer.small_font.render(f"Temperature: {int(state['temperature'])}°C", True, (255, 255, 255))
+
+        # Temperature label with color based on status
+        label_color = (100, 255, 100) if in_ideal else (255, 255, 255)
+        _temp_surf = self.renderer.small_font.render(f"Temperature: {int(state['temperature'])}°C", True, label_color)
         surf.blit(_temp_surf, (temp_x, temp_y - 25))
+
+        if in_ideal:
+            _temp_surf = self.renderer.tiny_font.render("✓ IDEAL RANGE", True, (100, 255, 100))
+            surf.blit(_temp_surf, (temp_x + temp_width - 80, temp_y - 25))
 
         # Hammer bar
         hammer_x, hammer_y = 50, 200
@@ -3274,21 +3333,156 @@ class GameEngine:
                     surf.blit(_temp_surf, text_rect)
 
     def _render_enchanting_minigame(self):
-        """Render enchanting minigame UI (placeholder)"""
-        ww, wh = 800, 600
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
+        """Render enchanting minigame UI with pattern creation workspace"""
+        if not self.active_minigame:
+            return
+
+        state = self.active_minigame.get_state()
+
+        ww, wh = 1000, 700
+        wx = Config.VIEWPORT_WIDTH - ww - 20
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
         surf.fill((20, 20, 30, 250))
 
-        _temp_surf = self.renderer.font.render("ENCHANTING", True, (180, 60, 180))
-        surf.blit(_temp_surf, (ww//2 - 100, 20))
-        _temp_surf = self.renderer.small_font.render("Enchanting uses basic crafting (no minigame)", True, (200, 200, 200))
-        surf.blit(_temp_surf, (50, 100))
+        # Header
+        _temp_surf = self.renderer.font.render("ENCHANTING MINIGAME", True, (180, 60, 180))
+        surf.blit(_temp_surf, (ww//2 - 120, 20))
+
+        phase = state['phase']
+        if phase == 1:
+            _temp_surf = self.renderer.small_font.render("Phase 1: Place materials in workspace (click to place)", True, (180, 180, 180))
+        else:
+            _temp_surf = self.renderer.small_font.render("Phase 2: Connect materials (click and drag)", True, (180, 180, 180))
+        surf.blit(_temp_surf, (20, 50))
+
+        # Circular workspace
+        workspace_center = (ww // 2, 380)
+        workspace_radius = 250
+
+        # Store for click detection
+        self.enchanting_workspace_rect = pygame.Rect(
+            wx + workspace_center[0] - workspace_radius,
+            wy + workspace_center[1] - workspace_radius,
+            workspace_radius * 2,
+            workspace_radius * 2
+        )
+        self.enchanting_workspace_center = (wx + workspace_center[0], wy + workspace_center[1])
+        self.enchanting_workspace_radius = workspace_radius
+
+        # Draw workspace circle
+        pygame.draw.circle(surf, (40, 30, 50), workspace_center, workspace_radius)
+        pygame.draw.circle(surf, (120, 80, 140), workspace_center, workspace_radius, 3)
+
+        # Draw grid lines in workspace for placement help
+        if phase == 1:
+            for angle in range(0, 360, 30):
+                rad = math.radians(angle)
+                end_x = workspace_center[0] + int(workspace_radius * math.cos(rad))
+                end_y = workspace_center[1] + int(workspace_radius * math.sin(rad))
+                pygame.draw.line(surf, (60, 50, 70), workspace_center, (end_x, end_y), 1)
+
+        # Draw placed materials
+        placed_materials = state.get('placed_materials', {})
+        self.enchanting_material_rects = []
+
+        for idx, mat_data in placed_materials.items():
+            x, y = mat_data['x'], mat_data['y']
+            # Convert to surface-relative coordinates
+            surf_x = x - (self.enchanting_workspace_center[0] - workspace_center[0])
+            surf_y = y - (self.enchanting_workspace_center[1] - workspace_center[1])
+
+            # Draw material dot
+            color = (255, 215, 0) if mat_data.get('isKey') else (150, 150, 200)
+            pygame.draw.circle(surf, color, (surf_x, surf_y), 8)
+            pygame.draw.circle(surf, (255, 255, 255), (surf_x, surf_y), 8, 2)
+
+            # Draw index label
+            _temp_surf = self.renderer.tiny_font.render(str(idx), True, (255, 255, 255))
+            surf.blit(_temp_surf, (surf_x - 4, surf_y - 6))
+
+            # Store rect for click detection (in screen coordinates)
+            self.enchanting_material_rects.append((
+                pygame.Rect(x - 10, y - 10, 20, 20),
+                idx
+            ))
+
+        # Draw connections
+        connections = state.get('connections', [])
+        for conn in connections:
+            idx1, idx2 = conn
+            if idx1 in placed_materials and idx2 in placed_materials:
+                pos1 = placed_materials[idx1]
+                pos2 = placed_materials[idx2]
+                # Convert to surface coordinates
+                surf_x1 = pos1['x'] - (self.enchanting_workspace_center[0] - workspace_center[0])
+                surf_y1 = pos1['y'] - (self.enchanting_workspace_center[1] - workspace_center[1])
+                surf_x2 = pos2['x'] - (self.enchanting_workspace_center[0] - workspace_center[0])
+                surf_y2 = pos2['y'] - (self.enchanting_workspace_center[1] - workspace_center[1])
+                pygame.draw.line(surf, (100, 200, 255), (surf_x1, surf_y1), (surf_x2, surf_y2), 3)
+
+        # Material inventory (left side) - Phase 1 only
+        if phase == 1:
+            inv_x, inv_y = 50, 100
+            _temp_surf = self.renderer.small_font.render("Available Materials:", True, (200, 200, 200))
+            surf.blit(_temp_surf, (inv_x, inv_y))
+
+            # Get recipe materials (simplified - would come from recipe in real impl)
+            material_count = 5  # TODO: Get from recipe
+            for i in range(min(material_count, 8)):
+                mat_y = inv_y + 30 + (i * 40)
+                # Draw material slot
+                pygame.draw.rect(surf, (60, 50, 70), (inv_x, mat_y, 120, 35))
+                pygame.draw.rect(surf, (120, 100, 140), (inv_x, mat_y, 120, 35), 2)
+                _temp_surf = self.renderer.tiny_font.render(f"Material {i+1}", True, (180, 180, 180))
+                surf.blit(_temp_surf, (inv_x + 5, mat_y + 10))
+
+        # Phase advancement button
+        btn_w, btn_h = 200, 50
+        btn_x = ww // 2 - btn_w // 2
+        btn_y = 650
+
+        if phase == 1:
+            btn_text = "FINISH PLACEMENT"
+            btn_color = (80, 60, 100)
+        else:
+            btn_text = "COMPLETE PATTERN"
+            btn_color = (100, 60, 80)
+
+        btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+        pygame.draw.rect(surf, btn_color, btn_rect)
+        pygame.draw.rect(surf, (180, 140, 200), btn_rect, 3)
+        _temp_surf = self.renderer.small_font.render(btn_text, True, (255, 255, 255))
+        text_rect = _temp_surf.get_rect(center=(btn_x + btn_w//2, btn_y + btn_h//2))
+        surf.blit(_temp_surf, text_rect)
+
+        self.minigame_button_rect = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
+
+        # Result display
+        if state.get('result'):
+            result = state['result']
+            result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
+            result_surf.fill((10, 10, 20, 240))
+
+            if result['success']:
+                _temp_surf = self.renderer.font.render("ENCHANTMENT SUCCESS!", True, (100, 255, 100))
+                result_surf.blit(_temp_surf, (150, 50))
+                _temp_surf = self.renderer.small_font.render(f"Pattern: {result.get('pattern', 'unknown')}", True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 100))
+                _temp_surf = self.renderer.small_font.render(f"Quality: {result.get('quality', 0):.0%}", True, (255, 215, 0))
+                result_surf.blit(_temp_surf, (150, 130))
+                _temp_surf = self.renderer.small_font.render(result.get('message', ''), True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 160))
+            else:
+                _temp_surf = self.renderer.font.render("FAILED", True, (255, 100, 100))
+                result_surf.blit(_temp_surf, (200, 50))
+                _temp_surf = self.renderer.small_font.render(result.get('message', ''), True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (150, 120))
+
+            surf.blit(result_surf, (200, 200))
 
         self.screen.blit(surf, (wx, wy))
-        self.minigame_button_rect = None
 
     def run(self):
         print("=== GAME STARTED ===")
