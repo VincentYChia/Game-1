@@ -1398,12 +1398,26 @@ class Renderer:
                             hovered_skill = (skill_def, player_skill)
                             hovered_slot_rect = slot_rect
 
-                        # Skill name (abbreviated)
-                        name_parts = skill_def.name.split()
-                        short_name = "".join(p[0] for p in name_parts[:2])  # First letters
-                        name_surf = self.font.render(short_name, True, (200, 200, 255))
-                        name_rect = name_surf.get_rect(center=(x + slot_size // 2, y + slot_size // 2 - 5))
-                        self.screen.blit(name_surf, name_rect)
+                        # Try to display skill icon
+                        icon_displayed = False
+                        if skill_def.icon_path:
+                            from rendering.image_cache import ImageCache
+                            image_cache = ImageCache.get_instance()
+                            icon_size = slot_size - 16  # Leave room for key number and mana cost
+                            icon = image_cache.get_image(skill_def.icon_path, (icon_size, icon_size))
+                            if icon:
+                                icon_x = x + 8
+                                icon_y = y + 8
+                                self.screen.blit(icon, (icon_x, icon_y))
+                                icon_displayed = True
+
+                        # Fallback to abbreviated name if no icon
+                        if not icon_displayed:
+                            name_parts = skill_def.name.split()
+                            short_name = "".join(p[0] for p in name_parts[:2])  # First letters
+                            name_surf = self.font.render(short_name, True, (200, 200, 255))
+                            name_rect = name_surf.get_rect(center=(x + slot_size // 2, y + slot_size // 2 - 5))
+                            self.screen.blit(name_surf, name_rect)
 
                         # Cooldown overlay
                         if player_skill.current_cooldown > 0:
@@ -2509,59 +2523,123 @@ class Renderer:
         self.screen.blit(surf, (x, y))
 
     def _group_recipes_by_type(self, recipes, equip_db, mat_db):
-        """Group recipes by their output type for organized display"""
+        """Group recipes by their output type for organized display - station-specific grouping"""
         from collections import defaultdict
 
-        # Define type categories and their order
-        type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Consumables',
-                      'Tier 1 Materials', 'Tier 2 Materials', 'Tier 3 Materials', 'Tier 4 Materials',
-                      'Components', 'Resources', 'Stations', 'Other']
+        if not recipes:
+            return []
+
+        # Detect station type from first recipe
+        station_type = recipes[0].station_type if recipes else 'smithing'
+
         grouped = defaultdict(list)
 
         for recipe in recipes:
-            # Determine type based on output
             output_type = 'Other'
 
             if equip_db.is_equipment(recipe.output_id):
+                # Equipment items
                 equip = equip_db.create_equipment_from_id(recipe.output_id)
                 if equip:
                     if equip.item_type == 'weapon':
                         output_type = 'Weapons'
                     elif equip.item_type == 'shield':
-                        output_type = 'Weapons'  # Shields with weapons
+                        output_type = 'Weapons'
                     elif equip.item_type == 'armor':
                         output_type = 'Armor'
                     elif equip.item_type == 'tool':
                         output_type = 'Tools'
                     elif equip.item_type == 'accessory':
                         output_type = 'Accessories'
-                    elif equip.item_type == 'station':
-                        output_type = 'Stations'
             else:
+                # Material items
                 mat = mat_db.get_material(recipe.output_id)
                 if mat:
-                    if mat.category == 'consumable':
-                        output_type = 'Consumables'
-                    elif mat.category in ['material', 'resource', 'component']:
-                        # Group materials by tier for better organization
-                        if mat.tier == 1:
-                            output_type = 'Tier 1 Materials'
-                        elif mat.tier == 2:
-                            output_type = 'Tier 2 Materials'
-                        elif mat.tier == 3:
-                            output_type = 'Tier 3 Materials'
-                        elif mat.tier >= 4:
-                            output_type = 'Tier 4 Materials'
+                    # Station-specific grouping
+                    if station_type == 'engineering':
+                        # Engineering: Group by device type
+                        if mat.item_type == 'turret':
+                            output_type = 'Turrets'
+                        elif mat.item_type == 'trap':
+                            output_type = 'Traps'
+                        elif mat.item_type == 'bomb':
+                            output_type = 'Bombs'
+                        elif mat.item_type == 'utility':
+                            output_type = 'Utility Devices'
+                        elif mat.category == 'station':
+                            output_type = 'Crafting Stations'
                         else:
-                            # Fallback by category
-                            if mat.category == 'component':
-                                output_type = 'Components'
-                            elif mat.category == 'resource':
-                                output_type = 'Resources'
-                            else:
-                                output_type = 'Other'
+                            output_type = 'Other Devices'
+
+                    elif station_type == 'alchemy':
+                        # Alchemy: Group potions by subtype/effect
+                        if 'health' in mat.name.lower() or 'healing' in mat.effect.lower():
+                            output_type = 'Health Potions'
+                        elif 'mana' in mat.name.lower() or 'mana' in mat.effect.lower():
+                            output_type = 'Mana Potions'
+                        elif 'strength' in mat.effect.lower() or 'damage' in mat.effect.lower():
+                            output_type = 'Combat Buffs'
+                        elif 'speed' in mat.effect.lower() or 'agility' in mat.effect.lower():
+                            output_type = 'Movement Buffs'
+                        elif mat.category == 'consumable':
+                            output_type = 'Other Potions'
+                        else:
+                            output_type = 'Alchemy Materials'
+
+                    elif station_type == 'refining':
+                        # Refining: Group by material category
+                        if mat.category == 'metal':
+                            output_type = 'Metals & Ingots'
+                        elif mat.category == 'ore':
+                            output_type = 'Processed Ores'
+                        elif mat.category == 'elemental':
+                            output_type = 'Elemental Materials'
+                        elif mat.category in ['wood', 'stone']:
+                            output_type = 'Refined Resources'
+                        else:
+                            output_type = 'Other Materials'
+
+                    elif station_type == 'adornments':
+                        # Enchanting: Alphabetic grouping
+                        first_letter = mat.name[0].upper() if mat.name else 'Z'
+                        if first_letter <= 'F':
+                            output_type = 'A-F'
+                        elif first_letter <= 'M':
+                            output_type = 'G-M'
+                        elif first_letter <= 'S':
+                            output_type = 'N-S'
+                        else:
+                            output_type = 'T-Z'
+
+                    else:
+                        # Smithing or default: Group by tier
+                        if mat.tier == 1:
+                            output_type = 'Tier 1'
+                        elif mat.tier == 2:
+                            output_type = 'Tier 2'
+                        elif mat.tier == 3:
+                            output_type = 'Tier 3'
+                        elif mat.tier >= 4:
+                            output_type = 'Tier 4+'
+                        elif mat.category == 'station':
+                            output_type = 'Stations'
+                        else:
+                            output_type = 'Other'
 
             grouped[output_type].append(recipe)
+
+        # Define order based on station type
+        if station_type == 'engineering':
+            type_order = ['Turrets', 'Traps', 'Bombs', 'Utility Devices', 'Crafting Stations', 'Other Devices']
+        elif station_type == 'alchemy':
+            type_order = ['Health Potions', 'Mana Potions', 'Combat Buffs', 'Movement Buffs', 'Other Potions', 'Alchemy Materials']
+        elif station_type == 'refining':
+            type_order = ['Metals & Ingots', 'Processed Ores', 'Elemental Materials', 'Refined Resources', 'Other Materials']
+        elif station_type == 'adornments':
+            type_order = ['A-F', 'G-M', 'N-S', 'T-Z']
+        else:
+            # Smithing and default
+            type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4+', 'Stations', 'Other']
 
         # Return as ordered list of tuples
         result = []
