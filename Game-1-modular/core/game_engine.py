@@ -1885,13 +1885,15 @@ class GameEngine:
                             setattr(equipment, stat_name, stat_value)
 
                 # Use add_item which handles equipment properly (doesn't stack)
-                success = self.character.inventory.add_item(item_id, 1, equipment_instance=equipment)
+                success = self.character.inventory.add_item(item_id, 1, equipment_instance=equipment,
+                                                            rarity=rarity, crafted_stats=stats)
                 if not success:
                     self.add_notification("Inventory full!", (255, 100, 100))
                     break
         else:
             # Material - use add_item which handles stacking properly
-            success = self.character.inventory.add_item(item_id, quantity)
+            # Pass crafted_stats so materials with different bonuses don't stack together
+            success = self.character.inventory.add_item(item_id, quantity, rarity=rarity, crafted_stats=stats)
             if not success:
                 self.add_notification("Inventory full!", (255, 100, 100))
 

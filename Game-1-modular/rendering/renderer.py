@@ -2493,7 +2493,8 @@ class Renderer:
         if item_stack.is_equipment():
             equipment = item_stack.get_equipment()
             if equipment:
-                self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=True)
+                self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=True,
+                                              crafted_stats=item_stack.crafted_stats)
                 return
 
         # Regular material tooltip
@@ -2501,7 +2502,13 @@ class Renderer:
         if not mat:
             return
 
-        tw, th, pad = 250, 120, 10
+        # Calculate height based on whether we have crafted_stats to display
+        base_height = 120
+        stats_height = 0
+        if item_stack.crafted_stats:
+            stats_height = 25 + (len(item_stack.crafted_stats) * 18)  # Header + stats lines
+
+        tw, th, pad = 250, base_height + stats_height, 10
         x, y = mouse_pos[0] + 15, mouse_pos[1] + 15
         if x + tw > Config.SCREEN_WIDTH:
             x = mouse_pos[0] - tw - 15
@@ -2519,6 +2526,24 @@ class Renderer:
                   (pad, y_pos))
         y_pos += 20
         surf.blit(self.small_font.render(f"Rarity: {mat.rarity.capitalize()}", True, color), (pad, y_pos))
+        y_pos += 20
+
+        # Display crafted stats if present
+        if item_stack.crafted_stats:
+            y_pos += 5
+            surf.blit(self.small_font.render("Crafted Bonuses:", True, (100, 255, 100)), (pad, y_pos))
+            y_pos += 18
+            for stat_name, stat_value in item_stack.crafted_stats.items():
+                # Format stat name nicely (capitalize and add spaces)
+                display_name = stat_name.replace('_', ' ').title()
+                # Format value with + if positive
+                if isinstance(stat_value, (int, float)):
+                    value_str = f"+{stat_value}" if stat_value >= 0 else str(stat_value)
+                else:
+                    value_str = str(stat_value)
+                stat_text = f"  {display_name}: {value_str}"
+                surf.blit(self.tiny_font.render(stat_text, True, (150, 220, 150)), (pad, y_pos))
+                y_pos += 16
 
         self.screen.blit(surf, (x, y))
 
@@ -3081,9 +3106,16 @@ class Renderer:
         return pygame.Rect(wx, wy, ww, wh), equipment_rects
 
     def render_equipment_tooltip(self, item: EquipmentItem, mouse_pos: Tuple[int, int], character: Character,
-                                 from_inventory: bool = False):
+                                 from_inventory: bool = False, crafted_stats: dict = None):
         s = Config.scale
-        tw, th, pad = s(320), s(340), s(10)  # Increased height for enchantments
+
+        # Calculate height based on crafted_stats
+        base_height = s(340)
+        stats_height = 0
+        if crafted_stats:
+            stats_height = s(25) + (len(crafted_stats) * s(18))
+
+        tw, th, pad = s(320), base_height + stats_height, s(10)
         x, y = mouse_pos[0] + s(15), mouse_pos[1] + s(15)
         if x + tw > Config.SCREEN_WIDTH:
             x = mouse_pos[0] - tw - s(15)
@@ -3152,6 +3184,23 @@ class Renderer:
                     ench_text = f"  {ench_name}"
 
                 surf.blit(self.tiny_font.render(ench_text, True, (200, 180, 255)), (pad, y_pos))
+                y_pos += s(16)
+
+        # Display crafted bonuses if present
+        if crafted_stats:
+            y_pos += s(5)
+            surf.blit(self.small_font.render("Crafted Bonuses:", True, (100, 255, 100)), (pad, y_pos))
+            y_pos += s(18)
+            for stat_name, stat_value in crafted_stats.items():
+                # Format stat name nicely (capitalize and add spaces)
+                display_name = stat_name.replace('_', ' ').title()
+                # Format value with + if positive
+                if isinstance(stat_value, (int, float)):
+                    value_str = f"+{stat_value}" if stat_value >= 0 else str(stat_value)
+                else:
+                    value_str = str(stat_value)
+                stat_text = f"  {display_name}: {value_str}"
+                surf.blit(self.tiny_font.render(stat_text, True, (150, 220, 150)), (pad, y_pos))
                 y_pos += s(16)
 
         dur_pct = (item.durability_current / item.durability_max) * 100
