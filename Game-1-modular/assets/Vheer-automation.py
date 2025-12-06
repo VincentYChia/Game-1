@@ -871,11 +871,16 @@ def main():
 
     try:
         print("\n🌐 Opening Vheer...")
+<<<<<<< Updated upstream
         if not safe_driver_get(driver, "https://vheer.com/app/game-assets-generator"):
             print("✗ Failed to open Vheer after multiple retries")
             driver.quit()
             return
         time.sleep(16)
+=======
+        driver.get("https://vheer.com/app/game-assets-generator")
+        time.sleep(8)
+>>>>>>> Stashed changes
         print("✓ Page loaded")
 
         select_cel_shaded_style(driver)
