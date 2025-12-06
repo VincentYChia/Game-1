@@ -2562,7 +2562,23 @@ class Renderer:
         for recipe in recipes:
             output_type = 'Other'
 
-            if equip_db.is_equipment(recipe.output_id):
+            # Handle enchanting recipes separately (they don't have materials)
+            if station_type == 'adornments' and hasattr(recipe, 'is_enchantment') and recipe.is_enchantment:
+                # Enchanting: Alphabetic grouping by enchantment name
+                enchant_name = getattr(recipe, 'enchantment_name', recipe.output_id)
+                if enchant_name:
+                    first_letter = enchant_name[0].upper()
+                    if first_letter <= 'F':
+                        output_type = 'A-F'
+                    elif first_letter <= 'M':
+                        output_type = 'G-M'
+                    elif first_letter <= 'S':
+                        output_type = 'N-S'
+                    else:
+                        output_type = 'T-Z'
+                else:
+                    output_type = 'Other Enchantments'
+            elif equip_db.is_equipment(recipe.output_id):
                 # Equipment items
                 equip = equip_db.create_equipment_from_id(recipe.output_id)
                 if equip:
@@ -2583,33 +2599,34 @@ class Renderer:
                     # Station-specific grouping
                     if station_type == 'engineering':
                         # Engineering: Group by device type
-                        if mat.item_type == 'turret':
-                            output_type = 'Turrets'
-                        elif mat.item_type == 'trap':
-                            output_type = 'Traps'
-                        elif mat.item_type == 'bomb':
-                            output_type = 'Bombs'
-                        elif mat.item_type == 'utility':
-                            output_type = 'Utility Devices'
-                        elif mat.category == 'station':
+                        if hasattr(mat, 'item_type'):
+                            if mat.item_type == 'turret':
+                                output_type = 'Turrets'
+                            elif mat.item_type == 'trap':
+                                output_type = 'Traps'
+                            elif mat.item_type == 'bomb':
+                                output_type = 'Bombs'
+                            elif mat.item_type == 'utility':
+                                output_type = 'Utility Devices'
+                        if output_type == 'Other' and mat.category == 'station':
                             output_type = 'Crafting Stations'
-                        else:
+                        elif output_type == 'Other':
                             output_type = 'Other Devices'
 
                     elif station_type == 'alchemy':
                         # Alchemy: Group potions by subtype/effect
-                        if 'health' in mat.name.lower() or 'healing' in mat.effect.lower():
+                        if 'health' in mat.name.lower() or (hasattr(mat, 'effect') and 'healing' in mat.effect.lower()):
                             output_type = 'Health Potions'
-                        elif 'mana' in mat.name.lower() or 'mana' in mat.effect.lower():
+                        elif 'mana' in mat.name.lower() or (hasattr(mat, 'effect') and 'mana' in mat.effect.lower()):
                             output_type = 'Mana Potions'
-                        elif 'strength' in mat.effect.lower() or 'damage' in mat.effect.lower():
+                        elif hasattr(mat, 'effect') and ('strength' in mat.effect.lower() or 'damage' in mat.effect.lower()):
                             output_type = 'Combat Buffs'
-                        elif 'speed' in mat.effect.lower() or 'agility' in mat.effect.lower():
+                        elif hasattr(mat, 'effect') and ('speed' in mat.effect.lower() or 'agility' in mat.effect.lower()):
                             output_type = 'Movement Buffs'
                         elif mat.category == 'consumable':
                             output_type = 'Other Potions'
                         else:
-                            output_type = 'Alchemy Materials'
+                            output_type = 'Other Materials'
 
                     elif station_type == 'refining':
                         # Refining: Group by material category
@@ -2624,44 +2641,32 @@ class Renderer:
                         else:
                             output_type = 'Other Materials'
 
-                    elif station_type == 'adornments':
-                        # Enchanting: Alphabetic grouping
-                        first_letter = mat.name[0].upper() if mat.name else 'Z'
-                        if first_letter <= 'F':
-                            output_type = 'A-F'
-                        elif first_letter <= 'M':
-                            output_type = 'G-M'
-                        elif first_letter <= 'S':
-                            output_type = 'N-S'
-                        else:
-                            output_type = 'T-Z'
-
                     else:
                         # Smithing or default: Group by tier
-                        if mat.tier == 1:
-                            output_type = 'Tier 1'
-                        elif mat.tier == 2:
-                            output_type = 'Tier 2'
-                        elif mat.tier == 3:
-                            output_type = 'Tier 3'
-                        elif mat.tier >= 4:
-                            output_type = 'Tier 4+'
-                        elif mat.category == 'station':
+                        if hasattr(mat, 'tier'):
+                            if mat.tier == 1:
+                                output_type = 'Tier 1'
+                            elif mat.tier == 2:
+                                output_type = 'Tier 2'
+                            elif mat.tier == 3:
+                                output_type = 'Tier 3'
+                            elif mat.tier >= 4:
+                                output_type = 'Tier 4+'
+                        if output_type == 'Other' and mat.category == 'station':
                             output_type = 'Stations'
-                        else:
-                            output_type = 'Other'
+                        # If still 'Other', keep it as 'Other'
 
             grouped[output_type].append(recipe)
 
         # Define order based on station type
         if station_type == 'engineering':
-            type_order = ['Turrets', 'Traps', 'Bombs', 'Utility Devices', 'Crafting Stations', 'Other Devices']
+            type_order = ['Turrets', 'Traps', 'Bombs', 'Utility Devices', 'Crafting Stations', 'Other Devices', 'Other']
         elif station_type == 'alchemy':
-            type_order = ['Health Potions', 'Mana Potions', 'Combat Buffs', 'Movement Buffs', 'Other Potions', 'Alchemy Materials']
+            type_order = ['Health Potions', 'Mana Potions', 'Combat Buffs', 'Movement Buffs', 'Other Potions', 'Other Materials', 'Other']
         elif station_type == 'refining':
-            type_order = ['Metals & Ingots', 'Processed Ores', 'Elemental Materials', 'Refined Resources', 'Other Materials']
+            type_order = ['Metals & Ingots', 'Processed Ores', 'Elemental Materials', 'Refined Resources', 'Other Materials', 'Other']
         elif station_type == 'adornments':
-            type_order = ['A-F', 'G-M', 'N-S', 'T-Z']
+            type_order = ['A-F', 'G-M', 'N-S', 'T-Z', 'Other Enchantments', 'Other']
         else:
             # Smithing and default
             type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4+', 'Stations', 'Other']
