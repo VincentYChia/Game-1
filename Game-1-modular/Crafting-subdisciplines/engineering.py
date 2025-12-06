@@ -266,7 +266,9 @@ class SlidingTilePuzzle:
     Goal: Arrange numbered tiles in order by sliding into empty space
     Classic sliding puzzle (3x3 or 4x4)
 
-    [PLACEHOLDER - To be fully implemented]
+    Solution state:
+    3x3: [1,2,3,4,5,6,7,8,0] (0 = empty)
+    4x4: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]
     """
 
     def __init__(self, grid_size=3):
@@ -279,29 +281,87 @@ class SlidingTilePuzzle:
         self.grid_size = grid_size
         self.grid = []
         self.empty_pos = (grid_size - 1, grid_size - 1)
+        self.moves = 0
         self._generate_puzzle()
 
     def _generate_puzzle(self):
-        """Generate solvable sliding puzzle"""
-        # TODO: Implement proper puzzle generation
-        # For now, simple placeholder
+        """Generate solvable sliding puzzle by making random moves from solution"""
+        # Start with solved state
         self.grid = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
         num = 1
         for r in range(self.grid_size):
             for c in range(self.grid_size):
-                if (r, c) != self.empty_pos:
+                if (r, c) != (self.grid_size - 1, self.grid_size - 1):
                     self.grid[r][c] = num
                     num += 1
 
+        self.empty_pos = (self.grid_size - 1, self.grid_size - 1)
+
+        # Make random moves to scramble (guarantees solvability)
+        scramble_moves = self.grid_size * self.grid_size * 10  # More moves for harder puzzles
+        last_move = None
+
+        for _ in range(scramble_moves):
+            # Get valid moves (tiles that can slide into empty space)
+            valid_moves = []
+            er, ec = self.empty_pos
+
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nr, nc = er + dr, ec + dc
+                if 0 <= nr < self.grid_size and 0 <= nc < self.grid_size:
+                    # Don't immediately undo the last move
+                    if last_move is None or (nr, nc) != last_move:
+                        valid_moves.append((nr, nc))
+
+            if valid_moves:
+                # Pick random valid move
+                tile_pos = random.choice(valid_moves)
+                last_move = self.empty_pos
+                self._do_slide(tile_pos[0], tile_pos[1])
+
+        self.moves = 0  # Reset move counter
+
+    def _do_slide(self, row, col):
+        """Internal method to slide tile without validation"""
+        er, ec = self.empty_pos
+        # Swap tile with empty space
+        self.grid[er][ec], self.grid[row][col] = self.grid[row][col], self.grid[er][ec]
+        self.empty_pos = (row, col)
+
     def slide_tile(self, row, col):
-        """Slide tile at position into empty space"""
-        # TODO: Implement sliding logic
-        pass
+        """
+        Slide tile at position into empty space if adjacent
+
+        Args:
+            row, col: Position of tile to slide
+
+        Returns:
+            bool: True if slide was valid and executed
+        """
+        er, ec = self.empty_pos
+
+        # Check if tile is adjacent to empty space
+        if (abs(row - er) == 1 and col == ec) or (abs(col - ec) == 1 and row == er):
+            self._do_slide(row, col)
+            self.moves += 1
+            return True
+
+        return False
 
     def check_solution(self):
-        """Check if puzzle is solved"""
-        # TODO: Implement solution checking
-        return False
+        """Check if puzzle is in solved state"""
+        num = 1
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
+                # Last position should be 0 (empty)
+                if r == self.grid_size - 1 and c == self.grid_size - 1:
+                    if self.grid[r][c] != 0:
+                        return False
+                else:
+                    if self.grid[r][c] != num:
+                        return False
+                    num += 1
+        return True
 
     def get_state(self):
         """Get puzzle state"""
@@ -309,6 +369,7 @@ class SlidingTilePuzzle:
             "grid_size": self.grid_size,
             "grid": self.grid,
             "empty_pos": self.empty_pos,
+            "moves": self.moves,
             "solved": self.check_solution()
         }
 

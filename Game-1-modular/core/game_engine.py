@@ -992,6 +992,25 @@ class GameEngine:
 
         # Minigame button clicks (highest priority)
         if self.active_minigame:
+            # Check engineering puzzle cells first (rotation/sliding)
+            if self.minigame_type == 'engineering' and hasattr(self, 'engineering_puzzle_rects'):
+                for rect, action_data in self.engineering_puzzle_rects:
+                    if rect.collidepoint(mouse_pos):
+                        action_type = action_data[0]
+                        row, col = action_data[1], action_data[2]
+
+                        if action_type == 'rotate':
+                            # Rotate pipe piece
+                            self.active_minigame.handle_action('rotate', row=row, col=col)
+                        elif action_type == 'slide':
+                            # Slide tile
+                            self.active_minigame.handle_action('slide', row=row, col=col)
+
+                        # Check if puzzle was solved
+                        if self.active_minigame.check_current_puzzle():
+                            print(f"✅ Puzzle {self.active_minigame.current_puzzle_index}/{self.active_minigame.puzzle_count} solved!")
+                        return
+
             if hasattr(self, 'minigame_button_rect') and self.minigame_button_rect:
                 if self.minigame_button_rect.collidepoint(mouse_pos):
                     # Handle minigame-specific buttons
@@ -1001,7 +1020,7 @@ class GameEngine:
                         # Chain button (minigame_button_rect is chain button)
                         self.active_minigame.chain()
                     elif self.minigame_type == 'engineering':
-                        # Check puzzle solution button
+                        # Complete button for placeholder puzzles
                         self.active_minigame.check_current_puzzle()
                     return
             # Check secondary button (alchemy stabilize)
@@ -3044,7 +3063,7 @@ class GameEngine:
         self.minigame_button_rect = None
 
     def _render_engineering_minigame(self):
-        """Render engineering minigame UI"""
+        """Render engineering minigame UI with actual puzzle visualization"""
         state = self.active_minigame.get_state()
 
         ww, wh = 1000, 700
@@ -3066,32 +3085,42 @@ class GameEngine:
         _temp_surf = self.renderer.font.render(f"Solved: {state['solved_count']}", True, (100, 255, 100))
         surf.blit(_temp_surf, (50, 140))
 
+        # Store puzzle cell rects for click detection
+        self.engineering_puzzle_rects = []
+
         # Puzzle-specific rendering
         if state['current_puzzle']:
             puzzle = state['current_puzzle']
-            _temp_surf = self.renderer.font.render("Current Puzzle: Click to interact", True, (200, 200, 200))
-            surf.blit(_temp_surf, (50, 200))
 
-            # Simple visualization (placeholder for actual puzzle rendering)
-            puzzle_rect = pygame.Rect(200, 250, 600, 300)
-            pygame.draw.rect(surf, (40, 40, 40), puzzle_rect)
-            pygame.draw.rect(surf, (100, 100, 100), puzzle_rect, 2)
-
-            if puzzle.get('grid_size'):
-                _temp_surf = self.renderer.small_font.render(f"Rotation Puzzle ({puzzle['grid_size']}x{puzzle['grid_size']})", True, (200, 200, 200))
-                surf.blit(_temp_surf, (puzzle_rect.x + 20, puzzle_rect.y + 20))
+            # Detect puzzle type and render accordingly
+            if 'grid' in puzzle and 'rotations' in puzzle:
+                # Rotation Pipe Puzzle
+                self._render_rotation_pipe_puzzle(surf, puzzle, wx, wy)
+            elif 'grid' in puzzle and 'moves' in puzzle:
+                # Sliding Tile Puzzle
+                self._render_sliding_tile_puzzle(surf, puzzle, wx, wy)
             elif puzzle.get('placeholder'):
+                # Placeholder puzzle
+                puzzle_rect = pygame.Rect(200, 250, 600, 300)
+                pygame.draw.rect(surf, (40, 40, 40), puzzle_rect)
+                pygame.draw.rect(surf, (100, 100, 100), puzzle_rect, 2)
                 _temp_surf = self.renderer.small_font.render("Puzzle placeholder - Click COMPLETE", True, (200, 200, 200))
                 surf.blit(_temp_surf, (puzzle_rect.x + 20, puzzle_rect.y + 20))
 
-        # Complete button (for testing)
+        # Complete button (for placeholder/testing only)
         btn_w, btn_h = 200, 50
         btn_x, btn_y = ww // 2 - btn_w // 2, 600
         complete_btn = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
-        pygame.draw.rect(surf, (60, 100, 60), complete_btn)
-        pygame.draw.rect(surf, (100, 200, 100), complete_btn, 2)
-        _temp_surf = self.renderer.small_font.render("COMPLETE PUZZLE", True, (200, 200, 200))
-        surf.blit(_temp_surf, (btn_x + 40, btn_y + 15))
+
+        # Only show complete button for placeholder puzzles
+        if state['current_puzzle'] and state['current_puzzle'].get('placeholder'):
+            pygame.draw.rect(surf, (60, 100, 60), complete_btn)
+            pygame.draw.rect(surf, (100, 200, 100), complete_btn, 2)
+            _temp_surf = self.renderer.small_font.render("COMPLETE PUZZLE", True, (200, 200, 200))
+            surf.blit(_temp_surf, (btn_x + 40, btn_y + 15))
+            self.minigame_button_rect = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
+        else:
+            self.minigame_button_rect = None
 
         # Result
         if state['result']:
@@ -3105,7 +3134,144 @@ class GameEngine:
             surf.blit(result_surf, (200, 250))
 
         self.screen.blit(surf, (wx, wy))
-        self.minigame_button_rect = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
+
+    def _render_rotation_pipe_puzzle(self, surf, puzzle, wx, wy):
+        """Render rotation pipe puzzle with visual pipe pieces"""
+        grid_size = puzzle['grid_size']
+        grid = puzzle['grid']
+        rotations = puzzle['rotations']
+        input_pos = puzzle['input_pos']
+        output_pos = puzzle['output_pos']
+
+        # Calculate cell size and position
+        puzzle_area_size = min(500, 500)
+        cell_size = puzzle_area_size // grid_size
+        start_x = (1000 - (cell_size * grid_size)) // 2
+        start_y = 200
+
+        _temp_surf = self.renderer.small_font.render("Click pipes to rotate", True, (180, 180, 180))
+        surf.blit(_temp_surf, (start_x, start_y - 30))
+
+        # Draw grid
+        for r in range(grid_size):
+            for c in range(grid_size):
+                x = start_x + c * cell_size
+                y = start_y + r * cell_size
+
+                # Cell background
+                cell_color = (50, 50, 60) if (r, c) in [input_pos, output_pos] else (40, 40, 50)
+                pygame.draw.rect(surf, cell_color, (x, y, cell_size, cell_size))
+                pygame.draw.rect(surf, (80, 80, 90), (x, y, cell_size, cell_size), 1)
+
+                piece_type = grid[r][c]
+                rotation = rotations[r][c]
+
+                # Store rect for click detection (relative to screen coordinates)
+                self.engineering_puzzle_rects.append((
+                    pygame.Rect(wx + x, wy + y, cell_size, cell_size),
+                    ('rotate', r, c)
+                ))
+
+                # Draw pipe piece
+                if piece_type != 0:
+                    self._draw_pipe_piece(surf, x, y, cell_size, piece_type, rotation)
+
+                # Mark input/output
+                if (r, c) == input_pos:
+                    _temp_surf = self.renderer.tiny_font.render("IN", True, (100, 255, 100))
+                    surf.blit(_temp_surf, (x + 5, y + 5))
+                elif (r, c) == output_pos:
+                    _temp_surf = self.renderer.tiny_font.render("OUT", True, (255, 100, 100))
+                    surf.blit(_temp_surf, (x + 5, y + 5))
+
+    def _draw_pipe_piece(self, surf, x, y, size, piece_type, rotation):
+        """Draw a pipe piece with the given type and rotation"""
+        center_x = x + size // 2
+        center_y = y + size // 2
+        pipe_width = max(4, size // 8)
+        pipe_color = (100, 180, 220)
+
+        if piece_type == 1:  # Straight
+            if rotation in [0, 180]:  # Horizontal
+                pygame.draw.rect(surf, pipe_color, (x, center_y - pipe_width//2, size, pipe_width))
+            else:  # Vertical
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, y, pipe_width, size))
+
+        elif piece_type == 2:  # L-bend
+            if rotation == 0:  # Top-Right
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, y, pipe_width, size//2 + pipe_width//2))
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, center_y - pipe_width//2, size//2 + pipe_width//2, pipe_width))
+            elif rotation == 90:  # Right-Bottom
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, center_y - pipe_width//2, size//2 + pipe_width//2, pipe_width))
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, center_y - pipe_width//2, pipe_width, size//2 + pipe_width//2))
+            elif rotation == 180:  # Bottom-Left
+                pygame.draw.rect(surf, pipe_color, (x, center_y - pipe_width//2, size//2 + pipe_width//2, pipe_width))
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, center_y - pipe_width//2, pipe_width, size//2 + pipe_width//2))
+            else:  # Left-Top
+                pygame.draw.rect(surf, pipe_color, (x, center_y - pipe_width//2, size//2 + pipe_width//2, pipe_width))
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, y, pipe_width, size//2 + pipe_width//2))
+
+        elif piece_type == 3:  # T-junction
+            # Draw based on which direction is missing
+            if rotation == 0:  # Missing bottom
+                pygame.draw.rect(surf, pipe_color, (x, center_y - pipe_width//2, size, pipe_width))
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, y, pipe_width, size//2 + pipe_width//2))
+            elif rotation == 90:  # Missing left
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, y, pipe_width, size))
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, center_y - pipe_width//2, size//2 + pipe_width//2, pipe_width))
+            elif rotation == 180:  # Missing top
+                pygame.draw.rect(surf, pipe_color, (x, center_y - pipe_width//2, size, pipe_width))
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, center_y - pipe_width//2, pipe_width, size//2 + pipe_width//2))
+            else:  # Missing right
+                pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, y, pipe_width, size))
+                pygame.draw.rect(surf, pipe_color, (x, center_y - pipe_width//2, size//2 + pipe_width//2, pipe_width))
+
+        elif piece_type == 4:  # Cross
+            pygame.draw.rect(surf, pipe_color, (x, center_y - pipe_width//2, size, pipe_width))
+            pygame.draw.rect(surf, pipe_color, (center_x - pipe_width//2, y, pipe_width, size))
+
+    def _render_sliding_tile_puzzle(self, surf, puzzle, wx, wy):
+        """Render sliding tile puzzle with numbered tiles"""
+        grid_size = puzzle['grid_size']
+        grid = puzzle['grid']
+        empty_pos = puzzle['empty_pos']
+        moves = puzzle.get('moves', 0)
+
+        # Calculate cell size and position
+        puzzle_area_size = min(400, 400)
+        cell_size = puzzle_area_size // grid_size
+        start_x = (1000 - (cell_size * grid_size)) // 2
+        start_y = 200
+
+        _temp_surf = self.renderer.small_font.render(f"Click tiles to slide - Moves: {moves}", True, (180, 180, 180))
+        surf.blit(_temp_surf, (start_x, start_y - 30))
+
+        # Draw grid
+        for r in range(grid_size):
+            for c in range(grid_size):
+                x = start_x + c * cell_size
+                y = start_y + r * cell_size
+
+                tile_num = grid[r][c]
+
+                # Store rect for click detection
+                self.engineering_puzzle_rects.append((
+                    pygame.Rect(wx + x, wy + y, cell_size, cell_size),
+                    ('slide', r, c)
+                ))
+
+                if tile_num == 0:  # Empty space
+                    pygame.draw.rect(surf, (30, 30, 40), (x, y, cell_size, cell_size))
+                    pygame.draw.rect(surf, (60, 60, 70), (x, y, cell_size, cell_size), 2)
+                else:
+                    # Draw tile
+                    pygame.draw.rect(surf, (60, 90, 120), (x+2, y+2, cell_size-4, cell_size-4))
+                    pygame.draw.rect(surf, (100, 140, 180), (x+2, y+2, cell_size-4, cell_size-4), 2)
+
+                    # Draw number
+                    _temp_surf = self.renderer.font.render(str(tile_num), True, (255, 255, 255))
+                    text_rect = _temp_surf.get_rect(center=(x + cell_size//2, y + cell_size//2))
+                    surf.blit(_temp_surf, text_rect)
 
     def _render_enchanting_minigame(self):
         """Render enchanting minigame UI (placeholder)"""
