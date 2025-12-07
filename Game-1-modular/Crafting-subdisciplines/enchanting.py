@@ -5,13 +5,13 @@ Framework:
 - Python module ready for main.py integration
 - Loads recipes from JSON files
 - REQUIRED minigame (no skip option for adornments)
-- Difficulty based on tier (tier + X + Y in future updates)
+- Difficulty based on tier (affects grid size and pattern complexity)
 
-Minigame: Freeform pattern creation
-- Phase 1: Place enhancement materials in circular workspace
-- Phase 2: Draw lines between materials to create pattern
-- Phase 3: System recognizes geometric pattern created
-- Phase 4: System judges quality/precision of pattern
+Minigame: Pattern-matching (like enchanting-pattern-designer.py in survival mode)
+- Player must recreate the target pattern from placements JSON
+- Place shapes (triangles, squares) at correct positions with correct rotations
+- Assign correct materials to vertices
+- Validation checks for exact match
 
 NOTE: Enchanting is unique - minigame is REQUIRED, cannot be skipped
 """
@@ -21,6 +21,306 @@ import json
 import math
 from pathlib import Path
 from rarity_utils import rarity_system
+
+
+class PatternMatchingMinigame:
+    """
+    Pattern-matching minigame for enchanting
+
+    Player must recreate the target pattern by:
+    1. Placing shapes (from available shape types based on tier)
+    2. Assigning materials to vertices
+    3. Matching the target pattern exactly
+    """
+
+    def __init__(self, recipe, tier, target_pattern, available_shapes):
+        """
+        Initialize pattern-matching minigame
+
+        Args:
+            recipe: Recipe dict from JSON
+            tier: Recipe tier (1-4)
+            target_pattern: Pattern from placements JSON {"gridType", "vertices", "shapes"}
+            available_shapes: List of available shape types for this tier
+        """
+        self.recipe = recipe
+        self.tier = tier
+        self.target_pattern = target_pattern
+        self.available_shapes = available_shapes
+
+        # Parse grid size from gridType (e.g., "square_8x8")
+        grid_type = target_pattern.get('gridType', 'square_8x8')
+        self.grid_size = int(grid_type.split('_')[1].split('x')[0])
+
+        # Game state
+        self.active = False
+        self.mode = 'shape_placement'  # 'shape_placement' or 'material_assignment'
+        self.player_shapes = []  # List of placed shapes
+        self.player_vertices = {}  # {(x,y): {"materialId": ..., "isKey": ...}}
+        self.result = None
+
+        # UI state
+        self.selected_shape_type = None
+        self.current_rotation = 0
+        self.selected_material = None
+        self.show_target_materials = True  # Show target materials as hint
+
+        # Shape templates (same as in enchanting-pattern-designer.py)
+        self.shape_templates = {
+            "triangle_equilateral_small": [(0, 0), (-1, -2), (1, -2)],
+            "square_small": [(0, 0), (2, 0), (2, -2), (0, -2)],
+            "triangle_isosceles_small": [(0, 0), (-1, -3), (1, -3)],
+            "triangle_equilateral_large": [(0, 0), (-2, -3), (2, -3)],
+            "square_large": [(0, 0), (4, 0), (4, -4), (0, -4)],
+            "triangle_isosceles_large": [(0, 0), (-1, -5), (1, -5)]
+        }
+
+        # Get available materials from recipe
+        self.available_materials = [inp['materialId'] for inp in recipe.get('inputs', [])]
+
+    def start(self):
+        """Start the minigame"""
+        self.active = True
+        self.mode = 'shape_placement'
+        self.player_shapes = []
+        self.player_vertices = {}
+        self.result = None
+
+    def rotate_point(self, x, y, degrees):
+        """Rotate a point around origin by degrees"""
+        rad = math.radians(degrees)
+        cos_a = math.cos(rad)
+        sin_a = math.sin(rad)
+        new_x = round(x * cos_a - y * sin_a)
+        new_y = round(x * sin_a + y * cos_a)
+        return (new_x, new_y)
+
+    def get_rotated_shape_vertices(self, shape_type, anchor_x, anchor_y, rotation):
+        """Get absolute vertices for a shape at anchor position with rotation"""
+        if shape_type not in self.shape_templates:
+            return []
+
+        template = self.shape_templates[shape_type]
+        vertices = []
+        for dx, dy in template:
+            # Rotate offset around origin
+            rx, ry = self.rotate_point(dx, dy, rotation)
+            # Add anchor position
+            vertices.append((anchor_x + rx, anchor_y + ry))
+        return vertices
+
+    def place_shape(self, shape_type, anchor_x, anchor_y, rotation):
+        """
+        Place a shape at the given anchor position with rotation
+
+        Returns:
+            bool: True if placed successfully
+        """
+        if self.mode != 'shape_placement':
+            return False
+
+        if shape_type not in self.available_shapes:
+            return False
+
+        # Get vertices for this shape
+        vertices = self.get_rotated_shape_vertices(shape_type, anchor_x, anchor_y, rotation)
+
+        # Check if all vertices fit in grid
+        half = self.grid_size // 2
+        for vx, vy in vertices:
+            if abs(vx) > half or abs(vy) > half:
+                return False
+
+        # Add shape to player's shapes
+        shape_data = {
+            "type": shape_type,
+            "vertices": vertices,
+            "rotation": rotation
+        }
+        self.player_shapes.append(shape_data)
+
+        # Activate vertices for material assignment
+        for v in vertices:
+            if v not in self.player_vertices:
+                self.player_vertices[v] = {"materialId": None, "isKey": False}
+
+        return True
+
+    def remove_last_shape(self):
+        """Remove the last placed shape"""
+        if not self.player_shapes:
+            return False
+
+        # Get vertices from last shape
+        last_shape = self.player_shapes.pop()
+        shape_vertices = set(last_shape['vertices'])
+
+        # Check if any other shape uses these vertices
+        other_vertices = set()
+        for shape in self.player_shapes:
+            other_vertices.update(shape['vertices'])
+
+        # Remove vertices not used by other shapes
+        vertices_to_remove = shape_vertices - other_vertices
+        for v in vertices_to_remove:
+            if v in self.player_vertices:
+                del self.player_vertices[v]
+
+        return True
+
+    def assign_material(self, x, y, material_id):
+        """
+        Assign material to a vertex
+
+        Returns:
+            bool: True if assigned successfully
+        """
+        if self.mode != 'material_assignment':
+            return False
+
+        coord = (x, y)
+        if coord not in self.player_vertices:
+            return False
+
+        if material_id not in self.available_materials and material_id is not None:
+            return False
+
+        self.player_vertices[coord]['materialId'] = material_id
+        return True
+
+    def toggle_key_vertex(self, x, y):
+        """Toggle whether a vertex is marked as key"""
+        coord = (x, y)
+        if coord in self.player_vertices and self.player_vertices[coord]['materialId']:
+            is_key = self.player_vertices[coord].get('isKey', False)
+            self.player_vertices[coord]['isKey'] = not is_key
+            return True
+        return False
+
+    def validate_pattern(self):
+        """
+        Check if player's pattern matches the target pattern exactly
+
+        Returns:
+            dict: {"success": bool, "message": str, "errors": list}
+        """
+        errors = []
+
+        # Parse target vertices (convert string keys to tuples)
+        target_vertices = {}
+        for key, value in self.target_pattern.get('vertices', {}).items():
+            x, y = map(int, key.split(','))
+            target_vertices[(x, y)] = value
+
+        # Parse target shapes
+        target_shapes = []
+        for shape in self.target_pattern.get('shapes', []):
+            shape_vertices = []
+            for v_str in shape['vertices']:
+                x, y = map(int, v_str.split(','))
+                shape_vertices.append((x, y))
+            target_shapes.append({
+                "type": shape['type'],
+                "vertices": set(shape_vertices),
+                "rotation": shape['rotation']
+            })
+
+        # Check shape count
+        if len(self.player_shapes) != len(target_shapes):
+            errors.append(f"Wrong number of shapes: {len(self.player_shapes)} placed, need {len(target_shapes)}")
+
+        # Check if all target shapes are matched
+        matched_target_shapes = set()
+        for player_shape in self.player_shapes:
+            player_vertices_set = set(player_shape['vertices'])
+            matched = False
+
+            for idx, target_shape in enumerate(target_shapes):
+                if idx in matched_target_shapes:
+                    continue
+
+                # Check if vertices match
+                if player_vertices_set == target_shape['vertices']:
+                    # Check if type and rotation match
+                    if player_shape['type'] == target_shape['type'] and player_shape['rotation'] == target_shape['rotation']:
+                        matched_target_shapes.add(idx)
+                        matched = True
+                        break
+
+            if not matched:
+                errors.append(f"Unmatched shape: {player_shape['type']} at rotation {player_shape['rotation']}")
+
+        # Check for missing target shapes
+        for idx, target_shape in enumerate(target_shapes):
+            if idx not in matched_target_shapes:
+                errors.append(f"Missing target shape: {target_shape['type']}")
+
+        # Check vertex materials
+        for coord, target_data in target_vertices.items():
+            if coord not in self.player_vertices:
+                errors.append(f"Missing vertex at {coord}")
+                continue
+
+            player_data = self.player_vertices[coord]
+            if player_data['materialId'] != target_data['materialId']:
+                errors.append(f"Wrong material at {coord}: placed {player_data['materialId']}, need {target_data['materialId']}")
+
+        # Check for extra vertices with materials
+        for coord, player_data in self.player_vertices.items():
+            if coord not in target_vertices and player_data['materialId']:
+                errors.append(f"Extra material at {coord}: {player_data['materialId']}")
+
+        # Success if no errors
+        success = len(errors) == 0
+        message = "Perfect match!" if success else f"{len(errors)} error(s) found"
+
+        return {
+            "success": success,
+            "message": message,
+            "errors": errors
+        }
+
+    def complete(self):
+        """Complete the minigame and calculate results"""
+        validation = self.validate_pattern()
+
+        if validation['success']:
+            # Success - determine enchantment quality based on tier
+            self.result = {
+                "success": True,
+                "message": "Enchantment pattern matched perfectly!",
+                "quality": 1.0,  # Perfect match
+                "tier_bonus": self.tier * 5  # 5% per tier
+            }
+        else:
+            # Failure
+            self.result = {
+                "success": False,
+                "message": f"Pattern mismatch: {validation['message']}",
+                "errors": validation['errors'],
+                "materials_lost": True
+            }
+
+        self.active = False
+        return self.result
+
+    def get_state(self):
+        """Get current minigame state for rendering"""
+        return {
+            "active": self.active,
+            "mode": self.mode,
+            "grid_size": self.grid_size,
+            "target_pattern": self.target_pattern,
+            "player_shapes": self.player_shapes,
+            "player_vertices": self.player_vertices,
+            "available_shapes": self.available_shapes,
+            "available_materials": self.available_materials,
+            "selected_shape_type": self.selected_shape_type,
+            "current_rotation": self.current_rotation,
+            "selected_material": self.selected_material,
+            "show_target_materials": self.show_target_materials,
+            "result": self.result
+        }
 
 
 class EnchantingMinigame:
@@ -448,6 +748,28 @@ class EnchantingCrafter:
             "message": f"Created {input_rarity} {enchantment_name}"
         }
 
+    def get_available_shapes_for_tier(self, tier):
+        """Get available shape types for a given tier (cumulative)"""
+        shapes = []
+
+        # T1: Basic small shapes
+        if tier >= 1:
+            shapes.extend(["triangle_equilateral_small", "square_small"])
+
+        # T2: Add small isosceles
+        if tier >= 2:
+            shapes.append("triangle_isosceles_small")
+
+        # T3: Add large equilateral and square
+        if tier >= 3:
+            shapes.extend(["triangle_equilateral_large", "square_large"])
+
+        # T4: Add large isosceles (all shapes now available)
+        if tier >= 4:
+            shapes.append("triangle_isosceles_large")
+
+        return shapes
+
     def create_minigame(self, recipe_id, target_item=None):
         """
         Create an enchanting minigame for this recipe
@@ -457,7 +779,7 @@ class EnchantingCrafter:
             target_item: Item to enchant (can be None for accessories)
 
         Returns:
-            EnchantingMinigame instance or None
+            PatternMatchingMinigame instance or None
         """
         if recipe_id not in self.recipes:
             return None
@@ -465,7 +787,16 @@ class EnchantingCrafter:
         recipe = self.recipes[recipe_id]
         tier = recipe.get('stationTier', 1)
 
-        return EnchantingMinigame(recipe, tier, target_item)
+        # Get target pattern from placements
+        target_pattern = self.get_placement(recipe_id)
+        if not target_pattern:
+            print(f"[Enchanting] WARNING: No placement pattern found for {recipe_id}")
+            return None
+
+        # Get available shapes for this tier
+        available_shapes = self.get_available_shapes_for_tier(tier)
+
+        return PatternMatchingMinigame(recipe, tier, target_pattern, available_shapes)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result, target_item=None, item_metadata=None):
         """
@@ -474,7 +805,7 @@ class EnchantingCrafter:
         Args:
             recipe_id: Recipe ID to craft
             inventory: Dict of {material_id: quantity} (will be modified)
-            minigame_result: Result dict from EnchantingMinigame
+            minigame_result: Result dict from PatternMatchingMinigame
             target_item: Item to enchant (modified in place)
             item_metadata: Optional dict of item metadata
 
@@ -492,23 +823,16 @@ class EnchantingCrafter:
             inventory[inp['materialId']] -= inp['quantity']
 
         if not minigame_result.get('success'):
-            # Check if item was broken
-            if minigame_result.get('item_broken') and target_item:
-                return {
-                    "success": False,
-                    "message": minigame_result.get('message'),
-                    "item_broken": True,
-                    "broken_item_id": target_item.get('itemId')
-                }
-            else:
-                return {
-                    "success": False,
-                    "message": minigame_result.get('message'),
-                    "materials_lost": True
-                }
+            # Pattern match failed
+            return {
+                "success": False,
+                "message": minigame_result.get('message'),
+                "errors": minigame_result.get('errors', []),
+                "materials_lost": True
+            }
 
         # Success - apply enchantment with rarity bonus
-        base_magnitude = minigame_result.get('bonus_magnitude', 10)
+        tier_bonus = minigame_result.get('tier_bonus', 10)  # Base bonus from tier
 
         # Apply rarity modifier to enchantment strength
         rarity_multipliers = {
@@ -519,14 +843,17 @@ class EnchantingCrafter:
             'legendary': 2.0
         }
         rarity_mult = rarity_multipliers.get(input_rarity, 1.0)
-        modified_magnitude = int(base_magnitude * rarity_mult)
+        final_bonus = int(tier_bonus * rarity_mult)
+
+        # Get enchantment details from recipe
+        enchantment_id = recipe.get('enchantmentId', recipe.get('outputId'))
+        enchantment_name = recipe.get('enchantmentName', recipe.get('name', 'Unknown Enchantment'))
 
         enchantment_data = {
-            "recipeId": recipe_id,
-            "bonus_type": minigame_result.get('bonus_type'),
-            "bonus_magnitude": modified_magnitude,
-            "pattern": minigame_result.get('pattern'),
-            "quality": minigame_result.get('quality'),
+            "enchantmentId": enchantment_id,
+            "enchantmentName": enchantment_name,
+            "bonus_magnitude": final_bonus,
+            "quality": minigame_result.get('quality', 1.0),
             "rarity": input_rarity
         }
 
@@ -539,18 +866,19 @@ class EnchantingCrafter:
 
             return {
                 "success": True,
-                "message": f"{input_rarity.capitalize()} enchantment applied to {target_item.get('itemId')}",
+                "message": f"{input_rarity.capitalize()} {enchantment_name} applied to {target_item.get('itemId')}!",
                 "enchantment": enchantment_data,
                 "enchanted_item": target_item,
                 "rarity": input_rarity
             }
         else:
-            # Create new accessory
+            # Create new enchanted accessory
             return {
                 "success": True,
-                "outputId": recipe['outputId'],
-                "quantity": recipe['outputQty'],
-                "message": f"Created {input_rarity} accessory",
+                "outputId": enchantment_id,
+                "quantity": 1,
+                "enchantmentName": enchantment_name,
+                "message": f"Created {input_rarity} {enchantment_name}",
                 "enchantment": enchantment_data,
                 "rarity": input_rarity
             }
