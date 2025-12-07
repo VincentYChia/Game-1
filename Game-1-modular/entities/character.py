@@ -1100,9 +1100,14 @@ class Character:
             else:
                 self.attack_cooldown = 0.5
 
-    def use_consumable(self, item_id: str) -> Tuple[bool, str]:
+    def use_consumable(self, item_id: str, crafted_stats: Dict = None) -> Tuple[bool, str]:
         """
         Use a consumable item from inventory
+
+        Args:
+            item_id: ID of the consumable item
+            crafted_stats: Optional stats from alchemy minigame (potency, duration, quality)
+
         Returns (success, message)
         """
         # Get item from database
@@ -1120,115 +1125,155 @@ class Character:
         if not self.inventory.has_item(item_id, 1):
             return False, f"You don't have any {item_def.name}"
 
+        # Get crafting quality multipliers (default to 100 if no crafted stats)
+        if crafted_stats is None:
+            crafted_stats = {}
+        potency = crafted_stats.get('potency', 100) / 100.0  # Effect strength multiplier
+        duration = crafted_stats.get('duration', 100) / 100.0  # Duration multiplier
+
         # Parse and apply effect based on item type
         success = False
         message = ""
 
         # HEALING POTIONS (instant HP restoration)
         if item_id == "minor_health_potion":
-            heal_amount = min(50, self.max_health - self.health)
+            base_heal = 50
+            heal_amount = min(int(base_heal * potency), self.max_health - self.health)
             self.health += heal_amount
             success = True
             message = f"Restored {heal_amount:.0f} HP"
+            if potency > 1.0:
+                message += f" (potency: {int(potency*100)}%)"
 
         elif item_id == "health_potion":
-            heal_amount = min(100, self.max_health - self.health)
+            base_heal = 100
+            heal_amount = min(int(base_heal * potency), self.max_health - self.health)
             self.health += heal_amount
             success = True
             message = f"Restored {heal_amount:.0f} HP"
+            if potency > 1.0:
+                message += f" (potency: {int(potency*100)}%)"
 
         elif item_id == "greater_health_potion":
-            heal_amount = min(200, self.max_health - self.health)
+            base_heal = 200
+            heal_amount = min(int(base_heal * potency), self.max_health - self.health)
             self.health += heal_amount
             success = True
             message = f"Restored {heal_amount:.0f} HP"
+            if potency > 1.0:
+                message += f" (potency: {int(potency*100)}%)"
 
         # MANA POTIONS (instant mana restoration)
         elif item_id == "minor_mana_potion":
-            mana_amount = min(50, self.max_mana - self.mana)
+            base_mana = 50
+            mana_amount = min(int(base_mana * potency), self.max_mana - self.mana)
             self.mana += mana_amount
             success = True
             message = f"Restored {mana_amount:.0f} Mana"
+            if potency > 1.0:
+                message += f" (potency: {int(potency*100)}%)"
 
         elif item_id == "mana_potion":
-            mana_amount = min(100, self.max_mana - self.mana)
+            base_mana = 100
+            mana_amount = min(int(base_mana * potency), self.max_mana - self.mana)
             self.mana += mana_amount
             success = True
             message = f"Restored {mana_amount:.0f} Mana"
+            if potency > 1.0:
+                message += f" (potency: {int(potency*100)}%)"
 
         elif item_id == "greater_mana_potion":
-            mana_amount = min(200, self.max_mana - self.mana)
+            base_mana = 200
+            mana_amount = min(int(base_mana * potency), self.max_mana - self.mana)
             self.mana += mana_amount
             success = True
             message = f"Restored {mana_amount:.0f} Mana"
+            if potency > 1.0:
+                message += f" (potency: {int(potency*100)}%)"
 
         # REGENERATION (heal over time buff)
         elif item_id == "regeneration_tonic":
+            base_duration = 60.0
+            base_regen = 5.0
+            actual_duration = base_duration * duration
+            actual_regen = base_regen * potency
             buff = ActiveBuff(
                 buff_id="potion_regen",
                 name="Regeneration",
                 effect_type="regenerate",
                 category="health",
                 magnitude="minor",
-                bonus_value=5.0,
-                duration=60.0,
-                duration_remaining=60.0,
+                bonus_value=actual_regen,
+                duration=actual_duration,
+                duration_remaining=actual_duration,
                 source="potion"
             )
             self.buffs.add_buff(buff)
             success = True
-            message = "Regenerating 5 HP/sec for 60 seconds"
+            message = f"Regenerating {actual_regen:.1f} HP/sec for {actual_duration:.0f} seconds"
 
         # STRENGTH BUFFS
         elif item_id == "strength_elixir" or item_id == "minor_strength_potion":
+            base_duration = 300.0
+            base_bonus = 0.20
+            actual_duration = base_duration * duration
+            actual_bonus = base_bonus * potency
             buff = ActiveBuff(
                 buff_id="potion_strength",
                 name="Strength",
                 effect_type="empower",
                 category="combat",
                 magnitude="moderate",
-                bonus_value=0.20,
-                duration=300.0,
-                duration_remaining=300.0,
+                bonus_value=actual_bonus,
+                duration=actual_duration,
+                duration_remaining=actual_duration,
                 source="potion"
             )
             self.buffs.add_buff(buff)
             success = True
-            message = "+20% damage for 5 minutes"
+            message = f"+{int(actual_bonus*100)}% damage for {actual_duration/60:.1f} minutes"
 
         # DEFENSE BUFFS
         elif item_id == "iron_skin_potion":
+            base_duration = 300.0
+            base_defense = 10.0
+            actual_duration = base_duration * duration
+            actual_defense = base_defense * potency
             buff = ActiveBuff(
                 buff_id="potion_iron_skin",
                 name="Iron Skin",
                 effect_type="fortify",
                 category="defense",
                 magnitude="moderate",
-                bonus_value=10.0,
-                duration=300.0,
-                duration_remaining=300.0,
+                bonus_value=actual_defense,
+                duration=actual_duration,
+                duration_remaining=actual_duration,
                 source="potion"
             )
             self.buffs.add_buff(buff)
             success = True
-            message = "+10 defense for 5 minutes"
+            message = f"+{actual_defense:.0f} defense for {actual_duration/60:.1f} minutes"
 
         # SPEED BUFFS
         elif item_id == "swiftness_draught":
+            base_duration = 240.0
+            base_bonus = 0.25
+            actual_duration = base_duration * duration
+            actual_bonus = base_bonus * potency
             buff = ActiveBuff(
                 buff_id="potion_swiftness",
                 name="Swiftness",
                 effect_type="quicken",
                 category="movement",
                 magnitude="moderate",
-                bonus_value=0.25,
-                duration=240.0,
-                duration_remaining=240.0,
+                bonus_value=actual_bonus,
+                duration=actual_duration,
+                duration_remaining=actual_duration,
                 source="potion"
             )
             self.buffs.add_buff(buff)
             success = True
-            message = "+25% speed for 4 minutes"
+            message = f"+{int(actual_bonus*100)}% speed for {actual_duration/60:.1f} minutes"
 
         # TITAN'S BREW (multi-stat buff)
         elif item_id == "titans_brew":

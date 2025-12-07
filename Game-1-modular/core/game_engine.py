@@ -736,8 +736,9 @@ class GameEngine:
                             if item_def:
                                 # Check if item is consumable
                                 if item_def.category == "consumable":
-                                    # Use ONE consumable from the stack
-                                    success, message = self.character.use_consumable(item_stack.item_id)
+                                    # Use ONE consumable from the stack, passing crafted stats
+                                    crafted_stats = item_stack.crafted_stats if hasattr(item_stack, 'crafted_stats') else None
+                                    success, message = self.character.use_consumable(item_stack.item_id, crafted_stats)
                                     if success:
                                         self.add_notification(message, (100, 255, 100))
                                     else:
@@ -1253,8 +1254,9 @@ class GameEngine:
                                         self.add_notification(f"Placed {mat_def.name}", (100, 255, 100))
                                         print(f"✓ Placed {mat_def.name} at player position")
                                     elif mat_def and mat_def.category == "consumable":
-                                        # Double-click to use consumable (use ONE from stack)
-                                        success, message = self.character.use_consumable(item_stack.item_id)
+                                        # Double-click to use consumable (use ONE from stack), passing crafted stats
+                                        crafted_stats = item_stack.crafted_stats if hasattr(item_stack, 'crafted_stats') else None
+                                        success, message = self.character.use_consumable(item_stack.item_id, crafted_stats)
                                         if success:
                                             self.add_notification(message, (100, 255, 100))
                                         else:
