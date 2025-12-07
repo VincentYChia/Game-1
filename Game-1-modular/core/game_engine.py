@@ -1041,37 +1041,38 @@ class GameEngine:
 
         # Minigame button clicks (highest priority)
         if self.active_minigame:
-            # Check enchanting workspace clicks (Phase 1: placement, Phase 2: connections)
-            if self.minigame_type == 'adornments' and hasattr(self, 'enchanting_workspace_rect'):
+            # Check spinning wheel minigame clicks
+            if self.minigame_type == 'adornments':
                 state = self.active_minigame.get_state()
-                phase = state.get('phase', 1)
+                phase = state.get('phase', 'betting')
 
-                if phase == 1:
-                    # Phase 1: Click in workspace to place material
-                    if self.enchanting_workspace_rect.collidepoint(mouse_pos):
-                        # Check if click is within circle
-                        dx = mouse_pos[0] - self.enchanting_workspace_center[0]
-                        dy = mouse_pos[1] - self.enchanting_workspace_center[1]
-                        dist = math.sqrt(dx * dx + dy * dy)
-
-                        if dist <= self.enchanting_workspace_radius:
-                            # Place material at this position
-                            self.active_minigame.place_material("material_placeholder", mouse_pos[0], mouse_pos[1])
+                # Handle bet button clicks
+                if phase == 'betting' and hasattr(self, 'wheel_bet_buttons'):
+                    for btn_rect, amount in self.wheel_bet_buttons:
+                        if btn_rect.collidepoint(mouse_pos):
+                            if self.active_minigame.place_bet(amount):
+                                print(f"✓ Bet placed: ${amount}")
                             return
 
-                elif phase == 2:
-                    # Phase 2: Click on materials to connect them
-                    if hasattr(self, 'enchanting_material_rects'):
-                        for rect, idx in self.enchanting_material_rects:
-                            if rect.collidepoint(mouse_pos):
-                                # Handle material click for connection
-                                if not hasattr(self, '_enchanting_first_click'):
-                                    self._enchanting_first_click = idx
-                                else:
-                                    # Connect to previously clicked material
-                                    self.active_minigame.connect_materials(self._enchanting_first_click, idx)
-                                    delattr(self, '_enchanting_first_click')
-                                return
+                # Handle spin button click
+                if phase == 'ready_to_spin' and hasattr(self, 'wheel_spin_button'):
+                    if self.wheel_spin_button and self.wheel_spin_button.collidepoint(mouse_pos):
+                        if self.active_minigame.spin_wheel():
+                            print("🎡 Spinning wheel...")
+                        return
+
+                # Handle next button click
+                if phase == 'spin_result' and hasattr(self, 'wheel_next_button'):
+                    if self.wheel_next_button and self.wheel_next_button.collidepoint(mouse_pos):
+                        self.active_minigame.advance_to_next_spin()
+                        return
+
+                # Handle completion click (anywhere in window)
+                if phase == 'completed' and hasattr(self, 'enchanting_minigame_window'):
+                    if self.enchanting_minigame_window.collidepoint(mouse_pos):
+                        # Complete the minigame
+                        self._complete_minigame()
+                        return
 
             # Check engineering puzzle cells first (rotation/sliding)
             if self.minigame_type == 'engineering' and hasattr(self, 'engineering_puzzle_rects'):
@@ -1103,9 +1104,7 @@ class GameEngine:
                     elif self.minigame_type == 'engineering':
                         # Complete button for placeholder puzzles
                         self.active_minigame.check_current_puzzle()
-                    elif self.minigame_type == 'adornments':
-                        # Phase advancement button
-                        self.active_minigame.advance_phase()
+                    # Removed adornments button handler - now uses specific wheel buttons
                     return
             # Check secondary button (alchemy stabilize)
             if hasattr(self, 'minigame_button_rect2') and self.minigame_button_rect2:
@@ -3466,7 +3465,7 @@ class GameEngine:
                     surf.blit(_temp_surf, text_rect)
 
     def _render_enchanting_minigame(self):
-        """Render enchanting minigame UI with pattern creation workspace"""
+        """Render spinning wheel gambling minigame UI"""
         if not self.active_minigame:
             return
 
@@ -3480,142 +3479,219 @@ class GameEngine:
         surf.fill((20, 20, 30, 250))
 
         # Header
-        _temp_surf = self.renderer.font.render("ENCHANTING MINIGAME", True, (180, 60, 180))
-        surf.blit(_temp_surf, (ww//2 - 120, 20))
+        _temp_surf = self.renderer.font.render("SPINNING WHEEL MINIGAME", True, (255, 215, 0))
+        surf.blit(_temp_surf, (ww//2 - 180, 20))
 
-        phase = state['phase']
-        if phase == 1:
-            _temp_surf = self.renderer.small_font.render("Phase 1: Place materials in workspace (click to place)", True, (180, 180, 180))
+        # Currency display
+        current_currency = state.get('current_currency', 100)
+        _temp_surf = self.renderer.font.render(f"Currency: {current_currency}", True, (100, 255, 100))
+        surf.blit(_temp_surf, (50, 80))
+
+        # Spin counter
+        spin_num = state.get('current_spin_number', 0) + 1
+        _temp_surf = self.renderer.small_font.render(f"Spin {spin_num} / 3", True, (200, 200, 200))
+        surf.blit(_temp_surf, (ww - 150, 80))
+
+        # Phase-specific rendering
+        phase = state.get('phase', 'betting')
+
+        # Wheel area
+        wheel_center = (ww // 2, 350)
+        wheel_radius = 180
+        wheel_visible = state.get('wheel_visible', False)
+
+        if wheel_visible:
+            # Draw spinning wheel
+            current_wheel = state.get('current_wheel', [])
+            wheel_rotation = state.get('wheel_rotation', 0.0)
+
+            if current_wheel:
+                # Draw wheel background
+                pygame.draw.circle(surf, (40, 40, 50), wheel_center, wheel_radius)
+                pygame.draw.circle(surf, (200, 200, 200), wheel_center, wheel_radius, 4)
+
+                # Draw 20 slices
+                slice_angle = 360 / 20  # 18 degrees per slice
+                color_map = {
+                    'green': (50, 200, 50),
+                    'red': (200, 50, 50),
+                    'grey': (120, 120, 120)
+                }
+
+                for i, color_name in enumerate(current_wheel):
+                    # Calculate slice angles
+                    start_angle = i * slice_angle - wheel_rotation - 90  # -90 to start at top
+                    end_angle = (i + 1) * slice_angle - wheel_rotation - 90
+
+                    # Convert to radians
+                    start_rad = math.radians(start_angle)
+                    end_rad = math.radians(end_angle)
+
+                    # Draw slice as a polygon (triangle fan from center)
+                    points = [wheel_center]
+                    # Generate arc points
+                    num_arc_points = 5
+                    for j in range(num_arc_points + 1):
+                        angle = start_rad + (end_rad - start_rad) * (j / num_arc_points)
+                        px = wheel_center[0] + int(wheel_radius * math.cos(angle))
+                        py = wheel_center[1] + int(wheel_radius * math.sin(angle))
+                        points.append((px, py))
+
+                    color = color_map.get(color_name, (100, 100, 100))
+                    pygame.draw.polygon(surf, color, points)
+                    pygame.draw.polygon(surf, (0, 0, 0), points, 2)
+
+                # Draw pointer at top
+                pointer_points = [
+                    (wheel_center[0], wheel_center[1] - wheel_radius - 20),
+                    (wheel_center[0] - 15, wheel_center[1] - wheel_radius - 5),
+                    (wheel_center[0] + 15, wheel_center[1] - wheel_radius - 5)
+                ]
+                pygame.draw.polygon(surf, (255, 255, 0), pointer_points)
+                pygame.draw.polygon(surf, (0, 0, 0), pointer_points, 2)
+
+                # Draw center circle
+                pygame.draw.circle(surf, (60, 60, 70), wheel_center, 30)
+                pygame.draw.circle(surf, (200, 200, 200), wheel_center, 30, 3)
         else:
-            _temp_surf = self.renderer.small_font.render("Phase 2: Connect materials (click and drag)", True, (180, 180, 180))
-        surf.blit(_temp_surf, (20, 50))
+            # Wheel hidden
+            _temp_surf = self.renderer.font.render("???", True, (100, 100, 100))
+            text_rect = _temp_surf.get_rect(center=wheel_center)
+            surf.blit(_temp_surf, text_rect)
+            _temp_surf = self.renderer.small_font.render("Place bet to reveal wheel", True, (150, 150, 150))
+            text_rect = _temp_surf.get_rect(center=(wheel_center[0], wheel_center[1] + 40))
+            surf.blit(_temp_surf, text_rect)
 
-        # Circular workspace
-        workspace_center = (ww // 2, 380)
-        workspace_radius = 250
+        # Multiplier display
+        current_multiplier = state.get('current_multiplier', {})
+        if current_multiplier:
+            mult_y = 560
+            _temp_surf = self.renderer.small_font.render("Multipliers:", True, (200, 200, 200))
+            surf.blit(_temp_surf, (ww//2 - 70, mult_y))
+            _temp_surf = self.renderer.small_font.render(
+                f"Green: {current_multiplier.get('green', 0)}x  Grey: {current_multiplier.get('grey', 0)}x  Red: {current_multiplier.get('red', 0)}x",
+                True, (220, 220, 220)
+            )
+            surf.blit(_temp_surf, (ww//2 - 170, mult_y + 25))
 
-        # Store for click detection
-        self.enchanting_workspace_rect = pygame.Rect(
-            wx + workspace_center[0] - workspace_radius,
-            wy + workspace_center[1] - workspace_radius,
-            workspace_radius * 2,
-            workspace_radius * 2
-        )
-        self.enchanting_workspace_center = (wx + workspace_center[0], wy + workspace_center[1])
-        self.enchanting_workspace_radius = workspace_radius
+        # Betting controls
+        if phase == 'betting':
+            # Bet amount input (simple buttons)
+            bet_y = 590
+            _temp_surf = self.renderer.small_font.render("Place Bet:", True, (200, 200, 200))
+            surf.blit(_temp_surf, (50, bet_y))
 
-        # Draw workspace circle
-        pygame.draw.circle(surf, (40, 30, 50), workspace_center, workspace_radius)
-        pygame.draw.circle(surf, (120, 80, 140), workspace_center, workspace_radius, 3)
+            # Bet buttons
+            bet_amounts = [10, 25, 50, current_currency]  # Last button is "All In"
+            bet_button_rects = []
+            for i, amount in enumerate(bet_amounts):
+                btn_x = 50 + i * 110
+                btn_w, btn_h = 100, 40
+                btn_rect = pygame.Rect(btn_x, bet_y + 30, btn_w, btn_h)
 
-        # Draw grid lines in workspace for placement help
-        if phase == 1:
-            for angle in range(0, 360, 30):
-                rad = math.radians(angle)
-                end_x = workspace_center[0] + int(workspace_radius * math.cos(rad))
-                end_y = workspace_center[1] + int(workspace_radius * math.sin(rad))
-                pygame.draw.line(surf, (60, 50, 70), workspace_center, (end_x, end_y), 1)
+                btn_text = "ALL IN" if i == 3 else f"${amount}"
+                btn_color = (80, 100, 60) if amount <= current_currency else (60, 60, 60)
 
-        # Draw placed materials
-        placed_materials = state.get('placed_materials', {})
-        self.enchanting_material_rects = []
+                pygame.draw.rect(surf, btn_color, btn_rect)
+                pygame.draw.rect(surf, (150, 180, 120), btn_rect, 2)
+                _temp_surf = self.renderer.tiny_font.render(btn_text, True, (255, 255, 255))
+                text_rect = _temp_surf.get_rect(center=(btn_x + btn_w//2, bet_y + 30 + btn_h//2))
+                surf.blit(_temp_surf, text_rect)
 
-        for idx, mat_data in placed_materials.items():
-            x, y = mat_data['x'], mat_data['y']
-            # Convert to surface-relative coordinates
-            surf_x = x - (self.enchanting_workspace_center[0] - workspace_center[0])
-            surf_y = y - (self.enchanting_workspace_center[1] - workspace_center[1])
+                # Store for click detection (in screen coordinates)
+                bet_button_rects.append((pygame.Rect(wx + btn_x, wy + bet_y + 30, btn_w, btn_h), amount))
 
-            # Draw material dot
-            color = (255, 215, 0) if mat_data.get('isKey') else (150, 150, 200)
-            pygame.draw.circle(surf, color, (surf_x, surf_y), 8)
-            pygame.draw.circle(surf, (255, 255, 255), (surf_x, surf_y), 8, 2)
+            self.wheel_bet_buttons = bet_button_rects
 
-            # Draw index label
-            _temp_surf = self.renderer.tiny_font.render(str(idx), True, (255, 255, 255))
-            surf.blit(_temp_surf, (surf_x - 4, surf_y - 6))
+        elif phase == 'ready_to_spin':
+            # Show current bet and spin button
+            current_bet = state.get('current_bet', 0)
+            _temp_surf = self.renderer.small_font.render(f"Current Bet: ${current_bet}", True, (255, 215, 0))
+            surf.blit(_temp_surf, (50, 600))
 
-            # Store rect for click detection (in screen coordinates)
-            self.enchanting_material_rects.append((
-                pygame.Rect(x - 10, y - 10, 20, 20),
-                idx
-            ))
+            # Spin button
+            btn_x, btn_y = ww//2 - 100, 620
+            btn_w, btn_h = 200, 50
+            spin_btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+            pygame.draw.rect(surf, (100, 60, 120), spin_btn_rect)
+            pygame.draw.rect(surf, (200, 120, 240), spin_btn_rect, 3)
+            _temp_surf = self.renderer.font.render("SPIN!", True, (255, 255, 255))
+            text_rect = _temp_surf.get_rect(center=(btn_x + btn_w//2, btn_y + btn_h//2))
+            surf.blit(_temp_surf, text_rect)
 
-        # Draw connections
-        connections = state.get('connections', [])
-        for conn in connections:
-            idx1, idx2 = conn
-            if idx1 in placed_materials and idx2 in placed_materials:
-                pos1 = placed_materials[idx1]
-                pos2 = placed_materials[idx2]
-                # Convert to surface coordinates
-                surf_x1 = pos1['x'] - (self.enchanting_workspace_center[0] - workspace_center[0])
-                surf_y1 = pos1['y'] - (self.enchanting_workspace_center[1] - workspace_center[1])
-                surf_x2 = pos2['x'] - (self.enchanting_workspace_center[0] - workspace_center[0])
-                surf_y2 = pos2['y'] - (self.enchanting_workspace_center[1] - workspace_center[1])
-                pygame.draw.line(surf, (100, 200, 255), (surf_x1, surf_y1), (surf_x2, surf_y2), 3)
+            self.wheel_spin_button = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
 
-        # Material inventory (left side) - Phase 1 only
-        if phase == 1:
-            inv_x, inv_y = 50, 100
-            _temp_surf = self.renderer.small_font.render("Available Materials:", True, (200, 200, 200))
-            surf.blit(_temp_surf, (inv_x, inv_y))
+        elif phase == 'spinning':
+            # Show spinning message
+            _temp_surf = self.renderer.font.render("SPINNING...", True, (255, 215, 0))
+            text_rect = _temp_surf.get_rect(center=(ww//2, 620))
+            surf.blit(_temp_surf, text_rect)
+            self.wheel_spin_button = None
 
-            # Get recipe materials (simplified - would come from recipe in real impl)
-            material_count = 5  # TODO: Get from recipe
-            for i in range(min(material_count, 8)):
-                mat_y = inv_y + 30 + (i * 40)
-                # Draw material slot
-                pygame.draw.rect(surf, (60, 50, 70), (inv_x, mat_y, 120, 35))
-                pygame.draw.rect(surf, (120, 100, 140), (inv_x, mat_y, 120, 35), 2)
-                _temp_surf = self.renderer.tiny_font.render(f"Material {i+1}", True, (180, 180, 180))
-                surf.blit(_temp_surf, (inv_x + 5, mat_y + 10))
+        elif phase == 'spin_result':
+            # Show result of this spin
+            spin_results = state.get('spin_results', [])
+            if spin_results:
+                last_result = spin_results[-1]
+                result_y = 590
 
-        # Phase advancement button
-        btn_w, btn_h = 200, 50
-        btn_x = ww // 2 - btn_w // 2
-        btn_y = 650
+                color_text = last_result['color'].upper()
+                profit = last_result['profit']
+                profit_text = f"+${profit}" if profit >= 0 else f"-${abs(profit)}"
+                profit_color = (100, 255, 100) if profit >= 0 else (255, 100, 100)
 
-        if phase == 1:
-            btn_text = "FINISH PLACEMENT"
-            btn_color = (80, 60, 100)
-        else:
-            btn_text = "COMPLETE PATTERN"
-            btn_color = (100, 60, 80)
+                _temp_surf = self.renderer.font.render(f"Result: {color_text}", True, (255, 255, 255))
+                surf.blit(_temp_surf, (ww//2 - 100, result_y))
+                _temp_surf = self.renderer.font.render(profit_text, True, profit_color)
+                surf.blit(_temp_surf, (ww//2 - 60, result_y + 35))
 
-        btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
-        pygame.draw.rect(surf, btn_color, btn_rect)
-        pygame.draw.rect(surf, (180, 140, 200), btn_rect, 3)
-        _temp_surf = self.renderer.small_font.render(btn_text, True, (255, 255, 255))
-        text_rect = _temp_surf.get_rect(center=(btn_x + btn_w//2, btn_y + btn_h//2))
-        surf.blit(_temp_surf, text_rect)
+            # Next button
+            btn_x, btn_y = ww//2 - 100, 635
+            btn_w, btn_h = 200, 40
+            next_btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+            pygame.draw.rect(surf, (60, 100, 80), next_btn_rect)
+            pygame.draw.rect(surf, (120, 200, 160), next_btn_rect, 3)
+            btn_text = "NEXT SPIN" if spin_num < 3 else "FINISH"
+            _temp_surf = self.renderer.small_font.render(btn_text, True, (255, 255, 255))
+            text_rect = _temp_surf.get_rect(center=(btn_x + btn_w//2, btn_y + btn_h//2))
+            surf.blit(_temp_surf, text_rect)
 
-        self.minigame_button_rect = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
+            self.wheel_next_button = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
 
-        # Result display
-        if state.get('result'):
-            result = state['result']
-            result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
-            result_surf.fill((10, 10, 20, 240))
+        elif phase == 'completed':
+            # Show final result
+            result = state.get('result', {})
+            if result:
+                efficacy_percent = result.get('efficacy_percent', 0)
+                final_currency = result.get('final_currency', 100)
+                currency_diff = result.get('currency_diff', 0)
 
-            if result['success']:
-                _temp_surf = self.renderer.font.render("ENCHANTMENT SUCCESS!", True, (100, 255, 100))
-                result_surf.blit(_temp_surf, (150, 50))
-                _temp_surf = self.renderer.small_font.render(f"Pattern: {result.get('pattern', 'unknown')}", True, (200, 200, 200))
-                result_surf.blit(_temp_surf, (150, 100))
-                _temp_surf = self.renderer.small_font.render(f"Quality: {result.get('quality', 0):.0%}", True, (255, 215, 0))
-                result_surf.blit(_temp_surf, (150, 130))
-                _temp_surf = self.renderer.small_font.render(result.get('message', ''), True, (200, 200, 200))
-                result_surf.blit(_temp_surf, (150, 160))
-            else:
-                _temp_surf = self.renderer.font.render("FAILED", True, (255, 100, 100))
-                result_surf.blit(_temp_surf, (200, 50))
-                _temp_surf = self.renderer.small_font.render(result.get('message', ''), True, (200, 200, 200))
-                result_surf.blit(_temp_surf, (150, 120))
+                result_surf = pygame.Surface((800, 400), pygame.SRCALPHA)
+                result_surf.fill((10, 10, 20, 240))
 
-            surf.blit(result_surf, (200, 200))
+                _temp_surf = self.renderer.font.render("MINIGAME COMPLETE!", True, (255, 215, 0))
+                result_surf.blit(_temp_surf, (250, 50))
+
+                _temp_surf = self.renderer.small_font.render(f"Final Currency: ${final_currency}", True, (200, 200, 200))
+                result_surf.blit(_temp_surf, (270, 120))
+
+                diff_text = f"+${currency_diff}" if currency_diff >= 0 else f"-${abs(currency_diff)}"
+                diff_color = (100, 255, 100) if currency_diff >= 0 else (255, 100, 100)
+                _temp_surf = self.renderer.small_font.render(f"Profit/Loss: {diff_text}", True, diff_color)
+                result_surf.blit(_temp_surf, (270, 150))
+
+                eff_text = f"{efficacy_percent:+.1f}%"
+                eff_color = (100, 255, 100) if efficacy_percent >= 0 else (255, 100, 100)
+                _temp_surf = self.renderer.font.render(f"Efficacy Bonus: {eff_text}", True, eff_color)
+                result_surf.blit(_temp_surf, (220, 200))
+
+                _temp_surf = self.renderer.small_font.render("Click anywhere to continue", True, (150, 150, 150))
+                result_surf.blit(_temp_surf, (250, 320))
+
+                surf.blit(result_surf, (100, 150))
 
         self.screen.blit(surf, (wx, wy))
+        self.enchanting_minigame_window = pygame.Rect(wx, wy, ww, wh)
 
     def run(self):
         print("=== GAME STARTED ===")

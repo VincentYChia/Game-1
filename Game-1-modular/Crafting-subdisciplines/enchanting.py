@@ -23,6 +23,346 @@ from pathlib import Path
 from rarity_utils import rarity_system
 
 
+class SpinningWheelMinigame:
+    """
+    Gambling-based spinning wheel minigame for enchanting
+
+    Mechanics:
+    - 20-slice wheel with green, red, grey colors
+    - 3 spins total per minigame
+    - Start with 100 currency
+    - Bet currency, spin wheel, win/lose based on color
+    - Different multipliers per spin
+    - Final currency difference from 100 = efficacy boost (±50% max)
+    """
+
+    def __init__(self, recipe, tier, target_item=None):
+        """
+        Initialize spinning wheel minigame
+
+        Args:
+            recipe: Recipe dict from JSON
+            tier: Recipe tier (1-4)
+            target_item: Item being enchanted (optional)
+        """
+        self.recipe = recipe
+        self.tier = tier
+        self.target_item = target_item
+
+        # Currency system
+        self.starting_currency = 100
+        self.current_currency = 100
+        self.current_bet = 0
+
+        # Wheel state
+        self.current_spin_number = 0  # 0-2 for spins 1-3
+        self.wheels = []  # Store 3 wheels (list of 20 colors each)
+        self.spin_results = []  # Track results of each spin
+        self.wheel_visible = False  # Hidden until bet (except first spin)
+        self.wheel_spinning = False
+        self.wheel_rotation = 0.0  # Current rotation angle
+        self.spin_start_time = None
+        self.final_slice_index = None  # Result of current spin
+
+        # Multipliers for each spin [green, grey, red]
+        self.multipliers = [
+            {'green': 1.2, 'grey': 1.0, 'red': 0.66},   # Spin 1
+            {'green': 1.5, 'grey': 0.95, 'red': 0.5},   # Spin 2
+            {'green': 2.0, 'grey': 0.8, 'red': 0.0}     # Spin 3
+        ]
+
+        # Game state
+        self.active = False
+        self.result = None
+        self.phase = 'betting'  # 'betting', 'spinning', 'result', 'completed'
+
+        # Generate all 3 wheels upfront
+        self._generate_wheels()
+
+    def _generate_wheels(self):
+        """Generate 3 wheels with constraints"""
+        import random
+
+        for spin_num in range(3):
+            wheel = self._generate_single_wheel(spin_num)
+            self.wheels.append(wheel)
+
+    def _generate_single_wheel(self, spin_num):
+        """
+        Generate a single wheel with constraints
+
+        Constraints:
+        - Spin 0 (first): at least 3 red
+        - Spin 1 (second): at least 5 grey (on top of 3 red rule)
+        - Spin 2 (third): max 12 green (on top of previous rules)
+
+        Args:
+            spin_num: 0, 1, or 2
+
+        Returns:
+            List of 20 colors: ['green', 'red', 'grey', ...]
+        """
+        import random
+
+        max_attempts = 1000
+        for attempt in range(max_attempts):
+            # Generate random wheel
+            colors = ['green', 'red', 'grey']
+            wheel = [random.choice(colors) for _ in range(20)]
+
+            # Count colors
+            red_count = wheel.count('red')
+            grey_count = wheel.count('grey')
+            green_count = wheel.count('green')
+
+            # Check constraints
+            valid = True
+
+            # Spin 1: at least 3 red
+            if spin_num >= 0:
+                if red_count < 3:
+                    valid = False
+
+            # Spin 2: at least 5 grey (on top of 3 red)
+            if spin_num >= 1:
+                if grey_count < 5:
+                    valid = False
+
+            # Spin 3: max 12 green (on top of previous rules)
+            if spin_num >= 2:
+                if green_count > 12:
+                    valid = False
+
+            if valid:
+                return wheel
+
+        # Fallback if couldn't generate valid wheel (shouldn't happen)
+        # Force-create a valid wheel
+        wheel = ['grey'] * 20
+
+        if spin_num >= 0:
+            # At least 3 red
+            for i in range(3):
+                wheel[i] = 'red'
+
+        if spin_num >= 1:
+            # At least 5 grey (already have 20)
+            pass
+
+        if spin_num >= 2:
+            # Max 12 green, need at least 3 red and 5 grey
+            # So max green = 20 - 3 - 5 = 12
+            green_count = min(12, 20 - 3 - 5)
+            for i in range(8, 8 + green_count):
+                wheel[i] = 'green'
+        else:
+            # Fill remaining with green
+            for i in range(8, 20):
+                import random
+                wheel[i] = random.choice(['green', 'grey', 'red'])
+
+        import random
+        random.shuffle(wheel)
+        return wheel
+
+    def start(self):
+        """Start the minigame"""
+        self.active = True
+        self.phase = 'betting'
+        self.current_spin_number = 0
+        self.current_currency = self.starting_currency
+        self.current_bet = 0
+        self.spin_results = []
+        self.wheel_visible = True  # First spin wheel is visible
+        self.wheel_spinning = False
+        self.result = None
+
+    def update(self, dt):
+        """
+        Update minigame state
+
+        Args:
+            dt: Delta time in milliseconds
+        """
+        if not self.active:
+            return
+
+        # Handle wheel spinning animation
+        if self.wheel_spinning and self.spin_start_time is not None:
+            import time
+            elapsed = (time.time() - self.spin_start_time) * 1000  # Convert to ms
+
+            # Spin duration: 2 seconds
+            spin_duration = 2000
+
+            if elapsed < spin_duration:
+                # Animate rotation (decelerating)
+                progress = elapsed / spin_duration
+                # Ease-out cubic
+                ease_progress = 1 - pow(1 - progress, 3)
+
+                # Calculate final rotation (multiple full rotations + final position)
+                if self.final_slice_index is not None:
+                    # Target angle for the slice (each slice is 18 degrees = 360/20)
+                    slice_angle = (self.final_slice_index * 18) + 9  # Center of slice
+                    # Add multiple rotations for dramatic effect
+                    total_rotation = 360 * 5 + slice_angle  # 5 full rotations plus final position
+                    self.wheel_rotation = ease_progress * total_rotation
+            else:
+                # Spinning complete
+                self.wheel_spinning = False
+                self._process_spin_result()
+
+    def place_bet(self, amount):
+        """
+        Place a bet for the current spin
+
+        Args:
+            amount: Bet amount
+
+        Returns:
+            bool: True if bet placed successfully
+        """
+        if self.phase != 'betting':
+            return False
+
+        if amount <= 0 or amount > self.current_currency:
+            return False
+
+        self.current_bet = amount
+        self.phase = 'ready_to_spin'
+        self.wheel_visible = True
+        return True
+
+    def spin_wheel(self):
+        """
+        Start spinning the wheel
+
+        Returns:
+            bool: True if spin started successfully
+        """
+        if self.phase != 'ready_to_spin':
+            return False
+
+        if self.current_bet <= 0:
+            return False
+
+        # Start spinning
+        self.wheel_spinning = True
+        self.wheel_rotation = 0.0
+        import time
+        self.spin_start_time = time.time()
+
+        # Randomly select result slice
+        import random
+        current_wheel = self.wheels[self.current_spin_number]
+        self.final_slice_index = random.randint(0, 19)
+
+        self.phase = 'spinning'
+        return True
+
+    def _process_spin_result(self):
+        """Process the result of a spin after animation completes"""
+        current_wheel = self.wheels[self.current_spin_number]
+        result_color = current_wheel[self.final_slice_index]
+
+        # Get multiplier for this spin and color
+        multiplier = self.multipliers[self.current_spin_number][result_color]
+
+        # Calculate winnings
+        winnings = int(self.current_bet * multiplier)
+        profit = winnings - self.current_bet
+
+        # Update currency
+        self.current_currency = self.current_currency - self.current_bet + winnings
+
+        # Record result
+        self.spin_results.append({
+            'spin_number': self.current_spin_number + 1,
+            'bet': self.current_bet,
+            'color': result_color,
+            'multiplier': multiplier,
+            'winnings': winnings,
+            'profit': profit,
+            'currency_after': self.current_currency
+        })
+
+        # Move to result phase
+        self.phase = 'spin_result'
+        self.current_bet = 0
+
+    def advance_to_next_spin(self):
+        """
+        Advance to the next spin or complete the minigame
+
+        Returns:
+            bool: True if advanced successfully
+        """
+        if self.phase != 'spin_result':
+            return False
+
+        self.current_spin_number += 1
+
+        if self.current_spin_number >= 3:
+            # All spins complete
+            self.complete()
+            return True
+        else:
+            # Move to next spin
+            self.phase = 'betting'
+            self.wheel_visible = False  # Hide wheel until bet
+            return True
+
+    def complete(self):
+        """Complete the minigame and calculate final efficacy"""
+        self.active = False
+        self.phase = 'completed'
+
+        # Calculate efficacy from currency difference
+        currency_diff = self.current_currency - self.starting_currency
+
+        # Efficacy is capped at ±50%
+        # Map currency difference to efficacy: -100 to +100 → -50% to +50%
+        # But currency can go below 0 or above 200, so we need to cap
+        efficacy_percent = (currency_diff / 100.0) * 50.0
+        efficacy_percent = max(-50.0, min(50.0, efficacy_percent))
+
+        # Convert to decimal (e.g., 25% = 0.25)
+        efficacy = efficacy_percent / 100.0
+
+        self.result = {
+            "success": True,  # Always succeeds (but efficacy can be negative)
+            "efficacy": efficacy,
+            "efficacy_percent": efficacy_percent,
+            "final_currency": self.current_currency,
+            "currency_diff": currency_diff,
+            "spin_results": self.spin_results,
+            "message": f"Minigame complete! Efficacy: {efficacy_percent:+.1f}%"
+        }
+
+        return self.result
+
+    def get_state(self):
+        """Get current minigame state for rendering"""
+        return {
+            "active": self.active,
+            "phase": self.phase,
+            "current_spin_number": self.current_spin_number,
+            "current_currency": self.current_currency,
+            "current_bet": self.current_bet,
+            "wheel_visible": self.wheel_visible,
+            "wheel_spinning": self.wheel_spinning,
+            "wheel_rotation": self.wheel_rotation,
+            "wheels": self.wheels,
+            "current_wheel": self.wheels[self.current_spin_number] if self.current_spin_number < len(self.wheels) else None,
+            "multipliers": self.multipliers,
+            "current_multiplier": self.multipliers[self.current_spin_number] if self.current_spin_number < len(self.multipliers) else None,
+            "spin_results": self.spin_results,
+            "final_slice_index": self.final_slice_index,
+            "result": self.result
+        }
+
+
 class PatternMatchingMinigame:
     """
     Pattern-matching minigame for enchanting
@@ -808,7 +1148,7 @@ class EnchantingCrafter:
             target_item: Item to enchant (can be None for accessories)
 
         Returns:
-            PatternMatchingMinigame instance or None
+            SpinningWheelMinigame instance or None
         """
         if recipe_id not in self.recipes:
             return None
@@ -816,16 +1156,8 @@ class EnchantingCrafter:
         recipe = self.recipes[recipe_id]
         tier = recipe.get('stationTier', 1)
 
-        # Get target pattern from placements
-        target_pattern = self.get_placement(recipe_id)
-        if not target_pattern:
-            print(f"[Enchanting] WARNING: No placement pattern found for {recipe_id}")
-            return None
-
-        # Get available shapes for this tier
-        available_shapes = self.get_available_shapes_for_tier(tier)
-
-        return PatternMatchingMinigame(recipe, tier, target_pattern, available_shapes)
+        # Create spinning wheel minigame
+        return SpinningWheelMinigame(recipe, tier, target_item)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result, target_item=None, item_metadata=None):
         """
@@ -852,7 +1184,7 @@ class EnchantingCrafter:
             inventory[inp['materialId']] -= inp['quantity']
 
         if not minigame_result.get('success'):
-            # Pattern match failed
+            # Minigame failed (shouldn't happen with spinning wheel, but keep for safety)
             return {
                 "success": False,
                 "message": minigame_result.get('message'),
@@ -860,10 +1192,15 @@ class EnchantingCrafter:
                 "materials_lost": True
             }
 
-        # Success - apply enchantment with rarity bonus
-        tier_bonus = minigame_result.get('tier_bonus', 10)  # Base bonus from tier
+        # Success - apply enchantment with efficacy from minigame
+        # Efficacy ranges from -0.5 to +0.5 (-50% to +50%)
+        efficacy = minigame_result.get('efficacy', 0.0)
+        efficacy_percent = minigame_result.get('efficacy_percent', 0.0)
 
-        # Apply rarity modifier to enchantment strength
+        # Base bonus from tier
+        base_bonus = self.tier * 5  # T1=5%, T2=10%, T3=15%, T4=20%
+
+        # Apply rarity modifier to base
         rarity_multipliers = {
             'common': 1.0,
             'uncommon': 1.1,
@@ -872,7 +1209,13 @@ class EnchantingCrafter:
             'legendary': 2.0
         }
         rarity_mult = rarity_multipliers.get(input_rarity, 1.0)
-        final_bonus = int(tier_bonus * rarity_mult)
+
+        # Calculate final bonus with efficacy applied
+        # Base bonus is modified by (1 + efficacy)
+        # E.g., if base is 10% and efficacy is +25%, final is 10 * 1.25 = 12.5%
+        # If efficacy is -25%, final is 10 * 0.75 = 7.5%
+        final_bonus_multiplier = 1.0 + efficacy
+        final_bonus = int(base_bonus * rarity_mult * final_bonus_multiplier)
 
         # Get enchantment details from recipe
         enchantment_id = recipe.get('enchantmentId', recipe.get('outputId'))
@@ -882,7 +1225,8 @@ class EnchantingCrafter:
             "enchantmentId": enchantment_id,
             "enchantmentName": enchantment_name,
             "bonus_magnitude": final_bonus,
-            "quality": minigame_result.get('quality', 1.0),
+            "efficacy": efficacy,
+            "efficacy_percent": efficacy_percent,
             "rarity": input_rarity
         }
 
