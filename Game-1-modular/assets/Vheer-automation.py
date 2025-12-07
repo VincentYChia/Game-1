@@ -30,130 +30,94 @@ import time
 import re
 import shutil
 
-# ============================================================================
-# CONFIGURATION - BRIGHT + BOLD DISTINCTION
+## ============================================================================
+# CONFIGURATION 5
 # ============================================================================
 
 PERSISTENT_PROMPT = (
     "Bright cel-shaded 3D stylized fantasy item icons. Clean render, smooth contours, "
     "high readability at small size. Transparent background. Vibrant materials with strong "
-    "distinction. Soft ambient lighting, clear materials, appealing highlights. No dark mood lighting. Light Colored gradient backgrounds"
+    "distinction. Clear highlights and details. Illustrative distinction and creativity."
 )
 
 # Version-specific prompts
 VERSION_PROMPTS = {
     1: "Bright 3D rendered item icon in illustrative fantasy style. CRITICAL: Items must be visually "
-       "distinct through form and material. Item fills 70–80% frame, dynamic angle. Soft gradient backdrop, "
+       "distinct through form and material. Item fills 70–80% frame, dynamic angle. Light colored gradient backdrop, "
        "bright three-point lighting with good fill—no deep shadows. Emphasize idealized shapes, vibrant "
-       "materials, clear silhouettes.",
+       "materials, clear silhouettes. Illustrative accuracy and distinction.",
 
     2: "Bright 3D rendered item icon with STRONG TYPE VERIFICATION. Distinguish axes from pickaxes, ores from "
        "ingots, nodes from processed materials. Form and function must be immediately recognizable. Materials "
        "MUST show distinct visual properties (metallic sheen, texture, color temperature). Item 70–80% frame, "
        "appealing angle. Soft gradient, bright even lighting, material-appropriate highlights. PUSH visual "
-       "distinction aggressively while keeping brightness high.",
+       "distinction aggressively while keeping readability high.  Illustrative accuracy and distinction.",
 
     3: "Bright 3D rendered item icon with MAXIMUM DISTINCTION. Read full description and verify: tool function "
        "(mining/chopping/combat), item state (raw node/ore/ingot/crafted), material properties. Each category "
-       "needs unique silhouette. Materials must be EXAGGERATED for clarity: copper=warm orange-gold, "
+       "needs unique silhouette. Materials must be EXAGGERATED for clarity: copper=warm orange-bronze, "
        "steel=cool blue-grey with sheen, iron=neutral grey, wood types with signature effects. Reject realistic "
-       "ambiguity—embrace bright fantasy symbolism. 70–80% coverage, dynamic angle, soft gradient background, "
-       "bright three-point lighting with subtle colored rim lights for depth.",
+       "ambiguity—embrace bright fantasy symbolism. 70–80% coverage, dynamic angle, light colored soft gradient background, "
+       "bright three-point lighting with subtle colored rim lights for depth.  Illustrative accuracy and distinction.",
 }
 
-# Category-specific additions
-CATEGORY_ADDITIONS = {
-    'enemy': 'Stylized creature with BOLD silhouette and clear personality. Bright readable colors. Character over darkness.',
-
-    'resource': 'RESOURCE NODE (in-ground deposit, tree, quarry vein) NOT harvested material. Show source in bright natural '
-                'context—rock formations, tree bark, ore veins. Must be clearly gatherable. Bright, appealing stylization.',
-
-    'title': 'Symbolic emblem. Creative styling, modern, medieval, fantasy, anything is allowed'
-             'finishes (gold, silver, bronze, black, purple). NOT literal illustration.',
-
-    'skill': 'Abstract symbolic icon with BOLD graphic design. Bright geometric shapes, energy effects, elemental symbols, '
-             'glowing sigils. Instant recognition priority. Vibrant colors, magical glow.',
-
-    'station': 'Crafting station with CLEAR tier progression. T1: Simple rustic (warm wood, clean stone). T2: Refined with '
-               'bright metal accents. T3: Advanced with mechanisms and magical blue/purple touches. T4: Masterwork with '
-               'glowing runes, intricate details, premium materials. Each tier visibly more impressive. Bright, clean lighting.',
-
-    'device': 'Functional fantasy device. Type determines form—turrets, traps, gadgets CLEARLY distinct. Show purpose through '
-              'bright readable design. Quality materials, clear detailing.',
-
-    'material': 'Processed material with HIGHLY SYMBOLIC bright representation. Ingots=stylized bars with BOLD material '
-                'signature (copper warm glow, steel crisp sheen, gold radiant). Drops=luminous crystallized essence with '
-                'bright effects. Instant material recognition—look precious and distinct.',
-
-    'consumable': 'Container design tells the story. Bright vibrant liquids in clear glass. Health=round flask, brilliant red, '
-                  'warm glow. Mana=elegant vial, luminous blue, sparkles. Buff=distinctive bottle with vivid liquid and bright '
-                  'effects. Containers creative and CLEARLY distinct.',
-
-    'equipment': 'Equipment with CLEAR material properties. Metal type affects color, sheen, highlights. Copper=warm orange-gold. '
-                 'Iron=neutral grey. Steel=cool blue-grey with clean highlights. Bronze=rich amber. Gold=radiant yellow. '
-                 'Material MUST be unmistakable. All well-crafted and appealing.',
-}
-
-# Type-specific additions
 TYPE_ADDITIONS = {
-    # TOOLS - Critical distinction from weapons
-    'tool': 'TOOL not weapon. Utilitarian design—reinforced heads, practical grips, functional construction. Less elegant than weapons.',
+    # Core material/elemental types:
+    'aberration': '',
+    'beast': 'A fierce predator, but also a tameable pet with the right tools and enough skill',
+    'construct': 'A construct of ancient time still functioning today. Sturdy, robust, and deadly',
+    'elemental': 'A materialization of an element. You can feel the power radiating from its outer crystalline shell, and see the element sealed inside the core of the shard',
+    'insect': 'A fantasy illustration, avoid grimy details. This should not trigger someone fear of bugs',
+    'monster_drop': 'A drop from a monster, appears usable and with a certain sheen to it. It should appear to obviously come from its namesake monster.',
+    'ooze': 'A simple blob of ooze. Neighboring on cuteness these slimes can appear harmless but are merciless omnivores.',
+    'undead': 'A being obviously not belonging to the world of the living.',
 
-    'axe': 'WOODCUTTING AXE. Wide straight-edged blade for chopping wood. Thick spine, broad surface. Practical handle. '
-           'NOT battle axe—no spikes, curves, or aggressive styling. Utilitarian.',
+    # Gathering / resource / environment types:
+    'ore': 'Nodes of their namesake material. They should appear grounded and harvestable. Like a larger boulder for stone, or a vein of iron. These are not items but places to harvest items from.',
+    'stone': 'A simple rock. Take more liberty in this illustration to capture and represent the properties of the rock better. A Clear distinction between other stones is key.',
+    'tree': 'A tree for harvesting wood from. It should embody its namesake tree with clear distinctions that separate it from similar trees. Details and embellishment are crucial here.',
+    'wood': 'Wood harvested from trees, processed into various forms. Requires an eye for detail and clear illustrative distinction to distinguish types of wood at a glance',
+    'metal': 'Ingots forged after refining ores. Hard corners, rectangular shapes, polished. They greatly resemble their namesakes colors, sheen, texture, and properties.',
+    'material': 'Raw unrefined versions of the materials, they allude to their refined counterparts properties through their own appearance.',
 
-    'pickaxe': 'MINING PICKAXE. Distinctive pointed pick, narrow profile, reinforced shaft. Head angled for rock. '
-               'COMPLETELY different from axe—emphasize sharp pick points. Mining tool.',
+    # Equipment types:
+    'accessory': '',
+    'armor': '',
+    'axe': 'A destructive battleaxe designed for war. Heavy blows from its large head could split a shield in half',
+    'bow': 'An archers weapon of choice. Smooth curved wood connected at the ends by string',
+    'dagger': 'A light weapon. Distinguished from shortsword by its thing blade and size.',
+    'mace': 'A warhammer designed to sunder the battlefield. Distinguished from other weapons by its large blunt head that only the strongest can wield.',
+    'shield': '',
+    'staff': 'A magical staff that boosts elemental powers.',
+    'tool': 'Equipment used not for battle but for simple living. Simple, well worn, and practical. These tools are the backbone of society and are cherished by those who use them. Be sure they do not resemble weapons',
+    'weapon': '',
 
-    'hatchet': 'Small forestry hatchet. Compact head, short handle. Clearly smaller than axe.',
+    # Utility / deployable devices:
+    'bomb': 'Illustrate these with creative distinction so they become the embodiment of their names. They should appear prelit and ready for use',
+    'turret': 'Turrets require a base',
+    'utility': 'A wide range of items. Pay special attention to faithfully illustrate the item',
 
-    # WEAPONS - Elegant design
-    'weapon': 'Combat weapon with elegant  design. Clean lines, balanced proportions, decorative elements.',
+    # Skill types:
+    'devastate': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
+    'empower': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
+    'enrich': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
+    'elevate': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
+    'fortify': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
+    'pierce': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
+    'quicken': 'Additional guidance for quicken skills',
+    'regenerate': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
+    'restore': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
+    'smithing': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
+    'transcend': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
 
-    'battleaxe': 'COMBAT AXE. Curved aggressive blade, decorative elements, fighting balance. More elegant and deadly than tool axe.',
-
-    'sword': 'Sword with clear blade profile. Material affects color, sheen, edge highlights.',
-
-    'bow': 'Elegant bow with VISIBLE STRING. String as fine bright line connecting limbs, curved under tension. '
-           'Add subtle glow if needed for visibility. Clear recurve or longbow shape.',
-
-    'staff': 'Magical staff with ornate head—bright crystals, glowing orbs, elemental effects. Carved shaft with '
-             'illuminated runes. Emanates magical energy.',
-
-    'dagger': 'Short blade, elegant curves. Distinct from sword by compact size. Sleek, capable design.',
-
-    'spear': 'Long shaft with gleaming pointed head. Clear spearhead—leaf-shaped, barbed, or angular. Shaft details.',
-
-    'mace': 'Blunt weapon with distinctive head—spiked ball, flanged cylinder, geometric shape. Imposing but clean.',
-
-    # MATERIALS - BOLD signatures
-    'metal': 'Stylized metal bar with clean bevels. Material signature CRITICAL and BOLD: Copper=warm orange-amber with '
-             'rose highlights. Iron=neutral grey with subtle shine. Steel=cool blue-grey with crisp white highlights. '
-             'Gold=radiant rich yellow with warm glow. Bronze=bright amber-orange. Silver=bright grey with sharp highlights. '
-             'Materials must look premium and DISTINCT.',
-
-    'ore': 'Unrefined ore chunk with VIVID colors. Copper ore=brilliant green malachite crystals. Iron ore=warm reddish-brown '
-           'hematite with sheen. Gold ore=bright yellow veins in quartz. Raw state with appealing natural crystal formations.',
-
-    'wood': 'Processed lumber with DISTINCT signature effects. Oak=rich brown with golden grain. Pine=honey-tan with knots. '
-            'Ironwood=grey with shimmering silver metallic veins. Ebony=deep black with purple sheen. Crimson=vibrant red '
-            'with flame-like grain. Woods CLEARLY distinguishable.',
-
-    'node': 'Resource node—environmental deposit. QUARRY for stone, VEIN for ore, TREE for wood. Bright natural context. '
-            'Must look clearly gatherable and valuable.',
-
-    # SPECIFIC ITEMS
-    'potion': 'Fantasy potion in beautiful container. Clear glass with BRILLIANT liquid color. Premium details—polished stopper, '
-              'decorative seal, bright glow. Should look precious and magical.',
-
-    'forge': 'Forge with CLEAR bright tier progression: T1=clean stone hearth, solid anvil (warm functional). T2=polished brick '
-             'with brass accents, quality anvil (refined). T3=impressive with bright copper chimney, bronze bellows, blue magical '
-             'touches (advanced). T4=magnificent with golden metalwork, RADIANT glowing runes, pristine flames, enchanted anvil '
-             '(masterwork). Each tier dramatically brighter and more impressive.',
-
-    'turret': 'Defensive turret with clear base. Mounted weapon on stable platform. Show mechanism, bright ammunition, '
-              'sturdy foundation. Well-maintained, capable appearance.',
+    # Special / misc types:
+    'combat': 'A combat title, illustrate creatively and know that the title is only earned by those who live and die by the rules of war.',
+    'crafting': 'A crafting title, given to only those who pursue a crafting discipline. Illustrate with strong symbolism from the represented discipline and mastery level',
+    'gathering': 'A title given to those who gather materials for a living. Its design should be illustrative and be that of a crest.',
+    'mining': 'A title given to those who have mined tirelessly. A crest like sigil denotes the earth itself seems to favor them',
+    'movement': 'A swiftness sigil. The bearers of the crest seem to always have a tailwind. Be illustrative and symbolic.',
 }
+
 
 TEST_ITEMS = [
     {
@@ -181,7 +145,7 @@ OUTPUT_DIR = SCRIPT_DIR / 'generated_icons'
 CATALOG_PATH = SCRIPT_DIR.parent.parent / "Scaled JSON Development" / "ITEM_CATALOG_FOR_ICONS.md"
 
 GENERATION_TIMEOUT = 180
-WAIT_BETWEEN_ITEMS = 5
+WAIT_BETWEEN_ITEMS = 10
 VERSIONS_TO_GENERATE = 3
 
 # ============================================================================
@@ -292,10 +256,6 @@ Type: {item['type']}
 Subtype: {item['subtype']}
 Narrative: {item['narrative']}"""
 
-        category = item.get('category', '').lower()
-        if category in CATEGORY_ADDITIONS:
-            print(f"  [DEBUG] Adding category guidance for: {category}")
-            base_prompt += f"\n\nAdditional guidance: {CATEGORY_ADDITIONS[category]}"
 
         item_type = item.get('type', '').lower()
         if item_type in TYPE_ADDITIONS:
@@ -737,6 +697,7 @@ def generate_item(driver, item, version=1):
         if not fill_textareas(driver, persistent_prompt, detail_prompt):
             print("  ✗ Could not find textareas")
             return False, False
+        time.sleep(1)
 
         print("  → Clicking Generate...")
         print("  [DEBUG] Operation: click_generate_button")
