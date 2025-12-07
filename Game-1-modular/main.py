@@ -1,4 +1,4 @@
-w#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Game-1 Modular - Main Entry Point
 
