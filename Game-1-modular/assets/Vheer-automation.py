@@ -37,7 +37,7 @@ import shutil
 PERSISTENT_PROMPT = (
     "Bright cel-shaded 3D stylized fantasy item icons. Clean render, smooth contours, "
     "high readability at small size. Transparent background. Vibrant materials with strong "
-    "distinction. Soft ambient lighting, clear materials, appealing highlights. No dark mood lighting."
+    "distinction. Soft ambient lighting, clear materials, appealing highlights. No dark mood lighting. Light Colored gradient backgrounds"
 )
 
 # Version-specific prompts
