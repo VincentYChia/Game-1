@@ -253,6 +253,8 @@ class GameEngine:
         # Enchantment/Adornment selection UI
         self.enchantment_selection_active = False
         self.enchantment_recipe = None
+        self.enchantment_use_minigame = False  # Whether to start minigame after item selection
+        self.enchantment_selected_item = None  # The item selected for enchanting (for minigame)
         self.enchantment_compatible_items = []
         self.enchantment_selection_rect = None
         self.enchantment_item_rects = None  # Item rects for click detection
@@ -1708,8 +1710,12 @@ class GameEngine:
 
             # Sync inventory back (consume materials even on failure)
             recipe_db.consume_materials(recipe, self.character.inventory)
+
+            # Clear enchantment selection if this was an enchantment
+            if self.enchantment_selected_item:
+                self.enchantment_selected_item = None
         else:
-            # Success - consume materials and add output
+            # Success - consume materials and process output
             recipe_db.consume_materials(recipe, self.character.inventory)
 
             # Record activity and XP
@@ -1732,13 +1738,33 @@ class GameEngine:
             if new_title:
                 self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
-            # Add output to inventory with rarity and stats
-            output_id = craft_result.get('outputId', recipe.output_id)
-            output_qty = craft_result.get('quantity', recipe.output_qty)
-            rarity = craft_result.get('rarity', 'common')
-            stats = craft_result.get('stats')
+            # Handle enchantment application (apply to selected item instead of adding to inventory)
+            if self.minigame_type == 'adornments' and self.enchantment_selected_item:
+                equipment = self.enchantment_selected_item['equipment']
+                enchantment_data = craft_result.get('enchantment', {})
 
-            self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
+                # Apply enchantment to the equipment
+                success, message = equipment.apply_enchantment(
+                    recipe.output_id,
+                    recipe.enchantment_name,
+                    recipe.effect
+                )
+
+                if success:
+                    self.add_notification(f"Applied {recipe.enchantment_name} to {equipment.name}!", (100, 255, 255))
+                else:
+                    self.add_notification(f"❌ {message}", (255, 100, 100))
+
+                # Clear the stored item
+                self.enchantment_selected_item = None
+            else:
+                # Normal crafting - add output to inventory with rarity and stats
+                output_id = craft_result.get('outputId', recipe.output_id)
+                output_qty = craft_result.get('quantity', recipe.output_qty)
+                rarity = craft_result.get('rarity', 'common')
+                stats = craft_result.get('stats')
+
+                self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
 
             # Get proper name for notification
             if equip_db.is_equipment(output_id):
@@ -2245,7 +2271,9 @@ class GameEngine:
 
         # Handle enchanting recipes differently (apply to existing items)
         if recipe.is_enchantment:
-            print("⚠ Enchantment recipe - opening item selection UI")
+            print(f"⚠ Enchantment recipe - opening item selection UI (use_minigame={use_minigame})")
+            # Store whether to use minigame for this enchantment
+            self.enchantment_use_minigame = use_minigame
             self._open_enchantment_selection(recipe)
             return
 
@@ -2407,6 +2435,22 @@ class GameEngine:
             self.add_notification(f"❌ Cannot apply: {reason}", (255, 100, 100))
             print(f"   ❌ Cannot apply enchantment: {reason}")
             self._close_enchantment_selection()
+            return
+
+        # If using minigame, store item details and start pattern-matching minigame instead
+        if self.enchantment_use_minigame:
+            print("🎮 Starting pattern-matching minigame for enchantment...")
+            # Store the selected item details for after minigame completion
+            self.enchantment_selected_item = {
+                'source_type': source_type,
+                'source_id': source_id,
+                'item_stack': item_stack,
+                'equipment': equipment
+            }
+            # Close enchantment selection UI
+            self._close_enchantment_selection()
+            # Start the pattern-matching minigame
+            self._start_minigame(recipe)
             return
 
         # Pre-check for tier protection and duplicates (without modifying the item)
