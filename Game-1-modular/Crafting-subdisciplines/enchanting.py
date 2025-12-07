@@ -86,6 +86,20 @@ class PatternMatchingMinigame:
         self.player_vertices = {}
         self.result = None
 
+    def update(self, dt):
+        """
+        Update minigame state
+
+        Args:
+            dt: Delta time in milliseconds
+
+        Note: Pattern-matching minigame is purely event-driven,
+        no time-based updates needed.
+        """
+        if not self.active:
+            return
+        # No time-based logic needed for pattern matching
+
     def rotate_point(self, x, y, degrees):
         """Rotate a point around origin by degrees"""
         rad = math.radians(degrees)
@@ -396,6 +410,20 @@ class EnchantingMinigame:
         self.recognized_pattern = None
         self.pattern_quality = 0.0
         self.result = None
+
+    def update(self, dt):
+        """
+        Update minigame state
+
+        Args:
+            dt: Delta time in milliseconds
+
+        Note: Enchanting minigame is purely event-driven,
+        no time-based updates needed.
+        """
+        if not self.active:
+            return
+        # No time-based logic needed for enchanting
 
     def place_material(self, material_id, x, y, is_key=False):
         """

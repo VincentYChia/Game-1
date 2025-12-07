@@ -668,8 +668,28 @@ class GameEngine:
                     if self.crafting_window_rect.collidepoint(self.mouse_pos):
                         # Scroll the recipe list
                         self.recipe_scroll_offset -= event.y  # event.y is positive for scroll up
-                        # Clamp to minimum of 0 (renderer handles max based on actual list with headers)
-                        self.recipe_scroll_offset = max(0, self.recipe_scroll_offset)
+
+                        # Calculate max scroll based on current recipe list
+                        if self.crafting_recipes:
+                            mat_db = MaterialDatabase.get_instance()
+                            equip_db = EquipmentDatabase.get_instance()
+
+                            # Build flat list (same as renderer/click handler)
+                            grouped_recipes = self.renderer._group_recipes_by_type(self.crafting_recipes, equip_db, mat_db)
+                            flat_list = []
+                            for type_name, type_recipes in grouped_recipes:
+                                flat_list.append(('header', type_name))
+                                for recipe in type_recipes:
+                                    flat_list.append(('recipe', recipe))
+
+                            total_items = len(flat_list)
+                            max_visible = 18  # Must match renderer and click handler
+                            max_scroll = max(0, total_items - max_visible)
+
+                            # Clamp scroll offset to valid range [0, max_scroll]
+                            self.recipe_scroll_offset = max(0, min(self.recipe_scroll_offset, max_scroll))
+                        else:
+                            self.recipe_scroll_offset = max(0, self.recipe_scroll_offset)
                 # Handle mouse wheel scrolling for encyclopedia
                 elif self.character.encyclopedia.is_open and hasattr(self, 'encyclopedia_window_rect') and self.encyclopedia_window_rect:
                     if self.encyclopedia_window_rect.collidepoint(self.mouse_pos):
