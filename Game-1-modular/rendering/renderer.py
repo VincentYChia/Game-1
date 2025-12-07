@@ -2774,27 +2774,35 @@ class Renderer:
 
             # Apply scroll offset and show items
             total_items = len(flat_list)
-            max_visible = 18  # Increased to show more recipes (was 12, needed for 26+ enchantments)
-            start_idx = min(scroll_offset, max(0, total_items - max_visible))
-            end_idx = min(start_idx + max_visible, total_items)
-            visible_items = flat_list[start_idx:end_idx]
+            # Calculate max_visible based on available vertical space
+            # Window height: 600px, start at y=70, leaves ~530px
+            # Average recipe height: ~85px (70px base + spacing)
+            # Can fit approximately: 530/85 ≈ 6 recipes, but be generous for small recipes
+            # Use 8 as a safe value that won't overflow the window
+            max_visible = 999999  # No limit - renderer will stop when out of space
+            start_idx = min(scroll_offset, max(0, total_items - 1))
+            # Don't cap end_idx here - let rendering loop handle it based on available space
+            visible_items = flat_list[start_idx:]  # Start from scroll offset, render until out of space
 
-            # Show scroll indicators if needed
-            if total_items > max_visible:
-                scroll_text = f"Showing {start_idx + 1}-{end_idx} of {total_items}"
-                scroll_surf = self.small_font.render(scroll_text, True, (150, 150, 150))
-                surf.blit(scroll_surf, (s(20), s(50)))
-
-                # Show scroll arrows
-                if start_idx > 0:
-                    up_arrow = self.small_font.render("▲ Scroll Up", True, (100, 200, 100))
-                    surf.blit(up_arrow, (left_panel_w - s(120), s(50)))
-                if end_idx < total_items:
-                    down_arrow = self.small_font.render("▼ Scroll Down", True, (100, 200, 100))
-                    surf.blit(down_arrow, (left_panel_w - s(120), wh - s(30)))
-
+            # Render items until we run out of vertical space
             y_off = s(70)
+            max_y = wh - s(20)  # Leave 20px margin at bottom
+            items_rendered = 0
+
             for i, item in enumerate(visible_items):
+                # Check if we have room for this item BEFORE rendering it
+                if item[0] == 'header':
+                    needed_height = s(28)
+                else:  # recipe
+                    recipe = item[1]
+                    num_inputs = len(recipe.inputs)
+                    needed_height = max(s(70), s(35) + num_inputs * s(16) + s(5)) + s(8)
+
+                if y_off + needed_height > max_y:
+                    # Out of space, stop rendering
+                    break
+
+                items_rendered += 1
                 item_type, item_data = item
 
                 if item_type == 'header':
@@ -2859,6 +2867,23 @@ class Renderer:
                         req_y += s(16)
 
                     y_off += btn_height + s(8)
+
+            # Calculate end_idx based on items actually rendered
+            end_idx = start_idx + items_rendered
+
+            # Show scroll indicators
+            if start_idx > 0 or end_idx < total_items:
+                scroll_text = f"Showing {start_idx + 1}-{end_idx} of {total_items}"
+                scroll_surf = self.small_font.render(scroll_text, True, (150, 150, 150))
+                surf.blit(scroll_surf, (s(20), s(50)))
+
+                # Show scroll arrows
+                if start_idx > 0:
+                    up_arrow = self.small_font.render("▲ Scroll Up", True, (100, 200, 100))
+                    surf.blit(up_arrow, (left_panel_w - s(120), s(50)))
+                if end_idx < total_items:
+                    down_arrow = self.small_font.render("▼ Scroll Down", True, (100, 200, 100))
+                    surf.blit(down_arrow, (left_panel_w - s(120), wh - s(30)))
 
         # ======================
         # DIVIDER

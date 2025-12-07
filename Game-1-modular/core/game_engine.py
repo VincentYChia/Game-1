@@ -673,6 +673,7 @@ class GameEngine:
                         if self.crafting_recipes:
                             mat_db = MaterialDatabase.get_instance()
                             equip_db = EquipmentDatabase.get_instance()
+                            s = Config.scale
 
                             # Build flat list (same as renderer/click handler)
                             grouped_recipes = self.renderer._group_recipes_by_type(self.crafting_recipes, equip_db, mat_db)
@@ -683,8 +684,29 @@ class GameEngine:
                                     flat_list.append(('recipe', recipe))
 
                             total_items = len(flat_list)
-                            max_visible = 18  # Must match renderer and click handler
-                            max_scroll = max(0, total_items - max_visible)
+
+                            # Calculate how many items can actually fit on screen
+                            # Simulate rendering to count items that fit
+                            wh = Config.MENU_MEDIUM_H
+                            max_y = wh - s(20)
+                            y_test = s(70)
+                            items_that_fit = 0
+
+                            for item in flat_list:
+                                if item[0] == 'header':
+                                    needed_height = s(28)
+                                else:
+                                    recipe = item[1]
+                                    num_inputs = len(recipe.inputs)
+                                    needed_height = max(s(70), s(35) + num_inputs * s(16) + s(5)) + s(8)
+
+                                if y_test + needed_height > max_y:
+                                    break
+                                items_that_fit += 1
+                                y_test += needed_height
+
+                            # Max scroll is total items minus how many fit on screen
+                            max_scroll = max(0, total_items - items_that_fit)
 
                             # Clamp scroll offset to valid range [0, max_scroll]
                             self.recipe_scroll_offset = max(0, min(self.recipe_scroll_offset, max_scroll))
@@ -1896,16 +1918,30 @@ class GameEngine:
                 for recipe in type_recipes:
                     flat_list.append(('recipe', recipe))
 
-            # Apply scroll offset
+            # Apply scroll offset (match renderer logic exactly)
             total_items = len(flat_list)
-            max_visible = 18  # Match renderer's max_visible (increased to show more recipes)
-            start_idx = min(self.recipe_scroll_offset, max(0, total_items - max_visible))
-            end_idx = min(start_idx + max_visible, total_items)
-            visible_items = flat_list[start_idx:end_idx]
+            start_idx = min(self.recipe_scroll_offset, max(0, total_items - 1))
+            visible_items = flat_list[start_idx:]  # All items from scroll offset, will stop at vertical limit
+
+            # Get window dimensions (must match renderer)
+            wh = Config.MENU_MEDIUM_H
+            max_y = wh - s(20)  # Leave 20px margin at bottom
 
             y_off = s(70)
             for i, item in enumerate(visible_items):
                 item_type, item_data = item
+
+                # Calculate height needed for this item
+                if item_type == 'header':
+                    needed_height = s(28)
+                else:
+                    recipe = item_data
+                    num_inputs = len(recipe.inputs)
+                    needed_height = max(s(70), s(35) + num_inputs * s(16) + s(5)) + s(8)
+
+                # Stop if we're out of vertical space (match renderer)
+                if y_off + needed_height > max_y:
+                    break
 
                 if item_type == 'header':
                     # Header - just skip over it (height = 28)
