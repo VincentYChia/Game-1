@@ -323,6 +323,7 @@ class PatternMatchingMinigame:
         return {
             "active": self.active,
             "mode": self.mode,
+            "phase": 1 if self.mode == 'shape_placement' else 2,  # Map mode to phase for renderer compatibility
             "grid_size": self.grid_size,
             "target_pattern": self.target_pattern,
             "player_shapes": self.player_shapes,
