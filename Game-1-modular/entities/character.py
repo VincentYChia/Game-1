@@ -829,9 +829,10 @@ class Character:
         """Intelligently determine which slot to equip an item to
 
         Rules:
-        - 2H weapons: Always mainhand (will auto-unequip offhand)
+        - 2H weapons: Always mainhand (will auto-unequip offhand), nothing allowed in offhand
+        - Versatile weapons: Always mainhand, but allows 1H or shield in offhand
+        - 1H weapons: Prefer offhand if empty, but never replace shields
         - Shields: Prefer offhand, replace shields
-        - Weapons (1H/versatile): Prefer offhand if empty, but never replace shields
         - Default weapons: Always mainhand
         """
         # For non-weapon items, use their designated slot
@@ -875,20 +876,25 @@ class Character:
                 print(f"      → offHand (shield replacing {offhand.item_type})")
                 return 'offHand'
 
-        # Equipping a weapon (1H or versatile)
-        if equipment.hand_type in ["1H", "versatile"]:
+        # Versatile weapons always go to mainhand (can be used with 1H in offhand)
+        if equipment.hand_type == "versatile":
+            print(f"      → mainHand (versatile weapon)")
+            return 'mainHand'
+
+        # Equipping a 1H weapon
+        if equipment.hand_type == "1H":
             if offhand is None:
                 # Offhand is empty, use it
-                print(f"      → offHand (weapon, empty offhand)")
+                print(f"      → offHand (1H weapon, empty offhand)")
                 return 'offHand'
             elif offhand.item_type == "shield":
                 # Don't replace shield with weapon - replace mainhand weapon instead
-                print(f"      → mainHand (weapon, shield in offhand)")
+                print(f"      → mainHand (1H weapon, shield in offhand)")
                 return 'mainHand'
             else:
                 # Offhand has a weapon, replace mainhand weapon
                 # (User likely wants to replace what they're holding, not offhand)
-                print(f"      → mainHand (weapon, weapon in offhand)")
+                print(f"      → mainHand (1H weapon, weapon in offhand)")
                 return 'mainHand'
 
         # Default weapons can't dual-wield, always mainhand

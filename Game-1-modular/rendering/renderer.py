@@ -991,10 +991,32 @@ class Renderer:
             size = Config.TILE_SIZE
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
-            # Render entity (turret icon or colored square)
-            color = entity.get_color()
-            pygame.draw.rect(self.screen, color, rect)
-            pygame.draw.rect(self.screen, (0, 0, 0), rect, 2)
+            # Construct icon path based on entity type
+            icon_path = None
+            if entity.entity_type == PlacedEntityType.CRAFTING_STATION:
+                # Crafting stations (already handled below, but we can preview here)
+                # Using pattern: stations/{station_name}_t{tier}.png
+                pass  # Will use existing crafting station rendering
+            else:
+                # Devices (turrets, traps, bombs, etc.) use: devices/{item_id}.png
+                # ImageCache will try assets/devices/{item_id}.png then assets/items/devices/{item_id}.png
+                icon_path = f"devices/{entity.item_id}.png"
+
+            # Try to load and render entity icon
+            image_cache = ImageCache.get_instance()
+            icon = None
+            if icon_path:
+                icon = image_cache.get_image(icon_path, (size, size))
+
+            if icon:
+                # Render icon
+                icon_rect = icon.get_rect(center=(sx, sy))
+                self.screen.blit(icon, icon_rect)
+            else:
+                # Fallback to colored rectangle if no icon
+                color = entity.get_color()
+                pygame.draw.rect(self.screen, color, rect)
+                pygame.draw.rect(self.screen, (0, 0, 0), rect, 2)
 
             # Render tier indicator
             tier_text = f"T{entity.tier}"

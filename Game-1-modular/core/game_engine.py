@@ -1625,26 +1625,40 @@ class GameEngine:
             self.add_notification("Invalid crafting station!", (255, 100, 100))
             return
 
-        # Calculate skill buff bonuses for this crafting discipline
+        # Initialize buff bonuses
         buff_time_bonus = 0.0
         buff_quality_bonus = 0.0
 
-        if hasattr(self.character, 'buffs'):
-            # Quicken buff: Extends minigame time
-            quicken_general = self.character.buffs.get_total_bonus('quicken', recipe.station_type)
-            quicken_smithing_alt = self.character.buffs.get_total_bonus('quicken', 'smithing') if recipe.station_type in ['smithing', 'refining'] else 0
-            buff_time_bonus = max(quicken_general, quicken_smithing_alt)
+        # Enchanting has different minigame signature (requires target_item, no buff bonuses)
+        if recipe.station_type == 'adornments':
+            # Get target item from stored enchantment selection
+            target_item = None
+            if self.enchantment_selected_item:
+                target_item = self.enchantment_selected_item.get('equipment')
 
-            # Empower/Elevate buff: Improves quality
-            empower_bonus = self.character.buffs.get_total_bonus('empower', recipe.station_type)
-            elevate_bonus = self.character.buffs.get_total_bonus('elevate', recipe.station_type)
-            buff_quality_bonus = max(empower_bonus, elevate_bonus)
+            minigame = crafter.create_minigame(recipe.recipe_id, target_item)
+            if not minigame:
+                self.add_notification("Minigame not available!", (255, 100, 100))
+                return
+        else:
+            # Other crafting disciplines use buff bonuses
+            # Calculate skill buff bonuses for this crafting discipline
+            if hasattr(self.character, 'buffs'):
+                # Quicken buff: Extends minigame time
+                quicken_general = self.character.buffs.get_total_bonus('quicken', recipe.station_type)
+                quicken_smithing_alt = self.character.buffs.get_total_bonus('quicken', 'smithing') if recipe.station_type in ['smithing', 'refining'] else 0
+                buff_time_bonus = max(quicken_general, quicken_smithing_alt)
 
-        # Create minigame instance with buff bonuses
-        minigame = crafter.create_minigame(recipe.recipe_id, buff_time_bonus, buff_quality_bonus)
-        if not minigame:
-            self.add_notification("Minigame not available!", (255, 100, 100))
-            return
+                # Empower/Elevate buff: Improves quality
+                empower_bonus = self.character.buffs.get_total_bonus('empower', recipe.station_type)
+                elevate_bonus = self.character.buffs.get_total_bonus('elevate', recipe.station_type)
+                buff_quality_bonus = max(empower_bonus, elevate_bonus)
+
+            # Create minigame instance with buff bonuses
+            minigame = crafter.create_minigame(recipe.recipe_id, buff_time_bonus, buff_quality_bonus)
+            if not minigame:
+                self.add_notification("Minigame not available!", (255, 100, 100))
+                return
 
         if buff_time_bonus > 0 or buff_quality_bonus > 0:
             print(f"⚡ Skill buffs active:")
