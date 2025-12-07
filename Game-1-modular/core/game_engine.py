@@ -1759,7 +1759,15 @@ class GameEngine:
                     # Apply crafted stats to equipment
                     for stat_name, stat_value in stats.items():
                         if hasattr(equipment, stat_name):
-                            setattr(equipment, stat_name, stat_value)
+                            # Special handling for damage - must be tuple
+                            if stat_name == 'damage' and isinstance(stat_value, (int, float)):
+                                # Convert single damage value to (min, max) tuple
+                                # Use 80-100% of damage value for min-max range
+                                dmg_min = int(stat_value * 0.8)
+                                dmg_max = int(stat_value)
+                                setattr(equipment, stat_name, (dmg_min, dmg_max))
+                            else:
+                                setattr(equipment, stat_name, stat_value)
 
                 # Use add_item which handles equipment properly (doesn't stack)
                 success = self.character.inventory.add_item(item_id, 1, equipment_instance=equipment,
