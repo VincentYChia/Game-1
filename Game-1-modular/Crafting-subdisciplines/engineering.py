@@ -292,7 +292,8 @@ class SlidingTilePuzzle:
         self.empty_pos = (self.grid_size - 1, self.grid_size - 1)
 
         # Make random moves to scramble (guarantees solvability)
-        scramble_moves = self.grid_size * self.grid_size * 10  # More moves for harder puzzles
+        # Reduced difficulty: fewer scrambles for easier solving
+        scramble_moves = self.grid_size * self.grid_size * 3  # 3x area (was 10x - too hard!)
         last_move = None
 
         for _ in range(scramble_moves):

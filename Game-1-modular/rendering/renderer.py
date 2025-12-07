@@ -2752,7 +2752,7 @@ class Renderer:
 
             # Apply scroll offset and show items
             total_items = len(flat_list)
-            max_visible = 12  # Increased to account for headers
+            max_visible = 18  # Increased to show more recipes (was 12, needed for 26+ enchantments)
             start_idx = min(scroll_offset, max(0, total_items - max_visible))
             end_idx = min(start_idx + max_visible, total_items)
             visible_items = flat_list[start_idx:end_idx]

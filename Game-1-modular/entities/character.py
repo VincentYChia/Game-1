@@ -1100,13 +1100,14 @@ class Character:
             else:
                 self.attack_cooldown = 0.5
 
-    def use_consumable(self, item_id: str, crafted_stats: Dict = None) -> Tuple[bool, str]:
+    def use_consumable(self, item_id: str, crafted_stats: Dict = None, consume_from_inventory: bool = True) -> Tuple[bool, str]:
         """
         Use a consumable item from inventory
 
         Args:
             item_id: ID of the consumable item
             crafted_stats: Optional stats from alchemy minigame (potency, duration, quality)
+            consume_from_inventory: If True, automatically remove item from inventory. If False, caller handles removal.
 
         Returns (success, message)
         """
@@ -1395,9 +1396,11 @@ class Character:
             # Generic consumable (not yet implemented)
             return False, f"Effect for {item_def.name} not yet implemented"
 
-        # If successful, consume the item
-        if success:
+        # If successful, consume the item (only if consume_from_inventory is True)
+        if success and consume_from_inventory:
             self.inventory.remove_item(item_id, 1)
             print(f"✓ Used {item_def.name}: {message}")
+        elif success:
+            print(f"✓ Used {item_def.name}: {message} (caller handles inventory)")
 
         return success, message

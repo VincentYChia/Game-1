@@ -666,9 +666,8 @@ class GameEngine:
                     if self.crafting_window_rect.collidepoint(self.mouse_pos):
                         # Scroll the recipe list
                         self.recipe_scroll_offset -= event.y  # event.y is positive for scroll up
-                        # Clamp scroll offset to valid range
-                        max_scroll = max(0, len(self.crafting_recipes) - 8)
-                        self.recipe_scroll_offset = max(0, min(self.recipe_scroll_offset, max_scroll))
+                        # Clamp to minimum of 0 (renderer handles max based on actual list with headers)
+                        self.recipe_scroll_offset = max(0, self.recipe_scroll_offset)
                 # Handle mouse wheel scrolling for encyclopedia
                 elif self.character.encyclopedia.is_open and hasattr(self, 'encyclopedia_window_rect') and self.encyclopedia_window_rect:
                     if self.encyclopedia_window_rect.collidepoint(self.mouse_pos):
@@ -736,10 +735,15 @@ class GameEngine:
                             if item_def:
                                 # Check if item is consumable
                                 if item_def.category == "consumable":
-                                    # Use ONE consumable from the stack, passing crafted stats
+                                    # Use ONE consumable from THIS SPECIFIC stack
                                     crafted_stats = item_stack.crafted_stats if hasattr(item_stack, 'crafted_stats') else None
-                                    success, message = self.character.use_consumable(item_stack.item_id, crafted_stats)
+                                    success, message = self.character.use_consumable(item_stack.item_id, crafted_stats, consume_from_inventory=False)
                                     if success:
+                                        # Manually decrement from THIS specific slot (not the first matching item_id)
+                                        if item_stack.quantity > 1:
+                                            item_stack.quantity -= 1
+                                        else:
+                                            self.character.inventory.slots[idx] = None
                                         self.add_notification(message, (100, 255, 100))
                                     else:
                                         self.add_notification(message, (255, 100, 100))
@@ -1254,10 +1258,15 @@ class GameEngine:
                                         self.add_notification(f"Placed {mat_def.name}", (100, 255, 100))
                                         print(f"✓ Placed {mat_def.name} at player position")
                                     elif mat_def and mat_def.category == "consumable":
-                                        # Double-click to use consumable (use ONE from stack), passing crafted stats
+                                        # Double-click to use consumable - use ONE from THIS SPECIFIC stack
                                         crafted_stats = item_stack.crafted_stats if hasattr(item_stack, 'crafted_stats') else None
-                                        success, message = self.character.use_consumable(item_stack.item_id, crafted_stats)
+                                        success, message = self.character.use_consumable(item_stack.item_id, crafted_stats, consume_from_inventory=False)
                                         if success:
+                                            # Manually decrement from THIS specific slot (not the first matching item_id)
+                                            if item_stack.quantity > 1:
+                                                item_stack.quantity -= 1
+                                            else:
+                                                self.character.inventory.slots[idx] = None
                                             self.add_notification(message, (100, 255, 100))
                                         else:
                                             self.add_notification(message, (255, 100, 100))
