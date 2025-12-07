@@ -2564,20 +2564,8 @@ class Renderer:
 
             # Handle enchanting recipes separately (they don't have materials)
             if station_type == 'adornments' and hasattr(recipe, 'is_enchantment') and recipe.is_enchantment:
-                # Enchanting: Alphabetic grouping by enchantment name
-                enchant_name = getattr(recipe, 'enchantment_name', recipe.output_id)
-                if enchant_name:
-                    first_letter = enchant_name[0].upper()
-                    if first_letter <= 'F':
-                        output_type = 'A-F'
-                    elif first_letter <= 'M':
-                        output_type = 'G-M'
-                    elif first_letter <= 'S':
-                        output_type = 'N-S'
-                    else:
-                        output_type = 'T-Z'
-                else:
-                    output_type = 'Other Enchantments'
+                # Enchanting: Just use 'Enchantments' category - we'll sort alphabetically
+                output_type = 'Enchantments'
             elif equip_db.is_equipment(recipe.output_id):
                 # Equipment items
                 equip = equip_db.create_equipment_from_id(recipe.output_id)
@@ -2666,7 +2654,7 @@ class Renderer:
         elif station_type == 'refining':
             type_order = ['Metals & Ingots', 'Processed Ores', 'Elemental Materials', 'Refined Resources', 'Other Materials', 'Other']
         elif station_type == 'adornments':
-            type_order = ['A-F', 'G-M', 'N-S', 'T-Z', 'Other Enchantments', 'Other']
+            type_order = ['Enchantments', 'Other']
         else:
             # Smithing and default
             type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4+', 'Stations', 'Other']
@@ -2675,7 +2663,11 @@ class Renderer:
         result = []
         for type_name in type_order:
             if type_name in grouped and grouped[type_name]:
-                result.append((type_name, grouped[type_name]))
+                recipes_list = grouped[type_name]
+                # Sort enchantments alphabetically by name
+                if station_type == 'adornments' and type_name == 'Enchantments':
+                    recipes_list = sorted(recipes_list, key=lambda r: getattr(r, 'enchantment_name', '').lower())
+                result.append((type_name, recipes_list))
 
         return result
 
