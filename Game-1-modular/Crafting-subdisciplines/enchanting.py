@@ -92,9 +92,10 @@ class SpinningWheelMinigame:
         Generate a single wheel with constraints
 
         Constraints:
-        - Spin 0 (first): at least 3 red
-        - Spin 1 (second): at least 5 grey (on top of 3 red rule)
-        - Spin 2 (third): max 12 green (on top of previous rules)
+        - Spin 0 (first): min 10 green, min 3 red, rest grey
+        - Spin 1 (second): min 8 green, min 5 red, rest grey
+        - Spin 2 (third): min 8 green, min 8 red, rest grey
+        After minimums met, remaining slots are 33% split
 
         Args:
             spin_num: 0, 1, or 2
@@ -104,64 +105,27 @@ class SpinningWheelMinigame:
         """
         import random
 
-        max_attempts = 1000
-        for attempt in range(max_attempts):
-            # Generate random wheel
-            colors = ['green', 'red', 'grey']
-            wheel = [random.choice(colors) for _ in range(20)]
+        # Define minimum requirements per spin
+        if spin_num == 0:
+            min_green = 10
+            min_red = 3
+        elif spin_num == 1:
+            min_green = 8
+            min_red = 5
+        else:  # spin_num == 2
+            min_green = 8
+            min_red = 8
 
-            # Count colors
-            red_count = wheel.count('red')
-            grey_count = wheel.count('grey')
-            green_count = wheel.count('green')
+        # Create wheel with minimums
+        wheel = ['green'] * min_green + ['red'] * min_red
 
-            # Check constraints
-            valid = True
+        # Fill remaining slots with 33% split
+        remaining_slots = 20 - min_green - min_red
+        colors = ['green', 'red', 'grey']
+        for _ in range(remaining_slots):
+            wheel.append(random.choice(colors))
 
-            # Spin 1: at least 3 red
-            if spin_num >= 0:
-                if red_count < 3:
-                    valid = False
-
-            # Spin 2: at least 5 grey (on top of 3 red)
-            if spin_num >= 1:
-                if grey_count < 5:
-                    valid = False
-
-            # Spin 3: max 12 green (on top of previous rules)
-            if spin_num >= 2:
-                if green_count > 12:
-                    valid = False
-
-            if valid:
-                return wheel
-
-        # Fallback if couldn't generate valid wheel (shouldn't happen)
-        # Force-create a valid wheel
-        wheel = ['grey'] * 20
-
-        if spin_num >= 0:
-            # At least 3 red
-            for i in range(3):
-                wheel[i] = 'red'
-
-        if spin_num >= 1:
-            # At least 5 grey (already have 20)
-            pass
-
-        if spin_num >= 2:
-            # Max 12 green, need at least 3 red and 5 grey
-            # So max green = 20 - 3 - 5 = 12
-            green_count = min(12, 20 - 3 - 5)
-            for i in range(8, 8 + green_count):
-                wheel[i] = 'green'
-        else:
-            # Fill remaining with green
-            for i in range(8, 20):
-                import random
-                wheel[i] = random.choice(['green', 'grey', 'red'])
-
-        import random
+        # Shuffle to randomize positions
         random.shuffle(wheel)
         return wheel
 
@@ -1198,7 +1162,8 @@ class EnchantingCrafter:
         efficacy_percent = minigame_result.get('efficacy_percent', 0.0)
 
         # Base bonus from tier
-        base_bonus = self.tier * 5  # T1=5%, T2=10%, T3=15%, T4=20%
+        tier = recipe.get('stationTier', 1)
+        base_bonus = tier * 5  # T1=5%, T2=10%, T3=15%, T4=20%
 
         # Apply rarity modifier to base
         rarity_multipliers = {

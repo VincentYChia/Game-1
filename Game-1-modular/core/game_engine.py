@@ -658,6 +658,19 @@ class GameEngine:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
                 self.mouse_pos = event.pos
+
+                # Handle slider dragging for betting
+                if self.active_minigame and self.minigame_type == 'adornments':
+                    state = self.active_minigame.get_state()
+                    if state.get('phase') == 'betting' and event.buttons[0]:  # Left mouse button held
+                        if hasattr(self, 'wheel_slider_rect') and self.wheel_slider_rect:
+                            if self.wheel_slider_rect.collidepoint(event.pos):
+                                # Calculate bet amount from slider position
+                                max_currency, slider_x, slider_w = self.wheel_slider_info
+                                local_x = event.pos[0] - self.wheel_slider_rect.x
+                                slider_pos = max(0, min(local_x, slider_w))
+                                bet_amount = int((slider_pos / slider_w) * max_currency)
+                                self.wheel_slider_bet_amount = max(1, min(bet_amount, max_currency))
             elif event.type == pygame.MOUSEWHEEL:
                 # Skip if no character exists yet
                 if self.character is None:
@@ -1046,12 +1059,33 @@ class GameEngine:
                 state = self.active_minigame.get_state()
                 phase = state.get('phase', 'betting')
 
-                # Handle bet button clicks
-                if phase == 'betting' and hasattr(self, 'wheel_bet_buttons'):
-                    for btn_rect, amount in self.wheel_bet_buttons:
-                        if btn_rect.collidepoint(mouse_pos):
-                            if self.active_minigame.place_bet(amount):
-                                print(f"✓ Bet placed: ${amount}")
+                # Handle betting phase
+                if phase == 'betting':
+                    # Handle slider drag
+                    if hasattr(self, 'wheel_slider_rect') and self.wheel_slider_rect:
+                        if self.wheel_slider_rect.collidepoint(mouse_pos):
+                            # Calculate bet amount from slider position
+                            max_currency, slider_x, slider_w = self.wheel_slider_info
+                            local_x = mouse_pos[0] - self.wheel_slider_rect.x
+                            slider_pos = max(0, min(local_x, slider_w))
+                            bet_amount = int((slider_pos / slider_w) * max_currency)
+                            self.wheel_slider_bet_amount = max(1, min(bet_amount, max_currency))
+                            return
+
+                    # Handle quick bet buttons (set slider amount)
+                    if hasattr(self, 'wheel_bet_buttons'):
+                        for btn_rect, amount in self.wheel_bet_buttons:
+                            if btn_rect.collidepoint(mouse_pos):
+                                if amount <= state.get('current_currency', 0):
+                                    self.wheel_slider_bet_amount = amount
+                                    print(f"✓ Bet amount set to ${amount}")
+                                return
+
+                    # Handle confirm bet button
+                    if hasattr(self, 'wheel_confirm_bet_button') and self.wheel_confirm_bet_button:
+                        if self.wheel_confirm_bet_button.collidepoint(mouse_pos):
+                            if self.active_minigame.place_bet(self.wheel_slider_bet_amount):
+                                print(f"✓ Bet placed: ${self.wheel_slider_bet_amount}")
                             return
 
                 # Handle spin button click
@@ -1065,6 +1099,10 @@ class GameEngine:
                 if phase == 'spin_result' and hasattr(self, 'wheel_next_button'):
                     if self.wheel_next_button and self.wheel_next_button.collidepoint(mouse_pos):
                         self.active_minigame.advance_to_next_spin()
+                        # Reset slider for next spin
+                        if hasattr(self, 'wheel_slider_bet_amount'):
+                            next_currency = self.active_minigame.current_currency
+                            self.wheel_slider_bet_amount = min(self.wheel_slider_bet_amount, next_currency)
                         return
 
                 # Handle completion click (anywhere in window)
@@ -1072,6 +1110,9 @@ class GameEngine:
                     if self.enchanting_minigame_window.collidepoint(mouse_pos):
                         # Complete the minigame
                         self._complete_minigame()
+                        # Clean up slider state
+                        if hasattr(self, 'wheel_slider_bet_amount'):
+                            delattr(self, 'wheel_slider_bet_amount')
                         return
 
             # Check engineering puzzle cells first (rotation/sliding)
@@ -3562,46 +3603,141 @@ class GameEngine:
             text_rect = _temp_surf.get_rect(center=(wheel_center[0], wheel_center[1] + 40))
             surf.blit(_temp_surf, text_rect)
 
-        # Multiplier display
+        # Payout display panel (right side)
         current_multiplier = state.get('current_multiplier', {})
         if current_multiplier:
-            mult_y = 560
-            _temp_surf = self.renderer.small_font.render("Multipliers:", True, (200, 200, 200))
-            surf.blit(_temp_surf, (ww//2 - 70, mult_y))
-            _temp_surf = self.renderer.small_font.render(
-                f"Green: {current_multiplier.get('green', 0)}x  Grey: {current_multiplier.get('grey', 0)}x  Red: {current_multiplier.get('red', 0)}x",
-                True, (220, 220, 220)
-            )
-            surf.blit(_temp_surf, (ww//2 - 170, mult_y + 25))
+            panel_x = ww - 220
+            panel_y = 140
+            panel_w = 200
+            panel_h = 280
+
+            # Draw panel background
+            pygame.draw.rect(surf, (30, 30, 40, 200), (panel_x, panel_y, panel_w, panel_h))
+            pygame.draw.rect(surf, (100, 100, 120), (panel_x, panel_y, panel_w, panel_h), 2)
+
+            # Title
+            _temp_surf = self.renderer.small_font.render("PAYOUTS", True, (255, 215, 0))
+            surf.blit(_temp_surf, (panel_x + 55, panel_y + 10))
+
+            _temp_surf = self.renderer.tiny_font.render(f"(Spin {spin_num})", True, (180, 180, 180))
+            surf.blit(_temp_surf, (panel_x + 65, panel_y + 35))
+
+            # Color labels and multipliers
+            color_y = panel_y + 65
+            spacing = 60
+
+            # Green
+            pygame.draw.rect(surf, (50, 200, 50), (panel_x + 20, color_y, 40, 40))
+            pygame.draw.rect(surf, (0, 0, 0), (panel_x + 20, color_y, 40, 40), 2)
+            _temp_surf = self.renderer.small_font.render("GREEN", True, (255, 255, 255))
+            surf.blit(_temp_surf, (panel_x + 70, color_y + 5))
+            mult_text = f"{current_multiplier.get('green', 0)}x"
+            _temp_surf = self.renderer.font.render(mult_text, True, (100, 255, 100))
+            surf.blit(_temp_surf, (panel_x + 70, color_y + 20))
+
+            # Grey
+            color_y += spacing
+            pygame.draw.rect(surf, (120, 120, 120), (panel_x + 20, color_y, 40, 40))
+            pygame.draw.rect(surf, (0, 0, 0), (panel_x + 20, color_y, 40, 40), 2)
+            _temp_surf = self.renderer.small_font.render("GREY", True, (255, 255, 255))
+            surf.blit(_temp_surf, (panel_x + 70, color_y + 5))
+            mult_text = f"{current_multiplier.get('grey', 0)}x"
+            _temp_surf = self.renderer.font.render(mult_text, True, (200, 200, 200))
+            surf.blit(_temp_surf, (panel_x + 70, color_y + 20))
+
+            # Red
+            color_y += spacing
+            pygame.draw.rect(surf, (200, 50, 50), (panel_x + 20, color_y, 40, 40))
+            pygame.draw.rect(surf, (0, 0, 0), (panel_x + 20, color_y, 40, 40), 2)
+            _temp_surf = self.renderer.small_font.render("RED", True, (255, 255, 255))
+            surf.blit(_temp_surf, (panel_x + 70, color_y + 5))
+            mult_text = f"{current_multiplier.get('red', 0)}x"
+            _temp_surf = self.renderer.font.render(mult_text, True, (255, 100, 100))
+            surf.blit(_temp_surf, (panel_x + 70, color_y + 20))
 
         # Betting controls
         if phase == 'betting':
-            # Bet amount input (simple buttons)
-            bet_y = 590
+            # Initialize bet amount if not set
+            if not hasattr(self, 'wheel_slider_bet_amount'):
+                self.wheel_slider_bet_amount = min(10, current_currency)
+
+            bet_y = 560
             _temp_surf = self.renderer.small_font.render("Place Bet:", True, (200, 200, 200))
             surf.blit(_temp_surf, (50, bet_y))
 
-            # Bet buttons
-            bet_amounts = [10, 25, 50, current_currency]  # Last button is "All In"
+            # Bet amount display
+            _temp_surf = self.renderer.font.render(f"${self.wheel_slider_bet_amount}", True, (255, 215, 0))
+            surf.blit(_temp_surf, (50, bet_y + 25))
+
+            # Slider
+            slider_x = 50
+            slider_y = bet_y + 65
+            slider_w = 400
+            slider_h = 10
+
+            # Slider background
+            pygame.draw.rect(surf, (60, 60, 70), (slider_x, slider_y, slider_w, slider_h))
+            pygame.draw.rect(surf, (100, 100, 120), (slider_x, slider_y, slider_w, slider_h), 2)
+
+            # Slider handle position
+            if current_currency > 0:
+                slider_pos = (self.wheel_slider_bet_amount / current_currency) * slider_w
+            else:
+                slider_pos = 0
+
+            handle_x = slider_x + int(slider_pos)
+            handle_y = slider_y - 5
+            handle_w = 15
+            handle_h = 20
+
+            # Draw slider handle
+            pygame.draw.rect(surf, (100, 150, 200), (handle_x - handle_w//2, handle_y, handle_w, handle_h))
+            pygame.draw.rect(surf, (150, 200, 255), (handle_x - handle_w//2, handle_y, handle_w, handle_h), 2)
+
+            # Store slider rect for click detection
+            self.wheel_slider_rect = pygame.Rect(wx + slider_x, wy + slider_y - 10, slider_w, slider_h + 20)
+            self.wheel_slider_info = (current_currency, slider_x, slider_w)
+
+            # Quick bet buttons
+            btn_y = bet_y + 95
+            _temp_surf = self.renderer.tiny_font.render("Quick Bet:", True, (150, 150, 150))
+            surf.blit(_temp_surf, (50, btn_y))
+
+            bet_amounts = [10, 25, 50, current_currency]
             bet_button_rects = []
             for i, amount in enumerate(bet_amounts):
-                btn_x = 50 + i * 110
-                btn_w, btn_h = 100, 40
-                btn_rect = pygame.Rect(btn_x, bet_y + 30, btn_w, btn_h)
+                btn_x = 50 + i * 85
+                btn_w, btn_h = 75, 30
+                btn_rect = pygame.Rect(btn_x, btn_y + 20, btn_w, btn_h)
 
-                btn_text = "ALL IN" if i == 3 else f"${amount}"
+                btn_text = "ALL" if i == 3 else f"${amount}"
                 btn_color = (80, 100, 60) if amount <= current_currency else (60, 60, 60)
 
                 pygame.draw.rect(surf, btn_color, btn_rect)
                 pygame.draw.rect(surf, (150, 180, 120), btn_rect, 2)
                 _temp_surf = self.renderer.tiny_font.render(btn_text, True, (255, 255, 255))
-                text_rect = _temp_surf.get_rect(center=(btn_x + btn_w//2, bet_y + 30 + btn_h//2))
+                text_rect = _temp_surf.get_rect(center=(btn_x + btn_w//2, btn_y + 20 + btn_h//2))
                 surf.blit(_temp_surf, text_rect)
 
                 # Store for click detection (in screen coordinates)
-                bet_button_rects.append((pygame.Rect(wx + btn_x, wy + bet_y + 30, btn_w, btn_h), amount))
+                bet_button_rects.append((pygame.Rect(wx + btn_x, wy + btn_y + 20, btn_w, btn_h), amount))
 
             self.wheel_bet_buttons = bet_button_rects
+
+            # Confirm bet button
+            confirm_x, confirm_y = ww//2 - 100, 630
+            confirm_w, confirm_h = 200, 50
+            confirm_btn_rect = pygame.Rect(confirm_x, confirm_y, confirm_w, confirm_h)
+            confirm_enabled = self.wheel_slider_bet_amount > 0 and self.wheel_slider_bet_amount <= current_currency
+            confirm_color = (100, 60, 120) if confirm_enabled else (60, 40, 60)
+
+            pygame.draw.rect(surf, confirm_color, confirm_btn_rect)
+            pygame.draw.rect(surf, (200, 120, 240), confirm_btn_rect, 3)
+            _temp_surf = self.renderer.font.render("PLACE BET", True, (255, 255, 255))
+            text_rect = _temp_surf.get_rect(center=(confirm_x + confirm_w//2, confirm_y + confirm_h//2))
+            surf.blit(_temp_surf, text_rect)
+
+            self.wheel_confirm_bet_button = pygame.Rect(wx + confirm_x, wy + confirm_y, confirm_w, confirm_h)
 
         elif phase == 'ready_to_spin':
             # Show current bet and spin button
