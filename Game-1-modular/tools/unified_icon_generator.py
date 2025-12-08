@@ -50,6 +50,9 @@ CATEGORY_COLORS = {
     'resources': (34, 139, 34),      # Forest green
     'titles': (138, 43, 226),        # Blue violet
     'skills': (255, 215, 0),         # Gold
+    'npcs': (255, 20, 147),          # Deep pink
+    'quests': (255, 69, 0),          # Orange red
+    'classes': (75, 0, 130),         # Indigo
 }
 
 # Hardcoded resources (from ResourceType enum in code)
@@ -390,20 +393,175 @@ def extract_skills(base_path: Path) -> List[EntityEntry]:
     return entities
 
 
-def extract_resources() -> List[EntityEntry]:
-    """Extract hardcoded resources"""
+def extract_resources(base_path: Path) -> List[EntityEntry]:
+    """Extract resources from resource-node-1.JSON (actually used by game)"""
     entities = []
-    for res in RESOURCES:
-        entities.append(EntityEntry(
-            entity_id=res['id'],
-            name=res['name'],
-            category='resource',
-            entity_type=res['category'],
-            subtype=res['category'],
-            narrative=res['narrative'],
-            tier=res['tier'],
-            subfolder='resources'
-        ))
+    resources_file = base_path / 'Definitions.JSON' / 'resource-node-1.JSON'
+
+    if not resources_file.exists():
+        # Fallback to hardcoded if file doesn't exist
+        for res in RESOURCES:
+            entities.append(EntityEntry(
+                entity_id=res['id'],
+                name=res['name'],
+                category='resource',
+                entity_type=res['category'],
+                subtype=res['category'],
+                narrative=res['narrative'],
+                tier=res['tier'],
+                subfolder='resources'
+            ))
+        return entities
+
+    with open(resources_file, 'r') as f:
+        data = json.load(f)
+        for resource in data.get('nodes', []):
+            resource_id = resource.get('resourceId', '')
+            if not resource_id:
+                continue
+
+            category = resource.get('category', 'resource')
+            narrative = resource.get('metadata', {}).get('narrative', 'No description available.')
+            tier = resource.get('tier', 1)
+
+            entities.append(EntityEntry(
+                entity_id=resource_id,
+                name=resource.get('name', resource_id),
+                category='resource',
+                entity_type=category,
+                subtype=category,
+                narrative=narrative,
+                tier=tier,
+                subfolder='resources'
+            ))
+
+    return entities
+
+
+def extract_npcs(base_path: Path) -> List[EntityEntry]:
+    """Extract NPCs from npcs-1.JSON or npcs-enhanced.JSON (actually loaded by game)"""
+    entities = []
+
+    # Try enhanced first, then fallback to v1.0 (same as game logic)
+    npc_files = [
+        base_path / 'progression' / 'npcs-enhanced.JSON',
+        base_path / 'progression' / 'npcs-1.JSON'
+    ]
+
+    for npc_file in npc_files:
+        if npc_file.exists():
+            with open(npc_file, 'r') as f:
+                data = json.load(f)
+                for npc in data.get('npcs', []):
+                    npc_id = npc.get('npc_id', '')
+                    if not npc_id:
+                        continue
+
+                    # Extract dialogue for narrative
+                    dialogue_lines = npc.get('dialogue_lines', [])
+                    if not dialogue_lines and 'dialogue' in npc:
+                        dialogue_obj = npc['dialogue']
+                        if 'dialogue_lines' in dialogue_obj:
+                            dialogue_lines = dialogue_obj['dialogue_lines']
+                        else:
+                            greeting = dialogue_obj.get('greeting', {})
+                            dialogue_lines = [greeting.get('default', 'Hello!')]
+
+                    narrative = ' '.join(dialogue_lines[:2]) if dialogue_lines else 'An NPC in the world.'
+
+                    entities.append(EntityEntry(
+                        entity_id=npc_id,
+                        name=npc.get('name', npc_id),
+                        category='npc',
+                        entity_type='npc',
+                        subtype='npc',
+                        narrative=narrative,
+                        tier=1,
+                        subfolder='npcs'
+                    ))
+            break  # Only load from first file that exists
+
+    return entities
+
+
+def extract_quests(base_path: Path) -> List[EntityEntry]:
+    """Extract quests from quests-1.JSON or quests-enhanced.JSON (actually loaded by game)"""
+    entities = []
+
+    # Try enhanced first, then fallback to v1.0 (same as game logic)
+    quest_files = [
+        base_path / 'progression' / 'quests-enhanced.JSON',
+        base_path / 'progression' / 'quests-1.JSON'
+    ]
+
+    for quest_file in quest_files:
+        if quest_file.exists():
+            with open(quest_file, 'r') as f:
+                data = json.load(f)
+                for quest in data.get('quests', []):
+                    quest_id = quest.get('quest_id', quest.get('questId', ''))
+                    if not quest_id:
+                        continue
+
+                    title = quest.get('title', quest.get('name', 'Untitled Quest'))
+                    description = quest.get('description', '')
+                    if isinstance(description, dict):
+                        description = description.get('long', description.get('short', ''))
+
+                    narrative = description if description else 'A quest in the game.'
+
+                    # Determine tier based on rewards
+                    rewards = quest.get('rewards', {})
+                    experience = rewards.get('experience', 0)
+                    tier = 1 if experience < 200 else (2 if experience < 400 else (3 if experience < 600 else 4))
+
+                    entities.append(EntityEntry(
+                        entity_id=quest_id,
+                        name=title,
+                        category='quest',
+                        entity_type='quest',
+                        subtype=quest.get('objectives', {}).get('type', 'gather'),
+                        narrative=narrative,
+                        tier=tier,
+                        subfolder='quests'
+                    ))
+            break  # Only load from first file that exists
+
+    return entities
+
+
+def extract_classes(base_path: Path) -> List[EntityEntry]:
+    """Extract classes from classes-1.JSON (actually loaded by game)"""
+    entities = []
+    classes_file = base_path / 'progression' / 'classes-1.JSON'
+
+    if not classes_file.exists():
+        return entities
+
+    with open(classes_file, 'r') as f:
+        data = json.load(f)
+        for char_class in data.get('classes', []):
+            class_id = char_class.get('classId', '')
+            if not class_id:
+                continue
+
+            description = char_class.get('description', '')
+            narrative = char_class.get('narrative', description)
+            playstyle = char_class.get('playstyle', '')
+            if playstyle:
+                narrative = f"{narrative} {playstyle}"
+
+            entities.append(EntityEntry(
+                entity_id=class_id,
+                name=char_class.get('name', class_id),
+                category='class',
+                entity_type='character_class',
+                subtype=char_class.get('thematicIdentity', 'general'),
+                narrative=narrative,
+                tier=1,
+                subfolder='classes'
+            ))
+
     return entities
 
 
@@ -412,12 +570,12 @@ def extract_resources() -> List[EntityEntry]:
 # ============================================================================
 
 def generate_placeholders(entities: List[EntityEntry], base_path: Path) -> int:
-    """Generate placeholder PNG images for all entities"""
+    """Generate placeholder PNG images for all entities (only if they don't exist)"""
     generated = 0
 
     for entity in entities:
         # Determine save path
-        if entity.subfolder in ['enemies', 'resources', 'titles', 'skills']:
+        if entity.subfolder in ['enemies', 'resources', 'titles', 'skills', 'npcs', 'quests', 'classes']:
             save_dir = base_path / 'assets' / entity.subfolder
         else:
             save_dir = base_path / 'assets' / 'items' / entity.subfolder
@@ -425,7 +583,7 @@ def generate_placeholders(entities: List[EntityEntry], base_path: Path) -> int:
         save_dir.mkdir(parents=True, exist_ok=True)
         save_path = save_dir / f"{entity.id}.png"
 
-        # Skip if already exists
+        # Skip if already exists (DON'T OVERWRITE)
         if save_path.exists():
             continue
 
@@ -478,6 +636,9 @@ def generate_catalog(entities: List[EntityEntry], output_path: Path):
     lines.append(f"- **Resources**: {len(grouped.get('resources', []))}")
     lines.append(f"- **Titles**: {len(grouped.get('titles', []))}")
     lines.append(f"- **Skills**: {len(grouped.get('skills', []))}")
+    lines.append(f"- **NPCs**: {len(grouped.get('npcs', []))}")
+    lines.append(f"- **Quests**: {len(grouped.get('quests', []))}")
+    lines.append(f"- **Classes**: {len(grouped.get('classes', []))}")
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -496,6 +657,9 @@ def generate_catalog(entities: List[EntityEntry], output_path: Path):
         ('resources', 'RESOURCES'),
         ('titles', 'TITLES'),
         ('skills', 'SKILLS'),
+        ('npcs', 'NPCS'),
+        ('quests', 'QUESTS'),
+        ('classes', 'CLASSES'),
     ]
 
     for key, section_name in section_order:
@@ -531,53 +695,67 @@ def generate_catalog(entities: List[EntityEntry], output_path: Path):
 def main():
     """Main entry point"""
     print("=" * 70)
-    print("UNIFIED ICON & CATALOG GENERATOR")
+    print("UNIFIED ICON & CATALOG GENERATOR (Enhanced)")
     print("=" * 70)
 
     # Determine base path
     script_dir = Path(__file__).parent
     base_path = script_dir.parent  # Game-1-modular directory
-    catalog_path = base_path.parent / "Scaled JSON Development" / "ITEM_CATALOG_FOR_ICONS.md"
+    # Save catalog in tools directory, not in "Scaled JSON Development"
+    catalog_path = script_dir / "ITEM_CATALOG_FOR_ICONS.md"
 
     print(f"\nBase path: {base_path}")
     print(f"Catalog output: {catalog_path}")
 
-    # Extract all entities
-    print("\n[1/7] Extracting materials...")
+    # Extract all entities (only those actually loaded by the game)
+    print("\n[1/10] Extracting materials...")
     materials = extract_materials(base_path)
-    print(f"      Found {len(materials)} materials")
+    print(f"       Found {len(materials)} materials")
 
-    print("\n[2/7] Extracting equipment...")
+    print("\n[2/10] Extracting equipment...")
     equipment = extract_equipment(base_path)
-    print(f"      Found {len(equipment)} equipment items")
+    print(f"       Found {len(equipment)} equipment items")
 
-    print("\n[3/7] Extracting enemies...")
+    print("\n[3/10] Extracting enemies...")
     enemies = extract_enemies(base_path)
-    print(f"      Found {len(enemies)} enemies")
+    print(f"       Found {len(enemies)} enemies")
 
-    print("\n[4/7] Extracting titles...")
+    print("\n[4/10] Extracting titles...")
     titles = extract_titles(base_path)
-    print(f"      Found {len(titles)} titles")
+    print(f"       Found {len(titles)} titles")
 
-    print("\n[5/7] Extracting skills...")
+    print("\n[5/10] Extracting skills...")
     skills = extract_skills(base_path)
-    print(f"      Found {len(skills)} skills")
+    print(f"       Found {len(skills)} skills")
 
-    print("\n[6/7] Extracting resources...")
-    resources = extract_resources()
-    print(f"      Found {len(resources)} resources")
+    print("\n[6/10] Extracting resources...")
+    resources = extract_resources(base_path)
+    print(f"       Found {len(resources)} resources")
+
+    print("\n[7/10] Extracting NPCs...")
+    npcs = extract_npcs(base_path)
+    print(f"       Found {len(npcs)} NPCs")
+
+    print("\n[8/10] Extracting quests...")
+    quests = extract_quests(base_path)
+    print(f"       Found {len(quests)} quests")
+
+    print("\n[9/10] Extracting classes...")
+    classes = extract_classes(base_path)
+    print(f"       Found {len(classes)} classes")
 
     # Combine all entities
-    all_entities = materials + equipment + enemies + titles + skills + resources
+    all_entities = materials + equipment + enemies + titles + skills + resources + npcs + quests + classes
     print(f"\n✓ Total entities: {len(all_entities)}")
 
     # Generate placeholders
-    print("\n[7/7] Generating placeholders...")
+    print("\n[10/10] Generating placeholders...")
     generated = generate_placeholders(all_entities, base_path)
-    print(f"      Generated {generated} new placeholder icons")
+    print(f"        Generated {generated} new placeholder icons")
+    print(f"        (Skipped {len(all_entities) - generated} existing icons)")
 
     # Generate catalog
-    print("\nGenerating catalog...")
+    print("\nGenerating catalog markdown...")
     generate_catalog(all_entities, catalog_path)
     print(f"✓ Catalog saved to: {catalog_path}")
 
@@ -587,8 +765,10 @@ def main():
     print("=" * 70)
     print(f"Total entities: {len(all_entities)}")
     print(f"New placeholders: {generated}")
+    print(f"Existing icons preserved: {len(all_entities) - generated}")
     print(f"Catalog entries: {len(all_entities)}")
     print("\n✓ Placeholders and catalog are now synchronized!")
+    print("\n✓ Only entities ACTUALLY LOADED by the game are included.")
     print("\nDirectory structure:")
 
     # Count existing files
@@ -597,7 +777,7 @@ def main():
         count = len(list(path.glob('*.png'))) if path.exists() else 0
         print(f"  - assets/items/{subdir:15s} {count:3d} files")
 
-    for subdir in ['enemies', 'resources', 'titles', 'skills']:
+    for subdir in ['enemies', 'resources', 'titles', 'skills', 'npcs', 'quests', 'classes']:
         path = base_path / 'assets' / subdir
         count = len(list(path.glob('*.png'))) if path.exists() else 0
         print(f"  - assets/{subdir:20s} {count:3d} files")
