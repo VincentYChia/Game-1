@@ -1,0 +1,5448 @@
+{
+  "metadata": {
+    "generated": "2025-12-08",
+    "total_entities": 552,
+    "categories": {
+      "STATIONS": 23,
+      "ENEMIES": 13,
+      "RESOURCES": 28,
+      "SKILLS": 30,
+      "MATERIALS": 65,
+      "EQUIPMENT": 30,
+      "PLACEMENTS": 171,
+      "CLASSES": 6,
+      "NPCS": 6,
+      "QUESTS": 6,
+      "TITLES": 10,
+      "RECIPES": 164
+    }
+  },
+  "entities": {
+    "STATIONS": [
+      {
+        "id": "UNKNOWN",
+        "name": "Basic Forge",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Reinforced Forge",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Master Forge",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Eternal Forge",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Basic Refinery",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Advanced Refinery",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Basic Alchemy Table",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Advanced Alchemy Table",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Basic Engineering Bench",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Advanced Engineering Bench",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Basic Enchanting Table",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Arcane Enchanting Table",
+        "category": "station",
+        "type": "crafting",
+        "source_file": "Definitions.JSON/crafting-stations-1.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Basic Stone Forge",
+        "category": "station",
+        "type": "smithing",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Steel Forge",
+        "category": "station",
+        "type": "smithing",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Master Forge",
+        "category": "station",
+        "type": "smithing",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Basic Refinery",
+        "category": "station",
+        "type": "refining",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Steel Refinery",
+        "category": "station",
+        "type": "refining",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Master Refinery",
+        "category": "station",
+        "type": "refining",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Basic Alchemy Table",
+        "category": "station",
+        "type": "alchemy",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Steel Alchemy Table",
+        "category": "station",
+        "type": "alchemy",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Basic Engineering Bench",
+        "category": "station",
+        "type": "engineering",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Steel Engineering Bench",
+        "category": "station",
+        "type": "engineering",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Basic Enchanting Altar",
+        "category": "station",
+        "type": "adornments",
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED"
+      }
+    ],
+    "ENEMIES": [
+      {
+        "id": "wolf_grey",
+        "name": "Grey Wolf",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 1,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "wolf_dire",
+        "name": "Dire Wolf",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 2,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "wolf_elder",
+        "name": "Elder Wolf",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 3,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "slime_green",
+        "name": "Green Slime",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 1,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "slime_acid",
+        "name": "Acid Slime",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 2,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "slime_crystal",
+        "name": "Crystal Slime",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 3,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "beetle_brown",
+        "name": "Brown Beetle",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 1,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "beetle_armored",
+        "name": "Armored Beetle",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 2,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "beetle_titan",
+        "name": "Titan Beetle",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 4,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "golem_stone",
+        "name": "Stone Golem",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 3,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "golem_crystal",
+        "name": "Crystal Golem",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 4,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "void_wraith",
+        "name": "Void Wraith",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 4,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "entity_primordial",
+        "name": "Primordial Entity",
+        "category": "enemy",
+        "type": "hostile",
+        "tier": 4,
+        "source_file": "Definitions.JSON/hostiles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      }
+    ],
+    "RESOURCES": [
+      {
+        "id": "oak_tree",
+        "name": "Oak Tree",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "oak_log"
+      },
+      {
+        "id": "pine_tree",
+        "name": "Pine Tree",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "pine_log"
+      },
+      {
+        "id": "ash_tree",
+        "name": "Ash Tree",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "ash_log"
+      },
+      {
+        "id": "birch_tree",
+        "name": "Birch Tree",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "birch_log"
+      },
+      {
+        "id": "maple_tree",
+        "name": "Maple Tree",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "maple_log"
+      },
+      {
+        "id": "ironwood_tree",
+        "name": "Ironwood Tree",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "ironwood_log"
+      },
+      {
+        "id": "ebony_tree",
+        "name": "Ebony Tree",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "ebony_log"
+      },
+      {
+        "id": "worldtree_sapling",
+        "name": "Worldtree Sapling",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "worldtree_log"
+      },
+      {
+        "id": "copper_vein",
+        "name": "Copper Vein",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "copper_ore"
+      },
+      {
+        "id": "iron_deposit",
+        "name": "Iron Deposit",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "iron_ore"
+      },
+      {
+        "id": "tin_seam",
+        "name": "Tin Seam",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "tin_ore"
+      },
+      {
+        "id": "steel_node",
+        "name": "Steel Node",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "steel_ore"
+      },
+      {
+        "id": "mithril_cache",
+        "name": "Mithril Cache",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "mithril_ore"
+      },
+      {
+        "id": "adamantine_lode",
+        "name": "Adamantine Lode",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "adamantine_ore"
+      },
+      {
+        "id": "orichalcum_trove",
+        "name": "Orichalcum Trove",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "orichalcum_ore"
+      },
+      {
+        "id": "etherion_nexus",
+        "name": "Etherion Nexus",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "etherion_ore"
+      },
+      {
+        "id": "limestone_outcrop",
+        "name": "Limestone Outcrop",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "limestone"
+      },
+      {
+        "id": "granite_formation",
+        "name": "Granite Formation",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "granite"
+      },
+      {
+        "id": "shale_bed",
+        "name": "Shale Bed",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "shale"
+      },
+      {
+        "id": "basalt_column",
+        "name": "Basalt Column",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "basalt"
+      },
+      {
+        "id": "marble_quarry",
+        "name": "Marble Quarry",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "marble"
+      },
+      {
+        "id": "quartz_cluster",
+        "name": "Quartz Cluster",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "crystal_quartz"
+      },
+      {
+        "id": "obsidian_flow",
+        "name": "Obsidian Flow",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "obsidian"
+      },
+      {
+        "id": "voidstone_shard",
+        "name": "Voidstone Shard",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "voidstone"
+      },
+      {
+        "id": "diamond_geode",
+        "name": "Diamond Geode",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "diamond"
+      },
+      {
+        "id": "eternity_monolith",
+        "name": "Eternity Monolith",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "eternity_stone"
+      },
+      {
+        "id": "primordial_formation",
+        "name": "Primordial Formation",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "primordial_crystal"
+      },
+      {
+        "id": "genesis_structure",
+        "name": "Genesis Structure",
+        "category": "resource",
+        "type": "node",
+        "source_file": "Definitions.JSON/resource-node-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "yields": "genesis_lattice"
+      }
+    ],
+    "SKILLS": [
+      {
+        "id": "miners_fury",
+        "name": "Miner's Fury",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 1,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Channel raw strength into your pickaxe, doubling mining damage for a sustained period."
+      },
+      {
+        "id": "lumberjacks_rhythm",
+        "name": "Lumberjack's Rhythm",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 1,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Fall into a steady rhythm, chopping wood much faster than normal."
+      },
+      {
+        "id": "battle_stance",
+        "name": "Battle Stance",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 1,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Brace yourself against incoming attacks, reducing damage taken significantly."
+      },
+      {
+        "id": "combat_strike",
+        "name": "Power Strike",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 1,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Your next attack hits with devastating force, dealing massive damage."
+      },
+      {
+        "id": "quick_repair",
+        "name": "Quick Repair",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 1,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Instantly restore durability to your equipped tools and weapons."
+      },
+      {
+        "id": "bountiful_harvest",
+        "name": "Bountiful Harvest",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 1,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Gather extra materials from each resource node you harvest."
+      },
+      {
+        "id": "sprint",
+        "name": "Sprint",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 1,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Move significantly faster for a brief period."
+      },
+      {
+        "id": "smiths_focus",
+        "name": "Smith's Focus",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 1,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Extend your smithing mini-game timer, giving more time for perfect strikes."
+      },
+      {
+        "id": "combat_rush",
+        "name": "Combat Rush",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 1,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Attack much faster for a short burst of time."
+      },
+      {
+        "id": "field_medic",
+        "name": "Field Medic",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 1,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Instantly restore a moderate amount of health."
+      },
+      {
+        "id": "keen_eye",
+        "name": "Keen Eye",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 2,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Significantly increase critical hit chance for all actions."
+      },
+      {
+        "id": "alchemists_insight",
+        "name": "Alchemist's Insight",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 2,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Gain extra time for your alchemy mini-game and increase potion quality."
+      },
+      {
+        "id": "treasure_sense",
+        "name": "Treasure Sense",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 2,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Dramatically increase the chance of finding rare materials while gathering."
+      },
+      {
+        "id": "regenerative_aura",
+        "name": "Regenerative Aura",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 2,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Slowly restore health over time while active."
+      },
+      {
+        "id": "engineers_precision",
+        "name": "Engineer's Precision",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 2,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Extend engineering puzzle time and improve device quality significantly."
+      },
+      {
+        "id": "tool_preservation",
+        "name": "Tool Preservation",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 2,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Your tools consume durability much more slowly."
+      },
+      {
+        "id": "refiners_touch",
+        "name": "Refiner's Touch",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 2,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Improve your refining mini-game time and material quality output."
+      },
+      {
+        "id": "battle_fury",
+        "name": "Battle Fury",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 2,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Dramatically increase attack damage and speed simultaneously."
+      },
+      {
+        "id": "enchanters_grace",
+        "name": "Enchanter's Grace",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 2,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Gain increased chance for perfect enchantment patterns and rarity upgrades."
+      },
+      {
+        "id": "second_wind",
+        "name": "Second Wind",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 2,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Restore health and mana simultaneously when you need it most."
+      },
+      {
+        "id": "chain_harvest",
+        "name": "Chain Harvest",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 3,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Gather from multiple resource nodes in a small area simultaneously."
+      },
+      {
+        "id": "whirlwind_strike",
+        "name": "Whirlwind Strike",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 3,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Attack all enemies in a wide radius around you."
+      },
+      {
+        "id": "master_craftsman",
+        "name": "Master Craftsman",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 3,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Dramatically boost crafted item quality and gain massive rarity upgrade chance."
+      },
+      {
+        "id": "fortunes_favor",
+        "name": "Fortune's Favor",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 3,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Massively increase critical chance and rarity for all actions."
+      },
+      {
+        "id": "phoenix_resurrection",
+        "name": "Phoenix Resurrection",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 3,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Continuously regenerate massive health and repair equipment durability."
+      },
+      {
+        "id": "absolute_destruction",
+        "name": "Absolute Destruction",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 3,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Unleash catastrophic damage in a massive area, obliterating everything."
+      },
+      {
+        "id": "endless_bounty",
+        "name": "Endless Bounty",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 3,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Gain massive bonus materials from every gather for an extended period."
+      },
+      {
+        "id": "time_dilation",
+        "name": "Time Dilation",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 3,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Massively extend all mini-game timers, giving you all the time you need."
+      },
+      {
+        "id": "reality_breach",
+        "name": "Reality Breach",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 4,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Temporarily ignore all tier restrictions and requirements. Use any tool on any material, craft at any station."
+      },
+      {
+        "id": "omega_strike",
+        "name": "Omega Strike",
+        "category": "skill",
+        "type": "unknown",
+        "tier": 4,
+        "source_file": "Skills/skills-skills-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "A single attack of unimaginable power that ignores defenses and deals catastrophic damage."
+      }
+    ],
+    "MATERIALS": [
+      {
+        "id": "copper_ore",
+        "name": "Copper Ore",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "copper_ingot",
+        "name": "Copper Ingot",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_ore",
+        "name": "Iron Ore",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_ingot",
+        "name": "Iron Ingot",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "tin_ore",
+        "name": "Tin Ore",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "tin_ingot",
+        "name": "Tin Ingot",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "steel_ore",
+        "name": "Steel Ore",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "steel_ingot",
+        "name": "Steel Ingot",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "mithril_ore",
+        "name": "Mithril Ore",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "mithril_ingot",
+        "name": "Mithril Ingot",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "adamantine_ore",
+        "name": "Adamantine Ore",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "adamantine_ingot",
+        "name": "Adamantine Ingot",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "orichalcum_ore",
+        "name": "Orichalcum Ore",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "orichalcum_ingot",
+        "name": "Orichalcum Ingot",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "etherion_ore",
+        "name": "Etherion Ore",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 4,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "etherion_ingot",
+        "name": "Etherion Ingot",
+        "category": "metal",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 4,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "oak_log",
+        "name": "Oak Log",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "oak_plank",
+        "name": "Oak Plank",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "pine_log",
+        "name": "Pine Log",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "pine_plank",
+        "name": "Pine Plank",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "ash_log",
+        "name": "Ash Log",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "ash_plank",
+        "name": "Ash Plank",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "birch_log",
+        "name": "Birch Log",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "birch_plank",
+        "name": "Birch Plank",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "maple_log",
+        "name": "Maple Log",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "maple_plank",
+        "name": "Maple Plank",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "ironwood_log",
+        "name": "Ironwood Log",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "ironwood_plank",
+        "name": "Ironwood Plank",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "ebony_log",
+        "name": "Ebony Log",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "ebony_plank",
+        "name": "Ebony Plank",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "worldtree_log",
+        "name": "Worldtree Log",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 4,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "worldtree_plank",
+        "name": "Worldtree Plank",
+        "category": "wood",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 4,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "limestone",
+        "name": "Limestone",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "granite",
+        "name": "Granite",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "shale",
+        "name": "Shale",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "basalt",
+        "name": "Basalt",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "marble",
+        "name": "Marble",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "crystal_quartz",
+        "name": "Crystal Quartz",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "obsidian",
+        "name": "Obsidian",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "voidstone",
+        "name": "Voidstone",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "diamond",
+        "name": "Diamond",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "eternity_stone",
+        "name": "Eternity Stone",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 4,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "primordial_crystal",
+        "name": "Primordial Crystal",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 4,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "genesis_lattice",
+        "name": "Genesis Lattice",
+        "category": "stone",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 4,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "fire_crystal",
+        "name": "Fire Crystal",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "water_crystal",
+        "name": "Water Crystal",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "earth_crystal",
+        "name": "Earth Crystal",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "air_crystal",
+        "name": "Air Crystal",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "lightning_shard",
+        "name": "Lightning Shard",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "frost_essence",
+        "name": "Frost Essence",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "light_gem",
+        "name": "Light Gem",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "shadow_core",
+        "name": "Shadow Core",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "phoenix_ash",
+        "name": "Phoenix Ash",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "void_essence",
+        "name": "Void Essence",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "storm_heart",
+        "name": "Storm Heart",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "chaos_matrix",
+        "name": "Chaos Matrix",
+        "category": "elemental",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 4,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "wolf_pelt",
+        "name": "Wolf Pelt",
+        "category": "monster_drop",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "slime_gel",
+        "name": "Slime Gel",
+        "category": "monster_drop",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "beetle_carapace",
+        "name": "Beetle Carapace",
+        "category": "monster_drop",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 1,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "dire_fang",
+        "name": "Dire Fang",
+        "category": "monster_drop",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "living_ichor",
+        "name": "Living Ichor",
+        "category": "monster_drop",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_scales",
+        "name": "Iron Scales",
+        "category": "monster_drop",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 2,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "essence_blood",
+        "name": "Essence Blood",
+        "category": "monster_drop",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "spectral_thread",
+        "name": "Spectral Thread",
+        "category": "monster_drop",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "golem_core",
+        "name": "Golem Core",
+        "category": "monster_drop",
+        "type": "unknown",
+        "subtype": "unknown",
+        "tier": 3,
+        "source_file": "items.JSON/items-materials-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      }
+    ],
+    "EQUIPMENT": [
+      {
+        "id": "iron_shortsword",
+        "name": "Iron Shortsword",
+        "category": "equipment",
+        "type": "weapon",
+        "subtype": "shortsword",
+        "tier": 1,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "copper_spear",
+        "name": "Copper Spear",
+        "category": "equipment",
+        "type": "weapon",
+        "subtype": "spear",
+        "tier": 1,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "steel_longsword",
+        "name": "Steel Longsword",
+        "category": "equipment",
+        "type": "weapon",
+        "subtype": "longsword",
+        "tier": 2,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "steel_battleaxe",
+        "name": "Steel Battleaxe",
+        "category": "equipment",
+        "type": "axe",
+        "subtype": "battleaxe",
+        "tier": 2,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_warhammer",
+        "name": "Iron Warhammer",
+        "category": "equipment",
+        "type": "mace",
+        "subtype": "warhammer",
+        "tier": 2,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "copper_dagger",
+        "name": "Copper Dagger",
+        "category": "equipment",
+        "type": "dagger",
+        "subtype": "dagger",
+        "tier": 1,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "composite_longbow",
+        "name": "Composite Longbow",
+        "category": "equipment",
+        "type": "bow",
+        "subtype": "longbow",
+        "tier": 2,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "fire_crystal_staff",
+        "name": "Fire Crystal Staff",
+        "category": "equipment",
+        "type": "staff",
+        "subtype": "staff",
+        "tier": 3,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_round_shield",
+        "name": "Iron Round Shield",
+        "category": "equipment",
+        "type": "shield",
+        "subtype": "buckler",
+        "tier": 1,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "mithril_dagger",
+        "name": "Mithril Dagger",
+        "category": "equipment",
+        "type": "weapon",
+        "subtype": "dagger",
+        "tier": 3,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "pine_shortbow",
+        "name": "Pine Shortbow",
+        "category": "equipment",
+        "type": "weapon",
+        "subtype": "shortbow",
+        "tier": 1,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "leather_tunic",
+        "name": "Leather Tunic",
+        "category": "equipment",
+        "type": "armor",
+        "subtype": "tunic",
+        "tier": 1,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_boots",
+        "name": "Iron Boots",
+        "category": "equipment",
+        "type": "armor",
+        "subtype": "boots",
+        "tier": 1,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_chestplate",
+        "name": "Iron Chestplate",
+        "category": "equipment",
+        "type": "armor",
+        "subtype": "chestplate",
+        "tier": 2,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "steel_helm",
+        "name": "Steel Helm",
+        "category": "equipment",
+        "type": "armor",
+        "subtype": "helmet",
+        "tier": 2,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "steel_leggings",
+        "name": "Steel Leggings",
+        "category": "equipment",
+        "type": "armor",
+        "subtype": "leggings",
+        "tier": 2,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_studded_gauntlets",
+        "name": "Iron-Studded Gauntlets",
+        "category": "equipment",
+        "type": "armor",
+        "subtype": "gauntlets",
+        "tier": 1,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "copper_fire_ring",
+        "name": "Copper Fire Ring",
+        "category": "equipment",
+        "type": "accessory",
+        "subtype": "ring",
+        "tier": 1,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_water_amulet",
+        "name": "Iron Water Amulet",
+        "category": "equipment",
+        "type": "accessory",
+        "subtype": "amulet",
+        "tier": 2,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "steel_lightning_bracelet",
+        "name": "Steel Lightning Bracelet",
+        "category": "equipment",
+        "type": "accessory",
+        "subtype": "bracelet",
+        "tier": 3,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "bamboo_fishing_rod",
+        "name": "Bamboo Fishing Rod",
+        "category": "equipment",
+        "type": "tool",
+        "subtype": "fishing_rod",
+        "tier": 1,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "steel_sickle",
+        "name": "Steel Sickle",
+        "category": "equipment",
+        "type": "tool",
+        "subtype": "sickle",
+        "tier": 2,
+        "source_file": "items.JSON/items-smithing-2.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "copper_pickaxe",
+        "name": "Copper Pickaxe",
+        "category": "equipment",
+        "type": "tool",
+        "subtype": "pickaxe",
+        "tier": 1,
+        "source_file": "items.JSON/items-tools-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_pickaxe",
+        "name": "Iron Pickaxe",
+        "category": "equipment",
+        "type": "tool",
+        "subtype": "pickaxe",
+        "tier": 2,
+        "source_file": "items.JSON/items-tools-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "steel_pickaxe",
+        "name": "Steel Pickaxe",
+        "category": "equipment",
+        "type": "tool",
+        "subtype": "pickaxe",
+        "tier": 3,
+        "source_file": "items.JSON/items-tools-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "mithril_pickaxe",
+        "name": "Mithril Pickaxe",
+        "category": "equipment",
+        "type": "tool",
+        "subtype": "pickaxe",
+        "tier": 4,
+        "source_file": "items.JSON/items-tools-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "copper_axe",
+        "name": "Copper Axe",
+        "category": "equipment",
+        "type": "tool",
+        "subtype": "axe",
+        "tier": 1,
+        "source_file": "items.JSON/items-tools-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "iron_axe",
+        "name": "Iron Axe",
+        "category": "equipment",
+        "type": "tool",
+        "subtype": "axe",
+        "tier": 2,
+        "source_file": "items.JSON/items-tools-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "steel_axe",
+        "name": "Steel Axe",
+        "category": "equipment",
+        "type": "tool",
+        "subtype": "axe",
+        "tier": 3,
+        "source_file": "items.JSON/items-tools-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      },
+      {
+        "id": "mithril_axe",
+        "name": "Mithril Axe",
+        "category": "equipment",
+        "type": "tool",
+        "subtype": "axe",
+        "tier": 4,
+        "source_file": "items.JSON/items-tools-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "narrative": ""
+      }
+    ],
+    "PLACEMENTS": [
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-adornments-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-alchemy-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-engineering-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-refining-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      },
+      {
+        "id": "UNKNOWN",
+        "name": "Unnamed",
+        "category": "placement",
+        "discipline": "unknown",
+        "tier": 0,
+        "source_file": "placements.JSON/placements-smithing-1.JSON",
+        "related_item": "NONE"
+      }
+    ],
+    "CLASSES": [
+      {
+        "id": "warrior",
+        "name": "Warrior",
+        "category": "class",
+        "type": "character_class",
+        "source_file": "progression/classes-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Masters of combat and physical might. Warriors excel at dealing and taking damage in melee combat.",
+        "narrative": "Steel and strength. You are the immovable wall, the unstoppable force. When enemies see you, they know: their time has come.",
+        "playstyle": "Direct combat, high survivability, straightforward gameplay"
+      },
+      {
+        "id": "ranger",
+        "name": "Ranger",
+        "category": "class",
+        "type": "character_class",
+        "source_file": "progression/classes-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Swift explorers and natural harvesters. Rangers move quickly and gather resources efficiently.",
+        "narrative": "The wilderness is your home. Trees fall faster before you, and you move like the wind. Nature bends to those who respect it.",
+        "playstyle": "Fast-paced, mobility-focused, efficient gathering"
+      },
+      {
+        "id": "scholar",
+        "name": "Scholar",
+        "category": "class",
+        "type": "character_class",
+        "source_file": "progression/classes-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Intellectuals who master alchemy and magical arts. Scholars excel at discovery and experimentation.",
+        "narrative": "Knowledge is power, and you wield both. Potions brew faster in your hands, recipes reveal themselves, and magic bends to your will.",
+        "playstyle": "Research-focused, crafting-heavy, magic-oriented"
+      },
+      {
+        "id": "artisan",
+        "name": "Artisan",
+        "category": "class",
+        "type": "character_class",
+        "source_file": "progression/classes-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Master crafters who excel at all creation disciplines. Artisans create better items faster.",
+        "narrative": "Your hands shape reality. What takes others hours, you complete in moments. What they craft once, you perfect instantly.",
+        "playstyle": "Crafting-centric, quality-focused, efficient production"
+      },
+      {
+        "id": "scavenger",
+        "name": "Scavenger",
+        "category": "class",
+        "type": "character_class",
+        "source_file": "progression/classes-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Lucky opportunists who find better loot and resources. Scavengers thrive on discovery.",
+        "narrative": "Where others see rocks, you see treasures. Fortune favors the prepared, and you are always prepared.",
+        "playstyle": "Exploration-heavy, loot-focused, opportunistic"
+      },
+      {
+        "id": "adventurer",
+        "name": "Adventurer",
+        "category": "class",
+        "type": "character_class",
+        "source_file": "progression/classes-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Balanced generalists who dabble in everything. Adventurers have flexibility and choice.",
+        "narrative": "You are not confined by tradition or specialty. Every path is open, every skill within reach. You are limitless.",
+        "playstyle": "Flexible, self-directed, balanced progression"
+      }
+    ],
+    "NPCS": [
+      {
+        "id": "tutorial_guide",
+        "name": "Elder Sage",
+        "category": "npc",
+        "type": "npc",
+        "source_file": "progression/npcs-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "dialogue": [
+          "Welcome, traveler! I sense great potential within you.",
+          "These lands are filled with resources to gather and enemies to defeat.",
+          "I have a small task for you, if you're willing to help."
+        ],
+        "quests": [
+          "tutorial_quest"
+        ]
+      },
+      {
+        "id": "mysterious_trader",
+        "name": "Wandering Trader",
+        "category": "npc",
+        "type": "npc",
+        "source_file": "progression/npcs-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "dialogue": [
+          "Greetings! I've traveled far and wide.",
+          "I seek brave adventurers to help with my research.",
+          "Perhaps you could assist me?"
+        ],
+        "quests": [
+          "gathering_quest"
+        ]
+      },
+      {
+        "id": "combat_trainer",
+        "name": "Battle Master",
+        "category": "npc",
+        "type": "npc",
+        "source_file": "progression/npcs-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "dialogue": [
+          "Ho there, warrior! Ready to test your mettle?",
+          "The wilds are dangerous, but I can help you prepare.",
+          "Defeat some enemies, and I'll reward your bravery."
+        ],
+        "quests": [
+          "combat_quest"
+        ]
+      },
+      {
+        "id": "tutorial_guide",
+        "name": "Elder Sage",
+        "category": "npc",
+        "type": "npc",
+        "source_file": "progression/npcs-enhanced.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "dialogue": [],
+        "quests": [
+          "tutorial_quest"
+        ]
+      },
+      {
+        "id": "mysterious_trader",
+        "name": "Wandering Trader",
+        "category": "npc",
+        "type": "npc",
+        "source_file": "progression/npcs-enhanced.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "dialogue": [],
+        "quests": [
+          "gathering_quest"
+        ]
+      },
+      {
+        "id": "combat_trainer",
+        "name": "Battle Master",
+        "category": "npc",
+        "type": "npc",
+        "source_file": "progression/npcs-enhanced.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "dialogue": [],
+        "quests": [
+          "combat_quest"
+        ]
+      }
+    ],
+    "QUESTS": [
+      {
+        "id": "tutorial_quest",
+        "name": "First Steps",
+        "category": "quest",
+        "type": "gather",
+        "source_file": "progression/quests-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "The Elder Sage wants you to gather 5 oak logs to prove your resourcefulness.",
+        "npc": "tutorial_guide"
+      },
+      {
+        "id": "gathering_quest",
+        "name": "Material Research",
+        "category": "quest",
+        "type": "gather",
+        "source_file": "progression/quests-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "The Wandering Trader needs 3 copper ore and 3 iron ore for his studies.",
+        "npc": "mysterious_trader"
+      },
+      {
+        "id": "combat_quest",
+        "name": "Prove Your Worth",
+        "category": "quest",
+        "type": "combat",
+        "source_file": "progression/quests-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "The Battle Master challenges you to defeat 3 enemies to prove your combat prowess.",
+        "npc": "combat_trainer"
+      },
+      {
+        "id": "tutorial_quest",
+        "name": "First Steps",
+        "category": "quest",
+        "type": "gather",
+        "source_file": "progression/quests-enhanced.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": {
+          "short": "Gather 5 oak logs for the Elder Sage",
+          "long": "The Elder Sage wants you to gather 5 oak logs to prove your resourcefulness. Approach oak trees and use your axe to gather wood.",
+          "narrative": "Every journey begins with a single step. Show me you can gather what nature provides."
+        },
+        "npc": "tutorial_guide"
+      },
+      {
+        "id": "gathering_quest",
+        "name": "Material Research",
+        "category": "quest",
+        "type": "gather",
+        "source_file": "progression/quests-enhanced.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": {
+          "short": "Collect 3 copper ore and 3 iron ore",
+          "long": "The Wandering Trader needs 3 copper ore and 3 iron ore for his studies. Mine rocks to find these ores.",
+          "narrative": "I study the properties of metals. Help me gather samples and I'll reward you handsomely."
+        },
+        "npc": "mysterious_trader"
+      },
+      {
+        "id": "combat_quest",
+        "name": "Prove Your Worth",
+        "category": "quest",
+        "type": "combat",
+        "source_file": "progression/quests-enhanced.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": {
+          "short": "Defeat 3 enemies",
+          "long": "The Battle Master challenges you to defeat 3 enemies to prove your combat prowess. Venture into the wilderness and return victorious.",
+          "narrative": "A warrior is defined by their deeds. Show me you can stand against the dangers of this world."
+        },
+        "npc": "combat_trainer"
+      }
+    ],
+    "TITLES": [
+      {
+        "id": "novice_miner",
+        "name": "Novice Miner",
+        "category": "title",
+        "rarity": "common",
+        "source_file": "progression/titles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Your first steps into the depths. Every mine begins with a single swing."
+      },
+      {
+        "id": "novice_lumberjack",
+        "name": "Novice Lumberjack",
+        "category": "title",
+        "rarity": "common",
+        "source_file": "progression/titles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "The forest acknowledges your presence. Trees fall before you."
+      },
+      {
+        "id": "novice_smith",
+        "name": "Novice Smith",
+        "category": "title",
+        "rarity": "common",
+        "source_file": "progression/titles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "The forge accepts you. Your hammer rings with purpose."
+      },
+      {
+        "id": "novice_warrior",
+        "name": "Novice Warrior",
+        "category": "title",
+        "rarity": "common",
+        "source_file": "progression/titles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "First blood has been drawn. You've tasted battle and survived."
+      },
+      {
+        "id": "apprentice_flame_miner",
+        "name": "Apprentice Flame Miner",
+        "category": "title",
+        "rarity": "common",
+        "source_file": "progression/titles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Fire-veined ores call to you. The heat of the deep welcomes your touch."
+      },
+      {
+        "id": "journeyman_refiner",
+        "name": "Journeyman Refiner",
+        "category": "title",
+        "rarity": "common",
+        "source_file": "progression/titles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Impurities flee before your knowledge. Material transformation is your domain."
+      },
+      {
+        "id": "expert_battle_sage",
+        "name": "Expert Battle Sage",
+        "category": "title",
+        "rarity": "common",
+        "source_file": "progression/titles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Combat flows through you like water. Blade and mind move as one."
+      },
+      {
+        "id": "master_eternal_smith",
+        "name": "Master Eternal Smith",
+        "category": "title",
+        "rarity": "common",
+        "source_file": "progression/titles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Legends speak of smiths who forged the impossible. You are one of them."
+      },
+      {
+        "id": "hidden_dragons_bane",
+        "name": "Dragon's Bane",
+        "category": "title",
+        "rarity": "common",
+        "source_file": "progression/titles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Wyrms fear your name. The great beasts fall before you."
+      },
+      {
+        "id": "hidden_lucky_bastard",
+        "name": "Lucky Bastard",
+        "category": "title",
+        "rarity": "common",
+        "source_file": "progression/titles-1.JSON",
+        "icon_path": "NOT_SPECIFIED",
+        "description": "Fortune herself smiles upon you. Or perhaps you've rigged the dice."
+      }
+    ],
+    "RECIPES": [
+      {
+        "id": "enchanting_sharpness_basic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_sharpness_advanced",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_sharpness_master",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_durability_basic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_durability_advanced",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_fire_aspect",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_frost_touch",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_lightning_strike",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_protection_basic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_protection_advanced",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_protection_master",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_thorns",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_efficiency_basic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_efficiency_advanced",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_fortune_basic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_fortune_advanced",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_silk_touch",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_swiftness",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_regeneration",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_weightless",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_self_repair",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_soulbound",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_knockback",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_poison",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_lifesteal",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-adornments-1.json",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_minor_health_potion",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_health_potion",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_greater_health_potion",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_strength_elixir",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_iron_skin_potion",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_swiftness_draught",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_fire_resistance_potion",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_frost_resistance_potion",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_regeneration_tonic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_titans_brew",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_elemental_harmony",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_efficiency_oil",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_armor_polish",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_universal_solvent",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_transmute_copper_tin",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_transmute_iron_steel",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_refine_essence_blood",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "alchemy_crystallize_fire",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_sharpness_basic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_sharpness_advanced",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_sharpness_master",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_durability_basic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_durability_advanced",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_fire_aspect",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_frost_touch",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_lightning_strike",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_protection_basic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_protection_advanced",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_protection_master",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_thorns",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_efficiency_basic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_efficiency_advanced",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_fortune_basic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_fortune_advanced",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_silk_touch",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_swiftness",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_regeneration",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_weightless",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_self_repair",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_soulbound",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_knockback",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_poison",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "enchanting_lifesteal",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_basic_arrow_turret",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_fire_arrow_turret",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_lightning_cannon",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_flamethrower_turret",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_laser_turret",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_simple_bomb",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_fire_bomb",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_cluster_bomb",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_spike_trap",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_frost_mine",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_bear_trap",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_healing_beacon",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_net_launcher",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_emp_device",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_grappling_hook",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "engineering_jetpack",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-engineering-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_copper_ore_to_ingot",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_iron_ore_to_ingot",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_tin_ore_to_ingot",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_steel_ore_to_ingot",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_mithril_ore_to_ingot",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_adamantine_ore_to_ingot",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_orichalcum_ore_to_ingot",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_etherion_ore_to_ingot",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_oak_log_to_plank",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_pine_log_to_plank",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_ash_log_to_plank",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_birch_log_to_plank",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_maple_log_to_plank",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_ironwood_log_to_plank",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_ebony_log_to_plank",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_worldtree_log_to_plank",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_bronze_alloy",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_fire_steel",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_frost_steel",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_lightning_copper",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_copper_uncommon",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_copper_rare",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_copper_epic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_copper_legendary",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_iron_uncommon",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_iron_rare",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_iron_epic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_iron_legendary",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_steel_rare",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_steel_epic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_steel_legendary",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_mithril_epic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_mithril_legendary",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_mithril_mythical",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_adamantine_epic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_adamantine_legendary",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_orichalcum_legendary",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_orichalcum_mythical",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_etherion_mythical",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_tin_rare",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_tin_epic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_bronze_rare",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "refining_rarity_bronze_epic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-refining-1.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_iron_shortsword",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_copper_pickaxe",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_copper_axe",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_copper_spear",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_leather_tunic",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_iron_boots",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_iron_pickaxe",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_iron_axe",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_steel_longsword",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_iron_chestplate",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_steel_helm",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_steel_pickaxe",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_steel_axe",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_mithril_dagger",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_mithril_pickaxe",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_mithril_axe",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_copper_fire_ring",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_iron_water_amulet",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_steel_lightning_bracelet",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_forge_t1",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_forge_t2",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_forge_t3",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_refinery_t1",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_refinery_t2",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_pine_shortbow",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_alchemy_table_t1",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_engineering_bench_t1",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_steel_battleaxe",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_iron_warhammer",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_copper_dagger",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_composite_longbow",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_fire_crystal_staff",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_iron_round_shield",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_steel_leggings",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_iron_studded_gauntlets",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_bamboo_fishing_rod",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      },
+      {
+        "id": "smithing_steel_sickle",
+        "name": "Unnamed",
+        "category": "recipe",
+        "discipline": "unknown",
+        "type": "unknown",
+        "tier": 0,
+        "source_file": "recipes.JSON/recipes-smithing-3.JSON",
+        "output": "UNKNOWN"
+      }
+    ]
+  }
+}
