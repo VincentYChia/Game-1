@@ -2922,7 +2922,12 @@ class GameEngine:
                 print(f"⚠ Warning: Recipe material '{mat_id}' not in inventory!")
 
         # Use crafter to process minigame result
-        craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
+        # For adornments, pass target_item if available
+        if self.minigame_type == 'adornments' and hasattr(self, 'enchantment_selected_item') and self.enchantment_selected_item:
+            target_item = self.enchantment_selected_item.get('equipment')
+            craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result, target_item=target_item)
+        else:
+            craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
 
         if not craft_result.get('success'):
             # Failure - materials may have been lost
@@ -2955,32 +2960,43 @@ class GameEngine:
             if new_title:
                 self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
-            # Add output to inventory with minigame bonuses
-            output_id = craft_result.get('outputId', recipe.output_id)
-            output_qty = craft_result.get('quantity', recipe.output_qty)
-            rarity = craft_result.get('rarity', 'common')
-            stats = craft_result.get('stats', {})
-            bonus_pct = craft_result.get('bonus', 0)
+            # Check if this was an enchantment applied to an item (not a new item created)
+            if 'enchanted_item' in craft_result:
+                # Enchantment was applied to existing item - no need to add to inventory
+                message = craft_result.get('message', 'Applied enchantment')
+                self.add_notification(message, (100, 255, 255))
+                print(f"✅ Enchantment applied: {message}")
 
-            # Use add_crafted_item_to_inventory to apply enhanced stats
-            self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
-
-            # Get proper name for notification
-            if equip_db.is_equipment(output_id):
-                equipment = equip_db.create_equipment_from_id(output_id)
-                out_name = equipment.name if equipment else output_id
+                # Clear enchantment selection
+                if hasattr(self, 'enchantment_selected_item'):
+                    self.enchantment_selected_item = None
             else:
-                out_mat = mat_db.get_material(output_id)
-                out_name = out_mat.name if out_mat else output_id
+                # Normal crafting - add output to inventory with minigame bonuses
+                output_id = craft_result.get('outputId', recipe.output_id)
+                output_qty = craft_result.get('quantity', recipe.output_qty)
+                rarity = craft_result.get('rarity', 'common')
+                stats = craft_result.get('stats', {})
+                bonus_pct = craft_result.get('bonus', 0)
 
-            # Enhanced message showing rarity and bonus
-            if bonus_pct > 0:
-                message = f"Crafted {rarity.capitalize()} {out_name} x{output_qty} (+{bonus_pct}% bonus)!"
-            else:
-                message = f"Crafted {rarity.capitalize()} {out_name} x{output_qty}"
+                # Use add_crafted_item_to_inventory to apply enhanced stats
+                self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
 
-            self.add_notification(message, (100, 255, 100))
-            print(f"✅ Minigame crafting complete: {rarity} {out_name} x{output_qty} with stats: {stats}")
+                # Get proper name for notification
+                if equip_db.is_equipment(output_id):
+                    equipment = equip_db.create_equipment_from_id(output_id)
+                    out_name = equipment.name if equipment else output_id
+                else:
+                    out_mat = mat_db.get_material(output_id)
+                    out_name = out_mat.name if out_mat else output_id
+
+                # Enhanced message showing rarity and bonus
+                if bonus_pct > 0:
+                    message = f"Crafted {rarity.capitalize()} {out_name} x{output_qty} (+{bonus_pct}% bonus)!"
+                else:
+                    message = f"Crafted {rarity.capitalize()} {out_name} x{output_qty}"
+
+                self.add_notification(message, (100, 255, 100))
+                print(f"✅ Minigame crafting complete: {rarity} {out_name} x{output_qty} with stats: {stats}")
 
         # Clear minigame state
         self.active_minigame = None
