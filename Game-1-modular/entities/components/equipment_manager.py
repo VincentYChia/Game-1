@@ -55,10 +55,14 @@ class EquipmentManager:
                     # Default weapons can't have offhand unless this is a shield
                     if item.item_type != "shield":
                         return None, "Mainhand weapon doesn't support offhand"
+                elif mainhand.hand_type == "versatile":
+                    # Versatile weapons can have 1H in offhand, but not versatile/2H
+                    if item.item_type != "shield" and item.hand_type != "1H":
+                        return None, "Versatile mainhand only allows 1H or shield in offhand"
 
-            # Offhand can only equip 1H items or shields
-            if item.hand_type not in ["1H", "versatile"] and item.item_type != "shield":
-                return None, "Item cannot be equipped in offhand"
+            # Offhand can only equip 1H items or shields (NOT versatile or 2H)
+            if item.hand_type not in ["1H"] and item.item_type != "shield":
+                return None, "Item cannot be equipped in offhand (must be 1H or shield)"
 
         old_item = self.slots[slot]
         self.slots[slot] = item

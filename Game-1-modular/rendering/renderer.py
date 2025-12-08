@@ -991,10 +991,32 @@ class Renderer:
             size = Config.TILE_SIZE
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
-            # Render entity (turret icon or colored square)
-            color = entity.get_color()
-            pygame.draw.rect(self.screen, color, rect)
-            pygame.draw.rect(self.screen, (0, 0, 0), rect, 2)
+            # Construct icon path based on entity type
+            icon_path = None
+            if entity.entity_type == PlacedEntityType.CRAFTING_STATION:
+                # Crafting stations (already handled below, but we can preview here)
+                # Using pattern: stations/{station_name}_t{tier}.png
+                pass  # Will use existing crafting station rendering
+            else:
+                # Devices (turrets, traps, bombs, etc.) use: devices/{item_id}.png
+                # ImageCache will try assets/devices/{item_id}.png then assets/items/devices/{item_id}.png
+                icon_path = f"devices/{entity.item_id}.png"
+
+            # Try to load and render entity icon
+            image_cache = ImageCache.get_instance()
+            icon = None
+            if icon_path:
+                icon = image_cache.get_image(icon_path, (size, size))
+
+            if icon:
+                # Render icon
+                icon_rect = icon.get_rect(center=(sx, sy))
+                self.screen.blit(icon, icon_rect)
+            else:
+                # Fallback to colored rectangle if no icon
+                color = entity.get_color()
+                pygame.draw.rect(self.screen, color, rect)
+                pygame.draw.rect(self.screen, (0, 0, 0), rect, 2)
 
             # Render tier indicator
             tier_text = f"T{entity.tier}"
@@ -2493,7 +2515,8 @@ class Renderer:
         if item_stack.is_equipment():
             equipment = item_stack.get_equipment()
             if equipment:
-                self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=True)
+                self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=True,
+                                              crafted_stats=item_stack.crafted_stats)
                 return
 
         # Regular material tooltip
@@ -2501,7 +2524,13 @@ class Renderer:
         if not mat:
             return
 
-        tw, th, pad = 250, 120, 10
+        # Calculate height based on whether we have crafted_stats to display
+        base_height = 120
+        stats_height = 0
+        if item_stack.crafted_stats:
+            stats_height = 25 + (len(item_stack.crafted_stats) * 18)  # Header + stats lines
+
+        tw, th, pad = 250, base_height + stats_height, 10
         x, y = mouse_pos[0] + 15, mouse_pos[1] + 15
         if x + tw > Config.SCREEN_WIDTH:
             x = mouse_pos[0] - tw - 15
@@ -2519,6 +2548,24 @@ class Renderer:
                   (pad, y_pos))
         y_pos += 20
         surf.blit(self.small_font.render(f"Rarity: {mat.rarity.capitalize()}", True, color), (pad, y_pos))
+        y_pos += 20
+
+        # Display crafted stats if present
+        if item_stack.crafted_stats:
+            y_pos += 5
+            surf.blit(self.small_font.render("Crafted Bonuses:", True, (100, 255, 100)), (pad, y_pos))
+            y_pos += 18
+            for stat_name, stat_value in item_stack.crafted_stats.items():
+                # Format stat name nicely (capitalize and add spaces)
+                display_name = stat_name.replace('_', ' ').title()
+                # Format value with + if positive
+                if isinstance(stat_value, (int, float)):
+                    value_str = f"+{stat_value}" if stat_value >= 0 else str(stat_value)
+                else:
+                    value_str = str(stat_value)
+                stat_text = f"  {display_name}: {value_str}"
+                surf.blit(self.tiny_font.render(stat_text, True, (150, 220, 150)), (pad, y_pos))
+                y_pos += 16
 
         self.screen.blit(surf, (x, y))
 
@@ -2537,7 +2584,11 @@ class Renderer:
         for recipe in recipes:
             output_type = 'Other'
 
-            if equip_db.is_equipment(recipe.output_id):
+            # Handle enchanting recipes separately (they don't have materials)
+            if station_type == 'adornments' and hasattr(recipe, 'is_enchantment') and recipe.is_enchantment:
+                # Enchanting: Just use 'Enchantments' category - we'll sort alphabetically
+                output_type = 'Enchantments'
+            elif equip_db.is_equipment(recipe.output_id):
                 # Equipment items
                 equip = equip_db.create_equipment_from_id(recipe.output_id)
                 if equip:
@@ -2558,33 +2609,34 @@ class Renderer:
                     # Station-specific grouping
                     if station_type == 'engineering':
                         # Engineering: Group by device type
-                        if mat.item_type == 'turret':
-                            output_type = 'Turrets'
-                        elif mat.item_type == 'trap':
-                            output_type = 'Traps'
-                        elif mat.item_type == 'bomb':
-                            output_type = 'Bombs'
-                        elif mat.item_type == 'utility':
-                            output_type = 'Utility Devices'
-                        elif mat.category == 'station':
+                        if hasattr(mat, 'item_type'):
+                            if mat.item_type == 'turret':
+                                output_type = 'Turrets'
+                            elif mat.item_type == 'trap':
+                                output_type = 'Traps'
+                            elif mat.item_type == 'bomb':
+                                output_type = 'Bombs'
+                            elif mat.item_type == 'utility':
+                                output_type = 'Utility Devices'
+                        if output_type == 'Other' and mat.category == 'station':
                             output_type = 'Crafting Stations'
-                        else:
+                        elif output_type == 'Other':
                             output_type = 'Other Devices'
 
                     elif station_type == 'alchemy':
                         # Alchemy: Group potions by subtype/effect
-                        if 'health' in mat.name.lower() or 'healing' in mat.effect.lower():
+                        if 'health' in mat.name.lower() or (hasattr(mat, 'effect') and 'healing' in mat.effect.lower()):
                             output_type = 'Health Potions'
-                        elif 'mana' in mat.name.lower() or 'mana' in mat.effect.lower():
+                        elif 'mana' in mat.name.lower() or (hasattr(mat, 'effect') and 'mana' in mat.effect.lower()):
                             output_type = 'Mana Potions'
-                        elif 'strength' in mat.effect.lower() or 'damage' in mat.effect.lower():
+                        elif hasattr(mat, 'effect') and ('strength' in mat.effect.lower() or 'damage' in mat.effect.lower()):
                             output_type = 'Combat Buffs'
-                        elif 'speed' in mat.effect.lower() or 'agility' in mat.effect.lower():
+                        elif hasattr(mat, 'effect') and ('speed' in mat.effect.lower() or 'agility' in mat.effect.lower()):
                             output_type = 'Movement Buffs'
                         elif mat.category == 'consumable':
                             output_type = 'Other Potions'
                         else:
-                            output_type = 'Alchemy Materials'
+                            output_type = 'Other Materials'
 
                     elif station_type == 'refining':
                         # Refining: Group by material category
@@ -2599,44 +2651,32 @@ class Renderer:
                         else:
                             output_type = 'Other Materials'
 
-                    elif station_type == 'adornments':
-                        # Enchanting: Alphabetic grouping
-                        first_letter = mat.name[0].upper() if mat.name else 'Z'
-                        if first_letter <= 'F':
-                            output_type = 'A-F'
-                        elif first_letter <= 'M':
-                            output_type = 'G-M'
-                        elif first_letter <= 'S':
-                            output_type = 'N-S'
-                        else:
-                            output_type = 'T-Z'
-
                     else:
                         # Smithing or default: Group by tier
-                        if mat.tier == 1:
-                            output_type = 'Tier 1'
-                        elif mat.tier == 2:
-                            output_type = 'Tier 2'
-                        elif mat.tier == 3:
-                            output_type = 'Tier 3'
-                        elif mat.tier >= 4:
-                            output_type = 'Tier 4+'
-                        elif mat.category == 'station':
+                        if hasattr(mat, 'tier'):
+                            if mat.tier == 1:
+                                output_type = 'Tier 1'
+                            elif mat.tier == 2:
+                                output_type = 'Tier 2'
+                            elif mat.tier == 3:
+                                output_type = 'Tier 3'
+                            elif mat.tier >= 4:
+                                output_type = 'Tier 4+'
+                        if output_type == 'Other' and mat.category == 'station':
                             output_type = 'Stations'
-                        else:
-                            output_type = 'Other'
+                        # If still 'Other', keep it as 'Other'
 
             grouped[output_type].append(recipe)
 
         # Define order based on station type
         if station_type == 'engineering':
-            type_order = ['Turrets', 'Traps', 'Bombs', 'Utility Devices', 'Crafting Stations', 'Other Devices']
+            type_order = ['Turrets', 'Traps', 'Bombs', 'Utility Devices', 'Crafting Stations', 'Other Devices', 'Other']
         elif station_type == 'alchemy':
-            type_order = ['Health Potions', 'Mana Potions', 'Combat Buffs', 'Movement Buffs', 'Other Potions', 'Alchemy Materials']
+            type_order = ['Health Potions', 'Mana Potions', 'Combat Buffs', 'Movement Buffs', 'Other Potions', 'Other Materials', 'Other']
         elif station_type == 'refining':
-            type_order = ['Metals & Ingots', 'Processed Ores', 'Elemental Materials', 'Refined Resources', 'Other Materials']
+            type_order = ['Metals & Ingots', 'Processed Ores', 'Elemental Materials', 'Refined Resources', 'Other Materials', 'Other']
         elif station_type == 'adornments':
-            type_order = ['A-F', 'G-M', 'N-S', 'T-Z']
+            type_order = ['Enchantments', 'Other']
         else:
             # Smithing and default
             type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4+', 'Stations', 'Other']
@@ -2645,7 +2685,11 @@ class Renderer:
         result = []
         for type_name in type_order:
             if type_name in grouped and grouped[type_name]:
-                result.append((type_name, grouped[type_name]))
+                recipes_list = grouped[type_name]
+                # Sort enchantments alphabetically by name
+                if station_type == 'adornments' and type_name == 'Enchantments':
+                    recipes_list = sorted(recipes_list, key=lambda r: getattr(r, 'enchantment_name', '').lower())
+                result.append((type_name, recipes_list))
 
         return result
 
@@ -2730,27 +2774,35 @@ class Renderer:
 
             # Apply scroll offset and show items
             total_items = len(flat_list)
-            max_visible = 12  # Increased to account for headers
-            start_idx = min(scroll_offset, max(0, total_items - max_visible))
-            end_idx = min(start_idx + max_visible, total_items)
-            visible_items = flat_list[start_idx:end_idx]
+            # Calculate max_visible based on available vertical space
+            # Window height: 600px, start at y=70, leaves ~530px
+            # Average recipe height: ~85px (70px base + spacing)
+            # Can fit approximately: 530/85 ≈ 6 recipes, but be generous for small recipes
+            # Use 8 as a safe value that won't overflow the window
+            max_visible = 999999  # No limit - renderer will stop when out of space
+            start_idx = min(scroll_offset, max(0, total_items - 1))
+            # Don't cap end_idx here - let rendering loop handle it based on available space
+            visible_items = flat_list[start_idx:]  # Start from scroll offset, render until out of space
 
-            # Show scroll indicators if needed
-            if total_items > max_visible:
-                scroll_text = f"Showing {start_idx + 1}-{end_idx} of {total_items}"
-                scroll_surf = self.small_font.render(scroll_text, True, (150, 150, 150))
-                surf.blit(scroll_surf, (s(20), s(50)))
-
-                # Show scroll arrows
-                if start_idx > 0:
-                    up_arrow = self.small_font.render("▲ Scroll Up", True, (100, 200, 100))
-                    surf.blit(up_arrow, (left_panel_w - s(120), s(50)))
-                if end_idx < total_items:
-                    down_arrow = self.small_font.render("▼ Scroll Down", True, (100, 200, 100))
-                    surf.blit(down_arrow, (left_panel_w - s(120), wh - s(30)))
-
+            # Render items until we run out of vertical space
             y_off = s(70)
+            max_y = wh - s(20)  # Leave 20px margin at bottom
+            items_rendered = 0
+
             for i, item in enumerate(visible_items):
+                # Check if we have room for this item BEFORE rendering it
+                if item[0] == 'header':
+                    needed_height = s(28)
+                else:  # recipe
+                    recipe = item[1]
+                    num_inputs = len(recipe.inputs)
+                    needed_height = max(s(70), s(35) + num_inputs * s(16) + s(5)) + s(8)
+
+                if y_off + needed_height > max_y:
+                    # Out of space, stop rendering
+                    break
+
+                items_rendered += 1
                 item_type, item_data = item
 
                 if item_type == 'header':
@@ -2815,6 +2867,23 @@ class Renderer:
                         req_y += s(16)
 
                     y_off += btn_height + s(8)
+
+            # Calculate end_idx based on items actually rendered
+            end_idx = start_idx + items_rendered
+
+            # Show scroll indicators
+            if start_idx > 0 or end_idx < total_items:
+                scroll_text = f"Showing {start_idx + 1}-{end_idx} of {total_items}"
+                scroll_surf = self.small_font.render(scroll_text, True, (150, 150, 150))
+                surf.blit(scroll_surf, (s(20), s(50)))
+
+                # Show scroll arrows
+                if start_idx > 0:
+                    up_arrow = self.small_font.render("▲ Scroll Up", True, (100, 200, 100))
+                    surf.blit(up_arrow, (left_panel_w - s(120), s(50)))
+                if end_idx < total_items:
+                    down_arrow = self.small_font.render("▼ Scroll Down", True, (100, 200, 100))
+                    surf.blit(down_arrow, (left_panel_w - s(120), wh - s(30)))
 
         # ======================
         # DIVIDER
@@ -3081,9 +3150,16 @@ class Renderer:
         return pygame.Rect(wx, wy, ww, wh), equipment_rects
 
     def render_equipment_tooltip(self, item: EquipmentItem, mouse_pos: Tuple[int, int], character: Character,
-                                 from_inventory: bool = False):
+                                 from_inventory: bool = False, crafted_stats: dict = None):
         s = Config.scale
-        tw, th, pad = s(320), s(340), s(10)  # Increased height for enchantments
+
+        # Calculate height based on crafted_stats
+        base_height = s(340)
+        stats_height = 0
+        if crafted_stats:
+            stats_height = s(25) + (len(crafted_stats) * s(18))
+
+        tw, th, pad = s(320), base_height + stats_height, s(10)
         x, y = mouse_pos[0] + s(15), mouse_pos[1] + s(15)
         if x + tw > Config.SCREEN_WIDTH:
             x = mouse_pos[0] - tw - s(15)
@@ -3152,6 +3228,23 @@ class Renderer:
                     ench_text = f"  {ench_name}"
 
                 surf.blit(self.tiny_font.render(ench_text, True, (200, 180, 255)), (pad, y_pos))
+                y_pos += s(16)
+
+        # Display crafted bonuses if present
+        if crafted_stats:
+            y_pos += s(5)
+            surf.blit(self.small_font.render("Crafted Bonuses:", True, (100, 255, 100)), (pad, y_pos))
+            y_pos += s(18)
+            for stat_name, stat_value in crafted_stats.items():
+                # Format stat name nicely (capitalize and add spaces)
+                display_name = stat_name.replace('_', ' ').title()
+                # Format value with + if positive
+                if isinstance(stat_value, (int, float)):
+                    value_str = f"+{stat_value}" if stat_value >= 0 else str(stat_value)
+                else:
+                    value_str = str(stat_value)
+                stat_text = f"  {display_name}: {value_str}"
+                surf.blit(self.tiny_font.render(stat_text, True, (150, 220, 150)), (pad, y_pos))
                 y_pos += s(16)
 
         dur_pct = (item.durability_current / item.durability_max) * 100

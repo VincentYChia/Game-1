@@ -71,7 +71,7 @@
 
 ### pine_shortbow
 - **Category**: equipment
-- **Type**: weapon
+- **Type**: bow
 - **Subtype**: shortbow
 - **Narrative**: Simple pine shortbow strung with treated slime gel. Not powerful, but reliable and easy to maintain. Perfect for learning the basics of archery.
 
@@ -719,19 +719,19 @@
 - **Category**: wood
 - **Type**: material
 - **Subtype**: wood
-- **Narrative**: Rare wood with metallic properties. As hard as soft metals, holds edges almost as well as iron.
+- **Narrative**: Rare wood with metallic properties and small veins of metal running through it. As hard as soft metals, holds edges almost as well as iron.
 
 ### ironwood_plank
 - **Category**: wood
 - **Type**: material
 - **Subtype**: wood
-- **Narrative**: Refined ironwood planks, nearly as strong as actual metal.
+- **Narrative**: Refined ironwood planks reinforced by the trees natural uptake of metals, nearly as strong as actual metal.
 
 ### ironwood_plank
 - **Category**: material
 - **Type**: wood
 - **Subtype**: plank
-- **Narrative**: Ironwood planks, dense and metallic. Dulls saw blades quickly but the result is worth it - wood as strong as iron, light as oak. Nature's answer to steel.
+- **Narrative**: Ironwood planks, dense and metallic. Dulls saw blades quickly but the result is worth it - wood as strong as iron with small veins of iron running along its grain, light as oak. Nature's answer to steel.
 
 ### light_gem
 - **Category**: elemental
@@ -959,19 +959,19 @@
 - **Category**: wood
 - **Type**: material
 - **Subtype**: wood
-- **Narrative**: Living wood from the World Tree's roots. Contains millennia of accumulated magical essence.
+- **Narrative**: Living wood from the World Tree's roots. Contains millennia of accumulated magical essence. Seems to glow and give out mystical particles even as a log.
 
 ### worldtree_plank
 - **Category**: wood
 - **Type**: material
 - **Subtype**: wood
-- **Narrative**: Refined worldtree planks that remember their connection to the source.
+- **Narrative**: Refined worldtree planks that remember their connection to the source. Seems to glow and shine even in the dark.
 
 ### worldtree_plank
 - **Category**: material
 - **Type**: wood
 - **Subtype**: plank
-- **Narrative**: Worldtree planks that remember being part of something greater. The wood hums with ancient power. Items crafted from this are said to carry the world's will.
+- **Narrative**: Worldtree planks that remember being part of something greater. The wood hums with ancient power. Items crafted from this are said to carry the world's will. The wood seems to sparkle in the sun.
 
 ---
 
@@ -1087,7 +1087,7 @@
 - **Category**: resource
 - **Type**: tree
 - **Subtype**: tree
-- **Narrative**: Ironwood tree (T3, requires axe). Rare wood with metallic properties.
+- **Narrative**: Ironwood tree (T3, requires axe). Rare wood with metallic properties, seems to have veins or iron running along its bark.
 
 ### limestone_node
 - **Category**: resource
