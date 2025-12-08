@@ -1196,19 +1196,29 @@ class EnchantingCrafter:
         }
 
         if target_item:
-            # Apply to existing item
-            if 'enchantments' not in target_item:
-                target_item['enchantments'] = []
+            # Apply to existing equipment item (EquipmentItem object, not dict)
+            # Use the apply_enchantment method which handles the enchantment logic
+            success, message = target_item.apply_enchantment(
+                enchantment_id,
+                enchantment_name,
+                recipe.get('effect', {})
+            )
 
-            target_item['enchantments'].append(enchantment_data)
-
-            return {
-                "success": True,
-                "message": f"{input_rarity.capitalize()} {enchantment_name} applied to {target_item.get('itemId')}!",
-                "enchantment": enchantment_data,
-                "enchanted_item": target_item,
-                "rarity": input_rarity
-            }
+            if success:
+                return {
+                    "success": True,
+                    "message": f"{input_rarity.capitalize()} {enchantment_name} applied to {target_item.name}! (Efficacy: {efficacy_percent:+.1f}%)",
+                    "enchantment": enchantment_data,
+                    "enchanted_item": target_item,
+                    "rarity": input_rarity
+                }
+            else:
+                # Enchantment failed (e.g., tier protection, duplicate, etc.)
+                return {
+                    "success": False,
+                    "message": f"Failed to apply enchantment: {message}",
+                    "rarity": input_rarity
+                }
         else:
             # Create new enchanted accessory
             return {
