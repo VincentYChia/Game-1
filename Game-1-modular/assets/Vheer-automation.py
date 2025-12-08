@@ -145,7 +145,7 @@ OUTPUT_DIR = SCRIPT_DIR / 'generated_icons'
 CATALOG_PATH = SCRIPT_DIR.parent.parent / "Scaled JSON Development" / "ITEM_CATALOG_FOR_ICONS.md"
 
 GENERATION_TIMEOUT = 180
-WAIT_BETWEEN_ITEMS = 10
+WAIT_BETWEEN_ITEMS = 5
 VERSIONS_TO_GENERATE = 3
 
 # ============================================================================
@@ -437,7 +437,7 @@ def fill_textareas(driver, prompt1, prompt2):
         textareas[1].send_keys(Keys.CONTROL + 'a')
         time.sleep(0.1)
         textareas[1].send_keys(prompt2)
-        time.sleep(0.2)
+        time.sleep(1)
         print(f"  [DEBUG] Textarea 2 filled")
 
         return True
