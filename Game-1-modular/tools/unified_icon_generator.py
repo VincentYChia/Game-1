@@ -701,8 +701,8 @@ def main():
     # Determine base path
     script_dir = Path(__file__).parent
     base_path = script_dir.parent  # Game-1-modular directory
-    # Save catalog in tools directory, not in "Scaled JSON Development"
-    catalog_path = script_dir / "ITEM_CATALOG_FOR_ICONS.md"
+    # Save catalog in Scaled JSON Development (for backward compatibility with automation scripts)
+    catalog_path = base_path.parent / "Scaled JSON Development" / "ITEM_CATALOG_FOR_ICONS.md"
 
     print(f"\nBase path: {base_path}")
     print(f"Catalog output: {catalog_path}")
