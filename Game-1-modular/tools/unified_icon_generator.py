@@ -394,46 +394,29 @@ def extract_skills(base_path: Path) -> List[EntityEntry]:
 
 
 def extract_resources(base_path: Path) -> List[EntityEntry]:
-    """Extract resources from resource-node-1.JSON (actually used by game)"""
+    """Extract resources from hardcoded RESOURCES list (matches game's ResourceType enum)
+
+    The game uses the ResourceType enum in data/models/world.py, and the renderer
+    constructs icon paths by appending '_node' to non-tree resources.
+    This function uses the hardcoded RESOURCES list which matches these expectations.
+
+    Note: resource-node-1.JSON contains 28 resources for future expansion, but the game
+    only currently uses the 12 resources defined in the ResourceType enum.
+    """
     entities = []
-    resources_file = base_path / 'Definitions.JSON' / 'resource-node-1.JSON'
 
-    if not resources_file.exists():
-        # Fallback to hardcoded if file doesn't exist
-        for res in RESOURCES:
-            entities.append(EntityEntry(
-                entity_id=res['id'],
-                name=res['name'],
-                category='resource',
-                entity_type=res['category'],
-                subtype=res['category'],
-                narrative=res['narrative'],
-                tier=res['tier'],
-                subfolder='resources'
-            ))
-        return entities
-
-    with open(resources_file, 'r') as f:
-        data = json.load(f)
-        for resource in data.get('nodes', []):
-            resource_id = resource.get('resourceId', '')
-            if not resource_id:
-                continue
-
-            category = resource.get('category', 'resource')
-            narrative = resource.get('metadata', {}).get('narrative', 'No description available.')
-            tier = resource.get('tier', 1)
-
-            entities.append(EntityEntry(
-                entity_id=resource_id,
-                name=resource.get('name', resource_id),
-                category='resource',
-                entity_type=category,
-                subtype=category,
-                narrative=narrative,
-                tier=tier,
-                subfolder='resources'
-            ))
+    # Use hardcoded list that matches ResourceType enum and renderer expectations
+    for res in RESOURCES:
+        entities.append(EntityEntry(
+            entity_id=res['id'],
+            name=res['name'],
+            category='resource',
+            entity_type=res['category'],
+            subtype=res['category'],
+            narrative=res['narrative'],
+            tier=res['tier'],
+            subfolder='resources'
+        ))
 
     return entities
 
