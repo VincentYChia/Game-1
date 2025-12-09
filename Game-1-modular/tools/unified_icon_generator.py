@@ -728,8 +728,23 @@ def main():
     print(f"       Found {len(classes)} classes")
 
     # Combine all entities
-    all_entities = materials + equipment + enemies + titles + skills + resources + npcs + quests + classes
+    all_entities_raw = materials + equipment + enemies + titles + skills + resources + npcs + quests + classes
+
+    # Deduplicate by id (keep first occurrence)
+    # This handles cases where items appear in both materials and equipment files
+    seen_ids = set()
+    all_entities = []
+    duplicates_removed = 0
+    for entity in all_entities_raw:
+        if entity.id not in seen_ids:
+            seen_ids.add(entity.id)
+            all_entities.append(entity)
+        else:
+            duplicates_removed += 1
+
     print(f"\n✓ Total entities: {len(all_entities)}")
+    if duplicates_removed > 0:
+        print(f"  (Removed {duplicates_removed} duplicate entries)")
 
     # Generate placeholders
     print("\n[10/10] Generating placeholders...")
