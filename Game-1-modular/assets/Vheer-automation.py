@@ -145,7 +145,7 @@ OUTPUT_DIR = SCRIPT_DIR / 'generated_icons'
 CATALOG_PATH = SCRIPT_DIR.parent.parent / "Scaled JSON Development" / "ITEM_CATALOG_FOR_ICONS.md"
 
 GENERATION_TIMEOUT = 180
-WAIT_BETWEEN_ITEMS = 5
+WAIT_BETWEEN_ITEMS = 25
 VERSIONS_TO_GENERATE = 3
 
 # ============================================================================
