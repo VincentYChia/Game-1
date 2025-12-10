@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Dict, List
 from data.models.recipes import Recipe
+from core.paths import get_resource_path
 
 
 class RecipeDatabase:
@@ -28,10 +29,10 @@ class RecipeDatabase:
                                        ("refining", "recipes-refining-1.JSON"),
                                        ("engineering", "recipes-engineering-1.JSON"),
                                        ("adornments", "recipes-adornments-1.json")]:
-            for path in [f"recipes.JSON/{filename}", f"{base_path}recipes.JSON/{filename}"]:
-                if Path(path).exists():
-                    total += self._load_file(path, station_type)
-                    break
+            # Use get_resource_path for packaged environment support
+            path = get_resource_path(f"recipes.JSON/{filename}")
+            if path.exists():
+                total += self._load_file(str(path), station_type)
 
         if total == 0:
             self._create_default_recipes()

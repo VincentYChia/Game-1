@@ -6,6 +6,7 @@ from typing import Dict
 from data.models.npcs import NPCDefinition
 from data.models.quests import QuestDefinition, QuestObjective, QuestRewards
 from data.models.world import Position
+from core.paths import get_resource_path
 
 
 class NPCDatabase:
@@ -28,8 +29,8 @@ class NPCDatabase:
         try:
             # Try loading enhanced NPCs first, fallback to v1.0
             npc_files = [
-                Path("progression/npcs-enhanced.JSON"),
-                Path("progression/npcs-1.JSON")
+                get_resource_path("progression/npcs-enhanced.JSON"),
+                get_resource_path("progression/npcs-1.JSON")
             ]
 
             for npc_path in npc_files:
@@ -76,8 +77,8 @@ class NPCDatabase:
 
             # Try loading enhanced quests first, fallback to v1.0
             quest_files = [
-                Path("progression/quests-enhanced.JSON"),
-                Path("progression/quests-1.JSON")
+                get_resource_path("progression/quests-enhanced.JSON"),
+                get_resource_path("progression/quests-1.JSON")
             ]
 
             for quest_path in quest_files:

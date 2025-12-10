@@ -14,6 +14,7 @@ from .config import Config
 from .camera import Camera
 from .notifications import Notification
 from .testing import CraftingSystemTester
+from .paths import get_resource_path
 
 # Entities
 from entities import Character, DamageNumber
@@ -81,21 +82,21 @@ class GameEngine:
         print("Loading databases...")
         print("=" * 60)
 
-        MaterialDatabase.get_instance().load_from_file("items.JSON/items-materials-1.JSON")
+        MaterialDatabase.get_instance().load_from_file(str(get_resource_path("items.JSON/items-materials-1.JSON")))
         MaterialDatabase.get_instance().load_refining_items(
-            "items.JSON/items-refining-1.JSON")  # FIX #2: Load ingots/planks
+            str(get_resource_path("items.JSON/items-refining-1.JSON")))  # FIX #2: Load ingots/planks
         # Load stackable consumables (potions, oils, etc.)
         MaterialDatabase.get_instance().load_stackable_items(
-            "items.JSON/items-alchemy-1.JSON", categories=['consumable'])
+            str(get_resource_path("items.JSON/items-alchemy-1.JSON")), categories=['consumable'])
         # Load stackable devices (turrets, traps, bombs, utility devices)
         MaterialDatabase.get_instance().load_stackable_items(
-            "items.JSON/items-engineering-1.JSON", categories=['device'])
+            str(get_resource_path("items.JSON/items-engineering-1.JSON")), categories=['device'])
         # Load placeable crafting stations from items-smithing-2.JSON
         MaterialDatabase.get_instance().load_stackable_items(
-            "items.JSON/items-smithing-2.JSON", categories=['station'])
+            str(get_resource_path("items.JSON/items-smithing-2.JSON")), categories=['station'])
         # Load placeable crafting stations from legacy file (backup)
         MaterialDatabase.get_instance().load_stackable_items(
-            "Definitions.JSON/crafting-stations-1.JSON", categories=['station'])
+            str(get_resource_path("Definitions.JSON/crafting-stations-1.JSON")), categories=['station'])
         TranslationDatabase.get_instance().load_from_files()
         SkillDatabase.get_instance().load_from_file()
         RecipeDatabase.get_instance().load_from_files()
@@ -103,14 +104,14 @@ class GameEngine:
 
         # Load equipment from all item files
         equip_db = EquipmentDatabase.get_instance()
-        equip_db.load_from_file("items.JSON/items-engineering-1.JSON")
-        equip_db.load_from_file("items.JSON/items-smithing-2.JSON")
-        equip_db.load_from_file("items.JSON/items-tools-1.JSON")
-        equip_db.load_from_file("items.JSON/items-alchemy-1.JSON")
+        equip_db.load_from_file(str(get_resource_path("items.JSON/items-engineering-1.JSON")))
+        equip_db.load_from_file(str(get_resource_path("items.JSON/items-smithing-2.JSON")))
+        equip_db.load_from_file(str(get_resource_path("items.JSON/items-tools-1.JSON")))
+        equip_db.load_from_file(str(get_resource_path("items.JSON/items-alchemy-1.JSON")))
 
-        TitleDatabase.get_instance().load_from_file("progression/titles-1.JSON")
-        ClassDatabase.get_instance().load_from_file("progression/classes-1.JSON")
-        SkillDatabase.get_instance().load_from_file("Skills/skills-skills-1.JSON")
+        TitleDatabase.get_instance().load_from_file(str(get_resource_path("progression/titles-1.JSON")))
+        ClassDatabase.get_instance().load_from_file(str(get_resource_path("progression/classes-1.JSON")))
+        SkillDatabase.get_instance().load_from_file(str(get_resource_path("Skills/skills-skills-1.JSON")))
         NPCDatabase.get_instance().load_from_files()  # Load NPCs and Quests
 
         # Initialize crafting subdisciplines (minigames)

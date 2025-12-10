@@ -3,6 +3,7 @@
 import os
 import pygame
 from typing import Dict, Optional
+from core.paths import get_resource_path
 
 
 class ImageCache:
@@ -16,10 +17,8 @@ class ImageCache:
         self.failed_paths: set = set()  # Track failed loads to avoid repeated attempts
 
         # Get the absolute path to the assets directory
-        # Assumes this file is in Game-1-modular/rendering/
-        import pathlib
-        module_dir = pathlib.Path(__file__).parent.parent  # Go up to Game-1-modular/
-        self.base_path = str(module_dir / "assets")
+        # Uses PathManager for correct handling of packaged vs development environments
+        self.base_path = str(get_resource_path("assets"))
 
     @classmethod
     def get_instance(cls) -> 'ImageCache':
