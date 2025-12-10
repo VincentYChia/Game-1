@@ -900,8 +900,17 @@ class Renderer:
             size = Config.TILE_SIZE - 4
             npc_rect = pygame.Rect(nx - size // 2, ny - size // 2, size, size)
 
-            # Draw NPC with sprite color
-            pygame.draw.rect(self.screen, npc.npc_def.sprite_color, npc_rect)
+            # Try to load NPC icon
+            npc_icon_path = f"npcs/{npc.npc_def.npc_id}.png"
+            image_cache = ImageCache.get_instance()
+            npc_icon = image_cache.get_image(npc_icon_path, (size, size))
+
+            if npc_icon:
+                # Render icon
+                self.screen.blit(npc_icon, npc_rect.topleft)
+            else:
+                # Fallback: Draw NPC with sprite color
+                pygame.draw.rect(self.screen, npc.npc_def.sprite_color, npc_rect)
 
             # Border color based on proximity
             if is_near:
@@ -3482,7 +3491,8 @@ class Renderer:
 
             # Load and display class icon
             class_icon_path = f"classes/{class_def.class_id}.png"
-            class_icon = self.image_cache.get_image(class_icon_path, (s(60), s(60)))
+            image_cache = ImageCache.get_instance()
+            class_icon = image_cache.get_image(class_icon_path, (s(60), s(60)))
             if class_icon:
                 icon_rect = class_icon.get_rect(topleft=(x + s(10), y + s(10)))
                 surf.blit(class_icon, icon_rect)
