@@ -900,8 +900,17 @@ class Renderer:
             size = Config.TILE_SIZE - 4
             npc_rect = pygame.Rect(nx - size // 2, ny - size // 2, size, size)
 
-            # Draw NPC with sprite color
-            pygame.draw.rect(self.screen, npc.npc_def.sprite_color, npc_rect)
+            # Try to load NPC icon
+            npc_icon_path = f"npcs/{npc.npc_def.npc_id}.png"
+            image_cache = ImageCache.get_instance()
+            npc_icon = image_cache.get_image(npc_icon_path, (size, size))
+
+            if npc_icon:
+                # Render icon
+                self.screen.blit(npc_icon, npc_rect.topleft)
+            else:
+                # Fallback: Draw NPC with sprite color
+                pygame.draw.rect(self.screen, npc.npc_def.sprite_color, npc_rect)
 
             # Border color based on proximity
             if is_near:
@@ -1216,8 +1225,21 @@ class Renderer:
         y += 40
 
         if character.class_system.current_class:
-            class_text = f"Class: {character.class_system.current_class.name}"
-            self.render_text(class_text, Config.VIEWPORT_WIDTH + 20, y, small=True)
+            # Try to load class icon
+            class_id = character.class_system.current_class.class_id
+            class_icon_path = f"classes/{class_id}.png"
+            image_cache = ImageCache.get_instance()
+            class_icon = image_cache.get_image(class_icon_path, (24, 24))
+
+            if class_icon:
+                # Render icon next to text
+                self.screen.blit(class_icon, (Config.VIEWPORT_WIDTH + 20, y - 2))
+                class_text = f"Class: {character.class_system.current_class.name}"
+                self.render_text(class_text, Config.VIEWPORT_WIDTH + 50, y, small=True)
+            else:
+                # Fallback without icon
+                class_text = f"Class: {character.class_system.current_class.name}"
+                self.render_text(class_text, Config.VIEWPORT_WIDTH + 20, y, small=True)
             y += 25
 
         self.render_text(f"Position: ({character.position.x:.1f}, {character.position.y:.1f})",
@@ -1900,14 +1922,26 @@ class Renderer:
                     pygame.draw.rect(surf, button_color, button_rect)
                     pygame.draw.rect(surf, (100, 150, 200), button_rect, s(2))
 
+                    # Quest icon
+                    quest_icon_path = f"quests/{quest_id}.png"
+                    image_cache = ImageCache.get_instance()
+                    quest_icon = image_cache.get_image(quest_icon_path, (s(40), s(40)))
+
+                    if quest_icon:
+                        # Render icon on left side of button
+                        surf.blit(quest_icon, (button_rect.x + s(10), button_rect.y + s(10)))
+                        title_x = button_rect.x + s(60)
+                    else:
+                        title_x = button_rect.x + s(10)
+
                     # Quest title
                     title_surf = self.small_font.render(quest_def.title, True, (220, 220, 255))
-                    surf.blit(title_surf, (button_rect.x + s(10), button_rect.y + s(8)))
+                    surf.blit(title_surf, (title_x, button_rect.y + s(8)))
 
                     # Quest description (truncated)
                     desc = quest_def.description[:60] + "..." if len(quest_def.description) > 60 else quest_def.description
                     desc_surf = self.tiny_font.render(desc, True, (180, 180, 200))
-                    surf.blit(desc_surf, (button_rect.x + s(10), button_rect.y + s(30)))
+                    surf.blit(desc_surf, (title_x, button_rect.y + s(30)))
 
                     button_rects.append(('accept', quest_id, pygame.Rect(wx + button_rect.x, wy + button_rect.y, button_rect.width, button_rect.height)))
                     y += s(70)
@@ -1980,10 +2014,23 @@ class Renderer:
 
         if character.quests.active_quests:
             for quest_id, quest in character.quests.active_quests.items():
-                # Quest Title
-                if y >= content_rect.y - s(25) and y < content_rect.bottom:
-                    title_text = f"📜 {quest.quest_def.title}"
-                    surf.blit(self.small_font.render(title_text, True, (220, 220, 255)), (x + s(10), y))
+                # Quest Title with Icon
+                if y >= content_rect.y - s(30) and y < content_rect.bottom:
+                    # Try to load quest icon
+                    quest_icon_path = f"quests/{quest_id}.png"
+                    image_cache = ImageCache.get_instance()
+                    quest_icon = image_cache.get_image(quest_icon_path, (s(20), s(20)))
+
+                    if quest_icon:
+                        # Render icon
+                        surf.blit(quest_icon, (x + s(10), y))
+                        # Title next to icon
+                        title_text = quest.quest_def.title
+                        surf.blit(self.small_font.render(title_text, True, (220, 220, 255)), (x + s(35), y))
+                    else:
+                        # Fallback: emoji + title
+                        title_text = f"📜 {quest.quest_def.title}"
+                        surf.blit(self.small_font.render(title_text, True, (220, 220, 255)), (x + s(10), y))
                 y += s(25)
 
                 # Quest Description
@@ -2099,8 +2146,22 @@ class Renderer:
                 if quest_id in npc_db.quests:
                     quest_def = npc_db.quests[quest_id]
                     if y >= content_rect.y - s(20) and y < content_rect.bottom:
-                        completed_text = f"✓ {quest_def.title}"
-                        surf.blit(self.tiny_font.render(completed_text, True, (100, 255, 100)), (x + s(10), y))
+                        # Try to load quest icon
+                        quest_icon_path = f"quests/{quest_id}.png"
+                        image_cache = ImageCache.get_instance()
+                        quest_icon = image_cache.get_image(quest_icon_path, (s(16), s(16)))
+
+                        if quest_icon:
+                            # Render icon (greyed out for completed)
+                            greyed_icon = quest_icon.copy()
+                            greyed_icon.set_alpha(128)
+                            surf.blit(greyed_icon, (x + s(10), y))
+                            completed_text = f"✓ {quest_def.title}"
+                            surf.blit(self.tiny_font.render(completed_text, True, (100, 255, 100)), (x + s(30), y))
+                        else:
+                            # Fallback without icon
+                            completed_text = f"✓ {quest_def.title}"
+                            surf.blit(self.tiny_font.render(completed_text, True, (100, 255, 100)), (x + s(10), y))
                     y += s(20)
         else:
             if y >= content_rect.y and y < content_rect.bottom:
@@ -3480,14 +3541,36 @@ class Renderer:
             pygame.draw.rect(surf, card_color, card_rect)
             pygame.draw.rect(surf, (100, 120, 140) if is_hovered else (80, 90, 100), card_rect, s(2))
 
-            name_surf = self.font.render(class_def.name, True, (255, 215, 0))
-            surf.blit(name_surf, (x + s(10), y + s(8)))
+            # Load and display class icon
+            class_icon_path = f"classes/{class_def.class_id}.png"
+            image_cache = ImageCache.get_instance()
+            class_icon = image_cache.get_image(class_icon_path, (s(60), s(60)))
 
-            bonus_y = y + s(35)
+            # Determine text positioning based on icon availability
+            if class_icon:
+                # Icon on left side
+                icon_rect = class_icon.get_rect(topleft=(x + s(10), y + s(10)))
+                surf.blit(class_icon, icon_rect)
+                # Text positioned to the right of icon
+                text_x = x + s(80)  # After icon (10 + 60) + 10px spacing
+                name_y = y + s(8)
+                bonus_start_y = y + s(30)
+            else:
+                # No icon, use traditional left-aligned layout
+                text_x = x + s(10)
+                name_y = y + s(8)
+                bonus_start_y = y + s(35)
+
+            # Render class name
+            name_surf = self.font.render(class_def.name, True, (255, 215, 0))
+            surf.blit(name_surf, (text_x, name_y))
+
+            # Render bonuses
+            bonus_y = bonus_start_y
             for bonus_type, value in list(class_def.bonuses.items())[:2]:
                 bonus_text = f"+{value if isinstance(value, int) else f'{value * 100:.0f}%'} {bonus_type.replace('_', ' ')}"
                 bonus_surf = self.tiny_font.render(bonus_text, True, (100, 200, 100))
-                surf.blit(bonus_surf, (x + s(15), bonus_y))
+                surf.blit(bonus_surf, (text_x, bonus_y))
                 bonus_y += s(14)
 
             if is_hovered:
