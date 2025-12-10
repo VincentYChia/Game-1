@@ -152,6 +152,11 @@ class GameEngine:
             self.character = Character(Position(50.0, 50.0, 0.0))
             self.start_menu_open = False
 
+            # Open class selection for new character
+            if not self.character.class_system.current_class:
+                self.character.class_selection_open = True
+                print("✓ Opening class selection...")
+
         # Initialize automated testing framework
         self.test_system = CraftingSystemTester(self)
 
@@ -950,6 +955,11 @@ class GameEngine:
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
             self.add_notification("Welcome to your new world!", (100, 255, 100))
 
+            # Open class selection for new character
+            if not self.character.class_system.current_class:
+                self.character.class_selection_open = True
+                print("✓ Opening class selection...")
+
         elif option_index == 1:
             # Load World - Load from autosave.json using new SaveManager
             print("📂 Loading saved world...")
@@ -1034,6 +1044,11 @@ class GameEngine:
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
             self.add_notification("Temporary world started (no saves)", (255, 215, 0))
+
+            # Open class selection for new character
+            if not self.character.class_system.current_class:
+                self.character.class_selection_open = True
+                print("✓ Opening class selection...")
 
     def handle_mouse_click(self, mouse_pos: Tuple[int, int]):
         # Start menu clicks (highest priority)
