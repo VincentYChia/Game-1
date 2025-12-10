@@ -1,149 +1,50 @@
 {
   "version": "2.0",
-  "save_timestamp": "2025-12-06T20:58:58.981112",
+  "save_timestamp": "2025-12-09T22:42:17.951561",
   "player": {
     "position": {
-      "x": 47.20711265,
-      "y": 51.65260744999995,
+      "x": 50.0,
+      "y": 50.0,
       "z": 0.0
     },
-    "facing": "up",
+    "facing": "down",
     "stats": {
-      "strength": 15,
-      "defense": 12,
-      "vitality": 14,
-      "luck": 8,
-      "agility": 10,
-      "intelligence": 11
+      "strength": 0,
+      "defense": 0,
+      "vitality": 0,
+      "luck": 0,
+      "agility": 0,
+      "intelligence": 0
     },
     "leveling": {
-      "level": 10,
-      "current_exp": 5000,
-      "unallocated_stat_points": 5
+      "level": 1,
+      "current_exp": 0,
+      "unallocated_stat_points": 0
     },
-    "health": 340.0,
-    "max_health": 340,
-    "mana": 253.01920000000018,
-    "max_mana": 320,
-    "class": "warrior",
+    "health": 100,
+    "max_health": 100,
+    "mana": 100,
+    "max_mana": 100,
+    "class": null,
     "inventory": [
-      {
-        "item_id": "copper_ore",
-        "quantity": 25,
-        "max_stack": 99,
-        "rarity": "common"
-      },
-      {
-        "item_id": "iron_ore",
-        "quantity": 20,
-        "max_stack": 99,
-        "rarity": "common"
-      },
-      {
-        "item_id": "steel_ore",
-        "quantity": 10,
-        "max_stack": 99,
-        "rarity": "uncommon"
-      },
-      {
-        "item_id": "oak_log",
-        "quantity": 30,
-        "max_stack": 99,
-        "rarity": "common"
-      },
-      {
-        "item_id": "birch_log",
-        "quantity": 20,
-        "max_stack": 99,
-        "rarity": "common"
-      },
-      {
-        "item_id": "maple_log",
-        "quantity": 15,
-        "max_stack": 99,
-        "rarity": "uncommon"
-      },
-      {
-        "item_id": "limestone",
-        "quantity": 20,
-        "max_stack": 99,
-        "rarity": "common"
-      },
-      {
-        "item_id": "granite",
-        "quantity": 15,
-        "max_stack": 99,
-        "rarity": "common"
-      },
-      {
-        "item_id": "copper_ingot",
-        "quantity": 15,
-        "max_stack": 99,
-        "rarity": "common"
-      },
-      {
-        "item_id": "iron_ingot",
-        "quantity": 10,
-        "max_stack": 99,
-        "rarity": "common"
-      },
-      {
-        "item_id": "oak_plank",
-        "quantity": 20,
-        "max_stack": 99,
-        "rarity": "common"
-      },
-      {
-        "item_id": "birch_plank",
-        "quantity": 15,
-        "max_stack": 99,
-        "rarity": "common"
-      },
-      {
-        "item_id": "minor_health_potion",
-        "quantity": 5,
-        "max_stack": 20,
-        "rarity": "common"
-      },
       null,
       null,
-      {
-        "item_id": "steel_helm",
-        "quantity": 1,
-        "max_stack": 1,
-        "rarity": "uncommon",
-        "equipment_data": {
-          "item_id": "steel_helm",
-          "name": "Steel Helm",
-          "tier": 2,
-          "rarity": "uncommon",
-          "slot": "head",
-          "damage": [
-            0,
-            0
-          ],
-          "defense": 12,
-          "durability_current": 120,
-          "durability_max": 120,
-          "attack_speed": 1.0,
-          "weight": 3.0,
-          "range": 1.0,
-          "hand_type": "default",
-          "item_type": "armor"
-        }
-      },
-      {
-        "item_id": "basic_arrow_turret",
-        "quantity": 2,
-        "max_stack": 5,
-        "rarity": "uncommon"
-      },
-      {
-        "item_id": "spike_trap",
-        "quantity": 3,
-        "max_stack": 15,
-        "rarity": "common"
-      },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       null,
       null,
       null,
@@ -158,75 +59,202 @@
       null
     ],
     "equipment": {
-      "mainHand": "steel_longsword",
-      "offHand": "iron_shortsword",
-      "helmet": "steel_helm",
-      "chestplate": "iron_chestplate",
-      "leggings": "steel_leggings",
-      "boots": "iron_boots",
-      "gauntlets": "iron_studded_gauntlets",
+      "mainHand": null,
+      "offHand": null,
+      "helmet": null,
+      "chestplate": null,
+      "leggings": null,
+      "boots": null,
+      "gauntlets": null,
       "accessory": null,
-      "axe": "iron_axe",
-      "pickaxe": "iron_pickaxe"
+      "axe": "copper_axe",
+      "pickaxe": "copper_pickaxe"
     },
     "equipped_skills": [
-      "fireball",
-      "heal",
-      "shield_bash",
+      null,
+      null,
+      null,
       null,
       null
     ],
-    "known_skills": {
-      "fireball": {
-        "level": 2,
-        "experience": 150
-      },
-      "heal": {
-        "level": 1,
-        "experience": 50
-      },
-      "shield_bash": {
-        "level": 3,
-        "experience": 300
-      },
-      "ice_shard": {
-        "level": 1,
-        "experience": 0
-      },
-      "power_strike": {
-        "level": 2,
-        "experience": 100
-      }
-    },
+    "known_skills": {},
     "titles": [],
     "activities": {
-      "mining": 50,
-      "forestry": 40,
-      "smithing": 25,
-      "refining": 20,
-      "alchemy": 10,
-      "engineering": 15,
-      "enchanting": 5,
-      "combat": 60
+      "mining": 0,
+      "forestry": 0,
+      "smithing": 0,
+      "refining": 0,
+      "alchemy": 0,
+      "engineering": 0,
+      "enchanting": 0,
+      "combat": 0
     }
   },
   "world_state": {
-    "placed_entities": [
+    "placed_entities": [],
+    "modified_resources": [],
+    "crafting_stations": [
       {
         "position": {
-          "x": 48.0,
-          "y": 48.0,
-          "z": 0.0
+          "x": 44,
+          "y": 46,
+          "z": 0
         },
-        "item_id": "basic_arrow_turret",
-        "entity_type": "TURRET",
-        "tier": 1,
-        "health": 100.0,
-        "owner": null,
-        "time_remaining": 267.4749999999985,
-        "range": 5.0,
-        "damage": 20.0,
-        "attack_speed": 1.0
+        "station_type": "SMITHING",
+        "tier": 1
+      },
+      {
+        "position": {
+          "x": 44,
+          "y": 48,
+          "z": 0
+        },
+        "station_type": "SMITHING",
+        "tier": 2
+      },
+      {
+        "position": {
+          "x": 44,
+          "y": 50,
+          "z": 0
+        },
+        "station_type": "SMITHING",
+        "tier": 3
+      },
+      {
+        "position": {
+          "x": 44,
+          "y": 52,
+          "z": 0
+        },
+        "station_type": "SMITHING",
+        "tier": 4
+      },
+      {
+        "position": {
+          "x": 46,
+          "y": 46,
+          "z": 0
+        },
+        "station_type": "REFINING",
+        "tier": 1
+      },
+      {
+        "position": {
+          "x": 46,
+          "y": 48,
+          "z": 0
+        },
+        "station_type": "REFINING",
+        "tier": 2
+      },
+      {
+        "position": {
+          "x": 46,
+          "y": 50,
+          "z": 0
+        },
+        "station_type": "REFINING",
+        "tier": 3
+      },
+      {
+        "position": {
+          "x": 46,
+          "y": 52,
+          "z": 0
+        },
+        "station_type": "REFINING",
+        "tier": 4
+      },
+      {
+        "position": {
+          "x": 54,
+          "y": 46,
+          "z": 0
+        },
+        "station_type": "ALCHEMY",
+        "tier": 1
+      },
+      {
+        "position": {
+          "x": 54,
+          "y": 48,
+          "z": 0
+        },
+        "station_type": "ALCHEMY",
+        "tier": 2
+      },
+      {
+        "position": {
+          "x": 54,
+          "y": 50,
+          "z": 0
+        },
+        "station_type": "ALCHEMY",
+        "tier": 3
+      },
+      {
+        "position": {
+          "x": 54,
+          "y": 52,
+          "z": 0
+        },
+        "station_type": "ALCHEMY",
+        "tier": 4
+      },
+      {
+        "position": {
+          "x": 56,
+          "y": 46,
+          "z": 0
+        },
+        "station_type": "ENGINEERING",
+        "tier": 1
+      },
+      {
+        "position": {
+          "x": 56,
+          "y": 48,
+          "z": 0
+        },
+        "station_type": "ENGINEERING",
+        "tier": 2
+      },
+      {
+        "position": {
+          "x": 56,
+          "y": 50,
+          "z": 0
+        },
+        "station_type": "ENGINEERING",
+        "tier": 3
+      },
+      {
+        "position": {
+          "x": 56,
+          "y": 52,
+          "z": 0
+        },
+        "station_type": "ENGINEERING",
+        "tier": 4
+      },
+      {
+        "position": {
+          "x": 50,
+          "y": 46,
+          "z": 0
+        },
+        "station_type": "ADORNMENTS",
+        "tier": 1
+      },
+      {
+        "position": {
+          "x": 50,
+          "y": 48,
+          "z": 0
+        },
+        "station_type": "ADORNMENTS",
+        "tier": 2
       },
       {
         "position": {
@@ -234,227 +262,14 @@
           "y": 50,
           "z": 0
         },
-        "item_id": "basic_arrow_turret",
-        "entity_type": "TURRET",
-        "tier": 1,
-        "health": 100.0,
-        "owner": null,
-        "time_remaining": 269.53199999999896,
-        "range": 5.0,
-        "damage": 20.0,
-        "attack_speed": 1.0
+        "station_type": "ADORNMENTS",
+        "tier": 3
       },
       {
         "position": {
-          "x": 48,
-          "y": 50,
+          "x": 50,
+          "y": 52,
           "z": 0
-        },
-        "item_id": "spike_trap",
-        "entity_type": "TRAP",
-        "tier": 1,
-        "health": 100.0,
-        "owner": null,
-        "time_remaining": 280.2149999999992,
-        "range": 5.0,
-        "damage": 30.0,
-        "attack_speed": 1.0
-      },
-      {
-        "position": {
-          "x": 47,
-          "y": 51,
-          "z": 0
-        },
-        "item_id": "spike_trap",
-        "entity_type": "TRAP",
-        "tier": 1,
-        "health": 100.0,
-        "owner": null,
-        "time_remaining": 298.35999999999973,
-        "range": 5.0,
-        "damage": 30.0,
-        "attack_speed": 1.0
-      }
-    ],
-    "modified_resources": [],
-    "crafting_stations": [
-      {
-        "position": {
-          "x": 44.0,
-          "y": 46.0,
-          "z": 0.0
-        },
-        "station_type": "SMITHING",
-        "tier": 1
-      },
-      {
-        "position": {
-          "x": 44.0,
-          "y": 48.0,
-          "z": 0.0
-        },
-        "station_type": "SMITHING",
-        "tier": 2
-      },
-      {
-        "position": {
-          "x": 44.0,
-          "y": 50.0,
-          "z": 0.0
-        },
-        "station_type": "SMITHING",
-        "tier": 3
-      },
-      {
-        "position": {
-          "x": 44.0,
-          "y": 52.0,
-          "z": 0.0
-        },
-        "station_type": "SMITHING",
-        "tier": 4
-      },
-      {
-        "position": {
-          "x": 46.0,
-          "y": 46.0,
-          "z": 0.0
-        },
-        "station_type": "REFINING",
-        "tier": 1
-      },
-      {
-        "position": {
-          "x": 46.0,
-          "y": 48.0,
-          "z": 0.0
-        },
-        "station_type": "REFINING",
-        "tier": 2
-      },
-      {
-        "position": {
-          "x": 46.0,
-          "y": 50.0,
-          "z": 0.0
-        },
-        "station_type": "REFINING",
-        "tier": 3
-      },
-      {
-        "position": {
-          "x": 46.0,
-          "y": 52.0,
-          "z": 0.0
-        },
-        "station_type": "REFINING",
-        "tier": 4
-      },
-      {
-        "position": {
-          "x": 54.0,
-          "y": 46.0,
-          "z": 0.0
-        },
-        "station_type": "ALCHEMY",
-        "tier": 1
-      },
-      {
-        "position": {
-          "x": 54.0,
-          "y": 48.0,
-          "z": 0.0
-        },
-        "station_type": "ALCHEMY",
-        "tier": 2
-      },
-      {
-        "position": {
-          "x": 54.0,
-          "y": 50.0,
-          "z": 0.0
-        },
-        "station_type": "ALCHEMY",
-        "tier": 3
-      },
-      {
-        "position": {
-          "x": 54.0,
-          "y": 52.0,
-          "z": 0.0
-        },
-        "station_type": "ALCHEMY",
-        "tier": 4
-      },
-      {
-        "position": {
-          "x": 56.0,
-          "y": 46.0,
-          "z": 0.0
-        },
-        "station_type": "ENGINEERING",
-        "tier": 1
-      },
-      {
-        "position": {
-          "x": 56.0,
-          "y": 48.0,
-          "z": 0.0
-        },
-        "station_type": "ENGINEERING",
-        "tier": 2
-      },
-      {
-        "position": {
-          "x": 56.0,
-          "y": 50.0,
-          "z": 0.0
-        },
-        "station_type": "ENGINEERING",
-        "tier": 3
-      },
-      {
-        "position": {
-          "x": 56.0,
-          "y": 52.0,
-          "z": 0.0
-        },
-        "station_type": "ENGINEERING",
-        "tier": 4
-      },
-      {
-        "position": {
-          "x": 50.0,
-          "y": 46.0,
-          "z": 0.0
-        },
-        "station_type": "ADORNMENTS",
-        "tier": 1
-      },
-      {
-        "position": {
-          "x": 50.0,
-          "y": 48.0,
-          "z": 0.0
-        },
-        "station_type": "ADORNMENTS",
-        "tier": 2
-      },
-      {
-        "position": {
-          "x": 50.0,
-          "y": 50.0,
-          "z": 0.0
-        },
-        "station_type": "ADORNMENTS",
-        "tier": 3
-      },
-      {
-        "position": {
-          "x": 50.0,
-          "y": 52.0,
-          "z": 0.0
         },
         "station_type": "ADORNMENTS",
         "tier": 4
@@ -463,9 +278,7 @@
   },
   "quest_state": {
     "active_quests": {},
-    "completed_quests": [
-      "tutorial_quest"
-    ]
+    "completed_quests": []
   },
   "npc_state": {
     "tutorial_guide": {
