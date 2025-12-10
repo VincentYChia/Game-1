@@ -56,8 +56,9 @@ class ImageCache:
         # Build full path - handle both items and non-items
         # Items use paths like "materials/copper_ore.png" (need items/ prefix)
         # Others use paths like "enemies/wolf_grey.png" (no items/ prefix needed)
-        if icon_path.startswith(('enemies/', 'resources/', 'skills/', 'titles/')):
-            # Direct asset path (enemies, resources, etc.)
+        # New entity types: npcs, quests, classes (direct asset paths)
+        if icon_path.startswith(('enemies/', 'resources/', 'skills/', 'titles/', 'npcs/', 'quests/', 'classes/')):
+            # Direct asset path (enemies, resources, npcs, quests, classes, etc.)
             full_path = os.path.join(self.base_path, icon_path)
         else:
             # Item path (needs items/ prefix)
@@ -89,6 +90,7 @@ class ImageCache:
 
         except (pygame.error, FileNotFoundError, OSError) as e:
             # Failed to load - add to failed paths to avoid repeated attempts
+            # Uncomment for debugging: print(f"Failed to load {full_path}: {e}")
             self.failed_paths.add(icon_path)
             return None
 

@@ -3480,8 +3480,19 @@ class Renderer:
             pygame.draw.rect(surf, card_color, card_rect)
             pygame.draw.rect(surf, (100, 120, 140) if is_hovered else (80, 90, 100), card_rect, s(2))
 
-            name_surf = self.font.render(class_def.name, True, (255, 215, 0))
-            surf.blit(name_surf, (x + s(10), y + s(8)))
+            # Load and display class icon
+            class_icon_path = f"classes/{class_def.class_id}.png"
+            class_icon = self.image_cache.get_image(class_icon_path, (s(60), s(60)))
+            if class_icon:
+                icon_rect = class_icon.get_rect(topleft=(x + s(10), y + s(10)))
+                surf.blit(class_icon, icon_rect)
+                # Name next to icon
+                name_surf = self.font.render(class_def.name, True, (255, 215, 0))
+                surf.blit(name_surf, (x + s(80), y + s(8)))
+            else:
+                # No icon available, just show name as before
+                name_surf = self.font.render(class_def.name, True, (255, 215, 0))
+                surf.blit(name_surf, (x + s(10), y + s(8)))
 
             bonus_y = y + s(35)
             for bonus_type, value in list(class_def.bonuses.items())[:2]:
