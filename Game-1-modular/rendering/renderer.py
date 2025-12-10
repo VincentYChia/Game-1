@@ -3545,22 +3545,32 @@ class Renderer:
             class_icon_path = f"classes/{class_def.class_id}.png"
             image_cache = ImageCache.get_instance()
             class_icon = image_cache.get_image(class_icon_path, (s(60), s(60)))
+
+            # Determine text positioning based on icon availability
             if class_icon:
+                # Icon on left side
                 icon_rect = class_icon.get_rect(topleft=(x + s(10), y + s(10)))
                 surf.blit(class_icon, icon_rect)
-                # Name next to icon
-                name_surf = self.font.render(class_def.name, True, (255, 215, 0))
-                surf.blit(name_surf, (x + s(80), y + s(8)))
+                # Text positioned to the right of icon
+                text_x = x + s(80)  # After icon (10 + 60) + 10px spacing
+                name_y = y + s(8)
+                bonus_start_y = y + s(30)
             else:
-                # No icon available, just show name as before
-                name_surf = self.font.render(class_def.name, True, (255, 215, 0))
-                surf.blit(name_surf, (x + s(10), y + s(8)))
+                # No icon, use traditional left-aligned layout
+                text_x = x + s(10)
+                name_y = y + s(8)
+                bonus_start_y = y + s(35)
 
-            bonus_y = y + s(35)
+            # Render class name
+            name_surf = self.font.render(class_def.name, True, (255, 215, 0))
+            surf.blit(name_surf, (text_x, name_y))
+
+            # Render bonuses
+            bonus_y = bonus_start_y
             for bonus_type, value in list(class_def.bonuses.items())[:2]:
                 bonus_text = f"+{value if isinstance(value, int) else f'{value * 100:.0f}%'} {bonus_type.replace('_', ' ')}"
                 bonus_surf = self.tiny_font.render(bonus_text, True, (100, 200, 100))
-                surf.blit(bonus_surf, (x + s(15), bonus_y))
+                surf.blit(bonus_surf, (text_x, bonus_y))
                 bonus_y += s(14)
 
             if is_hovered:
