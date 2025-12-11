@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Dict, Optional
 from data.models.recipes import PlacementData
+from core.paths import get_resource_path
 
 
 class PlacementDatabase:
@@ -25,19 +26,19 @@ class PlacementDatabase:
         total = 0
 
         # Smithing placements
-        total += self._load_smithing("placements.JSON/placements-smithing-1.JSON")
+        total += self._load_smithing(str(get_resource_path("placements.JSON/placements-smithing-1.JSON")))
 
         # Refining placements
-        total += self._load_refining("placements.JSON/placements-refining-1.JSON")
+        total += self._load_refining(str(get_resource_path("placements.JSON/placements-refining-1.JSON")))
 
         # Alchemy placements
-        total += self._load_alchemy("placements.JSON/placements-alchemy-1.JSON")
+        total += self._load_alchemy(str(get_resource_path("placements.JSON/placements-alchemy-1.JSON")))
 
         # Engineering placements
-        total += self._load_engineering("placements.JSON/placements-engineering-1.JSON")
+        total += self._load_engineering(str(get_resource_path("placements.JSON/placements-engineering-1.JSON")))
 
         # Enchanting/Adornments placements
-        total += self._load_enchanting("placements.JSON/placements-adornments-1.JSON")
+        total += self._load_enchanting(str(get_resource_path("placements.JSON/placements-adornments-1.JSON")))
 
         self.loaded = True
         print(f"✓ Loaded {total} placement templates")

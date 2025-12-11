@@ -1,0 +1,15 @@
+# Game-1 Runtime Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core game engine
+pygame>=2.6.0
+
+# Note: All other dependencies are Python standard library
+# - json (data loading/saving)
+# - dataclasses (data models)
+# - pathlib (file handling)
+# - typing (type hints)
+# - enum (constants)
+# - random (procedural generation)
+# - math (calculations)
+# - datetime (timestamps)

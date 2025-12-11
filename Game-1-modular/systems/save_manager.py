@@ -10,21 +10,23 @@ from typing import Dict, List, Optional, Any
 from pathlib import Path
 
 from data.models.world import Position
+from core.paths import get_save_path
 
 
 class SaveManager:
     """Centralized save/load manager for all game state."""
 
     SAVE_VERSION = "2.0"
-    SAVE_DIR = "saves"
 
     def __init__(self):
         """Initialize the save manager."""
         self.ensure_save_directory()
 
     def ensure_save_directory(self):
-        """Ensure the saves directory exists."""
-        Path(self.SAVE_DIR).mkdir(exist_ok=True)
+        """Ensure the saves directory exists (handled by PathManager)."""
+        # PathManager automatically creates save directory
+        # This method kept for compatibility
+        pass
 
     def create_save_data(
         self,
@@ -343,7 +345,7 @@ class SaveManager:
                 npcs
             )
 
-            filepath = os.path.join(self.SAVE_DIR, filename)
+            filepath = get_save_path(filename)
 
             with open(filepath, 'w') as f:
                 json.dump(save_data, f, indent=2)
@@ -369,7 +371,7 @@ class SaveManager:
             Dictionary containing save data, or None if load failed
         """
         try:
-            filepath = os.path.join(self.SAVE_DIR, filename)
+            filepath = get_save_path(filename)
 
             if not os.path.exists(filepath):
                 print(f"Save file not found: {filepath}")
@@ -399,12 +401,13 @@ class SaveManager:
         """
         save_files = []
 
-        if not os.path.exists(self.SAVE_DIR):
+        save_dir = get_save_path()
+        if not os.path.exists(save_dir):
             return save_files
 
-        for filename in os.listdir(self.SAVE_DIR):
+        for filename in os.listdir(save_dir):
             if filename.endswith('.json'):
-                filepath = os.path.join(self.SAVE_DIR, filename)
+                filepath = get_save_path(filename)
 
                 try:
                     # Get file metadata
@@ -450,7 +453,7 @@ class SaveManager:
             True if deletion was successful, False otherwise
         """
         try:
-            filepath = os.path.join(self.SAVE_DIR, filename)
+            filepath = get_save_path(filename)
 
             if os.path.exists(filepath):
                 os.remove(filepath)

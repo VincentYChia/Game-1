@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 from typing import Dict
+from core.paths import get_resource_path
 
 
 class TranslationDatabase:
@@ -22,27 +23,24 @@ class TranslationDatabase:
         return cls._instance
 
     def load_from_files(self, base_path: str = ""):
-        possible_paths = [
-            "Definitions.JSON/skills-translation-table.JSON",
-            f"{base_path}Definitions.JSON/skills-translation-table.JSON",
-        ]
+        # Use get_resource_path for packaged environment support
+        path = get_resource_path("Definitions.JSON/skills-translation-table.JSON")
 
-        for path in possible_paths:
-            if Path(path).exists():
-                try:
-                    with open(path, 'r') as f:
-                        data = json.load(f)
-                    if 'durationTranslations' in data:
-                        for key, val in data['durationTranslations'].items():
-                            self.duration_seconds[key] = val.get('seconds', 0)
-                    if 'manaCostTranslations' in data:
-                        for key, val in data['manaCostTranslations'].items():
-                            self.mana_costs[key] = val.get('cost', 0)
-                    print(f"✓ Loaded translations from {path}")
-                    self.loaded = True
-                    return
-                except Exception as e:
-                    print(f"⚠ Error loading {path}: {e}")
+        if path.exists():
+            try:
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                if 'durationTranslations' in data:
+                    for key, val in data['durationTranslations'].items():
+                        self.duration_seconds[key] = val.get('seconds', 0)
+                if 'manaCostTranslations' in data:
+                    for key, val in data['manaCostTranslations'].items():
+                        self.mana_costs[key] = val.get('cost', 0)
+                print(f"✓ Loaded translations from {path}")
+                self.loaded = True
+                return
+            except Exception as e:
+                print(f"⚠ Error loading {path}: {e}")
 
         self._create_defaults()
         self.loaded = True
