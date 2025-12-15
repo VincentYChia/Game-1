@@ -1,0 +1,5294 @@
+{
+  "summary": {
+    "total_files": 44,
+    "total_unique_tags": 190,
+    "total_occurrences": 773
+  },
+  "tags": {
+    "station": [
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t3",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t4",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "enchanting_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "enchanting_table_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t3",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t3",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "enchanting_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_forge_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_forge_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_forge_t3",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_refinery_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_refinery_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_alchemy_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_engineering_bench_t1",
+        "context": "metadata.tags"
+      }
+    ],
+    "smithing": [
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t3",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t4",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "smiths_focus",
+        "context": "tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t3",
+        "context": "metadata.tags"
+      }
+    ],
+    "starter": [
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "enchanting_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_grey",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_green",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_brown",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "enchanting_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "progression/npcs-enhanced.JSON",
+        "entity_type": "npc",
+        "entity_id": "unknown",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "progression/quests-enhanced.JSON",
+        "entity_type": "quest",
+        "entity_id": "tutorial_quest",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_minor_health_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_shortsword",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_spear",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_leather_tunic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_boots",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_forge_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_refinery_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_pine_shortbow",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_alchemy_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_engineering_bench_t1",
+        "context": "metadata.tags"
+      }
+    ],
+    "standard": [
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_health_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_chestplate",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_forge_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_refinery_t2",
+        "context": "metadata.tags"
+      }
+    ],
+    "quality": [
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t3",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "enchanting_table_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "alchemists_insight",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "engineers_precision",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "refiners_touch",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "master_craftsman",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_greater_health_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_ash_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_longsword",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_helm",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_forge_t3",
+        "context": "metadata.tags"
+      }
+    ],
+    "legendary": [
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t4",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_titans_brew",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_master",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_master",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_mithril_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_adamantine_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_worldtree_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_adamantine_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_orichalcum_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_mithril_dagger",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_mithril_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_mithril_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_master",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_master",
+        "context": "metadata.tags"
+      }
+    ],
+    "refining": [
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "refiners_touch",
+        "context": "tags"
+      }
+    ],
+    "alchemy": [
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "alchemists_insight",
+        "context": "tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_alchemy_table_t1",
+        "context": "metadata.tags"
+      }
+    ],
+    "engineering": [
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "engineers_precision",
+        "context": "tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_engineering_bench_t1",
+        "context": "metadata.tags"
+      }
+    ],
+    "enchanting": [
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "enchanting_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/crafting-stations-1.JSON",
+        "entity_type": "station",
+        "entity_id": "enchanting_table_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "enchanters_grace",
+        "context": "tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "enchanting_table_t1",
+        "context": "metadata.tags"
+      }
+    ],
+    "wolf": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_grey",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_dire",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_elder",
+        "context": "metadata.tags"
+      }
+    ],
+    "common": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_grey",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_green",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_brown",
+        "context": "metadata.tags"
+      }
+    ],
+    "passive": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_grey",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_green",
+        "context": "metadata.tags"
+      }
+    ],
+    "uncommon": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_dire",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_acid",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_armored",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_uncommon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_uncommon",
+        "context": "metadata.tags"
+      }
+    ],
+    "aggressive": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_dire",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_acid",
+        "context": "metadata.tags"
+      }
+    ],
+    "mid-game": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_dire",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_acid",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_armored",
+        "context": "metadata.tags"
+      }
+    ],
+    "rare": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_elder",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_crystal",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_titan",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "golem_stone",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "void_wraith",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_tin_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_bronze_rare",
+        "context": "metadata.tags"
+      }
+    ],
+    "boss": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_elder",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_crystal",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_titan",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "golem_stone",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "golem_crystal",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "entity_primordial",
+        "context": "metadata.tags"
+      }
+    ],
+    "end-game": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "wolf_elder",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_crystal",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_titan",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "void_wraith",
+        "context": "metadata.tags"
+      }
+    ],
+    "slime": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_green",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_acid",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "slime_crystal",
+        "context": "metadata.tags"
+      }
+    ],
+    "beetle": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_brown",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_armored",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_titan",
+        "context": "metadata.tags"
+      }
+    ],
+    "docile": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_brown",
+        "context": "metadata.tags"
+      }
+    ],
+    "territorial": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "beetle_armored",
+        "context": "metadata.tags"
+      }
+    ],
+    "golem": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "golem_stone",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "golem_crystal",
+        "context": "metadata.tags"
+      }
+    ],
+    "construct": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "golem_stone",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "golem_crystal",
+        "context": "metadata.tags"
+      }
+    ],
+    "epic": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "golem_crystal",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_adamantine_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_tin_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_bronze_epic",
+        "context": "metadata.tags"
+      }
+    ],
+    "wraith": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "void_wraith",
+        "context": "metadata.tags"
+      }
+    ],
+    "phase": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "void_wraith",
+        "context": "metadata.tags"
+      }
+    ],
+    "entity": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "entity_primordial",
+        "context": "metadata.tags"
+      }
+    ],
+    "mythical": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "entity_primordial",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_etherion_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_mythical",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_orichalcum_mythical",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_etherion_mythical",
+        "context": "metadata.tags"
+      }
+    ],
+    "reality-bender": [
+      {
+        "file": "Definitions.JSON/hostiles-1.JSON",
+        "entity_type": "hostile",
+        "entity_id": "entity_primordial",
+        "context": "metadata.tags"
+      }
+    ],
+    "damage_boost": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "miners_fury",
+        "context": "tags"
+      }
+    ],
+    "gathering": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "miners_fury",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "lumberjacks_rhythm",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "bountiful_harvest",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "treasure_sense",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "tool_preservation",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "chain_harvest",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "endless_bounty",
+        "context": "tags"
+      },
+      {
+        "file": "progression/quests-enhanced.JSON",
+        "entity_type": "quest",
+        "entity_id": "tutorial_quest",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "progression/quests-enhanced.JSON",
+        "entity_type": "quest",
+        "entity_id": "gathering_quest",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_bamboo_fishing_rod",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_sickle",
+        "context": "metadata.tags"
+      }
+    ],
+    "basic": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "miners_fury",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "lumberjacks_rhythm",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_transmute_copper_tin",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_basic_arrow_turret",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_simple_bomb",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_spike_trap",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_copper_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_iron_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_tin_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_oak_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_pine_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_bronze_alloy",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_basic",
+        "context": "metadata.tags"
+      }
+    ],
+    "speed_boost": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "lumberjacks_rhythm",
+        "context": "tags"
+      }
+    ],
+    "defense": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "battle_stance",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_iron_skin_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_master",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_master",
+        "context": "metadata.tags"
+      }
+    ],
+    "damage_reduction": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "battle_stance",
+        "context": "tags"
+      }
+    ],
+    "combat": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "battle_stance",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "combat_strike",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "combat_rush",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "battle_fury",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "whirlwind_strike",
+        "context": "tags"
+      },
+      {
+        "file": "progression/npcs-enhanced.JSON",
+        "entity_type": "npc",
+        "entity_id": "unknown",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "progression/quests-enhanced.JSON",
+        "entity_type": "quest",
+        "entity_id": "combat_quest",
+        "context": "metadata.tags"
+      }
+    ],
+    "damage": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "combat_strike",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "battle_fury",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "whirlwind_strike",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "absolute_destruction",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "omega_strike",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_master",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_poison",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_master",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_poison",
+        "context": "metadata.tags"
+      }
+    ],
+    "single_hit": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "combat_strike",
+        "context": "tags"
+      }
+    ],
+    "durability": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "quick_repair",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "tool_preservation",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "phoenix_resurrection",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_advanced",
+        "context": "metadata.tags"
+      }
+    ],
+    "repair": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "quick_repair",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_self_repair",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_self_repair",
+        "context": "metadata.tags"
+      }
+    ],
+    "instant": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "quick_repair",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "field_medic",
+        "context": "tags"
+      }
+    ],
+    "yield": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "bountiful_harvest",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "endless_bounty",
+        "context": "tags"
+      }
+    ],
+    "bonus": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "bountiful_harvest",
+        "context": "tags"
+      }
+    ],
+    "movement": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "sprint",
+        "context": "tags"
+      }
+    ],
+    "speed": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "sprint",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "battle_fury",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_swiftness_draught",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_swiftness",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_swiftness",
+        "context": "metadata.tags"
+      }
+    ],
+    "mobility": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "sprint",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_swiftness",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_grappling_hook",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_jetpack",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_swiftness",
+        "context": "metadata.tags"
+      }
+    ],
+    "crafting": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "smiths_focus",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "alchemists_insight",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "engineers_precision",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "refiners_touch",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "enchanters_grace",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "master_craftsman",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "time_dilation",
+        "context": "tags"
+      }
+    ],
+    "time": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "smiths_focus",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "time_dilation",
+        "context": "tags"
+      }
+    ],
+    "attack_speed": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "combat_rush",
+        "context": "tags"
+      }
+    ],
+    "burst": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "combat_rush",
+        "context": "tags"
+      }
+    ],
+    "healing": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "field_medic",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "regenerative_aura",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "second_wind",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "phoenix_resurrection",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_minor_health_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_health_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_greater_health_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_regeneration_tonic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_regeneration",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_healing_beacon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_regeneration",
+        "context": "metadata.tags"
+      }
+    ],
+    "survival": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "field_medic",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "second_wind",
+        "context": "tags"
+      }
+    ],
+    "critical": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "keen_eye",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "enchanters_grace",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "fortunes_favor",
+        "context": "tags"
+      }
+    ],
+    "precision": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "keen_eye",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_laser_turret",
+        "context": "metadata.tags"
+      }
+    ],
+    "multi_purpose": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "keen_eye",
+        "context": "tags"
+      }
+    ],
+    "rarity": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "treasure_sense",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "enchanters_grace",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "master_craftsman",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "fortunes_favor",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_uncommon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_uncommon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_mythical",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_adamantine_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_adamantine_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_orichalcum_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_orichalcum_mythical",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_etherion_mythical",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_tin_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_tin_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_bronze_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_bronze_epic",
+        "context": "metadata.tags"
+      }
+    ],
+    "luck": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "treasure_sense",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "fortunes_favor",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_basic",
+        "context": "metadata.tags"
+      }
+    ],
+    "over_time": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "regenerative_aura",
+        "context": "tags"
+      }
+    ],
+    "sustain": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "regenerative_aura",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "phoenix_resurrection",
+        "context": "tags"
+      }
+    ],
+    "efficiency": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "tool_preservation",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "chain_harvest",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_advanced",
+        "context": "metadata.tags"
+      }
+    ],
+    "berserker": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "battle_fury",
+        "context": "tags"
+      }
+    ],
+    "mana": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "second_wind",
+        "context": "tags"
+      }
+    ],
+    "recovery": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "second_wind",
+        "context": "tags"
+      }
+    ],
+    "aoe": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "chain_harvest",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "whirlwind_strike",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "absolute_destruction",
+        "context": "tags"
+      }
+    ],
+    "mastery": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "master_craftsman",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "time_dilation",
+        "context": "tags"
+      }
+    ],
+    "universal": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "fortunes_favor",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "time_dilation",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_weightless",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_self_repair",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_soulbound",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_weightless",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_self_repair",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_soulbound",
+        "context": "metadata.tags"
+      }
+    ],
+    "regeneration": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "phoenix_resurrection",
+        "context": "tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_regeneration_tonic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_regeneration",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_regeneration",
+        "context": "metadata.tags"
+      }
+    ],
+    "destruction": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "absolute_destruction",
+        "context": "tags"
+      }
+    ],
+    "ultimate": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "absolute_destruction",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "reality_breach",
+        "context": "tags"
+      },
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "omega_strike",
+        "context": "tags"
+      }
+    ],
+    "abundance": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "endless_bounty",
+        "context": "tags"
+      }
+    ],
+    "bypass": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "reality_breach",
+        "context": "tags"
+      }
+    ],
+    "tier": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "reality_breach",
+        "context": "tags"
+      }
+    ],
+    "transcendence": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "reality_breach",
+        "context": "tags"
+      }
+    ],
+    "single_target": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "omega_strike",
+        "context": "tags"
+      }
+    ],
+    "finisher": [
+      {
+        "file": "Skills/skills-skills-1.JSON",
+        "entity_type": "skill",
+        "entity_id": "omega_strike",
+        "context": "tags"
+      }
+    ],
+    "forge": [
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t3",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_forge_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_forge_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_forge_t3",
+        "context": "metadata.tags"
+      }
+    ],
+    "master": [
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "forge_t3",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t3",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_advanced",
+        "context": "metadata.tags"
+      }
+    ],
+    "refinery": [
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t3",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_refinery_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_refinery_t2",
+        "context": "metadata.tags"
+      }
+    ],
+    "forging": [
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t2",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "refinery_t3",
+        "context": "metadata.tags"
+      }
+    ],
+    "brewing": [
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "alchemy_table_t2",
+        "context": "metadata.tags"
+      }
+    ],
+    "mechanical": [
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "engineering_bench_t2",
+        "context": "metadata.tags"
+      }
+    ],
+    "enhancement": [
+      {
+        "file": "items.JSON/items-smithing-2.JSON",
+        "entity_type": "station",
+        "entity_id": "enchanting_table_t1",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_efficiency_oil",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_armor_polish",
+        "context": "metadata.tags"
+      }
+    ],
+    "tutorial": [
+      {
+        "file": "progression/npcs-enhanced.JSON",
+        "entity_type": "npc",
+        "entity_id": "unknown",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "progression/quests-enhanced.JSON",
+        "entity_type": "quest",
+        "entity_id": "tutorial_quest",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "progression/quests-enhanced.JSON",
+        "entity_type": "quest",
+        "entity_id": "combat_quest",
+        "context": "metadata.tags"
+      }
+    ],
+    "essential": [
+      {
+        "file": "progression/npcs-enhanced.JSON",
+        "entity_type": "npc",
+        "entity_id": "unknown",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "progression/npcs-enhanced.JSON",
+        "entity_type": "npc",
+        "entity_id": "unknown",
+        "context": "metadata.tags"
+      }
+    ],
+    "trader": [
+      {
+        "file": "progression/npcs-enhanced.JSON",
+        "entity_type": "npc",
+        "entity_id": "unknown",
+        "context": "metadata.tags"
+      }
+    ],
+    "wandering": [
+      {
+        "file": "progression/npcs-enhanced.JSON",
+        "entity_type": "npc",
+        "entity_id": "unknown",
+        "context": "metadata.tags"
+      }
+    ],
+    "minerals": [
+      {
+        "file": "progression/npcs-enhanced.JSON",
+        "entity_type": "npc",
+        "entity_id": "unknown",
+        "context": "metadata.tags"
+      }
+    ],
+    "trainer": [
+      {
+        "file": "progression/npcs-enhanced.JSON",
+        "entity_type": "npc",
+        "entity_id": "unknown",
+        "context": "metadata.tags"
+      }
+    ],
+    "mining": [
+      {
+        "file": "progression/quests-enhanced.JSON",
+        "entity_type": "quest",
+        "entity_id": "gathering_quest",
+        "context": "metadata.tags"
+      }
+    ],
+    "repeatable": [
+      {
+        "file": "progression/quests-enhanced.JSON",
+        "entity_type": "quest",
+        "entity_id": "gathering_quest",
+        "context": "metadata.tags"
+      }
+    ],
+    "warrior": [
+      {
+        "file": "progression/quests-enhanced.JSON",
+        "entity_type": "quest",
+        "entity_id": "combat_quest",
+        "context": "metadata.tags"
+      }
+    ],
+    "potion": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_minor_health_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_health_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_greater_health_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_strength_elixir",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_iron_skin_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_swiftness_draught",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_fire_resistance_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_frost_resistance_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_regeneration_tonic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_titans_brew",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_elemental_harmony",
+        "context": "metadata.tags"
+      }
+    ],
+    "buff": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_strength_elixir",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_iron_skin_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_swiftness_draught",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_titans_brew",
+        "context": "metadata.tags"
+      }
+    ],
+    "strength": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_strength_elixir",
+        "context": "metadata.tags"
+      }
+    ],
+    "resistance": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_fire_resistance_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_frost_resistance_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_elemental_harmony",
+        "context": "metadata.tags"
+      }
+    ],
+    "fire": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_fire_resistance_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fire_aspect",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_fire_arrow_turret",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_flamethrower_turret",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_fire_bomb",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_fire_steel",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_fire_ring",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_fire_crystal_staff",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fire_aspect",
+        "context": "metadata.tags"
+      }
+    ],
+    "frost": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_frost_resistance_potion",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_frost_touch",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_frost_mine",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_frost_steel",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_frost_touch",
+        "context": "metadata.tags"
+      }
+    ],
+    "elemental": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_elemental_harmony",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_crystallize_fire",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fire_aspect",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_frost_touch",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lightning_strike",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_fire_arrow_turret",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_fire_bomb",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_frost_mine",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_fire_steel",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_frost_steel",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_lightning_copper",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_fire_crystal_staff",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fire_aspect",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_frost_touch",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lightning_strike",
+        "context": "metadata.tags"
+      }
+    ],
+    "utility": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_efficiency_oil",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_armor_polish",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_universal_solvent",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_weightless",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_self_repair",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_knockback",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_healing_beacon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_net_launcher",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_emp_device",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_grappling_hook",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_jetpack",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_weightless",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_self_repair",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_knockback",
+        "context": "metadata.tags"
+      }
+    ],
+    "tool": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_efficiency_oil",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_silk_touch",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_grappling_hook",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_mithril_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_mithril_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_bamboo_fishing_rod",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_sickle",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_silk_touch",
+        "context": "metadata.tags"
+      }
+    ],
+    "armor": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_armor_polish",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_master",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_thorns",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_swiftness",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_regeneration",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_leather_tunic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_boots",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_chestplate",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_helm",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_leggings",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_studded_gauntlets",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_master",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_thorns",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_swiftness",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_regeneration",
+        "context": "metadata.tags"
+      }
+    ],
+    "transmutation": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_universal_solvent",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_transmute_copper_tin",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_transmute_iron_steel",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_refine_essence_blood",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_crystallize_fire",
+        "context": "metadata.tags"
+      }
+    ],
+    "dangerous": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_universal_solvent",
+        "context": "metadata.tags"
+      }
+    ],
+    "metal": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_transmute_copper_tin",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_transmute_iron_steel",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_leggings",
+        "context": "metadata.tags"
+      }
+    ],
+    "advanced": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_transmute_iron_steel",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_lightning_cannon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_steel_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_durability_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_protection_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_efficiency_advanced",
+        "context": "metadata.tags"
+      }
+    ],
+    "essence": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_refine_essence_blood",
+        "context": "metadata.tags"
+      }
+    ],
+    "purification": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_refine_essence_blood",
+        "context": "metadata.tags"
+      }
+    ],
+    "crystallization": [
+      {
+        "file": "recipes.JSON/recipes-alchemy-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "alchemy_crystallize_fire",
+        "context": "metadata.tags"
+      }
+    ],
+    "weapon": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_master",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fire_aspect",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_frost_touch",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lightning_strike",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_knockback",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_poison",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lifesteal",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_shortsword",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_spear",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_longsword",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_mithril_dagger",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_pine_shortbow",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_battleaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_warhammer",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_dagger",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_composite_longbow",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_fire_crystal_staff",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_round_shield",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_sharpness_master",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fire_aspect",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_frost_touch",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lightning_strike",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_knockback",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_poison",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lifesteal",
+        "context": "metadata.tags"
+      }
+    ],
+    "lightning": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lightning_strike",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_lightning_cannon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_lightning_copper",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_lightning_bracelet",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lightning_strike",
+        "context": "metadata.tags"
+      }
+    ],
+    "reflect": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_thorns",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_thorns",
+        "context": "metadata.tags"
+      }
+    ],
+    "thorns": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_thorns",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_thorns",
+        "context": "metadata.tags"
+      }
+    ],
+    "fortune": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_advanced",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_basic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_fortune_advanced",
+        "context": "metadata.tags"
+      }
+    ],
+    "silk-touch": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_silk_touch",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_silk_touch",
+        "context": "metadata.tags"
+      }
+    ],
+    "special": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_silk_touch",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_soulbound",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_silk_touch",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_soulbound",
+        "context": "metadata.tags"
+      }
+    ],
+    "weight": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_weightless",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_weightless",
+        "context": "metadata.tags"
+      }
+    ],
+    "soulbound": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_soulbound",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_soulbound",
+        "context": "metadata.tags"
+      }
+    ],
+    "knockback": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_knockback",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_knockback",
+        "context": "metadata.tags"
+      }
+    ],
+    "poison": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_poison",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_poison",
+        "context": "metadata.tags"
+      }
+    ],
+    "lifesteal": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lifesteal",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lifesteal",
+        "context": "metadata.tags"
+      }
+    ],
+    "vampiric": [
+      {
+        "file": "recipes.JSON/recipes-enchanting-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lifesteal",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-adornments-1.json",
+        "entity_type": "recipe",
+        "entity_id": "enchanting_lifesteal",
+        "context": "metadata.tags"
+      }
+    ],
+    "turret": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_basic_arrow_turret",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_fire_arrow_turret",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_lightning_cannon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_flamethrower_turret",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_laser_turret",
+        "context": "metadata.tags"
+      }
+    ],
+    "projectile": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_basic_arrow_turret",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_net_launcher",
+        "context": "metadata.tags"
+      }
+    ],
+    "area": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_flamethrower_turret",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_cluster_bomb",
+        "context": "metadata.tags"
+      }
+    ],
+    "light": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_laser_turret",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_studded_gauntlets",
+        "context": "metadata.tags"
+      }
+    ],
+    "bomb": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_simple_bomb",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_fire_bomb",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_cluster_bomb",
+        "context": "metadata.tags"
+      }
+    ],
+    "explosive": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_simple_bomb",
+        "context": "metadata.tags"
+      }
+    ],
+    "cluster": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_cluster_bomb",
+        "context": "metadata.tags"
+      }
+    ],
+    "trap": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_spike_trap",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_frost_mine",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_bear_trap",
+        "context": "metadata.tags"
+      }
+    ],
+    "physical": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_spike_trap",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_bear_trap",
+        "context": "metadata.tags"
+      }
+    ],
+    "immobilize": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_bear_trap",
+        "context": "metadata.tags"
+      }
+    ],
+    "support": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_healing_beacon",
+        "context": "metadata.tags"
+      }
+    ],
+    "crowd-control": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_net_launcher",
+        "context": "metadata.tags"
+      }
+    ],
+    "disable": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_emp_device",
+        "context": "metadata.tags"
+      }
+    ],
+    "tech": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_emp_device",
+        "context": "metadata.tags"
+      }
+    ],
+    "flight": [
+      {
+        "file": "recipes.JSON/recipes-engineering-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "engineering_jetpack",
+        "context": "metadata.tags"
+      }
+    ],
+    "smelting": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_copper_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_iron_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_tin_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_steel_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_mithril_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_adamantine_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_orichalcum_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_etherion_ore_to_ingot",
+        "context": "metadata.tags"
+      }
+    ],
+    "copper": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_copper_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_lightning_copper",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_uncommon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_legendary",
+        "context": "metadata.tags"
+      }
+    ],
+    "iron": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_iron_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_uncommon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_legendary",
+        "context": "metadata.tags"
+      }
+    ],
+    "tin": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_tin_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_tin_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_tin_epic",
+        "context": "metadata.tags"
+      }
+    ],
+    "steel": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_steel_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_fire_steel",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_frost_steel",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_legendary",
+        "context": "metadata.tags"
+      }
+    ],
+    "mithril": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_mithril_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_mythical",
+        "context": "metadata.tags"
+      }
+    ],
+    "adamantine": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_adamantine_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_adamantine_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_adamantine_legendary",
+        "context": "metadata.tags"
+      }
+    ],
+    "orichalcum": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_orichalcum_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_orichalcum_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_orichalcum_mythical",
+        "context": "metadata.tags"
+      }
+    ],
+    "ancient": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_orichalcum_ore_to_ingot",
+        "context": "metadata.tags"
+      }
+    ],
+    "etherion": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_etherion_ore_to_ingot",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_etherion_mythical",
+        "context": "metadata.tags"
+      }
+    ],
+    "sawing": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_oak_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_pine_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_ash_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_birch_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_maple_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_ironwood_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_ebony_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_worldtree_log_to_plank",
+        "context": "metadata.tags"
+      }
+    ],
+    "wood": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_oak_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_pine_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_ash_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_birch_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_maple_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_ironwood_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_ebony_log_to_plank",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_worldtree_log_to_plank",
+        "context": "metadata.tags"
+      }
+    ],
+    "fine": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_birch_log_to_plank",
+        "context": "metadata.tags"
+      }
+    ],
+    "durable": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_maple_log_to_plank",
+        "context": "metadata.tags"
+      }
+    ],
+    "metallic": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_ironwood_log_to_plank",
+        "context": "metadata.tags"
+      }
+    ],
+    "magical": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_ebony_log_to_plank",
+        "context": "metadata.tags"
+      }
+    ],
+    "alloy": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_bronze_alloy",
+        "context": "metadata.tags"
+      }
+    ],
+    "bronze": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_bronze_alloy",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_bronze_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_bronze_epic",
+        "context": "metadata.tags"
+      }
+    ],
+    "upgrade": [
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_uncommon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_copper_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_uncommon",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_iron_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_steel_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_mithril_mythical",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_adamantine_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_adamantine_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_orichalcum_legendary",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_orichalcum_mythical",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_etherion_mythical",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_tin_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_tin_epic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_bronze_rare",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-refining-1.JSON",
+        "entity_type": "recipe",
+        "entity_id": "refining_rarity_bronze_epic",
+        "context": "metadata.tags"
+      }
+    ],
+    "sword": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_shortsword",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_longsword",
+        "context": "metadata.tags"
+      }
+    ],
+    "pickaxe": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_pickaxe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_mithril_pickaxe",
+        "context": "metadata.tags"
+      }
+    ],
+    "axe": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_mithril_axe",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_battleaxe",
+        "context": "metadata.tags"
+      }
+    ],
+    "spear": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_spear",
+        "context": "metadata.tags"
+      }
+    ],
+    "chest": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_leather_tunic",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_chestplate",
+        "context": "metadata.tags"
+      }
+    ],
+    "feet": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_boots",
+        "context": "metadata.tags"
+      }
+    ],
+    "head": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_helm",
+        "context": "metadata.tags"
+      }
+    ],
+    "dagger": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_mithril_dagger",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_dagger",
+        "context": "metadata.tags"
+      }
+    ],
+    "accessory": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_fire_ring",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_water_amulet",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_lightning_bracelet",
+        "context": "metadata.tags"
+      }
+    ],
+    "ring": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_fire_ring",
+        "context": "metadata.tags"
+      }
+    ],
+    "amulet": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_water_amulet",
+        "context": "metadata.tags"
+      }
+    ],
+    "water": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_water_amulet",
+        "context": "metadata.tags"
+      }
+    ],
+    "bracelet": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_lightning_bracelet",
+        "context": "metadata.tags"
+      }
+    ],
+    "bow": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_pine_shortbow",
+        "context": "metadata.tags"
+      },
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_composite_longbow",
+        "context": "metadata.tags"
+      }
+    ],
+    "versatile": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_battleaxe",
+        "context": "metadata.tags"
+      }
+    ],
+    "cleaving": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_battleaxe",
+        "context": "metadata.tags"
+      }
+    ],
+    "mace": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_warhammer",
+        "context": "metadata.tags"
+      }
+    ],
+    "2H": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_warhammer",
+        "context": "metadata.tags"
+      }
+    ],
+    "crushing": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_warhammer",
+        "context": "metadata.tags"
+      }
+    ],
+    "1H": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_dagger",
+        "context": "metadata.tags"
+      }
+    ],
+    "fast": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_copper_dagger",
+        "context": "metadata.tags"
+      }
+    ],
+    "ranged": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_composite_longbow",
+        "context": "metadata.tags"
+      }
+    ],
+    "composite": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_composite_longbow",
+        "context": "metadata.tags"
+      }
+    ],
+    "staff": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_fire_crystal_staff",
+        "context": "metadata.tags"
+      }
+    ],
+    "shield": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_round_shield",
+        "context": "metadata.tags"
+      }
+    ],
+    "defensive": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_round_shield",
+        "context": "metadata.tags"
+      }
+    ],
+    "bash": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_round_shield",
+        "context": "metadata.tags"
+      }
+    ],
+    "legs": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_leggings",
+        "context": "metadata.tags"
+      }
+    ],
+    "heavy": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_leggings",
+        "context": "metadata.tags"
+      }
+    ],
+    "hands": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_studded_gauntlets",
+        "context": "metadata.tags"
+      }
+    ],
+    "flexible": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_iron_studded_gauntlets",
+        "context": "metadata.tags"
+      }
+    ],
+    "fishing": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_bamboo_fishing_rod",
+        "context": "metadata.tags"
+      }
+    ],
+    "harvesting": [
+      {
+        "file": "recipes.JSON/recipes-smithing-3.JSON",
+        "entity_type": "recipe",
+        "entity_id": "smithing_steel_sickle",
+        "context": "metadata.tags"
+      }
+    ]
+  },
+  "categories": {
+    "hand_type": [
+      "versatile"
+    ],
+    "weapon_type": [
+      "axe",
+      "bow",
+      "dagger",
+      "mace",
+      "pickaxe",
+      "spear",
+      "staff",
+      "sword",
+      "wandering"
+    ],
+    "damage_type": [
+      "crushing",
+      "precision"
+    ],
+    "attack_geometry": [
+      "aoe",
+      "area",
+      "projectile",
+      "ranged"
+    ],
+    "status_effect": [
+      "poison"
+    ],
+    "equipment_slot": [
+      "accessory",
+      "tool"
+    ],
+    "item_quality": [],
+    "item_category": [
+      "armor",
+      "potion",
+      "tool",
+      "weapon"
+    ],
+    "speed_modifier": [
+      "fast"
+    ],
+    "defensive": [
+      "armor",
+      "defense",
+      "defensive",
+      "shield"
+    ],
+    "elemental": [
+      "fire",
+      "frost",
+      "lightning",
+      "water"
+    ],
+    "skill_category": [
+      "alchemy",
+      "basic",
+      "combat",
+      "crafting",
+      "damage_boost",
+      "efficiency",
+      "enchanting",
+      "engineering",
+      "fishing",
+      "gathering",
+      "mining",
+      "refining",
+      "smithing",
+      "ultimate"
+    ],
+    "enemy_type": [
+      "beetle",
+      "construct",
+      "entity",
+      "wolf"
+    ],
+    "ai_behavior": [
+      "aggressive",
+      "defensive",
+      "passive",
+      "support"
+    ],
+    "rarity": [
+      "advanced",
+      "basic",
+      "boss",
+      "common",
+      "end-game",
+      "epic",
+      "legendary",
+      "mythical",
+      "rare",
+      "starter",
+      "uncommon"
+    ],
+    "progression": [
+      "advanced",
+      "master",
+      "mastery",
+      "starter"
+    ],
+    "crafting": [
+      "alchemy",
+      "enchanting",
+      "engineering",
+      "refining",
+      "smithing"
+    ],
+    "gathering": [
+      "fishing",
+      "gathering",
+      "harvesting",
+      "mining"
+    ],
+    "device_type": [
+      "bomb",
+      "trap",
+      "turret",
+      "utility"
+    ],
+    "uncategorized": [
+      "1H",
+      "2H",
+      "abundance",
+      "adamantine",
+      "alloy",
+      "amulet",
+      "ancient",
+      "attack_speed",
+      "bash",
+      "berserker",
+      "bonus",
+      "bracelet",
+      "brewing",
+      "bronze",
+      "buff",
+      "burst",
+      "bypass",
+      "chest",
+      "cleaving",
+      "cluster",
+      "composite",
+      "copper",
+      "critical",
+      "crowd-control",
+      "crystallization",
+      "damage",
+      "damage_reduction",
+      "dangerous",
+      "destruction",
+      "disable",
+      "docile",
+      "durability",
+      "durable",
+      "elemental",
+      "enhancement",
+      "essence",
+      "essential",
+      "etherion",
+      "explosive",
+      "feet",
+      "fine",
+      "finisher",
+      "flexible",
+      "flight",
+      "forge",
+      "forging",
+      "fortune",
+      "golem",
+      "hands",
+      "head",
+      "healing",
+      "heavy",
+      "immobilize",
+      "instant",
+      "iron",
+      "knockback",
+      "legs",
+      "lifesteal",
+      "light",
+      "luck",
+      "magical",
+      "mana",
+      "mechanical",
+      "metal",
+      "metallic",
+      "mid-game",
+      "minerals",
+      "mithril",
+      "mobility",
+      "movement",
+      "multi_purpose",
+      "orichalcum",
+      "over_time",
+      "phase",
+      "physical",
+      "purification",
+      "quality",
+      "rarity",
+      "reality-bender",
+      "recovery",
+      "refinery",
+      "reflect",
+      "regeneration",
+      "repair",
+      "repeatable",
+      "resistance",
+      "ring",
+      "sawing",
+      "silk-touch",
+      "single_hit",
+      "single_target",
+      "slime",
+      "smelting",
+      "soulbound",
+      "special",
+      "speed",
+      "speed_boost",
+      "standard",
+      "station",
+      "steel",
+      "strength",
+      "survival",
+      "sustain",
+      "tech",
+      "territorial",
+      "thorns",
+      "tier",
+      "time",
+      "tin",
+      "trader",
+      "trainer",
+      "transcendence",
+      "transmutation",
+      "tutorial",
+      "universal",
+      "upgrade",
+      "vampiric",
+      "warrior",
+      "weight",
+      "wood",
+      "wraith",
+      "yield"
+    ]
+  },
+  "potential_typos": [
+    {
+      "tag1": "master",
+      "tag2": "mastery",
+      "similarity": 0.9230769230769231
+    },
+    {
+      "tag1": "flight",
+      "tag2": "light",
+      "similarity": 0.9090909090909091
+    },
+    {
+      "tag1": "defense",
+      "tag2": "defensive",
+      "similarity": 0.875
+    },
+    {
+      "tag1": "common",
+      "tag2": "uncommon",
+      "similarity": 0.8571428571428571
+    }
+  ]
+}

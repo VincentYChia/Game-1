@@ -1,0 +1,1564 @@
+================================================================================
+TAG COLLECTION AND ANALYSIS REPORT
+================================================================================
+
+SUMMARY
+--------------------------------------------------------------------------------
+Total JSON files scanned: 44
+Total unique tags found: 190
+Total tag occurrences: 773
+
+ERRORS ENCOUNTERED
+--------------------------------------------------------------------------------
+  - Error scanning /home/user/Game-1/Game-1-modular/Definitions.JSON: [Errno 21] Is a directory: '/home/user/Game-1/Game-1-modular/Definitions.JSON'
+  - Error scanning /home/user/Game-1/Game-1-modular/items.JSON: [Errno 21] Is a directory: '/home/user/Game-1/Game-1-modular/items.JSON'
+  - Error scanning /home/user/Game-1/Game-1-modular/placements.JSON: [Errno 21] Is a directory: '/home/user/Game-1/Game-1-modular/placements.JSON'
+  - Error scanning /home/user/Game-1/Game-1-modular/recipes.JSON: [Errno 21] Is a directory: '/home/user/Game-1/Game-1-modular/recipes.JSON'
+
+TAG CATEGORIES
+--------------------------------------------------------------------------------
+
+AI BEHAVIOR (4 tags):
+  - aggressive (2 occurrences)
+  - defensive (1 occurrences)
+  - passive (2 occurrences)
+  - support (1 occurrences)
+
+ATTACK GEOMETRY (4 tags):
+  - aoe (3 occurrences)
+  - area (2 occurrences)
+  - projectile (2 occurrences)
+  - ranged (1 occurrences)
+
+CRAFTING (5 tags):
+  - alchemy (6 occurrences)
+  - enchanting (4 occurrences)
+  - engineering (6 occurrences)
+  - refining (3 occurrences)
+  - smithing (8 occurrences)
+
+DAMAGE TYPE (2 tags):
+  - crushing (1 occurrences)
+  - precision (2 occurrences)
+
+DEFENSIVE (4 tags):
+  - armor (19 occurrences)
+  - defense (8 occurrences)
+  - defensive (1 occurrences)
+  - shield (1 occurrences)
+
+DEVICE TYPE (4 tags):
+  - bomb (3 occurrences)
+  - trap (3 occurrences)
+  - turret (5 occurrences)
+  - utility (14 occurrences)
+
+ELEMENTAL (4 tags):
+  - fire (9 occurrences)
+  - frost (5 occurrences)
+  - lightning (5 occurrences)
+  - water (1 occurrences)
+
+ENEMY TYPE (4 tags):
+  - beetle (3 occurrences)
+  - construct (2 occurrences)
+  - entity (1 occurrences)
+  - wolf (3 occurrences)
+
+EQUIPMENT SLOT (2 tags):
+  - accessory (3 occurrences)
+  - tool (22 occurrences)
+
+GATHERING (4 tags):
+  - fishing (1 occurrences)
+  - gathering (11 occurrences)
+  - harvesting (1 occurrences)
+  - mining (1 occurrences)
+
+HAND TYPE (1 tags):
+  - versatile (1 occurrences)
+
+ITEM CATEGORY (4 tags):
+  - armor (19 occurrences)
+  - potion (11 occurrences)
+  - tool (22 occurrences)
+  - weapon (29 occurrences)
+
+PROGRESSION (4 tags):
+  - advanced (11 occurrences)
+  - master (4 occurrences)
+  - mastery (2 occurrences)
+  - starter (27 occurrences)
+
+RARITY (11 tags):
+  - advanced (11 occurrences)
+  - basic (20 occurrences)
+  - boss (6 occurrences)
+  - common (3 occurrences)
+  - end-game (4 occurrences)
+  - epic (8 occurrences)
+  - legendary (18 occurrences)
+  - mythical (5 occurrences)
+  - rare (10 occurrences)
+  - starter (27 occurrences)
+  - uncommon (5 occurrences)
+
+SKILL CATEGORY (14 tags):
+  - alchemy (6 occurrences)
+  - basic (20 occurrences)
+  - combat (7 occurrences)
+  - crafting (7 occurrences)
+  - damage_boost (1 occurrences)
+  - efficiency (6 occurrences)
+  - enchanting (4 occurrences)
+  - engineering (6 occurrences)
+  - fishing (1 occurrences)
+  - gathering (11 occurrences)
+  - mining (1 occurrences)
+  - refining (3 occurrences)
+  - smithing (8 occurrences)
+  - ultimate (3 occurrences)
+
+SPEED MODIFIER (1 tags):
+  - fast (1 occurrences)
+
+STATUS EFFECT (1 tags):
+  - poison (2 occurrences)
+
+UNCATEGORIZED (122 tags):
+  - 1H (1 occurrences)
+  - 2H (1 occurrences)
+  - abundance (1 occurrences)
+  - adamantine (3 occurrences)
+  - alloy (1 occurrences)
+  - amulet (1 occurrences)
+  - ancient (1 occurrences)
+  - attack_speed (1 occurrences)
+  - bash (1 occurrences)
+  - berserker (1 occurrences)
+  - bonus (1 occurrences)
+  - bracelet (1 occurrences)
+  - brewing (2 occurrences)
+  - bronze (3 occurrences)
+  - buff (4 occurrences)
+  - burst (1 occurrences)
+  - bypass (1 occurrences)
+  - chest (2 occurrences)
+  - cleaving (1 occurrences)
+  - cluster (1 occurrences)
+  - composite (1 occurrences)
+  - copper (6 occurrences)
+  - critical (3 occurrences)
+  - crowd-control (1 occurrences)
+  - crystallization (1 occurrences)
+  - damage (13 occurrences)
+  - damage_reduction (1 occurrences)
+  - dangerous (1 occurrences)
+  - destruction (1 occurrences)
+  - disable (1 occurrences)
+  - docile (1 occurrences)
+  - durability (7 occurrences)
+  - durable (1 occurrences)
+  - elemental (15 occurrences)
+  - enhancement (3 occurrences)
+  - essence (1 occurrences)
+  - essential (2 occurrences)
+  - etherion (2 occurrences)
+  - explosive (1 occurrences)
+  - feet (1 occurrences)
+  - fine (1 occurrences)
+  - finisher (1 occurrences)
+  - flexible (1 occurrences)
+  - flight (1 occurrences)
+  - forge (6 occurrences)
+  - forging (3 occurrences)
+  - fortune (4 occurrences)
+  - golem (2 occurrences)
+  - hands (1 occurrences)
+  - head (1 occurrences)
+  - healing (11 occurrences)
+  - heavy (1 occurrences)
+  - immobilize (1 occurrences)
+  - instant (2 occurrences)
+  - iron (5 occurrences)
+  - knockback (2 occurrences)
+  - legs (1 occurrences)
+  - lifesteal (2 occurrences)
+  - light (2 occurrences)
+  - luck (4 occurrences)
+  - magical (1 occurrences)
+  - mana (1 occurrences)
+  - mechanical (2 occurrences)
+  - metal (3 occurrences)
+  - metallic (1 occurrences)
+  - mid-game (3 occurrences)
+  - minerals (1 occurrences)
+  - mithril (4 occurrences)
+  - mobility (5 occurrences)
+  - movement (1 occurrences)
+  - multi_purpose (1 occurrences)
+  - orichalcum (3 occurrences)
+  - over_time (1 occurrences)
+  - phase (1 occurrences)
+  - physical (2 occurrences)
+  - purification (1 occurrences)
+  - quality (15 occurrences)
+  - rarity (27 occurrences)
+  - reality-bender (1 occurrences)
+  - recovery (1 occurrences)
+  - refinery (5 occurrences)
+  - reflect (2 occurrences)
+  - regeneration (4 occurrences)
+  - repair (3 occurrences)
+  - repeatable (1 occurrences)
+  - resistance (3 occurrences)
+  - ring (1 occurrences)
+  - sawing (8 occurrences)
+  - silk-touch (2 occurrences)
+  - single_hit (1 occurrences)
+  - single_target (1 occurrences)
+  - slime (3 occurrences)
+  - smelting (8 occurrences)
+  - soulbound (2 occurrences)
+  - special (4 occurrences)
+  - speed (5 occurrences)
+  - speed_boost (1 occurrences)
+  - standard (12 occurrences)
+  - station (30 occurrences)
+  - steel (6 occurrences)
+  - strength (1 occurrences)
+  - survival (2 occurrences)
+  - sustain (2 occurrences)
+  - tech (1 occurrences)
+  - territorial (1 occurrences)
+  - thorns (2 occurrences)
+  - tier (1 occurrences)
+  - time (2 occurrences)
+  - tin (3 occurrences)
+  - trader (1 occurrences)
+  - trainer (1 occurrences)
+  - transcendence (1 occurrences)
+  - transmutation (5 occurrences)
+  - tutorial (3 occurrences)
+  - universal (12 occurrences)
+  - upgrade (23 occurrences)
+  - vampiric (2 occurrences)
+  - warrior (1 occurrences)
+  - weight (2 occurrences)
+  - wood (8 occurrences)
+  - wraith (1 occurrences)
+  - yield (2 occurrences)
+
+WEAPON TYPE (9 tags):
+  - axe (5 occurrences)
+  - bow (2 occurrences)
+  - dagger (2 occurrences)
+  - mace (1 occurrences)
+  - pickaxe (4 occurrences)
+  - spear (1 occurrences)
+  - staff (1 occurrences)
+  - sword (2 occurrences)
+  - wandering (1 occurrences)
+
+POTENTIAL TYPOS / SIMILAR TAGS
+--------------------------------------------------------------------------------
+These tags are very similar and might be typos or inconsistencies:
+  - 'master' vs 'mastery' (similarity: 92.31%)
+  - 'flight' vs 'light' (similarity: 90.91%)
+  - 'defense' vs 'defensive' (similarity: 87.50%)
+  - 'common' vs 'uncommon' (similarity: 85.71%)
+
+DETAILED TAG REGISTRY
+--------------------------------------------------------------------------------
+
+1H (1 occurrences):
+  recipe:
+    - smithing_copper_dagger (recipes.JSON/recipes-smithing-3.JSON)
+
+2H (1 occurrences):
+  recipe:
+    - smithing_iron_warhammer (recipes.JSON/recipes-smithing-3.JSON)
+
+abundance (1 occurrences):
+  skill:
+    - endless_bounty (Skills/skills-skills-1.JSON)
+
+accessory (3 occurrences):
+  recipe:
+    - smithing_copper_fire_ring (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_iron_water_amulet (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_steel_lightning_bracelet (recipes.JSON/recipes-smithing-3.JSON)
+
+adamantine (3 occurrences):
+  recipe:
+    - refining_adamantine_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_adamantine_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_adamantine_legendary (recipes.JSON/recipes-refining-1.JSON)
+
+advanced (11 occurrences):
+  recipe:
+    - alchemy_transmute_iron_steel (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_sharpness_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_durability_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_protection_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_efficiency_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - engineering_lightning_cannon (recipes.JSON/recipes-engineering-1.JSON)
+    - refining_steel_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - enchanting_sharpness_advanced (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_durability_advanced (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_protection_advanced (recipes.JSON/recipes-adornments-1.json)
+    ... and 1 more
+
+aggressive (2 occurrences):
+  hostile:
+    - wolf_dire (Definitions.JSON/hostiles-1.JSON)
+    - slime_acid (Definitions.JSON/hostiles-1.JSON)
+
+alchemy (6 occurrences):
+  recipe:
+    - smithing_alchemy_table_t1 (recipes.JSON/recipes-smithing-3.JSON)
+  skill:
+    - alchemists_insight (Skills/skills-skills-1.JSON)
+  station:
+    - alchemy_table_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - alchemy_table_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - alchemy_table_t1 (items.JSON/items-smithing-2.JSON)
+    - alchemy_table_t2 (items.JSON/items-smithing-2.JSON)
+
+alloy (1 occurrences):
+  recipe:
+    - refining_bronze_alloy (recipes.JSON/recipes-refining-1.JSON)
+
+amulet (1 occurrences):
+  recipe:
+    - smithing_iron_water_amulet (recipes.JSON/recipes-smithing-3.JSON)
+
+ancient (1 occurrences):
+  recipe:
+    - refining_orichalcum_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+
+aoe (3 occurrences):
+  skill:
+    - chain_harvest (Skills/skills-skills-1.JSON)
+    - whirlwind_strike (Skills/skills-skills-1.JSON)
+    - absolute_destruction (Skills/skills-skills-1.JSON)
+
+area (2 occurrences):
+  recipe:
+    - engineering_flamethrower_turret (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_cluster_bomb (recipes.JSON/recipes-engineering-1.JSON)
+
+armor (19 occurrences):
+  recipe:
+    - alchemy_armor_polish (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_protection_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_protection_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_protection_master (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_thorns (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_swiftness (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_regeneration (recipes.JSON/recipes-enchanting-1.JSON)
+    - smithing_leather_tunic (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_iron_boots (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_iron_chestplate (recipes.JSON/recipes-smithing-3.JSON)
+    ... and 9 more
+
+attack_speed (1 occurrences):
+  skill:
+    - combat_rush (Skills/skills-skills-1.JSON)
+
+axe (5 occurrences):
+  recipe:
+    - smithing_copper_axe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_iron_axe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_steel_axe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_mithril_axe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_steel_battleaxe (recipes.JSON/recipes-smithing-3.JSON)
+
+bash (1 occurrences):
+  recipe:
+    - smithing_iron_round_shield (recipes.JSON/recipes-smithing-3.JSON)
+
+basic (20 occurrences):
+  recipe:
+    - alchemy_transmute_copper_tin (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_sharpness_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_durability_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_protection_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_efficiency_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - engineering_basic_arrow_turret (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_simple_bomb (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_spike_trap (recipes.JSON/recipes-engineering-1.JSON)
+    - refining_copper_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_iron_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    ... and 8 more
+  skill:
+    - miners_fury (Skills/skills-skills-1.JSON)
+    - lumberjacks_rhythm (Skills/skills-skills-1.JSON)
+
+beetle (3 occurrences):
+  hostile:
+    - beetle_brown (Definitions.JSON/hostiles-1.JSON)
+    - beetle_armored (Definitions.JSON/hostiles-1.JSON)
+    - beetle_titan (Definitions.JSON/hostiles-1.JSON)
+
+berserker (1 occurrences):
+  skill:
+    - battle_fury (Skills/skills-skills-1.JSON)
+
+bomb (3 occurrences):
+  recipe:
+    - engineering_simple_bomb (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_fire_bomb (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_cluster_bomb (recipes.JSON/recipes-engineering-1.JSON)
+
+bonus (1 occurrences):
+  skill:
+    - bountiful_harvest (Skills/skills-skills-1.JSON)
+
+boss (6 occurrences):
+  hostile:
+    - wolf_elder (Definitions.JSON/hostiles-1.JSON)
+    - slime_crystal (Definitions.JSON/hostiles-1.JSON)
+    - beetle_titan (Definitions.JSON/hostiles-1.JSON)
+    - golem_stone (Definitions.JSON/hostiles-1.JSON)
+    - golem_crystal (Definitions.JSON/hostiles-1.JSON)
+    - entity_primordial (Definitions.JSON/hostiles-1.JSON)
+
+bow (2 occurrences):
+  recipe:
+    - smithing_pine_shortbow (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_composite_longbow (recipes.JSON/recipes-smithing-3.JSON)
+
+bracelet (1 occurrences):
+  recipe:
+    - smithing_steel_lightning_bracelet (recipes.JSON/recipes-smithing-3.JSON)
+
+brewing (2 occurrences):
+  station:
+    - alchemy_table_t1 (items.JSON/items-smithing-2.JSON)
+    - alchemy_table_t2 (items.JSON/items-smithing-2.JSON)
+
+bronze (3 occurrences):
+  recipe:
+    - refining_bronze_alloy (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_bronze_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_bronze_epic (recipes.JSON/recipes-refining-1.JSON)
+
+buff (4 occurrences):
+  recipe:
+    - alchemy_strength_elixir (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_iron_skin_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_swiftness_draught (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_titans_brew (recipes.JSON/recipes-alchemy-1.JSON)
+
+burst (1 occurrences):
+  skill:
+    - combat_rush (Skills/skills-skills-1.JSON)
+
+bypass (1 occurrences):
+  skill:
+    - reality_breach (Skills/skills-skills-1.JSON)
+
+chest (2 occurrences):
+  recipe:
+    - smithing_leather_tunic (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_iron_chestplate (recipes.JSON/recipes-smithing-3.JSON)
+
+cleaving (1 occurrences):
+  recipe:
+    - smithing_steel_battleaxe (recipes.JSON/recipes-smithing-3.JSON)
+
+cluster (1 occurrences):
+  recipe:
+    - engineering_cluster_bomb (recipes.JSON/recipes-engineering-1.JSON)
+
+combat (7 occurrences):
+  npc:
+    - unknown (progression/npcs-enhanced.JSON)
+  quest:
+    - combat_quest (progression/quests-enhanced.JSON)
+  skill:
+    - battle_stance (Skills/skills-skills-1.JSON)
+    - combat_strike (Skills/skills-skills-1.JSON)
+    - combat_rush (Skills/skills-skills-1.JSON)
+    - battle_fury (Skills/skills-skills-1.JSON)
+    - whirlwind_strike (Skills/skills-skills-1.JSON)
+
+common (3 occurrences):
+  hostile:
+    - wolf_grey (Definitions.JSON/hostiles-1.JSON)
+    - slime_green (Definitions.JSON/hostiles-1.JSON)
+    - beetle_brown (Definitions.JSON/hostiles-1.JSON)
+
+composite (1 occurrences):
+  recipe:
+    - smithing_composite_longbow (recipes.JSON/recipes-smithing-3.JSON)
+
+construct (2 occurrences):
+  hostile:
+    - golem_stone (Definitions.JSON/hostiles-1.JSON)
+    - golem_crystal (Definitions.JSON/hostiles-1.JSON)
+
+copper (6 occurrences):
+  recipe:
+    - refining_copper_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_lightning_copper (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_uncommon (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_legendary (recipes.JSON/recipes-refining-1.JSON)
+
+crafting (7 occurrences):
+  skill:
+    - smiths_focus (Skills/skills-skills-1.JSON)
+    - alchemists_insight (Skills/skills-skills-1.JSON)
+    - engineers_precision (Skills/skills-skills-1.JSON)
+    - refiners_touch (Skills/skills-skills-1.JSON)
+    - enchanters_grace (Skills/skills-skills-1.JSON)
+    - master_craftsman (Skills/skills-skills-1.JSON)
+    - time_dilation (Skills/skills-skills-1.JSON)
+
+critical (3 occurrences):
+  skill:
+    - keen_eye (Skills/skills-skills-1.JSON)
+    - enchanters_grace (Skills/skills-skills-1.JSON)
+    - fortunes_favor (Skills/skills-skills-1.JSON)
+
+crowd-control (1 occurrences):
+  recipe:
+    - engineering_net_launcher (recipes.JSON/recipes-engineering-1.JSON)
+
+crushing (1 occurrences):
+  recipe:
+    - smithing_iron_warhammer (recipes.JSON/recipes-smithing-3.JSON)
+
+crystallization (1 occurrences):
+  recipe:
+    - alchemy_crystallize_fire (recipes.JSON/recipes-alchemy-1.JSON)
+
+dagger (2 occurrences):
+  recipe:
+    - smithing_mithril_dagger (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_copper_dagger (recipes.JSON/recipes-smithing-3.JSON)
+
+damage (13 occurrences):
+  recipe:
+    - enchanting_sharpness_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_sharpness_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_sharpness_master (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_poison (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_sharpness_basic (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_sharpness_advanced (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_sharpness_master (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_poison (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - combat_strike (Skills/skills-skills-1.JSON)
+    - battle_fury (Skills/skills-skills-1.JSON)
+    - whirlwind_strike (Skills/skills-skills-1.JSON)
+    - absolute_destruction (Skills/skills-skills-1.JSON)
+    - omega_strike (Skills/skills-skills-1.JSON)
+
+damage_boost (1 occurrences):
+  skill:
+    - miners_fury (Skills/skills-skills-1.JSON)
+
+damage_reduction (1 occurrences):
+  skill:
+    - battle_stance (Skills/skills-skills-1.JSON)
+
+dangerous (1 occurrences):
+  recipe:
+    - alchemy_universal_solvent (recipes.JSON/recipes-alchemy-1.JSON)
+
+defense (8 occurrences):
+  recipe:
+    - alchemy_iron_skin_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_protection_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_protection_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_protection_master (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_protection_basic (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_protection_advanced (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_protection_master (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - battle_stance (Skills/skills-skills-1.JSON)
+
+defensive (1 occurrences):
+  recipe:
+    - smithing_iron_round_shield (recipes.JSON/recipes-smithing-3.JSON)
+
+destruction (1 occurrences):
+  skill:
+    - absolute_destruction (Skills/skills-skills-1.JSON)
+
+disable (1 occurrences):
+  recipe:
+    - engineering_emp_device (recipes.JSON/recipes-engineering-1.JSON)
+
+docile (1 occurrences):
+  hostile:
+    - beetle_brown (Definitions.JSON/hostiles-1.JSON)
+
+durability (7 occurrences):
+  recipe:
+    - enchanting_durability_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_durability_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_durability_basic (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_durability_advanced (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - quick_repair (Skills/skills-skills-1.JSON)
+    - tool_preservation (Skills/skills-skills-1.JSON)
+    - phoenix_resurrection (Skills/skills-skills-1.JSON)
+
+durable (1 occurrences):
+  recipe:
+    - refining_maple_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+
+efficiency (6 occurrences):
+  recipe:
+    - enchanting_efficiency_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_efficiency_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_efficiency_basic (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_efficiency_advanced (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - tool_preservation (Skills/skills-skills-1.JSON)
+    - chain_harvest (Skills/skills-skills-1.JSON)
+
+elemental (15 occurrences):
+  recipe:
+    - alchemy_elemental_harmony (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_crystallize_fire (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_fire_aspect (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_frost_touch (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_lightning_strike (recipes.JSON/recipes-enchanting-1.JSON)
+    - engineering_fire_arrow_turret (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_fire_bomb (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_frost_mine (recipes.JSON/recipes-engineering-1.JSON)
+    - refining_fire_steel (recipes.JSON/recipes-refining-1.JSON)
+    - refining_frost_steel (recipes.JSON/recipes-refining-1.JSON)
+    ... and 5 more
+
+enchanting (4 occurrences):
+  skill:
+    - enchanters_grace (Skills/skills-skills-1.JSON)
+  station:
+    - enchanting_table_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - enchanting_table_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - enchanting_table_t1 (items.JSON/items-smithing-2.JSON)
+
+end-game (4 occurrences):
+  hostile:
+    - wolf_elder (Definitions.JSON/hostiles-1.JSON)
+    - slime_crystal (Definitions.JSON/hostiles-1.JSON)
+    - beetle_titan (Definitions.JSON/hostiles-1.JSON)
+    - void_wraith (Definitions.JSON/hostiles-1.JSON)
+
+engineering (6 occurrences):
+  recipe:
+    - smithing_engineering_bench_t1 (recipes.JSON/recipes-smithing-3.JSON)
+  skill:
+    - engineers_precision (Skills/skills-skills-1.JSON)
+  station:
+    - engineering_bench_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - engineering_bench_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - engineering_bench_t1 (items.JSON/items-smithing-2.JSON)
+    - engineering_bench_t2 (items.JSON/items-smithing-2.JSON)
+
+enhancement (3 occurrences):
+  recipe:
+    - alchemy_efficiency_oil (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_armor_polish (recipes.JSON/recipes-alchemy-1.JSON)
+  station:
+    - enchanting_table_t1 (items.JSON/items-smithing-2.JSON)
+
+entity (1 occurrences):
+  hostile:
+    - entity_primordial (Definitions.JSON/hostiles-1.JSON)
+
+epic (8 occurrences):
+  hostile:
+    - golem_crystal (Definitions.JSON/hostiles-1.JSON)
+  recipe:
+    - refining_rarity_copper_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_steel_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_mithril_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_adamantine_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_tin_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_bronze_epic (recipes.JSON/recipes-refining-1.JSON)
+
+essence (1 occurrences):
+  recipe:
+    - alchemy_refine_essence_blood (recipes.JSON/recipes-alchemy-1.JSON)
+
+essential (2 occurrences):
+  npc:
+    - unknown (progression/npcs-enhanced.JSON)
+    - unknown (progression/npcs-enhanced.JSON)
+
+etherion (2 occurrences):
+  recipe:
+    - refining_etherion_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_etherion_mythical (recipes.JSON/recipes-refining-1.JSON)
+
+explosive (1 occurrences):
+  recipe:
+    - engineering_simple_bomb (recipes.JSON/recipes-engineering-1.JSON)
+
+fast (1 occurrences):
+  recipe:
+    - smithing_copper_dagger (recipes.JSON/recipes-smithing-3.JSON)
+
+feet (1 occurrences):
+  recipe:
+    - smithing_iron_boots (recipes.JSON/recipes-smithing-3.JSON)
+
+fine (1 occurrences):
+  recipe:
+    - refining_birch_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+
+finisher (1 occurrences):
+  skill:
+    - omega_strike (Skills/skills-skills-1.JSON)
+
+fire (9 occurrences):
+  recipe:
+    - alchemy_fire_resistance_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_fire_aspect (recipes.JSON/recipes-enchanting-1.JSON)
+    - engineering_fire_arrow_turret (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_flamethrower_turret (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_fire_bomb (recipes.JSON/recipes-engineering-1.JSON)
+    - refining_fire_steel (recipes.JSON/recipes-refining-1.JSON)
+    - smithing_copper_fire_ring (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_fire_crystal_staff (recipes.JSON/recipes-smithing-3.JSON)
+    - enchanting_fire_aspect (recipes.JSON/recipes-adornments-1.json)
+
+fishing (1 occurrences):
+  recipe:
+    - smithing_bamboo_fishing_rod (recipes.JSON/recipes-smithing-3.JSON)
+
+flexible (1 occurrences):
+  recipe:
+    - smithing_iron_studded_gauntlets (recipes.JSON/recipes-smithing-3.JSON)
+
+flight (1 occurrences):
+  recipe:
+    - engineering_jetpack (recipes.JSON/recipes-engineering-1.JSON)
+
+forge (6 occurrences):
+  recipe:
+    - smithing_forge_t1 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_forge_t2 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_forge_t3 (recipes.JSON/recipes-smithing-3.JSON)
+  station:
+    - forge_t1 (items.JSON/items-smithing-2.JSON)
+    - forge_t2 (items.JSON/items-smithing-2.JSON)
+    - forge_t3 (items.JSON/items-smithing-2.JSON)
+
+forging (3 occurrences):
+  station:
+    - refinery_t1 (items.JSON/items-smithing-2.JSON)
+    - refinery_t2 (items.JSON/items-smithing-2.JSON)
+    - refinery_t3 (items.JSON/items-smithing-2.JSON)
+
+fortune (4 occurrences):
+  recipe:
+    - enchanting_fortune_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_fortune_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_fortune_basic (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_fortune_advanced (recipes.JSON/recipes-adornments-1.json)
+
+frost (5 occurrences):
+  recipe:
+    - alchemy_frost_resistance_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_frost_touch (recipes.JSON/recipes-enchanting-1.JSON)
+    - engineering_frost_mine (recipes.JSON/recipes-engineering-1.JSON)
+    - refining_frost_steel (recipes.JSON/recipes-refining-1.JSON)
+    - enchanting_frost_touch (recipes.JSON/recipes-adornments-1.json)
+
+gathering (11 occurrences):
+  quest:
+    - tutorial_quest (progression/quests-enhanced.JSON)
+    - gathering_quest (progression/quests-enhanced.JSON)
+  recipe:
+    - smithing_bamboo_fishing_rod (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_steel_sickle (recipes.JSON/recipes-smithing-3.JSON)
+  skill:
+    - miners_fury (Skills/skills-skills-1.JSON)
+    - lumberjacks_rhythm (Skills/skills-skills-1.JSON)
+    - bountiful_harvest (Skills/skills-skills-1.JSON)
+    - treasure_sense (Skills/skills-skills-1.JSON)
+    - tool_preservation (Skills/skills-skills-1.JSON)
+    - chain_harvest (Skills/skills-skills-1.JSON)
+    - endless_bounty (Skills/skills-skills-1.JSON)
+
+golem (2 occurrences):
+  hostile:
+    - golem_stone (Definitions.JSON/hostiles-1.JSON)
+    - golem_crystal (Definitions.JSON/hostiles-1.JSON)
+
+hands (1 occurrences):
+  recipe:
+    - smithing_iron_studded_gauntlets (recipes.JSON/recipes-smithing-3.JSON)
+
+harvesting (1 occurrences):
+  recipe:
+    - smithing_steel_sickle (recipes.JSON/recipes-smithing-3.JSON)
+
+head (1 occurrences):
+  recipe:
+    - smithing_steel_helm (recipes.JSON/recipes-smithing-3.JSON)
+
+healing (11 occurrences):
+  recipe:
+    - alchemy_minor_health_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_health_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_greater_health_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_regeneration_tonic (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_regeneration (recipes.JSON/recipes-enchanting-1.JSON)
+    - engineering_healing_beacon (recipes.JSON/recipes-engineering-1.JSON)
+    - enchanting_regeneration (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - field_medic (Skills/skills-skills-1.JSON)
+    - regenerative_aura (Skills/skills-skills-1.JSON)
+    - second_wind (Skills/skills-skills-1.JSON)
+    - phoenix_resurrection (Skills/skills-skills-1.JSON)
+
+heavy (1 occurrences):
+  recipe:
+    - smithing_steel_leggings (recipes.JSON/recipes-smithing-3.JSON)
+
+immobilize (1 occurrences):
+  recipe:
+    - engineering_bear_trap (recipes.JSON/recipes-engineering-1.JSON)
+
+instant (2 occurrences):
+  skill:
+    - quick_repair (Skills/skills-skills-1.JSON)
+    - field_medic (Skills/skills-skills-1.JSON)
+
+iron (5 occurrences):
+  recipe:
+    - refining_iron_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_uncommon (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_legendary (recipes.JSON/recipes-refining-1.JSON)
+
+knockback (2 occurrences):
+  recipe:
+    - enchanting_knockback (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_knockback (recipes.JSON/recipes-adornments-1.json)
+
+legendary (18 occurrences):
+  recipe:
+    - alchemy_titans_brew (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_sharpness_master (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_protection_master (recipes.JSON/recipes-enchanting-1.JSON)
+    - refining_mithril_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_adamantine_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_worldtree_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_legendary (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_legendary (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_steel_legendary (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_mithril_legendary (recipes.JSON/recipes-refining-1.JSON)
+    ... and 7 more
+  station:
+    - forge_t4 (Definitions.JSON/crafting-stations-1.JSON)
+
+legs (1 occurrences):
+  recipe:
+    - smithing_steel_leggings (recipes.JSON/recipes-smithing-3.JSON)
+
+lifesteal (2 occurrences):
+  recipe:
+    - enchanting_lifesteal (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_lifesteal (recipes.JSON/recipes-adornments-1.json)
+
+light (2 occurrences):
+  recipe:
+    - engineering_laser_turret (recipes.JSON/recipes-engineering-1.JSON)
+    - smithing_iron_studded_gauntlets (recipes.JSON/recipes-smithing-3.JSON)
+
+lightning (5 occurrences):
+  recipe:
+    - enchanting_lightning_strike (recipes.JSON/recipes-enchanting-1.JSON)
+    - engineering_lightning_cannon (recipes.JSON/recipes-engineering-1.JSON)
+    - refining_lightning_copper (recipes.JSON/recipes-refining-1.JSON)
+    - smithing_steel_lightning_bracelet (recipes.JSON/recipes-smithing-3.JSON)
+    - enchanting_lightning_strike (recipes.JSON/recipes-adornments-1.json)
+
+luck (4 occurrences):
+  recipe:
+    - enchanting_fortune_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_fortune_basic (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - treasure_sense (Skills/skills-skills-1.JSON)
+    - fortunes_favor (Skills/skills-skills-1.JSON)
+
+mace (1 occurrences):
+  recipe:
+    - smithing_iron_warhammer (recipes.JSON/recipes-smithing-3.JSON)
+
+magical (1 occurrences):
+  recipe:
+    - refining_ebony_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+
+mana (1 occurrences):
+  skill:
+    - second_wind (Skills/skills-skills-1.JSON)
+
+master (4 occurrences):
+  recipe:
+    - enchanting_fortune_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_fortune_advanced (recipes.JSON/recipes-adornments-1.json)
+  station:
+    - forge_t3 (items.JSON/items-smithing-2.JSON)
+    - refinery_t3 (items.JSON/items-smithing-2.JSON)
+
+mastery (2 occurrences):
+  skill:
+    - master_craftsman (Skills/skills-skills-1.JSON)
+    - time_dilation (Skills/skills-skills-1.JSON)
+
+mechanical (2 occurrences):
+  station:
+    - engineering_bench_t1 (items.JSON/items-smithing-2.JSON)
+    - engineering_bench_t2 (items.JSON/items-smithing-2.JSON)
+
+metal (3 occurrences):
+  recipe:
+    - alchemy_transmute_copper_tin (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_transmute_iron_steel (recipes.JSON/recipes-alchemy-1.JSON)
+    - smithing_steel_leggings (recipes.JSON/recipes-smithing-3.JSON)
+
+metallic (1 occurrences):
+  recipe:
+    - refining_ironwood_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+
+mid-game (3 occurrences):
+  hostile:
+    - wolf_dire (Definitions.JSON/hostiles-1.JSON)
+    - slime_acid (Definitions.JSON/hostiles-1.JSON)
+    - beetle_armored (Definitions.JSON/hostiles-1.JSON)
+
+minerals (1 occurrences):
+  npc:
+    - unknown (progression/npcs-enhanced.JSON)
+
+mining (1 occurrences):
+  quest:
+    - gathering_quest (progression/quests-enhanced.JSON)
+
+mithril (4 occurrences):
+  recipe:
+    - refining_mithril_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_mithril_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_mithril_legendary (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_mithril_mythical (recipes.JSON/recipes-refining-1.JSON)
+
+mobility (5 occurrences):
+  recipe:
+    - enchanting_swiftness (recipes.JSON/recipes-enchanting-1.JSON)
+    - engineering_grappling_hook (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_jetpack (recipes.JSON/recipes-engineering-1.JSON)
+    - enchanting_swiftness (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - sprint (Skills/skills-skills-1.JSON)
+
+movement (1 occurrences):
+  skill:
+    - sprint (Skills/skills-skills-1.JSON)
+
+multi_purpose (1 occurrences):
+  skill:
+    - keen_eye (Skills/skills-skills-1.JSON)
+
+mythical (5 occurrences):
+  hostile:
+    - entity_primordial (Definitions.JSON/hostiles-1.JSON)
+  recipe:
+    - refining_etherion_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_mithril_mythical (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_orichalcum_mythical (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_etherion_mythical (recipes.JSON/recipes-refining-1.JSON)
+
+orichalcum (3 occurrences):
+  recipe:
+    - refining_orichalcum_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_orichalcum_legendary (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_orichalcum_mythical (recipes.JSON/recipes-refining-1.JSON)
+
+over_time (1 occurrences):
+  skill:
+    - regenerative_aura (Skills/skills-skills-1.JSON)
+
+passive (2 occurrences):
+  hostile:
+    - wolf_grey (Definitions.JSON/hostiles-1.JSON)
+    - slime_green (Definitions.JSON/hostiles-1.JSON)
+
+phase (1 occurrences):
+  hostile:
+    - void_wraith (Definitions.JSON/hostiles-1.JSON)
+
+physical (2 occurrences):
+  recipe:
+    - engineering_spike_trap (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_bear_trap (recipes.JSON/recipes-engineering-1.JSON)
+
+pickaxe (4 occurrences):
+  recipe:
+    - smithing_copper_pickaxe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_iron_pickaxe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_steel_pickaxe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_mithril_pickaxe (recipes.JSON/recipes-smithing-3.JSON)
+
+poison (2 occurrences):
+  recipe:
+    - enchanting_poison (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_poison (recipes.JSON/recipes-adornments-1.json)
+
+potion (11 occurrences):
+  recipe:
+    - alchemy_minor_health_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_health_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_greater_health_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_strength_elixir (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_iron_skin_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_swiftness_draught (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_fire_resistance_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_frost_resistance_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_regeneration_tonic (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_titans_brew (recipes.JSON/recipes-alchemy-1.JSON)
+    ... and 1 more
+
+precision (2 occurrences):
+  recipe:
+    - engineering_laser_turret (recipes.JSON/recipes-engineering-1.JSON)
+  skill:
+    - keen_eye (Skills/skills-skills-1.JSON)
+
+projectile (2 occurrences):
+  recipe:
+    - engineering_basic_arrow_turret (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_net_launcher (recipes.JSON/recipes-engineering-1.JSON)
+
+purification (1 occurrences):
+  recipe:
+    - alchemy_refine_essence_blood (recipes.JSON/recipes-alchemy-1.JSON)
+
+quality (15 occurrences):
+  recipe:
+    - alchemy_greater_health_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - refining_ash_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - smithing_steel_longsword (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_steel_helm (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_steel_pickaxe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_steel_axe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_forge_t3 (recipes.JSON/recipes-smithing-3.JSON)
+  skill:
+    - alchemists_insight (Skills/skills-skills-1.JSON)
+    - engineers_precision (Skills/skills-skills-1.JSON)
+    - refiners_touch (Skills/skills-skills-1.JSON)
+    - master_craftsman (Skills/skills-skills-1.JSON)
+  station:
+    - forge_t3 (Definitions.JSON/crafting-stations-1.JSON)
+    - alchemy_table_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - engineering_bench_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - enchanting_table_t2 (Definitions.JSON/crafting-stations-1.JSON)
+
+ranged (1 occurrences):
+  recipe:
+    - smithing_composite_longbow (recipes.JSON/recipes-smithing-3.JSON)
+
+rare (10 occurrences):
+  hostile:
+    - wolf_elder (Definitions.JSON/hostiles-1.JSON)
+    - slime_crystal (Definitions.JSON/hostiles-1.JSON)
+    - beetle_titan (Definitions.JSON/hostiles-1.JSON)
+    - golem_stone (Definitions.JSON/hostiles-1.JSON)
+    - void_wraith (Definitions.JSON/hostiles-1.JSON)
+  recipe:
+    - refining_rarity_copper_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_steel_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_tin_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_bronze_rare (recipes.JSON/recipes-refining-1.JSON)
+
+rarity (27 occurrences):
+  recipe:
+    - refining_rarity_copper_uncommon (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_legendary (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_uncommon (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_legendary (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_steel_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_steel_epic (recipes.JSON/recipes-refining-1.JSON)
+    ... and 13 more
+  skill:
+    - treasure_sense (Skills/skills-skills-1.JSON)
+    - enchanters_grace (Skills/skills-skills-1.JSON)
+    - master_craftsman (Skills/skills-skills-1.JSON)
+    - fortunes_favor (Skills/skills-skills-1.JSON)
+
+reality-bender (1 occurrences):
+  hostile:
+    - entity_primordial (Definitions.JSON/hostiles-1.JSON)
+
+recovery (1 occurrences):
+  skill:
+    - second_wind (Skills/skills-skills-1.JSON)
+
+refinery (5 occurrences):
+  recipe:
+    - smithing_refinery_t1 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_refinery_t2 (recipes.JSON/recipes-smithing-3.JSON)
+  station:
+    - refinery_t1 (items.JSON/items-smithing-2.JSON)
+    - refinery_t2 (items.JSON/items-smithing-2.JSON)
+    - refinery_t3 (items.JSON/items-smithing-2.JSON)
+
+refining (3 occurrences):
+  skill:
+    - refiners_touch (Skills/skills-skills-1.JSON)
+  station:
+    - refinery_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - refinery_t2 (Definitions.JSON/crafting-stations-1.JSON)
+
+reflect (2 occurrences):
+  recipe:
+    - enchanting_thorns (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_thorns (recipes.JSON/recipes-adornments-1.json)
+
+regeneration (4 occurrences):
+  recipe:
+    - alchemy_regeneration_tonic (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_regeneration (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_regeneration (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - phoenix_resurrection (Skills/skills-skills-1.JSON)
+
+repair (3 occurrences):
+  recipe:
+    - enchanting_self_repair (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_self_repair (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - quick_repair (Skills/skills-skills-1.JSON)
+
+repeatable (1 occurrences):
+  quest:
+    - gathering_quest (progression/quests-enhanced.JSON)
+
+resistance (3 occurrences):
+  recipe:
+    - alchemy_fire_resistance_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_frost_resistance_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_elemental_harmony (recipes.JSON/recipes-alchemy-1.JSON)
+
+ring (1 occurrences):
+  recipe:
+    - smithing_copper_fire_ring (recipes.JSON/recipes-smithing-3.JSON)
+
+sawing (8 occurrences):
+  recipe:
+    - refining_oak_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_pine_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_ash_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_birch_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_maple_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_ironwood_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_ebony_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_worldtree_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+
+shield (1 occurrences):
+  recipe:
+    - smithing_iron_round_shield (recipes.JSON/recipes-smithing-3.JSON)
+
+silk-touch (2 occurrences):
+  recipe:
+    - enchanting_silk_touch (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_silk_touch (recipes.JSON/recipes-adornments-1.json)
+
+single_hit (1 occurrences):
+  skill:
+    - combat_strike (Skills/skills-skills-1.JSON)
+
+single_target (1 occurrences):
+  skill:
+    - omega_strike (Skills/skills-skills-1.JSON)
+
+slime (3 occurrences):
+  hostile:
+    - slime_green (Definitions.JSON/hostiles-1.JSON)
+    - slime_acid (Definitions.JSON/hostiles-1.JSON)
+    - slime_crystal (Definitions.JSON/hostiles-1.JSON)
+
+smelting (8 occurrences):
+  recipe:
+    - refining_copper_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_iron_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_tin_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_steel_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_mithril_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_adamantine_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_orichalcum_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_etherion_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+
+smithing (8 occurrences):
+  skill:
+    - smiths_focus (Skills/skills-skills-1.JSON)
+  station:
+    - forge_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - forge_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - forge_t3 (Definitions.JSON/crafting-stations-1.JSON)
+    - forge_t4 (Definitions.JSON/crafting-stations-1.JSON)
+    - forge_t1 (items.JSON/items-smithing-2.JSON)
+    - forge_t2 (items.JSON/items-smithing-2.JSON)
+    - forge_t3 (items.JSON/items-smithing-2.JSON)
+
+soulbound (2 occurrences):
+  recipe:
+    - enchanting_soulbound (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_soulbound (recipes.JSON/recipes-adornments-1.json)
+
+spear (1 occurrences):
+  recipe:
+    - smithing_copper_spear (recipes.JSON/recipes-smithing-3.JSON)
+
+special (4 occurrences):
+  recipe:
+    - enchanting_silk_touch (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_soulbound (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_silk_touch (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_soulbound (recipes.JSON/recipes-adornments-1.json)
+
+speed (5 occurrences):
+  recipe:
+    - alchemy_swiftness_draught (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_swiftness (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_swiftness (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - sprint (Skills/skills-skills-1.JSON)
+    - battle_fury (Skills/skills-skills-1.JSON)
+
+speed_boost (1 occurrences):
+  skill:
+    - lumberjacks_rhythm (Skills/skills-skills-1.JSON)
+
+staff (1 occurrences):
+  recipe:
+    - smithing_fire_crystal_staff (recipes.JSON/recipes-smithing-3.JSON)
+
+standard (12 occurrences):
+  recipe:
+    - alchemy_health_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - smithing_iron_pickaxe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_iron_axe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_iron_chestplate (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_forge_t2 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_refinery_t2 (recipes.JSON/recipes-smithing-3.JSON)
+  station:
+    - forge_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - refinery_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - forge_t2 (items.JSON/items-smithing-2.JSON)
+    - refinery_t2 (items.JSON/items-smithing-2.JSON)
+    - alchemy_table_t2 (items.JSON/items-smithing-2.JSON)
+    - engineering_bench_t2 (items.JSON/items-smithing-2.JSON)
+
+starter (27 occurrences):
+  hostile:
+    - wolf_grey (Definitions.JSON/hostiles-1.JSON)
+    - slime_green (Definitions.JSON/hostiles-1.JSON)
+    - beetle_brown (Definitions.JSON/hostiles-1.JSON)
+  npc:
+    - unknown (progression/npcs-enhanced.JSON)
+  quest:
+    - tutorial_quest (progression/quests-enhanced.JSON)
+  recipe:
+    - alchemy_minor_health_potion (recipes.JSON/recipes-alchemy-1.JSON)
+    - smithing_iron_shortsword (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_copper_pickaxe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_copper_axe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_copper_spear (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_leather_tunic (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_iron_boots (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_forge_t1 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_refinery_t1 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_pine_shortbow (recipes.JSON/recipes-smithing-3.JSON)
+    ... and 2 more
+  station:
+    - forge_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - refinery_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - alchemy_table_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - engineering_bench_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - enchanting_table_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - forge_t1 (items.JSON/items-smithing-2.JSON)
+    - refinery_t1 (items.JSON/items-smithing-2.JSON)
+    - alchemy_table_t1 (items.JSON/items-smithing-2.JSON)
+    - engineering_bench_t1 (items.JSON/items-smithing-2.JSON)
+    - enchanting_table_t1 (items.JSON/items-smithing-2.JSON)
+
+station (30 occurrences):
+  recipe:
+    - smithing_forge_t1 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_forge_t2 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_forge_t3 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_refinery_t1 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_refinery_t2 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_alchemy_table_t1 (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_engineering_bench_t1 (recipes.JSON/recipes-smithing-3.JSON)
+  station:
+    - forge_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - forge_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - forge_t3 (Definitions.JSON/crafting-stations-1.JSON)
+    - forge_t4 (Definitions.JSON/crafting-stations-1.JSON)
+    - refinery_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - refinery_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - alchemy_table_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - alchemy_table_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    - engineering_bench_t1 (Definitions.JSON/crafting-stations-1.JSON)
+    - engineering_bench_t2 (Definitions.JSON/crafting-stations-1.JSON)
+    ... and 13 more
+
+steel (6 occurrences):
+  recipe:
+    - refining_steel_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_fire_steel (recipes.JSON/recipes-refining-1.JSON)
+    - refining_frost_steel (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_steel_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_steel_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_steel_legendary (recipes.JSON/recipes-refining-1.JSON)
+
+strength (1 occurrences):
+  recipe:
+    - alchemy_strength_elixir (recipes.JSON/recipes-alchemy-1.JSON)
+
+support (1 occurrences):
+  recipe:
+    - engineering_healing_beacon (recipes.JSON/recipes-engineering-1.JSON)
+
+survival (2 occurrences):
+  skill:
+    - field_medic (Skills/skills-skills-1.JSON)
+    - second_wind (Skills/skills-skills-1.JSON)
+
+sustain (2 occurrences):
+  skill:
+    - regenerative_aura (Skills/skills-skills-1.JSON)
+    - phoenix_resurrection (Skills/skills-skills-1.JSON)
+
+sword (2 occurrences):
+  recipe:
+    - smithing_iron_shortsword (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_steel_longsword (recipes.JSON/recipes-smithing-3.JSON)
+
+tech (1 occurrences):
+  recipe:
+    - engineering_emp_device (recipes.JSON/recipes-engineering-1.JSON)
+
+territorial (1 occurrences):
+  hostile:
+    - beetle_armored (Definitions.JSON/hostiles-1.JSON)
+
+thorns (2 occurrences):
+  recipe:
+    - enchanting_thorns (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_thorns (recipes.JSON/recipes-adornments-1.json)
+
+tier (1 occurrences):
+  skill:
+    - reality_breach (Skills/skills-skills-1.JSON)
+
+time (2 occurrences):
+  skill:
+    - smiths_focus (Skills/skills-skills-1.JSON)
+    - time_dilation (Skills/skills-skills-1.JSON)
+
+tin (3 occurrences):
+  recipe:
+    - refining_tin_ore_to_ingot (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_tin_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_tin_epic (recipes.JSON/recipes-refining-1.JSON)
+
+tool (22 occurrences):
+  recipe:
+    - alchemy_efficiency_oil (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_efficiency_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_efficiency_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_fortune_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_fortune_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_silk_touch (recipes.JSON/recipes-enchanting-1.JSON)
+    - engineering_grappling_hook (recipes.JSON/recipes-engineering-1.JSON)
+    - smithing_copper_pickaxe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_copper_axe (recipes.JSON/recipes-smithing-3.JSON)
+    - smithing_iron_pickaxe (recipes.JSON/recipes-smithing-3.JSON)
+    ... and 12 more
+
+trader (1 occurrences):
+  npc:
+    - unknown (progression/npcs-enhanced.JSON)
+
+trainer (1 occurrences):
+  npc:
+    - unknown (progression/npcs-enhanced.JSON)
+
+transcendence (1 occurrences):
+  skill:
+    - reality_breach (Skills/skills-skills-1.JSON)
+
+transmutation (5 occurrences):
+  recipe:
+    - alchemy_universal_solvent (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_transmute_copper_tin (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_transmute_iron_steel (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_refine_essence_blood (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_crystallize_fire (recipes.JSON/recipes-alchemy-1.JSON)
+
+trap (3 occurrences):
+  recipe:
+    - engineering_spike_trap (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_frost_mine (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_bear_trap (recipes.JSON/recipes-engineering-1.JSON)
+
+turret (5 occurrences):
+  recipe:
+    - engineering_basic_arrow_turret (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_fire_arrow_turret (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_lightning_cannon (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_flamethrower_turret (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_laser_turret (recipes.JSON/recipes-engineering-1.JSON)
+
+tutorial (3 occurrences):
+  npc:
+    - unknown (progression/npcs-enhanced.JSON)
+  quest:
+    - tutorial_quest (progression/quests-enhanced.JSON)
+    - combat_quest (progression/quests-enhanced.JSON)
+
+ultimate (3 occurrences):
+  skill:
+    - absolute_destruction (Skills/skills-skills-1.JSON)
+    - reality_breach (Skills/skills-skills-1.JSON)
+    - omega_strike (Skills/skills-skills-1.JSON)
+
+uncommon (5 occurrences):
+  hostile:
+    - wolf_dire (Definitions.JSON/hostiles-1.JSON)
+    - slime_acid (Definitions.JSON/hostiles-1.JSON)
+    - beetle_armored (Definitions.JSON/hostiles-1.JSON)
+  recipe:
+    - refining_rarity_copper_uncommon (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_uncommon (recipes.JSON/recipes-refining-1.JSON)
+
+universal (12 occurrences):
+  recipe:
+    - enchanting_durability_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_durability_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_weightless (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_self_repair (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_soulbound (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_durability_basic (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_durability_advanced (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_weightless (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_self_repair (recipes.JSON/recipes-adornments-1.json)
+    - enchanting_soulbound (recipes.JSON/recipes-adornments-1.json)
+  skill:
+    - fortunes_favor (Skills/skills-skills-1.JSON)
+    - time_dilation (Skills/skills-skills-1.JSON)
+
+upgrade (23 occurrences):
+  recipe:
+    - refining_rarity_copper_uncommon (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_copper_legendary (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_uncommon (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_epic (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_iron_legendary (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_steel_rare (recipes.JSON/recipes-refining-1.JSON)
+    - refining_rarity_steel_epic (recipes.JSON/recipes-refining-1.JSON)
+    ... and 13 more
+
+utility (14 occurrences):
+  recipe:
+    - alchemy_efficiency_oil (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_armor_polish (recipes.JSON/recipes-alchemy-1.JSON)
+    - alchemy_universal_solvent (recipes.JSON/recipes-alchemy-1.JSON)
+    - enchanting_weightless (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_self_repair (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_knockback (recipes.JSON/recipes-enchanting-1.JSON)
+    - engineering_healing_beacon (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_net_launcher (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_emp_device (recipes.JSON/recipes-engineering-1.JSON)
+    - engineering_grappling_hook (recipes.JSON/recipes-engineering-1.JSON)
+    ... and 4 more
+
+vampiric (2 occurrences):
+  recipe:
+    - enchanting_lifesteal (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_lifesteal (recipes.JSON/recipes-adornments-1.json)
+
+versatile (1 occurrences):
+  recipe:
+    - smithing_steel_battleaxe (recipes.JSON/recipes-smithing-3.JSON)
+
+wandering (1 occurrences):
+  npc:
+    - unknown (progression/npcs-enhanced.JSON)
+
+warrior (1 occurrences):
+  quest:
+    - combat_quest (progression/quests-enhanced.JSON)
+
+water (1 occurrences):
+  recipe:
+    - smithing_iron_water_amulet (recipes.JSON/recipes-smithing-3.JSON)
+
+weapon (29 occurrences):
+  recipe:
+    - enchanting_sharpness_basic (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_sharpness_advanced (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_sharpness_master (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_fire_aspect (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_frost_touch (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_lightning_strike (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_knockback (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_poison (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_lifesteal (recipes.JSON/recipes-enchanting-1.JSON)
+    - smithing_iron_shortsword (recipes.JSON/recipes-smithing-3.JSON)
+    ... and 19 more
+
+weight (2 occurrences):
+  recipe:
+    - enchanting_weightless (recipes.JSON/recipes-enchanting-1.JSON)
+    - enchanting_weightless (recipes.JSON/recipes-adornments-1.json)
+
+wolf (3 occurrences):
+  hostile:
+    - wolf_grey (Definitions.JSON/hostiles-1.JSON)
+    - wolf_dire (Definitions.JSON/hostiles-1.JSON)
+    - wolf_elder (Definitions.JSON/hostiles-1.JSON)
+
+wood (8 occurrences):
+  recipe:
+    - refining_oak_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_pine_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_ash_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_birch_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_maple_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_ironwood_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_ebony_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+    - refining_worldtree_log_to_plank (recipes.JSON/recipes-refining-1.JSON)
+
+wraith (1 occurrences):
+  hostile:
+    - void_wraith (Definitions.JSON/hostiles-1.JSON)
+
+yield (2 occurrences):
+  skill:
+    - bountiful_harvest (Skills/skills-skills-1.JSON)
+    - endless_bounty (Skills/skills-skills-1.JSON)
