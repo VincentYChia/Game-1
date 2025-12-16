@@ -1,0 +1,594 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Tag-to-effects system tag definitions - SINGLE SOURCE OF TRUTH",
+    "note": "All functional tags and their behaviors are defined here"
+  },
+
+  "categories": {
+    "equipment": ["1H", "2H", "versatile"],
+    "geometry": ["single_target", "chain", "cone", "circle", "beam", "projectile", "pierce", "splash"],
+    "damage_type": ["physical", "slashing", "piercing", "crushing", "fire", "frost", "lightning", "poison", "holy", "shadow", "arcane", "chaos"],
+    "status_debuff": ["burn", "freeze", "chill", "slow", "stun", "root", "bleed", "poison_status", "shock", "weaken"],
+    "status_buff": ["haste", "quicken", "empower", "fortify", "regeneration", "shield", "barrier", "invisible"],
+    "special": ["lifesteal", "vampiric", "reflect", "thorns", "knockback", "pull", "teleport", "summon", "dash", "charge", "phase", "execute", "critical"],
+    "trigger": ["on_hit", "on_kill", "on_damage", "on_crit", "on_contact", "on_proximity", "passive", "active", "instant"],
+    "context": ["self", "ally", "friendly", "enemy", "hostile", "all", "player", "turret", "device", "construct", "undead", "mechanical"]
+  },
+
+  "tag_definitions": {
+    "1H": {
+      "category": "equipment",
+      "description": "Can be equipped in mainHand OR offHand",
+      "priority": 0,
+      "conflicts_with": ["2H", "versatile"]
+    },
+    "2H": {
+      "category": "equipment",
+      "description": "Requires both hands, blocks offHand",
+      "priority": 0,
+      "conflicts_with": ["1H", "versatile"]
+    },
+    "versatile": {
+      "category": "equipment",
+      "description": "Optional offHand, different stats when 2H",
+      "priority": 0,
+      "conflicts_with": ["1H", "2H"]
+    },
+
+    "single_target": {
+      "category": "geometry",
+      "description": "Hits only primary target",
+      "priority": 1,
+      "requires_params": [],
+      "default_params": {}
+    },
+    "chain": {
+      "category": "geometry",
+      "description": "Arcs to additional nearby targets",
+      "priority": 5,
+      "requires_params": [],
+      "default_params": {
+        "chain_count": 2,
+        "chain_range": 5.0,
+        "chain_falloff": 0.3
+      },
+      "synergies": {
+        "lightning": {"chain_range_bonus": 0.2}
+      }
+    },
+    "cone": {
+      "category": "geometry",
+      "description": "Hits all targets in frontal cone",
+      "priority": 4,
+      "requires_params": [],
+      "default_params": {
+        "cone_angle": 60,
+        "cone_range": 8.0
+      }
+    },
+    "circle": {
+      "category": "geometry",
+      "description": "Hits all targets in radius",
+      "priority": 3,
+      "requires_params": [],
+      "default_params": {
+        "radius": 3.0,
+        "origin": "target",
+        "max_targets": 0
+      },
+      "aliases": ["aoe", "radial"]
+    },
+    "beam": {
+      "category": "geometry",
+      "description": "Hits all targets in straight line",
+      "priority": 2,
+      "requires_params": [],
+      "default_params": {
+        "beam_range": 10.0,
+        "beam_width": 0.5,
+        "pierce_count": 0
+      },
+      "aliases": ["line"]
+    },
+    "projectile": {
+      "category": "geometry",
+      "description": "Physical projectile that travels",
+      "priority": 0,
+      "requires_params": [],
+      "default_params": {
+        "projectile_speed": 15.0,
+        "projectile_gravity": 0.0,
+        "projectile_homing": 0.0
+      }
+    },
+    "pierce": {
+      "category": "geometry",
+      "description": "Penetrates through targets",
+      "priority": 0,
+      "requires_params": [],
+      "default_params": {
+        "pierce_count": -1,
+        "pierce_falloff": 0.1
+      }
+    },
+    "splash": {
+      "category": "geometry",
+      "description": "Impact creates AOE",
+      "priority": 0,
+      "requires_params": [],
+      "default_params": {
+        "splash_radius": 2.0,
+        "splash_falloff": "linear"
+      }
+    },
+
+    "physical": {
+      "category": "damage_type",
+      "description": "Base physical damage"
+    },
+    "slashing": {
+      "category": "damage_type",
+      "description": "Physical cutting damage",
+      "parent": "physical"
+    },
+    "piercing": {
+      "category": "damage_type",
+      "description": "Physical piercing damage, ignores some armor",
+      "parent": "physical"
+    },
+    "crushing": {
+      "category": "damage_type",
+      "description": "Physical impact damage, bonus vs armor",
+      "parent": "physical",
+      "aliases": ["blunt"]
+    },
+    "fire": {
+      "category": "damage_type",
+      "description": "Fire elemental damage",
+      "auto_apply_chance": 0.1,
+      "auto_apply_status": "burn",
+      "conflicts_with": ["freeze"]
+    },
+    "frost": {
+      "category": "damage_type",
+      "description": "Frost elemental damage",
+      "auto_apply_chance": 0.15,
+      "auto_apply_status": "chill",
+      "conflicts_with": ["burn"],
+      "aliases": ["ice", "cold"]
+    },
+    "lightning": {
+      "category": "damage_type",
+      "description": "Lightning elemental damage",
+      "synergies": {
+        "chain": {"chain_range_bonus": 0.2}
+      },
+      "aliases": ["electric", "shock"]
+    },
+    "poison": {
+      "category": "damage_type",
+      "description": "Poison damage"
+    },
+    "holy": {
+      "category": "damage_type",
+      "description": "Holy damage, bonus vs undead",
+      "context_behavior": {
+        "undead": {"damage_multiplier": 1.5},
+        "ally": {"converts_to_healing": true}
+      },
+      "aliases": ["light", "radiant"]
+    },
+    "shadow": {
+      "category": "damage_type",
+      "description": "Shadow damage",
+      "aliases": ["dark", "necrotic"]
+    },
+    "arcane": {
+      "category": "damage_type",
+      "description": "Arcane magic damage, bypasses armor",
+      "aliases": ["magic", "magical"]
+    },
+    "chaos": {
+      "category": "damage_type",
+      "description": "Chaotic damage, random type each hit",
+      "aliases": ["void"]
+    },
+
+    "burn": {
+      "category": "status_debuff",
+      "description": "Fire damage over time",
+      "stacking": "additive",
+      "default_params": {
+        "duration": 5.0,
+        "damage_per_tick": 5.0,
+        "tick_rate": 1.0
+      },
+      "conflicts_with": ["freeze"],
+      "aliases": ["burning", "ignite"]
+    },
+    "freeze": {
+      "category": "status_debuff",
+      "description": "Complete immobilization",
+      "stacking": "none",
+      "default_params": {
+        "duration": 3.0,
+        "damage_to_break": 0.0
+      },
+      "conflicts_with": ["burn"],
+      "aliases": ["frozen"]
+    },
+    "chill": {
+      "category": "status_debuff",
+      "description": "Movement speed reduction",
+      "stacking": "multiplicative",
+      "default_params": {
+        "duration": 4.0,
+        "slow_amount": 0.5,
+        "affect_attack_speed": false
+      },
+      "aliases": ["slow", "slowed"]
+    },
+    "slow": {
+      "category": "status_debuff",
+      "description": "Movement speed reduction (alias for chill)",
+      "alias_of": "chill"
+    },
+    "stun": {
+      "category": "status_debuff",
+      "description": "Cannot act or move",
+      "stacking": "diminishing",
+      "default_params": {
+        "duration": 2.0
+      },
+      "aliases": ["stunned", "dazed"]
+    },
+    "root": {
+      "category": "status_debuff",
+      "description": "Cannot move, can still act",
+      "stacking": "additive",
+      "default_params": {
+        "duration": 3.0
+      },
+      "aliases": ["rooted", "immobilize", "immobilized", "snare"]
+    },
+    "bleed": {
+      "category": "status_debuff",
+      "description": "Physical damage over time",
+      "stacking": "additive",
+      "default_params": {
+        "duration": 6.0,
+        "damage_per_tick": 3.0,
+        "tick_rate": 1.0,
+        "movement_increases_damage": true
+      },
+      "immunity": ["construct", "mechanical"],
+      "aliases": ["bleeding", "hemorrhage"]
+    },
+    "poison_status": {
+      "category": "status_debuff",
+      "description": "Poison damage over time",
+      "stacking": "additive",
+      "default_params": {
+        "duration": 10.0,
+        "damage_per_tick": 4.0,
+        "tick_rate": 2.0
+      },
+      "immunity": ["construct", "undead", "mechanical"],
+      "aliases": ["poisoned", "toxic"]
+    },
+    "shock": {
+      "category": "status_debuff",
+      "description": "Periodic damage and interrupt",
+      "stacking": "additive",
+      "default_params": {
+        "duration": 6.0,
+        "damage_per_tick": 5.0,
+        "tick_rate": 2.0
+      }
+    },
+    "weaken": {
+      "category": "status_debuff",
+      "description": "Stat reduction",
+      "stacking": "additive",
+      "default_params": {
+        "duration": 5.0,
+        "stat_reduction": 0.25,
+        "affected_stats": ["damage", "defense"]
+      },
+      "aliases": ["weakened", "enfeeble"]
+    },
+
+    "haste": {
+      "category": "status_buff",
+      "description": "Increased speed",
+      "stacking": "additive",
+      "default_params": {
+        "duration": 10.0,
+        "speed_increase": 0.5,
+        "attack_speed_increase": 0.0
+      },
+      "aliases": ["quicken", "swiftness"]
+    },
+    "quicken": {
+      "category": "status_buff",
+      "description": "Increased speed (alias for haste)",
+      "alias_of": "haste"
+    },
+    "empower": {
+      "category": "status_buff",
+      "description": "Increased damage",
+      "stacking": "multiplicative",
+      "default_params": {
+        "duration": 10.0,
+        "damage_increase": 0.5
+      },
+      "aliases": ["strengthen", "damage_buff"]
+    },
+    "fortify": {
+      "category": "status_buff",
+      "description": "Increased defense",
+      "stacking": "additive",
+      "default_params": {
+        "duration": 10.0,
+        "defense_increase": 20,
+        "damage_reduction": 0.0
+      },
+      "aliases": ["armor_buff", "defense_buff"]
+    },
+    "regeneration": {
+      "category": "status_buff",
+      "description": "Healing over time",
+      "stacking": "additive",
+      "default_params": {
+        "duration": 10.0,
+        "heal_per_tick": 5.0,
+        "tick_rate": 1.0
+      },
+      "aliases": ["regen", "heal_over_time", "hot"]
+    },
+    "shield": {
+      "category": "status_buff",
+      "description": "Absorbs damage",
+      "stacking": "none",
+      "default_params": {
+        "duration": 15.0,
+        "shield_amount": 50.0,
+        "shield_type": "all"
+      },
+      "aliases": ["barrier", "damage_shield"]
+    },
+    "barrier": {
+      "category": "status_buff",
+      "description": "Absorbs damage (alias for shield)",
+      "alias_of": "shield"
+    },
+    "invisible": {
+      "category": "status_buff",
+      "description": "Undetectable by enemies",
+      "stacking": "none",
+      "default_params": {
+        "duration": 10.0,
+        "breaks_on_action": true
+      },
+      "aliases": ["stealth", "hidden"]
+    },
+
+    "lifesteal": {
+      "category": "special",
+      "description": "Heal percentage of damage dealt",
+      "default_params": {
+        "lifesteal_percent": 0.15
+      },
+      "aliases": ["vampiric", "drain", "life_drain"]
+    },
+    "vampiric": {
+      "category": "special",
+      "description": "Heal percentage of damage dealt (alias for lifesteal)",
+      "alias_of": "lifesteal"
+    },
+    "reflect": {
+      "category": "special",
+      "description": "Return damage to attacker",
+      "default_params": {
+        "reflect_percent": 0.3,
+        "reflect_type": "damage"
+      },
+      "aliases": ["thorns", "reflect_damage"]
+    },
+    "thorns": {
+      "category": "special",
+      "description": "Return damage to attacker (alias for reflect)",
+      "alias_of": "reflect"
+    },
+    "knockback": {
+      "category": "special",
+      "description": "Push target away",
+      "default_params": {
+        "knockback_distance": 2.0,
+        "knockback_duration": 0.5
+      },
+      "aliases": ["push", "displace"]
+    },
+    "pull": {
+      "category": "special",
+      "description": "Pull target toward source",
+      "default_params": {
+        "pull_distance": 2.0,
+        "pull_duration": 0.5
+      },
+      "aliases": ["draw_in", "attract"]
+    },
+    "teleport": {
+      "category": "special",
+      "description": "Instant movement",
+      "default_params": {
+        "teleport_range": 10.0,
+        "teleport_type": "targeted"
+      },
+      "aliases": ["blink", "warp"]
+    },
+    "summon": {
+      "category": "special",
+      "description": "Spawn entities",
+      "requires_params": ["summon_id"],
+      "default_params": {
+        "summon_count": 1,
+        "summon_duration": 30.0
+      },
+      "aliases": ["spawn", "create"]
+    },
+    "dash": {
+      "category": "special",
+      "description": "Rapid movement",
+      "default_params": {
+        "dash_distance": 5.0,
+        "dash_speed": 20.0,
+        "damage_on_contact": false
+      },
+      "aliases": ["charge", "rush"]
+    },
+    "charge": {
+      "category": "special",
+      "description": "Rapid movement (alias for dash)",
+      "alias_of": "dash"
+    },
+    "phase": {
+      "category": "special",
+      "description": "Temporary intangibility",
+      "default_params": {
+        "phase_duration": 2.0,
+        "can_pass_walls": false
+      },
+      "aliases": ["phase_shift", "intangible", "ethereal"]
+    },
+    "execute": {
+      "category": "special",
+      "description": "Bonus damage below HP threshold",
+      "default_params": {
+        "threshold_hp": 0.2,
+        "bonus_damage": 2.0
+      },
+      "aliases": ["finisher"]
+    },
+    "critical": {
+      "category": "special",
+      "description": "Critical hit chance and damage",
+      "default_params": {
+        "crit_chance": 0.15,
+        "crit_multiplier": 2.0
+      },
+      "aliases": ["crit"]
+    },
+
+    "on_hit": {
+      "category": "trigger",
+      "description": "Triggers when attack hits"
+    },
+    "on_kill": {
+      "category": "trigger",
+      "description": "Triggers when kills target"
+    },
+    "on_damage": {
+      "category": "trigger",
+      "description": "Triggers when taking damage"
+    },
+    "on_crit": {
+      "category": "trigger",
+      "description": "Triggers on critical hit"
+    },
+    "on_contact": {
+      "category": "trigger",
+      "description": "Triggers when touched"
+    },
+    "on_proximity": {
+      "category": "trigger",
+      "description": "Triggers when nearby"
+    },
+    "passive": {
+      "category": "trigger",
+      "description": "Always active"
+    },
+    "active": {
+      "category": "trigger",
+      "description": "Requires manual activation"
+    },
+    "instant": {
+      "category": "trigger",
+      "description": "No cast time"
+    },
+
+    "self": {
+      "category": "context",
+      "description": "Affects only caster"
+    },
+    "ally": {
+      "category": "context",
+      "description": "Affects allies",
+      "aliases": ["friendly"]
+    },
+    "friendly": {
+      "category": "context",
+      "description": "Affects allies (alias for ally)",
+      "alias_of": "ally"
+    },
+    "enemy": {
+      "category": "context",
+      "description": "Affects enemies",
+      "aliases": ["hostile"]
+    },
+    "hostile": {
+      "category": "context",
+      "description": "Affects enemies (alias for enemy)",
+      "alias_of": "enemy"
+    },
+    "all": {
+      "category": "context",
+      "description": "Affects all entities"
+    },
+    "player": {
+      "category": "context",
+      "description": "Affects players only"
+    },
+    "turret": {
+      "category": "context",
+      "description": "Affects turrets/devices",
+      "aliases": ["device"]
+    },
+    "device": {
+      "category": "context",
+      "description": "Affects turrets/devices (alias for turret)",
+      "alias_of": "turret"
+    },
+    "construct": {
+      "category": "context",
+      "description": "Affects construct enemies"
+    },
+    "undead": {
+      "category": "context",
+      "description": "Affects undead enemies"
+    },
+    "mechanical": {
+      "category": "context",
+      "description": "Affects mechanical enemies"
+    }
+  },
+
+  "conflict_resolution": {
+    "geometry_priority": ["chain", "cone", "circle", "beam", "single_target"],
+    "mutually_exclusive": {
+      "burn": ["freeze"],
+      "freeze": ["burn"],
+      "1H": ["2H", "versatile"],
+      "2H": ["1H", "versatile"],
+      "versatile": ["1H", "2H"]
+    }
+  },
+
+  "context_inference": {
+    "damage": "enemy",
+    "debuff": "enemy",
+    "healing": "ally",
+    "buff": "ally"
+  }
+}

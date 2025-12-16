@@ -51,6 +51,9 @@ from core.config import Config
 # Tool class
 from entities import Tool
 
+# Status effect system
+from entities.status_manager import add_status_manager_to_entity
+
 
 class Character:
     def __init__(self, start_position: Position):
@@ -82,6 +85,10 @@ class Character:
         self.selected_tool: Optional[Tool] = None
         self._selected_weapon: Optional[EquipmentItem] = None  # For Tab cycling through weapons
         self._selected_slot: str = 'mainHand'  # Default to mainHand until player presses TAB
+
+        # Add status effect manager
+        add_status_manager_to_entity(self)
+        self.category = "player"  # For tag system context-awareness
 
         self.active_station: Optional[CraftingStation] = None
         self.crafting_ui_open = False
@@ -490,6 +497,10 @@ class Character:
         return False
 
     def move(self, dx: float, dy: float, world: WorldSystem) -> bool:
+        # Check if immobilized by status effects
+        if hasattr(self, 'status_manager') and self.status_manager.is_immobilized():
+            return False
+
         # Calculate movement speed from stats, class, and active buffs
         speed_mult = 1.0 + self.stats.get_bonus('agility') * 0.02 + self.class_system.get_bonus('movement_speed') + self.buffs.get_movement_speed_bonus()
         new_pos = Position(self.position.x + dx * speed_mult, self.position.y + dy * speed_mult, self.position.z)
@@ -746,9 +757,13 @@ class Character:
             self.mana = min(self.max_mana, self.mana + mana_regen_amount)
 
     def update_buffs(self, dt: float):
-        """Update all active buffs"""
+        """Update all active buffs and status effects"""
         self.buffs.update(dt, character=self)
         self.skills.update_cooldowns(dt)
+
+        # Update status effects
+        if hasattr(self, 'status_manager'):
+            self.status_manager.update(dt)
 
     def toggle_stats_ui(self):
         self.stats_ui_open = not self.stats_ui_open

@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Optional
 from enum import Enum
 from pathlib import Path
+from entities.status_manager import add_status_manager_to_entity
 
 
 # ============================================================================
@@ -247,6 +248,12 @@ class Enemy:
         self.time_since_death = 0.0
         self.corpse_lifetime = 60.0  # Will be overridden by config
 
+        # Add status effect manager
+        add_status_manager_to_entity(self)
+
+        # Add category for tag system context-awareness
+        self.category = definition.category
+
     def _get_initial_state(self) -> AIState:
         """Map behavior string to initial AI state"""
         state_map = {
@@ -306,6 +313,10 @@ class Enemy:
                 self.ai_state = AIState.CORPSE
             self.time_since_death += dt
             return
+
+        # Update status effects
+        if hasattr(self, 'status_manager'):
+            self.status_manager.update(dt)
 
         # Update attack cooldown
         if self.attack_cooldown > 0:
@@ -465,6 +476,10 @@ class Enemy:
 
     def _move_towards(self, target: Tuple[float, float], dt: float):
         """Move towards a target position, restricted to chunk boundaries"""
+        # Check if immobilized by status effects
+        if hasattr(self, 'status_manager') and self.status_manager.is_immobilized():
+            return
+
         dx = target[0] - self.position[0]
         dy = target[1] - self.position[1]
         dist = (dx * dx + dy * dy) ** 0.5
@@ -482,7 +497,11 @@ class Enemy:
             self.position[1] = new_y
 
     def can_attack(self) -> bool:
-        """Check if enemy can attack (cooldown ready)"""
+        """Check if enemy can attack (cooldown ready and not CC'd)"""
+        # Check if stunned/silenced
+        if hasattr(self, 'status_manager') and self.status_manager.is_silenced():
+            return False
+
         return self.attack_cooldown <= 0 and self.ai_state == AIState.ATTACK
 
     def perform_attack(self) -> float:
