@@ -69,6 +69,11 @@ class EffectExecutor:
 
         self.debugger.log_effect_application(context)
 
+        # Store current execution context for training dummies and debug
+        self._current_source = source
+        self._current_tags = tags
+        self._current_context = context
+
         # Apply effects to all targets
         for i, target in enumerate(targets):
             # Calculate damage falloff for geometry
@@ -232,7 +237,22 @@ class EffectExecutor:
         """Apply damage to a target entity"""
         # Try different damage methods that might exist
         if hasattr(target, 'take_damage'):
-            target.take_damage(damage, damage_type)
+            # Check if target supports enhanced damage info (like training dummy)
+            import inspect
+            sig = inspect.signature(target.take_damage)
+            params = list(sig.parameters.keys())
+
+            # Pass additional context if supported
+            if 'source' in params or 'tags' in params or 'context' in params:
+                target.take_damage(
+                    damage,
+                    damage_type,
+                    source=getattr(self, '_current_source', None),
+                    tags=getattr(self, '_current_tags', []),
+                    context=getattr(self, '_current_context', None)
+                )
+            else:
+                target.take_damage(damage, damage_type)
         elif hasattr(target, 'current_health'):
             target.current_health -= damage
             if target.current_health < 0:
