@@ -323,8 +323,17 @@ class CombatManager:
                     # Update AI
                     enemy.update_ai(dt, player_pos)
 
-                    # Check if enemy can attack player
-                    if enemy.can_attack():
+                    # Check if enemy can use special ability
+                    special_ability = enemy.can_use_special_ability()
+                    if special_ability:
+                        # Use special ability if in range
+                        dist = enemy.distance_to(player_pos)
+                        # Special abilities have varied ranges, use aggro range as max
+                        if dist <= enemy.definition.aggro_range:
+                            enemy.use_special_ability(special_ability, self.character, [self.character])
+
+                    # Check if enemy can attack player normally
+                    elif enemy.can_attack():
                         dist = enemy.distance_to(player_pos)
                         if dist <= 1.5:  # Melee range
                             self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
