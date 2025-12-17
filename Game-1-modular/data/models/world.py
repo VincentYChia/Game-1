@@ -146,6 +146,7 @@ class PlacedEntityType(Enum):
     BOMB = "bomb"
     UTILITY_DEVICE = "utility_device"
     CRAFTING_STATION = "crafting_station"
+    TRAINING_DUMMY = "training_dummy"
 
 
 @dataclass
@@ -184,5 +185,6 @@ class PlacedEntity:
             PlacedEntityType.TRAP: (160, 82, 45),  # Sienna
             PlacedEntityType.BOMB: (178, 34, 34),  # Firebrick
             PlacedEntityType.UTILITY_DEVICE: (60, 180, 180),  # Cyan
-            PlacedEntityType.CRAFTING_STATION: (105, 105, 105)  # Gray
+            PlacedEntityType.CRAFTING_STATION: (105, 105, 105),  # Gray
+            PlacedEntityType.TRAINING_DUMMY: (200, 200, 0)  # Yellow (visible target)
         }.get(self.entity_type, (150, 150, 150))

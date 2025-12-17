@@ -228,7 +228,7 @@ def create_training_dummy_entity(position: Position) -> PlacedEntity:
     dummy = PlacedEntity(
         position=position,
         item_id="training_dummy",
-        entity_type=PlacedEntityType.UTILITY_DEVICE,
+        entity_type=PlacedEntityType.TRAINING_DUMMY,
         tier=1,
         health=10000.0,
         range=0.0,  # Not an attacking entity

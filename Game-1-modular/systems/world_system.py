@@ -6,6 +6,7 @@ from data.models import Position, WorldTile, TileType, StationType, CraftingStat
 from systems.natural_resource import NaturalResource
 from systems.chunk import Chunk
 from core.config import Config
+from systems.training_dummy import create_training_dummy_entity
 
 
 class WorldSystem:
@@ -17,6 +18,7 @@ class WorldSystem:
         self.placed_entities: List[PlacedEntity] = []  # Player-placed turrets, traps, stations, etc.
         self.generate_world()
         self.spawn_starting_stations()
+        self.spawn_training_dummy()
 
     def generate_world(self):
         num_chunks = Config.WORLD_SIZE // Config.CHUNK_SIZE
@@ -52,6 +54,14 @@ class WorldSystem:
             for tier in range(1, 5):  # T1, T2, T3, T4
                 y = 46 + (tier - 1) * 2  # Vertical spacing: 46, 48, 50, 52
                 self.crafting_stations.append(CraftingStation(Position(base_x, y, 0), stype, tier))
+
+    def spawn_training_dummy(self):
+        """Spawn a training dummy for testing tag-based effects near spawn"""
+        # Place training dummy at (60, 50) - to the right of the player spawn
+        dummy_position = Position(60, 50, 0)
+        training_dummy = create_training_dummy_entity(dummy_position)
+        self.placed_entities.append(training_dummy)
+        print(f"🎯 Spawned training dummy at (60, 50) with {training_dummy.health:.0f} HP")
 
     def get_tile(self, position: Position) -> Optional[WorldTile]:
         return self.tiles.get(position.snap_to_grid().to_key())
