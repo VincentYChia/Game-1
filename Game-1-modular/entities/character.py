@@ -1106,6 +1106,16 @@ class Character:
             # Weapon attack cooldown based on attack speed stat and weapon speed
             base_cooldown = 1.0
             attack_speed_bonus = self.stats.agility * 0.03  # 3% faster per AGI
+
+            # Add weapon tag attack speed bonus (fast)
+            weapon = self.equipment.slots.get(hand)
+            if weapon:
+                weapon_tags = weapon.get_metadata_tags()
+                if weapon_tags:
+                    from entities.components.weapon_tag_calculator import WeaponTagModifiers
+                    tag_speed_bonus = WeaponTagModifiers.get_attack_speed_bonus(weapon_tags)
+                    attack_speed_bonus += tag_speed_bonus
+
             cooldown = (base_cooldown / weapon_attack_speed) / (1.0 + attack_speed_bonus)
 
             if hand == 'mainHand':

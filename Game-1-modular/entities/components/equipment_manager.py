@@ -125,7 +125,16 @@ class EquipmentManager:
         """Get range of equipped weapon in specified hand, default to 1.0 for unarmed"""
         weapon = self.slots.get(hand)
         if weapon:
-            return weapon.range
+            base_range = weapon.range
+
+            # Add tag-based range bonus (reach)
+            weapon_tags = weapon.get_metadata_tags()
+            if weapon_tags:
+                from entities.components.weapon_tag_calculator import WeaponTagModifiers
+                range_bonus = WeaponTagModifiers.get_range_bonus(weapon_tags)
+                return base_range + range_bonus
+
+            return base_range
         if hand == 'mainHand':
             return 1.0  # Unarmed/default range
         return 0.0  # No offhand range

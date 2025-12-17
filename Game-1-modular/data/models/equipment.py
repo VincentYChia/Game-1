@@ -185,3 +185,11 @@ class EquipmentItem:
             return 'armor'
         else:
             return 'accessory'
+
+    def get_metadata_tags(self) -> List[str]:
+        """Get metadata tags for weapon tag modifiers
+
+        Returns:
+            List[str]: Metadata tags from JSON (e.g., ["melee", "sword", "2H", "crushing"])
+        """
+        return self.tags if self.tags else []

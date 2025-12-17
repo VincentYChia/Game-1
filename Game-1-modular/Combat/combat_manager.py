@@ -427,6 +427,42 @@ class CombatManager:
         # Apply tool type effectiveness penalty
         weapon_damage = int(weapon_damage * tool_type_effectiveness)
 
+        # WEAPON TAG MODIFIERS
+        weapon_tag_damage_mult = 1.0
+        weapon_tag_crit_bonus = 0.0
+        armor_penetration = 0.0
+        crushing_bonus = 0.0
+
+        if equipped_weapon:
+            weapon_tags = equipped_weapon.get_metadata_tags()
+            if weapon_tags:
+                from entities.components.weapon_tag_calculator import WeaponTagModifiers
+
+                # Hand requirement damage bonus (2H = +20%, versatile without offhand = +10%)
+                has_offhand = self.character.equipment.slots.get('offHand') is not None
+                weapon_tag_damage_mult = WeaponTagModifiers.get_damage_multiplier(weapon_tags, has_offhand)
+
+                # Precision crit bonus (+10%)
+                weapon_tag_crit_bonus = WeaponTagModifiers.get_crit_chance_bonus(weapon_tags)
+
+                # Armor penetration (armor_breaker = ignore 25% defense)
+                armor_penetration = WeaponTagModifiers.get_armor_penetration(weapon_tags)
+
+                # Crushing bonus vs armored enemies (+20% if defense > 10)
+                crushing_bonus = WeaponTagModifiers.get_damage_vs_armored_bonus(weapon_tags)
+
+                if weapon_tag_damage_mult > 1.0 or armor_penetration > 0 or crushing_bonus > 0:
+                    print(f"   🏷️  Weapon tags: {', '.join(weapon_tags)}")
+                    if weapon_tag_damage_mult > 1.0:
+                        print(f"      +{int((weapon_tag_damage_mult - 1.0) * 100)}% damage (hand requirement)")
+                    if armor_penetration > 0:
+                        print(f"      {int(armor_penetration * 100)}% armor penetration")
+                    if crushing_bonus > 0 and enemy.definition.defense > 10:
+                        print(f"      +{int(crushing_bonus * 100)}% vs armored")
+
+        # Apply weapon tag damage multiplier
+        weapon_damage = int(weapon_damage * weapon_tag_damage_mult)
+
         # Calculate multipliers
         str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
         print(f"   STR multiplier: {str_multiplier:.2f} (STR: {self.character.stats.strength})")
@@ -441,6 +477,11 @@ class CombatManager:
 
         # Calculate base damage
         base_damage = weapon_damage * str_multiplier * title_multiplier
+
+        # Apply crushing bonus vs armored enemies
+        if crushing_bonus > 0 and enemy.definition.defense > 10:
+            base_damage *= (1.0 + crushing_bonus)
+
         print(f"   Base damage: {base_damage:.1f}")
 
         # SKILL BUFF BONUSES: Check for active damage buffs (empower)
@@ -466,20 +507,28 @@ class CombatManager:
             if pierce_bonus == 0:
                 pierce_bonus = self.character.buffs.get_total_bonus('pierce', 'combat')
 
-        crit_chance = base_crit_chance + pierce_bonus
+        # Add weapon tag crit bonus (precision)
+        crit_chance = base_crit_chance + pierce_bonus + weapon_tag_crit_bonus
 
         if pierce_bonus > 0:
             print(f"   ⚡ Pierce buff: +{pierce_bonus*100:.0f}% crit chance (total: {crit_chance*100:.1f}%)")
+        elif weapon_tag_crit_bonus > 0:
+            print(f"   🎯 Precision: +{weapon_tag_crit_bonus*100:.0f}% crit chance (total: {crit_chance*100:.1f}%)")
 
         if random.random() < crit_chance:
             is_crit = True
             base_damage *= 2.0
             print(f"   💥 CRITICAL HIT! x2 damage")
 
-        # Apply enemy defense
-        defense_reduction = enemy.definition.defense * 0.01  # 1% reduction per defense
+        # Apply enemy defense (with armor penetration from weapon tags)
+        effective_defense = enemy.definition.defense * (1.0 - armor_penetration)
+        defense_reduction = effective_defense * 0.01  # 1% reduction per defense
         final_damage = base_damage * (1.0 - min(0.75, defense_reduction))
-        print(f"   Enemy defense: {enemy.definition.defense} (reduction: {defense_reduction*100:.1f}%)")
+
+        if armor_penetration > 0:
+            print(f"   Enemy defense: {enemy.definition.defense} → {effective_defense:.1f} (after armor pen) (reduction: {defense_reduction*100:.1f}%)")
+        else:
+            print(f"   Enemy defense: {enemy.definition.defense} (reduction: {defense_reduction*100:.1f}%)")
         print(f"   ➜ Final damage: {final_damage:.1f}")
 
         # Apply damage to enemy
