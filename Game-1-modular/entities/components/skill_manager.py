@@ -5,12 +5,16 @@ from typing import Dict, List, Optional
 from data.models import PlayerSkill
 from data.databases import SkillDatabase
 from .buffs import ActiveBuff
+from core.effect_executor import get_effect_executor
+from core.tag_debug import get_tag_debugger
 
 
 class SkillManager:
     def __init__(self):
         self.known_skills: Dict[str, PlayerSkill] = {}
         self.equipped_skills: List[Optional[str]] = [None] * 5  # 5 hotbar slots
+        self.effect_executor = get_effect_executor()
+        self.debugger = get_tag_debugger()
 
     def can_learn_skill(self, skill_id: str, character) -> tuple[bool, str]:
         """
@@ -170,6 +174,11 @@ class SkillManager:
 
     def _apply_skill_effect(self, skill_def, character, player_skill):
         """Apply the skill's effect with level scaling"""
+        # Check if skill uses tag-based combat system
+        if skill_def.combat_tags and len(skill_def.combat_tags) > 0:
+            return self._apply_combat_skill(skill_def, character, player_skill)
+
+        # Otherwise use legacy buff-based system
         effect = skill_def.effect
         skill_db = SkillDatabase.get_instance()
 
@@ -365,3 +374,194 @@ class SkillManager:
             )
             character.buffs.add_buff(buff)
             print(f"   Bypass {bypass} tier restriction(s) for {effect.category} for {int(duration)}s")
+
+    def _apply_combat_skill(self, skill_def, character, player_skill):
+        """Apply a tag-based combat skill using the effect executor"""
+        # Apply level scaling to combat params
+        level_bonus = player_skill.get_level_scaling_bonus()
+        scaled_params = skill_def.combat_params.copy()
+
+        # Scale damage parameters
+        if "baseDamage" in scaled_params:
+            scaled_params["baseDamage"] *= (1.0 + level_bonus)
+        if "baseHealing" in scaled_params:
+            scaled_params["baseHealing"] *= (1.0 + level_bonus)
+
+        level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
+        print(f"⚡ {skill_def.name}{level_indicator}: Combat skill using tags {skill_def.combat_tags}")
+
+        # Determine primary target based on skill target type
+        effect = skill_def.effect
+        primary_target = None
+        available_entities = []
+
+        if effect.target == "enemy":
+            # Find nearest enemy from combat manager
+            # For now, we need access to combat manager which the skill system doesn't have
+            # We'll document that combat skills need to be called with context
+            # For skills used outside combat, this will be a no-op
+            self.debugger.warning(f"Combat skill {skill_def.skill_id} requires enemy target - needs combat context")
+            print(f"   ⚠ Skill requires enemy target (use in combat)")
+            return
+
+        elif effect.target == "self":
+            # Self-targeting skill (e.g., shield, regeneration)
+            primary_target = character
+            available_entities = [character]
+
+        elif effect.target == "area":
+            # Area effect - needs available enemies from combat manager
+            self.debugger.warning(f"Combat skill {skill_def.skill_id} is area effect - needs combat context")
+            print(f"   ⚠ Area skill requires combat context")
+            return
+
+        else:
+            # Default to self
+            primary_target = character
+            available_entities = [character]
+
+        # Execute effect using tag system
+        try:
+            context = self.effect_executor.execute_effect(
+                source=character,
+                primary_target=primary_target,
+                tags=skill_def.combat_tags,
+                params=scaled_params,
+                available_entities=available_entities
+            )
+
+            self.debugger.info(
+                f"Skill {skill_def.skill_id} executed: {len(context.targets)} targets affected"
+            )
+            print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+        except Exception as e:
+            self.debugger.error(f"Combat skill execution failed: {e}")
+            print(f"   ⚠ Skill execution failed: {e}")
+
+    def use_skill_in_combat(self, slot: int, character, target_enemy=None, available_enemies=None) -> tuple[bool, str]:
+        """Use a skill from hotbar slot in combat context with enemy targeting
+
+        Args:
+            slot: Hotbar slot (0-4)
+            character: Player character
+            target_enemy: Primary target enemy (for single-target skills)
+            available_enemies: List of all available enemies (for AOE/chain skills)
+
+        Returns:
+            (success, message)
+        """
+        if not (0 <= slot < 5):
+            return False, "Invalid slot"
+
+        skill_id = self.equipped_skills[slot]
+        if not skill_id:
+            return False, "No skill in slot"
+
+        player_skill = self.known_skills.get(skill_id)
+        if not player_skill:
+            return False, "Skill not learned"
+
+        skill_def = player_skill.get_definition()
+        if not skill_def:
+            return False, "Skill definition not found"
+
+        # Check cooldown
+        if player_skill.current_cooldown > 0:
+            return False, f"On cooldown ({player_skill.current_cooldown:.1f}s)"
+
+        # Check mana cost
+        skill_db = SkillDatabase.get_instance()
+        mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+        if character.mana < mana_cost:
+            return False, f"Not enough mana ({mana_cost} required)"
+
+        # Consume mana
+        character.mana -= mana_cost
+
+        # Start cooldown
+        cooldown_duration = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
+        player_skill.current_cooldown = cooldown_duration
+
+        # Apply skill effect with combat context
+        if skill_def.combat_tags and len(skill_def.combat_tags) > 0:
+            self._apply_combat_skill_with_context(
+                skill_def, character, player_skill,
+                target_enemy, available_enemies or []
+            )
+        else:
+            self._apply_skill_effect(skill_def, character, player_skill)
+
+        # Award skill EXP (100 EXP per activation)
+        leveled_up, new_level = player_skill.add_exp(100)
+        if leveled_up:
+            return True, f"Used {skill_def.name}! 🌟 Level {new_level}!"
+
+        return True, f"Used {skill_def.name}!"
+
+    def _apply_combat_skill_with_context(self, skill_def, character, player_skill,
+                                          target_enemy, available_enemies):
+        """Apply a combat skill with full combat context (enemies available)"""
+        # Apply level scaling to combat params
+        level_bonus = player_skill.get_level_scaling_bonus()
+        scaled_params = skill_def.combat_params.copy()
+
+        # Scale damage parameters
+        if "baseDamage" in scaled_params:
+            scaled_params["baseDamage"] *= (1.0 + level_bonus)
+        if "baseHealing" in scaled_params:
+            scaled_params["baseHealing"] *= (1.0 + level_bonus)
+
+        level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
+        print(f"⚡ {skill_def.name}{level_indicator}: Combat skill using tags {skill_def.combat_tags}")
+
+        # Determine primary target based on skill target type
+        effect = skill_def.effect
+        primary_target = None
+        available_entities = []
+
+        if effect.target == "enemy":
+            # Use provided target enemy
+            if not target_enemy:
+                print(f"   ⚠ No target enemy provided")
+                return
+            primary_target = target_enemy
+            available_entities = available_enemies
+
+        elif effect.target == "self":
+            # Self-targeting skill
+            primary_target = character
+            available_entities = [character]
+
+        elif effect.target == "area":
+            # Area effect - use all available enemies
+            if not available_enemies:
+                print(f"   ⚠ No enemies available for area skill")
+                return
+            # For AOE, primary target is first enemy (or nearest)
+            primary_target = available_enemies[0] if available_enemies else character
+            available_entities = available_enemies
+
+        else:
+            # Default to self
+            primary_target = character
+            available_entities = [character]
+
+        # Execute effect using tag system
+        try:
+            context = self.effect_executor.execute_effect(
+                source=character,
+                primary_target=primary_target,
+                tags=skill_def.combat_tags,
+                params=scaled_params,
+                available_entities=available_entities
+            )
+
+            self.debugger.info(
+                f"Skill {skill_def.skill_id} executed: {len(context.targets)} targets affected"
+            )
+            print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+        except Exception as e:
+            self.debugger.error(f"Combat skill execution failed: {e}")
+            print(f"   ⚠ Skill execution failed: {e}")

@@ -237,18 +237,23 @@ PlacedEntity(
 - Handle combat-specific contexts (critical hits, blocks)
 - Test with various weapon + enchantment combinations
 
-#### 🔲 Skill System (`entities/components/skill_manager.py`)
-**Status:** Not started
+#### ✅ Skill System (`entities/components/skill_manager.py`)
+**Status:** COMPLETE
 
-**Tasks:**
-- Update skill JSON format to use tags
-- Integrate effect executor into skill execution
-- Handle mana costs and cooldowns
-- Test skills:
-  - Combat Strike (single_target + physical + empower)
-  - Fireball (circle + fire + burn)
-  - Healing Word (ally + healing + regeneration)
-  - Chain Lightning (chain + lightning + shock)
+**Completed:**
+- ✅ Extended SkillDefinition with combat_tags and combat_params fields
+- ✅ Integrated effect executor into skill execution
+- ✅ Created use_skill_in_combat() method with enemy targeting
+- ✅ Level scaling for combat skills (+10% per level)
+- ✅ Backward compatibility with buff-based skills
+- ✅ Comprehensive documentation in SKILL-TAG-GUIDE.md
+- ✅ Example combat skills (Fireball, Chain Lightning, Power Strike, etc.)
+
+**Changes Made:**
+- Updated `data/models/skills.py` - Added combat_tags/combat_params to SkillDefinition
+- Updated `data/databases/skill_db.py` - Load combat tags/params from JSON
+- Updated `entities/components/skill_manager.py` - Added tag-based combat execution
+- Created `docs/tag-system/SKILL-TAG-GUIDE.md` - Complete usage guide with examples
 
 **Example Skill JSON:**
 ```json
@@ -256,16 +261,29 @@ PlacedEntity(
   "skillId": "fireball",
   "name": "Fireball",
   "tier": 2,
-  "tags": ["fire", "circle", "burn"],
-  "effectParams": {
+  "combatTags": ["fire", "circle", "burn"],
+  "combatParams": {
     "baseDamage": 80,
     "circle_radius": 4.0,
     "burn_duration": 5.0,
     "burn_damage_per_second": 10.0
   },
-  "manaCost": 40,
-  "cooldown": 8.0
+  "effect": {
+    "type": "devastate",
+    "target": "area"
+  }
 }
+```
+
+**Usage:**
+```python
+# In combat:
+character.skills.use_skill_in_combat(
+    slot=0,
+    character=character,
+    target_enemy=nearest_enemy,
+    available_enemies=all_enemies
+)
 ```
 
 #### 🔲 Hostile Abilities
