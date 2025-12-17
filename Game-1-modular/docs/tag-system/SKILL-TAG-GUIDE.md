@@ -4,9 +4,34 @@ This document provides guidance on integrating skills with the tag-to-effects sy
 
 ---
 
+## CRITICAL: Two Types of Tags
+
+**Skills use TWO completely different tag fields that serve different purposes:**
+
+### 1. Metadata Tags (`tags` field)
+**Purpose**: Describe WHAT the skill is (for filtering, UI, narrative)
+**Location**: `"tags"` field (existing, unchanged)
+**Used By**: Skill unlocks, UI filters, tooltips, LLM recommendations
+**Examples**: `["damage_boost", "gathering", "basic"]`, `["movement", "speed", "mobility"]`
+
+### 2. Effect Tags (`combatTags` field)
+**Purpose**: Tell effect executor HOW to execute the skill (for combat mechanics)
+**Location**: `"combatTags"` field (NEW, only for combat skills)
+**Used By**: Effect executor, damage calculator, status manager
+**Examples**: `["fire", "circle", "burn"]`, `["lightning", "chain", "shock"]`
+
+**BOTH fields coexist in combat skills!** The `tags` field remains for metadata, and `combatTags` is added for effect execution.
+
+---
+
 ## Overview
 
 The skill system now supports tag-based combat effects for skills that deal direct damage or healing. This allows skills to use the full power of the tag system (geometries, status effects, damage types, etc.) while maintaining backward compatibility with buff-based skills.
+
+**Key Points**:
+- Buff skills keep their existing `tags` field only (no changes)
+- Combat skills have BOTH `tags` (metadata) AND `combatTags` (effects)
+- The `tags` field is NEVER replaced, only supplemented
 
 ---
 
@@ -15,6 +40,8 @@ The skill system now supports tag-based combat effects for skills that deal dire
 ### Buff-Based Skills (Legacy)
 Skills that apply buffs to the character (empower, quicken, fortify, etc.) continue to use the existing buff system. No changes needed.
 
+**Tag Usage**: Only metadata `tags` field
+
 Examples:
 - Miner's Fury (empower mining)
 - Sprint (quicken movement)
@@ -22,6 +49,8 @@ Examples:
 
 ### Tag-Based Combat Skills (New)
 Skills that deal direct damage, healing, or apply combat effects can now use the tag system for rich, composable behavior.
+
+**Tag Usage**: Both metadata `tags` AND effect `combatTags` fields
 
 Examples:
 - Fireball (fire + circle + burn)
@@ -33,7 +62,7 @@ Examples:
 
 ## Skill JSON Format
 
-### Buff-Based Skill (No Changes)
+### Buff-Based Skill (Unchanged)
 ```json
 {
   "skillId": "sprint",
@@ -43,7 +72,7 @@ Examples:
   "categories": ["movement"],
   "description": "Move significantly faster for a brief period.",
   "narrative": "Sometimes the best strategy is running away. Fast.",
-  "tags": ["movement", "speed", "mobility"],
+  "tags": ["movement", "speed", "mobility"],  // METADATA ONLY
 
   "effect": {
     "type": "quicken",
@@ -64,6 +93,7 @@ Examples:
     "stats": {},
     "titles": []
   }
+  // NO combatTags field - this is a buff skill
 }
 ```
 
@@ -77,7 +107,8 @@ Examples:
   "categories": ["combat", "magic"],
   "description": "Hurl an explosive fireball that burns all enemies in the blast radius.",
   "narrative": "Why solve problems diplomatically when you can solve them with fire?",
-  "tags": ["damage", "aoe", "combat", "fire"],
+
+  "tags": ["damage", "aoe", "combat", "fire"],  // METADATA (what it IS)
 
   "effect": {
     "type": "devastate",
@@ -99,7 +130,7 @@ Examples:
     "titles": []
   },
 
-  "combatTags": ["fire", "circle", "burn"],
+  "combatTags": ["fire", "circle", "burn"],  // EFFECT TAGS (what it DOES)
   "combatParams": {
     "baseDamage": 80,
     "circle_radius": 4.0,
@@ -109,10 +140,10 @@ Examples:
 }
 ```
 
-**Key Differences:**
-- Added `combatTags` array - tags for the effect executor
-- Added `combatParams` object - parameters for the effect
-- `effect.type` is still "devastate" for buff system compatibility
+**Key Differences from Buff Skills:**
+- Has BOTH `tags` (metadata) AND `combatTags` (effects)
+- Added `combatParams` object with damage/geometry parameters
+- `effect.type` still uses existing system for compatibility
 - `effect.target` determines targeting behavior ("area", "enemy", "self")
 
 ---
