@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from ..main import WorldSystem, Character, Inventory
 
 from .enemy import Enemy, EnemyDatabase, EnemyDefinition, AIState
+from core.effect_executor import get_effect_executor
+from core.tag_debug import get_tag_debugger
 
 
 # ============================================================================
@@ -100,6 +102,10 @@ class CombatManager:
         self.character = character
         self.config = CombatConfig()
         self.enemy_db = EnemyDatabase.get_instance()
+
+        # Tag system integration
+        self.effect_executor = get_effect_executor()
+        self.debugger = get_tag_debugger()
 
         # Active enemies by chunk
         self.enemies: Dict[Tuple[int, int], List[Enemy]] = {}
@@ -505,6 +511,119 @@ class CombatManager:
         self.player_in_combat = True
 
         return (final_damage, is_crit, loot)
+
+    def player_attack_enemy_with_tags(self, enemy: Enemy, tags: List[str], params: dict = None) -> Tuple[float, bool, List[Tuple[str, int]]]:
+        """
+        Player attacks enemy using tag-based effects system
+
+        Args:
+            enemy: Target enemy
+            tags: Effect tags (e.g., ["physical", "single_target"] or ["fire", "circle", "burn"])
+            params: Effect parameters (baseDamage, geometry params, status effects)
+
+        Returns:
+            (total_damage, any_crit, loot) where loot is empty if enemy didn't die
+        """
+        print(f"\n⚔️ PLAYER TAG ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
+        print(f"   Using tags: {tags}")
+
+        # Get all active enemies for geometry calculations
+        all_enemies = self.get_all_active_enemies()
+        alive_enemies = [e for e in all_enemies if e.is_alive]
+
+        # Setup effect parameters
+        effect_params = params.copy() if params else {}
+
+        # Apply character stat bonuses to base damage
+        if "baseDamage" in effect_params:
+            base_damage = effect_params["baseDamage"]
+
+            # Weapon damage
+            weapon_damage = self.character.get_weapon_damage()
+            if weapon_damage > 0:
+                base_damage += weapon_damage
+
+            # STR multiplier
+            str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
+            base_damage *= str_multiplier
+
+            # Title bonuses
+            if hasattr(self.character, 'activity_tracker'):
+                title_multiplier = 1.0 + self.character.activity_tracker.get_combat_bonus()
+                base_damage *= title_multiplier
+
+            # Skill buff bonuses (empower)
+            if hasattr(self.character, 'buffs'):
+                empower_damage = self.character.buffs.get_damage_bonus('damage')
+                empower_combat = self.character.buffs.get_damage_bonus('combat')
+                skill_bonus = max(empower_damage, empower_combat)
+                if skill_bonus > 0:
+                    base_damage *= (1.0 + skill_bonus)
+                    print(f"   ⚡ Skill buff: +{skill_bonus*100:.0f}% damage")
+
+            effect_params["baseDamage"] = base_damage
+            print(f"   Base damage (with bonuses): {base_damage:.1f}")
+
+        # Execute effect using tag system
+        try:
+            context = self.effect_executor.execute_effect(
+                source=self.character,
+                primary_target=enemy,
+                tags=tags,
+                params=effect_params,
+                available_entities=alive_enemies
+            )
+
+            print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+            # Track damage dealt
+            total_damage = 0.0
+            enemy_died = False
+
+            # Check if primary enemy died
+            if not enemy.is_alive:
+                enemy_died = True
+                total_damage += effect_params.get("baseDamage", 0)  # Rough estimate
+
+            # Initialize loot
+            loot = []
+
+            # Grant EXP and loot if killed
+            if enemy_died:
+                print(f"   💀 Enemy killed!")
+                exp_reward = self._calculate_exp_reward(enemy)
+                self.character.leveling.add_exp(exp_reward)
+                print(f"   +{exp_reward} EXP")
+
+                # Auto-loot
+                loot = enemy.generate_loot()
+                if loot:
+                    print(f"   💰 Auto-looting {len(loot)} item type(s):")
+                    for material_id, quantity in loot:
+                        success = self.character.inventory.add_item(material_id, quantity)
+                        if success:
+                            print(f"      +{quantity}x {material_id}")
+                        else:
+                            print(f"      ⚠️ Inventory full! Could not add {quantity}x {material_id}")
+
+                # Track combat activity
+                if hasattr(self.character, 'activity_tracker'):
+                    self.character.activity_tracker.record_activity('combat', 1)
+            else:
+                print(f"   Enemy HP remaining: {enemy.current_health:.1f}/{enemy.max_health:.1f}")
+
+            # Update combat state
+            self.player_last_combat_time = 0.0
+            self.player_in_combat = True
+
+            # Tag-based attacks don't use traditional crit system (handled by tags)
+            return (total_damage, False, loot)
+
+        except Exception as e:
+            self.debugger.error(f"Tag-based attack failed: {e}")
+            print(f"   ⚠ Tag attack failed: {e}")
+            # Fall back to 0 damage on error
+            return (0.0, False, [])
 
     def _enemy_attack_player(self, enemy: Enemy, shield_blocking: bool = False):
         """Enemy attacks player

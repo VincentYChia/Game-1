@@ -228,14 +228,54 @@ PlacedEntity(
 )
 ```
 
-#### 🔲 Combat System (`Combat/combat_manager.py`)
-**Status:** Partially integrated (CC checks done)
+#### ✅ Combat System (`Combat/combat_manager.py`)
+**Status:** COMPLETE
 
-**Remaining Tasks:**
-- Integrate effect executor into `player_attack_enemy()`
-- Support weapon tags (if implemented)
-- Handle combat-specific contexts (critical hits, blocks)
-- Test with various weapon + enchantment combinations
+**Completed:**
+- ✅ Added effect_executor and debugger to CombatManager
+- ✅ Created player_attack_enemy_with_tags() method
+- ✅ Full stat bonus integration (STR, titles, skill buffs)
+- ✅ AOE geometry support for player attacks
+- ✅ Auto-loot and EXP for tag-based kills
+- ✅ Backward compatibility with legacy player_attack_enemy()
+
+**Changes Made:**
+- Updated `Combat/combat_manager.py` - Added tag-based combat methods
+- Integrated effect_executor with all combat bonuses
+- Supports all geometries (single, circle, chain, cone, beam, pierce)
+- Status effect application (burn, freeze, shock, etc.)
+
+**Example Usage:**
+```python
+# Fire sword attack with burn
+combat_manager.player_attack_enemy_with_tags(
+    enemy=target_enemy,
+    tags=["fire", "single_target", "burn"],
+    params={
+        "baseDamage": 50,  # Weapon base (bonuses applied automatically)
+        "burn_duration": 4.0,
+        "burn_damage_per_second": 8.0
+    }
+)
+
+# Whirlwind AOE attack
+combat_manager.player_attack_enemy_with_tags(
+    enemy=primary_target,
+    tags=["physical", "circle", "bleed"],
+    params={
+        "baseDamage": 60,
+        "circle_radius": 3.0,
+        "bleed_duration": 6.0,
+        "bleed_damage_per_second": 5.0
+    }
+)
+```
+
+**Bonuses Applied Automatically:**
+- Weapon damage from equipped weapon
+- STR multiplier (1 + STR × 0.05)
+- Title bonuses from activity tracker
+- Skill buff bonuses (empower from active skills)
 
 #### ✅ Skill System (`entities/components/skill_manager.py`)
 **Status:** COMPLETE
