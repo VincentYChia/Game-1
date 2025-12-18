@@ -119,15 +119,41 @@ class EquipmentItem:
             tags=self.tags.copy()
         )
 
-    def can_apply_enchantment(self, enchantment_id: str, applicable_to: List[str], effect: Dict) -> Tuple[bool, str]:
-        """Check if an enchantment can be applied to this item"""
-        # Check if item type is compatible
-        item_type = self._get_item_type()
-        if item_type not in applicable_to:
-            return False, f"Cannot apply to {item_type} items"
+    def can_apply_enchantment(self, enchantment_id: str, applicable_to: List[str] = None,
+                              effect: Dict = None, tags: List[str] = None) -> Tuple[bool, str]:
+        """Check if an enchantment can be applied to this item
 
-        # Enchantments with conflicts will overwrite existing conflicting enchantments
-        return True, "OK"
+        Args:
+            enchantment_id: ID of the enchantment
+            applicable_to: Legacy list of applicable item types (weapon, armor, tool)
+            effect: Enchantment effect dict
+            tags: Recipe tags (preferred over applicable_to)
+
+        Returns:
+            (can_apply, reason) tuple
+        """
+        # Get item type
+        item_type = self._get_item_type()
+
+        # Use EnchantingTagProcessor if tags provided (new system)
+        if tags and len(tags) > 0:
+            from core.crafting_tag_processor import EnchantingTagProcessor
+
+            # Graceful failure - use tag processor validation
+            can_apply, reason = EnchantingTagProcessor.can_apply_to_item(tags, item_type)
+            if not can_apply:
+                return False, reason  # Returns descriptive message like "Enchantment not applicable to armor items"
+            return True, "OK"
+
+        # Fallback to legacy applicable_to list
+        elif applicable_to:
+            if item_type not in applicable_to:
+                return False, f"Cannot apply to {item_type} items"
+            return True, "OK"
+
+        # No validation data provided - allow by default (graceful)
+        else:
+            return True, "OK (no applicability rules provided)"
 
     def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict) -> Tuple[bool, str]:
         """Apply an enchantment effect to this item with comprehensive rules"""

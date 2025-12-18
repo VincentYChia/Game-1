@@ -1332,17 +1332,38 @@ class GameEngine:
                                             self.character.inventory.slots[idx] = item_stack
                                             return
 
-                                        # Determine entity type based on category or item_type
-                                        if mat_def.category == 'station':
-                                            entity_type = PlacedEntityType.CRAFTING_STATION
-                                        else:
-                                            entity_type_map = {
-                                                'turret': PlacedEntityType.TURRET,
-                                                'trap': PlacedEntityType.TRAP,
-                                                'bomb': PlacedEntityType.BOMB,
-                                                'utility': PlacedEntityType.UTILITY_DEVICE,
+                                        # Determine entity type using EngineeringTagProcessor
+                                        from core.crafting_tag_processor import EngineeringTagProcessor
+
+                                        # Get tags from material definition
+                                        mat_tags = mat_def.metadata.get('tags', []) if hasattr(mat_def, 'metadata') and mat_def.metadata else []
+
+                                        # Use tag processor to determine behavior type
+                                        if mat_tags:
+                                            behavior_type = EngineeringTagProcessor.get_behavior_type(mat_tags)
+
+                                            # Map behavior type to PlacedEntityType
+                                            behavior_to_entity_map = {
+                                                'placeable_combat': PlacedEntityType.TURRET,
+                                                'placeable_triggered': PlacedEntityType.TRAP,
+                                                'placeable_crafting': PlacedEntityType.CRAFTING_STATION,
+                                                'usable': PlacedEntityType.UTILITY_DEVICE,  # Usable items placed like devices
+                                                'consumable': PlacedEntityType.BOMB,        # Consumables placed as bombs
+                                                'placeable': PlacedEntityType.UTILITY_DEVICE,  # Generic placeable
                                             }
-                                            entity_type = entity_type_map.get(mat_def.item_type, PlacedEntityType.TURRET)
+                                            entity_type = behavior_to_entity_map.get(behavior_type, PlacedEntityType.TURRET)
+                                        else:
+                                            # Fallback to legacy logic if no tags
+                                            if mat_def.category == 'station':
+                                                entity_type = PlacedEntityType.CRAFTING_STATION
+                                            else:
+                                                entity_type_map = {
+                                                    'turret': PlacedEntityType.TURRET,
+                                                    'trap': PlacedEntityType.TRAP,
+                                                    'bomb': PlacedEntityType.BOMB,
+                                                    'utility': PlacedEntityType.UTILITY_DEVICE,
+                                                }
+                                                entity_type = entity_type_map.get(mat_def.item_type, PlacedEntityType.TURRET)
 
                                         # Parse stats from effect string (only for combat entities)
                                         range_val = 5.0

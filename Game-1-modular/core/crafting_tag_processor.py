@@ -313,7 +313,16 @@ class AlchemyTagProcessor:
 
 
 class RefiningTagProcessor:
-    """Process refining recipe tags for LLM scaling logic"""
+    """Process refining recipe tags for output modification"""
+
+    # Process type bonuses (affect output quantity/quality)
+    PROCESS_BONUSES = {
+        "smelting": {"yield_multiplier": 1.0, "quality_bonus": 0},      # Standard refining
+        "crushing": {"yield_multiplier": 1.1, "quality_bonus": 0},      # +10% yield from crushing
+        "grinding": {"yield_multiplier": 1.15, "quality_bonus": 0},     # +15% yield from fine grinding
+        "purifying": {"yield_multiplier": 1.0, "quality_bonus": 1},     # Better quality output
+        "alloying": {"yield_multiplier": 0.9, "quality_bonus": 2},      # -10% yield but much higher quality
+    }
 
     @staticmethod
     def get_process_type(recipe_tags: List[str]) -> str:
@@ -325,10 +334,8 @@ class RefiningTagProcessor:
         Returns:
             Process type string
         """
-        PROCESS_TYPES = ["smelting", "crushing", "grinding", "purifying", "alloying"]
-
         for tag in recipe_tags:
-            if tag in PROCESS_TYPES:
+            if tag in RefiningTagProcessor.PROCESS_BONUSES:
                 return tag
 
         # Default to smelting
@@ -361,32 +368,67 @@ class RefiningTagProcessor:
         return 1
 
     @staticmethod
-    def generate_recipe_template(material_name: str, tier: int) -> Dict[str, Any]:
-        """Generate LLM-friendly recipe template for scaling
-
-        This is the core of the LLM scaling logic - provides a structured
-        template that an LLM can use to generate new refining recipes
+    def get_yield_multiplier(recipe_tags: List[str]) -> float:
+        """Get output quantity multiplier from process type
 
         Args:
-            material_name: Name of material being refined
-            tier: Material tier (1-4)
+            recipe_tags: List of tags from recipe metadata
 
         Returns:
-            Recipe template dict
+            Yield multiplier (1.0 = normal, >1.0 = bonus yield)
         """
-        return {
-            "recipeId": f"refining_{material_name}_ore_to_ingot",
-            "inputs": [
-                {"materialId": f"{material_name}_ore", "quantity": 1}
-            ],
-            "outputs": [
-                {"materialId": f"{material_name}_ingot", "quantity": 1, "rarity": "common"}
-            ],
-            "stationRequired": "refinery",
-            "stationTierRequired": tier,
-            "fuelRequired": None,
-            "metadata": {
-                "narrative": f"Refining {material_name} ore into usable ingots.",
-                "tags": ["smelting", material_name, "basic" if tier == 1 else "advanced"]
-            }
-        }
+        process_type = RefiningTagProcessor.get_process_type(recipe_tags)
+        return RefiningTagProcessor.PROCESS_BONUSES[process_type]["yield_multiplier"]
+
+    @staticmethod
+    def get_quality_bonus(recipe_tags: List[str]) -> int:
+        """Get quality bonus from process type (affects rarity)
+
+        Args:
+            recipe_tags: List of tags from recipe metadata
+
+        Returns:
+            Quality bonus (0 = no change, +1 = one tier higher rarity, etc.)
+        """
+        process_type = RefiningTagProcessor.get_process_type(recipe_tags)
+        return RefiningTagProcessor.PROCESS_BONUSES[process_type]["quality_bonus"]
+
+    @staticmethod
+    def calculate_output_quantity(base_quantity: int, recipe_tags: List[str]) -> int:
+        """Calculate final output quantity with process bonuses
+
+        Args:
+            base_quantity: Base output quantity from recipe
+            recipe_tags: List of tags from recipe metadata
+
+        Returns:
+            Final output quantity (base * multiplier, rounded)
+        """
+        multiplier = RefiningTagProcessor.get_yield_multiplier(recipe_tags)
+        return max(1, int(base_quantity * multiplier))
+
+    @staticmethod
+    def upgrade_rarity(base_rarity: str, recipe_tags: List[str]) -> str:
+        """Upgrade output rarity based on quality bonus
+
+        Args:
+            base_rarity: Base rarity from recipe
+            recipe_tags: List of tags from recipe metadata
+
+        Returns:
+            Upgraded rarity string
+        """
+        RARITY_TIERS = ["common", "uncommon", "rare", "epic", "legendary"]
+
+        quality_bonus = RefiningTagProcessor.get_quality_bonus(recipe_tags)
+
+        # Find current tier
+        try:
+            current_tier = RARITY_TIERS.index(base_rarity.lower())
+        except ValueError:
+            current_tier = 0  # Default to common if not found
+
+        # Upgrade by quality bonus
+        new_tier = min(current_tier + quality_bonus, len(RARITY_TIERS) - 1)
+
+        return RARITY_TIERS[new_tier]
