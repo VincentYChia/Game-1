@@ -958,6 +958,9 @@ class GameEngine:
             self.combat_manager.character = self.character
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+            # Spawn training dummy for tag testing
+            from systems.training_dummy import spawn_training_dummy
+            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
             self.add_notification("Welcome to your new world!", (100, 255, 100))
 
             # Open class selection for new character
@@ -993,6 +996,10 @@ class GameEngine:
 
                 # Spawn enemies near loaded position
                 self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+
+                # Spawn training dummy for tag testing
+                from systems.training_dummy import spawn_training_dummy
+                spawn_training_dummy(self.combat_manager, (60.0, 50.0))
 
                 print(f"✓ Loaded character: Level {self.character.leveling.level}")
                 self.add_notification("World loaded successfully!", (100, 255, 100))
@@ -1030,6 +1037,10 @@ class GameEngine:
                 # Spawn enemies near loaded position
                 self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
+                # Spawn training dummy for tag testing
+                from systems.training_dummy import spawn_training_dummy
+                spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+
                 print(f"✓ Loaded default save: Level {self.character.leveling.level}")
                 self.add_notification("Default save loaded successfully!", (100, 255, 100))
             else:
@@ -1048,6 +1059,9 @@ class GameEngine:
             self.combat_manager.character = self.character
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+            # Spawn training dummy for tag testing
+            from systems.training_dummy import spawn_training_dummy
+            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
             self.add_notification("Temporary world started (no saves)", (255, 215, 0))
 
             # Open class selection for new character
