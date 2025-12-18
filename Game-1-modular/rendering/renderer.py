@@ -1035,8 +1035,8 @@ class Renderer:
             pygame.draw.rect(self.screen, (0, 0, 0, 180), tier_bg)
             self.screen.blit(tier_surf, (sx - size // 2 + 4, sy - size // 2 + 2))
 
-            # Render lifetime bar (only for combat entities, not crafting stations or training dummies)
-            if entity.entity_type != PlacedEntityType.CRAFTING_STATION and entity.entity_type != PlacedEntityType.TRAINING_DUMMY:
+            # Render lifetime bar (only for combat entities, not crafting stations)
+            if entity.entity_type != PlacedEntityType.CRAFTING_STATION:
                 # Skip entities with infinite lifetime
                 if hasattr(entity, 'lifetime') and entity.lifetime != float('inf'):
                     bar_w, bar_h = size - 4, 4
@@ -1062,37 +1062,6 @@ class Renderer:
             if entity.entity_type == PlacedEntityType.TURRET and entity.target_enemy and entity.target_enemy.is_alive:
                 tx, ty = camera.world_to_screen(Position(entity.target_enemy.position[0], entity.target_enemy.position[1], 0))
                 pygame.draw.line(self.screen, (255, 0, 0), (sx, sy), (tx, ty), 2)
-
-            # Special rendering for training dummy
-            if entity.entity_type == PlacedEntityType.TRAINING_DUMMY:
-                # Draw health bar instead of lifetime bar
-                if hasattr(entity, 'current_health') and hasattr(entity, 'max_health'):
-                    bar_w, bar_h = size + 20, 6
-                    bar_y = sy + size // 2 + 8
-                    pygame.draw.rect(self.screen, (60, 60, 60), (sx - bar_w // 2, bar_y, bar_w, bar_h))
-                    health_w = int(bar_w * (entity.current_health / entity.max_health))
-                    # Color based on health percentage
-                    if entity.current_health > entity.max_health * 0.5:
-                        bar_color = (0, 255, 0)  # Green
-                    elif entity.current_health > entity.max_health * 0.25:
-                        bar_color = (255, 255, 0)  # Yellow
-                    else:
-                        bar_color = (255, 0, 0)  # Red
-                    pygame.draw.rect(self.screen, bar_color, (sx - bar_w // 2, bar_y, health_w, bar_h))
-
-                    # Draw health text
-                    health_text = f"{int(entity.current_health)}/{int(entity.max_health)}"
-                    health_surf = self.tiny_font.render(health_text, True, (255, 255, 255))
-                    self.screen.blit(health_surf, (sx - health_surf.get_width() // 2, bar_y + bar_h + 2))
-
-                # Draw label
-                label_text = "TRAINING DUMMY"
-                label_surf = self.small_font.render(label_text, True, (255, 255, 100))
-                label_bg = pygame.Rect(sx - label_surf.get_width() // 2 - 4, sy - size // 2 - 22,
-                                       label_surf.get_width() + 8, label_surf.get_height() + 4)
-                pygame.draw.rect(self.screen, (0, 0, 0, 200), label_bg)
-                pygame.draw.rect(self.screen, (255, 255, 100), label_bg, 1)
-                self.screen.blit(label_surf, (sx - label_surf.get_width() // 2, sy - size // 2 - 20))
 
         for resource in world.get_visible_resources(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             if resource.depleted and not resource.respawns:

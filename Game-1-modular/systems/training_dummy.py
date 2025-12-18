@@ -1,310 +1,165 @@
 """
 Training Dummy System for Tag Testing
-Provides detailed feedback on effects applied, perfect for testing tag combinations
+Creates a special enemy that provides detailed feedback on effects applied
 """
 
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
-from data.models import PlacedEntity, PlacedEntityType, Position
+from typing import Tuple
+from Combat.enemy import Enemy, EnemyDefinition, AIPattern, DropDefinition
 from entities.status_manager import add_status_manager_to_entity
 
 
-@dataclass
-class DamageReport:
-    """Report of damage/effects applied to training dummy"""
-    timestamp: float
-    source_name: str
-    tags_used: List[str]
-    primary_damage: float
-    damage_type: str
-    targets_hit: int
-    status_effects_applied: List[str]
-    geometry_used: Optional[str]
-    total_damage_dealt: float
-
-    def format_report(self) -> str:
-        """Format damage report for console output"""
-        lines = [
-            "=" * 60,
-            f"🎯 TRAINING DUMMY HIT REPORT",
-            "=" * 60,
-            f"Source: {self.source_name}",
-            f"Tags: {', '.join(self.tags_used)}",
-            f"Geometry: {self.geometry_used or 'single_target'}",
-            f"",
-            f"Primary Damage: {self.primary_damage:.1f} {self.damage_type}",
-            f"Targets Hit: {self.targets_hit}",
-            f"Total Damage Dealt: {self.total_damage_dealt:.1f}",
-        ]
-
-        if self.status_effects_applied:
-            lines.append(f"Status Effects Applied:")
-            for effect in self.status_effects_applied:
-                lines.append(f"  - {effect}")
-        else:
-            lines.append(f"Status Effects: None")
-
-        lines.append("=" * 60)
-        return "\n".join(lines)
+def create_training_dummy_definition() -> EnemyDefinition:
+    """Create EnemyDefinition for training dummy"""
+    return EnemyDefinition(
+        enemy_id="training_dummy",
+        name="Training Dummy",
+        tier=1,
+        category="construct",  # Immune to poison, bleed
+        behavior="idle",  # Doesn't move or attack
+        max_health=10000.0,  # Very high HP
+        damage_min=0,  # Doesn't attack
+        damage_max=0,
+        defense=0,  # No defense for clear damage numbers
+        speed=0.0,  # Doesn't move
+        aggro_range=0.0,  # Doesn't aggro
+        attack_speed=0.0,  # Never attacks
+        drops=[],  # No drops
+        ai_pattern=AIPattern(
+            default_state="idle",
+            aggro_on_damage=False,  # Doesn't react
+            aggro_on_proximity=False,
+            flee_at_health=0.0,  # Never flees
+            call_for_help_radius=0.0,
+            pack_coordination=False
+        ),
+        special_abilities=[],  # No special attacks
+        narrative="A stationary dummy for testing combat abilities. High HP, doesn't fight back. Perfect for testing tag combinations.",
+        tags=["training", "dummy", "passive", "construct"]
+    )
 
 
-class TrainingDummy:
+class TrainingDummy(Enemy):
     """
-    Training dummy for testing tag effects
+    Training dummy enemy with enhanced reporting
 
     Features:
-    - High HP (doesn't die easily)
+    - High HP (10,000) - doesn't die easily
+    - Stationary - doesn't move
+    - Passive - doesn't attack back
+    - Auto-resets at 10% health
     - Detailed damage reporting
-    - Status effect tracking
-    - Tag combination feedback
-    - Resets automatically
     """
 
-    def __init__(self, position: Position, max_health: float = 10000.0):
-        self.position = position
-        self.max_health = max_health
-        self.current_health = max_health
-        self.name = "Training Dummy"
-        self.category = "construct"  # Immune to poison, bleed
+    def __init__(self, position: Tuple[float, float], chunk_coords: Tuple[int, int]):
+        # Create training dummy definition
+        definition = create_training_dummy_definition()
+
+        # Initialize as Enemy
+        super().__init__(definition, position, chunk_coords)
+
+        # Override some Enemy behaviors
         self.is_alive = True
+        self.ai_state_locked = True  # Prevent AI state changes
 
-        # Add status manager
-        add_status_manager_to_entity(self)
-
-        # Tracking
+        # Enhanced tracking
         self.total_damage_taken = 0.0
         self.hit_count = 0
-        self.damage_reports: List[DamageReport] = []
-        self.last_hit_timestamp = 0.0
+        self.reset_count = 0
 
-        # For tag system
-        self.definition = type('obj', (object,), {
-            'name': 'Training Dummy',
-            'category': 'construct'
-        })()
-
-    def take_damage(self, damage: float, damage_type: str = "physical",
-                   source: Any = None, tags: List[str] = None,
-                   context: Any = None):
+    def take_damage(self, damage: float, damage_type: str = "physical", from_player: bool = False):
         """
-        Take damage and generate detailed report
+        Take damage with detailed reporting
 
         Args:
             damage: Amount of damage
-            damage_type: Type of damage (physical, fire, etc.)
-            source: Source entity
-            tags: Tags used in the attack
-            context: EffectContext from tag system
+            damage_type: Type of damage
+            from_player: Whether damage came from player
         """
-        import time
-
-        # Apply damage
-        actual_damage = damage * self.damage_taken_multiplier
-        self.current_health -= actual_damage
-        self.total_damage_taken += actual_damage
+        self.current_health -= damage
+        self.total_damage_taken += damage
         self.hit_count += 1
-        self.last_hit_timestamp = time.time()
 
-        # Generate report
-        source_name = getattr(source, 'name', getattr(source, 'item_id', 'Unknown'))
-        tags_used = tags or []
+        # Detailed console output
+        print(f"\n🎯 TRAINING DUMMY HIT #{self.hit_count}")
+        print(f"   Damage: {damage:.1f} {damage_type}")
+        print(f"   HP: {self.current_health:.1f}/{self.max_health:.1f} ({self.current_health/self.max_health*100:.1f}%)")
+        print(f"   Total damage taken: {self.total_damage_taken:.1f}")
 
-        # Get active status effects
-        active_statuses = []
-        if hasattr(self, 'status_manager'):
-            active_statuses = [effect.name for effect in self.status_manager.active_effects]
+        # Check active status effects
+        if hasattr(self, 'status_manager') and len(self.status_manager.active_effects) > 0:
+            print(f"   Active status effects:")
+            for effect_name, effect in self.status_manager.active_effects.items():
+                stacks = effect.get('stacks', 1)
+                duration = effect.get('duration', 0)
+                print(f"      - {effect_name} (x{stacks}, {duration:.1f}s remaining)")
 
-        # Get geometry from context
-        geometry = None
-        targets_hit = 1
-        if context:
-            geometry = context.config.geometry_tag
-            targets_hit = len(context.targets)
-
-        report = DamageReport(
-            timestamp=self.last_hit_timestamp,
-            source_name=source_name,
-            tags_used=tags_used,
-            primary_damage=actual_damage,
-            damage_type=damage_type,
-            targets_hit=targets_hit,
-            status_effects_applied=active_statuses,
-            geometry_used=geometry,
-            total_damage_dealt=actual_damage
-        )
-
-        self.damage_reports.append(report)
-
-        # Print report
-        print(report.format_report())
-
-        # Print current status
-        self._print_status()
-
-        # Auto-reset if health gets low
+        # Auto-reset at 10% health
         if self.current_health <= self.max_health * 0.1:
-            self.reset()
+            self.reset_count += 1
+            print(f"\n♻️  TRAINING DUMMY AUTO-RESET #{self.reset_count}")
+            print(f"   Total hits taken: {self.hit_count}")
+            print(f"   Total damage: {self.total_damage_taken:.1f}")
 
-    def _print_status(self):
-        """Print current dummy status"""
-        hp_percent = (self.current_health / self.max_health) * 100
+            # Reset health and tracking
+            self.current_health = self.max_health
+            self.total_damage_taken = 0.0
+            self.hit_count = 0
 
-        print(f"\n📊 DUMMY STATUS:")
-        print(f"   HP: {self.current_health:.1f}/{self.max_health:.1f} ({hp_percent:.1f}%)")
-        print(f"   Total Damage Taken: {self.total_damage_taken:.1f}")
-        print(f"   Hits: {self.hit_count}")
+            # Clear status effects
+            if hasattr(self, 'status_manager'):
+                self.status_manager.active_effects.clear()
 
-        # Show active status effects
-        if hasattr(self, 'status_manager') and self.status_manager.active_effects:
-            print(f"   Active Status Effects:")
-            for effect in self.status_manager.active_effects:
-                time_left = effect.duration_remaining
-                stacks = getattr(effect, 'stacks', 1)
-                print(f"      - {effect.name}: {time_left:.1f}s remaining, {stacks} stacks")
+            print(f"   HP restored to {self.max_health:.1f}")
+            print(f"   Status effects cleared")
 
-        print()
+        # Training dummies never die
+        return False  # Never returns True (never dies)
 
-    def reset(self):
-        """Reset dummy to full health and clear status effects"""
-        print("\n" + "=" * 60)
-        print("🔄 TRAINING DUMMY RESET")
-        print("=" * 60)
-        print(f"Total damage taken: {self.total_damage_taken:.1f}")
-        print(f"Total hits: {self.hit_count}")
-
-        self.current_health = self.max_health
-        self.total_damage_taken = 0.0
-        self.hit_count = 0
-        self.damage_reports.clear()
-
-        if hasattr(self, 'status_manager'):
-            self.status_manager.clear_all()
-
-        print("Ready for testing!")
-        print("=" * 60 + "\n")
-
-    def update(self, dt: float):
-        """Update status effects"""
+    def update_ai(self, dt: float, player_position: Tuple[float, float]):
+        """Override AI - training dummy doesn't move or attack"""
+        # Update status effects (burn, poison, etc. still tick)
         if hasattr(self, 'status_manager'):
             self.status_manager.update(dt)
 
-    def print_summary(self):
-        """Print summary of all damage reports"""
-        if not self.damage_reports:
-            print("No damage reports yet.")
-            return
+        # Update ability cooldowns
+        for ability_id in self.ability_cooldowns:
+            if self.ability_cooldowns[ability_id] > 0:
+                self.ability_cooldowns[ability_id] -= dt
 
-        print("\n" + "=" * 60)
-        print("📋 TRAINING DUMMY SUMMARY")
-        print("=" * 60)
-        print(f"Total Hits: {len(self.damage_reports)}")
-        print(f"Total Damage: {self.total_damage_taken:.1f}")
-        print(f"Average Damage: {self.total_damage_taken / len(self.damage_reports):.1f}")
-        print()
+        # Training dummy never moves or changes state
+        pass
 
-        # Group by tag combination
-        tag_combos: Dict[tuple, List[float]] = {}
-        for report in self.damage_reports:
-            key = tuple(sorted(report.tags_used))
-            if key not in tag_combos:
-                tag_combos[key] = []
-            tag_combos[key].append(report.total_damage_dealt)
-
-        print("Damage by Tag Combination:")
-        for tags, damages in sorted(tag_combos.items(), key=lambda x: sum(x[1]), reverse=True):
-            avg_dmg = sum(damages) / len(damages)
-            total_dmg = sum(damages)
-            print(f"  {', '.join(tags) or 'No tags'}: {len(damages)} hits, {avg_dmg:.1f} avg, {total_dmg:.1f} total")
-
-        print("=" * 60 + "\n")
+    def can_attack(self) -> bool:
+        """Training dummy never attacks"""
+        return False
 
 
-def create_training_dummy_entity(position: Position) -> PlacedEntity:
+def spawn_training_dummy(combat_manager, position: Tuple[float, float]) -> TrainingDummy:
     """
-    Create a PlacedEntity configured as a training dummy
+    Spawn a training dummy in the combat manager
 
-    Returns PlacedEntity that can be placed in the world
+    Args:
+        combat_manager: CombatManager instance
+        position: (x, y) position to spawn at
+
+    Returns:
+        TrainingDummy instance
     """
-    dummy = PlacedEntity(
-        position=position,
-        item_id="training_dummy",
-        entity_type=PlacedEntityType.TRAINING_DUMMY,
-        tier=1,
-        health=10000.0,
-        range=0.0,  # Not an attacking entity
-        damage=0.0,
-        attack_speed=0.0,
-        lifetime=float('inf'),  # Never expires
-        time_remaining=float('inf')
-    )
+    # Calculate chunk coords
+    chunk_x = int(position[0] // 16)
+    chunk_y = int(position[1] // 16)
+    chunk_coords = (chunk_x, chunk_y)
 
-    # Add custom attributes for dummy
-    dummy.max_health = 10000.0
-    dummy.current_health = 10000.0
-    dummy.total_damage_taken = 0.0
-    dummy.hit_count = 0
-    dummy.category = "construct"
-    dummy.name = "Training Dummy"
+    # Create training dummy
+    dummy = TrainingDummy(position, chunk_coords)
 
-    # Add status manager
-    add_status_manager_to_entity(dummy)
+    # Add to combat manager's enemy list
+    if chunk_coords not in combat_manager.enemies:
+        combat_manager.enemies[chunk_coords] = []
+    combat_manager.enemies[chunk_coords].append(dummy)
+
+    print(f"🎯 Spawned Training Dummy at ({position[0]:.1f}, {position[1]:.1f})")
+    print(f"   HP: {dummy.max_health:.0f}")
+    print(f"   Click to attack, or use skills/turrets to test tag effects!")
 
     return dummy
-
-
-def create_training_dummy_item_definition():
-    """
-    Create item definition for training dummy
-
-    This should be added to items-engineering-1.JSON
-    """
-    return {
-        "metadata": {
-            "narrative": "Indestructible training dummy for testing combat abilities. Reports detailed damage and effect information. Immune to most status effects due to construct nature.",
-            "tags": ["device", "training", "utility", "indestructible"]
-        },
-        "itemId": "training_dummy",
-        "name": "Training Dummy",
-        "category": "device",
-        "type": "utility",
-        "subtype": "training",
-        "tier": 1,
-        "rarity": "uncommon",
-        "effect": "Provides detailed combat feedback for testing. 10,000 HP, auto-resets at 10%.",
-        "stackSize": 5,
-        "statMultipliers": {
-            "weight": 2.0
-        },
-        "requirements": {
-            "level": 1,
-            "stats": {}
-        },
-        "flags": {
-            "stackable": True,
-            "placeable": True,
-            "repairable": False,
-            "indestructible": True
-        }
-    }
-
-
-# Example usage for testing
-if __name__ == "__main__":
-    print("Training Dummy System Test")
-    print("-" * 60)
-
-    # Create dummy
-    dummy = TrainingDummy(Position(10, 10))
-
-    # Simulate some hits
-    print("\n1. Testing basic damage:")
-    dummy.take_damage(50, "physical", tags=["physical", "single_target"])
-
-    print("\n2. Testing fire + burn:")
-    dummy.take_damage(80, "fire", tags=["fire", "circle", "burn"])
-
-    print("\n3. Testing chain lightning:")
-    dummy.take_damage(70, "lightning", tags=["lightning", "chain", "shock"])
-
-    # Print summary
-    dummy.print_summary()

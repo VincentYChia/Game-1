@@ -173,6 +173,10 @@ class GameEngine:
         if self.character:
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
+            # Spawn training dummy for tag testing
+            from systems.training_dummy import spawn_training_dummy
+            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+
         # Initialize NPC system
         print("Loading NPCs...")
         self.npcs: List[NPC] = []
