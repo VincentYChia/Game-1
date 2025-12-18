@@ -94,20 +94,22 @@ Result: `is_consumable=False` (defaults to transmutation - everything is an item
 ## Refining Integration Example
 
 ### Integration Point
-When a refining recipe is completed, use `RefiningTagProcessor` to modify output quantity (yield) and quality (rarity) based on process type tags.
+When a refining recipe is completed, use `RefiningTagProcessor` for **probabilistic** bonus rolls (yield and quality upgrades) based on process type tags.
+
+**Design Philosophy:** Tags enhance the base recipe with CHANCE-based bonuses, not deterministic modifiers. Core recipe output remains unchanged.
 
 ### Example Code
 
 ```python
 def complete_refining_recipe(recipe: Dict, base_success_rate: float = 1.0):
-    """Complete a refining recipe with tag-based output modification"""
+    """Complete a refining recipe with probabilistic tag bonuses"""
     from core.crafting_tag_processor import RefiningTagProcessor
     from data.databases import MaterialDatabase
 
     # Get recipe tags
     recipe_tags = recipe.get('metadata', {}).get('tags', [])
 
-    # Get base output from recipe
+    # Get base output from recipe (UNCHANGED by tags)
     outputs = recipe.get('outputs', [])
     if not outputs:
         return None
@@ -117,14 +119,18 @@ def complete_refining_recipe(recipe: Dict, base_success_rate: float = 1.0):
     base_rarity = output_data.get('rarity', 'common')
     material_id = output_data.get('materialId')
 
-    # Apply tag-based modifications
-    final_quantity = RefiningTagProcessor.calculate_output_quantity(base_quantity, recipe_tags)
-    final_rarity = RefiningTagProcessor.upgrade_rarity(base_rarity, recipe_tags)
+    # Roll for probabilistic bonuses
+    final_quantity, final_rarity = RefiningTagProcessor.calculate_final_output(
+        base_quantity, base_rarity, recipe_tags
+    )
 
-    # Get process type for logging
-    process_type = RefiningTagProcessor.get_process_type(recipe_tags)
-    yield_mult = RefiningTagProcessor.get_yield_multiplier(recipe_tags)
-    quality_bonus = RefiningTagProcessor.get_quality_bonus(recipe_tags)
+    # Get bonus info for logging
+    bonus_info = RefiningTagProcessor.get_bonus_info(recipe_tags)
+    process_type = bonus_info['process_type']
+
+    # Detect if bonuses proc'd
+    got_bonus_yield = (final_quantity > base_quantity)
+    got_quality_upgrade = (final_rarity != base_rarity)
 
     # Create output item
     item = create_material_item(
@@ -134,21 +140,30 @@ def complete_refining_recipe(recipe: Dict, base_success_rate: float = 1.0):
         max_stack=999
     )
 
-    # Log modifications
-    if yield_mult != 1.0 or quality_bonus > 0:
-        print(f"✓ Refining complete: {material_id}")
-        print(f"   Process: {process_type}")
-        if yield_mult != 1.0:
-            print(f"   Yield: {base_quantity} → {final_quantity} ({int((yield_mult-1)*100):+d}% from {process_type})")
-        if quality_bonus > 0:
-            print(f"   Quality: {base_rarity} → {final_rarity} (+{quality_bonus} tiers from {process_type})")
+    # Log results
+    print(f"✓ Refining complete: {material_id}")
+    print(f"   Process: {process_type}")
+    print(f"   Base output: {base_quantity}x {base_rarity}")
+
+    if got_bonus_yield:
+        bonus_amt = final_quantity - base_quantity
+        print(f"   🎲 BONUS YIELD! +{bonus_amt} (from {process_type})")
+    elif bonus_info['bonus_yield_chance'] > 0:
+        print(f"   No bonus yield ({int(bonus_info['bonus_yield_chance']*100)}% chance)")
+
+    if got_quality_upgrade:
+        print(f"   ✨ QUALITY UPGRADE! {base_rarity} → {final_rarity} (from {process_type})")
+    elif bonus_info['quality_upgrade_chance'] > 0:
+        print(f"   No quality upgrade ({int(bonus_info['quality_upgrade_chance']*100)}% chance)")
+
+    print(f"   Final output: {final_quantity}x {final_rarity}")
 
     return item
 ```
 
-### Tag Examples
+### Tag Examples (Probabilistic System)
 
-**Smelting (Standard):**
+**Smelting (Standard - No Bonuses):**
 ```json
 {
   "metadata": {
@@ -159,69 +174,83 @@ def complete_refining_recipe(recipe: Dict, base_success_rate: float = 1.0):
   ]
 }
 ```
-Result: 1x copper ingot (common) - no modifications (1.0x yield, +0 quality)
+Result: ALWAYS 1x copper ingot (common) - no bonus chances
 
-**Crushing (+10% Yield):**
+**Crushing (25% Chance for +1 Bonus Yield):**
 ```json
 {
   "metadata": {
-    "tags": ["crushing", "iron", "basic"]
+    "tags": ["smelting", "crushing", "iron", "basic"]
   },
   "outputs": [
-    {"materialId": "iron_powder", "quantity": 10, "rarity": "common"}
+    {"materialId": "iron_ingot", "quantity": 1, "rarity": "common"}
   ]
 }
 ```
-Result: 11x iron powder (common) - crushing gives +10% yield (10 → 11)
+Possible Results:
+- 75% chance: 1x iron ingot (common) - base output
+- 25% chance: 2x iron ingot (common) - bonus yield proc!
 
-**Grinding (+15% Yield):**
+**Grinding (40% Chance for +1 Bonus Yield):**
 ```json
 {
   "metadata": {
-    "tags": ["grinding", "diamond", "advanced"]
+    "tags": ["smelting", "grinding", "diamond", "advanced"]
   },
   "outputs": [
     {"materialId": "diamond_dust", "quantity": 4, "rarity": "rare"}
   ]
 }
 ```
-Result: 5x diamond dust (rare) - grinding gives +15% yield (4 → 4.6 → 5 rounded)
+Possible Results:
+- 60% chance: 4x diamond dust (rare) - base output
+- 40% chance: 5x diamond dust (rare) - bonus yield proc!
 
-**Purifying (+1 Rarity Tier):**
+**Purifying (30% Chance for +1 Rarity Tier):**
 ```json
 {
   "metadata": {
-    "tags": ["purifying", "mithril", "quality"]
+    "tags": ["smelting", "purifying", "mithril", "legendary"]
   },
   "outputs": [
-    {"materialId": "mithril_ingot", "quantity": 1, "rarity": "uncommon"}
+    {"materialId": "mithril_ingot", "quantity": 1, "rarity": "rare"}
   ]
 }
 ```
-Result: 1x mithril ingot (rare) - purifying upgrades uncommon → rare (+1 tier)
+Possible Results:
+- 70% chance: 1x mithril ingot (rare) - base output
+- 30% chance: 1x mithril ingot (epic) - quality upgrade proc!
 
-**Alloying (+2 Rarity Tiers, -10% Yield):**
+**Alloying (15% Chance for +2 Rarity Tiers - Very Rare!):**
 ```json
 {
   "metadata": {
-    "tags": ["alloying", "steel", "legendary"]
+    "tags": ["alloying", "bronze", "basic"]
   },
   "outputs": [
-    {"materialId": "damascus_steel", "quantity": 10, "rarity": "uncommon"}
+    {"materialId": "bronze_ingot", "quantity": 3, "rarity": "common"}
   ]
 }
 ```
-Result: 9x damascus steel (epic) - alloying gives -10% yield (10 → 9) but +2 quality tiers (uncommon → epic)
+Possible Results:
+- 85% chance: 3x bronze ingot (common) - base output
+- 15% chance: 3x bronze ingot (rare) - quality upgrade proc! (+2 tiers: common → rare)
 
-### Process Type Effects
+### Process Type Effects (Probabilistic Bonuses)
 
-| Process    | Yield Multiplier | Quality Bonus | Use Case                           |
-|------------|------------------|---------------|------------------------------------|
-| smelting   | 1.0x             | +0            | Standard refining                  |
-| crushing   | 1.1x (+10%)      | +0            | More output, same quality          |
-| grinding   | 1.15x (+15%)     | +0            | Maximum output, same quality       |
-| purifying  | 1.0x             | +1            | Better quality, same quantity      |
-| alloying   | 0.9x (-10%)      | +2            | Much better quality, less quantity |
+| Process    | Bonus Yield Chance | Bonus Yield Amount | Quality Upgrade Chance | Quality Tiers | Use Case                       |
+|------------|--------------------|--------------------|------------------------|---------------|--------------------------------|
+| smelting   | 0%                 | 0                  | 0%                     | 0             | Standard refining (no bonuses) |
+| crushing   | 25%                | +1                 | 0%                     | 0             | Bonus yield chance             |
+| grinding   | 40%                | +1                 | 0%                     | 0             | Higher yield chance            |
+| purifying  | 0%                 | 0                  | 30%                    | +1            | Quality upgrade chance         |
+| alloying   | 0%                 | 0                  | 15%                    | +2            | Rare quality upgrade (+2!)     |
+
+**Key Points:**
+- All bonuses are CHANCE-based (probabilistic rolls)
+- Base recipe output is NEVER modified (core recipe intact)
+- Tags provide ENHANCEMENT opportunities
+- Multiple process tags can stack (crushing + purifying = both chances roll)
 
 ### Rarity Upgrade Tiers
 

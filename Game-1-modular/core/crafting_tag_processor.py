@@ -313,15 +313,47 @@ class AlchemyTagProcessor:
 
 
 class RefiningTagProcessor:
-    """Process refining recipe tags for output modification"""
+    """Process refining recipe tags for probabilistic output enhancement
 
-    # Process type bonuses (affect output quantity/quality)
+    Design Philosophy:
+    - Tags ENHANCE the base recipe, not override it
+    - All bonuses are CHANCE-based (probabilistic)
+    - Core recipe remains unchanged
+    - Tags provide bonus opportunities (extra yield, quality upgrade)
+    """
+
+    # Process type bonuses (probabilistic chances, not deterministic multipliers)
     PROCESS_BONUSES = {
-        "smelting": {"yield_multiplier": 1.0, "quality_bonus": 0},      # Standard refining
-        "crushing": {"yield_multiplier": 1.1, "quality_bonus": 0},      # +10% yield from crushing
-        "grinding": {"yield_multiplier": 1.15, "quality_bonus": 0},     # +15% yield from fine grinding
-        "purifying": {"yield_multiplier": 1.0, "quality_bonus": 1},     # Better quality output
-        "alloying": {"yield_multiplier": 0.9, "quality_bonus": 2},      # -10% yield but much higher quality
+        "smelting": {
+            "bonus_yield_chance": 0.0,    # No bonus (standard process)
+            "bonus_yield_amount": 0,
+            "quality_upgrade_chance": 0.0,
+            "quality_tiers": 0
+        },
+        "crushing": {
+            "bonus_yield_chance": 0.25,   # 25% chance for bonus yield
+            "bonus_yield_amount": 1,      # +1 extra item on proc
+            "quality_upgrade_chance": 0.0,
+            "quality_tiers": 0
+        },
+        "grinding": {
+            "bonus_yield_chance": 0.4,    # 40% chance for bonus yield
+            "bonus_yield_amount": 1,      # +1 extra item on proc
+            "quality_upgrade_chance": 0.0,
+            "quality_tiers": 0
+        },
+        "purifying": {
+            "bonus_yield_chance": 0.0,
+            "bonus_yield_amount": 0,
+            "quality_upgrade_chance": 0.3, # 30% chance to upgrade rarity
+            "quality_tiers": 1             # +1 tier on upgrade
+        },
+        "alloying": {
+            "bonus_yield_chance": 0.0,
+            "bonus_yield_amount": 0,
+            "quality_upgrade_chance": 0.15, # 15% chance to upgrade rarity
+            "quality_tiers": 2              # +2 tiers on upgrade (rare!)
+        },
     }
 
     @staticmethod
@@ -368,59 +400,89 @@ class RefiningTagProcessor:
         return 1
 
     @staticmethod
-    def get_yield_multiplier(recipe_tags: List[str]) -> float:
-        """Get output quantity multiplier from process type
+    def roll_bonus_yield(recipe_tags: List[str]) -> int:
+        """Roll for bonus yield (probabilistic)
 
         Args:
             recipe_tags: List of tags from recipe metadata
 
         Returns:
-            Yield multiplier (1.0 = normal, >1.0 = bonus yield)
+            Bonus quantity (0 if no proc, bonus_amount if proc)
         """
+        import random
+
         process_type = RefiningTagProcessor.get_process_type(recipe_tags)
-        return RefiningTagProcessor.PROCESS_BONUSES[process_type]["yield_multiplier"]
+        bonuses = RefiningTagProcessor.PROCESS_BONUSES[process_type]
+
+        chance = bonuses["bonus_yield_chance"]
+        amount = bonuses["bonus_yield_amount"]
+
+        if random.random() < chance:
+            return amount  # Bonus proc!
+        return 0  # No bonus
 
     @staticmethod
-    def get_quality_bonus(recipe_tags: List[str]) -> int:
-        """Get quality bonus from process type (affects rarity)
+    def roll_quality_upgrade(recipe_tags: List[str]) -> int:
+        """Roll for quality upgrade (probabilistic)
 
         Args:
             recipe_tags: List of tags from recipe metadata
 
         Returns:
-            Quality bonus (0 = no change, +1 = one tier higher rarity, etc.)
+            Quality tiers to upgrade (0 if no proc, tiers if proc)
         """
+        import random
+
         process_type = RefiningTagProcessor.get_process_type(recipe_tags)
-        return RefiningTagProcessor.PROCESS_BONUSES[process_type]["quality_bonus"]
+        bonuses = RefiningTagProcessor.PROCESS_BONUSES[process_type]
+
+        chance = bonuses["quality_upgrade_chance"]
+        tiers = bonuses["quality_tiers"]
+
+        if random.random() < chance:
+            return tiers  # Quality upgrade proc!
+        return 0  # No upgrade
 
     @staticmethod
-    def calculate_output_quantity(base_quantity: int, recipe_tags: List[str]) -> int:
-        """Calculate final output quantity with process bonuses
+    def calculate_final_output(base_quantity: int, base_rarity: str, recipe_tags: List[str]) -> Tuple[int, str]:
+        """Calculate final output with probabilistic tag bonuses
 
         Args:
-            base_quantity: Base output quantity from recipe
+            base_quantity: Base output quantity from recipe (unchanged)
+            base_rarity: Base rarity from recipe (unchanged)
             recipe_tags: List of tags from recipe metadata
 
         Returns:
-            Final output quantity (base * multiplier, rounded)
+            (final_quantity, final_rarity) tuple
         """
-        multiplier = RefiningTagProcessor.get_yield_multiplier(recipe_tags)
-        return max(1, int(base_quantity * multiplier))
+        # Base values unchanged
+        final_quantity = base_quantity
+        final_rarity = base_rarity
+
+        # Roll for bonus yield
+        bonus_yield = RefiningTagProcessor.roll_bonus_yield(recipe_tags)
+        if bonus_yield > 0:
+            final_quantity += bonus_yield
+
+        # Roll for quality upgrade
+        quality_tiers = RefiningTagProcessor.roll_quality_upgrade(recipe_tags)
+        if quality_tiers > 0:
+            final_rarity = RefiningTagProcessor.upgrade_rarity(base_rarity, quality_tiers)
+
+        return final_quantity, final_rarity
 
     @staticmethod
-    def upgrade_rarity(base_rarity: str, recipe_tags: List[str]) -> str:
-        """Upgrade output rarity based on quality bonus
+    def upgrade_rarity(base_rarity: str, tiers: int) -> str:
+        """Upgrade rarity by specified number of tiers
 
         Args:
-            base_rarity: Base rarity from recipe
-            recipe_tags: List of tags from recipe metadata
+            base_rarity: Base rarity
+            tiers: Number of tiers to upgrade
 
         Returns:
             Upgraded rarity string
         """
         RARITY_TIERS = ["common", "uncommon", "rare", "epic", "legendary"]
-
-        quality_bonus = RefiningTagProcessor.get_quality_bonus(recipe_tags)
 
         # Find current tier
         try:
@@ -428,7 +490,28 @@ class RefiningTagProcessor:
         except ValueError:
             current_tier = 0  # Default to common if not found
 
-        # Upgrade by quality bonus
-        new_tier = min(current_tier + quality_bonus, len(RARITY_TIERS) - 1)
+        # Upgrade by tiers
+        new_tier = min(current_tier + tiers, len(RARITY_TIERS) - 1)
 
         return RARITY_TIERS[new_tier]
+
+    @staticmethod
+    def get_bonus_info(recipe_tags: List[str]) -> Dict[str, Any]:
+        """Get bonus information for UI display
+
+        Args:
+            recipe_tags: List of tags from recipe metadata
+
+        Returns:
+            Dict with bonus chances and amounts
+        """
+        process_type = RefiningTagProcessor.get_process_type(recipe_tags)
+        bonuses = RefiningTagProcessor.PROCESS_BONUSES[process_type]
+
+        return {
+            "process_type": process_type,
+            "bonus_yield_chance": bonuses["bonus_yield_chance"],
+            "bonus_yield_amount": bonuses["bonus_yield_amount"],
+            "quality_upgrade_chance": bonuses["quality_upgrade_chance"],
+            "quality_tiers": bonuses["quality_tiers"]
+        }

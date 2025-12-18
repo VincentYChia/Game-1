@@ -35,8 +35,8 @@
       "stationTierRequired": 1,
       "fuelRequired": null,
       "metadata": {
-        "narrative": "Smelting iron ore into reliable metal. Backbone of civilization.",
-        "tags": ["smelting", "iron", "basic"]
+        "narrative": "Smelting iron ore into reliable metal. Backbone of civilization. Crushing the ore first increases yield.",
+        "tags": ["smelting", "crushing", "iron", "basic"]
       }
     },
     {
@@ -83,8 +83,8 @@
       "stationTierRequired": 2,
       "fuelRequired": null,
       "metadata": {
-        "narrative": "Refining legendary mithril. The metal seems to purify itself.",
-        "tags": ["smelting", "mithril", "legendary"]
+        "narrative": "Refining legendary mithril. The metal seems to purify itself, occasionally yielding higher quality ingots.",
+        "tags": ["smelting", "purifying", "mithril", "legendary"]
       }
     },
     {
@@ -99,8 +99,8 @@
       "stationTierRequired": 3,
       "fuelRequired": null,
       "metadata": {
-        "narrative": "Smelting adamantine requires extreme heat. Nothing else burns hot enough.",
-        "tags": ["smelting", "adamantine", "legendary"]
+        "narrative": "Smelting adamantine requires extreme heat and purification techniques. Sometimes yields exceptionally pure ingots.",
+        "tags": ["smelting", "purifying", "adamantine", "legendary"]
       }
     },
     {
@@ -276,8 +276,8 @@
       "stationTierRequired": 1,
       "fuelRequired": null,
       "metadata": {
-        "narrative": "Creating bronze through ancient metallurgy. Harder than copper, more workable than iron.",
-        "tags": ["alloy", "bronze", "basic"]
+        "narrative": "Creating bronze through ancient metallurgical alloying. Harder than copper, more workable than iron. Rarely produces exceptional quality ingots.",
+        "tags": ["alloying", "bronze", "basic"]
       }
     },
     {
