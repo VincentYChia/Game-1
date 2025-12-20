@@ -366,7 +366,7 @@ class SmithingCrafter:
             item_metadata: Optional dict of item metadata for category lookup
 
         Returns:
-            dict: Result with outputId, quantity, success, rarity
+            dict: Result with outputId, quantity, success, rarity, tags
         """
         can_craft, error_msg = self.can_craft(recipe_id, inventory)
         if not can_craft:
@@ -382,12 +382,18 @@ class SmithingCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
+        # Get inheritable tags from recipe
+        from core.crafting_tag_processor import SmithingTagProcessor
+        recipe_tags = recipe.get('metadata', {}).get('tags', [])
+        inheritable_tags = SmithingTagProcessor.get_inheritable_tags(recipe_tags)
+
         return {
             "success": True,
             "outputId": recipe['outputId'],
             "quantity": recipe['outputQty'],
             "bonus": 0,
             "rarity": input_rarity,
+            "tags": inheritable_tags,  # Tags to apply to crafted item
             "message": f"Crafted ({input_rarity})"
         }
 
@@ -422,7 +428,7 @@ class SmithingCrafter:
             item_metadata: Optional dict of item metadata for category lookup
 
         Returns:
-            dict: Result with outputId, quantity, bonus, rarity, stats, success
+            dict: Result with outputId, quantity, bonus, rarity, stats, tags, success
         """
         if not minigame_result.get('success'):
             # Failure - lose some materials (50% for now)
@@ -477,6 +483,11 @@ class SmithingCrafter:
         item_category = rarity_system.get_item_category(output_id, item_metadata)
         modified_stats = rarity_system.apply_rarity_modifiers(base_stats, item_category, input_rarity)
 
+        # Get inheritable tags from recipe
+        from core.crafting_tag_processor import SmithingTagProcessor
+        recipe_tags = recipe.get('metadata', {}).get('tags', [])
+        inheritable_tags = SmithingTagProcessor.get_inheritable_tags(recipe_tags)
+
         return {
             "success": True,
             "outputId": output_id,
@@ -485,6 +496,7 @@ class SmithingCrafter:
             "score": minigame_result.get('score', 0),
             "rarity": input_rarity,
             "stats": modified_stats,
+            "tags": inheritable_tags,  # Tags to apply to crafted item
             "message": f"Crafted {input_rarity} item with +{minigame_result.get('bonus', 0)}% bonus!"
         }
 

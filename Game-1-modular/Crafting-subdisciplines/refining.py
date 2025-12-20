@@ -347,7 +347,7 @@ class RefiningCrafter:
 
     def craft_instant(self, recipe_id, inventory):
         """
-        Instant craft (no minigame) - produces base output with rarity upgrade
+        Instant craft (no minigame) - produces base output with rarity upgrade and probabilistic tag bonuses
 
         Args:
             recipe_id: Recipe ID to craft
@@ -375,11 +375,13 @@ class RefiningCrafter:
         if outputs:
             output = outputs[0]  # Take first output
             output_id = output.get('materialId', recipe.get('outputId', 'unknown'))
-            output_qty = output.get('quantity', recipe.get('outputQty', 1))
+            base_output_qty = output.get('quantity', recipe.get('outputQty', 1))
+            base_output_rarity = output.get('rarity', input_rarity)
         else:
             # Fallback to old format
             output_id = recipe.get('outputId', 'unknown')
-            output_qty = recipe.get('outputQty', 1)
+            base_output_qty = recipe.get('outputQty', 1)
+            base_output_rarity = input_rarity
 
         # Apply rarity upgrade based on input quantity (4:1 ratio)
         # Calculate total input quantity from recipe
@@ -402,16 +404,34 @@ class RefiningCrafter:
         # If < 4, no upgrade (stays same rarity)
 
         output_rarity_idx = min(current_tier_idx + rarity_upgrade, len(rarity_tiers) - 1)
-        output_rarity = rarity_tiers[output_rarity_idx]
+        base_upgraded_rarity = rarity_tiers[output_rarity_idx]
 
-        print(f"[Refining Instant] {total_input_qty} {input_rarity} inputs -> {output_rarity} output (+{rarity_upgrade} tiers)")
+        # Apply probabilistic tag bonuses (crushing, grinding, purifying, alloying)
+        from core.crafting_tag_processor import RefiningTagProcessor
+        recipe_tags = recipe.get('metadata', {}).get('tags', [])
+        final_quantity, final_rarity = RefiningTagProcessor.calculate_final_output(
+            base_output_qty, base_upgraded_rarity, recipe_tags
+        )
+
+        # Detect bonus procs for feedback
+        bonus_yield_proc = (final_quantity > base_output_qty)
+        quality_upgrade_proc = (final_rarity != base_upgraded_rarity)
+
+        message_parts = [f"Refined to {final_rarity}!"]
+        if bonus_yield_proc:
+            bonus_amt = final_quantity - base_output_qty
+            message_parts.append(f"+{bonus_amt} bonus yield!")
+        if quality_upgrade_proc:
+            message_parts.append(f"Quality upgrade: {base_upgraded_rarity} → {final_rarity}!")
+
+        print(f"[Refining Instant] {total_input_qty} {input_rarity} inputs -> {final_rarity} output (+{rarity_upgrade} tiers from qty)")
 
         return {
             "success": True,
             "outputId": output_id,
-            "quantity": output_qty,
-            "rarity": output_rarity,
-            "message": f"Refined to {output_rarity}!"
+            "quantity": final_quantity,
+            "rarity": final_rarity,
+            "message": " ".join(message_parts)
         }
 
     def create_minigame(self, recipe_id, buff_time_bonus=0.0, buff_quality_bonus=0.0):
@@ -436,7 +456,7 @@ class RefiningCrafter:
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result):
         """
-        Craft with minigame result - all-or-nothing
+        Craft with minigame result - all-or-nothing with probabilistic tag bonuses
         Refining outputs materials with rarity but NO stat bonuses
 
         Args:
@@ -483,15 +503,12 @@ class RefiningCrafter:
         if outputs:
             output = outputs[0]
             output_id = output.get('materialId', recipe.get('outputId', 'unknown'))
-            output_qty = output.get('quantity', recipe.get('outputQty', 1))
+            base_output_qty = output.get('quantity', recipe.get('outputQty', 1))
+            base_output_rarity = output.get('rarity', input_rarity)
         else:
             output_id = recipe.get('outputId', 'unknown')
-            output_qty = recipe.get('outputQty', 1)
-
-        # 50% chance to double output (lucky refining)
-        if random.random() < 0.5:
-            output_qty *= 2
-            print(f"  Lucky! Doubled output: {output_qty}x {output_id}")
+            base_output_qty = recipe.get('outputQty', 1)
+            base_output_rarity = input_rarity
 
         # Refining rarity upgrade based on INPUT QUANTITY (4:1 ratio)
         # 4 inputs = +1 rarity tier (common -> uncommon)
@@ -516,17 +533,40 @@ class RefiningCrafter:
             rarity_upgrade = 1  # +1 tier
 
         output_rarity_idx = min(current_tier_idx + rarity_upgrade, len(rarity_tiers) - 1)
-        output_rarity = rarity_tiers[output_rarity_idx]
+        base_upgraded_rarity = rarity_tiers[output_rarity_idx]
 
-        print(f"  Rarity calculation: {total_input_qty} inputs -> +{rarity_upgrade} tiers")
-        print(f"  Final output: {output_qty}x {output_id} ({input_rarity} -> {output_rarity})\n")
+        # Apply probabilistic tag bonuses (crushing, grinding, purifying, alloying)
+        from core.crafting_tag_processor import RefiningTagProcessor
+        recipe_tags = recipe.get('metadata', {}).get('tags', [])
+        final_quantity, final_rarity = RefiningTagProcessor.calculate_final_output(
+            base_output_qty, base_upgraded_rarity, recipe_tags
+        )
+
+        # Detect bonus procs for feedback
+        bonus_yield_proc = (final_quantity > base_output_qty)
+        quality_upgrade_proc = (final_rarity != base_upgraded_rarity)
+
+        print(f"  Rarity calculation: {total_input_qty} inputs -> +{rarity_upgrade} tiers from qty")
+        if bonus_yield_proc:
+            bonus_amt = final_quantity - base_output_qty
+            print(f"  🎲 BONUS YIELD! +{bonus_amt} (from tag bonuses)")
+        if quality_upgrade_proc:
+            print(f"  ✨ QUALITY UPGRADE! {base_upgraded_rarity} → {final_rarity} (from tag bonuses)")
+        print(f"  Final output: {final_quantity}x {output_id} ({input_rarity} -> {final_rarity})\n")
+
+        message_parts = [f"Refined to {final_rarity} quality!"]
+        if bonus_yield_proc:
+            bonus_amt = final_quantity - base_output_qty
+            message_parts.append(f"+{bonus_amt} bonus yield!")
+        if quality_upgrade_proc:
+            message_parts.append(f"Quality upgrade: {base_upgraded_rarity} → {final_rarity}!")
 
         result = {
             "success": True,
             "outputId": output_id,
-            "quantity": output_qty,
-            "rarity": output_rarity,
-            "message": f"Refined to {output_rarity} quality!"
+            "quantity": final_quantity,
+            "rarity": final_rarity,
+            "message": " ".join(message_parts)
         }
 
         return result

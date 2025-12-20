@@ -546,7 +546,7 @@ class AlchemyCrafter:
             item_metadata: Optional dict of item metadata for category lookup
 
         Returns:
-            dict: Result with outputId, quantity, success, rarity
+            dict: Result with outputId, quantity, success, rarity, effect_type, is_consumable
         """
         can_craft, error_msg = self.can_craft(recipe_id, inventory)
         if not can_craft:
@@ -562,6 +562,12 @@ class AlchemyCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
+        # Determine output type and effect from tags
+        from core.crafting_tag_processor import AlchemyTagProcessor
+        recipe_tags = recipe.get('metadata', {}).get('tags', [])
+        is_consumable = AlchemyTagProcessor.is_consumable(recipe_tags)
+        effect_type = AlchemyTagProcessor.get_effect_type(recipe_tags)
+
         return {
             "success": True,
             "outputId": recipe['outputId'],
@@ -569,7 +575,9 @@ class AlchemyCrafter:
             "duration_mult": 1.0,  # Base duration
             "effect_mult": 1.0,  # Base effect
             "rarity": input_rarity,
-            "message": f"Brewed ({input_rarity})"
+            "is_consumable": is_consumable,  # Potion vs transmutation
+            "effect_type": effect_type,  # Healing, buff, damage, etc.
+            "message": f"Brewed ({input_rarity}) {'potion' if is_consumable else 'transmutation'}"
         }
 
     def create_minigame(self, recipe_id, buff_time_bonus=0.0, buff_quality_bonus=0.0):
@@ -593,7 +601,7 @@ class AlchemyCrafter:
             item_metadata: Optional dict of item metadata for category lookup
 
         Returns:
-            dict: Result with outputId, quality, multipliers, rarity, stats
+            dict: Result with outputId, quality, multipliers, rarity, stats, effect_type, is_consumable
         """
         recipe = self.recipes[recipe_id]
 
@@ -637,6 +645,12 @@ class AlchemyCrafter:
         item_category = rarity_system.get_item_category(output_id, item_metadata)
         modified_stats = rarity_system.apply_rarity_modifiers(base_stats, item_category, input_rarity)
 
+        # Determine output type and effect from tags
+        from core.crafting_tag_processor import AlchemyTagProcessor
+        recipe_tags = recipe.get('metadata', {}).get('tags', [])
+        is_consumable = AlchemyTagProcessor.is_consumable(recipe_tags)
+        effect_type = AlchemyTagProcessor.get_effect_type(recipe_tags)
+
         return {
             "success": True,
             "outputId": output_id,
@@ -646,7 +660,9 @@ class AlchemyCrafter:
             "effect_mult": effect_mult,
             "rarity": input_rarity,
             "stats": modified_stats,
-            "message": f"Brewed {input_rarity} potion! {minigame_result.get('message', '')}"
+            "is_consumable": is_consumable,  # Potion vs transmutation
+            "effect_type": effect_type,  # Healing, buff, damage, etc.
+            "message": f"Brewed {input_rarity} {'potion' if is_consumable else 'transmutation'}! {minigame_result.get('message', '')}"
         }
 
     def get_recipe(self, recipe_id):
