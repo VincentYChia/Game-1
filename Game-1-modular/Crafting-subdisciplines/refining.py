@@ -408,6 +408,8 @@ class RefiningCrafter:
 
         # Apply probabilistic tag bonuses (crushing, grinding, purifying, alloying)
         from core.crafting_tag_processor import RefiningTagProcessor
+        from core.tag_debug import get_tag_debugger
+
         recipe_tags = recipe.get('metadata', {}).get('tags', [])
         final_quantity, final_rarity = RefiningTagProcessor.calculate_final_output(
             base_output_qty, base_upgraded_rarity, recipe_tags
@@ -416,6 +418,11 @@ class RefiningCrafter:
         # Detect bonus procs for feedback
         bonus_yield_proc = (final_quantity > base_output_qty)
         quality_upgrade_proc = (final_rarity != base_upgraded_rarity)
+
+        # Debug output
+        debugger = get_tag_debugger()
+        debugger.log_refining_bonuses(recipe_id, recipe_tags, base_output_qty, base_upgraded_rarity,
+                                      final_quantity, final_rarity)
 
         message_parts = [f"Refined to {final_rarity}!"]
         if bonus_yield_proc:
@@ -537,6 +544,8 @@ class RefiningCrafter:
 
         # Apply probabilistic tag bonuses (crushing, grinding, purifying, alloying)
         from core.crafting_tag_processor import RefiningTagProcessor
+        from core.tag_debug import get_tag_debugger
+
         recipe_tags = recipe.get('metadata', {}).get('tags', [])
         final_quantity, final_rarity = RefiningTagProcessor.calculate_final_output(
             base_output_qty, base_upgraded_rarity, recipe_tags
@@ -545,6 +554,11 @@ class RefiningCrafter:
         # Detect bonus procs for feedback
         bonus_yield_proc = (final_quantity > base_output_qty)
         quality_upgrade_proc = (final_rarity != base_upgraded_rarity)
+
+        # Debug output
+        debugger = get_tag_debugger()
+        debugger.log_refining_bonuses(recipe_id, recipe_tags, base_output_qty, base_upgraded_rarity,
+                                      final_quantity, final_rarity)
 
         print(f"  Rarity calculation: {total_input_qty} inputs -> +{rarity_upgrade} tiers from qty")
         if bonus_yield_proc:

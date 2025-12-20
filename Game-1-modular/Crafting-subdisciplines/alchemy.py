@@ -564,9 +564,15 @@ class AlchemyCrafter:
 
         # Determine output type and effect from tags
         from core.crafting_tag_processor import AlchemyTagProcessor
+        from core.tag_debug import get_tag_debugger
+
         recipe_tags = recipe.get('metadata', {}).get('tags', [])
         is_consumable = AlchemyTagProcessor.is_consumable(recipe_tags)
         effect_type = AlchemyTagProcessor.get_effect_type(recipe_tags)
+
+        # Debug output
+        debugger = get_tag_debugger()
+        debugger.log_alchemy_detection(recipe_id, recipe_tags, is_consumable, effect_type)
 
         return {
             "success": True,
@@ -647,9 +653,15 @@ class AlchemyCrafter:
 
         # Determine output type and effect from tags
         from core.crafting_tag_processor import AlchemyTagProcessor
+        from core.tag_debug import get_tag_debugger
+
         recipe_tags = recipe.get('metadata', {}).get('tags', [])
         is_consumable = AlchemyTagProcessor.is_consumable(recipe_tags)
         effect_type = AlchemyTagProcessor.get_effect_type(recipe_tags)
+
+        # Debug output
+        debugger = get_tag_debugger()
+        debugger.log_alchemy_detection(recipe_id, recipe_tags, is_consumable, effect_type)
 
         return {
             "success": True,

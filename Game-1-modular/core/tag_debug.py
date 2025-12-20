@@ -184,6 +184,66 @@ class TagDebugger:
             targets_found=count
         )
 
+    # Crafting Tag System Logging
+
+    def log_smithing_inheritance(self, recipe_id: str, recipe_tags: List[str], inheritable_tags: List[str]):
+        """Log smithing tag inheritance"""
+        filtered_out = [t for t in recipe_tags if t not in inheritable_tags]
+        self.info(
+            f"⚒️  Smithing: Recipe '{recipe_id}' tag inheritance",
+            recipe_tags=recipe_tags,
+            inherited=inheritable_tags,
+            filtered=filtered_out
+        )
+
+    def log_refining_bonuses(self, recipe_id: str, recipe_tags: List[str],
+                            base_qty: int, base_rarity: str,
+                            final_qty: int, final_rarity: str):
+        """Log refining probabilistic bonuses"""
+        bonus_yield_proc = (final_qty > base_qty)
+        quality_upgrade_proc = (final_rarity != base_rarity)
+
+        self.info(
+            f"🔨 Refining: Recipe '{recipe_id}' probabilistic bonuses",
+            recipe_tags=recipe_tags,
+            base_output=f"{base_qty}x {base_rarity}",
+            final_output=f"{final_qty}x {final_rarity}",
+            yield_proc=bonus_yield_proc,
+            quality_proc=quality_upgrade_proc
+        )
+
+        if bonus_yield_proc or quality_upgrade_proc:
+            self.info(f"   🎲 PROBABILISTIC BONUS ACTIVATED!")
+
+    def log_alchemy_detection(self, recipe_id: str, recipe_tags: List[str],
+                              is_consumable: bool, effect_type: Optional[str]):
+        """Log alchemy effect detection"""
+        output_type = "potion" if is_consumable else "transmutation"
+        self.info(
+            f"⚗️  Alchemy: Recipe '{recipe_id}' effect detection",
+            recipe_tags=recipe_tags,
+            output_type=output_type,
+            effect_type=effect_type or "None"
+        )
+
+    def log_crafting_result(self, discipline: str, recipe_id: str, result: dict):
+        """Log crafting result"""
+        if not result.get('success'):
+            self.warning(
+                f"Crafting failed: {discipline}/{recipe_id}",
+                reason=result.get('message', 'Unknown')
+            )
+            return
+
+        self.info(
+            f"📦 Crafting complete: {discipline}/{recipe_id}",
+            output=f"{result.get('quantity', 1)}x {result.get('outputId', 'unknown')}",
+            rarity=result.get('rarity', 'common'),
+            tags=result.get('tags'),
+            effect_type=result.get('effect_type'),
+            is_consumable=result.get('is_consumable')
+        )
+
 
 # Global debugger instance
 _debugger = None

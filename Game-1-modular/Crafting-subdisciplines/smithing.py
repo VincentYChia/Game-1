@@ -384,8 +384,14 @@ class SmithingCrafter:
 
         # Get inheritable tags from recipe
         from core.crafting_tag_processor import SmithingTagProcessor
+        from core.tag_debug import get_tag_debugger
+
         recipe_tags = recipe.get('metadata', {}).get('tags', [])
         inheritable_tags = SmithingTagProcessor.get_inheritable_tags(recipe_tags)
+
+        # Debug output
+        debugger = get_tag_debugger()
+        debugger.log_smithing_inheritance(recipe_id, recipe_tags, inheritable_tags)
 
         return {
             "success": True,
@@ -485,8 +491,14 @@ class SmithingCrafter:
 
         # Get inheritable tags from recipe
         from core.crafting_tag_processor import SmithingTagProcessor
+        from core.tag_debug import get_tag_debugger
+
         recipe_tags = recipe.get('metadata', {}).get('tags', [])
         inheritable_tags = SmithingTagProcessor.get_inheritable_tags(recipe_tags)
+
+        # Debug output
+        debugger = get_tag_debugger()
+        debugger.log_smithing_inheritance(recipe_id, recipe_tags, inheritable_tags)
 
         return {
             "success": True,
