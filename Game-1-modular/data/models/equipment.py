@@ -195,6 +195,13 @@ class EquipmentItem:
             'effect': effect
         })
 
+        # Debug output for enchantment verification
+        print(f"\n✨ ENCHANTMENT APPLIED")
+        print(f"   Item: {self.item_id} ({self.name})")
+        print(f"   Enchantment: {enchantment_name} ({enchantment_id})")
+        print(f"   Effect: {effect}")
+        print(f"   Total Enchantments: {len(self.enchantments)}")
+
         return True, "OK"
 
     def _get_item_type(self) -> str:

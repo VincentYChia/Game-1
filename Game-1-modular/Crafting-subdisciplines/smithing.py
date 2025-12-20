@@ -281,23 +281,32 @@ class SmithingCrafter:
             "../recipes.JSON/recipes-smithing-1.json",
             "../recipes.JSON/recipes-smithing-2.json",
             "../recipes.JSON/recipes-smithing-3.json",
+            "../recipes.JSON/recipes-tag-tests.JSON",  # TEST RECIPES
             "recipes.JSON/recipes-smithing-1.json",
             "recipes.JSON/recipes-smithing-2.json",
             "recipes.JSON/recipes-smithing-3.json",
+            "recipes.JSON/recipes-tag-tests.JSON",  # TEST RECIPES
         ]
 
+        loaded_count = 0
         for path in possible_paths:
             try:
                 with open(path, 'r') as f:
                     data = json.load(f)
                     recipe_list = data.get('recipes', [])
                     for recipe in recipe_list:
-                        self.recipes[recipe['recipeId']] = recipe
+                        # Only load smithing recipes (or recipes with no stationType for backward compat)
+                        station_type = recipe.get('stationType', 'smithing')
+                        if station_type == 'smithing':
+                            self.recipes[recipe['recipeId']] = recipe
+                            loaded_count += 1
             except FileNotFoundError:
                 continue
+            except Exception as e:
+                print(f"[Smithing] Error loading {path}: {e}")
 
         if self.recipes:
-            print(f"[Smithing] Loaded {len(self.recipes)} recipes")
+            print(f"[Smithing] Loaded {loaded_count} recipes from {len(self.recipes)} total")
         else:
             print("[Smithing] WARNING: No recipes loaded")
 
@@ -392,6 +401,20 @@ class SmithingCrafter:
         # Debug output
         debugger = get_tag_debugger()
         debugger.log_smithing_inheritance(recipe_id, recipe_tags, inheritable_tags)
+
+        # Console output for tag verification
+        print(f"\n⚒️  SMITHING CRAFT: {recipe['outputId']}")
+        print(f"   Recipe: {recipe_id}")
+        if recipe_tags:
+            print(f"   Recipe Tags: {', '.join(recipe_tags)}")
+        else:
+            print(f"   Recipe Tags: (none)")
+
+        if inheritable_tags:
+            print(f"   ✓ Inherited Tags: {', '.join(inheritable_tags)}")
+        else:
+            print(f"   ⚠️  NO TAGS INHERITED (no functional tags in recipe)")
+        print(f"   Rarity: {input_rarity}")
 
         return {
             "success": True,
@@ -499,6 +522,21 @@ class SmithingCrafter:
         # Debug output
         debugger = get_tag_debugger()
         debugger.log_smithing_inheritance(recipe_id, recipe_tags, inheritable_tags)
+
+        # Console output for tag verification
+        print(f"\n⚒️  SMITHING CRAFT (MINIGAME): {output_id}")
+        print(f"   Recipe: {recipe_id}")
+        print(f"   Minigame Bonus: {bonus_pct}%")
+        if recipe_tags:
+            print(f"   Recipe Tags: {', '.join(recipe_tags)}")
+        else:
+            print(f"   Recipe Tags: (none)")
+
+        if inheritable_tags:
+            print(f"   ✓ Inherited Tags: {', '.join(inheritable_tags)}")
+        else:
+            print(f"   ⚠️  NO TAGS INHERITED (no functional tags in recipe)")
+        print(f"   Rarity: {input_rarity}")
 
         return {
             "success": True,

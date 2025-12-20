@@ -67,18 +67,35 @@ class TrainingDummy(Enemy):
         self.reset_count = 0
 
     def take_damage(self, damage: float, damage_type: str = "physical", from_player: bool = False,
-                    source_tags: list = None, attacker_name: str = None, **kwargs):
+                    source_tags: list = None, attacker_name: str = None, source=None, tags=None, **kwargs):
         """
         Take damage with detailed reporting
+
+        Accepts parameters from both player attacks and effect_executor system.
 
         Args:
             damage: Amount of damage
             damage_type: Type of damage
             from_player: Whether damage came from player
-            source_tags: Optional tags from attacking item/entity
-            attacker_name: Optional name of attacker
+            source_tags: Optional tags from attacking item/entity (player attacks)
+            attacker_name: Optional name of attacker (player attacks)
+            source: Source entity (effect_executor)
+            tags: Tags from effect_executor system
             **kwargs: Additional damage metadata (crit, armor_pen, etc.)
         """
+        # Normalize tags parameter (accept from either source_tags or tags)
+        if tags and not source_tags:
+            source_tags = tags
+        if not source_tags:
+            source_tags = []
+
+        # Normalize attacker_name (try to get from source if not provided)
+        if not attacker_name and source:
+            if hasattr(source, 'item_id'):
+                attacker_name = source.item_id
+            elif hasattr(source, 'name'):
+                attacker_name = source.name
+
         self.current_health -= damage
         self.total_damage_taken += damage
         self.hit_count += 1
@@ -91,6 +108,8 @@ class TrainingDummy(Enemy):
             print(f"   Attacker: {attacker_name}")
         elif from_player:
             print(f"   Attacker: Player")
+        elif source:
+            print(f"   Attacker: {type(source).__name__}")
 
         # Damage breakdown
         print(f"   Damage: {damage:.1f} ({damage_type})")
@@ -108,9 +127,10 @@ class TrainingDummy(Enemy):
             print(f"   🏷️  Attack Tags: {', '.join(source_tags)}")
 
             # Categorize tags
-            damage_tags = [t for t in source_tags if t in ['slashing', 'piercing', 'crushing', 'fire', 'ice', 'lightning', 'poison']]
+            damage_tags = [t for t in source_tags if t in ['slashing', 'piercing', 'crushing', 'fire', 'ice', 'lightning', 'poison', 'burning']]
             property_tags = [t for t in source_tags if t in ['fast', 'reach', 'precision', 'armor_breaker', 'cleaving']]
             hand_tags = [t for t in source_tags if t in ['1H', '2H', 'versatile']]
+            geometry_tags = [t for t in source_tags if t in ['single', 'aoe', 'cone', 'chain', 'line']]
 
             if damage_tags:
                 print(f"      Damage Types: {', '.join(damage_tags)}")
@@ -118,6 +138,10 @@ class TrainingDummy(Enemy):
                 print(f"      Properties: {', '.join(property_tags)}")
             if hand_tags:
                 print(f"      Weapon Type: {', '.join(hand_tags)}")
+            if geometry_tags:
+                print(f"      Geometry: {', '.join(geometry_tags)}")
+        else:
+            print(f"   ⚠️  NO TAGS (legacy damage or tags not passed)")
 
         print(f"   HP: {self.current_health:.1f}/{self.max_health:.1f} ({self.current_health/self.max_health*100:.1f}%)")
         print(f"   Total damage taken: {self.total_damage_taken:.1f}")

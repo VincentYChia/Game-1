@@ -272,21 +272,30 @@ class RefiningCrafter:
         """Load refining recipes from JSON files"""
         possible_paths = [
             "../recipes.JSON/recipes-refining-1.json",
+            "../recipes.JSON/recipes-tag-tests.JSON",  # TEST RECIPES
             "recipes.JSON/recipes-refining-1.json",
+            "recipes.JSON/recipes-tag-tests.JSON",  # TEST RECIPES
         ]
 
+        loaded_count = 0
         for path in possible_paths:
             try:
                 with open(path, 'r') as f:
                     data = json.load(f)
                     recipe_list = data.get('recipes', [])
                     for recipe in recipe_list:
-                        self.recipes[recipe['recipeId']] = recipe
+                        # Only load refining recipes
+                        station_type = recipe.get('stationType', 'refining')
+                        if station_type == 'refining':
+                            self.recipes[recipe['recipeId']] = recipe
+                            loaded_count += 1
             except FileNotFoundError:
                 continue
+            except Exception as e:
+                print(f"[Refining] Error loading {path}: {e}")
 
         if self.recipes:
-            print(f"[Refining] Loaded {len(self.recipes)} recipes")
+            print(f"[Refining] Loaded {loaded_count} recipes from {len(self.recipes)} total")
         else:
             print("[Refining] WARNING: No recipes loaded")
 
