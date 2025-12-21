@@ -570,6 +570,50 @@ class CombatManager:
 
         return (final_damage, is_crit, loot)
 
+    def _apply_weapon_enchantment_effects(self, enemy: Enemy):
+        """
+        Apply onHit enchantment effects from equipped weapons to enemy
+
+        Handles effects like Fire Aspect (burning), Poison, etc.
+
+        Args:
+            enemy: Target enemy to apply status effects to
+        """
+        # Check mainhand weapon for enchantments
+        weapons_to_check = ['mainHand', 'offHand']
+
+        for hand in weapons_to_check:
+            weapon = self.character.equipment.slots.get(hand)
+            if not weapon or not hasattr(weapon, 'enchantments'):
+                continue
+
+            # Apply each enchantment's onHit effect
+            for enchantment in weapon.enchantments:
+                effect = enchantment.get('effect', {})
+                effect_type = effect.get('type')
+
+                if effect_type == 'damage_over_time':
+                    # Map element to status tag
+                    element = effect.get('element', 'physical')
+                    status_tag_map = {
+                        'fire': 'burn',
+                        'poison': 'poison',
+                        'bleed': 'bleed'
+                    }
+
+                    status_tag = status_tag_map.get(element, 'burn')
+
+                    # Build status params from enchantment effect
+                    status_params = {
+                        'duration': effect.get('duration', 5.0),
+                        'damage_per_second': effect.get('damagePerSecond', 10.0)
+                    }
+
+                    # Apply the status effect
+                    if hasattr(enemy, 'status_manager'):
+                        enemy.status_manager.apply_status(status_tag, status_params, source=self.character)
+                        print(f"   🔥 {enchantment.get('name', 'Enchantment')} triggered! Applied {status_tag}")
+
     def player_attack_enemy_with_tags(self, enemy: Enemy, tags: List[str], params: dict = None) -> Tuple[float, bool, List[Tuple[str, int]]]:
         """
         Player attacks enemy using tag-based effects system
@@ -633,6 +677,10 @@ class CombatManager:
             )
 
             print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+            # Apply weapon enchantment onHit effects (Fire Aspect, etc.)
+            if enemy.is_alive:
+                self._apply_weapon_enchantment_effects(enemy)
 
             # Track damage dealt
             total_damage = 0.0
