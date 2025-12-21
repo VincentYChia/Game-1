@@ -19,6 +19,10 @@
       "tier": 1,
       "rarity": "common",
       "range": 1,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 10
+      },
       "stats": {
         "damage": [8, 12],
         "mining": 10,
@@ -47,6 +51,10 @@
       "tier": 2,
       "rarity": "common",
       "range": 1,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 18
+      },
       "stats": {
         "damage": [15, 22],
         "mining": 20,
@@ -75,6 +83,10 @@
       "tier": 3,
       "rarity": "uncommon",
       "range": 1,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 37
+      },
       "stats": {
         "damage": [30, 45],
         "mining": 40,
@@ -103,6 +115,10 @@
       "tier": 4,
       "rarity": "rare",
       "range": 1,
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 75
+      },
       "stats": {
         "damage": [60, 90],
         "mining": 80,
@@ -131,6 +147,10 @@
       "tier": 1,
       "rarity": "common",
       "range": 1,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 10
+      },
       "stats": {
         "damage": [8, 12],
         "forestry": 10,
@@ -159,6 +179,10 @@
       "tier": 2,
       "rarity": "common",
       "range": 1,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 18
+      },
       "stats": {
         "damage": [15, 22],
         "forestry": 20,
@@ -187,6 +211,10 @@
       "tier": 3,
       "rarity": "uncommon",
       "range": 1,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 37
+      },
       "stats": {
         "damage": [30, 45],
         "forestry": 40,
@@ -215,6 +243,10 @@
       "tier": 4,
       "rarity": "rare",
       "range": 1,
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 75
+      },
       "stats": {
         "damage": [60, 90],
         "forestry": 80,
