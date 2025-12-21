@@ -196,6 +196,11 @@
       "tier": 1,
       "rarity": "common",
       "effect": "Explodes for 40 damage in 3 unit radius",
+      "effectTags": ["physical", "circle"],
+      "effectParams": {
+        "baseDamage": 40,
+        "circle_radius": 3.0
+      },
       "stackSize": 10,
       "statMultipliers": {
         "weight": 0.5
@@ -223,6 +228,13 @@
       "tier": 2,
       "rarity": "uncommon",
       "effect": "Explodes for 75 fire damage + lingering flames",
+      "effectTags": ["fire", "circle", "burn"],
+      "effectParams": {
+        "baseDamage": 75,
+        "circle_radius": 4.0,
+        "burn_duration": 6.0,
+        "burn_damage_per_second": 8.0
+      },
       "stackSize": 10,
       "statMultipliers": {
         "weight": 0.6
@@ -250,6 +262,11 @@
       "tier": 3,
       "rarity": "rare",
       "effect": "Splits into 8 smaller explosions, total 120 damage over wide area",
+      "effectTags": ["physical", "circle"],
+      "effectParams": {
+        "baseDamage": 120,
+        "circle_radius": 5.0
+      },
       "stackSize": 5,
       "statMultipliers": {
         "weight": 0.8
@@ -280,6 +297,13 @@
       "tier": 1,
       "rarity": "common",
       "effect": "Triggers on contact, 30 damage + bleed",
+      "effectTags": ["physical", "piercing", "circle", "bleed"],
+      "effectParams": {
+        "baseDamage": 30,
+        "circle_radius": 2.0,
+        "bleed_duration": 8.0,
+        "bleed_damage_per_second": 3.0
+      },
       "stackSize": 15,
       "statMultipliers": {
         "weight": 1.0
@@ -307,6 +331,13 @@
       "tier": 2,
       "rarity": "uncommon",
       "effect": "Triggers on proximity, 50 damage + slow",
+      "effectTags": ["ice", "circle", "freeze", "slow"],
+      "effectParams": {
+        "baseDamage": 50,
+        "circle_radius": 3.0,
+        "freeze_duration": 3.0,
+        "slow_factor": 0.5
+      },
       "stackSize": 10,
       "statMultipliers": {
         "weight": 0.8
@@ -334,6 +365,11 @@
       "tier": 1,
       "rarity": "common",
       "effect": "Triggers on contact, 25 damage + immobilize for 5 seconds",
+      "effectTags": ["physical", "crushing", "single", "root"],
+      "effectParams": {
+        "baseDamage": 25,
+        "root_duration": 5.0
+      },
       "stackSize": 10,
       "statMultipliers": {
         "weight": 1.2
