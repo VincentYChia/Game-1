@@ -187,7 +187,9 @@ class MaterialDatabase:
                                 placeable=flags.get('placeable', False),
                                 item_type=item_data.get('type', ''),
                                 item_subtype=item_data.get('subtype', ''),
-                                effect=item_data.get('effect', '')
+                                effect=item_data.get('effect', ''),
+                                effect_tags=item_data.get('effectTags', []),
+                                effect_params=item_data.get('effectParams', {})
                             )
                             if mat.material_id and mat.material_id not in self.materials:
                                 self.materials[mat.material_id] = mat

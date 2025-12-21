@@ -110,7 +110,7 @@ class BurnEffect(StatusEffect):
         """Apply fire damage"""
         damage = self.damage_per_second * self.stacks * dt
         if hasattr(target, 'take_damage'):
-            target.take_damage(damage, 'fire')
+            target.take_damage(damage, 'fire', tags=['burn', 'fire'], source=self.source)
         elif hasattr(target, 'current_health'):
             target.current_health = max(0, target.current_health - damage)
 
@@ -142,7 +142,7 @@ class BleedEffect(StatusEffect):
         """Apply bleed damage"""
         damage = self.damage_per_second * self.stacks * dt
         if hasattr(target, 'take_damage'):
-            target.take_damage(damage, 'physical')
+            target.take_damage(damage, 'physical', tags=['bleed', 'physical'], source=self.source)
         elif hasattr(target, 'current_health'):
             target.current_health = max(0, target.current_health - damage)
 
@@ -175,7 +175,7 @@ class PoisonEffect(StatusEffect):
         # Poison scales multiplicatively with stacks
         damage = self.damage_per_second * (self.stacks ** 1.2) * dt
         if hasattr(target, 'take_damage'):
-            target.take_damage(damage, 'poison')
+            target.take_damage(damage, 'poison', tags=['poison', 'poison_status'], source=self.source)
         elif hasattr(target, 'current_health'):
             target.current_health = max(0, target.current_health - damage)
 
