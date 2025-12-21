@@ -181,7 +181,9 @@ class WorldSystem:
                 tier=entity_data.get("tier", 1),
                 health=entity_data.get("health", 100.0),
                 owner=entity_data.get("owner"),
-                time_remaining=entity_data.get("time_remaining", 300.0)
+                time_remaining=entity_data.get("time_remaining", 300.0),
+                tags=entity_data.get("tags"),
+                effect_params=entity_data.get("effect_params")
             )
 
             # Restore turret-specific properties

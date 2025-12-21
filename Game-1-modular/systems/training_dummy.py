@@ -149,12 +149,13 @@ class TrainingDummy(Enemy):
         # Check active status effects
         if hasattr(self, 'status_manager') and len(self.status_manager.active_effects) > 0:
             print(f"   📋 Active Status Effects:")
-            for effect_name, effect in self.status_manager.active_effects.items():
-                stacks = effect.get('stacks', 1)
-                duration = effect.get('duration', 0)
-                damage_per_tick = effect.get('damage_per_tick', 0)
+            for effect in self.status_manager.active_effects:
+                effect_name = effect.status_id
+                stacks = effect.stacks
+                duration = effect.duration_remaining
+                damage_per_tick = effect.damage_per_second if hasattr(effect, 'damage_per_second') else 0
                 if damage_per_tick > 0:
-                    print(f"      - {effect_name} (x{stacks}, {duration:.1f}s, {damage_per_tick:.1f} dmg/tick)")
+                    print(f"      - {effect_name} (x{stacks}, {duration:.1f}s, {damage_per_tick:.1f} dmg/sec)")
                 else:
                     print(f"      - {effect_name} (x{stacks}, {duration:.1f}s)")
 

@@ -318,8 +318,17 @@ class TargetFinder:
         entity_type = type(entity).__name__.lower()
 
         if context == 'enemy' or context == 'hostile':
-            # Enemy entities
-            return entity_type == 'enemy' or 'enemy' in entity_type.lower()
+            # Enemy entities - check for Enemy class, enemy-like attributes, or enemy type name
+            # Check if it's an Enemy instance (handles Enemy subclasses like TrainingDummy)
+            if hasattr(entity, 'definition') and hasattr(entity, 'is_alive'):
+                return True  # Has Enemy-like attributes
+            # Check type name contains "enemy"
+            if 'enemy' in entity_type:
+                return True
+            # Check category
+            if entity_category and entity_category in ['beast', 'undead', 'construct', 'mechanical', 'elemental']:
+                return True
+            return False
 
         elif context == 'ally' or context == 'friendly':
             # Allied entities (player, turrets, etc.)
