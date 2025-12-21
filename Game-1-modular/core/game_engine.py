@@ -299,6 +299,46 @@ class GameEngine:
     def add_notification(self, message: str, color: Tuple[int, int, int] = Config.COLOR_NOTIFICATION):
         self.notifications.append(Notification(message, 3.0, color))
 
+    def _get_weapon_effect_data(self, hand: str = 'mainHand') -> tuple:
+        """
+        Extract effect tags and params from equipped weapon for tag-based combat.
+
+        Args:
+            hand: Which hand to check ('mainHand' or 'offHand')
+
+        Returns:
+            tuple: (effect_tags: List[str], effect_params: Dict)
+        """
+        weapon = self.character.equipment.slots.get(hand)
+
+        if weapon and hasattr(weapon, 'get_effect_tags'):
+            effect_tags = weapon.get_effect_tags()
+            effect_params = weapon.get_effect_params()
+
+            # If weapon has effect tags, use them
+            if effect_tags:
+                # Ensure baseDamage is set from weapon damage if not specified
+                if 'baseDamage' not in effect_params and weapon.damage != (0, 0):
+                    # Use average of damage range
+                    avg_damage = (weapon.damage[0] + weapon.damage[1]) / 2
+                    effect_params = effect_params.copy()
+                    effect_params['baseDamage'] = avg_damage
+
+                return (effect_tags, effect_params)
+
+        # Fallback: No effect tags, create basic physical attack
+        fallback_tags = ["physical", "single"]
+        fallback_params = {}
+
+        if weapon and weapon.damage != (0, 0):
+            avg_damage = (weapon.damage[0] + weapon.damage[1]) / 2
+            fallback_params['baseDamage'] = avg_damage
+        else:
+            # Unarmed
+            fallback_params['baseDamage'] = 5
+
+        return (fallback_tags, fallback_params)
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -843,8 +883,11 @@ class GameEngine:
                 self.add_notification(f"Enemy too far (offhand range: {weapon_range})", (255, 100, 100))
                 return
 
-            # Attack with offhand
-            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='offHand')
+            # Attack with offhand (using tag system)
+            effect_tags, effect_params = self._get_weapon_effect_data('offHand')
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                enemy, effect_tags, effect_params
+            )
             self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
             self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
 
@@ -1450,8 +1493,11 @@ class GameEngine:
                 self.add_notification(range_msg, (255, 100, 100))
                 return
 
-            # Attack enemy with mainhand
-            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='mainHand')
+            # Attack enemy with mainhand (using tag system)
+            effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                enemy, effect_tags, effect_params
+            )
             self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
             self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
 
@@ -2782,8 +2828,11 @@ class GameEngine:
                                 weapon_range = self.character.equipment.get_weapon_range('offHand')
                                 dist = enemy.distance_to((self.character.position.x, self.character.position.y))
                                 if dist <= weapon_range:
-                                    # Attack with offhand
-                                    damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='offHand')
+                                    # Attack with offhand (using tag system)
+                                    effect_tags, effect_params = self._get_weapon_effect_data('offHand')
+                                    damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                                        enemy, effect_tags, effect_params
+                                    )
                                     self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
                                     self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
 

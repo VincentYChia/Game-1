@@ -350,6 +350,10 @@
   "rarity": "common",
   "range": 10,
   "slot": "mainHand",
+  "effectTags": ["physical", "piercing", "single"],
+  "effectParams": {
+    "baseDamage": 20
+  },
   "statMultipliers": {
     "damage": 1.0,
     "attackSpeed": 1.0,
