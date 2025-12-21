@@ -21,6 +21,11 @@
       "tier": 1,
       "rarity": "common",
       "effect": "Fires arrows at enemies, 20 damage, 5 unit range",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 20,
+        "range": 5.0
+      },
       "stackSize": 5,
       "statMultipliers": {
         "weight": 1.5
@@ -48,6 +53,13 @@
       "tier": 2,
       "rarity": "uncommon",
       "effect": "Fires flaming arrows, 35 damage + burn, 7 unit range",
+      "effectTags": ["fire", "piercing", "single", "burn"],
+      "effectParams": {
+        "baseDamage": 35,
+        "range": 7.0,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 5.0
+      },
       "stackSize": 5,
       "statMultipliers": {
         "weight": 1.5
@@ -75,6 +87,15 @@
       "tier": 3,
       "rarity": "rare",
       "effect": "Fires lightning bolts, 70 damage + chain, 10 unit range",
+      "effectTags": ["lightning", "chain", "shock"],
+      "effectParams": {
+        "baseDamage": 70,
+        "range": 10.0,
+        "chain_count": 2,
+        "chain_range": 5.0,
+        "shock_duration": 2.0,
+        "shock_damage": 5.0
+      },
       "stackSize": 3,
       "statMultipliers": {
         "weight": 2.0
@@ -102,6 +123,15 @@
       "tier": 3,
       "rarity": "rare",
       "effect": "Sweeps cone of fire, 60 damage + lingering burn",
+      "effectTags": ["fire", "cone", "burn"],
+      "effectParams": {
+        "baseDamage": 60,
+        "range": 8.0,
+        "cone_angle": 60.0,
+        "cone_range": 8.0,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 8.0
+      },
       "stackSize": 3,
       "statMultipliers": {
         "weight": 2.0
@@ -129,6 +159,13 @@
       "tier": 3,
       "rarity": "rare",
       "effect": "Fires concentrated light beam, 80 damage, 12 unit range",
+      "effectTags": ["energy", "beam"],
+      "effectParams": {
+        "baseDamage": 80,
+        "range": 12.0,
+        "beam_range": 12.0,
+        "beam_width": 1.0
+      },
       "stackSize": 3,
       "statMultipliers": {
         "weight": 1.8

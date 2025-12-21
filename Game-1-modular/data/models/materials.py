@@ -20,3 +20,5 @@ class MaterialDefinition:
     item_type: str = ""  # turret, trap, bomb, utility, station, etc.
     item_subtype: str = ""  # projectile, area, elemental, etc.
     effect: str = ""  # Description of what the item does when used/placed
+    effect_tags: list = field(default_factory=list)  # Combat effect tags (fire, cone, burn, etc.)
+    effect_params: dict = field(default_factory=dict)  # Effect parameters (baseDamage, cone_angle, etc.)

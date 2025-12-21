@@ -1408,10 +1408,14 @@ class GameEngine:
                                                 }
                                                 entity_type = entity_type_map.get(mat_def.item_type, PlacedEntityType.TURRET)
 
-                                        # Parse stats from effect string (only for combat entities)
-                                        range_val = 5.0
-                                        damage_val = 20.0
-                                        if entity_type != PlacedEntityType.CRAFTING_STATION and mat_def.effect:
+                                        # Extract effect tags and params for tag system
+                                        effect_tags = mat_def.effect_tags if hasattr(mat_def, 'effect_tags') else []
+                                        effect_params = mat_def.effect_params if hasattr(mat_def, 'effect_params') else {}
+
+                                        # Parse stats from effect string (only for combat entities) - legacy fallback
+                                        range_val = effect_params.get('range', 5.0)
+                                        damage_val = effect_params.get('baseDamage', 20.0)
+                                        if entity_type != PlacedEntityType.CRAFTING_STATION and mat_def.effect and not effect_tags:
                                             import re
                                             range_match = re.search(r'(\d+)\s*unit range', mat_def.effect)
                                             damage_match = re.search(r'(\d+)\s*damage', mat_def.effect)
@@ -1420,14 +1424,16 @@ class GameEngine:
                                             if damage_match:
                                                 damage_val = float(damage_match.group(1))
 
-                                        # Place the entity
+                                        # Place the entity (with tags)
                                         self.world.place_entity(
                                             player_pos,
                                             item_stack.item_id,
                                             entity_type,
                                             tier=mat_def.tier,
                                             range=range_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0,
-                                            damage=damage_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0
+                                            damage=damage_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0,
+                                            tags=effect_tags,
+                                            effect_params=effect_params
                                         )
 
                                         # Remove one item from inventory
