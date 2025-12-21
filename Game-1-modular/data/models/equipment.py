@@ -27,6 +27,8 @@ class EquipmentItem:
     item_type: str = "weapon"  # "weapon", "shield", "tool", etc.
     stat_multipliers: Dict[str, float] = field(default_factory=dict)  # Original stat multipliers from JSON
     tags: List[str] = field(default_factory=list)  # Metadata tags from JSON
+    effect_tags: List[str] = field(default_factory=list)  # Combat effect tags (fire, slashing, cone, etc.)
+    effect_params: Dict[str, Any] = field(default_factory=dict)  # Effect parameters (baseDamage, cone_angle, etc.)
 
     def get_effectiveness(self) -> float:
         """Get effectiveness multiplier based on durability (for CONFIG check - imported later)"""
@@ -226,3 +228,19 @@ class EquipmentItem:
             List[str]: Metadata tags from JSON (e.g., ["melee", "sword", "2H", "crushing"])
         """
         return self.tags if self.tags else []
+
+    def get_effect_tags(self) -> List[str]:
+        """Get combat effect tags for effect_executor
+
+        Returns:
+            List[str]: Effect tags (e.g., ["physical", "slashing", "single"])
+        """
+        return self.effect_tags if self.effect_tags else []
+
+    def get_effect_params(self) -> Dict[str, Any]:
+        """Get effect parameters for effect_executor
+
+        Returns:
+            Dict: Effect parameters (e.g., {"baseDamage": 30, "cone_angle": 60.0})
+        """
+        return self.effect_params if self.effect_params else {}

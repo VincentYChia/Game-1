@@ -300,6 +300,10 @@ class EquipmentDatabase:
         elif item_type == 'station':
             parsed_item_type = "station"
 
+        # Load effect tags and params for combat system
+        effect_tags = data.get('effectTags', [])
+        effect_params = data.get('effectParams', {})
+
         return EquipmentItem(
             item_id=item_id,
             name=data.get('name', item_id),
@@ -319,7 +323,9 @@ class EquipmentDatabase:
             hand_type=hand_type,
             item_type=parsed_item_type,
             stat_multipliers=stat_multipliers,
-            tags=tags  # Pass the tags from metadata
+            tags=tags,  # Pass the tags from metadata
+            effect_tags=effect_tags,  # Pass combat effect tags
+            effect_params=effect_params  # Pass effect parameters
         )
 
     def is_equipment(self, item_id: str) -> bool:

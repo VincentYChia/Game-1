@@ -22,6 +22,10 @@
       "rarity": "common",
       "range": 1,
       "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 30
+      },
       "statMultipliers": {
         "damage": 1.0,
         "attackSpeed": 1.0,
@@ -52,6 +56,10 @@
       "rarity": "common",
       "range": 2,
       "slot": "mainHand",
+      "effectTags": ["physical", "piercing", "single"],
+      "effectParams": {
+        "baseDamage": 25
+      },
       "statMultipliers": {
         "damage": 1.0,
         "attackSpeed": 1.0,
@@ -82,6 +90,10 @@
       "rarity": "uncommon",
       "range": 1,
       "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 40
+      },
       "statMultipliers": {
         "damage": 1.1,
         "attackSpeed": 1.0,
@@ -112,6 +124,10 @@
       "rarity": "uncommon",
       "range": 1,
       "slot": "mainHand",
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 50
+      },
       "statMultipliers": {
         "damage": 1.1,
         "attackSpeed": 0.95,
@@ -142,6 +158,10 @@
       "rarity": "common",
       "range": 1.5,
       "slot": "mainHand",
+      "effectTags": ["physical", "crushing", "single"],
+      "effectParams": {
+        "baseDamage": 45
+      },
       "statMultipliers": {
         "damage": 1.3,
         "attackSpeed": 0.75,
