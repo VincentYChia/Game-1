@@ -122,26 +122,75 @@ class TrainingDummy(Enemy):
         if kwargs.get('bonus_damage'):
             print(f"   ⚡ Bonus Damage: +{kwargs['bonus_damage']:.1f}")
 
-        # Tag information
+        # Tag information with comprehensive validation
         if source_tags and len(source_tags) > 0:
-            print(f"   🏷️  Attack Tags: {', '.join(source_tags)}")
+            print(f"   🏷️  TAGS DETECTED: {source_tags}")
 
-            # Categorize tags
-            damage_tags = [t for t in source_tags if t in ['slashing', 'piercing', 'crushing', 'fire', 'ice', 'lightning', 'poison', 'burning']]
-            property_tags = [t for t in source_tags if t in ['fast', 'reach', 'precision', 'armor_breaker', 'cleaving']]
-            hand_tags = [t for t in source_tags if t in ['1H', '2H', 'versatile']]
-            geometry_tags = [t for t in source_tags if t in ['single', 'aoe', 'cone', 'chain', 'line']]
+            # Categorize tags by system
+            damage_tags = [t for t in source_tags if t in [
+                'physical', 'slashing', 'piercing', 'crushing',
+                'fire', 'ice', 'lightning', 'poison', 'energy', 'arcane'
+            ]]
+            geometry_tags = [t for t in source_tags if t in [
+                'single', 'circle', 'cone', 'chain', 'beam', 'line', 'aoe'
+            ]]
+            status_tags = [t for t in source_tags if t in [
+                'burn', 'freeze', 'slow', 'shock', 'bleed', 'poison_status', 'root', 'stun'
+            ]]
+            property_tags = [t for t in source_tags if t in [
+                'fast', 'reach', 'precision', 'armor_breaker', 'cleaving', '1H', '2H', 'versatile'
+            ]]
 
+            # Unknown tags (potential typos or new tags)
+            known_tags = set(damage_tags + geometry_tags + status_tags + property_tags)
+            unknown_tags = [t for t in source_tags if t not in known_tags]
+
+            # Display categorized tags
             if damage_tags:
-                print(f"      Damage Types: {', '.join(damage_tags)}")
-            if property_tags:
-                print(f"      Properties: {', '.join(property_tags)}")
-            if hand_tags:
-                print(f"      Weapon Type: {', '.join(hand_tags)}")
+                print(f"      ⚔️  Damage: {', '.join(damage_tags)}")
             if geometry_tags:
-                print(f"      Geometry: {', '.join(geometry_tags)}")
+                print(f"      📐 Geometry: {', '.join(geometry_tags)}")
+            if status_tags:
+                print(f"      💫 Status: {', '.join(status_tags)}")
+            if property_tags:
+                print(f"      🔧 Properties: {', '.join(property_tags)}")
+            if unknown_tags:
+                print(f"      ❓ Unknown: {', '.join(unknown_tags)} (typo or new tag?)")
+
+            # Tag validation warnings
+            tag_warnings = []
+            if not damage_tags and not status_tags:
+                tag_warnings.append("No damage or status tags (what type of attack is this?)")
+            if not geometry_tags:
+                tag_warnings.append("No geometry tag (defaulting to single target)")
+            if 'burn' in status_tags and 'fire' not in damage_tags:
+                tag_warnings.append("burn status without fire damage tag")
+            if 'freeze' in status_tags and 'ice' not in damage_tags:
+                tag_warnings.append("freeze status without ice damage tag")
+            if len(geometry_tags) > 1:
+                tag_warnings.append(f"Multiple geometry tags: {geometry_tags} (which one applies?)")
+
+            if tag_warnings:
+                print(f"      ⚠️  Tag Warnings:")
+                for warning in tag_warnings:
+                    print(f"         • {warning}")
+            else:
+                print(f"      ✅ Tag validation passed")
+
         else:
-            print(f"   ⚠️  NO TAGS (legacy damage or tags not passed)")
+            print(f"   ⚠️  NO TAGS DETECTED!")
+            print(f"      This attack is using the legacy damage system")
+            print(f"      Expected: Attack should have tags like ['physical', 'single', 'piercing']")
+
+        # Effect parameters (if passed)
+        if 'effect_params' in kwargs and kwargs['effect_params']:
+            print(f"   📊 Effect Parameters:")
+            for key, value in kwargs['effect_params'].items():
+                print(f"      {key}: {value}")
+        elif source and hasattr(source, 'effect_params') and source.effect_params:
+            print(f"   📊 Source Effect Parameters:")
+            for key, value in source.effect_params.items():
+                print(f"      {key}: {value}")
 
         print(f"   HP: {self.current_health:.1f}/{self.max_health:.1f} ({self.current_health/self.max_health*100:.1f}%)")
         print(f"   Total damage taken: {self.total_damage_taken:.1f}")
