@@ -91,6 +91,9 @@ class GameEngine:
         # Load stackable devices (turrets, traps, bombs, utility devices)
         MaterialDatabase.get_instance().load_stackable_items(
             str(get_resource_path("items.JSON/items-engineering-1.JSON")), categories=['device'])
+        # Load test items for tag system validation
+        MaterialDatabase.get_instance().load_stackable_items(
+            str(get_resource_path("items.JSON/items-testing-tags.JSON")), categories=['device', 'weapon'])
         # Load placeable crafting stations from items-smithing-2.JSON
         MaterialDatabase.get_instance().load_stackable_items(
             str(get_resource_path("items.JSON/items-smithing-2.JSON")), categories=['station'])
@@ -108,6 +111,8 @@ class GameEngine:
         equip_db.load_from_file(str(get_resource_path("items.JSON/items-smithing-2.JSON")))
         equip_db.load_from_file(str(get_resource_path("items.JSON/items-tools-1.JSON")))
         equip_db.load_from_file(str(get_resource_path("items.JSON/items-alchemy-1.JSON")))
+        # Load test weapons for tag system validation
+        equip_db.load_from_file(str(get_resource_path("items.JSON/items-testing-tags.JSON")))
 
         TitleDatabase.get_instance().load_from_file(str(get_resource_path("progression/titles-1.JSON")))
         ClassDatabase.get_instance().load_from_file(str(get_resource_path("progression/classes-1.JSON")))

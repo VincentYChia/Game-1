@@ -285,7 +285,14 @@ class TargetFinder:
             return entity
 
         if hasattr(entity, 'position'):
-            return entity.position
+            pos = entity.position
+            # Handle position as list [x, y] or [x, y, z] (for Enemy class)
+            if isinstance(pos, list) or isinstance(pos, tuple):
+                x, y = pos[0], pos[1]
+                z = pos[2] if len(pos) > 2 else 0.0
+                return Position(x, y, z)
+            # Already a Position object
+            return pos
 
         # Fallback for other structures
         if hasattr(entity, 'x') and hasattr(entity, 'y'):
