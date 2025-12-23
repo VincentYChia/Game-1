@@ -281,23 +281,32 @@ class SmithingCrafter:
             "../recipes.JSON/recipes-smithing-1.json",
             "../recipes.JSON/recipes-smithing-2.json",
             "../recipes.JSON/recipes-smithing-3.json",
+            "../recipes.JSON/recipes-tag-tests.JSON",  # TEST RECIPES
             "recipes.JSON/recipes-smithing-1.json",
             "recipes.JSON/recipes-smithing-2.json",
             "recipes.JSON/recipes-smithing-3.json",
+            "recipes.JSON/recipes-tag-tests.JSON",  # TEST RECIPES
         ]
 
+        loaded_count = 0
         for path in possible_paths:
             try:
                 with open(path, 'r') as f:
                     data = json.load(f)
                     recipe_list = data.get('recipes', [])
                     for recipe in recipe_list:
-                        self.recipes[recipe['recipeId']] = recipe
+                        # Only load smithing recipes (or recipes with no stationType for backward compat)
+                        station_type = recipe.get('stationType', 'smithing')
+                        if station_type == 'smithing':
+                            self.recipes[recipe['recipeId']] = recipe
+                            loaded_count += 1
             except FileNotFoundError:
                 continue
+            except Exception as e:
+                print(f"[Smithing] Error loading {path}: {e}")
 
         if self.recipes:
-            print(f"[Smithing] Loaded {len(self.recipes)} recipes")
+            print(f"[Smithing] Loaded {loaded_count} recipes from {len(self.recipes)} total")
         else:
             print("[Smithing] WARNING: No recipes loaded")
 
@@ -366,7 +375,7 @@ class SmithingCrafter:
             item_metadata: Optional dict of item metadata for category lookup
 
         Returns:
-            dict: Result with outputId, quantity, success, rarity
+            dict: Result with outputId, quantity, success, rarity, tags
         """
         can_craft, error_msg = self.can_craft(recipe_id, inventory)
         if not can_craft:
@@ -382,12 +391,38 @@ class SmithingCrafter:
         for inp in recipe['inputs']:
             inventory[inp['materialId']] -= inp['quantity']
 
+        # Get inheritable tags from recipe
+        from core.crafting_tag_processor import SmithingTagProcessor
+        from core.tag_debug import get_tag_debugger
+
+        recipe_tags = recipe.get('metadata', {}).get('tags', [])
+        inheritable_tags = SmithingTagProcessor.get_inheritable_tags(recipe_tags)
+
+        # Debug output
+        debugger = get_tag_debugger()
+        debugger.log_smithing_inheritance(recipe_id, recipe_tags, inheritable_tags)
+
+        # Console output for tag verification
+        print(f"\n⚒️  SMITHING CRAFT: {recipe['outputId']}")
+        print(f"   Recipe: {recipe_id}")
+        if recipe_tags:
+            print(f"   Recipe Tags: {', '.join(recipe_tags)}")
+        else:
+            print(f"   Recipe Tags: (none)")
+
+        if inheritable_tags:
+            print(f"   ✓ Inherited Tags: {', '.join(inheritable_tags)}")
+        else:
+            print(f"   ⚠️  NO TAGS INHERITED (no functional tags in recipe)")
+        print(f"   Rarity: {input_rarity}")
+
         return {
             "success": True,
             "outputId": recipe['outputId'],
             "quantity": recipe['outputQty'],
             "bonus": 0,
             "rarity": input_rarity,
+            "tags": inheritable_tags,  # Tags to apply to crafted item
             "message": f"Crafted ({input_rarity})"
         }
 
@@ -422,7 +457,7 @@ class SmithingCrafter:
             item_metadata: Optional dict of item metadata for category lookup
 
         Returns:
-            dict: Result with outputId, quantity, bonus, rarity, stats, success
+            dict: Result with outputId, quantity, bonus, rarity, stats, tags, success
         """
         if not minigame_result.get('success'):
             # Failure - lose some materials (50% for now)
@@ -477,6 +512,32 @@ class SmithingCrafter:
         item_category = rarity_system.get_item_category(output_id, item_metadata)
         modified_stats = rarity_system.apply_rarity_modifiers(base_stats, item_category, input_rarity)
 
+        # Get inheritable tags from recipe
+        from core.crafting_tag_processor import SmithingTagProcessor
+        from core.tag_debug import get_tag_debugger
+
+        recipe_tags = recipe.get('metadata', {}).get('tags', [])
+        inheritable_tags = SmithingTagProcessor.get_inheritable_tags(recipe_tags)
+
+        # Debug output
+        debugger = get_tag_debugger()
+        debugger.log_smithing_inheritance(recipe_id, recipe_tags, inheritable_tags)
+
+        # Console output for tag verification
+        print(f"\n⚒️  SMITHING CRAFT (MINIGAME): {output_id}")
+        print(f"   Recipe: {recipe_id}")
+        print(f"   Minigame Bonus: {bonus_pct}%")
+        if recipe_tags:
+            print(f"   Recipe Tags: {', '.join(recipe_tags)}")
+        else:
+            print(f"   Recipe Tags: (none)")
+
+        if inheritable_tags:
+            print(f"   ✓ Inherited Tags: {', '.join(inheritable_tags)}")
+        else:
+            print(f"   ⚠️  NO TAGS INHERITED (no functional tags in recipe)")
+        print(f"   Rarity: {input_rarity}")
+
         return {
             "success": True,
             "outputId": output_id,
@@ -485,6 +546,7 @@ class SmithingCrafter:
             "score": minigame_result.get('score', 0),
             "rarity": input_rarity,
             "stats": modified_stats,
+            "tags": inheritable_tags,  # Tags to apply to crafted item
             "message": f"Crafted {input_rarity} item with +{minigame_result.get('bonus', 0)}% bonus!"
         }
 

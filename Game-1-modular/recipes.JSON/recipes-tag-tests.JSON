@@ -1,0 +1,221 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "discipline": "tag_system_testing",
+    "description": "Test recipes for tag system integration verification and edge case handling",
+    "note": "These recipes test weak points, edge cases, and tag system robustness",
+    "totalRecipes": 15
+  },
+
+  "recipes": [
+    {
+      "metadata": {
+        "narrative": "TEST: Weapon with ALL functional combat tags inherited",
+        "tags": ["weapon", "sword", "1H", "2H", "versatile", "melee", "slashing", "piercing", "crushing", "fast", "precision", "reach", "armor_breaker", "cleaving", "starter"]
+      },
+      "recipeId": "test_smithing_max_tags",
+      "outputId": "test_ultimate_sword",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 5}
+      ]
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Weapon with CONFLICTING hand requirement tags (1H + 2H)",
+        "tags": ["weapon", "sword", "1H", "2H", "melee", "slashing"]
+      },
+      "recipeId": "test_smithing_conflicting_hands",
+      "outputId": "test_conflicting_sword",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 3}
+      ]
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Weapon with NO functional tags (only metadata tags)",
+        "tags": ["weapon", "sword", "starter", "basic", "quality"]
+      },
+      "recipeId": "test_smithing_no_functional_tags",
+      "outputId": "test_plain_sword",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 2}
+      ]
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Weapon with EMPTY tags array",
+        "tags": []
+      },
+      "recipeId": "test_smithing_empty_tags",
+      "outputId": "test_tagless_sword",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 2}
+      ]
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Refining with MULTIPLE bonus process tags (crushing + grinding + purifying + alloying)",
+        "tags": ["smelting", "crushing", "grinding", "purifying", "alloying", "iron"]
+      },
+      "recipeId": "test_refining_all_bonuses",
+      "inputs": [{"materialId": "iron_ore", "quantity": 1}],
+      "outputs": [{"materialId": "iron_ingot", "quantity": 1, "rarity": "common"}],
+      "stationTier": 1,
+      "stationType": "refining"
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Refining with ONLY high-probability tags (grinding 40% + purifying 30%)",
+        "tags": ["smelting", "grinding", "purifying", "iron"]
+      },
+      "recipeId": "test_refining_high_probability",
+      "inputs": [{"materialId": "iron_ore", "quantity": 1}],
+      "outputs": [{"materialId": "iron_ingot", "quantity": 1, "rarity": "common"}],
+      "stationTier": 1,
+      "stationType": "refining"
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Refining with NO bonus tags (pure smelting)",
+        "tags": ["smelting", "iron", "basic"]
+      },
+      "recipeId": "test_refining_no_bonuses",
+      "inputs": [{"materialId": "iron_ore", "quantity": 1}],
+      "outputs": [{"materialId": "iron_ingot", "quantity": 1, "rarity": "common"}],
+      "stationTier": 1,
+      "stationType": "refining"
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Refining with EMPTY tags array",
+        "tags": []
+      },
+      "recipeId": "test_refining_empty_tags",
+      "inputs": [{"materialId": "iron_ore", "quantity": 1}],
+      "outputs": [{"materialId": "iron_ingot", "quantity": 1, "rarity": "common"}],
+      "stationTier": 1,
+      "stationType": "refining"
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Refining with alloying tag for maximum rarity upgrade (+2 tiers)",
+        "tags": ["smelting", "alloying", "legendary"]
+      },
+      "recipeId": "test_refining_alloying_upgrade",
+      "inputs": [{"materialId": "iron_ore", "quantity": 1}],
+      "outputs": [{"materialId": "iron_ingot", "quantity": 1, "rarity": "common"}],
+      "stationTier": 1,
+      "stationType": "refining"
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Alchemy with explicit 'potion' tag",
+        "tags": ["potion", "healing", "starter"]
+      },
+      "recipeId": "test_alchemy_explicit_potion",
+      "outputId": "test_healing_potion",
+      "outputQty": 3,
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "slime_gel", "quantity": 2}
+      ]
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Alchemy with explicit 'transmutation' tag",
+        "tags": ["transmutation", "gold", "advanced"]
+      },
+      "recipeId": "test_alchemy_explicit_transmutation",
+      "outputId": "test_gold_nugget",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "copper_ingot", "quantity": 10}
+      ]
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Alchemy with BOTH potion and transmutation tags (potion should win)",
+        "tags": ["potion", "transmutation", "healing"]
+      },
+      "recipeId": "test_alchemy_conflicting_type",
+      "outputId": "test_conflicting_output",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "slime_gel", "quantity": 1}
+      ]
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Alchemy with NO potion/transmutation tag (should default to transmutation)",
+        "tags": ["healing", "starter"]
+      },
+      "recipeId": "test_alchemy_default_type",
+      "outputId": "test_default_output",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "slime_gel", "quantity": 1}
+      ]
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Alchemy with multiple effect tags",
+        "tags": ["potion", "healing", "buff", "strength", "defense", "speed"]
+      },
+      "recipeId": "test_alchemy_multiple_effects",
+      "outputId": "test_multi_effect_potion",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "essence_blood", "quantity": 3}
+      ]
+    },
+
+    {
+      "metadata": {
+        "narrative": "TEST: Alchemy with EMPTY tags array",
+        "tags": []
+      },
+      "recipeId": "test_alchemy_empty_tags",
+      "outputId": "test_tagless_output",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "inputs": [
+        {"materialId": "slime_gel", "quantity": 1}
+      ]
+    }
+  ]
+}

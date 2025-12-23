@@ -51,6 +51,9 @@ from core.config import Config
 # Tool class
 from entities import Tool
 
+# Status effect system
+from entities.status_manager import add_status_manager_to_entity
+
 
 class Character:
     def __init__(self, start_position: Position):
@@ -82,6 +85,10 @@ class Character:
         self.selected_tool: Optional[Tool] = None
         self._selected_weapon: Optional[EquipmentItem] = None  # For Tab cycling through weapons
         self._selected_slot: str = 'mainHand'  # Default to mainHand until player presses TAB
+
+        # Add status effect manager
+        add_status_manager_to_entity(self)
+        self.category = "player"  # For tag system context-awareness
 
         self.active_station: Optional[CraftingStation] = None
         self.crafting_ui_open = False
@@ -490,6 +497,10 @@ class Character:
         return False
 
     def move(self, dx: float, dy: float, world: WorldSystem) -> bool:
+        # Check if immobilized by status effects
+        if hasattr(self, 'status_manager') and self.status_manager.is_immobilized():
+            return False
+
         # Calculate movement speed from stats, class, and active buffs
         speed_mult = 1.0 + self.stats.get_bonus('agility') * 0.02 + self.class_system.get_bonus('movement_speed') + self.buffs.get_movement_speed_bonus()
         new_pos = Position(self.position.x + dx * speed_mult, self.position.y + dy * speed_mult, self.position.z)
@@ -746,9 +757,13 @@ class Character:
             self.mana = min(self.max_mana, self.mana + mana_regen_amount)
 
     def update_buffs(self, dt: float):
-        """Update all active buffs"""
+        """Update all active buffs and status effects"""
         self.buffs.update(dt, character=self)
         self.skills.update_cooldowns(dt)
+
+        # Update status effects
+        if hasattr(self, 'status_manager'):
+            self.status_manager.update(dt)
 
     def toggle_stats_ui(self):
         self.stats_ui_open = not self.stats_ui_open
@@ -1026,7 +1041,7 @@ class Character:
 
     def get_weapon_damage(self) -> float:
         """
-        Get average weapon damage from currently selected weapon/tool.
+        Get average weapon damage from currently selected weapon/tool INCLUDING ENCHANTMENTS.
 
         If player has selected a slot via TAB, use that slot's damage.
         Otherwise, use mainHand (backward compatibility).
@@ -1035,10 +1050,12 @@ class Character:
         if hasattr(self, '_selected_slot') and self._selected_slot:
             selected_item = self.equipment.slots.get(self._selected_slot)
             if selected_item and selected_item.damage:
-                if isinstance(selected_item.damage, tuple):
-                    return (selected_item.damage[0] + selected_item.damage[1]) / 2.0
+                # Use get_actual_damage() to include enchantment bonuses
+                actual_damage = selected_item.get_actual_damage()
+                if isinstance(actual_damage, tuple):
+                    return (actual_damage[0] + actual_damage[1]) / 2.0
                 else:
-                    return float(selected_item.damage)
+                    return float(actual_damage)
 
         # Otherwise, default to mainHand (backward compatibility)
         damage_range = self.equipment.get_weapon_damage()
@@ -1091,6 +1108,16 @@ class Character:
             # Weapon attack cooldown based on attack speed stat and weapon speed
             base_cooldown = 1.0
             attack_speed_bonus = self.stats.agility * 0.03  # 3% faster per AGI
+
+            # Add weapon tag attack speed bonus (fast)
+            weapon = self.equipment.slots.get(hand)
+            if weapon:
+                weapon_tags = weapon.get_metadata_tags()
+                if weapon_tags:
+                    from entities.components.weapon_tag_calculator import WeaponTagModifiers
+                    tag_speed_bonus = WeaponTagModifiers.get_attack_speed_bonus(weapon_tags)
+                    attack_speed_bonus += tag_speed_bonus
+
             cooldown = (base_cooldown / weapon_attack_speed) / (1.0 + attack_speed_bonus)
 
             if hand == 'mainHand':

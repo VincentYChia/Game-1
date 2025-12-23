@@ -1,0 +1,420 @@
+{
+  "metadata": {
+    "description": "Test items for tag system validation and edge case testing",
+    "version": "1.0",
+    "purpose": "Stress-test tag system with edge cases, conflicting tags, and complex combos"
+  },
+
+  "test_weapons": [
+    {
+      "itemId": "test_weapon_simple",
+      "name": "Test Weapon (Simple Valid)",
+      "tier": 1,
+      "category": "weapon",
+      "type": "sword",
+      "subtype": "shortsword",
+      "rarity": "common",
+      "stackSize": 1,
+      "flags": {
+        "equippable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "A simple test weapon with valid tags."
+      },
+      "stats": {
+        "baseDamage": 25.0,
+        "attackSpeed": 1.0,
+        "critChance": 0.05
+      },
+      "effectTags": ["physical", "slashing", "single"],
+      "effectParams": {
+        "baseDamage": 25.0
+      }
+    },
+
+    {
+      "itemId": "test_weapon_conflicting_elements",
+      "name": "Test Weapon (Conflicting Elements)",
+      "tier": 2,
+      "category": "weapon",
+      "type": "staff",
+      "subtype": "battle_staff",
+      "rarity": "rare",
+      "stackSize": 1,
+      "flags": {
+        "equippable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "Tests what happens with conflicting elemental tags (fire + ice)."
+      },
+      "stats": {
+        "baseDamage": 40.0,
+        "attackSpeed": 0.8,
+        "critChance": 0.1
+      },
+      "effectTags": ["fire", "ice", "single", "burn", "freeze"],
+      "effectParams": {
+        "baseDamage": 40.0,
+        "burn_damage_per_second": 5.0,
+        "burn_duration": 5.0,
+        "freeze_duration": 2.0
+      }
+    },
+
+    {
+      "itemId": "test_weapon_multi_geometry",
+      "name": "Test Weapon (Multiple Geometry)",
+      "tier": 2,
+      "category": "weapon",
+      "type": "bow",
+      "subtype": "special_bow",
+      "rarity": "epic",
+      "stackSize": 1,
+      "flags": {
+        "equippable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "Tests multiple geometry tags (cone + chain + circle)."
+      },
+      "stats": {
+        "baseDamage": 35.0,
+        "attackSpeed": 1.2,
+        "critChance": 0.15
+      },
+      "effectTags": ["physical", "piercing", "cone", "chain", "circle"],
+      "effectParams": {
+        "baseDamage": 35.0,
+        "cone_angle": 60,
+        "cone_length": 8.0,
+        "chain_count": 3,
+        "circle_radius": 5.0
+      }
+    },
+
+    {
+      "itemId": "test_weapon_missing_params",
+      "name": "Test Weapon (Missing Params)",
+      "tier": 1,
+      "category": "weapon",
+      "type": "axe",
+      "subtype": "battle_axe",
+      "rarity": "uncommon",
+      "stackSize": 1,
+      "flags": {
+        "equippable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "Has tags but missing required effectParams."
+      },
+      "stats": {
+        "baseDamage": 30.0,
+        "attackSpeed": 0.9
+      },
+      "effectTags": ["physical", "slashing", "cone", "bleed"],
+      "effectParams": {}
+    },
+
+    {
+      "itemId": "test_weapon_unknown_tags",
+      "name": "Test Weapon (Unknown Tags)",
+      "tier": 3,
+      "category": "weapon",
+      "type": "hammer",
+      "subtype": "war_hammer",
+      "rarity": "legendary",
+      "stackSize": 1,
+      "flags": {
+        "equippable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "Contains unknown/typo tags to test error handling."
+      },
+      "stats": {
+        "baseDamage": 50.0,
+        "attackSpeed": 0.7,
+        "critChance": 0.2
+      },
+      "effectTags": ["physical", "crushing", "single", "quantum", "chrono", "void"],
+      "effectParams": {
+        "baseDamage": 50.0,
+        "quantum_collapse_chance": 0.1,
+        "chrono_slow": 0.5
+      }
+    },
+
+    {
+      "itemId": "test_weapon_complex_valid",
+      "name": "Test Weapon (Complex Valid)",
+      "tier": 4,
+      "category": "weapon",
+      "type": "staff",
+      "subtype": "arcane_staff",
+      "rarity": "legendary",
+      "stackSize": 1,
+      "flags": {
+        "equippable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "Complex but valid combo: lightning chain with shock and slow."
+      },
+      "stats": {
+        "baseDamage": 60.0,
+        "attackSpeed": 1.0,
+        "critChance": 0.15
+      },
+      "effectTags": ["lightning", "chain", "shock", "slow"],
+      "effectParams": {
+        "baseDamage": 60.0,
+        "chain_count": 4,
+        "chain_damage_falloff": 0.8,
+        "shock_chance": 0.3,
+        "shock_damage": 10.0,
+        "slow_percent": 0.4,
+        "slow_duration": 3.0
+      }
+    }
+  ],
+
+  "test_devices": [
+    {
+      "itemId": "test_turret_no_tags",
+      "name": "Test Turret (No Tags)",
+      "tier": 1,
+      "category": "device",
+      "type": "turret",
+      "subtype": "arrow_turret",
+      "rarity": "common",
+      "stackSize": 10,
+      "flags": {
+        "placeable": true,
+        "stackable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "Turret with NO tags to test fallback behavior."
+      },
+      "effect": "Basic turret with no tag system support"
+    },
+
+    {
+      "itemId": "test_turret_beam_burn",
+      "name": "Test Turret (Beam + Burn)",
+      "tier": 3,
+      "category": "device",
+      "type": "turret",
+      "subtype": "laser_turret",
+      "rarity": "rare",
+      "stackSize": 5,
+      "flags": {
+        "placeable": true,
+        "stackable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "Beam geometry with burn status effect."
+      },
+      "effect": "Fires a burning laser beam",
+      "effectTags": ["fire", "beam", "burn"],
+      "effectParams": {
+        "baseDamage": 80.0,
+        "beam_length": 15.0,
+        "beam_width": 1.0,
+        "burn_damage_per_second": 10.0,
+        "burn_duration": 6.0,
+        "range": 15.0
+      }
+    },
+
+    {
+      "itemId": "test_trap_conflicting_status",
+      "name": "Test Trap (Conflicting Status)",
+      "tier": 2,
+      "category": "device",
+      "type": "trap",
+      "subtype": "status_trap",
+      "rarity": "uncommon",
+      "stackSize": 10,
+      "flags": {
+        "placeable": true,
+        "stackable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "Tests conflicting status effects (freeze + burn + slow + root)."
+      },
+      "effect": "Trap with all status effects",
+      "effectTags": ["physical", "circle", "freeze", "burn", "slow", "root"],
+      "effectParams": {
+        "baseDamage": 20.0,
+        "circle_radius": 3.0,
+        "freeze_duration": 2.0,
+        "burn_damage_per_second": 5.0,
+        "burn_duration": 5.0,
+        "slow_percent": 0.5,
+        "slow_duration": 4.0,
+        "root_duration": 3.0
+      }
+    },
+
+    {
+      "itemId": "test_bomb_massive_aoe",
+      "name": "Test Bomb (Massive AOE)",
+      "tier": 4,
+      "category": "device",
+      "type": "bomb",
+      "subtype": "cluster_bomb",
+      "rarity": "epic",
+      "stackSize": 3,
+      "flags": {
+        "stackable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "Extremely large AOE to test geometry limits."
+      },
+      "effect": "Massive explosion with huge radius",
+      "effectTags": ["physical", "fire", "circle", "burn", "shock"],
+      "effectParams": {
+        "baseDamage": 150.0,
+        "circle_radius": 20.0,
+        "burn_damage_per_second": 15.0,
+        "burn_duration": 10.0,
+        "shock_chance": 0.5,
+        "shock_damage": 20.0
+      }
+    },
+
+    {
+      "itemId": "test_device_chain_cone_hybrid",
+      "name": "Test Device (Chain + Cone Hybrid)",
+      "tier": 3,
+      "category": "device",
+      "type": "turret",
+      "subtype": "hybrid_turret",
+      "rarity": "legendary",
+      "stackSize": 1,
+      "flags": {
+        "placeable": true,
+        "stackable": true,
+        "tradeable": true
+      },
+      "metadata": {
+        "narrative": "Tests what happens when chain and cone geometry are both specified."
+      },
+      "effect": "Hybrid turret with chain AND cone",
+      "effectTags": ["lightning", "chain", "cone"],
+      "effectParams": {
+        "baseDamage": 70.0,
+        "chain_count": 3,
+        "chain_damage_falloff": 0.9,
+        "cone_angle": 45,
+        "cone_length": 10.0,
+        "range": 10.0
+      }
+    }
+  ],
+
+  "test_edge_cases": [
+    {
+      "itemId": "test_empty_tags",
+      "name": "Test Item (Empty Tags Array)",
+      "tier": 1,
+      "category": "weapon",
+      "type": "dagger",
+      "rarity": "common",
+      "stackSize": 1,
+      "flags": {
+        "equippable": true
+      },
+      "metadata": {
+        "narrative": "Has effectTags field but it's empty."
+      },
+      "stats": {
+        "baseDamage": 15.0
+      },
+      "effectTags": [],
+      "effectParams": {}
+    },
+
+    {
+      "itemId": "test_only_status_tags",
+      "name": "Test Weapon (Only Status, No Damage)",
+      "tier": 2,
+      "category": "weapon",
+      "type": "wand",
+      "rarity": "rare",
+      "stackSize": 1,
+      "flags": {
+        "equippable": true
+      },
+      "metadata": {
+        "narrative": "Has only status tags, no damage type tags."
+      },
+      "stats": {
+        "baseDamage": 5.0
+      },
+      "effectTags": ["burn", "freeze", "slow"],
+      "effectParams": {
+        "baseDamage": 5.0,
+        "burn_damage_per_second": 10.0,
+        "burn_duration": 5.0,
+        "freeze_duration": 3.0,
+        "slow_percent": 0.6,
+        "slow_duration": 4.0
+      }
+    },
+
+    {
+      "itemId": "test_duplicate_tags",
+      "name": "Test Weapon (Duplicate Tags)",
+      "tier": 1,
+      "category": "weapon",
+      "type": "sword",
+      "rarity": "uncommon",
+      "stackSize": 1,
+      "flags": {
+        "equippable": true
+      },
+      "metadata": {
+        "narrative": "Has duplicate tags in the array."
+      },
+      "stats": {
+        "baseDamage": 30.0
+      },
+      "effectTags": ["physical", "physical", "slashing", "slashing", "single", "single"],
+      "effectParams": {
+        "baseDamage": 30.0
+      }
+    },
+
+    {
+      "itemId": "test_case_sensitivity",
+      "name": "Test Weapon (Case Sensitivity)",
+      "tier": 1,
+      "category": "weapon",
+      "type": "axe",
+      "rarity": "common",
+      "stackSize": 1,
+      "flags": {
+        "equippable": true
+      },
+      "metadata": {
+        "narrative": "Tests if tag matching is case-sensitive."
+      },
+      "stats": {
+        "baseDamage": 28.0
+      },
+      "effectTags": ["Physical", "SLASHING", "Single", "BURN"],
+      "effectParams": {
+        "baseDamage": 28.0,
+        "burn_damage_per_second": 5.0
+      }
+    }
+  ]
+}

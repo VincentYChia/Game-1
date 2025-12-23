@@ -11,6 +11,9 @@
         "tags": [
           "weapon",
           "sword",
+          "1H",
+          "melee",
+          "slashing",
           "starter"
         ]
       },
@@ -104,6 +107,10 @@
         "tags": [
           "weapon",
           "spear",
+          "2H",
+          "melee",
+          "piercing",
+          "reach",
           "starter"
         ]
       },
@@ -259,6 +266,9 @@
         "tags": [
           "weapon",
           "sword",
+          "versatile",
+          "melee",
+          "slashing",
           "quality"
         ]
       },

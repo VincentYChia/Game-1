@@ -218,23 +218,34 @@ class EquipmentDatabase:
         # Calculate defense for armor
         defense = 0
 
-        # Determine slot - tools use their subtype as slot
-        if item_type == 'tool':
-            if subtype in ['axe', 'pickaxe']:
-                mapped_slot = subtype  # 'axe' or 'pickaxe' slot
+        # Parse hand_type and tags from metadata early (needed for slot assignment)
+        metadata = data.get('metadata', {})
+        tags = metadata.get('tags', [])
+
+        # Determine slot using SmithingTagProcessor for tag-based assignment
+        from core.crafting_tag_processor import SmithingTagProcessor
+
+        # Try tag-based slot assignment first (more specific and future-proof)
+        mapped_slot = SmithingTagProcessor.get_equipment_slot(tags)
+
+        # Fallback to legacy logic if no tag-based slot found
+        if mapped_slot is None:
+            if item_type == 'tool':
+                if subtype in ['axe', 'pickaxe']:
+                    mapped_slot = subtype  # 'axe' or 'pickaxe' slot
+                else:
+                    mapped_slot = 'mainHand'  # Fallback for other tools
             else:
-                mapped_slot = 'mainHand'  # Fallback for other tools
-        else:
-            json_slot = data.get('slot', 'mainHand')
-            slot_mapping = {
-                'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',
-                'feet': 'boots', 'hands': 'gauntlets',
-                'mainHand': 'mainHand', 'offHand': 'offHand',
-                'helmet': 'helmet', 'chestplate': 'chestplate',
-                'leggings': 'leggings', 'boots': 'boots',
-                'gauntlets': 'gauntlets', 'accessory': 'accessory',
-            }
-            mapped_slot = slot_mapping.get(json_slot, json_slot)
+                json_slot = data.get('slot', 'mainHand')
+                slot_mapping = {
+                    'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',
+                    'feet': 'boots', 'hands': 'gauntlets',
+                    'mainHand': 'mainHand', 'offHand': 'offHand',
+                    'helmet': 'helmet', 'chestplate': 'chestplate',
+                    'leggings': 'leggings', 'boots': 'boots',
+                    'gauntlets': 'gauntlets', 'accessory': 'accessory',
+                }
+                mapped_slot = slot_mapping.get(json_slot, json_slot)
 
         if item_type in armor_types:
             defense = self._calculate_armor_defense(tier, mapped_slot, stat_multipliers)
@@ -266,10 +277,8 @@ class EquipmentDatabase:
                 subdir = 'weapons'  # Default fallback
             icon_path = f"{subdir}/{item_id}.png"
 
-        # Parse hand_type from metadata tags
+        # Parse hand_type from metadata tags (metadata and tags already parsed above)
         hand_type = "default"  # Default: mainhand only
-        metadata = data.get('metadata', {})
-        tags = metadata.get('tags', [])
 
         if '1H' in tags:
             hand_type = "1H"  # Can be equipped in either hand
@@ -291,6 +300,10 @@ class EquipmentDatabase:
         elif item_type == 'station':
             parsed_item_type = "station"
 
+        # Load effect tags and params for combat system
+        effect_tags = data.get('effectTags', [])
+        effect_params = data.get('effectParams', {})
+
         return EquipmentItem(
             item_id=item_id,
             name=data.get('name', item_id),
@@ -310,7 +323,9 @@ class EquipmentDatabase:
             hand_type=hand_type,
             item_type=parsed_item_type,
             stat_multipliers=stat_multipliers,
-            tags=tags  # Pass the tags from metadata
+            tags=tags,  # Pass the tags from metadata
+            effect_tags=effect_tags,  # Pass combat effect tags
+            effect_params=effect_params  # Pass effect parameters
         )
 
     def is_equipment(self, item_id: str) -> bool:

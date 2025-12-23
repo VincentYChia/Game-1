@@ -1,7 +1,7 @@
 """World-related data models (Position, Tiles, Resources, Chunks, Stations)"""
 
 from dataclasses import dataclass
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List, Dict
 from enum import Enum
 import math
 
@@ -146,6 +146,7 @@ class PlacedEntityType(Enum):
     BOMB = "bomb"
     UTILITY_DEVICE = "utility_device"
     CRAFTING_STATION = "crafting_station"
+    TRAINING_DUMMY = "training_dummy"
 
 
 @dataclass
@@ -157,15 +158,25 @@ class PlacedEntity:
     tier: int = 1
     health: float = 100.0
     owner: Optional[str] = None
-    # Turret-specific fields
+    # Turret-specific fields (legacy - prefer using tags)
     range: float = 5.0  # Detection/attack range
     damage: float = 20.0
     attack_speed: float = 1.0  # Attacks per second
     last_attack_time: float = 0.0
     target_enemy: Optional[any] = None  # Will be Enemy type
+    # Tag system integration
+    tags: List[str] = None  # Effect tags (fire, chain, burn, etc.)
+    effect_params: Dict[str, any] = None  # Parameters for tag effects
     # Lifetime management
     lifetime: float = 300.0  # Total lifetime in seconds (5 minutes default)
     time_remaining: float = 300.0  # Time remaining before despawn
+
+    def __post_init__(self):
+        """Initialize mutable default values"""
+        if self.tags is None:
+            self.tags = []
+        if self.effect_params is None:
+            self.effect_params = {}
 
     def get_color(self) -> Tuple[int, int, int]:
         """Get display color for this entity"""
@@ -174,5 +185,6 @@ class PlacedEntity:
             PlacedEntityType.TRAP: (160, 82, 45),  # Sienna
             PlacedEntityType.BOMB: (178, 34, 34),  # Firebrick
             PlacedEntityType.UTILITY_DEVICE: (60, 180, 180),  # Cyan
-            PlacedEntityType.CRAFTING_STATION: (105, 105, 105)  # Gray
+            PlacedEntityType.CRAFTING_STATION: (105, 105, 105),  # Gray
+            PlacedEntityType.TRAINING_DUMMY: (200, 200, 0)  # Yellow (visible target)
         }.get(self.entity_type, (150, 150, 150))

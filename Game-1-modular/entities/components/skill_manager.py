@@ -1,16 +1,49 @@
 """Skill management component"""
 
 from typing import Dict, List, Optional
+import json
+from pathlib import Path
 
 from data.models import PlayerSkill
 from data.databases import SkillDatabase
 from .buffs import ActiveBuff
+from core.effect_executor import get_effect_executor
+from core.tag_debug import get_tag_debugger
+from core.paths import get_resource_path
+from core.debug_display import debug_print
 
 
 class SkillManager:
     def __init__(self):
         self.known_skills: Dict[str, PlayerSkill] = {}
         self.equipped_skills: List[Optional[str]] = [None] * 5  # 5 hotbar slots
+        self.effect_executor = get_effect_executor()
+        self.debugger = get_tag_debugger()
+        self.magnitude_values = self._load_magnitude_values()
+
+    def _load_magnitude_values(self) -> dict:
+        """Load magnitude values from skills-base-effects-1.JSON"""
+        try:
+            base_effects_path = get_resource_path("Skills/skills-base-effects-1.JSON")
+            with open(base_effects_path, 'r') as f:
+                data = json.load(f)
+
+            # Extract magnitude values for each effect type
+            magnitude_map = {}
+            for effect_name, effect_data in data.get("BASE_EFFECT_TYPES", {}).items():
+                magnitude_map[effect_name] = effect_data.get("magnitudeValues", {})
+
+            print(f"[SkillManager] Loaded magnitude values from skills-base-effects-1.JSON")
+            return magnitude_map
+        except Exception as e:
+            print(f"[SkillManager] Warning: Could not load magnitude values: {e}")
+            # Fallback to hardcoded values (old system)
+            return {
+                'empower': {'minor': 0.5, 'moderate': 1.0, 'major': 2.0, 'extreme': 4.0},
+                'quicken': {'minor': 0.3, 'moderate': 0.5, 'major': 0.75, 'extreme': 1.0},
+                'fortify': {'minor': 10, 'moderate': 20, 'major': 40, 'extreme': 80},
+                'pierce': {'minor': 0.1, 'moderate': 0.15, 'major': 0.25, 'extreme': 0.4}
+            }
 
     def can_learn_skill(self, skill_id: str, character) -> tuple[bool, str]:
         """
@@ -170,34 +203,45 @@ class SkillManager:
 
     def _apply_skill_effect(self, skill_def, character, player_skill):
         """Apply the skill's effect with level scaling"""
+        # Check if skill uses tag-based combat system
+        if skill_def.combat_tags and len(skill_def.combat_tags) > 0:
+            return self._apply_combat_skill(skill_def, character, player_skill)
+
+        # Otherwise use legacy buff-based system
         effect = skill_def.effect
         skill_db = SkillDatabase.get_instance()
 
         # Get duration for buffs
         base_duration = skill_db.get_duration_seconds(effect.duration)
+        is_instant = (base_duration == 0)  # "instant" duration translates to 0
 
         # Apply level scaling: +10% per level
         level_bonus = player_skill.get_level_scaling_bonus()
-        duration = base_duration * (1.0 + level_bonus)
 
-        # Magnitude-based bonus values (base values)
-        magnitude_values = {
-            'minor': {'empower': 0.25, 'quicken': 0.15, 'fortify': 10, 'pierce': 0.10},
-            'moderate': {'empower': 0.50, 'quicken': 0.30, 'fortify': 20, 'pierce': 0.15},
-            'major': {'empower': 1.00, 'quicken': 0.50, 'fortify': 40, 'pierce': 0.25},
-            'extreme': {'empower': 1.50, 'quicken': 0.75, 'fortify': 60, 'pierce': 0.35}
-        }
+        # For instant buffs, use 60s duration but mark as consume_on_use
+        # For timed buffs, use calculated duration
+        if is_instant:
+            duration = 60.0  # Fallback duration
+            consume_on_use = True
+        else:
+            duration = base_duration * (1.0 + level_bonus)
+            consume_on_use = False
 
         # Apply level scaling to magnitude values (+10% per level)
         def apply_level_scaling(base_value):
             return base_value * (1.0 + level_bonus)
 
+        def get_magnitude_value(effect_type: str, magnitude: str) -> float:
+            """Get magnitude value from loaded JSON data"""
+            effect_magnitudes = self.magnitude_values.get(effect_type, {})
+            return effect_magnitudes.get(magnitude, 0.5)  # Default to 0.5 if not found
+
         level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
-        print(f"⚡ {skill_def.name}{level_indicator}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
+        debug_print(f"⚡ {skill_def.name}{level_indicator}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
 
         # EMPOWER - Increases damage/output
         if effect.effect_type == "empower":
-            base_bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.5)
+            base_bonus = get_magnitude_value('empower', effect.magnitude)
             bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_empower",
@@ -207,14 +251,18 @@ class SkillManager:
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
                 duration=duration,
-                duration_remaining=duration
+                duration_remaining=duration,
+                consume_on_use=consume_on_use
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus*100)}% {effect.category} damage for {int(duration)}s")
+            if consume_on_use:
+                debug_print(f"   +{int(bonus*100)}% {effect.category} damage for next action")
+            else:
+                debug_print(f"   +{int(bonus*100)}% {effect.category} damage for {int(duration)}s")
 
         # QUICKEN - Increases speed
         elif effect.effect_type == "quicken":
-            base_bonus = magnitude_values.get(effect.magnitude, {}).get('quicken', 0.3)
+            base_bonus = get_magnitude_value('quicken', effect.magnitude)
             bonus = apply_level_scaling(base_bonus)
             category = "movement" if effect.category == "movement" else effect.category
             buff = ActiveBuff(
@@ -225,14 +273,18 @@ class SkillManager:
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
                 duration=duration,
-                duration_remaining=duration
+                duration_remaining=duration,
+                consume_on_use=consume_on_use
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus*100)}% {category} speed for {int(duration)}s")
+            if consume_on_use:
+                print(f"   +{int(bonus*100)}% {category} speed for next action")
+            else:
+                print(f"   +{int(bonus*100)}% {category} speed for {int(duration)}s")
 
         # FORTIFY - Increases defense
         elif effect.effect_type == "fortify":
-            base_bonus = magnitude_values.get(effect.magnitude, {}).get('fortify', 20)
+            base_bonus = get_magnitude_value('fortify', effect.magnitude)
             bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_fortify",
@@ -242,14 +294,18 @@ class SkillManager:
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
                 duration=duration,
-                duration_remaining=duration
+                duration_remaining=duration,
+                consume_on_use=consume_on_use
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus)} flat damage reduction for {duration}s")
+            if consume_on_use:
+                print(f"   +{int(bonus)} flat damage reduction for next hit")
+            else:
+                print(f"   +{int(bonus)} flat damage reduction for {int(duration)}s")
 
         # PIERCE - Increases critical chance
         elif effect.effect_type == "pierce":
-            base_bonus = magnitude_values.get(effect.magnitude, {}).get('pierce', 0.15)
+            base_bonus = get_magnitude_value('pierce', effect.magnitude)
             bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_pierce",
@@ -259,10 +315,14 @@ class SkillManager:
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
                 duration=duration,
-                duration_remaining=duration
+                duration_remaining=duration,
+                consume_on_use=consume_on_use
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus*100)}% critical chance for {duration}s")
+            if consume_on_use:
+                print(f"   +{int(bonus*100)}% critical chance for next action")
+            else:
+                print(f"   +{int(bonus*100)}% critical chance for {int(duration)}s")
 
         # RESTORE - Instant restoration
         elif effect.effect_type == "restore":
@@ -278,9 +338,8 @@ class SkillManager:
 
         # ENRICH - Bonus gathering yield
         elif effect.effect_type == "enrich":
-            bonus_items = {'minor': 1, 'moderate': 2, 'major': 3, 'extreme': 5}
-            base_bonus = bonus_items.get(effect.magnitude, 2)
-            bonus = int(apply_level_scaling(base_bonus))  # Whole items only
+            enrich_values = get_magnitude_value('enrich', effect.magnitude)
+            bonus = int(apply_level_scaling(enrich_values))  # Whole items only
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_enrich",
                 name=f"{skill_def.name} (Yield)",
@@ -289,14 +348,18 @@ class SkillManager:
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
                 duration=duration,
-                duration_remaining=duration
+                duration_remaining=duration,
+                consume_on_use=consume_on_use
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus)} bonus items from {effect.category} for {int(duration)}s")
+            if consume_on_use:
+                print(f"   +{int(bonus)} bonus items from next {effect.category} action")
+            else:
+                print(f"   +{int(bonus)} bonus items from {effect.category} for {int(duration)}s")
 
         # ELEVATE - Rarity upgrade chance
         elif effect.effect_type == "elevate":
-            base_bonus = magnitude_values.get(effect.magnitude, {}).get('empower', 0.1)  # Reuse empower values
+            base_bonus = get_magnitude_value('elevate', effect.magnitude)
             bonus = apply_level_scaling(base_bonus)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_elevate",
@@ -306,16 +369,19 @@ class SkillManager:
                 magnitude=effect.magnitude,
                 bonus_value=bonus,
                 duration=duration,
-                duration_remaining=duration
+                duration_remaining=duration,
+                consume_on_use=consume_on_use
             )
             character.buffs.add_buff(buff)
-            print(f"   +{int(bonus*100)}% rarity upgrade chance for {duration}s")
+            if consume_on_use:
+                print(f"   +{int(bonus*100)}% rarity upgrade chance for next {effect.category} action")
+            else:
+                print(f"   +{int(bonus*100)}% rarity upgrade chance for {int(duration)}s")
 
-        # REGENERATE - Restore resources over time
+        # REGENERATE - Restore resources over time (never instant)
         elif effect.effect_type == "regenerate":
-            regen_amounts = {'minor': 3, 'moderate': 5, 'major': 10, 'extreme': 20}
-            base_amount = regen_amounts.get(effect.magnitude, 5)
-            amount = apply_level_scaling(base_amount)
+            regen_values = get_magnitude_value('regenerate', effect.magnitude)
+            amount = apply_level_scaling(regen_values)
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_regenerate",
                 name=f"{skill_def.name} (Regen)",
@@ -323,18 +389,21 @@ class SkillManager:
                 category=effect.category,
                 magnitude=effect.magnitude,
                 bonus_value=amount,
-                duration=duration,
-                duration_remaining=duration
+                duration=duration if not consume_on_use else 60.0,
+                duration_remaining=duration if not consume_on_use else 60.0,
+                consume_on_use=False  # Regenerate is always over time
             )
             character.buffs.add_buff(buff)
             resource_type = "HP" if "health" in effect.category or "defense" in effect.category else "MP"
-            print(f"   Regenerating {amount:.1f} {resource_type}/s for {int(duration)}s")
+            print(f"   Regenerating {amount:.1f} {resource_type}/s for {int(duration if not consume_on_use else 60)}s")
 
-        # DEVASTATE - Area of effect
+        # DEVASTATE - Area of effect (instant execution if consume_on_use)
         elif effect.effect_type == "devastate":
-            radius_sizes = {'minor': 3, 'moderate': 5, 'major': 7, 'extreme': 10}
-            base_radius = radius_sizes.get(effect.magnitude, 5)
-            radius = int(apply_level_scaling(base_radius))
+            devastate_values = get_magnitude_value('devastate', effect.magnitude)
+            radius = int(apply_level_scaling(devastate_values))
+
+            # TODO: For instant devastate skills, execute immediately using tag system
+            # For now, create buff and let it be applied in combat
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_devastate",
                 name=f"{skill_def.name} (AoE)",
@@ -343,16 +412,19 @@ class SkillManager:
                 magnitude=effect.magnitude,
                 bonus_value=radius,
                 duration=duration,
-                duration_remaining=duration
+                duration_remaining=duration,
+                consume_on_use=consume_on_use
             )
             character.buffs.add_buff(buff)
-            print(f"   {effect.category.capitalize()} affects {radius}-tile radius for {int(duration)}s")
+            if consume_on_use:
+                print(f"   Next {effect.category} action affects {radius}-tile radius")
+            else:
+                print(f"   {effect.category.capitalize()} affects {radius}-tile radius for {int(duration)}s")
 
         # TRANSCEND - Bypass tier restrictions
         elif effect.effect_type == "transcend":
-            tier_bypass = {'minor': 1, 'moderate': 2, 'major': 3, 'extreme': 4}
-            base_bypass = tier_bypass.get(effect.magnitude, 1)
-            bypass = int(apply_level_scaling(base_bypass))
+            transcend_values = get_magnitude_value('transcend', effect.magnitude)
+            bypass = int(apply_level_scaling(transcend_values))
             buff = ActiveBuff(
                 buff_id=f"{skill_def.skill_id}_transcend",
                 name=f"{skill_def.name} (Transcend)",
@@ -361,7 +433,202 @@ class SkillManager:
                 magnitude=effect.magnitude,
                 bonus_value=bypass,
                 duration=duration,
-                duration_remaining=duration
+                duration_remaining=duration,
+                consume_on_use=consume_on_use
             )
             character.buffs.add_buff(buff)
-            print(f"   Bypass {bypass} tier restriction(s) for {effect.category} for {int(duration)}s")
+            if consume_on_use:
+                print(f"   Next {effect.category} action bypasses {bypass} tier restriction(s)")
+            else:
+                print(f"   Bypass {bypass} tier restriction(s) for {effect.category} for {int(duration)}s")
+
+    def _apply_combat_skill(self, skill_def, character, player_skill):
+        """Apply a tag-based combat skill using the effect executor"""
+        # Apply level scaling to combat params
+        level_bonus = player_skill.get_level_scaling_bonus()
+        scaled_params = skill_def.combat_params.copy()
+
+        # Scale damage parameters
+        if "baseDamage" in scaled_params:
+            scaled_params["baseDamage"] *= (1.0 + level_bonus)
+        if "baseHealing" in scaled_params:
+            scaled_params["baseHealing"] *= (1.0 + level_bonus)
+
+        level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
+        print(f"⚡ {skill_def.name}{level_indicator}: Combat skill using tags {skill_def.combat_tags}")
+
+        # Determine primary target based on skill target type
+        effect = skill_def.effect
+        primary_target = None
+        available_entities = []
+
+        if effect.target == "enemy":
+            # Find nearest enemy from combat manager
+            # For now, we need access to combat manager which the skill system doesn't have
+            # We'll document that combat skills need to be called with context
+            # For skills used outside combat, this will be a no-op
+            self.debugger.warning(f"Combat skill {skill_def.skill_id} requires enemy target - needs combat context")
+            print(f"   ⚠ Skill requires enemy target (use in combat)")
+            return
+
+        elif effect.target == "self":
+            # Self-targeting skill (e.g., shield, regeneration)
+            primary_target = character
+            available_entities = [character]
+
+        elif effect.target == "area":
+            # Area effect - needs available enemies from combat manager
+            self.debugger.warning(f"Combat skill {skill_def.skill_id} is area effect - needs combat context")
+            print(f"   ⚠ Area skill requires combat context")
+            return
+
+        else:
+            # Default to self
+            primary_target = character
+            available_entities = [character]
+
+        # Execute effect using tag system
+        try:
+            context = self.effect_executor.execute_effect(
+                source=character,
+                primary_target=primary_target,
+                tags=skill_def.combat_tags,
+                params=scaled_params,
+                available_entities=available_entities
+            )
+
+            self.debugger.info(
+                f"Skill {skill_def.skill_id} executed: {len(context.targets)} targets affected"
+            )
+            print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+        except Exception as e:
+            self.debugger.error(f"Combat skill execution failed: {e}")
+            print(f"   ⚠ Skill execution failed: {e}")
+
+    def use_skill_in_combat(self, slot: int, character, target_enemy=None, available_enemies=None) -> tuple[bool, str]:
+        """Use a skill from hotbar slot in combat context with enemy targeting
+
+        Args:
+            slot: Hotbar slot (0-4)
+            character: Player character
+            target_enemy: Primary target enemy (for single-target skills)
+            available_enemies: List of all available enemies (for AOE/chain skills)
+
+        Returns:
+            (success, message)
+        """
+        if not (0 <= slot < 5):
+            return False, "Invalid slot"
+
+        skill_id = self.equipped_skills[slot]
+        if not skill_id:
+            return False, "No skill in slot"
+
+        player_skill = self.known_skills.get(skill_id)
+        if not player_skill:
+            return False, "Skill not learned"
+
+        skill_def = player_skill.get_definition()
+        if not skill_def:
+            return False, "Skill definition not found"
+
+        # Check cooldown
+        if player_skill.current_cooldown > 0:
+            return False, f"On cooldown ({player_skill.current_cooldown:.1f}s)"
+
+        # Check mana cost
+        skill_db = SkillDatabase.get_instance()
+        mana_cost = skill_db.get_mana_cost(skill_def.cost.mana)
+        if character.mana < mana_cost:
+            return False, f"Not enough mana ({mana_cost} required)"
+
+        # Consume mana
+        character.mana -= mana_cost
+
+        # Start cooldown
+        cooldown_duration = skill_db.get_cooldown_seconds(skill_def.cost.cooldown)
+        player_skill.current_cooldown = cooldown_duration
+
+        # Apply skill effect with combat context
+        if skill_def.combat_tags and len(skill_def.combat_tags) > 0:
+            self._apply_combat_skill_with_context(
+                skill_def, character, player_skill,
+                target_enemy, available_enemies or []
+            )
+        else:
+            self._apply_skill_effect(skill_def, character, player_skill)
+
+        # Award skill EXP (100 EXP per activation)
+        leveled_up, new_level = player_skill.add_exp(100)
+        if leveled_up:
+            return True, f"Used {skill_def.name}! 🌟 Level {new_level}!"
+
+        return True, f"Used {skill_def.name}!"
+
+    def _apply_combat_skill_with_context(self, skill_def, character, player_skill,
+                                          target_enemy, available_enemies):
+        """Apply a combat skill with full combat context (enemies available)"""
+        # Apply level scaling to combat params
+        level_bonus = player_skill.get_level_scaling_bonus()
+        scaled_params = skill_def.combat_params.copy()
+
+        # Scale damage parameters
+        if "baseDamage" in scaled_params:
+            scaled_params["baseDamage"] *= (1.0 + level_bonus)
+        if "baseHealing" in scaled_params:
+            scaled_params["baseHealing"] *= (1.0 + level_bonus)
+
+        level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
+        print(f"⚡ {skill_def.name}{level_indicator}: Combat skill using tags {skill_def.combat_tags}")
+
+        # Determine primary target based on skill target type
+        effect = skill_def.effect
+        primary_target = None
+        available_entities = []
+
+        if effect.target == "enemy":
+            # Use provided target enemy
+            if not target_enemy:
+                print(f"   ⚠ No target enemy provided")
+                return
+            primary_target = target_enemy
+            available_entities = available_enemies
+
+        elif effect.target == "self":
+            # Self-targeting skill
+            primary_target = character
+            available_entities = [character]
+
+        elif effect.target == "area":
+            # Area effect - use all available enemies
+            if not available_enemies:
+                print(f"   ⚠ No enemies available for area skill")
+                return
+            # For AOE, primary target is first enemy (or nearest)
+            primary_target = available_enemies[0] if available_enemies else character
+            available_entities = available_enemies
+
+        else:
+            # Default to self
+            primary_target = character
+            available_entities = [character]
+
+        # Execute effect using tag system
+        try:
+            context = self.effect_executor.execute_effect(
+                source=character,
+                primary_target=primary_target,
+                tags=skill_def.combat_tags,
+                params=scaled_params,
+                available_entities=available_entities
+            )
+
+            self.debugger.info(
+                f"Skill {skill_def.skill_id} executed: {len(context.targets)} targets affected"
+            )
+            print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+        except Exception as e:
+            self.debugger.error(f"Combat skill execution failed: {e}")
+            print(f"   ⚠ Skill execution failed: {e}")

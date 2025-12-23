@@ -203,7 +203,9 @@ class SaveManager:
                 "tier": entity.tier,
                 "health": entity.health,
                 "owner": entity.owner,
-                "time_remaining": entity.time_remaining
+                "time_remaining": entity.time_remaining,
+                "tags": entity.tags if hasattr(entity, 'tags') else None,
+                "effect_params": entity.effect_params if hasattr(entity, 'effect_params') else None
             }
 
             # Add turret-specific data

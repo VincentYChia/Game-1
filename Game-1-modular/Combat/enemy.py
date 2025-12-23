@@ -6,9 +6,12 @@ from __future__ import annotations
 import json
 import random
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 from enum import Enum
 from pathlib import Path
+from entities.status_manager import add_status_manager_to_entity
+from core.effect_executor import get_effect_executor
+from core.tag_debug import get_tag_debugger
 
 
 # ============================================================================
@@ -35,6 +38,16 @@ class DropDefinition:
     quantity_min: int
     quantity_max: int
     chance: float  # 0.0 to 1.0
+
+@dataclass
+class SpecialAbility:
+    """Tag-based special attack for enemies"""
+    ability_id: str
+    cooldown: float  # Seconds between uses
+    tags: List[str]  # Effect tags (e.g., ["fire", "circle", "burn"])
+    params: Dict[str, Any]  # Effect parameters
+    health_threshold: float = 1.0  # Use when HP below this (1.0 = always, 0.5 = below 50%)
+    priority: int = 0  # Higher priority abilities used first
 
 @dataclass
 class AIPattern:
@@ -66,6 +79,9 @@ class EnemyDefinition:
     # Drops and AI
     drops: List[DropDefinition]
     ai_pattern: AIPattern
+
+    # Special abilities (tag-based attacks)
+    special_abilities: List[SpecialAbility] = field(default_factory=list)
 
     # Metadata
     narrative: str = ""
@@ -137,6 +153,18 @@ class EnemyDatabase:
                     special_abilities=ai_data.get('specialAbilities', [])
                 )
 
+                # Parse special abilities (tag-based attacks)
+                special_abilities = []
+                for ability_data in enemy_data.get('specialAbilities', []):
+                    special_abilities.append(SpecialAbility(
+                        ability_id=ability_data.get('abilityId', ''),
+                        cooldown=ability_data.get('cooldown', 10.0),
+                        tags=ability_data.get('tags', []),
+                        params=ability_data.get('params', {}),
+                        health_threshold=ability_data.get('healthThreshold', 1.0),
+                        priority=ability_data.get('priority', 0)
+                    ))
+
                 # Parse metadata
                 metadata = enemy_data.get('metadata', {})
 
@@ -162,6 +190,7 @@ class EnemyDatabase:
                     attack_speed=stats.get('attackSpeed', 1.0),
                     drops=drops,
                     ai_pattern=ai_pattern,
+                    special_abilities=special_abilities,
                     narrative=metadata.get('narrative', ''),
                     tags=metadata.get('tags', []),
                     icon_path=icon_path
@@ -247,6 +276,21 @@ class Enemy:
         self.time_since_death = 0.0
         self.corpse_lifetime = 60.0  # Will be overridden by config
 
+        # Add status effect manager
+        add_status_manager_to_entity(self)
+
+        # Add category for tag system context-awareness
+        self.category = definition.category
+
+        # Tag-based attack system
+        self.effect_executor = get_effect_executor()
+        self.debugger = get_tag_debugger()
+
+        # Special ability cooldowns (dict: ability_id -> cooldown_remaining)
+        self.ability_cooldowns: Dict[str, float] = {
+            ability.ability_id: 0.0 for ability in definition.special_abilities
+        }
+
     def _get_initial_state(self) -> AIState:
         """Map behavior string to initial AI state"""
         state_map = {
@@ -307,9 +351,18 @@ class Enemy:
             self.time_since_death += dt
             return
 
+        # Update status effects
+        if hasattr(self, 'status_manager'):
+            self.status_manager.update(dt)
+
         # Update attack cooldown
         if self.attack_cooldown > 0:
             self.attack_cooldown -= dt
+
+        # Update ability cooldowns
+        for ability_id in self.ability_cooldowns:
+            if self.ability_cooldowns[ability_id] > 0:
+                self.ability_cooldowns[ability_id] -= dt
 
         # Get distance to player
         dist_to_player = self.distance_to(player_position)
@@ -465,6 +518,10 @@ class Enemy:
 
     def _move_towards(self, target: Tuple[float, float], dt: float):
         """Move towards a target position, restricted to chunk boundaries"""
+        # Check if immobilized by status effects
+        if hasattr(self, 'status_manager') and self.status_manager.is_immobilized():
+            return
+
         dx = target[0] - self.position[0]
         dy = target[1] - self.position[1]
         dist = (dx * dx + dy * dy) ** 0.5
@@ -482,7 +539,11 @@ class Enemy:
             self.position[1] = new_y
 
     def can_attack(self) -> bool:
-        """Check if enemy can attack (cooldown ready)"""
+        """Check if enemy can attack (cooldown ready and not CC'd)"""
+        # Check if stunned/silenced
+        if hasattr(self, 'status_manager') and self.status_manager.is_silenced():
+            return False
+
         return self.attack_cooldown <= 0 and self.ai_state == AIState.ATTACK
 
     def perform_attack(self) -> float:
@@ -490,3 +551,102 @@ class Enemy:
         self.attack_cooldown = 1.0 / self.definition.attack_speed
         damage = random.uniform(self.definition.damage_min, self.definition.damage_max)
         return damage
+
+    def can_use_special_ability(self) -> Optional[SpecialAbility]:
+        """Check if enemy can use a special ability. Returns ability if available, None otherwise"""
+        if not self.definition.special_abilities:
+            return None
+
+        # Check if silenced
+        if hasattr(self, 'status_manager') and self.status_manager.is_silenced():
+            return None
+
+        # Sort abilities by priority (higher first)
+        sorted_abilities = sorted(
+            self.definition.special_abilities,
+            key=lambda a: a.priority,
+            reverse=True
+        )
+
+        # Find first usable ability
+        health_percent = self.current_health / self.max_health
+        for ability in sorted_abilities:
+            # Check health threshold
+            if health_percent > ability.health_threshold:
+                continue
+
+            # Check cooldown
+            if self.ability_cooldowns.get(ability.ability_id, 0) > 0:
+                continue
+
+            # Found usable ability!
+            return ability
+
+        return None
+
+    def attack_with_tags(self, target: Any, tags: List[str], params: dict, available_targets: List[Any] = None) -> bool:
+        """
+        Enemy attacks using tag-based effects system (inherits from player/turret systems)
+
+        Args:
+            target: Primary target (usually player)
+            tags: Effect tags (e.g., ["fire", "circle", "burn"])
+            params: Effect parameters (baseDamage, geometry params, etc.)
+            available_targets: List of all potential targets for AOE/chain (default: [target])
+
+        Returns:
+            True if attack succeeded, False if failed
+        """
+        if available_targets is None:
+            available_targets = [target] if target else []
+
+        print(f"\n🔥 ENEMY SPECIAL: {self.definition.name}")
+        print(f"   Using tags: {tags}")
+
+        # Execute effect using tag system (same as player/turret)
+        try:
+            context = self.effect_executor.execute_effect(
+                source=self,
+                primary_target=target,
+                tags=tags,
+                params=params,
+                available_entities=available_targets
+            )
+
+            self.debugger.info(
+                f"Enemy {self.definition.enemy_id} used special ability: {len(context.targets)} targets affected"
+            )
+            print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+            return True
+
+        except Exception as e:
+            self.debugger.error(f"Enemy special ability failed: {e}")
+            print(f"   ⚠ Ability failed: {e}")
+            return False
+
+    def use_special_ability(self, ability: SpecialAbility, target: Any, available_targets: List[Any] = None) -> bool:
+        """
+        Use a specific special ability
+
+        Args:
+            ability: The special ability to use
+            target: Primary target
+            available_targets: List of all potential targets
+
+        Returns:
+            True if successful
+        """
+        # Execute the tag-based attack
+        success = self.attack_with_tags(
+            target=target,
+            tags=ability.tags,
+            params=ability.params,
+            available_targets=available_targets
+        )
+
+        if success:
+            # Start cooldown
+            self.ability_cooldowns[ability.ability_id] = ability.cooldown
+
+        return success

@@ -91,6 +91,9 @@ class GameEngine:
         # Load stackable devices (turrets, traps, bombs, utility devices)
         MaterialDatabase.get_instance().load_stackable_items(
             str(get_resource_path("items.JSON/items-engineering-1.JSON")), categories=['device'])
+        # Load test items for tag system validation
+        MaterialDatabase.get_instance().load_stackable_items(
+            str(get_resource_path("items.JSON/items-testing-tags.JSON")), categories=['device', 'weapon'])
         # Load placeable crafting stations from items-smithing-2.JSON
         MaterialDatabase.get_instance().load_stackable_items(
             str(get_resource_path("items.JSON/items-smithing-2.JSON")), categories=['station'])
@@ -108,6 +111,8 @@ class GameEngine:
         equip_db.load_from_file(str(get_resource_path("items.JSON/items-smithing-2.JSON")))
         equip_db.load_from_file(str(get_resource_path("items.JSON/items-tools-1.JSON")))
         equip_db.load_from_file(str(get_resource_path("items.JSON/items-alchemy-1.JSON")))
+        # Load test weapons for tag system validation
+        equip_db.load_from_file(str(get_resource_path("items.JSON/items-testing-tags.JSON")))
 
         TitleDatabase.get_instance().load_from_file(str(get_resource_path("progression/titles-1.JSON")))
         ClassDatabase.get_instance().load_from_file(str(get_resource_path("progression/classes-1.JSON")))
@@ -172,6 +177,10 @@ class GameEngine:
         # Only spawn initial enemies if we have a real character
         if self.character:
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+
+            # Spawn training dummy for tag testing
+            from systems.training_dummy import spawn_training_dummy
+            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
 
         # Initialize NPC system
         print("Loading NPCs...")
@@ -294,6 +303,46 @@ class GameEngine:
 
     def add_notification(self, message: str, color: Tuple[int, int, int] = Config.COLOR_NOTIFICATION):
         self.notifications.append(Notification(message, 3.0, color))
+
+    def _get_weapon_effect_data(self, hand: str = 'mainHand') -> tuple:
+        """
+        Extract effect tags and params from equipped weapon for tag-based combat.
+
+        Args:
+            hand: Which hand to check ('mainHand' or 'offHand')
+
+        Returns:
+            tuple: (effect_tags: List[str], effect_params: Dict)
+        """
+        weapon = self.character.equipment.slots.get(hand)
+
+        if weapon and hasattr(weapon, 'get_effect_tags'):
+            effect_tags = weapon.get_effect_tags()
+            effect_params = weapon.get_effect_params()
+
+            # If weapon has effect tags, use them
+            if effect_tags:
+                # Ensure baseDamage is set from weapon damage if not specified
+                if 'baseDamage' not in effect_params and weapon.damage != (0, 0):
+                    # Use average of damage range
+                    avg_damage = (weapon.damage[0] + weapon.damage[1]) / 2
+                    effect_params = effect_params.copy()
+                    effect_params['baseDamage'] = avg_damage
+
+                return (effect_tags, effect_params)
+
+        # Fallback: No effect tags, create basic physical attack
+        fallback_tags = ["physical", "single"]
+        fallback_params = {}
+
+        if weapon and weapon.damage != (0, 0):
+            avg_damage = (weapon.damage[0] + weapon.damage[1]) / 2
+            fallback_params['baseDamage'] = avg_damage
+        else:
+            # Unarmed
+            fallback_params['baseDamage'] = 5
+
+        return (fallback_tags, fallback_params)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -839,8 +888,11 @@ class GameEngine:
                 self.add_notification(f"Enemy too far (offhand range: {weapon_range})", (255, 100, 100))
                 return
 
-            # Attack with offhand
-            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='offHand')
+            # Attack with offhand (using tag system)
+            effect_tags, effect_params = self._get_weapon_effect_data('offHand')
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                enemy, effect_tags, effect_params
+            )
             self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
             self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
 
@@ -954,6 +1006,9 @@ class GameEngine:
             self.combat_manager.character = self.character
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+            # Spawn training dummy for tag testing
+            from systems.training_dummy import spawn_training_dummy
+            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
             self.add_notification("Welcome to your new world!", (100, 255, 100))
 
             # Open class selection for new character
@@ -989,6 +1044,10 @@ class GameEngine:
 
                 # Spawn enemies near loaded position
                 self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+
+                # Spawn training dummy for tag testing
+                from systems.training_dummy import spawn_training_dummy
+                spawn_training_dummy(self.combat_manager, (60.0, 50.0))
 
                 print(f"✓ Loaded character: Level {self.character.leveling.level}")
                 self.add_notification("World loaded successfully!", (100, 255, 100))
@@ -1026,6 +1085,10 @@ class GameEngine:
                 # Spawn enemies near loaded position
                 self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
+                # Spawn training dummy for tag testing
+                from systems.training_dummy import spawn_training_dummy
+                spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+
                 print(f"✓ Loaded default save: Level {self.character.leveling.level}")
                 self.add_notification("Default save loaded successfully!", (100, 255, 100))
             else:
@@ -1044,6 +1107,9 @@ class GameEngine:
             self.combat_manager.character = self.character
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+            # Spawn training dummy for tag testing
+            from systems.training_dummy import spawn_training_dummy
+            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
             self.add_notification("Temporary world started (no saves)", (255, 215, 0))
 
             # Open class selection for new character
@@ -1314,22 +1380,47 @@ class GameEngine:
                                             self.character.inventory.slots[idx] = item_stack
                                             return
 
-                                        # Determine entity type based on category or item_type
-                                        if mat_def.category == 'station':
-                                            entity_type = PlacedEntityType.CRAFTING_STATION
-                                        else:
-                                            entity_type_map = {
-                                                'turret': PlacedEntityType.TURRET,
-                                                'trap': PlacedEntityType.TRAP,
-                                                'bomb': PlacedEntityType.BOMB,
-                                                'utility': PlacedEntityType.UTILITY_DEVICE,
-                                            }
-                                            entity_type = entity_type_map.get(mat_def.item_type, PlacedEntityType.TURRET)
+                                        # Determine entity type using EngineeringTagProcessor
+                                        from core.crafting_tag_processor import EngineeringTagProcessor
 
-                                        # Parse stats from effect string (only for combat entities)
-                                        range_val = 5.0
-                                        damage_val = 20.0
-                                        if entity_type != PlacedEntityType.CRAFTING_STATION and mat_def.effect:
+                                        # Get tags from material definition
+                                        mat_tags = mat_def.metadata.get('tags', []) if hasattr(mat_def, 'metadata') and mat_def.metadata else []
+
+                                        # Use tag processor to determine behavior type
+                                        if mat_tags:
+                                            behavior_type = EngineeringTagProcessor.get_behavior_type(mat_tags)
+
+                                            # Map behavior type to PlacedEntityType
+                                            behavior_to_entity_map = {
+                                                'placeable_combat': PlacedEntityType.TURRET,
+                                                'placeable_triggered': PlacedEntityType.TRAP,
+                                                'placeable_crafting': PlacedEntityType.CRAFTING_STATION,
+                                                'usable': PlacedEntityType.UTILITY_DEVICE,  # Usable items placed like devices
+                                                'consumable': PlacedEntityType.BOMB,        # Consumables placed as bombs
+                                                'placeable': PlacedEntityType.UTILITY_DEVICE,  # Generic placeable
+                                            }
+                                            entity_type = behavior_to_entity_map.get(behavior_type, PlacedEntityType.TURRET)
+                                        else:
+                                            # Fallback to legacy logic if no tags
+                                            if mat_def.category == 'station':
+                                                entity_type = PlacedEntityType.CRAFTING_STATION
+                                            else:
+                                                entity_type_map = {
+                                                    'turret': PlacedEntityType.TURRET,
+                                                    'trap': PlacedEntityType.TRAP,
+                                                    'bomb': PlacedEntityType.BOMB,
+                                                    'utility': PlacedEntityType.UTILITY_DEVICE,
+                                                }
+                                                entity_type = entity_type_map.get(mat_def.item_type, PlacedEntityType.TURRET)
+
+                                        # Extract effect tags and params for tag system
+                                        effect_tags = mat_def.effect_tags if hasattr(mat_def, 'effect_tags') else []
+                                        effect_params = mat_def.effect_params if hasattr(mat_def, 'effect_params') else {}
+
+                                        # Parse stats from effect string (only for combat entities) - legacy fallback
+                                        range_val = effect_params.get('range', 5.0)
+                                        damage_val = effect_params.get('baseDamage', 20.0)
+                                        if entity_type != PlacedEntityType.CRAFTING_STATION and mat_def.effect and not effect_tags:
                                             import re
                                             range_match = re.search(r'(\d+)\s*unit range', mat_def.effect)
                                             damage_match = re.search(r'(\d+)\s*damage', mat_def.effect)
@@ -1338,14 +1429,16 @@ class GameEngine:
                                             if damage_match:
                                                 damage_val = float(damage_match.group(1))
 
-                                        # Place the entity
+                                        # Place the entity (with tags)
                                         self.world.place_entity(
                                             player_pos,
                                             item_stack.item_id,
                                             entity_type,
                                             tier=mat_def.tier,
                                             range=range_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0,
-                                            damage=damage_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0
+                                            damage=damage_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0,
+                                            tags=effect_tags,
+                                            effect_params=effect_params
                                         )
 
                                         # Remove one item from inventory
@@ -1411,8 +1504,11 @@ class GameEngine:
                 self.add_notification(range_msg, (255, 100, 100))
                 return
 
-            # Attack enemy with mainhand
-            damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='mainHand')
+            # Attack enemy with mainhand (using tag system)
+            effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
+            damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                enemy, effect_tags, effect_params
+            )
             self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
             self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
 
@@ -2743,8 +2839,11 @@ class GameEngine:
                                 weapon_range = self.character.equipment.get_weapon_range('offHand')
                                 dist = enemy.distance_to((self.character.position.x, self.character.position.y))
                                 if dist <= weapon_range:
-                                    # Attack with offhand
-                                    damage, is_crit, loot = self.combat_manager.player_attack_enemy(enemy, hand='offHand')
+                                    # Attack with offhand (using tag system)
+                                    effect_tags, effect_params = self._get_weapon_effect_data('offHand')
+                                    damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                                        enemy, effect_tags, effect_params
+                                    )
                                     self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
                                     self.character.reset_attack_cooldown(is_weapon=True, hand='offHand')
 
@@ -2789,6 +2888,7 @@ class GameEngine:
                 self.start_menu_buttons = result
             # Render notifications even when menu is open
             self.renderer.render_notifications(self.notifications)
+            self.renderer.render_debug_messages()
             pygame.display.flip()
             return
 
@@ -2807,6 +2907,7 @@ class GameEngine:
         self.renderer.render_skill_hotbar(self.character)
 
         self.renderer.render_notifications(self.notifications)
+        self.renderer.render_debug_messages()
 
         if self.character.class_selection_open:
             result = self.renderer.render_class_selection_ui(self.character, self.mouse_pos)

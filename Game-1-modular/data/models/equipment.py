@@ -27,6 +27,8 @@ class EquipmentItem:
     item_type: str = "weapon"  # "weapon", "shield", "tool", etc.
     stat_multipliers: Dict[str, float] = field(default_factory=dict)  # Original stat multipliers from JSON
     tags: List[str] = field(default_factory=list)  # Metadata tags from JSON
+    effect_tags: List[str] = field(default_factory=list)  # Combat effect tags (fire, slashing, cone, etc.)
+    effect_params: Dict[str, Any] = field(default_factory=dict)  # Effect parameters (baseDamage, cone_angle, etc.)
 
     def get_effectiveness(self) -> float:
         """Get effectiveness multiplier based on durability (for CONFIG check - imported later)"""
@@ -119,15 +121,41 @@ class EquipmentItem:
             tags=self.tags.copy()
         )
 
-    def can_apply_enchantment(self, enchantment_id: str, applicable_to: List[str], effect: Dict) -> Tuple[bool, str]:
-        """Check if an enchantment can be applied to this item"""
-        # Check if item type is compatible
-        item_type = self._get_item_type()
-        if item_type not in applicable_to:
-            return False, f"Cannot apply to {item_type} items"
+    def can_apply_enchantment(self, enchantment_id: str, applicable_to: List[str] = None,
+                              effect: Dict = None, tags: List[str] = None) -> Tuple[bool, str]:
+        """Check if an enchantment can be applied to this item
 
-        # Enchantments with conflicts will overwrite existing conflicting enchantments
-        return True, "OK"
+        Args:
+            enchantment_id: ID of the enchantment
+            applicable_to: Legacy list of applicable item types (weapon, armor, tool)
+            effect: Enchantment effect dict
+            tags: Recipe tags (preferred over applicable_to)
+
+        Returns:
+            (can_apply, reason) tuple
+        """
+        # Get item type
+        item_type = self._get_item_type()
+
+        # Use EnchantingTagProcessor if tags provided (new system)
+        if tags and len(tags) > 0:
+            from core.crafting_tag_processor import EnchantingTagProcessor
+
+            # Graceful failure - use tag processor validation
+            can_apply, reason = EnchantingTagProcessor.can_apply_to_item(tags, item_type)
+            if not can_apply:
+                return False, reason  # Returns descriptive message like "Enchantment not applicable to armor items"
+            return True, "OK"
+
+        # Fallback to legacy applicable_to list
+        elif applicable_to:
+            if item_type not in applicable_to:
+                return False, f"Cannot apply to {item_type} items"
+            return True, "OK"
+
+        # No validation data provided - allow by default (graceful)
+        else:
+            return True, "OK (no applicability rules provided)"
 
     def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict) -> Tuple[bool, str]:
         """Apply an enchantment effect to this item with comprehensive rules"""
@@ -169,6 +197,13 @@ class EquipmentItem:
             'effect': effect
         })
 
+        # Debug output for enchantment verification
+        print(f"\n✨ ENCHANTMENT APPLIED")
+        print(f"   Item: {self.item_id} ({self.name})")
+        print(f"   Enchantment: {enchantment_name} ({enchantment_id})")
+        print(f"   Effect: {effect}")
+        print(f"   Total Enchantments: {len(self.enchantments)}")
+
         return True, "OK"
 
     def _get_item_type(self) -> str:
@@ -185,3 +220,27 @@ class EquipmentItem:
             return 'armor'
         else:
             return 'accessory'
+
+    def get_metadata_tags(self) -> List[str]:
+        """Get metadata tags for weapon tag modifiers
+
+        Returns:
+            List[str]: Metadata tags from JSON (e.g., ["melee", "sword", "2H", "crushing"])
+        """
+        return self.tags if self.tags else []
+
+    def get_effect_tags(self) -> List[str]:
+        """Get combat effect tags for effect_executor
+
+        Returns:
+            List[str]: Effect tags (e.g., ["physical", "slashing", "single"])
+        """
+        return self.effect_tags if self.effect_tags else []
+
+    def get_effect_params(self) -> Dict[str, Any]:
+        """Get effect parameters for effect_executor
+
+        Returns:
+            Dict: Effect parameters (e.g., {"baseDamage": 30, "cone_angle": 60.0})
+        """
+        return self.effect_params if self.effect_params else {}

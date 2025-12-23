@@ -20,6 +20,7 @@ class ActiveBuff:
     duration: float                 # Original duration in seconds (for UI progress bar)
     duration_remaining: float       # Time remaining in seconds (countdown)
     source: str = "skill"           # skill, potion, equipment, etc.
+    consume_on_use: bool = False    # If True, buff is consumed when relevant action is performed
 
     def update(self, dt: float) -> bool:
         """Update buff timer. Returns True if buff is still active."""
@@ -76,3 +77,45 @@ class BuffManager:
     def get_defense_bonus(self) -> float:
         """Get defense bonus"""
         return self.get_total_bonus("fortify", "defense")
+
+    def consume_buffs_for_action(self, action_type: str, category: str = None):
+        """
+        Consume (remove) buffs that are marked consume_on_use for this action type.
+
+        Args:
+            action_type: Type of action performed ("attack", "gather", "craft", etc.)
+            category: Optional category filter (e.g., "combat", "mining", "smithing")
+        """
+        buffs_to_remove = []
+
+        for buff in self.active_buffs:
+            if not buff.consume_on_use:
+                continue
+
+            # Match by action type
+            should_consume = False
+
+            if action_type == "attack":
+                # Consume combat/damage buffs on attack
+                if buff.category in ["combat", "damage"]:
+                    should_consume = True
+            elif action_type == "gather":
+                # Consume gathering buffs (mining, forestry, fishing) on gather
+                if category and buff.category == category:
+                    should_consume = True
+                elif buff.category in ["mining", "forestry", "fishing", "gathering"]:
+                    should_consume = True
+            elif action_type == "craft":
+                # Consume crafting buffs on craft
+                if category and buff.category == category:
+                    should_consume = True
+                elif buff.category in ["smithing", "alchemy", "engineering", "refining", "enchanting"]:
+                    should_consume = True
+
+            if should_consume:
+                buffs_to_remove.append(buff)
+
+        # Remove consumed buffs
+        for buff in buffs_to_remove:
+            print(f"   ⚡ Consumed: {buff.name}")
+            self.active_buffs.remove(buff)

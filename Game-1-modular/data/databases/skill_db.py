@@ -83,7 +83,9 @@ class SkillDatabase:
                     cost=cost,
                     evolution=evolution,
                     requirements=requirements,
-                    icon_path=icon_path
+                    icon_path=icon_path,
+                    combat_tags=skill_data.get('combatTags', []),
+                    combat_params=skill_data.get('combatParams', {})
                 )
 
                 self.skills[skill.skill_id] = skill

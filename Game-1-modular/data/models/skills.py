@@ -58,6 +58,15 @@ class SkillDefinition:
     evolution: SkillEvolution
     requirements: SkillRequirements
     icon_path: Optional[str] = None
+    # Tag-based combat support
+    combat_tags: Optional[List[str]] = None
+    combat_params: Optional[Dict] = None
+
+    def __post_init__(self):
+        if self.combat_tags is None:
+            self.combat_tags = []
+        if self.combat_params is None:
+            self.combat_params = {}
 
 
 @dataclass

@@ -1037,18 +1037,20 @@ class Renderer:
 
             # Render lifetime bar (only for combat entities, not crafting stations)
             if entity.entity_type != PlacedEntityType.CRAFTING_STATION:
-                bar_w, bar_h = size - 4, 4
-                bar_y = sy + size // 2 + 4
-                pygame.draw.rect(self.screen, (100, 100, 100), (sx - bar_w // 2, bar_y, bar_w, bar_h))
-                lifetime_w = int(bar_w * (entity.time_remaining / entity.lifetime))
-                # Color based on time remaining (green -> yellow -> red)
-                if entity.time_remaining > entity.lifetime * 0.5:
-                    bar_color = (0, 255, 0)  # Green
-                elif entity.time_remaining > entity.lifetime * 0.25:
-                    bar_color = (255, 255, 0)  # Yellow
-                else:
-                    bar_color = (255, 0, 0)  # Red
-                pygame.draw.rect(self.screen, bar_color, (sx - bar_w // 2, bar_y, lifetime_w, bar_h))
+                # Skip entities with infinite lifetime
+                if hasattr(entity, 'lifetime') and entity.lifetime != float('inf'):
+                    bar_w, bar_h = size - 4, 4
+                    bar_y = sy + size // 2 + 4
+                    pygame.draw.rect(self.screen, (100, 100, 100), (sx - bar_w // 2, bar_y, bar_w, bar_h))
+                    lifetime_w = int(bar_w * (entity.time_remaining / entity.lifetime))
+                    # Color based on time remaining (green -> yellow -> red)
+                    if entity.time_remaining > entity.lifetime * 0.5:
+                        bar_color = (0, 255, 0)  # Green
+                    elif entity.time_remaining > entity.lifetime * 0.25:
+                        bar_color = (255, 255, 0)  # Yellow
+                    else:
+                        bar_color = (255, 0, 0)  # Red
+                    pygame.draw.rect(self.screen, bar_color, (sx - bar_w // 2, bar_y, lifetime_w, bar_h))
 
             # Draw range circle for turrets only (semi-transparent)
             if entity.entity_type == PlacedEntityType.TURRET and hasattr(entity, 'range') and entity.range > 0:
@@ -2361,6 +2363,35 @@ class Renderer:
 
             self.screen.blit(surf, (x, y))
             y += surf.get_height() + 15
+
+    def render_debug_messages(self):
+        """Render on-screen debug messages (max 5, bottom-left corner)."""
+        from core.debug_display import get_debug_manager
+
+        manager = get_debug_manager()
+        if not manager.is_enabled():
+            return
+
+        messages = manager.get_messages()
+        if not messages:
+            return
+
+        # Position in bottom-left corner, above inventory panel
+        x = 10
+        y = Config.VIEWPORT_HEIGHT - 120  # Above inventory panel
+
+        # Render each message with semi-transparent background
+        for i, message in enumerate(messages):
+            # Use small font for compact display
+            surf = self.small_font.render(message, True, (200, 200, 255))
+
+            # Background for readability
+            bg = pygame.Surface((surf.get_width() + 10, surf.get_height() + 4), pygame.SRCALPHA)
+            bg.fill((0, 0, 0, 150))
+            self.screen.blit(bg, (x, y - (i * 22)))
+
+            # Text
+            self.screen.blit(surf, (x + 5, y + 2 - (i * 22)))
 
     def render_inventory_panel(self, character: Character, mouse_pos: Tuple[int, int]):
         panel_rect = pygame.Rect(Config.INVENTORY_PANEL_X, Config.INVENTORY_PANEL_Y,
