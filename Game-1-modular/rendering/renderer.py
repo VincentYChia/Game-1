@@ -2364,6 +2364,35 @@ class Renderer:
             self.screen.blit(surf, (x, y))
             y += surf.get_height() + 15
 
+    def render_debug_messages(self):
+        """Render on-screen debug messages (max 5, bottom-left corner)."""
+        from core.debug_display import get_debug_manager
+
+        manager = get_debug_manager()
+        if not manager.is_enabled():
+            return
+
+        messages = manager.get_messages()
+        if not messages:
+            return
+
+        # Position in bottom-left corner, above inventory panel
+        x = 10
+        y = Config.VIEWPORT_HEIGHT - 120  # Above inventory panel
+
+        # Render each message with semi-transparent background
+        for i, message in enumerate(messages):
+            # Use small font for compact display
+            surf = self.small_font.render(message, True, (200, 200, 255))
+
+            # Background for readability
+            bg = pygame.Surface((surf.get_width() + 10, surf.get_height() + 4), pygame.SRCALPHA)
+            bg.fill((0, 0, 0, 150))
+            self.screen.blit(bg, (x, y - (i * 22)))
+
+            # Text
+            self.screen.blit(surf, (x + 5, y + 2 - (i * 22)))
+
     def render_inventory_panel(self, character: Character, mouse_pos: Tuple[int, int]):
         panel_rect = pygame.Rect(Config.INVENTORY_PANEL_X, Config.INVENTORY_PANEL_Y,
                                  Config.INVENTORY_PANEL_WIDTH, Config.INVENTORY_PANEL_HEIGHT)

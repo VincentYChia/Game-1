@@ -1041,7 +1041,7 @@ class Character:
 
     def get_weapon_damage(self) -> float:
         """
-        Get average weapon damage from currently selected weapon/tool.
+        Get average weapon damage from currently selected weapon/tool INCLUDING ENCHANTMENTS.
 
         If player has selected a slot via TAB, use that slot's damage.
         Otherwise, use mainHand (backward compatibility).
@@ -1050,10 +1050,12 @@ class Character:
         if hasattr(self, '_selected_slot') and self._selected_slot:
             selected_item = self.equipment.slots.get(self._selected_slot)
             if selected_item and selected_item.damage:
-                if isinstance(selected_item.damage, tuple):
-                    return (selected_item.damage[0] + selected_item.damage[1]) / 2.0
+                # Use get_actual_damage() to include enchantment bonuses
+                actual_damage = selected_item.get_actual_damage()
+                if isinstance(actual_damage, tuple):
+                    return (actual_damage[0] + actual_damage[1]) / 2.0
                 else:
-                    return float(selected_item.damage)
+                    return float(actual_damage)
 
         # Otherwise, default to mainHand (backward compatibility)
         damage_range = self.equipment.get_weapon_damage()

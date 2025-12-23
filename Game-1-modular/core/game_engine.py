@@ -2888,6 +2888,7 @@ class GameEngine:
                 self.start_menu_buttons = result
             # Render notifications even when menu is open
             self.renderer.render_notifications(self.notifications)
+            self.renderer.render_debug_messages()
             pygame.display.flip()
             return
 
@@ -2906,6 +2907,7 @@ class GameEngine:
         self.renderer.render_skill_hotbar(self.character)
 
         self.renderer.render_notifications(self.notifications)
+        self.renderer.render_debug_messages()
 
         if self.character.class_selection_open:
             result = self.renderer.render_class_selection_ui(self.character, self.mouse_pos)
