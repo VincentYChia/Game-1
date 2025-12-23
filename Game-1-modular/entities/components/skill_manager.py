@@ -10,6 +10,7 @@ from .buffs import ActiveBuff
 from core.effect_executor import get_effect_executor
 from core.tag_debug import get_tag_debugger
 from core.paths import get_resource_path
+from core.debug_display import debug_print
 
 
 class SkillManager:
@@ -236,7 +237,7 @@ class SkillManager:
             return effect_magnitudes.get(magnitude, 0.5)  # Default to 0.5 if not found
 
         level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
-        print(f"⚡ {skill_def.name}{level_indicator}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
+        debug_print(f"⚡ {skill_def.name}{level_indicator}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
 
         # EMPOWER - Increases damage/output
         if effect.effect_type == "empower":
@@ -255,9 +256,9 @@ class SkillManager:
             )
             character.buffs.add_buff(buff)
             if consume_on_use:
-                print(f"   +{int(bonus*100)}% {effect.category} damage for next action")
+                debug_print(f"   +{int(bonus*100)}% {effect.category} damage for next action")
             else:
-                print(f"   +{int(bonus*100)}% {effect.category} damage for {int(duration)}s")
+                debug_print(f"   +{int(bonus*100)}% {effect.category} damage for {int(duration)}s")
 
         # QUICKEN - Increases speed
         elif effect.effect_type == "quicken":

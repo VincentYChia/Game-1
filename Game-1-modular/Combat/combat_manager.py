@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 from .enemy import Enemy, EnemyDatabase, EnemyDefinition, AIState
 from core.effect_executor import get_effect_executor
 from core.tag_debug import get_tag_debugger
+from core.debug_display import debug_print
 
 
 # ============================================================================
@@ -534,6 +535,10 @@ class CombatManager:
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
+        # Consume any consume-on-use buffs (Power Strike, etc.)
+        if hasattr(self.character, 'buffs'):
+            self.character.buffs.consume_buffs_for_action("attack")
+
         # Initialize loot list
         loot = []
 
@@ -626,8 +631,8 @@ class CombatManager:
         Returns:
             (total_damage, any_crit, loot) where loot is empty if enemy didn't die
         """
-        print(f"\n⚔️ PLAYER TAG ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
-        print(f"   Using tags: {tags}")
+        debug_print(f"⚔️  PLAYER TAG ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
+        debug_print(f"   Using tags: {tags}")
 
         # Get all active enemies for geometry calculations
         all_enemies = self.get_all_active_enemies()
@@ -677,6 +682,10 @@ class CombatManager:
             )
 
             print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+            # Consume any consume-on-use buffs (Power Strike, etc.)
+            if hasattr(self.character, 'buffs'):
+                self.character.buffs.consume_buffs_for_action("attack")
 
             # Apply weapon enchantment onHit effects (Fire Aspect, etc.)
             if enemy.is_alive:
