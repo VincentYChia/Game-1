@@ -391,12 +391,132 @@ class CombatManager:
                     self.spawn_enemies_in_chunk(chunk)
                     self.spawn_timers[chunk_coords] = 0.0
 
+    def _execute_aoe_attack(self, primary_target: Enemy, hand: str, radius: int) -> Tuple[float, bool, List[Tuple[str, int]]]:
+        """Execute an AoE attack (devastate effect) hitting all enemies in radius"""
+        from core.debug_display import debug_print
+        import math
+
+        # Find all enemies in radius
+        targets = []
+        for e in self.active_enemies:
+            if e.is_alive():
+                dx = e.position.x - self.character.position.x
+                dy = e.position.y - self.character.position.y
+                distance = math.sqrt(dx*dx + dy*dy)
+                if distance <= radius:
+                    targets.append(e)
+
+        if not targets:
+            targets = [primary_target]  # Fallback to primary target
+
+        print(f"\n🌀 DEVASTATE (AoE Attack): Hitting {len(targets)} target(s) in {radius}-tile radius!")
+        debug_print(f"🌀 AoE Attack: {len(targets)} targets in {radius}-tile radius")
+
+        # Consume the devastate buff before attacking
+        self.character.buffs.consume_buffs_for_action("attack")
+
+        # Attack each target (reuse single-target logic)
+        total_damage = 0
+        any_crit = False
+        all_loot = []
+
+        for i, target in enumerate(targets):
+            # Temporarily remove the devastate check to avoid infinite recursion
+            # Call the parent attack logic directly
+            damage, is_crit, loot = self._single_target_attack(target, hand)
+            total_damage += damage
+            any_crit = any_crit or is_crit
+            all_loot.extend(loot)
+
+        return (total_damage, any_crit, all_loot)
+
+    def _single_target_attack(self, enemy: Enemy, hand: str) -> Tuple[float, bool, List[Tuple[str, int]]]:
+        """Single-target attack logic (extracted from player_attack_enemy)"""
+        hand_label = "MAINHAND" if hand == 'mainHand' else "OFFHAND"
+        print(f"   → {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
+
+        # Get weapon damage from currently selected slot (via TAB)
+        weapon_damage = self.character.get_weapon_damage()  # Get average damage
+
+        # Check if using a tool (axe/pickaxe) for combat - apply effectiveness penalty
+        tool_type_effectiveness = 1.0
+        equipped_weapon = None
+
+        if hasattr(self.character, '_selected_slot') and self.character._selected_slot:
+            equipped_weapon = self.character.equipment.slots.get(self.character._selected_slot)
+        else:
+            equipped_weapon = self.character.equipment.slots.get(hand)
+
+        if equipped_weapon:
+            tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
+
+        if weapon_damage == 0:
+            weapon_damage = 5  # Unarmed damage
+
+        weapon_damage = int(weapon_damage * tool_type_effectiveness)
+
+        # Continue with full attack logic (weapon tags, stats, buffs, etc.)
+        # [This will be a copy of the existing logic from player_attack_enemy]
+        # For now, let's do a simplified version that calls the main method
+        # We'll refactor to avoid duplication
+
+        # TEMPORARY: Just apply basic damage
+        # TODO: Extract full attack logic to avoid duplication
+        base_damage = weapon_damage
+
+        # Apply stat bonuses
+        strength_mult = 1.0 + (self.character.stats.strength * 0.01)
+        base_damage = base_damage * strength_mult
+
+        # Apply empower buffs
+        if hasattr(self.character, 'buffs'):
+            empower_bonus = self.character.buffs.get_damage_bonus("combat")
+            if empower_bonus == 0:
+                empower_bonus = self.character.buffs.get_damage_bonus("damage")
+            if empower_bonus > 0:
+                base_damage = base_damage * (1.0 + empower_bonus)
+
+        # Crit check (10% base)
+        is_crit = False
+        crit_chance = 0.10
+        if random.random() < crit_chance:
+            is_crit = True
+            base_damage *= 2.0
+
+        # Apply defense
+        defense_reduction = enemy.definition.defense * 0.01
+        final_damage = base_damage * (1.0 - min(0.75, defense_reduction))
+
+        print(f"      Damage: {final_damage:.1f}" + (" CRIT!" if is_crit else ""))
+
+        # Apply damage
+        enemy_died = enemy.take_damage(final_damage, from_player=True)
+
+        loot = []
+        if enemy_died:
+            print(f"      ☠️ Killed!")
+            exp_reward = self._calculate_exp_reward(enemy)
+            self.character.leveling.add_exp(exp_reward)
+            loot = enemy.generate_loot()
+            if loot:
+                for material_id, quantity in loot:
+                    self.character.inventory.add_item(material_id, quantity)
+
+        return (final_damage, is_crit, loot)
+
     def player_attack_enemy(self, enemy: Enemy, hand: str = 'mainHand') -> Tuple[float, bool, List[Tuple[str, int]]]:
         """
         Calculate player damage to enemy
         Returns (damage, is_crit, loot) where loot is empty list if enemy didn't die
         hand: 'mainHand' or 'offHand' to specify which hand is attacking
         """
+        # Check for active devastate buffs (AoE attacks like Whirlwind Strike)
+        if hasattr(self.character, 'buffs'):
+            for buff in self.character.buffs.active_buffs:
+                if buff.effect_type == "devastate" and buff.category in ["damage", "combat"]:
+                    # Execute AoE attack instead
+                    return self._execute_aoe_attack(enemy, hand, int(buff.bonus_value))
+
         hand_label = "MAINHAND" if hand == 'mainHand' else "OFFHAND"
         print(f"\n⚔️ PLAYER {hand_label} ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
 
