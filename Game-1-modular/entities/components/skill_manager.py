@@ -399,31 +399,77 @@ class SkillManager:
             resource_type = "HP" if "health" in effect.category or "defense" in effect.category else "MP"
             print(f"   Regenerating {amount:.1f} {resource_type}/s for {int(duration if not consume_on_use else 60)}s")
 
-        # DEVASTATE - Area of effect (instant execution if consume_on_use)
+        # DEVASTATE - Area of effect (instant execution for combat skills)
         elif effect.effect_type == "devastate":
             devastate_values = get_magnitude_value('devastate', effect.magnitude)
             radius = int(apply_level_scaling(devastate_values))
 
-            # TODO: For instant devastate skills, execute immediately using tag system
-            # For now, create buff and let it be applied in combat
-            buff = ActiveBuff(
-                buff_id=f"{skill_def.skill_id}_devastate",
-                name=f"{skill_def.name} (AoE)",
-                effect_type="devastate",
-                category=effect.category,
-                magnitude=effect.magnitude,
-                bonus_value=radius,
-                duration=duration,
-                duration_remaining=duration,
-                consume_on_use=consume_on_use
-            )
-            character.buffs.add_buff(buff)
-            if consume_on_use:
-                print(f"\n🌀 DEVASTATE READY: Next {effect.category} action hits {radius}-tile radius!")
-                print(f"   Buff active: {skill_def.name} (AoE)")
-                debug_print(f"🌀 DEVASTATE: {skill_def.name} ready ({radius}-tile radius)")
+            # For INSTANT combat/damage AoE skills: Execute immediately!
+            if consume_on_use and effect.category in ["damage", "combat"]:
+                print(f"\n🌀 INSTANT AoE: {skill_def.name} executing immediately!")
+                debug_print(f"🌀 INSTANT AoE: {skill_def.name} ({radius}-tile radius)")
+
+                # Get combat manager to execute instant AoE
+                if hasattr(character, '_game_engine'):
+                    combat_mgr = character._game_engine.combat_manager
+                    if combat_mgr and hasattr(combat_mgr, 'execute_instant_player_aoe'):
+                        # Execute instant AoE damage
+                        affected = combat_mgr.execute_instant_player_aoe(
+                            radius=radius,
+                            skill_name=skill_def.name
+                        )
+                        print(f"   ✓ Hit {affected} enemy(s) in {radius}-tile radius!")
+                    else:
+                        print(f"   ⚠️  Combat manager not available, creating buff instead")
+                        # Fallback: create buff
+                        buff = ActiveBuff(
+                            buff_id=f"{skill_def.skill_id}_devastate",
+                            name=f"{skill_def.name} (AoE)",
+                            effect_type="devastate",
+                            category=effect.category,
+                            magnitude=effect.magnitude,
+                            bonus_value=radius,
+                            duration=duration,
+                            duration_remaining=duration,
+                            consume_on_use=consume_on_use
+                        )
+                        character.buffs.add_buff(buff)
+                else:
+                    # Fallback: create buff if game engine not available
+                    print(f"   ⚠️  Instant execution not available, using buff mode")
+                    buff = ActiveBuff(
+                        buff_id=f"{skill_def.skill_id}_devastate",
+                        name=f"{skill_def.name} (AoE)",
+                        effect_type="devastate",
+                        category=effect.category,
+                        magnitude=effect.magnitude,
+                        bonus_value=radius,
+                        duration=duration,
+                        duration_remaining=duration,
+                        consume_on_use=consume_on_use
+                    )
+                    character.buffs.add_buff(buff)
+
+            # For gathering AoE (Chain Harvest) or timed AoE: Create buff
             else:
-                print(f"   {effect.category.capitalize()} affects {radius}-tile radius for {int(duration)}s")
+                buff = ActiveBuff(
+                    buff_id=f"{skill_def.skill_id}_devastate",
+                    name=f"{skill_def.name} (AoE)",
+                    effect_type="devastate",
+                    category=effect.category,
+                    magnitude=effect.magnitude,
+                    bonus_value=radius,
+                    duration=duration,
+                    duration_remaining=duration,
+                    consume_on_use=consume_on_use
+                )
+                character.buffs.add_buff(buff)
+                if consume_on_use:
+                    print(f"\n🌀 DEVASTATE READY: Next {effect.category} action hits {radius}-tile radius!")
+                    print(f"   Buff active: {skill_def.name} (AoE)")
+                    debug_print(f"🌀 DEVASTATE: {skill_def.name} ready ({radius}-tile radius)")
+                else:
+                    print(f"   {effect.category.capitalize()} affects {radius}-tile radius for {int(duration)}s")
 
         # TRANSCEND - Bypass tier restrictions
         elif effect.effect_type == "transcend":

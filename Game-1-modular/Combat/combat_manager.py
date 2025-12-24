@@ -739,6 +739,65 @@ class CombatManager:
                         enemy.status_manager.apply_status(status_tag, status_params, source=self.character)
                         print(f"   🔥 {enchantment.get('name', 'Enchantment')} triggered! Applied {status_tag}")
 
+    def execute_instant_player_aoe(self, radius: int, skill_name: str) -> int:
+        """Execute instant AoE attack around player (for skills like Whirlwind Strike)
+
+        Args:
+            radius: Radius in tiles
+            skill_name: Name of the skill for display
+
+        Returns:
+            Number of enemies affected
+        """
+        import math
+
+        # Get player position
+        player_pos = (self.character.position.x, self.character.position.y)
+
+        # Find all enemies in radius
+        affected_enemies = []
+        all_enemies = self.get_all_active_enemies()
+
+        for enemy in all_enemies:
+            if enemy.is_alive:
+                dx = enemy.position[0] - player_pos[0]
+                dy = enemy.position[1] - player_pos[1]
+                distance = math.sqrt(dx*dx + dy*dy)
+                if distance <= radius:
+                    affected_enemies.append(enemy)
+
+        if not affected_enemies:
+            print(f"   ⚠️  No enemies in {radius}-tile radius")
+            return 0
+
+        print(f"\n🌀 {skill_name}: Hitting {len(affected_enemies)} enemy(s) in {radius}-tile radius!")
+        debug_print(f"🌀 {skill_name}: {len(affected_enemies)} enemies")
+
+        # Execute tag-based AoE attack on each enemy
+        # Use physical damage with circle geometry
+        for enemy in affected_enemies:
+            # Get weapon damage type tags
+            equipped_weapon = self.character.equipment.slots.get('mainHand')
+            damage_tags = ['physical']  # Default
+            if equipped_weapon and hasattr(equipped_weapon, 'effect_tags'):
+                # Keep damage type tags from weapon
+                damage_types = ['physical', 'fire', 'ice', 'lightning', 'poison', 'arcane', 'shadow', 'holy', 'chaos']
+                damage_tags = [tag for tag in equipped_weapon.effect_tags if tag in damage_types]
+                if not damage_tags:
+                    damage_tags = ['physical']
+
+            # Execute attack with circle geometry
+            tags = damage_tags + ['circle']
+            params = {
+                'baseDamage': self.character.get_weapon_damage() or 10,
+                'circle_radius': radius
+            }
+
+            # Use the tag-based attack system
+            self.player_attack_enemy_with_tags(enemy, tags, params)
+
+        return len(affected_enemies)
+
     def _execute_tag_attack_aoe(self, primary_target: Enemy, tags: List[str], params: dict) -> Tuple[float, bool, List[Tuple[str, int]]]:
         """Execute AoE attack using tag system (for devastate buffs like Whirlwind Strike)"""
         from core.debug_display import debug_print

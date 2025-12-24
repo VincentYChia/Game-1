@@ -504,14 +504,9 @@ class Enemy:
             self.ai_state = AIState.CHASE
             return
 
-        # Check for special ability usage (before normal attack)
-        ability = self.can_use_special_ability(dist_to_player, player_position)
-        if ability:
-            # Use special ability with tag-based effects
-            success = self.use_special_ability(ability, target=None, available_targets=[])
-            if success:
-                # Detailed message printed in use_special_ability method
-                return  # Ability used, skip normal attack this frame
+        # NOTE: Special ability usage is now handled by combat_manager
+        # combat_manager.update() calls enemy.use_special_ability with proper target/available_targets
+        # Removed duplicate call here that was passing target=None, available_targets=[]
 
         # Attack cooldown handled by combat manager
         # Enemy just faces player and waits for attack cooldown
