@@ -1105,8 +1105,16 @@ class Character:
 
         return True, "OK"
 
-    def take_damage(self, damage: float):
-        """Take damage from enemy"""
+    def take_damage(self, damage: float, damage_type: str = "physical", **kwargs):
+        """
+        Take damage from enemy
+
+        Args:
+            damage: Amount of damage to take
+            damage_type: Type of damage (physical, fire, poison, etc.)
+            **kwargs: Additional context (source, tags, context) for advanced damage systems
+        """
+        # Apply damage
         self.health -= damage
         if self.health <= 0:
             self.health = 0
