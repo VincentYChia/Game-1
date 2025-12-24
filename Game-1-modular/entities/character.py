@@ -622,7 +622,7 @@ class Character:
         targets = []
         for res in all_resources:
             # Must match tool requirement and not be depleted
-            if res.required_tool == primary_resource.required_tool and not res.is_depleted:
+            if res.required_tool == primary_resource.required_tool and not res.depleted:
                 dx = res.position.x - self.position.x
                 dy = res.position.y - self.position.y
                 distance = math.sqrt(dx*dx + dy*dy)
@@ -724,12 +724,15 @@ class Character:
 
         # Check for active devastate buffs (AoE gathering like Chain Harvest)
         if hasattr(self, 'buffs') and nearby_resources:
+            # Determine activity type from resource
+            activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
+
             for buff in self.buffs.active_buffs:
-                if buff.effect_type == "devastate" and buff.category in ["mining", "forestry", "fishing", "gathering"]:
+                # Must be devastate type AND match the activity category (or be generic 'gathering')
+                if buff.effect_type == "devastate" and (buff.category == activity or buff.category == "gathering"):
                     # Execute AoE gathering instead of single-node
                     result = self._execute_aoe_gathering(resource, int(buff.bonus_value), nearby_resources, equipped_tool)
                     # Still record activity/XP/titles for AoE gathering
-                    activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
                     self.activities.record_activity(activity, 1)
                     new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
                     if new_title:
