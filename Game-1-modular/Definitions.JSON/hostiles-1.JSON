@@ -5,6 +5,320 @@
     "note": "Stats are PLACEHOLDERS for balance testing"
   },
 
+  "abilities": [
+    {
+      "abilityId": "howl_buff",
+      "name": "Rallying Howl",
+      "tags": ["circle", "ally", "empower", "haste"],
+      "effectParams": {
+        "circle_radius": 10.0,
+        "empower_percent": 0.2,
+        "haste_speed_bonus": 0.15,
+        "duration": 15.0
+      },
+      "cooldown": 30.0,
+      "triggerConditions": {
+        "healthThreshold": 0.5,
+        "allyCount": 2
+      }
+    },
+    {
+      "abilityId": "leap_attack",
+      "name": "Pounce",
+      "tags": ["physical", "single", "bleed"],
+      "effectParams": {
+        "baseDamage": 35,
+        "bleed_duration": 6.0,
+        "bleed_damage_per_second": 5.0,
+        "leapRange": 8.0
+      },
+      "cooldown": 12.0,
+      "triggerConditions": {
+        "distanceMin": 4.0,
+        "distanceMax": 8.0
+      }
+    },
+    {
+      "abilityId": "acid_damage_over_time",
+      "name": "Acid Splash",
+      "tags": ["poison", "circle", "poison_status"],
+      "effectParams": {
+        "baseDamage": 25,
+        "circle_radius": 3.0,
+        "poison_duration": 10.0,
+        "poison_damage_per_second": 8.0
+      },
+      "cooldown": 15.0,
+      "triggerConditions": {
+        "healthThreshold": 0.7
+      }
+    },
+    {
+      "abilityId": "split_on_damage",
+      "name": "Mitosis",
+      "tags": ["summon", "self"],
+      "effectParams": {
+        "summonCount": 2,
+        "summonId": "slime_tiny",
+        "healthPercent": 0.5
+      },
+      "cooldown": 60.0,
+      "triggerConditions": {
+        "healthThreshold": 0.5,
+        "oncePerFight": true
+      }
+    },
+    {
+      "abilityId": "elemental_burst",
+      "name": "Elemental Burst",
+      "tags": ["arcane", "circle", "knockback"],
+      "effectParams": {
+        "baseDamage": 50,
+        "circle_radius": 5.0,
+        "knockback_distance": 3.0
+      },
+      "cooldown": 20.0,
+      "triggerConditions": {
+        "healthThreshold": 0.3
+      }
+    },
+    {
+      "abilityId": "charge_attack",
+      "name": "Charge",
+      "tags": ["physical", "beam", "stun"],
+      "effectParams": {
+        "baseDamage": 40,
+        "beam_range": 12.0,
+        "beam_width": 2.0,
+        "stun_duration": 2.0,
+        "chargeSpeed": 3.0
+      },
+      "cooldown": 18.0,
+      "triggerConditions": {
+        "distanceMin": 6.0
+      }
+    },
+    {
+      "abilityId": "earthquake_stomp",
+      "name": "Earthquake Stomp",
+      "tags": ["physical", "circle", "stun"],
+      "effectParams": {
+        "baseDamage": 60,
+        "circle_radius": 6.0,
+        "stun_duration": 3.0
+      },
+      "cooldown": 25.0,
+      "triggerConditions": {
+        "healthThreshold": 0.4,
+        "enemyCount": 1
+      }
+    },
+    {
+      "abilityId": "shell_shield",
+      "name": "Defensive Shell",
+      "tags": ["self", "shield", "fortify"],
+      "effectParams": {
+        "shield_health": 200,
+        "fortify_damage_reduction": 0.5,
+        "duration": 10.0
+      },
+      "cooldown": 40.0,
+      "triggerConditions": {
+        "healthThreshold": 0.3
+      }
+    },
+    {
+      "abilityId": "rampage",
+      "name": "Rampage",
+      "tags": ["self", "haste", "empower", "enrage"],
+      "effectParams": {
+        "haste_speed_bonus": 0.4,
+        "empower_percent": 0.5,
+        "duration": 15.0
+      },
+      "cooldown": 45.0,
+      "triggerConditions": {
+        "healthThreshold": 0.2
+      }
+    },
+    {
+      "abilityId": "ground_slam",
+      "name": "Ground Slam",
+      "tags": ["physical", "cone", "knockback"],
+      "effectParams": {
+        "baseDamage": 70,
+        "cone_angle": 90.0,
+        "cone_range": 8.0,
+        "knockback_distance": 4.0
+      },
+      "cooldown": 20.0,
+      "triggerConditions": {
+        "enemyCount": 2
+      }
+    },
+    {
+      "abilityId": "stone_armor",
+      "name": "Stone Armor",
+      "tags": ["self", "fortify", "slow"],
+      "effectParams": {
+        "fortify_damage_reduction": 0.6,
+        "slow_percent": 0.3,
+        "duration": 12.0
+      },
+      "cooldown": 35.0,
+      "triggerConditions": {
+        "healthThreshold": 0.5
+      }
+    },
+    {
+      "abilityId": "crystal_beam",
+      "name": "Crystal Beam",
+      "tags": ["arcane", "beam", "pierce"],
+      "effectParams": {
+        "baseDamage": 80,
+        "beam_range": 15.0,
+        "beam_width": 1.5,
+        "pierce_count": 5
+      },
+      "cooldown": 15.0,
+      "triggerConditions": {
+        "distanceMin": 5.0
+      }
+    },
+    {
+      "abilityId": "refraction_shield",
+      "name": "Refraction Shield",
+      "tags": ["self", "shield", "reflect"],
+      "effectParams": {
+        "shield_health": 150,
+        "reflect_percent": 0.5,
+        "duration": 8.0
+      },
+      "cooldown": 30.0,
+      "triggerConditions": {
+        "healthThreshold": 0.6
+      }
+    },
+    {
+      "abilityId": "summon_shards",
+      "name": "Summon Crystal Shards",
+      "tags": ["summon", "circle"],
+      "effectParams": {
+        "summonCount": 3,
+        "summonId": "crystal_shard_minion",
+        "circle_radius": 5.0
+      },
+      "cooldown": 40.0,
+      "triggerConditions": {
+        "healthThreshold": 0.5,
+        "oncePerFight": true
+      }
+    },
+    {
+      "abilityId": "phase_shift",
+      "name": "Phase Shift",
+      "tags": ["self", "teleport", "invisible"],
+      "effectParams": {
+        "teleport_range": 10.0,
+        "invisible_duration": 3.0
+      },
+      "cooldown": 20.0,
+      "triggerConditions": {
+        "healthThreshold": 0.7,
+        "maxUsesPerFight": 3
+      }
+    },
+    {
+      "abilityId": "life_drain",
+      "name": "Life Drain",
+      "tags": ["shadow", "cone", "lifesteal"],
+      "effectParams": {
+        "baseDamage": 50,
+        "cone_angle": 60.0,
+        "cone_range": 10.0,
+        "lifesteal_percent": 0.8
+      },
+      "cooldown": 18.0,
+      "triggerConditions": {
+        "healthThreshold": 0.4
+      }
+    },
+    {
+      "abilityId": "teleport",
+      "name": "Teleport",
+      "tags": ["self", "teleport"],
+      "effectParams": {
+        "teleport_range": 12.0,
+        "minDistance": 6.0
+      },
+      "cooldown": 12.0,
+      "triggerConditions": {
+        "distanceMax": 3.0
+      }
+    },
+    {
+      "abilityId": "reality_warp",
+      "name": "Reality Warp",
+      "tags": ["chaos", "circle", "confuse", "vulnerable"],
+      "effectParams": {
+        "baseDamage": 60,
+        "circle_radius": 8.0,
+        "confuse_duration": 5.0,
+        "vulnerable_percent": 0.3,
+        "duration": 10.0
+      },
+      "cooldown": 30.0,
+      "triggerConditions": {
+        "healthThreshold": 0.5
+      }
+    },
+    {
+      "abilityId": "void_rift",
+      "name": "Void Rift",
+      "tags": ["shadow", "circle", "pull"],
+      "effectParams": {
+        "baseDamage": 70,
+        "circle_radius": 10.0,
+        "pull_strength": 5.0,
+        "duration": 4.0
+      },
+      "cooldown": 25.0,
+      "triggerConditions": {
+        "enemyCount": 1
+      }
+    },
+    {
+      "abilityId": "temporal_distortion",
+      "name": "Temporal Distortion",
+      "tags": ["arcane", "circle", "slow", "silence"],
+      "effectParams": {
+        "circle_radius": 12.0,
+        "slow_percent": 0.6,
+        "silence_duration": 6.0,
+        "duration": 8.0
+      },
+      "cooldown": 35.0,
+      "triggerConditions": {
+        "healthThreshold": 0.3
+      }
+    },
+    {
+      "abilityId": "chaos_burst",
+      "name": "Chaos Burst",
+      "tags": ["chaos", "chain", "random"],
+      "effectParams": {
+        "baseDamage": 90,
+        "chain_count": 4,
+        "chain_range": 8.0,
+        "chain_falloff": 0.1
+      },
+      "cooldown": 20.0,
+      "triggerConditions": {
+        "healthThreshold": 0.2
+      }
+    }
+  ],
+
   "enemies": [
     {
       "metadata": {

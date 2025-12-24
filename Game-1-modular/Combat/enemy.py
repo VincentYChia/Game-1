@@ -43,10 +43,19 @@ class DropDefinition:
 class SpecialAbility:
     """Tag-based special attack for enemies"""
     ability_id: str
+    name: str
     cooldown: float  # Seconds between uses
     tags: List[str]  # Effect tags (e.g., ["fire", "circle", "burn"])
-    params: Dict[str, Any]  # Effect parameters
+    params: Dict[str, Any]  # Effect parameters (effectParams from JSON)
+
+    # Trigger conditions
     health_threshold: float = 1.0  # Use when HP below this (1.0 = always, 0.5 = below 50%)
+    distance_min: float = 0.0  # Minimum distance to target
+    distance_max: float = 999.0  # Maximum distance to target
+    enemy_count: int = 0  # Minimum number of enemies nearby
+    ally_count: int = 0  # Minimum number of allies nearby
+    once_per_fight: bool = False  # Can only be used once per combat
+    max_uses_per_fight: int = 0  # Maximum uses per combat (0 = unlimited)
     priority: int = 0  # Higher priority abilities used first
 
 @dataclass
@@ -122,6 +131,27 @@ class EnemyDatabase:
             with open(filepath, 'r') as f:
                 data = json.load(f)
 
+            # Load ability definitions first (from top-level "abilities" array)
+            ability_map: Dict[str, SpecialAbility] = {}
+            for ability_data in data.get('abilities', []):
+                trigger = ability_data.get('triggerConditions', {})
+                ability = SpecialAbility(
+                    ability_id=ability_data.get('abilityId', ''),
+                    name=ability_data.get('name', ''),
+                    cooldown=ability_data.get('cooldown', 10.0),
+                    tags=ability_data.get('tags', []),
+                    params=ability_data.get('effectParams', {}),
+                    health_threshold=trigger.get('healthThreshold', 1.0),
+                    distance_min=trigger.get('distanceMin', 0.0),
+                    distance_max=trigger.get('distanceMax', 999.0),
+                    enemy_count=trigger.get('enemyCount', 0),
+                    ally_count=trigger.get('allyCount', 0),
+                    once_per_fight=trigger.get('oncePerFight', False),
+                    max_uses_per_fight=trigger.get('maxUsesPerFight', 0),
+                    priority=ability_data.get('priority', 0)
+                )
+                ability_map[ability.ability_id] = ability
+
             for enemy_data in data.get('enemies', []):
                 # Parse stats
                 stats = enemy_data.get('stats', {})
@@ -153,17 +183,14 @@ class EnemyDatabase:
                     special_abilities=ai_data.get('specialAbilities', [])
                 )
 
-                # Parse special abilities (tag-based attacks)
+                # Parse special abilities (look up by ID from aiPattern.specialAbilities)
                 special_abilities = []
-                for ability_data in enemy_data.get('specialAbilities', []):
-                    special_abilities.append(SpecialAbility(
-                        ability_id=ability_data.get('abilityId', ''),
-                        cooldown=ability_data.get('cooldown', 10.0),
-                        tags=ability_data.get('tags', []),
-                        params=ability_data.get('params', {}),
-                        health_threshold=ability_data.get('healthThreshold', 1.0),
-                        priority=ability_data.get('priority', 0)
-                    ))
+                ability_ids = ai_data.get('specialAbilities', [])
+                for ability_id in ability_ids:
+                    if ability_id in ability_map:
+                        special_abilities.append(ability_map[ability_id])
+                    else:
+                        print(f"⚠️ Warning: Enemy {enemy_data.get('enemyId')} references unknown ability '{ability_id}'")
 
                 # Parse metadata
                 metadata = enemy_data.get('metadata', {})
@@ -289,6 +316,11 @@ class Enemy:
         # Special ability cooldowns (dict: ability_id -> cooldown_remaining)
         self.ability_cooldowns: Dict[str, float] = {
             ability.ability_id: 0.0 for ability in definition.special_abilities
+        }
+
+        # Special ability usage tracking (dict: ability_id -> uses_this_fight)
+        self.ability_uses_this_fight: Dict[str, int] = {
+            ability.ability_id: 0 for ability in definition.special_abilities
         }
 
     def _get_initial_state(self) -> AIState:
@@ -472,6 +504,15 @@ class Enemy:
             self.ai_state = AIState.CHASE
             return
 
+        # Check for special ability usage (before normal attack)
+        ability = self.can_use_special_ability(dist_to_player, player_position)
+        if ability:
+            # Use special ability with tag-based effects
+            success = self.use_special_ability(ability, target=None, available_targets=[])
+            if success:
+                print(f"   🔥 {self.definition.name} used {ability.name}!")
+                return  # Ability used, skip normal attack this frame
+
         # Attack cooldown handled by combat manager
         # Enemy just faces player and waits for attack cooldown
 
@@ -552,8 +593,11 @@ class Enemy:
         damage = random.uniform(self.definition.damage_min, self.definition.damage_max)
         return damage
 
-    def can_use_special_ability(self) -> Optional[SpecialAbility]:
-        """Check if enemy can use a special ability. Returns ability if available, None otherwise"""
+    def can_use_special_ability(self, dist_to_target: float = 0.0, target_position: Tuple[float, float] = None) -> Optional[SpecialAbility]:
+        """
+        Check if enemy can use a special ability based on trigger conditions.
+        Returns ability if available, None otherwise.
+        """
         if not self.definition.special_abilities:
             return None
 
@@ -579,7 +623,24 @@ class Enemy:
             if self.ability_cooldowns.get(ability.ability_id, 0) > 0:
                 continue
 
-            # Found usable ability!
+            # Check distance conditions
+            if ability.distance_min > 0 and dist_to_target < ability.distance_min:
+                continue
+            if ability.distance_max < 999 and dist_to_target > ability.distance_max:
+                continue
+
+            # Check once-per-fight limitation
+            if ability.once_per_fight and self.ability_uses_this_fight.get(ability.ability_id, 0) > 0:
+                continue
+
+            # Check max-uses-per-fight limitation
+            if ability.max_uses_per_fight > 0 and self.ability_uses_this_fight.get(ability.ability_id, 0) >= ability.max_uses_per_fight:
+                continue
+
+            # TODO: Check enemy_count and ally_count (needs nearby enemy/ally tracking)
+            # For now, these conditions are ignored (will be implemented when needed)
+
+            # All conditions met - found usable ability!
             return ability
 
         return None
@@ -648,5 +709,8 @@ class Enemy:
         if success:
             # Start cooldown
             self.ability_cooldowns[ability.ability_id] = ability.cooldown
+
+            # Track usage (for once-per-fight and max-uses-per-fight limitations)
+            self.ability_uses_this_fight[ability.ability_id] = self.ability_uses_this_fight.get(ability.ability_id, 0) + 1
 
         return success

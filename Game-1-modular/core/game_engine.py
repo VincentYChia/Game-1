@@ -1637,7 +1637,8 @@ class GameEngine:
                 self.add_notification(f"Cannot harvest: {reason}", (255, 100, 100))
                 return
 
-            result = self.character.harvest_resource(resource)
+            # Pass nearby resources for AoE gathering (Chain Harvest skill)
+            result = self.character.harvest_resource(resource, nearby_resources=self.world.resources)
             if result:
                 loot, dmg, is_crit = result
                 self.damage_numbers.append(DamageNumber(dmg, resource.position.copy(), is_crit))
@@ -3114,6 +3115,12 @@ class GameEngine:
 
                 self.add_notification(message, (100, 255, 100))
                 print(f"✅ Minigame crafting complete: {rarity} {out_name} x{output_qty} with stats: {stats}")
+
+            # IMPORTANT: Consume crafting buffs after successful craft
+            # This includes skills like Smith's Focus, Alchemist's Insight, Engineer's Precision, etc.
+            if hasattr(self.character, 'buffs'):
+                self.character.buffs.consume_buffs_for_action("craft", category=activity_type)
+                print(f"   ⚡ Consumed {activity_type} crafting buffs")
 
         # Clear minigame state
         self.active_minigame = None

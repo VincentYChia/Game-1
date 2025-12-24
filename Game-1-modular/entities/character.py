@@ -607,7 +607,112 @@ class Character:
             return False, "Tool broken"
         return True, "OK"
 
-    def harvest_resource(self, resource: NaturalResource):
+    def _execute_aoe_gathering(self, primary_resource: NaturalResource, radius: int, all_resources: list, equipped_tool):
+        """
+        Execute AoE gathering (devastate effect) harvesting all resource nodes in radius
+        Similar to combat's _execute_aoe_attack but for resource gathering
+        """
+        import math
+        from core.debug_display import debug_print
+
+        # Determine activity type from tool
+        activity = 'mining' if primary_resource.required_tool == "pickaxe" else 'forestry'
+
+        # Find all harvestable resources in radius (matching tool type)
+        targets = []
+        for res in all_resources:
+            # Must match tool requirement and not be depleted
+            if res.required_tool == primary_resource.required_tool and not res.is_depleted:
+                dx = res.position.x - self.position.x
+                dy = res.position.y - self.position.y
+                distance = math.sqrt(dx*dx + dy*dy)
+                if distance <= radius:
+                    targets.append(res)
+
+        if not targets:
+            targets = [primary_resource]  # Fallback to primary resource
+
+        print(f"\n🌀 CHAIN HARVEST (AoE Gathering): Harvesting {len(targets)} node(s) in {radius}-tile radius!")
+        debug_print(f"🌀 Chain Harvest: {len(targets)} nodes in {radius}-tile radius")
+
+        # Consume the devastate buff before gathering
+        self.buffs.consume_buffs_for_action("gather", category=activity)
+
+        # Harvest each resource node
+        total_loot = []
+        total_damage = 0
+        any_crit = False
+
+        for i, resource in enumerate(targets):
+            # Call single-node harvest logic (reuse existing logic below)
+            result = self._single_node_harvest(resource, equipped_tool, activity)
+            if result:
+                loot, dmg, is_crit = result
+                if loot:
+                    total_loot.extend(loot)
+                total_damage += dmg
+                any_crit = any_crit or is_crit
+
+        print(f"   ✓ Total loot: {len(total_loot)} items from {len(targets)} nodes")
+        return (total_loot, total_damage, any_crit) if total_loot else None
+
+    def _single_node_harvest(self, resource: NaturalResource, equipped_tool, activity: str):
+        """Single-node harvest logic (extracted from harvest_resource for reuse in AoE)"""
+        # Calculate base damage from tool's damage stat
+        if isinstance(equipped_tool.damage, tuple):
+            base_damage = (equipped_tool.damage[0] + equipped_tool.damage[1]) // 2
+        else:
+            base_damage = equipped_tool.damage
+
+        # Durability-based effectiveness
+        durability_effectiveness = equipped_tool.get_effectiveness()
+
+        # Tool type effectiveness
+        tool_type_effectiveness = self.get_tool_effectiveness_for_action(equipped_tool, activity)
+
+        # Combine effectiveness multipliers
+        total_effectiveness = durability_effectiveness * tool_type_effectiveness
+
+        stat_bonus = self.stats.get_bonus('strength' if activity == 'mining' else 'agility')
+        title_bonus = self.titles.get_total_bonus(f'{activity}_damage')
+        buff_bonus = self.buffs.get_damage_bonus(activity) if hasattr(self, 'buffs') else 0.0
+        damage_mult = 1.0 + stat_bonus + title_bonus + buff_bonus
+
+        crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance')
+        if hasattr(self, 'buffs'):
+            crit_chance += self.buffs.get_total_bonus('pierce', activity)
+
+        is_crit = random.random() < crit_chance
+        damage = int(base_damage * total_effectiveness * damage_mult)
+        actual_damage, depleted = resource.take_damage(damage, is_crit)
+
+        # Reduce tool durability
+        if not Config.DEBUG_INFINITE_RESOURCES:
+            equipped_tool.durability_current = max(0, equipped_tool.durability_current - 1)
+
+        loot = None
+        if depleted:
+            loot = resource.get_loot()
+            processed_loot = []
+            for item_id, qty in loot:
+                # Luck-based bonus
+                if random.random() < (self.stats.luck * 0.02 + self.class_system.get_bonus('resource_quality')):
+                    qty += 1
+
+                # Enrich buff bonuses
+                if hasattr(self, 'buffs'):
+                    enrich_bonus = int(self.buffs.get_total_bonus('enrich', activity))
+                    if enrich_bonus > 0:
+                        qty += enrich_bonus
+
+                processed_loot.append((item_id, qty))
+                self.inventory.add_item(item_id, qty)
+
+            return (processed_loot, actual_damage, is_crit)
+
+        return None
+
+    def harvest_resource(self, resource: NaturalResource, nearby_resources: list = None):
         can_harvest, reason = self.can_harvest_resource(resource)
         if not can_harvest:
             return None
@@ -617,38 +722,29 @@ class Character:
         if not equipped_tool:
             return None
 
-        # Calculate base damage from tool's damage stat
-        if isinstance(equipped_tool.damage, tuple):
-            base_damage = (equipped_tool.damage[0] + equipped_tool.damage[1]) // 2
-        else:
-            base_damage = equipped_tool.damage
+        # Check for active devastate buffs (AoE gathering like Chain Harvest)
+        if hasattr(self, 'buffs') and nearby_resources:
+            for buff in self.buffs.active_buffs:
+                if buff.effect_type == "devastate" and buff.category in ["mining", "forestry", "fishing", "gathering"]:
+                    # Execute AoE gathering instead of single-node
+                    result = self._execute_aoe_gathering(resource, int(buff.bonus_value), nearby_resources, equipped_tool)
+                    # Still record activity/XP/titles for AoE gathering
+                    activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
+                    self.activities.record_activity(activity, 1)
+                    new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
+                    if new_title:
+                        print(f"🏆 TITLE EARNED: {new_title.name} - {new_title.bonus_description}")
+                    leveled_up = self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
+                    if leveled_up:
+                        self.check_and_notify_new_skills()
+                    self.time_since_last_damage_dealt = 0.0
+                    return result
 
-        # Durability-based effectiveness (0.5 to 1.0 based on condition)
-        durability_effectiveness = equipped_tool.get_effectiveness()
-
-        # Tool type effectiveness (1.0 if right tool, 0.25 if wrong tool)
+        # Normal single-node harvest - use extracted helper method
         activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
-        tool_type_effectiveness = self.get_tool_effectiveness_for_action(equipped_tool, activity)
+        result = self._single_node_harvest(resource, equipped_tool, activity)
 
-        # Combine effectiveness multipliers
-        total_effectiveness = durability_effectiveness * tool_type_effectiveness
-
-        stat_bonus = self.stats.get_bonus('strength' if activity == 'mining' else 'agility')
-        title_bonus = self.titles.get_total_bonus(f'{activity}_damage')
-        buff_bonus = self.buffs.get_damage_bonus(activity)
-        damage_mult = 1.0 + stat_bonus + title_bonus + buff_bonus
-
-        crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance') + self.buffs.get_total_bonus('pierce', activity)
-        is_crit = random.random() < crit_chance
-        damage = int(base_damage * total_effectiveness * damage_mult)
-        actual_damage, depleted = resource.take_damage(damage, is_crit)
-
-        # Reduce tool durability
-        if not Config.DEBUG_INFINITE_RESOURCES:
-            equipped_tool.durability_current = max(0, equipped_tool.durability_current - 1)
-            if equipped_tool.durability_current <= 0:
-                print("⚠ Tool broke!")
-
+        # Track activities, titles, XP (same as before)
         self.activities.record_activity(activity, 1)
         new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
         if new_title:
@@ -661,26 +757,7 @@ class Character:
         # Reset damage dealt timer (harvesting counts as dealing damage)
         self.time_since_last_damage_dealt = 0.0
 
-        loot = None
-        if depleted:
-            loot = resource.get_loot()
-            for item_id, qty in loot:
-                # Luck-based bonus
-                if random.random() < (self.stats.luck * 0.02 + self.class_system.get_bonus('resource_quality')):
-                    qty += 1
-
-                # SKILL BUFF BONUSES: Check for enrich buffs (bonus items)
-                enrich_bonus = 0
-                if hasattr(self, 'buffs'):
-                    # Check for enrich buff on this activity (mining or forestry)
-                    enrich_bonus = int(self.buffs.get_total_bonus('enrich', activity))
-
-                if enrich_bonus > 0:
-                    qty += enrich_bonus
-                    print(f"   ⚡ Enrich buff: +{enrich_bonus} bonus {item_id}")
-
-                self.inventory.add_item(item_id, qty)
-        return (loot, actual_damage, is_crit)
+        return result
 
     def switch_tool(self):
         """Cycle through equipped tools and weapons (mainHand/offHand → axe → pickaxe)"""
