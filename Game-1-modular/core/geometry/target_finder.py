@@ -68,7 +68,7 @@ class TargetFinder:
 
             return self.find_circle_targets(
                 center,
-                params.get('radius', 3.0),
+                params.get('circle_radius', params.get('radius', 3.0)),  # Check circle_radius first, fallback to radius
                 params.get('max_targets', 0),
                 context, available_entities
             )
