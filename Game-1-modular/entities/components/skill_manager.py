@@ -203,6 +203,8 @@ class SkillManager:
 
     def _apply_skill_effect(self, skill_def, character, player_skill):
         """Apply the skill's effect with level scaling"""
+        from core.debug_display import debug_print
+
         # Check if skill uses tag-based combat system
         if skill_def.combat_tags and len(skill_def.combat_tags) > 0:
             return self._apply_combat_skill(skill_def, character, player_skill)
@@ -419,7 +421,6 @@ class SkillManager:
             if consume_on_use:
                 print(f"\n🌀 DEVASTATE READY: Next {effect.category} action hits {radius}-tile radius!")
                 print(f"   Buff active: {skill_def.name} (AoE)")
-                from core.debug_display import debug_print
                 debug_print(f"🌀 DEVASTATE: {skill_def.name} ready ({radius}-tile radius)")
             else:
                 print(f"   {effect.category.capitalize()} affects {radius}-tile radius for {int(duration)}s")
