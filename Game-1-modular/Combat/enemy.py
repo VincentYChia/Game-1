@@ -510,7 +510,7 @@ class Enemy:
             # Use special ability with tag-based effects
             success = self.use_special_ability(ability, target=None, available_targets=[])
             if success:
-                print(f"   🔥 {self.definition.name} used {ability.name}!")
+                # Detailed message printed in use_special_ability method
                 return  # Ability used, skip normal attack this frame
 
         # Attack cooldown handled by combat manager
@@ -712,5 +712,11 @@ class Enemy:
 
             # Track usage (for once-per-fight and max-uses-per-fight limitations)
             self.ability_uses_this_fight[ability.ability_id] = self.ability_uses_this_fight.get(ability.ability_id, 0) + 1
+
+            # VISIBLE FEEDBACK - Show enemy used ability!
+            print(f"\n⚡💀 ENEMY ABILITY: {self.definition.name} used {ability.name}!")
+            print(f"   Tags: {', '.join(ability.tags)}")
+            from core.debug_display import debug_print
+            debug_print(f"💀 ENEMY ABILITY: {self.definition.name} → {ability.name} ({', '.join(ability.tags)})")
 
         return success

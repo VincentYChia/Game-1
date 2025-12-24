@@ -417,7 +417,10 @@ class SkillManager:
             )
             character.buffs.add_buff(buff)
             if consume_on_use:
-                print(f"   Next {effect.category} action affects {radius}-tile radius")
+                print(f"\n🌀 DEVASTATE READY: Next {effect.category} action hits {radius}-tile radius!")
+                print(f"   Buff active: {skill_def.name} (AoE)")
+                from core.debug_display import debug_print
+                debug_print(f"🌀 DEVASTATE: {skill_def.name} ready ({radius}-tile radius)")
             else:
                 print(f"   {effect.category.capitalize()} affects {radius}-tile radius for {int(duration)}s")
 

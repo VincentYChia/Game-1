@@ -739,6 +739,94 @@ class CombatManager:
                         enemy.status_manager.apply_status(status_tag, status_params, source=self.character)
                         print(f"   🔥 {enchantment.get('name', 'Enchantment')} triggered! Applied {status_tag}")
 
+    def _execute_tag_attack_aoe(self, primary_target: Enemy, tags: List[str], params: dict) -> Tuple[float, bool, List[Tuple[str, int]]]:
+        """Execute AoE attack using tag system (for devastate buffs like Whirlwind Strike)"""
+        from core.debug_display import debug_print
+
+        print(f"🌀 AoE ATTACK via tags: {tags}")
+        debug_print(f"🌀 AoE Attack executing with tags: {tags}")
+
+        # Get all active enemies for geometry
+        all_enemies = self.get_all_active_enemies()
+        alive_enemies = [e for e in all_enemies if e.is_alive]
+
+        # Setup effect parameters with character bonuses
+        effect_params = params.copy()
+
+        # Apply character stat bonuses to base damage
+        if "baseDamage" in effect_params:
+            base_damage = effect_params["baseDamage"]
+
+            # Weapon damage
+            weapon_damage = self.character.get_weapon_damage()
+            if weapon_damage > 0:
+                base_damage += weapon_damage
+
+            # STR multiplier
+            str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
+            base_damage *= str_multiplier
+
+            # Title bonuses
+            if hasattr(self.character, 'activity_tracker'):
+                title_multiplier = 1.0 + self.character.activity_tracker.get_combat_bonus()
+                base_damage *= title_multiplier
+
+            # Skill buff bonuses (empower) - but NOT devastate since we already consumed it
+            if hasattr(self.character, 'buffs'):
+                empower_damage = self.character.buffs.get_damage_bonus('damage')
+                empower_combat = self.character.buffs.get_damage_bonus('combat')
+                skill_bonus = max(empower_damage, empower_combat)
+                if skill_bonus > 0:
+                    base_damage *= (1.0 + skill_bonus)
+                    print(f"   ⚡ Skill buff: +{skill_bonus*100:.0f}% damage")
+
+            effect_params["baseDamage"] = base_damage
+            print(f"   Base damage (with bonuses): {base_damage:.1f}")
+
+        # Execute effect using tag system
+        try:
+            context = self.effect_executor.execute_effect(
+                source=self.character,
+                primary_target=primary_target,
+                tags=tags,
+                params=effect_params,
+                available_entities=alive_enemies
+            )
+
+            print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+            # Apply weapon enchantment onHit effects
+            if primary_target.is_alive:
+                self._apply_weapon_enchantment_effects(primary_target)
+
+            # Track damage and loot
+            total_damage = 0.0
+            loot = []
+
+            # Check for kills and grant rewards
+            for target in context.targets:
+                if not target.is_alive:
+                    total_damage += effect_params.get("baseDamage", 0)
+                    print(f"   💀 {target.definition.name} killed!")
+
+                    # EXP reward
+                    exp_reward = self._calculate_exp_reward(target)
+                    self.character.leveling.add_exp(exp_reward)
+
+                    # Auto-loot
+                    target_loot = target.generate_loot()
+                    if target_loot:
+                        for material_id, quantity in target_loot:
+                            self.character.inventory.add_item(material_id, quantity)
+                            loot.extend(target_loot)
+
+            return (total_damage, False, loot)
+
+        except Exception as e:
+            debug_print(f"⚠️  AoE attack failed: {e}")
+            print(f"   ⚠️  Attack failed: {e}")
+            return (0.0, False, [])
+
     def player_attack_enemy_with_tags(self, enemy: Enemy, tags: List[str], params: dict = None) -> Tuple[float, bool, List[Tuple[str, int]]]:
         """
         Player attacks enemy using tag-based effects system
@@ -751,6 +839,36 @@ class CombatManager:
         Returns:
             (total_damage, any_crit, loot) where loot is empty if enemy didn't die
         """
+        # Check for active devastate buffs (AoE attacks like Whirlwind Strike)
+        # Must check BEFORE normal attack to trigger AoE
+        if hasattr(self.character, 'buffs'):
+            for buff in self.character.buffs.active_buffs:
+                if buff.effect_type == "devastate" and buff.category in ["damage", "combat"]:
+                    # Override tags with AoE geometry
+                    print(f"\n🌀 DEVASTATE BUFF ACTIVE: {buff.name} (radius={int(buff.bonus_value)})")
+
+                    # Build AoE tags - preserve damage type but add circle geometry
+                    aoe_tags = []
+
+                    # Keep damage type tags (physical, fire, etc.)
+                    damage_types = ['physical', 'fire', 'ice', 'lightning', 'poison', 'arcane', 'shadow', 'holy', 'chaos']
+                    for tag in tags:
+                        if tag in damage_types:
+                            aoe_tags.append(tag)
+
+                    # Add AoE geometry
+                    aoe_tags.append('circle')
+
+                    # Set radius in params
+                    aoe_params = params.copy() if params else {}
+                    aoe_params['circle_radius'] = int(buff.bonus_value)
+
+                    # Consume the buff BEFORE executing effect
+                    self.character.buffs.consume_buffs_for_action("attack")
+
+                    # Execute with AoE tags
+                    return self._execute_tag_attack_aoe(enemy, aoe_tags, aoe_params)
+
         debug_print(f"⚔️  PLAYER TAG ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
         debug_print(f"   Using tags: {tags}")
 
