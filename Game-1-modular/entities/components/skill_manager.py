@@ -157,7 +157,7 @@ class SkillManager:
             if skill.current_cooldown > 0:
                 skill.current_cooldown = max(0, skill.current_cooldown - dt)
 
-    def use_skill(self, slot: int, character) -> tuple[bool, str]:
+    def use_skill(self, slot: int, character, combat_manager=None) -> tuple[bool, str]:
         """Use a skill from hotbar slot (0-4). Returns (success, message)"""
         if not (0 <= slot < 5):
             return False, "Invalid slot"
@@ -192,7 +192,7 @@ class SkillManager:
         player_skill.current_cooldown = cooldown_duration
 
         # Apply skill effect (with level scaling)
-        self._apply_skill_effect(skill_def, character, player_skill)
+        self._apply_skill_effect(skill_def, character, player_skill, combat_manager)
 
         # Award skill EXP (100 EXP per activation)
         leveled_up, new_level = player_skill.add_exp(100)
@@ -201,7 +201,7 @@ class SkillManager:
 
         return True, f"Used {skill_def.name}!"
 
-    def _apply_skill_effect(self, skill_def, character, player_skill):
+    def _apply_skill_effect(self, skill_def, character, player_skill, combat_manager=None):
         """Apply the skill's effect with level scaling"""
         from core.debug_display import debug_print
 
@@ -409,34 +409,17 @@ class SkillManager:
                 print(f"\n🌀 INSTANT AoE: {skill_def.name} executing immediately!")
                 debug_print(f"🌀 INSTANT AoE: {skill_def.name} ({radius}-tile radius)")
 
-                # Get combat manager to execute instant AoE
-                if hasattr(character, '_game_engine'):
-                    combat_mgr = character._game_engine.combat_manager
-                    if combat_mgr and hasattr(combat_mgr, 'execute_instant_player_aoe'):
-                        # Execute instant AoE damage
-                        affected = combat_mgr.execute_instant_player_aoe(
-                            radius=radius,
-                            skill_name=skill_def.name
-                        )
-                        print(f"   ✓ Hit {affected} enemy(s) in {radius}-tile radius!")
-                    else:
-                        print(f"   ⚠️  Combat manager not available, creating buff instead")
-                        # Fallback: create buff
-                        buff = ActiveBuff(
-                            buff_id=f"{skill_def.skill_id}_devastate",
-                            name=f"{skill_def.name} (AoE)",
-                            effect_type="devastate",
-                            category=effect.category,
-                            magnitude=effect.magnitude,
-                            bonus_value=radius,
-                            duration=duration,
-                            duration_remaining=duration,
-                            consume_on_use=consume_on_use
-                        )
-                        character.buffs.add_buff(buff)
+                # Execute instant AoE if combat manager available
+                if combat_manager and hasattr(combat_manager, 'execute_instant_player_aoe'):
+                    # Execute instant AoE damage
+                    affected = combat_manager.execute_instant_player_aoe(
+                        radius=radius,
+                        skill_name=skill_def.name
+                    )
+                    print(f"   ✓ Hit {affected} enemy(s) in {radius}-tile radius!")
                 else:
-                    # Fallback: create buff if game engine not available
-                    print(f"   ⚠️  Instant execution not available, using buff mode")
+                    # Fallback: create buff if combat manager not available
+                    print(f"   ⚠️  Combat manager not available, creating buff instead")
                     buff = ActiveBuff(
                         buff_id=f"{skill_def.skill_id}_devastate",
                         name=f"{skill_def.name} (AoE)",

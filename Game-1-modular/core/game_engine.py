@@ -455,31 +455,31 @@ class GameEngine:
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
-                    success, msg = self.character.skills.use_skill(0, self.character)
+                    success, msg = self.character.skills.use_skill(0, self.character, self.combat_manager)
                     if success:
                         self.add_notification(msg, (150, 255, 150))
                     else:
                         self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_2:
-                    success, msg = self.character.skills.use_skill(1, self.character)
+                    success, msg = self.character.skills.use_skill(1, self.character, self.combat_manager)
                     if success:
                         self.add_notification(msg, (150, 255, 150))
                     else:
                         self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_3:
-                    success, msg = self.character.skills.use_skill(2, self.character)
+                    success, msg = self.character.skills.use_skill(2, self.character, self.combat_manager)
                     if success:
                         self.add_notification(msg, (150, 255, 150))
                     else:
                         self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_4:
-                    success, msg = self.character.skills.use_skill(3, self.character)
+                    success, msg = self.character.skills.use_skill(3, self.character, self.combat_manager)
                     if success:
                         self.add_notification(msg, (150, 255, 150))
                     else:
                         self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_5:
-                    success, msg = self.character.skills.use_skill(4, self.character)
+                    success, msg = self.character.skills.use_skill(4, self.character, self.combat_manager)
                     if success:
                         self.add_notification(msg, (150, 255, 150))
                     else:
