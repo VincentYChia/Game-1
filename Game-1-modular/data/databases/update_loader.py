@@ -150,8 +150,7 @@ def load_material_updates(project_root: Path):
     installed = get_installed_updates(project_root)
 
     if not installed:
-        print("   No updates installed for materials")
-        return
+        return  # Silent - materials are optional
 
     print(f"\n🔄 Loading materials from {len(installed)} update(s)...")
 
@@ -172,6 +171,58 @@ def load_material_updates(project_root: Path):
                 else:
                     # For consumables/devices, use load_stackable_items
                     db.load_stackable_items(str(file))
+            except Exception as e:
+                print(f"   ⚠️  Error loading {file.name}: {e}")
+
+
+def load_recipe_updates(project_root: Path):
+    """Load recipes from all installed updates"""
+    from data.databases.recipe_db import RecipeDatabase
+    db = RecipeDatabase.get_instance()
+    installed = get_installed_updates(project_root)
+
+    if not installed:
+        return  # Silent - recipes are optional
+
+    print(f"\n🔄 Loading recipes from {len(installed)} update(s)...")
+
+    for update_name in installed:
+        update_dir = project_root / update_name
+        if not update_dir.exists():
+            print(f"   ⚠️  Update directory not found: {update_name}")
+            continue
+
+        # Scan for recipe files
+        patterns = ['*recipes*.JSON', '*crafting*.JSON']
+        files = []
+        for pattern in patterns:
+            files.extend(update_dir.glob(pattern))
+
+        for file in files:
+            try:
+                print(f"   📜 Loading: {update_name}/{file.name}")
+
+                # Determine station type from filename
+                filename_lower = file.name.lower()
+                if 'smithing' in filename_lower:
+                    station_type = 'smithing'
+                elif 'alchemy' in filename_lower:
+                    station_type = 'alchemy'
+                elif 'refining' in filename_lower:
+                    station_type = 'refining'
+                elif 'engineering' in filename_lower:
+                    station_type = 'engineering'
+                elif 'adornment' in filename_lower or 'enchanting' in filename_lower:
+                    station_type = 'adornments'
+                else:
+                    # Try to auto-detect from content or default to smithing
+                    station_type = 'smithing'
+                    print(f"      ⚠️  Could not detect station type, defaulting to smithing")
+
+                # Load recipes using the internal _load_file method
+                count = db._load_file(str(file), station_type)
+                print(f"      ✓ Loaded {count} recipes for {station_type}")
+
             except Exception as e:
                 print(f"   ⚠️  Error loading {file.name}: {e}")
 
@@ -201,6 +252,7 @@ def load_all_updates(project_root: Path = None):
     load_skill_updates(project_root)
     load_enemy_updates(project_root)
     load_material_updates(project_root)
+    load_recipe_updates(project_root)
 
     print(f"\n✅ Update-N packages loaded successfully")
     print("="*70 + "\n")

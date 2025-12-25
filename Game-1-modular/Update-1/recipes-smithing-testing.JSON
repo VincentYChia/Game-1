@@ -1,0 +1,65 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Smithing recipes for Update-1 test weapons",
+    "note": "These recipes allow crafting of tag-driven test weapons at smithing stations"
+  },
+
+  "recipes": [
+    {
+      "recipeId": "recipe_lightning_chain_whip",
+      "outputId": "lightning_chain_whip",
+      "outputQty": 1,
+      "stationTier": 3,
+      "inputs": [
+        {"materialId": "steel_ingot", "quantity": 5},
+        {"materialId": "lightning_essence", "quantity": 3},
+        {"materialId": "star_crystal", "quantity": 1}
+      ]
+    },
+    {
+      "recipeId": "recipe_inferno_blade",
+      "outputId": "inferno_blade",
+      "outputQty": 1,
+      "stationTier": 3,
+      "inputs": [
+        {"materialId": "steel_ingot", "quantity": 4},
+        {"materialId": "fire_crystal", "quantity": 3},
+        {"materialId": "obsidian", "quantity": 2}
+      ]
+    },
+    {
+      "recipeId": "recipe_void_piercer",
+      "outputId": "void_piercer",
+      "outputQty": 1,
+      "stationTier": 4,
+      "inputs": [
+        {"materialId": "mithril_ingot", "quantity": 3},
+        {"materialId": "void_essence", "quantity": 4},
+        {"materialId": "shadow_crystal", "quantity": 2}
+      ]
+    },
+    {
+      "recipeId": "recipe_frostbite_hammer",
+      "outputId": "frostbite_hammer",
+      "outputQty": 1,
+      "stationTier": 3,
+      "inputs": [
+        {"materialId": "steel_ingot", "quantity": 6},
+        {"materialId": "frost_crystal", "quantity": 3},
+        {"materialId": "granite", "quantity": 3}
+      ]
+    },
+    {
+      "recipeId": "recipe_blood_reaver",
+      "outputId": "blood_reaver",
+      "outputQty": 1,
+      "stationTier": 4,
+      "inputs": [
+        {"materialId": "mithril_ingot", "quantity": 4},
+        {"materialId": "living_ichor", "quantity": 5},
+        {"materialId": "obsidian", "quantity": 2}
+      ]
+    }
+  ]
+}
