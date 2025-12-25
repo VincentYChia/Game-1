@@ -220,15 +220,116 @@ class EffectExecutor:
 
     def _apply_knockback(self, source: Any, target: Any, params: dict):
         """Apply knockback to target"""
-        # TODO: Implement knockback physics
         knockback_distance = params.get('knockback_distance', 2.0)
-        self.debugger.debug(f"Knockback: {knockback_distance} units (not yet implemented)")
+
+        # Get positions
+        source_pos = self._get_position(source)
+        target_pos = self._get_position(target)
+
+        if not source_pos or not target_pos:
+            self.debugger.warning(f"Cannot apply knockback: missing position")
+            return
+
+        # Calculate knockback direction (away from source)
+        dx = target_pos.x - source_pos.x
+        dy = target_pos.y - source_pos.y
+
+        # Normalize direction
+        distance = (dx * dx + dy * dy) ** 0.5
+        if distance < 0.1:  # Too close, use default direction
+            dx, dy = 1.0, 0.0
+        else:
+            dx /= distance
+            dy /= distance
+
+        # Calculate new position
+        new_x = target_pos.x + dx * knockback_distance
+        new_y = target_pos.y + dy * knockback_distance
+
+        # Apply knockback based on entity type
+        if hasattr(target, 'position'):
+            # Character uses Position object
+            if hasattr(target.position, 'x'):
+                target.position.x = new_x
+                target.position.y = new_y
+            # Enemy uses list [x, y, z]
+            elif isinstance(target.position, list):
+                target.position[0] = new_x
+                target.position[1] = new_y
+
+            self.debugger.debug(
+                f"Knockback: {getattr(target, 'name', 'Unknown')} pushed {knockback_distance:.1f} tiles"
+            )
+            print(f"   💨 Knockback! {getattr(target, 'name', 'Target')} pushed back {knockback_distance:.1f} tiles")
+        else:
+            self.debugger.warning(f"Target has no position attribute for knockback")
+
+    def _get_position(self, entity: Any):
+        """Get position from entity"""
+        if not hasattr(entity, 'position'):
+            return None
+
+        pos = entity.position
+
+        # Handle Position object
+        if hasattr(pos, 'x') and hasattr(pos, 'y'):
+            return pos
+
+        # Handle list/tuple [x, y, z]
+        if isinstance(pos, (list, tuple)) and len(pos) >= 2:
+            from data.models.world import Position
+            return Position(pos[0], pos[1], pos[2] if len(pos) > 2 else 0.0)
+
+        return None
 
     def _apply_pull(self, source: Any, target: Any, params: dict):
         """Apply pull to target"""
-        # TODO: Implement pull physics
         pull_distance = params.get('pull_distance', 2.0)
-        self.debugger.debug(f"Pull: {pull_distance} units (not yet implemented)")
+
+        # Get positions
+        source_pos = self._get_position(source)
+        target_pos = self._get_position(target)
+
+        if not source_pos or not target_pos:
+            self.debugger.warning(f"Cannot apply pull: missing position")
+            return
+
+        # Calculate pull direction (toward source)
+        dx = source_pos.x - target_pos.x
+        dy = source_pos.y - target_pos.y
+
+        # Normalize direction
+        distance = (dx * dx + dy * dy) ** 0.5
+        if distance < 0.1:  # Already at source, no pull needed
+            return
+
+        # Don't pull past the source
+        actual_pull = min(pull_distance, distance)
+
+        dx /= distance
+        dy /= distance
+
+        # Calculate new position
+        new_x = target_pos.x + dx * actual_pull
+        new_y = target_pos.y + dy * actual_pull
+
+        # Apply pull based on entity type
+        if hasattr(target, 'position'):
+            # Character uses Position object
+            if hasattr(target.position, 'x'):
+                target.position.x = new_x
+                target.position.y = new_y
+            # Enemy uses list [x, y, z]
+            elif isinstance(target.position, list):
+                target.position[0] = new_x
+                target.position[1] = new_y
+
+            self.debugger.debug(
+                f"Pull: {getattr(target, 'name', 'Unknown')} pulled {actual_pull:.1f} tiles"
+            )
+            print(f"   🧲 Pull! {getattr(target, 'name', 'Target')} pulled {actual_pull:.1f} tiles")
+        else:
+            self.debugger.warning(f"Target has no position attribute for pull")
 
     # Low-level damage/heal functions
     # These should work with the game's entity system
