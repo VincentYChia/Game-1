@@ -119,6 +119,10 @@ class GameEngine:
         SkillDatabase.get_instance().load_from_file(str(get_resource_path("Skills/skills-skills-1.JSON")))
         NPCDatabase.get_instance().load_from_files()  # Load NPCs and Quests
 
+        # Load content from installed Update-N packages
+        from data.databases.update_loader import load_all_updates
+        load_all_updates(get_resource_path(""))
+
         # Initialize crafting subdisciplines (minigames)
         if CRAFTING_MODULES_LOADED:
             print("\nInitializing crafting subdisciplines...")
