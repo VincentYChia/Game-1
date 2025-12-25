@@ -563,6 +563,46 @@ class VulnerableEffect(StatusEffect):
         pass
 
 
+class ShockEffect(StatusEffect):
+    """Lightning damage over time with interrupt potential"""
+
+    def __init__(self, duration: float, params: Dict[str, Any], source: Any = None):
+        super().__init__(
+            status_id="shock",
+            name="Shocked",
+            duration=duration,
+            duration_remaining=duration,
+            max_stacks=params.get('shock_max_stacks', 3),
+            source=source,
+            params=params
+        )
+        self.damage_per_tick = params.get('shock_damage_per_tick', params.get('damage_per_tick', 5.0))
+        self.tick_rate = params.get('shock_tick_rate', params.get('tick_rate', 2.0))
+        self.time_since_last_tick = 0.0
+
+    def on_apply(self, target: Any):
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.add('shock')
+
+    def on_remove(self, target: Any):
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.remove('shock')
+
+    def _apply_periodic_effect(self, dt: float, target: Any):
+        """Apply lightning damage periodically"""
+        self.time_since_last_tick += dt
+
+        # Apply damage every tick_rate seconds
+        if self.time_since_last_tick >= self.tick_rate:
+            damage = self.damage_per_tick * self.stacks
+            if hasattr(target, 'take_damage'):
+                target.take_damage(damage, 'lightning', tags=['shock', 'lightning'], source=self.source)
+            elif hasattr(target, 'current_health'):
+                target.current_health = max(0, target.current_health - damage)
+
+            self.time_since_last_tick = 0.0
+
+
 # ============================================================================
 # STATUS EFFECT FACTORY
 # ============================================================================
@@ -577,6 +617,7 @@ STATUS_EFFECT_CLASSES = {
     'chill': SlowEffect,  # Alias for slow
     'stun': StunEffect,
     'root': RootEffect,
+    'shock': ShockEffect,
     'regeneration': RegenerationEffect,
     'regen': RegenerationEffect,  # Alias
     'shield': ShieldEffect,
