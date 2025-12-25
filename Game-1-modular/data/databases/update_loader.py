@@ -116,6 +116,66 @@ def load_skill_updates(project_root: Path):
                 print(f"   ⚠️  Error loading {file.name}: {e}")
 
 
+def load_enemy_updates(project_root: Path):
+    """Load enemies from all installed updates"""
+    from Combat.enemy import EnemyDatabase
+    db = EnemyDatabase.get_instance()
+    installed = get_installed_updates(project_root)
+
+    if not installed:
+        print("   No updates installed for enemies")
+        return
+
+    print(f"\n🔄 Loading enemies from {len(installed)} update(s)...")
+
+    for update_name in installed:
+        update_dir = project_root / update_name
+        if not update_dir.exists():
+            print(f"   ⚠️  Update directory not found: {update_name}")
+            continue
+
+        files = scan_update_directory(update_dir, 'enemies')
+
+        for file in files:
+            try:
+                print(f"   👾 Loading: {update_name}/{file.name}")
+                db.load_additional_file(str(file))
+            except Exception as e:
+                print(f"   ⚠️  Error loading {file.name}: {e}")
+
+
+def load_material_updates(project_root: Path):
+    """Load materials/consumables/devices from all installed updates"""
+    db = MaterialDatabase.get_instance()
+    installed = get_installed_updates(project_root)
+
+    if not installed:
+        print("   No updates installed for materials")
+        return
+
+    print(f"\n🔄 Loading materials from {len(installed)} update(s)...")
+
+    for update_name in installed:
+        update_dir = project_root / update_name
+        if not update_dir.exists():
+            print(f"   ⚠️  Update directory not found: {update_name}")
+            continue
+
+        files = scan_update_directory(update_dir, 'materials')
+
+        for file in files:
+            try:
+                print(f"   💎 Loading: {update_name}/{file.name}")
+                # Try load_from_file first (for dedicated material JSONs)
+                if 'materials' in file.name.lower():
+                    db.load_from_file(str(file))
+                else:
+                    # For consumables/devices, use load_stackable_items
+                    db.load_stackable_items(str(file))
+            except Exception as e:
+                print(f"   ⚠️  Error loading {file.name}: {e}")
+
+
 def load_all_updates(project_root: Path = None):
     """
     Load all content from installed Update-N packages
@@ -139,7 +199,8 @@ def load_all_updates(project_root: Path = None):
     # Load each database type
     load_equipment_updates(project_root)
     load_skill_updates(project_root)
-    # Add more database loaders as needed
+    load_enemy_updates(project_root)
+    load_material_updates(project_root)
 
     print(f"\n✅ Update-N packages loaded successfully")
     print("="*70 + "\n")

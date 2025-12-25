@@ -109,8 +109,8 @@ def process_items_json(json_path: Path) -> list:
 
         color = COLOR_SCHEMES.get(category, (128, 128, 128))
 
-        # Determine output path
-        output_path = project_root / 'assets' / 'generated_icons' / 'items' / category / f'{item_id}.png'
+        # Determine output path - goes directly to assets/items/
+        output_path = project_root / 'assets' / 'items' / category / f'{item_id}.png'
 
         create_minimal_png(output_path, 64, 64, color)
         created.append(str(output_path.relative_to(project_root)))
@@ -131,8 +131,8 @@ def process_skills_json(json_path: Path) -> list:
     for skill in skills:
         skill_id = skill.get('skillId')
 
-        # Determine output path
-        output_path = project_root / 'assets' / 'generated_icons' / 'skills' / f'{skill_id}.png'
+        # Determine output path - goes directly to assets/skills/
+        output_path = project_root / 'assets' / 'skills' / f'{skill_id}.png'
 
         create_minimal_png(output_path, 64, 64, color)
         created.append(str(output_path.relative_to(project_root)))
@@ -153,8 +153,8 @@ def process_enemies_json(json_path: Path) -> list:
     for enemy in enemies:
         enemy_id = enemy.get('enemyId')
 
-        # Determine output path
-        output_path = project_root / 'assets' / 'generated_icons' / 'enemies' / f'{enemy_id}.png'
+        # Determine output path - goes directly to assets/enemies/
+        output_path = project_root / 'assets' / 'enemies' / f'{enemy_id}.png'
 
         create_minimal_png(output_path, 64, 64, color)
         created.append(str(output_path.relative_to(project_root)))
@@ -167,12 +167,35 @@ def main():
     parser.add_argument('--json', help='Path to specific JSON file to process')
     parser.add_argument('--all-test-content', action='store_true',
                        help='Process all testing-integration JSON files')
+    parser.add_argument('--update', help='Process all JSON files in an Update-N directory (e.g., Update-1)')
 
     args = parser.parse_args()
 
     created_files = []
 
-    if args.all_test_content:
+    if args.update:
+        print(f"\n🎨 Creating placeholder icons for {args.update}...\n")
+
+        update_dir = project_root / args.update
+        if not update_dir.exists():
+            print(f"❌ Error: Update directory not found: {update_dir}")
+            return 1
+
+        # Process all JSON files in the update directory
+        for json_file in update_dir.glob("*.JSON"):
+            print(f"📄 Processing: {json_file.name}")
+
+            # Determine type from filename
+            if 'items' in json_file.name or 'weapons' in json_file.name or 'armor' in json_file.name:
+                created_files.extend(process_items_json(json_file))
+            elif 'skills' in json_file.name.lower():
+                created_files.extend(process_skills_json(json_file))
+            elif 'hostiles' in json_file.name or 'enemies' in json_file.name:
+                created_files.extend(process_enemies_json(json_file))
+            else:
+                print(f"  ⏭️  Skipped (unknown type)")
+
+    elif args.all_test_content:
         print("\n🎨 Creating placeholder icons for all test content...\n")
 
         # Process test items

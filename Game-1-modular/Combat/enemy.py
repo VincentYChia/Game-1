@@ -236,6 +236,119 @@ class EnemyDatabase:
             self._create_placeholders()
             return False
 
+    def load_additional_file(self, filepath: str) -> bool:
+        """Load additional enemies from a file (appends to existing, doesn't replace)"""
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            # Load ability definitions
+            ability_map: Dict[str, SpecialAbility] = {}
+            for ability_data in data.get('abilities', []):
+                trigger = ability_data.get('triggerConditions', {})
+                ability = SpecialAbility(
+                    ability_id=ability_data.get('abilityId', ''),
+                    name=ability_data.get('name', ''),
+                    cooldown=ability_data.get('cooldown', 10.0),
+                    tags=ability_data.get('tags', []),
+                    params=ability_data.get('effectParams', {}),
+                    health_threshold=trigger.get('healthThreshold', 1.0),
+                    distance_min=trigger.get('distanceMin', 0.0),
+                    distance_max=trigger.get('distanceMax', 999.0),
+                    enemy_count=trigger.get('enemyCount', 0),
+                    ally_count=trigger.get('allyCount', 0),
+                    once_per_fight=trigger.get('oncePerFight', False),
+                    max_uses_per_fight=trigger.get('maxUsesPerFight', 0),
+                    priority=ability_data.get('priority', 0)
+                )
+                ability_map[ability.ability_id] = ability
+
+            count = 0
+            for enemy_data in data.get('enemies', []):
+                # Parse stats
+                stats = enemy_data.get('stats', {})
+                damage = stats.get('damage', [5, 10])
+
+                # Parse drops
+                drops = []
+                for drop_data in enemy_data.get('drops', []):
+                    qty = drop_data.get('quantity', [1, 1])
+                    chance_text = drop_data.get('chance', 'low')
+                    chance_val = self.chance_map.get(chance_text, 0.5)
+
+                    drops.append(DropDefinition(
+                        material_id=drop_data.get('materialId', ''),
+                        quantity_min=qty[0] if isinstance(qty, list) else qty,
+                        quantity_max=qty[1] if isinstance(qty, list) else qty,
+                        chance=chance_val
+                    ))
+
+                # Parse AI pattern
+                ai_data = enemy_data.get('aiPattern', {})
+                ai_pattern = AIPattern(
+                    default_state=ai_data.get('defaultState', 'idle'),
+                    aggro_on_damage=ai_data.get('aggroOnDamage', True),
+                    aggro_on_proximity=ai_data.get('aggroOnProximity', False),
+                    flee_at_health=ai_data.get('fleeAtHealth', 0.0),
+                    call_for_help_radius=ai_data.get('callForHelpRadius', 0.0),
+                    pack_coordination=ai_data.get('packCoordination', False),
+                    special_abilities=ai_data.get('specialAbilities', [])
+                )
+
+                # Parse special abilities (look up by ID from aiPattern.specialAbilities)
+                special_abilities = []
+                ability_ids = ai_data.get('specialAbilities', [])
+                for ability_id in ability_ids:
+                    if ability_id in ability_map:
+                        special_abilities.append(ability_map[ability_id])
+                    else:
+                        print(f"⚠️ Warning: Enemy {enemy_data.get('enemyId')} references unknown ability '{ability_id}'")
+
+                # Parse metadata
+                metadata = enemy_data.get('metadata', {})
+                enemy_id = enemy_data.get('enemyId', '')
+
+                # Icon path
+                icon_path = enemy_data.get('iconPath')
+                if not icon_path and enemy_id:
+                    icon_path = f"enemies/{enemy_id}.png"
+
+                # Create definition
+                enemy_def = EnemyDefinition(
+                    enemy_id=enemy_id,
+                    name=enemy_data.get('name', 'Unknown Enemy'),
+                    tier=enemy_data.get('tier', 1),
+                    category=enemy_data.get('category', 'beast'),
+                    behavior=enemy_data.get('behavior', 'passive_patrol'),
+                    max_health=stats.get('health', 50) * 0.1,
+                    damage_min=damage[0] if isinstance(damage, list) else damage,
+                    damage_max=damage[1] if isinstance(damage, list) else damage,
+                    defense=stats.get('defense', 0),
+                    speed=stats.get('speed', 1.0),
+                    aggro_range=stats.get('aggroRange', 5),
+                    attack_speed=stats.get('attackSpeed', 1.0),
+                    drops=drops,
+                    ai_pattern=ai_pattern,
+                    special_abilities=special_abilities,
+                    narrative=metadata.get('narrative', ''),
+                    tags=metadata.get('tags', []),
+                    icon_path=icon_path
+                )
+
+                self.enemies[enemy_def.enemy_id] = enemy_def
+                if enemy_def.tier in self.enemies_by_tier:
+                    self.enemies_by_tier[enemy_def.tier].append(enemy_def)
+                count += 1
+
+            print(f"✓ Loaded {count} additional enemies from {filepath}")
+            return True
+
+        except Exception as e:
+            print(f"⚠ Error loading additional enemies from {filepath}: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
     def _create_placeholders(self):
         """Create basic placeholder enemies if file fails to load"""
         wolf = EnemyDefinition(
