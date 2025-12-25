@@ -1,0 +1,240 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Test skills for comprehensive tag system validation",
+    "note": "These skills test complex combinations of effects and geometries"
+  },
+
+  "skills": [
+    {
+      "skillId": "meteor_strike",
+      "name": "Meteor Strike",
+      "tier": 4,
+      "rarity": "legendary",
+      "categories": ["combat", "fire"],
+      "description": "Call down a meteor that devastates an area and ignites all enemies",
+      "narrative": "You tear a fragment from the heavens itself. The meteor crashes down with the fury of a dying star, leaving nothing but scorched earth and burning foes.",
+      "tags": ["damage", "fire", "aoe", "elemental"],
+
+      "effect": {
+        "type": "devastate",
+        "category": "damage",
+        "magnitude": "extreme",
+        "target": "area",
+        "duration": "instant"
+      },
+
+      "combatTags": ["fire", "circle", "burn", "knockback"],
+      "combatParams": {
+        "baseDamage": 150,
+        "circle_radius": 8.0,
+        "origin": "target",
+        "burn_duration": 12.0,
+        "burn_damage_per_second": 10.0,
+        "knockback_distance": 5.0
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+
+      "requirements": {
+        "characterLevel": 25,
+        "stats": {"INT": 30, "STR": 20}
+      }
+    },
+
+    {
+      "skillId": "chain_lightning",
+      "name": "Chain Lightning",
+      "tier": 3,
+      "rarity": "epic",
+      "categories": ["combat", "lightning"],
+      "description": "Lightning that jumps between enemies, shocking each target",
+      "narrative": "A single bolt becomes many. Watch as lightning leaps from foe to foe, each target convulsing as the shock spreads through the battlefield.",
+      "tags": ["damage", "lightning", "chain", "elemental"],
+
+      "effect": {
+        "type": "empower",
+        "category": "damage",
+        "magnitude": "major",
+        "target": "area",
+        "duration": "instant"
+      },
+
+      "combatTags": ["lightning", "chain", "shock"],
+      "combatParams": {
+        "baseDamage": 60,
+        "chain_count": 5,
+        "chain_range": 7.0,
+        "shock_duration": 6.0,
+        "shock_damage_per_tick": 4.0,
+        "shock_tick_rate": 1.5
+      },
+
+      "cost": {
+        "mana": "high",
+        "cooldown": "long"
+      },
+
+      "requirements": {
+        "characterLevel": 18,
+        "stats": {"INT": 20}
+      }
+    },
+
+    {
+      "skillId": "arctic_cone",
+      "name": "Arctic Cone",
+      "tier": 2,
+      "rarity": "uncommon",
+      "categories": ["combat", "ice"],
+      "description": "Blast of freezing wind in a cone that slows and freezes enemies",
+      "narrative": "Exhale winter itself. A cone of absolute zero flash-freezes everything before you, leaving your enemies slowed or frozen solid.",
+      "tags": ["damage", "ice", "aoe", "control"],
+
+      "effect": {
+        "type": "fortify",
+        "category": "damage",
+        "magnitude": "moderate",
+        "target": "area",
+        "duration": "instant"
+      },
+
+      "combatTags": ["ice", "cone", "freeze", "slow"],
+      "combatParams": {
+        "baseDamage": 45,
+        "cone_angle": 90.0,
+        "cone_range": 10.0,
+        "freeze_duration": 4.0,
+        "slow_percent": 0.5,
+        "slow_duration": 8.0
+      },
+
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "moderate"
+      },
+
+      "requirements": {
+        "characterLevel": 12,
+        "stats": {"INT": 15}
+      }
+    },
+
+    {
+      "skillId": "shadow_beam",
+      "name": "Shadow Beam",
+      "tier": 3,
+      "rarity": "rare",
+      "categories": ["combat", "shadow"],
+      "description": "Piercing beam of darkness that weakens all it touches",
+      "narrative": "A lance of pure darkness tears through reality. Those touched by the void find their strength sapped, their attacks feeble.",
+      "tags": ["damage", "shadow", "pierce", "debuff"],
+
+      "effect": {
+        "type": "empower",
+        "category": "damage",
+        "magnitude": "major",
+        "target": "line",
+        "duration": "instant"
+      },
+
+      "combatTags": ["shadow", "beam", "weaken", "pierce"],
+      "combatParams": {
+        "baseDamage": 55,
+        "beam_range": 15.0,
+        "beam_width": 2.0,
+        "pierce_count": 10,
+        "weaken_percent": 0.4,
+        "weaken_duration": 10.0
+      },
+
+      "cost": {
+        "mana": "high",
+        "cooldown": "long"
+      },
+
+      "requirements": {
+        "characterLevel": 16,
+        "stats": {"INT": 18}
+      }
+    },
+
+    {
+      "skillId": "vampiric_aura",
+      "name": "Vampiric Aura",
+      "tier": 3,
+      "rarity": "epic",
+      "categories": ["combat", "shadow"],
+      "description": "Aura that drains life from all nearby enemies",
+      "narrative": "Become the void. An aura of darkness surrounds you, leeching the life force from all who dare come close. Their pain is your healing.",
+      "tags": ["damage", "shadow", "aoe", "sustain"],
+
+      "effect": {
+        "type": "devastate",
+        "category": "damage",
+        "magnitude": "moderate",
+        "target": "area",
+        "duration": "instant"
+      },
+
+      "combatTags": ["shadow", "circle", "lifesteal"],
+      "combatParams": {
+        "baseDamage": 40,
+        "circle_radius": 6.0,
+        "origin": "source",
+        "lifesteal_percent": 0.6
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "long"
+      },
+
+      "requirements": {
+        "characterLevel": 20,
+        "stats": {"INT": 22, "STR": 15}
+      }
+    },
+
+    {
+      "skillId": "gravity_well",
+      "name": "Gravity Well",
+      "tier": 4,
+      "rarity": "legendary",
+      "categories": ["combat", "arcane"],
+      "description": "Create a point of intense gravity that pulls and crushes all nearby foes",
+      "narrative": "Bend space itself to your will. A singularity forms at your target, pulling enemies inward before crushing them with arcane force.",
+      "tags": ["damage", "arcane", "aoe", "control"],
+
+      "effect": {
+        "type": "devastate",
+        "category": "damage",
+        "magnitude": "extreme",
+        "target": "area",
+        "duration": "instant"
+      },
+
+      "combatTags": ["arcane", "circle", "pull", "stun"],
+      "combatParams": {
+        "baseDamage": 100,
+        "circle_radius": 7.0,
+        "origin": "target",
+        "pull_distance": 5.0,
+        "stun_duration": 3.0
+      },
+
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+
+      "requirements": {
+        "characterLevel": 28,
+        "stats": {"INT": 32}
+      }
+    }
+  ]
+}
