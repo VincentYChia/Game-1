@@ -52,7 +52,8 @@
       },
       "cooldown": 15.0,
       "triggerConditions": {
-        "healthThreshold": 1.0
+        "healthThreshold": 1.0,
+        "distanceMax": 3.0
       }
     },
     {
@@ -82,7 +83,8 @@
       },
       "cooldown": 20.0,
       "triggerConditions": {
-        "healthThreshold": 0.3
+        "healthThreshold": 0.3,
+        "distanceMax": 5.0
       }
     },
     {
@@ -99,7 +101,8 @@
       "cooldown": 18.0,
       "triggerConditions": {
         "healthThreshold": 1.0,
-        "distanceMin": 6.0
+        "distanceMin": 6.0,
+        "distanceMax": 12.0
       }
     },
     {
@@ -115,7 +118,8 @@
       "cooldown": 25.0,
       "triggerConditions": {
         "healthThreshold": 0.4,
-        "enemyCount": 1
+        "enemyCount": 1,
+        "distanceMax": 6.0
       }
     },
     {
@@ -158,7 +162,8 @@
       },
       "cooldown": 20.0,
       "triggerConditions": {
-        "enemyCount": 1
+        "enemyCount": 1,
+        "distanceMax": 8.0
       }
     },
     {
@@ -187,7 +192,8 @@
       },
       "cooldown": 15.0,
       "triggerConditions": {
-        "distanceMin": 5.0
+        "distanceMin": 5.0,
+        "distanceMax": 15.0
       }
     },
     {
@@ -245,7 +251,8 @@
       },
       "cooldown": 18.0,
       "triggerConditions": {
-        "healthThreshold": 0.4
+        "healthThreshold": 0.4,
+        "distanceMax": 10.0
       }
     },
     {
