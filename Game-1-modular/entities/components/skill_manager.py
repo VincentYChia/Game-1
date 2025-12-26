@@ -207,17 +207,26 @@ class SkillManager:
 
         # Check if skill uses tag-based combat system
         if skill_def.combat_tags and len(skill_def.combat_tags) > 0:
-            # If in combat, use the combat-aware version
-            if combat_manager and hasattr(combat_manager, 'player_in_combat') and combat_manager.player_in_combat:
+            # Check if enemies are available (regardless of in_combat flag)
+            # This allows skills to INITIATE combat, just like weapon attacks
+            if combat_manager and hasattr(combat_manager, 'get_all_active_enemies'):
                 available_enemies = combat_manager.get_all_active_enemies()
-                target_enemy = available_enemies[0] if available_enemies else None
-                return self._apply_combat_skill_with_context(
-                    skill_def, character, player_skill,
-                    target_enemy, available_enemies
-                )
-            else:
-                # Out of combat - will warn if skill needs combat context
-                return self._apply_combat_skill(skill_def, character, player_skill)
+
+                # If enemies exist, use combat-aware skill execution
+                if available_enemies:
+                    target_enemy = available_enemies[0]
+
+                    # Set player in combat (skills can initiate combat)
+                    if hasattr(combat_manager, 'player_in_combat'):
+                        combat_manager.player_in_combat = True
+
+                    return self._apply_combat_skill_with_context(
+                        skill_def, character, player_skill,
+                        target_enemy, available_enemies
+                    )
+
+            # No enemies available - will warn if skill needs combat context
+            return self._apply_combat_skill(skill_def, character, player_skill)
 
         # Otherwise use legacy buff-based system
         effect = skill_def.effect
@@ -510,8 +519,8 @@ class SkillManager:
         available_entities = []
 
         if effect.target == "enemy":
-            # Enemy-targeted skills require combat context
-            print(f"   ⚠ [DEBUG] Skill requires enemy target - called from wrong context (use use_skill_in_combat)")
+            # Enemy-targeted skills require enemies to be nearby
+            print(f"   ⚠ No enemies in range (enemy-targeted skill)")
             return
 
         elif effect.target == "self":
@@ -520,8 +529,8 @@ class SkillManager:
             available_entities = [character]
 
         elif effect.target == "area":
-            # Area effect skills require combat context with available enemies
-            print(f"   ⚠ [DEBUG] Area skill requires combat context - called from wrong context (use use_skill_in_combat)")
+            # Area effect skills require enemies to be nearby
+            print(f"   ⚠ No enemies in range (area-effect skill)")
             return
 
         else:
