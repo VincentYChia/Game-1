@@ -501,8 +501,7 @@ class SkillManager:
 
         if effect.target == "enemy":
             # Enemy-targeted skills require combat context
-            if not suppress_warnings:
-                print(f"   ⚠ Skill requires enemy target (use in combat)")
+            # Silently skip if no enemy available (expected behavior outside combat)
             return
 
         elif effect.target == "self":
@@ -512,8 +511,7 @@ class SkillManager:
 
         elif effect.target == "area":
             # Area effect skills require combat context with available enemies
-            if not suppress_warnings:
-                print(f"   ⚠ Area skill requires combat context")
+            # Silently skip if no enemies available (expected behavior outside combat)
             return
 
         else:
