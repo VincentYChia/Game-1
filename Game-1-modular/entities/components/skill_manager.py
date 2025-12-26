@@ -207,7 +207,17 @@ class SkillManager:
 
         # Check if skill uses tag-based combat system
         if skill_def.combat_tags and len(skill_def.combat_tags) > 0:
-            return self._apply_combat_skill(skill_def, character, player_skill)
+            # If in combat, use the combat-aware version
+            if combat_manager and hasattr(combat_manager, 'player_in_combat') and combat_manager.player_in_combat:
+                available_enemies = combat_manager.get_all_active_enemies()
+                target_enemy = available_enemies[0] if available_enemies else None
+                return self._apply_combat_skill_with_context(
+                    skill_def, character, player_skill,
+                    target_enemy, available_enemies
+                )
+            else:
+                # Out of combat - will warn if skill needs combat context
+                return self._apply_combat_skill(skill_def, character, player_skill)
 
         # Otherwise use legacy buff-based system
         effect = skill_def.effect
@@ -501,7 +511,7 @@ class SkillManager:
 
         if effect.target == "enemy":
             # Enemy-targeted skills require combat context
-            # Silently skip if no enemy available (expected behavior outside combat)
+            print(f"   ⚠ [DEBUG] Skill requires enemy target - called from wrong context (use use_skill_in_combat)")
             return
 
         elif effect.target == "self":
@@ -511,7 +521,7 @@ class SkillManager:
 
         elif effect.target == "area":
             # Area effect skills require combat context with available enemies
-            # Silently skip if no enemies available (expected behavior outside combat)
+            print(f"   ⚠ [DEBUG] Area skill requires combat context - called from wrong context (use use_skill_in_combat)")
             return
 
         else:

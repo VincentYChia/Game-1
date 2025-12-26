@@ -301,8 +301,9 @@ class EquipmentDatabase:
             parsed_item_type = "station"
 
         # Load effect tags and params for combat system
-        effect_tags = data.get('effectTags', [])
-        effect_params = data.get('effectParams', {})
+        # Support both snake_case (effect_tags) and camelCase (effectTags) for compatibility
+        effect_tags = data.get('effect_tags', data.get('effectTags', []))
+        effect_params = data.get('effect_params', data.get('effectParams', {}))
 
         return EquipmentItem(
             item_id=item_id,
