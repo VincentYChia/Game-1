@@ -475,8 +475,12 @@ class SkillManager:
             else:
                 print(f"   Bypass {bypass} tier restriction(s) for {effect.category} for {int(duration)}s")
 
-    def _apply_combat_skill(self, skill_def, character, player_skill):
-        """Apply a tag-based combat skill using the effect executor"""
+    def _apply_combat_skill(self, skill_def, character, player_skill, suppress_warnings=False):
+        """Apply a tag-based combat skill using the effect executor
+
+        Args:
+            suppress_warnings: If True, don't print warnings for context-dependent skills
+        """
         # Apply level scaling to combat params
         level_bonus = player_skill.get_level_scaling_bonus()
         scaled_params = skill_def.combat_params.copy()
@@ -496,12 +500,9 @@ class SkillManager:
         available_entities = []
 
         if effect.target == "enemy":
-            # Find nearest enemy from combat manager
-            # For now, we need access to combat manager which the skill system doesn't have
-            # We'll document that combat skills need to be called with context
-            # For skills used outside combat, this will be a no-op
-            self.debugger.warning(f"Combat skill {skill_def.skill_id} requires enemy target - needs combat context")
-            print(f"   ⚠ Skill requires enemy target (use in combat)")
+            # Enemy-targeted skills require combat context
+            if not suppress_warnings:
+                print(f"   ⚠ Skill requires enemy target (use in combat)")
             return
 
         elif effect.target == "self":
@@ -510,9 +511,9 @@ class SkillManager:
             available_entities = [character]
 
         elif effect.target == "area":
-            # Area effect - needs available enemies from combat manager
-            self.debugger.warning(f"Combat skill {skill_def.skill_id} is area effect - needs combat context")
-            print(f"   ⚠ Area skill requires combat context")
+            # Area effect skills require combat context with available enemies
+            if not suppress_warnings:
+                print(f"   ⚠ Area skill requires combat context")
             return
 
         else:
