@@ -2868,6 +2868,7 @@ class GameEngine:
             self.character.update_attack_cooldown(dt)
             self.character.update_health_regen(dt)
             self.character.update_buffs(dt)
+            self.character.update_knockback(dt, self.world)
 
             # Update turret system
             self.turret_system.update(self.world.placed_entities, self.combat_manager, dt)

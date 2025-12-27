@@ -406,6 +406,11 @@ class Enemy:
         self.wander_timer = 0.0
         self.wander_cooldown = random.uniform(2.0, 5.0)
 
+        # Knockback system - smooth forced movement
+        self.knockback_velocity_x = 0.0
+        self.knockback_velocity_y = 0.0
+        self.knockback_duration_remaining = 0.0
+
         # Combat
         self.attack_cooldown = 0.0
         self.in_combat = False
@@ -487,6 +492,30 @@ class Enemy:
                 loot.append((drop.material_id, quantity))
         return loot
 
+    def update_knockback(self, dt: float):
+        """Apply knockback velocity over time (smooth forced movement)"""
+        if self.knockback_duration_remaining > 0:
+            # Apply knockback velocity to position
+            dx = self.knockback_velocity_x * dt
+            dy = self.knockback_velocity_y * dt
+
+            # Modify position directly (list format for enemies)
+            self.position[0] += dx
+            self.position[1] += dy
+
+            # Clamp to chunk boundaries (enemies should stay in their chunk)
+            self.position[0], self.position[1] = self._clamp_to_chunk_bounds(
+                self.position[0], self.position[1]
+            )
+
+            # Reduce remaining duration
+            self.knockback_duration_remaining -= dt
+            if self.knockback_duration_remaining <= 0:
+                # Knockback finished
+                self.knockback_velocity_x = 0.0
+                self.knockback_velocity_y = 0.0
+                self.knockback_duration_remaining = 0.0
+
     def update_ai(self, dt: float, player_position: Tuple[float, float]):
         """Update enemy AI behavior"""
         if not self.is_alive:
@@ -495,6 +524,9 @@ class Enemy:
                 self.ai_state = AIState.CORPSE
             self.time_since_death += dt
             return
+
+        # Update knockback (smooth forced movement)
+        self.update_knockback(dt)
 
         # Update status effects
         if hasattr(self, 'status_manager'):

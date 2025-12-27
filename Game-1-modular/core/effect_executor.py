@@ -219,8 +219,9 @@ class EffectExecutor:
         self.debugger.debug(f"Lifesteal: {heal_amount:.1f} HP to {getattr(source, 'name', 'Unknown')}")
 
     def _apply_knockback(self, source: Any, target: Any, params: dict):
-        """Apply knockback to target"""
+        """Apply knockback to target as smooth forced movement over time"""
         knockback_distance = params.get('knockback_distance', 2.0)
+        knockback_duration = params.get('knockback_duration', 0.5)  # Default 0.5 seconds
 
         # Get positions
         source_pos = self._get_position(source)
@@ -229,10 +230,6 @@ class EffectExecutor:
         if not source_pos or not target_pos:
             self.debugger.warning(f"Cannot apply knockback: missing position")
             return
-
-        # Store original position for debugging
-        orig_x = target_pos.x
-        orig_y = target_pos.y
 
         # Calculate knockback direction (away from source)
         dx = target_pos.x - source_pos.x
@@ -246,37 +243,24 @@ class EffectExecutor:
             dx /= distance
             dy /= distance
 
-        # Calculate new position
-        new_x = target_pos.x + dx * knockback_distance
-        new_y = target_pos.y + dy * knockback_distance
+        # Calculate velocity needed to move knockback_distance over knockback_duration
+        # velocity = distance / time
+        velocity_magnitude = knockback_distance / knockback_duration
+        velocity_x = dx * velocity_magnitude
+        velocity_y = dy * velocity_magnitude
 
-        # Apply knockback based on entity type
-        if hasattr(target, 'position'):
-            # Character uses Position object
-            if hasattr(target.position, 'x'):
-                print(f"\n🔧 KNOCKBACK DEBUG:")
-                print(f"   Target: {getattr(target, 'name', 'Unknown')}")
-                print(f"   Original position: ({orig_x:.1f}, {orig_y:.1f})")
-                print(f"   New position: ({new_x:.1f}, {new_y:.1f})")
-                print(f"   Distance pushed: {knockback_distance:.1f} tiles")
-
-                target.position.x = new_x
-                target.position.y = new_y
-
-                # Verify it worked
-                print(f"   Verified position after: ({target.position.x:.1f}, {target.position.y:.1f})")
-
-            # Enemy uses list [x, y, z]
-            elif isinstance(target.position, list):
-                target.position[0] = new_x
-                target.position[1] = new_y
+        # Apply knockback velocity to target
+        if hasattr(target, 'knockback_velocity_x'):
+            target.knockback_velocity_x = velocity_x
+            target.knockback_velocity_y = velocity_y
+            target.knockback_duration_remaining = knockback_duration
 
             self.debugger.debug(
-                f"Knockback: {getattr(target, 'name', 'Unknown')} pushed {knockback_distance:.1f} tiles"
+                f"Knockback: {getattr(target, 'name', 'Unknown')} - velocity ({velocity_x:.1f}, {velocity_y:.1f}) for {knockback_duration:.2f}s"
             )
-            print(f"   💨 Knockback! {getattr(target, 'name', 'Target')} pushed back {knockback_distance:.1f} tiles")
+            print(f"   💨 Knockback! {getattr(target, 'name', 'Target')} pushed back {knockback_distance:.1f} tiles over {knockback_duration:.2f}s")
         else:
-            self.debugger.warning(f"Target has no position attribute for knockback")
+            self.debugger.warning(f"Target has no knockback velocity fields - cannot apply smooth knockback")
 
     def _get_position(self, entity: Any):
         """Get position from entity"""

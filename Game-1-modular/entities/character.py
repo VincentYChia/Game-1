@@ -62,6 +62,11 @@ class Character:
         self.movement_speed = Config.PLAYER_SPEED
         self.interaction_range = Config.INTERACTION_RANGE
 
+        # Knockback system - smooth forced movement
+        self.knockback_velocity_x = 0.0
+        self.knockback_velocity_y = 0.0
+        self.knockback_duration_remaining = 0.0
+
         self.stats = CharacterStats()
         self.leveling = LevelingSystem()
         self.skills = SkillManager()
@@ -496,18 +501,62 @@ class Character:
             return True
         return False
 
+    def update_knockback(self, dt: float, world: WorldSystem):
+        """Apply knockback velocity over time (smooth forced movement)"""
+        if self.knockback_duration_remaining > 0:
+            # Apply knockback velocity to position
+            dx = self.knockback_velocity_x * dt
+            dy = self.knockback_velocity_y * dt
+
+            # Modify position directly (don't use move() to avoid creating new Position object)
+            new_x = self.position.x + dx
+            new_y = self.position.y + dy
+
+            # Clamp to world bounds
+            new_x = max(0, min(Config.WORLD_SIZE - 1, new_x))
+            new_y = max(0, min(Config.WORLD_SIZE - 1, new_y))
+
+            # Check if walkable (optional - knockback can push through obstacles)
+            new_pos = Position(new_x, new_y, self.position.z)
+            if world.is_walkable(new_pos):
+                self.position.x = new_x
+                self.position.y = new_y
+            # If not walkable, knockback is blocked but still counts as applied
+
+            # Reduce remaining duration
+            self.knockback_duration_remaining -= dt
+            if self.knockback_duration_remaining <= 0:
+                # Knockback finished
+                self.knockback_velocity_x = 0.0
+                self.knockback_velocity_y = 0.0
+                self.knockback_duration_remaining = 0.0
+
     def move(self, dx: float, dy: float, world: WorldSystem) -> bool:
         # Check if immobilized by status effects
         if hasattr(self, 'status_manager') and self.status_manager.is_immobilized():
             return False
 
+        # If being knocked back, reduce player movement significantly (knockback takes priority)
+        if self.knockback_duration_remaining > 0:
+            dx *= 0.1  # Reduce player input to 10% during knockback
+            dy *= 0.1
+
         # Calculate movement speed from stats, class, and active buffs
         speed_mult = 1.0 + self.stats.get_bonus('agility') * 0.02 + self.class_system.get_bonus('movement_speed') + self.buffs.get_movement_speed_bonus()
-        new_pos = Position(self.position.x + dx * speed_mult, self.position.y + dy * speed_mult, self.position.z)
-        if new_pos.x < 0 or new_pos.x >= Config.WORLD_SIZE or new_pos.y < 0 or new_pos.y >= Config.WORLD_SIZE:
+
+        # Modify position directly instead of creating new Position object
+        new_x = self.position.x + dx * speed_mult
+        new_y = self.position.y + dy * speed_mult
+
+        # Check bounds
+        if new_x < 0 or new_x >= Config.WORLD_SIZE or new_y < 0 or new_y >= Config.WORLD_SIZE:
             return False
+
+        # Check walkability
+        new_pos = Position(new_x, new_y, self.position.z)
         if world.is_walkable(new_pos):
-            self.position = new_pos
+            self.position.x = new_x
+            self.position.y = new_y
             self.facing = ("right" if dx > 0 else "left") if abs(dx) > abs(dy) else ("down" if dy > 0 else "up")
             return True
         return False
