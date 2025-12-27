@@ -230,6 +230,10 @@ class EffectExecutor:
             self.debugger.warning(f"Cannot apply knockback: missing position")
             return
 
+        # Store original position for debugging
+        orig_x = target_pos.x
+        orig_y = target_pos.y
+
         # Calculate knockback direction (away from source)
         dx = target_pos.x - source_pos.x
         dy = target_pos.y - source_pos.y
@@ -250,8 +254,18 @@ class EffectExecutor:
         if hasattr(target, 'position'):
             # Character uses Position object
             if hasattr(target.position, 'x'):
+                print(f"\n🔧 KNOCKBACK DEBUG:")
+                print(f"   Target: {getattr(target, 'name', 'Unknown')}")
+                print(f"   Original position: ({orig_x:.1f}, {orig_y:.1f})")
+                print(f"   New position: ({new_x:.1f}, {new_y:.1f})")
+                print(f"   Distance pushed: {knockback_distance:.1f} tiles")
+
                 target.position.x = new_x
                 target.position.y = new_y
+
+                # Verify it worked
+                print(f"   Verified position after: ({target.position.x:.1f}, {target.position.y:.1f})")
+
             # Enemy uses list [x, y, z]
             elif isinstance(target.position, list):
                 target.position[0] = new_x
