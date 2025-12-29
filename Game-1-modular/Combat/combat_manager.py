@@ -639,6 +639,9 @@ class CombatManager:
             base_damage *= 2.0
             print(f"   💥 CRITICAL HIT! x2 damage")
 
+            # Execute on-crit triggers from equipment
+            self._execute_triggers('on_crit', target=enemy, hand=hand)
+
         # Apply enemy defense (with armor penetration from weapon tags)
         effective_defense = enemy.definition.defense * (1.0 - armor_penetration)
         defense_reduction = effective_defense * 0.01  # 1% reduction per defense
