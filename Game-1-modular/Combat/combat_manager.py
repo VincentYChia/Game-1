@@ -656,6 +656,42 @@ class CombatManager:
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
+        # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt
+        if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
+            for ench in equipped_weapon.enchantments:
+                effect = ench.get('effect', {})
+                if effect.get('type') == 'lifesteal':
+                    lifesteal_percent = effect.get('value', 0.1)  # 10% default
+                    heal_amount = final_damage * lifesteal_percent
+                    self.character.health = min(self.character.max_health, self.character.health + heal_amount)
+                    print(f"   💚 {ench.get('name', 'Lifesteal')}: Healed {heal_amount:.1f} HP")
+
+        # CHAIN DAMAGE ENCHANTMENT: Damage nearby enemies
+        if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
+            for ench in equipped_weapon.enchantments:
+                effect = ench.get('effect', {})
+                if effect.get('type') == 'chain_damage':
+                    chain_count = int(effect.get('value', 2))  # Chain to 2 enemies default
+                    chain_damage_percent = effect.get('damagePercent', 0.5)  # 50% damage default
+
+                    # Find chain targets (exclude primary target)
+                    from core.geometry.target_finder import TargetFinder
+                    finder = TargetFinder()
+                    available_enemies = [e for e in self.active_enemies if e.is_alive and e != enemy]
+
+                    chain_targets = finder.find_chain_targets(
+                        primary=enemy,
+                        max_targets=chain_count,
+                        available_entities=available_enemies
+                    )
+
+                    if chain_targets:
+                        chain_damage = final_damage * chain_damage_percent
+                        print(f"   ⚡ {ench.get('name', 'Chain Damage')}: Hitting {len(chain_targets)} additional target(s)")
+                        for target in chain_targets:
+                            target.take_damage(chain_damage, from_player=True)
+                            print(f"      → {target.definition.name}: {chain_damage:.1f} damage")
+
         # Consume any consume-on-use buffs (Power Strike, etc.)
         if hasattr(self.character, 'buffs'):
             self.character.buffs.consume_buffs_for_action("attack")
@@ -752,6 +788,27 @@ class CombatManager:
                     if hasattr(enemy, 'status_manager'):
                         enemy.status_manager.apply_status(status_tag, status_params, source=self.character)
                         print(f"   🔥 {enchantment.get('name', 'Enchantment')} triggered! Applied {status_tag}")
+
+                elif effect_type == 'knockback':
+                    # Apply knockback using existing effect executor
+                    knockback_distance = effect.get('value', 2.0)
+                    knockback_params = {'knockback_distance': knockback_distance}
+
+                    from core.effect_executor import get_effect_executor
+                    executor = get_effect_executor()
+                    executor._apply_knockback(self.character, enemy, knockback_params)
+                    print(f"   💨 {enchantment.get('name', 'Knockback')} triggered! Pushed enemy back")
+
+                elif effect_type == 'slow':
+                    # Apply slow status to enemy
+                    slow_params = {
+                        'duration': effect.get('duration', 3.0),
+                        'speed_reduction': effect.get('value', 0.3)  # 30% slow default
+                    }
+
+                    if hasattr(enemy, 'status_manager'):
+                        enemy.status_manager.apply_status('slow', slow_params, source=self.character)
+                        print(f"   ❄️ {enchantment.get('name', 'Frost')} triggered! Applied slow")
 
     def execute_instant_player_aoe(self, radius: int, skill_name: str) -> int:
         """Execute instant AoE attack around player (for skills like Whirlwind Strike)

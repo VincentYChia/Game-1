@@ -978,6 +978,21 @@ class Character:
                 regen_amount = self.health_regen_rate * dt
                 self.health = min(self.max_health, self.health + regen_amount)
 
+        # HEALTH REGENERATION ENCHANTMENT: Always active bonus regen from armor
+        if self.health < self.max_health:
+            enchant_regen_bonus = 0.0
+            armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+            for slot in armor_slots:
+                armor_piece = self.equipment.slots.get(slot)
+                if armor_piece and hasattr(armor_piece, 'enchantments'):
+                    for ench in armor_piece.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'health_regeneration':
+                            enchant_regen_bonus += effect.get('value', 1.0)  # HP per second
+
+            if enchant_regen_bonus > 0:
+                self.health = min(self.max_health, self.health + enchant_regen_bonus * dt)
+
         # Mana regeneration - 1% per second (always active)
         if self.mana < self.max_mana:
             mana_regen_amount = self.max_mana * 0.01 * dt  # 1% of max mana per second
