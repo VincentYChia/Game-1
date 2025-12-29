@@ -235,17 +235,28 @@ class EquipmentItem:
 
     def _get_item_type(self) -> str:
         """Determine the item type for enchantment compatibility"""
+        # Use explicit item_type if set and valid
+        if hasattr(self, 'item_type') and self.item_type in ['weapon', 'tool', 'armor', 'shield', 'accessory']:
+            # Map 'shield' to 'armor' for enchantment purposes
+            if self.item_type == 'shield':
+                return 'armor'
+            return self.item_type
+
+        # Fall back to slot-based detection
         weapon_slots = ['mainHand', 'offHand']
         tool_slots = ['tool']
         armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
 
         if self.slot in weapon_slots and self.damage != (0, 0):
             return 'weapon'
-        elif self.slot in weapon_slots or self.slot in tool_slots:
+        elif self.slot in tool_slots:
             return 'tool'
         elif self.slot in armor_slots:
             return 'armor'
         else:
+            # Items in weapon slots with no damage are tools (axes, pickaxes when equipped)
+            if self.slot in weapon_slots:
+                return 'tool'
             return 'accessory'
 
     def get_metadata_tags(self) -> List[str]:

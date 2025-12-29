@@ -104,7 +104,7 @@ class BurnEffect(StatusEffect):
     def on_remove(self, target: Any):
         """Visual: Remove fire"""
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('burn')
+            target.visual_effects.discard('burn')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """Apply fire damage"""
@@ -136,7 +136,7 @@ class BleedEffect(StatusEffect):
 
     def on_remove(self, target: Any):
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('bleed')
+            target.visual_effects.discard('bleed')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """Apply bleed damage"""
@@ -168,7 +168,7 @@ class PoisonEffect(StatusEffect):
 
     def on_remove(self, target: Any):
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('poison')
+            target.visual_effects.discard('poison')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """Apply poison damage (scales heavily with stacks)"""
@@ -223,7 +223,7 @@ class FreezeEffect(StatusEffect):
             target.movement_speed = self.stored_speed
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('freeze')
+            target.visual_effects.discard('freeze')
 
         if hasattr(target, 'is_frozen'):
             target.is_frozen = False
@@ -269,7 +269,7 @@ class SlowEffect(StatusEffect):
             target.movement_speed = self.stored_speed
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('slow')
+            target.visual_effects.discard('slow')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -304,7 +304,7 @@ class StunEffect(StatusEffect):
             target.is_stunned = False
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('stun')
+            target.visual_effects.discard('stun')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -352,7 +352,7 @@ class RootEffect(StatusEffect):
             target.is_rooted = False
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('root')
+            target.visual_effects.discard('root')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -384,7 +384,7 @@ class RegenerationEffect(StatusEffect):
 
     def on_remove(self, target: Any):
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('regen')
+            target.visual_effects.discard('regen')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """Apply healing"""
@@ -431,7 +431,7 @@ class ShieldEffect(StatusEffect):
             target.shield_amount = max(0, target.shield_amount - self.current_shield)
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('shield')
+            target.visual_effects.discard('shield')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect, shield is consumed by damage"""
@@ -484,7 +484,7 @@ class HasteEffect(StatusEffect):
             target.attack_speed = self.original_attack_speed
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('haste')
+            target.visual_effects.discard('haste')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -523,7 +523,7 @@ class EmpowerEffect(StatusEffect):
             target.empower_damage_multiplier -= self.damage_bonus
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('empower')
+            target.visual_effects.discard('empower')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -562,7 +562,7 @@ class FortifyEffect(StatusEffect):
             target.fortify_damage_reduction -= self.defense_bonus
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('fortify')
+            target.visual_effects.discard('fortify')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -601,7 +601,7 @@ class WeakenEffect(StatusEffect):
             target.damage_multiplier /= (1.0 - self.damage_reduction)
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('weaken')
+            target.visual_effects.discard('weaken')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -636,7 +636,7 @@ class VulnerableEffect(StatusEffect):
             target.damage_taken_multiplier /= (1.0 + self.damage_increase)
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('vulnerable')
+            target.visual_effects.discard('vulnerable')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -666,7 +666,7 @@ class ShockEffect(StatusEffect):
 
     def on_remove(self, target: Any):
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('shock')
+            target.visual_effects.discard('shock')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """Apply lightning damage periodically"""
@@ -723,7 +723,7 @@ class PhaseEffect(StatusEffect):
             target.ignore_collisions = False
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('phase')
+            target.visual_effects.discard('phase')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -762,7 +762,7 @@ class InvisibleEffect(StatusEffect):
             target.is_invisible = False
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('invisible')
+            target.visual_effects.discard('invisible')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""

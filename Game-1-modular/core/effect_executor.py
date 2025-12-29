@@ -304,7 +304,7 @@ class EffectExecutor:
 
     def _apply_pull(self, source: Any, target: Any, params: dict):
         """Apply pull to target"""
-        pull_distance = params.get('pull_distance', 2.0)
+        pull_distance = params.get('pull_distance', params.get('pull_strength', 2.0))
 
         # Get positions
         source_pos = self._get_position(source)

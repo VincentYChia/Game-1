@@ -771,7 +771,8 @@ class Character:
 
         # Reduce tool durability
         if not Config.DEBUG_INFINITE_RESOURCES:
-            durability_loss = 1.0
+            # -1 durability for proper use (correct tool type), -2 for improper use (wrong tool type)
+            durability_loss = 1.0 if tool_type_effectiveness >= 1.0 else 2.0
 
             # Unbreaking enchantment reduces durability loss
             if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
@@ -782,6 +783,10 @@ class Character:
                         durability_loss *= (1.0 - reduction)
 
             equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
+
+            # Warn about improper use
+            if durability_loss >= 2.0:
+                print(f"   ⚠️ Improper tool use! {equipped_tool.name} loses extra durability ({equipped_tool.durability_current:.0f}/{equipped_tool.durability_max})")
 
         loot = None
         if depleted:
@@ -1234,6 +1239,23 @@ class Character:
 
         # Apply remaining damage to health
         self.health -= damage
+
+        # Apply armor durability loss when taking damage
+        if damage > 0:  # Only lose durability if damage was actually taken
+            from core.config import Config
+            if not Config.DEBUG_INFINITE_RESOURCES:
+                armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+                for slot in armor_slots:
+                    armor_piece = self.equipment.slots.get(slot)
+                    if armor_piece and hasattr(armor_piece, 'durability_current'):
+                        armor_piece.durability_current = max(0, armor_piece.durability_current - 1)
+
+                        # Warn if armor is breaking
+                        if armor_piece.durability_current == 0:
+                            print(f"   💥 {armor_piece.name} has broken!")
+                        elif armor_piece.durability_current <= armor_piece.durability_max * 0.2:
+                            print(f"   ⚠️ {armor_piece.name} durability low: {armor_piece.durability_current}/{armor_piece.durability_max}")
+
         if self.health <= 0:
             self.health = 0
             self._handle_death()

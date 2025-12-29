@@ -37,6 +37,20 @@ class TargetFinder:
         Returns:
             List of target entities
         """
+        # Handle 'self' context - always targets the source entity
+        if context == 'self':
+            return [source] if source else []
+
+        # Flip context for enemy sources (relative targeting)
+        # When an enemy uses damage abilities, they target "ally" (player/turrets from their perspective)
+        # When an enemy uses healing/buffs, they target "enemy" (other enemies from their perspective)
+        if source and hasattr(source, 'definition') and hasattr(source, 'is_alive'):
+            # Source is an Enemy
+            if context == 'enemy':
+                context = 'ally'  # Enemy wants to target hostile entities = player/turrets
+            elif context == 'ally':
+                context = 'enemy'  # Enemy wants to target friendly entities = other enemies
+
         if geometry == 'single_target':
             return self.find_single_target(primary_target, context)
 

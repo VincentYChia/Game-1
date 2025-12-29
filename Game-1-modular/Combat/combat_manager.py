@@ -691,6 +691,19 @@ class CombatManager:
         self.player_last_combat_time = 0.0
         self.player_in_combat = True
 
+        # Apply weapon durability loss (after successful attack)
+        if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
+            from core.config import Config
+            if not Config.DEBUG_INFINITE_RESOURCES:
+                # -1 durability for proper use (weapon), -2 for improper use (tool)
+                durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
+                equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+
+                if durability_loss == 2:
+                    print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
+                elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
+                    print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
+
         return (final_damage, is_crit, loot)
 
     def _apply_weapon_enchantment_effects(self, enemy: Enemy):
