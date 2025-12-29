@@ -1019,6 +1019,9 @@ class CombatManager:
                 # Track combat activity
                 if hasattr(self.character, 'activity_tracker'):
                     self.character.activity_tracker.record_activity('combat', 1)
+
+                # Execute on-kill triggers
+                self._execute_triggers('on_kill', target=enemy, hand='mainHand')
             else:
                 print(f"   Enemy HP remaining: {enemy.current_health:.1f}/{enemy.max_health:.1f}")
 
@@ -1218,6 +1221,49 @@ class CombatManager:
                 break
 
         return loot
+
+    def _execute_triggers(self, trigger_type: str, target: Enemy = None, hand: str = 'mainHand'):
+        """
+        Execute trigger-based effects from equipment
+
+        Args:
+            trigger_type: Type of trigger ('on_kill', 'on_crit', 'on_hit', etc.)
+            target: Target entity (if applicable)
+            hand: Which hand to check for triggers
+        """
+        # Get weapon
+        weapon = self.character.equipment.slots.get(hand)
+        if not weapon:
+            return
+
+        # Check weapon enchantments for triggers
+        if hasattr(weapon, 'enchantments'):
+            for ench in weapon.enchantments:
+                metadata_tags = ench.get('metadata_tags', [])
+
+                # Check if this enchantment has the trigger
+                if trigger_type in metadata_tags:
+                    print(f"   🎯 TRIGGER! {trigger_type.upper()} effect: {ench.get('name', 'Unknown')}")
+
+                    # Execute the enchantment effect
+                    effect = ench.get('effect', {})
+                    effect_type = effect.get('type', '')
+
+                    # Handle different trigger effect types
+                    if effect_type == 'heal_on_kill' and trigger_type == 'on_kill':
+                        heal_amount = effect.get('value', 10.0)
+                        self.character.heal(heal_amount)
+                        print(f"      💚 Healed {heal_amount:.1f} HP")
+
+                    elif effect_type == 'explosion' and trigger_type == 'on_kill':
+                        # Would trigger an AOE explosion effect
+                        print(f"      💥 Explosion effect (not fully implemented)")
+
+                    elif effect_type == 'bonus_damage' and trigger_type == 'on_crit':
+                        # Bonus damage on crit (would need to be integrated into damage calculation)
+                        print(f"      ⚔️ Bonus damage on crit (not fully implemented)")
+
+                    # Add more trigger effect types as needed
 
     def get_all_active_enemies(self) -> List[Enemy]:
         """Get all enemies (for rendering)"""

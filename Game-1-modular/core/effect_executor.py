@@ -221,11 +221,14 @@ class EffectExecutor:
                 # Critical is handled in _apply_damage as a damage multiplier
                 pass
 
+            elif special_tag == 'teleport' or special_tag == 'blink':
+                self._apply_teleport(source, target, config.params)
+
+            elif special_tag == 'dash' or special_tag == 'charge':
+                self._apply_dash(source, target, config.params)
+
             # TODO: Implement other special mechanics
-            # - reflect/thorns
             # - summon
-            # - teleport
-            # - dash/charge
             # - phase
 
     def _apply_lifesteal(self, source: Any, damage_dealt: float, params: dict):
@@ -383,6 +386,138 @@ class EffectExecutor:
                 f"   ⚡ EXECUTE! {getattr(target, 'name', 'Target')} below {threshold_hp*100:.0f}% HP! "
                 f"+{execute_damage:.1f} bonus damage"
             )
+
+    def _apply_teleport(self, source: Any, target: Any, params: dict):
+        """
+        Apply teleport mechanic - instant movement to target position
+
+        Args:
+            source: Source entity (teleporting entity)
+            target: Target position or entity
+            params: Teleport parameters
+        """
+        teleport_range = params.get('teleport_range', 10.0)
+        teleport_type = params.get('teleport_type', 'targeted')  # targeted or forward
+
+        # Get source position
+        source_pos = self._get_position(source)
+        if not source_pos:
+            return
+
+        # Determine target position
+        if teleport_type == 'targeted' and target:
+            target_pos = self._get_position(target)
+            if not target_pos:
+                return
+        else:
+            # Forward teleport (not implemented yet - would need facing direction)
+            self.debugger.warning("Forward teleport not implemented yet")
+            return
+
+        # Calculate distance
+        dx = target_pos.x - source_pos.x
+        dy = target_pos.y - source_pos.y
+        distance = (dx * dx + dy * dy) ** 0.5
+
+        # Check range
+        if distance > teleport_range:
+            print(f"   ⚠ Teleport failed: target too far ({distance:.1f} > {teleport_range:.1f})")
+            return
+
+        # Apply teleport based on entity type
+        if hasattr(source, 'position'):
+            # Character uses Position object
+            if hasattr(source.position, 'x'):
+                source.position.x = target_pos.x
+                source.position.y = target_pos.y
+            # Enemy uses list [x, y, z]
+            elif isinstance(source.position, list):
+                source.position[0] = target_pos.x
+                source.position[1] = target_pos.y
+
+            self.debugger.debug(
+                f"Teleport: {getattr(source, 'name', 'Unknown')} teleported {distance:.1f} tiles"
+            )
+            print(f"   ✨ TELEPORT! {getattr(source, 'name', 'Source')} moved {distance:.1f} tiles instantly")
+        else:
+            self.debugger.warning(f"Source has no position attribute for teleport")
+
+    def _apply_dash(self, source: Any, target: Any, params: dict):
+        """
+        Apply dash mechanic - rapid movement toward target
+
+        Args:
+            source: Source entity (dashing entity)
+            target: Target position or entity
+            params: Dash parameters
+        """
+        dash_distance = params.get('dash_distance', 5.0)
+        dash_speed = params.get('dash_speed', 20.0)
+        damage_on_contact = params.get('damage_on_contact', False)
+
+        # Get source position
+        source_pos = self._get_position(source)
+        if not source_pos:
+            return
+
+        # Determine target position/direction
+        if target:
+            target_pos = self._get_position(target)
+            if not target_pos:
+                return
+
+            # Calculate direction toward target
+            dx = target_pos.x - source_pos.x
+            dy = target_pos.y - source_pos.y
+        else:
+            # Would need facing direction - not implemented yet
+            self.debugger.warning("Dash without target not implemented yet")
+            return
+
+        # Normalize direction
+        distance = (dx * dx + dy * dy) ** 0.5
+        if distance == 0:
+            return
+
+        norm_dx = dx / distance
+        norm_dy = dy / distance
+
+        # Calculate actual dash distance (capped at dash_distance)
+        actual_dash = min(dash_distance, distance)
+
+        # Calculate new position
+        new_x = source_pos.x + norm_dx * actual_dash
+        new_y = source_pos.y + norm_dy * actual_dash
+
+        # Apply dash via velocity (similar to knockback but toward target)
+        # Use dash_duration calculated from speed
+        dash_duration = actual_dash / dash_speed
+
+        if hasattr(source, 'knockback_velocity_x'):  # Reuse knockback system for dash
+            # Set velocity toward target
+            source.knockback_velocity_x = norm_dx * dash_speed
+            source.knockback_velocity_y = norm_dy * dash_speed
+            source.knockback_duration_remaining = dash_duration
+
+            self.debugger.debug(
+                f"Dash: {getattr(source, 'name', 'Unknown')} dashing {actual_dash:.1f} tiles"
+            )
+            print(f"   💨 DASH! {getattr(source, 'name', 'Source')} dashing {actual_dash:.1f} tiles")
+
+            # TODO: Implement damage_on_contact during dash
+            if damage_on_contact:
+                self.debugger.debug("Dash damage_on_contact not implemented yet")
+        else:
+            # Fallback to instant movement if velocity system not available
+            if hasattr(source, 'position'):
+                if hasattr(source.position, 'x'):
+                    source.position.x = new_x
+                    source.position.y = new_y
+                elif isinstance(source.position, list):
+                    source.position[0] = new_x
+                    source.position[1] = new_y
+
+                print(f"   💨 DASH! {getattr(source, 'name', 'Source')} moved {actual_dash:.1f} tiles")
 
     # Low-level damage/heal functions
     # These should work with the game's entity system

@@ -555,6 +555,17 @@ class Character:
                 slow_amount = chill_effect.params.get('slow_amount', 0.5)
                 speed_mult *= (1.0 - slow_amount)  # Reduce speed by slow_amount
 
+        # Apply movement speed enchantments from armor
+        if hasattr(self, 'equipment'):
+            armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+            for slot in armor_slots:
+                armor_piece = self.equipment.slots.get(slot)
+                if armor_piece and hasattr(armor_piece, 'enchantments'):
+                    for ench in armor_piece.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'movement_speed_multiplier':
+                            speed_mult += effect.get('value', 0.0)
+
         # Modify position directly instead of creating new Position object
         new_x = self.position.x + dx * speed_mult
         new_y = self.position.y + dy * speed_mult
