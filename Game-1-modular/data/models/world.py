@@ -1,7 +1,7 @@
 """World-related data models (Position, Tiles, Resources, Chunks, Stations)"""
 
 from dataclasses import dataclass
-from typing import Tuple, Optional, List, Dict
+from typing import Tuple, Optional, List, Dict, Any, Set
 from enum import Enum
 import math
 
@@ -163,10 +163,10 @@ class PlacedEntity:
     damage: float = 20.0
     attack_speed: float = 1.0  # Attacks per second
     last_attack_time: float = 0.0
-    target_enemy: Optional[any] = None  # Will be Enemy type
+    target_enemy: Optional[Any] = None  # Will be Enemy type
     # Tag system integration
     tags: List[str] = None  # Effect tags (fire, chain, burn, etc.)
-    effect_params: Dict[str, any] = None  # Parameters for tag effects
+    effect_params: Dict[str, Any] = None  # Parameters for tag effects
     # Lifetime management
     lifetime: float = 300.0  # Total lifetime in seconds (5 minutes default)
     time_remaining: float = 300.0  # Time remaining before despawn

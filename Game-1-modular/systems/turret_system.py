@@ -212,7 +212,10 @@ class TurretSystem:
             all_enemies: All enemies for AoE calculations
         """
         print(f"\n💥 TRAP TRIGGERED: {trap.item_id}")
-        print(f"   Target: {primary_target.definition.name if hasattr(primary_target, 'definition') else 'Unknown'}")
+        target_name = 'Unknown'
+        if hasattr(primary_target, 'definition') and hasattr(primary_target.definition, 'name'):
+            target_name = primary_target.definition.name
+        print(f"   Target: {target_name}")
         print(f"   Tags: {', '.join(trap.tags)}")
 
         if not trap.tags:
@@ -486,7 +489,9 @@ class TurretSystem:
                     continue
 
                 # Check if enemy is construct type
-                enemy_type = enemy.definition.enemy_type if hasattr(enemy.definition, 'enemy_type') else None
+                enemy_type = None
+                if hasattr(enemy, 'definition') and hasattr(enemy.definition, 'enemy_type'):
+                    enemy_type = enemy.definition.enemy_type
                 is_construct = enemy_type == 'construct' if enemy_type else False
 
                 # Calculate distance
@@ -501,7 +506,8 @@ class TurretSystem:
                         stun_params = {'duration': 30.0}
                         enemy.status_manager.apply_status('stun', stun_params, source=emp)
                         affected_count += 1
-                        print(f"   🤖 Disabled {enemy.definition.name} (construct)")
+                        enemy_name = enemy.definition.name if hasattr(enemy, 'definition') and hasattr(enemy.definition, 'name') else 'construct'
+                        print(f"   🤖 Disabled {enemy_name} (construct)")
 
             print(f"   ✓ Disabled {affected_count} construct enemies for 30 seconds")
 
