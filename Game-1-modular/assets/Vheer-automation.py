@@ -142,7 +142,7 @@ TEST_ITEMS = [
 
 SCRIPT_DIR = Path(__file__).parent
 OUTPUT_DIR = SCRIPT_DIR / 'generated_icons'
-CATALOG_PATH = SCRIPT_DIR.parent.parent / "Scaled JSON Development" / "ITEM_CATALOG_FOR_ICONS.md"
+CATALOG_PATH = SCRIPT_DIR / 'icons' / 'ITEM_CATALOG_FOR_ICONS.md'
 
 GENERATION_TIMEOUT = 180
 WAIT_BETWEEN_ITEMS = 25
