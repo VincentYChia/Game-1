@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from ..main import WorldSystem, Character, Inventory
 
 from .enemy import Enemy, EnemyDatabase, EnemyDefinition, AIState
+from data.models.world import PlacedEntityType
 from core.effect_executor import get_effect_executor
 from core.tag_debug import get_tag_debugger
 from core.debug_display import debug_print
@@ -328,8 +329,17 @@ class CombatManager:
                     dist = enemy.distance_to(player_pos)
                     special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_pos)
                     if special_ability:
+                        # Build available targets list (player + turrets + other valid targets)
+                        available_targets = [self.character]
+
+                        # Include turrets so enemies can target them with abilities
+                        if hasattr(self.world, 'placed_entities'):
+                            turrets = [e for e in self.world.placed_entities
+                                      if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
+                            available_targets.extend(turrets)
+
                         # Use special ability if in range (abilities define their own ranges via distance conditions)
-                        enemy.use_special_ability(special_ability, self.character, [self.character])
+                        enemy.use_special_ability(special_ability, self.character, available_targets)
 
                     # Check if enemy can attack player normally
                     elif enemy.can_attack():

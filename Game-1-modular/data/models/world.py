@@ -170,6 +170,15 @@ class PlacedEntity:
     # Lifetime management
     lifetime: float = 300.0  # Total lifetime in seconds (5 minutes default)
     time_remaining: float = 300.0  # Time remaining before despawn
+    # Status effect support (for hostile tags to affect turrets)
+    status_effects: List[Any] = None  # Active status effects
+    is_stunned: bool = False
+    is_frozen: bool = False
+    is_rooted: bool = False
+    is_burning: bool = False
+    visual_effects: Set[str] = None  # Visual indicators (burning, shocked, frozen, etc.)
+    # Trap-specific fields
+    triggered: bool = False  # For one-time traps
 
     def __post_init__(self):
         """Initialize mutable default values"""
@@ -177,6 +186,10 @@ class PlacedEntity:
             self.tags = []
         if self.effect_params is None:
             self.effect_params = {}
+        if self.status_effects is None:
+            self.status_effects = []
+        if self.visual_effects is None:
+            self.visual_effects = set()
 
     def get_color(self) -> Tuple[int, int, int]:
         """Get display color for this entity"""
@@ -188,3 +201,51 @@ class PlacedEntity:
             PlacedEntityType.CRAFTING_STATION: (105, 105, 105),  # Gray
             PlacedEntityType.TRAINING_DUMMY: (200, 200, 0)  # Yellow (visible target)
         }.get(self.entity_type, (150, 150, 150))
+
+    def take_damage(self, damage: float, damage_type: str = "physical") -> bool:
+        """
+        Take damage and return True if destroyed
+
+        Args:
+            damage: Amount of damage to take
+            damage_type: Type of damage (physical, fire, ice, etc.)
+
+        Returns:
+            True if entity is destroyed (health <= 0)
+        """
+        self.health -= damage
+        if self.health <= 0:
+            self.health = 0
+            return True  # Entity destroyed
+        return False
+
+    def update_status_effects(self, dt: float):
+        """Update all active status effects"""
+        if not self.status_effects:
+            return
+
+        # Reset status flags
+        self.is_stunned = False
+        self.is_frozen = False
+        self.is_rooted = False
+        self.is_burning = False
+
+        # Update each status effect
+        for effect in self.status_effects[:]:  # Copy list to allow removal
+            effect.update(dt)
+
+            # Apply status flags from active effects
+            effect_name = effect.__class__.__name__
+            if effect_name == 'StunEffect':
+                self.is_stunned = True
+            elif effect_name == 'FreezeEffect':
+                self.is_frozen = True
+            elif effect_name == 'RootEffect':
+                self.is_rooted = True
+            elif effect_name == 'BurnEffect':
+                self.is_burning = True
+
+            # Remove expired effects
+            if effect.is_expired():
+                effect.on_remove(self)
+                self.status_effects.remove(effect)
