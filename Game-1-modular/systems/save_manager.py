@@ -167,12 +167,47 @@ class SaveManager:
 
         return serialized_slots
 
-    def _serialize_equipment(self, equipment_manager) -> Dict[str, Optional[str]]:
-        """Serialize equipped items."""
-        return {
-            slot_name: item.item_id if item else None
-            for slot_name, item in equipment_manager.slots.items()
-        }
+    def _serialize_equipment(self, equipment_manager) -> Dict[str, Optional[Dict]]:
+        """Serialize equipped items with full equipment data to preserve durability, enchantments, etc."""
+        serialized_equipment = {}
+
+        for slot_name, item in equipment_manager.slots.items():
+            if item is None:
+                serialized_equipment[slot_name] = None
+            else:
+                # Save full equipment data to preserve durability, enchantments, etc.
+                equipment_data = {
+                    "item_id": item.item_id,
+                    "name": item.name,
+                    "tier": item.tier,
+                    "rarity": item.rarity,
+                    "slot": item.slot,
+                    "damage": list(item.damage) if isinstance(item.damage, tuple) else item.damage,
+                    "defense": item.defense,
+                    "durability_current": item.durability_current,
+                    "durability_max": item.durability_max,
+                    "attack_speed": item.attack_speed,
+                    "weight": item.weight,
+                    "range": item.range,
+                    "hand_type": item.hand_type,
+                    "item_type": item.item_type
+                }
+
+                # Save bonuses if present
+                if item.bonuses:
+                    equipment_data["bonuses"] = item.bonuses
+
+                # Save enchantments if present
+                if item.enchantments:
+                    equipment_data["enchantments"] = item.enchantments
+
+                # Save requirements if present
+                if item.requirements:
+                    equipment_data["requirements"] = item.requirements
+
+                serialized_equipment[slot_name] = equipment_data
+
+        return serialized_equipment
 
     def _serialize_world_state(self, world_system) -> Dict[str, Any]:
         """

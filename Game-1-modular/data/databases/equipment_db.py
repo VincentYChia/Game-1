@@ -222,20 +222,51 @@ class EquipmentDatabase:
         metadata = data.get('metadata', {})
         tags = metadata.get('tags', [])
 
-        # Determine slot using SmithingTagProcessor for tag-based assignment
+        # Determine slot - prioritize explicit type over tag-based inference
+        # This prevents weapons like "battleaxe" from being assigned to tool slots
         from core.crafting_tag_processor import SmithingTagProcessor
 
-        # Try tag-based slot assignment first (more specific and future-proof)
-        mapped_slot = SmithingTagProcessor.get_equipment_slot(tags)
+        mapped_slot = None
 
-        # Fallback to legacy logic if no tag-based slot found
-        if mapped_slot is None:
-            if item_type == 'tool':
-                if subtype in ['axe', 'pickaxe']:
-                    mapped_slot = subtype  # 'axe' or 'pickaxe' slot
-                else:
-                    mapped_slot = 'mainHand'  # Fallback for other tools
+        # 1. Weapons (sword, axe, mace, dagger, spear, bow, staff) - use explicit slot from JSON
+        #    This prevents battleaxe/handaxe weapons from going to tool slots
+        if item_type in weapon_types:
+            json_slot = data.get('slot', 'mainHand')
+            slot_mapping = {
+                'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',
+                'feet': 'boots', 'hands': 'gauntlets',
+                'mainHand': 'mainHand', 'offHand': 'offHand',
+                'helmet': 'helmet', 'chestplate': 'chestplate',
+                'leggings': 'leggings', 'boots': 'boots',
+                'gauntlets': 'gauntlets', 'accessory': 'accessory',
+            }
+            mapped_slot = slot_mapping.get(json_slot, json_slot)
+
+        # 2. Tools - use subtype to determine slot (axe → axe slot, pickaxe → pickaxe slot)
+        elif item_type == 'tool':
+            if subtype in ['axe', 'pickaxe']:
+                mapped_slot = subtype  # 'axe' or 'pickaxe' slot
             else:
+                mapped_slot = 'mainHand'  # Fallback for other tools
+
+        # 3. Armor - use tag-based or explicit slot
+        elif item_type in armor_types:
+            # Try tag-based first for armor
+            mapped_slot = SmithingTagProcessor.get_equipment_slot(tags)
+            if mapped_slot is None:
+                json_slot = data.get('slot', 'helmet')
+                slot_mapping = {
+                    'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',
+                    'feet': 'boots', 'hands': 'gauntlets',
+                    'helmet': 'helmet', 'chestplate': 'chestplate',
+                    'leggings': 'leggings', 'boots': 'boots', 'gauntlets': 'gauntlets',
+                }
+                mapped_slot = slot_mapping.get(json_slot, json_slot)
+
+        # 4. Fallback - use tag-based or explicit slot
+        else:
+            mapped_slot = SmithingTagProcessor.get_equipment_slot(tags)
+            if mapped_slot is None:
                 json_slot = data.get('slot', 'mainHand')
                 slot_mapping = {
                     'head': 'helmet', 'chest': 'chestplate', 'legs': 'leggings',

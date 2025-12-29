@@ -406,19 +406,53 @@ class Character:
         equipment_data = player_data.get("equipment", {})
         equipment_db = EquipmentDatabase.get_instance()
 
-        for slot_name, item_id in equipment_data.items():
-            if item_id and equipment_db.is_equipment(item_id):
-                # Find the equipment in inventory to preserve stats
-                found_in_inventory = False
-                for inv_slot in self.inventory.slots:
-                    if inv_slot and inv_slot.item_id == item_id and inv_slot.equipment_data:
-                        # Use the equipment data from inventory
-                        self.equipment.slots[slot_name] = inv_slot.equipment_data
-                        found_in_inventory = True
-                        break
+        for slot_name, eq_data in equipment_data.items():
+            if eq_data is None:
+                self.equipment.slots[slot_name] = None
+            elif isinstance(eq_data, dict):
+                # New format: full equipment data with durability, enchantments, etc.
+                from data.models.equipment import EquipmentItem
 
-                # If not found in inventory, create new equipment
-                if not found_in_inventory:
+                # Convert damage list back to tuple if needed
+                damage = eq_data.get("damage", [0, 0])
+                if isinstance(damage, list):
+                    damage = tuple(damage)
+
+                equipment_item = EquipmentItem(
+                    item_id=eq_data["item_id"],
+                    name=eq_data.get("name", eq_data["item_id"]),
+                    tier=eq_data.get("tier", 1),
+                    rarity=eq_data.get("rarity", "common"),
+                    slot=eq_data.get("slot", slot_name),
+                    damage=damage,
+                    defense=eq_data.get("defense", 0),
+                    durability_current=eq_data.get("durability_current", 100),
+                    durability_max=eq_data.get("durability_max", 100),
+                    attack_speed=eq_data.get("attack_speed", 1.0),
+                    weight=eq_data.get("weight", 1.0),
+                    range=eq_data.get("range", 1.0),
+                    hand_type=eq_data.get("hand_type", "default"),
+                    item_type=eq_data.get("item_type", "weapon")
+                )
+
+                # Restore bonuses if present
+                if "bonuses" in eq_data:
+                    equipment_item.bonuses = eq_data["bonuses"]
+
+                # Restore enchantments if present
+                if "enchantments" in eq_data:
+                    equipment_item.enchantments = eq_data["enchantments"]
+
+                # Restore requirements if present
+                if "requirements" in eq_data:
+                    equipment_item.requirements = eq_data["requirements"]
+
+                self.equipment.slots[slot_name] = equipment_item
+
+            elif isinstance(eq_data, str):
+                # Old format: just item_id (for backward compatibility)
+                item_id = eq_data
+                if equipment_db.is_equipment(item_id):
                     equipment_item = equipment_db.create_equipment_from_id(item_id)
                     self.equipment.slots[slot_name] = equipment_item
 
@@ -750,23 +784,26 @@ class Character:
         buff_bonus = self.buffs.get_damage_bonus(activity) if hasattr(self, 'buffs') else 0.0
         damage_mult = 1.0 + stat_bonus + title_bonus + buff_bonus
 
-        # Apply Efficiency enchantment (gathering speed multiplier)
+        # Check for Efficiency enchantment (gathering speed multiplier)
+        # This should multiply the final damage, not add to the multiplier
+        efficiency_mult = 1.0
         if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
             for ench in equipped_tool.enchantments:
                 effect = ench.get('effect', {})
                 if effect.get('type') == 'gathering_speed_multiplier':
-                    efficiency_mult = effect.get('value', 0.0)
-                    damage_mult += efficiency_mult
+                    efficiency_bonus = effect.get('value', 0.0)
+                    efficiency_mult = 1.0 + efficiency_bonus
                     # Visual feedback for efficiency
-                    if efficiency_mult > 0:
-                        print(f"   ⚡ Efficiency: +{efficiency_mult*100:.0f}% gathering speed")
+                    if efficiency_bonus > 0:
+                        print(f"   ⚡ Efficiency: +{efficiency_bonus*100:.0f}% gathering speed")
 
         crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance')
         if hasattr(self, 'buffs'):
             crit_chance += self.buffs.get_total_bonus('pierce', activity)
 
         is_crit = random.random() < crit_chance
-        damage = int(base_damage * total_effectiveness * damage_mult)
+        # Apply efficiency as a true multiplicative bonus (40% efficiency = 40% more damage)
+        damage = int(base_damage * total_effectiveness * damage_mult * efficiency_mult)
         actual_damage, depleted = resource.take_damage(damage, is_crit)
 
         # Reduce tool durability
