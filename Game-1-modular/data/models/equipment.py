@@ -29,6 +29,21 @@ class EquipmentItem:
     tags: List[str] = field(default_factory=list)  # Metadata tags from JSON
     effect_tags: List[str] = field(default_factory=list)  # Combat effect tags (fire, slashing, cone, etc.)
     effect_params: Dict[str, Any] = field(default_factory=dict)  # Effect parameters (baseDamage, cone_angle, etc.)
+    soulbound: bool = False  # If true, item is kept on death
+
+    def is_soulbound(self) -> bool:
+        """Check if this item is soulbound (kept on death)"""
+        # Check direct flag
+        if self.soulbound:
+            return True
+
+        # Check for soulbound enchantment
+        for ench in self.enchantments:
+            effect = ench.get('effect', {})
+            if effect.get('type') == 'soulbound':
+                return True
+
+        return False
 
     def get_effectiveness(self) -> float:
         """Get effectiveness multiplier based on durability (for CONFIG check - imported later)"""

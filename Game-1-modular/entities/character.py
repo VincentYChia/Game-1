@@ -1219,6 +1219,11 @@ class Character:
             damage_type: Type of damage (physical, fire, poison, etc.)
             **kwargs: Additional context (source, tags, context) for advanced damage systems
         """
+        # Phase immunity - completely immune to damage
+        if hasattr(self, 'is_phased') and self.is_phased:
+            print(f"   👻 PHASED! Damage completely negated ({damage:.1f} damage avoided)")
+            return
+
         # Shield/Barrier absorption
         if self.shield_amount > 0:
             absorbed = min(damage, self.shield_amount)

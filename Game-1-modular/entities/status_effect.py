@@ -683,6 +683,92 @@ class ShockEffect(StatusEffect):
             self.time_since_last_tick = 0.0
 
 
+class PhaseEffect(StatusEffect):
+    """Temporary intangibility - immune to damage and optionally pass through walls"""
+
+    def __init__(self, duration: float, params: Dict[str, Any], source: Any = None):
+        super().__init__(
+            status_id="phase",
+            name="Phased",
+            duration=duration,
+            duration_remaining=duration,
+            max_stacks=1,
+            source=source,
+            params=params
+        )
+        self.can_pass_walls = params.get('can_pass_walls', False)
+
+    def on_apply(self, target: Any):
+        """Make entity intangible"""
+        if not hasattr(target, 'is_phased'):
+            target.is_phased = False
+        target.is_phased = True
+
+        if self.can_pass_walls:
+            if not hasattr(target, 'ignore_collisions'):
+                target.ignore_collisions = False
+            target.ignore_collisions = True
+
+        print(f"   👻 Phased: Immune to damage for {self.duration:.1f}s")
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.add('phase')
+
+    def on_remove(self, target: Any):
+        """Restore tangibility"""
+        if hasattr(target, 'is_phased'):
+            target.is_phased = False
+
+        if self.can_pass_walls and hasattr(target, 'ignore_collisions'):
+            target.ignore_collisions = False
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.remove('phase')
+
+    def _apply_periodic_effect(self, dt: float, target: Any):
+        """No periodic effect"""
+        pass
+
+
+class InvisibleEffect(StatusEffect):
+    """Stealth - undetectable by enemies"""
+
+    def __init__(self, duration: float, params: Dict[str, Any], source: Any = None):
+        super().__init__(
+            status_id="invisible",
+            name="Invisible",
+            duration=duration,
+            duration_remaining=duration,
+            max_stacks=1,
+            source=source,
+            params=params
+        )
+        self.breaks_on_action = params.get('breaks_on_action', True)
+
+    def on_apply(self, target: Any):
+        """Make entity invisible"""
+        if not hasattr(target, 'is_invisible'):
+            target.is_invisible = False
+        target.is_invisible = True
+
+        print(f"   🌫️ Invisible: Undetectable for {self.duration:.1f}s")
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.add('invisible')
+
+    def on_remove(self, target: Any):
+        """Restore visibility"""
+        if hasattr(target, 'is_invisible'):
+            target.is_invisible = False
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.remove('invisible')
+
+    def _apply_periodic_effect(self, dt: float, target: Any):
+        """No periodic effect"""
+        pass
+
+
 # ============================================================================
 # STATUS EFFECT FACTORY
 # ============================================================================
@@ -706,6 +792,12 @@ STATUS_EFFECT_CLASSES = {
     'quicken': HasteEffect,  # Alias
     'empower': EmpowerEffect,
     'fortify': FortifyEffect,
+    'phase': PhaseEffect,
+    'ethereal': PhaseEffect,  # Alias
+    'intangible': PhaseEffect,  # Alias
+    'invisible': InvisibleEffect,
+    'stealth': InvisibleEffect,  # Alias
+    'hidden': InvisibleEffect,  # Alias
     'weaken': WeakenEffect,
     'vulnerable': VulnerableEffect,
 }

@@ -227,9 +227,11 @@ class EffectExecutor:
             elif special_tag == 'dash' or special_tag == 'charge':
                 self._apply_dash(source, target, config.params)
 
+            elif special_tag == 'phase' or special_tag == 'ethereal' or special_tag == 'intangible':
+                self._apply_phase(source, config.params)
+
             # TODO: Implement other special mechanics
             # - summon
-            # - phase
 
     def _apply_lifesteal(self, source: Any, damage_dealt: float, params: dict):
         """Apply lifesteal healing to source"""
@@ -518,6 +520,31 @@ class EffectExecutor:
                     source.position[1] = new_y
 
                 print(f"   💨 DASH! {getattr(source, 'name', 'Source')} moved {actual_dash:.1f} tiles")
+
+    def _apply_phase(self, source: Any, params: dict):
+        """
+        Apply phase mechanic - temporary intangibility/invulnerability
+
+        Args:
+            source: Source entity (phasing entity)
+            params: Phase parameters
+        """
+        phase_duration = params.get('phase_duration', 2.0)
+        can_pass_walls = params.get('can_pass_walls', False)
+
+        # Apply phase as a status effect
+        if hasattr(source, 'status_manager'):
+            phase_params = {
+                'duration': phase_duration,
+                'can_pass_walls': can_pass_walls
+            }
+            source.status_manager.apply_status('phase', phase_params, source=source)
+
+            print(f"   👻 PHASE! {getattr(source, 'name', 'Source')} is intangible for {phase_duration:.1f}s")
+            if can_pass_walls:
+                print(f"      Can pass through walls!")
+        else:
+            self.debugger.warning(f"Source has no status_manager for phase")
 
     # Low-level damage/heal functions
     # These should work with the game's entity system
