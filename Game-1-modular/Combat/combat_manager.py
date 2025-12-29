@@ -1042,6 +1042,26 @@ class CombatManager:
             self.player_last_combat_time = 0.0
             self.player_in_combat = True
 
+            # Apply weapon durability loss (for tag-based attacks)
+            equipped_weapon = None
+            if hasattr(self.character, '_selected_slot') and self.character._selected_slot:
+                equipped_weapon = self.character.equipment.slots.get(self.character._selected_slot)
+            else:
+                equipped_weapon = self.character.equipment.slots.get('mainHand')
+
+            if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
+                from core.config import Config
+                if not Config.DEBUG_INFINITE_RESOURCES:
+                    # Determine if using tool as weapon (improper use)
+                    tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
+                    durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
+                    equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+
+                    if durability_loss == 2:
+                        print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
+                    elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
+                        print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
+
             # Tag-based attacks don't use traditional crit system (handled by tags)
             return (total_damage, False, loot)
 
