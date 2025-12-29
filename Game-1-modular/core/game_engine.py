@@ -333,6 +333,42 @@ class GameEngine:
                     effect_params = effect_params.copy()
                     effect_params['baseDamage'] = avg_damage
 
+                # Collect enchantment metadata tags and apply enchantment effects
+                if hasattr(weapon, 'enchantments') and weapon.enchantments:
+                    enchant_tags = []
+                    damage_multiplier = 1.0
+
+                    for ench in weapon.enchantments:
+                        # Collect metadata tags
+                        metadata_tags = ench.get('metadata_tags', [])
+                        if metadata_tags:
+                            enchant_tags.extend(metadata_tags)
+
+                        # Apply damage multiplier enchantments (Sharpness, etc.)
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'damage_multiplier':
+                            damage_multiplier += effect.get('value', 0.0)
+
+                    # Merge enchantment tags with weapon tags (avoid duplicates)
+                    if enchant_tags:
+                        effect_tags = list(set(effect_tags + enchant_tags))
+
+                    # Apply damage multiplier to baseDamage
+                    if damage_multiplier != 1.0 and 'baseDamage' in effect_params:
+                        effect_params = effect_params.copy()
+                        effect_params['baseDamage'] *= damage_multiplier
+
+                # Apply weaken status damage reduction
+                if hasattr(self.character, 'status_manager'):
+                    weaken_effect = self.character.status_manager._find_effect('weaken')
+                    if weaken_effect:
+                        stat_reduction = weaken_effect.params.get('stat_reduction', 0.25)
+                        affected_stats = weaken_effect.params.get('affected_stats', ['damage', 'defense'])
+
+                        if 'damage' in affected_stats and 'baseDamage' in effect_params:
+                            effect_params = effect_params.copy()
+                            effect_params['baseDamage'] *= (1.0 - stat_reduction)
+
                 return (effect_tags, effect_params)
 
         # Fallback: No effect tags, create basic physical attack
@@ -1498,6 +1534,15 @@ class GameEngine:
             # Check if player can attack with mainhand
             if not self.character.can_attack('mainHand'):
                 return  # Still on cooldown
+
+            # Check if stunned or frozen (cannot attack)
+            if hasattr(self.character, 'status_manager'):
+                if self.character.status_manager.has_status('stun'):
+                    self.add_notification("Cannot attack while stunned!", (255, 100, 100))
+                    return
+                if self.character.status_manager.has_status('freeze'):
+                    self.add_notification("Cannot attack while frozen!", (255, 100, 100))
+                    return
 
             # Check if in range (using mainhand weapon's range)
             weapon_range = self.character.equipment.get_weapon_range('mainHand')

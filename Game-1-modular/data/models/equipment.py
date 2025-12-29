@@ -157,8 +157,16 @@ class EquipmentItem:
         else:
             return True, "OK (no applicability rules provided)"
 
-    def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict) -> Tuple[bool, str]:
-        """Apply an enchantment effect to this item with comprehensive rules"""
+    def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict,
+                         metadata_tags: List[str] = None) -> Tuple[bool, str]:
+        """Apply an enchantment effect to this item with comprehensive rules
+
+        Args:
+            enchantment_id: Unique ID of the enchantment
+            enchantment_name: Display name of the enchantment
+            effect: Effect dictionary (type, value, etc.)
+            metadata_tags: Optional metadata tags from recipe (for combat system)
+        """
         # Check for exact duplicate
         if any(ench.get('enchantment_id') == enchantment_id for ench in self.enchantments):
             return False, "This enchantment is already applied"
@@ -191,11 +199,15 @@ class EquipmentItem:
         ]
 
         # Apply the new enchantment
-        self.enchantments.append({
+        enchantment_data = {
             'enchantment_id': enchantment_id,
             'name': enchantment_name,
             'effect': effect
-        })
+        }
+        if metadata_tags:
+            enchantment_data['metadata_tags'] = metadata_tags
+
+        self.enchantments.append(enchantment_data)
 
         # Debug output for enchantment verification
         print(f"\n✨ ENCHANTMENT APPLIED")

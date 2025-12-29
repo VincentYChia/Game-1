@@ -544,6 +544,17 @@ class Character:
         # Calculate movement speed from stats, class, and active buffs
         speed_mult = 1.0 + self.stats.get_bonus('agility') * 0.02 + self.class_system.get_bonus('movement_speed') + self.buffs.get_movement_speed_bonus()
 
+        # Apply slow/chill speed reduction
+        if hasattr(self, 'status_manager'):
+            # Check for chill or slow status
+            chill_effect = self.status_manager._find_effect('chill')
+            if not chill_effect:
+                chill_effect = self.status_manager._find_effect('slow')
+
+            if chill_effect:
+                slow_amount = chill_effect.params.get('slow_amount', 0.5)
+                speed_mult *= (1.0 - slow_amount)  # Reduce speed by slow_amount
+
         # Modify position directly instead of creating new Position object
         new_x = self.position.x + dx * speed_mult
         new_y = self.position.y + dy * speed_mult

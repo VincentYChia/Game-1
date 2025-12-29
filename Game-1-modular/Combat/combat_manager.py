@@ -1046,8 +1046,21 @@ class CombatManager:
         print(f"   Base damage: {damage:.1f}")
 
         # Calculate damage reduction
-        def_multiplier = 1.0 - (self.character.stats.defense * 0.02)
-        print(f"   DEF multiplier: {def_multiplier:.2f} (DEF: {self.character.stats.defense})")
+        defense_stat = self.character.stats.defense
+
+        # Apply weaken status to player defense
+        if hasattr(self.character, 'status_manager'):
+            weaken_effect = self.character.status_manager._find_effect('weaken')
+            if weaken_effect:
+                stat_reduction = weaken_effect.params.get('stat_reduction', 0.25)
+                affected_stats = weaken_effect.params.get('affected_stats', ['damage', 'defense'])
+
+                if 'defense' in affected_stats:
+                    defense_stat *= (1.0 - stat_reduction)
+                    print(f"   ⚠️ WEAKENED: Defense reduced by {stat_reduction*100:.0f}%")
+
+        def_multiplier = 1.0 - (defense_stat * 0.02)
+        print(f"   DEF multiplier: {def_multiplier:.2f} (DEF: {defense_stat:.1f})")
 
         # Armor bonus from equipment
         armor_bonus = 0.0
@@ -1057,8 +1070,25 @@ class CombatManager:
 
         armor_multiplier = 1.0 - (armor_bonus * 0.01)
 
+        # PROTECTION ENCHANTMENTS: Apply defense_multiplier enchantments
+        protection_reduction = 0.0
+        if hasattr(self.character, 'equipment'):
+            armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+            for slot in armor_slots:
+                armor_piece = self.character.equipment.slots.get(slot)
+                if armor_piece and hasattr(armor_piece, 'enchantments'):
+                    for ench in armor_piece.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'defense_multiplier':
+                            protection_reduction += effect.get('value', 0.0)
+
+        if protection_reduction > 0:
+            print(f"   🛡️ Protection enchantments: -{protection_reduction*100:.0f}% damage reduction")
+
+        protection_multiplier = 1.0 - protection_reduction
+
         # Apply multipliers
-        final_damage = damage * def_multiplier * armor_multiplier
+        final_damage = damage * def_multiplier * armor_multiplier * protection_multiplier
 
         # SHIELD BLOCKING: Apply shield damage reduction if actively blocking
         if shield_blocking and self.character.is_shield_active():
@@ -1081,6 +1111,29 @@ class CombatManager:
         # Apply to player
         self.character.take_damage(final_damage)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
+
+        # REFLECT/THORNS: Check for reflect damage on armor
+        if hasattr(self.character, 'equipment') and enemy.is_alive:
+            reflect_percent = 0.0
+            armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+
+            for slot in armor_slots:
+                armor_piece = self.character.equipment.slots.get(slot)
+                if armor_piece and hasattr(armor_piece, 'enchantments'):
+                    for ench in armor_piece.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'reflect' or effect.get('type') == 'thorns':
+                            reflect_percent += effect.get('value', 0.0)
+
+            if reflect_percent > 0:
+                reflect_damage = final_damage * reflect_percent
+                enemy.current_health -= reflect_damage
+                print(f"   ⚡ THORNS! Reflected {reflect_damage:.1f} damage back to {enemy.definition.name}")
+
+                if enemy.current_health <= 0:
+                    enemy.is_alive = False
+                    enemy.current_health = 0
+                    print(f"   💀 {enemy.definition.name} killed by thorns damage!")
 
         # Reset health regen timer (damage taken)
         self.character.time_since_last_damage_taken = 0.0

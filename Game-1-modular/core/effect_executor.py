@@ -114,9 +114,20 @@ class EffectExecutor:
         """Apply damage to target"""
         base_damage = config.base_damage * magnitude_mult
 
+        # Check for critical hit mechanic
+        crit_multiplier = 1.0
+        if 'critical' in config.special_tags:
+            crit_chance = config.params.get('crit_chance', 0.15)
+            crit_multiplier_param = config.params.get('crit_multiplier', 2.0)
+
+            if random.random() < crit_chance:
+                crit_multiplier = crit_multiplier_param
+                print(f"   💥 CRITICAL HIT! ({crit_multiplier}x damage)")
+                self.debugger.debug(f"Critical hit! Multiplier: {crit_multiplier}x")
+
         # Apply damage for each damage type
         for damage_tag in config.damage_tags:
-            damage = base_damage
+            damage = base_damage * crit_multiplier  # Apply crit multiplier
 
             # Check for type-specific bonuses
             tag_def = self.registry.get_definition(damage_tag)
@@ -203,13 +214,19 @@ class EffectExecutor:
             elif special_tag == 'pull':
                 self._apply_pull(source, target, config.params)
 
+            elif special_tag == 'execute':
+                self._apply_execute(source, target, config, magnitude_mult)
+
+            elif special_tag == 'critical':
+                # Critical is handled in _apply_damage as a damage multiplier
+                pass
+
             # TODO: Implement other special mechanics
             # - reflect/thorns
             # - summon
             # - teleport
             # - dash/charge
-            # - execute
-            # - critical
+            # - phase
 
     def _apply_lifesteal(self, source: Any, damage_dealt: float, params: dict):
         """Apply lifesteal healing to source"""
@@ -328,6 +345,44 @@ class EffectExecutor:
             print(f"   🧲 Pull! {getattr(target, 'name', 'Target')} pulled {actual_pull:.1f} tiles")
         else:
             self.debugger.warning(f"Target has no position attribute for pull")
+
+    def _apply_execute(self, source: Any, target: Any, config: EffectConfig, magnitude_mult: float):
+        """
+        Apply execute mechanic - bonus damage when target is below HP threshold
+
+        Args:
+            source: Source entity
+            target: Target entity
+            config: Effect configuration
+            magnitude_mult: Magnitude multiplier
+        """
+        # Get execute parameters
+        threshold_hp = config.params.get('threshold_hp', 0.2)  # Default 20% HP
+        bonus_damage = config.params.get('bonus_damage', 2.0)  # Default 2x multiplier
+
+        # Check if target has HP tracking
+        if not hasattr(target, 'current_health') or not hasattr(target, 'max_health'):
+            return
+
+        # Check HP percentage
+        hp_percent = target.current_health / target.max_health if target.max_health > 0 else 0.0
+
+        if hp_percent <= threshold_hp:
+            # Target is below threshold - apply execute bonus damage
+            base_damage = config.base_damage * magnitude_mult
+            execute_damage = base_damage * (bonus_damage - 1.0)  # Bonus portion only
+
+            # Apply the execute damage
+            self._damage_target(target, execute_damage, 'execute')
+
+            self.debugger.debug(
+                f"Execute: {getattr(target, 'name', 'Unknown')} below {threshold_hp*100:.0f}% HP, "
+                f"+{execute_damage:.1f} bonus damage ({bonus_damage}x)"
+            )
+            print(
+                f"   ⚡ EXECUTE! {getattr(target, 'name', 'Target')} below {threshold_hp*100:.0f}% HP! "
+                f"+{execute_damage:.1f} bonus damage"
+            )
 
     # Low-level damage/heal functions
     # These should work with the game's entity system
