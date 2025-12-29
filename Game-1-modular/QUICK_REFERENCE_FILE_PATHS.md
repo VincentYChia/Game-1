@@ -259,7 +259,7 @@ Catalog Generator:
    └─ Generates catalog
 
 Catalog Output:
-📄 Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md
+📄 assets/icons/ITEM_CATALOG_FOR_ICONS.md
 
 Vheer Automation:
 📂 assets/Vheer-automation.py
@@ -420,7 +420,7 @@ Likely files:
 3. Check: `core/effect_executor.py` (execution logs)
 
 **Update PNG assets:**
-1. Update: `Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md`
+1. Generate catalog: `python assets/icons/unified_icon_generator.py`
 2. Run: `assets/Vheer-automation.py`
 3. Choose: Full catalog or test mode
 4. Output: `assets/generated_icons-3/`

@@ -441,7 +441,7 @@ Assets are automatically generated using Vheer AI automation.
 
 ### The Catalog System
 
-**File**: `Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md`
+**File**: `assets/icons/ITEM_CATALOG_FOR_ICONS.md`
 
 **Format**:
 ```markdown

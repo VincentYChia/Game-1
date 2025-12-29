@@ -1,7 +1,7 @@
 # Comprehensive Icon Requirements - All Game Entities
 
-> **NOTE**: This document is now maintained automatically by `tools/unified_icon_generator.py`.
-> The authoritative catalog is at `Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md`.
+> **NOTE**: This document is now maintained automatically by `assets/icons/unified_icon_generator.py`.
+> The authoritative catalog is at `assets/icons/ITEM_CATALOG_FOR_ICONS.md`.
 > See `tools/README_ICON_AUTOMATION.md` for the complete workflow.
 
 **Purpose**: Complete inventory of all visual entities requiring icon images

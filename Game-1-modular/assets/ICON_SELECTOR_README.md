@@ -138,8 +138,8 @@ Future cycles would be:
 ## Technical Details
 
 ### Catalog Integration
-- Reads from: `Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md`
-- Parses 219 items with full metadata
+- Reads from: `assets/icons/ITEM_CATALOG_FOR_ICONS.md`
+- Parses 233 items with full metadata (includes Update-N content)
 - Auto-categorizes items into correct folder structure
 
 ### Selection Logic
