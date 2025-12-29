@@ -414,19 +414,21 @@ class ShieldEffect(StatusEffect):
 
     def on_apply(self, target: Any):
         """Add shield to target"""
-        if hasattr(target, 'shield_health'):
-            target.shield_health += self.shield_amount
+        if hasattr(target, 'shield_amount'):
+            target.shield_amount += self.shield_amount
         else:
             # Create shield attribute if it doesn't exist
-            target.shield_health = self.shield_amount
+            target.shield_amount = self.shield_amount
+
+        print(f"   🛡️ Shield applied: {self.shield_amount:.1f} absorption (Total: {target.shield_amount:.1f})")
 
         if hasattr(target, 'visual_effects'):
             target.visual_effects.add('shield')
 
     def on_remove(self, target: Any):
         """Remove shield from target"""
-        if hasattr(target, 'shield_health'):
-            target.shield_health = max(0, target.shield_health - self.current_shield)
+        if hasattr(target, 'shield_amount'):
+            target.shield_amount = max(0, target.shield_amount - self.current_shield)
 
         if hasattr(target, 'visual_effects'):
             target.visual_effects.remove('shield')
@@ -483,6 +485,84 @@ class HasteEffect(StatusEffect):
 
         if hasattr(target, 'visual_effects'):
             target.visual_effects.remove('haste')
+
+    def _apply_periodic_effect(self, dt: float, target: Any):
+        """No periodic effect"""
+        pass
+
+
+class EmpowerEffect(StatusEffect):
+    """Increases damage dealt"""
+
+    def __init__(self, duration: float, params: Dict[str, Any], source: Any = None):
+        super().__init__(
+            status_id="empower",
+            name="Empowered",
+            duration=duration,
+            duration_remaining=duration,
+            max_stacks=1,
+            source=source,
+            params=params
+        )
+        self.damage_bonus = params.get('empower_damage_bonus', 0.25)  # 25% more damage
+
+    def on_apply(self, target: Any):
+        """Increase damage"""
+        if not hasattr(target, 'empower_damage_multiplier'):
+            target.empower_damage_multiplier = 1.0
+        target.empower_damage_multiplier += self.damage_bonus
+
+        print(f"   ⚔️ Empowered: +{self.damage_bonus*100:.0f}% damage")
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.add('empower')
+
+    def on_remove(self, target: Any):
+        """Restore damage"""
+        if hasattr(target, 'empower_damage_multiplier'):
+            target.empower_damage_multiplier -= self.damage_bonus
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.remove('empower')
+
+    def _apply_periodic_effect(self, dt: float, target: Any):
+        """No periodic effect"""
+        pass
+
+
+class FortifyEffect(StatusEffect):
+    """Increases defense/damage reduction"""
+
+    def __init__(self, duration: float, params: Dict[str, Any], source: Any = None):
+        super().__init__(
+            status_id="fortify",
+            name="Fortified",
+            duration=duration,
+            duration_remaining=duration,
+            max_stacks=1,
+            source=source,
+            params=params
+        )
+        self.defense_bonus = params.get('fortify_defense_bonus', 0.20)  # 20% damage reduction
+
+    def on_apply(self, target: Any):
+        """Increase defense"""
+        if not hasattr(target, 'fortify_damage_reduction'):
+            target.fortify_damage_reduction = 0.0
+        target.fortify_damage_reduction += self.defense_bonus
+
+        print(f"   🛡️ Fortified: +{self.defense_bonus*100:.0f}% damage reduction")
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.add('fortify')
+
+    def on_remove(self, target: Any):
+        """Restore defense"""
+        if hasattr(target, 'fortify_damage_reduction'):
+            target.fortify_damage_reduction -= self.defense_bonus
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.remove('fortify')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -624,6 +704,8 @@ STATUS_EFFECT_CLASSES = {
     'barrier': ShieldEffect,  # Alias
     'haste': HasteEffect,
     'quicken': HasteEffect,  # Alias
+    'empower': EmpowerEffect,
+    'fortify': FortifyEffect,
     'weaken': WeakenEffect,
     'vulnerable': VulnerableEffect,
 }

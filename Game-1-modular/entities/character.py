@@ -84,6 +84,7 @@ class Character:
         self.health = self.max_health
         self.max_mana = self.base_max_mana
         self.mana = self.max_mana
+        self.shield_amount = 0.0  # Temporary damage absorption from shield/barrier buffs
 
         self.inventory = Inventory(30)
         self.tools: List[Tool] = []
@@ -749,6 +750,17 @@ class Character:
         buff_bonus = self.buffs.get_damage_bonus(activity) if hasattr(self, 'buffs') else 0.0
         damage_mult = 1.0 + stat_bonus + title_bonus + buff_bonus
 
+        # Apply Efficiency enchantment (gathering speed multiplier)
+        if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
+            for ench in equipped_tool.enchantments:
+                effect = ench.get('effect', {})
+                if effect.get('type') == 'gathering_speed_multiplier':
+                    efficiency_mult = effect.get('value', 0.0)
+                    damage_mult += efficiency_mult
+                    # Visual feedback for efficiency
+                    if efficiency_mult > 0:
+                        print(f"   ⚡ Efficiency: +{efficiency_mult*100:.0f}% gathering speed")
+
         crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance')
         if hasattr(self, 'buffs'):
             crit_chance += self.buffs.get_total_bonus('pierce', activity)
@@ -759,7 +771,17 @@ class Character:
 
         # Reduce tool durability
         if not Config.DEBUG_INFINITE_RESOURCES:
-            equipped_tool.durability_current = max(0, equipped_tool.durability_current - 1)
+            durability_loss = 1.0
+
+            # Unbreaking enchantment reduces durability loss
+            if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
+                for ench in equipped_tool.enchantments:
+                    effect = ench.get('effect', {})
+                    if effect.get('type') == 'durability_multiplier':
+                        reduction = effect.get('value', 0.0)
+                        durability_loss *= (1.0 - reduction)
+
+            equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
 
         loot = None
         if depleted:
@@ -775,6 +797,18 @@ class Character:
                     enrich_bonus = int(self.buffs.get_total_bonus('enrich', activity))
                     if enrich_bonus > 0:
                         qty += enrich_bonus
+
+                # Fortune enchantment bonus
+                if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
+                    for ench in equipped_tool.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'bonus_yield_chance':
+                            bonus_chance = effect.get('value', 0.0)
+                            # Roll for bonus yield
+                            if random.random() < bonus_chance:
+                                qty += 1
+                                print(f"   💎 Fortune! +1 bonus {item_id}")
+                                break  # Only proc once per item
 
                 processed_loot.append((item_id, qty))
                 self.inventory.add_item(item_id, qty)
@@ -1185,7 +1219,15 @@ class Character:
             damage_type: Type of damage (physical, fire, poison, etc.)
             **kwargs: Additional context (source, tags, context) for advanced damage systems
         """
-        # Apply damage
+        # Shield/Barrier absorption
+        if self.shield_amount > 0:
+            absorbed = min(damage, self.shield_amount)
+            self.shield_amount -= absorbed
+            damage -= absorbed
+            if absorbed > 0:
+                print(f"   🛡️ Shield absorbed {absorbed:.1f} damage (Shield: {self.shield_amount:.1f} remaining)")
+
+        # Apply remaining damage to health
         self.health -= damage
         if self.health <= 0:
             self.health = 0
