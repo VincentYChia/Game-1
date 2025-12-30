@@ -398,6 +398,38 @@ item_stack.equipment_data = EquipmentItem(
 
 ---
 
+## SECTION 5.5: UNIMPLEMENTED MECHANICS
+
+These mechanics are documented but have NO code implementation:
+
+### Block/Parry Mechanics
+**Status**: ❌ NOT IMPLEMENTED
+**Documented In**: `docs/tag-system/TAG-DEFINITIONS-PHASE2.md`
+**Description**: Chance-based damage negation with counter-attack option
+**What's Needed**:
+- Add `block_chance` and `parry_chance` stats to CharacterStats
+- Add shield items with block values
+- Modify `combat_manager.py` to check for block/parry before applying damage
+- Add counter-attack damage on successful parry
+- UI feedback for successful blocks/parries
+
+**Estimated Effort**: 4-6 hours
+
+### Summon Mechanics
+**Status**: ❌ NOT IMPLEMENTED
+**Documented In**: `docs/FUTURE_MECHANICS_TO_IMPLEMENT.md:72-126`
+**Description**: Spawn temporary allied entities that fight for the player
+**What's Needed**:
+- Entity spawning system with ownership tracking
+- Summon allegiance/faction system (friendly vs hostile)
+- Temporary entity lifetime and cleanup
+- Summon AI behavior (follow player, attack enemies)
+- Skills/items that create summons
+
+**Estimated Effort**: 8-12 hours
+
+---
+
 ## SECTION 6: PRIORITY ORDER
 
 ### Immediate (Critical Bugs)
