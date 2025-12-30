@@ -30,13 +30,21 @@ class ClassDatabase:
                 rec_stats_data = class_data.get('recommendedStats', {})
                 rec_stats = rec_stats_data.get('primary', []) if isinstance(rec_stats_data, dict) else []
 
+                # Load tag-driven identity
+                tags = class_data.get('tags', [])
+                preferred_damage_types = class_data.get('preferredDamageTypes', [])
+                preferred_armor_type = class_data.get('preferredArmorType', '')
+
                 cls_def = ClassDefinition(
                     class_id=class_data.get('classId', ''),
                     name=class_data.get('name', ''),
                     description=class_data.get('description', ''),
                     bonuses=bonuses,
                     starting_skill=starting_skill,
-                    recommended_stats=rec_stats
+                    recommended_stats=rec_stats,
+                    tags=tags,
+                    preferred_damage_types=preferred_damage_types,
+                    preferred_armor_type=preferred_armor_type
                 )
                 self.classes[cls_def.class_id] = cls_def
             self.loaded = True
@@ -66,24 +74,35 @@ class ClassDatabase:
         return bonuses
 
     def _create_placeholders(self):
+        # Each tuple: (class_id, name, desc, bonuses, skill, stats, tags, damage_types, armor_type)
         classes_data = [
             ('warrior', 'Warrior', 'A melee fighter with high health and damage',
-             {'max_health': 30, 'melee_damage': 0.10, 'carry_capacity': 20}, 'battle_rage', ['STR', 'VIT', 'DEF']),
+             {'max_health': 30, 'melee_damage': 0.10, 'carry_capacity': 20}, 'battle_rage', ['STR', 'VIT', 'DEF'],
+             ['warrior', 'melee', 'physical', 'tanky'], ['physical', 'slashing'], 'heavy'),
             ('ranger', 'Ranger', 'A nimble hunter specializing in speed and precision',
              {'movement_speed': 0.15, 'crit_chance': 0.10, 'forestry_damage': 0.10}, 'forestry_frenzy',
-             ['AGI', 'LCK', 'VIT']),
+             ['AGI', 'LCK', 'VIT'],
+             ['ranger', 'ranged', 'agile', 'nature'], ['physical', 'piercing'], 'light'),
             ('scholar', 'Scholar', 'A learned mage with vast knowledge',
-             {'max_mana': 100, 'recipe_discovery': 0.10, 'skill_exp': 0.05}, 'alchemist_touch', ['INT', 'LCK', 'AGI']),
+             {'max_mana': 100, 'recipe_discovery': 0.10, 'skill_exp': 0.05}, 'alchemist_touch', ['INT', 'LCK', 'AGI'],
+             ['scholar', 'magic', 'alchemy', 'arcane'], ['arcane', 'fire', 'frost'], 'robes'),
             ('artisan', 'Artisan', 'A master craftsman creating quality goods',
              {'crafting_speed': 0.10, 'first_try_bonus': 0.10, 'durability_bonus': 0.05}, 'smithing_focus',
-             ['AGI', 'INT', 'LCK']),
+             ['AGI', 'INT', 'LCK'],
+             ['artisan', 'crafting', 'smithing', 'utility'], ['physical'], 'medium'),
             ('scavenger', 'Scavenger', 'A treasure hunter with keen eyes',
              {'rare_drops': 0.20, 'resource_quality': 0.10, 'carry_capacity': 100}, 'treasure_luck',
-             ['LCK', 'STR', 'VIT']),
+             ['LCK', 'STR', 'VIT'],
+             ['scavenger', 'luck', 'gathering', 'treasure'], ['physical'], 'light'),
             ('adventurer', 'Adventurer', 'A balanced jack-of-all-trades',
-             {'gathering_bonus': 0.05, 'crafting_bonus': 0.05, 'max_health': 50, 'max_mana': 50}, '', ['Balanced'])
+             {'gathering_bonus': 0.05, 'crafting_bonus': 0.05, 'max_health': 50, 'max_mana': 50}, '', ['Balanced'],
+             ['adventurer', 'balanced', 'versatile', 'generalist'], ['physical', 'arcane'], 'medium')
         ]
-        for class_id, name, desc, bonuses, skill, stats in classes_data:
-            self.classes[class_id] = ClassDefinition(class_id, name, desc, bonuses, skill, stats)
+        for class_id, name, desc, bonuses, skill, stats, tags, dmg_types, armor in classes_data:
+            self.classes[class_id] = ClassDefinition(
+                class_id=class_id, name=name, description=desc, bonuses=bonuses,
+                starting_skill=skill, recommended_stats=stats, tags=tags,
+                preferred_damage_types=dmg_types, preferred_armor_type=armor
+            )
         self.loaded = True
         print(f"✓ Created {len(self.classes)} placeholder classes")

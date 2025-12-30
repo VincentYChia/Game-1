@@ -13,7 +13,10 @@
     "status_buff": ["haste", "quicken", "empower", "fortify", "regeneration", "shield", "barrier", "invisible"],
     "special": ["lifesteal", "vampiric", "reflect", "thorns", "knockback", "pull", "teleport", "summon", "dash", "charge", "phase", "execute", "critical"],
     "trigger": ["on_hit", "on_kill", "on_damage", "on_crit", "on_contact", "on_proximity", "passive", "active", "instant"],
-    "context": ["self", "ally", "friendly", "enemy", "hostile", "all", "player", "turret", "device", "construct", "undead", "mechanical"]
+    "context": ["self", "ally", "friendly", "enemy", "hostile", "all", "player", "turret", "device", "construct", "undead", "mechanical"],
+    "class": ["warrior", "ranger", "scholar", "artisan", "scavenger", "adventurer"],
+    "playstyle": ["melee", "ranged", "magic", "crafting", "gathering", "balanced", "tanky", "agile", "caster"],
+    "armor_type": ["heavy", "medium", "light", "robes"]
   },
 
   "tag_definitions": {
@@ -571,6 +574,91 @@
     "mechanical": {
       "category": "context",
       "description": "Affects mechanical enemies"
+    },
+
+    "warrior": {
+      "category": "class",
+      "description": "Frontline fighter class - high HP, melee damage",
+      "skill_affinity": ["melee", "physical", "tanky"]
+    },
+    "ranger": {
+      "category": "class",
+      "description": "Mobile gatherer class - speed, ranged, nature",
+      "skill_affinity": ["ranged", "agile", "nature"]
+    },
+    "scholar": {
+      "category": "class",
+      "description": "Magical researcher class - mana, alchemy, arcane",
+      "skill_affinity": ["magic", "arcane", "alchemy"]
+    },
+    "artisan": {
+      "category": "class",
+      "description": "Master crafter class - crafting speed and quality",
+      "skill_affinity": ["crafting", "smithing", "engineering"]
+    },
+    "scavenger": {
+      "category": "class",
+      "description": "Loot hunter class - luck, rare drops, gathering",
+      "skill_affinity": ["luck", "gathering", "treasure"]
+    },
+    "adventurer": {
+      "category": "class",
+      "description": "Jack of all trades class - balanced versatility",
+      "skill_affinity": ["balanced", "versatile", "adaptive"]
+    },
+
+    "melee": {
+      "category": "playstyle",
+      "description": "Close-range combat focus"
+    },
+    "ranged": {
+      "category": "playstyle",
+      "description": "Long-range combat focus"
+    },
+    "magic": {
+      "category": "playstyle",
+      "description": "Magical/arcane combat focus"
+    },
+    "crafting": {
+      "category": "playstyle",
+      "description": "Item creation focus"
+    },
+    "gathering": {
+      "category": "playstyle",
+      "description": "Resource collection focus"
+    },
+    "balanced": {
+      "category": "playstyle",
+      "description": "No specialization, versatile"
+    },
+    "tanky": {
+      "category": "playstyle",
+      "description": "High survivability focus"
+    },
+    "agile": {
+      "category": "playstyle",
+      "description": "Speed and evasion focus"
+    },
+    "caster": {
+      "category": "playstyle",
+      "description": "Spell-casting focus"
+    },
+
+    "heavy": {
+      "category": "armor_type",
+      "description": "Heavy armor - high defense, low mobility"
+    },
+    "medium": {
+      "category": "armor_type",
+      "description": "Medium armor - balanced stats"
+    },
+    "light": {
+      "category": "armor_type",
+      "description": "Light armor - low defense, high mobility"
+    },
+    "robes": {
+      "category": "armor_type",
+      "description": "Cloth armor - lowest defense, magic bonuses"
     }
   },
 
