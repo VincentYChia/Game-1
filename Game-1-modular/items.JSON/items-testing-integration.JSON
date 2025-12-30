@@ -1,0 +1,155 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Test items for comprehensive tag system validation",
+    "note": "These items test novel tag combinations and verify full integration"
+  },
+
+  "test_weapons": [
+    {
+      "itemId": "lightning_chain_whip",
+      "name": "Lightning Chain Whip",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "equipment",
+      "type": "weapon",
+      "slot": "mainHand",
+
+      "stats": {
+        "damage": [30, 45],
+        "attackSpeed": 1.5,
+        "durability": 400,
+        "critChance": 0.15
+      },
+
+      "effect_tags": ["lightning", "chain", "shock"],
+      "effect_params": {
+        "baseDamage": 40,
+        "chain_count": 3,
+        "chain_range": 6.0,
+        "shock_duration": 4.0,
+        "shock_damage_per_tick": 5.0,
+        "shock_tick_rate": 1.0
+      },
+
+      "description": "Whip that arcs lightning between foes",
+      "narrative": "Crackling with elemental fury, this whip doesn't just strike—it hunts. Each lash leaps from victim to victim, leaving a trail of shocked enemies in its wake."
+    },
+
+    {
+      "itemId": "inferno_blade",
+      "name": "Inferno Blade",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "equipment",
+      "type": "weapon",
+      "slot": "mainHand",
+
+      "stats": {
+        "damage": [40, 60],
+        "attackSpeed": 1.2,
+        "durability": 500,
+        "critChance": 0.20
+      },
+
+      "effect_tags": ["fire", "cone", "burn"],
+      "effect_params": {
+        "baseDamage": 50,
+        "cone_angle": 60.0,
+        "cone_range": 8.0,
+        "burn_duration": 10.0,
+        "burn_damage_per_second": 8.0
+      },
+
+      "description": "Blade that projects waves of flame",
+      "narrative": "The blade itself never cools. Each swing projects a wave of searing flame that engulfs all before you. The heat is so intense that victims continue burning long after the strike."
+    },
+
+    {
+      "itemId": "void_piercer",
+      "name": "Void Piercer",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "equipment",
+      "type": "weapon",
+      "slot": "mainHand",
+
+      "stats": {
+        "damage": [35, 55],
+        "attackSpeed": 1.4,
+        "durability": 450,
+        "critChance": 0.25
+      },
+
+      "effect_tags": ["shadow", "beam", "weaken", "pierce"],
+      "effect_params": {
+        "baseDamage": 45,
+        "beam_range": 12.0,
+        "beam_width": 1.5,
+        "pierce_count": 5,
+        "weaken_percent": 0.3,
+        "weaken_duration": 8.0
+      },
+
+      "description": "Spear that fires void beams through multiple targets",
+      "narrative": "Forged from crystallized void essence, this spear doesn't throw—it tears. A beam of pure darkness lances through your enemies, weakening each it touches as it passes through flesh and armor alike."
+    },
+
+    {
+      "itemId": "frostbite_hammer",
+      "name": "Frostbite Hammer",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "equipment",
+      "type": "mace",
+      "slot": "mainHand",
+
+      "stats": {
+        "damage": [45, 65],
+        "attackSpeed": 0.8,
+        "durability": 600,
+        "critChance": 0.10
+      },
+
+      "effect_tags": ["ice", "circle", "freeze", "knockback"],
+      "effect_params": {
+        "baseDamage": 60,
+        "circle_radius": 4.0,
+        "origin": "target",
+        "freeze_duration": 3.0,
+        "knockback_distance": 3.0
+      },
+
+      "description": "Hammer that freezes and repels nearby foes",
+      "narrative": "Each impact sends a shockwave of absolute zero. Enemies freeze mid-motion as they're blasted backward, turned into icy statues before they even hit the ground."
+    },
+
+    {
+      "itemId": "blood_reaver",
+      "name": "Blood Reaver",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "equipment",
+      "type": "weapon",
+      "slot": "mainHand",
+
+      "stats": {
+        "damage": [35, 50],
+        "attackSpeed": 1.3,
+        "durability": 400,
+        "critChance": 0.18
+      },
+
+      "effect_tags": ["physical", "single", "bleed", "lifesteal"],
+      "effect_params": {
+        "baseDamage": 42,
+        "bleed_duration": 10.0,
+        "bleed_damage_per_second": 6.0,
+        "lifesteal_percent": 0.25
+      },
+
+      "description": "Cursed blade that feeds on lifeblood",
+      "narrative": "This weapon hungers. Each strike opens wounds that refuse to close, and as your enemies bleed, the blade drinks—and so do you. Feel their vitality flow into you with each passing second."
+    }
+  ]
+}

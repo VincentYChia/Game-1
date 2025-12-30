@@ -43,10 +43,19 @@ class DropDefinition:
 class SpecialAbility:
     """Tag-based special attack for enemies"""
     ability_id: str
+    name: str
     cooldown: float  # Seconds between uses
     tags: List[str]  # Effect tags (e.g., ["fire", "circle", "burn"])
-    params: Dict[str, Any]  # Effect parameters
+    params: Dict[str, Any]  # Effect parameters (effectParams from JSON)
+
+    # Trigger conditions
     health_threshold: float = 1.0  # Use when HP below this (1.0 = always, 0.5 = below 50%)
+    distance_min: float = 0.0  # Minimum distance to target
+    distance_max: float = 999.0  # Maximum distance to target
+    enemy_count: int = 0  # Minimum number of enemies nearby
+    ally_count: int = 0  # Minimum number of allies nearby
+    once_per_fight: bool = False  # Can only be used once per combat
+    max_uses_per_fight: int = 0  # Maximum uses per combat (0 = unlimited)
     priority: int = 0  # Higher priority abilities used first
 
 @dataclass
@@ -122,6 +131,27 @@ class EnemyDatabase:
             with open(filepath, 'r') as f:
                 data = json.load(f)
 
+            # Load ability definitions first (from top-level "abilities" array)
+            ability_map: Dict[str, SpecialAbility] = {}
+            for ability_data in data.get('abilities', []):
+                trigger = ability_data.get('triggerConditions', {})
+                ability = SpecialAbility(
+                    ability_id=ability_data.get('abilityId', ''),
+                    name=ability_data.get('name', ''),
+                    cooldown=ability_data.get('cooldown', 10.0),
+                    tags=ability_data.get('tags', []),
+                    params=ability_data.get('effectParams', {}),
+                    health_threshold=trigger.get('healthThreshold', 1.0),
+                    distance_min=trigger.get('distanceMin', 0.0),
+                    distance_max=trigger.get('distanceMax', 999.0),
+                    enemy_count=trigger.get('enemyCount', 0),
+                    ally_count=trigger.get('allyCount', 0),
+                    once_per_fight=trigger.get('oncePerFight', False),
+                    max_uses_per_fight=trigger.get('maxUsesPerFight', 0),
+                    priority=ability_data.get('priority', 0)
+                )
+                ability_map[ability.ability_id] = ability
+
             for enemy_data in data.get('enemies', []):
                 # Parse stats
                 stats = enemy_data.get('stats', {})
@@ -153,17 +183,14 @@ class EnemyDatabase:
                     special_abilities=ai_data.get('specialAbilities', [])
                 )
 
-                # Parse special abilities (tag-based attacks)
+                # Parse special abilities (look up by ID from aiPattern.specialAbilities)
                 special_abilities = []
-                for ability_data in enemy_data.get('specialAbilities', []):
-                    special_abilities.append(SpecialAbility(
-                        ability_id=ability_data.get('abilityId', ''),
-                        cooldown=ability_data.get('cooldown', 10.0),
-                        tags=ability_data.get('tags', []),
-                        params=ability_data.get('params', {}),
-                        health_threshold=ability_data.get('healthThreshold', 1.0),
-                        priority=ability_data.get('priority', 0)
-                    ))
+                ability_ids = ai_data.get('specialAbilities', [])
+                for ability_id in ability_ids:
+                    if ability_id in ability_map:
+                        special_abilities.append(ability_map[ability_id])
+                    else:
+                        print(f"⚠️ Warning: Enemy {enemy_data.get('enemyId')} references unknown ability '{ability_id}'")
 
                 # Parse metadata
                 metadata = enemy_data.get('metadata', {})
@@ -207,6 +234,119 @@ class EnemyDatabase:
         except Exception as e:
             print(f"⚠ Error loading enemies: {e}")
             self._create_placeholders()
+            return False
+
+    def load_additional_file(self, filepath: str) -> bool:
+        """Load additional enemies from a file (appends to existing, doesn't replace)"""
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            # Load ability definitions
+            ability_map: Dict[str, SpecialAbility] = {}
+            for ability_data in data.get('abilities', []):
+                trigger = ability_data.get('triggerConditions', {})
+                ability = SpecialAbility(
+                    ability_id=ability_data.get('abilityId', ''),
+                    name=ability_data.get('name', ''),
+                    cooldown=ability_data.get('cooldown', 10.0),
+                    tags=ability_data.get('tags', []),
+                    params=ability_data.get('effectParams', {}),
+                    health_threshold=trigger.get('healthThreshold', 1.0),
+                    distance_min=trigger.get('distanceMin', 0.0),
+                    distance_max=trigger.get('distanceMax', 999.0),
+                    enemy_count=trigger.get('enemyCount', 0),
+                    ally_count=trigger.get('allyCount', 0),
+                    once_per_fight=trigger.get('oncePerFight', False),
+                    max_uses_per_fight=trigger.get('maxUsesPerFight', 0),
+                    priority=ability_data.get('priority', 0)
+                )
+                ability_map[ability.ability_id] = ability
+
+            count = 0
+            for enemy_data in data.get('enemies', []):
+                # Parse stats
+                stats = enemy_data.get('stats', {})
+                damage = stats.get('damage', [5, 10])
+
+                # Parse drops
+                drops = []
+                for drop_data in enemy_data.get('drops', []):
+                    qty = drop_data.get('quantity', [1, 1])
+                    chance_text = drop_data.get('chance', 'low')
+                    chance_val = self.chance_map.get(chance_text, 0.5)
+
+                    drops.append(DropDefinition(
+                        material_id=drop_data.get('materialId', ''),
+                        quantity_min=qty[0] if isinstance(qty, list) else qty,
+                        quantity_max=qty[1] if isinstance(qty, list) else qty,
+                        chance=chance_val
+                    ))
+
+                # Parse AI pattern
+                ai_data = enemy_data.get('aiPattern', {})
+                ai_pattern = AIPattern(
+                    default_state=ai_data.get('defaultState', 'idle'),
+                    aggro_on_damage=ai_data.get('aggroOnDamage', True),
+                    aggro_on_proximity=ai_data.get('aggroOnProximity', False),
+                    flee_at_health=ai_data.get('fleeAtHealth', 0.0),
+                    call_for_help_radius=ai_data.get('callForHelpRadius', 0.0),
+                    pack_coordination=ai_data.get('packCoordination', False),
+                    special_abilities=ai_data.get('specialAbilities', [])
+                )
+
+                # Parse special abilities (look up by ID from aiPattern.specialAbilities)
+                special_abilities = []
+                ability_ids = ai_data.get('specialAbilities', [])
+                for ability_id in ability_ids:
+                    if ability_id in ability_map:
+                        special_abilities.append(ability_map[ability_id])
+                    else:
+                        print(f"⚠️ Warning: Enemy {enemy_data.get('enemyId')} references unknown ability '{ability_id}'")
+
+                # Parse metadata
+                metadata = enemy_data.get('metadata', {})
+                enemy_id = enemy_data.get('enemyId', '')
+
+                # Icon path
+                icon_path = enemy_data.get('iconPath')
+                if not icon_path and enemy_id:
+                    icon_path = f"enemies/{enemy_id}.png"
+
+                # Create definition
+                enemy_def = EnemyDefinition(
+                    enemy_id=enemy_id,
+                    name=enemy_data.get('name', 'Unknown Enemy'),
+                    tier=enemy_data.get('tier', 1),
+                    category=enemy_data.get('category', 'beast'),
+                    behavior=enemy_data.get('behavior', 'passive_patrol'),
+                    max_health=stats.get('health', 50) * 0.1,
+                    damage_min=damage[0] if isinstance(damage, list) else damage,
+                    damage_max=damage[1] if isinstance(damage, list) else damage,
+                    defense=stats.get('defense', 0),
+                    speed=stats.get('speed', 1.0),
+                    aggro_range=stats.get('aggroRange', 5),
+                    attack_speed=stats.get('attackSpeed', 1.0),
+                    drops=drops,
+                    ai_pattern=ai_pattern,
+                    special_abilities=special_abilities,
+                    narrative=metadata.get('narrative', ''),
+                    tags=metadata.get('tags', []),
+                    icon_path=icon_path
+                )
+
+                self.enemies[enemy_def.enemy_id] = enemy_def
+                if enemy_def.tier in self.enemies_by_tier:
+                    self.enemies_by_tier[enemy_def.tier].append(enemy_def)
+                count += 1
+
+            print(f"✓ Loaded {count} additional enemies from {filepath}")
+            return True
+
+        except Exception as e:
+            print(f"⚠ Error loading additional enemies from {filepath}: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def _create_placeholders(self):
@@ -266,6 +406,11 @@ class Enemy:
         self.wander_timer = 0.0
         self.wander_cooldown = random.uniform(2.0, 5.0)
 
+        # Knockback system - smooth forced movement
+        self.knockback_velocity_x = 0.0
+        self.knockback_velocity_y = 0.0
+        self.knockback_duration_remaining = 0.0
+
         # Combat
         self.attack_cooldown = 0.0
         self.in_combat = False
@@ -289,6 +434,11 @@ class Enemy:
         # Special ability cooldowns (dict: ability_id -> cooldown_remaining)
         self.ability_cooldowns: Dict[str, float] = {
             ability.ability_id: 0.0 for ability in definition.special_abilities
+        }
+
+        # Special ability usage tracking (dict: ability_id -> uses_this_fight)
+        self.ability_uses_this_fight: Dict[str, int] = {
+            ability.ability_id: 0 for ability in definition.special_abilities
         }
 
     def _get_initial_state(self) -> AIState:
@@ -342,6 +492,30 @@ class Enemy:
                 loot.append((drop.material_id, quantity))
         return loot
 
+    def update_knockback(self, dt: float):
+        """Apply knockback velocity over time (smooth forced movement)"""
+        if self.knockback_duration_remaining > 0:
+            # Apply knockback velocity to position
+            dx = self.knockback_velocity_x * dt
+            dy = self.knockback_velocity_y * dt
+
+            # Modify position directly (list format for enemies)
+            self.position[0] += dx
+            self.position[1] += dy
+
+            # Clamp to chunk boundaries (enemies should stay in their chunk)
+            self.position[0], self.position[1] = self._clamp_to_chunk_bounds(
+                self.position[0], self.position[1]
+            )
+
+            # Reduce remaining duration
+            self.knockback_duration_remaining -= dt
+            if self.knockback_duration_remaining <= 0:
+                # Knockback finished
+                self.knockback_velocity_x = 0.0
+                self.knockback_velocity_y = 0.0
+                self.knockback_duration_remaining = 0.0
+
     def update_ai(self, dt: float, player_position: Tuple[float, float]):
         """Update enemy AI behavior"""
         if not self.is_alive:
@@ -350,6 +524,9 @@ class Enemy:
                 self.ai_state = AIState.CORPSE
             self.time_since_death += dt
             return
+
+        # Update knockback (smooth forced movement)
+        self.update_knockback(dt)
 
         # Update status effects
         if hasattr(self, 'status_manager'):
@@ -472,6 +649,10 @@ class Enemy:
             self.ai_state = AIState.CHASE
             return
 
+        # NOTE: Special ability usage is now handled by combat_manager
+        # combat_manager.update() calls enemy.use_special_ability with proper target/available_targets
+        # Removed duplicate call here that was passing target=None, available_targets=[]
+
         # Attack cooldown handled by combat manager
         # Enemy just faces player and waits for attack cooldown
 
@@ -552,8 +733,11 @@ class Enemy:
         damage = random.uniform(self.definition.damage_min, self.definition.damage_max)
         return damage
 
-    def can_use_special_ability(self) -> Optional[SpecialAbility]:
-        """Check if enemy can use a special ability. Returns ability if available, None otherwise"""
+    def can_use_special_ability(self, dist_to_target: float = 0.0, target_position: Tuple[float, float] = None) -> Optional[SpecialAbility]:
+        """
+        Check if enemy can use a special ability based on trigger conditions.
+        Returns ability if available, None otherwise.
+        """
         if not self.definition.special_abilities:
             return None
 
@@ -579,7 +763,24 @@ class Enemy:
             if self.ability_cooldowns.get(ability.ability_id, 0) > 0:
                 continue
 
-            # Found usable ability!
+            # Check distance conditions
+            if ability.distance_min > 0 and dist_to_target < ability.distance_min:
+                continue
+            if ability.distance_max < 999 and dist_to_target > ability.distance_max:
+                continue
+
+            # Check once-per-fight limitation
+            if ability.once_per_fight and self.ability_uses_this_fight.get(ability.ability_id, 0) > 0:
+                continue
+
+            # Check max-uses-per-fight limitation
+            if ability.max_uses_per_fight > 0 and self.ability_uses_this_fight.get(ability.ability_id, 0) >= ability.max_uses_per_fight:
+                continue
+
+            # TODO: Check enemy_count and ally_count (needs nearby enemy/ally tracking)
+            # For now, these conditions are ignored (will be implemented when needed)
+
+            # All conditions met - found usable ability!
             return ability
 
         return None
@@ -648,5 +849,14 @@ class Enemy:
         if success:
             # Start cooldown
             self.ability_cooldowns[ability.ability_id] = ability.cooldown
+
+            # Track usage (for once-per-fight and max-uses-per-fight limitations)
+            self.ability_uses_this_fight[ability.ability_id] = self.ability_uses_this_fight.get(ability.ability_id, 0) + 1
+
+            # VISIBLE FEEDBACK - Show enemy used ability!
+            print(f"\n⚡💀 ENEMY ABILITY: {self.definition.name} used {ability.name}!")
+            print(f"   Tags: {', '.join(ability.tags)}")
+            from core.debug_display import debug_print
+            debug_print(f"💀 ENEMY ABILITY: {self.definition.name} → {ability.name} ({', '.join(ability.tags)})")
 
         return success

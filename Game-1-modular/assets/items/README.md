@@ -181,7 +181,7 @@ The game currently has **165+ items** requiring icons:
 ### Skills (30 items)
 Skills use effect type icons rather than individual skill icons.
 
-See `/Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md` for complete item list with descriptions.
+See `/assets/icons/ITEM_CATALOG_FOR_ICONS.md` for complete item list with descriptions.
 
 ---
 
@@ -323,7 +323,7 @@ cache.clear_cache()
 
 ## 📚 References
 
-- **Item Catalog**: `/Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md`
+- **Item Catalog**: `/assets/icons/ITEM_CATALOG_FOR_ICONS.md`
 - **JSON Templates**: `/Game-1-modular/Definitions.JSON/JSON Templates/`
 - **Code Documentation**: `/Game-1-modular/docs/ARCHITECTURE.md`
 

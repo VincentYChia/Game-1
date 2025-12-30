@@ -119,6 +119,10 @@ class GameEngine:
         SkillDatabase.get_instance().load_from_file(str(get_resource_path("Skills/skills-skills-1.JSON")))
         NPCDatabase.get_instance().load_from_files()  # Load NPCs and Quests
 
+        # Load content from installed Update-N packages
+        from data.databases.update_loader import load_all_updates
+        load_all_updates(get_resource_path(""))
+
         # Initialize crafting subdisciplines (minigames)
         if CRAFTING_MODULES_LOADED:
             print("\nInitializing crafting subdisciplines...")
@@ -329,6 +333,42 @@ class GameEngine:
                     effect_params = effect_params.copy()
                     effect_params['baseDamage'] = avg_damage
 
+                # Collect enchantment metadata tags and apply enchantment effects
+                if hasattr(weapon, 'enchantments') and weapon.enchantments:
+                    enchant_tags = []
+                    damage_multiplier = 1.0
+
+                    for ench in weapon.enchantments:
+                        # Collect metadata tags
+                        metadata_tags = ench.get('metadata_tags', [])
+                        if metadata_tags:
+                            enchant_tags.extend(metadata_tags)
+
+                        # Apply damage multiplier enchantments (Sharpness, etc.)
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'damage_multiplier':
+                            damage_multiplier += effect.get('value', 0.0)
+
+                    # Merge enchantment tags with weapon tags (avoid duplicates)
+                    if enchant_tags:
+                        effect_tags = list(set(effect_tags + enchant_tags))
+
+                    # Apply damage multiplier to baseDamage
+                    if damage_multiplier != 1.0 and 'baseDamage' in effect_params:
+                        effect_params = effect_params.copy()
+                        effect_params['baseDamage'] *= damage_multiplier
+
+                # Apply weaken status damage reduction
+                if hasattr(self.character, 'status_manager'):
+                    weaken_effect = self.character.status_manager._find_effect('weaken')
+                    if weaken_effect:
+                        stat_reduction = weaken_effect.params.get('stat_reduction', 0.25)
+                        affected_stats = weaken_effect.params.get('affected_stats', ['damage', 'defense'])
+
+                        if 'damage' in affected_stats and 'baseDamage' in effect_params:
+                            effect_params = effect_params.copy()
+                            effect_params['baseDamage'] *= (1.0 - stat_reduction)
+
                 return (effect_tags, effect_params)
 
         # Fallback: No effect tags, create basic physical attack
@@ -455,31 +495,31 @@ class GameEngine:
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
-                    success, msg = self.character.skills.use_skill(0, self.character)
+                    success, msg = self.character.skills.use_skill(0, self.character, self.combat_manager)
                     if success:
                         self.add_notification(msg, (150, 255, 150))
                     else:
                         self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_2:
-                    success, msg = self.character.skills.use_skill(1, self.character)
+                    success, msg = self.character.skills.use_skill(1, self.character, self.combat_manager)
                     if success:
                         self.add_notification(msg, (150, 255, 150))
                     else:
                         self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_3:
-                    success, msg = self.character.skills.use_skill(2, self.character)
+                    success, msg = self.character.skills.use_skill(2, self.character, self.combat_manager)
                     if success:
                         self.add_notification(msg, (150, 255, 150))
                     else:
                         self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_4:
-                    success, msg = self.character.skills.use_skill(3, self.character)
+                    success, msg = self.character.skills.use_skill(3, self.character, self.combat_manager)
                     if success:
                         self.add_notification(msg, (150, 255, 150))
                     else:
                         self.add_notification(msg, (255, 150, 150))
                 elif event.key == pygame.K_5:
-                    success, msg = self.character.skills.use_skill(4, self.character)
+                    success, msg = self.character.skills.use_skill(4, self.character, self.combat_manager)
                     if success:
                         self.add_notification(msg, (150, 255, 150))
                     else:
@@ -1495,6 +1535,15 @@ class GameEngine:
             if not self.character.can_attack('mainHand'):
                 return  # Still on cooldown
 
+            # Check if stunned or frozen (cannot attack)
+            if hasattr(self.character, 'status_manager'):
+                if self.character.status_manager.has_status('stun'):
+                    self.add_notification("Cannot attack while stunned!", (255, 100, 100))
+                    return
+                if self.character.status_manager.has_status('freeze'):
+                    self.add_notification("Cannot attack while frozen!", (255, 100, 100))
+                    return
+
             # Check if in range (using mainhand weapon's range)
             weapon_range = self.character.equipment.get_weapon_range('mainHand')
             dist = enemy.distance_to((self.character.position.x, self.character.position.y))
@@ -1637,7 +1686,8 @@ class GameEngine:
                 self.add_notification(f"Cannot harvest: {reason}", (255, 100, 100))
                 return
 
-            result = self.character.harvest_resource(resource)
+            # Pass nearby resources for AoE gathering (Chain Harvest skill)
+            result = self.character.harvest_resource(resource, nearby_resources=self.world.resources)
             if result:
                 loot, dmg, is_crit = result
                 self.damage_numbers.append(DamageNumber(dmg, resource.position.copy(), is_crit))
@@ -2863,6 +2913,7 @@ class GameEngine:
             self.character.update_attack_cooldown(dt)
             self.character.update_health_regen(dt)
             self.character.update_buffs(dt)
+            self.character.update_knockback(dt, self.world)
 
             # Update turret system
             self.turret_system.update(self.world.placed_entities, self.combat_manager, dt)
@@ -3114,6 +3165,12 @@ class GameEngine:
 
                 self.add_notification(message, (100, 255, 100))
                 print(f"✅ Minigame crafting complete: {rarity} {out_name} x{output_qty} with stats: {stats}")
+
+            # IMPORTANT: Consume crafting buffs after successful craft
+            # This includes skills like Smith's Focus, Alchemist's Insight, Engineer's Precision, etc.
+            if hasattr(self.character, 'buffs'):
+                self.character.buffs.consume_buffs_for_action("craft", category=activity_type)
+                print(f"   ⚡ Consumed {activity_type} crafting buffs")
 
         # Clear minigame state
         self.active_minigame = None

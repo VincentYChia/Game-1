@@ -800,7 +800,7 @@
       "effect": {
         "type": "devastate",
         "category": "mining",
-        "magnitude": "minor",
+        "magnitude": "major",
         "target": "area",
         "duration": "instant",
         "additionalEffects": []

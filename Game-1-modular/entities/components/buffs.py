@@ -101,16 +101,24 @@ class BuffManager:
                     should_consume = True
             elif action_type == "gather":
                 # Consume gathering buffs (mining, forestry, fishing) on gather
-                if category and buff.category == category:
-                    should_consume = True
-                elif buff.category in ["mining", "forestry", "fishing", "gathering"]:
-                    should_consume = True
+                if category:
+                    # If category specified, only consume exact matches
+                    if buff.category == category:
+                        should_consume = True
+                else:
+                    # If no category specified, consume all gathering buffs
+                    if buff.category in ["mining", "forestry", "fishing", "gathering"]:
+                        should_consume = True
             elif action_type == "craft":
                 # Consume crafting buffs on craft
-                if category and buff.category == category:
-                    should_consume = True
-                elif buff.category in ["smithing", "alchemy", "engineering", "refining", "enchanting"]:
-                    should_consume = True
+                if category:
+                    # If category specified, only consume exact matches
+                    if buff.category == category:
+                        should_consume = True
+                else:
+                    # If no category specified, consume all crafting buffs
+                    if buff.category in ["smithing", "alchemy", "engineering", "refining", "enchanting"]:
+                        should_consume = True
 
             if should_consume:
                 buffs_to_remove.append(buff)

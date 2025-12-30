@@ -29,6 +29,21 @@ class EquipmentItem:
     tags: List[str] = field(default_factory=list)  # Metadata tags from JSON
     effect_tags: List[str] = field(default_factory=list)  # Combat effect tags (fire, slashing, cone, etc.)
     effect_params: Dict[str, Any] = field(default_factory=dict)  # Effect parameters (baseDamage, cone_angle, etc.)
+    soulbound: bool = False  # If true, item is kept on death
+
+    def is_soulbound(self) -> bool:
+        """Check if this item is soulbound (kept on death)"""
+        # Check direct flag
+        if self.soulbound:
+            return True
+
+        # Check for soulbound enchantment
+        for ench in self.enchantments:
+            effect = ench.get('effect', {})
+            if effect.get('type') == 'soulbound':
+                return True
+
+        return False
 
     def get_effectiveness(self) -> float:
         """Get effectiveness multiplier based on durability (for CONFIG check - imported later)"""
@@ -157,8 +172,16 @@ class EquipmentItem:
         else:
             return True, "OK (no applicability rules provided)"
 
-    def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict) -> Tuple[bool, str]:
-        """Apply an enchantment effect to this item with comprehensive rules"""
+    def apply_enchantment(self, enchantment_id: str, enchantment_name: str, effect: Dict,
+                         metadata_tags: List[str] = None) -> Tuple[bool, str]:
+        """Apply an enchantment effect to this item with comprehensive rules
+
+        Args:
+            enchantment_id: Unique ID of the enchantment
+            enchantment_name: Display name of the enchantment
+            effect: Effect dictionary (type, value, etc.)
+            metadata_tags: Optional metadata tags from recipe (for combat system)
+        """
         # Check for exact duplicate
         if any(ench.get('enchantment_id') == enchantment_id for ench in self.enchantments):
             return False, "This enchantment is already applied"
@@ -191,11 +214,15 @@ class EquipmentItem:
         ]
 
         # Apply the new enchantment
-        self.enchantments.append({
+        enchantment_data = {
             'enchantment_id': enchantment_id,
             'name': enchantment_name,
             'effect': effect
-        })
+        }
+        if metadata_tags:
+            enchantment_data['metadata_tags'] = metadata_tags
+
+        self.enchantments.append(enchantment_data)
 
         # Debug output for enchantment verification
         print(f"\n✨ ENCHANTMENT APPLIED")
@@ -208,17 +235,28 @@ class EquipmentItem:
 
     def _get_item_type(self) -> str:
         """Determine the item type for enchantment compatibility"""
+        # Use explicit item_type if set and valid
+        if hasattr(self, 'item_type') and self.item_type in ['weapon', 'tool', 'armor', 'shield', 'accessory']:
+            # Map 'shield' to 'armor' for enchantment purposes
+            if self.item_type == 'shield':
+                return 'armor'
+            return self.item_type
+
+        # Fall back to slot-based detection
         weapon_slots = ['mainHand', 'offHand']
         tool_slots = ['tool']
         armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
 
         if self.slot in weapon_slots and self.damage != (0, 0):
             return 'weapon'
-        elif self.slot in weapon_slots or self.slot in tool_slots:
+        elif self.slot in tool_slots:
             return 'tool'
         elif self.slot in armor_slots:
             return 'armor'
         else:
+            # Items in weapon slots with no damage are tools (axes, pickaxes when equipped)
+            if self.slot in weapon_slots:
+                return 'tool'
             return 'accessory'
 
     def get_metadata_tags(self) -> List[str]:

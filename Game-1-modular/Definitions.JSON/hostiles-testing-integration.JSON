@@ -1,0 +1,269 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Test enemies for comprehensive tag system validation",
+    "note": "These enemies test complex ability combinations and AI behavior"
+  },
+
+  "enemies": [
+    {
+      "enemyId": "void_archon",
+      "name": "Void Archon",
+      "category": "undead",
+      "tier": 4,
+
+      "stats": {
+        "health": 800,
+        "damage": 55,
+        "speed": 1.8,
+        "attackSpeed": 1.2,
+        "armor": 30
+      },
+
+      "ai": {
+        "aggroRange": 15.0,
+        "chaseRange": 20.0,
+        "behavior": "aggressive",
+        "attackCooldown": 1.8
+      },
+
+      "specialAbilities": [
+        {
+          "abilityId": "void_beam",
+          "name": "Void Beam",
+          "tags": ["shadow", "beam", "weaken", "pierce", "player"],
+          "effectParams": {
+            "baseDamage": 70,
+            "beam_range": 15.0,
+            "beam_width": 2.0,
+            "pierce_count": 5,
+            "weaken_percent": 0.35,
+            "weaken_duration": 12.0
+          },
+          "cooldown": 10.0,
+          "triggerConditions": {
+            "healthThreshold": 1.0,
+            "distanceMin": 6.0,
+            "distanceMax": 15.0
+          }
+        },
+        {
+          "abilityId": "gravity_pull",
+          "name": "Gravity Pull",
+          "tags": ["arcane", "circle", "pull", "player"],
+          "effectParams": {
+            "baseDamage": 30,
+            "circle_radius": 10.0,
+            "origin": "source",
+            "pull_distance": 6.0
+          },
+          "cooldown": 15.0,
+          "triggerConditions": {
+            "healthThreshold": 0.7,
+            "distanceMin": 4.0,
+            "distanceMax": 10.0
+          }
+        },
+        {
+          "abilityId": "void_explosion",
+          "name": "Void Explosion",
+          "tags": ["shadow", "circle", "knockback", "vulnerable", "player"],
+          "effectParams": {
+            "baseDamage": 100,
+            "circle_radius": 8.0,
+            "origin": "source",
+            "knockback_distance": 6.0,
+            "vulnerable_percent": 0.3,
+            "vulnerable_duration": 10.0
+          },
+          "cooldown": 25.0,
+          "triggerConditions": {
+            "healthThreshold": 0.3,
+            "distanceMax": 8.0,
+            "maxUsesPerFight": 2
+          }
+        }
+      ],
+
+      "loot": [
+        {"itemId": "void_essence", "chance": 0.8, "minQuantity": 2, "maxQuantity": 5},
+        {"itemId": "shadow_crystal", "chance": 0.4, "minQuantity": 1, "maxQuantity": 2},
+        {"itemId": "arcane_dust", "chance": 0.6, "minQuantity": 3, "maxQuantity": 6}
+      ],
+
+      "narrative": "An archon corrupted by the void. It bends space and shadow to pull victims close before tearing them apart with beams of pure darkness."
+    },
+
+    {
+      "enemyId": "storm_titan",
+      "name": "Storm Titan",
+      "category": "elemental",
+      "tier": 4,
+
+      "stats": {
+        "health": 1000,
+        "damage": 60,
+        "speed": 1.4,
+        "attackSpeed": 1.0,
+        "armor": 40
+      },
+
+      "ai": {
+        "aggroRange": 12.0,
+        "chaseRange": 18.0,
+        "behavior": "aggressive",
+        "attackCooldown": 2.0
+      },
+
+      "specialAbilities": [
+        {
+          "abilityId": "chain_lightning",
+          "name": "Chain Lightning",
+          "tags": ["lightning", "chain", "shock", "player"],
+          "effectParams": {
+            "baseDamage": 65,
+            "chain_count": 4,
+            "chain_range": 6.0,
+            "shock_duration": 8.0,
+            "shock_damage_per_tick": 6.0,
+            "shock_tick_rate": 1.0
+          },
+          "cooldown": 8.0,
+          "triggerConditions": {
+            "healthThreshold": 1.0,
+            "distanceMax": 12.0
+          }
+        },
+        {
+          "abilityId": "thunder_slam",
+          "name": "Thunder Slam",
+          "tags": ["lightning", "circle", "stun", "knockback", "player"],
+          "effectParams": {
+            "baseDamage": 80,
+            "circle_radius": 6.0,
+            "origin": "source",
+            "stun_duration": 4.0,
+            "knockback_distance": 4.0
+          },
+          "cooldown": 12.0,
+          "triggerConditions": {
+            "healthThreshold": 0.6,
+            "distanceMax": 6.0
+          }
+        },
+        {
+          "abilityId": "static_field",
+          "name": "Static Field",
+          "tags": ["lightning", "circle", "slow", "shock", "player"],
+          "effectParams": {
+            "baseDamage": 40,
+            "circle_radius": 10.0,
+            "origin": "source",
+            "slow_percent": 0.6,
+            "slow_duration": 10.0,
+            "shock_duration": 10.0,
+            "shock_damage_per_tick": 5.0,
+            "shock_tick_rate": 1.5
+          },
+          "cooldown": 18.0,
+          "triggerConditions": {
+            "healthThreshold": 0.4,
+            "distanceMax": 10.0
+          }
+        }
+      ],
+
+      "loot": [
+        {"itemId": "lightning_essence", "chance": 0.9, "minQuantity": 3, "maxQuantity": 6},
+        {"itemId": "storm_core", "chance": 0.3, "minQuantity": 1, "maxQuantity": 1}
+      ],
+
+      "narrative": "A living storm given form. Lightning arcs from its body, chaining between victims as it slams the ground with thunderous force."
+    },
+
+    {
+      "enemyId": "inferno_drake",
+      "name": "Inferno Drake",
+      "category": "beast",
+      "tier": 3,
+
+      "stats": {
+        "health": 650,
+        "damage": 50,
+        "speed": 2.0,
+        "attackSpeed": 1.4,
+        "armor": 25
+      },
+
+      "ai": {
+        "aggroRange": 14.0,
+        "chaseRange": 20.0,
+        "behavior": "aggressive",
+        "attackCooldown": 1.5
+      },
+
+      "specialAbilities": [
+        {
+          "abilityId": "fire_breath",
+          "name": "Fire Breath",
+          "tags": ["fire", "cone", "burn", "player"],
+          "effectParams": {
+            "baseDamage": 75,
+            "cone_angle": 60.0,
+            "cone_range": 10.0,
+            "burn_duration": 12.0,
+            "burn_damage_per_second": 8.0
+          },
+          "cooldown": 8.0,
+          "triggerConditions": {
+            "healthThreshold": 1.0,
+            "distanceMax": 10.0
+          }
+        },
+        {
+          "abilityId": "wing_buffet",
+          "name": "Wing Buffet",
+          "tags": ["physical", "circle", "knockback", "player"],
+          "effectParams": {
+            "baseDamage": 40,
+            "circle_radius": 5.0,
+            "origin": "source",
+            "knockback_distance": 5.0
+          },
+          "cooldown": 10.0,
+          "triggerConditions": {
+            "healthThreshold": 0.7,
+            "distanceMax": 5.0
+          }
+        },
+        {
+          "abilityId": "meteor_strike",
+          "name": "Meteor Strike",
+          "tags": ["fire", "circle", "burn", "knockback", "player"],
+          "effectParams": {
+            "baseDamage": 120,
+            "circle_radius": 8.0,
+            "origin": "target",
+            "burn_duration": 15.0,
+            "burn_damage_per_second": 10.0,
+            "knockback_distance": 6.0
+          },
+          "cooldown": 20.0,
+          "triggerConditions": {
+            "healthThreshold": 0.3,
+            "distanceMin": 5.0,
+            "distanceMax": 15.0,
+            "oncePerFight": true
+          }
+        }
+      ],
+
+      "loot": [
+        {"itemId": "drake_scale", "chance": 1.0, "minQuantity": 2, "maxQuantity": 4},
+        {"itemId": "fire_crystal", "chance": 0.5, "minQuantity": 1, "maxQuantity": 3}
+      ],
+
+      "narrative": "A drake infused with elemental flame. It bathes foes in fire breath, knocks them back with wing beats, and calls down meteors when desperate."
+    }
+  ]
+}

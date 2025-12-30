@@ -25,22 +25,22 @@ All icons and catalog entries are generated from the same data, guaranteeing the
 
 ## File Descriptions
 
-### 1. `unified_icon_generator.py` ⭐ PRIMARY TOOL
+### 1. `assets/icons/unified_icon_generator.py` ⭐ PRIMARY TOOL
 
 **Purpose**: Generate BOTH placeholder icons AND the catalog markdown from JSON files.
+
+**Location**: Moved to `assets/icons/` to keep icon generation tools co-located with icon assets.
 
 **Usage**:
 ```bash
 cd Game-1-modular
-python tools/unified_icon_generator.py
+python assets/icons/unified_icon_generator.py
 ```
 
 **What it does**:
 1. Reads from all JSON definition files:
-   - `items.JSON/*.JSON` (materials, equipment)
-   - `Definitions.JSON/hostiles-1.JSON` (enemies)
-   - `progression/titles-1.JSON` (titles)
-   - `Skills/skills-skills-1.JSON` (skills)
+   - **Core content**: `items.JSON/*.JSON`, `Definitions.JSON/hostiles-1.JSON`, `progression/*.JSON`, `Skills/*.JSON`
+   - **Update-N packages**: Scans `updates_manifest.json` to discover and extract all Update-N content
    - Hardcoded resources (from ResourceType enum)
 
 2. Generates placeholder PNG images:
@@ -50,14 +50,23 @@ python tools/unified_icon_generator.py
    - Only creates missing files (won't overwrite existing)
 
 3. Generates catalog markdown:
-   - `Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md`
+   - `assets/icons/ITEM_CATALOG_FOR_ICONS.md`
    - Contains: ITEM_ID, Category, Type, Subtype, Narrative
    - Used by Vheer-automation for AI icon generation
+   - **Includes Update-N content** automatically
 
 **When to run**:
-- After adding new items to JSON files
+- After adding new items to core JSON files
+- After adding/updating Update-N packages
 - After modifying item narratives
 - When placeholders and catalog get out of sync
+
+**Update-N Integration** 🆕:
+- Automatically scans `updates_manifest.json` for installed updates
+- Extracts items, skills, and enemies from all Update-N directories
+- Deduplicates entries (Update-N overrides core items with same ID)
+- Generates placeholders and catalog entries for Update-N content
+- No manual intervention needed - just run the script!
 
 ---
 
@@ -116,7 +125,7 @@ python Vheer-automation.py
 2. **Run unified generator**:
    ```bash
    cd Game-1-modular
-   python tools/unified_icon_generator.py
+   python assets/icons/unified_icon_generator.py
    ```
 
    This creates:
@@ -140,23 +149,26 @@ python Vheer-automation.py
 
 ## Current Statistics
 
-**Total Entities**: 219
-- **Items**: 154
+**Total Entities**: 233 (includes Update-N content)
+- **Items**: 147
   - Materials: 70
-  - Weapons: 11
+  - Weapons: 16 (includes 5 Update-1 weapons)
   - Armor: 6
   - Tools: 10
   - Accessories: 3
   - Stations: 11
   - Devices: 16
   - Consumables: 16
-- **Enemies**: 13
+- **Enemies**: 16 (includes Update-1 enemies)
 - **Resources**: 12
 - **Titles**: 10
-- **Skills**: 30
+- **Skills**: 36 (includes Update-1 skills)
+- **NPCs**: 3
+- **Quests**: 3
+- **Classes**: 6
 
-**Placeholders**: 208 PNG files (all categories)
-**Catalog Entries**: 219 (matches JSON definitions)
+**Placeholders**: 233 PNG files (all categories)
+**Catalog Entries**: 233 (matches all loaded game content + Update-N)
 
 ---
 
@@ -170,7 +182,7 @@ Run the unified generator. It reads the authoritative JSON files and regenerates
 
 Check if the item is in the catalog:
 ```bash
-grep "### item_name" "Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md"
+grep "### item_name" "assets/icons/ITEM_CATALOG_FOR_ICONS.md"
 ```
 
 If missing, run `unified_icon_generator.py` again.
@@ -236,7 +248,7 @@ Placeholder PNGs    Catalog MD
 ## Related Files
 
 - `../assets/ICON_REQUIREMENTS.md` - Original requirements document
-- `../Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md` - Generated catalog (AUTO-GENERATED, do not edit)
+- `../assets/icons/ITEM_CATALOG_FOR_ICONS.md` - Generated catalog (AUTO-GENERATED, do not edit)
 - `../assets/generated_icons/` - AI-generated icons from Vheer
 - `../assets/items/` - Item icon directory structure
 - `../assets/{enemies,resources,titles,skills}/` - Other icon directories

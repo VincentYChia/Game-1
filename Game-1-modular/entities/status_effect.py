@@ -104,7 +104,7 @@ class BurnEffect(StatusEffect):
     def on_remove(self, target: Any):
         """Visual: Remove fire"""
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('burn')
+            target.visual_effects.discard('burn')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """Apply fire damage"""
@@ -136,7 +136,7 @@ class BleedEffect(StatusEffect):
 
     def on_remove(self, target: Any):
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('bleed')
+            target.visual_effects.discard('bleed')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """Apply bleed damage"""
@@ -168,7 +168,7 @@ class PoisonEffect(StatusEffect):
 
     def on_remove(self, target: Any):
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('poison')
+            target.visual_effects.discard('poison')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """Apply poison damage (scales heavily with stacks)"""
@@ -223,7 +223,7 @@ class FreezeEffect(StatusEffect):
             target.movement_speed = self.stored_speed
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('freeze')
+            target.visual_effects.discard('freeze')
 
         if hasattr(target, 'is_frozen'):
             target.is_frozen = False
@@ -269,7 +269,7 @@ class SlowEffect(StatusEffect):
             target.movement_speed = self.stored_speed
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('slow')
+            target.visual_effects.discard('slow')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -304,7 +304,7 @@ class StunEffect(StatusEffect):
             target.is_stunned = False
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('stun')
+            target.visual_effects.discard('stun')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -352,7 +352,7 @@ class RootEffect(StatusEffect):
             target.is_rooted = False
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('root')
+            target.visual_effects.discard('root')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -384,7 +384,7 @@ class RegenerationEffect(StatusEffect):
 
     def on_remove(self, target: Any):
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('regen')
+            target.visual_effects.discard('regen')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """Apply healing"""
@@ -414,22 +414,24 @@ class ShieldEffect(StatusEffect):
 
     def on_apply(self, target: Any):
         """Add shield to target"""
-        if hasattr(target, 'shield_health'):
-            target.shield_health += self.shield_amount
+        if hasattr(target, 'shield_amount'):
+            target.shield_amount += self.shield_amount
         else:
             # Create shield attribute if it doesn't exist
-            target.shield_health = self.shield_amount
+            target.shield_amount = self.shield_amount
+
+        print(f"   🛡️ Shield applied: {self.shield_amount:.1f} absorption (Total: {target.shield_amount:.1f})")
 
         if hasattr(target, 'visual_effects'):
             target.visual_effects.add('shield')
 
     def on_remove(self, target: Any):
         """Remove shield from target"""
-        if hasattr(target, 'shield_health'):
-            target.shield_health = max(0, target.shield_health - self.current_shield)
+        if hasattr(target, 'shield_amount'):
+            target.shield_amount = max(0, target.shield_amount - self.current_shield)
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('shield')
+            target.visual_effects.discard('shield')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect, shield is consumed by damage"""
@@ -482,7 +484,85 @@ class HasteEffect(StatusEffect):
             target.attack_speed = self.original_attack_speed
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('haste')
+            target.visual_effects.discard('haste')
+
+    def _apply_periodic_effect(self, dt: float, target: Any):
+        """No periodic effect"""
+        pass
+
+
+class EmpowerEffect(StatusEffect):
+    """Increases damage dealt"""
+
+    def __init__(self, duration: float, params: Dict[str, Any], source: Any = None):
+        super().__init__(
+            status_id="empower",
+            name="Empowered",
+            duration=duration,
+            duration_remaining=duration,
+            max_stacks=1,
+            source=source,
+            params=params
+        )
+        self.damage_bonus = params.get('empower_damage_bonus', 0.25)  # 25% more damage
+
+    def on_apply(self, target: Any):
+        """Increase damage"""
+        if not hasattr(target, 'empower_damage_multiplier'):
+            target.empower_damage_multiplier = 1.0
+        target.empower_damage_multiplier += self.damage_bonus
+
+        print(f"   ⚔️ Empowered: +{self.damage_bonus*100:.0f}% damage")
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.add('empower')
+
+    def on_remove(self, target: Any):
+        """Restore damage"""
+        if hasattr(target, 'empower_damage_multiplier'):
+            target.empower_damage_multiplier -= self.damage_bonus
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.discard('empower')
+
+    def _apply_periodic_effect(self, dt: float, target: Any):
+        """No periodic effect"""
+        pass
+
+
+class FortifyEffect(StatusEffect):
+    """Increases defense/damage reduction"""
+
+    def __init__(self, duration: float, params: Dict[str, Any], source: Any = None):
+        super().__init__(
+            status_id="fortify",
+            name="Fortified",
+            duration=duration,
+            duration_remaining=duration,
+            max_stacks=1,
+            source=source,
+            params=params
+        )
+        self.defense_bonus = params.get('fortify_defense_bonus', 0.20)  # 20% damage reduction
+
+    def on_apply(self, target: Any):
+        """Increase defense"""
+        if not hasattr(target, 'fortify_damage_reduction'):
+            target.fortify_damage_reduction = 0.0
+        target.fortify_damage_reduction += self.defense_bonus
+
+        print(f"   🛡️ Fortified: +{self.defense_bonus*100:.0f}% damage reduction")
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.add('fortify')
+
+    def on_remove(self, target: Any):
+        """Restore defense"""
+        if hasattr(target, 'fortify_damage_reduction'):
+            target.fortify_damage_reduction -= self.defense_bonus
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.discard('fortify')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -521,7 +601,7 @@ class WeakenEffect(StatusEffect):
             target.damage_multiplier /= (1.0 - self.damage_reduction)
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('weaken')
+            target.visual_effects.discard('weaken')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -556,7 +636,133 @@ class VulnerableEffect(StatusEffect):
             target.damage_taken_multiplier /= (1.0 + self.damage_increase)
 
         if hasattr(target, 'visual_effects'):
-            target.visual_effects.remove('vulnerable')
+            target.visual_effects.discard('vulnerable')
+
+    def _apply_periodic_effect(self, dt: float, target: Any):
+        """No periodic effect"""
+        pass
+
+
+class ShockEffect(StatusEffect):
+    """Lightning damage over time with interrupt potential"""
+
+    def __init__(self, duration: float, params: Dict[str, Any], source: Any = None):
+        super().__init__(
+            status_id="shock",
+            name="Shocked",
+            duration=duration,
+            duration_remaining=duration,
+            max_stacks=params.get('shock_max_stacks', 3),
+            source=source,
+            params=params
+        )
+        self.damage_per_tick = params.get('shock_damage_per_tick', params.get('damage_per_tick', 5.0))
+        self.tick_rate = params.get('shock_tick_rate', params.get('tick_rate', 2.0))
+        self.time_since_last_tick = 0.0
+
+    def on_apply(self, target: Any):
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.add('shock')
+
+    def on_remove(self, target: Any):
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.discard('shock')
+
+    def _apply_periodic_effect(self, dt: float, target: Any):
+        """Apply lightning damage periodically"""
+        self.time_since_last_tick += dt
+
+        # Apply damage every tick_rate seconds
+        if self.time_since_last_tick >= self.tick_rate:
+            damage = self.damage_per_tick * self.stacks
+            if hasattr(target, 'take_damage'):
+                target.take_damage(damage, 'lightning', tags=['shock', 'lightning'], source=self.source)
+            elif hasattr(target, 'current_health'):
+                target.current_health = max(0, target.current_health - damage)
+
+            self.time_since_last_tick = 0.0
+
+
+class PhaseEffect(StatusEffect):
+    """Temporary intangibility - immune to damage and optionally pass through walls"""
+
+    def __init__(self, duration: float, params: Dict[str, Any], source: Any = None):
+        super().__init__(
+            status_id="phase",
+            name="Phased",
+            duration=duration,
+            duration_remaining=duration,
+            max_stacks=1,
+            source=source,
+            params=params
+        )
+        self.can_pass_walls = params.get('can_pass_walls', False)
+
+    def on_apply(self, target: Any):
+        """Make entity intangible"""
+        if not hasattr(target, 'is_phased'):
+            target.is_phased = False
+        target.is_phased = True
+
+        if self.can_pass_walls:
+            if not hasattr(target, 'ignore_collisions'):
+                target.ignore_collisions = False
+            target.ignore_collisions = True
+
+        print(f"   👻 Phased: Immune to damage for {self.duration:.1f}s")
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.add('phase')
+
+    def on_remove(self, target: Any):
+        """Restore tangibility"""
+        if hasattr(target, 'is_phased'):
+            target.is_phased = False
+
+        if self.can_pass_walls and hasattr(target, 'ignore_collisions'):
+            target.ignore_collisions = False
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.discard('phase')
+
+    def _apply_periodic_effect(self, dt: float, target: Any):
+        """No periodic effect"""
+        pass
+
+
+class InvisibleEffect(StatusEffect):
+    """Stealth - undetectable by enemies"""
+
+    def __init__(self, duration: float, params: Dict[str, Any], source: Any = None):
+        super().__init__(
+            status_id="invisible",
+            name="Invisible",
+            duration=duration,
+            duration_remaining=duration,
+            max_stacks=1,
+            source=source,
+            params=params
+        )
+        self.breaks_on_action = params.get('breaks_on_action', True)
+
+    def on_apply(self, target: Any):
+        """Make entity invisible"""
+        if not hasattr(target, 'is_invisible'):
+            target.is_invisible = False
+        target.is_invisible = True
+
+        print(f"   🌫️ Invisible: Undetectable for {self.duration:.1f}s")
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.add('invisible')
+
+    def on_remove(self, target: Any):
+        """Restore visibility"""
+        if hasattr(target, 'is_invisible'):
+            target.is_invisible = False
+
+        if hasattr(target, 'visual_effects'):
+            target.visual_effects.discard('invisible')
 
     def _apply_periodic_effect(self, dt: float, target: Any):
         """No periodic effect"""
@@ -577,12 +783,21 @@ STATUS_EFFECT_CLASSES = {
     'chill': SlowEffect,  # Alias for slow
     'stun': StunEffect,
     'root': RootEffect,
+    'shock': ShockEffect,
     'regeneration': RegenerationEffect,
     'regen': RegenerationEffect,  # Alias
     'shield': ShieldEffect,
     'barrier': ShieldEffect,  # Alias
     'haste': HasteEffect,
     'quicken': HasteEffect,  # Alias
+    'empower': EmpowerEffect,
+    'fortify': FortifyEffect,
+    'phase': PhaseEffect,
+    'ethereal': PhaseEffect,  # Alias
+    'intangible': PhaseEffect,  # Alias
+    'invisible': InvisibleEffect,
+    'stealth': InvisibleEffect,  # Alias
+    'hidden': InvisibleEffect,  # Alias
     'weaken': WeakenEffect,
     'vulnerable': VulnerableEffect,
 }

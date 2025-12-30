@@ -305,10 +305,69 @@ class SmithingCrafter:
             except Exception as e:
                 print(f"[Smithing] Error loading {path}: {e}")
 
+        # Load recipes from Update-N packages
+        loaded_count += self._load_update_recipes()
+
         if self.recipes:
             print(f"[Smithing] Loaded {loaded_count} recipes from {len(self.recipes)} total")
         else:
             print("[Smithing] WARNING: No recipes loaded")
+
+    def _load_update_recipes(self):
+        """Load smithing recipes from installed Update-N packages"""
+        loaded_count = 0
+
+        try:
+            # Find the project root (where updates_manifest.json is located)
+            current_dir = Path.cwd()
+            project_root = None
+
+            # Try current directory and parent directories
+            for potential_root in [current_dir, current_dir.parent, current_dir.parent.parent]:
+                manifest_path = potential_root / "updates_manifest.json"
+                if manifest_path.exists():
+                    project_root = potential_root
+                    break
+
+            if not project_root:
+                return 0
+
+            # Load manifest
+            manifest_path = project_root / "updates_manifest.json"
+            try:
+                with open(manifest_path, 'r') as f:
+                    manifest = json.load(f)
+                    installed_updates = manifest.get('installed_updates', [])
+            except Exception:
+                return 0
+
+            if not installed_updates:
+                return 0
+
+            # Scan each installed update for smithing recipes
+            for update_name in installed_updates:
+                update_path = project_root / update_name
+
+                if not update_path.exists():
+                    continue
+
+                # Look for recipe files with smithing in the name
+                for recipe_file in update_path.glob("*recipes*smithing*.JSON"):
+                    try:
+                        with open(recipe_file, 'r') as f:
+                            data = json.load(f)
+                            recipe_list = data.get('recipes', [])
+                            for recipe in recipe_list:
+                                self.recipes[recipe['recipeId']] = recipe
+                                loaded_count += 1
+                            print(f"[Smithing] Loaded {len(recipe_list)} recipes from {update_name}/{recipe_file.name}")
+                    except Exception as e:
+                        print(f"[Smithing] Error loading {recipe_file}: {e}")
+
+        except Exception as e:
+            print(f"[Smithing] Error loading update recipes: {e}")
+
+        return loaded_count
 
     def load_placements(self):
         """Load placement data from JSON files"""

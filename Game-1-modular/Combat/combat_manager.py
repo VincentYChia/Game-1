@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from ..main import WorldSystem, Character, Inventory
 
 from .enemy import Enemy, EnemyDatabase, EnemyDefinition, AIState
+from data.models.world import PlacedEntityType
 from core.effect_executor import get_effect_executor
 from core.tag_debug import get_tag_debugger
 from core.debug_display import debug_print
@@ -325,13 +326,20 @@ class CombatManager:
                     enemy.update_ai(dt, player_pos)
 
                     # Check if enemy can use special ability
-                    special_ability = enemy.can_use_special_ability()
+                    dist = enemy.distance_to(player_pos)
+                    special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_pos)
                     if special_ability:
-                        # Use special ability if in range
-                        dist = enemy.distance_to(player_pos)
-                        # Special abilities have varied ranges, use aggro range as max
-                        if dist <= enemy.definition.aggro_range:
-                            enemy.use_special_ability(special_ability, self.character, [self.character])
+                        # Build available targets list (player + turrets + other valid targets)
+                        available_targets = [self.character]
+
+                        # Include turrets so enemies can target them with abilities
+                        if hasattr(self.world, 'placed_entities'):
+                            turrets = [e for e in self.world.placed_entities
+                                      if e.entity_type == PlacedEntityType.TURRET and e.health > 0]
+                            available_targets.extend(turrets)
+
+                        # Use special ability if in range (abilities define their own ranges via distance conditions)
+                        enemy.use_special_ability(special_ability, self.character, available_targets)
 
                     # Check if enemy can attack player normally
                     elif enemy.can_attack():
@@ -641,6 +649,9 @@ class CombatManager:
             base_damage *= 2.0
             print(f"   💥 CRITICAL HIT! x2 damage")
 
+            # Execute on-crit triggers from equipment
+            self._execute_triggers('on_crit', target=enemy, hand=hand)
+
         # Apply enemy defense (with armor penetration from weapon tags)
         effective_defense = enemy.definition.defense * (1.0 - armor_penetration)
         defense_reduction = effective_defense * 0.01  # 1% reduction per defense
@@ -654,6 +665,42 @@ class CombatManager:
 
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
+
+        # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt
+        if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
+            for ench in equipped_weapon.enchantments:
+                effect = ench.get('effect', {})
+                if effect.get('type') == 'lifesteal':
+                    lifesteal_percent = effect.get('value', 0.1)  # 10% default
+                    heal_amount = final_damage * lifesteal_percent
+                    self.character.health = min(self.character.max_health, self.character.health + heal_amount)
+                    print(f"   💚 {ench.get('name', 'Lifesteal')}: Healed {heal_amount:.1f} HP")
+
+        # CHAIN DAMAGE ENCHANTMENT: Damage nearby enemies
+        if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
+            for ench in equipped_weapon.enchantments:
+                effect = ench.get('effect', {})
+                if effect.get('type') == 'chain_damage':
+                    chain_count = int(effect.get('value', 2))  # Chain to 2 enemies default
+                    chain_damage_percent = effect.get('damagePercent', 0.5)  # 50% damage default
+
+                    # Find chain targets (exclude primary target)
+                    from core.geometry.target_finder import TargetFinder
+                    finder = TargetFinder()
+                    available_enemies = [e for e in self.active_enemies if e.is_alive and e != enemy]
+
+                    chain_targets = finder.find_chain_targets(
+                        primary=enemy,
+                        max_targets=chain_count,
+                        available_entities=available_enemies
+                    )
+
+                    if chain_targets:
+                        chain_damage = final_damage * chain_damage_percent
+                        print(f"   ⚡ {ench.get('name', 'Chain Damage')}: Hitting {len(chain_targets)} additional target(s)")
+                        for target in chain_targets:
+                            target.take_damage(chain_damage, from_player=True)
+                            print(f"      → {target.definition.name}: {chain_damage:.1f} damage")
 
         # Consume any consume-on-use buffs (Power Strike, etc.)
         if hasattr(self.character, 'buffs'):
@@ -692,6 +739,19 @@ class CombatManager:
         # Update combat state
         self.player_last_combat_time = 0.0
         self.player_in_combat = True
+
+        # Apply weapon durability loss (after successful attack)
+        if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
+            from core.config import Config
+            if not Config.DEBUG_INFINITE_RESOURCES:
+                # -1 durability for proper use (weapon), -2 for improper use (tool)
+                durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
+                equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+
+                if durability_loss == 2:
+                    print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
+                elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
+                    print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
 
         return (final_damage, is_crit, loot)
 
@@ -739,6 +799,174 @@ class CombatManager:
                         enemy.status_manager.apply_status(status_tag, status_params, source=self.character)
                         print(f"   🔥 {enchantment.get('name', 'Enchantment')} triggered! Applied {status_tag}")
 
+                elif effect_type == 'knockback':
+                    # Apply knockback using existing effect executor
+                    knockback_distance = effect.get('value', 2.0)
+                    knockback_params = {'knockback_distance': knockback_distance}
+
+                    from core.effect_executor import get_effect_executor
+                    executor = get_effect_executor()
+                    executor._apply_knockback(self.character, enemy, knockback_params)
+                    print(f"   💨 {enchantment.get('name', 'Knockback')} triggered! Pushed enemy back")
+
+                elif effect_type == 'slow':
+                    # Apply slow status to enemy
+                    slow_params = {
+                        'duration': effect.get('duration', 3.0),
+                        'speed_reduction': effect.get('value', 0.3)  # 30% slow default
+                    }
+
+                    if hasattr(enemy, 'status_manager'):
+                        enemy.status_manager.apply_status('slow', slow_params, source=self.character)
+                        print(f"   ❄️ {enchantment.get('name', 'Frost')} triggered! Applied slow")
+
+    def execute_instant_player_aoe(self, radius: int, skill_name: str) -> int:
+        """Execute instant AoE attack around player (for skills like Whirlwind Strike)
+
+        Args:
+            radius: Radius in tiles
+            skill_name: Name of the skill for display
+
+        Returns:
+            Number of enemies affected
+        """
+        import math
+
+        # Get player position
+        player_pos = (self.character.position.x, self.character.position.y)
+
+        # Find all enemies in radius
+        affected_enemies = []
+        all_enemies = self.get_all_active_enemies()
+
+        for enemy in all_enemies:
+            if enemy.is_alive:
+                dx = enemy.position[0] - player_pos[0]
+                dy = enemy.position[1] - player_pos[1]
+                distance = math.sqrt(dx*dx + dy*dy)
+                if distance <= radius:
+                    affected_enemies.append(enemy)
+
+        if not affected_enemies:
+            print(f"   ⚠️  No enemies in {radius}-tile radius")
+            return 0
+
+        print(f"\n🌀 {skill_name}: Hitting {len(affected_enemies)} enemy(s) in {radius}-tile radius!")
+        debug_print(f"🌀 {skill_name}: {len(affected_enemies)} enemies")
+
+        # Execute tag-based AoE attack on each enemy
+        # Use physical damage with circle geometry
+        for enemy in affected_enemies:
+            # Get weapon damage type tags
+            equipped_weapon = self.character.equipment.slots.get('mainHand')
+            damage_tags = ['physical']  # Default
+            if equipped_weapon and hasattr(equipped_weapon, 'effect_tags'):
+                # Keep damage type tags from weapon
+                damage_types = ['physical', 'fire', 'ice', 'lightning', 'poison', 'arcane', 'shadow', 'holy', 'chaos']
+                damage_tags = [tag for tag in equipped_weapon.effect_tags if tag in damage_types]
+                if not damage_tags:
+                    damage_tags = ['physical']
+
+            # Execute attack with circle geometry
+            tags = damage_tags + ['circle']
+            params = {
+                'baseDamage': self.character.get_weapon_damage() or 10,
+                'circle_radius': radius
+            }
+
+            # Use the tag-based attack system
+            self.player_attack_enemy_with_tags(enemy, tags, params)
+
+        return len(affected_enemies)
+
+    def _execute_tag_attack_aoe(self, primary_target: Enemy, tags: List[str], params: dict) -> Tuple[float, bool, List[Tuple[str, int]]]:
+        """Execute AoE attack using tag system (for devastate buffs like Whirlwind Strike)"""
+        from core.debug_display import debug_print
+
+        print(f"🌀 AoE ATTACK via tags: {tags}")
+        debug_print(f"🌀 AoE Attack executing with tags: {tags}")
+
+        # Get all active enemies for geometry
+        all_enemies = self.get_all_active_enemies()
+        alive_enemies = [e for e in all_enemies if e.is_alive]
+
+        # Setup effect parameters with character bonuses
+        effect_params = params.copy()
+
+        # Apply character stat bonuses to base damage
+        if "baseDamage" in effect_params:
+            base_damage = effect_params["baseDamage"]
+
+            # Weapon damage
+            weapon_damage = self.character.get_weapon_damage()
+            if weapon_damage > 0:
+                base_damage += weapon_damage
+
+            # STR multiplier
+            str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
+            base_damage *= str_multiplier
+
+            # Title bonuses
+            if hasattr(self.character, 'activity_tracker'):
+                title_multiplier = 1.0 + self.character.activity_tracker.get_combat_bonus()
+                base_damage *= title_multiplier
+
+            # Skill buff bonuses (empower) - but NOT devastate since we already consumed it
+            if hasattr(self.character, 'buffs'):
+                empower_damage = self.character.buffs.get_damage_bonus('damage')
+                empower_combat = self.character.buffs.get_damage_bonus('combat')
+                skill_bonus = max(empower_damage, empower_combat)
+                if skill_bonus > 0:
+                    base_damage *= (1.0 + skill_bonus)
+                    print(f"   ⚡ Skill buff: +{skill_bonus*100:.0f}% damage")
+
+            effect_params["baseDamage"] = base_damage
+            print(f"   Base damage (with bonuses): {base_damage:.1f}")
+
+        # Execute effect using tag system
+        try:
+            context = self.effect_executor.execute_effect(
+                source=self.character,
+                primary_target=primary_target,
+                tags=tags,
+                params=effect_params,
+                available_entities=alive_enemies
+            )
+
+            print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+            # Apply weapon enchantment onHit effects
+            if primary_target.is_alive:
+                self._apply_weapon_enchantment_effects(primary_target)
+
+            # Track damage and loot
+            total_damage = 0.0
+            loot = []
+
+            # Check for kills and grant rewards
+            for target in context.targets:
+                if not target.is_alive:
+                    total_damage += effect_params.get("baseDamage", 0)
+                    print(f"   💀 {target.definition.name} killed!")
+
+                    # EXP reward
+                    exp_reward = self._calculate_exp_reward(target)
+                    self.character.leveling.add_exp(exp_reward)
+
+                    # Auto-loot
+                    target_loot = target.generate_loot()
+                    if target_loot:
+                        for material_id, quantity in target_loot:
+                            self.character.inventory.add_item(material_id, quantity)
+                            loot.extend(target_loot)
+
+            return (total_damage, False, loot)
+
+        except Exception as e:
+            debug_print(f"⚠️  AoE attack failed: {e}")
+            print(f"   ⚠️  Attack failed: {e}")
+            return (0.0, False, [])
+
     def player_attack_enemy_with_tags(self, enemy: Enemy, tags: List[str], params: dict = None) -> Tuple[float, bool, List[Tuple[str, int]]]:
         """
         Player attacks enemy using tag-based effects system
@@ -751,6 +979,36 @@ class CombatManager:
         Returns:
             (total_damage, any_crit, loot) where loot is empty if enemy didn't die
         """
+        # Check for active devastate buffs (AoE attacks like Whirlwind Strike)
+        # Must check BEFORE normal attack to trigger AoE
+        if hasattr(self.character, 'buffs'):
+            for buff in self.character.buffs.active_buffs:
+                if buff.effect_type == "devastate" and buff.category in ["damage", "combat"]:
+                    # Override tags with AoE geometry
+                    print(f"\n🌀 DEVASTATE BUFF ACTIVE: {buff.name} (radius={int(buff.bonus_value)})")
+
+                    # Build AoE tags - preserve damage type but add circle geometry
+                    aoe_tags = []
+
+                    # Keep damage type tags (physical, fire, etc.)
+                    damage_types = ['physical', 'fire', 'ice', 'lightning', 'poison', 'arcane', 'shadow', 'holy', 'chaos']
+                    for tag in tags:
+                        if tag in damage_types:
+                            aoe_tags.append(tag)
+
+                    # Add AoE geometry
+                    aoe_tags.append('circle')
+
+                    # Set radius in params
+                    aoe_params = params.copy() if params else {}
+                    aoe_params['circle_radius'] = int(buff.bonus_value)
+
+                    # Consume the buff BEFORE executing effect
+                    self.character.buffs.consume_buffs_for_action("attack")
+
+                    # Execute with AoE tags
+                    return self._execute_tag_attack_aoe(enemy, aoe_tags, aoe_params)
+
         debug_print(f"⚔️  PLAYER TAG ATTACK: {enemy.definition.name} (HP: {enemy.current_health:.1f}/{enemy.max_health:.1f})")
         debug_print(f"   Using tags: {tags}")
 
@@ -844,12 +1102,35 @@ class CombatManager:
                 # Track combat activity
                 if hasattr(self.character, 'activity_tracker'):
                     self.character.activity_tracker.record_activity('combat', 1)
+
+                # Execute on-kill triggers
+                self._execute_triggers('on_kill', target=enemy, hand='mainHand')
             else:
                 print(f"   Enemy HP remaining: {enemy.current_health:.1f}/{enemy.max_health:.1f}")
 
             # Update combat state
             self.player_last_combat_time = 0.0
             self.player_in_combat = True
+
+            # Apply weapon durability loss (for tag-based attacks)
+            equipped_weapon = None
+            if hasattr(self.character, '_selected_slot') and self.character._selected_slot:
+                equipped_weapon = self.character.equipment.slots.get(self.character._selected_slot)
+            else:
+                equipped_weapon = self.character.equipment.slots.get('mainHand')
+
+            if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
+                from core.config import Config
+                if not Config.DEBUG_INFINITE_RESOURCES:
+                    # Determine if using tool as weapon (improper use)
+                    tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
+                    durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
+                    equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+
+                    if durability_loss == 2:
+                        print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
+                    elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
+                        print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
 
             # Tag-based attacks don't use traditional crit system (handled by tags)
             return (total_damage, False, loot)
@@ -871,8 +1152,21 @@ class CombatManager:
         print(f"   Base damage: {damage:.1f}")
 
         # Calculate damage reduction
-        def_multiplier = 1.0 - (self.character.stats.defense * 0.02)
-        print(f"   DEF multiplier: {def_multiplier:.2f} (DEF: {self.character.stats.defense})")
+        defense_stat = self.character.stats.defense
+
+        # Apply weaken status to player defense
+        if hasattr(self.character, 'status_manager'):
+            weaken_effect = self.character.status_manager._find_effect('weaken')
+            if weaken_effect:
+                stat_reduction = weaken_effect.params.get('stat_reduction', 0.25)
+                affected_stats = weaken_effect.params.get('affected_stats', ['damage', 'defense'])
+
+                if 'defense' in affected_stats:
+                    defense_stat *= (1.0 - stat_reduction)
+                    print(f"   ⚠️ WEAKENED: Defense reduced by {stat_reduction*100:.0f}%")
+
+        def_multiplier = 1.0 - (defense_stat * 0.02)
+        print(f"   DEF multiplier: {def_multiplier:.2f} (DEF: {defense_stat:.1f})")
 
         # Armor bonus from equipment
         armor_bonus = 0.0
@@ -882,8 +1176,25 @@ class CombatManager:
 
         armor_multiplier = 1.0 - (armor_bonus * 0.01)
 
+        # PROTECTION ENCHANTMENTS: Apply defense_multiplier enchantments
+        protection_reduction = 0.0
+        if hasattr(self.character, 'equipment'):
+            armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+            for slot in armor_slots:
+                armor_piece = self.character.equipment.slots.get(slot)
+                if armor_piece and hasattr(armor_piece, 'enchantments'):
+                    for ench in armor_piece.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'defense_multiplier':
+                            protection_reduction += effect.get('value', 0.0)
+
+        if protection_reduction > 0:
+            print(f"   🛡️ Protection enchantments: -{protection_reduction*100:.0f}% damage reduction")
+
+        protection_multiplier = 1.0 - protection_reduction
+
         # Apply multipliers
-        final_damage = damage * def_multiplier * armor_multiplier
+        final_damage = damage * def_multiplier * armor_multiplier * protection_multiplier
 
         # SHIELD BLOCKING: Apply shield damage reduction if actively blocking
         if shield_blocking and self.character.is_shield_active():
@@ -906,6 +1217,29 @@ class CombatManager:
         # Apply to player
         self.character.take_damage(final_damage)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
+
+        # REFLECT/THORNS: Check for reflect damage on armor
+        if hasattr(self.character, 'equipment') and enemy.is_alive:
+            reflect_percent = 0.0
+            armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+
+            for slot in armor_slots:
+                armor_piece = self.character.equipment.slots.get(slot)
+                if armor_piece and hasattr(armor_piece, 'enchantments'):
+                    for ench in armor_piece.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'reflect' or effect.get('type') == 'thorns':
+                            reflect_percent += effect.get('value', 0.0)
+
+            if reflect_percent > 0:
+                reflect_damage = final_damage * reflect_percent
+                enemy.current_health -= reflect_damage
+                print(f"   ⚡ THORNS! Reflected {reflect_damage:.1f} damage back to {enemy.definition.name}")
+
+                if enemy.current_health <= 0:
+                    enemy.is_alive = False
+                    enemy.current_health = 0
+                    print(f"   💀 {enemy.definition.name} killed by thorns damage!")
 
         # Reset health regen timer (damage taken)
         self.character.time_since_last_damage_taken = 0.0
@@ -990,6 +1324,49 @@ class CombatManager:
                 break
 
         return loot
+
+    def _execute_triggers(self, trigger_type: str, target: Enemy = None, hand: str = 'mainHand'):
+        """
+        Execute trigger-based effects from equipment
+
+        Args:
+            trigger_type: Type of trigger ('on_kill', 'on_crit', 'on_hit', etc.)
+            target: Target entity (if applicable)
+            hand: Which hand to check for triggers
+        """
+        # Get weapon
+        weapon = self.character.equipment.slots.get(hand)
+        if not weapon:
+            return
+
+        # Check weapon enchantments for triggers
+        if hasattr(weapon, 'enchantments'):
+            for ench in weapon.enchantments:
+                metadata_tags = ench.get('metadata_tags', [])
+
+                # Check if this enchantment has the trigger
+                if trigger_type in metadata_tags:
+                    print(f"   🎯 TRIGGER! {trigger_type.upper()} effect: {ench.get('name', 'Unknown')}")
+
+                    # Execute the enchantment effect
+                    effect = ench.get('effect', {})
+                    effect_type = effect.get('type', '')
+
+                    # Handle different trigger effect types
+                    if effect_type == 'heal_on_kill' and trigger_type == 'on_kill':
+                        heal_amount = effect.get('value', 10.0)
+                        self.character.heal(heal_amount)
+                        print(f"      💚 Healed {heal_amount:.1f} HP")
+
+                    elif effect_type == 'explosion' and trigger_type == 'on_kill':
+                        # Would trigger an AOE explosion effect
+                        print(f"      💥 Explosion effect (not fully implemented)")
+
+                    elif effect_type == 'bonus_damage' and trigger_type == 'on_crit':
+                        # Bonus damage on crit (would need to be integrated into damage calculation)
+                        print(f"      ⚔️ Bonus damage on crit (not fully implemented)")
+
+                    # Add more trigger effect types as needed
 
     def get_all_active_enemies(self) -> List[Enemy]:
         """Get all enemies (for rendering)"""

@@ -548,6 +548,140 @@ def extract_classes(base_path: Path) -> List[EntityEntry]:
     return entities
 
 
+def extract_update_packages(base_path: Path) -> List[EntityEntry]:
+    """
+    Extract all items/skills/enemies from installed Update-N packages
+
+    Scans updates_manifest.json to find installed updates, then extracts:
+    - Items from *items*.JSON files
+    - Skills from *skills*.JSON files
+    - Enemies from *enemies*.JSON or *hostiles*.JSON files
+
+    Returns:
+        List of EntityEntry objects from all Update-N packages
+    """
+    entities = []
+
+    # Load updates manifest
+    manifest_path = base_path / "updates_manifest.json"
+    if not manifest_path.exists():
+        return entities
+
+    try:
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+    except Exception as e:
+        print(f"Warning: Could not load updates_manifest.json: {e}")
+        return entities
+
+    installed_updates = manifest.get('installed_updates', [])
+    if not installed_updates:
+        return entities
+
+    # Process each installed update
+    for update_name in installed_updates:
+        update_dir = base_path / update_name
+        if not update_dir.exists():
+            continue
+
+        # Find all JSON files in the update directory
+        for json_file in update_dir.glob("*.JSON"):
+            filename_lower = json_file.name.lower()
+
+            try:
+                with open(json_file, 'r') as f:
+                    data = json.load(f)
+
+                # Determine file type and extract accordingly
+                if 'items' in filename_lower or 'equipment' in filename_lower:
+                    # Extract items (equipment format)
+                    for section_name, section_data in data.items():
+                        if section_name == 'metadata' or not isinstance(section_data, list):
+                            continue
+
+                        for item in section_data:
+                            item_id = item.get('itemId', '')
+                            if not item_id:
+                                continue
+
+                            category = item.get('category', 'equipment')
+                            item_type = item.get('type', 'unknown')
+                            subtype = item.get('subtype', item_type)
+
+                            # Get narrative (Update-N uses 'narrative' directly or in 'metadata')
+                            narrative = item.get('narrative', '')
+                            if not narrative:
+                                narrative = item.get('metadata', {}).get('narrative', 'No description available.')
+
+                            tier = item.get('tier', 1)
+
+                            # Determine subfolder using existing categorization logic
+                            subfolder = categorize_item(item)
+
+                            entities.append(EntityEntry(
+                                entity_id=item_id,
+                                name=item.get('name', item_id),
+                                category=category,
+                                entity_type=item_type,
+                                subtype=subtype,
+                                narrative=narrative,
+                                tier=tier,
+                                subfolder=subfolder
+                            ))
+
+                elif 'skills' in filename_lower:
+                    # Extract skills
+                    for skill in data.get('skills', []):
+                        skill_id = skill.get('skillId', '')
+                        if not skill_id:
+                            continue
+
+                        tier = skill.get('tier', 1)
+                        skill_type = skill.get('skillType', 'active')
+                        narrative = skill.get('narrative', 'No description available.')
+
+                        entities.append(EntityEntry(
+                            entity_id=skill_id,
+                            name=skill.get('name', skill_id),
+                            category='skill',
+                            entity_type=skill_type,
+                            subtype=skill_type,
+                            narrative=narrative,
+                            tier=tier,
+                            subfolder='skills'
+                        ))
+
+                elif 'enemies' in filename_lower or 'hostiles' in filename_lower:
+                    # Extract enemies
+                    for enemy in data.get('enemies', []):
+                        enemy_id = enemy.get('enemyId', '')
+                        if not enemy_id:
+                            continue
+
+                        category = enemy.get('category', 'beast')
+                        narrative = enemy.get('narrative', '')
+                        if not narrative:
+                            narrative = enemy.get('metadata', {}).get('narrative', 'No description available.')
+                        tier = enemy.get('tier', 1)
+
+                        entities.append(EntityEntry(
+                            entity_id=enemy_id,
+                            name=enemy.get('name', enemy_id),
+                            category='enemy',
+                            entity_type=category,
+                            subtype=category,
+                            narrative=narrative,
+                            tier=tier,
+                            subfolder='enemies'
+                        ))
+
+            except Exception as e:
+                print(f"Warning: Could not parse {json_file.name}: {e}")
+                continue
+
+    return entities
+
+
 # ============================================================================
 # PLACEHOLDER GENERATION
 # ============================================================================
@@ -605,7 +739,7 @@ def generate_catalog(entities: List[EntityEntry], output_path: Path):
     lines.append(f"**Generated**: {datetime.now().strftime('%B %d, %Y')}")
     lines.append(f"**Total Entities**: {len(entities)}")
     lines.append("")
-    lines.append("**Note**: This file is AUTO-GENERATED by `tools/unified_icon_generator.py`. Do not edit manually.")
+    lines.append("**Note**: This file is AUTO-GENERATED by `assets/icons/unified_icon_generator.py`. Do not edit manually.")
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -682,10 +816,10 @@ def main():
     print("=" * 70)
 
     # Determine base path
-    script_dir = Path(__file__).parent
-    base_path = script_dir.parent  # Game-1-modular directory
-    # Save catalog in Scaled JSON Development (for backward compatibility with automation scripts)
-    catalog_path = base_path.parent / "Scaled JSON Development" / "ITEM_CATALOG_FOR_ICONS.md"
+    script_dir = Path(__file__).parent  # assets/icons directory
+    base_path = script_dir.parent.parent  # Game-1-modular directory
+    # Save catalog in same directory as this script (assets/icons/)
+    catalog_path = script_dir / "ITEM_CATALOG_FOR_ICONS.md"
 
     print(f"\nBase path: {base_path}")
     print(f"Catalog output: {catalog_path}")
@@ -727,27 +861,44 @@ def main():
     classes = extract_classes(base_path)
     print(f"       Found {len(classes)} classes")
 
-    # Combine all entities
-    all_entities_raw = materials + equipment + enemies + titles + skills + resources + npcs + quests + classes
+    print("\n[10/11] Extracting Update-N packages...")
+    update_entities = extract_update_packages(base_path)
+    print(f"        Found {len(update_entities)} Update-N entities")
 
-    # Deduplicate by id (keep first occurrence)
-    # This handles cases where items appear in both materials and equipment files
+    # Combine all entities with Update-N FIRST (gives Update-N priority in deduplication)
+    # This ensures Update-N items override core items with the same ID
+    all_entities_raw = update_entities + materials + equipment + enemies + titles + skills + resources + npcs + quests + classes
+
+    # Deduplicate by id (keep first occurrence = Update-N takes priority)
+    # This handles cases where:
+    # 1. Items appear in both materials and equipment files
+    # 2. Update-N packages override core items (Update-N listed first)
     seen_ids = set()
     all_entities = []
     duplicates_removed = 0
+    overridden_by_updates = []
+
     for entity in all_entities_raw:
         if entity.id not in seen_ids:
             seen_ids.add(entity.id)
             all_entities.append(entity)
         else:
             duplicates_removed += 1
+            # Track if this was an Update-N override (first N entities are from Update-N)
+            if entity in (materials + equipment + enemies + titles + skills + resources + npcs + quests + classes):
+                # Check if the entity already added was from Update-N
+                existing_entity = next(e for e in all_entities if e.id == entity.id)
+                if existing_entity in update_entities:
+                    overridden_by_updates.append(entity.id)
 
     print(f"\n✓ Total entities: {len(all_entities)}")
     if duplicates_removed > 0:
         print(f"  (Removed {duplicates_removed} duplicate entries)")
+    if overridden_by_updates:
+        print(f"  (Update-N overrode {len(overridden_by_updates)} core entities)")
 
     # Generate placeholders
-    print("\n[10/10] Generating placeholders...")
+    print("\n[11/11] Generating placeholders...")
     generated = generate_placeholders(all_entities, base_path)
     print(f"        Generated {generated} new placeholder icons")
     print(f"        (Skipped {len(all_entities) - generated} existing icons)")

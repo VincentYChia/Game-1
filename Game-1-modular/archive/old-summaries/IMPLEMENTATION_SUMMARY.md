@@ -319,7 +319,7 @@ None! Both reported bugs are fixed:
 
 **Reference**:
 - Placeholders show item names - use as reference
-- Check `Scaled JSON Development/ITEM_CATALOG_FOR_ICONS.md` for descriptions
+- Check `assets/icons/ITEM_CATALOG_FOR_ICONS.md` for descriptions
 - Color scheme: Rarity-based (common=gray, uncommon=green, etc.)
 
 ---

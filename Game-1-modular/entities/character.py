@@ -62,6 +62,11 @@ class Character:
         self.movement_speed = Config.PLAYER_SPEED
         self.interaction_range = Config.INTERACTION_RANGE
 
+        # Knockback system - smooth forced movement
+        self.knockback_velocity_x = 0.0
+        self.knockback_velocity_y = 0.0
+        self.knockback_duration_remaining = 0.0
+
         self.stats = CharacterStats()
         self.leveling = LevelingSystem()
         self.skills = SkillManager()
@@ -79,6 +84,7 @@ class Character:
         self.health = self.max_health
         self.max_mana = self.base_max_mana
         self.mana = self.max_mana
+        self.shield_amount = 0.0  # Temporary damage absorption from shield/barrier buffs
 
         self.inventory = Inventory(30)
         self.tools: List[Tool] = []
@@ -400,19 +406,53 @@ class Character:
         equipment_data = player_data.get("equipment", {})
         equipment_db = EquipmentDatabase.get_instance()
 
-        for slot_name, item_id in equipment_data.items():
-            if item_id and equipment_db.is_equipment(item_id):
-                # Find the equipment in inventory to preserve stats
-                found_in_inventory = False
-                for inv_slot in self.inventory.slots:
-                    if inv_slot and inv_slot.item_id == item_id and inv_slot.equipment_data:
-                        # Use the equipment data from inventory
-                        self.equipment.slots[slot_name] = inv_slot.equipment_data
-                        found_in_inventory = True
-                        break
+        for slot_name, eq_data in equipment_data.items():
+            if eq_data is None:
+                self.equipment.slots[slot_name] = None
+            elif isinstance(eq_data, dict):
+                # New format: full equipment data with durability, enchantments, etc.
+                from data.models.equipment import EquipmentItem
 
-                # If not found in inventory, create new equipment
-                if not found_in_inventory:
+                # Convert damage list back to tuple if needed
+                damage = eq_data.get("damage", [0, 0])
+                if isinstance(damage, list):
+                    damage = tuple(damage)
+
+                equipment_item = EquipmentItem(
+                    item_id=eq_data["item_id"],
+                    name=eq_data.get("name", eq_data["item_id"]),
+                    tier=eq_data.get("tier", 1),
+                    rarity=eq_data.get("rarity", "common"),
+                    slot=eq_data.get("slot", slot_name),
+                    damage=damage,
+                    defense=eq_data.get("defense", 0),
+                    durability_current=eq_data.get("durability_current", 100),
+                    durability_max=eq_data.get("durability_max", 100),
+                    attack_speed=eq_data.get("attack_speed", 1.0),
+                    weight=eq_data.get("weight", 1.0),
+                    range=eq_data.get("range", 1.0),
+                    hand_type=eq_data.get("hand_type", "default"),
+                    item_type=eq_data.get("item_type", "weapon")
+                )
+
+                # Restore bonuses if present
+                if "bonuses" in eq_data:
+                    equipment_item.bonuses = eq_data["bonuses"]
+
+                # Restore enchantments if present
+                if "enchantments" in eq_data:
+                    equipment_item.enchantments = eq_data["enchantments"]
+
+                # Restore requirements if present
+                if "requirements" in eq_data:
+                    equipment_item.requirements = eq_data["requirements"]
+
+                self.equipment.slots[slot_name] = equipment_item
+
+            elif isinstance(eq_data, str):
+                # Old format: just item_id (for backward compatibility)
+                item_id = eq_data
+                if equipment_db.is_equipment(item_id):
                     equipment_item = equipment_db.create_equipment_from_id(item_id)
                     self.equipment.slots[slot_name] = equipment_item
 
@@ -496,18 +536,84 @@ class Character:
             return True
         return False
 
+    def update_knockback(self, dt: float, world: WorldSystem):
+        """Apply knockback velocity over time (smooth forced movement)"""
+        if self.knockback_duration_remaining > 0:
+            # Apply knockback velocity to position
+            dx = self.knockback_velocity_x * dt
+            dy = self.knockback_velocity_y * dt
+
+            # Modify position directly (don't use move() to avoid creating new Position object)
+            new_x = self.position.x + dx
+            new_y = self.position.y + dy
+
+            # Clamp to world bounds
+            new_x = max(0, min(Config.WORLD_SIZE - 1, new_x))
+            new_y = max(0, min(Config.WORLD_SIZE - 1, new_y))
+
+            # Check if walkable (optional - knockback can push through obstacles)
+            new_pos = Position(new_x, new_y, self.position.z)
+            if world.is_walkable(new_pos):
+                self.position.x = new_x
+                self.position.y = new_y
+            # If not walkable, knockback is blocked but still counts as applied
+
+            # Reduce remaining duration
+            self.knockback_duration_remaining -= dt
+            if self.knockback_duration_remaining <= 0:
+                # Knockback finished
+                self.knockback_velocity_x = 0.0
+                self.knockback_velocity_y = 0.0
+                self.knockback_duration_remaining = 0.0
+
     def move(self, dx: float, dy: float, world: WorldSystem) -> bool:
         # Check if immobilized by status effects
         if hasattr(self, 'status_manager') and self.status_manager.is_immobilized():
             return False
 
+        # If being knocked back, reduce player movement significantly (knockback takes priority)
+        if self.knockback_duration_remaining > 0:
+            dx *= 0.1  # Reduce player input to 10% during knockback
+            dy *= 0.1
+
         # Calculate movement speed from stats, class, and active buffs
         speed_mult = 1.0 + self.stats.get_bonus('agility') * 0.02 + self.class_system.get_bonus('movement_speed') + self.buffs.get_movement_speed_bonus()
-        new_pos = Position(self.position.x + dx * speed_mult, self.position.y + dy * speed_mult, self.position.z)
-        if new_pos.x < 0 or new_pos.x >= Config.WORLD_SIZE or new_pos.y < 0 or new_pos.y >= Config.WORLD_SIZE:
+
+        # Apply slow/chill speed reduction
+        if hasattr(self, 'status_manager'):
+            # Check for chill or slow status
+            chill_effect = self.status_manager._find_effect('chill')
+            if not chill_effect:
+                chill_effect = self.status_manager._find_effect('slow')
+
+            if chill_effect:
+                slow_amount = chill_effect.params.get('slow_amount', 0.5)
+                speed_mult *= (1.0 - slow_amount)  # Reduce speed by slow_amount
+
+        # Apply movement speed enchantments from armor
+        if hasattr(self, 'equipment'):
+            armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+            for slot in armor_slots:
+                armor_piece = self.equipment.slots.get(slot)
+                if armor_piece and hasattr(armor_piece, 'enchantments'):
+                    for ench in armor_piece.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'movement_speed_multiplier':
+                            speed_mult += effect.get('value', 0.0)
+
+        # Modify position directly instead of creating new Position object
+        new_x = self.position.x + dx * speed_mult
+        new_y = self.position.y + dy * speed_mult
+
+        # Check bounds
+        if new_x < 0 or new_x >= Config.WORLD_SIZE or new_y < 0 or new_y >= Config.WORLD_SIZE:
             return False
+
+        # Check walkability
+        new_pos = Position(new_x, new_y, self.position.z)
         if world.is_walkable(new_pos):
-            self.position = new_pos
+            self.position.x = new_x
+            self.position.y = new_y
             self.facing = ("right" if dx > 0 else "left") if abs(dx) > abs(dy) else ("down" if dy > 0 else "up")
             return True
         return False
@@ -607,7 +713,153 @@ class Character:
             return False, "Tool broken"
         return True, "OK"
 
-    def harvest_resource(self, resource: NaturalResource):
+    def _execute_aoe_gathering(self, primary_resource: NaturalResource, radius: int, all_resources: list, equipped_tool):
+        """
+        Execute AoE gathering (devastate effect) harvesting all resource nodes in radius
+        Similar to combat's _execute_aoe_attack but for resource gathering
+        """
+        import math
+        from core.debug_display import debug_print
+
+        # Determine activity type from tool
+        activity = 'mining' if primary_resource.required_tool == "pickaxe" else 'forestry'
+
+        # Find all harvestable resources in radius (matching tool type)
+        targets = []
+        for res in all_resources:
+            # Must match tool requirement and not be depleted
+            if res.required_tool == primary_resource.required_tool and not res.depleted:
+                dx = res.position.x - self.position.x
+                dy = res.position.y - self.position.y
+                distance = math.sqrt(dx*dx + dy*dy)
+                if distance <= radius:
+                    targets.append(res)
+
+        if not targets:
+            targets = [primary_resource]  # Fallback to primary resource
+
+        print(f"\n🌀 CHAIN HARVEST (AoE Gathering): Harvesting {len(targets)} node(s) in {radius}-tile radius!")
+        debug_print(f"🌀 Chain Harvest: {len(targets)} nodes in {radius}-tile radius")
+
+        # Consume the devastate buff before gathering
+        self.buffs.consume_buffs_for_action("gather", category=activity)
+
+        # Harvest each resource node
+        total_loot = []
+        total_damage = 0
+        any_crit = False
+
+        for i, resource in enumerate(targets):
+            # Call single-node harvest logic (reuse existing logic below)
+            result = self._single_node_harvest(resource, equipped_tool, activity)
+            if result:
+                loot, dmg, is_crit = result
+                if loot:
+                    total_loot.extend(loot)
+                total_damage += dmg
+                any_crit = any_crit or is_crit
+
+        print(f"   ✓ Total loot: {len(total_loot)} items from {len(targets)} nodes")
+        return (total_loot, total_damage, any_crit) if total_loot else None
+
+    def _single_node_harvest(self, resource: NaturalResource, equipped_tool, activity: str):
+        """Single-node harvest logic (extracted from harvest_resource for reuse in AoE)"""
+        # Calculate base damage from tool's damage stat
+        if isinstance(equipped_tool.damage, tuple):
+            base_damage = (equipped_tool.damage[0] + equipped_tool.damage[1]) // 2
+        else:
+            base_damage = equipped_tool.damage
+
+        # Durability-based effectiveness
+        durability_effectiveness = equipped_tool.get_effectiveness()
+
+        # Tool type effectiveness
+        tool_type_effectiveness = self.get_tool_effectiveness_for_action(equipped_tool, activity)
+
+        # Combine effectiveness multipliers
+        total_effectiveness = durability_effectiveness * tool_type_effectiveness
+
+        stat_bonus = self.stats.get_bonus('strength' if activity == 'mining' else 'agility')
+        title_bonus = self.titles.get_total_bonus(f'{activity}_damage')
+        buff_bonus = self.buffs.get_damage_bonus(activity) if hasattr(self, 'buffs') else 0.0
+        damage_mult = 1.0 + stat_bonus + title_bonus + buff_bonus
+
+        # Check for Efficiency enchantment (gathering speed multiplier)
+        # This should multiply the final damage, not add to the multiplier
+        efficiency_mult = 1.0
+        if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
+            for ench in equipped_tool.enchantments:
+                effect = ench.get('effect', {})
+                if effect.get('type') == 'gathering_speed_multiplier':
+                    efficiency_bonus = effect.get('value', 0.0)
+                    efficiency_mult = 1.0 + efficiency_bonus
+                    # Visual feedback for efficiency
+                    if efficiency_bonus > 0:
+                        print(f"   ⚡ Efficiency: +{efficiency_bonus*100:.0f}% gathering speed")
+
+        crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance')
+        if hasattr(self, 'buffs'):
+            crit_chance += self.buffs.get_total_bonus('pierce', activity)
+
+        is_crit = random.random() < crit_chance
+        # Apply efficiency as a true multiplicative bonus (40% efficiency = 40% more damage)
+        damage = int(base_damage * total_effectiveness * damage_mult * efficiency_mult)
+        actual_damage, depleted = resource.take_damage(damage, is_crit)
+
+        # Reduce tool durability
+        if not Config.DEBUG_INFINITE_RESOURCES:
+            # -1 durability for proper use (correct tool type), -2 for improper use (wrong tool type)
+            durability_loss = 1.0 if tool_type_effectiveness >= 1.0 else 2.0
+
+            # Unbreaking enchantment reduces durability loss
+            if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
+                for ench in equipped_tool.enchantments:
+                    effect = ench.get('effect', {})
+                    if effect.get('type') == 'durability_multiplier':
+                        reduction = effect.get('value', 0.0)
+                        durability_loss *= (1.0 - reduction)
+
+            equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
+
+            # Warn about improper use
+            if durability_loss >= 2.0:
+                print(f"   ⚠️ Improper tool use! {equipped_tool.name} loses extra durability ({equipped_tool.durability_current:.0f}/{equipped_tool.durability_max})")
+
+        loot = None
+        if depleted:
+            loot = resource.get_loot()
+            processed_loot = []
+            for item_id, qty in loot:
+                # Luck-based bonus
+                if random.random() < (self.stats.luck * 0.02 + self.class_system.get_bonus('resource_quality')):
+                    qty += 1
+
+                # Enrich buff bonuses
+                if hasattr(self, 'buffs'):
+                    enrich_bonus = int(self.buffs.get_total_bonus('enrich', activity))
+                    if enrich_bonus > 0:
+                        qty += enrich_bonus
+
+                # Fortune enchantment bonus
+                if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
+                    for ench in equipped_tool.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'bonus_yield_chance':
+                            bonus_chance = effect.get('value', 0.0)
+                            # Roll for bonus yield
+                            if random.random() < bonus_chance:
+                                qty += 1
+                                print(f"   💎 Fortune! +1 bonus {item_id}")
+                                break  # Only proc once per item
+
+                processed_loot.append((item_id, qty))
+                self.inventory.add_item(item_id, qty)
+
+            return (processed_loot, actual_damage, is_crit)
+
+        return None
+
+    def harvest_resource(self, resource: NaturalResource, nearby_resources: list = None):
         can_harvest, reason = self.can_harvest_resource(resource)
         if not can_harvest:
             return None
@@ -617,38 +869,32 @@ class Character:
         if not equipped_tool:
             return None
 
-        # Calculate base damage from tool's damage stat
-        if isinstance(equipped_tool.damage, tuple):
-            base_damage = (equipped_tool.damage[0] + equipped_tool.damage[1]) // 2
-        else:
-            base_damage = equipped_tool.damage
+        # Check for active devastate buffs (AoE gathering like Chain Harvest)
+        if hasattr(self, 'buffs') and nearby_resources:
+            # Determine activity type from resource
+            activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
 
-        # Durability-based effectiveness (0.5 to 1.0 based on condition)
-        durability_effectiveness = equipped_tool.get_effectiveness()
+            for buff in self.buffs.active_buffs:
+                # Must be devastate type AND match the activity category (or be generic 'gathering')
+                if buff.effect_type == "devastate" and (buff.category == activity or buff.category == "gathering"):
+                    # Execute AoE gathering instead of single-node
+                    result = self._execute_aoe_gathering(resource, int(buff.bonus_value), nearby_resources, equipped_tool)
+                    # Still record activity/XP/titles for AoE gathering
+                    self.activities.record_activity(activity, 1)
+                    new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
+                    if new_title:
+                        print(f"🏆 TITLE EARNED: {new_title.name} - {new_title.bonus_description}")
+                    leveled_up = self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
+                    if leveled_up:
+                        self.check_and_notify_new_skills()
+                    self.time_since_last_damage_dealt = 0.0
+                    return result
 
-        # Tool type effectiveness (1.0 if right tool, 0.25 if wrong tool)
+        # Normal single-node harvest - use extracted helper method
         activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
-        tool_type_effectiveness = self.get_tool_effectiveness_for_action(equipped_tool, activity)
+        result = self._single_node_harvest(resource, equipped_tool, activity)
 
-        # Combine effectiveness multipliers
-        total_effectiveness = durability_effectiveness * tool_type_effectiveness
-
-        stat_bonus = self.stats.get_bonus('strength' if activity == 'mining' else 'agility')
-        title_bonus = self.titles.get_total_bonus(f'{activity}_damage')
-        buff_bonus = self.buffs.get_damage_bonus(activity)
-        damage_mult = 1.0 + stat_bonus + title_bonus + buff_bonus
-
-        crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance') + self.buffs.get_total_bonus('pierce', activity)
-        is_crit = random.random() < crit_chance
-        damage = int(base_damage * total_effectiveness * damage_mult)
-        actual_damage, depleted = resource.take_damage(damage, is_crit)
-
-        # Reduce tool durability
-        if not Config.DEBUG_INFINITE_RESOURCES:
-            equipped_tool.durability_current = max(0, equipped_tool.durability_current - 1)
-            if equipped_tool.durability_current <= 0:
-                print("⚠ Tool broke!")
-
+        # Track activities, titles, XP (same as before)
         self.activities.record_activity(activity, 1)
         new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
         if new_title:
@@ -661,26 +907,7 @@ class Character:
         # Reset damage dealt timer (harvesting counts as dealing damage)
         self.time_since_last_damage_dealt = 0.0
 
-        loot = None
-        if depleted:
-            loot = resource.get_loot()
-            for item_id, qty in loot:
-                # Luck-based bonus
-                if random.random() < (self.stats.luck * 0.02 + self.class_system.get_bonus('resource_quality')):
-                    qty += 1
-
-                # SKILL BUFF BONUSES: Check for enrich buffs (bonus items)
-                enrich_bonus = 0
-                if hasattr(self, 'buffs'):
-                    # Check for enrich buff on this activity (mining or forestry)
-                    enrich_bonus = int(self.buffs.get_total_bonus('enrich', activity))
-
-                if enrich_bonus > 0:
-                    qty += enrich_bonus
-                    print(f"   ⚡ Enrich buff: +{enrich_bonus} bonus {item_id}")
-
-                self.inventory.add_item(item_id, qty)
-        return (loot, actual_damage, is_crit)
+        return result
 
     def switch_tool(self):
         """Cycle through equipped tools and weapons (mainHand/offHand → axe → pickaxe)"""
@@ -750,6 +977,21 @@ class Character:
             if self.health < self.max_health:
                 regen_amount = self.health_regen_rate * dt
                 self.health = min(self.max_health, self.health + regen_amount)
+
+        # HEALTH REGENERATION ENCHANTMENT: Always active bonus regen from armor
+        if self.health < self.max_health:
+            enchant_regen_bonus = 0.0
+            armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+            for slot in armor_slots:
+                armor_piece = self.equipment.slots.get(slot)
+                if armor_piece and hasattr(armor_piece, 'enchantments'):
+                    for ench in armor_piece.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'health_regeneration':
+                            enchant_regen_bonus += effect.get('value', 1.0)  # HP per second
+
+            if enchant_regen_bonus > 0:
+                self.health = min(self.max_health, self.health + enchant_regen_bonus * dt)
 
         # Mana regeneration - 1% per second (always active)
         if self.mana < self.max_mana:
@@ -1025,9 +1267,47 @@ class Character:
 
         return True, "OK"
 
-    def take_damage(self, damage: float):
-        """Take damage from enemy"""
+    def take_damage(self, damage: float, damage_type: str = "physical", **kwargs):
+        """
+        Take damage from enemy
+
+        Args:
+            damage: Amount of damage to take
+            damage_type: Type of damage (physical, fire, poison, etc.)
+            **kwargs: Additional context (source, tags, context) for advanced damage systems
+        """
+        # Phase immunity - completely immune to damage
+        if hasattr(self, 'is_phased') and self.is_phased:
+            print(f"   👻 PHASED! Damage completely negated ({damage:.1f} damage avoided)")
+            return
+
+        # Shield/Barrier absorption
+        if self.shield_amount > 0:
+            absorbed = min(damage, self.shield_amount)
+            self.shield_amount -= absorbed
+            damage -= absorbed
+            if absorbed > 0:
+                print(f"   🛡️ Shield absorbed {absorbed:.1f} damage (Shield: {self.shield_amount:.1f} remaining)")
+
+        # Apply remaining damage to health
         self.health -= damage
+
+        # Apply armor durability loss when taking damage
+        if damage > 0:  # Only lose durability if damage was actually taken
+            from core.config import Config
+            if not Config.DEBUG_INFINITE_RESOURCES:
+                armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+                for slot in armor_slots:
+                    armor_piece = self.equipment.slots.get(slot)
+                    if armor_piece and hasattr(armor_piece, 'durability_current'):
+                        armor_piece.durability_current = max(0, armor_piece.durability_current - 1)
+
+                        # Warn if armor is breaking
+                        if armor_piece.durability_current == 0:
+                            print(f"   💥 {armor_piece.name} has broken!")
+                        elif armor_piece.durability_current <= armor_piece.durability_max * 0.2:
+                            print(f"   ⚠️ {armor_piece.name} durability low: {armor_piece.durability_current}/{armor_piece.durability_max}")
+
         if self.health <= 0:
             self.health = 0
             self._handle_death()

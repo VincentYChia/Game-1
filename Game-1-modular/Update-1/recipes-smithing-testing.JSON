@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Placeholder recipes for Update-1 test weapons",
+    "note": "These are simplified placeholder recipes for testing the Update-N automation system. Using basic materials for testing only."
+  },
+
+  "recipes": [
+    {
+      "recipeId": "recipe_lightning_chain_whip",
+      "outputId": "lightning_chain_whip",
+      "outputQty": 1,
+      "stationTier": 1,
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 3},
+        {"materialId": "copper_ingot", "quantity": 2}
+      ]
+    },
+    {
+      "recipeId": "recipe_inferno_blade",
+      "outputId": "inferno_blade",
+      "outputQty": 1,
+      "stationTier": 1,
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 3},
+        {"materialId": "copper_ingot", "quantity": 2}
+      ]
+    },
+    {
+      "recipeId": "recipe_void_piercer",
+      "outputId": "void_piercer",
+      "outputQty": 1,
+      "stationTier": 1,
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 3},
+        {"materialId": "copper_ingot", "quantity": 2}
+      ]
+    },
+    {
+      "recipeId": "recipe_frostbite_hammer",
+      "outputId": "frostbite_hammer",
+      "outputQty": 1,
+      "stationTier": 1,
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 3},
+        {"materialId": "copper_ingot", "quantity": 2}
+      ]
+    },
+    {
+      "recipeId": "recipe_blood_reaver",
+      "outputId": "blood_reaver",
+      "outputQty": 1,
+      "stationTier": 1,
+      "inputs": [
+        {"materialId": "iron_ingot", "quantity": 3},
+        {"materialId": "copper_ingot", "quantity": 2}
+      ]
+    }
+  ]
+}

@@ -157,7 +157,7 @@ class SkillManager:
             if skill.current_cooldown > 0:
                 skill.current_cooldown = max(0, skill.current_cooldown - dt)
 
-    def use_skill(self, slot: int, character) -> tuple[bool, str]:
+    def use_skill(self, slot: int, character, combat_manager=None) -> tuple[bool, str]:
         """Use a skill from hotbar slot (0-4). Returns (success, message)"""
         if not (0 <= slot < 5):
             return False, "Invalid slot"
@@ -192,7 +192,7 @@ class SkillManager:
         player_skill.current_cooldown = cooldown_duration
 
         # Apply skill effect (with level scaling)
-        self._apply_skill_effect(skill_def, character, player_skill)
+        self._apply_skill_effect(skill_def, character, player_skill, combat_manager)
 
         # Award skill EXP (100 EXP per activation)
         leveled_up, new_level = player_skill.add_exp(100)
@@ -201,10 +201,31 @@ class SkillManager:
 
         return True, f"Used {skill_def.name}!"
 
-    def _apply_skill_effect(self, skill_def, character, player_skill):
+    def _apply_skill_effect(self, skill_def, character, player_skill, combat_manager=None):
         """Apply the skill's effect with level scaling"""
+        from core.debug_display import debug_print
+
         # Check if skill uses tag-based combat system
         if skill_def.combat_tags and len(skill_def.combat_tags) > 0:
+            # Check if enemies are available (regardless of in_combat flag)
+            # This allows skills to INITIATE combat, just like weapon attacks
+            if combat_manager and hasattr(combat_manager, 'get_all_active_enemies'):
+                available_enemies = combat_manager.get_all_active_enemies()
+
+                # If enemies exist, use combat-aware skill execution
+                if available_enemies:
+                    target_enemy = available_enemies[0]
+
+                    # Set player in combat (skills can initiate combat)
+                    if hasattr(combat_manager, 'player_in_combat'):
+                        combat_manager.player_in_combat = True
+
+                    return self._apply_combat_skill_with_context(
+                        skill_def, character, player_skill,
+                        target_enemy, available_enemies
+                    )
+
+            # No enemies available - will warn if skill needs combat context
             return self._apply_combat_skill(skill_def, character, player_skill)
 
         # Otherwise use legacy buff-based system
@@ -397,29 +418,60 @@ class SkillManager:
             resource_type = "HP" if "health" in effect.category or "defense" in effect.category else "MP"
             print(f"   Regenerating {amount:.1f} {resource_type}/s for {int(duration if not consume_on_use else 60)}s")
 
-        # DEVASTATE - Area of effect (instant execution if consume_on_use)
+        # DEVASTATE - Area of effect (instant execution for combat skills)
         elif effect.effect_type == "devastate":
             devastate_values = get_magnitude_value('devastate', effect.magnitude)
             radius = int(apply_level_scaling(devastate_values))
 
-            # TODO: For instant devastate skills, execute immediately using tag system
-            # For now, create buff and let it be applied in combat
-            buff = ActiveBuff(
-                buff_id=f"{skill_def.skill_id}_devastate",
-                name=f"{skill_def.name} (AoE)",
-                effect_type="devastate",
-                category=effect.category,
-                magnitude=effect.magnitude,
-                bonus_value=radius,
-                duration=duration,
-                duration_remaining=duration,
-                consume_on_use=consume_on_use
-            )
-            character.buffs.add_buff(buff)
-            if consume_on_use:
-                print(f"   Next {effect.category} action affects {radius}-tile radius")
+            # For INSTANT combat/damage AoE skills: Execute immediately!
+            if consume_on_use and effect.category in ["damage", "combat"]:
+                print(f"\n🌀 INSTANT AoE: {skill_def.name} executing immediately!")
+                debug_print(f"🌀 INSTANT AoE: {skill_def.name} ({radius}-tile radius)")
+
+                # Execute instant AoE if combat manager available
+                if combat_manager and hasattr(combat_manager, 'execute_instant_player_aoe'):
+                    # Execute instant AoE damage
+                    affected = combat_manager.execute_instant_player_aoe(
+                        radius=radius,
+                        skill_name=skill_def.name
+                    )
+                    print(f"   ✓ Hit {affected} enemy(s) in {radius}-tile radius!")
+                else:
+                    # Fallback: create buff if combat manager not available
+                    print(f"   ⚠️  Combat manager not available, creating buff instead")
+                    buff = ActiveBuff(
+                        buff_id=f"{skill_def.skill_id}_devastate",
+                        name=f"{skill_def.name} (AoE)",
+                        effect_type="devastate",
+                        category=effect.category,
+                        magnitude=effect.magnitude,
+                        bonus_value=radius,
+                        duration=duration,
+                        duration_remaining=duration,
+                        consume_on_use=consume_on_use
+                    )
+                    character.buffs.add_buff(buff)
+
+            # For gathering AoE (Chain Harvest) or timed AoE: Create buff
             else:
-                print(f"   {effect.category.capitalize()} affects {radius}-tile radius for {int(duration)}s")
+                buff = ActiveBuff(
+                    buff_id=f"{skill_def.skill_id}_devastate",
+                    name=f"{skill_def.name} (AoE)",
+                    effect_type="devastate",
+                    category=effect.category,
+                    magnitude=effect.magnitude,
+                    bonus_value=radius,
+                    duration=duration,
+                    duration_remaining=duration,
+                    consume_on_use=consume_on_use
+                )
+                character.buffs.add_buff(buff)
+                if consume_on_use:
+                    print(f"\n🌀 DEVASTATE READY: Next {effect.category} action hits {radius}-tile radius!")
+                    print(f"   Buff active: {skill_def.name} (AoE)")
+                    debug_print(f"🌀 DEVASTATE: {skill_def.name} ready ({radius}-tile radius)")
+                else:
+                    print(f"   {effect.category.capitalize()} affects {radius}-tile radius for {int(duration)}s")
 
         # TRANSCEND - Bypass tier restrictions
         elif effect.effect_type == "transcend":
@@ -442,8 +494,12 @@ class SkillManager:
             else:
                 print(f"   Bypass {bypass} tier restriction(s) for {effect.category} for {int(duration)}s")
 
-    def _apply_combat_skill(self, skill_def, character, player_skill):
-        """Apply a tag-based combat skill using the effect executor"""
+    def _apply_combat_skill(self, skill_def, character, player_skill, suppress_warnings=False):
+        """Apply a tag-based combat skill using the effect executor
+
+        Args:
+            suppress_warnings: If True, don't print warnings for context-dependent skills
+        """
         # Apply level scaling to combat params
         level_bonus = player_skill.get_level_scaling_bonus()
         scaled_params = skill_def.combat_params.copy()
@@ -463,12 +519,8 @@ class SkillManager:
         available_entities = []
 
         if effect.target == "enemy":
-            # Find nearest enemy from combat manager
-            # For now, we need access to combat manager which the skill system doesn't have
-            # We'll document that combat skills need to be called with context
-            # For skills used outside combat, this will be a no-op
-            self.debugger.warning(f"Combat skill {skill_def.skill_id} requires enemy target - needs combat context")
-            print(f"   ⚠ Skill requires enemy target (use in combat)")
+            # Enemy-targeted skills require enemies to be nearby
+            print(f"   ⚠ No enemies in range (enemy-targeted skill)")
             return
 
         elif effect.target == "self":
@@ -477,9 +529,8 @@ class SkillManager:
             available_entities = [character]
 
         elif effect.target == "area":
-            # Area effect - needs available enemies from combat manager
-            self.debugger.warning(f"Combat skill {skill_def.skill_id} is area effect - needs combat context")
-            print(f"   ⚠ Area skill requires combat context")
+            # Area effect skills require enemies to be nearby
+            print(f"   ⚠ No enemies in range (area-effect skill)")
             return
 
         else:
