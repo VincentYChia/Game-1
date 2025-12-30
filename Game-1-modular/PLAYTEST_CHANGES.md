@@ -19,8 +19,10 @@
 | Feature | Location | What to Test | Expected Behavior |
 |---------|----------|--------------|-------------------|
 | Tag-driven class system | classes.py, classes-1.JSON | Select each class, check tags load | Classes have identity tags (warrior=melee/physical/tanky) |
-| Skill affinity bonus | classes.py | Use skills matching class tags | Skills matching class tags get up to 20% bonus |
-| Class tag definitions | tag-definitions.JSON | Check class/playstyle/armor categories | New tag categories defined in tag registry |
+| Skill affinity bonus | skill_manager.py | Use skills matching class tags in combat | Console shows affinity bonus, up to +20% damage |
+| Class selection tooltips | renderer.py | Hover over class cards during selection | Tooltip shows tags, affinity explanation, preferred types |
+| Tool slot tooltips | renderer.py | Hover over equipped axe/pickaxe slots | Tooltip shows tool stats, durability, class bonus |
+| Tag-driven tool bonus | class_system.py, character.py | Select Ranger/Scavenger, check tool efficiency | Ranger: +15% axe, Scavenger: +15% pickaxe |
 
 ### MEDIUM PRIORITY (Enchantments Need Verification)
 | Feature | Location | What to Test | Expected Behavior |
@@ -233,37 +235,60 @@ for slot in armor_slots:
 
 ---
 
-## Tag-Driven Class System (NEW)
+## Tag-Driven Class System (FULLY INTEGRATED)
 
 ### Overview
-Classes are now tag-driven, meaning each class has identity tags that can be used for:
-- Skill affinity bonuses (skills matching class tags get up to 20% bonus)
-- Future: Tag-based starting equipment selection
+Classes are now fully tag-driven with active gameplay effects:
+- **Skill affinity bonuses**: Skills matching class tags get up to 20% bonus (INTEGRATED)
+- **Tag-driven tool bonuses**: Starting tools get efficiency bonuses based on class tags (INTEGRATED)
+- **Class selection tooltips**: Detailed tooltips showing tags, affinity, and preferred types (NEW)
+- **Tool slot tooltips**: Equipped tools show stats and class bonuses (NEW)
 - Future: Class-specific content gating
 
 ### Class Tags
 
-| Class | Tags | Preferred Damage | Armor Type |
-|-------|------|------------------|------------|
-| Warrior | warrior, melee, physical, tanky, frontline | physical, slashing, crushing | heavy |
-| Ranger | ranger, ranged, agile, nature, mobile | physical, piercing, poison | light |
-| Scholar | scholar, magic, alchemy, arcane, caster | arcane, fire, frost, lightning | robes |
-| Artisan | artisan, crafting, smithing, engineering, utility | physical | medium |
-| Scavenger | scavenger, luck, gathering, treasure, explorer | physical | light |
-| Adventurer | adventurer, balanced, versatile, generalist, adaptive | physical, arcane | medium |
+| Class | Tags | Preferred Damage | Armor Type | Tool Bonus |
+|-------|------|------------------|------------|------------|
+| Warrior | warrior, melee, physical, tanky, frontline | physical, slashing, crushing | heavy | +10% tool damage |
+| Ranger | ranger, ranged, agile, nature, mobile | physical, piercing, poison | light | +15% axe efficiency |
+| Scholar | scholar, magic, alchemy, arcane, caster | arcane, fire, frost, lightning | robes | - |
+| Artisan | artisan, crafting, smithing, engineering, utility | physical | medium | - |
+| Scavenger | scavenger, luck, gathering, treasure, explorer | physical | light | +15% pickaxe efficiency |
+| Adventurer | adventurer, balanced, versatile, generalist, adaptive | physical, arcane | medium | - |
 
-### Skill Affinity Bonus
-When a skill's tags overlap with the class's tags, a bonus is applied:
+### Skill Affinity Bonus (NOW ACTIVE IN COMBAT)
+When a skill's tags overlap with the class's tags, a damage/effectiveness bonus is applied:
 - 1 matching tag = +5% effectiveness
 - 2 matching tags = +10% effectiveness
 - 3 matching tags = +15% effectiveness
 - 4+ matching tags = +20% effectiveness (capped)
+
+**Integration Points**:
+- `entities/components/skill_manager.py:_apply_combat_skill_with_context()` - Combat skills
+- `entities/components/skill_manager.py:_apply_skill_effect()` - Buff-based skills
+- Console output shows affinity bonus: `⚡ SkillName Lv2 (+10% affinity)`
+
+### Tool Efficiency Bonus (NOW ACTIVE)
+Classes with relevant tags get tool efficiency bonuses applied when class is selected:
+- `nature` tag → +10% axe efficiency (Rangers)
+- `gathering` tag → +5% axe efficiency, +10% pickaxe efficiency (Scavengers)
+- `explorer` tag → +5% pickaxe efficiency (Scavengers)
+- `physical`/`melee` tags → +5% each to tool damage in combat
+
+**Integration Points**:
+- `systems/class_system.py:get_tool_efficiency_bonus()` - Calculates bonus
+- `entities/character.py:_on_class_selected()` - Applies bonus when class is set
+- Tool tooltips show class bonus when hovering over equipped tools
 
 ### Files Changed
 - `data/models/classes.py` - Added tags, preferred_damage_types, preferred_armor_type fields
 - `data/databases/class_db.py` - Load tag data from JSON
 - `progression/classes-1.JSON` - Added tags to all 6 classes
 - `Definitions.JSON/tag-definitions.JSON` - Added class, playstyle, armor_type categories
+- `systems/class_system.py` - Added tool efficiency/damage bonus methods
+- `entities/character.py` - Added _on_class_selected callback
+- `entities/components/skill_manager.py` - Integrated skill affinity bonus
+- `rendering/renderer.py` - Added class tooltips and tool tooltips
 
 ---
 
@@ -274,8 +299,9 @@ The following systems should be converted to tag-driven for consistency:
 | System | Current Implementation | Status |
 |--------|----------------------|--------|
 | Class Selection | Hardcoded stat bonuses | ✅ NOW TAG-DRIVEN |
-| Skill Affinity | Same for all classes | ✅ NOW TAG-DRIVEN (get_skill_affinity_bonus) |
-| Starting Equipment | Fixed copper tools for all classes | ⏳ FUTURE: Use class tags to select gear |
+| Skill Affinity | Same for all classes | ✅ NOW INTEGRATED IN COMBAT |
+| Starting Tools | Fixed copper tools for all classes | ✅ NOW TAG-DRIVEN (efficiency bonuses) |
+| Starting Equipment | Fixed armor/weapons | ⏳ FUTURE: Use class tags to select gear |
 
 ---
 

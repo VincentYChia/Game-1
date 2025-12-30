@@ -52,6 +52,8 @@ class Renderer:
         self.tiny_font = pygame.font.Font(None, Config.scale(14))
         # Pending tooltip for deferred rendering (ensures tooltips render on top of all UI)
         self.pending_tooltip = None  # Tuple of (item_stack, mouse_pos, character, is_equipment)
+        self.pending_class_tooltip = None  # Tuple of (class_definition, mouse_pos)
+        self.pending_tool_tooltip = None  # Tuple of (tool, tool_type, mouse_pos, character)
 
     def _get_grid_size_for_tier(self, tier: int, discipline: str) -> Tuple[int, int]:
         """Get grid dimensions based on station tier for grid-based disciplines (smithing, adornments)"""
@@ -2413,8 +2415,18 @@ class Renderer:
         axe_x = 20
         axe_rect = pygame.Rect(axe_x, tools_y, slot_size, slot_size)
         equipped_axe = character.equipment.slots.get('axe')
-        pygame.draw.rect(self.screen, Config.COLOR_SLOT_FILLED if equipped_axe else Config.COLOR_SLOT_EMPTY, axe_rect)
+        axe_hovered = axe_rect.collidepoint(mouse_pos)
+
+        # Highlight if hovered
+        slot_color = Config.COLOR_SLOT_FILLED if equipped_axe else Config.COLOR_SLOT_EMPTY
+        if axe_hovered and equipped_axe:
+            slot_color = (80, 100, 120)  # Highlight color
+        pygame.draw.rect(self.screen, slot_color, axe_rect)
         pygame.draw.rect(self.screen, Config.COLOR_EQUIPPED if equipped_axe else Config.COLOR_SLOT_BORDER, axe_rect, 2)
+
+        # Set tooltip if hovered over equipped axe
+        if axe_hovered and equipped_axe:
+            self.pending_tool_tooltip = (equipped_axe, 'axe', mouse_pos, character)
 
         if equipped_axe:
             # Try to display axe icon
@@ -2443,8 +2455,18 @@ class Renderer:
         pick_x = axe_x + slot_size + spacing
         pick_rect = pygame.Rect(pick_x, tools_y, slot_size, slot_size)
         equipped_pick = character.equipment.slots.get('pickaxe')
-        pygame.draw.rect(self.screen, Config.COLOR_SLOT_FILLED if equipped_pick else Config.COLOR_SLOT_EMPTY, pick_rect)
+        pick_hovered = pick_rect.collidepoint(mouse_pos)
+
+        # Highlight if hovered
+        slot_color = Config.COLOR_SLOT_FILLED if equipped_pick else Config.COLOR_SLOT_EMPTY
+        if pick_hovered and equipped_pick:
+            slot_color = (80, 100, 120)  # Highlight color
+        pygame.draw.rect(self.screen, slot_color, pick_rect)
         pygame.draw.rect(self.screen, Config.COLOR_EQUIPPED if equipped_pick else Config.COLOR_SLOT_BORDER, pick_rect, 2)
+
+        # Set tooltip if hovered over equipped pickaxe
+        if pick_hovered and equipped_pick:
+            self.pending_tool_tooltip = (equipped_pick, 'pickaxe', mouse_pos, character)
 
         if equipped_pick:
             # Try to display pickaxe icon
@@ -3381,8 +3403,96 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
+    def render_tool_tooltip(self, tool, tool_type: str, mouse_pos: Tuple[int, int], character: Character = None):
+        """Render tooltip for equipped tool showing stats and durability."""
+        s = Config.scale
+
+        # Check for class bonus
+        class_bonus = 0.0
+        class_name = None
+        if character and character.class_system and character.class_system.current_class:
+            class_bonus = character.class_system.get_tool_efficiency_bonus(tool_type)
+            if class_bonus > 0:
+                class_name = character.class_system.current_class.name
+
+        # Calculate tooltip dimensions (extra height if class bonus exists)
+        tw = s(220)
+        th = s(140) if class_bonus > 0 else s(120)
+
+        # Position to the right of cursor
+        x = mouse_pos[0] + s(15)
+        y = mouse_pos[1]
+
+        # Keep on screen
+        if x + tw > Config.SCREEN_WIDTH:
+            x = mouse_pos[0] - tw - s(15)
+        if y + th > Config.SCREEN_HEIGHT:
+            y = Config.SCREEN_HEIGHT - th - s(10)
+
+        surf = pygame.Surface((tw, th), pygame.SRCALPHA)
+        surf.fill((25, 25, 35, 250))
+        pygame.draw.rect(surf, (100, 120, 140), (0, 0, tw, th), s(2))
+
+        pad = s(10)
+        y_pos = pad
+
+        # Tool name
+        tool_name = getattr(tool, 'name', f"Tier {tool.tier} {tool_type.title()}")
+        name_surf = self.font.render(tool_name, True, (255, 215, 0))
+        surf.blit(name_surf, (pad, y_pos))
+        y_pos += s(25)
+
+        # Tier
+        tier_surf = self.small_font.render(f"Tier: {tool.tier}", True, (180, 180, 180))
+        surf.blit(tier_surf, (pad, y_pos))
+        y_pos += s(20)
+
+        # Damage
+        damage_surf = self.small_font.render(f"Damage: {tool.damage}", True, (255, 150, 150))
+        surf.blit(damage_surf, (pad, y_pos))
+        y_pos += s(20)
+
+        # Durability with color coding
+        dur_pct = (tool.durability_current / tool.durability_max) if tool.durability_max > 0 else 0
+        if dur_pct >= 0.5:
+            dur_color = (100, 255, 100)  # Green
+        elif dur_pct >= 0.25:
+            dur_color = (255, 200, 100)  # Yellow
+        else:
+            dur_color = (255, 100, 100)  # Red
+
+        dur_text = f"Durability: {tool.durability_current}/{tool.durability_max}"
+        dur_surf = self.small_font.render(dur_text, True, dur_color)
+        surf.blit(dur_surf, (pad, y_pos))
+        y_pos += s(20)
+
+        # Efficiency (base)
+        eff_surf = self.tiny_font.render(f"Efficiency: {tool.efficiency:.0%}", True, (150, 200, 255))
+        surf.blit(eff_surf, (pad, y_pos))
+        y_pos += s(16)
+
+        # Class bonus (if applicable)
+        if class_bonus > 0 and class_name:
+            bonus_text = f"  ({class_name} class: +{class_bonus*100:.0f}%)"
+            bonus_surf = self.tiny_font.render(bonus_text, True, (100, 255, 150))
+            surf.blit(bonus_surf, (pad, y_pos))
+
+        self.screen.blit(surf, (x, y))
+
     def render_pending_tooltip(self):
         """Render any deferred tooltip - call this LAST in render loop to ensure tooltips appear on top."""
+        # Handle class tooltips first
+        if self.pending_class_tooltip is not None:
+            class_def, mouse_pos = self.pending_class_tooltip
+            self.pending_class_tooltip = None  # Clear for next frame
+            self.render_class_tooltip(class_def, mouse_pos)
+
+        # Handle tool tooltips
+        if self.pending_tool_tooltip is not None:
+            tool, tool_type, mouse_pos, character = self.pending_tool_tooltip
+            self.pending_tool_tooltip = None  # Clear for next frame
+            self.render_tool_tooltip(tool, tool_type, mouse_pos, character)
+
         if self.pending_tooltip is None:
             return
 
@@ -3397,6 +3507,91 @@ class Renderer:
         else:
             # From inventory - use render_item_tooltip
             self.render_item_tooltip(item_stack, mouse_pos, character)
+
+    def render_class_tooltip(self, class_def, mouse_pos: Tuple[int, int]):
+        """Render detailed tooltip for a class with tags and skill affinity explanation."""
+        s = Config.scale
+
+        # Calculate tooltip dimensions based on content
+        # Description + Tags section + Skill Affinity + Preferred Types + Armor
+        tag_count = len(class_def.tags) if class_def.tags else 0
+        damage_type_count = len(class_def.preferred_damage_types) if class_def.preferred_damage_types else 0
+
+        # Height calculation: title + description (2 lines) + spacing + tags header + tags + spacing
+        # + skill affinity header + explanation (2 lines) + spacing + damage types + armor type
+        base_height = s(40)  # Title and description
+        tags_height = s(40 + 18) if tag_count > 0 else 0  # Header + tags line
+        affinity_height = s(60)  # Skill affinity explanation
+        damage_height = s(25) if damage_type_count > 0 else 0
+        armor_height = s(25) if class_def.preferred_armor_type else 0
+
+        tw = s(320)
+        th = base_height + tags_height + affinity_height + damage_height + armor_height + s(30)
+
+        # Position tooltip to the left of cursor since class cards are on the right
+        x = mouse_pos[0] - tw - s(15)
+        y = mouse_pos[1]
+
+        # Keep on screen
+        if x < 0:
+            x = mouse_pos[0] + s(15)
+        if y + th > Config.SCREEN_HEIGHT:
+            y = Config.SCREEN_HEIGHT - th - s(10)
+
+        surf = pygame.Surface((tw, th), pygame.SRCALPHA)
+        surf.fill((25, 25, 35, 250))
+        pygame.draw.rect(surf, (100, 120, 140), (0, 0, tw, th), s(2))
+
+        pad = s(10)
+        y_pos = pad
+
+        # Class name
+        name_surf = self.font.render(class_def.name, True, (255, 215, 0))
+        surf.blit(name_surf, (pad, y_pos))
+        y_pos += s(25)
+
+        # Description (truncated if too long)
+        desc = class_def.description
+        if len(desc) > 50:
+            desc = desc[:47] + "..."
+        desc_surf = self.small_font.render(desc, True, (180, 180, 180))
+        surf.blit(desc_surf, (pad, y_pos))
+        y_pos += s(22)
+
+        # Tags section
+        if class_def.tags:
+            y_pos += s(5)
+            surf.blit(self.small_font.render("Identity Tags:", True, (150, 200, 255)), (pad, y_pos))
+            y_pos += s(18)
+            tags_text = ", ".join(class_def.tags)
+            surf.blit(self.tiny_font.render(tags_text, True, (130, 180, 230)), (pad + s(5), y_pos))
+            y_pos += s(18)
+
+        # Skill Affinity section
+        y_pos += s(5)
+        surf.blit(self.small_font.render("Skill Affinity Bonus:", True, (100, 255, 150)), (pad, y_pos))
+        y_pos += s(18)
+        surf.blit(self.tiny_font.render("Skills matching class tags get bonuses:", True, (180, 180, 180)),
+                  (pad + s(5), y_pos))
+        y_pos += s(14)
+        surf.blit(self.tiny_font.render("1 tag = +5%, 2 = +10%, 3 = +15%, 4+ = +20% max", True, (100, 200, 100)),
+                  (pad + s(5), y_pos))
+        y_pos += s(18)
+
+        # Preferred damage types
+        if class_def.preferred_damage_types:
+            y_pos += s(3)
+            dmg_text = f"Preferred Damage: {', '.join(class_def.preferred_damage_types)}"
+            surf.blit(self.tiny_font.render(dmg_text, True, (255, 180, 100)), (pad, y_pos))
+            y_pos += s(16)
+
+        # Preferred armor
+        if class_def.preferred_armor_type:
+            y_pos += s(3)
+            armor_text = f"Preferred Armor: {class_def.preferred_armor_type.title()}"
+            surf.blit(self.tiny_font.render(armor_text, True, (180, 180, 255)), (pad, y_pos))
+
+        self.screen.blit(surf, (x, y))
 
     def render_enchantment_selection_ui(self, mouse_pos: Tuple[int, int], recipe: Recipe, compatible_items: List):
         """Render UI for selecting which item to apply enchantment to"""
@@ -3633,6 +3828,8 @@ class Renderer:
             if is_hovered:
                 select_surf = self.small_font.render("[CLICK] Select", True, (100, 255, 100))
                 surf.blit(select_surf, (x + col_width - select_surf.get_width() - s(10), y + card_height - s(25)))
+                # Store class for deferred tooltip rendering (appears on top of all UI)
+                self.pending_class_tooltip = (class_def, mouse_pos)
 
             class_buttons.append((card_rect, class_def))
 

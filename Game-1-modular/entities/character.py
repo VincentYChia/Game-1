@@ -73,6 +73,7 @@ class Character:
         self.buffs = BuffManager()
         self.titles = TitleSystem()
         self.class_system = ClassSystem()
+        self.class_system.register_on_class_set(self._on_class_selected)
         self.activities = ActivityTracker()
         self.equipment = EquipmentManager()
         self.encyclopedia = Encyclopedia()
@@ -135,6 +136,33 @@ class Character:
         if copper_pickaxe:
             self.equipment.slots['pickaxe'] = copper_pickaxe
             print(f"✓ Starting tool equipped: {copper_pickaxe.name} in pickaxe slot")
+
+    def _on_class_selected(self, class_def):
+        """Called when a class is selected - applies tag-driven tool bonuses."""
+        if not class_def or not class_def.tags:
+            return
+
+        # Apply efficiency bonuses to equipped tools based on class tags
+        axe_bonus = self.class_system.get_tool_efficiency_bonus('axe')
+        pick_bonus = self.class_system.get_tool_efficiency_bonus('pickaxe')
+
+        # Apply to equipped axe
+        if axe_bonus > 0:
+            axe = self.equipment.slots.get('axe')
+            if axe and hasattr(axe, 'efficiency'):
+                axe.efficiency = 1.0 + axe_bonus
+                print(f"   → {class_def.name} class bonus: +{axe_bonus*100:.0f}% axe efficiency")
+
+        # Apply to equipped pickaxe
+        if pick_bonus > 0:
+            pick = self.equipment.slots.get('pickaxe')
+            if pick and hasattr(pick, 'efficiency'):
+                pick.efficiency = 1.0 + pick_bonus
+                print(f"   → {class_def.name} class bonus: +{pick_bonus*100:.0f}% pickaxe efficiency")
+
+        # Log tag-driven bonuses
+        if axe_bonus > 0 or pick_bonus > 0:
+            print(f"✓ Applied tag-driven tool bonuses for {class_def.name}")
 
     def _give_debug_items(self):
         """Give starter items in debug mode"""
