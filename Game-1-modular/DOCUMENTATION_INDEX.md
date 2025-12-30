@@ -16,6 +16,7 @@ This is the master documentation index for Game-1. All documentation has been re
 
 ## 📋 Current Work
 
+- **[MASTER_ISSUE_TRACKER.md](MASTER_ISSUE_TRACKER.md)** - **START HERE** - All known issues, bugs, and improvements
 - **[COMPLETE_FEATURE_COVERAGE_PLAN.md](COMPLETE_FEATURE_COVERAGE_PLAN.md)** - Current implementation status and roadmap
 - **[GRANULAR_TASK_BREAKDOWN.md](GRANULAR_TASK_BREAKDOWN.md)** - Detailed task list (Phases 1-7)
 
