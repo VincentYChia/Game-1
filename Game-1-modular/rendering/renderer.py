@@ -50,6 +50,8 @@ class Renderer:
         self.font = pygame.font.Font(None, Config.scale(24))
         self.small_font = pygame.font.Font(None, Config.scale(18))
         self.tiny_font = pygame.font.Font(None, Config.scale(14))
+        # Pending tooltip for deferred rendering (ensures tooltips render on top of all UI)
+        self.pending_tooltip = None  # Tuple of (item_stack, mouse_pos, character, is_equipment)
 
     def _get_grid_size_for_tier(self, tier: int, discipline: str) -> Tuple[int, int]:
         """Get grid dimensions based on station tier for grid-based disciplines (smithing, adornments)"""
@@ -2519,7 +2521,8 @@ class Renderer:
 
         if hovered_slot and not character.inventory.dragging_stack:
             _, item_stack, _ = hovered_slot
-            self.render_item_tooltip(item_stack, mouse_pos, character)
+            # Defer tooltip rendering to ensure it appears on top of all UI elements
+            self.pending_tooltip = (item_stack, mouse_pos, character, False)  # False = not from equipment UI
 
     def render_item_in_slot(self, item_stack: ItemStack, rect: pygame.Rect, is_equipped: bool = False):
         """
@@ -3234,11 +3237,17 @@ class Renderer:
                           (stats_x + s(10), stats_y))
                 stats_y += s(16)
 
+        self.screen.blit(surf, (wx, wy))
+
         if hovered_slot:
             slot_name, item = hovered_slot
-            self.render_equipment_tooltip(item, (mouse_pos[0], mouse_pos[1]), character, from_inventory=False)
+            # Defer tooltip rendering to ensure it appears on top of all UI elements
+            # Create a fake ItemStack to pass equipment data to the tooltip system
+            from entities.components.inventory import ItemStack
+            fake_stack = ItemStack(item_id=item.item_id, quantity=1)
+            fake_stack.equipment_data = item
+            self.pending_tooltip = (fake_stack, (mouse_pos[0], mouse_pos[1]), character, True)  # True = from equipment UI
 
-        self.screen.blit(surf, (wx, wy))
         return pygame.Rect(wx, wy, ww, wh), equipment_rects
 
     def render_equipment_tooltip(self, item: EquipmentItem, mouse_pos: Tuple[int, int], character: Character,
@@ -3371,6 +3380,23 @@ class Renderer:
         surf.blit(self.tiny_font.render(hint, True, (150, 150, 255)), (pad, y_pos))
 
         self.screen.blit(surf, (x, y))
+
+    def render_pending_tooltip(self):
+        """Render any deferred tooltip - call this LAST in render loop to ensure tooltips appear on top."""
+        if self.pending_tooltip is None:
+            return
+
+        item_stack, mouse_pos, character, is_equipment_ui = self.pending_tooltip
+        self.pending_tooltip = None  # Clear for next frame
+
+        if is_equipment_ui:
+            # From equipment UI - render equipment tooltip
+            equipment = item_stack.get_equipment() if item_stack else None
+            if equipment:
+                self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=False)
+        else:
+            # From inventory - use render_item_tooltip
+            self.render_item_tooltip(item_stack, mouse_pos, character)
 
     def render_enchantment_selection_ui(self, mouse_pos: Tuple[int, int], recipe: Recipe, compatible_items: List):
         """Render UI for selecting which item to apply enchantment to"""

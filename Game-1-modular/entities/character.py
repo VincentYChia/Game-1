@@ -380,7 +380,8 @@ class Character:
                         weight=eq_data.get("weight", 1.0),
                         range=eq_data.get("range", 1.0),
                         hand_type=eq_data.get("hand_type", "default"),
-                        item_type=eq_data.get("item_type", "weapon")
+                        item_type=eq_data.get("item_type", "weapon"),
+                        icon_path=eq_data.get("icon_path")  # Restore icon path for proper PNG rendering
                     )
 
                     # Restore bonuses if present
@@ -432,7 +433,8 @@ class Character:
                     weight=eq_data.get("weight", 1.0),
                     range=eq_data.get("range", 1.0),
                     hand_type=eq_data.get("hand_type", "default"),
-                    item_type=eq_data.get("item_type", "weapon")
+                    item_type=eq_data.get("item_type", "weapon"),
+                    icon_path=eq_data.get("icon_path")  # Restore icon path for proper PNG rendering
                 )
 
                 # Restore bonuses if present
