@@ -17,6 +17,7 @@ class EquipmentItem:
     durability_current: int = 100
     durability_max: int = 100
     attack_speed: float = 1.0
+    efficiency: float = 1.0  # Tool efficiency multiplier
     weight: float = 1.0
     range: float = 1.0  # Weapon range stat
     requirements: Dict[str, Any] = field(default_factory=dict)

@@ -1483,7 +1483,7 @@ class Character:
                         total += slot.equipment_data.weight
                     else:
                         # It's a material - look up weight
-                        mat = mat_db.get(slot.item_id)
+                        mat = mat_db.get_material(slot.item_id)
                         if mat and hasattr(mat, 'weight'):
                             total += mat.weight * slot.quantity
                         else:
