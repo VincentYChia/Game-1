@@ -1,8 +1,23 @@
 # Documentation Index
 
-**Last Updated**: 2025-12-29
+**Last Updated**: 2025-12-30
 
 This is the master documentation index for Game-1. All documentation has been reorganized for clarity and maintainability.
+
+> **IMPORTANT:** Use `GAME_MECHANICS_V6.md` as the source of truth for what's actually implemented.
+> Design docs (v5 and earlier) describe aspirations, not reality.
+
+---
+
+## 🎯 AUTHORITATIVE DOCUMENTS (Source of Truth)
+
+These documents reflect what is ACTUALLY IMPLEMENTED in code:
+
+| Document | Purpose | Priority |
+|----------|---------|----------|
+| **[docs/GAME_MECHANICS_V6.md](docs/GAME_MECHANICS_V6.md)** | **MASTER REFERENCE** - All implemented game mechanics | READ FIRST |
+| **[MASTER_ISSUE_TRACKER.md](MASTER_ISSUE_TRACKER.md)** | Known issues, bugs, unimplemented features | Check for bugs |
+| **[PLAYTEST_CHANGES.md](PLAYTEST_CHANGES.md)** | Recent changes needing testing | For testers |
 
 ---
 
@@ -16,7 +31,8 @@ This is the master documentation index for Game-1. All documentation has been re
 
 ## 📋 Current Work
 
-- **[COMPLETE_FEATURE_COVERAGE_PLAN.md](COMPLETE_FEATURE_COVERAGE_PLAN.md)** - Current implementation status and roadmap
+- **[MASTER_ISSUE_TRACKER.md](MASTER_ISSUE_TRACKER.md)** - **START HERE** - All known issues, bugs, and improvements
+- **[PLAYTEST_CHANGES.md](PLAYTEST_CHANGES.md)** - Changes that need playtesting
 - **[GRANULAR_TASK_BREAKDOWN.md](GRANULAR_TASK_BREAKDOWN.md)** - Detailed task list (Phases 1-7)
 
 ---
@@ -41,9 +57,10 @@ This is the master documentation index for Game-1. All documentation has been re
 - **[docs/UPDATE_SYSTEM_DOCUMENTATION.md](docs/UPDATE_SYSTEM_DOCUMENTATION.md)** - Update system details
 
 ### Features & Planning
-- **[docs/FEATURES_CHECKLIST.md](docs/FEATURES_CHECKLIST.md)** - Feature implementation checklist
-- **[docs/FUTURE_MECHANICS_TO_IMPLEMENT.md](docs/FUTURE_MECHANICS_TO_IMPLEMENT.md)** - Planned features
+- **[docs/GAME_MECHANICS_V6.md](docs/GAME_MECHANICS_V6.md)** - **PRIMARY** - What's actually implemented
+- **[docs/FUTURE_MECHANICS_TO_IMPLEMENT.md](docs/FUTURE_MECHANICS_TO_IMPLEMENT.md)** - Planned but NOT implemented features
 - **[docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md)** - Known limitations and constraints
+- **[docs/FEATURES_CHECKLIST.md](docs/FEATURES_CHECKLIST.md)** - Historical feature checklist (may be outdated)
 
 ---
 
@@ -110,9 +127,10 @@ All historical implementation notes, completion reports, and phase summaries hav
 3. Reference: [docs/tag-system/TAG-REFERENCE.md](docs/tag-system/TAG-REFERENCE.md)
 
 ### Bug Fixer
-1. Start: [COMPLETE_FEATURE_COVERAGE_PLAN.md](COMPLETE_FEATURE_COVERAGE_PLAN.md) - See what's implemented
-2. Debug: [docs/tag-system/DEBUG-GUIDE.md](docs/tag-system/DEBUG-GUIDE.md)
-3. Reference: [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md)
+1. Start: [docs/GAME_MECHANICS_V6.md](docs/GAME_MECHANICS_V6.md) - See what's actually implemented
+2. Issues: [MASTER_ISSUE_TRACKER.md](MASTER_ISSUE_TRACKER.md) - Known issues
+3. Debug: [docs/tag-system/DEBUG-GUIDE.md](docs/tag-system/DEBUG-GUIDE.md)
+4. Reference: [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md)
 
 ### Playtester
 1. Start: [PLAYTEST_README.md](PLAYTEST_README.md)
@@ -122,16 +140,22 @@ All historical implementation notes, completion reports, and phase summaries hav
 
 ## 📊 Documentation Statistics
 
-**Before Cleanup**: 86 markdown files (1.2MB)
-**After Cleanup**: 43 active files (500KB) + 43 archived files
+**Total Markdown Files**: 92 files
+**Active Documentation**: ~40 files (most useful)
+**Archived**: ~50 files (historical reference only)
 
-**Reduction**: 50% fewer active docs, all historical context preserved in archives
+**Key Documents by Importance**:
+1. `docs/GAME_MECHANICS_V6.md` - Source of truth for mechanics
+2. `MASTER_ISSUE_TRACKER.md` - What needs fixing
+3. `PLAYTEST_CHANGES.md` - What to test
+4. `docs/tag-system/TAG-GUIDE.md` - How tags work
+5. `docs/ARCHITECTURE.md` - System overview
 
 **Organization**:
-- Root: 5 files (quick access)
-- docs/: 17 files (technical documentation)
-- docs/tag-system/: 8 files (tag system docs)
-- Specialized: 13 files (assets, saves, crafting, etc.)
+- Root: Core tracking docs
+- docs/: Technical documentation
+- docs/tag-system/: Tag system specifics
+- archive/: Historical docs (don't reference unless needed)
 
 ---
 
@@ -152,4 +176,4 @@ All historical implementation notes, completion reports, and phase summaries hav
 
 ---
 
-**Last Updated**: 2025-12-29 - Documentation reorganization complete
+**Last Updated**: 2025-12-30 - Added Game Mechanics V6 as authoritative source, consolidated documentation

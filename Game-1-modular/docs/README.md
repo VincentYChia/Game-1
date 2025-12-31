@@ -2,7 +2,7 @@
 
 Complete documentation for Game-1-Modular.
 
-**Last Updated**: 2025-11-19
+**Last Updated**: 2025-12-30
 **Version**: 2.0 (Modular)
 
 ---
@@ -70,12 +70,12 @@ Complete documentation for Game-1-Modular.
 
 | Metric | Value |
 |--------|-------|
-| **Total Lines of Code** | 22,012 |
-| **Python Files** | 76 |
+| **Total Lines of Code** | ~33,000+ |
+| **Python Files** | 70+ |
 | **Classes** | 62+ |
-| **Average Lines/File** | ~290 |
-| **Documentation Files** | 5 |
-| **Total Doc Lines** | ~3,500 |
+| **Average Lines/File** | ~150 |
+| **Documentation Files** | 40+ |
+| **Total Doc Lines** | ~10,000 |
 
 ---
 
@@ -182,9 +182,15 @@ Please open an issue or submit a PR!
 
 ## Version History
 
+### v2.1 - Feature Complete (2025-12-29)
+- Complete turret/trap/bomb/utility device systems
+- 100% hostile ability tag coverage
+- 5 missing enchantments implemented
+- Documentation cleanup (50% reduction, improved organization)
+
 ### v2.0 - Modular Refactor (2025-11-19)
 - Complete refactor from 10,327-line singular file
-- Organized into 76 Python modules
+- Organized into 70+ Python modules
 - 100% feature parity maintained
 - Comprehensive documentation suite created
 
@@ -242,7 +248,7 @@ Configuration:    core/config.py
 Character:        entities/character.py
 Rendering:        rendering/renderer.py
 World:            systems/world_system.py
-Combat:           systems/combat_manager.py
+Combat:           Combat/combat_manager.py
 ```
 
 ---

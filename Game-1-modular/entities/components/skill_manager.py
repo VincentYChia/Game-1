@@ -239,6 +239,13 @@ class SkillManager:
         # Apply level scaling: +10% per level
         level_bonus = player_skill.get_level_scaling_bonus()
 
+        # Calculate class skill affinity bonus based on tag overlap
+        class_affinity_bonus = 0.0
+        if hasattr(character, 'class_system') and character.class_system.current_class:
+            # Get skill tags from combat_tags or effect category
+            skill_tags = skill_def.combat_tags if skill_def.combat_tags else [effect.category]
+            class_affinity_bonus = character.class_system.current_class.get_skill_affinity_bonus(skill_tags)
+
         # For instant buffs, use 60s duration but mark as consume_on_use
         # For timed buffs, use calculated duration
         if is_instant:
@@ -248,9 +255,9 @@ class SkillManager:
             duration = base_duration * (1.0 + level_bonus)
             consume_on_use = False
 
-        # Apply level scaling to magnitude values (+10% per level)
+        # Apply level scaling and class affinity to magnitude values
         def apply_level_scaling(base_value):
-            return base_value * (1.0 + level_bonus)
+            return base_value * (1.0 + level_bonus + class_affinity_bonus)
 
         def get_magnitude_value(effect_type: str, magnitude: str) -> float:
             """Get magnitude value from loaded JSON data"""
@@ -258,7 +265,8 @@ class SkillManager:
             return effect_magnitudes.get(magnitude, 0.5)  # Default to 0.5 if not found
 
         level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
-        debug_print(f"⚡ {skill_def.name}{level_indicator}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
+        affinity_indicator = f" (+{class_affinity_bonus*100:.0f}% affinity)" if class_affinity_bonus > 0 else ""
+        debug_print(f"⚡ {skill_def.name}{level_indicator}{affinity_indicator}: {effect.effect_type} - {effect.category} ({effect.magnitude})")
 
         # EMPOWER - Increases damage/output
         if effect.effect_type == "empower":
@@ -630,8 +638,23 @@ class SkillManager:
         if "baseHealing" in scaled_params:
             scaled_params["baseHealing"] *= (1.0 + level_bonus)
 
+        # Apply class skill affinity bonus based on tag overlap
+        class_affinity_bonus = 0.0
+        if hasattr(character, 'class_system') and character.class_system.current_class:
+            # Get skill tags from combat_tags or effect
+            skill_tags = skill_def.combat_tags if skill_def.combat_tags else []
+            class_affinity_bonus = character.class_system.current_class.get_skill_affinity_bonus(skill_tags)
+
+            if class_affinity_bonus > 0:
+                # Apply affinity bonus to damage and healing
+                if "baseDamage" in scaled_params:
+                    scaled_params["baseDamage"] *= (1.0 + class_affinity_bonus)
+                if "baseHealing" in scaled_params:
+                    scaled_params["baseHealing"] *= (1.0 + class_affinity_bonus)
+
         level_indicator = f" Lv{player_skill.level}" if player_skill.level > 1 else ""
-        print(f"⚡ {skill_def.name}{level_indicator}: Combat skill using tags {skill_def.combat_tags}")
+        affinity_indicator = f" (+{class_affinity_bonus*100:.0f}% affinity)" if class_affinity_bonus > 0 else ""
+        print(f"⚡ {skill_def.name}{level_indicator}{affinity_indicator}: Combat skill using tags {skill_def.combat_tags}")
 
         # Determine primary target based on skill target type
         effect = skill_def.effect

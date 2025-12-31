@@ -14,6 +14,9 @@
       "description": "Masters of combat and physical might. Warriors excel at dealing and taking damage in melee combat.",
       "narrative": "Steel and strength. You are the immovable wall, the unstoppable force. When enemies see you, they know: their time has come.",
       "thematicIdentity": "frontline_fighter",
+      "tags": ["warrior", "melee", "physical", "tanky", "frontline"],
+      "preferredDamageTypes": ["physical", "slashing", "crushing"],
+      "preferredArmorType": "heavy",
       "startingBonuses": {
         "baseHP": 30,
         "baseMana": 0,
@@ -55,6 +58,9 @@
       "description": "Swift explorers and natural harvesters. Rangers move quickly and gather resources efficiently.",
       "narrative": "The wilderness is your home. Trees fall faster before you, and you move like the wind. Nature bends to those who respect it.",
       "thematicIdentity": "mobile_gatherer",
+      "tags": ["ranger", "ranged", "agile", "nature", "mobile"],
+      "preferredDamageTypes": ["physical", "piercing", "poison"],
+      "preferredArmorType": "light",
       "startingBonuses": {
         "baseHP": 0,
         "baseMana": 0,
@@ -96,6 +102,9 @@
       "description": "Intellectuals who master alchemy and magical arts. Scholars excel at discovery and experimentation.",
       "narrative": "Knowledge is power, and you wield both. Potions brew faster in your hands, recipes reveal themselves, and magic bends to your will.",
       "thematicIdentity": "magical_researcher",
+      "tags": ["scholar", "magic", "alchemy", "arcane", "caster"],
+      "preferredDamageTypes": ["arcane", "fire", "frost", "lightning"],
+      "preferredArmorType": "robes",
       "startingBonuses": {
         "baseHP": 0,
         "baseMana": 100,
@@ -137,6 +146,9 @@
       "description": "Master crafters who excel at all creation disciplines. Artisans create better items faster.",
       "narrative": "Your hands shape reality. What takes others hours, you complete in moments. What they craft once, you perfect instantly.",
       "thematicIdentity": "master_crafter",
+      "tags": ["artisan", "crafting", "smithing", "engineering", "utility"],
+      "preferredDamageTypes": ["physical"],
+      "preferredArmorType": "medium",
       "startingBonuses": {
         "baseHP": 0,
         "baseMana": 0,
@@ -179,6 +191,9 @@
       "description": "Lucky opportunists who find better loot and resources. Scavengers thrive on discovery.",
       "narrative": "Where others see rocks, you see treasures. Fortune favors the prepared, and you are always prepared.",
       "thematicIdentity": "loot_hunter",
+      "tags": ["scavenger", "luck", "gathering", "treasure", "explorer"],
+      "preferredDamageTypes": ["physical"],
+      "preferredArmorType": "light",
       "startingBonuses": {
         "baseHP": 0,
         "baseMana": 0,
@@ -220,6 +235,9 @@
       "description": "Balanced generalists who dabble in everything. Adventurers have flexibility and choice.",
       "narrative": "You are not confined by tradition or specialty. Every path is open, every skill within reach. You are limitless.",
       "thematicIdentity": "jack_of_all_trades",
+      "tags": ["adventurer", "balanced", "versatile", "generalist", "adaptive"],
+      "preferredDamageTypes": ["physical", "arcane"],
+      "preferredArmorType": "medium",
       "startingBonuses": {
         "baseHP": 50,
         "baseMana": 50,
