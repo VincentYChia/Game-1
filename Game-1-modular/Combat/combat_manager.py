@@ -1161,6 +1161,12 @@ class CombatManager:
                     old_durability = equipped_weapon.durability_current
                     equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
 
+                    # DEBUG: Verify same object
+                    slot_name = self.character._selected_slot if hasattr(self.character, '_selected_slot') else 'mainHand'
+                    slot_weapon = self.character.equipment.slots.get(slot_name)
+                    print(f"   [DEBUG] Slot '{slot_name}' weapon id={id(slot_weapon)}, modified id={id(equipped_weapon)}, same={slot_weapon is equipped_weapon}")
+                    print(f"   [DEBUG] Slot weapon durability: {slot_weapon.durability_current if slot_weapon else 'None'}")
+
                     # Always show durability change
                     if durability_loss == 2:
                         print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
