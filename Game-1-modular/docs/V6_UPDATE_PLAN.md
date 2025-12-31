@@ -269,3 +269,46 @@
 | Other sections | ~100 lines | VERIFY |
 
 **Total estimated: ~820 lines of changes/additions**
+
+---
+
+## Hardcoded Items Tracking
+
+Items that are currently hardcoded but should eventually migrate to JSON for full data-driven architecture.
+
+### Intentionally Hardcoded (Keep as Code)
+These are "invariant mechanics" - the HOW, not the WHAT:
+- Element behavior boundaries (fire never slows, ice can slow AND damage)
+- Lookup hierarchy logic (override → tier/category → fallback)
+- Formula SHAPES (multiplication order, calculation structure)
+- Mini-game core mechanics and scoring logic
+- Position/distance calculations
+- Grid rendering system
+- Equipment slot architecture
+
+### Hardcoded Placeholders (Should Become JSON)
+These are values that should eventually move to JSON:
+
+| Item | Current Location | Target JSON | Priority |
+|------|------------------|-------------|----------|
+| Character EXP curve formula | `character.py` | `progression-config.json` | LOW |
+| Title progression thresholds | `title_system.py` | `titles-1.JSON` | LOW |
+| Skill EXP per activation (100) | `skill_manager.py` | `skills-translation-table.JSON` | LOW |
+| Stat bonus percentages (5% per point) | `character.py` | `stats-calculations.JSON` | MEDIUM |
+| Mana regen formula | `character.py` | `stats-calculations.JSON` | LOW |
+| Respec cooldown | `class_system.py` | `class-config.json` | LOW |
+| Interaction radius (3 units) | Multiple files | `game-config.json` | LOW |
+| Drop scatter radius (2-3 units) | `resource_system.py` | `game-config.json` | LOW |
+
+### Not Yet Implemented (Planned Features)
+- 🔮 LLM integration system
+- 🔮 Block/Parry combat mechanics
+- 🔮 Summon/minion mechanics
+- ⏳ World generation (detailed templates pending)
+- ⏳ NPC/Quest system (needs expansion)
+
+### Notes
+- The architecture IS fully tag/JSON-driven
+- ~85-90% of content is JSON-driven
+- Remaining hardcoded values are low priority (working fine as placeholders)
+- Migration can happen incrementally during future development
