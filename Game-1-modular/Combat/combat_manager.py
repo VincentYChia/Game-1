@@ -725,12 +725,14 @@ class CombatManager:
 
                 equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
 
-                # Warn about low/broken durability (use effective max with VIT bonus)
+                # Always show durability change (use effective max with VIT bonus)
                 effective_max = self.character.get_effective_max_durability(equipped_weapon)
                 if equipped_weapon.durability_current == 0:
-                    print(f"   💥 {equipped_weapon.name} has broken!")
+                    print(f"   💥 {equipped_weapon.name} has broken! (0/{effective_max})")
                 elif equipped_weapon.durability_current <= effective_max * 0.2:
                     print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current:.0f}/{effective_max}")
+                else:
+                    print(f"   🔧 {equipped_weapon.name}: {equipped_weapon.durability_current:.0f}/{effective_max} durability")
 
         # Initialize loot list
         loot = []
@@ -774,10 +776,15 @@ class CombatManager:
                 durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
                 equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
 
+                # Always show durability change
                 if durability_loss == 2:
                     print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
+                elif equipped_weapon.durability_current == 0:
+                    print(f"   💥 {equipped_weapon.name} has broken! (0/{equipped_weapon.durability_max})")
                 elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
                     print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
+                else:
+                    print(f"   🔧 {equipped_weapon.name}: {equipped_weapon.durability_current}/{equipped_weapon.durability_max} durability")
 
         return (final_damage, is_crit, loot)
 
@@ -1151,12 +1158,18 @@ class CombatManager:
                     # Determine if using tool as weapon (improper use)
                     tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
                     durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
+                    old_durability = equipped_weapon.durability_current
                     equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
 
+                    # Always show durability change
                     if durability_loss == 2:
                         print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
+                    elif equipped_weapon.durability_current == 0:
+                        print(f"   💥 {equipped_weapon.name} has broken! (0/{equipped_weapon.durability_max})")
                     elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
                         print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
+                    else:
+                        print(f"   🔧 {equipped_weapon.name}: {equipped_weapon.durability_current}/{equipped_weapon.durability_max} durability")
 
             # Tag-based attacks don't use traditional crit system (handled by tags)
             return (total_damage, False, loot)

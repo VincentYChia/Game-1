@@ -855,9 +855,15 @@ class Character:
 
             equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
 
-            # Warn about improper use (check against base loss, not modified)
+            # Always show durability change
             if base_durability_loss >= 2.0:
                 print(f"   ⚠️ Improper tool use! {equipped_tool.name} loses extra durability ({equipped_tool.durability_current:.0f}/{equipped_tool.durability_max})")
+            elif equipped_tool.durability_current == 0:
+                print(f"   💥 {equipped_tool.name} has broken! (0/{equipped_tool.durability_max})")
+            elif equipped_tool.durability_current <= equipped_tool.durability_max * 0.2:
+                print(f"   ⚠️ {equipped_tool.name} durability low: {equipped_tool.durability_current:.0f}/{equipped_tool.durability_max}")
+            else:
+                print(f"   🔧 {equipped_tool.name}: {equipped_tool.durability_current:.0f}/{equipped_tool.durability_max} durability")
 
         loot = None
         if depleted:
