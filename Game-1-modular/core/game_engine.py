@@ -2846,15 +2846,29 @@ class GameEngine:
         self.last_tick = curr
 
         if not self.character.class_selection_open:
+            # Calculate effective movement speed with encumbrance penalty
+            base_speed = self.character.movement_speed
+            encumbrance_mult = self.character.get_encumbrance_speed_penalty()
+            effective_speed = base_speed * encumbrance_mult
+
+            # Warn if over-encumbered
+            if encumbrance_mult <= 0:
+                # Can't move at all - 50% or more over capacity
+                if any(k in self.keys_pressed for k in [pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d]):
+                    if not hasattr(self, '_last_encumbered_warning') or curr - self._last_encumbered_warning > 2000:
+                        self.add_notification("Too encumbered to move!", (255, 100, 100))
+                        self._last_encumbered_warning = curr
+                effective_speed = 0
+
             dx = dy = 0
             if pygame.K_w in self.keys_pressed:
-                dy -= self.character.movement_speed
+                dy -= effective_speed
             if pygame.K_s in self.keys_pressed:
-                dy += self.character.movement_speed
+                dy += effective_speed
             if pygame.K_a in self.keys_pressed:
-                dx -= self.character.movement_speed
+                dx -= effective_speed
             if pygame.K_d in self.keys_pressed:
-                dx += self.character.movement_speed
+                dx += effective_speed
 
             if dx != 0 and dy != 0:
                 dx *= 0.7071

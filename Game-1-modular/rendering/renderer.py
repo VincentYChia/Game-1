@@ -2403,6 +2403,37 @@ class Renderer:
         pygame.draw.rect(self.screen, Config.COLOR_UI_BG, panel_rect)
         self.render_text("INVENTORY", 20, Config.INVENTORY_PANEL_Y + 10, bold=True)
 
+        # Render weight bar
+        weight_bar_x = 120
+        weight_bar_y = Config.INVENTORY_PANEL_Y + 12
+        weight_bar_width = 120
+        weight_bar_height = 12
+
+        current_weight = character.get_total_weight()
+        max_capacity = character.get_max_carry_capacity()
+        weight_ratio = current_weight / max_capacity if max_capacity > 0 else 1.0
+
+        # Color based on encumbrance (green until over, then red)
+        if weight_ratio <= 1.0:
+            bar_color = (80, 180, 80)  # Green
+        else:
+            # Red intensity based on how far over (cap at 50% over for visual)
+            over_amount = min(0.5, weight_ratio - 1.0)
+            red_intensity = int(150 + over_amount * 200)
+            bar_color = (min(255, red_intensity), 80, 80)
+
+        # Background
+        pygame.draw.rect(self.screen, (40, 40, 40), (weight_bar_x, weight_bar_y, weight_bar_width, weight_bar_height))
+        # Fill (cap visual at bar width)
+        fill_width = min(weight_bar_width, int(weight_bar_width * weight_ratio))
+        pygame.draw.rect(self.screen, bar_color, (weight_bar_x, weight_bar_y, fill_width, weight_bar_height))
+        # Border
+        pygame.draw.rect(self.screen, (100, 100, 100), (weight_bar_x, weight_bar_y, weight_bar_width, weight_bar_height), 1)
+        # Weight text
+        weight_text = f"{current_weight:.1f}/{max_capacity:.1f}"
+        weight_surf = self.tiny_font.render(weight_text, True, (255, 255, 255))
+        self.screen.blit(weight_surf, (weight_bar_x + weight_bar_width + 5, weight_bar_y))
+
         # Render equipped tools section
         tools_y = Config.INVENTORY_PANEL_Y + 35
         self.render_text("Equipped Tools:", 20, tools_y, small=True)

@@ -1400,6 +1400,118 @@ class Character:
             return 0.0
         return item.durability_current / effective_max
 
+    # ==================== WEIGHT SYSTEM ====================
+
+    def get_total_weight(self) -> float:
+        """Calculate total weight of all equipped items, tools, and inventory.
+
+        Returns:
+            float: Total weight in weight units
+        """
+        total = 0.0
+
+        # Equipment weight (armor, weapons, accessories)
+        if hasattr(self, 'equipment') and self.equipment:
+            for slot_name, item in self.equipment.slots.items():
+                if item and hasattr(item, 'weight'):
+                    total += item.weight
+
+        # Tool weight (axe, pickaxe)
+        if hasattr(self, 'axe') and self.axe and hasattr(self.axe, 'weight'):
+            total += self.axe.weight
+        if hasattr(self, 'pickaxe') and self.pickaxe and hasattr(self.pickaxe, 'weight'):
+            total += self.pickaxe.weight
+
+        # Inventory weight (materials and equipment in inventory)
+        if hasattr(self, 'inventory') and self.inventory:
+            from data.databases.material_db import get_material_db
+            mat_db = get_material_db()
+
+            for slot in self.inventory.slots:
+                if slot and slot.item_id:
+                    # Check if it's equipment (has equipment_data)
+                    if slot.equipment_data and hasattr(slot.equipment_data, 'weight'):
+                        total += slot.equipment_data.weight
+                    else:
+                        # It's a material - look up weight
+                        mat = mat_db.get(slot.item_id)
+                        if mat and hasattr(mat, 'weight'):
+                            total += mat.weight * slot.quantity
+                        else:
+                            # Default material weight: 0.1 per item
+                            total += 0.1 * slot.quantity
+
+        return total
+
+    def get_max_carry_capacity(self) -> float:
+        """Calculate max carry capacity based on STR stat.
+
+        Base capacity: 100 weight units
+        STR bonus: +2% per point
+
+        Returns:
+            float: Maximum carry capacity
+        """
+        base_capacity = 100.0
+        str_mult = self.stats.get_carry_capacity_multiplier()
+
+        # Title/class bonuses could add here
+        bonus = 0.0
+        if hasattr(self, 'class_system'):
+            bonus += self.class_system.get_bonus('carry_capacity')
+
+        return base_capacity * str_mult + bonus
+
+    def get_encumbrance_percent(self) -> float:
+        """Get how far over capacity we are.
+
+        Returns:
+            float: 0.0 if at or under capacity, otherwise % over (0.1 = 10% over)
+        """
+        weight = self.get_total_weight()
+        capacity = self.get_max_carry_capacity()
+        if capacity <= 0:
+            return 1.0
+        ratio = weight / capacity
+        return max(0.0, ratio - 1.0)
+
+    def get_encumbrance_speed_penalty(self) -> float:
+        """Get movement speed penalty from encumbrance.
+
+        For every 1% over capacity, -2% movement speed.
+        Example: 10% over = -20% speed (returns 0.8)
+        Example: 50% over = -100% speed (returns 0.0)
+
+        Returns:
+            float: Speed multiplier (0.0 - 1.0)
+        """
+        over_percent = self.get_encumbrance_percent()
+        if over_percent <= 0:
+            return 1.0  # No penalty
+
+        # -2% speed per 1% over capacity
+        penalty = over_percent * 2.0
+        return max(0.0, 1.0 - penalty)
+
+    def is_over_encumbered(self) -> bool:
+        """Check if character is over carry capacity.
+
+        Returns:
+            bool: True if over capacity
+        """
+        return self.get_encumbrance_percent() > 0
+
+    def get_weight_ratio(self) -> float:
+        """Get current weight as ratio of capacity.
+
+        Returns:
+            float: weight / capacity (1.0 = at capacity)
+        """
+        capacity = self.get_max_carry_capacity()
+        if capacity <= 0:
+            return 1.0
+        return self.get_total_weight() / capacity
+
     def get_weapon_damage(self) -> float:
         """
         Get average weapon damage from currently selected weapon/tool INCLUDING ENCHANTMENTS.
