@@ -839,7 +839,11 @@ class Character:
         # Reduce tool durability
         if not Config.DEBUG_INFINITE_RESOURCES:
             # -1 durability for proper use (correct tool type), -2 for improper use (wrong tool type)
-            durability_loss = 1.0 if tool_type_effectiveness >= 1.0 else 2.0
+            base_durability_loss = 1.0 if tool_type_effectiveness >= 1.0 else 2.0
+            durability_loss = base_durability_loss
+
+            # DEF stat reduces durability loss
+            durability_loss *= self.stats.get_durability_loss_multiplier()
 
             # Unbreaking enchantment reduces durability loss
             if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
@@ -851,8 +855,8 @@ class Character:
 
             equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
 
-            # Warn about improper use
-            if durability_loss >= 2.0:
+            # Warn about improper use (check against base loss, not modified)
+            if base_durability_loss >= 2.0:
                 print(f"   ⚠️ Improper tool use! {equipped_tool.name} loses extra durability ({equipped_tool.durability_current:.0f}/{equipped_tool.durability_max})")
 
         loot = None
@@ -1326,17 +1330,30 @@ class Character:
         if damage > 0:  # Only lose durability if damage was actually taken
             from core.config import Config
             if not Config.DEBUG_INFINITE_RESOURCES:
+                # DEF stat reduces durability loss
+                durability_loss = 1.0 * self.stats.get_durability_loss_multiplier()
+
                 armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
                 for slot in armor_slots:
                     armor_piece = self.equipment.slots.get(slot)
                     if armor_piece and hasattr(armor_piece, 'durability_current'):
-                        armor_piece.durability_current = max(0, armor_piece.durability_current - 1)
+                        # Apply Unbreaking enchantment
+                        piece_loss = durability_loss
+                        if hasattr(armor_piece, 'enchantments') and armor_piece.enchantments:
+                            for ench in armor_piece.enchantments:
+                                effect = ench.get('effect', {})
+                                if effect.get('type') == 'durability_multiplier':
+                                    reduction = effect.get('value', 0.0)
+                                    piece_loss *= (1.0 - reduction)
 
-                        # Warn if armor is breaking
+                        armor_piece.durability_current = max(0, armor_piece.durability_current - piece_loss)
+
+                        # Warn if armor is breaking (use effective max with VIT bonus)
+                        effective_max = self.get_effective_max_durability(armor_piece)
                         if armor_piece.durability_current == 0:
                             print(f"   💥 {armor_piece.name} has broken!")
-                        elif armor_piece.durability_current <= armor_piece.durability_max * 0.2:
-                            print(f"   ⚠️ {armor_piece.name} durability low: {armor_piece.durability_current}/{armor_piece.durability_max}")
+                        elif armor_piece.durability_current <= effective_max * 0.2:
+                            print(f"   ⚠️ {armor_piece.name} durability low: {armor_piece.durability_current:.0f}/{effective_max}")
 
         if self.health <= 0:
             self.health = 0
@@ -1348,6 +1365,40 @@ class Character:
         self.health = self.max_health
         self.position = Position(50, 50, 0)  # Respawn at spawn
         # Keep all items and equipment (no death penalty)
+
+    def get_effective_max_durability(self, item) -> int:
+        """Get effective max durability for an item, including VIT bonus.
+
+        VIT increases max durability by 1% per point.
+        Example: Item with 100 max durability, 10 VIT = 110 effective max
+
+        Args:
+            item: Equipment or Tool with durability_max attribute
+
+        Returns:
+            int: Effective max durability
+        """
+        if not hasattr(item, 'durability_max'):
+            return 100
+        base_max = item.durability_max
+        vit_mult = self.stats.get_durability_bonus_multiplier()
+        return int(base_max * vit_mult)
+
+    def get_durability_percent(self, item) -> float:
+        """Get durability percentage for an item, accounting for VIT bonus.
+
+        Args:
+            item: Equipment or Tool with durability attributes
+
+        Returns:
+            float: Durability percentage (0.0 - 1.0+)
+        """
+        if not hasattr(item, 'durability_current') or not hasattr(item, 'durability_max'):
+            return 1.0
+        effective_max = self.get_effective_max_durability(item)
+        if effective_max <= 0:
+            return 0.0
+        return item.durability_current / effective_max
 
     def get_weapon_damage(self) -> float:
         """

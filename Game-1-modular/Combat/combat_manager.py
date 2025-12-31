@@ -706,6 +706,32 @@ class CombatManager:
         if hasattr(self.character, 'buffs'):
             self.character.buffs.consume_buffs_for_action("attack")
 
+        # WEAPON DURABILITY LOSS
+        if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
+            from core.config import Config
+            if not Config.DEBUG_INFINITE_RESOURCES:
+                durability_loss = 1.0
+
+                # DEF stat reduces durability loss
+                durability_loss *= self.character.stats.get_durability_loss_multiplier()
+
+                # Unbreaking enchantment reduces durability loss
+                if hasattr(equipped_weapon, 'enchantments') and equipped_weapon.enchantments:
+                    for ench in equipped_weapon.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'durability_multiplier':
+                            reduction = effect.get('value', 0.0)
+                            durability_loss *= (1.0 - reduction)
+
+                equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+
+                # Warn about low/broken durability (use effective max with VIT bonus)
+                effective_max = self.character.get_effective_max_durability(equipped_weapon)
+                if equipped_weapon.durability_current == 0:
+                    print(f"   💥 {equipped_weapon.name} has broken!")
+                elif equipped_weapon.durability_current <= effective_max * 0.2:
+                    print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current:.0f}/{effective_max}")
+
         # Initialize loot list
         loot = []
 
