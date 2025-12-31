@@ -53,6 +53,58 @@ class EquipmentItem:
         dur_pct = self.durability_current / self.durability_max
         return 1.0 if dur_pct >= 0.5 else 1.0 - (0.5 - dur_pct) * 0.5
 
+    def repair(self, amount: int = None, percent: float = None) -> int:
+        """Repair this equipment's durability.
+
+        Args:
+            amount: Flat durability to restore
+            percent: Percentage of max durability to restore (0.0-1.0)
+
+        Returns:
+            int: Amount of durability actually restored
+        """
+        old_durability = self.durability_current
+
+        if amount is not None:
+            self.durability_current = min(self.durability_max,
+                self.durability_current + amount)
+        elif percent is not None:
+            repair_amount = int(self.durability_max * percent)
+            self.durability_current = min(self.durability_max,
+                self.durability_current + repair_amount)
+        else:
+            # Full repair
+            self.durability_current = self.durability_max
+
+        return self.durability_current - old_durability
+
+    def needs_repair(self) -> bool:
+        """Check if this equipment needs repair.
+
+        Returns:
+            bool: True if durability is below max
+        """
+        return self.durability_current < self.durability_max
+
+    def get_repair_urgency(self) -> str:
+        """Get repair urgency level.
+
+        Returns:
+            str: 'none', 'low', 'medium', 'high', or 'critical'
+        """
+        if self.durability_current >= self.durability_max:
+            return 'none'
+
+        percent = self.durability_current / self.durability_max
+        if percent >= 0.5:
+            return 'low'
+        elif percent >= 0.2:
+            return 'medium'
+        elif percent > 0:
+            return 'high'
+        else:
+            return 'critical'
+
     def get_actual_damage(self) -> Tuple[int, int]:
         """Get actual damage including durability and enchantment effects"""
         eff = self.get_effectiveness()

@@ -54,9 +54,36 @@ class BuffManager:
                         character.health = min(character.max_health, character.health + amount)
                     elif "mana" in buff.category:
                         character.mana = min(character.max_mana, character.mana + amount)
+                    elif "durability" in buff.category:
+                        # Regenerate durability on all equipped items
+                        self._regenerate_durability(character, amount)
 
         # Update buff durations and remove expired ones
         self.active_buffs = [buff for buff in self.active_buffs if buff.update(dt)]
+
+    def _regenerate_durability(self, character, amount: float):
+        """Apply durability regeneration to all equipped items.
+
+        Args:
+            character: The character whose equipment to repair
+            amount: Amount of durability to restore
+        """
+        # Repair equipped items (armor, weapons, accessories)
+        if hasattr(character, 'equipment') and character.equipment:
+            for slot_name, item in character.equipment.slots.items():
+                if item and hasattr(item, 'durability_current') and hasattr(item, 'durability_max'):
+                    if item.durability_current < item.durability_max:
+                        item.durability_current = min(item.durability_max,
+                            item.durability_current + amount)
+
+        # Repair tools
+        for tool_attr in ['axe', 'pickaxe']:
+            if hasattr(character, tool_attr):
+                tool = getattr(character, tool_attr)
+                if tool and hasattr(tool, 'durability_current') and hasattr(tool, 'durability_max'):
+                    if tool.durability_current < tool.durability_max:
+                        tool.durability_current = min(tool.durability_max,
+                            tool.durability_current + amount)
 
     def get_total_bonus(self, effect_type: str, category: str) -> float:
         """Get total bonus from all matching buffs"""

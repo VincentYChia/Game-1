@@ -1037,9 +1037,58 @@ class Character:
         self.buffs.update(dt, character=self)
         self.skills.update_cooldowns(dt)
 
+        # Process Self-Repair enchantments on equipment
+        self._update_self_repair_enchantments(dt)
+
         # Update status effects
         if hasattr(self, 'status_manager'):
             self.status_manager.update(dt)
+
+    def _update_self_repair_enchantments(self, dt: float):
+        """Process Self-Repair enchantments on equipped items.
+
+        Items with Self-Repair enchantment passively regenerate durability over time.
+        """
+        from core.config import Config
+        if Config.DEBUG_INFINITE_RESOURCES:
+            return
+
+        # Check equipped items for self-repair enchantment
+        if hasattr(self, 'equipment') and self.equipment:
+            for slot_name, item in self.equipment.slots.items():
+                if not item or not hasattr(item, 'enchantments'):
+                    continue
+
+                for ench in item.enchantments:
+                    effect = ench.get('effect', {})
+                    if effect.get('type') == 'durability_regeneration':
+                        # Self-repair: regenerate durability over time
+                        regen_rate = effect.get('value', 1.0)  # Durability per second
+                        regen_amount = regen_rate * dt
+
+                        if hasattr(item, 'durability_current') and hasattr(item, 'durability_max'):
+                            if item.durability_current < item.durability_max:
+                                item.durability_current = min(item.durability_max,
+                                    item.durability_current + regen_amount)
+
+        # Check tools for self-repair enchantment
+        for tool_attr in ['axe', 'pickaxe']:
+            if hasattr(self, tool_attr):
+                tool = getattr(self, tool_attr)
+                if not tool or not hasattr(tool, 'enchantments'):
+                    continue
+
+                enchantments = getattr(tool, 'enchantments', [])
+                for ench in enchantments:
+                    effect = ench.get('effect', {})
+                    if effect.get('type') == 'durability_regeneration':
+                        regen_rate = effect.get('value', 1.0)
+                        regen_amount = regen_rate * dt
+
+                        if hasattr(tool, 'durability_current') and hasattr(tool, 'durability_max'):
+                            if tool.durability_current < tool.durability_max:
+                                tool.durability_current = min(tool.durability_max,
+                                    tool.durability_current + regen_amount)
 
     def toggle_stats_ui(self):
         self.stats_ui_open = not self.stats_ui_open
