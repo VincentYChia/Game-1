@@ -1473,8 +1473,8 @@ class Character:
 
         # Inventory weight (materials and equipment in inventory)
         if hasattr(self, 'inventory') and self.inventory:
-            from data.databases.material_db import get_material_db
-            mat_db = get_material_db()
+            from data.databases.material_db import MaterialDatabase
+            mat_db = MaterialDatabase.get_instance()
 
             for slot in self.inventory.slots:
                 if slot and slot.item_id:
