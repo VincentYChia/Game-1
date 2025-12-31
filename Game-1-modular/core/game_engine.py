@@ -698,6 +698,16 @@ class GameEngine:
                         ):
                             self.add_notification(f"Saved!", (100, 255, 100))
 
+                elif event.key == pygame.K_F7:
+                    # Toggle infinite durability (separate from F1 resources)
+                    Config.DEBUG_INFINITE_DURABILITY = not Config.DEBUG_INFINITE_DURABILITY
+                    if Config.DEBUG_INFINITE_DURABILITY:
+                        print("🔧 DEBUG F7: Infinite Durability ENABLED")
+                        self.add_notification("Infinite Durability: ON", (100, 255, 100))
+                    else:
+                        print("🔧 DEBUG F7: Infinite Durability DISABLED")
+                        self.add_notification("Infinite Durability: OFF", (255, 100, 100))
+
                 elif event.key == pygame.K_F9:
                     # Load game (Shift+F9 for default save, F9 for autosave)
                     shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed

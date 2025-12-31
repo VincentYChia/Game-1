@@ -837,7 +837,7 @@ class Character:
         actual_damage, depleted = resource.take_damage(damage, is_crit)
 
         # Reduce tool durability
-        if not Config.DEBUG_INFINITE_RESOURCES:
+        if not Config.DEBUG_INFINITE_DURABILITY:
             # -1 durability for proper use (correct tool type), -2 for improper use (wrong tool type)
             base_durability_loss = 1.0 if tool_type_effectiveness >= 1.0 else 2.0
             durability_loss = base_durability_loss
@@ -855,15 +855,13 @@ class Character:
 
             equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
 
-            # Always show durability change
+            # Only warn about improper use, low, or broken
             if base_durability_loss >= 2.0:
                 print(f"   ⚠️ Improper tool use! {equipped_tool.name} loses extra durability ({equipped_tool.durability_current:.0f}/{equipped_tool.durability_max})")
             elif equipped_tool.durability_current == 0:
                 print(f"   💥 {equipped_tool.name} has broken! (0/{equipped_tool.durability_max})")
             elif equipped_tool.durability_current <= equipped_tool.durability_max * 0.2:
                 print(f"   ⚠️ {equipped_tool.name} durability low: {equipped_tool.durability_current:.0f}/{equipped_tool.durability_max}")
-            else:
-                print(f"   🔧 {equipped_tool.name}: {equipped_tool.durability_current:.0f}/{equipped_tool.durability_max} durability")
 
         loot = None
         if depleted:
@@ -1384,7 +1382,7 @@ class Character:
         # Apply armor durability loss when taking damage
         if damage > 0:  # Only lose durability if damage was actually taken
             from core.config import Config
-            if not Config.DEBUG_INFINITE_RESOURCES:
+            if not Config.DEBUG_INFINITE_DURABILITY:
                 # DEF stat reduces durability loss
                 durability_loss = 1.0 * self.stats.get_durability_loss_multiplier()
 

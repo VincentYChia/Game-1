@@ -709,7 +709,7 @@ class CombatManager:
         # WEAPON DURABILITY LOSS
         if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
             from core.config import Config
-            if not Config.DEBUG_INFINITE_RESOURCES:
+            if not Config.DEBUG_INFINITE_DURABILITY:
                 durability_loss = 1.0
 
                 # DEF stat reduces durability loss
@@ -725,14 +725,12 @@ class CombatManager:
 
                 equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
 
-                # Always show durability change (use effective max with VIT bonus)
+                # Only warn about low/broken durability (use effective max with VIT bonus)
                 effective_max = self.character.get_effective_max_durability(equipped_weapon)
                 if equipped_weapon.durability_current == 0:
                     print(f"   💥 {equipped_weapon.name} has broken! (0/{effective_max})")
                 elif equipped_weapon.durability_current <= effective_max * 0.2:
                     print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current:.0f}/{effective_max}")
-                else:
-                    print(f"   🔧 {equipped_weapon.name}: {equipped_weapon.durability_current:.0f}/{effective_max} durability")
 
         # Initialize loot list
         loot = []
@@ -771,20 +769,18 @@ class CombatManager:
         # Apply weapon durability loss (after successful attack)
         if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
             from core.config import Config
-            if not Config.DEBUG_INFINITE_RESOURCES:
+            if not Config.DEBUG_INFINITE_DURABILITY:
                 # -1 durability for proper use (weapon), -2 for improper use (tool)
                 durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
                 equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
 
-                # Always show durability change
+                # Only warn about improper use, low, or broken
                 if durability_loss == 2:
                     print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
                 elif equipped_weapon.durability_current == 0:
                     print(f"   💥 {equipped_weapon.name} has broken! (0/{equipped_weapon.durability_max})")
                 elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
                     print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
-                else:
-                    print(f"   🔧 {equipped_weapon.name}: {equipped_weapon.durability_current}/{equipped_weapon.durability_max} durability")
 
         return (final_damage, is_crit, loot)
 
@@ -1154,31 +1150,19 @@ class CombatManager:
 
             if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
                 from core.config import Config
-                print(f"   [DEBUG] DURABILITY CHECK: DEBUG_INFINITE_RESOURCES={Config.DEBUG_INFINITE_RESOURCES}")
-                if not Config.DEBUG_INFINITE_RESOURCES:
+                if not Config.DEBUG_INFINITE_DURABILITY:
                     # Determine if using tool as weapon (improper use)
                     tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
                     durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
-                    old_durability = equipped_weapon.durability_current
-                    print(f"   [DEBUG] BEFORE: {equipped_weapon.name} durability={old_durability}, loss={durability_loss}")
                     equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
-                    print(f"   [DEBUG] AFTER: {equipped_weapon.name} durability={equipped_weapon.durability_current}")
 
-                    # DEBUG: Verify same object
-                    slot_name = self.character._selected_slot if hasattr(self.character, '_selected_slot') else 'mainHand'
-                    slot_weapon = self.character.equipment.slots.get(slot_name)
-                    print(f"   [DEBUG] Slot '{slot_name}' weapon id={id(slot_weapon)}, modified id={id(equipped_weapon)}, same={slot_weapon is equipped_weapon}")
-                    print(f"   [DEBUG] Slot weapon durability after: {slot_weapon.durability_current if slot_weapon else 'None'}")
-
-                    # Always show durability change
+                    # Only warn about improper use, low, or broken
                     if durability_loss == 2:
                         print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
                     elif equipped_weapon.durability_current == 0:
                         print(f"   💥 {equipped_weapon.name} has broken! (0/{equipped_weapon.durability_max})")
                     elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
                         print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
-                    else:
-                        print(f"   🔧 {equipped_weapon.name}: {equipped_weapon.durability_current}/{equipped_weapon.durability_max} durability")
 
             # Tag-based attacks don't use traditional crit system (handled by tags)
             return (total_damage, False, loot)
