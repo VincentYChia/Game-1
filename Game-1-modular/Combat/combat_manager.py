@@ -1154,18 +1154,21 @@ class CombatManager:
 
             if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
                 from core.config import Config
+                print(f"   [DEBUG] DURABILITY CHECK: DEBUG_INFINITE_RESOURCES={Config.DEBUG_INFINITE_RESOURCES}")
                 if not Config.DEBUG_INFINITE_RESOURCES:
                     # Determine if using tool as weapon (improper use)
                     tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
                     durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
                     old_durability = equipped_weapon.durability_current
+                    print(f"   [DEBUG] BEFORE: {equipped_weapon.name} durability={old_durability}, loss={durability_loss}")
                     equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+                    print(f"   [DEBUG] AFTER: {equipped_weapon.name} durability={equipped_weapon.durability_current}")
 
                     # DEBUG: Verify same object
                     slot_name = self.character._selected_slot if hasattr(self.character, '_selected_slot') else 'mainHand'
                     slot_weapon = self.character.equipment.slots.get(slot_name)
                     print(f"   [DEBUG] Slot '{slot_name}' weapon id={id(slot_weapon)}, modified id={id(equipped_weapon)}, same={slot_weapon is equipped_weapon}")
-                    print(f"   [DEBUG] Slot weapon durability: {slot_weapon.durability_current if slot_weapon else 'None'}")
+                    print(f"   [DEBUG] Slot weapon durability after: {slot_weapon.durability_current if slot_weapon else 'None'}")
 
                     # Always show durability change
                     if durability_loss == 2:

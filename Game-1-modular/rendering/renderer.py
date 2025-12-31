@@ -3404,6 +3404,8 @@ class Renderer:
         dur_pct = (item.durability_current / item.durability_max) * 100
         dur_color = (100, 255, 100) if dur_pct > 50 else (255, 200, 100) if dur_pct > 25 else (255, 100, 100)
         dur_text = f"Durability: {item.durability_current}/{item.durability_max} ({dur_pct:.0f}%)"
+        # DEBUG: Print to console to compare
+        print(f"[TOOLTIP DEBUG] {item.name} durability: {item.durability_current}/{item.durability_max} (id={id(item)})")
         if Config.DEBUG_INFINITE_RESOURCES:
             dur_text += " (∞)"
         surf.blit(self.small_font.render(dur_text, True, dur_color), (pad, y_pos))
