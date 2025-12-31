@@ -49,7 +49,7 @@ Throughout this document, the following markers indicate implementation status:
 - ✅ `placements-alchemy-1.JSON` - Sequential order layouts for alchemy
 
 **Material Files:**
-- ✅ `items-materials-1.JSON` - All 60 materials with properties and tiers
+- ✅ `items-materials-1.JSON` - 57 materials with properties and tiers (3 T4 monster drops pending)
 
 **Skill Files:**
 - ✅ `skills-skills-1.JSON` - 100+ skill definitions
@@ -119,11 +119,39 @@ Throughout this document, the following markers indicate implementation status:
 ### Core Design
 
 **Code Reference:** `entities/character.py:recalculate_stats()`
+**Formula Source:** `Definitions.JSON/stats-calculations.JSON` (369 lines)
 
 - **30 Total Stat Points** (earned through leveling, 1 point per level)
 - **Multiplicative Scaling** (stats × titles × equipment)
 - **No Hard Caps** (balance through careful tuning)
 - **Activity-Specific Bonuses** (each stat has clear purposes)
+
+### Hierarchical Stat Formula System ✅ IMPLEMENTED
+
+From `stats-calculations.JSON`:
+
+**Master Formula:**
+```
+FinalStat = globalBase × tierMultiplier × categoryMultiplier × typeMultiplier × subtypeMultiplier × itemMultiplier
+```
+
+**Global Bases:**
+| Stat | Base Value |
+|------|------------|
+| Weapon Damage | 10 |
+| Armor Defense | 10 |
+| Tool Gathering | 10 |
+| Durability | 500 |
+| Weight | 1.0 |
+| Attack Speed | 1.0 |
+
+**Tier Multipliers:**
+| Tier | Multiplier |
+|------|------------|
+| T1 | 1.0x |
+| T2 | 2.0x |
+| T3 | 4.0x |
+| T4 | 8.0x |
 
 ### The 6 Core Stats (All Start at 0)
 
@@ -277,7 +305,13 @@ Side Quests: 50% of main quest value
 
 ---
 
-## Skill System
+## Skill System ✅ IMPLEMENTED
+
+**Implementation Status:** ✅ Core system working
+**Source Files:**
+- `Definitions.JSON/skills-translation-table.JSON` (235 lines) - Translation tables
+- `skills.JSON/skills-skills-1.JSON` - 100+ skill definitions
+- `entities/components/skill_manager.py` (709 lines) - Skill logic
 
 ### Core Design
 
@@ -287,33 +321,116 @@ Side Quests: 50% of main quest value
 - **Consume Mana** (INT-based resource pool)
 - **Progress slowly** (late-game EXP sink, slower than character levels)
 
-### Skill Progression
+### Skill Progression ✅ IMPLEMENTED
 
+From `skills-translation-table.JSON`:
+
+| Level | EXP Required | Cumulative EXP |
+|-------|--------------|----------------|
+| 1 | 1,000 | 1,000 |
+| 2 | 2,000 | 3,000 |
+| 3 | 4,000 | 7,000 |
+| 4 | 8,000 | 15,000 |
+| 5 | 16,000 | 31,000 |
+| 6 | 32,000 | 63,000 |
+| 7 | 64,000 | 127,000 |
+| 8 | 128,000 | 255,000 |
+| 9 | 256,000 | 511,000 |
+| 10 | 512,000 | 1,022,000 |
+
+**Level Scaling Formula:** `effectValue × (1 + (currentLevel - 1) × 0.1)`
+- Level 1: 1.0x base effectiveness
+- Level 5: 1.4x base effectiveness
+- Level 10: 1.9x base effectiveness (max bonus: +90%)
+
+### Skill EXP Sources ✅ IMPLEMENTED
+
+| Source | EXP Gained |
+|--------|------------|
+| Using the skill | 100 |
+| T1 activity while active | 20 |
+| T2 activity while active | 80 |
+| T3 activity while active | 320 |
+| T4 activity while active | 1,280 |
+
+### Duration Translations ✅ IMPLEMENTED
+
+Text-based duration values translate to actual seconds:
+
+| Descriptor | Seconds | Description |
+|------------|---------|-------------|
+| `instant` | 0 | No duration - effect applies once immediately |
+| `brief` | 15 | Short burst - quick tactical advantage |
+| `moderate` | 30 | Standard duration - sustained effect |
+| `long` | 60 | Extended duration - strategic advantage |
+| `extended` | 120 | Very long duration - prolonged power |
+
+### Mana Cost Translations ✅ IMPLEMENTED
+
+| Descriptor | Cost | Description |
+|------------|------|-------------|
+| `low` | 30 | Minimal mana - frequent use |
+| `moderate` | 60 | Standard mana - tactical use |
+| `high` | 100 | Significant mana - powerful effects |
+| `extreme` | 150 | Massive mana - ultimate abilities |
+
+### Cooldown Translations ✅ IMPLEMENTED
+
+| Descriptor | Seconds | Description |
+|------------|---------|-------------|
+| `short` | 120 | 2 minutes - frequent use |
+| `moderate` | 300 | 5 minutes - tactical use |
+| `long` | 600 | 10 minutes - strategic use |
+| `extreme` | 1200 | 20 minutes - ultimate abilities |
+
+### Skill Categories ✅ IMPLEMENTED
+
+Skills apply to specific activity types with compatible effects:
+
+| Category | Applies To | Compatible Effects |
+|----------|------------|-------------------|
+| `mining` | resource_nodes, mining_damage, ore_yield | empower, quicken, enrich, pierce, devastate |
+| `forestry` | tree_nodes, forestry_damage, wood_yield | empower, quicken, enrich, pierce, devastate |
+| `fishing` | fishing_nodes, catch_rate, fish_quality | empower, quicken, enrich, pierce |
+| `combat` | weapon_damage, attack_speed, critical_chance | empower, quicken, fortify, pierce, restore, regenerate, devastate |
+| `smithing` | item_stats, mini_game_time, rarity_chance, first_try_bonus | empower, quicken, pierce, elevate |
+| `refining` | material_quality, mini_game_time, rarity_chance | empower, quicken, pierce, elevate |
+| `alchemy` | potion_quality, mini_game_time, effect_strength | empower, quicken, pierce, elevate |
+| `engineering` | device_stats, mini_game_time, success_rate | empower, quicken, pierce, elevate |
+| `enchanting` | enchantment_power, pattern_accuracy, success_rate | empower, quicken, pierce, elevate |
+| `movement` | move_speed, dash_distance | quicken |
+| `defense` | damage_reduction, armor_effectiveness | fortify, restore, regenerate |
+| `damage` | physical_damage, elemental_damage, critical_damage | empower, pierce, devastate |
+| `durability` | durability_consumption, repair_rate | fortify, restore, regenerate |
+
+### Effect Types & Formulas ✅ IMPLEMENTED
+
+All 10 effect types use this formula:
 ```
-Max Skill Level: 10 (Very Slow)
-
-Level 1:   1,000 Skill EXP
-Level 2:   2,000 Skill EXP
-Level 3:   4,000 Skill EXP
-Level 4:   8,000 Skill EXP
-...
-Level 10: 512,000 Skill EXP
-
-Total to Max: ~1,000,000 Skill EXP per skill
-(Much slower than character leveling - late game content)
+FinalValue = baseValue × rarityMultiplier × magnitudeMultiplier × levelScaling
 ```
 
-### Skill EXP Sources
+| Effect | Description | Example Calculation |
+|--------|-------------|---------------------|
+| **empower** | Increases damage/power | major (rare, lvl 5) = 100% × 1.35 × 2.0 × 1.4 = 378% damage |
+| **quicken** | Increases speed | moderate (epic, lvl 10) = 50% × 1.6 × 0.5 × 1.9 = 76% speed |
+| **fortify** | Flat damage reduction | major (legendary, lvl 7) = 20 × 2.0 × 40 × 1.6 = 2560 reduction |
+| **enrich** | Extra item drops | moderate (uncommon, lvl 3) = 3 × 1.15 × 3 × 1.2 = 12 items |
+| **pierce** | Critical hit chance | major (mythic, lvl 10) = 15% × 2.5 × 0.25 × 1.9 = 17.8% crit |
+| **restore** | Instant HP/mana/durability | major (epic, lvl 6) = 100 × 1.6 × 200 × 1.5 = 48000 restored |
+| **regenerate** | HP/mana per second | moderate (rare, lvl 8) = 5 × 1.35 × 5 × 1.7 = 57.4/sec |
+| **elevate** | Rarity upgrade chance | major (legendary, lvl 10) = 25% × 2.0 × 0.4 × 1.9 = 38% chance |
+| **devastate** | AoE tile radius | moderate (uncommon, lvl 4) = 5 × 1.15 × 5 × 1.3 = 37 tiles |
+| **transcend** | Tier bypass | moderate (mythic, lvl 10) = 1 × 2.5 × 2 × 1.9 = 9 tiers |
 
-```
-Using the skill: 100 EXP per activation
+### Target Types ✅ IMPLEMENTED
 
-Activity while skill active (bonus EXP):
-- T1 activity:    20 Skill EXP
-- T2 activity:    80 Skill EXP
-- T3 activity:   320 Skill EXP
-- T4 activity: 1,280 Skill EXP
-```
+| Target | Description | Radius |
+|--------|-------------|--------|
+| `self` | Affects only the player character | 0 |
+| `enemy` | Affects a single targeted enemy | 0 |
+| `resource_node` | Affects the resource being gathered | 0 |
+| `area` | Affects all targets in radius | 5 (modified by magnitude) |
 
 ### Mana System
 
@@ -1528,18 +1645,121 @@ ELEMENT_TEMPLATES = {
 
 ---
 
-## Text-Based Value System
+## Text-Based Value System ✅ IMPLEMENTED
+
+**Implementation Status:** ✅ Fully implemented
+**Source File:** `Definitions.JSON/value-translation-table-1.JSON` (237 lines)
 
 ### The Philosophy
 
-**CRITICAL: All JSON quantity/rate fields use TEXT, not numbers. Hierarchical lookup tables translate to actual values.**
+**CRITICAL: All JSON quantity/rate fields use TEXT, not numbers. Lookup tables translate to actual values.**
 
 This allows:
 - Natural language for LLM ("many logs" not "[8,12]")
 - Precise tuning for important materials (ironwood, voidsteel)
 - Consistent defaults for standard materials (oak, iron)
-- Easy global balance adjustments (change tier tables affects all non-override materials)
+- Easy global balance adjustments (change one table, affects all materials)
 - Rarity scales naturally (T1 common = high yields, T4 legendary = low yields)
+
+### Implemented Translation Tables
+
+The following tables are fully implemented in `value-translation-table-1.JSON`:
+
+#### Yield Translations
+Converts text descriptors to min/max item counts:
+
+| Descriptor | Min | Max | Description |
+|------------|-----|-----|-------------|
+| `few` | 1 | 2 | Minimal yield, barely worth gathering |
+| `several` | 3 | 5 | Standard low yield |
+| `many` | 6 | 9 | Good yield, efficient gathering |
+| `abundant` | 10 | 15 | High yield, very efficient |
+| `plentiful` | 16 | 25 | Exceptional yield, rare occurrence |
+
+#### Respawn Translations
+Converts text descriptors to seconds until resource respawns:
+
+| Descriptor | Seconds | Description |
+|------------|---------|-------------|
+| `null` | - | Does not respawn (finite resource) |
+| `quick` | 120 | 2 minutes - fast renewable |
+| `normal` | 300 | 5 minutes - standard renewable |
+| `slow` | 600 | 10 minutes - slow renewable |
+| `very_slow` | 1200 | 20 minutes - very slow renewable |
+
+#### Chance Translations
+Converts text descriptors to drop probabilities:
+
+| Descriptor | Probability | Percentage | Description |
+|------------|-------------|------------|-------------|
+| `guaranteed` | 1.0 | 100% | Always drops |
+| `high` | 0.75 | 75% | Very likely to drop |
+| `moderate` | 0.5 | 50% | 50/50 chance |
+| `low` | 0.25 | 25% | Unlikely but possible |
+| `rare` | 0.1 | 10% | Rare drop |
+| `improbable` | 0.03 | 3% | Very rare drop |
+
+#### Density Translations
+Converts text descriptors to spawn counts per chunk:
+
+| Descriptor | Count Range | Description |
+|------------|-------------|-------------|
+| `none` | [0, 0] | Does not spawn in this chunk type |
+| `very_low` | [1, 2] | Scarce presence |
+| `low` | [3, 5] | Light presence |
+| `moderate` | [6, 10] | Standard presence |
+| `high` | [11, 16] | Common presence |
+| `very_high` | [17, 24] | Abundant presence |
+
+#### Tier Bias Translations
+Tier distribution weights for resource spawning:
+
+| Bias Level | T1 Weight | T2 Weight | T3 Weight | T4 Weight | Description |
+|------------|-----------|-----------|-----------|-----------|-------------|
+| `low` | 70% | 25% | 5% | 0% | Heavily favors T1 resources |
+| `mid` | 30% | 50% | 18% | 2% | Favors T2 resources |
+| `high` | 10% | 30% | 50% | 10% | Favors T3 resources |
+| `legendary` | 0% | 10% | 40% | 50% | Favors T4 resources |
+
+#### Size Multipliers
+Resource node size affects HP and yield:
+
+| Size | Multiplier | HP Modifier | Yield Modifier | Description |
+|------|------------|-------------|----------------|-------------|
+| `small` | 0.8 | 0.7 | 0.6 | Smaller node, less HP and yield |
+| `normal` | 1.0 | 1.0 | 1.0 | Standard size baseline |
+| `large` | 1.5 | 1.5 | 1.4 | Larger node, more HP and yield |
+| `huge` | 2.5 | 2.5 | 2.0 | Massive node, significantly more HP and yield |
+
+#### Tool Efficiency
+Effectiveness based on tool tier vs resource tier:
+
+| Scenario | Multiplier | Description |
+|----------|------------|-------------|
+| `sameTier` | 1.0 | 100% efficiency - optimal |
+| `oneTierHigher` | 0.5 | 50% efficiency - slow but viable |
+| `twoTiersHigher` | 0.1 | 10% efficiency - impractical |
+| `lowerTier` | 1.5 | 150% efficiency - overkill |
+
+#### Resource Health by Tier
+Base HP for resource nodes:
+
+| Tier | Base HP | Description |
+|------|---------|-------------|
+| Tier 1 | 100 | T1 baseline health |
+| Tier 2 | 200 | T2 doubled health |
+| Tier 3 | 400 | T3 quadrupled health |
+| Tier 4 | 800 | T4 octupled health |
+
+#### Tool Damage by Tier
+Tool stats progression:
+
+| Tier | Base Damage | Durability | Description |
+|------|-------------|------------|-------------|
+| Tier 1 | 10 | 500 | T1 tool baseline |
+| Tier 2 | 20 | 1000 | T2 tool doubled |
+| Tier 3 | 40 | 2000 | T3 tool quadrupled |
+| Tier 4 | 80 | 4000 | T4 tool octupled |
 
 ### Three-Tier Lookup Hierarchy
 
@@ -1551,104 +1771,41 @@ This allows:
 3. Global Fallback (error state, shouldn't happen)
 ```
 
-### How Lookup Works
-
-**Example 1 - Hand-Crafted Material (Has Override):**
-```json
-{
-  "resourceId": "ironwood_tree_ancient",
-  "resourceType": "ironwood_log",
-  "category": "wood",
-  "tier": 3,
-  "yields": {
-    "materialId": "ironwood_log",
-    "baseYield": "several"
-  }
-}
-```
-**Lookup:** Check `MATERIAL_OVERRIDES["ironwood_log"]["several"]` → Found: `[4, 7]`
-
-**Example 2 - Standard Material (No Override):**
-```json
-{
-  "resourceId": "oak_tree_large",
-  "resourceType": "oak_log",
-  "category": "wood",
-  "tier": 1,
-  "yields": {
-    "materialId": "oak_log",
-    "baseYield": "several"
-  }
-}
-```
-**Lookup:**
-1. Check `MATERIAL_OVERRIDES["oak_log"]` → Not found
-2. Check `YIELD_TABLES["wood"]["T1"]["several"]` → Found: `[10, 15]`
-
-**Example 3 - Ultra-Rare Outlier (Voidsteel):**
-```json
-{
-  "resourceId": "voidsteel_vein_small",
-  "resourceType": "voidsteel_ore",
-  "category": "ore",
-  "tier": 4,
-  "yields": {
-    "materialId": "voidsteel_ore",
-    "baseYield": "many"
-  }
-}
-```
-**Lookup:** Check `MATERIAL_OVERRIDES["voidsteel_ore"]["many"]` → Found: `[2, 4]`
-
-(Even though T4 ore "many" defaults to `[7, 12]`, voidsteel override makes it even rarer)
-
-### Descriptor Categories
-
-**Yield Amount Descriptors:**
-- `few`, `several`, `many`, `abundant`, `plentiful`
-- Numbers vary by: Material override > Tier + Category > Fallback
-- **CRITICAL: Higher tiers yield LESS (rare/valuable), lower tiers yield MORE (common/abundant)**
-
-**Respawn Time Descriptors:**
-- `quick`, `normal`, `slow`, `very_slow`, `null` (never)
-- Duration varies by: Material override > Category defaults
-- Higher tier materials respawn slower (scarcity preservation)
-
-**Drop Chance Descriptors:**
-- `guaranteed`, `high`, `moderate`, `low`, `rare`, `improbable`
-- Percentages vary by: Material override > Tier defaults
-- Higher tiers have lower drop chances (T4 "low" < T1 "low")
-
-**Spawn Density Descriptors:**
-- `abundant`, `high`, `moderate`, `low`, `rare`, `improbable`
-- **NEVER use "unique" for density**
-- Counts vary by: Chunk type + Biome context
-- Higher tier materials spawn less frequently
-
 ### The Yield Inversion Principle
 
 **CRITICAL BALANCE MECHANIC:**
 
-Higher tier materials are MORE VALUABLE but LESS ABUNDANT. This is reflected in yields:
-- **T1 (Common):** High yields ([10-15] logs) - abundant in world, less valuable
-- **T2 (Uncommon):** Moderate yields ([7-12] logs) - less common, more valuable
-- **T3 (Rare):** Low yields ([5-9] logs) - rare in world, quite valuable
-- **T4 (Legendary):** Very low yields ([3-6] logs) - extremely scarce, highly valuable
+Higher tier materials are MORE VALUABLE but LESS ABUNDANT. Combined with resource HP scaling:
 
-This creates natural scarcity for high-tier materials without requiring complex spawn reduction. Players get LESS of valuable materials per harvest, preserving their rarity and economic value.
+| Tier | Yield Range | Resource HP | Tool Damage | Hits to Harvest |
+|------|-------------|-------------|-------------|-----------------|
+| T1 | plentiful (16-25) | 100 | 10 | 10 hits |
+| T2 | many (6-9) | 200 | 20 | 10 hits |
+| T3 | several (3-5) | 400 | 40 | 10 hits |
+| T4 | few (1-2) | 800 | 80 | 10 hits |
 
-**Exception:** Material overrides can break this pattern when needed (e.g., voidsteel even rarer than T4 defaults, or ancient oak yielding more than standard T3 wood).
+**Note:** Matching tool tier to resource tier maintains consistent harvest time (10 hits). Using lower-tier tools increases time significantly.
+
+### Example Calculations
+
+**T2 Tool on T3 Resource (One Tier Higher):**
+- Resource HP: 400
+- Tool Damage: 20 × 0.5 efficiency = 10 effective damage
+- Hits needed: 400 / 10 = 40 hits (4x longer than optimal)
+
+**T3 Tool on T1 Resource (Lower Tier - Overkill):**
+- Resource HP: 100
+- Tool Damage: 40 × 1.5 efficiency = 60 effective damage
+- Hits needed: 100 / 60 = 2 hits (5x faster than T1 tool)
 
 ### System Benefits
 
-✅ Precise tuning for important materials (ironwood, voidsteel, legendary items)  
-✅ Consistent defaults for standard materials (oak, iron use tier/category)  
-✅ Easy global balance adjustments (change tier tables, affects all non-override materials)  
-✅ Outlier support (voidsteel can be even rarer than T4 defaults)  
-✅ Natural language for LLM ("many logs" not "[8,12]")  
+✅ Precise tuning for important materials (ironwood, voidsteel, legendary items)
+✅ Consistent defaults for standard materials (oak, iron use tier/category)
+✅ Easy global balance adjustments (change tier tables, affects all non-override materials)
+✅ Outlier support (voidsteel can be even rarer than T4 defaults)
+✅ Natural language for LLM ("many logs" not "[8,12]")
 ✅ Rarity scales naturally (T1 common = high yields, T4 legendary = low yields)
-
-**Implementation Note:** Material overrides stored in `material_overrides.json`, tier/category defaults in `value_translation_tables.json`. Game code performs 3-step lookup at runtime.
 
 ---
 
@@ -2259,7 +2416,7 @@ Purpose:
 
 ## Material System
 
-**CRITICAL NOTE: All 60 materials listed below are PLACEHOLDERS for guided-play development. Names, descriptions, properties, and balance are subject to change during playtesting and narrative refinement. These establish baseline patterns for LLM generation post-guided-play.**
+**CRITICAL NOTE: All 57 materials listed below are PLACEHOLDERS for guided-play development. (3 T4 monster drops pending implementation.) Names, descriptions, properties, and balance are subject to change during playtesting and narrative refinement. These establish baseline patterns for LLM generation post-guided-play.**
 
 ### Material System Structure
 
@@ -2894,7 +3051,12 @@ Purpose:
 
 ---
 
-## Gathering System
+## Gathering System ✅ IMPLEMENTED
+
+**Implementation Status:** ✅ Core mechanics working
+**Source Files:**
+- `Definitions.JSON/value-translation-table-1.JSON` - Tool efficiency, resource HP, tool damage values
+- `systems/resource_system.py` - Resource gathering logic
 
 ### Core Interaction Loop
 
@@ -3010,70 +3172,50 @@ T4 Resources: 800 HP base (2x)
 
 **Design Goal:** Same-tier gathering always takes approximately 10 hits (consistent feedback)
 
-### Size Variance (Exponential Scaling)
+### Size Variance ✅ IMPLEMENTED
 
-**Visual Size Categories with Exponential Rewards:**
+From `value-translation-table-1.JSON` - **sizeMultipliers**:
+
+| Size | Multiplier | HP Modifier | Yield Modifier | Description |
+|------|------------|-------------|----------------|-------------|
+| `small` | 0.8x | 0.7x | 0.6x | Smaller node, less HP and yield |
+| `normal` | 1.0x | 1.0x | 1.0x | Standard size baseline |
+| `large` | 1.5x | 1.5x | 1.4x | Larger node, more HP and yield |
+| `huge` | 2.5x | 2.5x | 2.0x | Massive node, significantly more HP and yield |
+
+**Example Application (T1 Oak Tree, base HP 100, base yield "several" = 3-5):**
 ```
-SMALL Resources (0.8x sprite scale):
-- HP Modifier: 0.8x (Example: T1 = 80 HP instead of 100 HP)
-- Yield Modifier: 0.8x (Example: 3-5 logs instead of 4-6 logs)
-- Efficiency: 0.8 HP per material (100 HP ÷ 100 materials = 1:1 ratio)
-- Visual: Noticeably smaller sprite
-- Rationale: Quick to gather but lower yield, good for emergency materials
+SMALL Oak (70 HP, 0.6× yield):
+- Hits: 7 hits with T1 tool
+- Yield: 2-3 logs (60% of base)
+- Efficiency: Worse HP per log, but faster
 
-NORMAL Resources (1.0x sprite scale):
-- HP Modifier: 1.0x (Example: T1 = 100 HP)
-- Yield Modifier: 1.0x (Example: 4-6 logs)
-- Efficiency: 1.0 HP per material (baseline ratio)
-- Visual: Standard sprite size
-- Rationale: Most common, balanced risk/reward
+NORMAL Oak (100 HP, 1.0× yield):
+- Hits: 10 hits with T1 tool
+- Yield: 3-5 logs (baseline)
+- Efficiency: Standard
 
-LARGE Resources (1.5x sprite scale):
-- HP Modifier: 1.5x (Example: T1 = 150 HP)
-- Yield Modifier: 1.5x (Example: 7-10 logs)
-- Efficiency: 1.0 HP per material (same ratio, but more total)
-- Visual: Noticeably larger sprite
-- Rationale: Takes 50% longer but gives 50% more (proportional, worth it)
+LARGE Oak (150 HP, 1.4× yield):
+- Hits: 15 hits with T1 tool
+- Yield: 4-7 logs (140% of base)
+- Efficiency: Slightly better HP per log
 
-HUGE Resources (2.5x sprite scale):
-- HP Modifier: 2.5x (Example: T1 = 250 HP)
-- Yield Modifier: 2.5x (Example: 12-18 logs)
-- Efficiency: SLIGHTLY BETTER (exponential bonus starts here)
-- Visual: Massive sprite, stands out dramatically
-- Rationale: Takes 2.5x time but gives 2.5x+ reward (slight efficiency bonus rewards finding huge nodes)
-```
-
-**Exponential Scaling Example (T1 Oak Tree):**
-```
-Small Oak (80 HP):
-- Time: 8 hits
-- Yield: 3-4 logs average
-- Efficiency: 20 HP per log (worse than normal)
-
-Normal Oak (100 HP):
-- Time: 10 hits
-- Yield: 4-5 logs average
-- Efficiency: 22 HP per log (baseline)
-
-Large Oak (150 HP):
-- Time: 15 hits
-- Yield: 7-9 logs average
-- Efficiency: 19 HP per log (slightly better)
-
-Huge Oak (250 HP):
-- Time: 25 hits
-- Yield: 14-18 logs average
-- Efficiency: 16 HP per log (BEST efficiency)
+HUGE Oak (250 HP, 2.0× yield):
+- Hits: 25 hits with T1 tool
+- Yield: 6-10 logs (200% of base)
+- Efficiency: BEST efficiency - 2.5x time for 2x reward
 ```
 
 **Design Intent:**
 - Small nodes: Quick emergency resources but inefficient
 - Normal nodes: Balanced, most common
-- Large nodes: Worth targeting (same efficiency, more total)
+- Large nodes: Worth targeting (better efficiency, more total)
 - Huge nodes: BEST efficiency, reward exploration and observation
 - Visual feedback: Can identify valuable nodes from distance
 
-### Tool Damage Scaling (Matches Resource Health)
+### Tool Damage Scaling ✅ IMPLEMENTED
+
+From `value-translation-table-1.JSON` - **toolDamageByTier**:
 
 ```
 T1 Tools: 10 damage per hit
@@ -3095,34 +3237,33 @@ T4 Tools: 80 damage per hit (2x)
 
 **Perfect Symmetry:** Tool damage doubles when health doubles, maintaining 10-hit baseline across all tiers.
 
-### Material Yield System (RNG with Luck Influence)
+### Material Yield System ✅ IMPLEMENTED
 
-**Yield Ranges by Tier and Size:**
+**Text-Based Yields** from `value-translation-table-1.JSON`:
+
+| Descriptor | Min | Max | Description |
+|------------|-----|-----|-------------|
+| `few` | 1 | 2 | Minimal yield |
+| `several` | 3 | 5 | Standard low yield |
+| `many` | 6 | 9 | Good yield |
+| `abundant` | 10 | 15 | High yield |
+| `plentiful` | 16 | 25 | Exceptional yield |
+
+**Combined with Size Modifiers:**
 ```
-T1 Resources:
-- Small: 2-4 materials (avg 3)
-- Normal: 3-5 materials (avg 4)
-- Large: 5-8 materials (avg 6.5)
-- Huge: 10-15 materials (avg 12.5)
-
-T2 Resources:
-- Small: 3-5 materials (avg 4)
-- Normal: 5-7 materials (avg 6)
-- Large: 8-12 materials (avg 10)
-- Huge: 15-22 materials (avg 18.5)
-
-T3 Resources (proportional increase):
-- Small: 5-7 materials
-- Normal: 8-10 materials
-- Large: 12-18 materials
-- Huge: 22-32 materials
-
-T4 Resources (proportional increase):
-- Small: 8-12 materials
-- Normal: 12-16 materials
-- Large: 20-30 materials
-- Huge: 35-50 materials
+Example: Resource with "several" (3-5) base yield
+- Small (0.6x): 2-3 materials
+- Normal (1.0x): 3-5 materials
+- Large (1.4x): 4-7 materials
+- Huge (2.0x): 6-10 materials
 ```
+
+**Yield Inversion Principle:**
+Higher tier materials use lower yield descriptors:
+- T1 Resources: Often use "abundant" or "plentiful"
+- T2 Resources: Often use "many" or "abundant"
+- T3 Resources: Often use "several" or "many"
+- T4 Resources: Often use "few" or "several"
 
 **Luck Stat Influence:**
 ```
@@ -3694,7 +3835,13 @@ SPECIALTY MATERIALS (Unique to 1 discipline - Outer edges):
 
 ---
 
-## Smithing
+## Smithing ✅ IMPLEMENTED
+
+**Implementation Status:** ✅ Complete with mini-game
+**Source Files:**
+- `Crafting-subdisciplines/smithing.py` (622 lines)
+- `recipes.JSON/recipes-smithing-3.JSON` (30KB)
+- `placements.JSON/placements-smithing-1.JSON`
 
 ### Base Mechanic
 Temperature management + hammering/forging
@@ -3752,7 +3899,13 @@ Based on workbench tier + recipe size + material tier + rarity. Target: Max comp
 
 ---
 
-## Forging Refining
+## Forging Refining ✅ IMPLEMENTED
+
+**Implementation Status:** ✅ Complete with hub-spoke system
+**Source Files:**
+- `Crafting-subdisciplines/refining.py` (669 lines)
+- `recipes.JSON/recipes-refining-1.JSON` (24KB)
+- `placements.JSON/placements-refining-1.JSON`
 
 **Core Purpose:** Primary source for elemental materials, alloy creation, and material quality enhancement. Enables "anything + anything" combinations for infinite experimentation.
 
@@ -3892,7 +4045,13 @@ Lockpicking-style timing game - "unlocking" the potential of materials through c
 
 ---
 
-## Alchemy
+## Alchemy ✅ IMPLEMENTED
+
+**Implementation Status:** ✅ Complete with gradient success system
+**Source Files:**
+- `Crafting-subdisciplines/alchemy.py` (695 lines)
+- `recipes.JSON/recipes-alchemy-1.JSON` (12KB)
+- `placements.JSON/placements-alchemy-1.JSON`
 
 **Core Purpose:** Universal consumable creation system. No distinction between "potions" and "food" - all are consumables with buffs/effects. Same mechanics, different aesthetic (cauldron for potions, pot for food).
 
@@ -4124,7 +4283,13 @@ Reaction chain management - reading visual cues to identify optimal timing for i
 
 ---
 
-## Engineering
+## Engineering ✅ IMPLEMENTED
+
+**Implementation Status:** ✅ Complete with slot-type puzzle system
+**Source Files:**
+- `Crafting-subdisciplines/engineering.py` (890 lines)
+- `recipes.JSON/recipes-engineering-1.JSON` (11KB)
+- `placements.JSON/placements-engineering-1.JSON`
 
 **Core Purpose:** Tactical device creation through cognitive puzzles. Devices can be placed outside claimed territory. Complexity in crafting, simplicity in deployment.
 
@@ -4451,7 +4616,13 @@ Higher tier + higher rarity = more puzzles
 
 ---
 
-## Enchanting
+## Enchanting ✅ IMPLEMENTED
+
+**Implementation Status:** ✅ Complete with freeform pattern system
+**Source Files:**
+- `Crafting-subdisciplines/enchanting.py` (1,265 lines)
+- `recipes.JSON/recipes-adornments-1.JSON` (22KB)
+- `placements.JSON/placements-adornments-1.JSON`
 
 ### Base Mechanic & Purpose
 
@@ -4720,29 +4891,125 @@ TBD based on pattern types players gravitate toward
 
 ## Tag System ✅ IMPLEMENTED
 
+**Implementation Status:** ✅ Complete tag-to-effects system
+**Source File:** `Definitions.JSON/tag-definitions.JSON` (683 lines) - SINGLE SOURCE OF TRUTH
 **Code References:**
 - `core/effect_executor.py` - Tag-based effect execution
 - `core/tag_parser.py` - Tag parsing and resolution
 
-### Tag Categories
+### All Tag Categories
 
-| Category | Examples | Purpose |
-|----------|----------|---------|
-| **Geometry** | single_target, chain, circle, cone, line | Area targeting |
-| **Damage** | physical, fire, ice, lightning, poison, arcane | Damage type |
-| **Status** | burn, bleed, poison, freeze, slow, stun | Effect application |
-| **Context** | enemy, ally, self | Valid targets |
-| **Trigger** | on_hit, on_kill, on_crit | When to activate |
+From `tag-definitions.JSON`:
+
+| Category | Tags | Purpose |
+|----------|------|---------|
+| **equipment** | `1H`, `2H`, `versatile` | Weapon handedness |
+| **geometry** | `single_target`, `chain`, `cone`, `circle`, `beam`, `projectile`, `pierce`, `splash` | Area targeting |
+| **damage_type** | `physical`, `slashing`, `piercing`, `crushing`, `fire`, `frost`, `lightning`, `poison`, `holy`, `shadow`, `arcane`, `chaos` | Damage classification |
+| **status_debuff** | `burn`, `freeze`, `chill`, `slow`, `stun`, `root`, `bleed`, `poison_status`, `shock`, `weaken` | Negative effects |
+| **status_buff** | `haste`, `quicken`, `empower`, `fortify`, `regeneration`, `shield`, `barrier`, `invisible` | Positive effects |
+| **special** | `lifesteal`, `vampiric`, `reflect`, `thorns`, `knockback`, `pull`, `teleport`, `summon`, `dash`, `charge`, `phase`, `execute`, `critical` | Special mechanics |
+| **trigger** | `on_hit`, `on_kill`, `on_damage`, `on_crit`, `on_contact`, `on_proximity`, `passive`, `active`, `instant` | Activation conditions |
+| **context** | `self`, `ally`, `friendly`, `enemy`, `hostile`, `all`, `player`, `turret`, `device`, `construct`, `undead`, `mechanical` | Target filtering |
+| **class** | `warrior`, `ranger`, `scholar`, `artisan`, `scavenger`, `adventurer` | Class identity |
+| **playstyle** | `melee`, `ranged`, `magic`, `crafting`, `gathering`, `balanced`, `tanky`, `agile`, `caster` | Gameplay focus |
+| **armor_type** | `heavy`, `medium`, `light`, `robes` | Armor classification |
+
+### Geometry Tags with Parameters
+
+| Tag | Description | Default Parameters |
+|-----|-------------|-------------------|
+| `chain` | Arcs to nearby targets | chain_count: 2, chain_range: 5.0, chain_falloff: 0.3 |
+| `cone` | Frontal cone hit | cone_angle: 60, cone_range: 8.0 |
+| `circle` | Radial AoE | radius: 3.0, origin: "target", max_targets: 0 |
+| `beam` | Straight line hit | beam_range: 10.0, beam_width: 0.5, pierce_count: 0 |
+| `projectile` | Traveling projectile | projectile_speed: 15.0, projectile_gravity: 0.0 |
+| `pierce` | Penetrates targets | pierce_count: -1 (infinite), pierce_falloff: 0.1 |
+| `splash` | Impact creates AoE | splash_radius: 2.0, splash_falloff: "linear" |
+
+### Status Debuffs with Defaults
+
+| Tag | Effect | Default Duration | Tick Rate | Stacking |
+|-----|--------|------------------|-----------|----------|
+| `burn` | Fire DoT (5 dmg/tick) | 5.0s | 1.0s | additive |
+| `freeze` | Complete immobilization | 3.0s | - | none |
+| `chill` | 50% move slow | 4.0s | - | multiplicative |
+| `stun` | Cannot act or move | 2.0s | - | diminishing |
+| `root` | Cannot move, can act | 3.0s | - | additive |
+| `bleed` | Physical DoT (3 dmg/tick) | 6.0s | 1.0s | additive |
+| `poison_status` | Poison DoT (4 dmg/tick) | 10.0s | 2.0s | additive |
+| `shock` | Damage + interrupt (5 dmg) | 6.0s | 2.0s | additive |
+| `weaken` | 25% stat reduction | 5.0s | - | additive |
+
+### Status Buffs with Defaults
+
+| Tag | Effect | Default Duration | Stacking |
+|-----|--------|------------------|----------|
+| `haste` | +50% move speed | 10.0s | additive |
+| `empower` | +50% damage | 10.0s | multiplicative |
+| `fortify` | +20 defense | 10.0s | additive |
+| `regeneration` | +5 HP/tick | 10.0s | additive |
+| `shield` | Absorbs 50 damage | 15.0s | none |
+| `invisible` | Undetectable | 10.0s | none |
+
+### Special Tags with Defaults
+
+| Tag | Effect | Default Parameters |
+|-----|--------|-------------------|
+| `lifesteal` | Heal % of damage dealt | lifesteal_percent: 0.15 (15%) |
+| `reflect` | Return damage to attacker | reflect_percent: 0.3 (30%) |
+| `knockback` | Push target away | knockback_distance: 2.0 |
+| `execute` | Bonus damage below HP threshold | threshold_hp: 0.2, bonus_damage: 2.0x |
+| `critical` | Crit chance and multiplier | crit_chance: 0.15, crit_multiplier: 2.0x |
+
+### Tag Conflicts
+
+Mutually exclusive tag combinations:
+- `burn` ↔ `freeze` (cannot burn and freeze simultaneously)
+- `1H` ↔ `2H` ↔ `versatile` (weapon can only be one type)
+
+### Tag Synergies
+
+Certain tag combinations provide bonuses:
+- `lightning` + `chain`: +20% chain range bonus
+- `fire` + hit: 10% auto-apply chance for `burn`
+- `frost` + hit: 15% auto-apply chance for `chill`
+- `holy` + `undead` context: 1.5x damage multiplier
+- `holy` + `ally` context: converts damage to healing
+
+### Geometry Priority Resolution
+
+When multiple geometry tags exist, higher priority wins:
+1. `chain` (priority 5)
+2. `cone` (priority 4)
+3. `circle` (priority 3)
+4. `beam` (priority 2)
+5. `single_target` (priority 1)
+
+### Class Tags with Skill Affinity
+
+| Class | Tags | Skill Affinity (max +20% bonus) |
+|-------|------|--------------------------------|
+| `warrior` | melee, physical, tanky, frontline | melee, physical, tanky |
+| `ranger` | ranged, agile, nature, mobile | ranged, agile, nature |
+| `scholar` | magic, alchemy, arcane, caster | magic, arcane, alchemy |
+| `artisan` | crafting, smithing, engineering, utility | crafting, smithing, engineering |
+| `scavenger` | luck, gathering, treasure, explorer | luck, gathering, treasure |
+| `adventurer` | balanced, versatile, generalist, adaptive | balanced, versatile, adaptive |
 
 ### Tag Resolution Flow
 
 ```
 1. Parse tags from skill/equipment
-2. Determine geometry type (single, AoE, chain, etc.)
-3. Select valid targets based on context tags
-4. Apply damage with type modifiers
-5. Apply status effects from status tags
-6. Handle falloff for AoE effects
+2. Resolve aliases (e.g., "ice" → "frost", "vampiric" → "lifesteal")
+3. Check for conflicts and remove lower priority tag
+4. Determine geometry type (highest priority wins)
+5. Select valid targets based on context tags
+6. Apply synergy bonuses (e.g., lightning + chain)
+7. Apply damage with type modifiers
+8. Calculate status application chance
+9. Apply status effects from status tags
+10. Handle falloff for AoE effects
 ```
 
 ---
