@@ -133,7 +133,8 @@ class Config:
     CLICK_TOLERANCE = 0.7
 
     # Debug Mode
-    DEBUG_INFINITE_RESOURCES = False  # Toggle with F1
+    DEBUG_INFINITE_RESOURCES = False  # Toggle with F1 - no material consumption
+    DEBUG_INFINITE_DURABILITY = False  # Toggle with F3 - no durability loss
 
     # Colors
     COLOR_BACKGROUND = (20, 20, 30)

@@ -706,6 +706,32 @@ class CombatManager:
         if hasattr(self.character, 'buffs'):
             self.character.buffs.consume_buffs_for_action("attack")
 
+        # WEAPON DURABILITY LOSS
+        if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
+            from core.config import Config
+            if not Config.DEBUG_INFINITE_DURABILITY:
+                durability_loss = 1.0
+
+                # DEF stat reduces durability loss
+                durability_loss *= self.character.stats.get_durability_loss_multiplier()
+
+                # Unbreaking enchantment reduces durability loss
+                if hasattr(equipped_weapon, 'enchantments') and equipped_weapon.enchantments:
+                    for ench in equipped_weapon.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'durability_multiplier':
+                            reduction = effect.get('value', 0.0)
+                            durability_loss *= (1.0 - reduction)
+
+                equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
+
+                # Only warn about low/broken durability (use effective max with VIT bonus)
+                effective_max = self.character.get_effective_max_durability(equipped_weapon)
+                if equipped_weapon.durability_current == 0:
+                    print(f"   💥 {equipped_weapon.name} has broken! (0/{effective_max})")
+                elif equipped_weapon.durability_current <= effective_max * 0.2:
+                    print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current:.0f}/{effective_max}")
+
         # Initialize loot list
         loot = []
 
@@ -743,13 +769,16 @@ class CombatManager:
         # Apply weapon durability loss (after successful attack)
         if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
             from core.config import Config
-            if not Config.DEBUG_INFINITE_RESOURCES:
+            if not Config.DEBUG_INFINITE_DURABILITY:
                 # -1 durability for proper use (weapon), -2 for improper use (tool)
                 durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
                 equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
 
+                # Only warn about improper use, low, or broken
                 if durability_loss == 2:
                     print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
+                elif equipped_weapon.durability_current == 0:
+                    print(f"   💥 {equipped_weapon.name} has broken! (0/{equipped_weapon.durability_max})")
                 elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
                     print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
 
@@ -1121,14 +1150,17 @@ class CombatManager:
 
             if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
                 from core.config import Config
-                if not Config.DEBUG_INFINITE_RESOURCES:
+                if not Config.DEBUG_INFINITE_DURABILITY:
                     # Determine if using tool as weapon (improper use)
                     tool_type_effectiveness = self.character.get_tool_effectiveness_for_action(equipped_weapon, 'combat')
                     durability_loss = 1 if tool_type_effectiveness >= 1.0 else 2
                     equipped_weapon.durability_current = max(0, equipped_weapon.durability_current - durability_loss)
 
+                    # Only warn about improper use, low, or broken
                     if durability_loss == 2:
                         print(f"   ⚠️ Improper use! {equipped_weapon.name} loses {durability_loss} durability ({equipped_weapon.durability_current}/{equipped_weapon.durability_max})")
+                    elif equipped_weapon.durability_current == 0:
+                        print(f"   💥 {equipped_weapon.name} has broken! (0/{equipped_weapon.durability_max})")
                     elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
                         print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
 

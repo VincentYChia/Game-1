@@ -353,15 +353,29 @@ class SkillManager:
             else:
                 print(f"   +{int(bonus*100)}% critical chance for {int(duration)}s")
 
-        # RESTORE - Instant restoration
+        # RESTORE - Instant restoration (health, mana, or durability)
         elif effect.effect_type == "restore":
+            # For durability, use percentage-based restoration
+            restore_percents = {'minor': 0.15, 'moderate': 0.30, 'major': 0.50, 'extreme': 0.75}
             restore_amounts = {'minor': 50, 'moderate': 100, 'major': 200, 'extreme': 400}
-            amount = restore_amounts.get(effect.magnitude, 100)
 
-            if "health" in effect.category or "defense" in effect.category:
+            if "durability" in effect.category:
+                # Restore durability to all equipped items and tools
+                percent = restore_percents.get(effect.magnitude, 0.30)
+                percent *= (1.0 + level_bonus)  # Level scaling
+
+                repaired_items = self._restore_all_durability(character, percent)
+                if repaired_items:
+                    print(f"   🔧 Repaired {len(repaired_items)} item(s): {', '.join(repaired_items)}")
+                else:
+                    print(f"   ✓ All equipment at full durability")
+
+            elif "health" in effect.category or "defense" in effect.category:
+                amount = restore_amounts.get(effect.magnitude, 100)
                 character.health = min(character.max_health, character.health + amount)
                 print(f"   Restored {amount} HP")
             elif "mana" in effect.category:
+                amount = restore_amounts.get(effect.magnitude, 100)
                 character.mana = min(character.max_mana, character.mana + amount)
                 print(f"   Restored {amount} MP")
 
@@ -423,8 +437,15 @@ class SkillManager:
                 consume_on_use=False  # Regenerate is always over time
             )
             character.buffs.add_buff(buff)
-            resource_type = "HP" if "health" in effect.category or "defense" in effect.category else "MP"
-            print(f"   Regenerating {amount:.1f} {resource_type}/s for {int(duration if not consume_on_use else 60)}s")
+
+            # Determine resource type for display
+            if "durability" in effect.category:
+                resource_type = "durability/s"
+            elif "health" in effect.category or "defense" in effect.category:
+                resource_type = "HP/s"
+            else:
+                resource_type = "MP/s"
+            print(f"   Regenerating {amount:.1f} {resource_type} for {int(duration if not consume_on_use else 60)}s")
 
         # DEVASTATE - Area of effect (instant execution for combat skills)
         elif effect.effect_type == "devastate":
@@ -501,6 +522,50 @@ class SkillManager:
                 print(f"   Next {effect.category} action bypasses {bypass} tier restriction(s)")
             else:
                 print(f"   Bypass {bypass} tier restriction(s) for {effect.category} for {int(duration)}s")
+
+    def _restore_all_durability(self, character, percent: float) -> List[str]:
+        """Restore durability to all equipped items and tools.
+
+        Args:
+            character: The character whose equipment to repair
+            percent: Percentage of max durability to restore (0.0-1.0)
+
+        Returns:
+            List[str]: Names of items that were repaired
+        """
+        repaired_items = []
+
+        # Repair equipped items (armor, weapons, accessories)
+        if hasattr(character, 'equipment') and character.equipment:
+            for slot_name, item in character.equipment.slots.items():
+                if item and hasattr(item, 'repair') and hasattr(item, 'needs_repair'):
+                    if item.needs_repair():
+                        repaired = item.repair(percent=percent)
+                        if repaired > 0:
+                            repaired_items.append(item.name)
+
+        # Repair tools (axe, pickaxe)
+        if hasattr(character, 'axe') and character.axe:
+            tool = character.axe
+            if hasattr(tool, 'durability_current') and hasattr(tool, 'durability_max'):
+                if tool.durability_current < tool.durability_max:
+                    repair_amount = int(tool.durability_max * percent)
+                    tool.durability_current = min(tool.durability_max,
+                        tool.durability_current + repair_amount)
+                    if repair_amount > 0:
+                        repaired_items.append(tool.name)
+
+        if hasattr(character, 'pickaxe') and character.pickaxe:
+            tool = character.pickaxe
+            if hasattr(tool, 'durability_current') and hasattr(tool, 'durability_max'):
+                if tool.durability_current < tool.durability_max:
+                    repair_amount = int(tool.durability_max * percent)
+                    tool.durability_current = min(tool.durability_max,
+                        tool.durability_current + repair_amount)
+                    if repair_amount > 0:
+                        repaired_items.append(tool.name)
+
+        return repaired_items
 
     def _apply_combat_skill(self, skill_def, character, player_skill, suppress_warnings=False):
         """Apply a tag-based combat skill using the effect executor

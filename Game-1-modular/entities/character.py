@@ -837,9 +837,13 @@ class Character:
         actual_damage, depleted = resource.take_damage(damage, is_crit)
 
         # Reduce tool durability
-        if not Config.DEBUG_INFINITE_RESOURCES:
+        if not Config.DEBUG_INFINITE_DURABILITY:
             # -1 durability for proper use (correct tool type), -2 for improper use (wrong tool type)
-            durability_loss = 1.0 if tool_type_effectiveness >= 1.0 else 2.0
+            base_durability_loss = 1.0 if tool_type_effectiveness >= 1.0 else 2.0
+            durability_loss = base_durability_loss
+
+            # DEF stat reduces durability loss
+            durability_loss *= self.stats.get_durability_loss_multiplier()
 
             # Unbreaking enchantment reduces durability loss
             if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
@@ -851,9 +855,13 @@ class Character:
 
             equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
 
-            # Warn about improper use
-            if durability_loss >= 2.0:
+            # Only warn about improper use, low, or broken
+            if base_durability_loss >= 2.0:
                 print(f"   ⚠️ Improper tool use! {equipped_tool.name} loses extra durability ({equipped_tool.durability_current:.0f}/{equipped_tool.durability_max})")
+            elif equipped_tool.durability_current == 0:
+                print(f"   💥 {equipped_tool.name} has broken! (0/{equipped_tool.durability_max})")
+            elif equipped_tool.durability_current <= equipped_tool.durability_max * 0.2:
+                print(f"   ⚠️ {equipped_tool.name} durability low: {equipped_tool.durability_current:.0f}/{equipped_tool.durability_max}")
 
         loot = None
         if depleted:
@@ -1033,9 +1041,58 @@ class Character:
         self.buffs.update(dt, character=self)
         self.skills.update_cooldowns(dt)
 
+        # Process Self-Repair enchantments on equipment
+        self._update_self_repair_enchantments(dt)
+
         # Update status effects
         if hasattr(self, 'status_manager'):
             self.status_manager.update(dt)
+
+    def _update_self_repair_enchantments(self, dt: float):
+        """Process Self-Repair enchantments on equipped items.
+
+        Items with Self-Repair enchantment passively regenerate durability over time.
+        """
+        from core.config import Config
+        if Config.DEBUG_INFINITE_RESOURCES:
+            return
+
+        # Check equipped items for self-repair enchantment
+        if hasattr(self, 'equipment') and self.equipment:
+            for slot_name, item in self.equipment.slots.items():
+                if not item or not hasattr(item, 'enchantments'):
+                    continue
+
+                for ench in item.enchantments:
+                    effect = ench.get('effect', {})
+                    if effect.get('type') == 'durability_regeneration':
+                        # Self-repair: regenerate durability over time
+                        regen_rate = effect.get('value', 1.0)  # Durability per second
+                        regen_amount = regen_rate * dt
+
+                        if hasattr(item, 'durability_current') and hasattr(item, 'durability_max'):
+                            if item.durability_current < item.durability_max:
+                                item.durability_current = min(item.durability_max,
+                                    item.durability_current + regen_amount)
+
+        # Check tools for self-repair enchantment
+        for tool_attr in ['axe', 'pickaxe']:
+            if hasattr(self, tool_attr):
+                tool = getattr(self, tool_attr)
+                if not tool or not hasattr(tool, 'enchantments'):
+                    continue
+
+                enchantments = getattr(tool, 'enchantments', [])
+                for ench in enchantments:
+                    effect = ench.get('effect', {})
+                    if effect.get('type') == 'durability_regeneration':
+                        regen_rate = effect.get('value', 1.0)
+                        regen_amount = regen_rate * dt
+
+                        if hasattr(tool, 'durability_current') and hasattr(tool, 'durability_max'):
+                            if tool.durability_current < tool.durability_max:
+                                tool.durability_current = min(tool.durability_max,
+                                    tool.durability_current + regen_amount)
 
     def toggle_stats_ui(self):
         self.stats_ui_open = not self.stats_ui_open
@@ -1325,18 +1382,31 @@ class Character:
         # Apply armor durability loss when taking damage
         if damage > 0:  # Only lose durability if damage was actually taken
             from core.config import Config
-            if not Config.DEBUG_INFINITE_RESOURCES:
+            if not Config.DEBUG_INFINITE_DURABILITY:
+                # DEF stat reduces durability loss
+                durability_loss = 1.0 * self.stats.get_durability_loss_multiplier()
+
                 armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
                 for slot in armor_slots:
                     armor_piece = self.equipment.slots.get(slot)
                     if armor_piece and hasattr(armor_piece, 'durability_current'):
-                        armor_piece.durability_current = max(0, armor_piece.durability_current - 1)
+                        # Apply Unbreaking enchantment
+                        piece_loss = durability_loss
+                        if hasattr(armor_piece, 'enchantments') and armor_piece.enchantments:
+                            for ench in armor_piece.enchantments:
+                                effect = ench.get('effect', {})
+                                if effect.get('type') == 'durability_multiplier':
+                                    reduction = effect.get('value', 0.0)
+                                    piece_loss *= (1.0 - reduction)
 
-                        # Warn if armor is breaking
+                        armor_piece.durability_current = max(0, armor_piece.durability_current - piece_loss)
+
+                        # Warn if armor is breaking (use effective max with VIT bonus)
+                        effective_max = self.get_effective_max_durability(armor_piece)
                         if armor_piece.durability_current == 0:
                             print(f"   💥 {armor_piece.name} has broken!")
-                        elif armor_piece.durability_current <= armor_piece.durability_max * 0.2:
-                            print(f"   ⚠️ {armor_piece.name} durability low: {armor_piece.durability_current}/{armor_piece.durability_max}")
+                        elif armor_piece.durability_current <= effective_max * 0.2:
+                            print(f"   ⚠️ {armor_piece.name} durability low: {armor_piece.durability_current:.0f}/{effective_max}")
 
         if self.health <= 0:
             self.health = 0
@@ -1348,6 +1418,152 @@ class Character:
         self.health = self.max_health
         self.position = Position(50, 50, 0)  # Respawn at spawn
         # Keep all items and equipment (no death penalty)
+
+    def get_effective_max_durability(self, item) -> int:
+        """Get effective max durability for an item, including VIT bonus.
+
+        VIT increases max durability by 1% per point.
+        Example: Item with 100 max durability, 10 VIT = 110 effective max
+
+        Args:
+            item: Equipment or Tool with durability_max attribute
+
+        Returns:
+            int: Effective max durability
+        """
+        if not hasattr(item, 'durability_max'):
+            return 100
+        base_max = item.durability_max
+        vit_mult = self.stats.get_durability_bonus_multiplier()
+        return int(base_max * vit_mult)
+
+    def get_durability_percent(self, item) -> float:
+        """Get durability percentage for an item, accounting for VIT bonus.
+
+        Args:
+            item: Equipment or Tool with durability attributes
+
+        Returns:
+            float: Durability percentage (0.0 - 1.0+)
+        """
+        if not hasattr(item, 'durability_current') or not hasattr(item, 'durability_max'):
+            return 1.0
+        effective_max = self.get_effective_max_durability(item)
+        if effective_max <= 0:
+            return 0.0
+        return item.durability_current / effective_max
+
+    # ==================== WEIGHT SYSTEM ====================
+
+    def get_total_weight(self) -> float:
+        """Calculate total weight of all equipped items, tools, and inventory.
+
+        Returns:
+            float: Total weight in weight units
+        """
+        total = 0.0
+
+        # Equipment weight (armor, weapons, accessories)
+        if hasattr(self, 'equipment') and self.equipment:
+            for slot_name, item in self.equipment.slots.items():
+                if item and hasattr(item, 'weight'):
+                    total += item.weight
+
+        # Tool weight (axe, pickaxe)
+        if hasattr(self, 'axe') and self.axe and hasattr(self.axe, 'weight'):
+            total += self.axe.weight
+        if hasattr(self, 'pickaxe') and self.pickaxe and hasattr(self.pickaxe, 'weight'):
+            total += self.pickaxe.weight
+
+        # Inventory weight (materials and equipment in inventory)
+        if hasattr(self, 'inventory') and self.inventory:
+            from data.databases.material_db import MaterialDatabase
+            mat_db = MaterialDatabase.get_instance()
+
+            for slot in self.inventory.slots:
+                if slot and slot.item_id:
+                    # Check if it's equipment (has equipment_data)
+                    if slot.equipment_data and hasattr(slot.equipment_data, 'weight'):
+                        total += slot.equipment_data.weight
+                    else:
+                        # It's a material - look up weight
+                        mat = mat_db.get_material(slot.item_id)
+                        if mat and hasattr(mat, 'weight'):
+                            total += mat.weight * slot.quantity
+                        else:
+                            # Default material weight: 0.1 per item
+                            total += 0.1 * slot.quantity
+
+        return total
+
+    def get_max_carry_capacity(self) -> float:
+        """Calculate max carry capacity based on STR stat.
+
+        Base capacity: 100 weight units
+        STR bonus: +2% per point
+
+        Returns:
+            float: Maximum carry capacity
+        """
+        base_capacity = 100.0
+        str_mult = self.stats.get_carry_capacity_multiplier()
+
+        # Title/class bonuses could add here
+        bonus = 0.0
+        if hasattr(self, 'class_system'):
+            bonus += self.class_system.get_bonus('carry_capacity')
+
+        return base_capacity * str_mult + bonus
+
+    def get_encumbrance_percent(self) -> float:
+        """Get how far over capacity we are.
+
+        Returns:
+            float: 0.0 if at or under capacity, otherwise % over (0.1 = 10% over)
+        """
+        weight = self.get_total_weight()
+        capacity = self.get_max_carry_capacity()
+        if capacity <= 0:
+            return 1.0
+        ratio = weight / capacity
+        return max(0.0, ratio - 1.0)
+
+    def get_encumbrance_speed_penalty(self) -> float:
+        """Get movement speed penalty from encumbrance.
+
+        For every 1% over capacity, -2% movement speed.
+        Example: 10% over = -20% speed (returns 0.8)
+        Example: 50% over = -100% speed (returns 0.0)
+
+        Returns:
+            float: Speed multiplier (0.0 - 1.0)
+        """
+        over_percent = self.get_encumbrance_percent()
+        if over_percent <= 0:
+            return 1.0  # No penalty
+
+        # -2% speed per 1% over capacity
+        penalty = over_percent * 2.0
+        return max(0.0, 1.0 - penalty)
+
+    def is_over_encumbered(self) -> bool:
+        """Check if character is over carry capacity.
+
+        Returns:
+            bool: True if over capacity
+        """
+        return self.get_encumbrance_percent() > 0
+
+    def get_weight_ratio(self) -> float:
+        """Get current weight as ratio of capacity.
+
+        Returns:
+            float: weight / capacity (1.0 = at capacity)
+        """
+        capacity = self.get_max_carry_capacity()
+        if capacity <= 0:
+            return 1.0
+        return self.get_total_weight() / capacity
 
     def get_weapon_damage(self) -> float:
         """
