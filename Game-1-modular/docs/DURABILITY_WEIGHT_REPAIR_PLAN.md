@@ -75,18 +75,19 @@ if equipped_weapon and hasattr(equipped_weapon, 'durability_current'):
 **File**: `entities/character.py`
 **Location**: Modify durability loss calculations
 
+**DEF Stat**: -2% durability loss per point (gear lasts longer)
+**VIT Stat**: +1% max durability per point (items are tougher)
+
 ```python
 def get_durability_reduction_multiplier(self) -> float:
-    """Get multiplier for durability loss reduction from stats"""
-    def_bonus = self.stats.defense * 0.02  # 2% per DEF point
-    vit_bonus = self.stats.vitality * 0.01  # 1% per VIT point (tools only)
+    """Get multiplier for durability loss reduction from DEF stat"""
+    def_bonus = self.stats.defense * 0.02  # 2% reduction per DEF point
     return max(0.1, 1.0 - def_bonus)  # Minimum 10% durability loss
 
-def get_tool_durability_reduction(self) -> float:
-    """Get tool-specific durability reduction (DEF + VIT)"""
-    def_bonus = self.stats.defense * 0.02
-    vit_bonus = self.stats.vitality * 0.01
-    return max(0.1, 1.0 - def_bonus - vit_bonus)
+def get_durability_bonus_multiplier(self) -> float:
+    """Get multiplier for max durability from VIT stat"""
+    vit_bonus = self.stats.vitality * 0.01  # +1% max durability per VIT point
+    return 1.0 + vit_bonus
 ```
 
 #### Task 1.3: Tier-Based Durability Values
@@ -130,16 +131,16 @@ def _calculate_durability(self, tier: int, category: str) -> int:
 
 ### Design Decisions
 
-**Weight Formula** (from GAME_MECHANICS_V6.md):
+**Weight Formula**:
 - Base carry capacity: 100.0 weight units
-- Per STR point: +10.0 weight units
-- Encumbrance threshold: 80% capacity = movement penalty starts
-- Over-encumbered: 100% capacity = cannot move/attack
+- Per STR point: +2% capacity (capacity = base × (1 + STR × 0.02))
+- Example: 10 STR = 100 × 1.20 = 120 capacity
 
-**Encumbrance Penalties**:
-- 80-90% capacity: -10% movement speed
-- 90-100% capacity: -25% movement speed, -10% attack speed
-- 100%+ capacity: Cannot move or attack (drop items to continue)
+**Encumbrance Penalties** (Linear):
+- At or under 100% capacity: No penalty
+- Over 100%: For every 1% over max, -2% movement speed
+- Example: 110% capacity = -20% movement speed
+- Example: 125% capacity = -50% movement speed
 
 ### Implementation Tasks
 
@@ -178,38 +179,33 @@ def get_total_weight(self) -> float:
     return total
 
 def get_max_carry_capacity(self) -> float:
-    """Calculate max carry capacity based on STR"""
+    """Calculate max carry capacity based on STR (+2% per point)"""
     base = 100.0
-    str_bonus = self.stats.strength * 10.0
+    str_multiplier = 1.0 + (self.stats.strength * 0.02)  # +2% per STR
     # Title bonuses could add here
-    return base + str_bonus
+    return base * str_multiplier
 
-def get_encumbrance_level(self) -> str:
-    """Get current encumbrance status"""
+def get_encumbrance_percent(self) -> float:
+    """Get how much over capacity (0.0 = at capacity, 0.1 = 10% over)"""
     weight = self.get_total_weight()
     capacity = self.get_max_carry_capacity()
-    ratio = weight / capacity if capacity > 0 else 1.0
-
-    if ratio < 0.8:
-        return "normal"
-    elif ratio < 0.9:
-        return "burdened"  # -10% move speed
-    elif ratio <= 1.0:
-        return "encumbered"  # -25% move, -10% attack
-    else:
-        return "over_encumbered"  # Cannot move/attack
+    if capacity <= 0:
+        return 1.0
+    ratio = weight / capacity
+    return max(0.0, ratio - 1.0)  # 0 if under/at capacity
 
 def get_movement_speed_multiplier(self) -> float:
-    """Get movement speed multiplier including encumbrance"""
+    """Get movement speed multiplier including encumbrance
+
+    Linear penalty: -2% speed for every 1% over capacity
+    """
     base_mult = 1.0 + (self.stats.agility * 0.02)  # AGI bonus
 
-    encumbrance = self.get_encumbrance_level()
-    if encumbrance == "burdened":
-        base_mult *= 0.9
-    elif encumbrance == "encumbered":
-        base_mult *= 0.75
-    elif encumbrance == "over_encumbered":
-        base_mult = 0.0
+    over_percent = self.get_encumbrance_percent()
+    if over_percent > 0:
+        # -2% speed per 1% over capacity
+        penalty = over_percent * 2.0  # 10% over = 20% penalty
+        base_mult *= max(0.0, 1.0 - penalty)
 
     return base_mult
 ```
@@ -221,11 +217,13 @@ def get_movement_speed_multiplier(self) -> float:
 ```python
 # Modify movement to use encumbrance
 def handle_movement(self, keys, dt):
-    if self.character.get_encumbrance_level() == "over_encumbered":
-        self.add_notification("Over-encumbered! Drop items to move.", "warning")
+    speed_mult = self.character.get_movement_speed_multiplier()
+
+    if speed_mult <= 0:
+        self.add_notification("Too encumbered to move!", "warning")
         return
 
-    speed = self.character.movement_speed * self.character.get_movement_speed_multiplier()
+    speed = self.character.movement_speed * speed_mult
     # ... rest of movement logic
 ```
 
@@ -240,15 +238,14 @@ def render_weight_bar(self, surface, character):
     max_cap = character.get_max_carry_capacity()
     ratio = current / max_cap if max_cap > 0 else 0
 
-    # Color based on encumbrance
-    if ratio < 0.8:
-        color = (100, 200, 100)  # Green
-    elif ratio < 0.9:
-        color = (200, 200, 100)  # Yellow
-    elif ratio <= 1.0:
-        color = (200, 150, 100)  # Orange
+    # Color based on encumbrance (green until over, then red gradient)
+    if ratio <= 1.0:
+        color = (100, 200, 100)  # Green - under/at capacity
     else:
-        color = (200, 100, 100)  # Red
+        # Red intensity based on how far over
+        over_percent = min(0.5, ratio - 1.0)  # Cap visual at 50% over
+        red_intensity = int(100 + over_percent * 200)
+        color = (red_intensity, 100, 100)
 
     # Draw bar
     bar_width = 200
@@ -257,7 +254,7 @@ def render_weight_bar(self, surface, character):
 
     # Background
     pygame.draw.rect(surface, (50, 50, 50), (x, y, bar_width, bar_height))
-    # Fill
+    # Fill (cap at bar width for visual, but show overflow via color)
     fill_width = min(bar_width, int(bar_width * ratio))
     pygame.draw.rect(surface, color, (x, y, fill_width, bar_height))
     # Text
@@ -299,9 +296,9 @@ Add weight field to materials based on tier and type:
 | Equipment.repair() method | HIGH | Only Tool has repair |
 | Skill effect handler | HIGH | Connect restore/durability to actual repair |
 | Repair costs | MEDIUM | Material costs for repairs |
-| Repair station/NPC | MEDIUM | Place to repair items |
+| Repair station/NPC | DEFERRED | Place to repair items |
 | Partial repair | MEDIUM | Repair by percentage |
-| Self-repair enchantment | LOW | Passive durability regen |
+| Self-repair enchantment | HIGH | Passive durability regen |
 | Repair UI | MEDIUM | Interface for repairing |
 
 ### Design Decisions
@@ -406,44 +403,9 @@ def _restore_durability(self, percent: float):
 ```
 
 #### Task 3.3: Repair Station Integration
-**File**: `Crafting-subdisciplines/smithing.py` or new `systems/repair_system.py`
+**Status**: DEFERRED - Will implement later
 
-```python
-class RepairSystem:
-    """Handle item repairs at stations"""
-
-    @staticmethod
-    def can_repair(item, inventory) -> Tuple[bool, str]:
-        """Check if item can be repaired"""
-        if not hasattr(item, 'durability_current'):
-            return False, "Item has no durability"
-        if item.durability_current >= item.durability_max:
-            return False, "Item already at full durability"
-
-        # Check for repair kit
-        repair_kit_count = inventory.count_item("repair_kit")
-        if repair_kit_count < 1:
-            return False, "Need Repair Kit"
-
-        return True, "OK"
-
-    @staticmethod
-    def repair_item(item, inventory) -> Tuple[bool, str]:
-        """Repair an item using materials"""
-        can_repair, reason = RepairSystem.can_repair(item, inventory)
-        if not can_repair:
-            return False, reason
-
-        # Consume repair kit
-        inventory.remove_item("repair_kit", 1)
-
-        # Repair 50% durability
-        item.repair(percent=0.5)
-
-        return True, f"Repaired {item.name} to {item.durability_current}/{item.durability_max}"
-```
-
-#### Task 3.4: Self-Repair Enchantment
+#### Task 3.4: Self-Repair Enchantment (HIGH PRIORITY)
 **File**: `entities/character.py`
 **Location**: In update() or periodic update method
 
@@ -545,10 +507,10 @@ def update_passive_effects(self, dt: float):
 ### Weight Tests
 - [ ] Weight calculates correctly for equipped items
 - [ ] Weight calculates correctly for inventory items
-- [ ] STR increases carry capacity
-- [ ] Burdened (80%) reduces movement by 10%
-- [ ] Encumbered (90%) reduces movement by 25%
-- [ ] Over-encumbered (100%+) prevents movement
+- [ ] STR increases carry capacity (+2% per point)
+- [ ] At/under capacity: no movement penalty
+- [ ] 10% over capacity: -20% movement speed
+- [ ] 25% over capacity: -50% movement speed
 - [ ] Weight UI displays correctly
 
 ### Repair Tests
