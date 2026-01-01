@@ -12,8 +12,8 @@ import sys
 import os
 import json
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory (Game-1-modular) to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from Combat.enemy import EnemyDatabase
 

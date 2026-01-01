@@ -5,8 +5,8 @@ Test script to verify knockback works on Player Character
 import sys
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent
+# Add project root to path (Game-1-modular)
+project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from core.effect_executor import get_effect_executor

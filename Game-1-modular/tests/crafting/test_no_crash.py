@@ -5,8 +5,11 @@ Quick test to verify no crashes in basic operations
 import sys
 import os
 
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add Game-1-modular to path
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, project_root)
+# Add Crafting-subdisciplines to path for direct imports
+sys.path.insert(0, os.path.join(project_root, "Crafting-subdisciplines"))
 
 from smithing import SmithingCrafter
 from refining import RefiningCrafter

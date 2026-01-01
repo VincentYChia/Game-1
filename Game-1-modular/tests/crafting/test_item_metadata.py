@@ -2,6 +2,13 @@
 Test script to debug item metadata loading and enchanting filtering
 """
 import json
+import os
+import sys
+
+# Add Game-1-modular to path and set working directory
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, project_root)
+os.chdir(project_root)  # Change to project root for relative JSON paths
 
 def load_item_metadata():
     """Load all item metadata from recipes and items JSON files"""
@@ -9,9 +16,9 @@ def load_item_metadata():
 
     # Load from recipe files (recipes have metadata.narrative for outputs)
     recipe_paths = [
-        "../recipes.JSON/recipes-smithing-1.JSON",
-        "../recipes.JSON/recipes-smithing-2.JSON",
-        "../recipes.JSON/recipes-smithing-3.JSON",
+        "recipes.JSON/recipes-smithing-1.JSON",
+        "recipes.JSON/recipes-smithing-2.JSON",
+        "recipes.JSON/recipes-smithing-3.JSON",
     ]
 
     print("=" * 80)
@@ -41,8 +48,8 @@ def load_item_metadata():
 
     # Load from item files (items have metadata.narrative)
     item_paths = [
-        "../items.JSON/items-smithing-1.JSON",
-        "../items.JSON/items-smithing-2.JSON",
+        "items.JSON/items-smithing-1.JSON",
+        "items.JSON/items-smithing-2.JSON",
     ]
 
     print("\n" + "=" * 80)

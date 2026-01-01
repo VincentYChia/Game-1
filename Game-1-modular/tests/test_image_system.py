@@ -5,7 +5,7 @@ import sys
 import os
 
 # Add the Game-1-modular directory to the path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Initialize pygame (required for image loading)
 import pygame

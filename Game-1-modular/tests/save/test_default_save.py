@@ -8,8 +8,10 @@ import json
 import os
 from pathlib import Path
 
-# Add the parent directory (Game-1-modular) to path so we can import from data/
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add Game-1-modular to path so we can import from data/
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+os.chdir(project_root)  # Change to project root for relative paths
 
 from data.databases.equipment_db import EquipmentDatabase
 
