@@ -1,0 +1,431 @@
+{
+  "_meta": {
+    "category": "recipes-alchemy",
+    "description": "Alchemy recipes for potions",
+    "generated_at": "2026-01-01T19:53:07.767360",
+    "source_files": [
+      "recipes-alchemy-1.JSON"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "inputs[].materialId": {
+      "values": [
+        "air_crystal",
+        "beetle_carapace",
+        "coal",
+        "copper_ingot",
+        "dire_fang",
+        "earth_crystal",
+        "essence_blood",
+        "fire_crystal",
+        "frost_essence",
+        "golem_core",
+        "iron_ingot",
+        "light_gem",
+        "limestone",
+        "living_ichor",
+        "phoenix_ash",
+        "shadow_core",
+        "slime_gel",
+        "spectral_thread",
+        "storm_heart",
+        "void_essence",
+        "voidstone",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "count": 23,
+      "types": [
+        "string"
+      ],
+      "occurrences": 47
+    },
+    "inputs[].quantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "count": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 47
+    },
+    "metadata.narrative": {
+      "values": [
+        "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation.",
+        "Combining all basic elements into a harmony potion. Balance in bottle.",
+        "Crystallizing fire essence from raw materials. Chaos becomes order.",
+        "Defense-boosting potion using earth crystals. Skin hardens like stone.",
+        "Fire resistance potion using phoenix ash. Flames cannot harm you.",
+        "Frost resistance potion using frost essence. Cold cannot touch you.",
+        "Improved healing potion using water crystals to amplify restorative properties.",
+        "Oil that makes tools work faster and smoother. Efficiency soars.",
+        "Polish that makes armor gleam and deflect attacks. Sheen turns blades.",
+        "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly.",
+        "Refining raw life force into pure essence blood. No impurities, pure vitality.",
+        "Regeneration tonic that mends wounds over time. Body remembers how to heal continuously.",
+        "Speed-enhancing draught using air crystals and spectral thread. Time seems to slow.",
+        "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power.",
+        "Transmuting basic copper into tin. Foundation of alchemical wealth.",
+        "Transmuting iron into steel through alchemical process. Alchemy surpasses forging.",
+        "Ultimate power brew using legendary materials. You feel unstoppable.",
+        "Universal solvent that dissolves anything. Miss timing, dissolves cauldron itself."
+      ],
+      "count": 18,
+      "types": [
+        "string"
+      ],
+      "occurrences": 18
+    },
+    "metadata.tags": {
+      "values": [
+        "advanced",
+        "armor",
+        "basic",
+        "buff",
+        "crystallization",
+        "dangerous",
+        "defense",
+        "elemental",
+        "enhancement",
+        "essence",
+        "fire",
+        "frost",
+        "healing",
+        "legendary",
+        "metal",
+        "potion",
+        "purification",
+        "quality",
+        "regeneration",
+        "resistance",
+        "speed",
+        "standard",
+        "starter",
+        "strength",
+        "tool",
+        "transmutation",
+        "utility"
+      ],
+      "count": 27,
+      "types": [
+        "array"
+      ],
+      "occurrences": 18
+    },
+    "miniGame.baseTime": {
+      "values": [
+        20,
+        30,
+        35,
+        40,
+        45,
+        50,
+        60,
+        75,
+        90
+      ],
+      "count": 9,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 18
+    },
+    "miniGame.difficulty": {
+      "values": [
+        "easy",
+        "extreme",
+        "hard",
+        "moderate"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 18
+    },
+    "miniGame.type": {
+      "values": [
+        "alchemy"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 18
+    },
+    "outputId": {
+      "values": [
+        "armor_polish",
+        "efficiency_oil",
+        "elemental_harmony_potion",
+        "essence_blood",
+        "fire_crystal",
+        "fire_resistance_potion",
+        "frost_resistance_potion",
+        "greater_health_potion",
+        "health_potion",
+        "iron_skin_potion",
+        "minor_health_potion",
+        "regeneration_tonic",
+        "steel_ingot",
+        "strength_elixir",
+        "swiftness_draught",
+        "tin_ingot",
+        "titans_brew",
+        "universal_solvent"
+      ],
+      "count": 18,
+      "types": [
+        "string"
+      ],
+      "occurrences": 18
+    },
+    "outputQty": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 18
+    },
+    "recipeId": {
+      "values": [
+        "alchemy_armor_polish",
+        "alchemy_crystallize_fire",
+        "alchemy_efficiency_oil",
+        "alchemy_elemental_harmony",
+        "alchemy_fire_resistance_potion",
+        "alchemy_frost_resistance_potion",
+        "alchemy_greater_health_potion",
+        "alchemy_health_potion",
+        "alchemy_iron_skin_potion",
+        "alchemy_minor_health_potion",
+        "alchemy_refine_essence_blood",
+        "alchemy_regeneration_tonic",
+        "alchemy_strength_elixir",
+        "alchemy_swiftness_draught",
+        "alchemy_titans_brew",
+        "alchemy_transmute_copper_tin",
+        "alchemy_transmute_iron_steel",
+        "alchemy_universal_solvent"
+      ],
+      "count": 18,
+      "types": [
+        "string"
+      ],
+      "occurrences": 18
+    },
+    "stationTier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 18
+    },
+    "stationType": {
+      "values": [
+        "alchemy"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 18
+    }
+  },
+  "_usable_template": {
+    "inputs": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Speed-enhancing draught using air crystals and spectral thread. Time seems to slow.",
+      "tags": [
+        "standard",
+        "elemental",
+        "purification"
+      ]
+    },
+    "miniGame": {
+      "baseTime": 35,
+      "difficulty": "moderate",
+      "type": "alchemy"
+    },
+    "outputId": "health_potion",
+    "outputQty": 1,
+    "recipeId": "alchemy_elemental_harmony",
+    "stationTier": 1,
+    "stationType": "alchemy"
+  },
+  "template": {
+    "inputs": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "materialId": {
+        "_type": "string",
+        "_sample_values": [
+          "phoenix_ash",
+          "air_crystal",
+          "spectral_thread",
+          "earth_crystal",
+          "void_essence",
+          "dire_fang",
+          "beetle_carapace",
+          "essence_blood",
+          "storm_heart",
+          "living_ichor"
+        ],
+        "_total_unique_values": 23
+      },
+      "quantity": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "_total_unique_values": 5
+      }
+    },
+    "metadata": {
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "Speed-enhancing draught using air crystals and spectral thread. Time seems to slow.",
+          "Polish that makes armor gleam and deflect attacks. Sheen turns blades.",
+          "Transmuting basic copper into tin. Foundation of alchemical wealth.",
+          "Refining raw life force into pure essence blood. No impurities, pure vitality.",
+          "Frost resistance potion using frost essence. Cold cannot touch you.",
+          "Fire resistance potion using phoenix ash. Flames cannot harm you.",
+          "Combining all basic elements into a harmony potion. Balance in bottle.",
+          "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power.",
+          "Regeneration tonic that mends wounds over time. Body remembers how to heal continuously.",
+          "Universal solvent that dissolves anything. Miss timing, dissolves cauldron itself."
+        ],
+        "_total_unique_values": 18
+      },
+      "tags": {
+        "_type": "array",
+        "_sample_values": [
+          "standard",
+          "elemental",
+          "purification",
+          "basic",
+          "enhancement"
+        ],
+        "_total_unique_values": 27
+      }
+    },
+    "miniGame": {
+      "baseTime": {
+        "_type": "integer",
+        "_sample_values": [
+          35,
+          40,
+          75,
+          45,
+          50,
+          20,
+          90,
+          60,
+          30
+        ],
+        "_total_unique_values": 9
+      },
+      "difficulty": {
+        "_type": "string",
+        "_sample_values": [
+          "moderate",
+          "extreme",
+          "hard",
+          "easy"
+        ],
+        "_total_unique_values": 4
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "alchemy"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "outputId": {
+      "_type": "string",
+      "_sample_values": [
+        "health_potion",
+        "universal_solvent",
+        "frost_resistance_potion",
+        "greater_health_potion",
+        "iron_skin_potion",
+        "regeneration_tonic",
+        "swiftness_draught",
+        "efficiency_oil",
+        "steel_ingot",
+        "fire_crystal"
+      ],
+      "_total_unique_values": 18
+    },
+    "outputQty": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3
+      ],
+      "_total_unique_values": 3
+    },
+    "recipeId": {
+      "_type": "string",
+      "_sample_values": [
+        "alchemy_elemental_harmony",
+        "alchemy_transmute_copper_tin",
+        "alchemy_titans_brew",
+        "alchemy_health_potion",
+        "alchemy_armor_polish",
+        "alchemy_efficiency_oil",
+        "alchemy_fire_resistance_potion",
+        "alchemy_crystallize_fire",
+        "alchemy_iron_skin_potion",
+        "alchemy_regeneration_tonic"
+      ],
+      "_total_unique_values": 18
+    },
+    "stationTier": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "_total_unique_values": 4
+    },
+    "stationType": {
+      "_type": "string",
+      "_sample_values": [
+        "alchemy"
+      ],
+      "_total_unique_values": 1
+    }
+  }
+}

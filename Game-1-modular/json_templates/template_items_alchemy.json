@@ -1,0 +1,462 @@
+{
+  "_meta": {
+    "category": "items-alchemy",
+    "description": "Potions, elixirs, and consumables",
+    "generated_at": "2026-01-01T19:53:07.759531",
+    "source_files": [
+      "items-alchemy-1.JSON"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "category": {
+      "values": [
+        "consumable"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 8
+    },
+    "duration": {
+      "values": [
+        0,
+        240,
+        300,
+        480,
+        60
+      ],
+      "count": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 8
+    },
+    "effect": {
+      "values": [
+        "+20% defense",
+        "+20% physical damage",
+        "+25% movement and attack speed",
+        "+50% max HP and +40% physical damage",
+        "Restores 100 HP instantly",
+        "Restores 200 HP instantly",
+        "Restores 5 HP per second",
+        "Restores 50 HP instantly"
+      ],
+      "count": 8,
+      "types": [
+        "string"
+      ],
+      "occurrences": 8
+    },
+    "flags.consumable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 8
+    },
+    "flags.repairable": {
+      "values": [
+        false
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 8
+    },
+    "flags.stackable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 8
+    },
+    "itemId": {
+      "values": [
+        "greater_health_potion",
+        "health_potion",
+        "iron_skin_potion",
+        "minor_health_potion",
+        "regeneration_tonic",
+        "strength_elixir",
+        "swiftness_draught",
+        "titans_brew"
+      ],
+      "count": 8,
+      "types": [
+        "string"
+      ],
+      "occurrences": 8
+    },
+    "metadata.narrative": {
+      "values": [
+        "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation. Tastes terrible, works wonderfully. Wounds close and pain fades within moments.",
+        "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal, blows that should fell you merely bruise. Stand firm, unbreakable.",
+        "Improved healing potion using water crystals to amplify restorative properties. The liquid shimmers with captured vitality. One swallow and you feel strength returning.",
+        "Legendary brew combining dragon essence with phoenix ash. Maximum HP surges, strength magnifies. For a brief time, you become something more than mortal.",
+        "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly, mends broken bones, restores vitality. The taste of life itself.",
+        "Regeneration tonic that mends wounds over time. Light gems infused with living essence create a sustained healing effect. Your body remembers how to heal itself.",
+        "Speed-enhancing draught using air crystals and spectral thread. Time seems to slow around you. Your movements blur, strikes land before enemies can react.",
+        "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power, every strike hits harder. Feel the beast's ferocity flowing through you."
+      ],
+      "count": 8,
+      "types": [
+        "string"
+      ],
+      "occurrences": 8
+    },
+    "metadata.tags": {
+      "values": [
+        "advanced",
+        "agility",
+        "buff",
+        "combat",
+        "consumable",
+        "defense",
+        "healing",
+        "legendary",
+        "potion",
+        "power",
+        "protection",
+        "quality",
+        "regeneration",
+        "speed",
+        "standard",
+        "starter",
+        "strength"
+      ],
+      "count": 17,
+      "types": [
+        "array"
+      ],
+      "occurrences": 8
+    },
+    "name": {
+      "values": [
+        "Greater Health Potion",
+        "Health Potion",
+        "Iron Skin Potion",
+        "Minor Health Potion",
+        "Regeneration Tonic",
+        "Strength Elixir",
+        "Swiftness Draught",
+        "Titan's Brew"
+      ],
+      "count": 8,
+      "types": [
+        "string"
+      ],
+      "occurrences": 8
+    },
+    "rarity": {
+      "values": [
+        "common",
+        "epic",
+        "rare",
+        "uncommon"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 8
+    },
+    "requirements.level": {
+      "values": [
+        1,
+        12,
+        14,
+        20,
+        5,
+        7
+      ],
+      "count": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 8
+    },
+    "stackSize": {
+      "values": [
+        10,
+        20,
+        5
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 8
+    },
+    "statMultipliers.weight": {
+      "values": [
+        0.2,
+        0.3,
+        0.5
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 8
+    },
+    "subtype": {
+      "values": [
+        "buff",
+        "healing"
+      ],
+      "count": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 8
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 8
+    },
+    "type": {
+      "values": [
+        "potion"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 8
+    }
+  },
+  "_usable_template": {
+    "category": "consumable",
+    "duration": 0,
+    "effect": "Restores 100 HP instantly",
+    "flags": {
+      "consumable": true,
+      "repairable": true,
+      "stackable": true
+    },
+    "itemId": "health_potion",
+    "metadata": {
+      "narrative": "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal, blows that should fell you merely bruise. Stand firm, unbreakable.",
+      "tags": [
+        "standard",
+        "regeneration",
+        "buff"
+      ]
+    },
+    "name": "Health Potion",
+    "rarity": "common",
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "subtype": "healing",
+    "tier": 1,
+    "type": "potion"
+  },
+  "template": {
+    "category": {
+      "_type": "string",
+      "_sample_values": [
+        "consumable"
+      ],
+      "_total_unique_values": 1
+    },
+    "duration": {
+      "_type": "integer",
+      "_sample_values": [
+        0,
+        480,
+        300,
+        240,
+        60
+      ],
+      "_total_unique_values": 5
+    },
+    "effect": {
+      "_type": "string",
+      "_sample_values": [
+        "Restores 100 HP instantly",
+        "+20% defense",
+        "+25% movement and attack speed",
+        "+50% max HP and +40% physical damage",
+        "Restores 50 HP instantly",
+        "Restores 5 HP per second",
+        "+20% physical damage",
+        "Restores 200 HP instantly"
+      ],
+      "_total_unique_values": 8
+    },
+    "flags": {
+      "consumable": {
+        "_type": "boolean",
+        "_sample_values": [
+          true
+        ],
+        "_total_unique_values": 1
+      },
+      "repairable": {
+        "_type": "boolean",
+        "_sample_values": [
+          false
+        ],
+        "_total_unique_values": 1
+      },
+      "stackable": {
+        "_type": "boolean",
+        "_sample_values": [
+          true
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "itemId": {
+      "_type": "string",
+      "_sample_values": [
+        "health_potion",
+        "greater_health_potion",
+        "regeneration_tonic",
+        "iron_skin_potion",
+        "swiftness_draught",
+        "titans_brew",
+        "minor_health_potion",
+        "strength_elixir"
+      ],
+      "_total_unique_values": 8
+    },
+    "metadata": {
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal, blows that should fell you merely bruise. Stand firm, unbreakable.",
+          "Improved healing potion using water crystals to amplify restorative properties. The liquid shimmers with captured vitality. One swallow and you feel strength returning.",
+          "Speed-enhancing draught using air crystals and spectral thread. Time seems to slow around you. Your movements blur, strikes land before enemies can react.",
+          "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power, every strike hits harder. Feel the beast's ferocity flowing through you.",
+          "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly, mends broken bones, restores vitality. The taste of life itself.",
+          "Regeneration tonic that mends wounds over time. Light gems infused with living essence create a sustained healing effect. Your body remembers how to heal itself.",
+          "Legendary brew combining dragon essence with phoenix ash. Maximum HP surges, strength magnifies. For a brief time, you become something more than mortal.",
+          "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation. Tastes terrible, works wonderfully. Wounds close and pain fades within moments."
+        ],
+        "_total_unique_values": 8
+      },
+      "tags": {
+        "_type": "array",
+        "_sample_values": [
+          "standard",
+          "regeneration",
+          "buff",
+          "quality",
+          "starter"
+        ],
+        "_total_unique_values": 17
+      }
+    },
+    "name": {
+      "_type": "string",
+      "_sample_values": [
+        "Health Potion",
+        "Swiftness Draught",
+        "Minor Health Potion",
+        "Iron Skin Potion",
+        "Titan's Brew",
+        "Greater Health Potion",
+        "Regeneration Tonic",
+        "Strength Elixir"
+      ],
+      "_total_unique_values": 8
+    },
+    "rarity": {
+      "_type": "string",
+      "_sample_values": [
+        "common",
+        "uncommon",
+        "rare",
+        "epic"
+      ],
+      "_total_unique_values": 4
+    },
+    "requirements": {
+      "level": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          5,
+          7,
+          12,
+          14,
+          20
+        ],
+        "_total_unique_values": 6
+      },
+      "stats": {}
+    },
+    "stackSize": {
+      "_type": "integer",
+      "_sample_values": [
+        10,
+        20,
+        5
+      ],
+      "_total_unique_values": 3
+    },
+    "statMultipliers": {
+      "weight": {
+        "_type": "number",
+        "_sample_values": [
+          0.2,
+          0.5,
+          0.3
+        ],
+        "_total_unique_values": 3
+      }
+    },
+    "subtype": {
+      "_type": "string",
+      "_sample_values": [
+        "healing",
+        "buff"
+      ],
+      "_total_unique_values": 2
+    },
+    "tier": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "_total_unique_values": 4
+    },
+    "type": {
+      "_type": "string",
+      "_sample_values": [
+        "potion"
+      ],
+      "_total_unique_values": 1
+    }
+  }
+}

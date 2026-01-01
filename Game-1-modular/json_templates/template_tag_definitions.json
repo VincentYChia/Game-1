@@ -1,0 +1,8063 @@
+{
+  "_meta": {
+    "category": "tag-definitions",
+    "description": "Master tag system definitions",
+    "generated_at": "2026-01-01T19:53:07.797722",
+    "source_files": [
+      "tag-definitions.JSON"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "categories.armor_type": {
+      "values": [
+        "heavy",
+        "light",
+        "medium",
+        "robes"
+      ],
+      "count": 4,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "categories.class": {
+      "values": [
+        "adventurer",
+        "artisan",
+        "ranger",
+        "scavenger",
+        "scholar",
+        "warrior"
+      ],
+      "count": 6,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "categories.context": {
+      "values": [
+        "all",
+        "ally",
+        "construct",
+        "device",
+        "enemy",
+        "friendly",
+        "hostile",
+        "mechanical",
+        "player",
+        "self",
+        "turret",
+        "undead"
+      ],
+      "count": 12,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "categories.damage_type": {
+      "values": [
+        "arcane",
+        "chaos",
+        "crushing",
+        "fire",
+        "frost",
+        "holy",
+        "lightning",
+        "physical",
+        "piercing",
+        "poison",
+        "shadow",
+        "slashing"
+      ],
+      "count": 12,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "categories.equipment": {
+      "values": [
+        "1H",
+        "2H",
+        "versatile"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "categories.geometry": {
+      "values": [
+        "beam",
+        "chain",
+        "circle",
+        "cone",
+        "pierce",
+        "projectile",
+        "single_target",
+        "splash"
+      ],
+      "count": 8,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "categories.playstyle": {
+      "values": [
+        "agile",
+        "balanced",
+        "caster",
+        "crafting",
+        "gathering",
+        "magic",
+        "melee",
+        "ranged",
+        "tanky"
+      ],
+      "count": 9,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "categories.special": {
+      "values": [
+        "charge",
+        "critical",
+        "dash",
+        "execute",
+        "knockback",
+        "lifesteal",
+        "phase",
+        "pull",
+        "reflect",
+        "summon",
+        "teleport",
+        "thorns",
+        "vampiric"
+      ],
+      "count": 13,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "categories.status_buff": {
+      "values": [
+        "barrier",
+        "empower",
+        "fortify",
+        "haste",
+        "invisible",
+        "quicken",
+        "regeneration",
+        "shield"
+      ],
+      "count": 8,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "categories.status_debuff": {
+      "values": [
+        "bleed",
+        "burn",
+        "chill",
+        "freeze",
+        "poison_status",
+        "root",
+        "shock",
+        "slow",
+        "stun",
+        "weaken"
+      ],
+      "count": 10,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "categories.trigger": {
+      "values": [
+        "active",
+        "instant",
+        "on_contact",
+        "on_crit",
+        "on_damage",
+        "on_hit",
+        "on_kill",
+        "on_proximity",
+        "passive"
+      ],
+      "count": 9,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "conflict_resolution.geometry_priority": {
+      "values": [
+        "beam",
+        "chain",
+        "circle",
+        "cone",
+        "single_target"
+      ],
+      "count": 5,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "conflict_resolution.mutually_exclusive.1H": {
+      "values": [
+        "2H",
+        "versatile"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "conflict_resolution.mutually_exclusive.2H": {
+      "values": [
+        "1H",
+        "versatile"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "conflict_resolution.mutually_exclusive.burn": {
+      "values": [
+        "freeze"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "conflict_resolution.mutually_exclusive.freeze": {
+      "values": [
+        "burn"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "conflict_resolution.mutually_exclusive.versatile": {
+      "values": [
+        "1H",
+        "2H"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "context_inference.buff": {
+      "values": [
+        "ally"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "context_inference.damage": {
+      "values": [
+        "enemy"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "context_inference.debuff": {
+      "values": [
+        "enemy"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "context_inference.healing": {
+      "values": [
+        "ally"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "metadata.description": {
+      "values": [
+        "Tag-to-effects system tag definitions - SINGLE SOURCE OF TRUTH"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "metadata.note": {
+      "values": [
+        "All functional tags and their behaviors are defined here"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "metadata.version": {
+      "values": [
+        "1.0"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.1H.category": {
+      "values": [
+        "equipment"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.1H.conflicts_with": {
+      "values": [
+        "2H",
+        "versatile"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.1H.description": {
+      "values": [
+        "Can be equipped in mainHand OR offHand"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.1H.priority": {
+      "values": [
+        0
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.2H.category": {
+      "values": [
+        "equipment"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.2H.conflicts_with": {
+      "values": [
+        "1H",
+        "versatile"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.2H.description": {
+      "values": [
+        "Requires both hands, blocks offHand"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.2H.priority": {
+      "values": [
+        0
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.active.category": {
+      "values": [
+        "trigger"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.active.description": {
+      "values": [
+        "Requires manual activation"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.adventurer.category": {
+      "values": [
+        "class"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.adventurer.description": {
+      "values": [
+        "Jack of all trades class - balanced versatility"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.adventurer.skill_affinity": {
+      "values": [
+        "adaptive",
+        "balanced",
+        "versatile"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.agile.category": {
+      "values": [
+        "playstyle"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.agile.description": {
+      "values": [
+        "Speed and evasion focus"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.all.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.all.description": {
+      "values": [
+        "Affects all entities"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.ally.aliases": {
+      "values": [
+        "friendly"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.ally.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.ally.description": {
+      "values": [
+        "Affects allies"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.arcane.aliases": {
+      "values": [
+        "magic",
+        "magical"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.arcane.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.arcane.description": {
+      "values": [
+        "Arcane magic damage, bypasses armor"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.artisan.category": {
+      "values": [
+        "class"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.artisan.description": {
+      "values": [
+        "Master crafter class - crafting speed and quality"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.artisan.skill_affinity": {
+      "values": [
+        "crafting",
+        "engineering",
+        "smithing"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.balanced.category": {
+      "values": [
+        "playstyle"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.balanced.description": {
+      "values": [
+        "No specialization, versatile"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.barrier.alias_of": {
+      "values": [
+        "shield"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.barrier.category": {
+      "values": [
+        "status_buff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.barrier.description": {
+      "values": [
+        "Absorbs damage (alias for shield)"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.beam.aliases": {
+      "values": [
+        "line"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.beam.category": {
+      "values": [
+        "geometry"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.beam.default_params.beam_range": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.beam.default_params.beam_width": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.beam.default_params.pierce_count": {
+      "values": [
+        0
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.beam.description": {
+      "values": [
+        "Hits all targets in straight line"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.beam.priority": {
+      "values": [
+        2
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.bleed.aliases": {
+      "values": [
+        "bleeding",
+        "hemorrhage"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.bleed.category": {
+      "values": [
+        "status_debuff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.bleed.default_params.damage_per_tick": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.bleed.default_params.duration": {
+      "values": [
+        6.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.bleed.default_params.movement_increases_damage": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.bleed.default_params.tick_rate": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.bleed.description": {
+      "values": [
+        "Physical damage over time"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.bleed.immunity": {
+      "values": [
+        "construct",
+        "mechanical"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.bleed.stacking": {
+      "values": [
+        "additive"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.burn.aliases": {
+      "values": [
+        "burning",
+        "ignite"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.burn.category": {
+      "values": [
+        "status_debuff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.burn.conflicts_with": {
+      "values": [
+        "freeze"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.burn.default_params.damage_per_tick": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.burn.default_params.duration": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.burn.default_params.tick_rate": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.burn.description": {
+      "values": [
+        "Fire damage over time"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.burn.stacking": {
+      "values": [
+        "additive"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.caster.category": {
+      "values": [
+        "playstyle"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.caster.description": {
+      "values": [
+        "Spell-casting focus"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chain.category": {
+      "values": [
+        "geometry"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chain.default_params.chain_count": {
+      "values": [
+        2
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chain.default_params.chain_falloff": {
+      "values": [
+        0.3
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chain.default_params.chain_range": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chain.description": {
+      "values": [
+        "Arcs to additional nearby targets"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chain.priority": {
+      "values": [
+        5
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chain.synergies.lightning.chain_range_bonus": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chaos.aliases": {
+      "values": [
+        "void"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chaos.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chaos.description": {
+      "values": [
+        "Chaotic damage, random type each hit"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.charge.alias_of": {
+      "values": [
+        "dash"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.charge.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.charge.description": {
+      "values": [
+        "Rapid movement (alias for dash)"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chill.aliases": {
+      "values": [
+        "slow",
+        "slowed"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chill.category": {
+      "values": [
+        "status_debuff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chill.default_params.affect_attack_speed": {
+      "values": [
+        false
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chill.default_params.duration": {
+      "values": [
+        4.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chill.default_params.slow_amount": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chill.description": {
+      "values": [
+        "Movement speed reduction"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.chill.stacking": {
+      "values": [
+        "multiplicative"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.circle.aliases": {
+      "values": [
+        "aoe",
+        "radial"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.circle.category": {
+      "values": [
+        "geometry"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.circle.default_params.max_targets": {
+      "values": [
+        0
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.circle.default_params.origin": {
+      "values": [
+        "target"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.circle.default_params.radius": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.circle.description": {
+      "values": [
+        "Hits all targets in radius"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.circle.priority": {
+      "values": [
+        3
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.cone.category": {
+      "values": [
+        "geometry"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.cone.default_params.cone_angle": {
+      "values": [
+        60
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.cone.default_params.cone_range": {
+      "values": [
+        8.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.cone.description": {
+      "values": [
+        "Hits all targets in frontal cone"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.cone.priority": {
+      "values": [
+        4
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.construct.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.construct.description": {
+      "values": [
+        "Affects construct enemies"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.crafting.category": {
+      "values": [
+        "playstyle"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.crafting.description": {
+      "values": [
+        "Item creation focus"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.critical.aliases": {
+      "values": [
+        "crit"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.critical.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.critical.default_params.crit_chance": {
+      "values": [
+        0.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.critical.default_params.crit_multiplier": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.critical.description": {
+      "values": [
+        "Critical hit chance and damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.crushing.aliases": {
+      "values": [
+        "blunt"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.crushing.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.crushing.description": {
+      "values": [
+        "Physical impact damage, bonus vs armor"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.crushing.parent": {
+      "values": [
+        "physical"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.dash.aliases": {
+      "values": [
+        "charge",
+        "rush"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.dash.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.dash.default_params.damage_on_contact": {
+      "values": [
+        false
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.dash.default_params.dash_distance": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.dash.default_params.dash_speed": {
+      "values": [
+        20.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.dash.description": {
+      "values": [
+        "Rapid movement"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.device.alias_of": {
+      "values": [
+        "turret"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.device.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.device.description": {
+      "values": [
+        "Affects turrets/devices (alias for turret)"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.empower.aliases": {
+      "values": [
+        "damage_buff",
+        "strengthen"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.empower.category": {
+      "values": [
+        "status_buff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.empower.default_params.damage_increase": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.empower.default_params.duration": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.empower.description": {
+      "values": [
+        "Increased damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.empower.stacking": {
+      "values": [
+        "multiplicative"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.enemy.aliases": {
+      "values": [
+        "hostile"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.enemy.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.enemy.description": {
+      "values": [
+        "Affects enemies"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.execute.aliases": {
+      "values": [
+        "finisher"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.execute.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.execute.default_params.bonus_damage": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.execute.default_params.threshold_hp": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.execute.description": {
+      "values": [
+        "Bonus damage below HP threshold"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fire.auto_apply_chance": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fire.auto_apply_status": {
+      "values": [
+        "burn"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fire.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fire.conflicts_with": {
+      "values": [
+        "freeze"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fire.description": {
+      "values": [
+        "Fire elemental damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fortify.aliases": {
+      "values": [
+        "armor_buff",
+        "defense_buff"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fortify.category": {
+      "values": [
+        "status_buff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fortify.default_params.damage_reduction": {
+      "values": [
+        0.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fortify.default_params.defense_increase": {
+      "values": [
+        20
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fortify.default_params.duration": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fortify.description": {
+      "values": [
+        "Increased defense"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.fortify.stacking": {
+      "values": [
+        "additive"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.freeze.aliases": {
+      "values": [
+        "frozen"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.freeze.category": {
+      "values": [
+        "status_debuff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.freeze.conflicts_with": {
+      "values": [
+        "burn"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.freeze.default_params.damage_to_break": {
+      "values": [
+        0.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.freeze.default_params.duration": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.freeze.description": {
+      "values": [
+        "Complete immobilization"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.freeze.stacking": {
+      "values": [
+        "none"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.friendly.alias_of": {
+      "values": [
+        "ally"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.friendly.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.friendly.description": {
+      "values": [
+        "Affects allies (alias for ally)"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.frost.aliases": {
+      "values": [
+        "cold",
+        "ice"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.frost.auto_apply_chance": {
+      "values": [
+        0.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.frost.auto_apply_status": {
+      "values": [
+        "chill"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.frost.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.frost.conflicts_with": {
+      "values": [
+        "burn"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.frost.description": {
+      "values": [
+        "Frost elemental damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.gathering.category": {
+      "values": [
+        "playstyle"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.gathering.description": {
+      "values": [
+        "Resource collection focus"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.haste.aliases": {
+      "values": [
+        "quicken",
+        "swiftness"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.haste.category": {
+      "values": [
+        "status_buff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.haste.default_params.attack_speed_increase": {
+      "values": [
+        0.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.haste.default_params.duration": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.haste.default_params.speed_increase": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.haste.description": {
+      "values": [
+        "Increased speed"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.haste.stacking": {
+      "values": [
+        "additive"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.heavy.category": {
+      "values": [
+        "armor_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.heavy.description": {
+      "values": [
+        "Heavy armor - high defense, low mobility"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.holy.aliases": {
+      "values": [
+        "light",
+        "radiant"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.holy.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.holy.context_behavior.ally.converts_to_healing": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.holy.context_behavior.undead.damage_multiplier": {
+      "values": [
+        1.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.holy.description": {
+      "values": [
+        "Holy damage, bonus vs undead"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.hostile.alias_of": {
+      "values": [
+        "enemy"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.hostile.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.hostile.description": {
+      "values": [
+        "Affects enemies (alias for enemy)"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.instant.category": {
+      "values": [
+        "trigger"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.instant.description": {
+      "values": [
+        "No cast time"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.invisible.aliases": {
+      "values": [
+        "hidden",
+        "stealth"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.invisible.category": {
+      "values": [
+        "status_buff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.invisible.default_params.breaks_on_action": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.invisible.default_params.duration": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.invisible.description": {
+      "values": [
+        "Undetectable by enemies"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.invisible.stacking": {
+      "values": [
+        "none"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.knockback.aliases": {
+      "values": [
+        "displace",
+        "push"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.knockback.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.knockback.default_params.knockback_distance": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.knockback.default_params.knockback_duration": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.knockback.description": {
+      "values": [
+        "Push target away"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.lifesteal.aliases": {
+      "values": [
+        "drain",
+        "life_drain",
+        "vampiric"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.lifesteal.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.lifesteal.default_params.lifesteal_percent": {
+      "values": [
+        0.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.lifesteal.description": {
+      "values": [
+        "Heal percentage of damage dealt"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.light.category": {
+      "values": [
+        "armor_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.light.description": {
+      "values": [
+        "Light armor - low defense, high mobility"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.lightning.aliases": {
+      "values": [
+        "electric",
+        "shock"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.lightning.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.lightning.description": {
+      "values": [
+        "Lightning elemental damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.lightning.synergies.chain.chain_range_bonus": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.magic.category": {
+      "values": [
+        "playstyle"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.magic.description": {
+      "values": [
+        "Magical/arcane combat focus"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.mechanical.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.mechanical.description": {
+      "values": [
+        "Affects mechanical enemies"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.medium.category": {
+      "values": [
+        "armor_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.medium.description": {
+      "values": [
+        "Medium armor - balanced stats"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.melee.category": {
+      "values": [
+        "playstyle"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.melee.description": {
+      "values": [
+        "Close-range combat focus"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_contact.category": {
+      "values": [
+        "trigger"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_contact.description": {
+      "values": [
+        "Triggers when touched"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_crit.category": {
+      "values": [
+        "trigger"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_crit.description": {
+      "values": [
+        "Triggers on critical hit"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_damage.category": {
+      "values": [
+        "trigger"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_damage.description": {
+      "values": [
+        "Triggers when taking damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_hit.category": {
+      "values": [
+        "trigger"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_hit.description": {
+      "values": [
+        "Triggers when attack hits"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_kill.category": {
+      "values": [
+        "trigger"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_kill.description": {
+      "values": [
+        "Triggers when kills target"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_proximity.category": {
+      "values": [
+        "trigger"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.on_proximity.description": {
+      "values": [
+        "Triggers when nearby"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.passive.category": {
+      "values": [
+        "trigger"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.passive.description": {
+      "values": [
+        "Always active"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.phase.aliases": {
+      "values": [
+        "ethereal",
+        "intangible",
+        "phase_shift"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.phase.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.phase.default_params.can_pass_walls": {
+      "values": [
+        false
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.phase.default_params.phase_duration": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.phase.description": {
+      "values": [
+        "Temporary intangibility"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.physical.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.physical.description": {
+      "values": [
+        "Base physical damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.pierce.category": {
+      "values": [
+        "geometry"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.pierce.default_params.pierce_count": {
+      "values": [
+        -1
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.pierce.default_params.pierce_falloff": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.pierce.description": {
+      "values": [
+        "Penetrates through targets"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.pierce.priority": {
+      "values": [
+        0
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.piercing.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.piercing.description": {
+      "values": [
+        "Physical piercing damage, ignores some armor"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.piercing.parent": {
+      "values": [
+        "physical"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.player.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.player.description": {
+      "values": [
+        "Affects players only"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.poison.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.poison.description": {
+      "values": [
+        "Poison damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.poison_status.aliases": {
+      "values": [
+        "poisoned",
+        "toxic"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.poison_status.category": {
+      "values": [
+        "status_debuff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.poison_status.default_params.damage_per_tick": {
+      "values": [
+        4.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.poison_status.default_params.duration": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.poison_status.default_params.tick_rate": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.poison_status.description": {
+      "values": [
+        "Poison damage over time"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.poison_status.immunity": {
+      "values": [
+        "construct",
+        "mechanical",
+        "undead"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.poison_status.stacking": {
+      "values": [
+        "additive"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.projectile.category": {
+      "values": [
+        "geometry"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.projectile.default_params.projectile_gravity": {
+      "values": [
+        0.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.projectile.default_params.projectile_homing": {
+      "values": [
+        0.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.projectile.default_params.projectile_speed": {
+      "values": [
+        15.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.projectile.description": {
+      "values": [
+        "Physical projectile that travels"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.projectile.priority": {
+      "values": [
+        0
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.pull.aliases": {
+      "values": [
+        "attract",
+        "draw_in"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.pull.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.pull.default_params.pull_distance": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.pull.default_params.pull_duration": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.pull.description": {
+      "values": [
+        "Pull target toward source"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.quicken.alias_of": {
+      "values": [
+        "haste"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.quicken.category": {
+      "values": [
+        "status_buff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.quicken.description": {
+      "values": [
+        "Increased speed (alias for haste)"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.ranged.category": {
+      "values": [
+        "playstyle"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.ranged.description": {
+      "values": [
+        "Long-range combat focus"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.ranger.category": {
+      "values": [
+        "class"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.ranger.description": {
+      "values": [
+        "Mobile gatherer class - speed, ranged, nature"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.ranger.skill_affinity": {
+      "values": [
+        "agile",
+        "nature",
+        "ranged"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.reflect.aliases": {
+      "values": [
+        "reflect_damage",
+        "thorns"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.reflect.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.reflect.default_params.reflect_percent": {
+      "values": [
+        0.3
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.reflect.default_params.reflect_type": {
+      "values": [
+        "damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.reflect.description": {
+      "values": [
+        "Return damage to attacker"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.regeneration.aliases": {
+      "values": [
+        "heal_over_time",
+        "hot",
+        "regen"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.regeneration.category": {
+      "values": [
+        "status_buff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.regeneration.default_params.duration": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.regeneration.default_params.heal_per_tick": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.regeneration.default_params.tick_rate": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.regeneration.description": {
+      "values": [
+        "Healing over time"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.regeneration.stacking": {
+      "values": [
+        "additive"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.robes.category": {
+      "values": [
+        "armor_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.robes.description": {
+      "values": [
+        "Cloth armor - lowest defense, magic bonuses"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.root.aliases": {
+      "values": [
+        "immobilize",
+        "immobilized",
+        "rooted",
+        "snare"
+      ],
+      "count": 4,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.root.category": {
+      "values": [
+        "status_debuff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.root.default_params.duration": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.root.description": {
+      "values": [
+        "Cannot move, can still act"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.root.stacking": {
+      "values": [
+        "additive"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.scavenger.category": {
+      "values": [
+        "class"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.scavenger.description": {
+      "values": [
+        "Loot hunter class - luck, rare drops, gathering"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.scavenger.skill_affinity": {
+      "values": [
+        "gathering",
+        "luck",
+        "treasure"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.scholar.category": {
+      "values": [
+        "class"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.scholar.description": {
+      "values": [
+        "Magical researcher class - mana, alchemy, arcane"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.scholar.skill_affinity": {
+      "values": [
+        "alchemy",
+        "arcane",
+        "magic"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.self.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.self.description": {
+      "values": [
+        "Affects only caster"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shadow.aliases": {
+      "values": [
+        "dark",
+        "necrotic"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shadow.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shadow.description": {
+      "values": [
+        "Shadow damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shield.aliases": {
+      "values": [
+        "barrier",
+        "damage_shield"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shield.category": {
+      "values": [
+        "status_buff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shield.default_params.duration": {
+      "values": [
+        15.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shield.default_params.shield_amount": {
+      "values": [
+        50.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shield.default_params.shield_type": {
+      "values": [
+        "all"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shield.description": {
+      "values": [
+        "Absorbs damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shield.stacking": {
+      "values": [
+        "none"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shock.category": {
+      "values": [
+        "status_debuff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shock.default_params.damage_per_tick": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shock.default_params.duration": {
+      "values": [
+        6.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shock.default_params.tick_rate": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shock.description": {
+      "values": [
+        "Periodic damage and interrupt"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.shock.stacking": {
+      "values": [
+        "additive"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.single_target.category": {
+      "values": [
+        "geometry"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.single_target.description": {
+      "values": [
+        "Hits only primary target"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.single_target.priority": {
+      "values": [
+        1
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.slashing.category": {
+      "values": [
+        "damage_type"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.slashing.description": {
+      "values": [
+        "Physical cutting damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.slashing.parent": {
+      "values": [
+        "physical"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.slow.alias_of": {
+      "values": [
+        "chill"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.slow.category": {
+      "values": [
+        "status_debuff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.slow.description": {
+      "values": [
+        "Movement speed reduction (alias for chill)"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.splash.category": {
+      "values": [
+        "geometry"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.splash.default_params.splash_falloff": {
+      "values": [
+        "linear"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.splash.default_params.splash_radius": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.splash.description": {
+      "values": [
+        "Impact creates AOE"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.splash.priority": {
+      "values": [
+        0
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.stun.aliases": {
+      "values": [
+        "dazed",
+        "stunned"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.stun.category": {
+      "values": [
+        "status_debuff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.stun.default_params.duration": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.stun.description": {
+      "values": [
+        "Cannot act or move"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.stun.stacking": {
+      "values": [
+        "diminishing"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.summon.aliases": {
+      "values": [
+        "create",
+        "spawn"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.summon.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.summon.default_params.summon_count": {
+      "values": [
+        1
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.summon.default_params.summon_duration": {
+      "values": [
+        30.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.summon.description": {
+      "values": [
+        "Spawn entities"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.summon.requires_params": {
+      "values": [
+        "summon_id"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.tanky.category": {
+      "values": [
+        "playstyle"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.tanky.description": {
+      "values": [
+        "High survivability focus"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.teleport.aliases": {
+      "values": [
+        "blink",
+        "warp"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.teleport.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.teleport.default_params.teleport_range": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.teleport.default_params.teleport_type": {
+      "values": [
+        "targeted"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.teleport.description": {
+      "values": [
+        "Instant movement"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.thorns.alias_of": {
+      "values": [
+        "reflect"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.thorns.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.thorns.description": {
+      "values": [
+        "Return damage to attacker (alias for reflect)"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.turret.aliases": {
+      "values": [
+        "device"
+      ],
+      "count": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.turret.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.turret.description": {
+      "values": [
+        "Affects turrets/devices"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.undead.category": {
+      "values": [
+        "context"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.undead.description": {
+      "values": [
+        "Affects undead enemies"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.vampiric.alias_of": {
+      "values": [
+        "lifesteal"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.vampiric.category": {
+      "values": [
+        "special"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.vampiric.description": {
+      "values": [
+        "Heal percentage of damage dealt (alias for lifesteal)"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.versatile.category": {
+      "values": [
+        "equipment"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.versatile.conflicts_with": {
+      "values": [
+        "1H",
+        "2H"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.versatile.description": {
+      "values": [
+        "Optional offHand, different stats when 2H"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.versatile.priority": {
+      "values": [
+        0
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.warrior.category": {
+      "values": [
+        "class"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.warrior.description": {
+      "values": [
+        "Frontline fighter class - high HP, melee damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.warrior.skill_affinity": {
+      "values": [
+        "melee",
+        "physical",
+        "tanky"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.weaken.aliases": {
+      "values": [
+        "enfeeble",
+        "weakened"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.weaken.category": {
+      "values": [
+        "status_debuff"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.weaken.default_params.affected_stats": {
+      "values": [
+        "damage",
+        "defense"
+      ],
+      "count": 2,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.weaken.default_params.duration": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.weaken.default_params.stat_reduction": {
+      "values": [
+        0.25
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.weaken.description": {
+      "values": [
+        "Stat reduction"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tag_definitions.weaken.stacking": {
+      "values": [
+        "additive"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    }
+  },
+  "_usable_template": {
+    "categories": {
+      "armor_type": [
+        "medium",
+        "robes",
+        "heavy"
+      ],
+      "class": [
+        "scholar",
+        "scavenger",
+        "artisan"
+      ],
+      "context": [
+        "ally",
+        "friendly",
+        "device"
+      ],
+      "damage_type": [
+        "physical",
+        "poison",
+        "lightning"
+      ],
+      "equipment": [
+        "2H",
+        "versatile",
+        "1H"
+      ],
+      "geometry": [
+        "projectile",
+        "beam",
+        "cone"
+      ],
+      "playstyle": [
+        "ranged",
+        "caster",
+        "tanky"
+      ],
+      "special": [
+        "lifesteal",
+        "knockback",
+        "vampiric"
+      ],
+      "status_buff": [
+        "invisible",
+        "regeneration",
+        "quicken"
+      ],
+      "status_debuff": [
+        "freeze",
+        "poison_status",
+        "slow"
+      ],
+      "trigger": [
+        "on_damage",
+        "on_hit",
+        "instant"
+      ]
+    },
+    "conflict_resolution": {
+      "geometry_priority": [
+        "beam",
+        "cone",
+        "circle"
+      ],
+      "mutually_exclusive": {
+        "1H": [
+          "versatile",
+          "2H"
+        ],
+        "2H": [
+          "versatile",
+          "1H"
+        ],
+        "burn": [
+          "freeze"
+        ],
+        "freeze": [
+          "burn"
+        ],
+        "versatile": [
+          "2H",
+          "1H"
+        ]
+      }
+    },
+    "context_inference": {
+      "buff": "ally",
+      "damage": "enemy",
+      "debuff": "enemy",
+      "healing": "ally"
+    },
+    "metadata": {
+      "description": "Tag-to-effects system tag definitions - SINGLE SOURCE OF TRUTH",
+      "note": "All functional tags and their behaviors are defined here",
+      "version": "1.0"
+    },
+    "tag_definitions": {
+      "1H": {
+        "category": "equipment",
+        "conflicts_with": [
+          "versatile",
+          "2H"
+        ],
+        "description": "Can be equipped in mainHand OR offHand",
+        "priority": 0
+      },
+      "2H": {
+        "category": "equipment",
+        "conflicts_with": [
+          "versatile",
+          "1H"
+        ],
+        "description": "Requires both hands, blocks offHand",
+        "priority": 0
+      },
+      "active": {
+        "category": "trigger",
+        "description": "Requires manual activation"
+      },
+      "adventurer": {
+        "category": "class",
+        "description": "Jack of all trades class - balanced versatility",
+        "skill_affinity": [
+          "balanced",
+          "versatile",
+          "adaptive"
+        ]
+      },
+      "agile": {
+        "category": "playstyle",
+        "description": "Speed and evasion focus"
+      },
+      "all": {
+        "category": "context",
+        "description": "Affects all entities"
+      },
+      "ally": {
+        "aliases": [
+          "friendly"
+        ],
+        "category": "context",
+        "description": "Affects allies"
+      },
+      "arcane": {
+        "aliases": [
+          "magical",
+          "magic"
+        ],
+        "category": "damage_type",
+        "description": "Arcane magic damage, bypasses armor"
+      },
+      "artisan": {
+        "category": "class",
+        "description": "Master crafter class - crafting speed and quality",
+        "skill_affinity": [
+          "crafting",
+          "engineering",
+          "smithing"
+        ]
+      },
+      "balanced": {
+        "category": "playstyle",
+        "description": "No specialization, versatile"
+      },
+      "barrier": {
+        "alias_of": "shield",
+        "category": "status_buff",
+        "description": "Absorbs damage (alias for shield)"
+      },
+      "beam": {
+        "aliases": [
+          "line"
+        ],
+        "category": "geometry",
+        "default_params": {
+          "beam_range": 10.0,
+          "beam_width": 0.5,
+          "pierce_count": 0
+        },
+        "description": "Hits all targets in straight line",
+        "priority": 2,
+        "requires_params": [
+          "<value>"
+        ]
+      },
+      "bleed": {
+        "aliases": [
+          "bleeding",
+          "hemorrhage"
+        ],
+        "category": "status_debuff",
+        "default_params": {
+          "damage_per_tick": 3.0,
+          "duration": 6.0,
+          "movement_increases_damage": true,
+          "tick_rate": 1.0
+        },
+        "description": "Physical damage over time",
+        "immunity": [
+          "construct",
+          "mechanical"
+        ],
+        "stacking": "additive"
+      },
+      "burn": {
+        "aliases": [
+          "ignite",
+          "burning"
+        ],
+        "category": "status_debuff",
+        "conflicts_with": [
+          "freeze"
+        ],
+        "default_params": {
+          "damage_per_tick": 5.0,
+          "duration": 5.0,
+          "tick_rate": 1.0
+        },
+        "description": "Fire damage over time",
+        "stacking": "additive"
+      },
+      "caster": {
+        "category": "playstyle",
+        "description": "Spell-casting focus"
+      },
+      "chain": {
+        "category": "geometry",
+        "default_params": {
+          "chain_count": 2,
+          "chain_falloff": 0.3,
+          "chain_range": 5.0
+        },
+        "description": "Arcs to additional nearby targets",
+        "priority": 5,
+        "requires_params": [
+          "<value>"
+        ],
+        "synergies": {
+          "lightning": {
+            "chain_range_bonus": 0.2
+          }
+        }
+      },
+      "chaos": {
+        "aliases": [
+          "void"
+        ],
+        "category": "damage_type",
+        "description": "Chaotic damage, random type each hit"
+      },
+      "charge": {
+        "alias_of": "dash",
+        "category": "special",
+        "description": "Rapid movement (alias for dash)"
+      },
+      "chill": {
+        "aliases": [
+          "slowed",
+          "slow"
+        ],
+        "category": "status_debuff",
+        "default_params": {
+          "affect_attack_speed": true,
+          "duration": 4.0,
+          "slow_amount": 0.5
+        },
+        "description": "Movement speed reduction",
+        "stacking": "multiplicative"
+      },
+      "circle": {
+        "aliases": [
+          "aoe",
+          "radial"
+        ],
+        "category": "geometry",
+        "default_params": {
+          "max_targets": 0,
+          "origin": "target",
+          "radius": 3.0
+        },
+        "description": "Hits all targets in radius",
+        "priority": 3,
+        "requires_params": [
+          "<value>"
+        ]
+      },
+      "cone": {
+        "category": "geometry",
+        "default_params": {
+          "cone_angle": 60,
+          "cone_range": 8.0
+        },
+        "description": "Hits all targets in frontal cone",
+        "priority": 4,
+        "requires_params": [
+          "<value>"
+        ]
+      },
+      "construct": {
+        "category": "context",
+        "description": "Affects construct enemies"
+      },
+      "crafting": {
+        "category": "playstyle",
+        "description": "Item creation focus"
+      },
+      "critical": {
+        "aliases": [
+          "crit"
+        ],
+        "category": "special",
+        "default_params": {
+          "crit_chance": 0.15,
+          "crit_multiplier": 2.0
+        },
+        "description": "Critical hit chance and damage"
+      },
+      "crushing": {
+        "aliases": [
+          "blunt"
+        ],
+        "category": "damage_type",
+        "description": "Physical impact damage, bonus vs armor",
+        "parent": "physical"
+      },
+      "dash": {
+        "aliases": [
+          "rush",
+          "charge"
+        ],
+        "category": "special",
+        "default_params": {
+          "damage_on_contact": true,
+          "dash_distance": 5.0,
+          "dash_speed": 20.0
+        },
+        "description": "Rapid movement"
+      },
+      "device": {
+        "alias_of": "turret",
+        "category": "context",
+        "description": "Affects turrets/devices (alias for turret)"
+      },
+      "empower": {
+        "aliases": [
+          "strengthen",
+          "damage_buff"
+        ],
+        "category": "status_buff",
+        "default_params": {
+          "damage_increase": 0.5,
+          "duration": 10.0
+        },
+        "description": "Increased damage",
+        "stacking": "multiplicative"
+      },
+      "enemy": {
+        "aliases": [
+          "hostile"
+        ],
+        "category": "context",
+        "description": "Affects enemies"
+      },
+      "execute": {
+        "aliases": [
+          "finisher"
+        ],
+        "category": "special",
+        "default_params": {
+          "bonus_damage": 2.0,
+          "threshold_hp": 0.2
+        },
+        "description": "Bonus damage below HP threshold"
+      },
+      "fire": {
+        "auto_apply_chance": 0.1,
+        "auto_apply_status": "burn",
+        "category": "damage_type",
+        "conflicts_with": [
+          "freeze"
+        ],
+        "description": "Fire elemental damage"
+      },
+      "fortify": {
+        "aliases": [
+          "defense_buff",
+          "armor_buff"
+        ],
+        "category": "status_buff",
+        "default_params": {
+          "damage_reduction": 0.0,
+          "defense_increase": 20,
+          "duration": 10.0
+        },
+        "description": "Increased defense",
+        "stacking": "additive"
+      },
+      "freeze": {
+        "aliases": [
+          "frozen"
+        ],
+        "category": "status_debuff",
+        "conflicts_with": [
+          "burn"
+        ],
+        "default_params": {
+          "damage_to_break": 0.0,
+          "duration": 3.0
+        },
+        "description": "Complete immobilization",
+        "stacking": "none"
+      },
+      "friendly": {
+        "alias_of": "ally",
+        "category": "context",
+        "description": "Affects allies (alias for ally)"
+      },
+      "frost": {
+        "aliases": [
+          "cold",
+          "ice"
+        ],
+        "auto_apply_chance": 0.15,
+        "auto_apply_status": "chill",
+        "category": "damage_type",
+        "conflicts_with": [
+          "burn"
+        ],
+        "description": "Frost elemental damage"
+      },
+      "gathering": {
+        "category": "playstyle",
+        "description": "Resource collection focus"
+      },
+      "haste": {
+        "aliases": [
+          "swiftness",
+          "quicken"
+        ],
+        "category": "status_buff",
+        "default_params": {
+          "attack_speed_increase": 0.0,
+          "duration": 10.0,
+          "speed_increase": 0.5
+        },
+        "description": "Increased speed",
+        "stacking": "additive"
+      },
+      "heavy": {
+        "category": "armor_type",
+        "description": "Heavy armor - high defense, low mobility"
+      },
+      "holy": {
+        "aliases": [
+          "radiant",
+          "light"
+        ],
+        "category": "damage_type",
+        "context_behavior": {
+          "ally": {
+            "converts_to_healing": true
+          },
+          "undead": {
+            "damage_multiplier": 1.5
+          }
+        },
+        "description": "Holy damage, bonus vs undead"
+      },
+      "hostile": {
+        "alias_of": "enemy",
+        "category": "context",
+        "description": "Affects enemies (alias for enemy)"
+      },
+      "instant": {
+        "category": "trigger",
+        "description": "No cast time"
+      },
+      "invisible": {
+        "aliases": [
+          "stealth",
+          "hidden"
+        ],
+        "category": "status_buff",
+        "default_params": {
+          "breaks_on_action": true,
+          "duration": 10.0
+        },
+        "description": "Undetectable by enemies",
+        "stacking": "none"
+      },
+      "knockback": {
+        "aliases": [
+          "displace",
+          "push"
+        ],
+        "category": "special",
+        "default_params": {
+          "knockback_distance": 2.0,
+          "knockback_duration": 0.5
+        },
+        "description": "Push target away"
+      },
+      "lifesteal": {
+        "aliases": [
+          "life_drain",
+          "drain",
+          "vampiric"
+        ],
+        "category": "special",
+        "default_params": {
+          "lifesteal_percent": 0.15
+        },
+        "description": "Heal percentage of damage dealt"
+      },
+      "light": {
+        "category": "armor_type",
+        "description": "Light armor - low defense, high mobility"
+      },
+      "lightning": {
+        "aliases": [
+          "electric",
+          "shock"
+        ],
+        "category": "damage_type",
+        "description": "Lightning elemental damage",
+        "synergies": {
+          "chain": {
+            "chain_range_bonus": 0.2
+          }
+        }
+      },
+      "magic": {
+        "category": "playstyle",
+        "description": "Magical/arcane combat focus"
+      },
+      "mechanical": {
+        "category": "context",
+        "description": "Affects mechanical enemies"
+      },
+      "medium": {
+        "category": "armor_type",
+        "description": "Medium armor - balanced stats"
+      },
+      "melee": {
+        "category": "playstyle",
+        "description": "Close-range combat focus"
+      },
+      "on_contact": {
+        "category": "trigger",
+        "description": "Triggers when touched"
+      },
+      "on_crit": {
+        "category": "trigger",
+        "description": "Triggers on critical hit"
+      },
+      "on_damage": {
+        "category": "trigger",
+        "description": "Triggers when taking damage"
+      },
+      "on_hit": {
+        "category": "trigger",
+        "description": "Triggers when attack hits"
+      },
+      "on_kill": {
+        "category": "trigger",
+        "description": "Triggers when kills target"
+      },
+      "on_proximity": {
+        "category": "trigger",
+        "description": "Triggers when nearby"
+      },
+      "passive": {
+        "category": "trigger",
+        "description": "Always active"
+      },
+      "phase": {
+        "aliases": [
+          "phase_shift",
+          "ethereal",
+          "intangible"
+        ],
+        "category": "special",
+        "default_params": {
+          "can_pass_walls": true,
+          "phase_duration": 2.0
+        },
+        "description": "Temporary intangibility"
+      },
+      "physical": {
+        "category": "damage_type",
+        "description": "Base physical damage"
+      },
+      "pierce": {
+        "category": "geometry",
+        "default_params": {
+          "pierce_count": -1,
+          "pierce_falloff": 0.1
+        },
+        "description": "Penetrates through targets",
+        "priority": 0,
+        "requires_params": [
+          "<value>"
+        ]
+      },
+      "piercing": {
+        "category": "damage_type",
+        "description": "Physical piercing damage, ignores some armor",
+        "parent": "physical"
+      },
+      "player": {
+        "category": "context",
+        "description": "Affects players only"
+      },
+      "poison": {
+        "category": "damage_type",
+        "description": "Poison damage"
+      },
+      "poison_status": {
+        "aliases": [
+          "toxic",
+          "poisoned"
+        ],
+        "category": "status_debuff",
+        "default_params": {
+          "damage_per_tick": 4.0,
+          "duration": 10.0,
+          "tick_rate": 2.0
+        },
+        "description": "Poison damage over time",
+        "immunity": [
+          "construct",
+          "undead",
+          "mechanical"
+        ],
+        "stacking": "additive"
+      },
+      "projectile": {
+        "category": "geometry",
+        "default_params": {
+          "projectile_gravity": 0.0,
+          "projectile_homing": 0.0,
+          "projectile_speed": 15.0
+        },
+        "description": "Physical projectile that travels",
+        "priority": 0,
+        "requires_params": [
+          "<value>"
+        ]
+      },
+      "pull": {
+        "aliases": [
+          "attract",
+          "draw_in"
+        ],
+        "category": "special",
+        "default_params": {
+          "pull_distance": 2.0,
+          "pull_duration": 0.5
+        },
+        "description": "Pull target toward source"
+      },
+      "quicken": {
+        "alias_of": "haste",
+        "category": "status_buff",
+        "description": "Increased speed (alias for haste)"
+      },
+      "ranged": {
+        "category": "playstyle",
+        "description": "Long-range combat focus"
+      },
+      "ranger": {
+        "category": "class",
+        "description": "Mobile gatherer class - speed, ranged, nature",
+        "skill_affinity": [
+          "ranged",
+          "nature",
+          "agile"
+        ]
+      },
+      "reflect": {
+        "aliases": [
+          "thorns",
+          "reflect_damage"
+        ],
+        "category": "special",
+        "default_params": {
+          "reflect_percent": 0.3,
+          "reflect_type": "damage"
+        },
+        "description": "Return damage to attacker"
+      },
+      "regeneration": {
+        "aliases": [
+          "regen",
+          "hot",
+          "heal_over_time"
+        ],
+        "category": "status_buff",
+        "default_params": {
+          "duration": 10.0,
+          "heal_per_tick": 5.0,
+          "tick_rate": 1.0
+        },
+        "description": "Healing over time",
+        "stacking": "additive"
+      },
+      "robes": {
+        "category": "armor_type",
+        "description": "Cloth armor - lowest defense, magic bonuses"
+      },
+      "root": {
+        "aliases": [
+          "immobilize",
+          "rooted",
+          "immobilized"
+        ],
+        "category": "status_debuff",
+        "default_params": {
+          "duration": 3.0
+        },
+        "description": "Cannot move, can still act",
+        "stacking": "additive"
+      },
+      "scavenger": {
+        "category": "class",
+        "description": "Loot hunter class - luck, rare drops, gathering",
+        "skill_affinity": [
+          "gathering",
+          "treasure",
+          "luck"
+        ]
+      },
+      "scholar": {
+        "category": "class",
+        "description": "Magical researcher class - mana, alchemy, arcane",
+        "skill_affinity": [
+          "alchemy",
+          "magic",
+          "arcane"
+        ]
+      },
+      "self": {
+        "category": "context",
+        "description": "Affects only caster"
+      },
+      "shadow": {
+        "aliases": [
+          "dark",
+          "necrotic"
+        ],
+        "category": "damage_type",
+        "description": "Shadow damage"
+      },
+      "shield": {
+        "aliases": [
+          "barrier",
+          "damage_shield"
+        ],
+        "category": "status_buff",
+        "default_params": {
+          "duration": 15.0,
+          "shield_amount": 50.0,
+          "shield_type": "all"
+        },
+        "description": "Absorbs damage",
+        "stacking": "none"
+      },
+      "shock": {
+        "category": "status_debuff",
+        "default_params": {
+          "damage_per_tick": 5.0,
+          "duration": 6.0,
+          "tick_rate": 2.0
+        },
+        "description": "Periodic damage and interrupt",
+        "stacking": "additive"
+      },
+      "single_target": {
+        "category": "geometry",
+        "default_params": {},
+        "description": "Hits only primary target",
+        "priority": 1,
+        "requires_params": [
+          "<value>"
+        ]
+      },
+      "slashing": {
+        "category": "damage_type",
+        "description": "Physical cutting damage",
+        "parent": "physical"
+      },
+      "slow": {
+        "alias_of": "chill",
+        "category": "status_debuff",
+        "description": "Movement speed reduction (alias for chill)"
+      },
+      "splash": {
+        "category": "geometry",
+        "default_params": {
+          "splash_falloff": "linear",
+          "splash_radius": 2.0
+        },
+        "description": "Impact creates AOE",
+        "priority": 0,
+        "requires_params": [
+          "<value>"
+        ]
+      },
+      "stun": {
+        "aliases": [
+          "stunned",
+          "dazed"
+        ],
+        "category": "status_debuff",
+        "default_params": {
+          "duration": 2.0
+        },
+        "description": "Cannot act or move",
+        "stacking": "diminishing"
+      },
+      "summon": {
+        "aliases": [
+          "spawn",
+          "create"
+        ],
+        "category": "special",
+        "default_params": {
+          "summon_count": 1,
+          "summon_duration": 30.0
+        },
+        "description": "Spawn entities",
+        "requires_params": [
+          "summon_id"
+        ]
+      },
+      "tanky": {
+        "category": "playstyle",
+        "description": "High survivability focus"
+      },
+      "teleport": {
+        "aliases": [
+          "warp",
+          "blink"
+        ],
+        "category": "special",
+        "default_params": {
+          "teleport_range": 10.0,
+          "teleport_type": "targeted"
+        },
+        "description": "Instant movement"
+      },
+      "thorns": {
+        "alias_of": "reflect",
+        "category": "special",
+        "description": "Return damage to attacker (alias for reflect)"
+      },
+      "turret": {
+        "aliases": [
+          "device"
+        ],
+        "category": "context",
+        "description": "Affects turrets/devices"
+      },
+      "undead": {
+        "category": "context",
+        "description": "Affects undead enemies"
+      },
+      "vampiric": {
+        "alias_of": "lifesteal",
+        "category": "special",
+        "description": "Heal percentage of damage dealt (alias for lifesteal)"
+      },
+      "versatile": {
+        "category": "equipment",
+        "conflicts_with": [
+          "2H",
+          "1H"
+        ],
+        "description": "Optional offHand, different stats when 2H",
+        "priority": 0
+      },
+      "warrior": {
+        "category": "class",
+        "description": "Frontline fighter class - high HP, melee damage",
+        "skill_affinity": [
+          "melee",
+          "tanky",
+          "physical"
+        ]
+      },
+      "weaken": {
+        "aliases": [
+          "weakened",
+          "enfeeble"
+        ],
+        "category": "status_debuff",
+        "default_params": {
+          "affected_stats": [
+            "defense",
+            "damage"
+          ],
+          "duration": 5.0,
+          "stat_reduction": 0.25
+        },
+        "description": "Stat reduction",
+        "stacking": "additive"
+      }
+    }
+  },
+  "template": {
+    "categories": {
+      "armor_type": {
+        "_type": "array",
+        "_sample_values": [
+          "medium",
+          "robes",
+          "heavy",
+          "light"
+        ],
+        "_total_unique_values": 4
+      },
+      "class": {
+        "_type": "array",
+        "_sample_values": [
+          "scholar",
+          "scavenger",
+          "artisan",
+          "ranger",
+          "warrior"
+        ],
+        "_total_unique_values": 6
+      },
+      "context": {
+        "_type": "array",
+        "_sample_values": [
+          "ally",
+          "friendly",
+          "device",
+          "hostile",
+          "undead"
+        ],
+        "_total_unique_values": 12
+      },
+      "damage_type": {
+        "_type": "array",
+        "_sample_values": [
+          "physical",
+          "poison",
+          "lightning",
+          "frost",
+          "slashing"
+        ],
+        "_total_unique_values": 12
+      },
+      "equipment": {
+        "_type": "array",
+        "_sample_values": [
+          "2H",
+          "versatile",
+          "1H"
+        ],
+        "_total_unique_values": 3
+      },
+      "geometry": {
+        "_type": "array",
+        "_sample_values": [
+          "projectile",
+          "beam",
+          "cone",
+          "circle",
+          "pierce"
+        ],
+        "_total_unique_values": 8
+      },
+      "playstyle": {
+        "_type": "array",
+        "_sample_values": [
+          "ranged",
+          "caster",
+          "tanky",
+          "gathering",
+          "balanced"
+        ],
+        "_total_unique_values": 9
+      },
+      "special": {
+        "_type": "array",
+        "_sample_values": [
+          "lifesteal",
+          "knockback",
+          "vampiric",
+          "summon",
+          "execute"
+        ],
+        "_total_unique_values": 13
+      },
+      "status_buff": {
+        "_type": "array",
+        "_sample_values": [
+          "invisible",
+          "regeneration",
+          "quicken",
+          "barrier",
+          "fortify"
+        ],
+        "_total_unique_values": 8
+      },
+      "status_debuff": {
+        "_type": "array",
+        "_sample_values": [
+          "freeze",
+          "poison_status",
+          "slow",
+          "bleed",
+          "shock"
+        ],
+        "_total_unique_values": 10
+      },
+      "trigger": {
+        "_type": "array",
+        "_sample_values": [
+          "on_damage",
+          "on_hit",
+          "instant",
+          "on_proximity",
+          "passive"
+        ],
+        "_total_unique_values": 9
+      }
+    },
+    "conflict_resolution": {
+      "geometry_priority": {
+        "_type": "array",
+        "_sample_values": [
+          "beam",
+          "cone",
+          "circle",
+          "single_target",
+          "chain"
+        ],
+        "_total_unique_values": 5
+      },
+      "mutually_exclusive": {
+        "1H": {
+          "_type": "array",
+          "_sample_values": [
+            "versatile",
+            "2H"
+          ],
+          "_total_unique_values": 2
+        },
+        "2H": {
+          "_type": "array",
+          "_sample_values": [
+            "versatile",
+            "1H"
+          ],
+          "_total_unique_values": 2
+        },
+        "burn": {
+          "_type": "array",
+          "_sample_values": [
+            "freeze"
+          ],
+          "_total_unique_values": 1
+        },
+        "freeze": {
+          "_type": "array",
+          "_sample_values": [
+            "burn"
+          ],
+          "_total_unique_values": 1
+        },
+        "versatile": {
+          "_type": "array",
+          "_sample_values": [
+            "2H",
+            "1H"
+          ],
+          "_total_unique_values": 2
+        }
+      }
+    },
+    "context_inference": {
+      "buff": {
+        "_type": "string",
+        "_sample_values": [
+          "ally"
+        ],
+        "_total_unique_values": 1
+      },
+      "damage": {
+        "_type": "string",
+        "_sample_values": [
+          "enemy"
+        ],
+        "_total_unique_values": 1
+      },
+      "debuff": {
+        "_type": "string",
+        "_sample_values": [
+          "enemy"
+        ],
+        "_total_unique_values": 1
+      },
+      "healing": {
+        "_type": "string",
+        "_sample_values": [
+          "ally"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "metadata": {
+      "description": {
+        "_type": "string",
+        "_sample_values": [
+          "Tag-to-effects system tag definitions - SINGLE SOURCE OF TRUTH"
+        ],
+        "_total_unique_values": 1
+      },
+      "note": {
+        "_type": "string",
+        "_sample_values": [
+          "All functional tags and their behaviors are defined here"
+        ],
+        "_total_unique_values": 1
+      },
+      "version": {
+        "_type": "string",
+        "_sample_values": [
+          "1.0"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "tag_definitions": {
+      "1H": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "equipment"
+          ],
+          "_total_unique_values": 1
+        },
+        "conflicts_with": {
+          "_type": "array",
+          "_sample_values": [
+            "versatile",
+            "2H"
+          ],
+          "_total_unique_values": 2
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Can be equipped in mainHand OR offHand"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            0
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "2H": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "equipment"
+          ],
+          "_total_unique_values": 1
+        },
+        "conflicts_with": {
+          "_type": "array",
+          "_sample_values": [
+            "versatile",
+            "1H"
+          ],
+          "_total_unique_values": 2
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Requires both hands, blocks offHand"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            0
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "active": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "trigger"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Requires manual activation"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "adventurer": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "class"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Jack of all trades class - balanced versatility"
+          ],
+          "_total_unique_values": 1
+        },
+        "skill_affinity": {
+          "_type": "array",
+          "_sample_values": [
+            "balanced",
+            "versatile",
+            "adaptive"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "agile": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "playstyle"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Speed and evasion focus"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "all": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects all entities"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "ally": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "friendly"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects allies"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "arcane": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "magical",
+            "magic"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Arcane magic damage, bypasses armor"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "artisan": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "class"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Master crafter class - crafting speed and quality"
+          ],
+          "_total_unique_values": 1
+        },
+        "skill_affinity": {
+          "_type": "array",
+          "_sample_values": [
+            "crafting",
+            "engineering",
+            "smithing"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "balanced": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "playstyle"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "No specialization, versatile"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "barrier": {
+        "alias_of": {
+          "_type": "string",
+          "_sample_values": [
+            "shield"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_buff"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Absorbs damage (alias for shield)"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "beam": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "line"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "geometry"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "beam_range": {
+            "_type": "number",
+            "_sample_values": [
+              10.0
+            ],
+            "_total_unique_values": 1
+          },
+          "beam_width": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          },
+          "pierce_count": {
+            "_type": "integer",
+            "_sample_values": [
+              0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Hits all targets in straight line"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            2
+          ],
+          "_total_unique_values": 1
+        },
+        "requires_params": {
+          "_type": "array",
+          "_sample_values": [],
+          "_total_unique_values": 0
+        }
+      },
+      "bleed": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "bleeding",
+            "hemorrhage"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_debuff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "damage_per_tick": {
+            "_type": "number",
+            "_sample_values": [
+              3.0
+            ],
+            "_total_unique_values": 1
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              6.0
+            ],
+            "_total_unique_values": 1
+          },
+          "movement_increases_damage": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          },
+          "tick_rate": {
+            "_type": "number",
+            "_sample_values": [
+              1.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Physical damage over time"
+          ],
+          "_total_unique_values": 1
+        },
+        "immunity": {
+          "_type": "array",
+          "_sample_values": [
+            "construct",
+            "mechanical"
+          ],
+          "_total_unique_values": 2
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "additive"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "burn": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "ignite",
+            "burning"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_debuff"
+          ],
+          "_total_unique_values": 1
+        },
+        "conflicts_with": {
+          "_type": "array",
+          "_sample_values": [
+            "freeze"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "damage_per_tick": {
+            "_type": "number",
+            "_sample_values": [
+              5.0
+            ],
+            "_total_unique_values": 1
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              5.0
+            ],
+            "_total_unique_values": 1
+          },
+          "tick_rate": {
+            "_type": "number",
+            "_sample_values": [
+              1.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Fire damage over time"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "additive"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "caster": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "playstyle"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Spell-casting focus"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "chain": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "geometry"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "chain_count": {
+            "_type": "integer",
+            "_sample_values": [
+              2
+            ],
+            "_total_unique_values": 1
+          },
+          "chain_falloff": {
+            "_type": "number",
+            "_sample_values": [
+              0.3
+            ],
+            "_total_unique_values": 1
+          },
+          "chain_range": {
+            "_type": "number",
+            "_sample_values": [
+              5.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Arcs to additional nearby targets"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            5
+          ],
+          "_total_unique_values": 1
+        },
+        "requires_params": {
+          "_type": "array",
+          "_sample_values": [],
+          "_total_unique_values": 0
+        },
+        "synergies": {
+          "lightning": {
+            "chain_range_bonus": {
+              "_type": "number",
+              "_sample_values": [
+                0.2
+              ],
+              "_total_unique_values": 1
+            }
+          }
+        }
+      },
+      "chaos": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "void"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Chaotic damage, random type each hit"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "charge": {
+        "alias_of": {
+          "_type": "string",
+          "_sample_values": [
+            "dash"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Rapid movement (alias for dash)"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "chill": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "slowed",
+            "slow"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_debuff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "affect_attack_speed": {
+            "_type": "boolean",
+            "_sample_values": [
+              false
+            ],
+            "_total_unique_values": 1
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              4.0
+            ],
+            "_total_unique_values": 1
+          },
+          "slow_amount": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Movement speed reduction"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "multiplicative"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "circle": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "aoe",
+            "radial"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "geometry"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "max_targets": {
+            "_type": "integer",
+            "_sample_values": [
+              0
+            ],
+            "_total_unique_values": 1
+          },
+          "origin": {
+            "_type": "string",
+            "_sample_values": [
+              "target"
+            ],
+            "_total_unique_values": 1
+          },
+          "radius": {
+            "_type": "number",
+            "_sample_values": [
+              3.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Hits all targets in radius"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            3
+          ],
+          "_total_unique_values": 1
+        },
+        "requires_params": {
+          "_type": "array",
+          "_sample_values": [],
+          "_total_unique_values": 0
+        }
+      },
+      "cone": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "geometry"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "cone_angle": {
+            "_type": "integer",
+            "_sample_values": [
+              60
+            ],
+            "_total_unique_values": 1
+          },
+          "cone_range": {
+            "_type": "number",
+            "_sample_values": [
+              8.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Hits all targets in frontal cone"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            4
+          ],
+          "_total_unique_values": 1
+        },
+        "requires_params": {
+          "_type": "array",
+          "_sample_values": [],
+          "_total_unique_values": 0
+        }
+      },
+      "construct": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects construct enemies"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "crafting": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "playstyle"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Item creation focus"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "critical": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "crit"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "crit_chance": {
+            "_type": "number",
+            "_sample_values": [
+              0.15
+            ],
+            "_total_unique_values": 1
+          },
+          "crit_multiplier": {
+            "_type": "number",
+            "_sample_values": [
+              2.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Critical hit chance and damage"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "crushing": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "blunt"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Physical impact damage, bonus vs armor"
+          ],
+          "_total_unique_values": 1
+        },
+        "parent": {
+          "_type": "string",
+          "_sample_values": [
+            "physical"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "dash": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "rush",
+            "charge"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "damage_on_contact": {
+            "_type": "boolean",
+            "_sample_values": [
+              false
+            ],
+            "_total_unique_values": 1
+          },
+          "dash_distance": {
+            "_type": "number",
+            "_sample_values": [
+              5.0
+            ],
+            "_total_unique_values": 1
+          },
+          "dash_speed": {
+            "_type": "number",
+            "_sample_values": [
+              20.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Rapid movement"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "device": {
+        "alias_of": {
+          "_type": "string",
+          "_sample_values": [
+            "turret"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects turrets/devices (alias for turret)"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "empower": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "strengthen",
+            "damage_buff"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_buff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "damage_increase": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              10.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Increased damage"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "multiplicative"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "enemy": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "hostile"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects enemies"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "execute": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "finisher"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "bonus_damage": {
+            "_type": "number",
+            "_sample_values": [
+              2.0
+            ],
+            "_total_unique_values": 1
+          },
+          "threshold_hp": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Bonus damage below HP threshold"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "fire": {
+        "auto_apply_chance": {
+          "_type": "number",
+          "_sample_values": [
+            0.1
+          ],
+          "_total_unique_values": 1
+        },
+        "auto_apply_status": {
+          "_type": "string",
+          "_sample_values": [
+            "burn"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "conflicts_with": {
+          "_type": "array",
+          "_sample_values": [
+            "freeze"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Fire elemental damage"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "fortify": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "defense_buff",
+            "armor_buff"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_buff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "damage_reduction": {
+            "_type": "number",
+            "_sample_values": [
+              0.0
+            ],
+            "_total_unique_values": 1
+          },
+          "defense_increase": {
+            "_type": "integer",
+            "_sample_values": [
+              20
+            ],
+            "_total_unique_values": 1
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              10.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Increased defense"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "additive"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "freeze": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "frozen"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_debuff"
+          ],
+          "_total_unique_values": 1
+        },
+        "conflicts_with": {
+          "_type": "array",
+          "_sample_values": [
+            "burn"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "damage_to_break": {
+            "_type": "number",
+            "_sample_values": [
+              0.0
+            ],
+            "_total_unique_values": 1
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              3.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Complete immobilization"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "none"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "friendly": {
+        "alias_of": {
+          "_type": "string",
+          "_sample_values": [
+            "ally"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects allies (alias for ally)"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "frost": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "cold",
+            "ice"
+          ],
+          "_total_unique_values": 2
+        },
+        "auto_apply_chance": {
+          "_type": "number",
+          "_sample_values": [
+            0.15
+          ],
+          "_total_unique_values": 1
+        },
+        "auto_apply_status": {
+          "_type": "string",
+          "_sample_values": [
+            "chill"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "conflicts_with": {
+          "_type": "array",
+          "_sample_values": [
+            "burn"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Frost elemental damage"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "gathering": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "playstyle"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Resource collection focus"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "haste": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "swiftness",
+            "quicken"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_buff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "attack_speed_increase": {
+            "_type": "number",
+            "_sample_values": [
+              0.0
+            ],
+            "_total_unique_values": 1
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              10.0
+            ],
+            "_total_unique_values": 1
+          },
+          "speed_increase": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Increased speed"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "additive"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "heavy": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "armor_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Heavy armor - high defense, low mobility"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "holy": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "radiant",
+            "light"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "context_behavior": {
+          "ally": {
+            "converts_to_healing": {
+              "_type": "boolean",
+              "_sample_values": [
+                true
+              ],
+              "_total_unique_values": 1
+            }
+          },
+          "undead": {
+            "damage_multiplier": {
+              "_type": "number",
+              "_sample_values": [
+                1.5
+              ],
+              "_total_unique_values": 1
+            }
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Holy damage, bonus vs undead"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "hostile": {
+        "alias_of": {
+          "_type": "string",
+          "_sample_values": [
+            "enemy"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects enemies (alias for enemy)"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "instant": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "trigger"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "No cast time"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "invisible": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "stealth",
+            "hidden"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_buff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "breaks_on_action": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              10.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Undetectable by enemies"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "none"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "knockback": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "displace",
+            "push"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "knockback_distance": {
+            "_type": "number",
+            "_sample_values": [
+              2.0
+            ],
+            "_total_unique_values": 1
+          },
+          "knockback_duration": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Push target away"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "lifesteal": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "life_drain",
+            "drain",
+            "vampiric"
+          ],
+          "_total_unique_values": 3
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "lifesteal_percent": {
+            "_type": "number",
+            "_sample_values": [
+              0.15
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Heal percentage of damage dealt"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "light": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "armor_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Light armor - low defense, high mobility"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "lightning": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "electric",
+            "shock"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Lightning elemental damage"
+          ],
+          "_total_unique_values": 1
+        },
+        "synergies": {
+          "chain": {
+            "chain_range_bonus": {
+              "_type": "number",
+              "_sample_values": [
+                0.2
+              ],
+              "_total_unique_values": 1
+            }
+          }
+        }
+      },
+      "magic": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "playstyle"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Magical/arcane combat focus"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "mechanical": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects mechanical enemies"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "medium": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "armor_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Medium armor - balanced stats"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "melee": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "playstyle"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Close-range combat focus"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "on_contact": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "trigger"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Triggers when touched"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "on_crit": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "trigger"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Triggers on critical hit"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "on_damage": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "trigger"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Triggers when taking damage"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "on_hit": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "trigger"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Triggers when attack hits"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "on_kill": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "trigger"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Triggers when kills target"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "on_proximity": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "trigger"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Triggers when nearby"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "passive": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "trigger"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Always active"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "phase": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "phase_shift",
+            "ethereal",
+            "intangible"
+          ],
+          "_total_unique_values": 3
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "can_pass_walls": {
+            "_type": "boolean",
+            "_sample_values": [
+              false
+            ],
+            "_total_unique_values": 1
+          },
+          "phase_duration": {
+            "_type": "number",
+            "_sample_values": [
+              2.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Temporary intangibility"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "physical": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Base physical damage"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "pierce": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "geometry"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "pierce_count": {
+            "_type": "integer",
+            "_sample_values": [
+              -1
+            ],
+            "_total_unique_values": 1
+          },
+          "pierce_falloff": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Penetrates through targets"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            0
+          ],
+          "_total_unique_values": 1
+        },
+        "requires_params": {
+          "_type": "array",
+          "_sample_values": [],
+          "_total_unique_values": 0
+        }
+      },
+      "piercing": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Physical piercing damage, ignores some armor"
+          ],
+          "_total_unique_values": 1
+        },
+        "parent": {
+          "_type": "string",
+          "_sample_values": [
+            "physical"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "player": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects players only"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "poison": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Poison damage"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "poison_status": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "toxic",
+            "poisoned"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_debuff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "damage_per_tick": {
+            "_type": "number",
+            "_sample_values": [
+              4.0
+            ],
+            "_total_unique_values": 1
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              10.0
+            ],
+            "_total_unique_values": 1
+          },
+          "tick_rate": {
+            "_type": "number",
+            "_sample_values": [
+              2.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Poison damage over time"
+          ],
+          "_total_unique_values": 1
+        },
+        "immunity": {
+          "_type": "array",
+          "_sample_values": [
+            "construct",
+            "undead",
+            "mechanical"
+          ],
+          "_total_unique_values": 3
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "additive"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "projectile": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "geometry"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "projectile_gravity": {
+            "_type": "number",
+            "_sample_values": [
+              0.0
+            ],
+            "_total_unique_values": 1
+          },
+          "projectile_homing": {
+            "_type": "number",
+            "_sample_values": [
+              0.0
+            ],
+            "_total_unique_values": 1
+          },
+          "projectile_speed": {
+            "_type": "number",
+            "_sample_values": [
+              15.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Physical projectile that travels"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            0
+          ],
+          "_total_unique_values": 1
+        },
+        "requires_params": {
+          "_type": "array",
+          "_sample_values": [],
+          "_total_unique_values": 0
+        }
+      },
+      "pull": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "attract",
+            "draw_in"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "pull_distance": {
+            "_type": "number",
+            "_sample_values": [
+              2.0
+            ],
+            "_total_unique_values": 1
+          },
+          "pull_duration": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Pull target toward source"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "quicken": {
+        "alias_of": {
+          "_type": "string",
+          "_sample_values": [
+            "haste"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_buff"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Increased speed (alias for haste)"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "ranged": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "playstyle"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Long-range combat focus"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "ranger": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "class"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Mobile gatherer class - speed, ranged, nature"
+          ],
+          "_total_unique_values": 1
+        },
+        "skill_affinity": {
+          "_type": "array",
+          "_sample_values": [
+            "ranged",
+            "nature",
+            "agile"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "reflect": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "thorns",
+            "reflect_damage"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "reflect_percent": {
+            "_type": "number",
+            "_sample_values": [
+              0.3
+            ],
+            "_total_unique_values": 1
+          },
+          "reflect_type": {
+            "_type": "string",
+            "_sample_values": [
+              "damage"
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Return damage to attacker"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "regeneration": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "regen",
+            "hot",
+            "heal_over_time"
+          ],
+          "_total_unique_values": 3
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_buff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              10.0
+            ],
+            "_total_unique_values": 1
+          },
+          "heal_per_tick": {
+            "_type": "number",
+            "_sample_values": [
+              5.0
+            ],
+            "_total_unique_values": 1
+          },
+          "tick_rate": {
+            "_type": "number",
+            "_sample_values": [
+              1.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Healing over time"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "additive"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "robes": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "armor_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Cloth armor - lowest defense, magic bonuses"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "root": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "immobilize",
+            "rooted",
+            "immobilized",
+            "snare"
+          ],
+          "_total_unique_values": 4
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_debuff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              3.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Cannot move, can still act"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "additive"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "scavenger": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "class"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Loot hunter class - luck, rare drops, gathering"
+          ],
+          "_total_unique_values": 1
+        },
+        "skill_affinity": {
+          "_type": "array",
+          "_sample_values": [
+            "gathering",
+            "treasure",
+            "luck"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "scholar": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "class"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Magical researcher class - mana, alchemy, arcane"
+          ],
+          "_total_unique_values": 1
+        },
+        "skill_affinity": {
+          "_type": "array",
+          "_sample_values": [
+            "alchemy",
+            "magic",
+            "arcane"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "self": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects only caster"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "shadow": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "dark",
+            "necrotic"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Shadow damage"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "shield": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "barrier",
+            "damage_shield"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_buff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              15.0
+            ],
+            "_total_unique_values": 1
+          },
+          "shield_amount": {
+            "_type": "number",
+            "_sample_values": [
+              50.0
+            ],
+            "_total_unique_values": 1
+          },
+          "shield_type": {
+            "_type": "string",
+            "_sample_values": [
+              "all"
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Absorbs damage"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "none"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "shock": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_debuff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "damage_per_tick": {
+            "_type": "number",
+            "_sample_values": [
+              5.0
+            ],
+            "_total_unique_values": 1
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              6.0
+            ],
+            "_total_unique_values": 1
+          },
+          "tick_rate": {
+            "_type": "number",
+            "_sample_values": [
+              2.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Periodic damage and interrupt"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "additive"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "single_target": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "geometry"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {},
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Hits only primary target"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            1
+          ],
+          "_total_unique_values": 1
+        },
+        "requires_params": {
+          "_type": "array",
+          "_sample_values": [],
+          "_total_unique_values": 0
+        }
+      },
+      "slashing": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "damage_type"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Physical cutting damage"
+          ],
+          "_total_unique_values": 1
+        },
+        "parent": {
+          "_type": "string",
+          "_sample_values": [
+            "physical"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "slow": {
+        "alias_of": {
+          "_type": "string",
+          "_sample_values": [
+            "chill"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_debuff"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Movement speed reduction (alias for chill)"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "splash": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "geometry"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "splash_falloff": {
+            "_type": "string",
+            "_sample_values": [
+              "linear"
+            ],
+            "_total_unique_values": 1
+          },
+          "splash_radius": {
+            "_type": "number",
+            "_sample_values": [
+              2.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Impact creates AOE"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            0
+          ],
+          "_total_unique_values": 1
+        },
+        "requires_params": {
+          "_type": "array",
+          "_sample_values": [],
+          "_total_unique_values": 0
+        }
+      },
+      "stun": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "stunned",
+            "dazed"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_debuff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              2.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Cannot act or move"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "diminishing"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "summon": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "spawn",
+            "create"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "summon_count": {
+            "_type": "integer",
+            "_sample_values": [
+              1
+            ],
+            "_total_unique_values": 1
+          },
+          "summon_duration": {
+            "_type": "number",
+            "_sample_values": [
+              30.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Spawn entities"
+          ],
+          "_total_unique_values": 1
+        },
+        "requires_params": {
+          "_type": "array",
+          "_sample_values": [
+            "summon_id"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "tanky": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "playstyle"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "High survivability focus"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "teleport": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "warp",
+            "blink"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "teleport_range": {
+            "_type": "number",
+            "_sample_values": [
+              10.0
+            ],
+            "_total_unique_values": 1
+          },
+          "teleport_type": {
+            "_type": "string",
+            "_sample_values": [
+              "targeted"
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Instant movement"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "thorns": {
+        "alias_of": {
+          "_type": "string",
+          "_sample_values": [
+            "reflect"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Return damage to attacker (alias for reflect)"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "turret": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "device"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects turrets/devices"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "undead": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "context"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Affects undead enemies"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "vampiric": {
+        "alias_of": {
+          "_type": "string",
+          "_sample_values": [
+            "lifesteal"
+          ],
+          "_total_unique_values": 1
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "special"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Heal percentage of damage dealt (alias for lifesteal)"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "versatile": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "equipment"
+          ],
+          "_total_unique_values": 1
+        },
+        "conflicts_with": {
+          "_type": "array",
+          "_sample_values": [
+            "2H",
+            "1H"
+          ],
+          "_total_unique_values": 2
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Optional offHand, different stats when 2H"
+          ],
+          "_total_unique_values": 1
+        },
+        "priority": {
+          "_type": "integer",
+          "_sample_values": [
+            0
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "warrior": {
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "class"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Frontline fighter class - high HP, melee damage"
+          ],
+          "_total_unique_values": 1
+        },
+        "skill_affinity": {
+          "_type": "array",
+          "_sample_values": [
+            "melee",
+            "tanky",
+            "physical"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "weaken": {
+        "aliases": {
+          "_type": "array",
+          "_sample_values": [
+            "weakened",
+            "enfeeble"
+          ],
+          "_total_unique_values": 2
+        },
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "status_debuff"
+          ],
+          "_total_unique_values": 1
+        },
+        "default_params": {
+          "affected_stats": {
+            "_type": "array",
+            "_sample_values": [
+              "defense",
+              "damage"
+            ],
+            "_total_unique_values": 2
+          },
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              5.0
+            ],
+            "_total_unique_values": 1
+          },
+          "stat_reduction": {
+            "_type": "number",
+            "_sample_values": [
+              0.25
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Stat reduction"
+          ],
+          "_total_unique_values": 1
+        },
+        "stacking": {
+          "_type": "string",
+          "_sample_values": [
+            "additive"
+          ],
+          "_total_unique_values": 1
+        }
+      }
+    }
+  }
+}

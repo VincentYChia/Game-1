@@ -1,0 +1,474 @@
+{
+  "_meta": {
+    "category": "resource-nodes",
+    "description": "Gatherable resource node definitions",
+    "generated_at": "2026-01-01T19:53:07.791388",
+    "source_files": [
+      "resource-node-1.JSON"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "baseHealth": {
+      "values": [
+        100,
+        200,
+        400,
+        800
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 28
+    },
+    "category": {
+      "values": [
+        "ore",
+        "stone",
+        "tree"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 28
+    },
+    "drops[].chance": {
+      "values": [
+        "guaranteed",
+        "high",
+        "improbable",
+        "low",
+        "moderate",
+        "rare"
+      ],
+      "count": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 38
+    },
+    "drops[].materialId": {
+      "values": [
+        "adamantine_ore",
+        "ash_log",
+        "basalt",
+        "birch_log",
+        "chaos_matrix",
+        "copper_ore",
+        "crystal_quartz",
+        "diamond",
+        "earth_crystal",
+        "ebony_log",
+        "eternity_stone",
+        "etherion_ore",
+        "fire_crystal",
+        "genesis_lattice",
+        "granite",
+        "iron_ore",
+        "ironwood_log",
+        "light_gem",
+        "lightning_shard",
+        "limestone",
+        "maple_log",
+        "marble",
+        "mithril_ore",
+        "oak_log",
+        "obsidian",
+        "orichalcum_ore",
+        "phoenix_ash",
+        "pine_log",
+        "primordial_crystal",
+        "shale",
+        "steel_ore",
+        "storm_heart",
+        "tin_ore",
+        "void_essence",
+        "voidstone",
+        "water_crystal",
+        "worldtree_log"
+      ],
+      "count": 37,
+      "types": [
+        "string"
+      ],
+      "occurrences": 38
+    },
+    "drops[].quantity": {
+      "values": [
+        "abundant",
+        "few",
+        "many",
+        "several"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 38
+    },
+    "metadata.narrative": {
+      "values": [
+        "Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.",
+        "Ancient tree with jet-black wood. Seems to absorb light and magic equally.",
+        "Brilliant white stone that glows faintly with captured sunlight. Prized for temples and monuments.",
+        "Common copper deposit showing green-blue oxidation. Perfect for learning the basics of mining.",
+        "Crystal suspended in perpetual crystallization. Neither solid nor energy, exists in quantum superposition.",
+        "Dark, impossibly hard ore found only in the deepest caverns. The world's exposed bones.",
+        "Dense hardwood tree that survives temperature extremes. The wood holds its shape through any condition.",
+        "Dense volcanic rock with distinctive dark banding. Exceptional compression strength.",
+        "Dense, dark ore with carbon-rich composition. Superior to plain iron in every way.",
+        "Elegant tree with papery white bark. Fine grain makes it ideal for detailed carving work.",
+        "Gleaming golden-green ore from ancient civilizations. Entire empires were built on its discovery.",
+        "Grey metallic deposits throughout the rock face. The backbone of civilization's tools and weapons.",
+        "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is.",
+        "Layered sedimentary rock with fine grain. Compressed clay creates water-resistant sheets.",
+        "Legendary silver-white deposits that seem to drink in moonlight. Incredibly light yet impossibly strong.",
+        "Legendary tree connected to the World Tree's root network. The wood hums with accumulated magical essence.",
+        "Pale sedimentary stone easy to work with basic tools. Foundation for simple construction.",
+        "Pale-barked tree with wood that absorbs shock beautifully. Weapon smiths prize these for handle material.",
+        "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
+        "Pitch-black stone that pulls light into itself. Radiates subtle wrongness.",
+        "Rare tree whose wood rivals soft metals in hardness. Almost metallic ring when struck.",
+        "Reality-bending ore that exists in multiple states simultaneously. Defies conventional physics.",
+        "Silvery-white ore with a faint lunar glow. Ancient texts speak of its magical properties.",
+        "Speckled igneous rock with visible crystals. Harder and more reliable than limestone.",
+        "Stone that remembers everything it witnesses. Contains geological memory of eons.",
+        "Tall conifer reaching toward the sky. Flexible wood perfect for bows and lightweight construction.",
+        "Translucent crystal formation that hums near magical power sources. Amplifies energies passing through it.",
+        "Volcanic glass born in eruption's heart. Razor-sharp edges, incredibly brittle."
+      ],
+      "count": 28,
+      "types": [
+        "string"
+      ],
+      "occurrences": 28
+    },
+    "metadata.tags": {
+      "values": [
+        "advanced",
+        "ancient",
+        "common",
+        "crystal",
+        "durable",
+        "fine",
+        "flexible",
+        "impossible",
+        "layered",
+        "legendary",
+        "living",
+        "magical",
+        "memory",
+        "metal",
+        "metallic",
+        "mythical",
+        "ore",
+        "precious",
+        "quality",
+        "quantum",
+        "radiant",
+        "rare",
+        "sharp",
+        "standard",
+        "starter",
+        "stone",
+        "temporal",
+        "tree",
+        "void",
+        "volcanic",
+        "wood"
+      ],
+      "count": 31,
+      "types": [
+        "array"
+      ],
+      "occurrences": 28
+    },
+    "name": {
+      "values": [
+        "Adamantine Lode",
+        "Ash Tree",
+        "Basalt Column",
+        "Birch Tree",
+        "Copper Vein",
+        "Diamond Geode",
+        "Ebony Tree",
+        "Eternity Monolith",
+        "Etherion Nexus",
+        "Genesis Structure",
+        "Granite Formation",
+        "Iron Deposit",
+        "Ironwood Tree",
+        "Limestone Outcrop",
+        "Maple Tree",
+        "Marble Quarry",
+        "Mithril Cache",
+        "Oak Tree",
+        "Obsidian Flow",
+        "Orichalcum Trove",
+        "Pine Tree",
+        "Primordial Formation",
+        "Quartz Cluster",
+        "Shale Bed",
+        "Steel Node",
+        "Tin Seam",
+        "Voidstone Shard",
+        "Worldtree Sapling"
+      ],
+      "count": 28,
+      "types": [
+        "string"
+      ],
+      "occurrences": 28
+    },
+    "requiredTool": {
+      "values": [
+        "axe",
+        "pickaxe"
+      ],
+      "count": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 28
+    },
+    "resourceId": {
+      "values": [
+        "adamantine_lode",
+        "ash_tree",
+        "basalt_column",
+        "birch_tree",
+        "copper_vein",
+        "diamond_geode",
+        "ebony_tree",
+        "eternity_monolith",
+        "etherion_nexus",
+        "genesis_structure",
+        "granite_formation",
+        "iron_deposit",
+        "ironwood_tree",
+        "limestone_outcrop",
+        "maple_tree",
+        "marble_quarry",
+        "mithril_cache",
+        "oak_tree",
+        "obsidian_flow",
+        "orichalcum_trove",
+        "pine_tree",
+        "primordial_formation",
+        "quartz_cluster",
+        "shale_bed",
+        "steel_node",
+        "tin_seam",
+        "voidstone_shard",
+        "worldtree_sapling"
+      ],
+      "count": 28,
+      "types": [
+        "string"
+      ],
+      "occurrences": 28
+    },
+    "respawnTime": {
+      "values": [
+        "normal",
+        "slow",
+        "very_slow"
+      ],
+      "count": 3,
+      "types": [
+        "null",
+        "string"
+      ],
+      "occurrences": 28
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 28
+    }
+  },
+  "_usable_template": {
+    "baseHealth": 200,
+    "category": "tree",
+    "drops": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Dense volcanic rock with distinctive dark banding. Exceptional compression strength.",
+      "tags": [
+        "standard",
+        "wood",
+        "temporal"
+      ]
+    },
+    "name": "Obsidian Flow",
+    "requiredTool": "pickaxe",
+    "resourceId": "limestone_outcrop",
+    "respawnTime": "very_slow",
+    "tier": 1
+  },
+  "template": {
+    "baseHealth": {
+      "_type": "integer",
+      "_sample_values": [
+        200,
+        800,
+        100,
+        400
+      ],
+      "_total_unique_values": 4
+    },
+    "category": {
+      "_type": "string",
+      "_sample_values": [
+        "tree",
+        "ore",
+        "stone"
+      ],
+      "_total_unique_values": 3
+    },
+    "drops": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "chance": {
+        "_type": "string",
+        "_sample_values": [
+          "moderate",
+          "rare",
+          "improbable",
+          "high",
+          "low",
+          "guaranteed"
+        ],
+        "_total_unique_values": 6
+      },
+      "materialId": {
+        "_type": "string",
+        "_sample_values": [
+          "tin_ore",
+          "phoenix_ash",
+          "diamond",
+          "ash_log",
+          "ironwood_log",
+          "adamantine_ore",
+          "pine_log",
+          "earth_crystal",
+          "worldtree_log",
+          "birch_log"
+        ],
+        "_total_unique_values": 37
+      },
+      "quantity": {
+        "_type": "string",
+        "_sample_values": [
+          "few",
+          "several",
+          "many",
+          "abundant"
+        ],
+        "_total_unique_values": 4
+      }
+    },
+    "metadata": {
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "Dense volcanic rock with distinctive dark banding. Exceptional compression strength.",
+          "Pale-barked tree with wood that absorbs shock beautifully. Weapon smiths prize these for handle material.",
+          "Volcanic glass born in eruption's heart. Razor-sharp edges, incredibly brittle.",
+          "Speckled igneous rock with visible crystals. Harder and more reliable than limestone.",
+          "Stone that remembers everything it witnesses. Contains geological memory of eons.",
+          "Ancient tree with jet-black wood. Seems to absorb light and magic equally.",
+          "Dark, impossibly hard ore found only in the deepest caverns. The world's exposed bones.",
+          "Rare tree whose wood rivals soft metals in hardness. Almost metallic ring when struck.",
+          "Reality-bending ore that exists in multiple states simultaneously. Defies conventional physics.",
+          "Brilliant white stone that glows faintly with captured sunlight. Prized for temples and monuments."
+        ],
+        "_total_unique_values": 28
+      },
+      "tags": {
+        "_type": "array",
+        "_sample_values": [
+          "standard",
+          "wood",
+          "temporal",
+          "stone",
+          "mythical"
+        ],
+        "_total_unique_values": 31
+      }
+    },
+    "name": {
+      "_type": "string",
+      "_sample_values": [
+        "Obsidian Flow",
+        "Oak Tree",
+        "Genesis Structure",
+        "Steel Node",
+        "Shale Bed",
+        "Ebony Tree",
+        "Tin Seam",
+        "Ironwood Tree",
+        "Mithril Cache",
+        "Voidstone Shard"
+      ],
+      "_total_unique_values": 28
+    },
+    "requiredTool": {
+      "_type": "string",
+      "_sample_values": [
+        "pickaxe",
+        "axe"
+      ],
+      "_total_unique_values": 2
+    },
+    "resourceId": {
+      "_type": "string",
+      "_sample_values": [
+        "limestone_outcrop",
+        "basalt_column",
+        "eternity_monolith",
+        "tin_seam",
+        "oak_tree",
+        "worldtree_sapling",
+        "shale_bed",
+        "primordial_formation",
+        "adamantine_lode",
+        "ebony_tree"
+      ],
+      "_total_unique_values": 28
+    },
+    "respawnTime": {
+      "_type": "null",
+      "_sample_values": [
+        null,
+        "very_slow",
+        "normal",
+        "slow"
+      ],
+      "_total_unique_values": 4
+    },
+    "tier": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "_total_unique_values": 4
+    }
+  }
+}

@@ -1,0 +1,2024 @@
+{
+  "_meta": {
+    "category": "items-engineering",
+    "description": "Engineering devices and gadgets",
+    "generated_at": "2026-01-01T19:53:07.761636",
+    "source_files": [
+      "items-engineering-1.JSON"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "bombs[].category": {
+      "values": [
+        "device"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].effect": {
+      "values": [
+        "Explodes for 40 damage in 3 unit radius",
+        "Explodes for 75 fire damage + lingering flames",
+        "Splits into 8 smaller explosions, total 120 damage over wide area"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].effectParams.baseDamage": {
+      "values": [
+        120,
+        40,
+        75
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].effectParams.burn_damage_per_second": {
+      "values": [
+        8.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "bombs[].effectParams.burn_duration": {
+      "values": [
+        6.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "bombs[].effectParams.circle_radius": {
+      "values": [
+        3.0,
+        4.0,
+        5.0
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].effectTags": {
+      "values": [
+        "burn",
+        "circle",
+        "fire",
+        "physical"
+      ],
+      "count": 4,
+      "types": [
+        "array"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].flags.placeable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].flags.repairable": {
+      "values": [
+        false
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].flags.stackable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].itemId": {
+      "values": [
+        "cluster_bomb",
+        "fire_bomb",
+        "simple_bomb"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].metadata.narrative": {
+      "values": [
+        "Cluster bomb that splits into multiple explosives. Maximum coverage. One becomes many, the sky rains destruction.",
+        "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone. The explosion is just the beginning - the flames linger, hungry.",
+        "Simple explosive using blast powder in iron casing. The universal problem solver. Pull pin, throw, run. In that order."
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].metadata.tags": {
+      "values": [
+        "area",
+        "basic",
+        "bomb",
+        "cluster",
+        "device",
+        "elemental",
+        "explosive",
+        "fire"
+      ],
+      "count": 8,
+      "types": [
+        "array"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].name": {
+      "values": [
+        "Cluster Bomb",
+        "Fire Bomb",
+        "Simple Bomb"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].rarity": {
+      "values": [
+        "common",
+        "rare",
+        "uncommon"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].requirements.level": {
+      "values": [
+        14,
+        2,
+        7
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].stackSize": {
+      "values": [
+        10,
+        5
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].statMultipliers.weight": {
+      "values": [
+        0.5,
+        0.6,
+        0.8
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].subtype": {
+      "values": [
+        "elemental",
+        "explosive"
+      ],
+      "count": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].tier": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "bombs[].type": {
+      "values": [
+        "bomb"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "metadata.description": {
+      "values": [
+        "Devices crafted through engineering discipline"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "metadata.discipline": {
+      "values": [
+        "engineering"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "metadata.note": {
+      "values": [
+        "Turrets, bombs, traps, and utility devices - all placeable"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "metadata.totalItems": {
+      "values": [
+        16
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "metadata.version": {
+      "values": [
+        "1.0"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "traps[].category": {
+      "values": [
+        "device"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "traps[].effect": {
+      "values": [
+        "Triggers on contact, 25 damage + immobilize for 5 seconds",
+        "Triggers on contact, 30 damage + bleed",
+        "Triggers on proximity, 50 damage + slow"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "traps[].effectParams.baseDamage": {
+      "values": [
+        25,
+        30,
+        50
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "traps[].effectParams.bleed_damage_per_second": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "traps[].effectParams.bleed_duration": {
+      "values": [
+        8.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "traps[].effectParams.circle_radius": {
+      "values": [
+        2.0,
+        3.0
+      ],
+      "count": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "traps[].effectParams.freeze_duration": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "traps[].effectParams.root_duration": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "traps[].effectParams.slow_factor": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "traps[].effectTags": {
+      "values": [
+        "bleed",
+        "circle",
+        "crushing",
+        "freeze",
+        "ice",
+        "physical",
+        "piercing",
+        "root",
+        "single",
+        "slow"
+      ],
+      "count": 10,
+      "types": [
+        "array"
+      ],
+      "occurrences": 3
+    },
+    "traps[].flags.placeable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 3
+    },
+    "traps[].flags.repairable": {
+      "values": [
+        false
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 3
+    },
+    "traps[].flags.stackable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 3
+    },
+    "traps[].itemId": {
+      "values": [
+        "bear_trap",
+        "frost_mine",
+        "spike_trap"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "traps[].metadata.narrative": {
+      "values": [
+        "Bear trap with brutal steel jaws. Immobilizes anything that steps on it. The teeth dig deep and don't let go.",
+        "Frost mine that erupts in a blast of ice shards. Triggers on proximity. The cold bites deep, slowing everything it touches.",
+        "Spike trap with spring-loaded iron spikes. Triggers on contact. Simple, brutal, effective. The spikes punch through leather and flesh alike."
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "traps[].metadata.tags": {
+      "values": [
+        "basic",
+        "device",
+        "elemental",
+        "frost",
+        "immobilize",
+        "physical",
+        "trap"
+      ],
+      "count": 7,
+      "types": [
+        "array"
+      ],
+      "occurrences": 3
+    },
+    "traps[].name": {
+      "values": [
+        "Bear Trap",
+        "Frost Mine",
+        "Spike Trap"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "traps[].rarity": {
+      "values": [
+        "common",
+        "uncommon"
+      ],
+      "count": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "traps[].requirements.level": {
+      "values": [
+        2,
+        3,
+        6
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "traps[].stackSize": {
+      "values": [
+        10,
+        15
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "traps[].statMultipliers.weight": {
+      "values": [
+        0.8,
+        1.0,
+        1.2
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "traps[].subtype": {
+      "values": [
+        "elemental",
+        "physical"
+      ],
+      "count": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "traps[].tier": {
+      "values": [
+        1,
+        2
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "traps[].type": {
+      "values": [
+        "trap"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "turrets[].category": {
+      "values": [
+        "device"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].effect": {
+      "values": [
+        "Fires arrows at enemies, 20 damage, 5 unit range",
+        "Fires concentrated light beam, 80 damage, 12 unit range",
+        "Fires flaming arrows, 35 damage + burn, 7 unit range",
+        "Fires lightning bolts, 70 damage + chain, 10 unit range",
+        "Sweeps cone of fire, 60 damage + lingering burn"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].effectParams.baseDamage": {
+      "values": [
+        20,
+        35,
+        60,
+        70,
+        80
+      ],
+      "count": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].effectParams.beam_range": {
+      "values": [
+        12.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "turrets[].effectParams.beam_width": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "turrets[].effectParams.burn_damage_per_second": {
+      "values": [
+        5.0,
+        8.0
+      ],
+      "count": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "turrets[].effectParams.burn_duration": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "turrets[].effectParams.chain_count": {
+      "values": [
+        2
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "turrets[].effectParams.chain_range": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "turrets[].effectParams.cone_angle": {
+      "values": [
+        60.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "turrets[].effectParams.cone_range": {
+      "values": [
+        8.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "turrets[].effectParams.range": {
+      "values": [
+        10.0,
+        12.0,
+        5.0,
+        7.0,
+        8.0
+      ],
+      "count": 5,
+      "types": [
+        "number"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].effectParams.shock_damage": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "turrets[].effectParams.shock_duration": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "turrets[].effectTags": {
+      "values": [
+        "beam",
+        "burn",
+        "chain",
+        "cone",
+        "energy",
+        "fire",
+        "lightning",
+        "physical",
+        "piercing",
+        "shock",
+        "single"
+      ],
+      "count": 11,
+      "types": [
+        "array"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].flags.placeable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].flags.repairable": {
+      "values": [
+        false
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].flags.stackable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].itemId": {
+      "values": [
+        "basic_arrow_turret",
+        "fire_arrow_turret",
+        "flamethrower_turret",
+        "laser_turret",
+        "lightning_cannon"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].metadata.narrative": {
+      "values": [
+        "Basic arrow turret using simple springs and levers. Point away from face. Automated defense that never sleeps, never misses... well, rarely misses.",
+        "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense. Each arrow trails flames, lighting up enemies and the night.",
+        "Flamethrower turret that sweeps area with fire. Excellent for crowd control. The roar is almost as terrifying as the flames themselves.",
+        "Laser turret using focused light crystals. Precise and devastating. The beam cuts through armor like it's not even there.",
+        "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous. The bolts arc between enemies, chain lightning made manifest."
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].metadata.tags": {
+      "values": [
+        "advanced",
+        "area",
+        "basic",
+        "device",
+        "elemental",
+        "fire",
+        "light",
+        "lightning",
+        "precision",
+        "projectile",
+        "turret"
+      ],
+      "count": 11,
+      "types": [
+        "array"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].name": {
+      "values": [
+        "Basic Arrow Turret",
+        "Fire Arrow Turret",
+        "Flamethrower Turret",
+        "Laser Turret",
+        "Lightning Cannon"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].rarity": {
+      "values": [
+        "common",
+        "rare",
+        "uncommon"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].requirements.level": {
+      "values": [
+        14,
+        15,
+        16,
+        3,
+        8
+      ],
+      "count": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].stackSize": {
+      "values": [
+        3,
+        5
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].statMultipliers.weight": {
+      "values": [
+        1.5,
+        1.8,
+        2.0
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].subtype": {
+      "values": [
+        "area",
+        "energy",
+        "projectile"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].tier": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "turrets[].type": {
+      "values": [
+        "turret"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].category": {
+      "values": [
+        "device"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].effect": {
+      "values": [
+        "Disables all mechanical devices in 8 unit radius for 30 seconds",
+        "Enables flight for up to 30 seconds, recharge time 2 minutes",
+        "Fires net that slows enemies by 80% for 10 seconds",
+        "Heals 10 HP/sec in 5 unit radius for 2 minutes",
+        "Launches grappling hook up to 15 units, pulls player to location"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].flags.placeable": {
+      "values": [
+        false,
+        true
+      ],
+      "count": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].flags.repairable": {
+      "values": [
+        false,
+        true
+      ],
+      "count": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].flags.stackable": {
+      "values": [
+        false,
+        true
+      ],
+      "count": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].itemId": {
+      "values": [
+        "emp_device",
+        "grappling_hook",
+        "healing_beacon",
+        "jetpack",
+        "net_launcher"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].metadata.narrative": {
+      "values": [
+        "EMP device that disables electronic enemies and devices. Technology's worst nightmare. Lightning contained, waiting to be unleashed.",
+        "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces. The spectral thread never breaks, the iron hook never fails.",
+        "Healing beacon that emanates restorative energy. Heals allies in radius continuously. The light feels warm, comforting, alive.",
+        "Jetpack for brief flight. Fuel not included (but fire crystals work great). The mithril construction keeps it lightweight while phoenix ash provides sustained thrust.",
+        "Net launcher that ensnares enemies. Reduces movement speed dramatically. Spectral thread nets are nearly unbreakable."
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].metadata.tags": {
+      "values": [
+        "crowd-control",
+        "device",
+        "disable",
+        "flight",
+        "healing",
+        "mobility",
+        "projectile",
+        "support",
+        "tech",
+        "tool",
+        "utility"
+      ],
+      "count": 11,
+      "types": [
+        "array"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].name": {
+      "values": [
+        "EMP Device",
+        "Grappling Hook",
+        "Healing Beacon",
+        "Jetpack",
+        "Net Launcher"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].rarity": {
+      "values": [
+        "epic",
+        "rare",
+        "uncommon"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].requirements.level": {
+      "values": [
+        13,
+        16,
+        18,
+        8,
+        9
+      ],
+      "count": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].stackSize": {
+      "values": [
+        1,
+        3,
+        5
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].statMultipliers.weight": {
+      "values": [
+        1.0,
+        1.3,
+        1.5,
+        2.5
+      ],
+      "count": 4,
+      "types": [
+        "number"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].subtype": {
+      "values": [
+        "control",
+        "disable",
+        "mobility",
+        "support"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].tier": {
+      "values": [
+        2,
+        3
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "utility_devices[].type": {
+      "values": [
+        "utility"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    }
+  },
+  "_usable_template": {
+    "bombs": [
+      "<value>"
+    ],
+    "metadata": {
+      "description": "Devices crafted through engineering discipline",
+      "discipline": "engineering",
+      "note": "Turrets, bombs, traps, and utility devices - all placeable",
+      "totalItems": 16,
+      "version": "1.0"
+    },
+    "traps": [
+      "<value>"
+    ],
+    "turrets": [
+      "<value>"
+    ],
+    "utility_devices": [
+      "<value>"
+    ]
+  },
+  "template": {
+    "bombs": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "category": {
+        "_type": "string",
+        "_sample_values": [
+          "device"
+        ],
+        "_total_unique_values": 1
+      },
+      "effect": {
+        "_type": "string",
+        "_sample_values": [
+          "Splits into 8 smaller explosions, total 120 damage over wide area",
+          "Explodes for 40 damage in 3 unit radius",
+          "Explodes for 75 fire damage + lingering flames"
+        ],
+        "_total_unique_values": 3
+      },
+      "effectParams": {
+        "baseDamage": {
+          "_type": "integer",
+          "_sample_values": [
+            40,
+            75,
+            120
+          ],
+          "_total_unique_values": 3
+        },
+        "burn_damage_per_second": {
+          "_type": "number",
+          "_sample_values": [
+            8.0
+          ],
+          "_total_unique_values": 1
+        },
+        "burn_duration": {
+          "_type": "number",
+          "_sample_values": [
+            6.0
+          ],
+          "_total_unique_values": 1
+        },
+        "circle_radius": {
+          "_type": "number",
+          "_sample_values": [
+            3.0,
+            4.0,
+            5.0
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "effectTags": {
+        "_type": "array",
+        "_sample_values": [
+          "fire",
+          "burn",
+          "physical",
+          "circle"
+        ],
+        "_total_unique_values": 4
+      },
+      "flags": {
+        "placeable": {
+          "_type": "boolean",
+          "_sample_values": [
+            true
+          ],
+          "_total_unique_values": 1
+        },
+        "repairable": {
+          "_type": "boolean",
+          "_sample_values": [
+            false
+          ],
+          "_total_unique_values": 1
+        },
+        "stackable": {
+          "_type": "boolean",
+          "_sample_values": [
+            true
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "itemId": {
+        "_type": "string",
+        "_sample_values": [
+          "cluster_bomb",
+          "fire_bomb",
+          "simple_bomb"
+        ],
+        "_total_unique_values": 3
+      },
+      "metadata": {
+        "narrative": {
+          "_type": "string",
+          "_sample_values": [
+            "Cluster bomb that splits into multiple explosives. Maximum coverage. One becomes many, the sky rains destruction.",
+            "Simple explosive using blast powder in iron casing. The universal problem solver. Pull pin, throw, run. In that order.",
+            "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone. The explosion is just the beginning - the flames linger, hungry."
+          ],
+          "_total_unique_values": 3
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "elemental",
+            "area",
+            "explosive",
+            "device",
+            "basic"
+          ],
+          "_total_unique_values": 8
+        }
+      },
+      "name": {
+        "_type": "string",
+        "_sample_values": [
+          "Fire Bomb",
+          "Simple Bomb",
+          "Cluster Bomb"
+        ],
+        "_total_unique_values": 3
+      },
+      "rarity": {
+        "_type": "string",
+        "_sample_values": [
+          "common",
+          "uncommon",
+          "rare"
+        ],
+        "_total_unique_values": 3
+      },
+      "requirements": {
+        "level": {
+          "_type": "integer",
+          "_sample_values": [
+            2,
+            14,
+            7
+          ],
+          "_total_unique_values": 3
+        },
+        "stats": {}
+      },
+      "stackSize": {
+        "_type": "integer",
+        "_sample_values": [
+          10,
+          5
+        ],
+        "_total_unique_values": 2
+      },
+      "statMultipliers": {
+        "weight": {
+          "_type": "number",
+          "_sample_values": [
+            0.5,
+            0.6,
+            0.8
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "subtype": {
+        "_type": "string",
+        "_sample_values": [
+          "elemental",
+          "explosive"
+        ],
+        "_total_unique_values": 2
+      },
+      "tier": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          2,
+          3
+        ],
+        "_total_unique_values": 3
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "bomb"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "metadata": {
+      "description": {
+        "_type": "string",
+        "_sample_values": [
+          "Devices crafted through engineering discipline"
+        ],
+        "_total_unique_values": 1
+      },
+      "discipline": {
+        "_type": "string",
+        "_sample_values": [
+          "engineering"
+        ],
+        "_total_unique_values": 1
+      },
+      "note": {
+        "_type": "string",
+        "_sample_values": [
+          "Turrets, bombs, traps, and utility devices - all placeable"
+        ],
+        "_total_unique_values": 1
+      },
+      "totalItems": {
+        "_type": "integer",
+        "_sample_values": [
+          16
+        ],
+        "_total_unique_values": 1
+      },
+      "version": {
+        "_type": "string",
+        "_sample_values": [
+          "1.0"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "traps": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "category": {
+        "_type": "string",
+        "_sample_values": [
+          "device"
+        ],
+        "_total_unique_values": 1
+      },
+      "effect": {
+        "_type": "string",
+        "_sample_values": [
+          "Triggers on proximity, 50 damage + slow",
+          "Triggers on contact, 30 damage + bleed",
+          "Triggers on contact, 25 damage + immobilize for 5 seconds"
+        ],
+        "_total_unique_values": 3
+      },
+      "effectParams": {
+        "baseDamage": {
+          "_type": "integer",
+          "_sample_values": [
+            25,
+            50,
+            30
+          ],
+          "_total_unique_values": 3
+        },
+        "bleed_damage_per_second": {
+          "_type": "number",
+          "_sample_values": [
+            3.0
+          ],
+          "_total_unique_values": 1
+        },
+        "bleed_duration": {
+          "_type": "number",
+          "_sample_values": [
+            8.0
+          ],
+          "_total_unique_values": 1
+        },
+        "circle_radius": {
+          "_type": "number",
+          "_sample_values": [
+            2.0,
+            3.0
+          ],
+          "_total_unique_values": 2
+        },
+        "freeze_duration": {
+          "_type": "number",
+          "_sample_values": [
+            3.0
+          ],
+          "_total_unique_values": 1
+        },
+        "root_duration": {
+          "_type": "number",
+          "_sample_values": [
+            5.0
+          ],
+          "_total_unique_values": 1
+        },
+        "slow_factor": {
+          "_type": "number",
+          "_sample_values": [
+            0.5
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "effectTags": {
+        "_type": "array",
+        "_sample_values": [
+          "freeze",
+          "physical",
+          "slow",
+          "bleed",
+          "ice"
+        ],
+        "_total_unique_values": 10
+      },
+      "flags": {
+        "placeable": {
+          "_type": "boolean",
+          "_sample_values": [
+            true
+          ],
+          "_total_unique_values": 1
+        },
+        "repairable": {
+          "_type": "boolean",
+          "_sample_values": [
+            false
+          ],
+          "_total_unique_values": 1
+        },
+        "stackable": {
+          "_type": "boolean",
+          "_sample_values": [
+            true
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "itemId": {
+        "_type": "string",
+        "_sample_values": [
+          "frost_mine",
+          "bear_trap",
+          "spike_trap"
+        ],
+        "_total_unique_values": 3
+      },
+      "metadata": {
+        "narrative": {
+          "_type": "string",
+          "_sample_values": [
+            "Frost mine that erupts in a blast of ice shards. Triggers on proximity. The cold bites deep, slowing everything it touches.",
+            "Bear trap with brutal steel jaws. Immobilizes anything that steps on it. The teeth dig deep and don't let go.",
+            "Spike trap with spring-loaded iron spikes. Triggers on contact. Simple, brutal, effective. The spikes punch through leather and flesh alike."
+          ],
+          "_total_unique_values": 3
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "elemental",
+            "physical",
+            "device",
+            "basic",
+            "frost"
+          ],
+          "_total_unique_values": 7
+        }
+      },
+      "name": {
+        "_type": "string",
+        "_sample_values": [
+          "Bear Trap",
+          "Frost Mine",
+          "Spike Trap"
+        ],
+        "_total_unique_values": 3
+      },
+      "rarity": {
+        "_type": "string",
+        "_sample_values": [
+          "common",
+          "uncommon"
+        ],
+        "_total_unique_values": 2
+      },
+      "requirements": {
+        "level": {
+          "_type": "integer",
+          "_sample_values": [
+            2,
+            3,
+            6
+          ],
+          "_total_unique_values": 3
+        },
+        "stats": {}
+      },
+      "stackSize": {
+        "_type": "integer",
+        "_sample_values": [
+          10,
+          15
+        ],
+        "_total_unique_values": 2
+      },
+      "statMultipliers": {
+        "weight": {
+          "_type": "number",
+          "_sample_values": [
+            0.8,
+            1.0,
+            1.2
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "subtype": {
+        "_type": "string",
+        "_sample_values": [
+          "elemental",
+          "physical"
+        ],
+        "_total_unique_values": 2
+      },
+      "tier": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          2
+        ],
+        "_total_unique_values": 2
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "trap"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "turrets": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "category": {
+        "_type": "string",
+        "_sample_values": [
+          "device"
+        ],
+        "_total_unique_values": 1
+      },
+      "effect": {
+        "_type": "string",
+        "_sample_values": [
+          "Fires concentrated light beam, 80 damage, 12 unit range",
+          "Sweeps cone of fire, 60 damage + lingering burn",
+          "Fires flaming arrows, 35 damage + burn, 7 unit range",
+          "Fires lightning bolts, 70 damage + chain, 10 unit range",
+          "Fires arrows at enemies, 20 damage, 5 unit range"
+        ],
+        "_total_unique_values": 5
+      },
+      "effectParams": {
+        "baseDamage": {
+          "_type": "integer",
+          "_sample_values": [
+            35,
+            70,
+            80,
+            20,
+            60
+          ],
+          "_total_unique_values": 5
+        },
+        "beam_range": {
+          "_type": "number",
+          "_sample_values": [
+            12.0
+          ],
+          "_total_unique_values": 1
+        },
+        "beam_width": {
+          "_type": "number",
+          "_sample_values": [
+            1.0
+          ],
+          "_total_unique_values": 1
+        },
+        "burn_damage_per_second": {
+          "_type": "number",
+          "_sample_values": [
+            8.0,
+            5.0
+          ],
+          "_total_unique_values": 2
+        },
+        "burn_duration": {
+          "_type": "number",
+          "_sample_values": [
+            5.0
+          ],
+          "_total_unique_values": 1
+        },
+        "chain_count": {
+          "_type": "integer",
+          "_sample_values": [
+            2
+          ],
+          "_total_unique_values": 1
+        },
+        "chain_range": {
+          "_type": "number",
+          "_sample_values": [
+            5.0
+          ],
+          "_total_unique_values": 1
+        },
+        "cone_angle": {
+          "_type": "number",
+          "_sample_values": [
+            60.0
+          ],
+          "_total_unique_values": 1
+        },
+        "cone_range": {
+          "_type": "number",
+          "_sample_values": [
+            8.0
+          ],
+          "_total_unique_values": 1
+        },
+        "range": {
+          "_type": "number",
+          "_sample_values": [
+            5.0,
+            7.0,
+            8.0,
+            10.0,
+            12.0
+          ],
+          "_total_unique_values": 5
+        },
+        "shock_damage": {
+          "_type": "number",
+          "_sample_values": [
+            5.0
+          ],
+          "_total_unique_values": 1
+        },
+        "shock_duration": {
+          "_type": "number",
+          "_sample_values": [
+            2.0
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "effectTags": {
+        "_type": "array",
+        "_sample_values": [
+          "physical",
+          "beam",
+          "lightning",
+          "shock",
+          "piercing"
+        ],
+        "_total_unique_values": 11
+      },
+      "flags": {
+        "placeable": {
+          "_type": "boolean",
+          "_sample_values": [
+            true
+          ],
+          "_total_unique_values": 1
+        },
+        "repairable": {
+          "_type": "boolean",
+          "_sample_values": [
+            false
+          ],
+          "_total_unique_values": 1
+        },
+        "stackable": {
+          "_type": "boolean",
+          "_sample_values": [
+            true
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "itemId": {
+        "_type": "string",
+        "_sample_values": [
+          "laser_turret",
+          "fire_arrow_turret",
+          "basic_arrow_turret",
+          "flamethrower_turret",
+          "lightning_cannon"
+        ],
+        "_total_unique_values": 5
+      },
+      "metadata": {
+        "narrative": {
+          "_type": "string",
+          "_sample_values": [
+            "Flamethrower turret that sweeps area with fire. Excellent for crowd control. The roar is almost as terrifying as the flames themselves.",
+            "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense. Each arrow trails flames, lighting up enemies and the night.",
+            "Laser turret using focused light crystals. Precise and devastating. The beam cuts through armor like it's not even there.",
+            "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous. The bolts arc between enemies, chain lightning made manifest.",
+            "Basic arrow turret using simple springs and levers. Point away from face. Automated defense that never sleeps, never misses... well, rarely misses."
+          ],
+          "_total_unique_values": 5
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "elemental",
+            "projectile",
+            "area",
+            "device",
+            "lightning"
+          ],
+          "_total_unique_values": 11
+        }
+      },
+      "name": {
+        "_type": "string",
+        "_sample_values": [
+          "Basic Arrow Turret",
+          "Lightning Cannon",
+          "Fire Arrow Turret",
+          "Flamethrower Turret",
+          "Laser Turret"
+        ],
+        "_total_unique_values": 5
+      },
+      "rarity": {
+        "_type": "string",
+        "_sample_values": [
+          "common",
+          "uncommon",
+          "rare"
+        ],
+        "_total_unique_values": 3
+      },
+      "requirements": {
+        "level": {
+          "_type": "integer",
+          "_sample_values": [
+            3,
+            8,
+            14,
+            15,
+            16
+          ],
+          "_total_unique_values": 5
+        },
+        "stats": {}
+      },
+      "stackSize": {
+        "_type": "integer",
+        "_sample_values": [
+          3,
+          5
+        ],
+        "_total_unique_values": 2
+      },
+      "statMultipliers": {
+        "weight": {
+          "_type": "number",
+          "_sample_values": [
+            1.5,
+            2.0,
+            1.8
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "subtype": {
+        "_type": "string",
+        "_sample_values": [
+          "projectile",
+          "energy",
+          "area"
+        ],
+        "_total_unique_values": 3
+      },
+      "tier": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          2,
+          3
+        ],
+        "_total_unique_values": 3
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "turret"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "utility_devices": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "category": {
+        "_type": "string",
+        "_sample_values": [
+          "device"
+        ],
+        "_total_unique_values": 1
+      },
+      "effect": {
+        "_type": "string",
+        "_sample_values": [
+          "Fires net that slows enemies by 80% for 10 seconds",
+          "Disables all mechanical devices in 8 unit radius for 30 seconds",
+          "Heals 10 HP/sec in 5 unit radius for 2 minutes",
+          "Launches grappling hook up to 15 units, pulls player to location",
+          "Enables flight for up to 30 seconds, recharge time 2 minutes"
+        ],
+        "_total_unique_values": 5
+      },
+      "flags": {
+        "placeable": {
+          "_type": "boolean",
+          "_sample_values": [
+            false,
+            true
+          ],
+          "_total_unique_values": 2
+        },
+        "repairable": {
+          "_type": "boolean",
+          "_sample_values": [
+            false,
+            true
+          ],
+          "_total_unique_values": 2
+        },
+        "stackable": {
+          "_type": "boolean",
+          "_sample_values": [
+            false,
+            true
+          ],
+          "_total_unique_values": 2
+        }
+      },
+      "itemId": {
+        "_type": "string",
+        "_sample_values": [
+          "jetpack",
+          "emp_device",
+          "grappling_hook",
+          "healing_beacon",
+          "net_launcher"
+        ],
+        "_total_unique_values": 5
+      },
+      "metadata": {
+        "narrative": {
+          "_type": "string",
+          "_sample_values": [
+            "Healing beacon that emanates restorative energy. Heals allies in radius continuously. The light feels warm, comforting, alive.",
+            "Jetpack for brief flight. Fuel not included (but fire crystals work great). The mithril construction keeps it lightweight while phoenix ash provides sustained thrust.",
+            "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces. The spectral thread never breaks, the iron hook never fails.",
+            "EMP device that disables electronic enemies and devices. Technology's worst nightmare. Lightning contained, waiting to be unleashed.",
+            "Net launcher that ensnares enemies. Reduces movement speed dramatically. Spectral thread nets are nearly unbreakable."
+          ],
+          "_total_unique_values": 5
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "projectile",
+            "device",
+            "tech",
+            "tool",
+            "support"
+          ],
+          "_total_unique_values": 11
+        }
+      },
+      "name": {
+        "_type": "string",
+        "_sample_values": [
+          "Net Launcher",
+          "Grappling Hook",
+          "Healing Beacon",
+          "Jetpack",
+          "EMP Device"
+        ],
+        "_total_unique_values": 5
+      },
+      "rarity": {
+        "_type": "string",
+        "_sample_values": [
+          "rare",
+          "uncommon",
+          "epic"
+        ],
+        "_total_unique_values": 3
+      },
+      "requirements": {
+        "level": {
+          "_type": "integer",
+          "_sample_values": [
+            8,
+            9,
+            13,
+            16,
+            18
+          ],
+          "_total_unique_values": 5
+        },
+        "stats": {}
+      },
+      "stackSize": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          3,
+          5
+        ],
+        "_total_unique_values": 3
+      },
+      "statMultipliers": {
+        "weight": {
+          "_type": "number",
+          "_sample_values": [
+            1.5,
+            2.5,
+            1.3,
+            1.0
+          ],
+          "_total_unique_values": 4
+        }
+      },
+      "subtype": {
+        "_type": "string",
+        "_sample_values": [
+          "support",
+          "control",
+          "mobility",
+          "disable"
+        ],
+        "_total_unique_values": 4
+      },
+      "tier": {
+        "_type": "integer",
+        "_sample_values": [
+          2,
+          3
+        ],
+        "_total_unique_values": 2
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "utility"
+        ],
+        "_total_unique_values": 1
+      }
+    }
+  }
+}

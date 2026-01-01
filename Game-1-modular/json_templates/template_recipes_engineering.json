@@ -1,0 +1,427 @@
+{
+  "_meta": {
+    "category": "recipes-engineering",
+    "description": "Engineering recipes for devices",
+    "generated_at": "2026-01-01T19:53:07.769233",
+    "source_files": [
+      "recipes-engineering-1.JSON"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "inputs[].materialId": {
+      "values": [
+        "air_crystal",
+        "beetle_carapace",
+        "blast_powder",
+        "crystal_quartz",
+        "dire_fang",
+        "fire_crystal",
+        "frost_essence",
+        "iron_ingot",
+        "light_gem",
+        "lightning_shard",
+        "living_ichor",
+        "mithril_ingot",
+        "orichalcum_ingot",
+        "phoenix_ash",
+        "pine_plank",
+        "spectral_thread",
+        "steel_ingot",
+        "storm_heart",
+        "water_crystal"
+      ],
+      "count": 19,
+      "types": [
+        "string"
+      ],
+      "occurrences": 48
+    },
+    "inputs[].quantity": {
+      "values": [
+        10,
+        12,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8
+      ],
+      "count": 8,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 48
+    },
+    "metadata.narrative": {
+      "values": [
+        "Basic arrow turret using simple springs and levers. Point away from face.",
+        "Bear trap with brutal steel jaws. Immobilizes anything that steps on it.",
+        "Cluster bomb that splits into multiple explosives. Maximum coverage.",
+        "EMP device that disables electronic enemies and devices. Technology's worst nightmare.",
+        "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense.",
+        "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone.",
+        "Flamethrower turret that sweeps area with fire. Excellent for crowd control.",
+        "Frost mine that erupts in a blast of ice shards. The cold bites deep.",
+        "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces.",
+        "Healing beacon that emanates restorative energy. The light feels warm, comforting.",
+        "Jetpack for brief flight. Fuel not included (but fire crystals work great).",
+        "Laser turret using focused light crystals. Precise and devastating.",
+        "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous.",
+        "Net launcher that ensnares enemies. Reduces movement speed dramatically.",
+        "Simple explosive using blast powder in iron casing. Universal problem solver.",
+        "Spike trap with spring-loaded iron spikes. Simple, brutal, effective."
+      ],
+      "count": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "metadata.tags": {
+      "values": [
+        "advanced",
+        "area",
+        "basic",
+        "bomb",
+        "cluster",
+        "crowd-control",
+        "disable",
+        "elemental",
+        "explosive",
+        "fire",
+        "flight",
+        "frost",
+        "healing",
+        "immobilize",
+        "light",
+        "lightning",
+        "mobility",
+        "physical",
+        "precision",
+        "projectile",
+        "support",
+        "tech",
+        "tool",
+        "trap",
+        "turret",
+        "utility"
+      ],
+      "count": 26,
+      "types": [
+        "array"
+      ],
+      "occurrences": 16
+    },
+    "miniGame.baseTime": {
+      "values": [
+        25,
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        60,
+        65,
+        70,
+        75
+      ],
+      "count": 11,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "miniGame.difficulty": {
+      "values": [
+        "easy",
+        "extreme",
+        "hard",
+        "moderate"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "miniGame.type": {
+      "values": [
+        "engineering"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "outputId": {
+      "values": [
+        "basic_arrow_turret",
+        "bear_trap",
+        "cluster_bomb",
+        "emp_device",
+        "fire_arrow_turret",
+        "fire_bomb",
+        "flamethrower_turret",
+        "frost_mine",
+        "grappling_hook",
+        "healing_beacon",
+        "jetpack",
+        "laser_turret",
+        "lightning_cannon",
+        "net_launcher",
+        "simple_bomb",
+        "spike_trap"
+      ],
+      "count": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "outputQty": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "recipeId": {
+      "values": [
+        "engineering_basic_arrow_turret",
+        "engineering_bear_trap",
+        "engineering_cluster_bomb",
+        "engineering_emp_device",
+        "engineering_fire_arrow_turret",
+        "engineering_fire_bomb",
+        "engineering_flamethrower_turret",
+        "engineering_frost_mine",
+        "engineering_grappling_hook",
+        "engineering_healing_beacon",
+        "engineering_jetpack",
+        "engineering_laser_turret",
+        "engineering_lightning_cannon",
+        "engineering_net_launcher",
+        "engineering_simple_bomb",
+        "engineering_spike_trap"
+      ],
+      "count": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "stationTier": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "stationType": {
+      "values": [
+        "engineering"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    }
+  },
+  "_usable_template": {
+    "inputs": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone.",
+      "tags": [
+        "elemental",
+        "explosive",
+        "lightning"
+      ]
+    },
+    "miniGame": {
+      "baseTime": 65,
+      "difficulty": "moderate",
+      "type": "engineering"
+    },
+    "outputId": "frost_mine",
+    "outputQty": 1,
+    "recipeId": "engineering_net_launcher",
+    "stationTier": 1,
+    "stationType": "engineering"
+  },
+  "template": {
+    "inputs": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "materialId": {
+        "_type": "string",
+        "_sample_values": [
+          "phoenix_ash",
+          "air_crystal",
+          "spectral_thread",
+          "dire_fang",
+          "beetle_carapace",
+          "lightning_shard",
+          "storm_heart",
+          "living_ichor",
+          "light_gem",
+          "orichalcum_ingot"
+        ],
+        "_total_unique_values": 19
+      },
+      "quantity": {
+        "_type": "integer",
+        "_sample_values": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          8,
+          10,
+          12
+        ],
+        "_total_unique_values": 8
+      }
+    },
+    "metadata": {
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone.",
+          "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous.",
+          "Laser turret using focused light crystals. Precise and devastating.",
+          "Basic arrow turret using simple springs and levers. Point away from face.",
+          "Spike trap with spring-loaded iron spikes. Simple, brutal, effective.",
+          "Frost mine that erupts in a blast of ice shards. The cold bites deep.",
+          "Net launcher that ensnares enemies. Reduces movement speed dramatically.",
+          "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces.",
+          "Simple explosive using blast powder in iron casing. Universal problem solver.",
+          "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense."
+        ],
+        "_total_unique_values": 16
+      },
+      "tags": {
+        "_type": "array",
+        "_sample_values": [
+          "elemental",
+          "explosive",
+          "lightning",
+          "basic",
+          "tech"
+        ],
+        "_total_unique_values": 26
+      }
+    },
+    "miniGame": {
+      "baseTime": {
+        "_type": "integer",
+        "_sample_values": [
+          65,
+          35,
+          70,
+          40,
+          75,
+          45,
+          50,
+          55,
+          25,
+          60
+        ],
+        "_total_unique_values": 11
+      },
+      "difficulty": {
+        "_type": "string",
+        "_sample_values": [
+          "moderate",
+          "extreme",
+          "hard",
+          "easy"
+        ],
+        "_total_unique_values": 4
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "engineering"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "outputId": {
+      "_type": "string",
+      "_sample_values": [
+        "frost_mine",
+        "bear_trap",
+        "emp_device",
+        "simple_bomb",
+        "jetpack",
+        "laser_turret",
+        "cluster_bomb",
+        "fire_bomb",
+        "fire_arrow_turret",
+        "healing_beacon"
+      ],
+      "_total_unique_values": 16
+    },
+    "outputQty": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3
+      ],
+      "_total_unique_values": 3
+    },
+    "recipeId": {
+      "_type": "string",
+      "_sample_values": [
+        "engineering_net_launcher",
+        "engineering_bear_trap",
+        "engineering_healing_beacon",
+        "engineering_flamethrower_turret",
+        "engineering_basic_arrow_turret",
+        "engineering_fire_arrow_turret",
+        "engineering_laser_turret",
+        "engineering_emp_device",
+        "engineering_cluster_bomb",
+        "engineering_simple_bomb"
+      ],
+      "_total_unique_values": 16
+    },
+    "stationTier": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3
+      ],
+      "_total_unique_values": 3
+    },
+    "stationType": {
+      "_type": "string",
+      "_sample_values": [
+        "engineering"
+      ],
+      "_total_unique_values": 1
+    }
+  }
+}

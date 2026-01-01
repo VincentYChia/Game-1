@@ -1,0 +1,513 @@
+{
+  "_meta": {
+    "category": "recipes-refining",
+    "description": "Refining recipes for material processing",
+    "generated_at": "2026-01-01T19:53:07.768249",
+    "source_files": [
+      "recipes-refining-1.JSON"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "fuelRequired.materialId": {
+      "values": [
+        "phoenix_ash"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "fuelRequired.quantity": {
+      "values": [
+        1
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "inputs[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "adamantine_ore",
+        "ash_log",
+        "birch_log",
+        "bronze_ingot",
+        "copper_ingot",
+        "copper_ore",
+        "ebony_log",
+        "etherion_ingot",
+        "etherion_ore",
+        "fire_crystal",
+        "frost_essence",
+        "iron_ingot",
+        "iron_ore",
+        "ironwood_log",
+        "lightning_shard",
+        "maple_log",
+        "mithril_ingot",
+        "mithril_ore",
+        "oak_log",
+        "orichalcum_ingot",
+        "orichalcum_ore",
+        "pine_log",
+        "steel_ingot",
+        "steel_ore",
+        "tin_ingot",
+        "tin_ore",
+        "worldtree_log"
+      ],
+      "count": 28,
+      "types": [
+        "string"
+      ],
+      "occurrences": 47
+    },
+    "inputs[].quantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 47
+    },
+    "inputs[].rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "rare",
+        "uncommon"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 23
+    },
+    "metadata.narrative": {
+      "values": [
+        "Creating bronze through ancient metallurgical alloying. Harder than copper, more workable than iron. Rarely produces exceptional quality ingots.",
+        "Forging steel from carbon-rich ore. Requires intense heat.",
+        "Forging steel with frost essence. The metal is cold to touch, always.",
+        "Infusing copper with storm essence. Perfect magical conductivity.",
+        "Infusing steel with fire essence. The metal burns without being consumed.",
+        "Milling ash into planks. Superior shock absorption.",
+        "Milling maple wood. Resists warping beautifully.",
+        "Processing birch into fine planks. Excellent for detail work.",
+        "Processing ebony. The wood absorbs light as you work.",
+        "Processing pine into planks. Light, flexible wood.",
+        "Refining common copper into uncommon quality. Careful heat and patience.",
+        "Refining common iron into uncommon quality. Patient work and precise heat.",
+        "Refining epic adamantine into legendary quality. Hardness beyond measurement.",
+        "Refining epic copper into legendary quality. Perfect molecular alignment achieved.",
+        "Refining epic iron into legendary quality. Transcending conventional limits.",
+        "Refining epic mithril into legendary quality. The impossible made real.",
+        "Refining epic orichalcum into legendary quality. Ancient metal awakens fully.",
+        "Refining epic steel into legendary quality. Perfection crystallized in metal.",
+        "Refining legendary etherion into mythical quality. Temporal boundaries dissolve entirely.",
+        "Refining legendary mithril into mythical quality. The metal sings in harmonic perfection.",
+        "Refining legendary mithril. The metal seems to purify itself, occasionally yielding higher quality ingots.",
+        "Refining legendary orichalcum into mythical quality. The ancient metal awakens completely.",
+        "Refining metal that exists in multiple states. Reality bends during the process.",
+        "Refining rare adamantine into epic quality. Nearly indestructible becomes truly eternal.",
+        "Refining rare bronze into epic quality. Surpassing even the legendary smiths of old.",
+        "Refining rare copper into epic quality. Approaching theoretical perfection.",
+        "Refining rare iron into epic quality. Metal that defies conventional limits.",
+        "Refining rare mithril into epic quality. The metal sings as it transforms.",
+        "Refining rare steel into epic quality. Months of dedication distilled into perfection.",
+        "Refining rare tin into epic quality. Perfect magical conductivity achieved.",
+        "Refining the ancient metal. Channels both physical and magical forces.",
+        "Refining tin ore into silvery metal. Essential for alloys.",
+        "Refining uncommon bronze into rare quality. The ancient alloy perfected.",
+        "Refining uncommon copper into rare quality. The grain becomes perfect.",
+        "Refining uncommon iron into rare quality. Crystalline structure perfecting.",
+        "Refining uncommon steel into rare quality. Perfect crystalline structure.",
+        "Refining uncommon tin into rare quality. Silvery sheen becomes mirror-bright.",
+        "Sawing ironwood requires special blades. Wood dulls them quickly.",
+        "Sawing oak logs into usable planks. Basic carpentry.",
+        "Smelting adamantine requires extreme heat and purification techniques. Sometimes yields exceptionally pure ingots.",
+        "Smelting iron ore into reliable metal. Backbone of civilization. Crushing the ore first increases yield.",
+        "Smelting raw copper into usable ingots. The foundation of metallurgy.",
+        "Working worldtree wood. It remembers being part of something greater."
+      ],
+      "count": 43,
+      "types": [
+        "string"
+      ],
+      "occurrences": 43
+    },
+    "metadata.tags": {
+      "values": [
+        "adamantine",
+        "advanced",
+        "alloying",
+        "ancient",
+        "basic",
+        "bronze",
+        "copper",
+        "crushing",
+        "durable",
+        "elemental",
+        "epic",
+        "etherion",
+        "fine",
+        "fire",
+        "frost",
+        "iron",
+        "legendary",
+        "lightning",
+        "magical",
+        "metallic",
+        "mithril",
+        "mythical",
+        "orichalcum",
+        "purifying",
+        "quality",
+        "rare",
+        "rarity",
+        "sawing",
+        "smelting",
+        "steel",
+        "tin",
+        "uncommon",
+        "upgrade",
+        "wood"
+      ],
+      "count": 34,
+      "types": [
+        "array"
+      ],
+      "occurrences": 43
+    },
+    "outputs[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "ash_plank",
+        "birch_plank",
+        "bronze_ingot",
+        "copper_ingot",
+        "ebony_plank",
+        "etherion_ingot",
+        "fire_steel_ingot",
+        "frost_steel_ingot",
+        "iron_ingot",
+        "ironwood_plank",
+        "lightning_copper_ingot",
+        "maple_plank",
+        "mithril_ingot",
+        "oak_plank",
+        "orichalcum_ingot",
+        "pine_plank",
+        "steel_ingot",
+        "tin_ingot",
+        "worldtree_plank"
+      ],
+      "count": 20,
+      "types": [
+        "string"
+      ],
+      "occurrences": 43
+    },
+    "outputs[].quantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 43
+    },
+    "outputs[].rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "mythical",
+        "rare",
+        "uncommon"
+      ],
+      "count": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 43
+    },
+    "recipeId": {
+      "values": [
+        "refining_adamantine_ore_to_ingot",
+        "refining_ash_log_to_plank",
+        "refining_birch_log_to_plank",
+        "refining_bronze_alloy",
+        "refining_copper_ore_to_ingot",
+        "refining_ebony_log_to_plank",
+        "refining_etherion_ore_to_ingot",
+        "refining_fire_steel",
+        "refining_frost_steel",
+        "refining_iron_ore_to_ingot",
+        "refining_ironwood_log_to_plank",
+        "refining_lightning_copper",
+        "refining_maple_log_to_plank",
+        "refining_mithril_ore_to_ingot",
+        "refining_oak_log_to_plank",
+        "refining_orichalcum_ore_to_ingot",
+        "refining_pine_log_to_plank",
+        "refining_rarity_adamantine_epic",
+        "refining_rarity_adamantine_legendary",
+        "refining_rarity_bronze_epic",
+        "refining_rarity_bronze_rare",
+        "refining_rarity_copper_epic",
+        "refining_rarity_copper_legendary",
+        "refining_rarity_copper_rare",
+        "refining_rarity_copper_uncommon",
+        "refining_rarity_etherion_mythical",
+        "refining_rarity_iron_epic",
+        "refining_rarity_iron_legendary",
+        "refining_rarity_iron_rare",
+        "refining_rarity_iron_uncommon",
+        "refining_rarity_mithril_epic",
+        "refining_rarity_mithril_legendary",
+        "refining_rarity_mithril_mythical",
+        "refining_rarity_orichalcum_legendary",
+        "refining_rarity_orichalcum_mythical",
+        "refining_rarity_steel_epic",
+        "refining_rarity_steel_legendary",
+        "refining_rarity_steel_rare",
+        "refining_rarity_tin_epic",
+        "refining_rarity_tin_rare",
+        "refining_steel_ore_to_ingot",
+        "refining_tin_ore_to_ingot",
+        "refining_worldtree_log_to_plank"
+      ],
+      "count": 43,
+      "types": [
+        "string"
+      ],
+      "occurrences": 43
+    },
+    "stationRequired": {
+      "values": [
+        "refinery"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 43
+    },
+    "stationTierRequired": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 43
+    }
+  },
+  "_usable_template": {
+    "fuelRequired": {
+      "materialId": "phoenix_ash",
+      "quantity": 1
+    },
+    "inputs": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Refining common copper into uncommon quality. Careful heat and patience.",
+      "tags": [
+        "elemental",
+        "wood",
+        "mythical"
+      ]
+    },
+    "outputs": [
+      "<value>"
+    ],
+    "recipeId": "refining_rarity_copper_rare",
+    "stationRequired": "refinery",
+    "stationTierRequired": 1
+  },
+  "template": {
+    "fuelRequired": {
+      "materialId": {
+        "_type": "string",
+        "_sample_values": [
+          "phoenix_ash"
+        ],
+        "_total_unique_values": 1
+      },
+      "quantity": {
+        "_type": "integer",
+        "_sample_values": [
+          1
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "inputs": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "materialId": {
+        "_type": "string",
+        "_sample_values": [
+          "tin_ore",
+          "adamantine_ingot",
+          "ash_log",
+          "adamantine_ore",
+          "ironwood_log",
+          "pine_log",
+          "birch_log",
+          "worldtree_log",
+          "etherion_ingot",
+          "steel_ore"
+        ],
+        "_total_unique_values": 28
+      },
+      "quantity": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "_total_unique_values": 4
+      },
+      "rarity": {
+        "_type": "string",
+        "_sample_values": [
+          "rare",
+          "epic",
+          "common",
+          "uncommon",
+          "legendary"
+        ],
+        "_total_unique_values": 5
+      }
+    },
+    "metadata": {
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "Refining common copper into uncommon quality. Careful heat and patience.",
+          "Infusing copper with storm essence. Perfect magical conductivity.",
+          "Refining rare bronze into epic quality. Surpassing even the legendary smiths of old.",
+          "Sawing oak logs into usable planks. Basic carpentry.",
+          "Refining rare adamantine into epic quality. Nearly indestructible becomes truly eternal.",
+          "Milling maple wood. Resists warping beautifully.",
+          "Refining legendary orichalcum into mythical quality. The ancient metal awakens completely.",
+          "Refining rare iron into epic quality. Metal that defies conventional limits.",
+          "Sawing ironwood requires special blades. Wood dulls them quickly.",
+          "Refining tin ore into silvery metal. Essential for alloys."
+        ],
+        "_total_unique_values": 43
+      },
+      "tags": {
+        "_type": "array",
+        "_sample_values": [
+          "elemental",
+          "wood",
+          "mythical",
+          "basic",
+          "lightning"
+        ],
+        "_total_unique_values": 34
+      }
+    },
+    "outputs": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "materialId": {
+        "_type": "string",
+        "_sample_values": [
+          "frost_steel_ingot",
+          "ironwood_plank",
+          "etherion_ingot",
+          "birch_plank",
+          "worldtree_plank",
+          "ash_plank",
+          "oak_plank",
+          "bronze_ingot",
+          "fire_steel_ingot",
+          "copper_ingot"
+        ],
+        "_total_unique_values": 20
+      },
+      "quantity": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "_total_unique_values": 4
+      },
+      "rarity": {
+        "_type": "string",
+        "_sample_values": [
+          "mythical",
+          "rare",
+          "epic",
+          "common",
+          "uncommon",
+          "legendary"
+        ],
+        "_total_unique_values": 6
+      }
+    },
+    "recipeId": {
+      "_type": "string",
+      "_sample_values": [
+        "refining_rarity_copper_rare",
+        "refining_rarity_etherion_mythical",
+        "refining_rarity_copper_epic",
+        "refining_bronze_alloy",
+        "refining_maple_log_to_plank",
+        "refining_birch_log_to_plank",
+        "refining_rarity_steel_epic",
+        "refining_rarity_orichalcum_mythical",
+        "refining_rarity_steel_legendary",
+        "refining_ironwood_log_to_plank"
+      ],
+      "_total_unique_values": 43
+    },
+    "stationRequired": {
+      "_type": "string",
+      "_sample_values": [
+        "refinery"
+      ],
+      "_total_unique_values": 1
+    },
+    "stationTierRequired": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "_total_unique_values": 4
+    }
+  }
+}

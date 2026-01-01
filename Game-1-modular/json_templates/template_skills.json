@@ -1,0 +1,1070 @@
+{
+  "_meta": {
+    "category": "skills",
+    "description": "Player skill definitions",
+    "generated_at": "2026-01-01T19:53:07.783056",
+    "source_files": [
+      "skills-skills-1.JSON"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "categories": {
+      "values": [
+        "alchemy",
+        "combat",
+        "crafting",
+        "defense",
+        "durability",
+        "enchanting",
+        "engineering",
+        "forestry",
+        "gathering",
+        "mining",
+        "movement",
+        "refining",
+        "smithing",
+        "utility"
+      ],
+      "count": 14,
+      "types": [
+        "array"
+      ],
+      "occurrences": 30
+    },
+    "cost.cooldown": {
+      "values": [
+        "extreme",
+        "long",
+        "moderate",
+        "short"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "cost.mana": {
+      "values": [
+        "extreme",
+        "high",
+        "low",
+        "moderate"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "description": {
+      "values": [
+        "A single attack of unimaginable power that ignores defenses and deals catastrophic damage.",
+        "Attack all enemies in a wide radius around you.",
+        "Attack much faster for a short burst of time.",
+        "Brace yourself against incoming attacks, reducing damage taken significantly.",
+        "Channel raw strength into your pickaxe, doubling mining damage for a sustained period.",
+        "Continuously regenerate massive health and repair equipment durability.",
+        "Dramatically boost crafted item quality and gain massive rarity upgrade chance.",
+        "Dramatically increase attack damage and speed simultaneously.",
+        "Dramatically increase the chance of finding rare materials while gathering.",
+        "Extend engineering puzzle time and improve device quality significantly.",
+        "Extend your smithing mini-game timer, giving more time for perfect strikes.",
+        "Fall into a steady rhythm, chopping wood much faster than normal.",
+        "Gain extra time for your alchemy mini-game and increase potion quality.",
+        "Gain increased chance for perfect enchantment patterns and rarity upgrades.",
+        "Gain massive bonus materials from every gather for an extended period.",
+        "Gather extra materials from each resource node you harvest.",
+        "Gather from multiple resource nodes in a small area simultaneously.",
+        "Improve your refining mini-game time and material quality output.",
+        "Instantly restore a moderate amount of health.",
+        "Instantly restore durability to your equipped tools and weapons.",
+        "Massively extend all mini-game timers, giving you all the time you need.",
+        "Massively increase critical chance and rarity for all actions.",
+        "Move significantly faster for a brief period.",
+        "Restore health and mana simultaneously when you need it most.",
+        "Significantly increase critical hit chance for all actions.",
+        "Slowly restore health over time while active.",
+        "Temporarily ignore all tier restrictions and requirements. Use any tool on any material, craft at any station.",
+        "Unleash catastrophic damage in a massive area, obliterating everything.",
+        "Your next attack hits with devastating force, dealing massive damage.",
+        "Your tools consume durability much more slowly."
+      ],
+      "count": 30,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "effect.additionalEffects[].category": {
+      "values": [
+        "alchemy",
+        "combat",
+        "damage",
+        "durability",
+        "enchanting",
+        "engineering",
+        "mining",
+        "refining",
+        "smithing"
+      ],
+      "count": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect.additionalEffects[].duration": {
+      "values": [
+        "extended",
+        "instant",
+        "long",
+        "moderate"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect.additionalEffects[].magnitude": {
+      "values": [
+        "extreme",
+        "major",
+        "minor",
+        "moderate"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect.additionalEffects[].target": {
+      "values": [
+        "area",
+        "enemy",
+        "self"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect.additionalEffects[].type": {
+      "values": [
+        "elevate",
+        "empower",
+        "pierce",
+        "quicken",
+        "regenerate"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect.category": {
+      "values": [
+        "alchemy",
+        "combat",
+        "damage",
+        "defense",
+        "durability",
+        "enchanting",
+        "engineering",
+        "forestry",
+        "mining",
+        "movement",
+        "refining",
+        "smithing"
+      ],
+      "count": 12,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "effect.duration": {
+      "values": [
+        "brief",
+        "extended",
+        "instant",
+        "long",
+        "moderate"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "effect.magnitude": {
+      "values": [
+        "extreme",
+        "major",
+        "moderate"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "effect.target": {
+      "values": [
+        "area",
+        "enemy",
+        "resource_node",
+        "self"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "effect.type": {
+      "values": [
+        "devastate",
+        "elevate",
+        "empower",
+        "enrich",
+        "fortify",
+        "pierce",
+        "quicken",
+        "regenerate",
+        "restore",
+        "transcend"
+      ],
+      "count": 10,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "evolution.canEvolve": {
+      "values": [
+        false,
+        true
+      ],
+      "count": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 30
+    },
+    "evolution.nextSkillId": {
+      "values": [
+        "archmage_mastery",
+        "berserker_rage",
+        "decimating_blow",
+        "eagle_vision",
+        "eternal_edge",
+        "iron_fortress",
+        "legendary_prospector",
+        "master_alchemist",
+        "master_maintenance",
+        "master_mechanic",
+        "master_refiner",
+        "miracle_cure",
+        "natures_bounty",
+        "natures_tempo",
+        "phoenix_rebirth",
+        "timeless_forge",
+        "titans_excavation",
+        "undying_resolve",
+        "whirlwind_fury",
+        "wind_runner"
+      ],
+      "count": 20,
+      "types": [
+        "null",
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "evolution.requirement": {
+      "values": [
+        "Maximum evolution - cannot evolve further",
+        "Reach level 10 - LLM generates evolution",
+        "Reach level 10 and block 5000 damage",
+        "Reach level 10 and brew 150 potions",
+        "Reach level 10 and craft 100 devices",
+        "Reach level 10 and craft 100 smithed items",
+        "Reach level 10 and deal 10000 damage",
+        "Reach level 10 and defeat 500 enemies",
+        "Reach level 10 and enchant 100 items",
+        "Reach level 10 and find 50 rare+ materials",
+        "Reach level 10 and gather 5000 materials",
+        "Reach level 10 and harvest 500 trees",
+        "Reach level 10 and heal 50000 HP",
+        "Reach level 10 and land 1000 attacks",
+        "Reach level 10 and land 500 critical hits",
+        "Reach level 10 and mine 1000 ore nodes",
+        "Reach level 10 and refine 200 materials",
+        "Reach level 10 and regenerate 100000 HP",
+        "Reach level 10 and repair 50000 durability",
+        "Reach level 10 and save 50000 durability",
+        "Reach level 10 and survive at <10% HP 50 times",
+        "Reach level 10 and travel 100000 tiles"
+      ],
+      "count": 22,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "name": {
+      "values": [
+        "Absolute Destruction",
+        "Alchemist's Insight",
+        "Battle Fury",
+        "Battle Stance",
+        "Bountiful Harvest",
+        "Chain Harvest",
+        "Combat Rush",
+        "Enchanter's Grace",
+        "Endless Bounty",
+        "Engineer's Precision",
+        "Field Medic",
+        "Fortune's Favor",
+        "Keen Eye",
+        "Lumberjack's Rhythm",
+        "Master Craftsman",
+        "Miner's Fury",
+        "Omega Strike",
+        "Phoenix Resurrection",
+        "Power Strike",
+        "Quick Repair",
+        "Reality Breach",
+        "Refiner's Touch",
+        "Regenerative Aura",
+        "Second Wind",
+        "Smith's Focus",
+        "Sprint",
+        "Time Dilation",
+        "Tool Preservation",
+        "Treasure Sense",
+        "Whirlwind Strike"
+      ],
+      "count": 30,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "narrative": {
+      "values": [
+        "A warrior who maintains their tools never finds themselves defenseless.",
+        "A well-maintained tool is an investment. A broken tool is an expensive lesson.",
+        "Bandages are for people with time. This is for people who don't.",
+        "Complex mechanisms demand careful attention. Rush the gears, get your fingers caught.",
+        "From ashes, rise. From wounds, strength. Death is merely an inconvenience.",
+        "Impurities burn away when you know exactly how hot, exactly how long.",
+        "Listen to the forest. Find the heartbeat. Match your swing to the ancient pulse.",
+        "Luck is what happens when preparation meets opportunity. This is what happens when luck meets steroids.",
+        "Magic flows where intention directs it. Unless you sneeze. Then it flows everywhere.",
+        "Master smiths don't rush. They breathe. They focus. They strike true.",
+        "Mastery isn't a destination. It's a standard you refuse to compromise.",
+        "One strike. One chance. One ending.",
+        "Plant your feet. Lower your center. Become the immovable object.",
+        "Precision is overrated when you can just hit them twelve times before they blink.",
+        "Rage is a weapon. Control it, channel it, unleash it.",
+        "Rules are for people who lack imagination. And sufficient mana reserves.",
+        "See the weaknesses others miss. Strike where it matters most.",
+        "Some call it luck. Some call it intuition. Mostly it's just knowing where to dig.",
+        "Sometimes subtlety fails. Sometimes you just need to hit something really, really hard.",
+        "Sometimes the best strategy is running away. Fast.",
+        "Spin. Strike. Repeat. Simple tactics are often the deadliest.",
+        "Subtlety is for people who can't level mountains.",
+        "The brew reveals its secrets to those patient enough to watch. And lucky enough to not explode.",
+        "The earth provides for those who know its secrets. And sometimes, it just really likes you.",
+        "The generous earth rewards those who know where to look. And how to ask nicely.",
+        "The mountain yields to those who show it proper respect. Or, failing that, overwhelming force.",
+        "Time is relative. Especially when you're cheating.",
+        "Why harvest one at a time when you can harvest all of them?",
+        "Wounds close. Bones knit. Given enough time, everything heals.",
+        "You're not done yet. Get up."
+      ],
+      "count": 30,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "mythic",
+        "rare",
+        "uncommon"
+      ],
+      "count": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "requirements.characterLevel": {
+      "values": [
+        1,
+        10,
+        15,
+        16,
+        17,
+        18,
+        19,
+        2,
+        20,
+        22,
+        25,
+        28,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "count": 18,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 30
+    },
+    "requirements.stats.AGI": {
+      "values": [
+        10,
+        15,
+        25
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "requirements.stats.DEF": {
+      "values": [
+        5
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "requirements.stats.INT": {
+      "values": [
+        10,
+        12,
+        15,
+        20,
+        22,
+        30,
+        8
+      ],
+      "count": 7,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 8
+    },
+    "requirements.stats.LCK": {
+      "values": [
+        10,
+        15,
+        20,
+        25,
+        5,
+        8
+      ],
+      "count": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "requirements.stats.STR": {
+      "values": [
+        15,
+        20,
+        25,
+        30
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "requirements.stats.VIT": {
+      "values": [
+        10,
+        12,
+        25,
+        5
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    },
+    "skillId": {
+      "values": [
+        "absolute_destruction",
+        "alchemists_insight",
+        "battle_fury",
+        "battle_stance",
+        "bountiful_harvest",
+        "chain_harvest",
+        "combat_rush",
+        "combat_strike",
+        "enchanters_grace",
+        "endless_bounty",
+        "engineers_precision",
+        "field_medic",
+        "fortunes_favor",
+        "keen_eye",
+        "lumberjacks_rhythm",
+        "master_craftsman",
+        "miners_fury",
+        "omega_strike",
+        "phoenix_resurrection",
+        "quick_repair",
+        "reality_breach",
+        "refiners_touch",
+        "regenerative_aura",
+        "second_wind",
+        "smiths_focus",
+        "sprint",
+        "time_dilation",
+        "tool_preservation",
+        "treasure_sense",
+        "whirlwind_strike"
+      ],
+      "count": 30,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "tags": {
+      "values": [
+        "abundance",
+        "alchemy",
+        "aoe",
+        "attack_speed",
+        "basic",
+        "berserker",
+        "bonus",
+        "burst",
+        "bypass",
+        "combat",
+        "crafting",
+        "critical",
+        "damage",
+        "damage_boost",
+        "damage_reduction",
+        "defense",
+        "destruction",
+        "durability",
+        "efficiency",
+        "enchanting",
+        "engineering",
+        "finisher",
+        "gathering",
+        "healing",
+        "instant",
+        "luck",
+        "mana",
+        "mastery",
+        "mobility",
+        "movement",
+        "multi_purpose",
+        "over_time",
+        "precision",
+        "quality",
+        "rarity",
+        "recovery",
+        "refining",
+        "regeneration",
+        "repair",
+        "single_hit",
+        "single_target",
+        "smithing",
+        "speed",
+        "speed_boost",
+        "survival",
+        "sustain",
+        "tier",
+        "time",
+        "transcendence",
+        "ultimate",
+        "universal",
+        "yield"
+      ],
+      "count": 52,
+      "types": [
+        "array"
+      ],
+      "occurrences": 30
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 30
+    }
+  },
+  "_usable_template": {
+    "categories": [
+      "forestry",
+      "refining",
+      "gathering"
+    ],
+    "cost": {
+      "cooldown": "moderate",
+      "mana": "moderate"
+    },
+    "description": "Move significantly faster for a brief period.",
+    "effect": {
+      "additionalEffects": [
+        "<value>"
+      ],
+      "category": "forestry",
+      "duration": "instant",
+      "magnitude": "major",
+      "target": "resource_node",
+      "type": "transcend"
+    },
+    "evolution": {
+      "canEvolve": true,
+      "nextSkillId": "eternal_edge",
+      "requirement": "Reach level 10 and craft 100 smithed items"
+    },
+    "name": "Time Dilation",
+    "narrative": "Plant your feet. Lower your center. Become the immovable object.",
+    "rarity": "rare",
+    "requirements": {
+      "characterLevel": 1,
+      "stats": {
+        "AGI": 25,
+        "DEF": 5,
+        "INT": 8,
+        "LCK": 5,
+        "STR": 25,
+        "VIT": 25
+      },
+      "titles": [
+        "<value>"
+      ]
+    },
+    "skillId": "second_wind",
+    "tags": [
+      "time",
+      "refining",
+      "instant"
+    ],
+    "tier": 1
+  },
+  "template": {
+    "categories": {
+      "_type": "array",
+      "_sample_values": [
+        "forestry",
+        "refining",
+        "gathering",
+        "mining",
+        "combat"
+      ],
+      "_total_unique_values": 14
+    },
+    "cost": {
+      "cooldown": {
+        "_type": "string",
+        "_sample_values": [
+          "moderate",
+          "short",
+          "long",
+          "extreme"
+        ],
+        "_total_unique_values": 4
+      },
+      "mana": {
+        "_type": "string",
+        "_sample_values": [
+          "moderate",
+          "extreme",
+          "low",
+          "high"
+        ],
+        "_total_unique_values": 4
+      }
+    },
+    "description": {
+      "_type": "string",
+      "_sample_values": [
+        "Move significantly faster for a brief period.",
+        "Dramatically boost crafted item quality and gain massive rarity upgrade chance.",
+        "Instantly restore a moderate amount of health.",
+        "Your tools consume durability much more slowly.",
+        "Massively increase critical chance and rarity for all actions.",
+        "Extend engineering puzzle time and improve device quality significantly.",
+        "Fall into a steady rhythm, chopping wood much faster than normal.",
+        "Temporarily ignore all tier restrictions and requirements. Use any tool on any material, craft at any station.",
+        "A single attack of unimaginable power that ignores defenses and deals catastrophic damage.",
+        "Dramatically increase attack damage and speed simultaneously."
+      ],
+      "_total_unique_values": 30
+    },
+    "effect": {
+      "additionalEffects": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0,
+        "category": {
+          "_type": "string",
+          "_sample_values": [
+            "refining",
+            "mining",
+            "damage",
+            "combat",
+            "durability",
+            "enchanting",
+            "alchemy",
+            "engineering",
+            "smithing"
+          ],
+          "_total_unique_values": 9
+        },
+        "duration": {
+          "_type": "string",
+          "_sample_values": [
+            "moderate",
+            "long",
+            "extended",
+            "instant"
+          ],
+          "_total_unique_values": 4
+        },
+        "magnitude": {
+          "_type": "string",
+          "_sample_values": [
+            "major",
+            "moderate",
+            "extreme",
+            "minor"
+          ],
+          "_total_unique_values": 4
+        },
+        "target": {
+          "_type": "string",
+          "_sample_values": [
+            "area",
+            "self",
+            "enemy"
+          ],
+          "_total_unique_values": 3
+        },
+        "type": {
+          "_type": "string",
+          "_sample_values": [
+            "quicken",
+            "pierce",
+            "elevate",
+            "empower",
+            "regenerate"
+          ],
+          "_total_unique_values": 5
+        }
+      },
+      "category": {
+        "_type": "string",
+        "_sample_values": [
+          "forestry",
+          "refining",
+          "mining",
+          "damage",
+          "combat",
+          "durability",
+          "enchanting",
+          "movement",
+          "alchemy",
+          "defense"
+        ],
+        "_total_unique_values": 12
+      },
+      "duration": {
+        "_type": "string",
+        "_sample_values": [
+          "instant",
+          "moderate",
+          "brief",
+          "long",
+          "extended"
+        ],
+        "_total_unique_values": 5
+      },
+      "magnitude": {
+        "_type": "string",
+        "_sample_values": [
+          "major",
+          "extreme",
+          "moderate"
+        ],
+        "_total_unique_values": 3
+      },
+      "target": {
+        "_type": "string",
+        "_sample_values": [
+          "resource_node",
+          "area",
+          "self",
+          "enemy"
+        ],
+        "_total_unique_values": 4
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "transcend",
+          "quicken",
+          "fortify",
+          "pierce",
+          "enrich",
+          "devastate",
+          "elevate",
+          "empower",
+          "restore",
+          "regenerate"
+        ],
+        "_total_unique_values": 10
+      }
+    },
+    "evolution": {
+      "canEvolve": {
+        "_type": "boolean",
+        "_sample_values": [
+          false,
+          true
+        ],
+        "_total_unique_values": 2
+      },
+      "nextSkillId": {
+        "_type": "null",
+        "_sample_values": [
+          "eternal_edge",
+          "timeless_forge",
+          "master_mechanic",
+          "berserker_rage",
+          "eagle_vision",
+          "natures_tempo",
+          "wind_runner",
+          "undying_resolve",
+          "miracle_cure",
+          "phoenix_rebirth"
+        ],
+        "_total_unique_values": 21
+      },
+      "requirement": {
+        "_type": "string",
+        "_sample_values": [
+          "Reach level 10 and craft 100 smithed items",
+          "Reach level 10 and craft 100 devices",
+          "Reach level 10 and survive at <10% HP 50 times",
+          "Reach level 10 and block 5000 damage",
+          "Reach level 10 and brew 150 potions",
+          "Reach level 10 and travel 100000 tiles",
+          "Reach level 10 and regenerate 100000 HP",
+          "Reach level 10 and defeat 500 enemies",
+          "Reach level 10 and deal 10000 damage",
+          "Reach level 10 and enchant 100 items"
+        ],
+        "_total_unique_values": 22
+      }
+    },
+    "name": {
+      "_type": "string",
+      "_sample_values": [
+        "Time Dilation",
+        "Alchemist's Insight",
+        "Engineer's Precision",
+        "Power Strike",
+        "Absolute Destruction",
+        "Bountiful Harvest",
+        "Keen Eye",
+        "Master Craftsman",
+        "Treasure Sense",
+        "Fortune's Favor"
+      ],
+      "_total_unique_values": 30
+    },
+    "narrative": {
+      "_type": "string",
+      "_sample_values": [
+        "Plant your feet. Lower your center. Become the immovable object.",
+        "Rage is a weapon. Control it, channel it, unleash it.",
+        "Why harvest one at a time when you can harvest all of them?",
+        "Bandages are for people with time. This is for people who don't.",
+        "Luck is what happens when preparation meets opportunity. This is what happens when luck meets steroids.",
+        "The brew reveals its secrets to those patient enough to watch. And lucky enough to not explode.",
+        "Sometimes the best strategy is running away. Fast.",
+        "Some call it luck. Some call it intuition. Mostly it's just knowing where to dig.",
+        "Impurities burn away when you know exactly how hot, exactly how long.",
+        "Master smiths don't rush. They breathe. They focus. They strike true."
+      ],
+      "_total_unique_values": 30
+    },
+    "rarity": {
+      "_type": "string",
+      "_sample_values": [
+        "rare",
+        "mythic",
+        "epic",
+        "common",
+        "uncommon",
+        "legendary"
+      ],
+      "_total_unique_values": 6
+    },
+    "requirements": {
+      "characterLevel": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          2,
+          3,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          15
+        ],
+        "_total_unique_values": 18
+      },
+      "stats": {
+        "AGI": {
+          "_type": "integer",
+          "_sample_values": [
+            25,
+            10,
+            15
+          ],
+          "_total_unique_values": 3
+        },
+        "DEF": {
+          "_type": "integer",
+          "_sample_values": [
+            5
+          ],
+          "_total_unique_values": 1
+        },
+        "INT": {
+          "_type": "integer",
+          "_sample_values": [
+            8,
+            10,
+            12,
+            15,
+            20,
+            22,
+            30
+          ],
+          "_total_unique_values": 7
+        },
+        "LCK": {
+          "_type": "integer",
+          "_sample_values": [
+            5,
+            8,
+            10,
+            15,
+            20,
+            25
+          ],
+          "_total_unique_values": 6
+        },
+        "STR": {
+          "_type": "integer",
+          "_sample_values": [
+            25,
+            20,
+            30,
+            15
+          ],
+          "_total_unique_values": 4
+        },
+        "VIT": {
+          "_type": "integer",
+          "_sample_values": [
+            25,
+            10,
+            12,
+            5
+          ],
+          "_total_unique_values": 4
+        }
+      },
+      "titles": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0
+      }
+    },
+    "skillId": {
+      "_type": "string",
+      "_sample_values": [
+        "second_wind",
+        "miners_fury",
+        "combat_rush",
+        "enchanters_grace",
+        "absolute_destruction",
+        "refiners_touch",
+        "field_medic",
+        "chain_harvest",
+        "engineers_precision",
+        "regenerative_aura"
+      ],
+      "_total_unique_values": 30
+    },
+    "tags": {
+      "_type": "array",
+      "_sample_values": [
+        "time",
+        "refining",
+        "instant",
+        "transcendence",
+        "basic"
+      ],
+      "_total_unique_values": 52
+    },
+    "tier": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "_total_unique_values": 4
+    }
+  }
+}

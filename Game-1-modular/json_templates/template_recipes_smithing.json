@@ -1,0 +1,556 @@
+{
+  "_meta": {
+    "category": "recipes-smithing",
+    "description": "Smithing recipes for weapons and armor",
+    "generated_at": "2026-01-01T19:53:07.766246",
+    "source_files": [
+      "recipes-smithing-3.JSON"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "gridSize": {
+      "values": [
+        "3x3",
+        "5x5",
+        "7x7"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    },
+    "inputs[].materialId": {
+      "values": [
+        "air_crystal",
+        "ash_log",
+        "ash_plank",
+        "basalt",
+        "beetle_carapace",
+        "birch_plank",
+        "copper_ingot",
+        "dire_fang",
+        "earth_crystal",
+        "ebony_plank",
+        "essence_blood",
+        "fire_crystal",
+        "golem_core",
+        "granite",
+        "iron_ingot",
+        "ironwood_plank",
+        "lightning_shard",
+        "limestone",
+        "maple_plank",
+        "mithril_ingot",
+        "oak_log",
+        "oak_plank",
+        "obsidian",
+        "phoenix_ash",
+        "pine_log",
+        "pine_plank",
+        "slime_gel",
+        "spectral_thread",
+        "steel_ingot",
+        "storm_heart",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "count": 32,
+      "types": [
+        "string"
+      ],
+      "occurrences": 91
+    },
+    "inputs[].quantity": {
+      "values": [
+        1,
+        10,
+        11,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "count": 11,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 91
+    },
+    "metadata.narrative": {
+      "values": [
+        "A dagger is deceptively simple - just a blade and a grip. But the balance must be perfect for quick, precise strikes.",
+        "A simple round shield - iron face with oak backing. Protects and strikes in equal measure.",
+        "Advanced refinery with better efficiency and heat control.",
+        "Balanced steel longsword. The blade flows like water, strikes like thunder.",
+        "Basic alchemy table with mortar, pestle, and glassware.",
+        "Basic axe for woodcutting. Simple but essential for any aspiring adventurer.",
+        "Basic leather protection. Better than nothing, lighter than metal.",
+        "Basic refinery for turning raw ores into usable ingots. Essential for any metalworker.",
+        "Basic stone forge suitable for working copper and iron. The foundation of smithing.",
+        "Basic workbench for assembling mechanical devices.",
+        "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis.",
+        "Crafting a composite bow requires laminating different materials - wood for flexibility, sinew for power, silk for the string. Patience yields deadly accuracy.",
+        "Crafting a warhammer is about managing weight distribution. The crushing head must be perfectly balanced on the shaft, or it becomes a liability rather than a weapon.",
+        "Curved steel blade perfect for harvesting delicate plants. Clean cuts preserve quality and maximize yield.",
+        "Ethereal mithril axe that phases through wood fibers. Cuts with minimal resistance.",
+        "Flexible bamboo rod with silk line and bronze hook. Patience and the right tool can pull dinner from any water.",
+        "Forging a steel battleaxe requires balance - too heavy and it's unwieldy, too light and it lacks impact. This versatile weapon can devastate with two hands or still threaten with one.",
+        "Improved forge with better heat retention. Can work steel reliably.",
+        "Iron amulet holding a water crystal. Feels cool against your skin.",
+        "Iron plates protect vital organs. Heavy but reliable.",
+        "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective.",
+        "Master forge with crystal enhancement. Can reach extreme temperatures.",
+        "Mithril dagger that seems to shimmer out of existence. Wickedly sharp, impossibly light.",
+        "Razor-edged steel axe. Ancient trees fall before it.",
+        "Reinforced leather boots with iron caps. Protects your feet without slowing you down.",
+        "Reinforced leather gloves with iron studs across the knuckles. Your hands are your tools - protect them properly.",
+        "Simple copper band with fire crystal. Radiates gentle warmth.",
+        "Simple pine bow strung with treated sinew. Not powerful, but reliable.",
+        "Simple spear with copper tip. Keep your enemies at a distance.",
+        "Solid iron axe for serious forestry work. Bites deep and true.",
+        "Steel bracelet with lightning shard. Crackles with stored static.",
+        "Steel helm with full face protection. Your head stays attached, which is nice.",
+        "Steel pickaxe with perfect balance. Makes hard rock feel like clay.",
+        "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor.",
+        "The foundational smithing technique - blade, tang, handle. Simple in concept, demanding in execution. Every smith remembers their first sword.",
+        "Upgraded pickaxe that can tackle tougher deposits. Iron reliability meets practical design.",
+        "Your first pickaxe. The gateway to greater resources and deeper discoveries."
+      ],
+      "count": 37,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    },
+    "metadata.tags": {
+      "values": [
+        "1H",
+        "2H",
+        "accessory",
+        "alchemy",
+        "amulet",
+        "armor",
+        "axe",
+        "bash",
+        "bow",
+        "bracelet",
+        "chest",
+        "cleaving",
+        "composite",
+        "crushing",
+        "dagger",
+        "defensive",
+        "elemental",
+        "engineering",
+        "fast",
+        "feet",
+        "fire",
+        "fishing",
+        "flexible",
+        "forge",
+        "gathering",
+        "hands",
+        "harvesting",
+        "head",
+        "heavy",
+        "legendary",
+        "legs",
+        "light",
+        "lightning",
+        "mace",
+        "melee",
+        "metal",
+        "pickaxe",
+        "piercing",
+        "quality",
+        "ranged",
+        "reach",
+        "refinery",
+        "ring",
+        "shield",
+        "slashing",
+        "spear",
+        "staff",
+        "standard",
+        "starter",
+        "station",
+        "sword",
+        "tool",
+        "versatile",
+        "water",
+        "weapon"
+      ],
+      "count": 55,
+      "types": [
+        "array"
+      ],
+      "occurrences": 37
+    },
+    "miniGame.baseTime": {
+      "values": [
+        25,
+        28,
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        60,
+        65,
+        70,
+        90
+      ],
+      "count": 12,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 37
+    },
+    "miniGame.difficulty": {
+      "values": [
+        "easy",
+        "extreme",
+        "hard",
+        "moderate"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    },
+    "miniGame.type": {
+      "values": [
+        "smithing"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    },
+    "outputId": {
+      "values": [
+        "alchemy_table_t1",
+        "bamboo_fishing_rod",
+        "composite_longbow",
+        "copper_axe",
+        "copper_dagger",
+        "copper_fire_ring",
+        "copper_pickaxe",
+        "copper_spear",
+        "engineering_bench_t1",
+        "fire_crystal_staff",
+        "forge_t1",
+        "forge_t2",
+        "forge_t3",
+        "iron_axe",
+        "iron_boots",
+        "iron_chestplate",
+        "iron_pickaxe",
+        "iron_round_shield",
+        "iron_shortsword",
+        "iron_studded_gauntlets",
+        "iron_warhammer",
+        "iron_water_amulet",
+        "leather_tunic",
+        "mithril_axe",
+        "mithril_dagger",
+        "mithril_pickaxe",
+        "pine_shortbow",
+        "refinery_t1",
+        "refinery_t2",
+        "steel_axe",
+        "steel_battleaxe",
+        "steel_helm",
+        "steel_leggings",
+        "steel_lightning_bracelet",
+        "steel_longsword",
+        "steel_pickaxe",
+        "steel_sickle"
+      ],
+      "count": 37,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    },
+    "outputQty": {
+      "values": [
+        1
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 37
+    },
+    "recipeId": {
+      "values": [
+        "smithing_alchemy_table_t1",
+        "smithing_bamboo_fishing_rod",
+        "smithing_composite_longbow",
+        "smithing_copper_axe",
+        "smithing_copper_dagger",
+        "smithing_copper_fire_ring",
+        "smithing_copper_pickaxe",
+        "smithing_copper_spear",
+        "smithing_engineering_bench_t1",
+        "smithing_fire_crystal_staff",
+        "smithing_forge_t1",
+        "smithing_forge_t2",
+        "smithing_forge_t3",
+        "smithing_iron_axe",
+        "smithing_iron_boots",
+        "smithing_iron_chestplate",
+        "smithing_iron_pickaxe",
+        "smithing_iron_round_shield",
+        "smithing_iron_shortsword",
+        "smithing_iron_studded_gauntlets",
+        "smithing_iron_warhammer",
+        "smithing_iron_water_amulet",
+        "smithing_leather_tunic",
+        "smithing_mithril_axe",
+        "smithing_mithril_dagger",
+        "smithing_mithril_pickaxe",
+        "smithing_pine_shortbow",
+        "smithing_refinery_t1",
+        "smithing_refinery_t2",
+        "smithing_steel_axe",
+        "smithing_steel_battleaxe",
+        "smithing_steel_helm",
+        "smithing_steel_leggings",
+        "smithing_steel_lightning_bracelet",
+        "smithing_steel_longsword",
+        "smithing_steel_pickaxe",
+        "smithing_steel_sickle"
+      ],
+      "count": 37,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    },
+    "stationTier": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 37
+    },
+    "stationType": {
+      "values": [
+        "smithing"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    }
+  },
+  "_usable_template": {
+    "gridSize": "3x3",
+    "inputs": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Simple pine bow strung with treated sinew. Not powerful, but reliable.",
+      "tags": [
+        "standard",
+        "elemental",
+        "lightning"
+      ]
+    },
+    "miniGame": {
+      "baseTime": 65,
+      "difficulty": "moderate",
+      "type": "smithing"
+    },
+    "outputId": "leather_tunic",
+    "outputQty": 1,
+    "recipeId": "smithing_forge_t3",
+    "stationTier": 1,
+    "stationType": "smithing"
+  },
+  "template": {
+    "gridSize": {
+      "_type": "string",
+      "_sample_values": [
+        "3x3",
+        "5x5",
+        "7x7"
+      ],
+      "_total_unique_values": 3
+    },
+    "inputs": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "materialId": {
+        "_type": "string",
+        "_sample_values": [
+          "phoenix_ash",
+          "air_crystal",
+          "ash_log",
+          "spectral_thread",
+          "pine_log",
+          "ironwood_plank",
+          "earth_crystal",
+          "dire_fang",
+          "birch_plank",
+          "basalt"
+        ],
+        "_total_unique_values": 32
+      },
+      "quantity": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "_total_unique_values": 11
+      }
+    },
+    "metadata": {
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "Simple pine bow strung with treated sinew. Not powerful, but reliable.",
+          "Master forge with crystal enhancement. Can reach extreme temperatures.",
+          "Improved forge with better heat retention. Can work steel reliably.",
+          "Advanced refinery with better efficiency and heat control.",
+          "Your first pickaxe. The gateway to greater resources and deeper discoveries.",
+          "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective.",
+          "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis.",
+          "Crafting a warhammer is about managing weight distribution. The crushing head must be perfectly balanced on the shaft, or it becomes a liability rather than a weapon.",
+          "Iron amulet holding a water crystal. Feels cool against your skin.",
+          "Balanced steel longsword. The blade flows like water, strikes like thunder."
+        ],
+        "_total_unique_values": 37
+      },
+      "tags": {
+        "_type": "array",
+        "_sample_values": [
+          "standard",
+          "elemental",
+          "lightning",
+          "ring",
+          "dagger"
+        ],
+        "_total_unique_values": 55
+      }
+    },
+    "miniGame": {
+      "baseTime": {
+        "_type": "integer",
+        "_sample_values": [
+          65,
+          35,
+          70,
+          40,
+          45,
+          60,
+          50,
+          55,
+          25,
+          90
+        ],
+        "_total_unique_values": 12
+      },
+      "difficulty": {
+        "_type": "string",
+        "_sample_values": [
+          "moderate",
+          "extreme",
+          "hard",
+          "easy"
+        ],
+        "_total_unique_values": 4
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "smithing"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "outputId": {
+      "_type": "string",
+      "_sample_values": [
+        "leather_tunic",
+        "copper_axe",
+        "iron_pickaxe",
+        "refinery_t1",
+        "steel_battleaxe",
+        "steel_pickaxe",
+        "steel_longsword",
+        "steel_axe",
+        "forge_t3",
+        "refinery_t2"
+      ],
+      "_total_unique_values": 37
+    },
+    "outputQty": {
+      "_type": "integer",
+      "_sample_values": [
+        1
+      ],
+      "_total_unique_values": 1
+    },
+    "recipeId": {
+      "_type": "string",
+      "_sample_values": [
+        "smithing_forge_t3",
+        "smithing_leather_tunic",
+        "smithing_iron_water_amulet",
+        "smithing_iron_warhammer",
+        "smithing_steel_leggings",
+        "smithing_copper_fire_ring",
+        "smithing_refinery_t1",
+        "smithing_composite_longbow",
+        "smithing_iron_pickaxe",
+        "smithing_mithril_axe"
+      ],
+      "_total_unique_values": 37
+    },
+    "stationTier": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3
+      ],
+      "_total_unique_values": 3
+    },
+    "stationType": {
+      "_type": "string",
+      "_sample_values": [
+        "smithing"
+      ],
+      "_total_unique_values": 1
+    }
+  }
+}
