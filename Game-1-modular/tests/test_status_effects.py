@@ -5,7 +5,8 @@ Tests all implemented status effects to ensure they apply, tick, and expire corr
 
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory (Game-1-modular) to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from entities.status_effect import *
 from entities.status_manager import StatusEffectManager

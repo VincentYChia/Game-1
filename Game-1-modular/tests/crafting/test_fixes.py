@@ -2,13 +2,20 @@
 Systematic test script to verify all fixes
 """
 import json
+import os
+import sys
+
+# Add Game-1-modular to path and set working directory
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, project_root)
+os.chdir(project_root)  # Change to project root for relative JSON paths
 
 print("=" * 80)
 print("TESTING MATERIAL INVENTORY")
 print("=" * 80)
 
 # Load actual materials from JSON
-with open('../items.JSON/items-materials-1.JSON', 'r') as f:
+with open('items.JSON/items-materials-1.JSON', 'r') as f:
     data = json.load(f)
     materials_list = data.get('materials', [])
 
@@ -21,7 +28,7 @@ print("\n" + "=" * 80)
 print("TESTING SMITHING PLACEMENT COORDINATES")
 print("=" * 80)
 
-with open('../placements.JSON/placements-smithing-1.JSON', 'r') as f:
+with open('placements.JSON/placements-smithing-1.JSON', 'r') as f:
     data = json.load(f)
     placements = data.get('placements', [])
 
@@ -38,7 +45,7 @@ print("\n" + "=" * 80)
 print("TESTING SMITHING RECIPE GRID SIZE")
 print("=" * 80)
 
-with open('../recipes.JSON/recipes-smithing-1.JSON', 'r') as f:
+with open('recipes.JSON/recipes-smithing-1.JSON', 'r') as f:
     data = json.load(f)
     recipes = data.get('recipes', [])
 
@@ -56,7 +63,7 @@ print("TESTING ALCHEMY TIER 3+ DIFFICULTY")
 print("=" * 80)
 
 # Check if alchemy.py has tier 3/4 ingredient_types
-with open('alchemy.py', 'r') as f:
+with open('Crafting-subdisciplines/alchemy.py', 'r') as f:
     content = f.read()
 
 if 'elif self.tier == 3:' in content:

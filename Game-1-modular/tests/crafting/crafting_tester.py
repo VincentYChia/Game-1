@@ -1,7 +1,13 @@
 import pygame
 import json
 import sys
+import os
 from pathlib import Path
+
+# Add Game-1-modular to path and change to project root for JSON loading
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+os.chdir(project_root)
 
 # Initialize Pygame
 pygame.init()
