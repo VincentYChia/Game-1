@@ -1,0 +1,981 @@
+{
+  "_meta": {
+    "category": "skills-testing",
+    "description": "Test skills",
+    "generated_at": "2026-01-01T19:58:32.936770",
+    "source_files": [
+      "skills-testing-integration.JSON"
+    ],
+    "discovered_root_keys": [
+      "metadata",
+      "skills"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "categories": {
+      "values": [
+        "arcane",
+        "combat",
+        "fire",
+        "ice",
+        "lightning",
+        "shadow"
+      ],
+      "count": 6,
+      "types": [
+        "array"
+      ],
+      "occurrences": 12
+    },
+    "combatParams.baseDamage": {
+      "values": [
+        100,
+        150,
+        40,
+        45,
+        55,
+        60
+      ],
+      "count": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 12
+    },
+    "combatParams.beam_range": {
+      "values": [
+        15.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.beam_width": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.burn_damage_per_second": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.burn_duration": {
+      "values": [
+        12.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.chain_count": {
+      "values": [
+        5
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.chain_range": {
+      "values": [
+        7.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.circle_radius": {
+      "values": [
+        6.0,
+        7.0,
+        8.0
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "combatParams.cone_angle": {
+      "values": [
+        90.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.cone_range": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.freeze_duration": {
+      "values": [
+        4.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.knockback_distance": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.lifesteal_percent": {
+      "values": [
+        0.6
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.origin": {
+      "values": [
+        "source",
+        "target"
+      ],
+      "count": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "combatParams.pierce_count": {
+      "values": [
+        10
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.pull_distance": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.shock_damage_per_tick": {
+      "values": [
+        4.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.shock_duration": {
+      "values": [
+        6.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.shock_tick_rate": {
+      "values": [
+        1.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.slow_duration": {
+      "values": [
+        8.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.slow_percent": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.stun_duration": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.weaken_duration": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.weaken_percent": {
+      "values": [
+        0.4
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatTags": {
+      "values": [
+        "arcane",
+        "beam",
+        "burn",
+        "chain",
+        "circle",
+        "cone",
+        "fire",
+        "freeze",
+        "ice",
+        "knockback",
+        "lifesteal",
+        "lightning",
+        "pierce",
+        "pull",
+        "shadow",
+        "shock",
+        "slow",
+        "stun",
+        "weaken"
+      ],
+      "count": 19,
+      "types": [
+        "array"
+      ],
+      "occurrences": 12
+    },
+    "cost.cooldown": {
+      "values": [
+        "extreme",
+        "long",
+        "moderate"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "cost.mana": {
+      "values": [
+        "extreme",
+        "high",
+        "moderate"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "description": {
+      "values": [
+        "Aura that drains life from all nearby enemies",
+        "Blast of freezing wind in a cone that slows and freezes enemies",
+        "Call down a meteor that devastates an area and ignites all enemies",
+        "Create a point of intense gravity that pulls and crushes all nearby foes",
+        "Lightning that jumps between enemies, shocking each target",
+        "Piercing beam of darkness that weakens all it touches"
+      ],
+      "count": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "effect.category": {
+      "values": [
+        "damage"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "effect.duration": {
+      "values": [
+        "instant"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "effect.magnitude": {
+      "values": [
+        "extreme",
+        "major",
+        "moderate"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "effect.target": {
+      "values": [
+        "area",
+        "line"
+      ],
+      "count": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "effect.type": {
+      "values": [
+        "devastate",
+        "empower",
+        "fortify"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "name": {
+      "values": [
+        "Arctic Cone",
+        "Chain Lightning",
+        "Gravity Well",
+        "Meteor Strike",
+        "Shadow Beam",
+        "Vampiric Aura"
+      ],
+      "count": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "narrative": {
+      "values": [
+        "A lance of pure darkness tears through reality. Those touched by the void find their strength sapped, their attacks feeble.",
+        "A single bolt becomes many. Watch as lightning leaps from foe to foe, each target convulsing as the shock spreads through the battlefield.",
+        "Become the void. An aura of darkness surrounds you, leeching the life force from all who dare come close. Their pain is your healing.",
+        "Bend space itself to your will. A singularity forms at your target, pulling enemies inward before crushing them with arcane force.",
+        "Exhale winter itself. A cone of absolute zero flash-freezes everything before you, leaving your enemies slowed or frozen solid.",
+        "You tear a fragment from the heavens itself. The meteor crashes down with the fury of a dying star, leaving nothing but scorched earth and burning foes."
+      ],
+      "count": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "rarity": {
+      "values": [
+        "epic",
+        "legendary",
+        "rare",
+        "uncommon"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "requirements.characterLevel": {
+      "values": [
+        12,
+        16,
+        18,
+        20,
+        25,
+        28
+      ],
+      "count": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 12
+    },
+    "requirements.stats.INT": {
+      "values": [
+        15,
+        18,
+        20,
+        22,
+        30,
+        32
+      ],
+      "count": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 12
+    },
+    "requirements.stats.STR": {
+      "values": [
+        15,
+        20
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    },
+    "skillId": {
+      "values": [
+        "arctic_cone",
+        "chain_lightning",
+        "gravity_well",
+        "meteor_strike",
+        "shadow_beam",
+        "vampiric_aura"
+      ],
+      "count": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "tags": {
+      "values": [
+        "aoe",
+        "arcane",
+        "chain",
+        "control",
+        "damage",
+        "debuff",
+        "elemental",
+        "fire",
+        "ice",
+        "lightning",
+        "pierce",
+        "shadow",
+        "sustain"
+      ],
+      "count": 13,
+      "types": [
+        "array"
+      ],
+      "occurrences": 12
+    },
+    "tier": {
+      "values": [
+        2,
+        3,
+        4
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 12
+    }
+  },
+  "_usable_template": {
+    "categories": [
+      "ice",
+      "shadow",
+      "combat"
+    ],
+    "combatParams": {
+      "baseDamage": 100,
+      "beam_range": 15.0,
+      "beam_width": 2.0,
+      "burn_damage_per_second": 10.0,
+      "burn_duration": 12.0,
+      "chain_count": 5,
+      "chain_range": 7.0,
+      "circle_radius": 8.0,
+      "cone_angle": 90.0,
+      "cone_range": 10.0,
+      "freeze_duration": 4.0,
+      "knockback_distance": 5.0,
+      "lifesteal_percent": 0.6,
+      "origin": "source",
+      "pierce_count": 10,
+      "pull_distance": 5.0,
+      "shock_damage_per_tick": 4.0,
+      "shock_duration": 6.0,
+      "shock_tick_rate": 1.5,
+      "slow_duration": 8.0,
+      "slow_percent": 0.5,
+      "stun_duration": 3.0,
+      "weaken_duration": 10.0,
+      "weaken_percent": 0.4
+    },
+    "combatTags": [
+      "chain",
+      "ice",
+      "fire"
+    ],
+    "cost": {
+      "cooldown": "moderate",
+      "mana": "moderate"
+    },
+    "description": "Call down a meteor that devastates an area and ignites all enemies",
+    "effect": {
+      "category": "damage",
+      "duration": "instant",
+      "magnitude": "moderate",
+      "target": "line",
+      "type": "empower"
+    },
+    "name": "Gravity Well",
+    "narrative": "You tear a fragment from the heavens itself. The meteor crashes down with the fury of a dying star, leaving nothing but scorched earth and burning foes.",
+    "rarity": "rare",
+    "requirements": {
+      "characterLevel": 12,
+      "stats": {
+        "INT": 32,
+        "STR": 20
+      }
+    },
+    "skillId": "gravity_well",
+    "tags": [
+      "control",
+      "sustain",
+      "elemental"
+    ],
+    "tier": 2
+  },
+  "template": {
+    "categories": {
+      "_type": "array",
+      "_sample_values": [
+        "ice",
+        "shadow",
+        "combat",
+        "lightning",
+        "fire"
+      ],
+      "_total_unique_values": 6
+    },
+    "combatParams": {
+      "baseDamage": {
+        "_type": "integer",
+        "_sample_values": [
+          100,
+          40,
+          45,
+          150,
+          55,
+          60
+        ],
+        "_total_unique_values": 6
+      },
+      "beam_range": {
+        "_type": "number",
+        "_sample_values": [
+          15.0
+        ],
+        "_total_unique_values": 1
+      },
+      "beam_width": {
+        "_type": "number",
+        "_sample_values": [
+          2.0
+        ],
+        "_total_unique_values": 1
+      },
+      "burn_damage_per_second": {
+        "_type": "number",
+        "_sample_values": [
+          10.0
+        ],
+        "_total_unique_values": 1
+      },
+      "burn_duration": {
+        "_type": "number",
+        "_sample_values": [
+          12.0
+        ],
+        "_total_unique_values": 1
+      },
+      "chain_count": {
+        "_type": "integer",
+        "_sample_values": [
+          5
+        ],
+        "_total_unique_values": 1
+      },
+      "chain_range": {
+        "_type": "number",
+        "_sample_values": [
+          7.0
+        ],
+        "_total_unique_values": 1
+      },
+      "circle_radius": {
+        "_type": "number",
+        "_sample_values": [
+          8.0,
+          6.0,
+          7.0
+        ],
+        "_total_unique_values": 3
+      },
+      "cone_angle": {
+        "_type": "number",
+        "_sample_values": [
+          90.0
+        ],
+        "_total_unique_values": 1
+      },
+      "cone_range": {
+        "_type": "number",
+        "_sample_values": [
+          10.0
+        ],
+        "_total_unique_values": 1
+      },
+      "freeze_duration": {
+        "_type": "number",
+        "_sample_values": [
+          4.0
+        ],
+        "_total_unique_values": 1
+      },
+      "knockback_distance": {
+        "_type": "number",
+        "_sample_values": [
+          5.0
+        ],
+        "_total_unique_values": 1
+      },
+      "lifesteal_percent": {
+        "_type": "number",
+        "_sample_values": [
+          0.6
+        ],
+        "_total_unique_values": 1
+      },
+      "origin": {
+        "_type": "string",
+        "_sample_values": [
+          "source",
+          "target"
+        ],
+        "_total_unique_values": 2
+      },
+      "pierce_count": {
+        "_type": "integer",
+        "_sample_values": [
+          10
+        ],
+        "_total_unique_values": 1
+      },
+      "pull_distance": {
+        "_type": "number",
+        "_sample_values": [
+          5.0
+        ],
+        "_total_unique_values": 1
+      },
+      "shock_damage_per_tick": {
+        "_type": "number",
+        "_sample_values": [
+          4.0
+        ],
+        "_total_unique_values": 1
+      },
+      "shock_duration": {
+        "_type": "number",
+        "_sample_values": [
+          6.0
+        ],
+        "_total_unique_values": 1
+      },
+      "shock_tick_rate": {
+        "_type": "number",
+        "_sample_values": [
+          1.5
+        ],
+        "_total_unique_values": 1
+      },
+      "slow_duration": {
+        "_type": "number",
+        "_sample_values": [
+          8.0
+        ],
+        "_total_unique_values": 1
+      },
+      "slow_percent": {
+        "_type": "number",
+        "_sample_values": [
+          0.5
+        ],
+        "_total_unique_values": 1
+      },
+      "stun_duration": {
+        "_type": "number",
+        "_sample_values": [
+          3.0
+        ],
+        "_total_unique_values": 1
+      },
+      "weaken_duration": {
+        "_type": "number",
+        "_sample_values": [
+          10.0
+        ],
+        "_total_unique_values": 1
+      },
+      "weaken_percent": {
+        "_type": "number",
+        "_sample_values": [
+          0.4
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "combatTags": {
+      "_type": "array",
+      "_sample_values": [
+        "chain",
+        "ice",
+        "fire",
+        "arcane",
+        "lifesteal"
+      ],
+      "_total_unique_values": 19
+    },
+    "cost": {
+      "cooldown": {
+        "_type": "string",
+        "_sample_values": [
+          "moderate",
+          "long",
+          "extreme"
+        ],
+        "_total_unique_values": 3
+      },
+      "mana": {
+        "_type": "string",
+        "_sample_values": [
+          "moderate",
+          "high",
+          "extreme"
+        ],
+        "_total_unique_values": 3
+      }
+    },
+    "description": {
+      "_type": "string",
+      "_sample_values": [
+        "Call down a meteor that devastates an area and ignites all enemies",
+        "Aura that drains life from all nearby enemies",
+        "Blast of freezing wind in a cone that slows and freezes enemies",
+        "Piercing beam of darkness that weakens all it touches",
+        "Create a point of intense gravity that pulls and crushes all nearby foes",
+        "Lightning that jumps between enemies, shocking each target"
+      ],
+      "_total_unique_values": 6
+    },
+    "effect": {
+      "category": {
+        "_type": "string",
+        "_sample_values": [
+          "damage"
+        ],
+        "_total_unique_values": 1
+      },
+      "duration": {
+        "_type": "string",
+        "_sample_values": [
+          "instant"
+        ],
+        "_total_unique_values": 1
+      },
+      "magnitude": {
+        "_type": "string",
+        "_sample_values": [
+          "moderate",
+          "major",
+          "extreme"
+        ],
+        "_total_unique_values": 3
+      },
+      "target": {
+        "_type": "string",
+        "_sample_values": [
+          "line",
+          "area"
+        ],
+        "_total_unique_values": 2
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "empower",
+          "fortify",
+          "devastate"
+        ],
+        "_total_unique_values": 3
+      }
+    },
+    "name": {
+      "_type": "string",
+      "_sample_values": [
+        "Gravity Well",
+        "Shadow Beam",
+        "Arctic Cone",
+        "Meteor Strike",
+        "Chain Lightning",
+        "Vampiric Aura"
+      ],
+      "_total_unique_values": 6
+    },
+    "narrative": {
+      "_type": "string",
+      "_sample_values": [
+        "You tear a fragment from the heavens itself. The meteor crashes down with the fury of a dying star, leaving nothing but scorched earth and burning foes.",
+        "Bend space itself to your will. A singularity forms at your target, pulling enemies inward before crushing them with arcane force.",
+        "A lance of pure darkness tears through reality. Those touched by the void find their strength sapped, their attacks feeble.",
+        "A single bolt becomes many. Watch as lightning leaps from foe to foe, each target convulsing as the shock spreads through the battlefield.",
+        "Become the void. An aura of darkness surrounds you, leeching the life force from all who dare come close. Their pain is your healing.",
+        "Exhale winter itself. A cone of absolute zero flash-freezes everything before you, leaving your enemies slowed or frozen solid."
+      ],
+      "_total_unique_values": 6
+    },
+    "rarity": {
+      "_type": "string",
+      "_sample_values": [
+        "rare",
+        "epic",
+        "legendary",
+        "uncommon"
+      ],
+      "_total_unique_values": 4
+    },
+    "requirements": {
+      "characterLevel": {
+        "_type": "integer",
+        "_sample_values": [
+          12,
+          16,
+          18,
+          20,
+          25,
+          28
+        ],
+        "_total_unique_values": 6
+      },
+      "stats": {
+        "INT": {
+          "_type": "integer",
+          "_sample_values": [
+            32,
+            15,
+            18,
+            20,
+            22,
+            30
+          ],
+          "_total_unique_values": 6
+        },
+        "STR": {
+          "_type": "integer",
+          "_sample_values": [
+            20,
+            15
+          ],
+          "_total_unique_values": 2
+        }
+      }
+    },
+    "skillId": {
+      "_type": "string",
+      "_sample_values": [
+        "gravity_well",
+        "arctic_cone",
+        "chain_lightning",
+        "shadow_beam",
+        "vampiric_aura",
+        "meteor_strike"
+      ],
+      "_total_unique_values": 6
+    },
+    "tags": {
+      "_type": "array",
+      "_sample_values": [
+        "control",
+        "sustain",
+        "elemental",
+        "damage",
+        "chain"
+      ],
+      "_total_unique_values": 13
+    },
+    "tier": {
+      "_type": "integer",
+      "_sample_values": [
+        2,
+        3,
+        4
+      ],
+      "_total_unique_values": 3
+    }
+  }
+}

@@ -1,15 +1,1051 @@
 {
   "_meta": {
     "category": "skills",
-    "description": "Player skill definitions",
-    "generated_at": "2026-01-01T19:53:07.783056",
+    "description": "Skill base effect definitions",
+    "generated_at": "2026-01-01T19:58:32.944691",
     "source_files": [
+      "skills-base-effects-1.JSON",
       "skills-skills-1.JSON"
+    ],
+    "discovered_root_keys": [
+      "BASE_EFFECT_TYPES",
+      "RARITY_MULTIPLIERS",
+      "metadata",
+      "skills"
     ],
     "total_items_analyzed": 0
   },
   "_field_documentation": {},
   "_all_possible_values": {
+    "BASE_EFFECT_TYPES.devastate.baseValue": {
+      "values": [
+        "5 tile radius"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.devastate.description": {
+      "values": [
+        "Creates area of effect. Damage, gathering, or effects hit multiple targets in radius."
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.devastate.magnitudeValues.extreme": {
+      "values": [
+        10
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.devastate.magnitudeValues.major": {
+      "values": [
+        7
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.devastate.magnitudeValues.minor": {
+      "values": [
+        3
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.devastate.magnitudeValues.moderate": {
+      "values": [
+        5
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.devastate.tags": {
+      "values": [
+        "aoe",
+        "area",
+        "combat",
+        "gathering",
+        "radius"
+      ],
+      "count": 5,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.devastate.typicalTier": {
+      "values": [
+        "3, 4"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.devastate.useCases": {
+      "values": [
+        "attack hits 5-tile radius",
+        "damage all enemies nearby",
+        "gather from 3x3 area"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.elevate.baseValue": {
+      "values": [
+        "+10% rarity upgrade chance"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.elevate.description": {
+      "values": [
+        "Increases rarity upgrade chance on crafts or material drops. Shifts RNG toward higher rarity outcomes."
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.elevate.magnitudeValues.extreme": {
+      "values": [
+        0.6
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.elevate.magnitudeValues.major": {
+      "values": [
+        0.4
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.elevate.magnitudeValues.minor": {
+      "values": [
+        0.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.elevate.magnitudeValues.moderate": {
+      "values": [
+        0.25
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.elevate.tags": {
+      "values": [
+        "crafting",
+        "gathering",
+        "quality",
+        "rarity",
+        "rng",
+        "upgrade"
+      ],
+      "count": 6,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.elevate.typicalTier": {
+      "values": [
+        "2, 3, 4"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.elevate.useCases": {
+      "values": [
+        "12% chance for uncommon+ materials",
+        "15% chance to upgrade craft rarity",
+        "20% better rarity on mini-game success"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.empower.baseValue": {
+      "values": [
+        "+100% damage or +10% craft stats"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.empower.description": {
+      "values": [
+        "Multiplies damage or output quality. Combat/gathering: +100% base. Crafting: +10% base stats."
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.empower.magnitudeValues.extreme": {
+      "values": [
+        4.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.empower.magnitudeValues.major": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.empower.magnitudeValues.minor": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.empower.magnitudeValues.moderate": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.empower.tags": {
+      "values": [
+        "combat",
+        "crafting",
+        "damage",
+        "gathering",
+        "multiplier",
+        "output"
+      ],
+      "count": 6,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.empower.typicalTier": {
+      "values": [
+        "1, 2"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.empower.useCases": {
+      "values": [
+        "crafted items have 20% better base stats",
+        "pickaxe breaks nodes 150% faster",
+        "weapon hits deal 200% damage"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.enrich.baseValue": {
+      "values": [
+        "+3 bonus items"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.enrich.description": {
+      "values": [
+        "Increases quantity gained from gathering or combat drops only. Does NOT affect crafting output quantity."
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.enrich.magnitudeValues.extreme": {
+      "values": [
+        12
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.enrich.magnitudeValues.major": {
+      "values": [
+        6
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.enrich.magnitudeValues.minor": {
+      "values": [
+        1
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.enrich.magnitudeValues.moderate": {
+      "values": [
+        3
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.enrich.tags": {
+      "values": [
+        "combat",
+        "drops",
+        "gathering",
+        "quantity",
+        "yield"
+      ],
+      "count": 5,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.enrich.typicalTier": {
+      "values": [
+        "1, 2, 3"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.enrich.useCases": {
+      "values": [
+        "enemies drop +2 items",
+        "gain +3 ore per node",
+        "trees yield +5 wood"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.fortify.baseValue": {
+      "values": [
+        "20 flat reduction"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.fortify.description": {
+      "values": [
+        "Reduces damage taken or resource consumption. Flat reduction applied before percentages."
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.fortify.magnitudeValues.extreme": {
+      "values": [
+        80
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.fortify.magnitudeValues.major": {
+      "values": [
+        40
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.fortify.magnitudeValues.minor": {
+      "values": [
+        10
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.fortify.magnitudeValues.moderate": {
+      "values": [
+        20
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.fortify.tags": {
+      "values": [
+        "combat",
+        "cost",
+        "defense",
+        "durability",
+        "reduction",
+        "utility"
+      ],
+      "count": 6,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.fortify.typicalTier": {
+      "values": [
+        "1, 2"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.fortify.useCases": {
+      "values": [
+        "mana costs reduced by 15",
+        "reduce incoming damage by 20",
+        "tools lose 30% less durability"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.pierce.baseValue": {
+      "values": [
+        "+15% critical chance"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.pierce.description": {
+      "values": [
+        "Increases critical hit chance. Combat/gathering: double damage/yield. Crafting: first-try bonus."
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.pierce.magnitudeValues.extreme": {
+      "values": [
+        0.4
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.pierce.magnitudeValues.major": {
+      "values": [
+        0.25
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.pierce.magnitudeValues.minor": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.pierce.magnitudeValues.moderate": {
+      "values": [
+        0.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.pierce.tags": {
+      "values": [
+        "chance",
+        "combat",
+        "crafting",
+        "critical",
+        "gathering",
+        "rng"
+      ],
+      "count": 6,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.pierce.typicalTier": {
+      "values": [
+        "2, 3"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.pierce.useCases": {
+      "values": [
+        "15% double yield on gathers",
+        "20% first-try bonus on crafts",
+        "25% crit on attacks"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.quicken.baseValue": {
+      "values": [
+        "+50% speed or +5 seconds"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.quicken.description": {
+      "values": [
+        "Increases action frequency or extends mini-game time. Combat/gathering: +50% speed. Crafting: +5 seconds."
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.quicken.magnitudeValues.extreme": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.quicken.magnitudeValues.major": {
+      "values": [
+        0.75
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.quicken.magnitudeValues.minor": {
+      "values": [
+        0.3
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.quicken.magnitudeValues.moderate": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.quicken.tags": {
+      "values": [
+        "combat",
+        "crafting",
+        "gathering",
+        "haste",
+        "movement",
+        "speed",
+        "time"
+      ],
+      "count": 7,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.quicken.typicalTier": {
+      "values": [
+        "1, 2"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.quicken.useCases": {
+      "values": [
+        "attack 50% faster",
+        "harvest 75% quicker",
+        "mini-game timer +10 seconds",
+        "move 60% faster"
+      ],
+      "count": 4,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.regenerate.baseValue": {
+      "values": [
+        "5 per second"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.regenerate.description": {
+      "values": [
+        "Restores resources over time. Grants health, mana, or durability per second during duration."
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.regenerate.magnitudeValues.extreme": {
+      "values": [
+        20
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.regenerate.magnitudeValues.major": {
+      "values": [
+        10
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.regenerate.magnitudeValues.minor": {
+      "values": [
+        3
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.regenerate.magnitudeValues.moderate": {
+      "values": [
+        5
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.regenerate.tags": {
+      "values": [
+        "durability",
+        "healing",
+        "health",
+        "mana",
+        "over_time",
+        "sustained"
+      ],
+      "count": 6,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.regenerate.typicalTier": {
+      "values": [
+        "2, 3"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.regenerate.useCases": {
+      "values": [
+        "heal 8 HP per second",
+        "repair 10 durability per second",
+        "restore 5 mana per second"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.restore.baseValue": {
+      "values": [
+        "100 resource restored"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.restore.description": {
+      "values": [
+        "Instantly replenishes resources. Restores health, mana, or durability immediately."
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.restore.magnitudeValues.extreme": {
+      "values": [
+        400
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.restore.magnitudeValues.major": {
+      "values": [
+        200
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.restore.magnitudeValues.minor": {
+      "values": [
+        50
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.restore.magnitudeValues.moderate": {
+      "values": [
+        100
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.restore.tags": {
+      "values": [
+        "durability",
+        "healing",
+        "health",
+        "instant",
+        "mana",
+        "recovery"
+      ],
+      "count": 6,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.restore.typicalTier": {
+      "values": [
+        "1, 2, 3"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.restore.useCases": {
+      "values": [
+        "heal 150 HP instantly",
+        "repair 300 durability",
+        "restore 100 mana"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.transcend.baseValue": {
+      "values": [
+        "Bypass 1 tier/requirement"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.transcend.description": {
+      "values": [
+        "Bypasses restrictions or requirements. Ignores tier limits, material requirements, or level gates."
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.transcend.magnitudeValues.extreme": {
+      "values": [
+        4
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.transcend.magnitudeValues.major": {
+      "values": [
+        3
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.transcend.magnitudeValues.minor": {
+      "values": [
+        1
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.transcend.magnitudeValues.moderate": {
+      "values": [
+        2
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.transcend.tags": {
+      "values": [
+        "bypass",
+        "restriction",
+        "tier",
+        "unlock",
+        "utility"
+      ],
+      "count": 5,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.transcend.typicalTier": {
+      "values": [
+        "4"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "BASE_EFFECT_TYPES.transcend.useCases": {
+      "values": [
+        "craft T3 recipes at T2 station",
+        "gather T4 nodes with T2 tools",
+        "use T4 tools on any tier"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "RARITY_MULTIPLIERS.common": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "RARITY_MULTIPLIERS.epic": {
+      "values": [
+        1.6
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "RARITY_MULTIPLIERS.legendary": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "RARITY_MULTIPLIERS.mythic": {
+      "values": [
+        2.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "RARITY_MULTIPLIERS.rare": {
+      "values": [
+        1.35
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "RARITY_MULTIPLIERS.uncommon": {
+      "values": [
+        1.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
     "categories": {
       "values": [
         "alchemy",
@@ -283,8 +1319,8 @@
       ],
       "count": 20,
       "types": [
-        "null",
-        "string"
+        "string",
+        "null"
       ],
       "occurrences": 30
     },
@@ -633,33 +1669,253 @@
     }
   },
   "_usable_template": {
+    "BASE_EFFECT_TYPES": {
+      "devastate": {
+        "baseValue": "5 tile radius",
+        "description": "Creates area of effect. Damage, gathering, or effects hit multiple targets in radius.",
+        "magnitudeValues": {
+          "extreme": 10,
+          "major": 7,
+          "minor": 3,
+          "moderate": 5
+        },
+        "tags": [
+          "radius",
+          "combat",
+          "aoe"
+        ],
+        "typicalTier": "3, 4",
+        "useCases": [
+          "damage all enemies nearby",
+          "gather from 3x3 area",
+          "attack hits 5-tile radius"
+        ]
+      },
+      "elevate": {
+        "baseValue": "+10% rarity upgrade chance",
+        "description": "Increases rarity upgrade chance on crafts or material drops. Shifts RNG toward higher rarity outcomes.",
+        "magnitudeValues": {
+          "extreme": 0.6,
+          "major": 0.4,
+          "minor": 0.15,
+          "moderate": 0.25
+        },
+        "tags": [
+          "crafting",
+          "upgrade",
+          "rng"
+        ],
+        "typicalTier": "2, 3, 4",
+        "useCases": [
+          "20% better rarity on mini-game success",
+          "12% chance for uncommon+ materials",
+          "15% chance to upgrade craft rarity"
+        ]
+      },
+      "empower": {
+        "baseValue": "+100% damage or +10% craft stats",
+        "description": "Multiplies damage or output quality. Combat/gathering: +100% base. Crafting: +10% base stats.",
+        "magnitudeValues": {
+          "extreme": 4.0,
+          "major": 2.0,
+          "minor": 0.5,
+          "moderate": 1.0
+        },
+        "tags": [
+          "crafting",
+          "damage",
+          "combat"
+        ],
+        "typicalTier": "1, 2",
+        "useCases": [
+          "weapon hits deal 200% damage",
+          "crafted items have 20% better base stats",
+          "pickaxe breaks nodes 150% faster"
+        ]
+      },
+      "enrich": {
+        "baseValue": "+3 bonus items",
+        "description": "Increases quantity gained from gathering or combat drops only. Does NOT affect crafting output quantity.",
+        "magnitudeValues": {
+          "extreme": 12,
+          "major": 6,
+          "minor": 1,
+          "moderate": 3
+        },
+        "tags": [
+          "combat",
+          "quantity",
+          "drops"
+        ],
+        "typicalTier": "1, 2, 3",
+        "useCases": [
+          "gain +3 ore per node",
+          "enemies drop +2 items",
+          "trees yield +5 wood"
+        ]
+      },
+      "fortify": {
+        "baseValue": "20 flat reduction",
+        "description": "Reduces damage taken or resource consumption. Flat reduction applied before percentages.",
+        "magnitudeValues": {
+          "extreme": 80,
+          "major": 40,
+          "minor": 10,
+          "moderate": 20
+        },
+        "tags": [
+          "durability",
+          "reduction",
+          "defense"
+        ],
+        "typicalTier": "1, 2",
+        "useCases": [
+          "tools lose 30% less durability",
+          "reduce incoming damage by 20",
+          "mana costs reduced by 15"
+        ]
+      },
+      "pierce": {
+        "baseValue": "+15% critical chance",
+        "description": "Increases critical hit chance. Combat/gathering: double damage/yield. Crafting: first-try bonus.",
+        "magnitudeValues": {
+          "extreme": 0.4,
+          "major": 0.25,
+          "minor": 0.1,
+          "moderate": 0.15
+        },
+        "tags": [
+          "crafting",
+          "critical",
+          "combat"
+        ],
+        "typicalTier": "2, 3",
+        "useCases": [
+          "25% crit on attacks",
+          "20% first-try bonus on crafts",
+          "15% double yield on gathers"
+        ]
+      },
+      "quicken": {
+        "baseValue": "+50% speed or +5 seconds",
+        "description": "Increases action frequency or extends mini-game time. Combat/gathering: +50% speed. Crafting: +5 seconds.",
+        "magnitudeValues": {
+          "extreme": 1.0,
+          "major": 0.75,
+          "minor": 0.3,
+          "moderate": 0.5
+        },
+        "tags": [
+          "crafting",
+          "movement",
+          "combat"
+        ],
+        "typicalTier": "1, 2",
+        "useCases": [
+          "move 60% faster",
+          "harvest 75% quicker",
+          "attack 50% faster"
+        ]
+      },
+      "regenerate": {
+        "baseValue": "5 per second",
+        "description": "Restores resources over time. Grants health, mana, or durability per second during duration.",
+        "magnitudeValues": {
+          "extreme": 20,
+          "major": 10,
+          "minor": 3,
+          "moderate": 5
+        },
+        "tags": [
+          "durability",
+          "healing",
+          "mana"
+        ],
+        "typicalTier": "2, 3",
+        "useCases": [
+          "repair 10 durability per second",
+          "heal 8 HP per second",
+          "restore 5 mana per second"
+        ]
+      },
+      "restore": {
+        "baseValue": "100 resource restored",
+        "description": "Instantly replenishes resources. Restores health, mana, or durability immediately.",
+        "magnitudeValues": {
+          "extreme": 400,
+          "major": 200,
+          "minor": 50,
+          "moderate": 100
+        },
+        "tags": [
+          "instant",
+          "durability",
+          "healing"
+        ],
+        "typicalTier": "1, 2, 3",
+        "useCases": [
+          "restore 100 mana",
+          "repair 300 durability",
+          "heal 150 HP instantly"
+        ]
+      },
+      "transcend": {
+        "baseValue": "Bypass 1 tier/requirement",
+        "description": "Bypasses restrictions or requirements. Ignores tier limits, material requirements, or level gates.",
+        "magnitudeValues": {
+          "extreme": 4,
+          "major": 3,
+          "minor": 1,
+          "moderate": 2
+        },
+        "tags": [
+          "bypass",
+          "unlock",
+          "utility"
+        ],
+        "typicalTier": "4",
+        "useCases": [
+          "gather T4 nodes with T2 tools",
+          "use T4 tools on any tier",
+          "craft T3 recipes at T2 station"
+        ]
+      }
+    },
+    "RARITY_MULTIPLIERS": {
+      "common": 1.0,
+      "epic": 1.6,
+      "legendary": 2.0,
+      "mythic": 2.5,
+      "rare": 1.35,
+      "uncommon": 1.15
+    },
     "categories": [
-      "forestry",
       "refining",
-      "gathering"
+      "crafting",
+      "durability"
     ],
     "cost": {
-      "cooldown": "moderate",
-      "mana": "moderate"
+      "cooldown": "extreme",
+      "mana": "low"
     },
-    "description": "Move significantly faster for a brief period.",
+    "description": "Gain massive bonus materials from every gather for an extended period.",
     "effect": {
       "additionalEffects": [
         "<value>"
       ],
-      "category": "forestry",
+      "category": "durability",
       "duration": "instant",
-      "magnitude": "major",
+      "magnitude": "extreme",
       "target": "resource_node",
-      "type": "transcend"
+      "type": "regenerate"
     },
     "evolution": {
       "canEvolve": true,
-      "nextSkillId": "eternal_edge",
-      "requirement": "Reach level 10 and craft 100 smithed items"
+      "nextSkillId": "archmage_mastery",
+      "requirement": "Reach level 10 - LLM generates evolution"
     },
-    "name": "Time Dilation",
-    "narrative": "Plant your feet. Lower your center. Become the immovable object.",
+    "name": "Tool Preservation",
+    "narrative": "Spin. Strike. Repeat. Simple tactics are often the deadliest.",
     "rarity": "rare",
     "requirements": {
       "characterLevel": 1,
@@ -675,23 +1931,800 @@
         "<value>"
       ]
     },
-    "skillId": "second_wind",
+    "skillId": "regenerative_aura",
     "tags": [
-      "time",
-      "refining",
-      "instant"
+      "destruction",
+      "durability",
+      "single_hit"
     ],
     "tier": 1
   },
   "template": {
+    "BASE_EFFECT_TYPES": {
+      "devastate": {
+        "baseValue": {
+          "_type": "string",
+          "_sample_values": [
+            "5 tile radius"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Creates area of effect. Damage, gathering, or effects hit multiple targets in radius."
+          ],
+          "_total_unique_values": 1
+        },
+        "magnitudeValues": {
+          "extreme": {
+            "_type": "integer",
+            "_sample_values": [
+              10
+            ],
+            "_total_unique_values": 1
+          },
+          "major": {
+            "_type": "integer",
+            "_sample_values": [
+              7
+            ],
+            "_total_unique_values": 1
+          },
+          "minor": {
+            "_type": "integer",
+            "_sample_values": [
+              3
+            ],
+            "_total_unique_values": 1
+          },
+          "moderate": {
+            "_type": "integer",
+            "_sample_values": [
+              5
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "radius",
+            "combat",
+            "aoe",
+            "gathering",
+            "area"
+          ],
+          "_total_unique_values": 5
+        },
+        "typicalTier": {
+          "_type": "string",
+          "_sample_values": [
+            "3, 4"
+          ],
+          "_total_unique_values": 1
+        },
+        "useCases": {
+          "_type": "array",
+          "_sample_values": [
+            "damage all enemies nearby",
+            "gather from 3x3 area",
+            "attack hits 5-tile radius"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "elevate": {
+        "baseValue": {
+          "_type": "string",
+          "_sample_values": [
+            "+10% rarity upgrade chance"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Increases rarity upgrade chance on crafts or material drops. Shifts RNG toward higher rarity outcomes."
+          ],
+          "_total_unique_values": 1
+        },
+        "magnitudeValues": {
+          "extreme": {
+            "_type": "number",
+            "_sample_values": [
+              0.6
+            ],
+            "_total_unique_values": 1
+          },
+          "major": {
+            "_type": "number",
+            "_sample_values": [
+              0.4
+            ],
+            "_total_unique_values": 1
+          },
+          "minor": {
+            "_type": "number",
+            "_sample_values": [
+              0.15
+            ],
+            "_total_unique_values": 1
+          },
+          "moderate": {
+            "_type": "number",
+            "_sample_values": [
+              0.25
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "crafting",
+            "upgrade",
+            "rng",
+            "rarity",
+            "quality"
+          ],
+          "_total_unique_values": 6
+        },
+        "typicalTier": {
+          "_type": "string",
+          "_sample_values": [
+            "2, 3, 4"
+          ],
+          "_total_unique_values": 1
+        },
+        "useCases": {
+          "_type": "array",
+          "_sample_values": [
+            "20% better rarity on mini-game success",
+            "12% chance for uncommon+ materials",
+            "15% chance to upgrade craft rarity"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "empower": {
+        "baseValue": {
+          "_type": "string",
+          "_sample_values": [
+            "+100% damage or +10% craft stats"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Multiplies damage or output quality. Combat/gathering: +100% base. Crafting: +10% base stats."
+          ],
+          "_total_unique_values": 1
+        },
+        "magnitudeValues": {
+          "extreme": {
+            "_type": "number",
+            "_sample_values": [
+              4.0
+            ],
+            "_total_unique_values": 1
+          },
+          "major": {
+            "_type": "number",
+            "_sample_values": [
+              2.0
+            ],
+            "_total_unique_values": 1
+          },
+          "minor": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          },
+          "moderate": {
+            "_type": "number",
+            "_sample_values": [
+              1.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "crafting",
+            "damage",
+            "combat",
+            "output",
+            "multiplier"
+          ],
+          "_total_unique_values": 6
+        },
+        "typicalTier": {
+          "_type": "string",
+          "_sample_values": [
+            "1, 2"
+          ],
+          "_total_unique_values": 1
+        },
+        "useCases": {
+          "_type": "array",
+          "_sample_values": [
+            "weapon hits deal 200% damage",
+            "crafted items have 20% better base stats",
+            "pickaxe breaks nodes 150% faster"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "enrich": {
+        "baseValue": {
+          "_type": "string",
+          "_sample_values": [
+            "+3 bonus items"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Increases quantity gained from gathering or combat drops only. Does NOT affect crafting output quantity."
+          ],
+          "_total_unique_values": 1
+        },
+        "magnitudeValues": {
+          "extreme": {
+            "_type": "integer",
+            "_sample_values": [
+              12
+            ],
+            "_total_unique_values": 1
+          },
+          "major": {
+            "_type": "integer",
+            "_sample_values": [
+              6
+            ],
+            "_total_unique_values": 1
+          },
+          "minor": {
+            "_type": "integer",
+            "_sample_values": [
+              1
+            ],
+            "_total_unique_values": 1
+          },
+          "moderate": {
+            "_type": "integer",
+            "_sample_values": [
+              3
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "combat",
+            "quantity",
+            "drops",
+            "yield",
+            "gathering"
+          ],
+          "_total_unique_values": 5
+        },
+        "typicalTier": {
+          "_type": "string",
+          "_sample_values": [
+            "1, 2, 3"
+          ],
+          "_total_unique_values": 1
+        },
+        "useCases": {
+          "_type": "array",
+          "_sample_values": [
+            "gain +3 ore per node",
+            "enemies drop +2 items",
+            "trees yield +5 wood"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "fortify": {
+        "baseValue": {
+          "_type": "string",
+          "_sample_values": [
+            "20 flat reduction"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Reduces damage taken or resource consumption. Flat reduction applied before percentages."
+          ],
+          "_total_unique_values": 1
+        },
+        "magnitudeValues": {
+          "extreme": {
+            "_type": "integer",
+            "_sample_values": [
+              80
+            ],
+            "_total_unique_values": 1
+          },
+          "major": {
+            "_type": "integer",
+            "_sample_values": [
+              40
+            ],
+            "_total_unique_values": 1
+          },
+          "minor": {
+            "_type": "integer",
+            "_sample_values": [
+              10
+            ],
+            "_total_unique_values": 1
+          },
+          "moderate": {
+            "_type": "integer",
+            "_sample_values": [
+              20
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "durability",
+            "reduction",
+            "defense",
+            "combat",
+            "cost"
+          ],
+          "_total_unique_values": 6
+        },
+        "typicalTier": {
+          "_type": "string",
+          "_sample_values": [
+            "1, 2"
+          ],
+          "_total_unique_values": 1
+        },
+        "useCases": {
+          "_type": "array",
+          "_sample_values": [
+            "tools lose 30% less durability",
+            "reduce incoming damage by 20",
+            "mana costs reduced by 15"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "pierce": {
+        "baseValue": {
+          "_type": "string",
+          "_sample_values": [
+            "+15% critical chance"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Increases critical hit chance. Combat/gathering: double damage/yield. Crafting: first-try bonus."
+          ],
+          "_total_unique_values": 1
+        },
+        "magnitudeValues": {
+          "extreme": {
+            "_type": "number",
+            "_sample_values": [
+              0.4
+            ],
+            "_total_unique_values": 1
+          },
+          "major": {
+            "_type": "number",
+            "_sample_values": [
+              0.25
+            ],
+            "_total_unique_values": 1
+          },
+          "minor": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "moderate": {
+            "_type": "number",
+            "_sample_values": [
+              0.15
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "crafting",
+            "critical",
+            "combat",
+            "rng",
+            "chance"
+          ],
+          "_total_unique_values": 6
+        },
+        "typicalTier": {
+          "_type": "string",
+          "_sample_values": [
+            "2, 3"
+          ],
+          "_total_unique_values": 1
+        },
+        "useCases": {
+          "_type": "array",
+          "_sample_values": [
+            "25% crit on attacks",
+            "20% first-try bonus on crafts",
+            "15% double yield on gathers"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "quicken": {
+        "baseValue": {
+          "_type": "string",
+          "_sample_values": [
+            "+50% speed or +5 seconds"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Increases action frequency or extends mini-game time. Combat/gathering: +50% speed. Crafting: +5 seconds."
+          ],
+          "_total_unique_values": 1
+        },
+        "magnitudeValues": {
+          "extreme": {
+            "_type": "number",
+            "_sample_values": [
+              1.0
+            ],
+            "_total_unique_values": 1
+          },
+          "major": {
+            "_type": "number",
+            "_sample_values": [
+              0.75
+            ],
+            "_total_unique_values": 1
+          },
+          "minor": {
+            "_type": "number",
+            "_sample_values": [
+              0.3
+            ],
+            "_total_unique_values": 1
+          },
+          "moderate": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "crafting",
+            "movement",
+            "combat",
+            "time",
+            "haste"
+          ],
+          "_total_unique_values": 7
+        },
+        "typicalTier": {
+          "_type": "string",
+          "_sample_values": [
+            "1, 2"
+          ],
+          "_total_unique_values": 1
+        },
+        "useCases": {
+          "_type": "array",
+          "_sample_values": [
+            "move 60% faster",
+            "harvest 75% quicker",
+            "attack 50% faster",
+            "mini-game timer +10 seconds"
+          ],
+          "_total_unique_values": 4
+        }
+      },
+      "regenerate": {
+        "baseValue": {
+          "_type": "string",
+          "_sample_values": [
+            "5 per second"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Restores resources over time. Grants health, mana, or durability per second during duration."
+          ],
+          "_total_unique_values": 1
+        },
+        "magnitudeValues": {
+          "extreme": {
+            "_type": "integer",
+            "_sample_values": [
+              20
+            ],
+            "_total_unique_values": 1
+          },
+          "major": {
+            "_type": "integer",
+            "_sample_values": [
+              10
+            ],
+            "_total_unique_values": 1
+          },
+          "minor": {
+            "_type": "integer",
+            "_sample_values": [
+              3
+            ],
+            "_total_unique_values": 1
+          },
+          "moderate": {
+            "_type": "integer",
+            "_sample_values": [
+              5
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "durability",
+            "healing",
+            "mana",
+            "health",
+            "sustained"
+          ],
+          "_total_unique_values": 6
+        },
+        "typicalTier": {
+          "_type": "string",
+          "_sample_values": [
+            "2, 3"
+          ],
+          "_total_unique_values": 1
+        },
+        "useCases": {
+          "_type": "array",
+          "_sample_values": [
+            "repair 10 durability per second",
+            "heal 8 HP per second",
+            "restore 5 mana per second"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "restore": {
+        "baseValue": {
+          "_type": "string",
+          "_sample_values": [
+            "100 resource restored"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Instantly replenishes resources. Restores health, mana, or durability immediately."
+          ],
+          "_total_unique_values": 1
+        },
+        "magnitudeValues": {
+          "extreme": {
+            "_type": "integer",
+            "_sample_values": [
+              400
+            ],
+            "_total_unique_values": 1
+          },
+          "major": {
+            "_type": "integer",
+            "_sample_values": [
+              200
+            ],
+            "_total_unique_values": 1
+          },
+          "minor": {
+            "_type": "integer",
+            "_sample_values": [
+              50
+            ],
+            "_total_unique_values": 1
+          },
+          "moderate": {
+            "_type": "integer",
+            "_sample_values": [
+              100
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "instant",
+            "durability",
+            "healing",
+            "mana",
+            "health"
+          ],
+          "_total_unique_values": 6
+        },
+        "typicalTier": {
+          "_type": "string",
+          "_sample_values": [
+            "1, 2, 3"
+          ],
+          "_total_unique_values": 1
+        },
+        "useCases": {
+          "_type": "array",
+          "_sample_values": [
+            "restore 100 mana",
+            "repair 300 durability",
+            "heal 150 HP instantly"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "transcend": {
+        "baseValue": {
+          "_type": "string",
+          "_sample_values": [
+            "Bypass 1 tier/requirement"
+          ],
+          "_total_unique_values": 1
+        },
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Bypasses restrictions or requirements. Ignores tier limits, material requirements, or level gates."
+          ],
+          "_total_unique_values": 1
+        },
+        "magnitudeValues": {
+          "extreme": {
+            "_type": "integer",
+            "_sample_values": [
+              4
+            ],
+            "_total_unique_values": 1
+          },
+          "major": {
+            "_type": "integer",
+            "_sample_values": [
+              3
+            ],
+            "_total_unique_values": 1
+          },
+          "minor": {
+            "_type": "integer",
+            "_sample_values": [
+              1
+            ],
+            "_total_unique_values": 1
+          },
+          "moderate": {
+            "_type": "integer",
+            "_sample_values": [
+              2
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "tags": {
+          "_type": "array",
+          "_sample_values": [
+            "bypass",
+            "unlock",
+            "utility",
+            "restriction",
+            "tier"
+          ],
+          "_total_unique_values": 5
+        },
+        "typicalTier": {
+          "_type": "string",
+          "_sample_values": [
+            "4"
+          ],
+          "_total_unique_values": 1
+        },
+        "useCases": {
+          "_type": "array",
+          "_sample_values": [
+            "gather T4 nodes with T2 tools",
+            "use T4 tools on any tier",
+            "craft T3 recipes at T2 station"
+          ],
+          "_total_unique_values": 3
+        }
+      }
+    },
+    "RARITY_MULTIPLIERS": {
+      "common": {
+        "_type": "number",
+        "_sample_values": [
+          1.0
+        ],
+        "_total_unique_values": 1
+      },
+      "epic": {
+        "_type": "number",
+        "_sample_values": [
+          1.6
+        ],
+        "_total_unique_values": 1
+      },
+      "legendary": {
+        "_type": "number",
+        "_sample_values": [
+          2.0
+        ],
+        "_total_unique_values": 1
+      },
+      "mythic": {
+        "_type": "number",
+        "_sample_values": [
+          2.5
+        ],
+        "_total_unique_values": 1
+      },
+      "rare": {
+        "_type": "number",
+        "_sample_values": [
+          1.35
+        ],
+        "_total_unique_values": 1
+      },
+      "uncommon": {
+        "_type": "number",
+        "_sample_values": [
+          1.15
+        ],
+        "_total_unique_values": 1
+      }
+    },
     "categories": {
       "_type": "array",
       "_sample_values": [
-        "forestry",
         "refining",
-        "gathering",
-        "mining",
-        "combat"
+        "crafting",
+        "durability",
+        "defense",
+        "movement"
       ],
       "_total_unique_values": 14
     },
@@ -699,20 +2732,20 @@
       "cooldown": {
         "_type": "string",
         "_sample_values": [
-          "moderate",
+          "extreme",
           "short",
           "long",
-          "extreme"
+          "moderate"
         ],
         "_total_unique_values": 4
       },
       "mana": {
         "_type": "string",
         "_sample_values": [
-          "moderate",
-          "extreme",
           "low",
-          "high"
+          "high",
+          "extreme",
+          "moderate"
         ],
         "_total_unique_values": 4
       }
@@ -720,16 +2753,16 @@
     "description": {
       "_type": "string",
       "_sample_values": [
-        "Move significantly faster for a brief period.",
-        "Dramatically boost crafted item quality and gain massive rarity upgrade chance.",
-        "Instantly restore a moderate amount of health.",
-        "Your tools consume durability much more slowly.",
-        "Massively increase critical chance and rarity for all actions.",
-        "Extend engineering puzzle time and improve device quality significantly.",
-        "Fall into a steady rhythm, chopping wood much faster than normal.",
-        "Temporarily ignore all tier restrictions and requirements. Use any tool on any material, craft at any station.",
+        "Gain massive bonus materials from every gather for an extended period.",
+        "Channel raw strength into your pickaxe, doubling mining damage for a sustained period.",
+        "Restore health and mana simultaneously when you need it most.",
+        "Continuously regenerate massive health and repair equipment durability.",
+        "Significantly increase critical hit chance for all actions.",
+        "Gain extra time for your alchemy mini-game and increase potion quality.",
+        "Your next attack hits with devastating force, dealing massive damage.",
+        "Extend your smithing mini-game timer, giving more time for perfect strikes.",
         "A single attack of unimaginable power that ignores defenses and deals catastrophic damage.",
-        "Dramatically increase attack damage and speed simultaneously."
+        "Instantly restore durability to your equipped tools and weapons."
       ],
       "_total_unique_values": 30
     },
@@ -741,55 +2774,55 @@
         "category": {
           "_type": "string",
           "_sample_values": [
+            "durability",
+            "damage",
+            "engineering",
+            "combat",
+            "smithing",
             "refining",
             "mining",
-            "damage",
-            "combat",
-            "durability",
             "enchanting",
-            "alchemy",
-            "engineering",
-            "smithing"
+            "alchemy"
           ],
           "_total_unique_values": 9
         },
         "duration": {
           "_type": "string",
           "_sample_values": [
-            "moderate",
+            "instant",
             "long",
-            "extended",
-            "instant"
+            "moderate",
+            "extended"
           ],
           "_total_unique_values": 4
         },
         "magnitude": {
           "_type": "string",
           "_sample_values": [
-            "major",
-            "moderate",
             "extreme",
-            "minor"
+            "minor",
+            "major",
+            "moderate"
           ],
           "_total_unique_values": 4
         },
         "target": {
           "_type": "string",
           "_sample_values": [
+            "enemy",
             "area",
-            "self",
-            "enemy"
+            "self"
           ],
           "_total_unique_values": 3
         },
         "type": {
           "_type": "string",
           "_sample_values": [
+            "regenerate",
             "quicken",
-            "pierce",
             "elevate",
-            "empower",
-            "regenerate"
+            "pierce",
+            "empower"
           ],
           "_total_unique_values": 5
         }
@@ -797,16 +2830,16 @@
       "category": {
         "_type": "string",
         "_sample_values": [
-          "forestry",
-          "refining",
-          "mining",
-          "damage",
-          "combat",
           "durability",
-          "enchanting",
+          "defense",
+          "damage",
           "movement",
-          "alchemy",
-          "defense"
+          "combat",
+          "engineering",
+          "forestry",
+          "enchanting",
+          "refining",
+          "mining"
         ],
         "_total_unique_values": 12
       },
@@ -814,18 +2847,18 @@
         "_type": "string",
         "_sample_values": [
           "instant",
-          "moderate",
-          "brief",
           "long",
-          "extended"
+          "extended",
+          "moderate",
+          "brief"
         ],
         "_total_unique_values": 5
       },
       "magnitude": {
         "_type": "string",
         "_sample_values": [
-          "major",
           "extreme",
+          "major",
           "moderate"
         ],
         "_total_unique_values": 3
@@ -835,24 +2868,24 @@
         "_sample_values": [
           "resource_node",
           "area",
-          "self",
-          "enemy"
+          "enemy",
+          "self"
         ],
         "_total_unique_values": 4
       },
       "type": {
         "_type": "string",
         "_sample_values": [
-          "transcend",
+          "regenerate",
           "quicken",
+          "elevate",
+          "devastate",
+          "enrich",
+          "transcend",
           "fortify",
           "pierce",
-          "enrich",
-          "devastate",
-          "elevate",
           "empower",
-          "restore",
-          "regenerate"
+          "restore"
         ],
         "_total_unique_values": 10
       }
@@ -867,33 +2900,33 @@
         "_total_unique_values": 2
       },
       "nextSkillId": {
-        "_type": "null",
+        "_type": "string",
         "_sample_values": [
-          "eternal_edge",
-          "timeless_forge",
+          "archmage_mastery",
+          "decimating_blow",
+          "titans_excavation",
           "master_mechanic",
           "berserker_rage",
+          "timeless_forge",
+          "whirlwind_fury",
+          "master_maintenance",
           "eagle_vision",
-          "natures_tempo",
-          "wind_runner",
-          "undying_resolve",
-          "miracle_cure",
-          "phoenix_rebirth"
+          "wind_runner"
         ],
         "_total_unique_values": 21
       },
       "requirement": {
         "_type": "string",
         "_sample_values": [
-          "Reach level 10 and craft 100 smithed items",
-          "Reach level 10 and craft 100 devices",
-          "Reach level 10 and survive at <10% HP 50 times",
-          "Reach level 10 and block 5000 damage",
-          "Reach level 10 and brew 150 potions",
+          "Reach level 10 - LLM generates evolution",
+          "Reach level 10 and heal 50000 HP",
+          "Reach level 10 and harvest 500 trees",
+          "Reach level 10 and land 500 critical hits",
+          "Maximum evolution - cannot evolve further",
           "Reach level 10 and travel 100000 tiles",
-          "Reach level 10 and regenerate 100000 HP",
-          "Reach level 10 and defeat 500 enemies",
-          "Reach level 10 and deal 10000 damage",
+          "Reach level 10 and repair 50000 durability",
+          "Reach level 10 and craft 100 smithed items",
+          "Reach level 10 and gather 5000 materials",
           "Reach level 10 and enchant 100 items"
         ],
         "_total_unique_values": 22
@@ -902,32 +2935,32 @@
     "name": {
       "_type": "string",
       "_sample_values": [
+        "Tool Preservation",
+        "Battle Fury",
         "Time Dilation",
-        "Alchemist's Insight",
-        "Engineer's Precision",
-        "Power Strike",
-        "Absolute Destruction",
+        "Omega Strike",
+        "Quick Repair",
+        "Second Wind",
+        "Enchanter's Grace",
         "Bountiful Harvest",
-        "Keen Eye",
-        "Master Craftsman",
-        "Treasure Sense",
-        "Fortune's Favor"
+        "Smith's Focus",
+        "Engineer's Precision"
       ],
       "_total_unique_values": 30
     },
     "narrative": {
       "_type": "string",
       "_sample_values": [
-        "Plant your feet. Lower your center. Become the immovable object.",
-        "Rage is a weapon. Control it, channel it, unleash it.",
-        "Why harvest one at a time when you can harvest all of them?",
-        "Bandages are for people with time. This is for people who don't.",
-        "Luck is what happens when preparation meets opportunity. This is what happens when luck meets steroids.",
-        "The brew reveals its secrets to those patient enough to watch. And lucky enough to not explode.",
+        "Spin. Strike. Repeat. Simple tactics are often the deadliest.",
+        "The generous earth rewards those who know where to look. And how to ask nicely.",
         "Sometimes the best strategy is running away. Fast.",
+        "The earth provides for those who know its secrets. And sometimes, it just really likes you.",
+        "Complex mechanisms demand careful attention. Rush the gears, get your fingers caught.",
         "Some call it luck. Some call it intuition. Mostly it's just knowing where to dig.",
-        "Impurities burn away when you know exactly how hot, exactly how long.",
-        "Master smiths don't rush. They breathe. They focus. They strike true."
+        "Sometimes subtlety fails. Sometimes you just need to hit something really, really hard.",
+        "Rules are for people who lack imagination. And sufficient mana reserves.",
+        "Precision is overrated when you can just hit them twelve times before they blink.",
+        "Subtlety is for people who can't level mountains."
       ],
       "_total_unique_values": 30
     },
@@ -935,10 +2968,10 @@
       "_type": "string",
       "_sample_values": [
         "rare",
-        "mythic",
         "epic",
-        "common",
+        "mythic",
         "uncommon",
+        "common",
         "legendary"
       ],
       "_total_unique_values": 6
@@ -1032,27 +3065,27 @@
     "skillId": {
       "_type": "string",
       "_sample_values": [
+        "regenerative_aura",
+        "alchemists_insight",
+        "bountiful_harvest",
+        "whirlwind_strike",
+        "master_craftsman",
+        "phoenix_resurrection",
+        "fortunes_favor",
         "second_wind",
-        "miners_fury",
-        "combat_rush",
-        "enchanters_grace",
-        "absolute_destruction",
-        "refiners_touch",
-        "field_medic",
-        "chain_harvest",
-        "engineers_precision",
-        "regenerative_aura"
+        "lumberjacks_rhythm",
+        "reality_breach"
       ],
       "_total_unique_values": 30
     },
     "tags": {
       "_type": "array",
       "_sample_values": [
-        "time",
-        "refining",
-        "instant",
-        "transcendence",
-        "basic"
+        "destruction",
+        "durability",
+        "single_hit",
+        "survival",
+        "sustain"
       ],
       "_total_unique_values": 52
     },

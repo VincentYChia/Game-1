@@ -1,0 +1,2079 @@
+{
+  "_meta": {
+    "category": "items",
+    "description": "Processed materials (ingots, planks, alloys)",
+    "generated_at": "2026-01-01T19:58:32.948559",
+    "source_files": [
+      "items-alchemy-1.JSON",
+      "items-engineering-1.JSON",
+      "items-materials-1.JSON",
+      "items-refining-1.JSON",
+      "items-smithing-2.JSON",
+      "items-tools-1.JSON"
+    ],
+    "discovered_root_keys": [
+      "accessories",
+      "alloys",
+      "armor",
+      "basic_ingots",
+      "bombs",
+      "materials",
+      "metadata",
+      "potions_buff",
+      "potions_healing",
+      "potions_resistance",
+      "stations",
+      "tools",
+      "traps",
+      "turrets",
+      "utility_consumables",
+      "utility_devices",
+      "weapons",
+      "wood_planks"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "attributes[].effect": {
+      "values": [
+        "Adds fire damage to attacks",
+        "Adds lightning damage to attacks",
+        "Adds water damage to attacks",
+        "Elemental attacks deal bonus fire damage",
+        "Items crafted with this add fire damage",
+        "Items crafted with this add frost damage",
+        "Items crafted with this add lightning damage"
+      ],
+      "count": 7,
+      "types": [
+        "string"
+      ],
+      "occurrences": 7
+    },
+    "attributes[].element": {
+      "values": [
+        "fire",
+        "frost",
+        "lightning",
+        "water"
+      ],
+      "count": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 7
+    },
+    "attributes[].type": {
+      "values": [
+        "damage",
+        "elemental"
+      ],
+      "count": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 7
+    },
+    "attributes[].value": {
+      "values": [
+        10,
+        15,
+        20,
+        5
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 7
+    },
+    "category": {
+      "values": [
+        "consumable",
+        "device",
+        "elemental",
+        "equipment",
+        "material",
+        "metal",
+        "monster_drop",
+        "station",
+        "stone",
+        "wood"
+      ],
+      "count": 10,
+      "types": [
+        "string"
+      ],
+      "occurrences": 154
+    },
+    "duration": {
+      "values": [
+        0,
+        240,
+        300,
+        360,
+        3600,
+        480,
+        60,
+        600,
+        7200
+      ],
+      "count": 9,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "effect": {
+      "values": [
+        "+20% defense",
+        "+20% physical damage",
+        "+25% movement and attack speed",
+        "+50% max HP and +40% physical damage",
+        "50% fire damage reduction",
+        "50% ice damage reduction",
+        "Apply to armor for +10% defense for 2 hours",
+        "Apply to tools for +15% gathering speed for 1 hour",
+        "Apply to weapons for +10% damage for 2 hours",
+        "Can dissolve most materials, use carefully",
+        "Disables all mechanical devices in 8 unit radius for 30 seconds",
+        "Enables flight for up to 30 seconds, recharge time 2 minutes",
+        "Explodes for 40 damage in 3 unit radius",
+        "Explodes for 75 fire damage + lingering flames",
+        "Fires arrows at enemies, 20 damage, 5 unit range",
+        "Fires concentrated light beam, 80 damage, 12 unit range",
+        "Fires flaming arrows, 35 damage + burn, 7 unit range",
+        "Fires lightning bolts, 70 damage + chain, 10 unit range",
+        "Fires net that slows enemies by 80% for 10 seconds",
+        "Grants resistance to all elements for 10 minutes",
+        "Heals 10 HP/sec in 5 unit radius for 2 minutes",
+        "Launches grappling hook up to 15 units, pulls player to location",
+        "Restores 100 HP instantly",
+        "Restores 200 HP instantly",
+        "Restores 5 HP per second",
+        "Restores 50 HP instantly",
+        "Splits into 8 smaller explosions, total 120 damage over wide area",
+        "Sweeps cone of fire, 60 damage + lingering burn",
+        "Triggers on contact, 25 damage + immobilize for 5 seconds",
+        "Triggers on contact, 30 damage + bleed",
+        "Triggers on proximity, 50 damage + slow",
+        "Used in engineering recipes for bombs and explosives"
+      ],
+      "count": 32,
+      "types": [
+        "string"
+      ],
+      "occurrences": 32
+    },
+    "effectParams.baseDamage": {
+      "values": [
+        10,
+        120,
+        18,
+        20,
+        22,
+        25,
+        30,
+        35,
+        37,
+        40,
+        42,
+        45,
+        50,
+        60,
+        70,
+        75,
+        80
+      ],
+      "count": 17,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 30
+    },
+    "effectParams.beam_range": {
+      "values": [
+        12.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.beam_width": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.bleed_damage_per_second": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.bleed_duration": {
+      "values": [
+        8.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.burn_damage_per_second": {
+      "values": [
+        5.0,
+        8.0
+      ],
+      "count": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 4
+    },
+    "effectParams.burn_duration": {
+      "values": [
+        3.0,
+        5.0,
+        6.0
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 4
+    },
+    "effectParams.chain_count": {
+      "values": [
+        2
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.chain_range": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.circle_radius": {
+      "values": [
+        2.0,
+        3.0,
+        4.0,
+        5.0
+      ],
+      "count": 4,
+      "types": [
+        "number"
+      ],
+      "occurrences": 5
+    },
+    "effectParams.cone_angle": {
+      "values": [
+        60.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.cone_range": {
+      "values": [
+        8.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.freeze_duration": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.range": {
+      "values": [
+        10.0,
+        12.0,
+        5.0,
+        7.0,
+        8.0
+      ],
+      "count": 5,
+      "types": [
+        "number"
+      ],
+      "occurrences": 5
+    },
+    "effectParams.root_duration": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.shock_damage": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.shock_duration": {
+      "values": [
+        2.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.slow_factor": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectTags": {
+      "values": [
+        "beam",
+        "bleed",
+        "burn",
+        "chain",
+        "circle",
+        "cone",
+        "crushing",
+        "energy",
+        "fire",
+        "freeze",
+        "ice",
+        "lightning",
+        "physical",
+        "piercing",
+        "root",
+        "shock",
+        "single",
+        "slashing",
+        "slow"
+      ],
+      "count": 19,
+      "types": [
+        "array"
+      ],
+      "occurrences": 30
+    },
+    "flags.consumable": {
+      "values": [
+        false,
+        true
+      ],
+      "count": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 32
+    },
+    "flags.equippable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 30
+    },
+    "flags.placeable": {
+      "values": [
+        false,
+        true
+      ],
+      "count": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 27
+    },
+    "flags.repairable": {
+      "values": [
+        false,
+        true
+      ],
+      "count": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 89
+    },
+    "flags.stackable": {
+      "values": [
+        false,
+        true
+      ],
+      "count": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 89
+    },
+    "itemId": {
+      "values": [
+        "adamantine_ingot",
+        "alchemy_table_t1",
+        "alchemy_table_t2",
+        "armor_polish",
+        "ash_plank",
+        "bamboo_fishing_rod",
+        "basic_arrow_turret",
+        "bear_trap",
+        "blast_powder",
+        "bronze_ingot",
+        "cluster_bomb",
+        "composite_longbow",
+        "copper_axe",
+        "copper_dagger",
+        "copper_fire_ring",
+        "copper_ingot",
+        "copper_pickaxe",
+        "copper_spear",
+        "ebony_plank",
+        "efficiency_oil",
+        "elemental_harmony_potion",
+        "emp_device",
+        "enchanting_table_t1",
+        "engineering_bench_t1",
+        "engineering_bench_t2",
+        "fire_arrow_turret",
+        "fire_bomb",
+        "fire_crystal_staff",
+        "fire_resistance_potion",
+        "fire_steel_ingot",
+        "flamethrower_turret",
+        "forge_t1",
+        "forge_t2",
+        "forge_t3",
+        "frost_mine",
+        "frost_resistance_potion",
+        "frost_steel_ingot",
+        "grappling_hook",
+        "greater_health_potion",
+        "healing_beacon",
+        "health_potion",
+        "iron_axe",
+        "iron_boots",
+        "iron_chestplate",
+        "iron_ingot",
+        "iron_pickaxe",
+        "iron_round_shield",
+        "iron_shortsword",
+        "iron_skin_potion",
+        "iron_studded_gauntlets",
+        "iron_warhammer",
+        "iron_water_amulet",
+        "ironwood_plank",
+        "jetpack",
+        "laser_turret",
+        "leather_tunic",
+        "lightning_cannon",
+        "lightning_copper_ingot",
+        "minor_health_potion",
+        "mithril_axe",
+        "mithril_dagger",
+        "mithril_ingot",
+        "mithril_pickaxe",
+        "net_launcher",
+        "oak_plank",
+        "orichalcum_ingot",
+        "pine_shortbow",
+        "refinery_t1",
+        "refinery_t2",
+        "refinery_t3",
+        "regeneration_tonic",
+        "simple_bomb",
+        "spike_trap",
+        "steel_axe",
+        "steel_battleaxe",
+        "steel_helm",
+        "steel_ingot",
+        "steel_leggings",
+        "steel_lightning_bracelet",
+        "steel_longsword",
+        "steel_pickaxe",
+        "steel_sickle",
+        "strength_elixir",
+        "swiftness_draught",
+        "tin_ingot",
+        "titans_brew",
+        "universal_solvent",
+        "weapon_oil",
+        "worldtree_plank"
+      ],
+      "count": 89,
+      "types": [
+        "string"
+      ],
+      "occurrences": 89
+    },
+    "materialId": {
+      "values": [
+        "adamantine_ingot",
+        "adamantine_ore",
+        "air_crystal",
+        "ash_log",
+        "ash_plank",
+        "basalt",
+        "beetle_carapace",
+        "birch_log",
+        "birch_plank",
+        "chaos_matrix",
+        "copper_ingot",
+        "copper_ore",
+        "crystal_quartz",
+        "diamond",
+        "dire_fang",
+        "earth_crystal",
+        "ebony_log",
+        "ebony_plank",
+        "essence_blood",
+        "eternity_stone",
+        "etherion_ingot",
+        "etherion_ore",
+        "fire_crystal",
+        "frost_essence",
+        "genesis_lattice",
+        "golem_core",
+        "granite",
+        "iron_ingot",
+        "iron_ore",
+        "iron_scales",
+        "ironwood_log",
+        "ironwood_plank",
+        "light_gem",
+        "lightning_shard",
+        "limestone",
+        "living_ichor",
+        "maple_log",
+        "maple_plank",
+        "marble",
+        "mithril_ingot",
+        "mithril_ore",
+        "oak_log",
+        "oak_plank",
+        "obsidian",
+        "orichalcum_ingot",
+        "orichalcum_ore",
+        "phoenix_ash",
+        "pine_log",
+        "pine_plank",
+        "primordial_crystal",
+        "shadow_core",
+        "shale",
+        "slime_gel",
+        "spectral_thread",
+        "steel_ingot",
+        "steel_ore",
+        "storm_heart",
+        "tin_ingot",
+        "tin_ore",
+        "void_essence",
+        "voidstone",
+        "water_crystal",
+        "wolf_pelt",
+        "worldtree_log",
+        "worldtree_plank"
+      ],
+      "count": 65,
+      "types": [
+        "string"
+      ],
+      "occurrences": 65
+    },
+    "metadata.narrative": {
+      "values": [
+        "A simple iron blade with a wooden handle. Every warrior's first step on the path to mastery. The weight feels right in your hand - not perfect, but yours.",
+        "A soft, reddish metal found in shallow veins near the surface. Easy to work with basic tools but lacks the durability needed for serious combat. The foundation of all smithing - every blacksmith's first lesson.",
+        "Advanced alchemy station with steel vessels and crystal-infused apparatus. Handles volatile reactions with ease. The fire crystals maintain precise temperature control.",
+        "Advanced engineering station with steel construction and precision measuring tools. Complex mechanisms and intricate devices are possible here. Lightning crystals power automated tools.",
+        "Advanced refinery with improved efficiency and heat control. Can process higher-grade ores and create complex alloys. The granite construction handles intense heat without cracking.",
+        "Ash-grey substance from legendary phoenix nests. Burns eternally without being consumed.",
+        "Balanced steel longsword that flows like water and strikes like thunder. The blade sings when it cuts through air, a testament to its quality.",
+        "Basic arrow turret using simple springs and levers. Point away from face. Automated defense that never sleeps, never misses... well, rarely misses.",
+        "Basic copper pickaxe with a wooden handle. Your first step into the mining profession - crude but functional.",
+        "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation. Tastes terrible, works wonderfully. Wounds close and pain fades within moments.",
+        "Basic leather protection stitched from wolf pelts and bound with slime gel. Better than nothing, lighter than metal, and it might just save your life.",
+        "Basic limestone refinery for turning raw ores into usable ingots. Essential for any metalworker. The crucible glows red-hot as impurities burn away.",
+        "Basic stone forge suitable for working copper and iron. The foundation of smithing - crude but functional. Every master started with a forge like this.",
+        "Bear trap with brutal steel jaws. Immobilizes anything that steps on it. The teeth dig deep and don't let go.",
+        "Black adamantine ingot, heavy as sin and harder than anything known. This material refuses to yield, laughs at damage, and never breaks. Forged in earth's deepest fires.",
+        "Black ebony planks that absorb light. The wood feels cold, slightly wrong. Mages favor it for staves - it dampens unwanted magical interference while channeling intended power.",
+        "Blue crystal filled with flowing liquid. Cool and calming, perpetually damp.",
+        "Brilliant white stone that glows faintly with captured sunlight. Used in temples and monuments.",
+        "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+        "Captured lightning from primordial storms. Contains raw creation energy.",
+        "Cluster bomb that splits into multiple explosives. Maximum coverage. One becomes many, the sky rains destruction.",
+        "Combining all basic elements into a harmony potion. Balance in a bottle. All elemental forces recognize you as kin and refuse to harm their own.",
+        "Common sedimentary rock with fine grain. Compressed clay particles form water-resistant layers.",
+        "Common sedimentary rock. Soft enough to carve with basic tools yet strong enough for simple construction.",
+        "Composite longbow of ash wood and sinew, strung with silk-spider thread. The draw is heavy, demanding both hands and steady arms, but arrows fly true and far. Distance is your advantage.",
+        "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
+        "Crackling crystal surrounded by static discharge. Handle with insulated gloves.",
+        "Creamy-white wood from elegant trees. Highly valued for its fine grain and excellent carving properties.",
+        "Creating universal solvent that can dissolve anything. Handle with extreme care. The void essence makes it unstable, the shadow core makes it hungry. It wants to unmake things.",
+        "Crystallized blood from elemental beasts. Pulses with residual power.",
+        "Crystallized darkness that absorbs light. Uncomfortable to look at directly.",
+        "Curved steel blade designed for harvesting herbs, grains, and fibrous plants. The razor edge cuts clean without bruising delicate materials. Adequate for self-defense in a pinch.",
+        "Dark, impossibly hard metal that absorbs light. Found only in the deepest caverns where the world's bones are exposed.",
+        "Deep black wood from ancient forests. Absorbs and nullifies magical energies.",
+        "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal, blows that should fell you merely bruise. Stand firm, unbreakable.",
+        "Dense hardwood with beautiful figuring. Resists warping and holds its shape through temperature extremes.",
+        "Dense metamorphic rock with distinctive banding. Exceptional compression strength.",
+        "Dense steel ingot, dark grey with a bluish tint. Carbon-rich iron forged under intense heat. Holds an edge far better than common iron, the mark of quality craftsmanship.",
+        "EMP device that disables electronic enemies and devices. Technology's worst nightmare. Lightning contained, waiting to be unleashed.",
+        "Ethereal mithril axe that seems to phase through wood fibers. Cuts with minimal resistance.",
+        "Ethereal substance from creatures between worlds. Exists partially out of phase.",
+        "Explosive powder from concentrated elemental volatility. Handle with extreme care. Do not shake, drop, or look at funny. Used in engineering recipes for bombs and explosives.",
+        "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense. Each arrow trails flames, lighting up enemies and the night.",
+        "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone. The explosion is just the beginning - the flames linger, hungry.",
+        "Fire resistance potion using water and frost essences. Body temperature regulates perfectly. Walk through flames unscathed, fire becomes a gentle warmth.",
+        "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+        "Flamethrower turret that sweeps area with fire. Excellent for crowd control. The roar is almost as terrifying as the flames themselves.",
+        "Flexible ash planks with excellent shock absorption. Bowyers and spearmakers favor this wood - it bends without breaking, springs back without warping. The wood of warriors.",
+        "Flexible bamboo rod with silk line and bronze hook. Patient hands pull dinner from rivers and lakes. Not much use in a fight, but starvation kills just as surely as swords.",
+        "Frost mine that erupts in a blast of ice shards. Triggers on proximity. The cold bites deep, slowing everything it touches.",
+        "Frost resistance potion using fire crystals to create internal warmth. Cold cannot touch you. Ice shatters against your skin, blizzards feel like spring breezes.",
+        "Frost-blue crystal cold enough to burn. Creates rime patterns on nearby surfaces.",
+        "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+        "Gleaming golden metal with an otherworldly green-blue sheen. Ancient civilizations built empires on its discovery.",
+        "Golden-green orichalcum ingot humming with elemental forces. Fire, ice, lightning course through its crystalline structure. The gods' preferred metal when they walked among mortals.",
+        "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces. The spectral thread never breaks, the iron hook never fails.",
+        "Green-brown crystal with swirling sediment. Surprisingly heavy, grounds magical energies.",
+        "Harder and more durable than pure iron. The secret of its strength lies in its carbon-rich structure. A true warrior's metal.",
+        "Healing beacon that emanates restorative energy. Heals allies in radius continuously. The light feels warm, comforting, alive.",
+        "Heavy iron warhammer that crushes armor and bone alike. The weight demands both hands, but the devastation it delivers makes that trade worthwhile. Favored by those who prefer decisive, crushing blows.",
+        "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is.",
+        "Improved forge with better heat retention and basalt construction. Can work steel reliably. Fire crystals enhance the heat, pushing temperatures higher.",
+        "Improved healing potion using water crystals to amplify restorative properties. The liquid shimmers with captured vitality. One swallow and you feel strength returning.",
+        "Iridescent shell segment. Lightweight yet remarkably impact-resistant.",
+        "Iron amulet cradling water crystals. Feels cool against your skin, like a gentle stream running across your chest. The crystals shimmer with captured tides.",
+        "Iron plates protecting vital organs with beetle carapace reinforcement. Heavy but reliable. When arrows fly and blades swing, you'll appreciate every ounce of protection.",
+        "Ironwood planks, dense and metallic. Dulls saw blades quickly but the result is worth it - wood as strong as iron, light as oak. Nature's answer to steel.",
+        "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
+        "Jetpack for brief flight. Fuel not included (but fire crystals work great). The mithril construction keeps it lightweight while phoenix ash provides sustained thrust.",
+        "Laser turret using focused light crystals. Precise and devastating. The beam cuts through armor like it's not even there.",
+        "Leather gloves reinforced with iron studs across the knuckles. Light enough for dexterity, strong enough to turn a blade. Your hands are tools - protect them.",
+        "Legendary brew combining dragon essence with phoenix ash. Maximum HP surges, strength magnifies. For a brief time, you become something more than mortal.",
+        "Legendary mithril ingot, silvery-blue and impossibly light. The metal seems to defy natural laws - feather-light yet stronger than steel. Legends claim it fell from the stars.",
+        "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective.",
+        "Legendary silver-white metal that seems to drink in moonlight and starshine. Impossibly light yet incredibly strong.",
+        "Light, flexible wood harvested from tall conifers. Works easily under a blade, bends without breaking.",
+        "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous. The bolts arc between enemies, chain lightning made manifest.",
+        "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+        "Liquid darkness given physical form. Absorbs heat, light, and hope.",
+        "Living wood from the World Tree's roots. Contains millennia of accumulated magical essence.",
+        "Master forge with obsidian construction and crystal enhancement. Can reach extreme temperatures needed for legendary metals. Phoenix ash ensures the flames never die.",
+        "Master refinery capable of processing legendary materials. Obsidian crucibles contain temperatures that would vaporize lesser equipment. Mithril chambers prevent contamination.",
+        "Metal that simultaneously exists in multiple states. Scholars argue whether it's matter or energy, present or future. It is all of these and none.",
+        "Metallic scales from armored creatures. Can deflect sword strikes.",
+        "Mithril dagger that seems to shimmer out of existence. Wickedly sharp and impossibly light, it strikes faster than the eye can follow. The blade whispers through air and flesh alike.",
+        "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+        "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
+        "Net launcher that ensnares enemies. Reduces movement speed dramatically. Spectral thread nets are nearly unbreakable.",
+        "Oil that makes tools work faster and smoother. Craftsmen swear by this formula. Apply it before work and watch efficiency soar.",
+        "Oil that makes weapons strike true. Edges stay sharp impossibly long. Warriors whisper prayers to the alchemist who made this.",
+        "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
+        "Pale crystal that drifts upward if not secured. Contains compressed winds.",
+        "Pale wood with excellent shock absorption. Weapon handles made from ash feel alive in your grip.",
+        "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
+        "Petrified remains from ancient guardians. Contains geological memories.",
+        "Pitch-black stone that seems to pull light into itself. Radiates subtle wrongness.",
+        "Polish that makes armor gleam and deflect attacks. Knights pay fortunes for this. The sheen isn't just for show - it actually turns blades.",
+        "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly, mends broken bones, restores vitality. The taste of life itself.",
+        "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
+        "Rare wood with metallic properties. As hard as soft metals, holds edges almost as well as iron."
+      ],
+      "count": 154,
+      "types": [
+        "string"
+      ],
+      "occurrences": 154
+    },
+    "metadata.tags": {
+      "values": [
+        "1H",
+        "2H",
+        "accessory",
+        "adamantine",
+        "advanced",
+        "agility",
+        "air",
+        "alchemy",
+        "alloy",
+        "amulet",
+        "ancient",
+        "area",
+        "armor",
+        "armor_breaker",
+        "ash",
+        "axe",
+        "bash",
+        "basic",
+        "blood",
+        "bomb",
+        "bow",
+        "bracelet",
+        "brewing",
+        "bronze",
+        "buff",
+        "carapace",
+        "chaos",
+        "chest",
+        "cleaving",
+        "cluster",
+        "combat",
+        "common",
+        "consumable",
+        "copper",
+        "crafting",
+        "crowd-control",
+        "crushing",
+        "dagger",
+        "dangerous",
+        "dark",
+        "defense",
+        "defensive",
+        "device",
+        "disable",
+        "durable",
+        "earth",
+        "ebony",
+        "elemental",
+        "enchanting",
+        "engineering",
+        "enhancement",
+        "essence",
+        "exotic",
+        "explosive",
+        "fang",
+        "fast",
+        "feet",
+        "fine",
+        "fire",
+        "fishing",
+        "flexible",
+        "flight",
+        "forge",
+        "forging",
+        "frost",
+        "gathering",
+        "gel",
+        "hands",
+        "harmony",
+        "harvesting",
+        "head",
+        "healing",
+        "heavy",
+        "herbs",
+        "ice",
+        "immobilize",
+        "impossible",
+        "iron",
+        "ironwood",
+        "layered",
+        "leather",
+        "legendary",
+        "legs",
+        "light",
+        "lightning",
+        "living",
+        "mace",
+        "magical",
+        "master",
+        "material",
+        "mechanical",
+        "melee",
+        "memory",
+        "metal",
+        "metallic",
+        "mithril",
+        "mobility",
+        "monster",
+        "mythical",
+        "oak"
+      ],
+      "count": 153,
+      "types": [
+        "array"
+      ],
+      "occurrences": 154
+    },
+    "name": {
+      "values": [
+        "Adamantine Ingot",
+        "Adamantine Ore",
+        "Air Crystal",
+        "Armor Polish",
+        "Ash Log",
+        "Ash Plank",
+        "Bamboo Fishing Rod",
+        "Basalt",
+        "Basic Alchemy Table",
+        "Basic Arrow Turret",
+        "Basic Enchanting Altar",
+        "Basic Engineering Bench",
+        "Basic Refinery",
+        "Basic Stone Forge",
+        "Bear Trap",
+        "Beetle Carapace",
+        "Birch Log",
+        "Birch Plank",
+        "Blast Powder",
+        "Bronze Ingot",
+        "Chaos Matrix",
+        "Cluster Bomb",
+        "Composite Longbow",
+        "Copper Axe",
+        "Copper Dagger",
+        "Copper Fire Ring",
+        "Copper Ingot",
+        "Copper Ore",
+        "Copper Pickaxe",
+        "Copper Spear",
+        "Crystal Quartz",
+        "Diamond",
+        "Dire Fang",
+        "EMP Device",
+        "Earth Crystal",
+        "Ebony Log",
+        "Ebony Plank",
+        "Efficiency Oil",
+        "Elemental Harmony Potion",
+        "Essence Blood",
+        "Eternity Stone",
+        "Etherion Ingot",
+        "Etherion Ore",
+        "Fire Arrow Turret",
+        "Fire Bomb",
+        "Fire Crystal",
+        "Fire Crystal Staff",
+        "Fire Resistance Potion",
+        "Fire Steel Ingot",
+        "Flamethrower Turret",
+        "Frost Essence",
+        "Frost Mine",
+        "Frost Resistance Potion",
+        "Frost Steel Ingot",
+        "Genesis Lattice",
+        "Golem Core",
+        "Granite",
+        "Grappling Hook",
+        "Greater Health Potion",
+        "Healing Beacon",
+        "Health Potion",
+        "Iron Axe",
+        "Iron Boots",
+        "Iron Chestplate",
+        "Iron Ingot",
+        "Iron Ore",
+        "Iron Pickaxe",
+        "Iron Round Shield",
+        "Iron Scales",
+        "Iron Shortsword",
+        "Iron Skin Potion",
+        "Iron Warhammer",
+        "Iron Water Amulet",
+        "Iron-Studded Gauntlets",
+        "Ironwood Log",
+        "Ironwood Plank",
+        "Jetpack",
+        "Laser Turret",
+        "Leather Tunic",
+        "Light Gem",
+        "Lightning Cannon",
+        "Lightning Copper Ingot",
+        "Lightning Shard",
+        "Limestone",
+        "Living Ichor",
+        "Maple Log",
+        "Maple Plank",
+        "Marble",
+        "Master Forge",
+        "Master Refinery",
+        "Minor Health Potion",
+        "Mithril Axe",
+        "Mithril Dagger",
+        "Mithril Ingot",
+        "Mithril Ore",
+        "Mithril Pickaxe",
+        "Net Launcher",
+        "Oak Log",
+        "Oak Plank",
+        "Obsidian"
+      ],
+      "count": 142,
+      "types": [
+        "string"
+      ],
+      "occurrences": 154
+    },
+    "range": {
+      "values": [
+        0.5,
+        1,
+        1.5,
+        10,
+        15,
+        2,
+        5,
+        8
+      ],
+      "count": 8,
+      "types": [
+        "integer",
+        "number"
+      ],
+      "occurrences": 21
+    },
+    "rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "rare",
+        "uncommon"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 154
+    },
+    "requirements.level": {
+      "values": [
+        1,
+        10,
+        12,
+        13,
+        14,
+        15,
+        16,
+        18,
+        2,
+        20,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "count": 16,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 89
+    },
+    "requirements.stats.AGI": {
+      "values": [
+        14,
+        20,
+        6,
+        8
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    },
+    "requirements.stats.INT": {
+      "values": [
+        18
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "requirements.stats.STR": {
+      "values": [
+        10,
+        12,
+        15,
+        8
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    },
+    "slot": {
+      "values": [
+        "accessory",
+        "chest",
+        "feet",
+        "hands",
+        "head",
+        "legs",
+        "mainHand"
+      ],
+      "count": 7,
+      "types": [
+        "string"
+      ],
+      "occurrences": 22
+    },
+    "stackSize": {
+      "values": [
+        1,
+        10,
+        15,
+        20,
+        256,
+        3,
+        5,
+        50
+      ],
+      "count": 8,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 48
+    },
+    "statMultipliers.attackSpeed": {
+      "values": [
+        0.75,
+        0.85,
+        0.95,
+        1.0,
+        1.1,
+        1.2,
+        1.3
+      ],
+      "count": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 11
+    },
+    "statMultipliers.damage": {
+      "values": [
+        0.5,
+        0.6,
+        0.7,
+        0.85,
+        0.9,
+        1.0,
+        1.1,
+        1.3
+      ],
+      "count": 8,
+      "types": [
+        "number"
+      ],
+      "occurrences": 13
+    },
+    "statMultipliers.defense": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "statMultipliers.durability": {
+      "values": [
+        0.8,
+        0.9,
+        1.0,
+        1.1,
+        1.3,
+        1.5,
+        1.8
+      ],
+      "count": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 19
+    },
+    "statMultipliers.gathering": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "statMultipliers.weight": {
+      "values": [
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.2,
+        1.3,
+        1.5,
+        1.8,
+        2.0,
+        2.5
+      ],
+      "count": 16,
+      "types": [
+        "number"
+      ],
+      "occurrences": 81
+    },
+    "stats.damage": {
+      "values": [
+        12,
+        15,
+        22,
+        30,
+        45,
+        60,
+        8,
+        90
+      ],
+      "count": 8,
+      "types": [
+        "array"
+      ],
+      "occurrences": 8
+    },
+    "stats.durability": {
+      "values": [
+        1000,
+        2000,
+        4000,
+        500
+      ],
+      "count": 4,
+      "types": [
+        "array"
+      ],
+      "occurrences": 8
+    },
+    "stats.forestry": {
+      "values": [
+        10,
+        20,
+        40,
+        80
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    },
+    "stats.mining": {
+      "values": [
+        10,
+        20,
+        40,
+        80
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    },
+    "stats.weight": {
+      "values": [
+        2.5,
+        3.0,
+        3.5,
+        4.0,
+        4.5,
+        5.0,
+        5.5
+      ],
+      "count": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 8
+    },
+    "subtype": {
+      "values": [
+        "alchemy_table",
+        "alloy",
+        "altar",
+        "amulet",
+        "area",
+        "axe",
+        "battleaxe",
+        "boots",
+        "bracelet",
+        "buckler",
+        "buff",
+        "chestplate",
+        "control",
+        "dagger",
+        "disable",
+        "elemental",
+        "energy",
+        "engineering_bench",
+        "explosive",
+        "fishing_rod",
+        "forge",
+        "gauntlets",
+        "healing",
+        "helmet",
+        "ingot",
+        "leggings",
+        "longbow",
+        "longsword",
+        "mobility",
+        "physical",
+        "pickaxe",
+        "plank",
+        "projectile",
+        "refinery",
+        "resistance",
+        "ring",
+        "shortbow",
+        "shortsword",
+        "sickle",
+        "solvent",
+        "spear",
+        "staff",
+        "support",
+        "tunic",
+        "utility",
+        "warhammer"
+      ],
+      "count": 46,
+      "types": [
+        "string"
+      ],
+      "occurrences": 89
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 154
+    },
+    "type": {
+      "values": [
+        "accessory",
+        "adornments",
+        "alchemy",
+        "armor",
+        "axe",
+        "bomb",
+        "bow",
+        "dagger",
+        "engineering",
+        "mace",
+        "material",
+        "metal",
+        "oil",
+        "potion",
+        "refining",
+        "shield",
+        "smithing",
+        "staff",
+        "tool",
+        "trap",
+        "turret",
+        "utility",
+        "weapon",
+        "wood"
+      ],
+      "count": 24,
+      "types": [
+        "string"
+      ],
+      "occurrences": 89
+    }
+  },
+  "_usable_template": {
+    "attributes": [
+      "<value>"
+    ],
+    "category": "station",
+    "duration": 0,
+    "effect": "Explodes for 75 fire damage + lingering flames",
+    "effectParams": {
+      "baseDamage": 35,
+      "beam_range": 12.0,
+      "beam_width": 1.0,
+      "bleed_damage_per_second": 3.0,
+      "bleed_duration": 8.0,
+      "burn_damage_per_second": 8.0,
+      "burn_duration": 3.0,
+      "chain_count": 2,
+      "chain_range": 5.0,
+      "circle_radius": 2.0,
+      "cone_angle": 60.0,
+      "cone_range": 8.0,
+      "freeze_duration": 3.0,
+      "range": 5.0,
+      "root_duration": 5.0,
+      "shock_damage": 5.0,
+      "shock_duration": 2.0,
+      "slow_factor": 0.5
+    },
+    "effectTags": [
+      "energy",
+      "chain",
+      "ice"
+    ],
+    "flags": {
+      "consumable": true,
+      "equippable": true,
+      "placeable": true,
+      "repairable": true,
+      "stackable": true
+    },
+    "itemId": "armor_polish",
+    "materialId": "obsidian",
+    "metadata": {
+      "narrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
+      "tags": [
+        "adamantine",
+        "advanced",
+        "ancient"
+      ]
+    },
+    "name": "Frost Resistance Potion",
+    "range": 1,
+    "rarity": "rare",
+    "requirements": {
+      "level": 1,
+      "stats": {
+        "AGI": 8,
+        "INT": 18,
+        "STR": 8
+      }
+    },
+    "slot": "legs",
+    "stackSize": 256,
+    "statMultipliers": {
+      "attackSpeed": 0.95,
+      "damage": 0.9,
+      "defense": 1.0,
+      "durability": 0.8,
+      "gathering": 1.0,
+      "weight": 0.5
+    },
+    "stats": {
+      "damage": [
+        8,
+        12,
+        45
+      ],
+      "durability": [
+        1000,
+        500,
+        4000
+      ],
+      "forestry": 40,
+      "mining": 40,
+      "weight": 2.5
+    },
+    "subtype": "control",
+    "tier": 1,
+    "type": "adornments"
+  },
+  "template": {
+    "attributes": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "effect": {
+        "_type": "string",
+        "_sample_values": [
+          "Adds lightning damage to attacks",
+          "Adds fire damage to attacks",
+          "Items crafted with this add fire damage",
+          "Adds water damage to attacks",
+          "Elemental attacks deal bonus fire damage",
+          "Items crafted with this add lightning damage",
+          "Items crafted with this add frost damage"
+        ],
+        "_total_unique_values": 7
+      },
+      "element": {
+        "_type": "string",
+        "_sample_values": [
+          "lightning",
+          "fire",
+          "frost",
+          "water"
+        ],
+        "_total_unique_values": 4
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "damage",
+          "elemental"
+        ],
+        "_total_unique_values": 2
+      },
+      "value": {
+        "_type": "integer",
+        "_sample_values": [
+          10,
+          20,
+          5,
+          15
+        ],
+        "_total_unique_values": 4
+      }
+    },
+    "category": {
+      "_type": "string",
+      "_sample_values": [
+        "station",
+        "elemental",
+        "material",
+        "equipment",
+        "metal",
+        "consumable",
+        "stone",
+        "monster_drop",
+        "wood",
+        "device"
+      ],
+      "_total_unique_values": 10
+    },
+    "duration": {
+      "_type": "integer",
+      "_sample_values": [
+        0,
+        480,
+        7200,
+        360,
+        300,
+        240,
+        3600,
+        600,
+        60
+      ],
+      "_total_unique_values": 9
+    },
+    "effect": {
+      "_type": "string",
+      "_sample_values": [
+        "Explodes for 75 fire damage + lingering flames",
+        "Triggers on contact, 25 damage + immobilize for 5 seconds",
+        "+25% movement and attack speed",
+        "Enables flight for up to 30 seconds, recharge time 2 minutes",
+        "Explodes for 40 damage in 3 unit radius",
+        "Sweeps cone of fire, 60 damage + lingering burn",
+        "Disables all mechanical devices in 8 unit radius for 30 seconds",
+        "+20% physical damage",
+        "Splits into 8 smaller explosions, total 120 damage over wide area",
+        "Apply to weapons for +10% damage for 2 hours"
+      ],
+      "_total_unique_values": 32
+    },
+    "effectParams": {
+      "baseDamage": {
+        "_type": "integer",
+        "_sample_values": [
+          35,
+          37,
+          70,
+          40,
+          42,
+          75,
+          10,
+          45,
+          80,
+          50
+        ],
+        "_total_unique_values": 17
+      },
+      "beam_range": {
+        "_type": "number",
+        "_sample_values": [
+          12.0
+        ],
+        "_total_unique_values": 1
+      },
+      "beam_width": {
+        "_type": "number",
+        "_sample_values": [
+          1.0
+        ],
+        "_total_unique_values": 1
+      },
+      "bleed_damage_per_second": {
+        "_type": "number",
+        "_sample_values": [
+          3.0
+        ],
+        "_total_unique_values": 1
+      },
+      "bleed_duration": {
+        "_type": "number",
+        "_sample_values": [
+          8.0
+        ],
+        "_total_unique_values": 1
+      },
+      "burn_damage_per_second": {
+        "_type": "number",
+        "_sample_values": [
+          8.0,
+          5.0
+        ],
+        "_total_unique_values": 2
+      },
+      "burn_duration": {
+        "_type": "number",
+        "_sample_values": [
+          3.0,
+          5.0,
+          6.0
+        ],
+        "_total_unique_values": 3
+      },
+      "chain_count": {
+        "_type": "integer",
+        "_sample_values": [
+          2
+        ],
+        "_total_unique_values": 1
+      },
+      "chain_range": {
+        "_type": "number",
+        "_sample_values": [
+          5.0
+        ],
+        "_total_unique_values": 1
+      },
+      "circle_radius": {
+        "_type": "number",
+        "_sample_values": [
+          2.0,
+          3.0,
+          4.0,
+          5.0
+        ],
+        "_total_unique_values": 4
+      },
+      "cone_angle": {
+        "_type": "number",
+        "_sample_values": [
+          60.0
+        ],
+        "_total_unique_values": 1
+      },
+      "cone_range": {
+        "_type": "number",
+        "_sample_values": [
+          8.0
+        ],
+        "_total_unique_values": 1
+      },
+      "freeze_duration": {
+        "_type": "number",
+        "_sample_values": [
+          3.0
+        ],
+        "_total_unique_values": 1
+      },
+      "range": {
+        "_type": "number",
+        "_sample_values": [
+          5.0,
+          7.0,
+          8.0,
+          10.0,
+          12.0
+        ],
+        "_total_unique_values": 5
+      },
+      "root_duration": {
+        "_type": "number",
+        "_sample_values": [
+          5.0
+        ],
+        "_total_unique_values": 1
+      },
+      "shock_damage": {
+        "_type": "number",
+        "_sample_values": [
+          5.0
+        ],
+        "_total_unique_values": 1
+      },
+      "shock_duration": {
+        "_type": "number",
+        "_sample_values": [
+          2.0
+        ],
+        "_total_unique_values": 1
+      },
+      "slow_factor": {
+        "_type": "number",
+        "_sample_values": [
+          0.5
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "effectTags": {
+      "_type": "array",
+      "_sample_values": [
+        "energy",
+        "chain",
+        "ice",
+        "fire",
+        "bleed"
+      ],
+      "_total_unique_values": 19
+    },
+    "flags": {
+      "consumable": {
+        "_type": "boolean",
+        "_sample_values": [
+          false,
+          true
+        ],
+        "_total_unique_values": 2
+      },
+      "equippable": {
+        "_type": "boolean",
+        "_sample_values": [
+          true
+        ],
+        "_total_unique_values": 1
+      },
+      "placeable": {
+        "_type": "boolean",
+        "_sample_values": [
+          false,
+          true
+        ],
+        "_total_unique_values": 2
+      },
+      "repairable": {
+        "_type": "boolean",
+        "_sample_values": [
+          false,
+          true
+        ],
+        "_total_unique_values": 2
+      },
+      "stackable": {
+        "_type": "boolean",
+        "_sample_values": [
+          false,
+          true
+        ],
+        "_total_unique_values": 2
+      }
+    },
+    "itemId": {
+      "_type": "string",
+      "_sample_values": [
+        "armor_polish",
+        "fire_arrow_turret",
+        "titans_brew",
+        "mithril_pickaxe",
+        "fire_steel_ingot",
+        "iron_pickaxe",
+        "enchanting_table_t1",
+        "iron_water_amulet",
+        "universal_solvent",
+        "iron_chestplate"
+      ],
+      "_total_unique_values": 89
+    },
+    "materialId": {
+      "_type": "string",
+      "_sample_values": [
+        "obsidian",
+        "orichalcum_ingot",
+        "ash_plank",
+        "steel_ore",
+        "beetle_carapace",
+        "wolf_pelt",
+        "limestone",
+        "light_gem",
+        "etherion_ore",
+        "tin_ore"
+      ],
+      "_total_unique_values": 65
+    },
+    "metadata": {
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "Ethereal substance from creatures between worlds. Exists partially out of phase.",
+          "Liquid darkness given physical form. Absorbs heat, light, and hope.",
+          "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+          "Dense steel ingot, dark grey with a bluish tint. Carbon-rich iron forged under intense heat. Holds an edge far better than common iron, the mark of quality craftsmanship.",
+          "Refined ash planks with superior shock absorption properties.",
+          "Simple pine shortbow strung with treated slime gel. Not powerful, but reliable and easy to maintain. Perfect for learning the basics of archery.",
+          "Sturdy iron axe that bites deep into wood. The standard tool for serious forestry work.",
+          "Crystallized darkness that absorbs light. Uncomfortable to look at directly.",
+          "Laser turret using focused light crystals. Precise and devastating. The beam cuts through armor like it's not even there.",
+          "Blue crystal filled with flowing liquid. Cool and calming, perpetually damp."
+        ],
+        "_total_unique_values": 154
+      },
+      "tags": {
+        "_type": "array",
+        "_sample_values": [
+          "adamantine",
+          "advanced",
+          "ancient",
+          "tech",
+          "hands"
+        ],
+        "_total_unique_values": 153
+      }
+    },
+    "name": {
+      "_type": "string",
+      "_sample_values": [
+        "Frost Resistance Potion",
+        "Mithril Dagger",
+        "Fire Resistance Potion",
+        "Air Crystal",
+        "Bronze Ingot",
+        "Essence Blood",
+        "Simple Bomb",
+        "Grappling Hook",
+        "Beetle Carapace",
+        "Fire Bomb"
+      ],
+      "_total_unique_values": 142
+    },
+    "range": {
+      "_type": "integer",
+      "_sample_values": [
+        0.5,
+        1,
+        2,
+        1.5,
+        5,
+        8,
+        10,
+        15
+      ],
+      "_total_unique_values": 8
+    },
+    "rarity": {
+      "_type": "string",
+      "_sample_values": [
+        "rare",
+        "epic",
+        "uncommon",
+        "common",
+        "legendary"
+      ],
+      "_total_unique_values": 5
+    },
+    "requirements": {
+      "level": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          2,
+          3,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12
+        ],
+        "_total_unique_values": 16
+      },
+      "stats": {
+        "AGI": {
+          "_type": "integer",
+          "_sample_values": [
+            8,
+            20,
+            14,
+            6
+          ],
+          "_total_unique_values": 4
+        },
+        "INT": {
+          "_type": "integer",
+          "_sample_values": [
+            18
+          ],
+          "_total_unique_values": 1
+        },
+        "STR": {
+          "_type": "integer",
+          "_sample_values": [
+            8,
+            10,
+            12,
+            15
+          ],
+          "_total_unique_values": 4
+        }
+      }
+    },
+    "slot": {
+      "_type": "string",
+      "_sample_values": [
+        "legs",
+        "mainHand",
+        "chest",
+        "feet",
+        "accessory",
+        "head",
+        "hands"
+      ],
+      "_total_unique_values": 7
+    },
+    "stackSize": {
+      "_type": "integer",
+      "_sample_values": [
+        256,
+        1,
+        3,
+        5,
+        10,
+        15,
+        50,
+        20
+      ],
+      "_total_unique_values": 8
+    },
+    "statMultipliers": {
+      "attackSpeed": {
+        "_type": "number",
+        "_sample_values": [
+          0.95,
+          1.0,
+          0.85,
+          1.3,
+          0.75,
+          1.1,
+          1.2
+        ],
+        "_total_unique_values": 7
+      },
+      "damage": {
+        "_type": "number",
+        "_sample_values": [
+          0.9,
+          1.0,
+          0.85,
+          1.3,
+          1.1,
+          0.6,
+          0.5,
+          0.7
+        ],
+        "_total_unique_values": 8
+      },
+      "defense": {
+        "_type": "number",
+        "_sample_values": [
+          1.0
+        ],
+        "_total_unique_values": 1
+      },
+      "durability": {
+        "_type": "number",
+        "_sample_values": [
+          0.8,
+          1.0,
+          1.3,
+          1.1,
+          0.9,
+          1.8,
+          1.5
+        ],
+        "_total_unique_values": 7
+      },
+      "gathering": {
+        "_type": "number",
+        "_sample_values": [
+          1.0
+        ],
+        "_total_unique_values": 1
+      },
+      "weight": {
+        "_type": "number",
+        "_sample_values": [
+          0.5,
+          0.4,
+          0.6,
+          0.2,
+          1.5,
+          0.8,
+          0.3,
+          2.0,
+          1.8,
+          1.0
+        ],
+        "_total_unique_values": 16
+      }
+    },
+    "stats": {
+      "damage": {
+        "_type": "array",
+        "_sample_values": [
+          8,
+          12,
+          45,
+          15,
+          22
+        ],
+        "_total_unique_values": 8
+      },
+      "durability": {
+        "_type": "array",
+        "_sample_values": [
+          1000,
+          500,
+          4000,
+          2000
+        ],
+        "_total_unique_values": 4
+      },
+      "forestry": {
+        "_type": "integer",
+        "_sample_values": [
+          40,
+          10,
+          80,
+          20
+        ],
+        "_total_unique_values": 4
+      },
+      "mining": {
+        "_type": "integer",
+        "_sample_values": [
+          40,
+          10,
+          80,
+          20
+        ],
+        "_total_unique_values": 4
+      },
+      "weight": {
+        "_type": "number",
+        "_sample_values": [
+          2.5,
+          3.5,
+          3.0,
+          5.5,
+          4.0,
+          5.0,
+          4.5
+        ],
+        "_total_unique_values": 7
+      }
+    },
+    "subtype": {
+      "_type": "string",
+      "_sample_values": [
+        "control",
+        "energy",
+        "buff",
+        "pickaxe",
+        "spear",
+        "refinery",
+        "fishing_rod",
+        "alchemy_table",
+        "area",
+        "helmet"
+      ],
+      "_total_unique_values": 46
+    },
+    "tier": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "_total_unique_values": 4
+    },
+    "type": {
+      "_type": "string",
+      "_sample_values": [
+        "adornments",
+        "engineering",
+        "metal",
+        "bomb",
+        "mace",
+        "refining",
+        "alchemy",
+        "staff",
+        "weapon",
+        "trap"
+      ],
+      "_total_unique_values": 24
+    }
+  }
+}

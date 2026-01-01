@@ -1,0 +1,2233 @@
+{
+  "_meta": {
+    "category": "other-crafting-subdisciplines",
+    "description": "Other files from Crafting-subdisciplines",
+    "generated_at": "2026-01-01T19:58:32.979852",
+    "source_files": [
+      "rarity-modifiers.JSON"
+    ],
+    "discovered_root_keys": [
+      "armor",
+      "consumable",
+      "device",
+      "metadata",
+      "station",
+      "tool",
+      "weapon"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "armor.common.description": {
+      "values": [
+        "Basic armor with no bonuses"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "armor.epic.description": {
+      "values": [
+        "Exceptional armor with knockback resistance and enhanced durability"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "armor.epic.modifiers.damage_reduction": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.epic.modifiers.defense": {
+      "values": [
+        0.35
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.epic.modifiers.durability": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.epic.modifiers.resistance": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.epic.special_effects.enhanced_durability": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "armor.epic.special_effects.knockback_resistance": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "armor.legendary.description": {
+      "values": [
+        "Legendary armor with damage boost and thorns effect"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "armor.legendary.modifiers.damage_reduction": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.legendary.modifiers.defense": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.legendary.modifiers.durability": {
+      "values": [
+        0.3
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.legendary.modifiers.resistance": {
+      "values": [
+        0.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.legendary.modifiers.thorns": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.legendary.special_effects.damage_boost": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "armor.legendary.special_effects.enhanced_durability": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "armor.legendary.special_effects.knockback_resistance": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "armor.legendary.special_effects.thorns": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "armor.rare.description": {
+      "values": [
+        "High-quality armor with significant protection"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "armor.rare.modifiers.defense": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.rare.modifiers.durability": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.rare.modifiers.resistance": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.uncommon.description": {
+      "values": [
+        "Improved armor with modest protection"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "armor.uncommon.modifiers.defense": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "armor.uncommon.modifiers.durability": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "consumable.common.description": {
+      "values": [
+        "Basic consumable"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "consumable.epic.description": {
+      "values": [
+        "Exceptional consumable with additional effect"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "consumable.epic.modifiers.duration": {
+      "values": [
+        0.35
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "consumable.epic.modifiers.potency": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "consumable.epic.special_effects.effect_count": {
+      "values": [
+        1
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "consumable.legendary.description": {
+      "values": [
+        "Legendary consumable with multiple effects"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "consumable.legendary.modifiers.duration": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "consumable.legendary.modifiers.potency": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "consumable.legendary.special_effects.effect_count": {
+      "values": [
+        2
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "consumable.rare.description": {
+      "values": [
+        "High-quality consumable"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "consumable.rare.modifiers.duration": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "consumable.rare.modifiers.potency": {
+      "values": [
+        0.3
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "consumable.uncommon.description": {
+      "values": [
+        "Improved consumable"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "consumable.uncommon.modifiers.duration": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "consumable.uncommon.modifiers.potency": {
+      "values": [
+        0.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.common.description": {
+      "values": [
+        "Basic device"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "device.epic.description": {
+      "values": [
+        "Exceptional device with reduced cooldown"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "device.epic.modifiers.cooldown": {
+      "values": [
+        -0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.epic.modifiers.durability": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.epic.modifiers.power": {
+      "values": [
+        0.35
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.epic.modifiers.range": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.legendary.description": {
+      "values": [
+        "Legendary device with auto-reload"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "device.legendary.modifiers.cooldown": {
+      "values": [
+        -0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.legendary.modifiers.durability": {
+      "values": [
+        0.3
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.legendary.modifiers.power": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.legendary.modifiers.range": {
+      "values": [
+        0.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.legendary.special_effects.auto_reload": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "device.rare.description": {
+      "values": [
+        "High-quality device"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "device.rare.modifiers.durability": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.rare.modifiers.power": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.rare.modifiers.range": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.uncommon.description": {
+      "values": [
+        "Improved device"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "device.uncommon.modifiers.durability": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "device.uncommon.modifiers.power": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "station.common.description": {
+      "values": [
+        "Basic crafting station"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "station.epic.description": {
+      "values": [
+        "Exceptional crafting station"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "station.epic.modifiers.durability": {
+      "values": [
+        0.35
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "station.legendary.description": {
+      "values": [
+        "Legendary crafting station"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "station.legendary.modifiers.durability": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "station.rare.description": {
+      "values": [
+        "High-quality crafting station"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "station.rare.modifiers.durability": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "station.uncommon.description": {
+      "values": [
+        "Improved crafting station"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "station.uncommon.modifiers.durability": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.common.description": {
+      "values": [
+        "Basic tool with no bonuses"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tool.epic.description": {
+      "values": [
+        "Exceptional tool with major efficiency"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tool.epic.modifiers.durability": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.epic.modifiers.efficiency": {
+      "values": [
+        0.35
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.epic.modifiers.gathering_speed": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.epic.modifiers.yield_bonus": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.legendary.description": {
+      "values": [
+        "Legendary tool with auto-smelt capability"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tool.legendary.modifiers.durability": {
+      "values": [
+        0.3
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.legendary.modifiers.efficiency": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.legendary.modifiers.gathering_speed": {
+      "values": [
+        0.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.legendary.modifiers.yield_bonus": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.legendary.special_effects.auto_smelt": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "tool.rare.description": {
+      "values": [
+        "High-quality tool with significant efficiency"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tool.rare.modifiers.durability": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.rare.modifiers.efficiency": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.rare.modifiers.gathering_speed": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.uncommon.description": {
+      "values": [
+        "Improved tool with better efficiency"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "tool.uncommon.modifiers.durability": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "tool.uncommon.modifiers.efficiency": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.common.description": {
+      "values": [
+        "Basic weapon with no bonuses"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "weapon.epic.description": {
+      "values": [
+        "Exceptional weapon with major bonuses"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "weapon.epic.modifiers.attack_speed": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.epic.modifiers.critical_chance": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.epic.modifiers.damage": {
+      "values": [
+        0.35
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.epic.modifiers.durability": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.legendary.description": {
+      "values": [
+        "Legendary weapon with massive bonuses and lifesteal"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "weapon.legendary.modifiers.attack_speed": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.legendary.modifiers.critical_chance": {
+      "values": [
+        0.15
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.legendary.modifiers.damage": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.legendary.modifiers.durability": {
+      "values": [
+        0.3
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.legendary.modifiers.lifesteal": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.legendary.special_effects.lifesteal": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "weapon.rare.description": {
+      "values": [
+        "High-quality weapon with significant bonuses"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "weapon.rare.modifiers.critical_chance": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.rare.modifiers.damage": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.rare.modifiers.durability": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.uncommon.description": {
+      "values": [
+        "Improved weapon with modest bonuses"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "weapon.uncommon.modifiers.damage": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "weapon.uncommon.modifiers.durability": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    }
+  },
+  "_usable_template": {
+    "armor": {
+      "common": {
+        "description": "Basic armor with no bonuses",
+        "modifiers": {}
+      },
+      "epic": {
+        "description": "Exceptional armor with knockback resistance and enhanced durability",
+        "modifiers": {
+          "damage_reduction": 0.05,
+          "defense": 0.35,
+          "durability": 0.2,
+          "resistance": 0.1
+        },
+        "special_effects": {
+          "enhanced_durability": true,
+          "knockback_resistance": true
+        }
+      },
+      "legendary": {
+        "description": "Legendary armor with damage boost and thorns effect",
+        "modifiers": {
+          "damage_reduction": 0.1,
+          "defense": 1.0,
+          "durability": 0.3,
+          "resistance": 0.15,
+          "thorns": 0.05
+        },
+        "special_effects": {
+          "damage_boost": true,
+          "enhanced_durability": true,
+          "knockback_resistance": true,
+          "thorns": true
+        }
+      },
+      "rare": {
+        "description": "High-quality armor with significant protection",
+        "modifiers": {
+          "defense": 0.2,
+          "durability": 0.1,
+          "resistance": 0.05
+        }
+      },
+      "uncommon": {
+        "description": "Improved armor with modest protection",
+        "modifiers": {
+          "defense": 0.1,
+          "durability": 0.05
+        }
+      }
+    },
+    "consumable": {
+      "common": {
+        "description": "Basic consumable",
+        "modifiers": {}
+      },
+      "epic": {
+        "description": "Exceptional consumable with additional effect",
+        "modifiers": {
+          "duration": 0.35,
+          "potency": 0.5
+        },
+        "special_effects": {
+          "effect_count": 1
+        }
+      },
+      "legendary": {
+        "description": "Legendary consumable with multiple effects",
+        "modifiers": {
+          "duration": 0.5,
+          "potency": 1.0
+        },
+        "special_effects": {
+          "effect_count": 2
+        }
+      },
+      "rare": {
+        "description": "High-quality consumable",
+        "modifiers": {
+          "duration": 0.2,
+          "potency": 0.3
+        }
+      },
+      "uncommon": {
+        "description": "Improved consumable",
+        "modifiers": {
+          "duration": 0.1,
+          "potency": 0.15
+        }
+      }
+    },
+    "device": {
+      "common": {
+        "description": "Basic device",
+        "modifiers": {}
+      },
+      "epic": {
+        "description": "Exceptional device with reduced cooldown",
+        "modifiers": {
+          "cooldown": -0.1,
+          "durability": 0.2,
+          "power": 0.35,
+          "range": 0.1
+        }
+      },
+      "legendary": {
+        "description": "Legendary device with auto-reload",
+        "modifiers": {
+          "cooldown": -0.2,
+          "durability": 0.3,
+          "power": 1.0,
+          "range": 0.15
+        },
+        "special_effects": {
+          "auto_reload": true
+        }
+      },
+      "rare": {
+        "description": "High-quality device",
+        "modifiers": {
+          "durability": 0.1,
+          "power": 0.2,
+          "range": 0.05
+        }
+      },
+      "uncommon": {
+        "description": "Improved device",
+        "modifiers": {
+          "durability": 0.05,
+          "power": 0.1
+        }
+      }
+    },
+    "station": {
+      "common": {
+        "description": "Basic crafting station",
+        "modifiers": {}
+      },
+      "epic": {
+        "description": "Exceptional crafting station",
+        "modifiers": {
+          "durability": 0.35
+        }
+      },
+      "legendary": {
+        "description": "Legendary crafting station",
+        "modifiers": {
+          "durability": 0.5
+        }
+      },
+      "rare": {
+        "description": "High-quality crafting station",
+        "modifiers": {
+          "durability": 0.2
+        }
+      },
+      "uncommon": {
+        "description": "Improved crafting station",
+        "modifiers": {
+          "durability": 0.1
+        }
+      }
+    },
+    "tool": {
+      "common": {
+        "description": "Basic tool with no bonuses",
+        "modifiers": {}
+      },
+      "epic": {
+        "description": "Exceptional tool with major efficiency",
+        "modifiers": {
+          "durability": 0.2,
+          "efficiency": 0.35,
+          "gathering_speed": 0.1,
+          "yield_bonus": 0.05
+        }
+      },
+      "legendary": {
+        "description": "Legendary tool with auto-smelt capability",
+        "modifiers": {
+          "durability": 0.3,
+          "efficiency": 1.0,
+          "gathering_speed": 0.15,
+          "yield_bonus": 0.1
+        },
+        "special_effects": {
+          "auto_smelt": true
+        }
+      },
+      "rare": {
+        "description": "High-quality tool with significant efficiency",
+        "modifiers": {
+          "durability": 0.1,
+          "efficiency": 0.2,
+          "gathering_speed": 0.05
+        }
+      },
+      "uncommon": {
+        "description": "Improved tool with better efficiency",
+        "modifiers": {
+          "durability": 0.05,
+          "efficiency": 0.1
+        }
+      }
+    },
+    "weapon": {
+      "common": {
+        "description": "Basic weapon with no bonuses",
+        "modifiers": {}
+      },
+      "epic": {
+        "description": "Exceptional weapon with major bonuses",
+        "modifiers": {
+          "attack_speed": 0.05,
+          "critical_chance": 0.1,
+          "damage": 0.35,
+          "durability": 0.2
+        }
+      },
+      "legendary": {
+        "description": "Legendary weapon with massive bonuses and lifesteal",
+        "modifiers": {
+          "attack_speed": 0.1,
+          "critical_chance": 0.15,
+          "damage": 1.0,
+          "durability": 0.3,
+          "lifesteal": 0.05
+        },
+        "special_effects": {
+          "lifesteal": true
+        }
+      },
+      "rare": {
+        "description": "High-quality weapon with significant bonuses",
+        "modifiers": {
+          "critical_chance": 0.05,
+          "damage": 0.2,
+          "durability": 0.1
+        }
+      },
+      "uncommon": {
+        "description": "Improved weapon with modest bonuses",
+        "modifiers": {
+          "damage": 0.1,
+          "durability": 0.05
+        }
+      }
+    }
+  },
+  "template": {
+    "armor": {
+      "common": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Basic armor with no bonuses"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {}
+      },
+      "epic": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Exceptional armor with knockback resistance and enhanced durability"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "damage_reduction": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          },
+          "defense": {
+            "_type": "number",
+            "_sample_values": [
+              0.35
+            ],
+            "_total_unique_values": 1
+          },
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          },
+          "resistance": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "special_effects": {
+          "enhanced_durability": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          },
+          "knockback_resistance": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "legendary": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Legendary armor with damage boost and thorns effect"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "damage_reduction": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "defense": {
+            "_type": "number",
+            "_sample_values": [
+              1.0
+            ],
+            "_total_unique_values": 1
+          },
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.3
+            ],
+            "_total_unique_values": 1
+          },
+          "resistance": {
+            "_type": "number",
+            "_sample_values": [
+              0.15
+            ],
+            "_total_unique_values": 1
+          },
+          "thorns": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "special_effects": {
+          "damage_boost": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          },
+          "enhanced_durability": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          },
+          "knockback_resistance": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          },
+          "thorns": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "rare": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "High-quality armor with significant protection"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "defense": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          },
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "resistance": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "uncommon": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Improved armor with modest protection"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "defense": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      }
+    },
+    "consumable": {
+      "common": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Basic consumable"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {}
+      },
+      "epic": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Exceptional consumable with additional effect"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              0.35
+            ],
+            "_total_unique_values": 1
+          },
+          "potency": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "special_effects": {
+          "effect_count": {
+            "_type": "integer",
+            "_sample_values": [
+              1
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "legendary": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Legendary consumable with multiple effects"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          },
+          "potency": {
+            "_type": "number",
+            "_sample_values": [
+              1.0
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "special_effects": {
+          "effect_count": {
+            "_type": "integer",
+            "_sample_values": [
+              2
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "rare": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "High-quality consumable"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          },
+          "potency": {
+            "_type": "number",
+            "_sample_values": [
+              0.3
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "uncommon": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Improved consumable"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "duration": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "potency": {
+            "_type": "number",
+            "_sample_values": [
+              0.15
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      }
+    },
+    "device": {
+      "common": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Basic device"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {}
+      },
+      "epic": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Exceptional device with reduced cooldown"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "cooldown": {
+            "_type": "number",
+            "_sample_values": [
+              -0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          },
+          "power": {
+            "_type": "number",
+            "_sample_values": [
+              0.35
+            ],
+            "_total_unique_values": 1
+          },
+          "range": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "legendary": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Legendary device with auto-reload"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "cooldown": {
+            "_type": "number",
+            "_sample_values": [
+              -0.2
+            ],
+            "_total_unique_values": 1
+          },
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.3
+            ],
+            "_total_unique_values": 1
+          },
+          "power": {
+            "_type": "number",
+            "_sample_values": [
+              1.0
+            ],
+            "_total_unique_values": 1
+          },
+          "range": {
+            "_type": "number",
+            "_sample_values": [
+              0.15
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "special_effects": {
+          "auto_reload": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "rare": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "High-quality device"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "power": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          },
+          "range": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "uncommon": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Improved device"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          },
+          "power": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      }
+    },
+    "station": {
+      "common": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Basic crafting station"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {}
+      },
+      "epic": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Exceptional crafting station"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.35
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "legendary": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Legendary crafting station"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.5
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "rare": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "High-quality crafting station"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "uncommon": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Improved crafting station"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      }
+    },
+    "tool": {
+      "common": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Basic tool with no bonuses"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {}
+      },
+      "epic": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Exceptional tool with major efficiency"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          },
+          "efficiency": {
+            "_type": "number",
+            "_sample_values": [
+              0.35
+            ],
+            "_total_unique_values": 1
+          },
+          "gathering_speed": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "yield_bonus": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "legendary": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Legendary tool with auto-smelt capability"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.3
+            ],
+            "_total_unique_values": 1
+          },
+          "efficiency": {
+            "_type": "number",
+            "_sample_values": [
+              1.0
+            ],
+            "_total_unique_values": 1
+          },
+          "gathering_speed": {
+            "_type": "number",
+            "_sample_values": [
+              0.15
+            ],
+            "_total_unique_values": 1
+          },
+          "yield_bonus": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "special_effects": {
+          "auto_smelt": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "rare": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "High-quality tool with significant efficiency"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "efficiency": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          },
+          "gathering_speed": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "uncommon": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Improved tool with better efficiency"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          },
+          "efficiency": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      }
+    },
+    "weapon": {
+      "common": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Basic weapon with no bonuses"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {}
+      },
+      "epic": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Exceptional weapon with major bonuses"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "attack_speed": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          },
+          "critical_chance": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "damage": {
+            "_type": "number",
+            "_sample_values": [
+              0.35
+            ],
+            "_total_unique_values": 1
+          },
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "legendary": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Legendary weapon with massive bonuses and lifesteal"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "attack_speed": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "critical_chance": {
+            "_type": "number",
+            "_sample_values": [
+              0.15
+            ],
+            "_total_unique_values": 1
+          },
+          "damage": {
+            "_type": "number",
+            "_sample_values": [
+              1.0
+            ],
+            "_total_unique_values": 1
+          },
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.3
+            ],
+            "_total_unique_values": 1
+          },
+          "lifesteal": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          }
+        },
+        "special_effects": {
+          "lifesteal": {
+            "_type": "boolean",
+            "_sample_values": [
+              true
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "rare": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "High-quality weapon with significant bonuses"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "critical_chance": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          },
+          "damage": {
+            "_type": "number",
+            "_sample_values": [
+              0.2
+            ],
+            "_total_unique_values": 1
+          },
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      },
+      "uncommon": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Improved weapon with modest bonuses"
+          ],
+          "_total_unique_values": 1
+        },
+        "modifiers": {
+          "damage": {
+            "_type": "number",
+            "_sample_values": [
+              0.1
+            ],
+            "_total_unique_values": 1
+          },
+          "durability": {
+            "_type": "number",
+            "_sample_values": [
+              0.05
+            ],
+            "_total_unique_values": 1
+          }
+        }
+      }
+    }
+  }
+}

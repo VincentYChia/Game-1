@@ -2,9 +2,13 @@
   "_meta": {
     "category": "resource-nodes",
     "description": "Gatherable resource node definitions",
-    "generated_at": "2026-01-01T19:53:07.791388",
+    "generated_at": "2026-01-01T19:58:32.994731",
     "source_files": [
       "resource-node-1.JSON"
+    ],
+    "discovered_root_keys": [
+      "metadata",
+      "nodes"
     ],
     "total_items_analyzed": 0
   },
@@ -279,8 +283,8 @@
       ],
       "count": 3,
       "types": [
-        "null",
-        "string"
+        "string",
+        "null"
       ],
       "occurrences": 28
     },
@@ -305,17 +309,17 @@
       "<value>"
     ],
     "metadata": {
-      "narrative": "Dense volcanic rock with distinctive dark banding. Exceptional compression strength.",
+      "narrative": "Pitch-black stone that pulls light into itself. Radiates subtle wrongness.",
       "tags": [
-        "standard",
-        "wood",
-        "temporal"
+        "metallic",
+        "impossible",
+        "advanced"
       ]
     },
-    "name": "Obsidian Flow",
-    "requiredTool": "pickaxe",
-    "resourceId": "limestone_outcrop",
-    "respawnTime": "very_slow",
+    "name": "Birch Tree",
+    "requiredTool": "axe",
+    "resourceId": "adamantine_lode",
+    "respawnTime": "normal",
     "tier": 1
   },
   "template": {
@@ -333,8 +337,8 @@
       "_type": "string",
       "_sample_values": [
         "tree",
-        "ore",
-        "stone"
+        "stone",
+        "ore"
       ],
       "_total_unique_values": 3
     },
@@ -345,11 +349,11 @@
       "chance": {
         "_type": "string",
         "_sample_values": [
-          "moderate",
           "rare",
+          "low",
           "improbable",
           "high",
-          "low",
+          "moderate",
           "guaranteed"
         ],
         "_total_unique_values": 6
@@ -357,26 +361,26 @@
       "materialId": {
         "_type": "string",
         "_sample_values": [
+          "obsidian",
+          "steel_ore",
+          "limestone",
+          "light_gem",
+          "etherion_ore",
           "tin_ore",
-          "phoenix_ash",
-          "diamond",
-          "ash_log",
-          "ironwood_log",
-          "adamantine_ore",
-          "pine_log",
-          "earth_crystal",
+          "chaos_matrix",
           "worldtree_log",
-          "birch_log"
+          "orichalcum_ore",
+          "pine_log"
         ],
         "_total_unique_values": 37
       },
       "quantity": {
         "_type": "string",
         "_sample_values": [
-          "few",
+          "abundant",
           "several",
           "many",
-          "abundant"
+          "few"
         ],
         "_total_unique_values": 4
       }
@@ -385,27 +389,27 @@
       "narrative": {
         "_type": "string",
         "_sample_values": [
-          "Dense volcanic rock with distinctive dark banding. Exceptional compression strength.",
-          "Pale-barked tree with wood that absorbs shock beautifully. Weapon smiths prize these for handle material.",
-          "Volcanic glass born in eruption's heart. Razor-sharp edges, incredibly brittle.",
+          "Pitch-black stone that pulls light into itself. Radiates subtle wrongness.",
+          "Legendary tree connected to the World Tree's root network. The wood hums with accumulated magical essence.",
+          "Legendary silver-white deposits that seem to drink in moonlight. Incredibly light yet impossibly strong.",
+          "Common copper deposit showing green-blue oxidation. Perfect for learning the basics of mining.",
           "Speckled igneous rock with visible crystals. Harder and more reliable than limestone.",
-          "Stone that remembers everything it witnesses. Contains geological memory of eons.",
-          "Ancient tree with jet-black wood. Seems to absorb light and magic equally.",
-          "Dark, impossibly hard ore found only in the deepest caverns. The world's exposed bones.",
           "Rare tree whose wood rivals soft metals in hardness. Almost metallic ring when struck.",
-          "Reality-bending ore that exists in multiple states simultaneously. Defies conventional physics.",
-          "Brilliant white stone that glows faintly with captured sunlight. Prized for temples and monuments."
+          "Stone that remembers everything it witnesses. Contains geological memory of eons.",
+          "Tall conifer reaching toward the sky. Flexible wood perfect for bows and lightweight construction.",
+          "Dark, impossibly hard ore found only in the deepest caverns. The world's exposed bones.",
+          "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is."
         ],
         "_total_unique_values": 28
       },
       "tags": {
         "_type": "array",
         "_sample_values": [
-          "standard",
-          "wood",
-          "temporal",
-          "stone",
-          "mythical"
+          "metallic",
+          "impossible",
+          "advanced",
+          "flexible",
+          "ancient"
         ],
         "_total_unique_values": 31
       }
@@ -413,49 +417,49 @@
     "name": {
       "_type": "string",
       "_sample_values": [
+        "Birch Tree",
+        "Quartz Cluster",
+        "Orichalcum Trove",
+        "Eternity Monolith",
+        "Worldtree Sapling",
+        "Pine Tree",
+        "Primordial Formation",
+        "Adamantine Lode",
         "Obsidian Flow",
-        "Oak Tree",
-        "Genesis Structure",
-        "Steel Node",
-        "Shale Bed",
-        "Ebony Tree",
-        "Tin Seam",
-        "Ironwood Tree",
-        "Mithril Cache",
-        "Voidstone Shard"
+        "Ebony Tree"
       ],
       "_total_unique_values": 28
     },
     "requiredTool": {
       "_type": "string",
       "_sample_values": [
-        "pickaxe",
-        "axe"
+        "axe",
+        "pickaxe"
       ],
       "_total_unique_values": 2
     },
     "resourceId": {
       "_type": "string",
       "_sample_values": [
-        "limestone_outcrop",
-        "basalt_column",
-        "eternity_monolith",
-        "tin_seam",
-        "oak_tree",
-        "worldtree_sapling",
-        "shale_bed",
-        "primordial_formation",
         "adamantine_lode",
-        "ebony_tree"
+        "eternity_monolith",
+        "ebony_tree",
+        "shale_bed",
+        "etherion_nexus",
+        "diamond_geode",
+        "ironwood_tree",
+        "limestone_outcrop",
+        "orichalcum_trove",
+        "oak_tree"
       ],
       "_total_unique_values": 28
     },
     "respawnTime": {
-      "_type": "null",
+      "_type": "string",
       "_sample_values": [
         null,
-        "very_slow",
         "normal",
+        "very_slow",
         "slow"
       ],
       "_total_unique_values": 4

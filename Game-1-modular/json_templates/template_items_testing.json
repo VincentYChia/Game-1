@@ -1,0 +1,1561 @@
+{
+  "_meta": {
+    "category": "items-testing",
+    "description": "Test items for tag validation",
+    "generated_at": "2026-01-01T19:58:32.955139",
+    "source_files": [
+      "items-testing-integration.JSON",
+      "items-testing-tags.JSON"
+    ],
+    "discovered_root_keys": [
+      "metadata",
+      "test_devices",
+      "test_edge_cases",
+      "test_weapons"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "category": {
+      "values": [
+        "device",
+        "equipment",
+        "weapon"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 25
+    },
+    "description": {
+      "values": [
+        "Blade that projects waves of flame",
+        "Cursed blade that feeds on lifeblood",
+        "Hammer that freezes and repels nearby foes",
+        "Spear that fires void beams through multiple targets",
+        "Whip that arcs lightning between foes"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect": {
+      "values": [
+        "Basic turret with no tag system support",
+        "Fires a burning laser beam",
+        "Hybrid turret with chain AND cone",
+        "Massive explosion with huge radius",
+        "Trap with all status effects"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "effectParams.baseDamage": {
+      "values": [
+        150.0,
+        20.0,
+        25.0,
+        28.0,
+        30.0,
+        35.0,
+        40.0,
+        5.0,
+        50.0,
+        60.0,
+        70.0,
+        80.0
+      ],
+      "count": 12,
+      "types": [
+        "number"
+      ],
+      "occurrences": 12
+    },
+    "effectParams.beam_length": {
+      "values": [
+        15.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.beam_width": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.burn_damage_per_second": {
+      "values": [
+        10.0,
+        15.0,
+        5.0
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "effectParams.burn_duration": {
+      "values": [
+        10.0,
+        5.0,
+        6.0
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 5
+    },
+    "effectParams.chain_count": {
+      "values": [
+        3,
+        4
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "effectParams.chain_damage_falloff": {
+      "values": [
+        0.8,
+        0.9
+      ],
+      "count": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.chrono_slow": {
+      "values": [
+        0.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.circle_radius": {
+      "values": [
+        20.0,
+        3.0,
+        5.0
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "effectParams.cone_angle": {
+      "values": [
+        45,
+        60
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.cone_length": {
+      "values": [
+        10.0,
+        8.0
+      ],
+      "count": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.freeze_duration": {
+      "values": [
+        2.0,
+        3.0
+      ],
+      "count": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "effectParams.quantum_collapse_chance": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.range": {
+      "values": [
+        10.0,
+        15.0
+      ],
+      "count": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.root_duration": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.shock_chance": {
+      "values": [
+        0.3,
+        0.5
+      ],
+      "count": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.shock_damage": {
+      "values": [
+        10.0,
+        20.0
+      ],
+      "count": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.slow_duration": {
+      "values": [
+        3.0,
+        4.0
+      ],
+      "count": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "effectParams.slow_percent": {
+      "values": [
+        0.4,
+        0.5,
+        0.6
+      ],
+      "count": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "effectTags": {
+      "values": [
+        "BURN",
+        "Physical",
+        "SLASHING",
+        "Single",
+        "beam",
+        "bleed",
+        "burn",
+        "chain",
+        "chrono",
+        "circle",
+        "cone",
+        "crushing",
+        "fire",
+        "freeze",
+        "ice",
+        "lightning",
+        "physical",
+        "piercing",
+        "quantum",
+        "root",
+        "shock",
+        "single",
+        "slashing",
+        "slow",
+        "void"
+      ],
+      "count": 25,
+      "types": [
+        "array"
+      ],
+      "occurrences": 14
+    },
+    "effect_params.baseDamage": {
+      "values": [
+        40,
+        42,
+        45,
+        50,
+        60
+      ],
+      "count": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 10
+    },
+    "effect_params.beam_range": {
+      "values": [
+        12.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.beam_width": {
+      "values": [
+        1.5
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.bleed_damage_per_second": {
+      "values": [
+        6.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.bleed_duration": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.burn_damage_per_second": {
+      "values": [
+        8.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.burn_duration": {
+      "values": [
+        10.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.chain_count": {
+      "values": [
+        3
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.chain_range": {
+      "values": [
+        6.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.circle_radius": {
+      "values": [
+        4.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.cone_angle": {
+      "values": [
+        60.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.cone_range": {
+      "values": [
+        8.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.freeze_duration": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.knockback_distance": {
+      "values": [
+        3.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.lifesteal_percent": {
+      "values": [
+        0.25
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.origin": {
+      "values": [
+        "target"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.pierce_count": {
+      "values": [
+        5
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.shock_damage_per_tick": {
+      "values": [
+        5.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.shock_duration": {
+      "values": [
+        4.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.shock_tick_rate": {
+      "values": [
+        1.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.weaken_duration": {
+      "values": [
+        8.0
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_params.weaken_percent": {
+      "values": [
+        0.3
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect_tags": {
+      "values": [
+        "beam",
+        "bleed",
+        "burn",
+        "chain",
+        "circle",
+        "cone",
+        "fire",
+        "freeze",
+        "ice",
+        "knockback",
+        "lifesteal",
+        "lightning",
+        "physical",
+        "pierce",
+        "shadow",
+        "shock",
+        "single",
+        "weaken"
+      ],
+      "count": 18,
+      "types": [
+        "array"
+      ],
+      "occurrences": 10
+    },
+    "flags.equippable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 10
+    },
+    "flags.placeable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 4
+    },
+    "flags.stackable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5
+    },
+    "flags.tradeable": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 11
+    },
+    "itemId": {
+      "values": [
+        "blood_reaver",
+        "frostbite_hammer",
+        "inferno_blade",
+        "lightning_chain_whip",
+        "test_bomb_massive_aoe",
+        "test_case_sensitivity",
+        "test_device_chain_cone_hybrid",
+        "test_duplicate_tags",
+        "test_empty_tags",
+        "test_only_status_tags",
+        "test_trap_conflicting_status",
+        "test_turret_beam_burn",
+        "test_turret_no_tags",
+        "test_weapon_complex_valid",
+        "test_weapon_conflicting_elements",
+        "test_weapon_missing_params",
+        "test_weapon_multi_geometry",
+        "test_weapon_simple",
+        "test_weapon_unknown_tags",
+        "void_piercer"
+      ],
+      "count": 20,
+      "types": [
+        "string"
+      ],
+      "occurrences": 25
+    },
+    "metadata.narrative": {
+      "values": [
+        "A simple test weapon with valid tags.",
+        "Beam geometry with burn status effect.",
+        "Complex but valid combo: lightning chain with shock and slow.",
+        "Contains unknown/typo tags to test error handling.",
+        "Extremely large AOE to test geometry limits.",
+        "Has duplicate tags in the array.",
+        "Has effectTags field but it's empty.",
+        "Has only status tags, no damage type tags.",
+        "Has tags but missing required effectParams.",
+        "Tests conflicting status effects (freeze + burn + slow + root).",
+        "Tests if tag matching is case-sensitive.",
+        "Tests multiple geometry tags (cone + chain + circle).",
+        "Tests what happens when chain and cone geometry are both specified.",
+        "Tests what happens with conflicting elemental tags (fire + ice).",
+        "Turret with NO tags to test fallback behavior."
+      ],
+      "count": 15,
+      "types": [
+        "string"
+      ],
+      "occurrences": 15
+    },
+    "name": {
+      "values": [
+        "Blood Reaver",
+        "Frostbite Hammer",
+        "Inferno Blade",
+        "Lightning Chain Whip",
+        "Test Bomb (Massive AOE)",
+        "Test Device (Chain + Cone Hybrid)",
+        "Test Item (Empty Tags Array)",
+        "Test Trap (Conflicting Status)",
+        "Test Turret (Beam + Burn)",
+        "Test Turret (No Tags)",
+        "Test Weapon (Case Sensitivity)",
+        "Test Weapon (Complex Valid)",
+        "Test Weapon (Conflicting Elements)",
+        "Test Weapon (Duplicate Tags)",
+        "Test Weapon (Missing Params)",
+        "Test Weapon (Multiple Geometry)",
+        "Test Weapon (Only Status, No Damage)",
+        "Test Weapon (Simple Valid)",
+        "Test Weapon (Unknown Tags)",
+        "Void Piercer"
+      ],
+      "count": 20,
+      "types": [
+        "string"
+      ],
+      "occurrences": 25
+    },
+    "narrative": {
+      "values": [
+        "Crackling with elemental fury, this whip doesn't just strike\u2014it hunts. Each lash leaps from victim to victim, leaving a trail of shocked enemies in its wake.",
+        "Each impact sends a shockwave of absolute zero. Enemies freeze mid-motion as they're blasted backward, turned into icy statues before they even hit the ground.",
+        "Forged from crystallized void essence, this spear doesn't throw\u2014it tears. A beam of pure darkness lances through your enemies, weakening each it touches as it passes through flesh and armor alike.",
+        "The blade itself never cools. Each swing projects a wave of searing flame that engulfs all before you. The heat is so intense that victims continue burning long after the strike.",
+        "This weapon hungers. Each strike opens wounds that refuse to close, and as your enemies bleed, the blade drinks\u2014and so do you. Feel their vitality flow into you with each passing second."
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "rare",
+        "uncommon"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 25
+    },
+    "slot": {
+      "values": [
+        "mainHand"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "stackSize": {
+      "values": [
+        1,
+        10,
+        3,
+        5
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 15
+    },
+    "stats.attackSpeed": {
+      "values": [
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.2,
+        1.3,
+        1.4,
+        1.5
+      ],
+      "count": 8,
+      "types": [
+        "number"
+      ],
+      "occurrences": 16
+    },
+    "stats.baseDamage": {
+      "values": [
+        15.0,
+        25.0,
+        28.0,
+        30.0,
+        35.0,
+        40.0,
+        5.0,
+        50.0,
+        60.0
+      ],
+      "count": 9,
+      "types": [
+        "number"
+      ],
+      "occurrences": 10
+    },
+    "stats.critChance": {
+      "values": [
+        0.05,
+        0.1,
+        0.15,
+        0.18,
+        0.2,
+        0.25
+      ],
+      "count": 6,
+      "types": [
+        "number"
+      ],
+      "occurrences": 15
+    },
+    "stats.damage": {
+      "values": [
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        60,
+        65
+      ],
+      "count": 8,
+      "types": [
+        "array"
+      ],
+      "occurrences": 10
+    },
+    "stats.durability": {
+      "values": [
+        400,
+        450,
+        500,
+        600
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 10
+    },
+    "subtype": {
+      "values": [
+        "arcane_staff",
+        "arrow_turret",
+        "battle_axe",
+        "battle_staff",
+        "cluster_bomb",
+        "hybrid_turret",
+        "laser_turret",
+        "shortsword",
+        "special_bow",
+        "status_trap",
+        "war_hammer"
+      ],
+      "count": 11,
+      "types": [
+        "string"
+      ],
+      "occurrences": 11
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 25
+    },
+    "type": {
+      "values": [
+        "axe",
+        "bomb",
+        "bow",
+        "dagger",
+        "hammer",
+        "mace",
+        "staff",
+        "sword",
+        "trap",
+        "turret",
+        "wand",
+        "weapon"
+      ],
+      "count": 12,
+      "types": [
+        "string"
+      ],
+      "occurrences": 25
+    }
+  },
+  "_usable_template": {
+    "category": "device",
+    "description": "Whip that arcs lightning between foes",
+    "effect": "Massive explosion with huge radius",
+    "effectParams": {
+      "baseDamage": 35.0,
+      "beam_length": 15.0,
+      "beam_width": 1.0,
+      "burn_damage_per_second": 10.0,
+      "burn_duration": 10.0,
+      "chain_count": 3,
+      "chain_damage_falloff": 0.8,
+      "chrono_slow": 0.5,
+      "circle_radius": 3.0,
+      "cone_angle": 60,
+      "cone_length": 8.0,
+      "freeze_duration": 2.0,
+      "quantum_collapse_chance": 0.1,
+      "range": 10.0,
+      "root_duration": 3.0,
+      "shock_chance": 0.3,
+      "shock_damage": 10.0,
+      "slow_duration": 3.0,
+      "slow_percent": 0.4
+    },
+    "effectTags": [
+      "chain",
+      "ice",
+      "fire"
+    ],
+    "effect_params": {
+      "baseDamage": 40,
+      "beam_range": 12.0,
+      "beam_width": 1.5,
+      "bleed_damage_per_second": 6.0,
+      "bleed_duration": 10.0,
+      "burn_damage_per_second": 8.0,
+      "burn_duration": 10.0,
+      "chain_count": 3,
+      "chain_range": 6.0,
+      "circle_radius": 4.0,
+      "cone_angle": 60.0,
+      "cone_range": 8.0,
+      "freeze_duration": 3.0,
+      "knockback_distance": 3.0,
+      "lifesteal_percent": 0.25,
+      "origin": "target",
+      "pierce_count": 5,
+      "shock_damage_per_tick": 5.0,
+      "shock_duration": 4.0,
+      "shock_tick_rate": 1.0,
+      "weaken_duration": 8.0,
+      "weaken_percent": 0.3
+    },
+    "effect_tags": [
+      "freeze",
+      "beam",
+      "chain"
+    ],
+    "flags": {
+      "equippable": true,
+      "placeable": true,
+      "stackable": true,
+      "tradeable": true
+    },
+    "itemId": "test_weapon_unknown_tags",
+    "metadata": {
+      "narrative": "Contains unknown/typo tags to test error handling."
+    },
+    "name": "Test Bomb (Massive AOE)",
+    "narrative": "Crackling with elemental fury, this whip doesn't just strike\u2014it hunts. Each lash leaps from victim to victim, leaving a trail of shocked enemies in its wake.",
+    "rarity": "rare",
+    "slot": "mainHand",
+    "stackSize": 1,
+    "stats": {
+      "attackSpeed": 0.8,
+      "baseDamage": 35.0,
+      "critChance": 0.15,
+      "damage": [
+        65,
+        35,
+        40
+      ],
+      "durability": 400
+    },
+    "subtype": "arcane_staff",
+    "tier": 1,
+    "type": "hammer"
+  },
+  "template": {
+    "category": {
+      "_type": "string",
+      "_sample_values": [
+        "device",
+        "equipment",
+        "weapon"
+      ],
+      "_total_unique_values": 3
+    },
+    "description": {
+      "_type": "string",
+      "_sample_values": [
+        "Whip that arcs lightning between foes",
+        "Blade that projects waves of flame",
+        "Cursed blade that feeds on lifeblood",
+        "Hammer that freezes and repels nearby foes",
+        "Spear that fires void beams through multiple targets"
+      ],
+      "_total_unique_values": 5
+    },
+    "effect": {
+      "_type": "string",
+      "_sample_values": [
+        "Massive explosion with huge radius",
+        "Basic turret with no tag system support",
+        "Fires a burning laser beam",
+        "Trap with all status effects",
+        "Hybrid turret with chain AND cone"
+      ],
+      "_total_unique_values": 5
+    },
+    "effectParams": {
+      "baseDamage": {
+        "_type": "number",
+        "_sample_values": [
+          35.0,
+          5.0,
+          70.0,
+          40.0,
+          28.0,
+          80.0,
+          50.0,
+          20.0,
+          150.0,
+          25.0
+        ],
+        "_total_unique_values": 12
+      },
+      "beam_length": {
+        "_type": "number",
+        "_sample_values": [
+          15.0
+        ],
+        "_total_unique_values": 1
+      },
+      "beam_width": {
+        "_type": "number",
+        "_sample_values": [
+          1.0
+        ],
+        "_total_unique_values": 1
+      },
+      "burn_damage_per_second": {
+        "_type": "number",
+        "_sample_values": [
+          10.0,
+          5.0,
+          15.0
+        ],
+        "_total_unique_values": 3
+      },
+      "burn_duration": {
+        "_type": "number",
+        "_sample_values": [
+          10.0,
+          5.0,
+          6.0
+        ],
+        "_total_unique_values": 3
+      },
+      "chain_count": {
+        "_type": "integer",
+        "_sample_values": [
+          3,
+          4
+        ],
+        "_total_unique_values": 2
+      },
+      "chain_damage_falloff": {
+        "_type": "number",
+        "_sample_values": [
+          0.8,
+          0.9
+        ],
+        "_total_unique_values": 2
+      },
+      "chrono_slow": {
+        "_type": "number",
+        "_sample_values": [
+          0.5
+        ],
+        "_total_unique_values": 1
+      },
+      "circle_radius": {
+        "_type": "number",
+        "_sample_values": [
+          3.0,
+          20.0,
+          5.0
+        ],
+        "_total_unique_values": 3
+      },
+      "cone_angle": {
+        "_type": "integer",
+        "_sample_values": [
+          60,
+          45
+        ],
+        "_total_unique_values": 2
+      },
+      "cone_length": {
+        "_type": "number",
+        "_sample_values": [
+          8.0,
+          10.0
+        ],
+        "_total_unique_values": 2
+      },
+      "freeze_duration": {
+        "_type": "number",
+        "_sample_values": [
+          2.0,
+          3.0
+        ],
+        "_total_unique_values": 2
+      },
+      "quantum_collapse_chance": {
+        "_type": "number",
+        "_sample_values": [
+          0.1
+        ],
+        "_total_unique_values": 1
+      },
+      "range": {
+        "_type": "number",
+        "_sample_values": [
+          10.0,
+          15.0
+        ],
+        "_total_unique_values": 2
+      },
+      "root_duration": {
+        "_type": "number",
+        "_sample_values": [
+          3.0
+        ],
+        "_total_unique_values": 1
+      },
+      "shock_chance": {
+        "_type": "number",
+        "_sample_values": [
+          0.3,
+          0.5
+        ],
+        "_total_unique_values": 2
+      },
+      "shock_damage": {
+        "_type": "number",
+        "_sample_values": [
+          10.0,
+          20.0
+        ],
+        "_total_unique_values": 2
+      },
+      "slow_duration": {
+        "_type": "number",
+        "_sample_values": [
+          3.0,
+          4.0
+        ],
+        "_total_unique_values": 2
+      },
+      "slow_percent": {
+        "_type": "number",
+        "_sample_values": [
+          0.4,
+          0.5,
+          0.6
+        ],
+        "_total_unique_values": 3
+      }
+    },
+    "effectTags": {
+      "_type": "array",
+      "_sample_values": [
+        "chain",
+        "ice",
+        "fire",
+        "void",
+        "bleed"
+      ],
+      "_total_unique_values": 25
+    },
+    "effect_params": {
+      "baseDamage": {
+        "_type": "integer",
+        "_sample_values": [
+          40,
+          42,
+          45,
+          50,
+          60
+        ],
+        "_total_unique_values": 5
+      },
+      "beam_range": {
+        "_type": "number",
+        "_sample_values": [
+          12.0
+        ],
+        "_total_unique_values": 1
+      },
+      "beam_width": {
+        "_type": "number",
+        "_sample_values": [
+          1.5
+        ],
+        "_total_unique_values": 1
+      },
+      "bleed_damage_per_second": {
+        "_type": "number",
+        "_sample_values": [
+          6.0
+        ],
+        "_total_unique_values": 1
+      },
+      "bleed_duration": {
+        "_type": "number",
+        "_sample_values": [
+          10.0
+        ],
+        "_total_unique_values": 1
+      },
+      "burn_damage_per_second": {
+        "_type": "number",
+        "_sample_values": [
+          8.0
+        ],
+        "_total_unique_values": 1
+      },
+      "burn_duration": {
+        "_type": "number",
+        "_sample_values": [
+          10.0
+        ],
+        "_total_unique_values": 1
+      },
+      "chain_count": {
+        "_type": "integer",
+        "_sample_values": [
+          3
+        ],
+        "_total_unique_values": 1
+      },
+      "chain_range": {
+        "_type": "number",
+        "_sample_values": [
+          6.0
+        ],
+        "_total_unique_values": 1
+      },
+      "circle_radius": {
+        "_type": "number",
+        "_sample_values": [
+          4.0
+        ],
+        "_total_unique_values": 1
+      },
+      "cone_angle": {
+        "_type": "number",
+        "_sample_values": [
+          60.0
+        ],
+        "_total_unique_values": 1
+      },
+      "cone_range": {
+        "_type": "number",
+        "_sample_values": [
+          8.0
+        ],
+        "_total_unique_values": 1
+      },
+      "freeze_duration": {
+        "_type": "number",
+        "_sample_values": [
+          3.0
+        ],
+        "_total_unique_values": 1
+      },
+      "knockback_distance": {
+        "_type": "number",
+        "_sample_values": [
+          3.0
+        ],
+        "_total_unique_values": 1
+      },
+      "lifesteal_percent": {
+        "_type": "number",
+        "_sample_values": [
+          0.25
+        ],
+        "_total_unique_values": 1
+      },
+      "origin": {
+        "_type": "string",
+        "_sample_values": [
+          "target"
+        ],
+        "_total_unique_values": 1
+      },
+      "pierce_count": {
+        "_type": "integer",
+        "_sample_values": [
+          5
+        ],
+        "_total_unique_values": 1
+      },
+      "shock_damage_per_tick": {
+        "_type": "number",
+        "_sample_values": [
+          5.0
+        ],
+        "_total_unique_values": 1
+      },
+      "shock_duration": {
+        "_type": "number",
+        "_sample_values": [
+          4.0
+        ],
+        "_total_unique_values": 1
+      },
+      "shock_tick_rate": {
+        "_type": "number",
+        "_sample_values": [
+          1.0
+        ],
+        "_total_unique_values": 1
+      },
+      "weaken_duration": {
+        "_type": "number",
+        "_sample_values": [
+          8.0
+        ],
+        "_total_unique_values": 1
+      },
+      "weaken_percent": {
+        "_type": "number",
+        "_sample_values": [
+          0.3
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "effect_tags": {
+      "_type": "array",
+      "_sample_values": [
+        "freeze",
+        "beam",
+        "chain",
+        "ice",
+        "shock"
+      ],
+      "_total_unique_values": 18
+    },
+    "flags": {
+      "equippable": {
+        "_type": "boolean",
+        "_sample_values": [
+          true
+        ],
+        "_total_unique_values": 1
+      },
+      "placeable": {
+        "_type": "boolean",
+        "_sample_values": [
+          true
+        ],
+        "_total_unique_values": 1
+      },
+      "stackable": {
+        "_type": "boolean",
+        "_sample_values": [
+          true
+        ],
+        "_total_unique_values": 1
+      },
+      "tradeable": {
+        "_type": "boolean",
+        "_sample_values": [
+          true
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "itemId": {
+      "_type": "string",
+      "_sample_values": [
+        "test_weapon_unknown_tags",
+        "test_weapon_complex_valid",
+        "test_case_sensitivity",
+        "test_weapon_missing_params",
+        "test_bomb_massive_aoe",
+        "test_duplicate_tags",
+        "blood_reaver",
+        "test_empty_tags",
+        "test_weapon_simple",
+        "test_weapon_conflicting_elements"
+      ],
+      "_total_unique_values": 20
+    },
+    "metadata": {
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "Contains unknown/typo tags to test error handling.",
+          "Complex but valid combo: lightning chain with shock and slow.",
+          "Has tags but missing required effectParams.",
+          "Extremely large AOE to test geometry limits.",
+          "Tests if tag matching is case-sensitive.",
+          "A simple test weapon with valid tags.",
+          "Tests what happens with conflicting elemental tags (fire + ice).",
+          "Beam geometry with burn status effect.",
+          "Tests conflicting status effects (freeze + burn + slow + root).",
+          "Has only status tags, no damage type tags."
+        ],
+        "_total_unique_values": 15
+      }
+    },
+    "name": {
+      "_type": "string",
+      "_sample_values": [
+        "Test Bomb (Massive AOE)",
+        "Test Weapon (Conflicting Elements)",
+        "Inferno Blade",
+        "Test Device (Chain + Cone Hybrid)",
+        "Blood Reaver",
+        "Frostbite Hammer",
+        "Test Trap (Conflicting Status)",
+        "Test Item (Empty Tags Array)",
+        "Test Weapon (Complex Valid)",
+        "Void Piercer"
+      ],
+      "_total_unique_values": 20
+    },
+    "narrative": {
+      "_type": "string",
+      "_sample_values": [
+        "Crackling with elemental fury, this whip doesn't just strike\u2014it hunts. Each lash leaps from victim to victim, leaving a trail of shocked enemies in its wake.",
+        "This weapon hungers. Each strike opens wounds that refuse to close, and as your enemies bleed, the blade drinks\u2014and so do you. Feel their vitality flow into you with each passing second.",
+        "Forged from crystallized void essence, this spear doesn't throw\u2014it tears. A beam of pure darkness lances through your enemies, weakening each it touches as it passes through flesh and armor alike.",
+        "The blade itself never cools. Each swing projects a wave of searing flame that engulfs all before you. The heat is so intense that victims continue burning long after the strike.",
+        "Each impact sends a shockwave of absolute zero. Enemies freeze mid-motion as they're blasted backward, turned into icy statues before they even hit the ground."
+      ],
+      "_total_unique_values": 5
+    },
+    "rarity": {
+      "_type": "string",
+      "_sample_values": [
+        "rare",
+        "epic",
+        "uncommon",
+        "common",
+        "legendary"
+      ],
+      "_total_unique_values": 5
+    },
+    "slot": {
+      "_type": "string",
+      "_sample_values": [
+        "mainHand"
+      ],
+      "_total_unique_values": 1
+    },
+    "stackSize": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        10,
+        3,
+        5
+      ],
+      "_total_unique_values": 4
+    },
+    "stats": {
+      "attackSpeed": {
+        "_type": "number",
+        "_sample_values": [
+          0.8,
+          1.5,
+          1.4,
+          1.3,
+          1.2,
+          1.0,
+          0.9,
+          0.7
+        ],
+        "_total_unique_values": 8
+      },
+      "baseDamage": {
+        "_type": "number",
+        "_sample_values": [
+          35.0,
+          5.0,
+          40.0,
+          28.0,
+          15.0,
+          50.0,
+          25.0,
+          60.0,
+          30.0
+        ],
+        "_total_unique_values": 9
+      },
+      "critChance": {
+        "_type": "number",
+        "_sample_values": [
+          0.15,
+          0.25,
+          0.18,
+          0.1,
+          0.2,
+          0.05
+        ],
+        "_total_unique_values": 6
+      },
+      "damage": {
+        "_type": "array",
+        "_sample_values": [
+          65,
+          35,
+          40,
+          45,
+          50
+        ],
+        "_total_unique_values": 8
+      },
+      "durability": {
+        "_type": "integer",
+        "_sample_values": [
+          400,
+          450,
+          600,
+          500
+        ],
+        "_total_unique_values": 4
+      }
+    },
+    "subtype": {
+      "_type": "string",
+      "_sample_values": [
+        "arcane_staff",
+        "arrow_turret",
+        "special_bow",
+        "battle_axe",
+        "cluster_bomb",
+        "hybrid_turret",
+        "battle_staff",
+        "laser_turret",
+        "status_trap",
+        "shortsword"
+      ],
+      "_total_unique_values": 11
+    },
+    "tier": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "_total_unique_values": 4
+    },
+    "type": {
+      "_type": "string",
+      "_sample_values": [
+        "hammer",
+        "sword",
+        "turret",
+        "staff",
+        "axe",
+        "weapon",
+        "trap",
+        "bomb",
+        "mace",
+        "bow"
+      ],
+      "_total_unique_values": 12
+    }
+  }
+}

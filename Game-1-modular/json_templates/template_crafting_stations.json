@@ -2,45 +2,19 @@
   "_meta": {
     "category": "crafting-stations",
     "description": "Crafting station definitions",
-    "generated_at": "2026-01-01T19:53:07.811905",
+    "generated_at": "2026-01-01T19:58:32.935782",
     "source_files": [
       "crafting-stations-1.JSON"
+    ],
+    "discovered_root_keys": [
+      "metadata",
+      "stations"
     ],
     "total_items_analyzed": 0
   },
   "_field_documentation": {},
   "_all_possible_values": {
-    "metadata.description": {
-      "values": [
-        "Crafting station definitions - placeable items that enable crafting"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.note": {
-      "values": [
-        "Stations are just items with placeable flag, no special structure needed"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.version": {
-      "values": [
-        "1.0"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "stations[].category": {
+    "category": {
       "values": [
         "station"
       ],
@@ -50,7 +24,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].flags.placeable": {
+    "flags.placeable": {
       "values": [
         true
       ],
@@ -60,7 +34,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].flags.repairable": {
+    "flags.repairable": {
       "values": [
         false
       ],
@@ -70,7 +44,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].flags.stackable": {
+    "flags.stackable": {
       "values": [
         false
       ],
@@ -80,7 +54,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].itemId": {
+    "itemId": {
       "values": [
         "alchemy_table_t1",
         "alchemy_table_t2",
@@ -101,7 +75,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].metadata.narrative": {
+    "metadata.narrative": {
       "values": [
         "Advanced refinery with better heat retention. Processes materials more efficiently with less waste.",
         "Arcane enchanting table surrounded by floating crystals. Channels magical energies precisely.",
@@ -122,7 +96,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].metadata.tags": {
+    "metadata.tags": {
       "values": [
         "alchemy",
         "enchanting",
@@ -141,7 +115,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].name": {
+    "name": {
       "values": [
         "Advanced Alchemy Table",
         "Advanced Engineering Bench",
@@ -162,7 +136,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].range": {
+    "range": {
       "values": [
         0
       ],
@@ -172,7 +146,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].rarity": {
+    "rarity": {
       "values": [
         "common",
         "epic",
@@ -185,7 +159,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].requirements.level": {
+    "requirements.level": {
       "values": [
         1,
         10,
@@ -199,7 +173,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].stats.durability": {
+    "stats.durability": {
       "values": [
         9999
       ],
@@ -209,7 +183,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].stats.weight": {
+    "stats.weight": {
       "values": [
         100.0,
         150.0,
@@ -229,7 +203,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].subtype": {
+    "subtype": {
       "values": [
         "alchemy",
         "enchanting",
@@ -243,7 +217,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].tier": {
+    "tier": {
       "values": [
         1,
         2,
@@ -256,7 +230,7 @@
       ],
       "occurrences": 12
     },
-    "stations[].type": {
+    "type": {
       "values": [
         "crafting"
       ],
@@ -268,217 +242,211 @@
     }
   },
   "_usable_template": {
-    "metadata": {
-      "description": "Crafting station definitions - placeable items that enable crafting",
-      "note": "Stations are just items with placeable flag, no special structure needed",
-      "version": "1.0"
+    "category": "station",
+    "flags": {
+      "placeable": true,
+      "repairable": true,
+      "stackable": true
     },
-    "stations": [
-      "<value>"
-    ]
+    "itemId": "forge_t2",
+    "metadata": {
+      "narrative": "Legendary forge that bends reality itself. Can work metals that shouldn't exist.",
+      "tags": [
+        "starter",
+        "station",
+        "engineering"
+      ]
+    },
+    "name": "Basic Alchemy Table",
+    "range": 0,
+    "rarity": "rare",
+    "requirements": {
+      "level": 1
+    },
+    "stats": {
+      "durability": [
+        9999
+      ],
+      "weight": 65.0
+    },
+    "subtype": "engineering",
+    "tier": 1,
+    "type": "crafting"
   },
   "template": {
-    "metadata": {
-      "description": {
-        "_type": "string",
+    "category": {
+      "_type": "string",
+      "_sample_values": [
+        "station"
+      ],
+      "_total_unique_values": 1
+    },
+    "flags": {
+      "placeable": {
+        "_type": "boolean",
         "_sample_values": [
-          "Crafting station definitions - placeable items that enable crafting"
+          true
         ],
         "_total_unique_values": 1
       },
-      "note": {
-        "_type": "string",
+      "repairable": {
+        "_type": "boolean",
         "_sample_values": [
-          "Stations are just items with placeable flag, no special structure needed"
+          false
         ],
         "_total_unique_values": 1
       },
-      "version": {
-        "_type": "string",
+      "stackable": {
+        "_type": "boolean",
         "_sample_values": [
-          "1.0"
+          false
         ],
         "_total_unique_values": 1
       }
     },
-    "stations": {
-      "_type": "array",
-      "_sample_values": [],
-      "_total_unique_values": 0,
-      "category": {
+    "itemId": {
+      "_type": "string",
+      "_sample_values": [
+        "forge_t2",
+        "engineering_bench_t2",
+        "alchemy_table_t2",
+        "forge_t4",
+        "refinery_t2",
+        "enchanting_table_t2",
+        "alchemy_table_t1",
+        "refinery_t1",
+        "engineering_bench_t1",
+        "enchanting_table_t1"
+      ],
+      "_total_unique_values": 12
+    },
+    "metadata": {
+      "narrative": {
         "_type": "string",
         "_sample_values": [
-          "station"
-        ],
-        "_total_unique_values": 1
-      },
-      "flags": {
-        "placeable": {
-          "_type": "boolean",
-          "_sample_values": [
-            true
-          ],
-          "_total_unique_values": 1
-        },
-        "repairable": {
-          "_type": "boolean",
-          "_sample_values": [
-            false
-          ],
-          "_total_unique_values": 1
-        },
-        "stackable": {
-          "_type": "boolean",
-          "_sample_values": [
-            false
-          ],
-          "_total_unique_values": 1
-        }
-      },
-      "itemId": {
-        "_type": "string",
-        "_sample_values": [
-          "forge_t3",
-          "refinery_t2",
-          "alchemy_table_t2",
-          "refinery_t1",
-          "engineering_bench_t1",
-          "engineering_bench_t2",
-          "forge_t2",
-          "forge_t4",
-          "enchanting_table_t1",
-          "alchemy_table_t1"
+          "Legendary forge that bends reality itself. Can work metals that shouldn't exist.",
+          "Improved forge with reinforced stone and efficient airflow. Reaches temperatures needed for steel.",
+          "Precision engineering station with specialized tools for complex device assembly.",
+          "Professional alchemy setup with distillation equipment and precise measuring tools.",
+          "Simple alchemy table with mortar, pestle, and basic glassware. Sufficient for brewing basic potions.",
+          "Basic workbench with simple tools for assembling mechanical devices.",
+          "Simple stone forge with basic bellows. Hot enough for copper and iron work, but struggles with harder metals.",
+          "Arcane enchanting table surrounded by floating crystals. Channels magical energies precisely.",
+          "Basic stone furnace for refining raw ores into usable materials. Essential for any aspiring metalworker.",
+          "Simple enchanting table with basic rune-carving tools. Sufficient for minor enchantments."
         ],
         "_total_unique_values": 12
       },
-      "metadata": {
-        "narrative": {
-          "_type": "string",
-          "_sample_values": [
-            "Basic stone furnace for refining raw ores into usable materials. Essential for any aspiring metalworker.",
-            "Precision engineering station with specialized tools for complex device assembly.",
-            "Simple stone forge with basic bellows. Hot enough for copper and iron work, but struggles with harder metals.",
-            "Arcane enchanting table surrounded by floating crystals. Channels magical energies precisely.",
-            "Simple enchanting table with basic rune-carving tools. Sufficient for minor enchantments.",
-            "Master forge with crystal-enhanced heating. Can reach temperatures that would melt lesser furnaces.",
-            "Simple alchemy table with mortar, pestle, and basic glassware. Sufficient for brewing basic potions.",
-            "Professional alchemy setup with distillation equipment and precise measuring tools.",
-            "Legendary forge that bends reality itself. Can work metals that shouldn't exist.",
-            "Advanced refinery with better heat retention. Processes materials more efficiently with less waste."
-          ],
-          "_total_unique_values": 12
-        },
-        "tags": {
-          "_type": "array",
-          "_sample_values": [
-            "standard",
-            "refining",
-            "station",
-            "quality",
-            "legendary"
-          ],
-          "_total_unique_values": 10
-        }
-      },
-      "name": {
-        "_type": "string",
+      "tags": {
+        "_type": "array",
         "_sample_values": [
-          "Basic Engineering Bench",
-          "Advanced Engineering Bench",
-          "Reinforced Forge",
-          "Basic Alchemy Table",
-          "Advanced Alchemy Table",
-          "Advanced Refinery",
-          "Basic Refinery",
-          "Basic Forge",
-          "Basic Enchanting Table",
-          "Master Forge"
-        ],
-        "_total_unique_values": 12
-      },
-      "range": {
-        "_type": "integer",
-        "_sample_values": [
-          0
-        ],
-        "_total_unique_values": 1
-      },
-      "rarity": {
-        "_type": "string",
-        "_sample_values": [
-          "common",
-          "uncommon",
-          "rare",
-          "epic"
-        ],
-        "_total_unique_values": 4
-      },
-      "requirements": {
-        "level": {
-          "_type": "integer",
-          "_sample_values": [
-            1,
-            8,
-            10,
-            15,
-            25
-          ],
-          "_total_unique_values": 5
-        }
-      },
-      "stats": {
-        "durability": {
-          "_type": "array",
-          "_sample_values": [
-            9999
-          ],
-          "_total_unique_values": 1
-        },
-        "weight": {
-          "_type": "number",
-          "_sample_values": [
-            65.0,
-            35.0,
-            100.0,
-            40.0,
-            75.0,
-            45.0,
-            50.0,
-            150.0,
-            55.0,
-            60.0
-          ],
-          "_total_unique_values": 11
-        }
-      },
-      "subtype": {
-        "_type": "string",
-        "_sample_values": [
-          "refining",
-          "enchanting",
-          "alchemy",
+          "starter",
+          "station",
           "engineering",
-          "smithing"
+          "enchanting",
+          "standard"
         ],
-        "_total_unique_values": 5
-      },
-      "tier": {
+        "_total_unique_values": 10
+      }
+    },
+    "name": {
+      "_type": "string",
+      "_sample_values": [
+        "Basic Alchemy Table",
+        "Reinforced Forge",
+        "Basic Engineering Bench",
+        "Advanced Engineering Bench",
+        "Advanced Alchemy Table",
+        "Arcane Enchanting Table",
+        "Basic Enchanting Table",
+        "Basic Forge",
+        "Master Forge",
+        "Basic Refinery"
+      ],
+      "_total_unique_values": 12
+    },
+    "range": {
+      "_type": "integer",
+      "_sample_values": [
+        0
+      ],
+      "_total_unique_values": 1
+    },
+    "rarity": {
+      "_type": "string",
+      "_sample_values": [
+        "rare",
+        "epic",
+        "uncommon",
+        "common"
+      ],
+      "_total_unique_values": 4
+    },
+    "requirements": {
+      "level": {
         "_type": "integer",
         "_sample_values": [
           1,
-          2,
-          3,
-          4
+          8,
+          10,
+          15,
+          25
         ],
-        "_total_unique_values": 4
-      },
-      "type": {
-        "_type": "string",
+        "_total_unique_values": 5
+      }
+    },
+    "stats": {
+      "durability": {
+        "_type": "array",
         "_sample_values": [
-          "crafting"
+          9999
         ],
         "_total_unique_values": 1
+      },
+      "weight": {
+        "_type": "number",
+        "_sample_values": [
+          65.0,
+          35.0,
+          100.0,
+          40.0,
+          75.0,
+          45.0,
+          50.0,
+          150.0,
+          55.0,
+          60.0
+        ],
+        "_total_unique_values": 11
       }
+    },
+    "subtype": {
+      "_type": "string",
+      "_sample_values": [
+        "engineering",
+        "smithing",
+        "refining",
+        "enchanting",
+        "alchemy"
+      ],
+      "_total_unique_values": 5
+    },
+    "tier": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "_total_unique_values": 4
+    },
+    "type": {
+      "_type": "string",
+      "_sample_values": [
+        "crafting"
+      ],
+      "_total_unique_values": 1
     }
   }
 }

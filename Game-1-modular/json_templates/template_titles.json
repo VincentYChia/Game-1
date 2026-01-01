@@ -2,9 +2,15 @@
   "_meta": {
     "category": "titles",
     "description": "Achievement title definitions",
-    "generated_at": "2026-01-01T19:53:07.786019",
+    "generated_at": "2026-01-01T19:58:32.942078",
     "source_files": [
       "titles-1.JSON"
+    ],
+    "discovered_root_keys": [
+      "difficultyTiers",
+      "metadata",
+      "titleCategories",
+      "titles"
     ],
     "total_items_analyzed": 0
   },
@@ -324,6 +330,196 @@
       ],
       "occurrences": 10
     },
+    "difficultyTiers.apprentice.acquisition": {
+      "values": [
+        "event_based_rng"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.apprentice.bonusRange": {
+      "values": [
+        "25%"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.apprentice.generationChance": {
+      "values": [
+        0.2
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.apprentice.threshold": {
+      "values": [
+        1000
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.expert.acquisition": {
+      "values": [
+        "event_based_rng"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.expert.bonusRange": {
+      "values": [
+        "100%"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.expert.generationChance": {
+      "values": [
+        0.05
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.expert.threshold": {
+      "values": [
+        20000
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.journeyman.acquisition": {
+      "values": [
+        "event_based_rng"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.journeyman.bonusRange": {
+      "values": [
+        "50%"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.journeyman.generationChance": {
+      "values": [
+        0.1
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.journeyman.threshold": {
+      "values": [
+        5000
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.master.acquisition": {
+      "values": [
+        "special_achievement"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.master.bonusRange": {
+      "values": [
+        "200%"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.master.generationChance": {
+      "values": [
+        0.02
+      ],
+      "count": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.master.threshold": {
+      "values": [
+        100000
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.novice.acquisition": {
+      "values": [
+        "guaranteed_milestone"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.novice.bonusRange": {
+      "values": [
+        "10%"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "difficultyTiers.novice.threshold": {
+      "values": [
+        100
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
     "generationChance": {
       "values": [
         0.02,
@@ -603,7 +799,7 @@
     }
   },
   "_usable_template": {
-    "acquisitionMethod": "event_based_rng",
+    "acquisitionMethod": "guaranteed_milestone",
     "bonuses": {
       "alloyQuality": 0.25,
       "attackSpeed": 0.0,
@@ -632,12 +828,43 @@
       "smithingQuality": 0.0,
       "smithingTime": 0.1
     },
-    "description": "Impurities flee before your knowledge. Material transformation is your domain.",
-    "difficultyTier": "master",
+    "description": "Combat flows through you like water. Blade and mind move as one.",
+    "difficultyTier": "special",
+    "difficultyTiers": {
+      "apprentice": {
+        "acquisition": "event_based_rng",
+        "bonusRange": "25%",
+        "generationChance": 0.2,
+        "threshold": 1000
+      },
+      "expert": {
+        "acquisition": "event_based_rng",
+        "bonusRange": "100%",
+        "generationChance": 0.05,
+        "threshold": 20000
+      },
+      "journeyman": {
+        "acquisition": "event_based_rng",
+        "bonusRange": "50%",
+        "generationChance": 0.1,
+        "threshold": 5000
+      },
+      "master": {
+        "acquisition": "special_achievement",
+        "bonusRange": "200%",
+        "generationChance": 0.02,
+        "threshold": 100000
+      },
+      "novice": {
+        "acquisition": "guaranteed_milestone",
+        "bonusRange": "10%",
+        "threshold": 100
+      }
+    },
     "generationChance": 0.2,
     "isHidden": true,
-    "name": "Journeyman Refiner",
-    "narrative": "You don't believe in luck. You ARE luck.",
+    "name": "Novice Smith",
+    "narrative": "When you strike the anvil, gods pause to listen. Your work transcends mortality.",
     "prerequisites": {
       "activities": {
         "alloysCreated": 50,
@@ -658,22 +885,22 @@
       },
       "characterLevel": 0,
       "requiredTitles": [
-        "novice_miner",
+        "novice_refiner",
         "expert_master_smith",
         "journeyman_warrior"
       ]
     },
-    "titleId": "expert_battle_sage",
-    "titleType": "combat"
+    "titleId": "master_eternal_smith",
+    "titleType": "crafting"
   },
   "template": {
     "acquisitionMethod": {
       "_type": "string",
       "_sample_values": [
+        "guaranteed_milestone",
         "event_based_rng",
         "hidden_discovery",
-        "special_achievement",
-        "guaranteed_milestone"
+        "special_achievement"
       ],
       "_total_unique_values": 4
     },
@@ -871,30 +1098,175 @@
     "description": {
       "_type": "string",
       "_sample_values": [
-        "Impurities flee before your knowledge. Material transformation is your domain.",
-        "Wyrms fear your name. The great beasts fall before you.",
+        "Combat flows through you like water. Blade and mind move as one.",
+        "The forest acknowledges your presence. Trees fall before you.",
         "Legends speak of smiths who forged the impossible. You are one of them.",
         "Fortune herself smiles upon you. Or perhaps you've rigged the dice.",
-        "The forest acknowledges your presence. Trees fall before you.",
-        "Your first steps into the depths. Every mine begins with a single swing.",
-        "Combat flows through you like water. Blade and mind move as one.",
+        "Wyrms fear your name. The great beasts fall before you.",
         "Fire-veined ores call to you. The heat of the deep welcomes your touch.",
+        "First blood has been drawn. You've tasted battle and survived.",
         "The forge accepts you. Your hammer rings with purpose.",
-        "First blood has been drawn. You've tasted battle and survived."
+        "Impurities flee before your knowledge. Material transformation is your domain.",
+        "Your first steps into the depths. Every mine begins with a single swing."
       ],
       "_total_unique_values": 10
     },
     "difficultyTier": {
       "_type": "string",
       "_sample_values": [
-        "master",
-        "expert",
-        "journeyman",
-        "novice",
         "special",
-        "apprentice"
+        "novice",
+        "expert",
+        "apprentice",
+        "journeyman",
+        "master"
       ],
       "_total_unique_values": 6
+    },
+    "difficultyTiers": {
+      "apprentice": {
+        "acquisition": {
+          "_type": "string",
+          "_sample_values": [
+            "event_based_rng"
+          ],
+          "_total_unique_values": 1
+        },
+        "bonusRange": {
+          "_type": "string",
+          "_sample_values": [
+            "25%"
+          ],
+          "_total_unique_values": 1
+        },
+        "generationChance": {
+          "_type": "number",
+          "_sample_values": [
+            0.2
+          ],
+          "_total_unique_values": 1
+        },
+        "threshold": {
+          "_type": "integer",
+          "_sample_values": [
+            1000
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "expert": {
+        "acquisition": {
+          "_type": "string",
+          "_sample_values": [
+            "event_based_rng"
+          ],
+          "_total_unique_values": 1
+        },
+        "bonusRange": {
+          "_type": "string",
+          "_sample_values": [
+            "100%"
+          ],
+          "_total_unique_values": 1
+        },
+        "generationChance": {
+          "_type": "number",
+          "_sample_values": [
+            0.05
+          ],
+          "_total_unique_values": 1
+        },
+        "threshold": {
+          "_type": "integer",
+          "_sample_values": [
+            20000
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "journeyman": {
+        "acquisition": {
+          "_type": "string",
+          "_sample_values": [
+            "event_based_rng"
+          ],
+          "_total_unique_values": 1
+        },
+        "bonusRange": {
+          "_type": "string",
+          "_sample_values": [
+            "50%"
+          ],
+          "_total_unique_values": 1
+        },
+        "generationChance": {
+          "_type": "number",
+          "_sample_values": [
+            0.1
+          ],
+          "_total_unique_values": 1
+        },
+        "threshold": {
+          "_type": "integer",
+          "_sample_values": [
+            5000
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "master": {
+        "acquisition": {
+          "_type": "string",
+          "_sample_values": [
+            "special_achievement"
+          ],
+          "_total_unique_values": 1
+        },
+        "bonusRange": {
+          "_type": "string",
+          "_sample_values": [
+            "200%"
+          ],
+          "_total_unique_values": 1
+        },
+        "generationChance": {
+          "_type": "number",
+          "_sample_values": [
+            0.02
+          ],
+          "_total_unique_values": 1
+        },
+        "threshold": {
+          "_type": "integer",
+          "_sample_values": [
+            100000
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "novice": {
+        "acquisition": {
+          "_type": "string",
+          "_sample_values": [
+            "guaranteed_milestone"
+          ],
+          "_total_unique_values": 1
+        },
+        "bonusRange": {
+          "_type": "string",
+          "_sample_values": [
+            "10%"
+          ],
+          "_total_unique_values": 1
+        },
+        "threshold": {
+          "_type": "integer",
+          "_sample_values": [
+            100
+          ],
+          "_total_unique_values": 1
+        }
+      }
     },
     "generationChance": {
       "_type": "number",
@@ -918,32 +1290,32 @@
     "name": {
       "_type": "string",
       "_sample_values": [
-        "Journeyman Refiner",
-        "Expert Battle Sage",
-        "Master Eternal Smith",
-        "Dragon's Bane",
-        "Novice Warrior",
-        "Lucky Bastard",
-        "Novice Miner",
-        "Apprentice Flame Miner",
         "Novice Smith",
-        "Novice Lumberjack"
+        "Novice Miner",
+        "Lucky Bastard",
+        "Master Eternal Smith",
+        "Novice Lumberjack",
+        "Novice Warrior",
+        "Journeyman Refiner",
+        "Apprentice Flame Miner",
+        "Expert Battle Sage",
+        "Dragon's Bane"
       ],
       "_total_unique_values": 10
     },
     "narrative": {
       "_type": "string",
       "_sample_values": [
-        "You don't believe in luck. You ARE luck.",
-        "The forge burns hotter with ores touched by flame. You seek them instinctively.",
-        "Fifty foes have fallen. You're no longer prey.",
-        "The stone remembers your first strike. Keep swinging.",
-        "You see what others miss: the potential locked within raw matter.",
-        "Heat, hammer, shape. The trinity of the smith begins with you.",
-        "The dragon's roar becomes silence. You are the end of their age.",
         "When you strike the anvil, gods pause to listen. Your work transcends mortality.",
+        "The dragon's roar becomes silence. You are the end of their age.",
         "You don't fight. You dance. And everything around you dies beautifully.",
-        "Every great lumberjack started by felling their hundredth tree."
+        "Heat, hammer, shape. The trinity of the smith begins with you.",
+        "You don't believe in luck. You ARE luck.",
+        "Fifty foes have fallen. You're no longer prey.",
+        "The forge burns hotter with ores touched by flame. You seek them instinctively.",
+        "The stone remembers your first strike. Keep swinging.",
+        "Every great lumberjack started by felling their hundredth tree.",
+        "You see what others miss: the potential locked within raw matter."
       ],
       "_total_unique_values": 10
     },
@@ -1074,10 +1446,10 @@
       "requiredTitles": {
         "_type": "array",
         "_sample_values": [
-          "novice_miner",
+          "novice_refiner",
           "expert_master_smith",
           "journeyman_warrior",
-          "novice_refiner"
+          "novice_miner"
         ],
         "_total_unique_values": 4
       }
@@ -1085,25 +1457,25 @@
     "titleId": {
       "_type": "string",
       "_sample_values": [
-        "expert_battle_sage",
-        "novice_smith",
-        "novice_lumberjack",
-        "hidden_dragons_bane",
         "master_eternal_smith",
-        "novice_warrior",
-        "journeyman_refiner",
-        "novice_miner",
         "apprentice_flame_miner",
-        "hidden_lucky_bastard"
+        "hidden_lucky_bastard",
+        "novice_warrior",
+        "novice_lumberjack",
+        "novice_smith",
+        "journeyman_refiner",
+        "hidden_dragons_bane",
+        "novice_miner",
+        "expert_battle_sage"
       ],
       "_total_unique_values": 10
     },
     "titleType": {
       "_type": "string",
       "_sample_values": [
-        "combat",
-        "gathering",
         "crafting",
+        "gathering",
+        "combat",
         "utility"
       ],
       "_total_unique_values": 4

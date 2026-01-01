@@ -1,10 +1,22 @@
 {
   "_meta": {
     "category": "value-translations",
-    "description": "Qualitative to numeric value mappings",
-    "generated_at": "2026-01-01T19:53:07.807927",
+    "description": "Qualitative to numeric mappings",
+    "generated_at": "2026-01-01T19:58:32.930810",
     "source_files": [
       "value-translation-table-1.JSON"
+    ],
+    "discovered_root_keys": [
+      "chanceTranslations",
+      "densityTranslations",
+      "metadata",
+      "resourceHealthByTier",
+      "respawnTranslations",
+      "sizeMultipliers",
+      "tierBiasTranslations",
+      "toolDamageByTier",
+      "toolEfficiency",
+      "yieldTranslations"
     ],
     "total_items_analyzed": 0
   },
@@ -308,36 +320,6 @@
     "densityTranslations.very_low.description": {
       "values": [
         "Scarce presence"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.description": {
-      "values": [
-        "Hardcoded lookup tables for qualitative descriptors used in resource nodes and other systems"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.note": {
-      "values": [
-        "These values are PLACEHOLDERS and subject to balance changes"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.version": {
-      "values": [
-        "1.0"
       ],
       "count": 1,
       "types": [
@@ -1302,11 +1284,6 @@
         "description": "Scarce presence"
       }
     },
-    "metadata": {
-      "description": "Hardcoded lookup tables for qualitative descriptors used in resource nodes and other systems",
-      "note": "These values are PLACEHOLDERS and subject to balance changes",
-      "version": "1.0"
-    },
     "resourceHealthByTier": {
       "tier1": {
         "baseHP": 100,
@@ -1713,29 +1690,6 @@
           ],
           "_total_unique_values": 1
         }
-      }
-    },
-    "metadata": {
-      "description": {
-        "_type": "string",
-        "_sample_values": [
-          "Hardcoded lookup tables for qualitative descriptors used in resource nodes and other systems"
-        ],
-        "_total_unique_values": 1
-      },
-      "note": {
-        "_type": "string",
-        "_sample_values": [
-          "These values are PLACEHOLDERS and subject to balance changes"
-        ],
-        "_total_unique_values": 1
-      },
-      "version": {
-        "_type": "string",
-        "_sample_values": [
-          "1.0"
-        ],
-        "_total_unique_values": 1
       }
     },
     "resourceHealthByTier": {

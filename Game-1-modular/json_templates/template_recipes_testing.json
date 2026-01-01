@@ -1,0 +1,382 @@
+{
+  "_meta": {
+    "category": "recipes-testing",
+    "description": "Test recipes",
+    "generated_at": "2026-01-01T19:58:32.951231",
+    "source_files": [
+      "recipes-tag-tests.JSON"
+    ],
+    "discovered_root_keys": [
+      "metadata",
+      "recipes"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "inputs[].materialId": {
+      "values": [
+        "copper_ingot",
+        "essence_blood",
+        "iron_ingot",
+        "iron_ore",
+        "slime_gel"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 15
+    },
+    "inputs[].quantity": {
+      "values": [
+        1,
+        10,
+        2,
+        3,
+        5
+      ],
+      "count": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 15
+    },
+    "metadata.narrative": {
+      "values": [
+        "TEST: Alchemy with BOTH potion and transmutation tags (potion should win)",
+        "TEST: Alchemy with EMPTY tags array",
+        "TEST: Alchemy with NO potion/transmutation tag (should default to transmutation)",
+        "TEST: Alchemy with explicit 'potion' tag",
+        "TEST: Alchemy with explicit 'transmutation' tag",
+        "TEST: Alchemy with multiple effect tags",
+        "TEST: Refining with EMPTY tags array",
+        "TEST: Refining with MULTIPLE bonus process tags (crushing + grinding + purifying + alloying)",
+        "TEST: Refining with NO bonus tags (pure smelting)",
+        "TEST: Refining with ONLY high-probability tags (grinding 40% + purifying 30%)",
+        "TEST: Refining with alloying tag for maximum rarity upgrade (+2 tiers)",
+        "TEST: Weapon with ALL functional combat tags inherited",
+        "TEST: Weapon with CONFLICTING hand requirement tags (1H + 2H)",
+        "TEST: Weapon with EMPTY tags array",
+        "TEST: Weapon with NO functional tags (only metadata tags)"
+      ],
+      "count": 15,
+      "types": [
+        "string"
+      ],
+      "occurrences": 15
+    },
+    "metadata.tags": {
+      "values": [
+        "1H",
+        "2H",
+        "advanced",
+        "alloying",
+        "armor_breaker",
+        "basic",
+        "buff",
+        "cleaving",
+        "crushing",
+        "defense",
+        "fast",
+        "gold",
+        "grinding",
+        "healing",
+        "iron",
+        "legendary",
+        "melee",
+        "piercing",
+        "potion",
+        "precision",
+        "purifying",
+        "quality",
+        "reach",
+        "slashing",
+        "smelting",
+        "speed",
+        "starter",
+        "strength",
+        "sword",
+        "transmutation",
+        "versatile",
+        "weapon"
+      ],
+      "count": 32,
+      "types": [
+        "array"
+      ],
+      "occurrences": 15
+    },
+    "outputId": {
+      "values": [
+        "test_conflicting_output",
+        "test_conflicting_sword",
+        "test_default_output",
+        "test_gold_nugget",
+        "test_healing_potion",
+        "test_multi_effect_potion",
+        "test_plain_sword",
+        "test_tagless_output",
+        "test_tagless_sword",
+        "test_ultimate_sword"
+      ],
+      "count": 10,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "outputQty": {
+      "values": [
+        1,
+        3
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 10
+    },
+    "outputs[].materialId": {
+      "values": [
+        "iron_ingot"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "outputs[].quantity": {
+      "values": [
+        1
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "outputs[].rarity": {
+      "values": [
+        "common"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "recipeId": {
+      "values": [
+        "test_alchemy_conflicting_type",
+        "test_alchemy_default_type",
+        "test_alchemy_empty_tags",
+        "test_alchemy_explicit_potion",
+        "test_alchemy_explicit_transmutation",
+        "test_alchemy_multiple_effects",
+        "test_refining_all_bonuses",
+        "test_refining_alloying_upgrade",
+        "test_refining_empty_tags",
+        "test_refining_high_probability",
+        "test_refining_no_bonuses",
+        "test_smithing_conflicting_hands",
+        "test_smithing_empty_tags",
+        "test_smithing_max_tags",
+        "test_smithing_no_functional_tags"
+      ],
+      "count": 15,
+      "types": [
+        "string"
+      ],
+      "occurrences": 15
+    },
+    "stationTier": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "count": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 15
+    },
+    "stationType": {
+      "values": [
+        "alchemy",
+        "refining",
+        "smithing"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 15
+    }
+  },
+  "_usable_template": {
+    "inputs": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "TEST: Alchemy with EMPTY tags array",
+      "tags": [
+        "smelting",
+        "sword",
+        "melee"
+      ]
+    },
+    "outputId": "test_healing_potion",
+    "outputQty": 1,
+    "outputs": [
+      "<value>"
+    ],
+    "recipeId": "test_smithing_conflicting_hands",
+    "stationTier": 1,
+    "stationType": "smithing"
+  },
+  "template": {
+    "inputs": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "materialId": {
+        "_type": "string",
+        "_sample_values": [
+          "iron_ore",
+          "iron_ingot",
+          "slime_gel",
+          "copper_ingot",
+          "essence_blood"
+        ],
+        "_total_unique_values": 5
+      },
+      "quantity": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          2,
+          3,
+          5,
+          10
+        ],
+        "_total_unique_values": 5
+      }
+    },
+    "metadata": {
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "TEST: Alchemy with EMPTY tags array",
+          "TEST: Refining with MULTIPLE bonus process tags (crushing + grinding + purifying + alloying)",
+          "TEST: Refining with alloying tag for maximum rarity upgrade (+2 tiers)",
+          "TEST: Weapon with NO functional tags (only metadata tags)",
+          "TEST: Alchemy with explicit 'transmutation' tag",
+          "TEST: Refining with NO bonus tags (pure smelting)",
+          "TEST: Weapon with EMPTY tags array",
+          "TEST: Weapon with ALL functional combat tags inherited",
+          "TEST: Refining with ONLY high-probability tags (grinding 40% + purifying 30%)",
+          "TEST: Refining with EMPTY tags array"
+        ],
+        "_total_unique_values": 15
+      },
+      "tags": {
+        "_type": "array",
+        "_sample_values": [
+          "smelting",
+          "sword",
+          "melee",
+          "advanced",
+          "buff"
+        ],
+        "_total_unique_values": 32
+      }
+    },
+    "outputId": {
+      "_type": "string",
+      "_sample_values": [
+        "test_healing_potion",
+        "test_ultimate_sword",
+        "test_multi_effect_potion",
+        "test_conflicting_output",
+        "test_tagless_output",
+        "test_plain_sword",
+        "test_gold_nugget",
+        "test_conflicting_sword",
+        "test_default_output",
+        "test_tagless_sword"
+      ],
+      "_total_unique_values": 10
+    },
+    "outputQty": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        3
+      ],
+      "_total_unique_values": 2
+    },
+    "outputs": {
+      "_type": "array",
+      "_sample_values": [],
+      "_total_unique_values": 0,
+      "materialId": {
+        "_type": "string",
+        "_sample_values": [
+          "iron_ingot"
+        ],
+        "_total_unique_values": 1
+      },
+      "quantity": {
+        "_type": "integer",
+        "_sample_values": [
+          1
+        ],
+        "_total_unique_values": 1
+      },
+      "rarity": {
+        "_type": "string",
+        "_sample_values": [
+          "common"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "recipeId": {
+      "_type": "string",
+      "_sample_values": [
+        "test_smithing_conflicting_hands",
+        "test_refining_all_bonuses",
+        "test_alchemy_explicit_potion",
+        "test_alchemy_multiple_effects",
+        "test_smithing_empty_tags",
+        "test_alchemy_conflicting_type",
+        "test_refining_high_probability",
+        "test_refining_alloying_upgrade",
+        "test_alchemy_empty_tags",
+        "test_refining_empty_tags"
+      ],
+      "_total_unique_values": 15
+    },
+    "stationTier": {
+      "_type": "integer",
+      "_sample_values": [
+        1,
+        2,
+        3
+      ],
+      "_total_unique_values": 3
+    },
+    "stationType": {
+      "_type": "string",
+      "_sample_values": [
+        "smithing",
+        "alchemy",
+        "refining"
+      ],
+      "_total_unique_values": 3
+    }
+  }
+}

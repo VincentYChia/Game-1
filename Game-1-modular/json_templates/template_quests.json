@@ -2,46 +2,20 @@
   "_meta": {
     "category": "quests",
     "description": "Quest definitions",
-    "generated_at": "2026-01-01T19:53:07.789081",
+    "generated_at": "2026-01-01T19:58:32.934119",
     "source_files": [
       "quests-1.JSON",
       "quests-enhanced.JSON"
+    ],
+    "discovered_root_keys": [
+      "metadata",
+      "quests"
     ],
     "total_items_analyzed": 0
   },
   "_field_documentation": {},
   "_all_possible_values": {
-    "metadata.description": {
-      "values": [
-        "Enhanced quest system - includes requirements, progression, and detailed objectives"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.note": {
-      "values": [
-        "Backwards compatible with v1.0 format"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.version": {
-      "values": [
-        "2.0"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "quests[].completion_dialogue": {
+    "completion_dialogue": {
       "values": [
         "Continue honing your skills, and you'll become legendary!",
         "Excellent work! You've proven yourself capable.",
@@ -59,7 +33,7 @@
       ],
       "occurrences": 6
     },
-    "quests[].description": {
+    "description": {
       "values": [
         "The Battle Master challenges you to defeat 3 enemies to prove your combat prowess.",
         "The Elder Sage wants you to gather 5 oak logs to prove your resourcefulness.",
@@ -67,12 +41,12 @@
       ],
       "count": 3,
       "types": [
-        "object",
-        "string"
+        "string",
+        "object"
       ],
       "occurrences": 6
     },
-    "quests[].description.long": {
+    "description.long": {
       "values": [
         "The Battle Master challenges you to defeat 3 enemies to prove your combat prowess. Venture into the wilderness and return victorious.",
         "The Elder Sage wants you to gather 5 oak logs to prove your resourcefulness. Approach oak trees and use your axe to gather wood.",
@@ -84,7 +58,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].description.narrative": {
+    "description.narrative": {
       "values": [
         "A warrior is defined by their deeds. Show me you can stand against the dangers of this world.",
         "Every journey begins with a single step. Show me you can gather what nature provides.",
@@ -96,7 +70,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].description.short": {
+    "description.short": {
       "values": [
         "Collect 3 copper ore and 3 iron ore",
         "Defeat 3 enemies",
@@ -108,7 +82,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].givenBy": {
+    "givenBy": {
       "values": [
         "combat_trainer",
         "mysterious_trader",
@@ -120,7 +94,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].metadata.difficulty": {
+    "metadata.difficulty": {
       "values": [
         "easy",
         "medium"
@@ -131,7 +105,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].metadata.estimatedTime": {
+    "metadata.estimatedTime": {
       "values": [
         "10 minutes",
         "15 minutes",
@@ -143,7 +117,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].metadata.narrative": {
+    "metadata.narrative": {
       "values": [
         "The Wandering Trader's research requires various metals. This quest can be repeated daily.",
         "The first quest given to all travelers. A simple test of gathering skills.",
@@ -155,7 +129,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].metadata.tags": {
+    "metadata.tags": {
       "values": [
         "combat",
         "gathering",
@@ -171,7 +145,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].name": {
+    "name": {
       "values": [
         "First Steps",
         "Material Research",
@@ -183,7 +157,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].npc_id": {
+    "npc_id": {
       "values": [
         "combat_trainer",
         "mysterious_trader",
@@ -195,7 +169,7 @@
       ],
       "occurrences": 6
     },
-    "quests[].objectives.enemies_killed": {
+    "objectives.enemies_killed": {
       "values": [
         3
       ],
@@ -205,7 +179,7 @@
       ],
       "occurrences": 2
     },
-    "quests[].objectives.items[].description": {
+    "objectives.items[].description": {
       "values": [
         "Gather Oak Logs",
         "Mine Copper Ore",
@@ -217,7 +191,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].objectives.items[].item_id": {
+    "objectives.items[].item_id": {
       "values": [
         "copper_ore",
         "iron_ore",
@@ -229,7 +203,7 @@
       ],
       "occurrences": 6
     },
-    "quests[].objectives.items[].materialId": {
+    "objectives.items[].materialId": {
       "values": [
         "copper_ore",
         "iron_ore",
@@ -241,7 +215,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].objectives.items[].objectiveId": {
+    "objectives.items[].objectiveId": {
       "values": [
         "obj_gather_copper",
         "obj_gather_iron",
@@ -253,7 +227,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].objectives.items[].optional": {
+    "objectives.items[].optional": {
       "values": [
         false
       ],
@@ -263,7 +237,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].objectives.items[].quantity": {
+    "objectives.items[].quantity": {
       "values": [
         3,
         5
@@ -274,7 +248,7 @@
       ],
       "occurrences": 6
     },
-    "quests[].objectives.objective_type": {
+    "objectives.objective_type": {
       "values": [
         "combat",
         "gather"
@@ -285,7 +259,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].objectives.target.description": {
+    "objectives.target.description": {
       "values": [
         "Defeat any 3 enemies"
       ],
@@ -295,7 +269,7 @@
       ],
       "occurrences": 1
     },
-    "quests[].objectives.target.quantity": {
+    "objectives.target.quantity": {
       "values": [
         3
       ],
@@ -305,7 +279,7 @@
       ],
       "occurrences": 1
     },
-    "quests[].objectives.type": {
+    "objectives.type": {
       "values": [
         "combat",
         "gather"
@@ -316,7 +290,7 @@
       ],
       "occurrences": 6
     },
-    "quests[].progression.cooldown": {
+    "progression.cooldown": {
       "values": [
         3600
       ],
@@ -327,7 +301,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].progression.isRepeatable": {
+    "progression.isRepeatable": {
       "values": [
         false,
         true
@@ -338,7 +312,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].progression.questChain": {
+    "progression.questChain": {
       "values": [
         "combat_chain",
         "mining_chain",
@@ -350,7 +324,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].questId": {
+    "questId": {
       "values": [
         "combat_quest",
         "gathering_quest",
@@ -362,7 +336,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].questType": {
+    "questType": {
       "values": [
         "combat",
         "side",
@@ -374,7 +348,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].quest_id": {
+    "quest_id": {
       "values": [
         "combat_quest",
         "gathering_quest",
@@ -386,7 +360,7 @@
       ],
       "occurrences": 6
     },
-    "quests[].requirements.characterLevel": {
+    "requirements.characterLevel": {
       "values": [
         1
       ],
@@ -396,7 +370,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].returnTo": {
+    "returnTo": {
       "values": [
         "combat_trainer",
         "mysterious_trader",
@@ -408,7 +382,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].rewards.experience": {
+    "rewards.experience": {
       "values": [
         100,
         200,
@@ -420,7 +394,7 @@
       ],
       "occurrences": 6
     },
-    "quests[].rewards.gold": {
+    "rewards.gold": {
       "values": [
         0,
         100,
@@ -432,7 +406,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].rewards.health_restore": {
+    "rewards.health_restore": {
       "values": [
         0,
         100,
@@ -444,7 +418,7 @@
       ],
       "occurrences": 5
     },
-    "quests[].rewards.items[].itemId": {
+    "rewards.items[].itemId": {
       "values": [
         "iron_ingot",
         "minor_health_potion",
@@ -457,7 +431,7 @@
       ],
       "occurrences": 5
     },
-    "quests[].rewards.items[].item_id": {
+    "rewards.items[].item_id": {
       "values": [
         "iron_ingot",
         "minor_health_potion",
@@ -470,7 +444,7 @@
       ],
       "occurrences": 10
     },
-    "quests[].rewards.items[].quantity": {
+    "rewards.items[].quantity": {
       "values": [
         1,
         2,
@@ -482,7 +456,7 @@
       ],
       "occurrences": 10
     },
-    "quests[].rewards.mana_restore": {
+    "rewards.mana_restore": {
       "values": [
         0,
         50
@@ -493,7 +467,7 @@
       ],
       "occurrences": 4
     },
-    "quests[].rewards.skills": {
+    "rewards.skills": {
       "values": [
         "combat_strike",
         "fortify",
@@ -506,7 +480,7 @@
       ],
       "occurrences": 6
     },
-    "quests[].rewards.statPoints": {
+    "rewards.statPoints": {
       "values": [
         0,
         1
@@ -517,19 +491,19 @@
       ],
       "occurrences": 3
     },
-    "quests[].rewards.title": {
+    "rewards.title": {
       "values": [
         "apprentice_warrior",
         "novice_forester"
       ],
       "count": 2,
       "types": [
-        "null",
-        "string"
+        "string",
+        "null"
       ],
       "occurrences": 5
     },
-    "quests[].rewards.titles": {
+    "rewards.titles": {
       "values": [
         "apprentice_warrior",
         "novice_forester"
@@ -540,7 +514,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].tier": {
+    "tier": {
       "values": [
         1
       ],
@@ -550,7 +524,7 @@
       ],
       "occurrences": 3
     },
-    "quests[].title": {
+    "title": {
       "values": [
         "First Steps",
         "Material Research",
@@ -564,482 +538,527 @@
     }
   },
   "_usable_template": {
+    "completion_dialogue": [
+      "Excellent work! You've proven yourself capable.",
+      "Here, take these as payment.",
+      "May your journey be prosperous!"
+    ],
+    "description": "The Wandering Trader needs 3 copper ore and 3 iron ore for his studies.",
+    "givenBy": "tutorial_guide",
     "metadata": {
-      "description": "Enhanced quest system - includes requirements, progression, and detailed objectives",
-      "note": "Backwards compatible with v1.0 format",
-      "version": "2.0"
+      "difficulty": "medium",
+      "estimatedTime": "15 minutes",
+      "narrative": "The first quest given to all travelers. A simple test of gathering skills.",
+      "tags": [
+        "warrior",
+        "starter",
+        "combat"
+      ]
     },
-    "quests": [
-      "<value>"
-    ]
+    "name": "Material Research",
+    "npc_id": "tutorial_guide",
+    "objectives": {
+      "enemies_killed": 3,
+      "items": [
+        "<value>"
+      ],
+      "objective_type": "combat",
+      "target": {
+        "description": "Defeat any 3 enemies",
+        "enemyId": null,
+        "quantity": 3,
+        "specificLocation": null
+      },
+      "type": "combat"
+    },
+    "progression": {
+      "cooldown": 3600,
+      "isRepeatable": true,
+      "nextQuest": null,
+      "questChain": "mining_chain"
+    },
+    "questId": "tutorial_quest",
+    "questType": "combat",
+    "quest_id": "tutorial_quest",
+    "requirements": {
+      "characterLevel": 1,
+      "completedQuests": [
+        "<value>"
+      ],
+      "stats": {},
+      "titles": [
+        "<value>"
+      ]
+    },
+    "returnTo": "tutorial_guide",
+    "rewards": {
+      "experience": 200,
+      "gold": 0,
+      "health_restore": 0,
+      "items": [
+        "<value>"
+      ],
+      "mana_restore": 0,
+      "recipes": [
+        "<value>"
+      ],
+      "skills": [
+        "miners_endurance",
+        "fortify",
+        "sprint"
+      ],
+      "statPoints": 0,
+      "title": "novice_forester",
+      "titles": [
+        "novice_forester",
+        "apprentice_warrior"
+      ],
+      "unlocks": [
+        "<value>"
+      ]
+    },
+    "tier": 1,
+    "title": "Material Research"
   },
   "template": {
-    "metadata": {
-      "description": {
+    "completion_dialogue": {
+      "_type": "array",
+      "_sample_values": [
+        "Excellent work! You've proven yourself capable.",
+        "Here, take these as payment.",
+        "May your journey be prosperous!",
+        "Impressive! You fight with the skill of a seasoned warrior.",
+        "You have my deepest thanks, adventurer."
+      ],
+      "_total_unique_values": 9
+    },
+    "description": {
+      "long": {
         "_type": "string",
         "_sample_values": [
-          "Enhanced quest system - includes requirements, progression, and detailed objectives"
+          "The Wandering Trader needs 3 copper ore and 3 iron ore for his studies. Mine rocks to find these ores.",
+          "The Elder Sage wants you to gather 5 oak logs to prove your resourcefulness. Approach oak trees and use your axe to gather wood.",
+          "The Battle Master challenges you to defeat 3 enemies to prove your combat prowess. Venture into the wilderness and return victorious."
         ],
-        "_total_unique_values": 1
+        "_total_unique_values": 3
       },
-      "note": {
+      "narrative": {
         "_type": "string",
         "_sample_values": [
-          "Backwards compatible with v1.0 format"
+          "A warrior is defined by their deeds. Show me you can stand against the dangers of this world.",
+          "I study the properties of metals. Help me gather samples and I'll reward you handsomely.",
+          "Every journey begins with a single step. Show me you can gather what nature provides."
         ],
-        "_total_unique_values": 1
+        "_total_unique_values": 3
       },
-      "version": {
+      "short": {
         "_type": "string",
         "_sample_values": [
-          "2.0"
+          "Collect 3 copper ore and 3 iron ore",
+          "Defeat 3 enemies",
+          "Gather 5 oak logs for the Elder Sage"
         ],
-        "_total_unique_values": 1
+        "_total_unique_values": 3
       }
     },
-    "quests": {
-      "_type": "array",
-      "_sample_values": [],
-      "_total_unique_values": 0,
-      "completion_dialogue": {
+    "givenBy": {
+      "_type": "string",
+      "_sample_values": [
+        "tutorial_guide",
+        "combat_trainer",
+        "mysterious_trader"
+      ],
+      "_total_unique_values": 3
+    },
+    "metadata": {
+      "difficulty": {
+        "_type": "string",
+        "_sample_values": [
+          "medium",
+          "easy"
+        ],
+        "_total_unique_values": 2
+      },
+      "estimatedTime": {
+        "_type": "string",
+        "_sample_values": [
+          "15 minutes",
+          "10 minutes",
+          "5 minutes"
+        ],
+        "_total_unique_values": 3
+      },
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "The first quest given to all travelers. A simple test of gathering skills.",
+          "The first true test of a warrior. Defeat enemies and prove your combat abilities.",
+          "The Wandering Trader's research requires various metals. This quest can be repeated daily."
+        ],
+        "_total_unique_values": 3
+      },
+      "tags": {
         "_type": "array",
         "_sample_values": [
-          "Here, take these as payment.",
-          "I'm honored to grant you these rewards.",
-          "Take these rewards as a token of my gratitude.",
-          "Impressive! You fight with the skill of a seasoned warrior.",
-          "May your journey be prosperous!"
+          "warrior",
+          "starter",
+          "combat",
+          "tutorial",
+          "repeatable"
         ],
-        "_total_unique_values": 9
-      },
-      "description": {
-        "long": {
-          "_type": "string",
-          "_sample_values": [
-            "The Battle Master challenges you to defeat 3 enemies to prove your combat prowess. Venture into the wilderness and return victorious.",
-            "The Elder Sage wants you to gather 5 oak logs to prove your resourcefulness. Approach oak trees and use your axe to gather wood.",
-            "The Wandering Trader needs 3 copper ore and 3 iron ore for his studies. Mine rocks to find these ores."
-          ],
-          "_total_unique_values": 3
-        },
-        "narrative": {
-          "_type": "string",
-          "_sample_values": [
-            "I study the properties of metals. Help me gather samples and I'll reward you handsomely.",
-            "A warrior is defined by their deeds. Show me you can stand against the dangers of this world.",
-            "Every journey begins with a single step. Show me you can gather what nature provides."
-          ],
-          "_total_unique_values": 3
-        },
-        "short": {
-          "_type": "string",
-          "_sample_values": [
-            "Gather 5 oak logs for the Elder Sage",
-            "Defeat 3 enemies",
-            "Collect 3 copper ore and 3 iron ore"
-          ],
-          "_total_unique_values": 3
-        }
-      },
-      "givenBy": {
-        "_type": "string",
+        "_total_unique_values": 7
+      }
+    },
+    "name": {
+      "_type": "string",
+      "_sample_values": [
+        "Material Research",
+        "Prove Your Worth",
+        "First Steps"
+      ],
+      "_total_unique_values": 3
+    },
+    "npc_id": {
+      "_type": "string",
+      "_sample_values": [
+        "tutorial_guide",
+        "combat_trainer",
+        "mysterious_trader"
+      ],
+      "_total_unique_values": 3
+    },
+    "objectives": {
+      "enemies_killed": {
+        "_type": "integer",
         "_sample_values": [
-          "mysterious_trader",
-          "combat_trainer",
-          "tutorial_guide"
+          3
         ],
-        "_total_unique_values": 3
+        "_total_unique_values": 1
       },
-      "metadata": {
-        "difficulty": {
+      "items": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0,
+        "description": {
           "_type": "string",
           "_sample_values": [
-            "medium",
-            "easy"
+            "Gather Oak Logs",
+            "Mine Copper Ore",
+            "Mine Iron Ore"
+          ],
+          "_total_unique_values": 3
+        },
+        "item_id": {
+          "_type": "string",
+          "_sample_values": [
+            "oak_log",
+            "iron_ore",
+            "copper_ore"
+          ],
+          "_total_unique_values": 3
+        },
+        "materialId": {
+          "_type": "string",
+          "_sample_values": [
+            "oak_log",
+            "iron_ore",
+            "copper_ore"
+          ],
+          "_total_unique_values": 3
+        },
+        "objectiveId": {
+          "_type": "string",
+          "_sample_values": [
+            "obj_gather_copper",
+            "obj_gather_iron",
+            "obj_tutorial_gather_oak"
+          ],
+          "_total_unique_values": 3
+        },
+        "optional": {
+          "_type": "boolean",
+          "_sample_values": [
+            false
+          ],
+          "_total_unique_values": 1
+        },
+        "quantity": {
+          "_type": "integer",
+          "_sample_values": [
+            3,
+            5
           ],
           "_total_unique_values": 2
-        },
-        "estimatedTime": {
-          "_type": "string",
-          "_sample_values": [
-            "10 minutes",
-            "5 minutes",
-            "15 minutes"
-          ],
-          "_total_unique_values": 3
-        },
-        "narrative": {
-          "_type": "string",
-          "_sample_values": [
-            "The first true test of a warrior. Defeat enemies and prove your combat abilities.",
-            "The first quest given to all travelers. A simple test of gathering skills.",
-            "The Wandering Trader's research requires various metals. This quest can be repeated daily."
-          ],
-          "_total_unique_values": 3
-        },
-        "tags": {
-          "_type": "array",
-          "_sample_values": [
-            "tutorial",
-            "repeatable",
-            "gathering",
-            "starter",
-            "mining"
-          ],
-          "_total_unique_values": 7
         }
       },
-      "name": {
+      "objective_type": {
         "_type": "string",
         "_sample_values": [
-          "Prove Your Worth",
-          "First Steps",
-          "Material Research"
+          "combat",
+          "gather"
         ],
-        "_total_unique_values": 3
+        "_total_unique_values": 2
       },
-      "npc_id": {
-        "_type": "string",
-        "_sample_values": [
-          "mysterious_trader",
-          "combat_trainer",
-          "tutorial_guide"
-        ],
-        "_total_unique_values": 3
-      },
-      "objectives": {
-        "enemies_killed": {
+      "target": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Defeat any 3 enemies"
+          ],
+          "_total_unique_values": 1
+        },
+        "enemyId": {
+          "_type": "null",
+          "_sample_values": [
+            null
+          ],
+          "_total_unique_values": 1
+        },
+        "quantity": {
           "_type": "integer",
           "_sample_values": [
             3
           ],
           "_total_unique_values": 1
         },
-        "items": {
-          "_type": "array",
-          "_sample_values": [],
-          "_total_unique_values": 0,
-          "description": {
-            "_type": "string",
-            "_sample_values": [
-              "Mine Copper Ore",
-              "Mine Iron Ore",
-              "Gather Oak Logs"
-            ],
-            "_total_unique_values": 3
-          },
-          "item_id": {
-            "_type": "string",
-            "_sample_values": [
-              "iron_ore",
-              "copper_ore",
-              "oak_log"
-            ],
-            "_total_unique_values": 3
-          },
-          "materialId": {
-            "_type": "string",
-            "_sample_values": [
-              "iron_ore",
-              "copper_ore",
-              "oak_log"
-            ],
-            "_total_unique_values": 3
-          },
-          "objectiveId": {
-            "_type": "string",
-            "_sample_values": [
-              "obj_gather_iron",
-              "obj_tutorial_gather_oak",
-              "obj_gather_copper"
-            ],
-            "_total_unique_values": 3
-          },
-          "optional": {
-            "_type": "boolean",
-            "_sample_values": [
-              false
-            ],
-            "_total_unique_values": 1
-          },
-          "quantity": {
-            "_type": "integer",
-            "_sample_values": [
-              3,
-              5
-            ],
-            "_total_unique_values": 2
-          }
-        },
-        "objective_type": {
-          "_type": "string",
-          "_sample_values": [
-            "gather",
-            "combat"
-          ],
-          "_total_unique_values": 2
-        },
-        "target": {
-          "description": {
-            "_type": "string",
-            "_sample_values": [
-              "Defeat any 3 enemies"
-            ],
-            "_total_unique_values": 1
-          },
-          "enemyId": {
-            "_type": "null",
-            "_sample_values": [
-              null
-            ],
-            "_total_unique_values": 1
-          },
-          "quantity": {
-            "_type": "integer",
-            "_sample_values": [
-              3
-            ],
-            "_total_unique_values": 1
-          },
-          "specificLocation": {
-            "_type": "null",
-            "_sample_values": [
-              null
-            ],
-            "_total_unique_values": 1
-          }
-        },
-        "type": {
-          "_type": "string",
-          "_sample_values": [
-            "gather",
-            "combat"
-          ],
-          "_total_unique_values": 2
-        }
-      },
-      "progression": {
-        "cooldown": {
-          "_type": "integer",
-          "_sample_values": [
-            null,
-            3600
-          ],
-          "_total_unique_values": 2
-        },
-        "isRepeatable": {
-          "_type": "boolean",
-          "_sample_values": [
-            false,
-            true
-          ],
-          "_total_unique_values": 2
-        },
-        "nextQuest": {
+        "specificLocation": {
           "_type": "null",
           "_sample_values": [
             null
           ],
           "_total_unique_values": 1
-        },
-        "questChain": {
-          "_type": "string",
-          "_sample_values": [
-            "tutorial_chain",
-            "mining_chain",
-            "combat_chain"
-          ],
-          "_total_unique_values": 3
         }
       },
-      "questId": {
+      "type": {
         "_type": "string",
         "_sample_values": [
-          "gathering_quest",
-          "combat_quest",
-          "tutorial_quest"
+          "combat",
+          "gather"
         ],
-        "_total_unique_values": 3
+        "_total_unique_values": 2
+      }
+    },
+    "progression": {
+      "cooldown": {
+        "_type": "integer",
+        "_sample_values": [
+          null,
+          3600
+        ],
+        "_total_unique_values": 2
       },
-      "questType": {
+      "isRepeatable": {
+        "_type": "boolean",
+        "_sample_values": [
+          false,
+          true
+        ],
+        "_total_unique_values": 2
+      },
+      "nextQuest": {
+        "_type": "null",
+        "_sample_values": [
+          null
+        ],
+        "_total_unique_values": 1
+      },
+      "questChain": {
         "_type": "string",
         "_sample_values": [
-          "side",
-          "tutorial",
-          "combat"
+          "mining_chain",
+          "tutorial_chain",
+          "combat_chain"
         ],
         "_total_unique_values": 3
-      },
-      "quest_id": {
-        "_type": "string",
-        "_sample_values": [
-          "gathering_quest",
-          "combat_quest",
-          "tutorial_quest"
-        ],
-        "_total_unique_values": 3
-      },
-      "requirements": {
-        "characterLevel": {
-          "_type": "integer",
-          "_sample_values": [
-            1
-          ],
-          "_total_unique_values": 1
-        },
-        "completedQuests": {
-          "_type": "array",
-          "_sample_values": [],
-          "_total_unique_values": 0
-        },
-        "stats": {},
-        "titles": {
-          "_type": "array",
-          "_sample_values": [],
-          "_total_unique_values": 0
-        }
-      },
-      "returnTo": {
-        "_type": "string",
-        "_sample_values": [
-          "mysterious_trader",
-          "combat_trainer",
-          "tutorial_guide"
-        ],
-        "_total_unique_values": 3
-      },
-      "rewards": {
-        "experience": {
-          "_type": "integer",
-          "_sample_values": [
-            200,
-            100,
-            300
-          ],
-          "_total_unique_values": 3
-        },
-        "gold": {
-          "_type": "integer",
-          "_sample_values": [
-            0,
-            50,
-            100
-          ],
-          "_total_unique_values": 3
-        },
-        "health_restore": {
-          "_type": "integer",
-          "_sample_values": [
-            0,
-            50,
-            100
-          ],
-          "_total_unique_values": 3
-        },
-        "items": {
-          "_type": "array",
-          "_sample_values": [],
-          "_total_unique_values": 0,
-          "itemId": {
-            "_type": "string",
-            "_sample_values": [
-              "minor_strength_potion",
-              "minor_mana_potion",
-              "minor_health_potion",
-              "iron_ingot"
-            ],
-            "_total_unique_values": 4
-          },
-          "item_id": {
-            "_type": "string",
-            "_sample_values": [
-              "minor_strength_potion",
-              "minor_mana_potion",
-              "minor_health_potion",
-              "iron_ingot"
-            ],
-            "_total_unique_values": 4
-          },
-          "quantity": {
-            "_type": "integer",
-            "_sample_values": [
-              1,
-              2,
-              3
-            ],
-            "_total_unique_values": 3
-          }
-        },
-        "mana_restore": {
-          "_type": "integer",
-          "_sample_values": [
-            0,
-            50
-          ],
-          "_total_unique_values": 2
-        },
-        "recipes": {
-          "_type": "array",
-          "_sample_values": [],
-          "_total_unique_values": 0
-        },
-        "skills": {
-          "_type": "array",
-          "_sample_values": [
-            "combat_strike",
-            "fortify",
-            "miners_endurance",
-            "sprint"
-          ],
-          "_total_unique_values": 4
-        },
-        "statPoints": {
-          "_type": "integer",
-          "_sample_values": [
-            0,
-            1
-          ],
-          "_total_unique_values": 2
-        },
-        "title": {
-          "_type": "null",
-          "_sample_values": [
-            "apprentice_warrior",
-            "novice_forester",
-            null
-          ],
-          "_total_unique_values": 3
-        },
-        "titles": {
-          "_type": "array",
-          "_sample_values": [
-            "apprentice_warrior",
-            "novice_forester"
-          ],
-          "_total_unique_values": 2
-        },
-        "unlocks": {
-          "_type": "array",
-          "_sample_values": [],
-          "_total_unique_values": 0
-        }
-      },
-      "tier": {
+      }
+    },
+    "questId": {
+      "_type": "string",
+      "_sample_values": [
+        "tutorial_quest",
+        "combat_quest",
+        "gathering_quest"
+      ],
+      "_total_unique_values": 3
+    },
+    "questType": {
+      "_type": "string",
+      "_sample_values": [
+        "combat",
+        "side",
+        "tutorial"
+      ],
+      "_total_unique_values": 3
+    },
+    "quest_id": {
+      "_type": "string",
+      "_sample_values": [
+        "tutorial_quest",
+        "combat_quest",
+        "gathering_quest"
+      ],
+      "_total_unique_values": 3
+    },
+    "requirements": {
+      "characterLevel": {
         "_type": "integer",
         "_sample_values": [
           1
         ],
         "_total_unique_values": 1
       },
+      "completedQuests": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0
+      },
+      "stats": {},
+      "titles": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0
+      }
+    },
+    "returnTo": {
+      "_type": "string",
+      "_sample_values": [
+        "tutorial_guide",
+        "combat_trainer",
+        "mysterious_trader"
+      ],
+      "_total_unique_values": 3
+    },
+    "rewards": {
+      "experience": {
+        "_type": "integer",
+        "_sample_values": [
+          200,
+          100,
+          300
+        ],
+        "_total_unique_values": 3
+      },
+      "gold": {
+        "_type": "integer",
+        "_sample_values": [
+          0,
+          50,
+          100
+        ],
+        "_total_unique_values": 3
+      },
+      "health_restore": {
+        "_type": "integer",
+        "_sample_values": [
+          0,
+          50,
+          100
+        ],
+        "_total_unique_values": 3
+      },
+      "items": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0,
+        "itemId": {
+          "_type": "string",
+          "_sample_values": [
+            "minor_health_potion",
+            "iron_ingot",
+            "minor_strength_potion",
+            "minor_mana_potion"
+          ],
+          "_total_unique_values": 4
+        },
+        "item_id": {
+          "_type": "string",
+          "_sample_values": [
+            "minor_health_potion",
+            "iron_ingot",
+            "minor_strength_potion",
+            "minor_mana_potion"
+          ],
+          "_total_unique_values": 4
+        },
+        "quantity": {
+          "_type": "integer",
+          "_sample_values": [
+            1,
+            2,
+            3
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "mana_restore": {
+        "_type": "integer",
+        "_sample_values": [
+          0,
+          50
+        ],
+        "_total_unique_values": 2
+      },
+      "recipes": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0
+      },
+      "skills": {
+        "_type": "array",
+        "_sample_values": [
+          "miners_endurance",
+          "fortify",
+          "sprint",
+          "combat_strike"
+        ],
+        "_total_unique_values": 4
+      },
+      "statPoints": {
+        "_type": "integer",
+        "_sample_values": [
+          0,
+          1
+        ],
+        "_total_unique_values": 2
+      },
       "title": {
         "_type": "string",
         "_sample_values": [
-          "Prove Your Worth",
-          "First Steps",
-          "Material Research"
+          "novice_forester",
+          "apprentice_warrior",
+          null
         ],
         "_total_unique_values": 3
+      },
+      "titles": {
+        "_type": "array",
+        "_sample_values": [
+          "novice_forester",
+          "apprentice_warrior"
+        ],
+        "_total_unique_values": 2
+      },
+      "unlocks": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0
       }
+    },
+    "tier": {
+      "_type": "integer",
+      "_sample_values": [
+        1
+      ],
+      "_total_unique_values": 1
+    },
+    "title": {
+      "_type": "string",
+      "_sample_values": [
+        "Material Research",
+        "Prove Your Worth",
+        "First Steps"
+      ],
+      "_total_unique_values": 3
     }
   }
 }

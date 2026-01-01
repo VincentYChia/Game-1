@@ -2,46 +2,20 @@
   "_meta": {
     "category": "npcs",
     "description": "NPC definitions",
-    "generated_at": "2026-01-01T19:53:07.787715",
+    "generated_at": "2026-01-01T19:58:32.952188",
     "source_files": [
       "npcs-1.JSON",
       "npcs-enhanced.JSON"
+    ],
+    "discovered_root_keys": [
+      "metadata",
+      "npcs"
     ],
     "total_items_analyzed": 0
   },
   "_field_documentation": {},
   "_all_possible_values": {
-    "metadata.description": {
-      "values": [
-        "Enhanced NPC system - includes services, behavior, and unlock conditions"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.note": {
-      "values": [
-        "Backwards compatible with v1.0 format"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.version": {
-      "values": [
-        "2.0"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "npcs[].behavior.interactionRange": {
+    "behavior.interactionRange": {
       "values": [
         3.0
       ],
@@ -51,7 +25,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].behavior.isStatic": {
+    "behavior.isStatic": {
       "values": [
         false,
         true
@@ -62,19 +36,19 @@
       ],
       "occurrences": 3
     },
-    "npcs[].behavior.wanderRadius": {
+    "behavior.wanderRadius": {
       "values": [
         0,
         5.0
       ],
       "count": 2,
       "types": [
-        "number",
-        "integer"
+        "integer",
+        "number"
       ],
       "occurrences": 3
     },
-    "npcs[].dialogue.dialogue_lines": {
+    "dialogue.dialogue_lines": {
       "values": [
         "Defeat some enemies, and I'll reward your bravery.",
         "Greetings! I've traveled far and wide.",
@@ -92,7 +66,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].dialogue.farewell": {
+    "dialogue.farewell": {
       "values": [
         "Fight with honor!",
         "May your path be blessed with fortune!",
@@ -104,7 +78,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].dialogue.greeting.allComplete": {
+    "dialogue.greeting.allComplete": {
       "values": [
         "You are now a true warrior. Continue your training!",
         "You've learned all I can teach. Go forth and explore!",
@@ -116,7 +90,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].dialogue.greeting.default": {
+    "dialogue.greeting.default": {
       "values": [
         "Greetings! I've traveled far and wide seeking rare materials.",
         "Ho there, warrior! Ready to test your mettle?",
@@ -128,7 +102,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].dialogue.greeting.questComplete": {
+    "dialogue.greeting.questComplete": {
       "values": [
         "Excellent! Those will serve my research perfectly.",
         "Impressive! You've earned my respect and rewards.",
@@ -140,7 +114,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].dialogue.greeting.questInProgress": {
+    "dialogue.greeting.questInProgress": {
       "values": [
         "Go forth and prove yourself in battle!",
         "Have you found those materials yet? I await eagerly!",
@@ -152,7 +126,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].dialogue_lines": {
+    "dialogue_lines": {
       "values": [
         "Defeat some enemies, and I'll reward your bravery.",
         "Greetings! I've traveled far and wide.",
@@ -170,7 +144,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].interaction_radius": {
+    "interaction_radius": {
       "values": [
         3.0
       ],
@@ -180,7 +154,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].metadata.narrative": {
+    "metadata.narrative": {
       "values": [
         "A mysterious figure who wanders the lands collecting rare materials. His true purpose remains unknown.",
         "A veteran warrior who trains adventurers in the art of combat. His scars tell stories of countless battles.",
@@ -192,7 +166,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].metadata.tags": {
+    "metadata.tags": {
       "values": [
         "combat",
         "essential",
@@ -209,7 +183,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].name": {
+    "name": {
       "values": [
         "Battle Master",
         "Elder Sage",
@@ -221,7 +195,7 @@
       ],
       "occurrences": 6
     },
-    "npcs[].npc_id": {
+    "npc_id": {
       "values": [
         "combat_trainer",
         "mysterious_trader",
@@ -233,7 +207,7 @@
       ],
       "occurrences": 6
     },
-    "npcs[].position.x": {
+    "position.x": {
       "values": [
         48.0,
         52.0,
@@ -245,7 +219,7 @@
       ],
       "occurrences": 6
     },
-    "npcs[].position.y": {
+    "position.y": {
       "values": [
         48.0,
         52.0,
@@ -257,7 +231,7 @@
       ],
       "occurrences": 6
     },
-    "npcs[].position.z": {
+    "position.z": {
       "values": [
         0.0
       ],
@@ -267,7 +241,7 @@
       ],
       "occurrences": 6
     },
-    "npcs[].quests": {
+    "quests": {
       "values": [
         "combat_quest",
         "gathering_quest",
@@ -279,7 +253,7 @@
       ],
       "occurrences": 6
     },
-    "npcs[].services.canRepair": {
+    "services.canRepair": {
       "values": [
         false,
         true
@@ -290,7 +264,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].services.canTeach": {
+    "services.canTeach": {
       "values": [
         true
       ],
@@ -300,7 +274,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].services.canTrade": {
+    "services.canTrade": {
       "values": [
         false,
         true
@@ -311,7 +285,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].services.specialServices": {
+    "services.specialServices": {
       "values": [
         "identify_items",
         "skill_training"
@@ -322,7 +296,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].services.teachableSkills": {
+    "services.teachableSkills": {
       "values": [
         "combat_strike",
         "fortify",
@@ -335,7 +309,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].sprite_color": {
+    "sprite_color": {
       "values": [
         0,
         100,
@@ -350,7 +324,7 @@
       ],
       "occurrences": 6
     },
-    "npcs[].title": {
+    "title": {
       "values": [
         "Ancient Mentor",
         "Collector of Rarities",
@@ -362,7 +336,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].unlockConditions.alwaysAvailable": {
+    "unlockConditions.alwaysAvailable": {
       "values": [
         true
       ],
@@ -372,7 +346,7 @@
       ],
       "occurrences": 3
     },
-    "npcs[].unlockConditions.characterLevel": {
+    "unlockConditions.characterLevel": {
       "values": [
         0
       ],
@@ -384,305 +358,341 @@
     }
   },
   "_usable_template": {
-    "metadata": {
-      "description": "Enhanced NPC system - includes services, behavior, and unlock conditions",
-      "note": "Backwards compatible with v1.0 format",
-      "version": "2.0"
+    "behavior": {
+      "interactionRange": 3.0,
+      "isStatic": true,
+      "wanderRadius": 0
     },
-    "npcs": [
-      "<value>"
-    ]
-  },
-  "template": {
-    "metadata": {
-      "description": {
-        "_type": "string",
-        "_sample_values": [
-          "Enhanced NPC system - includes services, behavior, and unlock conditions"
-        ],
-        "_total_unique_values": 1
-      },
-      "note": {
-        "_type": "string",
-        "_sample_values": [
-          "Backwards compatible with v1.0 format"
-        ],
-        "_total_unique_values": 1
-      },
-      "version": {
-        "_type": "string",
-        "_sample_values": [
-          "2.0"
-        ],
-        "_total_unique_values": 1
+    "dialogue": {
+      "dialogue_lines": [
+        "Perhaps you could assist me?",
+        "Welcome, traveler! I sense great potential within you.",
+        "The wilds are dangerous, but I can help you prepare."
+      ],
+      "farewell": "May your path be blessed with fortune!",
+      "greeting": {
+        "allComplete": "You are now a true warrior. Continue your training!",
+        "default": "Greetings! I've traveled far and wide seeking rare materials.",
+        "questComplete": "Excellent! Those will serve my research perfectly.",
+        "questInProgress": "How goes your task? The forest awaits your efforts."
       }
     },
-    "npcs": {
-      "_type": "array",
-      "_sample_values": [],
-      "_total_unique_values": 0,
-      "behavior": {
-        "interactionRange": {
-          "_type": "number",
-          "_sample_values": [
-            3.0
-          ],
-          "_total_unique_values": 1
-        },
-        "isStatic": {
-          "_type": "boolean",
-          "_sample_values": [
-            false,
-            true
-          ],
-          "_total_unique_values": 2
-        },
-        "wanderRadius": {
-          "_type": "number",
-          "_sample_values": [
-            0,
-            5.0
-          ],
-          "_total_unique_values": 2
-        }
-      },
-      "dialogue": {
-        "dialogue_lines": {
-          "_type": "array",
-          "_sample_values": [
-            "Defeat some enemies, and I'll reward your bravery.",
-            "Welcome, traveler! I sense great potential within you.",
-            "Ho there, warrior! Ready to test your mettle?",
-            "The wilds are dangerous, but I can help you prepare.",
-            "Greetings! I've traveled far and wide."
-          ],
-          "_total_unique_values": 9
-        },
-        "farewell": {
-          "_type": "string",
-          "_sample_values": [
-            "Fight with honor!",
-            "May your path be blessed with fortune!",
-            "Safe travels, and may you find rare treasures!"
-          ],
-          "_total_unique_values": 3
-        },
-        "greeting": {
-          "allComplete": {
-            "_type": "string",
-            "_sample_values": [
-              "Your aid has been invaluable, friend.",
-              "You are now a true warrior. Continue your training!",
-              "You've learned all I can teach. Go forth and explore!"
-            ],
-            "_total_unique_values": 3
-          },
-          "default": {
-            "_type": "string",
-            "_sample_values": [
-              "Ho there, warrior! Ready to test your mettle?",
-              "Greetings! I've traveled far and wide seeking rare materials.",
-              "Welcome, traveler! I sense great potential within you."
-            ],
-            "_total_unique_values": 3
-          },
-          "questComplete": {
-            "_type": "string",
-            "_sample_values": [
-              "Well done! Return to me when ready to claim your rewards.",
-              "Impressive! You've earned my respect and rewards.",
-              "Excellent! Those will serve my research perfectly."
-            ],
-            "_total_unique_values": 3
-          },
-          "questInProgress": {
-            "_type": "string",
-            "_sample_values": [
-              "Go forth and prove yourself in battle!",
-              "Have you found those materials yet? I await eagerly!",
-              "How goes your task? The forest awaits your efforts."
-            ],
-            "_total_unique_values": 3
-          }
-        }
-      },
-      "dialogue_lines": {
-        "_type": "array",
-        "_sample_values": [
-          "Defeat some enemies, and I'll reward your bravery.",
-          "Welcome, traveler! I sense great potential within you.",
-          "Ho there, warrior! Ready to test your mettle?",
-          "The wilds are dangerous, but I can help you prepare.",
-          "Greetings! I've traveled far and wide."
-        ],
-        "_total_unique_values": 9
-      },
-      "interaction_radius": {
+    "dialogue_lines": [
+      "Perhaps you could assist me?",
+      "Welcome, traveler! I sense great potential within you.",
+      "The wilds are dangerous, but I can help you prepare."
+    ],
+    "interaction_radius": 3.0,
+    "metadata": {
+      "narrative": "The Elder Sage has guided countless travelers on their first steps. His wisdom is freely given to all who seek it.",
+      "tags": [
+        "wandering",
+        "trader",
+        "starter"
+      ]
+    },
+    "name": "Wandering Trader",
+    "npc_id": "tutorial_guide",
+    "position": {
+      "x": 48.0,
+      "y": 48.0,
+      "z": 0.0
+    },
+    "quests": [
+      "tutorial_quest",
+      "combat_quest",
+      "gathering_quest"
+    ],
+    "services": {
+      "canRepair": true,
+      "canTeach": true,
+      "canTrade": true,
+      "specialServices": [
+        "skill_training",
+        "identify_items"
+      ],
+      "teachableSkills": [
+        "miners_endurance",
+        "fortify",
+        "sprint"
+      ]
+    },
+    "sprite_color": [
+      0,
+      100,
+      200
+    ],
+    "title": "Collector of Rarities",
+    "unlockConditions": {
+      "alwaysAvailable": true,
+      "characterLevel": 0,
+      "completedQuests": [
+        "<value>"
+      ]
+    }
+  },
+  "template": {
+    "behavior": {
+      "interactionRange": {
         "_type": "number",
         "_sample_values": [
           3.0
         ],
         "_total_unique_values": 1
       },
-      "metadata": {
-        "narrative": {
-          "_type": "string",
-          "_sample_values": [
-            "The Elder Sage has guided countless travelers on their first steps. His wisdom is freely given to all who seek it.",
-            "A veteran warrior who trains adventurers in the art of combat. His scars tell stories of countless battles.",
-            "A mysterious figure who wanders the lands collecting rare materials. His true purpose remains unknown."
-          ],
-          "_total_unique_values": 3
-        },
-        "tags": {
-          "_type": "array",
-          "_sample_values": [
-            "tutorial",
-            "trader",
-            "starter",
-            "wandering",
-            "combat"
-          ],
-          "_total_unique_values": 8
-        }
-      },
-      "name": {
-        "_type": "string",
+      "isStatic": {
+        "_type": "boolean",
         "_sample_values": [
-          "Battle Master",
-          "Wandering Trader",
-          "Elder Sage"
+          false,
+          true
         ],
-        "_total_unique_values": 3
+        "_total_unique_values": 2
       },
-      "npc_id": {
-        "_type": "string",
-        "_sample_values": [
-          "mysterious_trader",
-          "combat_trainer",
-          "tutorial_guide"
-        ],
-        "_total_unique_values": 3
-      },
-      "position": {
-        "x": {
-          "_type": "number",
-          "_sample_values": [
-            48.0,
-            65.0,
-            52.0
-          ],
-          "_total_unique_values": 3
-        },
-        "y": {
-          "_type": "number",
-          "_sample_values": [
-            48.0,
-            58.0,
-            52.0
-          ],
-          "_total_unique_values": 3
-        },
-        "z": {
-          "_type": "number",
-          "_sample_values": [
-            0.0
-          ],
-          "_total_unique_values": 1
-        }
-      },
-      "quests": {
-        "_type": "array",
-        "_sample_values": [
-          "gathering_quest",
-          "combat_quest",
-          "tutorial_quest"
-        ],
-        "_total_unique_values": 3
-      },
-      "services": {
-        "canRepair": {
-          "_type": "boolean",
-          "_sample_values": [
-            false,
-            true
-          ],
-          "_total_unique_values": 2
-        },
-        "canTeach": {
-          "_type": "boolean",
-          "_sample_values": [
-            true
-          ],
-          "_total_unique_values": 1
-        },
-        "canTrade": {
-          "_type": "boolean",
-          "_sample_values": [
-            false,
-            true
-          ],
-          "_total_unique_values": 2
-        },
-        "specialServices": {
-          "_type": "array",
-          "_sample_values": [
-            "skill_training",
-            "identify_items"
-          ],
-          "_total_unique_values": 2
-        },
-        "teachableSkills": {
-          "_type": "array",
-          "_sample_values": [
-            "combat_strike",
-            "fortify",
-            "miners_endurance",
-            "sprint"
-          ],
-          "_total_unique_values": 4
-        }
-      },
-      "sprite_color": {
-        "_type": "array",
+      "wanderRadius": {
+        "_type": "integer",
         "_sample_values": [
           0,
-          100,
-          200,
-          150,
-          215
+          5.0
         ],
-        "_total_unique_values": 6
+        "_total_unique_values": 2
+      }
+    },
+    "dialogue": {
+      "dialogue_lines": {
+        "_type": "array",
+        "_sample_values": [
+          "Perhaps you could assist me?",
+          "Welcome, traveler! I sense great potential within you.",
+          "The wilds are dangerous, but I can help you prepare.",
+          "Greetings! I've traveled far and wide.",
+          "Ho there, warrior! Ready to test your mettle?"
+        ],
+        "_total_unique_values": 9
       },
-      "title": {
+      "farewell": {
         "_type": "string",
         "_sample_values": [
-          "Weapons Instructor",
-          "Collector of Rarities",
-          "Ancient Mentor"
+          "May your path be blessed with fortune!",
+          "Safe travels, and may you find rare treasures!",
+          "Fight with honor!"
         ],
         "_total_unique_values": 3
       },
-      "unlockConditions": {
-        "alwaysAvailable": {
-          "_type": "boolean",
+      "greeting": {
+        "allComplete": {
+          "_type": "string",
           "_sample_values": [
-            true
+            "You are now a true warrior. Continue your training!",
+            "You've learned all I can teach. Go forth and explore!",
+            "Your aid has been invaluable, friend."
           ],
-          "_total_unique_values": 1
+          "_total_unique_values": 3
         },
-        "characterLevel": {
-          "_type": "integer",
+        "default": {
+          "_type": "string",
           "_sample_values": [
-            0
+            "Greetings! I've traveled far and wide seeking rare materials.",
+            "Ho there, warrior! Ready to test your mettle?",
+            "Welcome, traveler! I sense great potential within you."
           ],
-          "_total_unique_values": 1
+          "_total_unique_values": 3
         },
-        "completedQuests": {
-          "_type": "array",
-          "_sample_values": [],
-          "_total_unique_values": 0
+        "questComplete": {
+          "_type": "string",
+          "_sample_values": [
+            "Excellent! Those will serve my research perfectly.",
+            "Impressive! You've earned my respect and rewards.",
+            "Well done! Return to me when ready to claim your rewards."
+          ],
+          "_total_unique_values": 3
+        },
+        "questInProgress": {
+          "_type": "string",
+          "_sample_values": [
+            "How goes your task? The forest awaits your efforts.",
+            "Have you found those materials yet? I await eagerly!",
+            "Go forth and prove yourself in battle!"
+          ],
+          "_total_unique_values": 3
         }
+      }
+    },
+    "dialogue_lines": {
+      "_type": "array",
+      "_sample_values": [
+        "Perhaps you could assist me?",
+        "Welcome, traveler! I sense great potential within you.",
+        "The wilds are dangerous, but I can help you prepare.",
+        "Greetings! I've traveled far and wide.",
+        "Ho there, warrior! Ready to test your mettle?"
+      ],
+      "_total_unique_values": 9
+    },
+    "interaction_radius": {
+      "_type": "number",
+      "_sample_values": [
+        3.0
+      ],
+      "_total_unique_values": 1
+    },
+    "metadata": {
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "The Elder Sage has guided countless travelers on their first steps. His wisdom is freely given to all who seek it.",
+          "A mysterious figure who wanders the lands collecting rare materials. His true purpose remains unknown.",
+          "A veteran warrior who trains adventurers in the art of combat. His scars tell stories of countless battles."
+        ],
+        "_total_unique_values": 3
+      },
+      "tags": {
+        "_type": "array",
+        "_sample_values": [
+          "wandering",
+          "trader",
+          "starter",
+          "combat",
+          "tutorial"
+        ],
+        "_total_unique_values": 8
+      }
+    },
+    "name": {
+      "_type": "string",
+      "_sample_values": [
+        "Wandering Trader",
+        "Battle Master",
+        "Elder Sage"
+      ],
+      "_total_unique_values": 3
+    },
+    "npc_id": {
+      "_type": "string",
+      "_sample_values": [
+        "tutorial_guide",
+        "combat_trainer",
+        "mysterious_trader"
+      ],
+      "_total_unique_values": 3
+    },
+    "position": {
+      "x": {
+        "_type": "number",
+        "_sample_values": [
+          48.0,
+          65.0,
+          52.0
+        ],
+        "_total_unique_values": 3
+      },
+      "y": {
+        "_type": "number",
+        "_sample_values": [
+          48.0,
+          58.0,
+          52.0
+        ],
+        "_total_unique_values": 3
+      },
+      "z": {
+        "_type": "number",
+        "_sample_values": [
+          0.0
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "quests": {
+      "_type": "array",
+      "_sample_values": [
+        "tutorial_quest",
+        "combat_quest",
+        "gathering_quest"
+      ],
+      "_total_unique_values": 3
+    },
+    "services": {
+      "canRepair": {
+        "_type": "boolean",
+        "_sample_values": [
+          false,
+          true
+        ],
+        "_total_unique_values": 2
+      },
+      "canTeach": {
+        "_type": "boolean",
+        "_sample_values": [
+          true
+        ],
+        "_total_unique_values": 1
+      },
+      "canTrade": {
+        "_type": "boolean",
+        "_sample_values": [
+          false,
+          true
+        ],
+        "_total_unique_values": 2
+      },
+      "specialServices": {
+        "_type": "array",
+        "_sample_values": [
+          "skill_training",
+          "identify_items"
+        ],
+        "_total_unique_values": 2
+      },
+      "teachableSkills": {
+        "_type": "array",
+        "_sample_values": [
+          "miners_endurance",
+          "fortify",
+          "sprint",
+          "combat_strike"
+        ],
+        "_total_unique_values": 4
+      }
+    },
+    "sprite_color": {
+      "_type": "array",
+      "_sample_values": [
+        0,
+        100,
+        200,
+        150,
+        215
+      ],
+      "_total_unique_values": 6
+    },
+    "title": {
+      "_type": "string",
+      "_sample_values": [
+        "Collector of Rarities",
+        "Weapons Instructor",
+        "Ancient Mentor"
+      ],
+      "_total_unique_values": 3
+    },
+    "unlockConditions": {
+      "alwaysAvailable": {
+        "_type": "boolean",
+        "_sample_values": [
+          true
+        ],
+        "_total_unique_values": 1
+      },
+      "characterLevel": {
+        "_type": "integer",
+        "_sample_values": [
+          0
+        ],
+        "_total_unique_values": 1
+      },
+      "completedQuests": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0
       }
     }
   }

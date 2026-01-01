@@ -1,0 +1,1069 @@
+{
+  "_meta": {
+    "category": "skill-unlocks",
+    "description": "Skill unlock requirements",
+    "generated_at": "2026-01-01T19:58:32.938294",
+    "source_files": [
+      "skill-unlocks.JSON"
+    ],
+    "discovered_root_keys": [
+      "FIELD_DOCUMENTATION",
+      "USAGE_NOTES",
+      "metadata",
+      "skillUnlocks"
+    ],
+    "total_items_analyzed": 0
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "FIELD_DOCUMENTATION.conditions.activityMilestones": {
+      "values": [
+        "Array of activity requirements"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.conditions.characterLevel": {
+      "values": [
+        "Minimum level required"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.conditions.completedQuests": {
+      "values": [
+        "Array of questIds required"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.conditions.stats": {
+      "values": [
+        "Object like {strength: 5, luck: 10}"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.conditions.titles": {
+      "values": [
+        "Array of titleIds required"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.cost.gold": {
+      "values": [
+        "Gold required to unlock"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.cost.materials": {
+      "values": [
+        "Array of {materialId, quantity}"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.cost.note": {
+      "values": [
+        "Cost is paid AFTER conditions met"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.cost.skillPoints": {
+      "values": [
+        "Special skill points if system uses them"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.skillId.description": {
+      "values": [
+        "References skillId from Skills/skills-skills-1.JSON"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.skillId.note": {
+      "values": [
+        "This is the skill being unlocked"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.skillId.required": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.unlockId.description": {
+      "values": [
+        "Unique identifier for this unlock definition"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.unlockId.format": {
+      "values": [
+        "unlock_{skill_name}"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.unlockId.required": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.unlockMethod.description": {
+      "values": [
+        "How this skill is unlocked"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.unlockMethod.options": {
+      "values": [
+        "automatic",
+        "class_specific",
+        "discovery",
+        "milestone_unlock",
+        "npc_purchase",
+        "quest_reward",
+        "random_drop",
+        "skill_evolution",
+        "title_unlock"
+      ],
+      "count": 9,
+      "types": [
+        "array"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.unlockMethod.required": {
+      "values": [
+        true
+      ],
+      "count": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.unlockTrigger.message": {
+      "values": [
+        "Notification shown to player when unlocked"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.unlockTrigger.triggerValue": {
+      "values": [
+        "Context-specific value (questId, npcId, level, etc)"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "FIELD_DOCUMENTATION.unlockTrigger.type": {
+      "values": [
+        "When/how the unlock actually happens"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "USAGE_NOTES.flow": {
+      "values": [
+        "Conditions met \u2192 Trigger occurs \u2192 Cost paid \u2192 Skill unlocked"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "USAGE_NOTES.integration": {
+      "values": [
+        "Works with quest rewards, NPC services, and title systems"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "USAGE_NOTES.notifications": {
+      "values": [
+        "UI shows unlock messages when skills become available"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "USAGE_NOTES.tracking": {
+      "values": [
+        "Game constantly checks conditions, marks skills as 'unlockable'"
+      ],
+      "count": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "conditions.activityMilestones[].count": {
+      "values": [
+        10,
+        200,
+        25,
+        50
+      ],
+      "count": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    },
+    "conditions.activityMilestones[].discipline": {
+      "values": [
+        "alchemy",
+        "smithing"
+      ],
+      "count": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "conditions.activityMilestones[].type": {
+      "values": [
+        "craft_count",
+        "gather_count",
+        "kill_count"
+      ],
+      "count": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 4
+    },
+    "conditions.characterLevel": {
+      "values": [
+        1,
+        10,
+        15,
+        20,
+        3,
+        5,
+        8
+      ],
+      "count": 7,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 13
+    },
+    "conditions.completedQuests": {
+      "values": [
+        "combat_quest",
+        "gathering_quest",
+        "tutorial_quest"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
+    },
+    "conditions.stats.intelligence": {
+      "values": [
+        8
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "conditions.stats.luck": {
+      "values": [
+        10,
+        12
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "conditions.stats.strength": {
+      "values": [
+        15
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "conditions.titles": {
+      "values": [
+        "master_gatherer",
+        "master_smith",
+        "master_warrior"
+      ],
+      "count": 3,
+      "types": [
+        "array"
+      ],
+      "occurrences": 4
+    },
+    "cost.gold": {
+      "values": [
+        0,
+        2500
+      ],
+      "count": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 13
+    },
+    "cost.skillPoints": {
+      "values": [
+        0
+      ],
+      "count": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "metadata.category": {
+      "values": [
+        "milestone_unlock",
+        "npc_taught",
+        "quest_reward",
+        "starter_skill",
+        "title_unlock"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 13
+    },
+    "metadata.narrative": {
+      "values": [
+        "Discovered through dedication. Only brewers of many potions gain this.",
+        "Discovered through dedication. Only smiths who craft many items gain this.",
+        "Given freely to all who begin their journey into mining.",
+        "Granted by the Battle Master for proving your worth in combat.",
+        "Granted by the Elder Sage as reward for completing your first task.",
+        "Granted by the Wandering Trader for helping gather rare ores.",
+        "Only Master Gatherers can perform this advanced technique.",
+        "Only Master Smiths possess the skill to craft without failure.",
+        "Only Master Warriors can execute this devastating attack.",
+        "Only those who have defeated many foes unlock this combat prowess.",
+        "Rare skill taught by the Wanderer to worthy explorers.",
+        "Veteran gatherers develop an eye for spotting rare materials."
+      ],
+      "count": 12,
+      "types": [
+        "string"
+      ],
+      "occurrences": 13
+    },
+    "skillId": {
+      "values": [
+        "alchemists_insight",
+        "battle_fury",
+        "chain_harvest",
+        "combat_strike",
+        "fortify",
+        "keen_eye",
+        "master_craftsman",
+        "miners_endurance",
+        "miners_fury",
+        "smiths_focus",
+        "sprint",
+        "treasure_sense",
+        "whirlwind_strike"
+      ],
+      "count": 13,
+      "types": [
+        "string"
+      ],
+      "occurrences": 13
+    },
+    "unlockId": {
+      "values": [
+        "unlock_alchemists_insight",
+        "unlock_battle_fury",
+        "unlock_chain_harvest",
+        "unlock_combat_strike",
+        "unlock_fortify",
+        "unlock_keen_eye",
+        "unlock_master_craftsman",
+        "unlock_miners_endurance",
+        "unlock_miners_fury",
+        "unlock_smiths_focus",
+        "unlock_sprint",
+        "unlock_treasure_sense",
+        "unlock_whirlwind_strike"
+      ],
+      "count": 13,
+      "types": [
+        "string"
+      ],
+      "occurrences": 13
+    },
+    "unlockMethod": {
+      "values": [
+        "automatic",
+        "milestone_unlock",
+        "npc_purchase",
+        "quest_reward",
+        "title_unlock"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 13
+    },
+    "unlockTrigger.message": {
+      "values": [
+        "As a Master Gatherer, you've unlocked Chain Harvest!",
+        "As a Master Smith, you've unlocked Master Craftsman!",
+        "As a Master Warrior, you've unlocked Whirlwind Strike!",
+        "The Battle Master teaches you Combat Strike!",
+        "The Battle Master teaches you Fortify!",
+        "The Elder Sage teaches you Sprint!",
+        "The Wandering Trader offers to teach you Treasure Sense.",
+        "The Wandering Trader teaches you Miner's Endurance!",
+        "Through countless battles, you've awakened Battle Fury!",
+        "Through countless experiments, you've developed Alchemist's Insight!",
+        "Through practice, you've developed Smith's Focus!",
+        "You've unlocked the skill: Miner's Fury!",
+        "Your experience gathering has sharpened your Keen Eye!"
+      ],
+      "count": 13,
+      "types": [
+        "string"
+      ],
+      "occurrences": 13
+    },
+    "unlockTrigger.triggerValue": {
+      "values": [
+        1,
+        10,
+        200,
+        25,
+        50,
+        "combat_quest",
+        "gathering_quest",
+        "master_gatherer",
+        "master_smith",
+        "master_warrior",
+        "mysterious_trader",
+        "tutorial_quest"
+      ],
+      "count": 12,
+      "types": [
+        "integer",
+        "string"
+      ],
+      "occurrences": 13
+    },
+    "unlockTrigger.type": {
+      "values": [
+        "activity_threshold",
+        "level_up",
+        "npc_interaction",
+        "quest_complete",
+        "title_earned"
+      ],
+      "count": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 13
+    }
+  },
+  "_usable_template": {
+    "FIELD_DOCUMENTATION": {
+      "conditions": {
+        "activityMilestones": "Array of activity requirements",
+        "characterLevel": "Minimum level required",
+        "completedQuests": "Array of questIds required",
+        "stats": "Object like {strength: 5, luck: 10}",
+        "titles": "Array of titleIds required"
+      },
+      "cost": {
+        "gold": "Gold required to unlock",
+        "materials": "Array of {materialId, quantity}",
+        "note": "Cost is paid AFTER conditions met",
+        "skillPoints": "Special skill points if system uses them"
+      },
+      "skillId": {
+        "description": "References skillId from Skills/skills-skills-1.JSON",
+        "note": "This is the skill being unlocked",
+        "required": true
+      },
+      "unlockId": {
+        "description": "Unique identifier for this unlock definition",
+        "format": "unlock_{skill_name}",
+        "required": true
+      },
+      "unlockMethod": {
+        "description": "How this skill is unlocked",
+        "options": [
+          "quest_reward",
+          "automatic",
+          "discovery"
+        ],
+        "required": true
+      },
+      "unlockTrigger": {
+        "message": "Notification shown to player when unlocked",
+        "triggerValue": "Context-specific value (questId, npcId, level, etc)",
+        "type": "When/how the unlock actually happens"
+      }
+    },
+    "USAGE_NOTES": {
+      "flow": "Conditions met \u2192 Trigger occurs \u2192 Cost paid \u2192 Skill unlocked",
+      "integration": "Works with quest rewards, NPC services, and title systems",
+      "notifications": "UI shows unlock messages when skills become available",
+      "tracking": "Game constantly checks conditions, marks skills as 'unlockable'"
+    },
+    "conditions": {
+      "activityMilestones": [
+        "<value>"
+      ],
+      "characterLevel": 1,
+      "completedQuests": [
+        "tutorial_quest",
+        "combat_quest",
+        "gathering_quest"
+      ],
+      "stats": {
+        "intelligence": 8,
+        "luck": 10,
+        "strength": 15
+      },
+      "titles": [
+        "master_gatherer",
+        "master_smith",
+        "master_warrior"
+      ]
+    },
+    "cost": {
+      "gold": 0,
+      "materials": [
+        "<value>"
+      ],
+      "skillPoints": 0
+    },
+    "metadata": {
+      "category": "quest_reward",
+      "narrative": "Discovered through dedication. Only brewers of many potions gain this."
+    },
+    "skillId": "chain_harvest",
+    "unlockId": "unlock_miners_fury",
+    "unlockMethod": "quest_reward",
+    "unlockTrigger": {
+      "message": "As a Master Warrior, you've unlocked Whirlwind Strike!",
+      "triggerValue": 1,
+      "type": "title_earned"
+    }
+  },
+  "template": {
+    "FIELD_DOCUMENTATION": {
+      "conditions": {
+        "activityMilestones": {
+          "_type": "string",
+          "_sample_values": [
+            "Array of activity requirements"
+          ],
+          "_total_unique_values": 1
+        },
+        "characterLevel": {
+          "_type": "string",
+          "_sample_values": [
+            "Minimum level required"
+          ],
+          "_total_unique_values": 1
+        },
+        "completedQuests": {
+          "_type": "string",
+          "_sample_values": [
+            "Array of questIds required"
+          ],
+          "_total_unique_values": 1
+        },
+        "stats": {
+          "_type": "string",
+          "_sample_values": [
+            "Object like {strength: 5, luck: 10}"
+          ],
+          "_total_unique_values": 1
+        },
+        "titles": {
+          "_type": "string",
+          "_sample_values": [
+            "Array of titleIds required"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "cost": {
+        "gold": {
+          "_type": "string",
+          "_sample_values": [
+            "Gold required to unlock"
+          ],
+          "_total_unique_values": 1
+        },
+        "materials": {
+          "_type": "string",
+          "_sample_values": [
+            "Array of {materialId, quantity}"
+          ],
+          "_total_unique_values": 1
+        },
+        "note": {
+          "_type": "string",
+          "_sample_values": [
+            "Cost is paid AFTER conditions met"
+          ],
+          "_total_unique_values": 1
+        },
+        "skillPoints": {
+          "_type": "string",
+          "_sample_values": [
+            "Special skill points if system uses them"
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "skillId": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "References skillId from Skills/skills-skills-1.JSON"
+          ],
+          "_total_unique_values": 1
+        },
+        "note": {
+          "_type": "string",
+          "_sample_values": [
+            "This is the skill being unlocked"
+          ],
+          "_total_unique_values": 1
+        },
+        "required": {
+          "_type": "boolean",
+          "_sample_values": [
+            true
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "unlockId": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "Unique identifier for this unlock definition"
+          ],
+          "_total_unique_values": 1
+        },
+        "format": {
+          "_type": "string",
+          "_sample_values": [
+            "unlock_{skill_name}"
+          ],
+          "_total_unique_values": 1
+        },
+        "required": {
+          "_type": "boolean",
+          "_sample_values": [
+            true
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "unlockMethod": {
+        "description": {
+          "_type": "string",
+          "_sample_values": [
+            "How this skill is unlocked"
+          ],
+          "_total_unique_values": 1
+        },
+        "options": {
+          "_type": "array",
+          "_sample_values": [
+            "quest_reward",
+            "automatic",
+            "discovery",
+            "random_drop",
+            "npc_purchase"
+          ],
+          "_total_unique_values": 9
+        },
+        "required": {
+          "_type": "boolean",
+          "_sample_values": [
+            true
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "unlockTrigger": {
+        "message": {
+          "_type": "string",
+          "_sample_values": [
+            "Notification shown to player when unlocked"
+          ],
+          "_total_unique_values": 1
+        },
+        "triggerValue": {
+          "_type": "string",
+          "_sample_values": [
+            "Context-specific value (questId, npcId, level, etc)"
+          ],
+          "_total_unique_values": 1
+        },
+        "type": {
+          "_type": "string",
+          "_sample_values": [
+            "When/how the unlock actually happens"
+          ],
+          "_total_unique_values": 1
+        }
+      }
+    },
+    "USAGE_NOTES": {
+      "flow": {
+        "_type": "string",
+        "_sample_values": [
+          "Conditions met \u2192 Trigger occurs \u2192 Cost paid \u2192 Skill unlocked"
+        ],
+        "_total_unique_values": 1
+      },
+      "integration": {
+        "_type": "string",
+        "_sample_values": [
+          "Works with quest rewards, NPC services, and title systems"
+        ],
+        "_total_unique_values": 1
+      },
+      "notifications": {
+        "_type": "string",
+        "_sample_values": [
+          "UI shows unlock messages when skills become available"
+        ],
+        "_total_unique_values": 1
+      },
+      "tracking": {
+        "_type": "string",
+        "_sample_values": [
+          "Game constantly checks conditions, marks skills as 'unlockable'"
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "conditions": {
+      "activityMilestones": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0,
+        "count": {
+          "_type": "integer",
+          "_sample_values": [
+            200,
+            25,
+            10,
+            50
+          ],
+          "_total_unique_values": 4
+        },
+        "discipline": {
+          "_type": "string",
+          "_sample_values": [
+            "smithing",
+            "alchemy"
+          ],
+          "_total_unique_values": 2
+        },
+        "type": {
+          "_type": "string",
+          "_sample_values": [
+            "gather_count",
+            "craft_count",
+            "kill_count"
+          ],
+          "_total_unique_values": 3
+        }
+      },
+      "characterLevel": {
+        "_type": "integer",
+        "_sample_values": [
+          1,
+          3,
+          5,
+          8,
+          10,
+          15,
+          20
+        ],
+        "_total_unique_values": 7
+      },
+      "completedQuests": {
+        "_type": "array",
+        "_sample_values": [
+          "tutorial_quest",
+          "combat_quest",
+          "gathering_quest"
+        ],
+        "_total_unique_values": 3
+      },
+      "stats": {
+        "intelligence": {
+          "_type": "integer",
+          "_sample_values": [
+            8
+          ],
+          "_total_unique_values": 1
+        },
+        "luck": {
+          "_type": "integer",
+          "_sample_values": [
+            10,
+            12
+          ],
+          "_total_unique_values": 2
+        },
+        "strength": {
+          "_type": "integer",
+          "_sample_values": [
+            15
+          ],
+          "_total_unique_values": 1
+        }
+      },
+      "titles": {
+        "_type": "array",
+        "_sample_values": [
+          "master_gatherer",
+          "master_smith",
+          "master_warrior"
+        ],
+        "_total_unique_values": 3
+      }
+    },
+    "cost": {
+      "gold": {
+        "_type": "integer",
+        "_sample_values": [
+          0,
+          2500
+        ],
+        "_total_unique_values": 2
+      },
+      "materials": {
+        "_type": "array",
+        "_sample_values": [],
+        "_total_unique_values": 0
+      },
+      "skillPoints": {
+        "_type": "integer",
+        "_sample_values": [
+          0
+        ],
+        "_total_unique_values": 1
+      }
+    },
+    "metadata": {
+      "category": {
+        "_type": "string",
+        "_sample_values": [
+          "quest_reward",
+          "starter_skill",
+          "npc_taught",
+          "title_unlock",
+          "milestone_unlock"
+        ],
+        "_total_unique_values": 5
+      },
+      "narrative": {
+        "_type": "string",
+        "_sample_values": [
+          "Discovered through dedication. Only brewers of many potions gain this.",
+          "Discovered through dedication. Only smiths who craft many items gain this.",
+          "Granted by the Elder Sage as reward for completing your first task.",
+          "Only Master Smiths possess the skill to craft without failure.",
+          "Only Master Warriors can execute this devastating attack.",
+          "Veteran gatherers develop an eye for spotting rare materials.",
+          "Only those who have defeated many foes unlock this combat prowess.",
+          "Only Master Gatherers can perform this advanced technique.",
+          "Rare skill taught by the Wanderer to worthy explorers.",
+          "Given freely to all who begin their journey into mining."
+        ],
+        "_total_unique_values": 12
+      }
+    },
+    "skillId": {
+      "_type": "string",
+      "_sample_values": [
+        "chain_harvest",
+        "keen_eye",
+        "treasure_sense",
+        "fortify",
+        "miners_endurance",
+        "combat_strike",
+        "alchemists_insight",
+        "miners_fury",
+        "smiths_focus",
+        "battle_fury"
+      ],
+      "_total_unique_values": 13
+    },
+    "unlockId": {
+      "_type": "string",
+      "_sample_values": [
+        "unlock_miners_fury",
+        "unlock_treasure_sense",
+        "unlock_sprint",
+        "unlock_battle_fury",
+        "unlock_chain_harvest",
+        "unlock_whirlwind_strike",
+        "unlock_combat_strike",
+        "unlock_fortify",
+        "unlock_miners_endurance",
+        "unlock_keen_eye"
+      ],
+      "_total_unique_values": 13
+    },
+    "unlockMethod": {
+      "_type": "string",
+      "_sample_values": [
+        "quest_reward",
+        "automatic",
+        "npc_purchase",
+        "title_unlock",
+        "milestone_unlock"
+      ],
+      "_total_unique_values": 5
+    },
+    "unlockTrigger": {
+      "message": {
+        "_type": "string",
+        "_sample_values": [
+          "As a Master Warrior, you've unlocked Whirlwind Strike!",
+          "The Wandering Trader teaches you Miner's Endurance!",
+          "As a Master Smith, you've unlocked Master Craftsman!",
+          "The Battle Master teaches you Combat Strike!",
+          "You've unlocked the skill: Miner's Fury!",
+          "Through countless battles, you've awakened Battle Fury!",
+          "Through practice, you've developed Smith's Focus!",
+          "Through countless experiments, you've developed Alchemist's Insight!",
+          "Your experience gathering has sharpened your Keen Eye!",
+          "The Battle Master teaches you Fortify!"
+        ],
+        "_total_unique_values": 13
+      },
+      "triggerValue": {
+        "_type": "integer",
+        "_sample_values": [
+          "master_gatherer",
+          1,
+          "combat_quest",
+          "master_warrior",
+          200,
+          10,
+          "tutorial_quest",
+          50,
+          25,
+          "master_smith"
+        ],
+        "_total_unique_values": 12
+      },
+      "type": {
+        "_type": "string",
+        "_sample_values": [
+          "title_earned",
+          "npc_interaction",
+          "level_up",
+          "activity_threshold",
+          "quest_complete"
+        ],
+        "_total_unique_values": 5
+      }
+    }
+  }
+}

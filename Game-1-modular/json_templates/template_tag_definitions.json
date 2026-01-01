@@ -2,207 +2,21 @@
   "_meta": {
     "category": "tag-definitions",
     "description": "Master tag system definitions",
-    "generated_at": "2026-01-01T19:53:07.797722",
+    "generated_at": "2026-01-01T19:58:32.969950",
     "source_files": [
       "tag-definitions.JSON"
+    ],
+    "discovered_root_keys": [
+      "categories",
+      "conflict_resolution",
+      "context_inference",
+      "metadata",
+      "tag_definitions"
     ],
     "total_items_analyzed": 0
   },
   "_field_documentation": {},
   "_all_possible_values": {
-    "categories.armor_type": {
-      "values": [
-        "heavy",
-        "light",
-        "medium",
-        "robes"
-      ],
-      "count": 4,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "categories.class": {
-      "values": [
-        "adventurer",
-        "artisan",
-        "ranger",
-        "scavenger",
-        "scholar",
-        "warrior"
-      ],
-      "count": 6,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "categories.context": {
-      "values": [
-        "all",
-        "ally",
-        "construct",
-        "device",
-        "enemy",
-        "friendly",
-        "hostile",
-        "mechanical",
-        "player",
-        "self",
-        "turret",
-        "undead"
-      ],
-      "count": 12,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "categories.damage_type": {
-      "values": [
-        "arcane",
-        "chaos",
-        "crushing",
-        "fire",
-        "frost",
-        "holy",
-        "lightning",
-        "physical",
-        "piercing",
-        "poison",
-        "shadow",
-        "slashing"
-      ],
-      "count": 12,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "categories.equipment": {
-      "values": [
-        "1H",
-        "2H",
-        "versatile"
-      ],
-      "count": 3,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "categories.geometry": {
-      "values": [
-        "beam",
-        "chain",
-        "circle",
-        "cone",
-        "pierce",
-        "projectile",
-        "single_target",
-        "splash"
-      ],
-      "count": 8,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "categories.playstyle": {
-      "values": [
-        "agile",
-        "balanced",
-        "caster",
-        "crafting",
-        "gathering",
-        "magic",
-        "melee",
-        "ranged",
-        "tanky"
-      ],
-      "count": 9,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "categories.special": {
-      "values": [
-        "charge",
-        "critical",
-        "dash",
-        "execute",
-        "knockback",
-        "lifesteal",
-        "phase",
-        "pull",
-        "reflect",
-        "summon",
-        "teleport",
-        "thorns",
-        "vampiric"
-      ],
-      "count": 13,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "categories.status_buff": {
-      "values": [
-        "barrier",
-        "empower",
-        "fortify",
-        "haste",
-        "invisible",
-        "quicken",
-        "regeneration",
-        "shield"
-      ],
-      "count": 8,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "categories.status_debuff": {
-      "values": [
-        "bleed",
-        "burn",
-        "chill",
-        "freeze",
-        "poison_status",
-        "root",
-        "shock",
-        "slow",
-        "stun",
-        "weaken"
-      ],
-      "count": 10,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "categories.trigger": {
-      "values": [
-        "active",
-        "instant",
-        "on_contact",
-        "on_crit",
-        "on_damage",
-        "on_hit",
-        "on_kill",
-        "on_proximity",
-        "passive"
-      ],
-      "count": 9,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
     "conflict_resolution.geometry_priority": {
       "values": [
         "beam",
@@ -303,36 +117,6 @@
     "context_inference.healing": {
       "values": [
         "ally"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.description": {
-      "values": [
-        "Tag-to-effects system tag definitions - SINGLE SOURCE OF TRUTH"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.note": {
-      "values": [
-        "All functional tags and their behaviors are defined here"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "metadata.version": {
-      "values": [
-        "1.0"
       ],
       "count": 1,
       "types": [
@@ -4023,67 +3807,10 @@
     }
   },
   "_usable_template": {
-    "categories": {
-      "armor_type": [
-        "medium",
-        "robes",
-        "heavy"
-      ],
-      "class": [
-        "scholar",
-        "scavenger",
-        "artisan"
-      ],
-      "context": [
-        "ally",
-        "friendly",
-        "device"
-      ],
-      "damage_type": [
-        "physical",
-        "poison",
-        "lightning"
-      ],
-      "equipment": [
-        "2H",
-        "versatile",
-        "1H"
-      ],
-      "geometry": [
-        "projectile",
-        "beam",
-        "cone"
-      ],
-      "playstyle": [
-        "ranged",
-        "caster",
-        "tanky"
-      ],
-      "special": [
-        "lifesteal",
-        "knockback",
-        "vampiric"
-      ],
-      "status_buff": [
-        "invisible",
-        "regeneration",
-        "quicken"
-      ],
-      "status_debuff": [
-        "freeze",
-        "poison_status",
-        "slow"
-      ],
-      "trigger": [
-        "on_damage",
-        "on_hit",
-        "instant"
-      ]
-    },
     "conflict_resolution": {
       "geometry_priority": [
         "beam",
-        "cone",
+        "chain",
         "circle"
       ],
       "mutually_exclusive": {
@@ -4092,8 +3819,8 @@
           "2H"
         ],
         "2H": [
-          "versatile",
-          "1H"
+          "1H",
+          "versatile"
         ],
         "burn": [
           "freeze"
@@ -4102,8 +3829,8 @@
           "burn"
         ],
         "versatile": [
-          "2H",
-          "1H"
+          "1H",
+          "2H"
         ]
       }
     },
@@ -4112,11 +3839,6 @@
       "damage": "enemy",
       "debuff": "enemy",
       "healing": "ally"
-    },
-    "metadata": {
-      "description": "Tag-to-effects system tag definitions - SINGLE SOURCE OF TRUTH",
-      "note": "All functional tags and their behaviors are defined here",
-      "version": "1.0"
     },
     "tag_definitions": {
       "1H": {
@@ -4131,8 +3853,8 @@
       "2H": {
         "category": "equipment",
         "conflicts_with": [
-          "versatile",
-          "1H"
+          "1H",
+          "versatile"
         ],
         "description": "Requires both hands, blocks offHand",
         "priority": 0
@@ -4146,8 +3868,8 @@
         "description": "Jack of all trades class - balanced versatility",
         "skill_affinity": [
           "balanced",
-          "versatile",
-          "adaptive"
+          "adaptive",
+          "versatile"
         ]
       },
       "agile": {
@@ -4167,8 +3889,8 @@
       },
       "arcane": {
         "aliases": [
-          "magical",
-          "magic"
+          "magic",
+          "magical"
         ],
         "category": "damage_type",
         "description": "Arcane magic damage, bypasses armor"
@@ -4178,8 +3900,8 @@
         "description": "Master crafter class - crafting speed and quality",
         "skill_affinity": [
           "crafting",
-          "engineering",
-          "smithing"
+          "smithing",
+          "engineering"
         ]
       },
       "balanced": {
@@ -4209,8 +3931,8 @@
       },
       "bleed": {
         "aliases": [
-          "bleeding",
-          "hemorrhage"
+          "hemorrhage",
+          "bleeding"
         ],
         "category": "status_debuff",
         "default_params": {
@@ -4221,8 +3943,8 @@
         },
         "description": "Physical damage over time",
         "immunity": [
-          "construct",
-          "mechanical"
+          "mechanical",
+          "construct"
         ],
         "stacking": "additive"
       },
@@ -4349,8 +4071,8 @@
       },
       "dash": {
         "aliases": [
-          "rush",
-          "charge"
+          "charge",
+          "rush"
         ],
         "category": "special",
         "default_params": {
@@ -4441,8 +4163,8 @@
       },
       "frost": {
         "aliases": [
-          "cold",
-          "ice"
+          "ice",
+          "cold"
         ],
         "auto_apply_chance": 0.15,
         "auto_apply_status": "chill",
@@ -4458,8 +4180,8 @@
       },
       "haste": {
         "aliases": [
-          "swiftness",
-          "quicken"
+          "quicken",
+          "swiftness"
         ],
         "category": "status_buff",
         "default_params": {
@@ -4501,8 +4223,8 @@
       },
       "invisible": {
         "aliases": [
-          "stealth",
-          "hidden"
+          "hidden",
+          "stealth"
         ],
         "category": "status_buff",
         "default_params": {
@@ -4526,9 +4248,9 @@
       },
       "lifesteal": {
         "aliases": [
-          "life_drain",
           "drain",
-          "vampiric"
+          "vampiric",
+          "life_drain"
         ],
         "category": "special",
         "default_params": {
@@ -4542,8 +4264,8 @@
       },
       "lightning": {
         "aliases": [
-          "electric",
-          "shock"
+          "shock",
+          "electric"
         ],
         "category": "damage_type",
         "description": "Lightning elemental damage",
@@ -4599,9 +4321,9 @@
       },
       "phase": {
         "aliases": [
-          "phase_shift",
           "ethereal",
-          "intangible"
+          "intangible",
+          "phase_shift"
         ],
         "category": "special",
         "default_params": {
@@ -4641,8 +4363,8 @@
       },
       "poison_status": {
         "aliases": [
-          "toxic",
-          "poisoned"
+          "poisoned",
+          "toxic"
         ],
         "category": "status_debuff",
         "default_params": {
@@ -4652,9 +4374,9 @@
         },
         "description": "Poison damage over time",
         "immunity": [
+          "mechanical",
           "construct",
-          "undead",
-          "mechanical"
+          "undead"
         ],
         "stacking": "additive"
       },
@@ -4696,15 +4418,15 @@
         "category": "class",
         "description": "Mobile gatherer class - speed, ranged, nature",
         "skill_affinity": [
+          "agile",
           "ranged",
-          "nature",
-          "agile"
+          "nature"
         ]
       },
       "reflect": {
         "aliases": [
-          "thorns",
-          "reflect_damage"
+          "reflect_damage",
+          "thorns"
         ],
         "category": "special",
         "default_params": {
@@ -4715,8 +4437,8 @@
       },
       "regeneration": {
         "aliases": [
-          "regen",
           "hot",
+          "regen",
           "heal_over_time"
         ],
         "category": "status_buff",
@@ -4734,9 +4456,9 @@
       },
       "root": {
         "aliases": [
-          "immobilize",
           "rooted",
-          "immobilized"
+          "immobilized",
+          "immobilize"
         ],
         "category": "status_debuff",
         "default_params": {
@@ -4758,9 +4480,9 @@
         "category": "class",
         "description": "Magical researcher class - mana, alchemy, arcane",
         "skill_affinity": [
-          "alchemy",
+          "arcane",
           "magic",
-          "arcane"
+          "alchemy"
         ]
       },
       "self": {
@@ -4769,16 +4491,16 @@
       },
       "shadow": {
         "aliases": [
-          "dark",
-          "necrotic"
+          "necrotic",
+          "dark"
         ],
         "category": "damage_type",
         "description": "Shadow damage"
       },
       "shield": {
         "aliases": [
-          "barrier",
-          "damage_shield"
+          "damage_shield",
+          "barrier"
         ],
         "category": "status_buff",
         "default_params": {
@@ -4832,8 +4554,8 @@
       },
       "stun": {
         "aliases": [
-          "stunned",
-          "dazed"
+          "dazed",
+          "stunned"
         ],
         "category": "status_debuff",
         "default_params": {
@@ -4844,8 +4566,8 @@
       },
       "summon": {
         "aliases": [
-          "spawn",
-          "create"
+          "create",
+          "spawn"
         ],
         "category": "special",
         "default_params": {
@@ -4863,8 +4585,8 @@
       },
       "teleport": {
         "aliases": [
-          "warp",
-          "blink"
+          "blink",
+          "warp"
         ],
         "category": "special",
         "default_params": {
@@ -4897,8 +4619,8 @@
       "versatile": {
         "category": "equipment",
         "conflicts_with": [
-          "2H",
-          "1H"
+          "1H",
+          "2H"
         ],
         "description": "Optional offHand, different stats when 2H",
         "priority": 0
@@ -4907,21 +4629,21 @@
         "category": "class",
         "description": "Frontline fighter class - high HP, melee damage",
         "skill_affinity": [
+          "physical",
           "melee",
-          "tanky",
-          "physical"
+          "tanky"
         ]
       },
       "weaken": {
         "aliases": [
-          "weakened",
-          "enfeeble"
+          "enfeeble",
+          "weakened"
         ],
         "category": "status_debuff",
         "default_params": {
           "affected_stats": [
-            "defense",
-            "damage"
+            "damage",
+            "defense"
           ],
           "duration": 5.0,
           "stat_reduction": 0.25
@@ -4932,135 +4654,15 @@
     }
   },
   "template": {
-    "categories": {
-      "armor_type": {
-        "_type": "array",
-        "_sample_values": [
-          "medium",
-          "robes",
-          "heavy",
-          "light"
-        ],
-        "_total_unique_values": 4
-      },
-      "class": {
-        "_type": "array",
-        "_sample_values": [
-          "scholar",
-          "scavenger",
-          "artisan",
-          "ranger",
-          "warrior"
-        ],
-        "_total_unique_values": 6
-      },
-      "context": {
-        "_type": "array",
-        "_sample_values": [
-          "ally",
-          "friendly",
-          "device",
-          "hostile",
-          "undead"
-        ],
-        "_total_unique_values": 12
-      },
-      "damage_type": {
-        "_type": "array",
-        "_sample_values": [
-          "physical",
-          "poison",
-          "lightning",
-          "frost",
-          "slashing"
-        ],
-        "_total_unique_values": 12
-      },
-      "equipment": {
-        "_type": "array",
-        "_sample_values": [
-          "2H",
-          "versatile",
-          "1H"
-        ],
-        "_total_unique_values": 3
-      },
-      "geometry": {
-        "_type": "array",
-        "_sample_values": [
-          "projectile",
-          "beam",
-          "cone",
-          "circle",
-          "pierce"
-        ],
-        "_total_unique_values": 8
-      },
-      "playstyle": {
-        "_type": "array",
-        "_sample_values": [
-          "ranged",
-          "caster",
-          "tanky",
-          "gathering",
-          "balanced"
-        ],
-        "_total_unique_values": 9
-      },
-      "special": {
-        "_type": "array",
-        "_sample_values": [
-          "lifesteal",
-          "knockback",
-          "vampiric",
-          "summon",
-          "execute"
-        ],
-        "_total_unique_values": 13
-      },
-      "status_buff": {
-        "_type": "array",
-        "_sample_values": [
-          "invisible",
-          "regeneration",
-          "quicken",
-          "barrier",
-          "fortify"
-        ],
-        "_total_unique_values": 8
-      },
-      "status_debuff": {
-        "_type": "array",
-        "_sample_values": [
-          "freeze",
-          "poison_status",
-          "slow",
-          "bleed",
-          "shock"
-        ],
-        "_total_unique_values": 10
-      },
-      "trigger": {
-        "_type": "array",
-        "_sample_values": [
-          "on_damage",
-          "on_hit",
-          "instant",
-          "on_proximity",
-          "passive"
-        ],
-        "_total_unique_values": 9
-      }
-    },
     "conflict_resolution": {
       "geometry_priority": {
         "_type": "array",
         "_sample_values": [
           "beam",
-          "cone",
+          "chain",
           "circle",
           "single_target",
-          "chain"
+          "cone"
         ],
         "_total_unique_values": 5
       },
@@ -5076,8 +4678,8 @@
         "2H": {
           "_type": "array",
           "_sample_values": [
-            "versatile",
-            "1H"
+            "1H",
+            "versatile"
           ],
           "_total_unique_values": 2
         },
@@ -5098,8 +4700,8 @@
         "versatile": {
           "_type": "array",
           "_sample_values": [
-            "2H",
-            "1H"
+            "1H",
+            "2H"
           ],
           "_total_unique_values": 2
         }
@@ -5131,29 +4733,6 @@
         "_type": "string",
         "_sample_values": [
           "ally"
-        ],
-        "_total_unique_values": 1
-      }
-    },
-    "metadata": {
-      "description": {
-        "_type": "string",
-        "_sample_values": [
-          "Tag-to-effects system tag definitions - SINGLE SOURCE OF TRUTH"
-        ],
-        "_total_unique_values": 1
-      },
-      "note": {
-        "_type": "string",
-        "_sample_values": [
-          "All functional tags and their behaviors are defined here"
-        ],
-        "_total_unique_values": 1
-      },
-      "version": {
-        "_type": "string",
-        "_sample_values": [
-          "1.0"
         ],
         "_total_unique_values": 1
       }
@@ -5201,8 +4780,8 @@
         "conflicts_with": {
           "_type": "array",
           "_sample_values": [
-            "versatile",
-            "1H"
+            "1H",
+            "versatile"
           ],
           "_total_unique_values": 2
         },
@@ -5256,8 +4835,8 @@
           "_type": "array",
           "_sample_values": [
             "balanced",
-            "versatile",
-            "adaptive"
+            "adaptive",
+            "versatile"
           ],
           "_total_unique_values": 3
         }
@@ -5321,8 +4900,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "magical",
-            "magic"
+            "magic",
+            "magical"
           ],
           "_total_unique_values": 2
         },
@@ -5360,8 +4939,8 @@
           "_type": "array",
           "_sample_values": [
             "crafting",
-            "engineering",
-            "smithing"
+            "smithing",
+            "engineering"
           ],
           "_total_unique_values": 3
         }
@@ -5467,8 +5046,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "bleeding",
-            "hemorrhage"
+            "hemorrhage",
+            "bleeding"
           ],
           "_total_unique_values": 2
         },
@@ -5519,8 +5098,8 @@
         "immunity": {
           "_type": "array",
           "_sample_values": [
-            "construct",
-            "mechanical"
+            "mechanical",
+            "construct"
           ],
           "_total_unique_values": 2
         },
@@ -5979,8 +5558,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "rush",
-            "charge"
+            "charge",
+            "rush"
           ],
           "_total_unique_values": 2
         },
@@ -6325,8 +5904,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "cold",
-            "ice"
+            "ice",
+            "cold"
           ],
           "_total_unique_values": 2
         },
@@ -6386,8 +5965,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "swiftness",
-            "quicken"
+            "quicken",
+            "swiftness"
           ],
           "_total_unique_values": 2
         },
@@ -6539,8 +6118,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "stealth",
-            "hidden"
+            "hidden",
+            "stealth"
           ],
           "_total_unique_values": 2
         },
@@ -6626,9 +6205,9 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "life_drain",
             "drain",
-            "vampiric"
+            "vampiric",
+            "life_drain"
           ],
           "_total_unique_values": 3
         },
@@ -6676,8 +6255,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "electric",
-            "shock"
+            "shock",
+            "electric"
           ],
           "_total_unique_values": 2
         },
@@ -6887,9 +6466,9 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "phase_shift",
             "ethereal",
-            "intangible"
+            "intangible",
+            "phase_shift"
           ],
           "_total_unique_values": 3
         },
@@ -7043,8 +6622,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "toxic",
-            "poisoned"
+            "poisoned",
+            "toxic"
           ],
           "_total_unique_values": 2
         },
@@ -7088,9 +6667,9 @@
         "immunity": {
           "_type": "array",
           "_sample_values": [
+            "mechanical",
             "construct",
-            "undead",
-            "mechanical"
+            "undead"
           ],
           "_total_unique_values": 3
         },
@@ -7250,9 +6829,9 @@
         "skill_affinity": {
           "_type": "array",
           "_sample_values": [
+            "agile",
             "ranged",
-            "nature",
-            "agile"
+            "nature"
           ],
           "_total_unique_values": 3
         }
@@ -7261,8 +6840,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "thorns",
-            "reflect_damage"
+            "reflect_damage",
+            "thorns"
           ],
           "_total_unique_values": 2
         },
@@ -7301,8 +6880,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "regen",
             "hot",
+            "regen",
             "heal_over_time"
           ],
           "_total_unique_values": 3
@@ -7372,9 +6951,9 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "immobilize",
             "rooted",
             "immobilized",
+            "immobilize",
             "snare"
           ],
           "_total_unique_values": 4
@@ -7453,9 +7032,9 @@
         "skill_affinity": {
           "_type": "array",
           "_sample_values": [
-            "alchemy",
+            "arcane",
             "magic",
-            "arcane"
+            "alchemy"
           ],
           "_total_unique_values": 3
         }
@@ -7480,8 +7059,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "dark",
-            "necrotic"
+            "necrotic",
+            "dark"
           ],
           "_total_unique_values": 2
         },
@@ -7504,8 +7083,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "barrier",
-            "damage_shield"
+            "damage_shield",
+            "barrier"
           ],
           "_total_unique_values": 2
         },
@@ -7723,8 +7302,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "stunned",
-            "dazed"
+            "dazed",
+            "stunned"
           ],
           "_total_unique_values": 2
         },
@@ -7763,8 +7342,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "spawn",
-            "create"
+            "create",
+            "spawn"
           ],
           "_total_unique_values": 2
         },
@@ -7826,8 +7405,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "warp",
-            "blink"
+            "blink",
+            "warp"
           ],
           "_total_unique_values": 2
         },
@@ -7958,8 +7537,8 @@
         "conflicts_with": {
           "_type": "array",
           "_sample_values": [
-            "2H",
-            "1H"
+            "1H",
+            "2H"
           ],
           "_total_unique_values": 2
         },
@@ -7996,9 +7575,9 @@
         "skill_affinity": {
           "_type": "array",
           "_sample_values": [
+            "physical",
             "melee",
-            "tanky",
-            "physical"
+            "tanky"
           ],
           "_total_unique_values": 3
         }
@@ -8007,8 +7586,8 @@
         "aliases": {
           "_type": "array",
           "_sample_values": [
-            "weakened",
-            "enfeeble"
+            "enfeeble",
+            "weakened"
           ],
           "_total_unique_values": 2
         },
@@ -8023,8 +7602,8 @@
           "affected_stats": {
             "_type": "array",
             "_sample_values": [
-              "defense",
-              "damage"
+              "damage",
+              "defense"
             ],
             "_total_unique_values": 2
           },
