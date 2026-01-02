@@ -1,0 +1,957 @@
+{
+  "_meta": {
+    "category": "recipes_generic",
+    "description": "Generic recipes (test/placeholder without specific discipline)",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.393613",
+    "total_items": 103,
+    "source_files": [
+      "Update-1/recipes-smithing-testing.JSON",
+      "placements.JSON/placements-alchemy-1.JSON",
+      "placements.JSON/placements-engineering-1.JSON",
+      "recipes.JSON/recipes-refining-1.JSON"
+    ]
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "fuelRequired.materialId": {
+      "values": [
+        "phoenix_ash"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "phoenix_ash"
+      ]
+    },
+    "fuelRequired.quantity": {
+      "values": [
+        1
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "phoenix_ash"
+      ]
+    },
+    "ingredients[].materialId": {
+      "values": [
+        "air_crystal",
+        "beetle_carapace",
+        "coal",
+        "copper_ingot",
+        "crystal_quartz",
+        "dire_fang",
+        "dragon_scale",
+        "earth_crystal",
+        "essence_blood",
+        "fire_crystal",
+        "frost_essence",
+        "gold_ingot",
+        "golem_core",
+        "iron_ingot",
+        "iron_scales",
+        "light_gem",
+        "lightning_shard",
+        "limestone",
+        "living_ichor",
+        "phoenix_ash",
+        "shadow_core",
+        "slime_gel",
+        "spectral_thread",
+        "storm_heart",
+        "void_essence",
+        "voidstone",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "total_unique": 28,
+      "types": [
+        "string"
+      ],
+      "occurrences": 91,
+      "example_items": [
+        "slime_gel",
+        "wolf_pelt",
+        "living_ichor"
+      ]
+    },
+    "ingredients[].quantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total_unique": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 91,
+      "example_items": [
+        "slime_gel",
+        "wolf_pelt",
+        "living_ichor"
+      ]
+    },
+    "ingredients[].slot": {
+      "values": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total_unique": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 91,
+      "example_items": [
+        "slime_gel",
+        "wolf_pelt",
+        "living_ichor"
+      ]
+    },
+    "inputs[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "adamantine_ore",
+        "ash_log",
+        "birch_log",
+        "bronze_ingot",
+        "copper_ingot",
+        "copper_ore",
+        "ebony_log",
+        "etherion_ingot",
+        "etherion_ore",
+        "fire_crystal",
+        "frost_essence",
+        "iron_ingot",
+        "iron_ore",
+        "ironwood_log",
+        "lightning_shard",
+        "maple_log",
+        "mithril_ingot",
+        "mithril_ore",
+        "oak_log",
+        "orichalcum_ingot",
+        "orichalcum_ore",
+        "pine_log",
+        "steel_ingot",
+        "steel_ore",
+        "tin_ingot",
+        "tin_ore",
+        "worldtree_log"
+      ],
+      "total_unique": 28,
+      "types": [
+        "string"
+      ],
+      "occurrences": 57,
+      "example_items": [
+        "copper_ore",
+        "iron_ore",
+        "tin_ore"
+      ]
+    },
+    "inputs[].quantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 57,
+      "example_items": [
+        "copper_ore",
+        "iron_ore",
+        "tin_ore"
+      ]
+    },
+    "inputs[].rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "steel_ingot"
+      ]
+    },
+    "metadata.narrative": {
+      "values": [
+        "Creating bronze through ancient metallurgical alloying. Harder than copper, more workable than iron. Rarely produces exceptional quality ingots.",
+        "Forging steel from carbon-rich ore. Requires intense heat.",
+        "Forging steel with frost essence. The metal is cold to touch, always.",
+        "Infusing copper with storm essence. Perfect magical conductivity.",
+        "Infusing steel with fire essence. The metal burns without being consumed.",
+        "Milling ash into planks. Superior shock absorption.",
+        "Milling maple wood. Resists warping beautifully.",
+        "Processing birch into fine planks. Excellent for detail work.",
+        "Processing ebony. The wood absorbs light as you work.",
+        "Processing pine into planks. Light, flexible wood.",
+        "Refining common copper into uncommon quality. Careful heat and patience.",
+        "Refining common iron into uncommon quality. Patient work and precise heat.",
+        "Refining epic adamantine into legendary quality. Hardness beyond measurement.",
+        "Refining epic copper into legendary quality. Perfect molecular alignment achieved.",
+        "Refining epic iron into legendary quality. Transcending conventional limits.",
+        "Refining epic mithril into legendary quality. The impossible made real.",
+        "Refining epic orichalcum into legendary quality. Ancient metal awakens fully.",
+        "Refining epic steel into legendary quality. Perfection crystallized in metal.",
+        "Refining legendary etherion into mythical quality. Temporal boundaries dissolve entirely.",
+        "Refining legendary mithril into mythical quality. The metal sings in harmonic perfection.",
+        "Refining legendary mithril. The metal seems to purify itself, occasionally yielding higher quality ingots.",
+        "Refining legendary orichalcum into mythical quality. The ancient metal awakens completely.",
+        "Refining metal that exists in multiple states. Reality bends during the process.",
+        "Refining rare adamantine into epic quality. Nearly indestructible becomes truly eternal.",
+        "Refining rare bronze into epic quality. Surpassing even the legendary smiths of old.",
+        "Refining rare copper into epic quality. Approaching theoretical perfection.",
+        "Refining rare iron into epic quality. Metal that defies conventional limits.",
+        "Refining rare mithril into epic quality. The metal sings as it transforms.",
+        "Refining rare steel into epic quality. Months of dedication distilled into perfection.",
+        "Refining rare tin into epic quality. Perfect magical conductivity achieved.",
+        "Refining the ancient metal. Channels both physical and magical forces.",
+        "Refining tin ore into silvery metal. Essential for alloys.",
+        "Refining uncommon bronze into rare quality. The ancient alloy perfected.",
+        "Refining uncommon copper into rare quality. The grain becomes perfect.",
+        "Refining uncommon iron into rare quality. Crystalline structure perfecting.",
+        "Refining uncommon steel into rare quality. Perfect crystalline structure.",
+        "Refining uncommon tin into rare quality. Silvery sheen becomes mirror-bright.",
+        "Sawing ironwood requires special blades. Wood dulls them quickly.",
+        "Sawing oak logs into usable planks. Basic carpentry.",
+        "Smelting adamantine requires extreme heat and purification techniques. Sometimes yields exceptionally pure ingots.",
+        "Smelting iron ore into reliable metal. Backbone of civilization. Crushing the ore first increases yield.",
+        "Smelting raw copper into usable ingots. The foundation of metallurgy.",
+        "Working worldtree wood. It remembers being part of something greater."
+      ],
+      "total_unique": 43,
+      "types": [
+        "string"
+      ],
+      "occurrences": 43,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "metadata.tags": {
+      "values": [
+        "adamantine",
+        "advanced",
+        "alloying",
+        "ancient",
+        "basic",
+        "bronze",
+        "copper",
+        "crushing",
+        "durable",
+        "elemental",
+        "epic",
+        "etherion",
+        "fine",
+        "fire",
+        "frost",
+        "iron",
+        "legendary",
+        "lightning",
+        "magical",
+        "metallic",
+        "mithril",
+        "mythical",
+        "orichalcum",
+        "purifying",
+        "quality",
+        "rare",
+        "rarity",
+        "sawing",
+        "smelting",
+        "steel",
+        "tin",
+        "uncommon",
+        "upgrade",
+        "wood"
+      ],
+      "total_unique": 34,
+      "types": [
+        "array"
+      ],
+      "occurrences": 43,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "narrative": {
+      "values": [
+        "Air crystal creates speed foundation. Lightning shard adds electric quickness. Spectral thread binds temporal acceleration. Move like lightning.",
+        "Air crystals create fluid motion essence. Spectral thread lightens body, quickens reflexes. Slime gel binds to living form. World seems to slow.",
+        "Air crystals deny gravity. Spectral thread lightens physical form. Void essence completes separation from earth. Living ichor binds to body. You float.",
+        "Automated collector - iron houses mechanism, light gem identifies targets, spectral thread extends reach, slime gel provides adhesive grip. Saves countless trips.",
+        "Basic arrow turret - iron frame for stability, oak mechanism for firing, beetle carapace provides spring tension. Point away from face.",
+        "Bear trap - steel forms jaw mechanism, dire fangs form serrated edges. Once closed, nothing escapes. Perfect spring tension required.",
+        "Cluster bomb - steel casing fragments, blast powder creates multiple charges, air crystals ensure wide dispersal. Maximum coverage.",
+        "Copper dissolves first into base form. Fire crystal catalyzes transformation to tin. Foundation of alchemical wealth.",
+        "Crystal quartz creates magical base, pure potential. Light gems infuse arcane energy. Water crystals stabilize volatile magic into drinkable form. Mana floods back.",
+        "Dire fangs dissolve first, releasing strength essence. Fire crystals amplify power. Beetle carapace adds durability to effect. Too early blocks absorption, too late makes it brief.",
+        "Dire fangs release primal fury. Fire crystals ignite rage. Storm heart adds raw power. Living ichor binds controlled chaos. Unleash inner beast.",
+        "Dire fangs release venom. Shadow core amplifies toxicity. Slime gel stabilizes for storage. Coat weapons with deadly brew.",
+        "EMP device - orichalcum frame channels energy, lightning shards provide pulse, storm heart amplifies. Technology's nightmare.",
+        "Essence blood provides foundation. Light gem illuminates and purifies. Living ichor amplifies. Miss a peak, lose potency - catch them all, wounds close rapidly.",
+        "Fire arrow turret - steel frame withstands heat, birch mechanism fires, fire crystals ignite projectiles. Warm touch to home defense.",
+        "Fire bomb - steel casing survives blast, blast powder creates explosion, fire crystals add burning. Melts stone.",
+        "Fire crystals generate inner warmth. Phoenix ash adds perpetual heat never fading. Slime gel spreads throughout body. Cold cannot touch you.",
+        "Fire then water - must balance before adding earth. Air completes cycle. Balance in bottle - all elements recognize you as kin.",
+        "Flamethrower turret - steel frame withstands heat, fire crystals fuel inferno, phoenix ash ensures perpetual burn. Excellent crowd control.",
+        "Frost mine - iron casing protects mechanism, blast powder triggers, frost essence provides freezing blast. Bury and wait.",
+        "Gold base for perfection. Dragon scale adds ancient power. Essence blood provides life. Void essence enables transmutation. Phoenix ash grants rebirth. Storm heart completes opus. Magnum achievement of alchemy.",
+        "Golem core provides titan strength. Storm heart adds raw power. Phoenix ash ensures perpetual effect. Essence blood binds all. You feel unstoppable.",
+        "Grappling hook - iron forms hook, spectral thread creates unbreakable line, air crystals enable vertical mobility. Hooks distant surfaces.",
+        "Healing beacon - steel frame supports, light gems project aura, living ichor provides life force, water crystals extend radius. Continuous healing.",
+        "Iron dissolves to potential. Coal provides carbon. Fire crystal bonds them into steel. Alchemy surpasses forging.",
+        "Iron scales dissolve into liquid stone base. Earth crystal adds flexible protection. Golem core solidifies without rigidity. Skin hardens like metal.",
+        "Jetpack for brief flight - mithril frame lightweight, fire crystals provide thrust, air crystals stabilize, phoenix ash ensures sustained burn. Fuel not included.",
+        "Laser turret - mithril frame reflects energy, light gems provide power, crystal quartz lenses focus to cutting intensity. Precise and devastating.",
+        "Light gems infuse eyes with illumination. Shadow core teaches seeing through darkness. Living ichor carries to vision. Darkness becomes irrelevant.",
+        "Lightning cannon - mithril frame conducts perfectly, ironwood mechanism directs, lightning shards provide power, storm heart amplifies. Extremely effective, extremely dangerous.",
+        "Limestone dissolves, creating crystalline matrix. Phoenix ash ignites transformation. Chaos becomes order - heat solidifies into stable crystal.",
+        "Limestone grinds to powder. Light gem infuses protective shimmer. Slime gel binds into paste. Sheen turns blades.",
+        "Living ichor creates sustained healing potential. Light gems infuse persistent illumination. Essence blood binds regenerative effect. Body remembers how to heal continuously.",
+        "Living ichor provides life force base. Water crystals amplify properties. Slime gel completes stabilization. Each stage must settle before next.",
+        "Living ichor provides raw life force. Light gems purify and concentrate. Pure essence emerges - no impurities, pure vitality.",
+        "Living ichor purges toxins from blood. Light gem illuminates and neutralizes poison. Simple but effective - corruption burns away.",
+        "Net launcher - iron frame launches, spectral thread forms unbreakable net, beetle carapace weights edges. Reduces movement dramatically.",
+        "Poison gas trap - iron casing contains, slime gel creates gas, shadow cores amplify toxicity. Choking clouds on trigger.",
+        "Proximity alarm - iron housing protects, light gem detects movement, beetle carapace creates sound. Simple but effective early warning.",
+        "Repair drone - mithril frame enables flight, light gem powers systems, spectral thread manipulates tools, living ichor enables restoration. Fixes what breaks.",
+        "Scanner detecting resources - steel houses sensors, light gems power scanning, crystal quartz focuses detection, air crystals enable remote sensing. Knowledge is power.",
+        "Shadow cores create concealment base. Spectral thread bends light around you. Void essence completes erasure. Living ichor binds to living form. You become absence.",
+        "Shield generator creating barrier - steel supports projectors, light gems power field, crystal quartz shapes barrier, water crystals distribute energy. Damage breaks on barrier.",
+        "Simple explosive - iron casing contains, blast powder explodes. Universal problem solver.",
+        "Slime gel creates base. Fire crystal adds warming confidence. Simple but effective - fear melts away.",
+        "Slime gel creates slick base. Spectral thread adds supernatural efficiency. Water crystal prevents evaporation. Productivity soars.",
+        "Slime gel dissolves first, creating restorative base. Wolf pelt binds mixture second. Watch for gentle green glow - too quick and they won't merge.",
+        "Slow field generator - iron anchors reality, frost essence creates temporal drag, crystal projects field, water stabilizes. Everything moves through frozen honey.",
+        "Spike trap - iron base forms platform, steel spikes deliver damage, beetle carapace provides snap force. Simple but brutal.",
+        "Storm heart provides raw lightning. Crystal quartz captures and stabilizes. Electricity crystallizes into solid form.",
+        "Teleporter folding space - etherion anchors reality, chaos matrix enables impossible, void essence tears dimensions, genesis lattice stabilizes. Science or magic? Yes.",
+        "Void bomb creating spatial tears - adamantine contains impossible, void essence tears reality, blast powder triggers, voidstone amplifies. Do not use indoors.",
+        "Void essence unmakes matter. Shadow cores channel dissolution. Voidstone stabilizes impossible. Miss timing, dissolves cauldron itself.",
+        "Water crystals attune body to aquatic existence. Air crystals teach lungs extracting oxygen from water. Living ichor completes transformation. Breathe liquid as air.",
+        "Water crystals create cooling base. Frost essence adds cold countering flame. Slime gel binds protection to skin. Fire cannot touch you."
+      ],
+      "total_unique": 55,
+      "types": [
+        "string"
+      ],
+      "occurrences": 55,
+      "example_items": [
+        "alchemy_minor_health_potion",
+        "alchemy_health_potion",
+        "alchemy_greater_health_potion"
+      ]
+    },
+    "outputId": {
+      "values": [
+        "antidote",
+        "armor_polish",
+        "auto_collector",
+        "basic_arrow_turret",
+        "bear_trap",
+        "berserker_rage_potion",
+        "blood_reaver",
+        "cluster_bomb",
+        "efficiency_oil",
+        "elemental_harmony_potion",
+        "emp_device",
+        "essence_blood",
+        "fire_arrow_turret",
+        "fire_bomb",
+        "fire_crystal",
+        "fire_resistance_potion",
+        "flamethrower_turret",
+        "frost_mine",
+        "frost_resistance_potion",
+        "frostbite_hammer",
+        "grappling_hook",
+        "greater_health_potion",
+        "haste_potion",
+        "healing_beacon",
+        "health_potion",
+        "inferno_blade",
+        "invisibility_potion",
+        "iron_skin_potion",
+        "jetpack",
+        "laser_turret",
+        "levitation_elixir",
+        "lightning_cannon",
+        "lightning_chain_whip",
+        "lightning_shard",
+        "liquid_courage",
+        "mana_potion",
+        "minor_health_potion",
+        "net_launcher",
+        "night_vision_elixir",
+        "philosophers_stone",
+        "poison_trap",
+        "poison_vial",
+        "proximity_alarm",
+        "regeneration_tonic",
+        "repair_drone",
+        "resource_scanner",
+        "shield_generator",
+        "simple_bomb",
+        "slow_field_generator",
+        "spike_trap",
+        "steel_ingot",
+        "strength_elixir",
+        "swiftness_draught",
+        "teleporter_pad",
+        "tin_ingot",
+        "titans_brew",
+        "universal_solvent",
+        "void_bomb",
+        "void_piercer",
+        "water_breathing_potion"
+      ],
+      "total_unique": 60,
+      "types": [
+        "string"
+      ],
+      "occurrences": 60,
+      "example_items": [
+        "alchemy_minor_health_potion",
+        "alchemy_health_potion",
+        "alchemy_greater_health_potion"
+      ]
+    },
+    "outputQty": {
+      "values": [
+        1
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "recipe_lightning_chain_whip",
+        "recipe_inferno_blade",
+        "recipe_void_piercer"
+      ]
+    },
+    "outputs[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "ash_plank",
+        "birch_plank",
+        "bronze_ingot",
+        "copper_ingot",
+        "ebony_plank",
+        "etherion_ingot",
+        "fire_steel_ingot",
+        "frost_steel_ingot",
+        "iron_ingot",
+        "ironwood_plank",
+        "lightning_copper_ingot",
+        "maple_plank",
+        "mithril_ingot",
+        "oak_plank",
+        "orichalcum_ingot",
+        "pine_plank",
+        "steel_ingot",
+        "tin_ingot",
+        "worldtree_plank"
+      ],
+      "total_unique": 20,
+      "types": [
+        "string"
+      ],
+      "occurrences": 43,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
+    },
+    "outputs[].quantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 43,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
+    },
+    "outputs[].rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "mythical",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 43,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
+    },
+    "recipeId": {
+      "values": [
+        "alchemy_antidote",
+        "alchemy_armor_polish",
+        "alchemy_berserker_rage",
+        "alchemy_crystallize_fire",
+        "alchemy_crystallize_lightning",
+        "alchemy_efficiency_oil",
+        "alchemy_elemental_harmony",
+        "alchemy_fire_resistance_potion",
+        "alchemy_frost_resistance_potion",
+        "alchemy_greater_health_potion",
+        "alchemy_haste_potion",
+        "alchemy_health_potion",
+        "alchemy_invisibility_potion",
+        "alchemy_iron_skin_potion",
+        "alchemy_levitation_elixir",
+        "alchemy_liquid_courage",
+        "alchemy_mana_potion",
+        "alchemy_minor_health_potion",
+        "alchemy_night_vision_elixir",
+        "alchemy_philosophers_stone",
+        "alchemy_poison_vial",
+        "alchemy_refine_essence_blood",
+        "alchemy_regeneration_tonic",
+        "alchemy_strength_elixir",
+        "alchemy_swiftness_draught",
+        "alchemy_titans_brew",
+        "alchemy_transmute_copper_tin",
+        "alchemy_transmute_iron_steel",
+        "alchemy_universal_solvent",
+        "alchemy_water_breathing_potion",
+        "engineering_auto_collector",
+        "engineering_basic_arrow_turret",
+        "engineering_bear_trap",
+        "engineering_cluster_bomb",
+        "engineering_emp_device",
+        "engineering_fire_arrow_turret",
+        "engineering_fire_bomb",
+        "engineering_flamethrower_turret",
+        "engineering_frost_mine",
+        "engineering_grappling_hook",
+        "engineering_healing_beacon",
+        "engineering_jetpack",
+        "engineering_laser_turret",
+        "engineering_lightning_cannon",
+        "engineering_net_launcher",
+        "engineering_poison_trap",
+        "engineering_proximity_alarm",
+        "engineering_repair_drone",
+        "engineering_resource_scanner",
+        "engineering_shield_generator",
+        "engineering_simple_bomb",
+        "engineering_slow_field_generator",
+        "engineering_spike_trap",
+        "engineering_teleporter",
+        "engineering_void_bomb",
+        "recipe_blood_reaver",
+        "recipe_frostbite_hammer",
+        "recipe_inferno_blade",
+        "recipe_lightning_chain_whip",
+        "recipe_void_piercer",
+        "refining_adamantine_ore_to_ingot",
+        "refining_ash_log_to_plank",
+        "refining_birch_log_to_plank",
+        "refining_bronze_alloy",
+        "refining_copper_ore_to_ingot",
+        "refining_ebony_log_to_plank",
+        "refining_etherion_ore_to_ingot",
+        "refining_fire_steel",
+        "refining_frost_steel",
+        "refining_iron_ore_to_ingot",
+        "refining_ironwood_log_to_plank",
+        "refining_lightning_copper",
+        "refining_maple_log_to_plank",
+        "refining_mithril_ore_to_ingot",
+        "refining_oak_log_to_plank",
+        "refining_orichalcum_ore_to_ingot",
+        "refining_pine_log_to_plank",
+        "refining_rarity_adamantine_epic",
+        "refining_rarity_adamantine_legendary",
+        "refining_rarity_bronze_epic",
+        "refining_rarity_bronze_rare",
+        "refining_rarity_copper_epic",
+        "refining_rarity_copper_legendary",
+        "refining_rarity_copper_rare",
+        "refining_rarity_copper_uncommon",
+        "refining_rarity_etherion_mythical",
+        "refining_rarity_iron_epic",
+        "refining_rarity_iron_legendary",
+        "refining_rarity_iron_rare",
+        "refining_rarity_iron_uncommon",
+        "refining_rarity_mithril_epic",
+        "refining_rarity_mithril_legendary",
+        "refining_rarity_mithril_mythical",
+        "refining_rarity_orichalcum_legendary",
+        "refining_rarity_orichalcum_mythical",
+        "refining_rarity_steel_epic",
+        "refining_rarity_steel_legendary",
+        "refining_rarity_steel_rare",
+        "refining_rarity_tin_epic",
+        "refining_rarity_tin_rare"
+      ],
+      "total_unique": 103,
+      "types": [
+        "string"
+      ],
+      "occurrences": 103,
+      "example_items": [
+        "refining_copper_ore_to_ingot",
+        "refining_iron_ore_to_ingot",
+        "refining_tin_ore_to_ingot"
+      ]
+    },
+    "slots[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "air_crystal",
+        "beetle_carapace",
+        "birch_plank",
+        "blast_powder",
+        "chaos_matrix",
+        "crystal_quartz",
+        "dire_fang",
+        "etherion_ingot",
+        "fire_crystal",
+        "frost_essence",
+        "genesis_lattice",
+        "iron_ingot",
+        "ironwood_plank",
+        "light_gem",
+        "lightning_shard",
+        "living_ichor",
+        "mithril_ingot",
+        "oak_plank",
+        "orichalcum_ingot",
+        "phoenix_ash",
+        "shadow_core",
+        "slime_gel",
+        "spectral_thread",
+        "steel_ingot",
+        "storm_heart",
+        "void_essence",
+        "voidstone",
+        "water_crystal"
+      ],
+      "total_unique": 29,
+      "types": [
+        "string"
+      ],
+      "occurrences": 83,
+      "example_items": [
+        "iron_ingot",
+        "oak_plank",
+        "beetle_carapace"
+      ]
+    },
+    "slots[].quantity": {
+      "values": [
+        1,
+        10,
+        12,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8
+      ],
+      "total_unique": 9,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 83,
+      "example_items": [
+        "iron_ingot",
+        "oak_plank",
+        "beetle_carapace"
+      ]
+    },
+    "slots[].type": {
+      "values": [
+        "FRAME",
+        "FUNCTION",
+        "MODIFIER",
+        "POWER",
+        "UTILITY"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 83,
+      "example_items": [
+        "iron_ingot",
+        "oak_plank",
+        "beetle_carapace"
+      ]
+    },
+    "stationRequired": {
+      "values": [
+        "refinery"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 43,
+      "example_items": [
+        "refining_copper_ore_to_ingot",
+        "refining_iron_ore_to_ingot",
+        "refining_tin_ore_to_ingot"
+      ]
+    },
+    "stationTier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 60,
+      "example_items": [
+        "alchemy_minor_health_potion",
+        "alchemy_health_potion",
+        "alchemy_greater_health_potion"
+      ]
+    },
+    "stationTierRequired": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 43,
+      "example_items": [
+        "refining_copper_ore_to_ingot",
+        "refining_iron_ore_to_ingot",
+        "refining_tin_ore_to_ingot"
+      ]
+    }
+  },
+  "_usable_template": {
+    "fuelRequired": {
+      "materialId": "phoenix_ash",
+      "quantity": 1
+    },
+    "ingredients": [
+      "<value>"
+    ],
+    "inputs": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Refining legendary mithril into mythical quality. The metal sings in harmonic perfection.",
+      "tags": [
+        "crushing",
+        "frost",
+        "uncommon"
+      ]
+    },
+    "narrative": "Air crystal creates speed foundation. Lightning shard adds electric quickness. Spectral thread binds temporal acceleration. Move like lightning.",
+    "outputId": "antidote",
+    "outputQty": 1,
+    "outputs": [
+      "<value>"
+    ],
+    "recipeId": "alchemy_mana_potion",
+    "slots": [
+      "<value>"
+    ],
+    "stationRequired": "refinery",
+    "stationTier": 1,
+    "stationTierRequired": 1
+  },
+  "_sample_items": [
+    {
+      "recipeId": "refining_copper_ore_to_ingot",
+      "inputs": [
+        {
+          "materialId": "copper_ore",
+          "quantity": 1
+        }
+      ],
+      "outputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1,
+          "rarity": "common"
+        }
+      ],
+      "stationRequired": "refinery",
+      "stationTierRequired": 1,
+      "fuelRequired": null,
+      "metadata": {
+        "narrative": "Smelting raw copper into usable ingots. The foundation of metallurgy.",
+        "tags": [
+          "smelting",
+          "copper",
+          "basic"
+        ]
+      }
+    },
+    {
+      "recipeId": "refining_iron_ore_to_ingot",
+      "inputs": [
+        {
+          "materialId": "iron_ore",
+          "quantity": 1
+        }
+      ],
+      "outputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 1,
+          "rarity": "common"
+        }
+      ],
+      "stationRequired": "refinery",
+      "stationTierRequired": 1,
+      "fuelRequired": null,
+      "metadata": {
+        "narrative": "Smelting iron ore into reliable metal. Backbone of civilization. Crushing the ore first increases yield.",
+        "tags": [
+          "smelting",
+          "crushing",
+          "iron",
+          "basic"
+        ]
+      }
+    },
+    {
+      "recipeId": "refining_tin_ore_to_ingot",
+      "inputs": [
+        {
+          "materialId": "tin_ore",
+          "quantity": 1
+        }
+      ],
+      "outputs": [
+        {
+          "materialId": "tin_ingot",
+          "quantity": 1,
+          "rarity": "uncommon"
+        }
+      ],
+      "stationRequired": "refinery",
+      "stationTierRequired": 1,
+      "fuelRequired": null,
+      "metadata": {
+        "narrative": "Refining tin ore into silvery metal. Essential for alloys.",
+        "tags": [
+          "smelting",
+          "tin",
+          "basic"
+        ]
+      }
+    },
+    {
+      "recipeId": "refining_steel_ore_to_ingot",
+      "inputs": [
+        {
+          "materialId": "steel_ore",
+          "quantity": 1
+        }
+      ],
+      "outputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 1,
+          "rarity": "uncommon"
+        }
+      ],
+      "stationRequired": "refinery",
+      "stationTierRequired": 2,
+      "fuelRequired": null,
+      "metadata": {
+        "narrative": "Forging steel from carbon-rich ore. Requires intense heat.",
+        "tags": [
+          "smelting",
+          "steel",
+          "advanced"
+        ]
+      }
+    },
+    {
+      "recipeId": "refining_mithril_ore_to_ingot",
+      "inputs": [
+        {
+          "materialId": "mithril_ore",
+          "quantity": 1
+        }
+      ],
+      "outputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 1,
+          "rarity": "rare"
+        }
+      ],
+      "stationRequired": "refinery",
+      "stationTierRequired": 2,
+      "fuelRequired": null,
+      "metadata": {
+        "narrative": "Refining legendary mithril. The metal seems to purify itself, occasionally yielding higher quality ingots.",
+        "tags": [
+          "smelting",
+          "purifying",
+          "mithril",
+          "legendary"
+        ]
+      }
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 {
   "_meta": {
-    "category": "recipes-engineering",
-    "description": "Engineering recipes for devices",
-    "generated_at": "2026-01-01T19:53:07.769233",
+    "category": "recipes_engineering",
+    "description": "Engineering recipes for devices and gadgets",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.392951",
+    "total_items": 16,
     "source_files": [
-      "recipes-engineering-1.JSON"
-    ],
-    "total_items_analyzed": 0
+      "recipes.JSON/recipes-engineering-1.JSON"
+    ]
   },
   "_field_documentation": {},
   "_all_possible_values": {
@@ -32,11 +33,16 @@
         "storm_heart",
         "water_crystal"
       ],
-      "count": 19,
+      "total_unique": 19,
       "types": [
         "string"
       ],
-      "occurrences": 48
+      "occurrences": 48,
+      "example_items": [
+        "iron_ingot",
+        "pine_plank",
+        "spectral_thread"
+      ]
     },
     "inputs[].quantity": {
       "values": [
@@ -49,11 +55,16 @@
         6,
         8
       ],
-      "count": 8,
+      "total_unique": 8,
       "types": [
         "integer"
       ],
-      "occurrences": 48
+      "occurrences": 48,
+      "example_items": [
+        "iron_ingot",
+        "pine_plank",
+        "spectral_thread"
+      ]
     },
     "metadata.narrative": {
       "values": [
@@ -74,11 +85,14 @@
         "Simple explosive using blast powder in iron casing. Universal problem solver.",
         "Spike trap with spring-loaded iron spikes. Simple, brutal, effective."
       ],
-      "count": 16,
+      "total_unique": 16,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "metadata.tags": {
       "values": [
@@ -109,11 +123,14 @@
         "turret",
         "utility"
       ],
-      "count": 26,
+      "total_unique": 26,
       "types": [
         "array"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "miniGame.baseTime": {
       "values": [
@@ -129,11 +146,14 @@
         70,
         75
       ],
-      "count": 11,
+      "total_unique": 11,
       "types": [
         "integer"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "miniGame.difficulty": {
       "values": [
@@ -142,21 +162,27 @@
         "hard",
         "moderate"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "miniGame.type": {
       "values": [
         "engineering"
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "outputId": {
       "values": [
@@ -177,11 +203,16 @@
         "simple_bomb",
         "spike_trap"
       ],
-      "count": 16,
+      "total_unique": 16,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "engineering_basic_arrow_turret",
+        "engineering_fire_arrow_turret",
+        "engineering_lightning_cannon"
+      ]
     },
     "outputQty": {
       "values": [
@@ -189,11 +220,16 @@
         2,
         3
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "integer"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "engineering_basic_arrow_turret",
+        "engineering_fire_arrow_turret",
+        "engineering_lightning_cannon"
+      ]
     },
     "recipeId": {
       "values": [
@@ -214,11 +250,16 @@
         "engineering_simple_bomb",
         "engineering_spike_trap"
       ],
-      "count": 16,
+      "total_unique": 16,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "engineering_basic_arrow_turret",
+        "engineering_fire_arrow_turret",
+        "engineering_lightning_cannon"
+      ]
     },
     "stationTier": {
       "values": [
@@ -226,21 +267,31 @@
         2,
         3
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "integer"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "engineering_basic_arrow_turret",
+        "engineering_fire_arrow_turret",
+        "engineering_lightning_cannon"
+      ]
     },
     "stationType": {
       "values": [
         "engineering"
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "engineering_basic_arrow_turret",
+        "engineering_fire_arrow_turret",
+        "engineering_lightning_cannon"
+      ]
     }
   },
   "_usable_template": {
@@ -248,180 +299,194 @@
       "<value>"
     ],
     "metadata": {
-      "narrative": "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone.",
+      "narrative": "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous.",
       "tags": [
-        "elemental",
-        "explosive",
-        "lightning"
+        "crowd-control",
+        "cluster",
+        "turret"
       ]
     },
     "miniGame": {
       "baseTime": 65,
-      "difficulty": "moderate",
+      "difficulty": "extreme",
       "type": "engineering"
     },
-    "outputId": "frost_mine",
+    "outputId": "jetpack",
     "outputQty": 1,
-    "recipeId": "engineering_net_launcher",
+    "recipeId": "engineering_fire_arrow_turret",
     "stationTier": 1,
     "stationType": "engineering"
   },
-  "template": {
-    "inputs": {
-      "_type": "array",
-      "_sample_values": [],
-      "_total_unique_values": 0,
-      "materialId": {
-        "_type": "string",
-        "_sample_values": [
-          "phoenix_ash",
-          "air_crystal",
-          "spectral_thread",
-          "dire_fang",
-          "beetle_carapace",
-          "lightning_shard",
-          "storm_heart",
-          "living_ichor",
-          "light_gem",
-          "orichalcum_ingot"
-        ],
-        "_total_unique_values": 19
-      },
-      "quantity": {
-        "_type": "integer",
-        "_sample_values": [
-          2,
-          3,
-          4,
-          5,
-          6,
-          8,
-          10,
-          12
-        ],
-        "_total_unique_values": 8
-      }
-    },
-    "metadata": {
-      "narrative": {
-        "_type": "string",
-        "_sample_values": [
-          "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone.",
-          "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous.",
-          "Laser turret using focused light crystals. Precise and devastating.",
-          "Basic arrow turret using simple springs and levers. Point away from face.",
-          "Spike trap with spring-loaded iron spikes. Simple, brutal, effective.",
-          "Frost mine that erupts in a blast of ice shards. The cold bites deep.",
-          "Net launcher that ensnares enemies. Reduces movement speed dramatically.",
-          "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces.",
-          "Simple explosive using blast powder in iron casing. Universal problem solver.",
-          "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense."
-        ],
-        "_total_unique_values": 16
-      },
-      "tags": {
-        "_type": "array",
-        "_sample_values": [
-          "elemental",
-          "explosive",
-          "lightning",
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "Basic arrow turret using simple springs and levers. Point away from face.",
+        "tags": [
+          "turret",
           "basic",
-          "tech"
-        ],
-        "_total_unique_values": 26
+          "projectile"
+        ]
+      },
+      "recipeId": "engineering_basic_arrow_turret",
+      "outputId": "basic_arrow_turret",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "pine_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "easy",
+        "baseTime": 40
       }
     },
-    "miniGame": {
-      "baseTime": {
-        "_type": "integer",
-        "_sample_values": [
-          65,
-          35,
-          70,
-          40,
-          75,
-          45,
-          50,
-          55,
-          25,
-          60
-        ],
-        "_total_unique_values": 11
+    {
+      "metadata": {
+        "narrative": "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense.",
+        "tags": [
+          "turret",
+          "fire",
+          "elemental"
+        ]
       },
-      "difficulty": {
-        "_type": "string",
-        "_sample_values": [
-          "moderate",
-          "extreme",
-          "hard",
-          "easy"
-        ],
-        "_total_unique_values": 4
-      },
-      "type": {
-        "_type": "string",
-        "_sample_values": [
-          "engineering"
-        ],
-        "_total_unique_values": 1
+      "recipeId": "engineering_fire_arrow_turret",
+      "outputId": "fire_arrow_turret",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 4
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 3
+        }
+      ],
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "moderate",
+        "baseTime": 50
       }
     },
-    "outputId": {
-      "_type": "string",
-      "_sample_values": [
-        "frost_mine",
-        "bear_trap",
-        "emp_device",
-        "simple_bomb",
-        "jetpack",
-        "laser_turret",
-        "cluster_bomb",
-        "fire_bomb",
-        "fire_arrow_turret",
-        "healing_beacon"
+    {
+      "metadata": {
+        "narrative": "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous.",
+        "tags": [
+          "turret",
+          "lightning",
+          "advanced"
+        ]
+      },
+      "recipeId": "engineering_lightning_cannon",
+      "outputId": "lightning_cannon",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 8
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 2
+        }
       ],
-      "_total_unique_values": 16
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "hard",
+        "baseTime": 70
+      }
     },
-    "outputQty": {
-      "_type": "integer",
-      "_sample_values": [
-        1,
-        2,
-        3
+    {
+      "metadata": {
+        "narrative": "Flamethrower turret that sweeps area with fire. Excellent for crowd control.",
+        "tags": [
+          "turret",
+          "fire",
+          "area"
+        ]
+      },
+      "recipeId": "engineering_flamethrower_turret",
+      "outputId": "flamethrower_turret",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 8
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 8
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        }
       ],
-      "_total_unique_values": 3
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "hard",
+        "baseTime": 60
+      }
     },
-    "recipeId": {
-      "_type": "string",
-      "_sample_values": [
-        "engineering_net_launcher",
-        "engineering_bear_trap",
-        "engineering_healing_beacon",
-        "engineering_flamethrower_turret",
-        "engineering_basic_arrow_turret",
-        "engineering_fire_arrow_turret",
-        "engineering_laser_turret",
-        "engineering_emp_device",
-        "engineering_cluster_bomb",
-        "engineering_simple_bomb"
+    {
+      "metadata": {
+        "narrative": "Laser turret using focused light crystals. Precise and devastating.",
+        "tags": [
+          "turret",
+          "light",
+          "precision"
+        ]
+      },
+      "recipeId": "engineering_laser_turret",
+      "outputId": "laser_turret",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 8
+        },
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 6
+        }
       ],
-      "_total_unique_values": 16
-    },
-    "stationTier": {
-      "_type": "integer",
-      "_sample_values": [
-        1,
-        2,
-        3
-      ],
-      "_total_unique_values": 3
-    },
-    "stationType": {
-      "_type": "string",
-      "_sample_values": [
-        "engineering"
-      ],
-      "_total_unique_values": 1
+      "miniGame": {
+        "type": "engineering",
+        "difficulty": "hard",
+        "baseTime": 65
+      }
     }
-  }
+  ]
 }

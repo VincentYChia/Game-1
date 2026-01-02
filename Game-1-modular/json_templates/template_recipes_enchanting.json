@@ -1,12 +1,14 @@
 {
   "_meta": {
-    "category": "recipes-enchanting",
-    "description": "Enchanting recipes",
-    "generated_at": "2026-01-01T19:53:07.770018",
+    "category": "recipes_enchanting",
+    "description": "Enchanting recipes for magical enhancements",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.391914",
+    "total_items": 50,
     "source_files": [
-      "recipes-enchanting-1.JSON"
-    ],
-    "total_items_analyzed": 0
+      "recipes.JSON/recipes-adornments-1.json",
+      "recipes.JSON/recipes-enchanting-1.JSON"
+    ]
   },
   "_field_documentation": {},
   "_all_possible_values": {
@@ -17,31 +19,42 @@
         "tool",
         "weapon"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "array"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "enchanting_sharpness_basic",
+        "enchanting_sharpness_advanced",
+        "enchanting_sharpness_master"
+      ]
     },
     "effect.chainCount": {
       "values": [
         2
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.chainRange": {
       "values": [
         3
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.conflictsWith": {
       "values": [
@@ -59,32 +72,41 @@
         "unbreaking_1",
         "unbreaking_2"
       ],
-      "count": 13,
+      "total_unique": 13,
       "types": [
         "array"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.damagePerSecond": {
       "values": [
         10,
         8
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "integer"
       ],
-      "occurrences": 2
+      "occurrences": 4,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.damagePercent": {
       "values": [
         0.5
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.duration": {
       "values": [
@@ -92,11 +114,14 @@
         5,
         8
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "integer"
       ],
-      "occurrences": 3
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.element": {
       "values": [
@@ -105,53 +130,68 @@
         "lightning",
         "poison"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "string"
       ],
-      "occurrences": 4
+      "occurrences": 8,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.maxStacks": {
       "values": [
         3,
         5
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "integer"
       ],
-      "occurrences": 2
+      "occurrences": 4,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.perMinute": {
       "values": [
         true
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "boolean"
       ],
-      "occurrences": 1
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.slowPercent": {
       "values": [
         0.3
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.stackable": {
       "values": [
         false,
         true
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "boolean"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.type": {
       "values": [
@@ -173,11 +213,14 @@
         "soulbound",
         "weight_multiplier"
       ],
-      "count": 17,
+      "total_unique": 17,
       "types": [
         "string"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "unknown"
+      ]
     },
     "effect.value": {
       "values": [
@@ -193,12 +236,15 @@
         1.0,
         3
       ],
-      "count": 11,
+      "total_unique": 11,
       "types": [
-        "number",
-        "integer"
+        "integer",
+        "number"
       ],
-      "occurrences": 21
+      "occurrences": 42,
+      "example_items": [
+        "unknown"
+      ]
     },
     "enchantmentId": {
       "values": [
@@ -228,11 +274,16 @@
         "unbreaking_2",
         "weightless"
       ],
-      "count": 25,
+      "total_unique": 25,
       "types": [
         "string"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "enchanting_sharpness_basic",
+        "enchanting_sharpness_advanced",
+        "enchanting_sharpness_master"
+      ]
     },
     "enchantmentName": {
       "values": [
@@ -262,64 +313,99 @@
         "Unbreaking II",
         "Weightless"
       ],
-      "count": 25,
+      "total_unique": 25,
       "types": [
         "string"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "enchanting_sharpness_basic",
+        "enchanting_sharpness_advanced",
+        "enchanting_sharpness_master"
+      ]
     },
     "inputs[].materialId": {
       "values": [
         "adamantine_ingot",
         "air_crystal",
+        "ash_plank",
         "beetle_carapace",
         "chaos_matrix",
         "crystal_quartz",
         "diamond",
         "dire_fang",
         "earth_crystal",
+        "ebony_log",
+        "ebony_plank",
         "essence_blood",
+        "eternity_stone",
         "fire_crystal",
         "frost_essence",
         "genesis_lattice",
         "golem_core",
         "granite",
+        "iron_ingot",
+        "iron_ore",
         "iron_scales",
+        "ironwood_plank",
         "light_gem",
         "lightning_shard",
         "living_ichor",
+        "maple_plank",
+        "marble",
+        "mithril_ingot",
         "obsidian",
         "orichalcum_ingot",
         "phoenix_ash",
+        "primordial_crystal",
         "shadow_core",
+        "shale",
         "slime_gel",
         "spectral_thread",
+        "steel_ingot",
         "storm_heart",
+        "tin_ore",
         "void_essence",
-        "water_crystal"
+        "voidstone",
+        "water_crystal",
+        "wolf_pelt",
+        "worldtree_plank"
       ],
-      "count": 27,
+      "total_unique": 44,
       "types": [
         "string"
       ],
-      "occurrences": 64
+      "occurrences": 164,
+      "example_items": [
+        "fire_crystal",
+        "granite",
+        "iron_ingot"
+      ]
     },
     "inputs[].quantity": {
       "values": [
         1,
         10,
+        12,
         2,
         3,
         4,
         5,
         6,
-        8
+        7,
+        8,
+        9
       ],
-      "count": 8,
+      "total_unique": 11,
       "types": [
         "integer"
       ],
-      "occurrences": 64
+      "occurrences": 164,
+      "example_items": [
+        "fire_crystal",
+        "granite",
+        "iron_ingot"
+      ]
     },
     "metadata.narrative": {
       "values": [
@@ -349,11 +435,14 @@
         "Thorns enchantment. Attackers hurt themselves.",
         "Weightless enchantment. Items become lighter without losing strength."
       ],
-      "count": 25,
+      "total_unique": 25,
       "types": [
         "string"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "unknown"
+      ]
     },
     "metadata.tags": {
       "values": [
@@ -392,11 +481,14 @@
         "weapon",
         "weight"
       ],
-      "count": 34,
+      "total_unique": 34,
       "types": [
         "array"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "unknown"
+      ]
     },
     "miniGame.baseTime": {
       "values": [
@@ -408,11 +500,14 @@
         80,
         90
       ],
-      "count": 7,
+      "total_unique": 7,
       "types": [
         "integer"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "unknown"
+      ]
     },
     "miniGame.difficulty": {
       "values": [
@@ -421,21 +516,27 @@
         "hard",
         "moderate"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "string"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "unknown"
+      ]
     },
     "miniGame.type": {
       "values": [
         "enchanting"
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "unknown"
+      ]
     },
     "recipeId": {
       "values": [
@@ -465,11 +566,16 @@
         "enchanting_thorns",
         "enchanting_weightless"
       ],
-      "count": 25,
+      "total_unique": 25,
       "types": [
         "string"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "enchanting_sharpness_basic",
+        "enchanting_sharpness_advanced",
+        "enchanting_sharpness_master"
+      ]
     },
     "stationTier": {
       "values": [
@@ -478,364 +584,332 @@
         3,
         4
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "integer"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "enchanting_sharpness_basic",
+        "enchanting_sharpness_advanced",
+        "enchanting_sharpness_master"
+      ]
     },
     "stationType": {
       "values": [
         "enchanting"
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 25
+      "occurrences": 50,
+      "example_items": [
+        "enchanting_sharpness_basic",
+        "enchanting_sharpness_advanced",
+        "enchanting_sharpness_master"
+      ]
     }
   },
   "_usable_template": {
     "applicableTo": [
-      "accessory",
+      "tool",
       "armor",
-      "tool"
+      "weapon"
     ],
     "effect": {
       "chainCount": 2,
       "chainRange": 3,
       "conflictsWith": [
-        "sharpness_1",
-        "efficiency_1",
-        "protection_2"
+        "protection_2",
+        "silk_touch",
+        "efficiency_2"
       ],
       "damagePerSecond": 8,
       "damagePercent": 0.5,
       "duration": 8,
-      "element": "fire",
+      "element": "poison",
       "maxStacks": 3,
       "perMinute": true,
       "slowPercent": 0.3,
       "stackable": true,
-      "type": "health_regeneration",
+      "type": "reflect_damage",
       "value": 3
     },
-    "enchantmentId": "efficiency_1",
-    "enchantmentName": "Soulbound",
+    "enchantmentId": "silk_touch",
+    "enchantmentName": "Frost Touch",
     "inputs": [
       "<value>"
     ],
     "metadata": {
-      "narrative": "Fire enchantment for weapons. Strikes leave burning wounds.",
+      "narrative": "Knockback enchantment. Send enemies flying with each hit.",
       "tags": [
-        "elemental",
-        "lightning",
-        "basic"
+        "weapon",
+        "weight",
+        "advanced"
       ]
     },
     "miniGame": {
       "baseTime": 40,
-      "difficulty": "moderate",
+      "difficulty": "extreme",
       "type": "enchanting"
     },
-    "recipeId": "enchanting_fire_aspect",
+    "recipeId": "enchanting_frost_touch",
     "stationTier": 1,
     "stationType": "enchanting"
   },
-  "template": {
-    "applicableTo": {
-      "_type": "array",
-      "_sample_values": [
-        "accessory",
-        "armor",
-        "tool",
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "Basic sharpening enchantment using fire crystals. The edge never dulls.",
+        "tags": [
+          "weapon",
+          "damage",
+          "basic"
+        ]
+      },
+      "recipeId": "enchanting_sharpness_basic",
+      "enchantmentId": "sharpness_1",
+      "enchantmentName": "Sharpness I",
+      "applicableTo": [
         "weapon"
       ],
-      "_total_unique_values": 4
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 4
+        },
+        {
+          "materialId": "granite",
+          "quantity": 2
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "tin_ore",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "enchanting",
+        "difficulty": "easy",
+        "baseTime": 30
+      },
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.1,
+        "stackable": false,
+        "conflictsWith": [
+          "sharpness_2",
+          "sharpness_3"
+        ]
+      }
     },
-    "effect": {
-      "chainCount": {
-        "_type": "integer",
-        "_sample_values": [
-          2
-        ],
-        "_total_unique_values": 1
+    {
+      "metadata": {
+        "narrative": "Improved sharpening using lightning shards. The blade crackles with energy.",
+        "tags": [
+          "weapon",
+          "damage",
+          "advanced"
+        ]
       },
-      "chainRange": {
-        "_type": "integer",
-        "_sample_values": [
-          3
-        ],
-        "_total_unique_values": 1
+      "recipeId": "enchanting_sharpness_advanced",
+      "enchantmentId": "sharpness_2",
+      "enchantmentName": "Sharpness II",
+      "applicableTo": [
+        "weapon"
+      ],
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 3
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 2
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3
+        },
+        {
+          "materialId": "marble",
+          "quantity": 4
+        }
+      ],
+      "miniGame": {
+        "type": "enchanting",
+        "difficulty": "moderate",
+        "baseTime": 40
       },
-      "conflictsWith": {
-        "_type": "array",
-        "_sample_values": [
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": [
           "sharpness_1",
-          "efficiency_1",
-          "protection_2",
-          "fortune_2",
-          "silk_touch"
-        ],
-        "_total_unique_values": 13
-      },
-      "damagePerSecond": {
-        "_type": "integer",
-        "_sample_values": [
-          8,
-          10
-        ],
-        "_total_unique_values": 2
-      },
-      "damagePercent": {
-        "_type": "number",
-        "_sample_values": [
-          0.5
-        ],
-        "_total_unique_values": 1
-      },
-      "duration": {
-        "_type": "integer",
-        "_sample_values": [
-          8,
-          4,
-          5
-        ],
-        "_total_unique_values": 3
-      },
-      "element": {
-        "_type": "string",
-        "_sample_values": [
-          "fire",
-          "poison",
-          "lightning",
-          "ice"
-        ],
-        "_total_unique_values": 4
-      },
-      "maxStacks": {
-        "_type": "integer",
-        "_sample_values": [
-          3,
-          5
-        ],
-        "_total_unique_values": 2
-      },
-      "perMinute": {
-        "_type": "boolean",
-        "_sample_values": [
-          true
-        ],
-        "_total_unique_values": 1
-      },
-      "slowPercent": {
-        "_type": "number",
-        "_sample_values": [
-          0.3
-        ],
-        "_total_unique_values": 1
-      },
-      "stackable": {
-        "_type": "boolean",
-        "_sample_values": [
-          false,
-          true
-        ],
-        "_total_unique_values": 2
-      },
-      "type": {
-        "_type": "string",
-        "_sample_values": [
-          "health_regeneration",
-          "movement_speed_multiplier",
-          "lifesteal",
-          "chain_damage",
-          "weight_multiplier",
-          "slow",
-          "knockback",
-          "bonus_yield_chance",
-          "harvest_original_form",
-          "gathering_speed_multiplier"
-        ],
-        "_total_unique_values": 17
-      },
-      "value": {
-        "_type": "number",
-        "_sample_values": [
-          0.1,
-          0.35,
-          0.6,
-          0.3,
-          0.2,
-          0.15,
-          0.4,
-          1.0,
-          -0.5,
-          3
-        ],
-        "_total_unique_values": 11
+          "sharpness_3"
+        ]
       }
     },
-    "enchantmentId": {
-      "_type": "string",
-      "_sample_values": [
-        "efficiency_1",
-        "protection_3",
-        "sharpness_2",
-        "lightning_strike",
-        "fire_aspect",
-        "protection_1",
-        "unbreaking_2",
-        "fortune_1",
-        "sharpness_1",
-        "lifesteal"
-      ],
-      "_total_unique_values": 25
-    },
-    "enchantmentName": {
-      "_type": "string",
-      "_sample_values": [
-        "Soulbound",
-        "Frost Touch",
-        "Lifesteal",
-        "Swiftness",
-        "Protection I",
-        "Efficiency I",
-        "Lightning Strike",
-        "Fortune I",
-        "Knockback",
-        "Fortune II"
-      ],
-      "_total_unique_values": 25
-    },
-    "inputs": {
-      "_type": "array",
-      "_sample_values": [],
-      "_total_unique_values": 0,
-      "materialId": {
-        "_type": "string",
-        "_sample_values": [
-          "phoenix_ash",
-          "diamond",
-          "air_crystal",
-          "spectral_thread",
-          "earth_crystal",
-          "void_essence",
-          "dire_fang",
-          "beetle_carapace",
-          "lightning_shard",
-          "genesis_lattice"
-        ],
-        "_total_unique_values": 27
+    {
+      "metadata": {
+        "narrative": "Master sharpening using phoenix ash. The edge exists between states of matter.",
+        "tags": [
+          "weapon",
+          "damage",
+          "legendary"
+        ]
       },
-      "quantity": {
-        "_type": "integer",
-        "_sample_values": [
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          8,
-          10
-        ],
-        "_total_unique_values": 8
+      "recipeId": "enchanting_sharpness_master",
+      "enchantmentId": "sharpness_3",
+      "enchantmentName": "Sharpness III",
+      "applicableTo": [
+        "weapon"
+      ],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 5
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 2
+        },
+        {
+          "materialId": "marble",
+          "quantity": 1
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        }
+      ],
+      "miniGame": {
+        "type": "enchanting",
+        "difficulty": "hard",
+        "baseTime": 60
+      },
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": [
+          "sharpness_1",
+          "sharpness_2"
+        ]
       }
     },
-    "metadata": {
-      "narrative": {
-        "_type": "string",
-        "_sample_values": [
-          "Fire enchantment for weapons. Strikes leave burning wounds.",
-          "Protection enchantment. Incoming damage reduced.",
-          "Lightning enchantment for weapons. Chain attacks to nearby enemies.",
-          "Basic durability enchantment. Items last longer before needing repair.",
-          "Fortune enchantment for tools. Better yields from resources.",
-          "Regeneration enchantment. Slowly heal over time.",
-          "Efficiency enchantment for tools. Gather resources faster.",
-          "Basic sharpening enchantment using fire crystals. The edge never dulls.",
-          "Soul bound enchantment. Item returns to you upon death.",
-          "Poison enchantment. Attacks inflict lingering toxins."
-        ],
-        "_total_unique_values": 25
+    {
+      "metadata": {
+        "narrative": "Basic durability enchantment. Items last longer before needing repair.",
+        "tags": [
+          "universal",
+          "durability",
+          "basic"
+        ]
       },
-      "tags": {
-        "_type": "array",
-        "_sample_values": [
-          "elemental",
-          "lightning",
-          "basic",
-          "special",
-          "speed"
-        ],
-        "_total_unique_values": 34
+      "recipeId": "enchanting_durability_basic",
+      "enchantmentId": "unbreaking_1",
+      "enchantmentName": "Unbreaking I",
+      "applicableTo": [
+        "weapon",
+        "tool",
+        "armor"
+      ],
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 4
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": 4
+        }
+      ],
+      "miniGame": {
+        "type": "enchanting",
+        "difficulty": "easy",
+        "baseTime": 30
+      },
+      "effect": {
+        "type": "durability_multiplier",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": [
+          "unbreaking_2"
+        ]
       }
     },
-    "miniGame": {
-      "baseTime": {
-        "_type": "integer",
-        "_sample_values": [
-          40,
-          45,
-          80,
-          55,
-          90,
-          60,
-          30
-        ],
-        "_total_unique_values": 7
+    {
+      "metadata": {
+        "narrative": "Advanced durability enchantment using diamond. Nearly indestructible.",
+        "tags": [
+          "universal",
+          "durability",
+          "advanced"
+        ]
       },
-      "difficulty": {
-        "_type": "string",
-        "_sample_values": [
-          "moderate",
-          "extreme",
-          "hard",
-          "easy"
-        ],
-        "_total_unique_values": 4
+      "recipeId": "enchanting_durability_advanced",
+      "enchantmentId": "unbreaking_2",
+      "enchantmentName": "Unbreaking II",
+      "applicableTo": [
+        "weapon",
+        "tool",
+        "armor"
+      ],
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 4
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 1
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 8
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 8
+        }
+      ],
+      "miniGame": {
+        "type": "enchanting",
+        "difficulty": "hard",
+        "baseTime": 55
       },
-      "type": {
-        "_type": "string",
-        "_sample_values": [
-          "enchanting"
-        ],
-        "_total_unique_values": 1
+      "effect": {
+        "type": "durability_multiplier",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": [
+          "unbreaking_1"
+        ]
       }
-    },
-    "recipeId": {
-      "_type": "string",
-      "_sample_values": [
-        "enchanting_fire_aspect",
-        "enchanting_efficiency_advanced",
-        "enchanting_sharpness_basic",
-        "enchanting_frost_touch",
-        "enchanting_lifesteal",
-        "enchanting_weightless",
-        "enchanting_self_repair",
-        "enchanting_sharpness_master",
-        "enchanting_swiftness",
-        "enchanting_durability_advanced"
-      ],
-      "_total_unique_values": 25
-    },
-    "stationTier": {
-      "_type": "integer",
-      "_sample_values": [
-        1,
-        2,
-        3,
-        4
-      ],
-      "_total_unique_values": 4
-    },
-    "stationType": {
-      "_type": "string",
-      "_sample_values": [
-        "enchanting"
-      ],
-      "_total_unique_values": 1
     }
-  }
+  ]
 }

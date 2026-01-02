@@ -1,0 +1,1588 @@
+{
+  "_meta": {
+    "category": "enemies",
+    "description": "Enemy definitions with stats, behavior, and loot",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.374654",
+    "total_items": 19,
+    "source_files": [
+      "Definitions.JSON/hostiles-1.JSON",
+      "Definitions.JSON/hostiles-testing-integration.JSON",
+      "Update-1/hostiles-testing-integration.JSON"
+    ]
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "ai.aggroRange": {
+      "values": [
+        12.0,
+        14.0,
+        15.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "ai.attackCooldown": {
+      "values": [
+        1.5,
+        1.8,
+        2.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "ai.behavior": {
+      "values": [
+        "aggressive"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "ai.chaseRange": {
+      "values": [
+        18.0,
+        20.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "aiPattern.aggroOnDamage": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "aiPattern.aggroOnProximity": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "aiPattern.callForHelpRadius": {
+      "values": [
+        0.0,
+        10.0,
+        12,
+        15,
+        20,
+        8
+      ],
+      "total_unique": 6,
+      "types": [
+        "integer",
+        "number"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "aiPattern.defaultState": {
+      "values": [
+        "guard",
+        "idle",
+        "patrol",
+        "wander"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "aiPattern.fleeAtHealth": {
+      "values": [
+        0.0,
+        0.2,
+        0.3
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer",
+        "number"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "aiPattern.packCoordination": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "aiPattern.specialAbilities": {
+      "values": [
+        "acid_damage_over_time",
+        "chain_lightning",
+        "chaos_burst",
+        "charge_attack",
+        "crystal_beam",
+        "earthquake_stomp",
+        "elemental_burst",
+        "fire_breath",
+        "gravity_pull",
+        "ground_slam",
+        "howl_buff",
+        "leap_attack",
+        "life_drain",
+        "meteor_strike",
+        "phase_shift",
+        "rampage",
+        "reality_warp",
+        "refraction_shield",
+        "shell_shield",
+        "split_on_damage",
+        "static_field",
+        "stone_armor",
+        "summon_shards",
+        "teleport",
+        "temporal_distortion",
+        "thunder_slam",
+        "void_beam",
+        "void_explosion",
+        "void_rift",
+        "wing_buffet"
+      ],
+      "total_unique": 30,
+      "types": [
+        "array"
+      ],
+      "occurrences": 12,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "behavior": {
+      "values": [
+        "aggressive_flying",
+        "aggressive_melee",
+        "aggressive_pack",
+        "aggressive_phase",
+        "aggressive_ranged",
+        "aggressive_swarm",
+        "boss_encounter",
+        "docile_wander",
+        "passive_patrol",
+        "stationary",
+        "territorial"
+      ],
+      "total_unique": 11,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "void_archon",
+        "storm_titan",
+        "inferno_drake"
+      ]
+    },
+    "category": {
+      "values": [
+        "aberration",
+        "beast",
+        "construct",
+        "elemental",
+        "insect",
+        "ooze",
+        "undead"
+      ],
+      "total_unique": 7,
+      "types": [
+        "string"
+      ],
+      "occurrences": 19,
+      "example_items": [
+        "void_archon",
+        "storm_titan",
+        "inferno_drake"
+      ]
+    },
+    "drops[].chance": {
+      "values": [
+        "guaranteed",
+        "high",
+        "low",
+        "moderate",
+        "rare"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 51,
+      "example_items": [
+        "void_essence",
+        "shadow_crystal",
+        "arcane_dust"
+      ]
+    },
+    "drops[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "arcane_dust",
+        "beetle_carapace",
+        "chaos_matrix",
+        "crystal_quartz",
+        "diamond",
+        "dire_fang",
+        "drake_scale",
+        "earth_crystal",
+        "essence_blood",
+        "etherion_ingot",
+        "fire_crystal",
+        "genesis_lattice",
+        "golem_core",
+        "granite",
+        "iron_scales",
+        "light_gem",
+        "lightning_essence",
+        "living_ichor",
+        "primordial_crystal",
+        "shadow_core",
+        "shadow_crystal",
+        "slime_gel",
+        "spectral_thread",
+        "storm_core",
+        "void_essence",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "total_unique": 28,
+      "types": [
+        "string"
+      ],
+      "occurrences": 51,
+      "example_items": [
+        "void_essence",
+        "shadow_crystal",
+        "arcane_dust"
+      ]
+    },
+    "drops[].quantity": {
+      "values": [
+        1,
+        10,
+        12,
+        15,
+        2,
+        20,
+        25,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "total_unique": 13,
+      "types": [
+        "array"
+      ],
+      "occurrences": 51,
+      "example_items": [
+        "void_essence",
+        "shadow_crystal",
+        "arcane_dust"
+      ]
+    },
+    "enemyId": {
+      "values": [
+        "beetle_armored",
+        "beetle_brown",
+        "beetle_titan",
+        "entity_primordial",
+        "golem_crystal",
+        "golem_stone",
+        "inferno_drake",
+        "slime_acid",
+        "slime_crystal",
+        "slime_green",
+        "storm_titan",
+        "void_archon",
+        "void_wraith",
+        "wolf_dire",
+        "wolf_elder",
+        "wolf_grey"
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 19,
+      "example_items": [
+        "void_archon",
+        "storm_titan",
+        "inferno_drake"
+      ]
+    },
+    "loot[].chance": {
+      "values": [
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.8,
+        0.9,
+        1.0
+      ],
+      "total_unique": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 7,
+      "example_items": [
+        "void_essence",
+        "shadow_crystal",
+        "arcane_dust"
+      ]
+    },
+    "loot[].itemId": {
+      "values": [
+        "arcane_dust",
+        "drake_scale",
+        "fire_crystal",
+        "lightning_essence",
+        "shadow_crystal",
+        "storm_core",
+        "void_essence"
+      ],
+      "total_unique": 7,
+      "types": [
+        "string"
+      ],
+      "occurrences": 7,
+      "example_items": [
+        "void_essence",
+        "shadow_crystal",
+        "arcane_dust"
+      ]
+    },
+    "loot[].maxQuantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total_unique": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 7,
+      "example_items": [
+        "void_essence",
+        "shadow_crystal",
+        "arcane_dust"
+      ]
+    },
+    "loot[].minQuantity": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 7,
+      "example_items": [
+        "void_essence",
+        "shadow_crystal",
+        "arcane_dust"
+      ]
+    },
+    "metadata.narrative": {
+      "values": [
+        "A drake infused with elemental flame. It bathes foes in fire breath, knocks them back with wing beats, and calls down meteors when desperate.",
+        "A living storm given form. Lightning arcs from its body, chaining between victims as it slams the ground with thunderous force.",
+        "An archon corrupted by the void. It bends space and shadow to pull victims close before tearing them apart with beams of pure darkness.",
+        "Ancient wolf wreathed in shadow. Pack leader that has survived countless battles.",
+        "Animated stone construct that guards ancient places. Slow but nearly indestructible.",
+        "Common brown beetle with hard carapace. Docile unless threatened, then surprisingly fierce.",
+        "Common grey wolf that roams grasslands and forests. More curious than aggressive, but will defend territory if threatened.",
+        "Corrosive slime that dissolves anything it touches. Highly aggressive and surprisingly fast.",
+        "Crystalline golem pulsing with magical energy. Rare guardian of legendary deposits.",
+        "Crystalline slime formed from pure elemental energy. Extremely rare and dangerously powerful.",
+        "Heavily armored beetle with metallic shell. Territorial and aggressive when its area is invaded.",
+        "Larger, more aggressive wolf. Alpha predator that hunts in coordinated packs.",
+        "Massive beetle with diamond-hard shell. Ancient guardian that has survived eons.",
+        "Reality-warped entity from beyond comprehension. Existence itself bends around it. Only the most prepared dare engage.",
+        "Small green slime that oozes slowly across terrain. Mostly harmless unless you step on it.",
+        "Spectral entity that phases between dimensions. Attacks pass through it unpredictably."
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "metadata.tags": {
+      "values": [
+        "aggressive",
+        "beetle",
+        "boss",
+        "common",
+        "construct",
+        "docile",
+        "end-game",
+        "entity",
+        "epic",
+        "golem",
+        "mid-game",
+        "mythical",
+        "passive",
+        "phase",
+        "rare",
+        "reality-bender",
+        "slime",
+        "starter",
+        "territorial",
+        "uncommon",
+        "wolf",
+        "wraith"
+      ],
+      "total_unique": 22,
+      "types": [
+        "array"
+      ],
+      "occurrences": 13,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "name": {
+      "values": [
+        "Acid Slime",
+        "Armored Beetle",
+        "Brown Beetle",
+        "Crystal Golem",
+        "Crystal Slime",
+        "Dire Wolf",
+        "Elder Wolf",
+        "Green Slime",
+        "Grey Wolf",
+        "Inferno Drake",
+        "Primordial Entity",
+        "Stone Golem",
+        "Storm Titan",
+        "Titan Beetle",
+        "Void Archon",
+        "Void Wraith"
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 19,
+      "example_items": [
+        "void_archon",
+        "storm_titan",
+        "inferno_drake"
+      ]
+    },
+    "narrative": {
+      "values": [
+        "A drake infused with elemental flame. It bathes foes in fire breath, knocks them back with wing beats, and calls down meteors when desperate.",
+        "A living storm given form. Lightning arcs from its body, chaining between victims as it slams the ground with thunderous force.",
+        "An archon corrupted by the void. It bends space and shadow to pull victims close before tearing them apart with beams of pure darkness."
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3,
+      "example_items": [
+        "void_archon",
+        "storm_titan",
+        "inferno_drake"
+      ]
+    },
+    "specialAbilities[].abilityId": {
+      "values": [
+        "chain_lightning",
+        "fire_breath",
+        "gravity_pull",
+        "meteor_strike",
+        "static_field",
+        "thunder_slam",
+        "void_beam",
+        "void_explosion",
+        "wing_buffet"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9,
+      "example_items": [
+        "void_beam",
+        "gravity_pull",
+        "void_explosion"
+      ]
+    },
+    "specialAbilities[].cooldown": {
+      "values": [
+        10.0,
+        12.0,
+        15.0,
+        18.0,
+        20.0,
+        25.0,
+        8.0
+      ],
+      "total_unique": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 9,
+      "example_items": [
+        "void_beam",
+        "gravity_pull",
+        "void_explosion"
+      ]
+    },
+    "specialAbilities[].effectParams.baseDamage": {
+      "values": [
+        100,
+        120,
+        30,
+        40,
+        65,
+        70,
+        75,
+        80
+      ],
+      "total_unique": 8,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 9,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.beam_range": {
+      "values": [
+        15.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.beam_width": {
+      "values": [
+        2.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.burn_damage_per_second": {
+      "values": [
+        10.0,
+        8.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.burn_duration": {
+      "values": [
+        12.0,
+        15.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.chain_count": {
+      "values": [
+        4
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.chain_range": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.circle_radius": {
+      "values": [
+        10.0,
+        5.0,
+        6.0,
+        8.0
+      ],
+      "total_unique": 4,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.cone_angle": {
+      "values": [
+        60.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.cone_range": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.knockback_distance": {
+      "values": [
+        4.0,
+        5.0,
+        6.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 4,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.origin": {
+      "values": [
+        "source",
+        "target"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.pierce_count": {
+      "values": [
+        5
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.pull_distance": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.shock_damage_per_tick": {
+      "values": [
+        5.0,
+        6.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.shock_duration": {
+      "values": [
+        10.0,
+        8.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.shock_tick_rate": {
+      "values": [
+        1.0,
+        1.5
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.slow_duration": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.slow_percent": {
+      "values": [
+        0.6
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.stun_duration": {
+      "values": [
+        4.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.vulnerable_duration": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.vulnerable_percent": {
+      "values": [
+        0.3
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.weaken_duration": {
+      "values": [
+        12.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].effectParams.weaken_percent": {
+      "values": [
+        0.35
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].name": {
+      "values": [
+        "Chain Lightning",
+        "Fire Breath",
+        "Gravity Pull",
+        "Meteor Strike",
+        "Static Field",
+        "Thunder Slam",
+        "Void Beam",
+        "Void Explosion",
+        "Wing Buffet"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9,
+      "example_items": [
+        "void_beam",
+        "gravity_pull",
+        "void_explosion"
+      ]
+    },
+    "specialAbilities[].tags": {
+      "values": [
+        "arcane",
+        "beam",
+        "burn",
+        "chain",
+        "circle",
+        "cone",
+        "fire",
+        "knockback",
+        "lightning",
+        "physical",
+        "pierce",
+        "player",
+        "pull",
+        "shadow",
+        "shock",
+        "slow",
+        "stun",
+        "vulnerable",
+        "weaken"
+      ],
+      "total_unique": 19,
+      "types": [
+        "array"
+      ],
+      "occurrences": 9,
+      "example_items": [
+        "void_beam",
+        "gravity_pull",
+        "void_explosion"
+      ]
+    },
+    "specialAbilities[].triggerConditions.distanceMax": {
+      "values": [
+        10.0,
+        12.0,
+        15.0,
+        5.0,
+        6.0,
+        8.0
+      ],
+      "total_unique": 6,
+      "types": [
+        "number"
+      ],
+      "occurrences": 9,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].triggerConditions.distanceMin": {
+      "values": [
+        4.0,
+        5.0,
+        6.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].triggerConditions.healthThreshold": {
+      "values": [
+        0.3,
+        0.4,
+        0.6,
+        0.7,
+        1.0
+      ],
+      "total_unique": 5,
+      "types": [
+        "number"
+      ],
+      "occurrences": 9,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].triggerConditions.maxUsesPerFight": {
+      "values": [
+        2
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "specialAbilities[].triggerConditions.oncePerFight": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.aggroRange": {
+      "values": [
+        10,
+        12,
+        14,
+        15,
+        20,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "total_unique": 11,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.armor": {
+      "values": [
+        25,
+        30,
+        40
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.attackSpeed": {
+      "values": [
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.2,
+        1.3,
+        1.4,
+        1.5
+      ],
+      "total_unique": 9,
+      "types": [
+        "number"
+      ],
+      "occurrences": 19,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.damage": {
+      "values": [
+        10,
+        110,
+        12,
+        120,
+        15,
+        18,
+        180,
+        20,
+        22,
+        28,
+        30,
+        40,
+        45,
+        5,
+        50,
+        55,
+        6,
+        60,
+        65,
+        70,
+        8,
+        80,
+        90
+      ],
+      "total_unique": 23,
+      "types": [
+        "integer",
+        "array"
+      ],
+      "occurrences": 19,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.defense": {
+      "values": [
+        12,
+        15,
+        2,
+        25,
+        30,
+        40,
+        45,
+        5,
+        50,
+        60,
+        8
+      ],
+      "total_unique": 11,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.health": {
+      "values": [
+        100,
+        1000,
+        120,
+        1200,
+        200,
+        2000,
+        250,
+        400,
+        50,
+        500,
+        600,
+        650,
+        80,
+        800
+      ],
+      "total_unique": 14,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 19,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.speed": {
+      "values": [
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.2,
+        1.4,
+        1.5,
+        1.6,
+        1.8,
+        2.0
+      ],
+      "total_unique": 12,
+      "types": [
+        "number"
+      ],
+      "occurrences": 19,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 19,
+      "example_items": [
+        "void_archon",
+        "storm_titan",
+        "inferno_drake"
+      ]
+    }
+  },
+  "_usable_template": {
+    "ai": {
+      "aggroRange": 12.0,
+      "attackCooldown": 1.8,
+      "behavior": "aggressive",
+      "chaseRange": 18.0
+    },
+    "aiPattern": {
+      "aggroOnDamage": true,
+      "aggroOnProximity": true,
+      "callForHelpRadius": 8,
+      "defaultState": "wander",
+      "fleeAtHealth": 0,
+      "packCoordination": true,
+      "specialAbilities": [
+        "leap_attack",
+        "charge_attack",
+        "refraction_shield"
+      ]
+    },
+    "behavior": "aggressive_swarm",
+    "category": "aberration",
+    "drops": [
+      "<value>"
+    ],
+    "enemyId": "golem_crystal",
+    "loot": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Larger, more aggressive wolf. Alpha predator that hunts in coordinated packs.",
+      "tags": [
+        "wolf",
+        "entity",
+        "beetle"
+      ]
+    },
+    "name": "Dire Wolf",
+    "narrative": "A living storm given form. Lightning arcs from its body, chaining between victims as it slams the ground with thunderous force.",
+    "specialAbilities": [
+      "<value>"
+    ],
+    "stats": {
+      "aggroRange": 3,
+      "armor": 40,
+      "attackSpeed": 0.8,
+      "damage": [
+        5,
+        6,
+        8
+      ],
+      "defense": 2,
+      "health": 800,
+      "speed": 0.5
+    },
+    "tier": 1
+  },
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "An archon corrupted by the void. It bends space and shadow to pull victims close before tearing them apart with beams of pure darkness."
+      },
+      "enemyId": "void_archon",
+      "name": "Void Archon",
+      "tier": 4,
+      "category": "undead",
+      "behavior": "aggressive_ranged",
+      "stats": {
+        "health": 800,
+        "damage": [
+          50,
+          60
+        ],
+        "defense": 30,
+        "speed": 1.8,
+        "aggroRange": 15,
+        "attackSpeed": 1.2
+      },
+      "drops": [
+        {
+          "materialId": "void_essence",
+          "quantity": [
+            2,
+            5
+          ],
+          "chance": "high"
+        },
+        {
+          "materialId": "shadow_crystal",
+          "quantity": [
+            1,
+            2
+          ],
+          "chance": "moderate"
+        },
+        {
+          "materialId": "arcane_dust",
+          "quantity": [
+            3,
+            6
+          ],
+          "chance": "high"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "patrol",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0.0,
+        "callForHelpRadius": 0.0,
+        "packCoordination": false,
+        "specialAbilities": [
+          "void_beam",
+          "gravity_pull",
+          "void_explosion"
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "A living storm given form. Lightning arcs from its body, chaining between victims as it slams the ground with thunderous force."
+      },
+      "enemyId": "storm_titan",
+      "name": "Storm Titan",
+      "tier": 4,
+      "category": "elemental",
+      "behavior": "aggressive_melee",
+      "stats": {
+        "health": 1000,
+        "damage": [
+          55,
+          65
+        ],
+        "defense": 40,
+        "speed": 1.4,
+        "aggroRange": 12,
+        "attackSpeed": 1.0
+      },
+      "drops": [
+        {
+          "materialId": "lightning_essence",
+          "quantity": [
+            3,
+            6
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "storm_core",
+          "quantity": [
+            1,
+            1
+          ],
+          "chance": "low"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "patrol",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0.0,
+        "callForHelpRadius": 10.0,
+        "packCoordination": false,
+        "specialAbilities": [
+          "chain_lightning",
+          "thunder_slam",
+          "static_field"
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "A drake infused with elemental flame. It bathes foes in fire breath, knocks them back with wing beats, and calls down meteors when desperate."
+      },
+      "enemyId": "inferno_drake",
+      "name": "Inferno Drake",
+      "tier": 3,
+      "category": "beast",
+      "behavior": "aggressive_flying",
+      "stats": {
+        "health": 650,
+        "damage": [
+          45,
+          55
+        ],
+        "defense": 25,
+        "speed": 2.0,
+        "aggroRange": 14,
+        "attackSpeed": 1.4
+      },
+      "drops": [
+        {
+          "materialId": "drake_scale",
+          "quantity": [
+            2,
+            4
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": [
+            1,
+            3
+          ],
+          "chance": "moderate"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "patrol",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0.0,
+        "callForHelpRadius": 0.0,
+        "packCoordination": false,
+        "specialAbilities": [
+          "fire_breath",
+          "wing_buffet",
+          "meteor_strike"
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Common grey wolf that roams grasslands and forests. More curious than aggressive, but will defend territory if threatened.",
+        "tags": [
+          "wolf",
+          "common",
+          "passive",
+          "starter"
+        ]
+      },
+      "enemyId": "wolf_grey",
+      "name": "Grey Wolf",
+      "tier": 1,
+      "category": "beast",
+      "behavior": "passive_patrol",
+      "stats": {
+        "health": 80,
+        "damage": [
+          8,
+          12
+        ],
+        "defense": 5,
+        "speed": 1.2,
+        "aggroRange": 5,
+        "attackSpeed": 1.0
+      },
+      "drops": [
+        {
+          "materialId": "wolf_pelt",
+          "quantity": [
+            2,
+            4
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "dire_fang",
+          "quantity": [
+            1,
+            1
+          ],
+          "chance": "low"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "wander",
+        "aggroOnDamage": true,
+        "aggroOnProximity": false,
+        "fleeAtHealth": 0.2,
+        "callForHelpRadius": 8
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Larger, more aggressive wolf. Alpha predator that hunts in coordinated packs.",
+        "tags": [
+          "wolf",
+          "uncommon",
+          "aggressive",
+          "mid-game"
+        ]
+      },
+      "enemyId": "wolf_dire",
+      "name": "Dire Wolf",
+      "tier": 2,
+      "category": "beast",
+      "behavior": "aggressive_pack",
+      "stats": {
+        "health": 200,
+        "damage": [
+          18,
+          28
+        ],
+        "defense": 12,
+        "speed": 1.4,
+        "aggroRange": 8,
+        "attackSpeed": 1.2
+      },
+      "drops": [
+        {
+          "materialId": "wolf_pelt",
+          "quantity": [
+            3,
+            6
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "dire_fang",
+          "quantity": [
+            2,
+            4
+          ],
+          "chance": "high"
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": [
+            1,
+            2
+          ],
+          "chance": "moderate"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "patrol",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0,
+        "callForHelpRadius": 12,
+        "packCoordination": true
+      }
+    }
+  ]
+}

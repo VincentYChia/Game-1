@@ -1,12 +1,13 @@
 {
   "_meta": {
-    "category": "items-materials",
-    "description": "Raw materials and crafting ingredients",
-    "generated_at": "2026-01-01T19:53:07.756965",
+    "category": "materials_raw",
+    "description": "Raw crafting materials (ores, logs, crystals) - gathered resources",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.380829",
+    "total_items": 65,
     "source_files": [
-      "items-materials-1.JSON"
-    ],
-    "total_items_analyzed": 0
+      "items.JSON/items-materials-1.JSON"
+    ]
   },
   "_field_documentation": {},
   "_all_possible_values": {
@@ -18,11 +19,16 @@
         "stone",
         "wood"
       ],
-      "count": 5,
+      "total_unique": 5,
       "types": [
         "string"
       ],
-      "occurrences": 65
+      "occurrences": 65,
+      "example_items": [
+        "copper_ore",
+        "copper_ingot",
+        "iron_ore"
+      ]
     },
     "materialId": {
       "values": [
@@ -92,11 +98,16 @@
         "worldtree_log",
         "worldtree_plank"
       ],
-      "count": 65,
+      "total_unique": 65,
       "types": [
         "string"
       ],
-      "occurrences": 65
+      "occurrences": 65,
+      "example_items": [
+        "copper_ore",
+        "copper_ingot",
+        "iron_ore"
+      ]
     },
     "metadata.narrative": {
       "values": [
@@ -166,11 +177,14 @@
         "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
         "Volcanic glass born in the heart of eruptions. Extremely sharp edges, incredibly brittle structure."
       ],
-      "count": 65,
+      "total_unique": 65,
       "types": [
         "string"
       ],
-      "occurrences": 65
+      "occurrences": 65,
+      "example_items": [
+        "unknown"
+      ]
     },
     "metadata.tags": {
       "values": [
@@ -226,11 +240,14 @@
         "water",
         "wood"
       ],
-      "count": 51,
+      "total_unique": 51,
       "types": [
         "array"
       ],
-      "occurrences": 65
+      "occurrences": 65,
+      "example_items": [
+        "unknown"
+      ]
     },
     "name": {
       "values": [
@@ -300,11 +317,16 @@
         "Worldtree Log",
         "Worldtree Plank"
       ],
-      "count": 65,
+      "total_unique": 65,
       "types": [
         "string"
       ],
-      "occurrences": 65
+      "occurrences": 65,
+      "example_items": [
+        "copper_ore",
+        "copper_ingot",
+        "iron_ore"
+      ]
     },
     "rarity": {
       "values": [
@@ -314,11 +336,16 @@
         "rare",
         "uncommon"
       ],
-      "count": 5,
+      "total_unique": 5,
       "types": [
         "string"
       ],
-      "occurrences": 65
+      "occurrences": 65,
+      "example_items": [
+        "copper_ore",
+        "copper_ingot",
+        "iron_ore"
+      ]
     },
     "tier": {
       "values": [
@@ -327,121 +354,108 @@
         3,
         4
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "integer"
       ],
-      "occurrences": 65
+      "occurrences": 65,
+      "example_items": [
+        "copper_ore",
+        "copper_ingot",
+        "iron_ore"
+      ]
     }
   },
   "_usable_template": {
     "category": "monster_drop",
-    "materialId": "tin_ore",
+    "materialId": "spectral_thread",
     "metadata": {
-      "narrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+      "narrative": "Pitch-black stone that seems to pull light into itself. Radiates subtle wrongness.",
       "tags": [
-        "standard",
-        "elemental",
-        "air"
+        "radiant",
+        "void",
+        "elemental"
       ]
     },
-    "name": "Copper Ore",
-    "rarity": "rare",
+    "name": "Granite",
+    "rarity": "common",
     "tier": 1
   },
-  "template": {
-    "category": {
-      "_type": "string",
-      "_sample_values": [
-        "monster_drop",
-        "metal",
-        "elemental",
-        "wood",
-        "stone"
-      ],
-      "_total_unique_values": 5
-    },
-    "materialId": {
-      "_type": "string",
-      "_sample_values": [
-        "tin_ore",
-        "phoenix_ash",
-        "diamond",
-        "air_crystal",
-        "ash_log",
-        "adamantine_ore",
-        "ironwood_log",
-        "spectral_thread",
-        "pine_log",
-        "ironwood_plank"
-      ],
-      "_total_unique_values": 65
-    },
-    "metadata": {
-      "narrative": {
-        "_type": "string",
-        "_sample_values": [
-          "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
-          "Refined ironwood planks, nearly as strong as actual metal.",
-          "Pale crystal that drifts upward if not secured. Contains compressed winds.",
-          "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "Living wood from the World Tree's roots. Contains millennia of accumulated magical essence.",
-          "Crystallized darkness that absorbs light. Uncomfortable to look at directly.",
-          "Brilliant white stone that glows faintly with captured sunlight. Used in temples and monuments.",
-          "Translucent crystal that amplifies magical energies passing through it. Hums softly when near power sources.",
-          "Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.",
-          "Suspended in perpetual crystallization. Neither fully solid nor energy, exists in quantum superposition."
-        ],
-        "_total_unique_values": 65
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "A soft, reddish metal found in shallow veins near the surface. Easy to work with basic tools but lacks the durability needed for serious combat. The foundation of all smithing - every blacksmith's first lesson.",
+        "tags": [
+          "basic",
+          "metal",
+          "starter"
+        ]
       },
-      "tags": {
-        "_type": "array",
-        "_sample_values": [
-          "standard",
-          "elemental",
-          "air",
-          "temporal",
-          "wood"
-        ],
-        "_total_unique_values": 51
-      }
+      "materialId": "copper_ore",
+      "name": "Copper Ore",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
     },
-    "name": {
-      "_type": "string",
-      "_sample_values": [
-        "Copper Ore",
-        "Orichalcum Ore",
-        "Adamantine Ingot",
-        "Ebony Plank",
-        "Lightning Shard",
-        "Primordial Crystal",
-        "Air Crystal",
-        "Iron Ore",
-        "Birch Plank",
-        "Ironwood Log"
-      ],
-      "_total_unique_values": 65
+    {
+      "metadata": {
+        "narrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+        "tags": [
+          "refined",
+          "metal",
+          "starter"
+        ]
+      },
+      "materialId": "copper_ingot",
+      "name": "Copper Ingot",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
     },
-    "rarity": {
-      "_type": "string",
-      "_sample_values": [
-        "rare",
-        "epic",
-        "common",
-        "uncommon",
-        "legendary"
-      ],
-      "_total_unique_values": 5
+    {
+      "metadata": {
+        "narrative": "Sturdy grey metal from common deposits throughout the land. The workhorse of civilization - reliable, abundant, and strong enough for most purposes.",
+        "tags": [
+          "basic",
+          "metal",
+          "standard"
+        ]
+      },
+      "materialId": "iron_ore",
+      "name": "Iron Ore",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
     },
-    "tier": {
-      "_type": "integer",
-      "_sample_values": [
-        1,
-        2,
-        3,
-        4
-      ],
-      "_total_unique_values": 4
+    {
+      "metadata": {
+        "narrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+        "tags": [
+          "refined",
+          "metal",
+          "standard"
+        ]
+      },
+      "materialId": "iron_ingot",
+      "name": "Iron Ingot",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Soft, silvery-white metal with a mysterious sheen that glows faintly in moonlight. Ancient texts speak of its lunar affinity.",
+        "tags": [
+          "basic",
+          "metal",
+          "magical"
+        ]
+      },
+      "materialId": "tin_ore",
+      "name": "Tin Ore",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
     }
-  }
+  ]
 }

@@ -1,12 +1,14 @@
 {
   "_meta": {
-    "category": "recipes-smithing",
-    "description": "Smithing recipes for weapons and armor",
-    "generated_at": "2026-01-01T19:53:07.766246",
+    "category": "recipes_smithing",
+    "description": "Smithing recipes for weapons, armor, and tools",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.395411",
+    "total_items": 41,
     "source_files": [
-      "recipes-smithing-3.JSON"
-    ],
-    "total_items_analyzed": 0
+      "recipes.JSON/recipes-smithing-3.JSON",
+      "recipes.JSON/recipes-tag-tests.JSON"
+    ]
   },
   "_field_documentation": {},
   "_all_possible_values": {
@@ -16,11 +18,16 @@
         "5x5",
         "7x7"
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "string"
       ],
-      "occurrences": 37
+      "occurrences": 37,
+      "example_items": [
+        "smithing_iron_shortsword",
+        "smithing_copper_pickaxe",
+        "smithing_copper_axe"
+      ]
     },
     "inputs[].materialId": {
       "values": [
@@ -57,11 +64,16 @@
         "water_crystal",
         "wolf_pelt"
       ],
-      "count": 32,
+      "total_unique": 32,
       "types": [
         "string"
       ],
-      "occurrences": 91
+      "occurrences": 95,
+      "example_items": [
+        "iron_ingot",
+        "oak_plank",
+        "copper_ingot"
+      ]
     },
     "inputs[].quantity": {
       "values": [
@@ -77,11 +89,16 @@
         8,
         9
       ],
-      "count": 11,
+      "total_unique": 11,
       "types": [
         "integer"
       ],
-      "occurrences": 91
+      "occurrences": 95,
+      "example_items": [
+        "iron_ingot",
+        "oak_plank",
+        "copper_ingot"
+      ]
     },
     "metadata.narrative": {
       "values": [
@@ -119,15 +136,22 @@
         "Steel helm with full face protection. Your head stays attached, which is nice.",
         "Steel pickaxe with perfect balance. Makes hard rock feel like clay.",
         "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor.",
+        "TEST: Weapon with ALL functional combat tags inherited",
+        "TEST: Weapon with CONFLICTING hand requirement tags (1H + 2H)",
+        "TEST: Weapon with EMPTY tags array",
+        "TEST: Weapon with NO functional tags (only metadata tags)",
         "The foundational smithing technique - blade, tang, handle. Simple in concept, demanding in execution. Every smith remembers their first sword.",
         "Upgraded pickaxe that can tackle tougher deposits. Iron reliability meets practical design.",
         "Your first pickaxe. The gateway to greater resources and deeper discoveries."
       ],
-      "count": 37,
+      "total_unique": 41,
       "types": [
         "string"
       ],
-      "occurrences": 37
+      "occurrences": 41,
+      "example_items": [
+        "unknown"
+      ]
     },
     "metadata.tags": {
       "values": [
@@ -137,8 +161,10 @@
         "alchemy",
         "amulet",
         "armor",
+        "armor_breaker",
         "axe",
         "bash",
+        "basic",
         "bow",
         "bracelet",
         "chest",
@@ -169,6 +195,7 @@
         "metal",
         "pickaxe",
         "piercing",
+        "precision",
         "quality",
         "ranged",
         "reach",
@@ -187,11 +214,14 @@
         "water",
         "weapon"
       ],
-      "count": 55,
+      "total_unique": 58,
       "types": [
         "array"
       ],
-      "occurrences": 37
+      "occurrences": 41,
+      "example_items": [
+        "unknown"
+      ]
     },
     "miniGame.baseTime": {
       "values": [
@@ -208,11 +238,14 @@
         70,
         90
       ],
-      "count": 12,
+      "total_unique": 12,
       "types": [
         "integer"
       ],
-      "occurrences": 37
+      "occurrences": 37,
+      "example_items": [
+        "unknown"
+      ]
     },
     "miniGame.difficulty": {
       "values": [
@@ -221,21 +254,27 @@
         "hard",
         "moderate"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "string"
       ],
-      "occurrences": 37
+      "occurrences": 37,
+      "example_items": [
+        "unknown"
+      ]
     },
     "miniGame.type": {
       "values": [
         "smithing"
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 37
+      "occurrences": 37,
+      "example_items": [
+        "unknown"
+      ]
     },
     "outputId": {
       "values": [
@@ -275,23 +314,37 @@
         "steel_lightning_bracelet",
         "steel_longsword",
         "steel_pickaxe",
-        "steel_sickle"
+        "steel_sickle",
+        "test_conflicting_sword",
+        "test_plain_sword",
+        "test_tagless_sword",
+        "test_ultimate_sword"
       ],
-      "count": 37,
+      "total_unique": 41,
       "types": [
         "string"
       ],
-      "occurrences": 37
+      "occurrences": 41,
+      "example_items": [
+        "smithing_iron_shortsword",
+        "smithing_copper_pickaxe",
+        "smithing_copper_axe"
+      ]
     },
     "outputQty": {
       "values": [
         1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 37
+      "occurrences": 41,
+      "example_items": [
+        "smithing_iron_shortsword",
+        "smithing_copper_pickaxe",
+        "smithing_copper_axe"
+      ]
     },
     "recipeId": {
       "values": [
@@ -331,13 +384,22 @@
         "smithing_steel_lightning_bracelet",
         "smithing_steel_longsword",
         "smithing_steel_pickaxe",
-        "smithing_steel_sickle"
+        "smithing_steel_sickle",
+        "test_smithing_conflicting_hands",
+        "test_smithing_empty_tags",
+        "test_smithing_max_tags",
+        "test_smithing_no_functional_tags"
       ],
-      "count": 37,
+      "total_unique": 41,
       "types": [
         "string"
       ],
-      "occurrences": 37
+      "occurrences": 41,
+      "example_items": [
+        "smithing_iron_shortsword",
+        "smithing_copper_pickaxe",
+        "smithing_copper_axe"
+      ]
     },
     "stationTier": {
       "values": [
@@ -345,21 +407,31 @@
         2,
         3
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "integer"
       ],
-      "occurrences": 37
+      "occurrences": 41,
+      "example_items": [
+        "smithing_iron_shortsword",
+        "smithing_copper_pickaxe",
+        "smithing_copper_axe"
+      ]
     },
     "stationType": {
       "values": [
         "smithing"
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 37
+      "occurrences": 41,
+      "example_items": [
+        "smithing_iron_shortsword",
+        "smithing_copper_pickaxe",
+        "smithing_copper_axe"
+      ]
     }
   },
   "_usable_template": {
@@ -368,189 +440,186 @@
       "<value>"
     ],
     "metadata": {
-      "narrative": "Simple pine bow strung with treated sinew. Not powerful, but reliable.",
+      "narrative": "Basic alchemy table with mortar, pestle, and glassware.",
       "tags": [
-        "standard",
-        "elemental",
-        "lightning"
+        "bow",
+        "weapon",
+        "2H"
       ]
     },
     "miniGame": {
       "baseTime": 65,
-      "difficulty": "moderate",
+      "difficulty": "extreme",
       "type": "smithing"
     },
-    "outputId": "leather_tunic",
+    "outputId": "steel_leggings",
     "outputQty": 1,
-    "recipeId": "smithing_forge_t3",
+    "recipeId": "smithing_refinery_t1",
     "stationTier": 1,
     "stationType": "smithing"
   },
-  "template": {
-    "gridSize": {
-      "_type": "string",
-      "_sample_values": [
-        "3x3",
-        "5x5",
-        "7x7"
-      ],
-      "_total_unique_values": 3
-    },
-    "inputs": {
-      "_type": "array",
-      "_sample_values": [],
-      "_total_unique_values": 0,
-      "materialId": {
-        "_type": "string",
-        "_sample_values": [
-          "phoenix_ash",
-          "air_crystal",
-          "ash_log",
-          "spectral_thread",
-          "pine_log",
-          "ironwood_plank",
-          "earth_crystal",
-          "dire_fang",
-          "birch_plank",
-          "basalt"
-        ],
-        "_total_unique_values": 32
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "The foundational smithing technique - blade, tang, handle. Simple in concept, demanding in execution. Every smith remembers their first sword.",
+        "tags": [
+          "weapon",
+          "sword",
+          "1H",
+          "melee",
+          "slashing",
+          "starter"
+        ]
       },
-      "quantity": {
-        "_type": "integer",
-        "_sample_values": [
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ],
-        "_total_unique_values": 11
+      "recipeId": "smithing_iron_shortsword",
+      "outputId": "iron_shortsword",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "easy",
+        "baseTime": 30
       }
     },
-    "metadata": {
-      "narrative": {
-        "_type": "string",
-        "_sample_values": [
-          "Simple pine bow strung with treated sinew. Not powerful, but reliable.",
-          "Master forge with crystal enhancement. Can reach extreme temperatures.",
-          "Improved forge with better heat retention. Can work steel reliably.",
-          "Advanced refinery with better efficiency and heat control.",
-          "Your first pickaxe. The gateway to greater resources and deeper discoveries.",
-          "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective.",
-          "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis.",
-          "Crafting a warhammer is about managing weight distribution. The crushing head must be perfectly balanced on the shaft, or it becomes a liability rather than a weapon.",
-          "Iron amulet holding a water crystal. Feels cool against your skin.",
-          "Balanced steel longsword. The blade flows like water, strikes like thunder."
-        ],
-        "_total_unique_values": 37
+    {
+      "metadata": {
+        "narrative": "Your first pickaxe. The gateway to greater resources and deeper discoveries.",
+        "tags": [
+          "tool",
+          "pickaxe",
+          "starter"
+        ]
       },
-      "tags": {
-        "_type": "array",
-        "_sample_values": [
-          "standard",
-          "elemental",
-          "lightning",
-          "ring",
-          "dagger"
-        ],
-        "_total_unique_values": 55
+      "recipeId": "smithing_copper_pickaxe",
+      "outputId": "copper_pickaxe",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "oak_log",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "easy",
+        "baseTime": 25
       }
     },
-    "miniGame": {
-      "baseTime": {
-        "_type": "integer",
-        "_sample_values": [
-          65,
-          35,
-          70,
-          40,
-          45,
-          60,
-          50,
-          55,
-          25,
-          90
-        ],
-        "_total_unique_values": 12
+    {
+      "metadata": {
+        "narrative": "Basic axe for woodcutting. Simple but essential for any aspiring adventurer.",
+        "tags": [
+          "tool",
+          "axe",
+          "starter"
+        ]
       },
-      "difficulty": {
-        "_type": "string",
-        "_sample_values": [
-          "moderate",
-          "extreme",
-          "hard",
-          "easy"
-        ],
-        "_total_unique_values": 4
-      },
-      "type": {
-        "_type": "string",
-        "_sample_values": [
-          "smithing"
-        ],
-        "_total_unique_values": 1
+      "recipeId": "smithing_copper_axe",
+      "outputId": "copper_axe",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "pine_log",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "easy",
+        "baseTime": 25
       }
     },
-    "outputId": {
-      "_type": "string",
-      "_sample_values": [
-        "leather_tunic",
-        "copper_axe",
-        "iron_pickaxe",
-        "refinery_t1",
-        "steel_battleaxe",
-        "steel_pickaxe",
-        "steel_longsword",
-        "steel_axe",
-        "forge_t3",
-        "refinery_t2"
+    {
+      "metadata": {
+        "narrative": "Simple spear with copper tip. Keep your enemies at a distance.",
+        "tags": [
+          "weapon",
+          "spear",
+          "2H",
+          "melee",
+          "piercing",
+          "reach",
+          "starter"
+        ]
+      },
+      "recipeId": "smithing_copper_spear",
+      "outputId": "copper_spear",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "ash_log",
+          "quantity": 2
+        },
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1
+        }
       ],
-      "_total_unique_values": 37
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "easy",
+        "baseTime": 30
+      }
     },
-    "outputQty": {
-      "_type": "integer",
-      "_sample_values": [
-        1
+    {
+      "metadata": {
+        "narrative": "Basic leather protection. Better than nothing, lighter than metal.",
+        "tags": [
+          "armor",
+          "chest",
+          "starter"
+        ]
+      },
+      "recipeId": "smithing_leather_tunic",
+      "outputId": "leather_tunic",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 6
+        }
       ],
-      "_total_unique_values": 1
-    },
-    "recipeId": {
-      "_type": "string",
-      "_sample_values": [
-        "smithing_forge_t3",
-        "smithing_leather_tunic",
-        "smithing_iron_water_amulet",
-        "smithing_iron_warhammer",
-        "smithing_steel_leggings",
-        "smithing_copper_fire_ring",
-        "smithing_refinery_t1",
-        "smithing_composite_longbow",
-        "smithing_iron_pickaxe",
-        "smithing_mithril_axe"
-      ],
-      "_total_unique_values": 37
-    },
-    "stationTier": {
-      "_type": "integer",
-      "_sample_values": [
-        1,
-        2,
-        3
-      ],
-      "_total_unique_values": 3
-    },
-    "stationType": {
-      "_type": "string",
-      "_sample_values": [
-        "smithing"
-      ],
-      "_total_unique_values": 1
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "easy",
+        "baseTime": 35
+      }
     }
-  }
+  ]
 }

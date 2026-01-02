@@ -1,0 +1,558 @@
+{
+  "_meta": {
+    "category": "stations",
+    "description": "Placeable crafting stations and tools",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.399322",
+    "total_items": 23,
+    "source_files": [
+      "Definitions.JSON/crafting-stations-1.JSON",
+      "items.JSON/items-smithing-2.JSON"
+    ]
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "category": {
+      "values": [
+        "station"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "forge_t1",
+        "forge_t2",
+        "forge_t3"
+      ]
+    },
+    "flags.placeable": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "flags.repairable": {
+      "values": [
+        false
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "flags.stackable": {
+      "values": [
+        false
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "itemId": {
+      "values": [
+        "alchemy_table_t1",
+        "alchemy_table_t2",
+        "enchanting_table_t1",
+        "enchanting_table_t2",
+        "engineering_bench_t1",
+        "engineering_bench_t2",
+        "forge_t1",
+        "forge_t2",
+        "forge_t3",
+        "forge_t4",
+        "refinery_t1",
+        "refinery_t2",
+        "refinery_t3"
+      ],
+      "total_unique": 13,
+      "types": [
+        "string"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "forge_t1",
+        "forge_t2",
+        "forge_t3"
+      ]
+    },
+    "metadata.narrative": {
+      "values": [
+        "Advanced alchemy station with steel vessels and crystal-infused apparatus. Handles volatile reactions with ease. The fire crystals maintain precise temperature control.",
+        "Advanced engineering station with steel construction and precision measuring tools. Complex mechanisms and intricate devices are possible here. Lightning crystals power automated tools.",
+        "Advanced refinery with better heat retention. Processes materials more efficiently with less waste.",
+        "Advanced refinery with improved efficiency and heat control. Can process higher-grade ores and create complex alloys. The granite construction handles intense heat without cracking.",
+        "Arcane enchanting table surrounded by floating crystals. Channels magical energies precisely.",
+        "Basic limestone refinery for turning raw ores into usable ingots. Essential for any metalworker. The crucible glows red-hot as impurities burn away.",
+        "Basic stone forge suitable for working copper and iron. The foundation of smithing - crude but functional. Every master started with a forge like this.",
+        "Basic stone furnace for refining raw ores into usable materials. Essential for any aspiring metalworker.",
+        "Basic workbench with simple tools for assembling mechanical devices.",
+        "Improved forge with better heat retention and basalt construction. Can work steel reliably. Fire crystals enhance the heat, pushing temperatures higher.",
+        "Improved forge with reinforced stone and efficient airflow. Reaches temperatures needed for steel.",
+        "Legendary forge that bends reality itself. Can work metals that shouldn't exist.",
+        "Master forge with crystal-enhanced heating. Can reach temperatures that would melt lesser furnaces.",
+        "Master forge with obsidian construction and crystal enhancement. Can reach extreme temperatures needed for legendary metals. Phoenix ash ensures the flames never die.",
+        "Master refinery capable of processing legendary materials. Obsidian crucibles contain temperatures that would vaporize lesser equipment. Mithril chambers prevent contamination.",
+        "Precision engineering station with specialized tools for complex device assembly.",
+        "Professional alchemy setup with distillation equipment and precise measuring tools.",
+        "Simple alchemy table with mortar, pestle, and basic glassware. Sufficient for brewing basic potions.",
+        "Simple enchanting table with basic rune-carving tools. Sufficient for minor enchantments.",
+        "Simple stone forge with basic bellows. Hot enough for copper and iron work, but struggles with harder metals.",
+        "Stone pedestal inlaid with crystalline channels that pulse with latent energy. Place items here and inscribe patterns of power to enhance them. Where mundane becomes magical.",
+        "Sturdy iron workbench equipped with precision tools, vises, and gear assemblies. Here mechanisms take shape - springs tension, gears mesh, devices come to life.",
+        "Wooden workbench fitted with glass vials, copper cauldrons, and measuring instruments. This is where plants become potions and careful mixing creates powerful effects."
+      ],
+      "total_unique": 23,
+      "types": [
+        "string"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "metadata.tags": {
+      "values": [
+        "alchemy",
+        "brewing",
+        "enchanting",
+        "engineering",
+        "enhancement",
+        "forge",
+        "forging",
+        "legendary",
+        "master",
+        "mechanical",
+        "quality",
+        "refinery",
+        "refining",
+        "smithing",
+        "standard",
+        "starter",
+        "station"
+      ],
+      "total_unique": 17,
+      "types": [
+        "array"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "name": {
+      "values": [
+        "Advanced Alchemy Table",
+        "Advanced Engineering Bench",
+        "Advanced Refinery",
+        "Arcane Enchanting Table",
+        "Basic Alchemy Table",
+        "Basic Enchanting Altar",
+        "Basic Enchanting Table",
+        "Basic Engineering Bench",
+        "Basic Forge",
+        "Basic Refinery",
+        "Basic Stone Forge",
+        "Eternal Forge",
+        "Master Forge",
+        "Master Refinery",
+        "Reinforced Forge",
+        "Steel Alchemy Table",
+        "Steel Engineering Bench",
+        "Steel Forge",
+        "Steel Refinery"
+      ],
+      "total_unique": 19,
+      "types": [
+        "string"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "forge_t1",
+        "forge_t2",
+        "forge_t3"
+      ]
+    },
+    "range": {
+      "values": [
+        0
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 12,
+      "example_items": [
+        "forge_t1",
+        "forge_t2",
+        "forge_t3"
+      ]
+    },
+    "rarity": {
+      "values": [
+        "common",
+        "epic",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "forge_t1",
+        "forge_t2",
+        "forge_t3"
+      ]
+    },
+    "requirements.level": {
+      "values": [
+        1,
+        10,
+        15,
+        25,
+        8
+      ],
+      "total_unique": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "statMultipliers.weight": {
+      "values": [
+        1.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 11,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.durability": {
+      "values": [
+        9999
+      ],
+      "total_unique": 1,
+      "types": [
+        "array"
+      ],
+      "occurrences": 12,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.weight": {
+      "values": [
+        100.0,
+        150.0,
+        30.0,
+        35.0,
+        40.0,
+        45.0,
+        50.0,
+        55.0,
+        60.0,
+        65.0,
+        75.0
+      ],
+      "total_unique": 11,
+      "types": [
+        "number"
+      ],
+      "occurrences": 12,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "subtype": {
+      "values": [
+        "alchemy",
+        "alchemy_table",
+        "altar",
+        "enchanting",
+        "engineering",
+        "engineering_bench",
+        "forge",
+        "refinery",
+        "refining",
+        "smithing"
+      ],
+      "total_unique": 10,
+      "types": [
+        "string"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "forge_t1",
+        "forge_t2",
+        "forge_t3"
+      ]
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "forge_t1",
+        "forge_t2",
+        "forge_t3"
+      ]
+    },
+    "type": {
+      "values": [
+        "adornments",
+        "alchemy",
+        "crafting",
+        "engineering",
+        "refining",
+        "smithing"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 23,
+      "example_items": [
+        "forge_t1",
+        "forge_t2",
+        "forge_t3"
+      ]
+    }
+  },
+  "_usable_template": {
+    "category": "station",
+    "flags": {
+      "placeable": true,
+      "repairable": true,
+      "stackable": true
+    },
+    "itemId": "forge_t2",
+    "metadata": {
+      "narrative": "Arcane enchanting table surrounded by floating crystals. Channels magical energies precisely.",
+      "tags": [
+        "engineering",
+        "forge",
+        "alchemy"
+      ]
+    },
+    "name": "Advanced Alchemy Table",
+    "range": 0,
+    "rarity": "common",
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "statMultipliers": {
+      "weight": 1.0
+    },
+    "stats": {
+      "durability": [
+        9999
+      ],
+      "weight": 65.0
+    },
+    "subtype": "forge",
+    "tier": 1,
+    "type": "alchemy"
+  },
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "Simple stone forge with basic bellows. Hot enough for copper and iron work, but struggles with harder metals.",
+        "tags": [
+          "station",
+          "smithing",
+          "starter"
+        ]
+      },
+      "itemId": "forge_t1",
+      "name": "Basic Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0,
+      "stats": {
+        "durability": [
+          9999,
+          9999
+        ],
+        "weight": 50.0
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Improved forge with reinforced stone and efficient airflow. Reaches temperatures needed for steel.",
+        "tags": [
+          "station",
+          "smithing",
+          "standard"
+        ]
+      },
+      "itemId": "forge_t2",
+      "name": "Reinforced Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 0,
+      "stats": {
+        "durability": [
+          9999,
+          9999
+        ],
+        "weight": 75.0
+      },
+      "requirements": {
+        "level": 8
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master forge with crystal-enhanced heating. Can reach temperatures that would melt lesser furnaces.",
+        "tags": [
+          "station",
+          "smithing",
+          "quality"
+        ]
+      },
+      "itemId": "forge_t3",
+      "name": "Master Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 0,
+      "stats": {
+        "durability": [
+          9999,
+          9999
+        ],
+        "weight": 100.0
+      },
+      "requirements": {
+        "level": 15
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary forge that bends reality itself. Can work metals that shouldn't exist.",
+        "tags": [
+          "station",
+          "smithing",
+          "legendary"
+        ]
+      },
+      "itemId": "forge_t4",
+      "name": "Eternal Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 0,
+      "stats": {
+        "durability": [
+          9999,
+          9999
+        ],
+        "weight": 150.0
+      },
+      "requirements": {
+        "level": 25
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Basic stone furnace for refining raw ores into usable materials. Essential for any aspiring metalworker.",
+        "tags": [
+          "station",
+          "refining",
+          "starter"
+        ]
+      },
+      "itemId": "refinery_t1",
+      "name": "Basic Refinery",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "refining",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0,
+      "stats": {
+        "durability": [
+          9999,
+          9999
+        ],
+        "weight": 45.0
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  ]
+}

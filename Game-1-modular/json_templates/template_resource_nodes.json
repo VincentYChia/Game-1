@@ -1,16 +1,13 @@
 {
   "_meta": {
-    "category": "resource-nodes",
+    "category": "resource_nodes",
     "description": "Gatherable resource node definitions",
-    "generated_at": "2026-01-01T19:58:32.994731",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.396214",
+    "total_items": 28,
     "source_files": [
-      "resource-node-1.JSON"
-    ],
-    "discovered_root_keys": [
-      "metadata",
-      "nodes"
-    ],
-    "total_items_analyzed": 0
+      "Definitions.JSON/resource-node-1.JSON"
+    ]
   },
   "_field_documentation": {},
   "_all_possible_values": {
@@ -21,11 +18,16 @@
         400,
         800
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "integer"
       ],
-      "occurrences": 28
+      "occurrences": 28,
+      "example_items": [
+        "Oak Tree",
+        "Pine Tree",
+        "Ash Tree"
+      ]
     },
     "category": {
       "values": [
@@ -33,11 +35,16 @@
         "stone",
         "tree"
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "string"
       ],
-      "occurrences": 28
+      "occurrences": 28,
+      "example_items": [
+        "Oak Tree",
+        "Pine Tree",
+        "Ash Tree"
+      ]
     },
     "drops[].chance": {
       "values": [
@@ -48,11 +55,16 @@
         "moderate",
         "rare"
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 38
+      "occurrences": 38,
+      "example_items": [
+        "oak_log",
+        "pine_log",
+        "ash_log"
+      ]
     },
     "drops[].materialId": {
       "values": [
@@ -94,11 +106,16 @@
         "water_crystal",
         "worldtree_log"
       ],
-      "count": 37,
+      "total_unique": 37,
       "types": [
         "string"
       ],
-      "occurrences": 38
+      "occurrences": 38,
+      "example_items": [
+        "oak_log",
+        "pine_log",
+        "ash_log"
+      ]
     },
     "drops[].quantity": {
       "values": [
@@ -107,11 +124,16 @@
         "many",
         "several"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "string"
       ],
-      "occurrences": 38
+      "occurrences": 38,
+      "example_items": [
+        "oak_log",
+        "pine_log",
+        "ash_log"
+      ]
     },
     "metadata.narrative": {
       "values": [
@@ -144,11 +166,14 @@
         "Translucent crystal formation that hums near magical power sources. Amplifies energies passing through it.",
         "Volcanic glass born in eruption's heart. Razor-sharp edges, incredibly brittle."
       ],
-      "count": 28,
+      "total_unique": 28,
       "types": [
         "string"
       ],
-      "occurrences": 28
+      "occurrences": 28,
+      "example_items": [
+        "unknown"
+      ]
     },
     "metadata.tags": {
       "values": [
@@ -184,11 +209,14 @@
         "volcanic",
         "wood"
       ],
-      "count": 31,
+      "total_unique": 31,
       "types": [
         "array"
       ],
-      "occurrences": 28
+      "occurrences": 28,
+      "example_items": [
+        "unknown"
+      ]
     },
     "name": {
       "values": [
@@ -221,22 +249,32 @@
         "Voidstone Shard",
         "Worldtree Sapling"
       ],
-      "count": 28,
+      "total_unique": 28,
       "types": [
         "string"
       ],
-      "occurrences": 28
+      "occurrences": 28,
+      "example_items": [
+        "Oak Tree",
+        "Pine Tree",
+        "Ash Tree"
+      ]
     },
     "requiredTool": {
       "values": [
         "axe",
         "pickaxe"
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "string"
       ],
-      "occurrences": 28
+      "occurrences": 28,
+      "example_items": [
+        "Oak Tree",
+        "Pine Tree",
+        "Ash Tree"
+      ]
     },
     "resourceId": {
       "values": [
@@ -269,11 +307,16 @@
         "voidstone_shard",
         "worldtree_sapling"
       ],
-      "count": 28,
+      "total_unique": 28,
       "types": [
         "string"
       ],
-      "occurrences": 28
+      "occurrences": 28,
+      "example_items": [
+        "Oak Tree",
+        "Pine Tree",
+        "Ash Tree"
+      ]
     },
     "respawnTime": {
       "values": [
@@ -281,12 +324,17 @@
         "slow",
         "very_slow"
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "string",
         "null"
       ],
-      "occurrences": 28
+      "occurrences": 28,
+      "example_items": [
+        "Oak Tree",
+        "Pine Tree",
+        "Ash Tree"
+      ]
     },
     "tier": {
       "values": [
@@ -295,184 +343,158 @@
         3,
         4
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "integer"
       ],
-      "occurrences": 28
+      "occurrences": 28,
+      "example_items": [
+        "Oak Tree",
+        "Pine Tree",
+        "Ash Tree"
+      ]
     }
   },
   "_usable_template": {
     "baseHealth": 200,
-    "category": "tree",
+    "category": "stone",
     "drops": [
       "<value>"
     ],
     "metadata": {
-      "narrative": "Pitch-black stone that pulls light into itself. Radiates subtle wrongness.",
+      "narrative": "Speckled igneous rock with visible crystals. Harder and more reliable than limestone.",
       "tags": [
-        "metallic",
-        "impossible",
-        "advanced"
+        "radiant",
+        "void",
+        "flexible"
       ]
     },
-    "name": "Birch Tree",
-    "requiredTool": "axe",
-    "resourceId": "adamantine_lode",
-    "respawnTime": "normal",
+    "name": "Ironwood Tree",
+    "requiredTool": "pickaxe",
+    "resourceId": "genesis_structure",
+    "respawnTime": "very_slow",
     "tier": 1
   },
-  "template": {
-    "baseHealth": {
-      "_type": "integer",
-      "_sample_values": [
-        200,
-        800,
-        100,
-        400
-      ],
-      "_total_unique_values": 4
-    },
-    "category": {
-      "_type": "string",
-      "_sample_values": [
-        "tree",
-        "stone",
-        "ore"
-      ],
-      "_total_unique_values": 3
-    },
-    "drops": {
-      "_type": "array",
-      "_sample_values": [],
-      "_total_unique_values": 0,
-      "chance": {
-        "_type": "string",
-        "_sample_values": [
-          "rare",
-          "low",
-          "improbable",
-          "high",
-          "moderate",
-          "guaranteed"
-        ],
-        "_total_unique_values": 6
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.",
+        "tags": [
+          "tree",
+          "wood",
+          "starter"
+        ]
       },
-      "materialId": {
-        "_type": "string",
-        "_sample_values": [
-          "obsidian",
-          "steel_ore",
-          "limestone",
-          "light_gem",
-          "etherion_ore",
-          "tin_ore",
-          "chaos_matrix",
-          "worldtree_log",
-          "orichalcum_ore",
-          "pine_log"
-        ],
-        "_total_unique_values": 37
+      "resourceId": "oak_tree",
+      "name": "Oak Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "oak_log",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Tall conifer reaching toward the sky. Flexible wood perfect for bows and lightweight construction.",
+        "tags": [
+          "tree",
+          "wood",
+          "flexible"
+        ]
       },
-      "quantity": {
-        "_type": "string",
-        "_sample_values": [
-          "abundant",
-          "several",
-          "many",
-          "few"
-        ],
-        "_total_unique_values": 4
-      }
+      "resourceId": "pine_tree",
+      "name": "Pine Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "pine_log",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": "normal"
     },
-    "metadata": {
-      "narrative": {
-        "_type": "string",
-        "_sample_values": [
-          "Pitch-black stone that pulls light into itself. Radiates subtle wrongness.",
-          "Legendary tree connected to the World Tree's root network. The wood hums with accumulated magical essence.",
-          "Legendary silver-white deposits that seem to drink in moonlight. Incredibly light yet impossibly strong.",
-          "Common copper deposit showing green-blue oxidation. Perfect for learning the basics of mining.",
-          "Speckled igneous rock with visible crystals. Harder and more reliable than limestone.",
-          "Rare tree whose wood rivals soft metals in hardness. Almost metallic ring when struck.",
-          "Stone that remembers everything it witnesses. Contains geological memory of eons.",
-          "Tall conifer reaching toward the sky. Flexible wood perfect for bows and lightweight construction.",
-          "Dark, impossibly hard ore found only in the deepest caverns. The world's exposed bones.",
-          "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is."
-        ],
-        "_total_unique_values": 28
+    {
+      "metadata": {
+        "narrative": "Pale-barked tree with wood that absorbs shock beautifully. Weapon smiths prize these for handle material.",
+        "tags": [
+          "tree",
+          "wood",
+          "quality"
+        ]
       },
-      "tags": {
-        "_type": "array",
-        "_sample_values": [
-          "metallic",
-          "impossible",
-          "advanced",
-          "flexible",
-          "ancient"
-        ],
-        "_total_unique_values": 31
-      }
-    },
-    "name": {
-      "_type": "string",
-      "_sample_values": [
-        "Birch Tree",
-        "Quartz Cluster",
-        "Orichalcum Trove",
-        "Eternity Monolith",
-        "Worldtree Sapling",
-        "Pine Tree",
-        "Primordial Formation",
-        "Adamantine Lode",
-        "Obsidian Flow",
-        "Ebony Tree"
+      "resourceId": "ash_tree",
+      "name": "Ash Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "ash_log",
+          "quantity": "several",
+          "chance": "guaranteed"
+        }
       ],
-      "_total_unique_values": 28
+      "respawnTime": "slow"
     },
-    "requiredTool": {
-      "_type": "string",
-      "_sample_values": [
-        "axe",
-        "pickaxe"
+    {
+      "metadata": {
+        "narrative": "Elegant tree with papery white bark. Fine grain makes it ideal for detailed carving work.",
+        "tags": [
+          "tree",
+          "wood",
+          "fine"
+        ]
+      },
+      "resourceId": "birch_tree",
+      "name": "Birch Tree",
+      "category": "tree",
+      "tier": 2,
+      "requiredTool": "axe",
+      "baseHealth": 200,
+      "drops": [
+        {
+          "materialId": "birch_log",
+          "quantity": "several",
+          "chance": "guaranteed"
+        }
       ],
-      "_total_unique_values": 2
+      "respawnTime": "slow"
     },
-    "resourceId": {
-      "_type": "string",
-      "_sample_values": [
-        "adamantine_lode",
-        "eternity_monolith",
-        "ebony_tree",
-        "shale_bed",
-        "etherion_nexus",
-        "diamond_geode",
-        "ironwood_tree",
-        "limestone_outcrop",
-        "orichalcum_trove",
-        "oak_tree"
+    {
+      "metadata": {
+        "narrative": "Dense hardwood tree that survives temperature extremes. The wood holds its shape through any condition.",
+        "tags": [
+          "tree",
+          "wood",
+          "durable"
+        ]
+      },
+      "resourceId": "maple_tree",
+      "name": "Maple Tree",
+      "category": "tree",
+      "tier": 2,
+      "requiredTool": "axe",
+      "baseHealth": 200,
+      "drops": [
+        {
+          "materialId": "maple_log",
+          "quantity": "several",
+          "chance": "high"
+        }
       ],
-      "_total_unique_values": 28
-    },
-    "respawnTime": {
-      "_type": "string",
-      "_sample_values": [
-        null,
-        "normal",
-        "very_slow",
-        "slow"
-      ],
-      "_total_unique_values": 4
-    },
-    "tier": {
-      "_type": "integer",
-      "_sample_values": [
-        1,
-        2,
-        3,
-        4
-      ],
-      "_total_unique_values": 4
+      "respawnTime": "very_slow"
     }
-  }
+  ]
 }

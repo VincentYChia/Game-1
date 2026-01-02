@@ -1,12 +1,13 @@
 {
   "_meta": {
-    "category": "items-refining",
-    "description": "Processed materials (ingots, planks, alloys)",
-    "generated_at": "2026-01-01T19:53:07.760534",
+    "category": "materials_refined",
+    "description": "Refined crafting materials (ingots, planks, alloys) - refining output",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.381516",
+    "total_items": 16,
     "source_files": [
-      "items-refining-1.JSON"
-    ],
-    "total_items_analyzed": 0
+      "items.JSON/items-refining-1.JSON"
+    ]
   },
   "_field_documentation": {},
   "_all_possible_values": {
@@ -16,11 +17,14 @@
         "Items crafted with this add frost damage",
         "Items crafted with this add lightning damage"
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "string"
       ],
-      "occurrences": 3
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
     },
     "attributes[].element": {
       "values": [
@@ -28,71 +32,94 @@
         "frost",
         "lightning"
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "string"
       ],
-      "occurrences": 3
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
     },
     "attributes[].type": {
       "values": [
         "elemental"
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 3
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
     },
     "attributes[].value": {
       "values": [
         10
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 3
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
     },
     "category": {
       "values": [
         "material"
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
     },
     "flags.consumable": {
       "values": [
         false
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "boolean"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "flags.repairable": {
       "values": [
         false
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "boolean"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "flags.stackable": {
       "values": [
         true
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "boolean"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "itemId": {
       "values": [
@@ -113,11 +140,16 @@
         "tin_ingot",
         "worldtree_plank"
       ],
-      "count": 16,
+      "total_unique": 16,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
     },
     "metadata.narrative": {
       "values": [
@@ -138,11 +170,14 @@
         "Sturdy oak planks, well-seasoned and straight-grained. The standard for all woodworking - reliable, abundant, and easy to work with. Handles bear this wood with pride.",
         "Worldtree planks that remember being part of something greater. The wood hums with ancient power. Items crafted from this are said to carry the world's will."
       ],
-      "count": 16,
+      "total_unique": 16,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "metadata.tags": {
       "values": [
@@ -173,11 +208,14 @@
         "wood",
         "worldtree"
       ],
-      "count": 26,
+      "total_unique": 26,
       "types": [
         "array"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "name": {
       "values": [
@@ -198,11 +236,16 @@
         "Tin Ingot",
         "Worldtree Plank"
       ],
-      "count": 16,
+      "total_unique": 16,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
     },
     "rarity": {
       "values": [
@@ -212,11 +255,16 @@
         "rare",
         "uncommon"
       ],
-      "count": 5,
+      "total_unique": 5,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
     },
     "requirements.level": {
       "values": [
@@ -229,21 +277,29 @@
         5,
         8
       ],
-      "count": 8,
+      "total_unique": 8,
       "types": [
         "integer"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "stackSize": {
       "values": [
         256
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
     },
     "statMultipliers.weight": {
       "values": [
@@ -255,11 +311,14 @@
         0.8,
         1.5
       ],
-      "count": 7,
+      "total_unique": 7,
       "types": [
         "number"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
     },
     "subtype": {
       "values": [
@@ -267,11 +326,16 @@
         "ingot",
         "plank"
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
     },
     "tier": {
       "values": [
@@ -280,22 +344,32 @@
         3,
         4
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "integer"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
     },
     "type": {
       "values": [
         "metal",
         "wood"
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "example_items": [
+        "copper_ingot",
+        "iron_ingot",
+        "tin_ingot"
+      ]
     }
   },
   "_usable_template": {
@@ -308,17 +382,17 @@
       "repairable": true,
       "stackable": true
     },
-    "itemId": "frost_steel_ingot",
+    "itemId": "steel_ingot",
     "metadata": {
-      "narrative": "Dense steel ingot, dark grey with a bluish tint. Carbon-rich iron forged under intense heat. Holds an edge far better than common iron, the mark of quality craftsmanship.",
+      "narrative": "Sturdy iron ingot, grey and reliable. The workhorse of civilization - strong enough for weapons, durable enough for tools, abundant enough to be practical.",
       "tags": [
-        "elemental",
+        "ash",
         "wood",
-        "lightning"
+        "copper"
       ]
     },
-    "name": "Adamantine Ingot",
-    "rarity": "rare",
+    "name": "Worldtree Plank",
+    "rarity": "common",
     "requirements": {
       "level": 1,
       "stats": {}
@@ -331,211 +405,162 @@
     "tier": 1,
     "type": "metal"
   },
-  "template": {
-    "attributes": {
-      "_type": "array",
-      "_sample_values": [],
-      "_total_unique_values": 0,
-      "effect": {
-        "_type": "string",
-        "_sample_values": [
-          "Items crafted with this add lightning damage",
-          "Items crafted with this add frost damage",
-          "Items crafted with this add fire damage"
-        ],
-        "_total_unique_values": 3
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "Refined copper ingot, reddish and malleable. The foundation of metallurgy - every smith's first metal. Soft enough to work easily, strong enough to be useful.",
+        "tags": [
+          "material",
+          "metal",
+          "refined",
+          "copper"
+        ]
       },
-      "element": {
-        "_type": "string",
-        "_sample_values": [
-          "fire",
-          "frost",
-          "lightning"
-        ],
-        "_total_unique_values": 3
+      "itemId": "copper_ingot",
+      "name": "Copper Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
       },
-      "type": {
-        "_type": "string",
-        "_sample_values": [
-          "elemental"
-        ],
-        "_total_unique_values": 1
+      "requirements": {
+        "level": 1,
+        "stats": {}
       },
-      "value": {
-        "_type": "integer",
-        "_sample_values": [
-          10
-        ],
-        "_total_unique_values": 1
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
       }
     },
-    "category": {
-      "_type": "string",
-      "_sample_values": [
-        "material"
-      ],
-      "_total_unique_values": 1
-    },
-    "flags": {
-      "consumable": {
-        "_type": "boolean",
-        "_sample_values": [
-          false
-        ],
-        "_total_unique_values": 1
+    {
+      "metadata": {
+        "narrative": "Sturdy iron ingot, grey and reliable. The workhorse of civilization - strong enough for weapons, durable enough for tools, abundant enough to be practical.",
+        "tags": [
+          "material",
+          "metal",
+          "refined",
+          "iron"
+        ]
       },
-      "repairable": {
-        "_type": "boolean",
-        "_sample_values": [
-          false
-        ],
-        "_total_unique_values": 1
+      "itemId": "iron_ingot",
+      "name": "Iron Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "common",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.5
       },
-      "stackable": {
-        "_type": "boolean",
-        "_sample_values": [
-          true
-        ],
-        "_total_unique_values": 1
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
       }
     },
-    "itemId": {
-      "_type": "string",
-      "_sample_values": [
-        "frost_steel_ingot",
-        "adamantine_ingot",
-        "orichalcum_ingot",
-        "steel_ingot",
-        "mithril_ingot",
-        "oak_plank",
-        "bronze_ingot",
-        "worldtree_plank",
-        "iron_ingot",
-        "ironwood_plank"
-      ],
-      "_total_unique_values": 16
-    },
-    "metadata": {
-      "narrative": {
-        "_type": "string",
-        "_sample_values": [
-          "Dense steel ingot, dark grey with a bluish tint. Carbon-rich iron forged under intense heat. Holds an edge far better than common iron, the mark of quality craftsmanship.",
-          "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
-          "Sturdy iron ingot, grey and reliable. The workhorse of civilization - strong enough for weapons, durable enough for tools, abundant enough to be practical.",
-          "Black ebony planks that absorb light. The wood feels cold, slightly wrong. Mages favor it for staves - it dampens unwanted magical interference while channeling intended power.",
-          "Refined copper ingot, reddish and malleable. The foundation of metallurgy - every smith's first metal. Soft enough to work easily, strong enough to be useful.",
-          "Black adamantine ingot, heavy as sin and harder than anything known. This material refuses to yield, laughs at damage, and never breaks. Forged in earth's deepest fires.",
-          "Ironwood planks, dense and metallic. Dulls saw blades quickly but the result is worth it - wood as strong as iron, light as oak. Nature's answer to steel.",
-          "Worldtree planks that remember being part of something greater. The wood hums with ancient power. Items crafted from this are said to carry the world's will.",
-          "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
-          "Silvery tin ingot with a subtle sheen. Rarely used alone, but essential for creating bronze alloys. The metal that teaches smiths about the power of combination."
-        ],
-        "_total_unique_values": 16
+    {
+      "metadata": {
+        "narrative": "Silvery tin ingot with a subtle sheen. Rarely used alone, but essential for creating bronze alloys. The metal that teaches smiths about the power of combination.",
+        "tags": [
+          "material",
+          "metal",
+          "refined",
+          "tin"
+        ]
       },
-      "tags": {
-        "_type": "array",
-        "_sample_values": [
-          "elemental",
-          "wood",
-          "lightning",
-          "adamantine",
-          "material"
-        ],
-        "_total_unique_values": 26
+      "itemId": "tin_ingot",
+      "name": "Tin Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
       }
     },
-    "name": {
-      "_type": "string",
-      "_sample_values": [
-        "Adamantine Ingot",
-        "Ebony Plank",
-        "Fire Steel Ingot",
-        "Ash Plank",
-        "Oak Plank",
-        "Mithril Ingot",
-        "Worldtree Plank",
-        "Frost Steel Ingot",
-        "Steel Ingot",
-        "Copper Ingot"
-      ],
-      "_total_unique_values": 16
-    },
-    "rarity": {
-      "_type": "string",
-      "_sample_values": [
-        "rare",
-        "epic",
-        "common",
-        "uncommon",
-        "legendary"
-      ],
-      "_total_unique_values": 5
-    },
-    "requirements": {
-      "level": {
-        "_type": "integer",
-        "_sample_values": [
-          1,
-          3,
-          5,
-          8,
-          12,
-          15,
-          18,
-          20
-        ],
-        "_total_unique_values": 8
+    {
+      "metadata": {
+        "narrative": "Dense steel ingot, dark grey with a bluish tint. Carbon-rich iron forged under intense heat. Holds an edge far better than common iron, the mark of quality craftsmanship.",
+        "tags": [
+          "material",
+          "metal",
+          "refined",
+          "steel"
+        ]
       },
-      "stats": {}
-    },
-    "stackSize": {
-      "_type": "integer",
-      "_sample_values": [
-        256
-      ],
-      "_total_unique_values": 1
-    },
-    "statMultipliers": {
-      "weight": {
-        "_type": "number",
-        "_sample_values": [
-          0.5,
-          0.4,
-          0.6,
-          0.2,
-          1.5,
-          0.8,
-          0.3
-        ],
-        "_total_unique_values": 7
+      "itemId": "steel_ingot",
+      "name": "Steel Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 2,
+      "rarity": "uncommon",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
       }
     },
-    "subtype": {
-      "_type": "string",
-      "_sample_values": [
-        "ingot",
-        "plank",
-        "alloy"
-      ],
-      "_total_unique_values": 3
-    },
-    "tier": {
-      "_type": "integer",
-      "_sample_values": [
-        1,
-        2,
-        3,
-        4
-      ],
-      "_total_unique_values": 4
-    },
-    "type": {
-      "_type": "string",
-      "_sample_values": [
-        "metal",
-        "wood"
-      ],
-      "_total_unique_values": 2
+    {
+      "metadata": {
+        "narrative": "Legendary mithril ingot, silvery-blue and impossibly light. The metal seems to defy natural laws - feather-light yet stronger than steel. Legends claim it fell from the stars.",
+        "tags": [
+          "material",
+          "metal",
+          "refined",
+          "mithril",
+          "legendary"
+        ]
+      },
+      "itemId": "mithril_ingot",
+      "name": "Mithril Ingot",
+      "category": "material",
+      "type": "metal",
+      "subtype": "ingot",
+      "tier": 3,
+      "rarity": "rare",
+      "stackSize": 256,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": false,
+        "repairable": false
+      }
     }
-  }
+  ]
 }

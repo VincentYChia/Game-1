@@ -1,18 +1,13 @@
 {
   "_meta": {
     "category": "titles",
-    "description": "Achievement title definitions",
-    "generated_at": "2026-01-01T19:58:32.942078",
+    "description": "Achievement titles with prerequisites and bonuses",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.400133",
+    "total_items": 10,
     "source_files": [
-      "titles-1.JSON"
-    ],
-    "discovered_root_keys": [
-      "difficultyTiers",
-      "metadata",
-      "titleCategories",
-      "titles"
-    ],
-    "total_items_analyzed": 0
+      "progression/titles-1.JSON"
+    ]
   },
   "_field_documentation": {},
   "_all_possible_values": {
@@ -23,51 +18,68 @@
         "hidden_discovery",
         "special_achievement"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "string"
       ],
-      "occurrences": 10
+      "occurrences": 10,
+      "example_items": [
+        "novice_miner",
+        "novice_lumberjack",
+        "novice_smith"
+      ]
     },
     "bonuses.alloyQuality": {
       "values": [
         0.25
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.attackSpeed": {
       "values": [
         0.0
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.combatSkillExp": {
       "values": [
         0.25
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.counterChance": {
       "values": [
         0.15
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.criticalChance": {
       "values": [
@@ -75,226 +87,292 @@
         0.1,
         0.2
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "number"
       ],
-      "occurrences": 3
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.dragonDamage": {
       "values": [
         0.5
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.durabilityBonus": {
       "values": [
         0.25
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.elementalAfinity": {
       "values": [
         "fire"
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.fireOreChance": {
       "values": [
         0.15
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.fireResistance": {
       "values": [
         0.3
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.firstTryBonus": {
       "values": [
         0.0,
         0.1
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "number"
       ],
-      "occurrences": 3
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.forestryDamage": {
       "values": [
         0.1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.forestrySpeed": {
       "values": [
         0.0
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.legendaryChance": {
       "values": [
         0.05
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.legendaryDropRate": {
       "values": [
         0.1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.luckStat": {
       "values": [
         0.25
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.materialYield": {
       "values": [
         0.1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.meleeDamage": {
       "values": [
         0.1,
         1.0
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "number"
       ],
-      "occurrences": 2
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.miningDamage": {
       "values": [
         0.1,
         0.25
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "number"
       ],
-      "occurrences": 2
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.miningSpeed": {
       "values": [
         0.0
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.rareDropRate": {
       "values": [
         0.15
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.rareOreChance": {
       "values": [
         0.0
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.rareWoodChance": {
       "values": [
         0.0
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.refiningPrecision": {
       "values": [
         0.5
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.smithingQuality": {
       "values": [
         0.0,
         0.5
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "number"
       ],
-      "occurrences": 2
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "bonuses.smithingTime": {
       "values": [
         0.1,
         2.0
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "number"
       ],
-      "occurrences": 2
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "description": {
       "values": [
@@ -309,11 +387,16 @@
         "Wyrms fear your name. The great beasts fall before you.",
         "Your first steps into the depths. Every mine begins with a single swing."
       ],
-      "count": 10,
+      "total_unique": 10,
       "types": [
         "string"
       ],
-      "occurrences": 10
+      "occurrences": 10,
+      "example_items": [
+        "novice_miner",
+        "novice_lumberjack",
+        "novice_smith"
+      ]
     },
     "difficultyTier": {
       "values": [
@@ -324,201 +407,16 @@
         "novice",
         "special"
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 10
-    },
-    "difficultyTiers.apprentice.acquisition": {
-      "values": [
-        "event_based_rng"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.apprentice.bonusRange": {
-      "values": [
-        "25%"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.apprentice.generationChance": {
-      "values": [
-        0.2
-      ],
-      "count": 1,
-      "types": [
-        "number"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.apprentice.threshold": {
-      "values": [
-        1000
-      ],
-      "count": 1,
-      "types": [
-        "integer"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.expert.acquisition": {
-      "values": [
-        "event_based_rng"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.expert.bonusRange": {
-      "values": [
-        "100%"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.expert.generationChance": {
-      "values": [
-        0.05
-      ],
-      "count": 1,
-      "types": [
-        "number"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.expert.threshold": {
-      "values": [
-        20000
-      ],
-      "count": 1,
-      "types": [
-        "integer"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.journeyman.acquisition": {
-      "values": [
-        "event_based_rng"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.journeyman.bonusRange": {
-      "values": [
-        "50%"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.journeyman.generationChance": {
-      "values": [
-        0.1
-      ],
-      "count": 1,
-      "types": [
-        "number"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.journeyman.threshold": {
-      "values": [
-        5000
-      ],
-      "count": 1,
-      "types": [
-        "integer"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.master.acquisition": {
-      "values": [
-        "special_achievement"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.master.bonusRange": {
-      "values": [
-        "200%"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.master.generationChance": {
-      "values": [
-        0.02
-      ],
-      "count": 1,
-      "types": [
-        "number"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.master.threshold": {
-      "values": [
-        100000
-      ],
-      "count": 1,
-      "types": [
-        "integer"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.novice.acquisition": {
-      "values": [
-        "guaranteed_milestone"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.novice.bonusRange": {
-      "values": [
-        "10%"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "difficultyTiers.novice.threshold": {
-      "values": [
-        100
-      ],
-      "count": 1,
-      "types": [
-        "integer"
-      ],
-      "occurrences": 1
+      "occurrences": 10,
+      "example_items": [
+        "novice_miner",
+        "novice_lumberjack",
+        "novice_smith"
+      ]
     },
     "generationChance": {
       "values": [
@@ -528,22 +426,32 @@
         0.2,
         1.0
       ],
-      "count": 5,
+      "total_unique": 5,
       "types": [
         "number"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "apprentice_flame_miner",
+        "journeyman_refiner",
+        "expert_battle_sage"
+      ]
     },
     "isHidden": {
       "values": [
         false,
         true
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "boolean"
       ],
-      "occurrences": 10
+      "occurrences": 10,
+      "example_items": [
+        "novice_miner",
+        "novice_lumberjack",
+        "novice_smith"
+      ]
     },
     "name": {
       "values": [
@@ -558,11 +466,16 @@
         "Novice Smith",
         "Novice Warrior"
       ],
-      "count": 10,
+      "total_unique": 10,
       "types": [
         "string"
       ],
-      "occurrences": 10
+      "occurrences": 10,
+      "example_items": [
+        "novice_miner",
+        "novice_lumberjack",
+        "novice_smith"
+      ]
     },
     "narrative": {
       "values": [
@@ -577,164 +490,214 @@
         "You don't fight. You dance. And everything around you dies beautifully.",
         "You see what others miss: the potential locked within raw matter."
       ],
-      "count": 10,
+      "total_unique": 10,
       "types": [
         "string"
       ],
-      "occurrences": 10
+      "occurrences": 10,
+      "example_items": [
+        "novice_miner",
+        "novice_lumberjack",
+        "novice_smith"
+      ]
     },
     "prerequisites.activities.alloysCreated": {
       "values": [
         50
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.consecutiveFirstTryBonuses": {
       "values": [
         10
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.criticalHits": {
       "values": [
         500
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.dragonBossDefeated": {
       "values": [
         1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.enemiesDefeated": {
       "values": [
         1000,
         50
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "integer"
       ],
-      "occurrences": 2
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.fireOresMined": {
       "values": [
         200
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.itemsSmithed": {
       "values": [
         50,
         5000
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "integer"
       ],
-      "occurrences": 2
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.legendaryItemsCreated": {
       "values": [
         10
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.materialsRefined": {
       "values": [
         500
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.oresMined": {
       "values": [
         100,
         1000
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "integer"
       ],
-      "occurrences": 2
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.perfectCrafts": {
       "values": [
         500
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.perfectDodges": {
       "values": [
         100
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.rareDropsFound": {
       "values": [
         50
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.treesChopped": {
       "values": [
         100
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.activities.usedFireWeapon": {
       "values": [
         true
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "boolean"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.characterLevel": {
       "values": [
@@ -746,11 +709,14 @@
         40,
         5
       ],
-      "count": 7,
+      "total_unique": 7,
       "types": [
         "integer"
       ],
-      "occurrences": 10
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
     },
     "prerequisites.requiredTitles": {
       "values": [
@@ -759,11 +725,14 @@
         "novice_miner",
         "novice_refiner"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "array"
       ],
-      "occurrences": 10
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
     },
     "titleId": {
       "values": [
@@ -778,11 +747,16 @@
         "novice_smith",
         "novice_warrior"
       ],
-      "count": 10,
+      "total_unique": 10,
       "types": [
         "string"
       ],
-      "occurrences": 10
+      "occurrences": 10,
+      "example_items": [
+        "novice_miner",
+        "novice_lumberjack",
+        "novice_smith"
+      ]
     },
     "titleType": {
       "values": [
@@ -791,15 +765,20 @@
         "gathering",
         "utility"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "string"
       ],
-      "occurrences": 10
+      "occurrences": 10,
+      "example_items": [
+        "novice_miner",
+        "novice_lumberjack",
+        "novice_smith"
+      ]
     }
   },
   "_usable_template": {
-    "acquisitionMethod": "guaranteed_milestone",
+    "acquisitionMethod": "special_achievement",
     "bonuses": {
       "alloyQuality": 0.25,
       "attackSpeed": 0.0,
@@ -828,43 +807,12 @@
       "smithingQuality": 0.0,
       "smithingTime": 0.1
     },
-    "description": "Combat flows through you like water. Blade and mind move as one.",
-    "difficultyTier": "special",
-    "difficultyTiers": {
-      "apprentice": {
-        "acquisition": "event_based_rng",
-        "bonusRange": "25%",
-        "generationChance": 0.2,
-        "threshold": 1000
-      },
-      "expert": {
-        "acquisition": "event_based_rng",
-        "bonusRange": "100%",
-        "generationChance": 0.05,
-        "threshold": 20000
-      },
-      "journeyman": {
-        "acquisition": "event_based_rng",
-        "bonusRange": "50%",
-        "generationChance": 0.1,
-        "threshold": 5000
-      },
-      "master": {
-        "acquisition": "special_achievement",
-        "bonusRange": "200%",
-        "generationChance": 0.02,
-        "threshold": 100000
-      },
-      "novice": {
-        "acquisition": "guaranteed_milestone",
-        "bonusRange": "10%",
-        "threshold": 100
-      }
-    },
+    "description": "Impurities flee before your knowledge. Material transformation is your domain.",
+    "difficultyTier": "master",
     "generationChance": 0.2,
     "isHidden": true,
     "name": "Novice Smith",
-    "narrative": "When you strike the anvil, gods pause to listen. Your work transcends mortality.",
+    "narrative": "Every great lumberjack started by felling their hundredth tree.",
     "prerequisites": {
       "activities": {
         "alloysCreated": 50,
@@ -886,599 +834,127 @@
       "characterLevel": 0,
       "requiredTitles": [
         "novice_refiner",
-        "expert_master_smith",
-        "journeyman_warrior"
+        "journeyman_warrior",
+        "expert_master_smith"
       ]
     },
-    "titleId": "master_eternal_smith",
-    "titleType": "crafting"
+    "titleId": "novice_smith",
+    "titleType": "gathering"
   },
-  "template": {
-    "acquisitionMethod": {
-      "_type": "string",
-      "_sample_values": [
-        "guaranteed_milestone",
-        "event_based_rng",
-        "hidden_discovery",
-        "special_achievement"
-      ],
-      "_total_unique_values": 4
+  "_sample_items": [
+    {
+      "titleId": "novice_miner",
+      "name": "Novice Miner",
+      "titleType": "gathering",
+      "difficultyTier": "novice",
+      "description": "Your first steps into the depths. Every mine begins with a single swing.",
+      "bonuses": {
+        "miningDamage": 0.1,
+        "miningSpeed": 0.0,
+        "rareOreChance": 0.0
+      },
+      "prerequisites": {
+        "activities": {
+          "oresMined": 100
+        },
+        "requiredTitles": [],
+        "characterLevel": 0
+      },
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "The stone remembers your first strike. Keep swinging."
     },
-    "bonuses": {
-      "alloyQuality": {
-        "_type": "number",
-        "_sample_values": [
-          0.25
-        ],
-        "_total_unique_values": 1
+    {
+      "titleId": "novice_lumberjack",
+      "name": "Novice Lumberjack",
+      "titleType": "gathering",
+      "difficultyTier": "novice",
+      "description": "The forest acknowledges your presence. Trees fall before you.",
+      "bonuses": {
+        "forestryDamage": 0.1,
+        "forestrySpeed": 0.0,
+        "rareWoodChance": 0.0
       },
-      "attackSpeed": {
-        "_type": "number",
-        "_sample_values": [
-          0.0
-        ],
-        "_total_unique_values": 1
+      "prerequisites": {
+        "activities": {
+          "treesChopped": 100
+        },
+        "requiredTitles": [],
+        "characterLevel": 0
       },
-      "combatSkillExp": {
-        "_type": "number",
-        "_sample_values": [
-          0.25
-        ],
-        "_total_unique_values": 1
-      },
-      "counterChance": {
-        "_type": "number",
-        "_sample_values": [
-          0.15
-        ],
-        "_total_unique_values": 1
-      },
-      "criticalChance": {
-        "_type": "number",
-        "_sample_values": [
-          0.0,
-          0.1,
-          0.2
-        ],
-        "_total_unique_values": 3
-      },
-      "dragonDamage": {
-        "_type": "number",
-        "_sample_values": [
-          0.5
-        ],
-        "_total_unique_values": 1
-      },
-      "durabilityBonus": {
-        "_type": "number",
-        "_sample_values": [
-          0.25
-        ],
-        "_total_unique_values": 1
-      },
-      "elementalAfinity": {
-        "_type": "string",
-        "_sample_values": [
-          "fire"
-        ],
-        "_total_unique_values": 1
-      },
-      "fireOreChance": {
-        "_type": "number",
-        "_sample_values": [
-          0.15
-        ],
-        "_total_unique_values": 1
-      },
-      "fireResistance": {
-        "_type": "number",
-        "_sample_values": [
-          0.3
-        ],
-        "_total_unique_values": 1
-      },
-      "firstTryBonus": {
-        "_type": "number",
-        "_sample_values": [
-          0.0,
-          0.1
-        ],
-        "_total_unique_values": 2
-      },
-      "forestryDamage": {
-        "_type": "number",
-        "_sample_values": [
-          0.1
-        ],
-        "_total_unique_values": 1
-      },
-      "forestrySpeed": {
-        "_type": "number",
-        "_sample_values": [
-          0.0
-        ],
-        "_total_unique_values": 1
-      },
-      "legendaryChance": {
-        "_type": "number",
-        "_sample_values": [
-          0.05
-        ],
-        "_total_unique_values": 1
-      },
-      "legendaryDropRate": {
-        "_type": "number",
-        "_sample_values": [
-          0.1
-        ],
-        "_total_unique_values": 1
-      },
-      "luckStat": {
-        "_type": "number",
-        "_sample_values": [
-          0.25
-        ],
-        "_total_unique_values": 1
-      },
-      "materialYield": {
-        "_type": "number",
-        "_sample_values": [
-          0.1
-        ],
-        "_total_unique_values": 1
-      },
-      "meleeDamage": {
-        "_type": "number",
-        "_sample_values": [
-          0.1,
-          1.0
-        ],
-        "_total_unique_values": 2
-      },
-      "miningDamage": {
-        "_type": "number",
-        "_sample_values": [
-          0.1,
-          0.25
-        ],
-        "_total_unique_values": 2
-      },
-      "miningSpeed": {
-        "_type": "number",
-        "_sample_values": [
-          0.0
-        ],
-        "_total_unique_values": 1
-      },
-      "rareDropRate": {
-        "_type": "number",
-        "_sample_values": [
-          0.15
-        ],
-        "_total_unique_values": 1
-      },
-      "rareOreChance": {
-        "_type": "number",
-        "_sample_values": [
-          0.0
-        ],
-        "_total_unique_values": 1
-      },
-      "rareWoodChance": {
-        "_type": "number",
-        "_sample_values": [
-          0.0
-        ],
-        "_total_unique_values": 1
-      },
-      "refiningPrecision": {
-        "_type": "number",
-        "_sample_values": [
-          0.5
-        ],
-        "_total_unique_values": 1
-      },
-      "smithingQuality": {
-        "_type": "number",
-        "_sample_values": [
-          0.0,
-          0.5
-        ],
-        "_total_unique_values": 2
-      },
-      "smithingTime": {
-        "_type": "number",
-        "_sample_values": [
-          0.1,
-          2.0
-        ],
-        "_total_unique_values": 2
-      }
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "Every great lumberjack started by felling their hundredth tree."
     },
-    "description": {
-      "_type": "string",
-      "_sample_values": [
-        "Combat flows through you like water. Blade and mind move as one.",
-        "The forest acknowledges your presence. Trees fall before you.",
-        "Legends speak of smiths who forged the impossible. You are one of them.",
-        "Fortune herself smiles upon you. Or perhaps you've rigged the dice.",
-        "Wyrms fear your name. The great beasts fall before you.",
-        "Fire-veined ores call to you. The heat of the deep welcomes your touch.",
-        "First blood has been drawn. You've tasted battle and survived.",
-        "The forge accepts you. Your hammer rings with purpose.",
-        "Impurities flee before your knowledge. Material transformation is your domain.",
-        "Your first steps into the depths. Every mine begins with a single swing."
-      ],
-      "_total_unique_values": 10
-    },
-    "difficultyTier": {
-      "_type": "string",
-      "_sample_values": [
-        "special",
-        "novice",
-        "expert",
-        "apprentice",
-        "journeyman",
-        "master"
-      ],
-      "_total_unique_values": 6
-    },
-    "difficultyTiers": {
-      "apprentice": {
-        "acquisition": {
-          "_type": "string",
-          "_sample_values": [
-            "event_based_rng"
-          ],
-          "_total_unique_values": 1
-        },
-        "bonusRange": {
-          "_type": "string",
-          "_sample_values": [
-            "25%"
-          ],
-          "_total_unique_values": 1
-        },
-        "generationChance": {
-          "_type": "number",
-          "_sample_values": [
-            0.2
-          ],
-          "_total_unique_values": 1
-        },
-        "threshold": {
-          "_type": "integer",
-          "_sample_values": [
-            1000
-          ],
-          "_total_unique_values": 1
-        }
+    {
+      "titleId": "novice_smith",
+      "name": "Novice Smith",
+      "titleType": "crafting",
+      "difficultyTier": "novice",
+      "description": "The forge accepts you. Your hammer rings with purpose.",
+      "bonuses": {
+        "smithingTime": 0.1,
+        "smithingQuality": 0.0,
+        "firstTryBonus": 0.0
       },
-      "expert": {
-        "acquisition": {
-          "_type": "string",
-          "_sample_values": [
-            "event_based_rng"
-          ],
-          "_total_unique_values": 1
+      "prerequisites": {
+        "activities": {
+          "itemsSmithed": 50
         },
-        "bonusRange": {
-          "_type": "string",
-          "_sample_values": [
-            "100%"
-          ],
-          "_total_unique_values": 1
-        },
-        "generationChance": {
-          "_type": "number",
-          "_sample_values": [
-            0.05
-          ],
-          "_total_unique_values": 1
-        },
-        "threshold": {
-          "_type": "integer",
-          "_sample_values": [
-            20000
-          ],
-          "_total_unique_values": 1
-        }
+        "requiredTitles": [],
+        "characterLevel": 0
       },
-      "journeyman": {
-        "acquisition": {
-          "_type": "string",
-          "_sample_values": [
-            "event_based_rng"
-          ],
-          "_total_unique_values": 1
-        },
-        "bonusRange": {
-          "_type": "string",
-          "_sample_values": [
-            "50%"
-          ],
-          "_total_unique_values": 1
-        },
-        "generationChance": {
-          "_type": "number",
-          "_sample_values": [
-            0.1
-          ],
-          "_total_unique_values": 1
-        },
-        "threshold": {
-          "_type": "integer",
-          "_sample_values": [
-            5000
-          ],
-          "_total_unique_values": 1
-        }
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "Heat, hammer, shape. The trinity of the smith begins with you."
+    },
+    {
+      "titleId": "novice_warrior",
+      "name": "Novice Warrior",
+      "titleType": "combat",
+      "difficultyTier": "novice",
+      "description": "First blood has been drawn. You've tasted battle and survived.",
+      "bonuses": {
+        "meleeDamage": 0.1,
+        "criticalChance": 0.0,
+        "attackSpeed": 0.0
       },
-      "master": {
-        "acquisition": {
-          "_type": "string",
-          "_sample_values": [
-            "special_achievement"
-          ],
-          "_total_unique_values": 1
+      "prerequisites": {
+        "activities": {
+          "enemiesDefeated": 50
         },
-        "bonusRange": {
-          "_type": "string",
-          "_sample_values": [
-            "200%"
-          ],
-          "_total_unique_values": 1
-        },
-        "generationChance": {
-          "_type": "number",
-          "_sample_values": [
-            0.02
-          ],
-          "_total_unique_values": 1
-        },
-        "threshold": {
-          "_type": "integer",
-          "_sample_values": [
-            100000
-          ],
-          "_total_unique_values": 1
-        }
+        "requiredTitles": [],
+        "characterLevel": 0
       },
-      "novice": {
-        "acquisition": {
-          "_type": "string",
-          "_sample_values": [
-            "guaranteed_milestone"
-          ],
-          "_total_unique_values": 1
-        },
-        "bonusRange": {
-          "_type": "string",
-          "_sample_values": [
-            "10%"
-          ],
-          "_total_unique_values": 1
-        },
-        "threshold": {
-          "_type": "integer",
-          "_sample_values": [
-            100
-          ],
-          "_total_unique_values": 1
-        }
-      }
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "Fifty foes have fallen. You're no longer prey."
     },
-    "generationChance": {
-      "_type": "number",
-      "_sample_values": [
-        0.2,
-        1.0,
-        0.1,
-        0.05,
-        0.02
-      ],
-      "_total_unique_values": 5
-    },
-    "isHidden": {
-      "_type": "boolean",
-      "_sample_values": [
-        false,
-        true
-      ],
-      "_total_unique_values": 2
-    },
-    "name": {
-      "_type": "string",
-      "_sample_values": [
-        "Novice Smith",
-        "Novice Miner",
-        "Lucky Bastard",
-        "Master Eternal Smith",
-        "Novice Lumberjack",
-        "Novice Warrior",
-        "Journeyman Refiner",
-        "Apprentice Flame Miner",
-        "Expert Battle Sage",
-        "Dragon's Bane"
-      ],
-      "_total_unique_values": 10
-    },
-    "narrative": {
-      "_type": "string",
-      "_sample_values": [
-        "When you strike the anvil, gods pause to listen. Your work transcends mortality.",
-        "The dragon's roar becomes silence. You are the end of their age.",
-        "You don't fight. You dance. And everything around you dies beautifully.",
-        "Heat, hammer, shape. The trinity of the smith begins with you.",
-        "You don't believe in luck. You ARE luck.",
-        "Fifty foes have fallen. You're no longer prey.",
-        "The forge burns hotter with ores touched by flame. You seek them instinctively.",
-        "The stone remembers your first strike. Keep swinging.",
-        "Every great lumberjack started by felling their hundredth tree.",
-        "You see what others miss: the potential locked within raw matter."
-      ],
-      "_total_unique_values": 10
-    },
-    "prerequisites": {
-      "activities": {
-        "alloysCreated": {
-          "_type": "integer",
-          "_sample_values": [
-            50
-          ],
-          "_total_unique_values": 1
-        },
-        "consecutiveFirstTryBonuses": {
-          "_type": "integer",
-          "_sample_values": [
-            10
-          ],
-          "_total_unique_values": 1
-        },
-        "criticalHits": {
-          "_type": "integer",
-          "_sample_values": [
-            500
-          ],
-          "_total_unique_values": 1
-        },
-        "dragonBossDefeated": {
-          "_type": "integer",
-          "_sample_values": [
-            1
-          ],
-          "_total_unique_values": 1
-        },
-        "enemiesDefeated": {
-          "_type": "integer",
-          "_sample_values": [
-            1000,
-            50
-          ],
-          "_total_unique_values": 2
-        },
-        "fireOresMined": {
-          "_type": "integer",
-          "_sample_values": [
-            200
-          ],
-          "_total_unique_values": 1
-        },
-        "itemsSmithed": {
-          "_type": "integer",
-          "_sample_values": [
-            5000,
-            50
-          ],
-          "_total_unique_values": 2
-        },
-        "legendaryItemsCreated": {
-          "_type": "integer",
-          "_sample_values": [
-            10
-          ],
-          "_total_unique_values": 1
-        },
-        "materialsRefined": {
-          "_type": "integer",
-          "_sample_values": [
-            500
-          ],
-          "_total_unique_values": 1
-        },
-        "oresMined": {
-          "_type": "integer",
-          "_sample_values": [
-            1000,
-            100
-          ],
-          "_total_unique_values": 2
-        },
-        "perfectCrafts": {
-          "_type": "integer",
-          "_sample_values": [
-            500
-          ],
-          "_total_unique_values": 1
-        },
-        "perfectDodges": {
-          "_type": "integer",
-          "_sample_values": [
-            100
-          ],
-          "_total_unique_values": 1
-        },
-        "rareDropsFound": {
-          "_type": "integer",
-          "_sample_values": [
-            50
-          ],
-          "_total_unique_values": 1
-        },
-        "treesChopped": {
-          "_type": "integer",
-          "_sample_values": [
-            100
-          ],
-          "_total_unique_values": 1
-        },
-        "usedFireWeapon": {
-          "_type": "boolean",
-          "_sample_values": [
-            true
-          ],
-          "_total_unique_values": 1
-        }
+    {
+      "titleId": "apprentice_flame_miner",
+      "name": "Apprentice Flame Miner",
+      "titleType": "gathering",
+      "difficultyTier": "apprentice",
+      "description": "Fire-veined ores call to you. The heat of the deep welcomes your touch.",
+      "bonuses": {
+        "miningDamage": 0.25,
+        "fireOreChance": 0.15,
+        "elementalAfinity": "fire"
       },
-      "characterLevel": {
-        "_type": "integer",
-        "_sample_values": [
-          0,
-          5,
-          40,
-          10,
-          15,
-          20,
-          25
-        ],
-        "_total_unique_values": 7
-      },
-      "requiredTitles": {
-        "_type": "array",
-        "_sample_values": [
-          "novice_refiner",
-          "expert_master_smith",
-          "journeyman_warrior",
+      "prerequisites": {
+        "activities": {
+          "oresMined": 1000,
+          "fireOresMined": 200
+        },
+        "requiredTitles": [
           "novice_miner"
         ],
-        "_total_unique_values": 4
-      }
-    },
-    "titleId": {
-      "_type": "string",
-      "_sample_values": [
-        "master_eternal_smith",
-        "apprentice_flame_miner",
-        "hidden_lucky_bastard",
-        "novice_warrior",
-        "novice_lumberjack",
-        "novice_smith",
-        "journeyman_refiner",
-        "hidden_dragons_bane",
-        "novice_miner",
-        "expert_battle_sage"
-      ],
-      "_total_unique_values": 10
-    },
-    "titleType": {
-      "_type": "string",
-      "_sample_values": [
-        "crafting",
-        "gathering",
-        "combat",
-        "utility"
-      ],
-      "_total_unique_values": 4
+        "characterLevel": 5
+      },
+      "acquisitionMethod": "event_based_rng",
+      "generationChance": 0.2,
+      "isHidden": false,
+      "narrative": "The forge burns hotter with ores touched by flame. You seek them instinctively."
     }
-  }
+  ]
 }

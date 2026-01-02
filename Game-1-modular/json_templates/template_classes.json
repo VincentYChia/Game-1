@@ -1,19 +1,13 @@
 {
   "_meta": {
     "category": "classes",
-    "description": "Starting class definitions",
-    "generated_at": "2026-01-01T19:58:32.953345",
+    "description": "Starting class definitions with bonuses and skills",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.368984",
+    "total_items": 6,
     "source_files": [
-      "classes-1.JSON"
-    ],
-    "discovered_root_keys": [
-      "classSwitching",
-      "classes",
-      "designNotes",
-      "metadata",
-      "statDescriptions"
-    ],
-    "total_items_analyzed": 0
+      "progression/classes-1.JSON"
+    ]
   },
   "_field_documentation": {},
   "_all_possible_values": {
@@ -26,108 +20,16 @@
         "scholar",
         "warrior"
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 6
-    },
-    "classSwitching.changedOnSwitch": {
-      "values": [
-        "Active class bonuses (old removed, new applied)",
-        "Starting skill (if applicable)"
-      ],
-      "count": 2,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
-    },
-    "classSwitching.confirmationRequired": {
-      "values": [
-        true
-      ],
-      "count": 1,
-      "types": [
-        "boolean"
-      ],
-      "occurrences": 1
-    },
-    "classSwitching.cost": {
-      "values": [
-        1000
-      ],
-      "count": 1,
-      "types": [
-        "integer"
-      ],
-      "occurrences": 1
-    },
-    "classSwitching.currency": {
-      "values": [
-        "gold"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "classSwitching.description": {
-      "values": [
-        "Players can switch classes at any time by paying a fixed cost"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "classSwitching.restrictions.cooldown": {
-      "values": [
-        0
-      ],
-      "count": 1,
-      "types": [
-        "integer"
-      ],
-      "occurrences": 1
-    },
-    "classSwitching.restrictions.minimumLevel": {
-      "values": [
-        1
-      ],
-      "count": 1,
-      "types": [
-        "integer"
-      ],
-      "occurrences": 1
-    },
-    "classSwitching.restrictions.requiresNPC": {
-      "values": [
-        false
-      ],
-      "count": 1,
-      "types": [
-        "boolean"
-      ],
-      "occurrences": 1
-    },
-    "classSwitching.retainedOnSwitch": {
-      "values": [
-        "All earned titles",
-        "All equipped gear",
-        "All inventory items",
-        "All skill levels and experience",
-        "All stored materials",
-        "All unlocked recipes",
-        "Character level and experience"
-      ],
-      "count": 7,
-      "types": [
-        "array"
-      ],
-      "occurrences": 1
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     },
     "description": {
       "values": [
@@ -138,51 +40,16 @@
         "Masters of combat and physical might. Warriors excel at dealing and taking damage in melee combat.",
         "Swift explorers and natural harvesters. Rangers move quickly and gather resources efficiently."
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 6
-    },
-    "designNotes.balance": {
-      "values": [
-        "All numerical values are placeholders subject to balance testing"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "designNotes.classDiversity": {
-      "values": [
-        "Each class provides distinct starting advantages"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "designNotes.permanentProgression": {
-      "values": [
-        "Most progression is retained across class switches"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "designNotes.switchingPhilosophy": {
-      "values": [
-        "Simple cost-based system encourages experimentation"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     },
     "name": {
       "values": [
@@ -193,11 +60,16 @@
         "Scholar",
         "Warrior"
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     },
     "narrative": {
       "values": [
@@ -208,11 +80,16 @@
         "You are not confined by tradition or specialty. Every path is open, every skill within reach. You are limitless.",
         "Your hands shape reality. What takes others hours, you complete in moments. What they craft once, you perfect instantly."
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     },
     "playstyle": {
       "values": [
@@ -223,11 +100,16 @@
         "Flexible, self-directed, balanced progression",
         "Research-focused, crafting-heavy, magic-oriented"
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     },
     "preferredArmorType": {
       "values": [
@@ -236,11 +118,16 @@
         "medium",
         "robes"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "string"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     },
     "preferredDamageTypes": {
       "values": [
@@ -254,11 +141,16 @@
         "poison",
         "slashing"
       ],
-      "count": 9,
+      "total_unique": 9,
       "types": [
         "array"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     },
     "recommendedStats.avoid": {
       "values": [
@@ -268,11 +160,14 @@
         "None - true flexibility",
         "STR"
       ],
-      "count": 5,
+      "total_unique": 5,
       "types": [
         "array"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
     },
     "recommendedStats.primary": {
       "values": [
@@ -284,11 +179,14 @@
         "STR",
         "VIT"
       ],
-      "count": 7,
+      "total_unique": 7,
       "types": [
         "array"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
     },
     "recommendedStats.secondary": {
       "values": [
@@ -297,41 +195,53 @@
         "STR",
         "VIT"
       ],
-      "count": 4,
+      "total_unique": 4,
       "types": [
         "array"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.allCrafting": {
       "values": [
         0.05
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.allCraftingTime": {
       "values": [
         0.1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.allGathering": {
       "values": [
         0.05
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.baseHP": {
       "values": [
@@ -339,11 +249,14 @@
         30,
         50
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "integer"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.baseMana": {
       "values": [
@@ -351,156 +264,201 @@
         100,
         50
       ],
-      "count": 3,
+      "total_unique": 3,
       "types": [
         "integer"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.carryCapacity": {
       "values": [
         0,
         100
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "integer"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.critChance": {
       "values": [
         0.0,
         0.1
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "number"
       ],
-      "occurrences": 2
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.defense": {
       "values": [
         0.0
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.firstTryBonus": {
       "values": [
         0.1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.forestryBonus": {
       "values": [
         0.1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.inventorySlots": {
       "values": [
         0,
         20
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "integer"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.itemDurability": {
       "values": [
         0.05
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.meleeDamage": {
       "values": [
         0.0,
         0.1
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "number"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.movementSpeed": {
       "values": [
         0.0,
         0.15
       ],
-      "count": 2,
+      "total_unique": 2,
       "types": [
         "number"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.rareDropRate": {
       "values": [
         0.2
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.recipeDiscovery": {
       "values": [
         0.1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.resourceQuality": {
       "values": [
         0.1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingBonuses.skillExpGain": {
       "values": [
         0.05
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "number"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
     },
     "startingSkill.availableChoices": {
       "values": [
         "any_tier1_skill"
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "versatile_start"
+      ]
     },
     "startingSkill.description": {
       "values": [
@@ -511,31 +469,44 @@
         "Player chooses ANY skill from the available skill pool to start with",
         "Temporarily increases rare drop rates and material quality"
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "battle_rage",
+        "forestry_frenzy",
+        "alchemists_touch"
+      ]
     },
     "startingSkill.initialLevel": {
       "values": [
         1
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "integer"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "battle_rage",
+        "forestry_frenzy",
+        "alchemists_touch"
+      ]
     },
     "startingSkill.isChoice": {
       "values": [
         true
       ],
-      "count": 1,
+      "total_unique": 1,
       "types": [
         "boolean"
       ],
-      "occurrences": 1
+      "occurrences": 1,
+      "example_items": [
+        "versatile_start"
+      ]
     },
     "startingSkill.skillId": {
       "values": [
@@ -546,11 +517,16 @@
         "treasure_hunters_luck",
         "versatile_start"
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "battle_rage",
+        "forestry_frenzy",
+        "alchemists_touch"
+      ]
     },
     "startingSkill.skillName": {
       "values": [
@@ -561,71 +537,16 @@
         "Treasure Hunter's Luck",
         "Versatile Beginning"
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 6
-    },
-    "statDescriptions.AGI": {
-      "values": [
-        "Agility - Increases attack speed, crafting speed, and movement"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "statDescriptions.DEF": {
-      "values": [
-        "Defense - Reduces incoming damage"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "statDescriptions.INT": {
-      "values": [
-        "Intelligence - Increases mana and magical effectiveness"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "statDescriptions.LCK": {
-      "values": [
-        "Luck - Improves drop rates, critical chance, and crafting outcomes"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "statDescriptions.STR": {
-      "values": [
-        "Strength - Increases melee damage and carry capacity"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
-    },
-    "statDescriptions.VIT": {
-      "values": [
-        "Vitality - Increases max health and health regeneration"
-      ],
-      "count": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1
+      "occurrences": 6,
+      "example_items": [
+        "battle_rage",
+        "forestry_frenzy",
+        "alchemists_touch"
+      ]
     },
     "strengths": {
       "values": [
@@ -655,11 +576,16 @@
         "Perfect for players who love experimentation",
         "Perfect for players who want to explore everything"
       ],
-      "count": 25,
+      "total_unique": 25,
       "types": [
         "array"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     },
     "tags": {
       "values": [
@@ -694,11 +620,16 @@
         "versatile",
         "warrior"
       ],
-      "count": 30,
+      "total_unique": 30,
       "types": [
         "array"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     },
     "thematicIdentity": {
       "values": [
@@ -709,11 +640,16 @@
         "master_crafter",
         "mobile_gatherer"
       ],
-      "count": 6,
+      "total_unique": 6,
       "types": [
         "string"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     },
     "weaknesses": {
       "values": [
@@ -736,66 +672,45 @@
         "Slower at gathering and crafting",
         "Smaller individual bonuses than specialists"
       ],
-      "count": 18,
+      "total_unique": 18,
       "types": [
         "array"
       ],
-      "occurrences": 6
+      "occurrences": 6,
+      "example_items": [
+        "warrior",
+        "ranger",
+        "scholar"
+      ]
     }
   },
   "_usable_template": {
-    "classId": "warrior",
-    "classSwitching": {
-      "changedOnSwitch": [
-        "Starting skill (if applicable)",
-        "Active class bonuses (old removed, new applied)"
-      ],
-      "confirmationRequired": true,
-      "cost": 1000,
-      "currency": "gold",
-      "description": "Players can switch classes at any time by paying a fixed cost",
-      "restrictions": {
-        "cooldown": 0,
-        "minimumLevel": 1,
-        "requiresNPC": true
-      },
-      "retainedOnSwitch": [
-        "All equipped gear",
-        "All inventory items",
-        "All skill levels and experience"
-      ]
-    },
-    "description": "Intellectuals who master alchemy and magical arts. Scholars excel at discovery and experimentation.",
-    "designNotes": {
-      "balance": "All numerical values are placeholders subject to balance testing",
-      "classDiversity": "Each class provides distinct starting advantages",
-      "permanentProgression": "Most progression is retained across class switches",
-      "switchingPhilosophy": "Simple cost-based system encourages experimentation"
-    },
-    "name": "Artisan",
-    "narrative": "The wilderness is your home. Trees fall faster before you, and you move like the wind. Nature bends to those who respect it.",
-    "playstyle": "Research-focused, crafting-heavy, magic-oriented",
-    "preferredArmorType": "medium",
+    "classId": "scavenger",
+    "description": "Balanced generalists who dabble in everything. Adventurers have flexibility and choice.",
+    "name": "Ranger",
+    "narrative": "Your hands shape reality. What takes others hours, you complete in moments. What they craft once, you perfect instantly.",
+    "playstyle": "Fast-paced, mobility-focused, efficient gathering",
+    "preferredArmorType": "heavy",
     "preferredDamageTypes": [
+      "crushing",
       "piercing",
-      "physical",
-      "lightning"
+      "poison"
     ],
     "recommendedStats": {
       "avoid": [
-        "DEF",
         "STR",
+        "None - true flexibility",
         "LCK"
       ],
       "primary": [
-        "DEF",
-        "STR",
-        "VIT"
+        "Balanced - player choice",
+        "AGI",
+        "STR"
       ],
       "secondary": [
-        "All stats viable",
         "STR",
-        "AGI"
+        "AGI",
+        "VIT"
       ]
     },
     "startingBonuses": {
@@ -820,539 +735,337 @@
     },
     "startingSkill": {
       "availableChoices": "any_tier1_skill",
-      "description": "Increases smithing mini-game performance and quality",
+      "description": "Dramatically increases wood gathering speed for a short duration",
       "initialLevel": 1,
       "isChoice": true,
-      "skillId": "forestry_frenzy",
-      "skillName": "Versatile Beginning"
-    },
-    "statDescriptions": {
-      "AGI": "Agility - Increases attack speed, crafting speed, and movement",
-      "DEF": "Defense - Reduces incoming damage",
-      "INT": "Intelligence - Increases mana and magical effectiveness",
-      "LCK": "Luck - Improves drop rates, critical chance, and crafting outcomes",
-      "STR": "Strength - Increases melee damage and carry capacity",
-      "VIT": "Vitality - Increases max health and health regeneration"
+      "skillId": "alchemists_touch",
+      "skillName": "Battle Rage"
     },
     "strengths": [
-      "High critical hit chance for combat",
       "Items have 5% more durability",
-      "10% better resource quality"
+      "Great for players who love collecting and exploring",
+      "High health pool for survivability"
     ],
     "tags": [
-      "melee",
-      "engineering",
-      "artisan"
+      "mobile",
+      "ranged",
+      "gathering"
     ],
-    "thematicIdentity": "master_crafter",
+    "thematicIdentity": "loot_hunter",
     "weaknesses": [
-      "Relies heavily on RNG",
-      "Fragile in direct combat",
-      "Requires preparation and planning"
+      "Less efficient at physical gathering",
+      "No gathering bonuses",
+      "No strong specialization bonuses"
     ]
   },
-  "template": {
-    "classId": {
-      "_type": "string",
-      "_sample_values": [
+  "_sample_items": [
+    {
+      "classId": "warrior",
+      "name": "Warrior",
+      "description": "Masters of combat and physical might. Warriors excel at dealing and taking damage in melee combat.",
+      "narrative": "Steel and strength. You are the immovable wall, the unstoppable force. When enemies see you, they know: their time has come.",
+      "thematicIdentity": "frontline_fighter",
+      "tags": [
         "warrior",
-        "adventurer",
-        "scavenger",
-        "artisan",
-        "ranger",
-        "scholar"
-      ],
-      "_total_unique_values": 6
-    },
-    "classSwitching": {
-      "changedOnSwitch": {
-        "_type": "array",
-        "_sample_values": [
-          "Starting skill (if applicable)",
-          "Active class bonuses (old removed, new applied)"
-        ],
-        "_total_unique_values": 2
-      },
-      "confirmationRequired": {
-        "_type": "boolean",
-        "_sample_values": [
-          true
-        ],
-        "_total_unique_values": 1
-      },
-      "cost": {
-        "_type": "integer",
-        "_sample_values": [
-          1000
-        ],
-        "_total_unique_values": 1
-      },
-      "currency": {
-        "_type": "string",
-        "_sample_values": [
-          "gold"
-        ],
-        "_total_unique_values": 1
-      },
-      "description": {
-        "_type": "string",
-        "_sample_values": [
-          "Players can switch classes at any time by paying a fixed cost"
-        ],
-        "_total_unique_values": 1
-      },
-      "restrictions": {
-        "cooldown": {
-          "_type": "integer",
-          "_sample_values": [
-            0
-          ],
-          "_total_unique_values": 1
-        },
-        "minimumLevel": {
-          "_type": "integer",
-          "_sample_values": [
-            1
-          ],
-          "_total_unique_values": 1
-        },
-        "requiresNPC": {
-          "_type": "boolean",
-          "_sample_values": [
-            false
-          ],
-          "_total_unique_values": 1
-        }
-      },
-      "retainedOnSwitch": {
-        "_type": "array",
-        "_sample_values": [
-          "All equipped gear",
-          "All inventory items",
-          "All skill levels and experience",
-          "All earned titles",
-          "All unlocked recipes"
-        ],
-        "_total_unique_values": 7
-      }
-    },
-    "description": {
-      "_type": "string",
-      "_sample_values": [
-        "Intellectuals who master alchemy and magical arts. Scholars excel at discovery and experimentation.",
-        "Balanced generalists who dabble in everything. Adventurers have flexibility and choice.",
-        "Masters of combat and physical might. Warriors excel at dealing and taking damage in melee combat.",
-        "Swift explorers and natural harvesters. Rangers move quickly and gather resources efficiently.",
-        "Master crafters who excel at all creation disciplines. Artisans create better items faster.",
-        "Lucky opportunists who find better loot and resources. Scavengers thrive on discovery."
-      ],
-      "_total_unique_values": 6
-    },
-    "designNotes": {
-      "balance": {
-        "_type": "string",
-        "_sample_values": [
-          "All numerical values are placeholders subject to balance testing"
-        ],
-        "_total_unique_values": 1
-      },
-      "classDiversity": {
-        "_type": "string",
-        "_sample_values": [
-          "Each class provides distinct starting advantages"
-        ],
-        "_total_unique_values": 1
-      },
-      "permanentProgression": {
-        "_type": "string",
-        "_sample_values": [
-          "Most progression is retained across class switches"
-        ],
-        "_total_unique_values": 1
-      },
-      "switchingPhilosophy": {
-        "_type": "string",
-        "_sample_values": [
-          "Simple cost-based system encourages experimentation"
-        ],
-        "_total_unique_values": 1
-      }
-    },
-    "name": {
-      "_type": "string",
-      "_sample_values": [
-        "Artisan",
-        "Scholar",
-        "Ranger",
-        "Adventurer",
-        "Warrior",
-        "Scavenger"
-      ],
-      "_total_unique_values": 6
-    },
-    "narrative": {
-      "_type": "string",
-      "_sample_values": [
-        "The wilderness is your home. Trees fall faster before you, and you move like the wind. Nature bends to those who respect it.",
-        "Steel and strength. You are the immovable wall, the unstoppable force. When enemies see you, they know: their time has come.",
-        "Where others see rocks, you see treasures. Fortune favors the prepared, and you are always prepared.",
-        "Your hands shape reality. What takes others hours, you complete in moments. What they craft once, you perfect instantly.",
-        "You are not confined by tradition or specialty. Every path is open, every skill within reach. You are limitless.",
-        "Knowledge is power, and you wield both. Potions brew faster in your hands, recipes reveal themselves, and magic bends to your will."
-      ],
-      "_total_unique_values": 6
-    },
-    "playstyle": {
-      "_type": "string",
-      "_sample_values": [
-        "Research-focused, crafting-heavy, magic-oriented",
-        "Crafting-centric, quality-focused, efficient production",
-        "Exploration-heavy, loot-focused, opportunistic",
-        "Flexible, self-directed, balanced progression",
-        "Direct combat, high survivability, straightforward gameplay",
-        "Fast-paced, mobility-focused, efficient gathering"
-      ],
-      "_total_unique_values": 6
-    },
-    "preferredArmorType": {
-      "_type": "string",
-      "_sample_values": [
-        "medium",
-        "light",
-        "heavy",
-        "robes"
-      ],
-      "_total_unique_values": 4
-    },
-    "preferredDamageTypes": {
-      "_type": "array",
-      "_sample_values": [
-        "piercing",
+        "melee",
         "physical",
-        "lightning",
-        "fire",
-        "arcane"
+        "tanky",
+        "frontline"
       ],
-      "_total_unique_values": 9
-    },
-    "recommendedStats": {
-      "avoid": {
-        "_type": "array",
-        "_sample_values": [
-          "DEF",
-          "STR",
-          "LCK",
-          "INT",
-          "None - true flexibility"
-        ],
-        "_total_unique_values": 5
+      "preferredDamageTypes": [
+        "physical",
+        "slashing",
+        "crushing"
+      ],
+      "preferredArmorType": "heavy",
+      "startingBonuses": {
+        "baseHP": 30,
+        "baseMana": 0,
+        "meleeDamage": 0.1,
+        "inventorySlots": 20,
+        "carryCapacity": 0,
+        "movementSpeed": 0.0,
+        "critChance": 0.0,
+        "defense": 0.0
       },
-      "primary": {
-        "_type": "array",
-        "_sample_values": [
-          "DEF",
+      "startingSkill": {
+        "skillId": "battle_rage",
+        "skillName": "Battle Rage",
+        "initialLevel": 1,
+        "description": "Increases damage and attack speed temporarily in combat"
+      },
+      "recommendedStats": {
+        "primary": [
           "STR",
           "VIT",
-          "LCK",
-          "INT"
+          "DEF"
         ],
-        "_total_unique_values": 7
+        "secondary": [
+          "AGI"
+        ],
+        "avoid": [
+          "INT",
+          "LCK"
+        ]
       },
-      "secondary": {
-        "_type": "array",
-        "_sample_values": [
-          "All stats viable",
-          "STR",
+      "playstyle": "Direct combat, high survivability, straightforward gameplay",
+      "strengths": [
+        "High health pool for survivability",
+        "Bonus melee damage from the start",
+        "Extra inventory for carrying loot and supplies",
+        "Excellent for players who prefer straightforward combat"
+      ],
+      "weaknesses": [
+        "No mana for utility skills initially",
+        "Limited range options",
+        "Slower at gathering and crafting"
+      ]
+    },
+    {
+      "classId": "ranger",
+      "name": "Ranger",
+      "description": "Swift explorers and natural harvesters. Rangers move quickly and gather resources efficiently.",
+      "narrative": "The wilderness is your home. Trees fall faster before you, and you move like the wind. Nature bends to those who respect it.",
+      "thematicIdentity": "mobile_gatherer",
+      "tags": [
+        "ranger",
+        "ranged",
+        "agile",
+        "nature",
+        "mobile"
+      ],
+      "preferredDamageTypes": [
+        "physical",
+        "piercing",
+        "poison"
+      ],
+      "preferredArmorType": "light",
+      "startingBonuses": {
+        "baseHP": 0,
+        "baseMana": 0,
+        "meleeDamage": 0.0,
+        "inventorySlots": 0,
+        "carryCapacity": 0,
+        "movementSpeed": 0.15,
+        "critChance": 0.1,
+        "forestryBonus": 0.1
+      },
+      "startingSkill": {
+        "skillId": "forestry_frenzy",
+        "skillName": "Forestry Frenzy",
+        "initialLevel": 1,
+        "description": "Dramatically increases wood gathering speed for a short duration"
+      },
+      "recommendedStats": {
+        "primary": [
           "AGI",
+          "LCK",
           "VIT"
         ],
-        "_total_unique_values": 4
-      }
-    },
-    "startingBonuses": {
-      "allCrafting": {
-        "_type": "number",
-        "_sample_values": [
-          0.05
+        "secondary": [
+          "STR"
         ],
-        "_total_unique_values": 1
+        "avoid": [
+          "INT",
+          "DEF"
+        ]
       },
-      "allCraftingTime": {
-        "_type": "number",
-        "_sample_values": [
-          0.1
-        ],
-        "_total_unique_values": 1
-      },
-      "allGathering": {
-        "_type": "number",
-        "_sample_values": [
-          0.05
-        ],
-        "_total_unique_values": 1
-      },
-      "baseHP": {
-        "_type": "integer",
-        "_sample_values": [
-          0,
-          50,
-          30
-        ],
-        "_total_unique_values": 3
-      },
-      "baseMana": {
-        "_type": "integer",
-        "_sample_values": [
-          0,
-          50,
-          100
-        ],
-        "_total_unique_values": 3
-      },
-      "carryCapacity": {
-        "_type": "integer",
-        "_sample_values": [
-          0,
-          100
-        ],
-        "_total_unique_values": 2
-      },
-      "critChance": {
-        "_type": "number",
-        "_sample_values": [
-          0.0,
-          0.1
-        ],
-        "_total_unique_values": 2
-      },
-      "defense": {
-        "_type": "number",
-        "_sample_values": [
-          0.0
-        ],
-        "_total_unique_values": 1
-      },
-      "firstTryBonus": {
-        "_type": "number",
-        "_sample_values": [
-          0.1
-        ],
-        "_total_unique_values": 1
-      },
-      "forestryBonus": {
-        "_type": "number",
-        "_sample_values": [
-          0.1
-        ],
-        "_total_unique_values": 1
-      },
-      "inventorySlots": {
-        "_type": "integer",
-        "_sample_values": [
-          0,
-          20
-        ],
-        "_total_unique_values": 2
-      },
-      "itemDurability": {
-        "_type": "number",
-        "_sample_values": [
-          0.05
-        ],
-        "_total_unique_values": 1
-      },
-      "meleeDamage": {
-        "_type": "number",
-        "_sample_values": [
-          0.1,
-          0.0
-        ],
-        "_total_unique_values": 2
-      },
-      "movementSpeed": {
-        "_type": "number",
-        "_sample_values": [
-          0.0,
-          0.15
-        ],
-        "_total_unique_values": 2
-      },
-      "rareDropRate": {
-        "_type": "number",
-        "_sample_values": [
-          0.2
-        ],
-        "_total_unique_values": 1
-      },
-      "recipeDiscovery": {
-        "_type": "number",
-        "_sample_values": [
-          0.1
-        ],
-        "_total_unique_values": 1
-      },
-      "resourceQuality": {
-        "_type": "number",
-        "_sample_values": [
-          0.1
-        ],
-        "_total_unique_values": 1
-      },
-      "skillExpGain": {
-        "_type": "number",
-        "_sample_values": [
-          0.05
-        ],
-        "_total_unique_values": 1
-      }
-    },
-    "startingSkill": {
-      "availableChoices": {
-        "_type": "string",
-        "_sample_values": [
-          "any_tier1_skill"
-        ],
-        "_total_unique_values": 1
-      },
-      "description": {
-        "_type": "string",
-        "_sample_values": [
-          "Increases smithing mini-game performance and quality",
-          "Temporarily increases rare drop rates and material quality",
-          "Increases damage and attack speed temporarily in combat",
-          "Player chooses ANY skill from the available skill pool to start with",
-          "Dramatically increases wood gathering speed for a short duration",
-          "Increases potion effectiveness and brewing speed"
-        ],
-        "_total_unique_values": 6
-      },
-      "initialLevel": {
-        "_type": "integer",
-        "_sample_values": [
-          1
-        ],
-        "_total_unique_values": 1
-      },
-      "isChoice": {
-        "_type": "boolean",
-        "_sample_values": [
-          true
-        ],
-        "_total_unique_values": 1
-      },
-      "skillId": {
-        "_type": "string",
-        "_sample_values": [
-          "forestry_frenzy",
-          "versatile_start",
-          "battle_rage",
-          "smithing_focus",
-          "alchemists_touch",
-          "treasure_hunters_luck"
-        ],
-        "_total_unique_values": 6
-      },
-      "skillName": {
-        "_type": "string",
-        "_sample_values": [
-          "Versatile Beginning",
-          "Smithing Focus",
-          "Battle Rage",
-          "Alchemist's Touch",
-          "Forestry Frenzy",
-          "Treasure Hunter's Luck"
-        ],
-        "_total_unique_values": 6
-      }
-    },
-    "statDescriptions": {
-      "AGI": {
-        "_type": "string",
-        "_sample_values": [
-          "Agility - Increases attack speed, crafting speed, and movement"
-        ],
-        "_total_unique_values": 1
-      },
-      "DEF": {
-        "_type": "string",
-        "_sample_values": [
-          "Defense - Reduces incoming damage"
-        ],
-        "_total_unique_values": 1
-      },
-      "INT": {
-        "_type": "string",
-        "_sample_values": [
-          "Intelligence - Increases mana and magical effectiveness"
-        ],
-        "_total_unique_values": 1
-      },
-      "LCK": {
-        "_type": "string",
-        "_sample_values": [
-          "Luck - Improves drop rates, critical chance, and crafting outcomes"
-        ],
-        "_total_unique_values": 1
-      },
-      "STR": {
-        "_type": "string",
-        "_sample_values": [
-          "Strength - Increases melee damage and carry capacity"
-        ],
-        "_total_unique_values": 1
-      },
-      "VIT": {
-        "_type": "string",
-        "_sample_values": [
-          "Vitality - Increases max health and health regeneration"
-        ],
-        "_total_unique_values": 1
-      }
-    },
-    "strengths": {
-      "_type": "array",
-      "_sample_values": [
+      "playstyle": "Fast-paced, mobility-focused, efficient gathering",
+      "strengths": [
+        "Fastest movement speed for exploration",
+        "Bonus to forestry from the start",
         "High critical hit chance for combat",
-        "Items have 5% more durability",
-        "10% better resource quality",
-        "100 bonus carry capacity for hoarding",
-        "High health pool for survivability"
+        "Great for players who enjoy mobility and gathering"
       ],
-      "_total_unique_values": 25
+      "weaknesses": [
+        "Lower base health than warrior",
+        "Relies on evasion rather than tanking",
+        "Less focused on crafting disciplines"
+      ]
     },
-    "tags": {
-      "_type": "array",
-      "_sample_values": [
-        "melee",
-        "engineering",
-        "artisan",
-        "luck",
-        "ranger"
+    {
+      "classId": "scholar",
+      "name": "Scholar",
+      "description": "Intellectuals who master alchemy and magical arts. Scholars excel at discovery and experimentation.",
+      "narrative": "Knowledge is power, and you wield both. Potions brew faster in your hands, recipes reveal themselves, and magic bends to your will.",
+      "thematicIdentity": "magical_researcher",
+      "tags": [
+        "scholar",
+        "magic",
+        "alchemy",
+        "arcane",
+        "caster"
       ],
-      "_total_unique_values": 30
-    },
-    "thematicIdentity": {
-      "_type": "string",
-      "_sample_values": [
-        "master_crafter",
-        "jack_of_all_trades",
-        "loot_hunter",
-        "magical_researcher",
-        "mobile_gatherer",
-        "frontline_fighter"
+      "preferredDamageTypes": [
+        "arcane",
+        "fire",
+        "frost",
+        "lightning"
       ],
-      "_total_unique_values": 6
-    },
-    "weaknesses": {
-      "_type": "array",
-      "_sample_values": [
-        "Relies heavily on RNG",
+      "preferredArmorType": "robes",
+      "startingBonuses": {
+        "baseHP": 0,
+        "baseMana": 100,
+        "meleeDamage": 0.0,
+        "inventorySlots": 0,
+        "carryCapacity": 0,
+        "movementSpeed": 0.0,
+        "recipeDiscovery": 0.1,
+        "skillExpGain": 0.05
+      },
+      "startingSkill": {
+        "skillId": "alchemists_touch",
+        "skillName": "Alchemist's Touch",
+        "initialLevel": 1,
+        "description": "Increases potion effectiveness and brewing speed"
+      },
+      "recommendedStats": {
+        "primary": [
+          "INT",
+          "LCK",
+          "AGI"
+        ],
+        "secondary": [
+          "VIT"
+        ],
+        "avoid": [
+          "STR",
+          "DEF"
+        ]
+      },
+      "playstyle": "Research-focused, crafting-heavy, magic-oriented",
+      "strengths": [
+        "Large mana pool for magical skills",
+        "Discovers recipes faster than other classes",
+        "Gains skill experience 5% faster",
+        "Perfect for players who love experimentation"
+      ],
+      "weaknesses": [
         "Fragile in direct combat",
         "Requires preparation and planning",
-        "No gathering bonuses",
-        "Slower at gathering and crafting"
+        "Less efficient at physical gathering"
+      ]
+    },
+    {
+      "classId": "artisan",
+      "name": "Artisan",
+      "description": "Master crafters who excel at all creation disciplines. Artisans create better items faster.",
+      "narrative": "Your hands shape reality. What takes others hours, you complete in moments. What they craft once, you perfect instantly.",
+      "thematicIdentity": "master_crafter",
+      "tags": [
+        "artisan",
+        "crafting",
+        "smithing",
+        "engineering",
+        "utility"
       ],
-      "_total_unique_values": 18
+      "preferredDamageTypes": [
+        "physical"
+      ],
+      "preferredArmorType": "medium",
+      "startingBonuses": {
+        "baseHP": 0,
+        "baseMana": 0,
+        "meleeDamage": 0.0,
+        "inventorySlots": 0,
+        "carryCapacity": 0,
+        "movementSpeed": 0.0,
+        "allCraftingTime": 0.1,
+        "firstTryBonus": 0.1,
+        "itemDurability": 0.05
+      },
+      "startingSkill": {
+        "skillId": "smithing_focus",
+        "skillName": "Smithing Focus",
+        "initialLevel": 1,
+        "description": "Increases smithing mini-game performance and quality"
+      },
+      "recommendedStats": {
+        "primary": [
+          "AGI",
+          "INT",
+          "LCK"
+        ],
+        "secondary": [
+          "VIT"
+        ],
+        "avoid": [
+          "STR",
+          "DEF"
+        ]
+      },
+      "playstyle": "Crafting-centric, quality-focused, efficient production",
+      "strengths": [
+        "All crafting 10% faster from the start",
+        "10% higher chance at first-try bonuses",
+        "Items have 5% more durability",
+        "Ideal for players who love crafting systems"
+      ],
+      "weaknesses": [
+        "No combat bonuses",
+        "No gathering bonuses",
+        "Requires access to crafting stations"
+      ]
+    },
+    {
+      "classId": "scavenger",
+      "name": "Scavenger",
+      "description": "Lucky opportunists who find better loot and resources. Scavengers thrive on discovery.",
+      "narrative": "Where others see rocks, you see treasures. Fortune favors the prepared, and you are always prepared.",
+      "thematicIdentity": "loot_hunter",
+      "tags": [
+        "scavenger",
+        "luck",
+        "gathering",
+        "treasure",
+        "explorer"
+      ],
+      "preferredDamageTypes": [
+        "physical"
+      ],
+      "preferredArmorType": "light",
+      "startingBonuses": {
+        "baseHP": 0,
+        "baseMana": 0,
+        "meleeDamage": 0.0,
+        "inventorySlots": 0,
+        "carryCapacity": 100,
+        "movementSpeed": 0.0,
+        "rareDropRate": 0.2,
+        "resourceQuality": 0.1
+      },
+      "startingSkill": {
+        "skillId": "treasure_hunters_luck",
+        "skillName": "Treasure Hunter's Luck",
+        "initialLevel": 1,
+        "description": "Temporarily increases rare drop rates and material quality"
+      },
+      "recommendedStats": {
+        "primary": [
+          "LCK",
+          "STR",
+          "VIT"
+        ],
+        "secondary": [
+          "AGI"
+        ],
+        "avoid": [
+          "INT",
+          "DEF"
+        ]
+      },
+      "playstyle": "Exploration-heavy, loot-focused, opportunistic",
+      "strengths": [
+        "20% better rare drop rates",
+        "10% better resource quality",
+        "100 bonus carry capacity for hoarding",
+        "Great for players who love collecting and exploring"
+      ],
+      "weaknesses": [
+        "No direct combat improvements",
+        "No crafting speed bonuses",
+        "Relies heavily on RNG"
+      ]
     }
-  }
+  ]
 }

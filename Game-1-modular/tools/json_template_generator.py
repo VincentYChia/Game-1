@@ -1,21 +1,34 @@
 #!/usr/bin/env python3
 """
-JSON Template Generator for Game-1
+JSON Template Generator for Game-1 - LLM Fine-Tuning Edition
 
 This script analyzes all JSON files in the game and generates comprehensive
-templates that show ALL possible values for each field across all files of
-that type.
+templates organized by CONTENT TYPE (not file source) for LLM fine-tuning.
 
-IMPORTANT: Uses the same file discovery patterns as the game's database loaders
-to ensure all content is captured, including Update-N directories.
+Key Features:
+- Classifies items by their fields, not their source file
+- Handles mixed/update JSONs by sorting individual items
+- Merges related content (e.g., all weapons go to "equipment")
+- Excludes metadata-only files
+
+LLM Categories:
+- equipment: Weapons, armor, shields, accessories
+- materials: Raw and processed materials
+- consumables: Potions, elixirs, food
+- devices: Turrets, traps, bombs
+- stations: Placeable crafting tools
+- recipes_smithing, recipes_alchemy, etc.: Recipes by discipline
+- skills: Player skills
+- enemies: Enemy definitions
+- abilities: Enemy abilities
+- npcs: NPC definitions
+- quests: Quest definitions
+- classes: Starting classes
+- titles: Achievement titles
+- resource_nodes: Gatherable resources
 
 Usage:
     python json_template_generator.py [--output-dir OUTPUT_DIR]
-
-Output:
-    Creates a 'json_templates/' directory with:
-    - One template file per JSON category
-    - A master summary file
 """
 
 import json
@@ -23,80 +36,331 @@ import os
 import argparse
 from pathlib import Path
 from collections import defaultdict
-from typing import Any, Dict, List, Set, Union, Tuple
+from typing import Any, Dict, List, Set, Tuple, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 
 
 @dataclass
 class FieldInfo:
-    """Tracks all values seen for a field across multiple files."""
+    """Tracks all values seen for a field across multiple items."""
     values: Set[Any] = field(default_factory=set)
     types: Set[str] = field(default_factory=set)
     is_array: bool = False
     array_item_values: Set[Any] = field(default_factory=set)
-    nested_fields: Dict[str, 'FieldInfo'] = field(default_factory=dict)
     occurrences: int = 0
-    source_files: Set[str] = field(default_factory=set)
+    example_items: List[str] = field(default_factory=list)
+
+
+@dataclass
+class ContentCategory:
+    """Definition of a content category for LLM fine-tuning."""
+    name: str
+    description: str
+    identifying_fields: Dict[str, Any]  # Fields that identify this category
+    priority: int = 0  # Higher priority = checked first
 
 
 class JSONTemplateGenerator:
-    """Generates comprehensive JSON templates from all game data files.
+    """Generates comprehensive JSON templates organized by content type."""
 
-    Uses filename pattern matching (like the game's update_loader.py) to
-    categorize files, and dynamically discovers all root keys within each file.
-    """
+    # Content categories for LLM fine-tuning
+    # Order matters - more specific categories should come first
+    CONTENT_CATEGORIES = [
+        # Equipment subtypes (check before generic equipment)
+        # Check both type: "weapon" AND category: "weapon" for different JSON formats
+        ContentCategory(
+            name="equipment_weapons",
+            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
+            identifying_fields={"type": "weapon"},
+            priority=100
+        ),
+        ContentCategory(
+            name="equipment_weapons",
+            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
+            identifying_fields={"category": "weapon"},
+            priority=100
+        ),
+        ContentCategory(
+            name="equipment_armor",
+            description="Armor pieces (helmets, chestplates, leggings, boots) - smithing output",
+            identifying_fields={"type": "armor"},
+            priority=100
+        ),
+        ContentCategory(
+            name="equipment_armor",
+            description="Armor pieces (helmets, chestplates, leggings, boots) - smithing output",
+            identifying_fields={"category": "armor"},
+            priority=100
+        ),
+        ContentCategory(
+            name="equipment_shields",
+            description="Shields and off-hand defensive items - smithing output",
+            identifying_fields={"type": "shield"},
+            priority=100
+        ),
+        ContentCategory(
+            name="equipment_accessories",
+            description="Accessories (rings, amulets, belts) - smithing/enchanting output",
+            identifying_fields={"type": "accessory"},
+            priority=100
+        ),
+        # Tools (pickaxes, axes) - have type: "tool"
+        ContentCategory(
+            name="equipment_tools",
+            description="Gathering tools (pickaxes, axes) - smithing output",
+            identifying_fields={"type": "tool"},
+            priority=99
+        ),
+        # Catch-all for other weapon subtypes (mace, sword, bow, staff, etc.)
+        ContentCategory(
+            name="equipment_weapons",
+            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
+            identifying_fields={"type": "sword"},
+            priority=98
+        ),
+        ContentCategory(
+            name="equipment_weapons",
+            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
+            identifying_fields={"type": "mace"},
+            priority=98
+        ),
+        ContentCategory(
+            name="equipment_weapons",
+            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
+            identifying_fields={"type": "bow"},
+            priority=98
+        ),
+        ContentCategory(
+            name="equipment_weapons",
+            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
+            identifying_fields={"type": "staff"},
+            priority=98
+        ),
+        ContentCategory(
+            name="equipment_weapons",
+            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
+            identifying_fields={"type": "spear"},
+            priority=98
+        ),
+        ContentCategory(
+            name="equipment_weapons",
+            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
+            identifying_fields={"type": "dagger"},
+            priority=98
+        ),
+        ContentCategory(
+            name="equipment_weapons",
+            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
+            identifying_fields={"type": "axe"},
+            priority=98
+        ),
 
-    # File patterns that match the game's loading logic (from update_loader.py)
-    # Pattern -> (category_name, description)
-    FILE_PATTERNS = [
-        # Items (scanned by MaterialDatabase and EquipmentDatabase)
-        ('items-materials', 'items', 'Raw materials and crafting ingredients'),
-        ('items-smithing', 'items', 'Weapons, armor, and shields'),
-        ('items-alchemy', 'items', 'Potions, elixirs, and consumables'),
-        ('items-refining', 'items', 'Processed materials (ingots, planks, alloys)'),
-        ('items-engineering', 'items', 'Engineering devices and gadgets'),
-        ('items-tools', 'items', 'Placeable crafting tools and stations'),
-        ('items-testing', 'items-testing', 'Test items for tag validation'),
+        # Consumables
+        ContentCategory(
+            name="consumables",
+            description="Potions, elixirs, food, and other consumable items - alchemy output",
+            identifying_fields={"category": "consumable"},
+            priority=90
+        ),
 
-        # Recipes (scanned by RecipeDatabase)
-        ('recipes-smithing', 'recipes', 'Smithing recipes'),
-        ('recipes-alchemy', 'recipes', 'Alchemy recipes'),
-        ('recipes-refining', 'recipes', 'Refining recipes'),
-        ('recipes-engineering', 'recipes', 'Engineering recipes'),
-        ('recipes-enchanting', 'recipes', 'Enchanting recipes'),
-        ('recipes-adornments', 'recipes', 'Adornment recipes'),
-        ('recipes-tag-tests', 'recipes-testing', 'Test recipes'),
+        # Devices (engineering)
+        ContentCategory(
+            name="devices_turrets",
+            description="Automated turret defenses - engineering output",
+            identifying_fields={"type": "turret"},
+            priority=85
+        ),
+        ContentCategory(
+            name="devices_traps",
+            description="Trap devices - engineering output",
+            identifying_fields={"type": "trap"},
+            priority=85
+        ),
+        ContentCategory(
+            name="devices_bombs",
+            description="Explosive devices - engineering output",
+            identifying_fields={"type": "bomb"},
+            priority=85
+        ),
+        ContentCategory(
+            name="devices",
+            description="Engineering devices (turrets, traps, bombs)",
+            identifying_fields={"category": "device"},
+            priority=80
+        ),
 
-        # Placements (scanned by PlacementDatabase)
-        ('placements-', 'placements', 'Minigame grid placement patterns'),
+        # Stations (placeable crafting stations)
+        ContentCategory(
+            name="stations",
+            description="Placeable crafting stations and tools",
+            identifying_fields={"category": "station"},
+            priority=75
+        ),
 
-        # Skills (scanned by SkillDatabase)
-        ('skills-skills', 'skills', 'Player skill definitions'),
-        ('skills-base-effects', 'skills', 'Skill base effect definitions'),
-        ('skills-testing', 'skills-testing', 'Test skills'),
+        # Refined/crafted materials (have itemId and category: "material")
+        ContentCategory(
+            name="materials_refined",
+            description="Refined crafting materials (ingots, planks, alloys) - refining output",
+            identifying_fields={"category": "material"},
+            priority=72
+        ),
 
-        # Progression (scanned by various databases)
-        ('classes', 'classes', 'Starting class definitions'),
-        ('titles', 'titles', 'Achievement title definitions'),
-        ('npcs', 'npcs', 'NPC definitions'),
-        ('quests', 'quests', 'Quest definitions'),
-        ('skill-unlocks', 'skill-unlocks', 'Skill unlock requirements'),
+        # Raw materials (have materialId field)
+        ContentCategory(
+            name="materials_raw",
+            description="Raw crafting materials (ores, logs, crystals) - gathered resources",
+            identifying_fields={"_has_field": "materialId"},
+            priority=70
+        ),
 
-        # Definitions (core game definitions)
-        ('resource-node', 'resource-nodes', 'Gatherable resource node definitions'),
-        ('hostiles', 'hostiles', 'Enemy and ability definitions'),
-        ('tag-definitions', 'tag-definitions', 'Master tag system definitions'),
-        ('value-translation', 'value-translations', 'Qualitative to numeric mappings'),
-        ('crafting-stations', 'crafting-stations', 'Crafting station definitions'),
-        ('stats-calculations', 'stats-calculations', 'Stat calculation formulas'),
-        ('skills-translation', 'skills-translation', 'Skill translation tables'),
-        ('combat-config', 'combat-config', 'Combat configuration'),
-        ('templates-crafting', 'templates-crafting', 'Crafting templates'),
-        ('chunk-templates', 'chunk-templates', 'World generation templates'),
+        # Recipes by discipline
+        ContentCategory(
+            name="recipes_smithing",
+            description="Smithing recipes for weapons, armor, and tools",
+            identifying_fields={"stationType": "smithing"},
+            priority=60
+        ),
+        ContentCategory(
+            name="recipes_alchemy",
+            description="Alchemy recipes for potions and consumables",
+            identifying_fields={"stationType": "alchemy"},
+            priority=60
+        ),
+        ContentCategory(
+            name="recipes_refining",
+            description="Refining recipes for processing raw materials",
+            identifying_fields={"stationType": "refining"},
+            priority=60
+        ),
+        ContentCategory(
+            name="recipes_engineering",
+            description="Engineering recipes for devices and gadgets",
+            identifying_fields={"stationType": "engineering"},
+            priority=60
+        ),
+        ContentCategory(
+            name="recipes_enchanting",
+            description="Enchanting recipes for magical enhancements",
+            identifying_fields={"stationType": "enchanting"},
+            priority=60
+        ),
+        ContentCategory(
+            name="recipes_adornments",
+            description="Adornment recipes for decorative items",
+            identifying_fields={"stationType": "adornments"},
+            priority=60
+        ),
+        # Fallback for recipes without stationType (test/placeholder recipes)
+        ContentCategory(
+            name="recipes_generic",
+            description="Generic recipes (test/placeholder without specific discipline)",
+            identifying_fields={"_has_field": "recipeId"},
+            priority=55
+        ),
+
+        # Skills and skill unlocks
+        ContentCategory(
+            name="skill_unlocks",
+            description="Skill unlock definitions - how players acquire skills",
+            identifying_fields={"_has_field": "unlockId"},
+            priority=52
+        ),
+        ContentCategory(
+            name="skills",
+            description="Player skills with effects, costs, and evolution paths",
+            identifying_fields={"_has_field": "skillId"},
+            priority=50
+        ),
+
+        # Enemies and abilities
+        ContentCategory(
+            name="abilities",
+            description="Enemy abilities with tags and effect parameters",
+            identifying_fields={"_has_field": "abilityId"},
+            priority=45
+        ),
+        ContentCategory(
+            name="enemies",
+            description="Enemy definitions with stats, behavior, and loot",
+            identifying_fields={"_has_field": "enemyId"},
+            priority=44
+        ),
+
+        # NPCs and Quests
+        ContentCategory(
+            name="npcs",
+            description="NPC definitions with dialogue and quest associations",
+            identifying_fields={"_has_field": "npc_id"},
+            priority=40
+        ),
+        ContentCategory(
+            name="quests",
+            description="Quest definitions with objectives and rewards",
+            identifying_fields={"_has_field": "quest_id"},
+            priority=40
+        ),
+
+        # Progression
+        ContentCategory(
+            name="classes",
+            description="Starting class definitions with bonuses and skills",
+            identifying_fields={"_has_field": "classId"},
+            priority=35
+        ),
+        ContentCategory(
+            name="titles",
+            description="Achievement titles with prerequisites and bonuses",
+            identifying_fields={"_has_field": "titleId"},
+            priority=35
+        ),
+
+        # Resource nodes
+        ContentCategory(
+            name="resource_nodes",
+            description="Gatherable resource node definitions",
+            identifying_fields={"_has_field": "resourceId"},
+            priority=30
+        ),
+
+        # World generation
+        ContentCategory(
+            name="world_chunks",
+            description="World chunk templates for procedural generation",
+            identifying_fields={"_has_field": "chunkType"},
+            priority=25
+        ),
+
+        # Placements (minigame grids) - have placementMap field
+        # Priority must be higher than recipes_generic (55) since placements also have recipeId
+        ContentCategory(
+            name="placements",
+            description="Minigame placement patterns for crafting",
+            identifying_fields={"_has_field": "placementMap"},
+            priority=57
+        ),
+        # Refining placements use coreInputs/surroundingInputs instead of placementMap
+        ContentCategory(
+            name="placements_refining",
+            description="Refining placement patterns (hub-and-spoke format)",
+            identifying_fields={"_has_field": "coreInputs"},
+            priority=56
+        ),
     ]
 
-    # Directories to scan (matching game's loading paths)
+    # Files to completely skip (metadata/config only, not game content)
+    SKIP_FILES = [
+        'tag-definitions',
+        'value-translation',
+        'stats-calculations',
+        'skills-translation',
+        'rarity-modifiers',      # Configuration file, not content
+        'templates-crafting',    # Documentation/reference, not content
+        'combat-config',         # Game config, not content
+        'updates_manifest',      # Package manifest, not content
+    ]
+
+    # Directories to scan
     SCAN_DIRECTORIES = [
         'items.JSON',
         'recipes.JSON',
@@ -105,124 +369,197 @@ class JSONTemplateGenerator:
         'progression',
         'Definitions.JSON',
         'Crafting-subdisciplines',
-        'Update-1',  # Update packages
+        'Update-1',
         'Update-2',
         'Update-3',
-        # Add more Update-N as needed
     ]
 
-    # Files/directories to skip
+    # Skip patterns
     SKIP_PATTERNS = [
-        'json_templates',  # Our own output
-        'saves',           # Save files
-        'assets',          # Asset configs
-        'docs',            # Documentation
+        'json_templates',
+        'saves',
+        'assets',
+        'docs',
     ]
 
     def __init__(self, base_path: str):
         self.base_path = Path(base_path)
-        self.templates: Dict[str, Dict] = {}
+        self.items_by_category: Dict[str, List[Dict]] = defaultdict(list)
         self.field_registry: Dict[str, Dict[str, FieldInfo]] = defaultdict(lambda: defaultdict(FieldInfo))
+        self.source_files_by_category: Dict[str, Set[str]] = defaultdict(set)
         self.all_tags: Set[str] = set()
-        self.all_effect_types: Set[str] = set()
-        self.all_item_ids: Set[str] = set()
         self.all_material_ids: Set[str] = set()
-        self.all_skill_ids: Set[str] = set()
-        self.all_recipe_ids: Set[str] = set()
-        self.discovered_root_keys: Dict[str, Set[str]] = defaultdict(set)
+        self.all_item_ids: Set[str] = set()
+        self.unclassified_items: List[Tuple[str, Dict]] = []
 
     def find_all_json_files(self) -> List[Path]:
-        """Find ALL JSON files in the project, matching the game's discovery pattern."""
+        """Find all JSON files to process."""
         all_files = []
 
-        # Scan specified directories
         for dir_name in self.SCAN_DIRECTORIES:
             dir_path = self.base_path / dir_name
             if dir_path.exists() and dir_path.is_dir():
-                # Both .JSON and .json extensions
                 all_files.extend(dir_path.glob('*.JSON'))
                 all_files.extend(dir_path.glob('*.json'))
 
-        # Also scan root for any stray JSON files
+        # Also scan root
         all_files.extend(self.base_path.glob('*.JSON'))
         all_files.extend(self.base_path.glob('*.json'))
 
-        # Filter out skipped patterns and directories
+        # Filter
         filtered = []
         for f in all_files:
-            # Skip directories (some directories end in .JSON)
             if f.is_dir():
                 continue
+
+            # Skip metadata files
             skip = False
+            filename_lower = f.name.lower()
+            for skip_file in self.SKIP_FILES:
+                if skip_file in filename_lower:
+                    skip = True
+                    break
+
             for pattern in self.SKIP_PATTERNS:
                 if pattern in str(f):
                     skip = True
                     break
+
             if not skip:
                 filtered.append(f)
 
-        return list(set(filtered))  # Remove duplicates
+        return list(set(filtered))
 
-    def categorize_file(self, filepath: Path) -> Tuple[str, str]:
-        """Categorize a file based on its filename pattern (like game's update_loader.py)."""
-        filename_lower = filepath.name.lower()
+    def classify_item(self, item: Dict) -> Optional[str]:
+        """Classify an item based on its fields, returning the category name."""
+        if not isinstance(item, dict):
+            return None
 
-        for pattern, category, description in self.FILE_PATTERNS:
-            if pattern.lower() in filename_lower:
-                return category, description
+        # Sort categories by priority (highest first)
+        sorted_categories = sorted(self.CONTENT_CATEGORIES, key=lambda c: -c.priority)
 
-        # Default: use parent directory name as category
-        parent = filepath.parent.name
-        return f"other-{parent.lower()}", f"Other files from {parent}"
+        for category in sorted_categories:
+            matches = True
+            for field_key, expected_value in category.identifying_fields.items():
+                if field_key == "_has_field":
+                    # Special case: just check if field exists
+                    if expected_value not in item:
+                        matches = False
+                        break
+                elif field_key not in item:
+                    matches = False
+                    break
+                elif item[field_key] != expected_value:
+                    matches = False
+                    break
 
-    def extract_values(self, obj: Any, path: str, category: str, source_file: str):
-        """Recursively extract all values from a JSON object."""
-        field_info = self.field_registry[category][path]
-        field_info.occurrences += 1
-        field_info.source_files.add(source_file)
+            if matches:
+                return category.name
 
-        if obj is None:
-            field_info.values.add(None)
-            field_info.types.add('null')
-        elif isinstance(obj, bool):
-            field_info.values.add(obj)
-            field_info.types.add('boolean')
-        elif isinstance(obj, int):
-            field_info.values.add(obj)
-            field_info.types.add('integer')
-        elif isinstance(obj, float):
-            field_info.values.add(obj)
-            field_info.types.add('number')
-        elif isinstance(obj, str):
-            field_info.values.add(obj)
-            field_info.types.add('string')
-            # Track special field values
-            path_lower = path.lower()
-            if 'tag' in path_lower:
-                self.all_tags.add(obj)
-            if path.endswith('.materialId') or path.endswith('.itemId'):
-                self.all_material_ids.add(obj)
-            if path.endswith('.skillId'):
-                self.all_skill_ids.add(obj)
-            if path.endswith('.recipeId'):
-                self.all_recipe_ids.add(obj)
-        elif isinstance(obj, list):
-            field_info.is_array = True
-            field_info.types.add('array')
-            for i, item in enumerate(obj):
+        return None
+
+    def extract_items_from_json(self, data: Any, source_file: str) -> List[Tuple[str, Dict]]:
+        """Extract individual items from a JSON structure, classifying each one."""
+        items = []
+
+        if isinstance(data, list):
+            # Top-level array
+            for item in data:
                 if isinstance(item, dict):
-                    self.extract_values(item, f"{path}[]", category, source_file)
-                else:
-                    field_info.array_item_values.add(self._make_hashable(item))
-                    if isinstance(item, str):
-                        path_lower = path.lower()
-                        if 'tag' in path_lower:
-                            self.all_tags.add(item)
-        elif isinstance(obj, dict):
-            field_info.types.add('object')
-            for key, value in obj.items():
-                new_path = f"{path}.{key}" if path else key
-                self.extract_values(value, new_path, category, source_file)
+                    category = self.classify_item(item)
+                    if category:
+                        items.append((category, item))
+                    else:
+                        self.unclassified_items.append((source_file, item))
+
+        elif isinstance(data, dict):
+            # Check if it's a single item or a container
+            category = self.classify_item(data)
+            if category:
+                items.append((category, data))
+            else:
+                # It's a container - iterate through all keys
+                for key, value in data.items():
+                    if key.lower() == 'metadata':
+                        continue
+
+                    if isinstance(value, list):
+                        for item in value:
+                            if isinstance(item, dict):
+                                cat = self.classify_item(item)
+                                if cat:
+                                    items.append((cat, item))
+                                else:
+                                    self.unclassified_items.append((source_file, item))
+
+                    elif isinstance(value, dict):
+                        # Could be nested containers or a single item
+                        cat = self.classify_item(value)
+                        if cat:
+                            items.append((cat, value))
+                        else:
+                            # Check if it's a container of lists
+                            for subkey, subvalue in value.items():
+                                if subkey.lower() == 'metadata':
+                                    continue
+                                if isinstance(subvalue, list):
+                                    for item in subvalue:
+                                        if isinstance(item, dict):
+                                            cat2 = self.classify_item(item)
+                                            if cat2:
+                                                items.append((cat2, item))
+
+        return items
+
+    def extract_field_values(self, item: Dict, category: str, source_file: str, prefix: str = ""):
+        """Recursively extract all field values from an item."""
+        for key, value in item.items():
+            path = f"{prefix}.{key}" if prefix else key
+            field_info = self.field_registry[category][path]
+            field_info.occurrences += 1
+
+            if len(field_info.example_items) < 3:
+                item_id = item.get('itemId') or item.get('materialId') or item.get('recipeId') or \
+                          item.get('skillId') or item.get('enemyId') or item.get('quest_id') or \
+                          item.get('npc_id') or item.get('classId') or item.get('titleId') or \
+                          item.get('abilityId') or item.get('name') or 'unknown'
+                if item_id not in field_info.example_items:
+                    field_info.example_items.append(str(item_id))
+
+            if value is None:
+                field_info.values.add(None)
+                field_info.types.add('null')
+            elif isinstance(value, bool):
+                field_info.values.add(value)
+                field_info.types.add('boolean')
+            elif isinstance(value, int):
+                field_info.values.add(value)
+                field_info.types.add('integer')
+            elif isinstance(value, float):
+                field_info.values.add(value)
+                field_info.types.add('number')
+            elif isinstance(value, str):
+                field_info.values.add(value)
+                field_info.types.add('string')
+                # Track special values
+                if 'tag' in path.lower():
+                    self.all_tags.add(value)
+                if path.endswith('materialId') or path.endswith('itemId'):
+                    self.all_material_ids.add(value)
+                    self.all_item_ids.add(value)
+            elif isinstance(value, list):
+                field_info.is_array = True
+                field_info.types.add('array')
+                for item_val in value:
+                    if isinstance(item_val, dict):
+                        self.extract_field_values(item_val, category, source_file, f"{path}[]")
+                    else:
+                        field_info.array_item_values.add(self._make_hashable(item_val))
+                        if isinstance(item_val, str) and 'tag' in path.lower():
+                            self.all_tags.add(item_val)
+            elif isinstance(value, dict):
+                field_info.types.add('object')
+                self.extract_field_values(value, category, source_file, path)
 
     def _make_hashable(self, obj: Any) -> Any:
         """Convert an object to a hashable type."""
@@ -232,8 +569,8 @@ class JSONTemplateGenerator:
             return tuple(self._make_hashable(item) for item in obj)
         return obj
 
-    def process_file(self, json_file: Path, category: str):
-        """Process a single JSON file, extracting all array sections dynamically."""
+    def process_file(self, json_file: Path):
+        """Process a single JSON file, extracting and classifying all items."""
         try:
             with open(json_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -241,71 +578,41 @@ class JSONTemplateGenerator:
             print(f"  Warning: Could not parse {json_file.name}: {e}")
             return
 
-        if not isinstance(data, dict):
-            # Handle top-level arrays
-            if isinstance(data, list):
-                for item in data:
-                    if isinstance(item, dict):
-                        self.extract_values(item, '', category, json_file.name)
-            return
+        source_name = f"{json_file.parent.name}/{json_file.name}"
+        items = self.extract_items_from_json(data, source_name)
 
-        # Process ALL keys in the JSON, not just predefined ones
-        for key, value in data.items():
-            # Track discovered root keys
-            self.discovered_root_keys[category].add(key)
+        for category, item in items:
+            self.items_by_category[category].append(item)
+            self.source_files_by_category[category].add(source_name)
+            self.extract_field_values(item, category, source_name)
 
-            # Skip metadata sections
-            if key.lower() == 'metadata':
-                continue
-
-            # If value is a list of objects, process each
-            if isinstance(value, list):
-                for item in value:
-                    if isinstance(item, dict):
-                        self.extract_values(item, '', category, json_file.name)
-            # If value is a dict, it might be a nested structure
-            elif isinstance(value, dict):
-                # Check if it's a single object or a named collection
-                # If all values are lists of dicts, treat as subsections
-                all_lists = all(isinstance(v, list) for v in value.values())
-                if all_lists:
-                    for subkey, sublist in value.items():
-                        if subkey.lower() == 'metadata':
-                            continue
-                        for item in sublist:
-                            if isinstance(item, dict):
-                                self.extract_values(item, '', category, json_file.name)
-                else:
-                    # Single object or mixed - extract as-is
-                    self.extract_values(value, key, category, json_file.name)
-
-    def generate_template(self, category: str, description: str) -> Dict:
+    def generate_category_template(self, category: str) -> Dict:
         """Generate a comprehensive template for a category."""
-        template = {
-            '_meta': {
-                'category': category,
-                'description': description,
-                'generated_at': datetime.now().isoformat(),
-                'source_files': [],
-                'discovered_root_keys': [],
-                'total_items_analyzed': 0
-            },
-            '_field_documentation': {},
-            '_all_possible_values': {},
-            '_usable_template': {},
-            'template': {}
-        }
+        # Find category description
+        description = "Unknown category"
+        for cat in self.CONTENT_CATEGORIES:
+            if cat.name == category:
+                description = cat.description
+                break
 
+        items = self.items_by_category.get(category, [])
         fields = self.field_registry.get(category, {})
 
-        # Collect source files
-        all_sources = set()
-        for field_info in fields.values():
-            all_sources.update(field_info.source_files)
-        template['_meta']['source_files'] = sorted(all_sources)
-        template['_meta']['discovered_root_keys'] = sorted(self.discovered_root_keys.get(category, set()))
+        template = {
+            "_meta": {
+                "category": category,
+                "description": description,
+                "purpose": "LLM fine-tuning template",
+                "generated_at": datetime.now().isoformat(),
+                "total_items": len(items),
+                "source_files": sorted(self.source_files_by_category.get(category, set())),
+            },
+            "_field_documentation": {},
+            "_all_possible_values": {},
+            "_usable_template": {},
+        }
 
-        # Build template structure
+        # Build field documentation
         for path, field_info in sorted(fields.items()):
             if not path:
                 continue
@@ -314,25 +621,31 @@ class JSONTemplateGenerator:
                 values = sorted([v for v in field_info.array_item_values if v is not None],
                               key=lambda x: str(x))
             else:
-                values = sorted([v for v in field_info.values if v is not None and not isinstance(v, (dict, list))],
+                values = sorted([v for v in field_info.values
+                               if v is not None and not isinstance(v, (dict, list))],
                               key=lambda x: str(x))
 
             if values:
-                template['_all_possible_values'][path] = {
-                    'values': values[:100],
-                    'count': len(values),
-                    'types': list(field_info.types),
-                    'occurrences': field_info.occurrences
+                # Limit to reasonable number
+                display_values = values[:100] if len(values) > 100 else values
+                template["_all_possible_values"][path] = {
+                    "values": display_values,
+                    "total_unique": len(values),
+                    "types": list(field_info.types),
+                    "occurrences": field_info.occurrences,
+                    "example_items": field_info.example_items[:3]
                 }
 
-            self._set_nested_value(template['template'], path, field_info)
+        # Build usable template
+        template["_usable_template"] = self._build_usable_template(fields)
 
-        template['_usable_template'] = self._build_usable_template(category, fields)
+        # Add sample items
+        template["_sample_items"] = items[:5] if len(items) > 5 else items
 
         return template
 
-    def _build_usable_template(self, category: str, fields: Dict[str, FieldInfo]) -> Dict:
-        """Build a clean, copy-paste ready template with placeholder comments."""
+    def _build_usable_template(self, fields: Dict[str, FieldInfo]) -> Dict:
+        """Build a clean, copy-paste ready template."""
         usable = {}
 
         for path, field_info in sorted(fields.items()):
@@ -342,29 +655,24 @@ class JSONTemplateGenerator:
             parts = path.split('.')
             current = usable
 
-            # Navigate to the correct nested location
+            # Navigate to correct nested location
             valid_path = True
-            for i, part in enumerate(parts[:-1]):
+            for part in parts[:-1]:
                 if part not in current:
                     current[part] = {}
                 elif not isinstance(current[part], dict):
-                    # Path conflict - skip this field
                     valid_path = False
                     break
                 current = current[part]
 
-            if not valid_path:
-                continue
-
-            # Make sure current is a dict before assigning
-            if not isinstance(current, dict):
+            if not valid_path or not isinstance(current, dict):
                 continue
 
             final_key = parts[-1] if parts else 'value'
 
             if field_info.is_array:
-                sample_values = list(field_info.array_item_values)[:3]
-                current[final_key] = sample_values if sample_values else ["<value>"]
+                sample = list(field_info.array_item_values)[:3]
+                current[final_key] = sample if sample else ["<value>"]
             elif 'boolean' in field_info.types:
                 current[final_key] = True
             elif 'integer' in field_info.types:
@@ -384,71 +692,28 @@ class JSONTemplateGenerator:
 
         return usable
 
-    def _set_nested_value(self, obj: Dict, path: str, field_info: FieldInfo):
-        """Set a value in a nested dictionary using dot notation."""
-        parts = path.replace('[]', '').split('.')
-        current = obj
-
-        for i, part in enumerate(parts[:-1]):
-            if part not in current:
-                current[part] = {}
-            current = current[part]
-
-        final_key = parts[-1] if parts else 'root'
-
-        if field_info.is_array:
-            sample_values = list(field_info.array_item_values)[:5]
-            current[final_key] = {
-                '_type': 'array',
-                '_sample_values': sample_values,
-                '_total_unique_values': len(field_info.array_item_values)
-            }
-        elif 'object' in field_info.types:
-            if final_key not in current:
-                current[final_key] = {}
-        else:
-            sample_values = [v for v in list(field_info.values)[:10]
-                          if not isinstance(v, (dict, list))]
-            current[final_key] = {
-                '_type': list(field_info.types)[0] if field_info.types else 'unknown',
-                '_sample_values': sample_values,
-                '_total_unique_values': len(field_info.values)
-            }
-
-    def generate_master_values(self) -> Dict:
-        """Generate a comprehensive list of all values found."""
-        all_values = {
-            '_meta': {
-                'description': 'Master reference of all values found across all JSON files',
-                'generated_at': datetime.now().isoformat(),
-                'total_unique_tags': len(self.all_tags),
-                'total_unique_material_ids': len(self.all_material_ids),
-                'total_unique_skill_ids': len(self.all_skill_ids),
-                'total_unique_recipe_ids': len(self.all_recipe_ids)
+    def generate_master_reference(self) -> Dict:
+        """Generate a master reference of all values."""
+        return {
+            "_meta": {
+                "description": "Master reference of all values for LLM fine-tuning",
+                "generated_at": datetime.now().isoformat(),
+                "total_categories": len(self.items_by_category),
+                "total_items": sum(len(items) for items in self.items_by_category.values()),
+                "total_unique_tags": len(self.all_tags),
+                "total_unique_material_ids": len(self.all_material_ids),
             },
-            'all_tags': sorted(self.all_tags),
-            'all_material_ids': sorted(self.all_material_ids),
-            'all_skill_ids': sorted(self.all_skill_ids),
-            'all_recipe_ids': sorted(self.all_recipe_ids),
-            'enum_values': {}
+            "all_tags": sorted(self.all_tags),
+            "all_material_ids": sorted(self.all_material_ids),
+            "all_item_ids": sorted(self.all_item_ids),
+            "categories_summary": {
+                cat: {
+                    "count": len(items),
+                    "sources": sorted(self.source_files_by_category.get(cat, set()))
+                }
+                for cat, items in sorted(self.items_by_category.items())
+            }
         }
-
-        # Collect enum-like values
-        enum_fields = {}
-        for category, fields in self.field_registry.items():
-            for path, field_info in fields.items():
-                if 'string' in field_info.types:
-                    str_values = [v for v in field_info.values if isinstance(v, str)]
-                    if 2 <= len(str_values) <= 50:  # Increased limit
-                        field_name = path.split('.')[-1] if path else 'unknown'
-                        if field_name not in enum_fields:
-                            enum_fields[field_name] = set()
-                        enum_fields[field_name].update(str_values)
-
-        for field_name, values in sorted(enum_fields.items()):
-            all_values['enum_values'][field_name] = sorted(values)
-
-        return all_values
 
     def generate_all_templates(self, output_dir: str):
         """Main method to generate all templates."""
@@ -456,152 +721,130 @@ class JSONTemplateGenerator:
         output_path.mkdir(parents=True, exist_ok=True)
 
         print("=" * 70)
-        print("JSON Template Generator for Game-1")
-        print("(Using game's file discovery patterns)")
+        print("JSON Template Generator - LLM Fine-Tuning Edition")
         print("=" * 70)
         print(f"\nBase path: {self.base_path}")
         print(f"Output dir: {output_path}")
         print()
 
-        # Find ALL JSON files
+        # Find all JSON files
         all_files = self.find_all_json_files()
-        print(f"Found {len(all_files)} JSON files total")
+        print(f"Found {len(all_files)} JSON files to process")
         print()
 
-        # Categorize and process files
-        files_by_category: Dict[str, Tuple[List[Path], str]] = defaultdict(lambda: ([], ''))
-
+        # Process each file
         for json_file in all_files:
-            category, description = self.categorize_file(json_file)
-            if category not in files_by_category:
-                files_by_category[category] = ([], description)
-            files_by_category[category][0].append(json_file)
+            print(f"  Processing: {json_file.parent.name}/{json_file.name}")
+            self.process_file(json_file)
 
-        # Show what we found
-        print("Files by category:")
-        for category, (files, desc) in sorted(files_by_category.items()):
-            print(f"  {category}: {len(files)} files")
-            for f in files:
-                print(f"    - {f.parent.name}/{f.name}")
         print()
+        print("=" * 70)
+        print("Content Classification Results:")
+        print("=" * 70)
 
-        # Process each category
-        for category, (files, description) in files_by_category.items():
-            if not files:
-                continue
-            print(f"Processing {category}...")
-            for json_file in files:
-                self.process_file(json_file, category)
+        # Show what was classified
+        for category, items in sorted(self.items_by_category.items()):
+            sources = self.source_files_by_category.get(category, set())
+            print(f"  {category}: {len(items)} items from {len(sources)} files")
+
+        if self.unclassified_items:
+            print(f"\n  Unclassified: {len(self.unclassified_items)} items")
+            for source, item in self.unclassified_items[:5]:
+                keys = list(item.keys())[:5]
+                print(f"    - {source}: keys={keys}")
 
         print()
         print("Generating templates...")
 
-        # Generate individual templates
-        for category, (files, description) in files_by_category.items():
-            if not self.field_registry.get(category):
+        # Generate individual category templates
+        for category in sorted(self.items_by_category.keys()):
+            if not self.items_by_category[category]:
                 continue
 
-            template = self.generate_template(category, description)
-
-            output_file = output_path / f"template_{category.replace('-', '_')}.json"
+            template = self.generate_category_template(category)
+            output_file = output_path / f"template_{category}.json"
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(template, f, indent=2, default=str)
-            print(f"  Created: {output_file.name}")
+            print(f"  Created: {output_file.name} ({len(self.items_by_category[category])} items)")
 
-        # Generate master values list
-        master_values = self.generate_master_values()
-        master_file = output_path / "master_all_values.json"
+        # Generate master reference
+        master = self.generate_master_reference()
+        master_file = output_path / "MASTER_REFERENCE.json"
         with open(master_file, 'w', encoding='utf-8') as f:
-            json.dump(master_values, f, indent=2)
+            json.dump(master, f, indent=2)
         print(f"  Created: {master_file.name}")
 
-        # Generate summary
-        summary = self.generate_summary(files_by_category)
-        summary_file = output_path / "TEMPLATE_SUMMARY.json"
-        with open(summary_file, 'w', encoding='utf-8') as f:
-            json.dump(summary, f, indent=2)
-        print(f"  Created: {summary_file.name}")
-
         # Generate markdown summary
-        self.generate_markdown_summary(output_path, files_by_category)
+        self.generate_markdown_summary(output_path)
 
         print()
         print("=" * 70)
         print(f"Done! Templates saved to: {output_path}")
-        print(f"Total unique tags found: {len(self.all_tags)}")
-        print(f"Total unique material IDs: {len(self.all_material_ids)}")
-        print(f"Total unique skill IDs: {len(self.all_skill_ids)}")
+        print(f"Total categories: {len(self.items_by_category)}")
+        print(f"Total items classified: {sum(len(items) for items in self.items_by_category.values())}")
+        print(f"Total unique tags: {len(self.all_tags)}")
         print("=" * 70)
 
-    def generate_summary(self, files_by_category: Dict) -> Dict:
-        """Generate a summary of all templates."""
-        summary = {
-            '_meta': {
-                'description': 'Master summary of all JSON templates',
-                'generated_at': datetime.now().isoformat(),
-                'base_path': str(self.base_path)
-            },
-            'categories': {},
-            'global_stats': {
-                'total_unique_tags': len(self.all_tags),
-                'total_unique_material_ids': len(self.all_material_ids),
-                'total_unique_skill_ids': len(self.all_skill_ids),
-                'total_unique_recipe_ids': len(self.all_recipe_ids)
-            },
-            'discovered_root_keys_by_category': {
-                cat: sorted(keys) for cat, keys in self.discovered_root_keys.items()
-            }
-        }
-
-        for category, (files, description) in files_by_category.items():
-            fields = self.field_registry.get(category, {})
-            summary['categories'][category] = {
-                'description': description,
-                'files': [f.name for f in files],
-                'total_fields': len(fields),
-                'fields': list(sorted(fields.keys()))[:50]
-            }
-
-        return summary
-
-    def generate_markdown_summary(self, output_path: Path, files_by_category: Dict):
+    def generate_markdown_summary(self, output_path: Path):
         """Generate a human-readable markdown summary."""
         md_lines = [
-            "# JSON Template Library - Game-1",
+            "# JSON Template Library - LLM Fine-Tuning",
             "",
             f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             "",
-            "## Overview",
+            "## Purpose",
             "",
-            f"- **Total Categories**: {len(files_by_category)}",
-            f"- **Total Unique Tags**: {len(self.all_tags)}",
-            f"- **Total Material IDs**: {len(self.all_material_ids)}",
-            f"- **Total Skill IDs**: {len(self.all_skill_ids)}",
-            f"- **Total Recipe IDs**: {len(self.all_recipe_ids)}",
+            "These templates are organized by **content type** for training specialized LLMs.",
+            "Each category represents a distinct type of game content that could be handled",
+            "by a dedicated fine-tuned model.",
+            "",
+            "## Categories Overview",
+            "",
+            "| Category | Items | Description |",
+            "|----------|-------|-------------|",
+        ]
+
+        for category in sorted(self.items_by_category.keys()):
+            items = self.items_by_category[category]
+            desc = "Unknown"
+            for cat in self.CONTENT_CATEGORIES:
+                if cat.name == category:
+                    desc = cat.description
+                    break
+            md_lines.append(f"| {category} | {len(items)} | {desc} |")
+
+        md_lines.extend([
             "",
             "---",
             "",
-            "## Categories",
-            ""
-        ]
+            "## Category Details",
+            "",
+        ])
 
-        for category, (files, description) in sorted(files_by_category.items()):
+        for category in sorted(self.items_by_category.keys()):
+            items = self.items_by_category[category]
+            sources = self.source_files_by_category.get(category, set())
             fields = self.field_registry.get(category, {})
 
-            md_lines.append(f"### {category}")
-            md_lines.append(f"**Description**: {description}")
-            md_lines.append(f"**Files**: {', '.join(f.name for f in files)}")
-            md_lines.append(f"**Total Fields**: {len(fields)}")
-            md_lines.append(f"**Root Keys Found**: {', '.join(sorted(self.discovered_root_keys.get(category, set())))}")
-            md_lines.append("")
+            desc = "Unknown"
+            for cat in self.CONTENT_CATEGORIES:
+                if cat.name == category:
+                    desc = cat.description
+                    break
 
+            md_lines.append(f"### {category}")
+            md_lines.append(f"**Description**: {desc}")
+            md_lines.append(f"**Total Items**: {len(items)}")
+            md_lines.append(f"**Source Files**: {', '.join(sorted(sources))}")
+            md_lines.append("")
             md_lines.append("**Key Fields**:")
-            for path, field_info in sorted(fields.items())[:20]:
-                if not path:
+
+            for path, field_info in sorted(fields.items())[:15]:
+                if not path or '[]' in path:
                     continue
                 types_str = ', '.join(field_info.types)
                 sample = list(field_info.values)[:3] if not field_info.is_array else list(field_info.array_item_values)[:3]
-                sample_str = ', '.join(str(s)[:50] for s in sample)
+                sample_str = ', '.join(str(s)[:40] for s in sample)
                 md_lines.append(f"- `{path}` ({types_str}): {sample_str}")
 
             md_lines.append("")
@@ -609,7 +852,9 @@ class JSONTemplateGenerator:
             md_lines.append("")
 
         # Add all tags section
-        md_lines.append("## All Tags (Sorted)")
+        md_lines.append("## All Tags")
+        md_lines.append("")
+        md_lines.append(f"Total unique tags: {len(self.all_tags)}")
         md_lines.append("")
         for tag in sorted(self.all_tags):
             md_lines.append(f"- `{tag}`")
@@ -622,7 +867,7 @@ class JSONTemplateGenerator:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate comprehensive JSON templates from Game-1 data files'
+        description='Generate JSON templates organized by content type for LLM fine-tuning'
     )
     parser.add_argument(
         '--base-path',

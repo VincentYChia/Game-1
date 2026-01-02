@@ -1,0 +1,1537 @@
+{
+  "_meta": {
+    "category": "equipment_weapons",
+    "description": "Weapons (swords, axes, spears, bows, staffs) - smithing output",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.379200",
+    "total_items": 30,
+    "source_files": [
+      "Update-1/items-testing-integration.JSON",
+      "items.JSON/items-smithing-2.JSON",
+      "items.JSON/items-testing-integration.JSON",
+      "items.JSON/items-testing-tags.JSON"
+    ]
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "attributes[].effect": {
+      "values": [
+        "Elemental attacks deal bonus fire damage"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "attributes[].element": {
+      "values": [
+        "fire"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "attributes[].type": {
+      "values": [
+        "damage"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "attributes[].value": {
+      "values": [
+        15
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "category": {
+      "values": [
+        "equipment",
+        "weapon"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30,
+      "example_items": [
+        "lightning_chain_whip",
+        "inferno_blade",
+        "void_piercer"
+      ]
+    },
+    "description": {
+      "values": [
+        "Blade that projects waves of flame",
+        "Cursed blade that feeds on lifeblood",
+        "Hammer that freezes and repels nearby foes",
+        "Spear that fires void beams through multiple targets",
+        "Whip that arcs lightning between foes"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "lightning_chain_whip",
+        "inferno_blade",
+        "void_piercer"
+      ]
+    },
+    "effectParams.baseDamage": {
+      "values": [
+        18,
+        20,
+        25.0,
+        28.0,
+        30.0,
+        35.0,
+        40.0,
+        42,
+        45,
+        5.0,
+        50.0,
+        60.0
+      ],
+      "total_unique": 12,
+      "types": [
+        "integer",
+        "number"
+      ],
+      "occurrences": 18,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.burn_damage_per_second": {
+      "values": [
+        10.0,
+        5.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 4,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.burn_duration": {
+      "values": [
+        3.0,
+        5.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.chain_count": {
+      "values": [
+        3,
+        4
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.chain_damage_falloff": {
+      "values": [
+        0.8
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.chrono_slow": {
+      "values": [
+        0.5
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.circle_radius": {
+      "values": [
+        5.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.cone_angle": {
+      "values": [
+        60
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.cone_length": {
+      "values": [
+        8.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.freeze_duration": {
+      "values": [
+        2.0,
+        3.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.quantum_collapse_chance": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.shock_chance": {
+      "values": [
+        0.3
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.shock_damage": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.slow_duration": {
+      "values": [
+        3.0,
+        4.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectParams.slow_percent": {
+      "values": [
+        0.4,
+        0.6
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effectTags": {
+      "values": [
+        "BURN",
+        "Physical",
+        "SLASHING",
+        "Single",
+        "bleed",
+        "burn",
+        "chain",
+        "chrono",
+        "circle",
+        "cone",
+        "crushing",
+        "fire",
+        "freeze",
+        "ice",
+        "lightning",
+        "physical",
+        "piercing",
+        "quantum",
+        "shock",
+        "single",
+        "slashing",
+        "slow",
+        "void"
+      ],
+      "total_unique": 23,
+      "types": [
+        "array"
+      ],
+      "occurrences": 20,
+      "example_items": [
+        "test_weapon_simple",
+        "test_weapon_conflicting_elements",
+        "test_weapon_multi_geometry"
+      ]
+    },
+    "effect_params.baseDamage": {
+      "values": [
+        40,
+        42,
+        45,
+        50,
+        60
+      ],
+      "total_unique": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.beam_range": {
+      "values": [
+        12.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.beam_width": {
+      "values": [
+        1.5
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.bleed_damage_per_second": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.bleed_duration": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.burn_damage_per_second": {
+      "values": [
+        8.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.burn_duration": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.chain_count": {
+      "values": [
+        3
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.chain_range": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.circle_radius": {
+      "values": [
+        4.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.cone_angle": {
+      "values": [
+        60.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.cone_range": {
+      "values": [
+        8.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.freeze_duration": {
+      "values": [
+        3.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.knockback_distance": {
+      "values": [
+        3.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.lifesteal_percent": {
+      "values": [
+        0.25
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.origin": {
+      "values": [
+        "target"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.pierce_count": {
+      "values": [
+        5
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.shock_damage_per_tick": {
+      "values": [
+        5.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.shock_duration": {
+      "values": [
+        4.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.shock_tick_rate": {
+      "values": [
+        1.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.weaken_duration": {
+      "values": [
+        8.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_params.weaken_percent": {
+      "values": [
+        0.3
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "effect_tags": {
+      "values": [
+        "beam",
+        "bleed",
+        "burn",
+        "chain",
+        "circle",
+        "cone",
+        "fire",
+        "freeze",
+        "ice",
+        "knockback",
+        "lifesteal",
+        "lightning",
+        "physical",
+        "pierce",
+        "shadow",
+        "shock",
+        "single",
+        "weaken"
+      ],
+      "total_unique": 18,
+      "types": [
+        "array"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "lightning_chain_whip",
+        "inferno_blade",
+        "void_piercer"
+      ]
+    },
+    "flags.equippable": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 20,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "flags.repairable": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "flags.stackable": {
+      "values": [
+        false
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "flags.tradeable": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 6,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "itemId": {
+      "values": [
+        "blood_reaver",
+        "composite_longbow",
+        "copper_dagger",
+        "copper_spear",
+        "fire_crystal_staff",
+        "frostbite_hammer",
+        "inferno_blade",
+        "iron_shortsword",
+        "iron_warhammer",
+        "lightning_chain_whip",
+        "mithril_dagger",
+        "pine_shortbow",
+        "steel_battleaxe",
+        "steel_longsword",
+        "test_case_sensitivity",
+        "test_duplicate_tags",
+        "test_empty_tags",
+        "test_only_status_tags",
+        "test_weapon_complex_valid",
+        "test_weapon_conflicting_elements",
+        "test_weapon_missing_params",
+        "test_weapon_multi_geometry",
+        "test_weapon_simple",
+        "test_weapon_unknown_tags",
+        "void_piercer"
+      ],
+      "total_unique": 25,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30,
+      "example_items": [
+        "lightning_chain_whip",
+        "inferno_blade",
+        "void_piercer"
+      ]
+    },
+    "metadata.narrative": {
+      "values": [
+        "A simple iron blade with a wooden handle. Every warrior's first step on the path to mastery. The weight feels right in your hand - not perfect, but yours.",
+        "A simple test weapon with valid tags.",
+        "Balanced steel longsword that flows like water and strikes like thunder. The blade sings when it cuts through air, a testament to its quality.",
+        "Complex but valid combo: lightning chain with shock and slow.",
+        "Composite longbow of ash wood and sinew, strung with silk-spider thread. The draw is heavy, demanding both hands and steady arms, but arrows fly true and far. Distance is your advantage.",
+        "Contains unknown/typo tags to test error handling.",
+        "Has duplicate tags in the array.",
+        "Has effectTags field but it's empty.",
+        "Has only status tags, no damage type tags.",
+        "Has tags but missing required effectParams.",
+        "Heavy iron warhammer that crushes armor and bone alike. The weight demands both hands, but the devastation it delivers makes that trade worthwhile. Favored by those who prefer decisive, crushing blows.",
+        "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
+        "Mithril dagger that seems to shimmer out of existence. Wickedly sharp and impossibly light, it strikes faster than the eye can follow. The blade whispers through air and flesh alike.",
+        "Simple copper dagger, light and quick. Not much reach, but what it lacks in power it makes up for in speed. Perfect for those who value precision over brute force.",
+        "Simple copper-tipped spear with ash wood shaft. The extra reach keeps danger at arm's length. Perfect for those who prefer distance over direct confrontation.",
+        "Simple pine shortbow strung with treated slime gel. Not powerful, but reliable and easy to maintain. Perfect for learning the basics of archery.",
+        "Steel battleaxe with brutal cleaving power. Grip it with both hands and watch enemies fall like timber. Equally deadly in one hand for those strong enough to wield it.",
+        "Tests if tag matching is case-sensitive.",
+        "Tests multiple geometry tags (cone + chain + circle).",
+        "Tests what happens with conflicting elemental tags (fire + ice)."
+      ],
+      "total_unique": 20,
+      "types": [
+        "string"
+      ],
+      "occurrences": 20,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "metadata.tags": {
+      "values": [
+        "1H",
+        "2H",
+        "armor_breaker",
+        "axe",
+        "bow",
+        "cleaving",
+        "crushing",
+        "dagger",
+        "elemental",
+        "fast",
+        "fire",
+        "legendary",
+        "mace",
+        "melee",
+        "precision",
+        "quality",
+        "ranged",
+        "reach",
+        "spear",
+        "staff",
+        "starter",
+        "sword",
+        "versatile"
+      ],
+      "total_unique": 23,
+      "types": [
+        "array"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "name": {
+      "values": [
+        "Blood Reaver",
+        "Composite Longbow",
+        "Copper Dagger",
+        "Copper Spear",
+        "Fire Crystal Staff",
+        "Frostbite Hammer",
+        "Inferno Blade",
+        "Iron Shortsword",
+        "Iron Warhammer",
+        "Lightning Chain Whip",
+        "Mithril Dagger",
+        "Pine Shortbow",
+        "Steel Battleaxe",
+        "Steel Longsword",
+        "Test Item (Empty Tags Array)",
+        "Test Weapon (Case Sensitivity)",
+        "Test Weapon (Complex Valid)",
+        "Test Weapon (Conflicting Elements)",
+        "Test Weapon (Duplicate Tags)",
+        "Test Weapon (Missing Params)",
+        "Test Weapon (Multiple Geometry)",
+        "Test Weapon (Only Status, No Damage)",
+        "Test Weapon (Simple Valid)",
+        "Test Weapon (Unknown Tags)",
+        "Void Piercer"
+      ],
+      "total_unique": 25,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30,
+      "example_items": [
+        "lightning_chain_whip",
+        "inferno_blade",
+        "void_piercer"
+      ]
+    },
+    "narrative": {
+      "values": [
+        "Crackling with elemental fury, this whip doesn't just strike\u2014it hunts. Each lash leaps from victim to victim, leaving a trail of shocked enemies in its wake.",
+        "Each impact sends a shockwave of absolute zero. Enemies freeze mid-motion as they're blasted backward, turned into icy statues before they even hit the ground.",
+        "Forged from crystallized void essence, this spear doesn't throw\u2014it tears. A beam of pure darkness lances through your enemies, weakening each it touches as it passes through flesh and armor alike.",
+        "The blade itself never cools. Each swing projects a wave of searing flame that engulfs all before you. The heat is so intense that victims continue burning long after the strike.",
+        "This weapon hungers. Each strike opens wounds that refuse to close, and as your enemies bleed, the blade drinks\u2014and so do you. Feel their vitality flow into you with each passing second."
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "lightning_chain_whip",
+        "inferno_blade",
+        "void_piercer"
+      ]
+    },
+    "range": {
+      "values": [
+        0.5,
+        1,
+        1.5,
+        10,
+        15,
+        2,
+        8
+      ],
+      "total_unique": 7,
+      "types": [
+        "integer",
+        "number"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "iron_shortsword",
+        "copper_spear",
+        "steel_longsword"
+      ]
+    },
+    "rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30,
+      "example_items": [
+        "lightning_chain_whip",
+        "inferno_blade",
+        "void_piercer"
+      ]
+    },
+    "requirements.level": {
+      "values": [
+        1,
+        10,
+        15,
+        16,
+        8,
+        9
+      ],
+      "total_unique": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "requirements.stats.AGI": {
+      "values": [
+        14,
+        20,
+        6,
+        8
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "requirements.stats.INT": {
+      "values": [
+        18
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "requirements.stats.STR": {
+      "values": [
+        10,
+        12,
+        15
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "slot": {
+      "values": [
+        "mainHand"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 20,
+      "example_items": [
+        "lightning_chain_whip",
+        "inferno_blade",
+        "void_piercer"
+      ]
+    },
+    "stackSize": {
+      "values": [
+        1
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "test_weapon_simple",
+        "test_weapon_conflicting_elements",
+        "test_weapon_multi_geometry"
+      ]
+    },
+    "statMultipliers.attackSpeed": {
+      "values": [
+        0.75,
+        0.85,
+        0.95,
+        1.0,
+        1.1,
+        1.2,
+        1.3
+      ],
+      "total_unique": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "statMultipliers.damage": {
+      "values": [
+        0.85,
+        0.9,
+        1.0,
+        1.1,
+        1.3
+      ],
+      "total_unique": 5,
+      "types": [
+        "number"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "statMultipliers.durability": {
+      "values": [
+        0.8,
+        0.9,
+        1.0,
+        1.1,
+        1.3,
+        1.5
+      ],
+      "total_unique": 6,
+      "types": [
+        "number"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "statMultipliers.weight": {
+      "values": [
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.2,
+        1.5
+      ],
+      "total_unique": 8,
+      "types": [
+        "number"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.attackSpeed": {
+      "values": [
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.2,
+        1.3,
+        1.4,
+        1.5
+      ],
+      "total_unique": 8,
+      "types": [
+        "number"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.baseDamage": {
+      "values": [
+        15.0,
+        25.0,
+        28.0,
+        30.0,
+        35.0,
+        40.0,
+        5.0,
+        50.0,
+        60.0
+      ],
+      "total_unique": 9,
+      "types": [
+        "number"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.critChance": {
+      "values": [
+        0.05,
+        0.1,
+        0.15,
+        0.18,
+        0.2,
+        0.25
+      ],
+      "total_unique": 6,
+      "types": [
+        "number"
+      ],
+      "occurrences": 15,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.damage": {
+      "values": [
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        60,
+        65
+      ],
+      "total_unique": 8,
+      "types": [
+        "array"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stats.durability": {
+      "values": [
+        400,
+        450,
+        500,
+        600
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 10,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "subtype": {
+      "values": [
+        "arcane_staff",
+        "battle_axe",
+        "battle_staff",
+        "battleaxe",
+        "dagger",
+        "longbow",
+        "longsword",
+        "shortbow",
+        "shortsword",
+        "spear",
+        "special_bow",
+        "staff",
+        "war_hammer",
+        "warhammer"
+      ],
+      "total_unique": 14,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "test_weapon_simple",
+        "test_weapon_conflicting_elements",
+        "test_weapon_multi_geometry"
+      ]
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 30,
+      "example_items": [
+        "lightning_chain_whip",
+        "inferno_blade",
+        "void_piercer"
+      ]
+    },
+    "type": {
+      "values": [
+        "axe",
+        "bow",
+        "dagger",
+        "hammer",
+        "mace",
+        "staff",
+        "sword",
+        "wand",
+        "weapon"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30,
+      "example_items": [
+        "lightning_chain_whip",
+        "inferno_blade",
+        "void_piercer"
+      ]
+    }
+  },
+  "_usable_template": {
+    "attributes": [
+      "<value>"
+    ],
+    "category": "weapon",
+    "description": "Whip that arcs lightning between foes",
+    "effectParams": {
+      "baseDamage": 42,
+      "burn_damage_per_second": 10.0,
+      "burn_duration": 3.0,
+      "chain_count": 3,
+      "chain_damage_falloff": 0.8,
+      "chrono_slow": 0.5,
+      "circle_radius": 5.0,
+      "cone_angle": 60,
+      "cone_length": 8.0,
+      "freeze_duration": 2.0,
+      "quantum_collapse_chance": 0.1,
+      "shock_chance": 0.3,
+      "shock_damage": 10.0,
+      "slow_duration": 3.0,
+      "slow_percent": 0.4
+    },
+    "effectTags": [
+      "void",
+      "crushing",
+      "bleed"
+    ],
+    "effect_params": {
+      "baseDamage": 40,
+      "beam_range": 12.0,
+      "beam_width": 1.5,
+      "bleed_damage_per_second": 6.0,
+      "bleed_duration": 10.0,
+      "burn_damage_per_second": 8.0,
+      "burn_duration": 10.0,
+      "chain_count": 3,
+      "chain_range": 6.0,
+      "circle_radius": 4.0,
+      "cone_angle": 60.0,
+      "cone_range": 8.0,
+      "freeze_duration": 3.0,
+      "knockback_distance": 3.0,
+      "lifesteal_percent": 0.25,
+      "origin": "target",
+      "pierce_count": 5,
+      "shock_damage_per_tick": 5.0,
+      "shock_duration": 4.0,
+      "shock_tick_rate": 1.0,
+      "weaken_duration": 8.0,
+      "weaken_percent": 0.3
+    },
+    "effect_tags": [
+      "physical",
+      "beam",
+      "bleed"
+    ],
+    "flags": {
+      "equippable": true,
+      "repairable": true,
+      "stackable": true,
+      "tradeable": true
+    },
+    "itemId": "test_weapon_complex_valid",
+    "metadata": {
+      "narrative": "A simple test weapon with valid tags.",
+      "tags": [
+        "ranged",
+        "bow",
+        "2H"
+      ]
+    },
+    "name": "Steel Battleaxe",
+    "narrative": "Crackling with elemental fury, this whip doesn't just strike\u2014it hunts. Each lash leaps from victim to victim, leaving a trail of shocked enemies in its wake.",
+    "range": 1,
+    "rarity": "common",
+    "requirements": {
+      "level": 1,
+      "stats": {
+        "AGI": 8,
+        "INT": 18,
+        "STR": 10
+      }
+    },
+    "slot": "mainHand",
+    "stackSize": 1,
+    "statMultipliers": {
+      "attackSpeed": 0.95,
+      "damage": 0.9,
+      "durability": 0.8,
+      "weight": 0.9
+    },
+    "stats": {
+      "attackSpeed": 0.8,
+      "baseDamage": 35.0,
+      "critChance": 0.15,
+      "damage": [
+        65,
+        35,
+        40
+      ],
+      "durability": 400
+    },
+    "subtype": "staff",
+    "tier": 1,
+    "type": "staff"
+  },
+  "_sample_items": [
+    {
+      "itemId": "lightning_chain_whip",
+      "name": "Lightning Chain Whip",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "equipment",
+      "type": "weapon",
+      "slot": "mainHand",
+      "stats": {
+        "damage": [
+          30,
+          45
+        ],
+        "attackSpeed": 1.5,
+        "durability": 400,
+        "critChance": 0.15
+      },
+      "effect_tags": [
+        "lightning",
+        "chain",
+        "shock"
+      ],
+      "effect_params": {
+        "baseDamage": 40,
+        "chain_count": 3,
+        "chain_range": 6.0,
+        "shock_duration": 4.0,
+        "shock_damage_per_tick": 5.0,
+        "shock_tick_rate": 1.0
+      },
+      "description": "Whip that arcs lightning between foes",
+      "narrative": "Crackling with elemental fury, this whip doesn't just strike\u2014it hunts. Each lash leaps from victim to victim, leaving a trail of shocked enemies in its wake."
+    },
+    {
+      "itemId": "inferno_blade",
+      "name": "Inferno Blade",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "equipment",
+      "type": "weapon",
+      "slot": "mainHand",
+      "stats": {
+        "damage": [
+          40,
+          60
+        ],
+        "attackSpeed": 1.2,
+        "durability": 500,
+        "critChance": 0.2
+      },
+      "effect_tags": [
+        "fire",
+        "cone",
+        "burn"
+      ],
+      "effect_params": {
+        "baseDamage": 50,
+        "cone_angle": 60.0,
+        "cone_range": 8.0,
+        "burn_duration": 10.0,
+        "burn_damage_per_second": 8.0
+      },
+      "description": "Blade that projects waves of flame",
+      "narrative": "The blade itself never cools. Each swing projects a wave of searing flame that engulfs all before you. The heat is so intense that victims continue burning long after the strike."
+    },
+    {
+      "itemId": "void_piercer",
+      "name": "Void Piercer",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "equipment",
+      "type": "weapon",
+      "slot": "mainHand",
+      "stats": {
+        "damage": [
+          35,
+          55
+        ],
+        "attackSpeed": 1.4,
+        "durability": 450,
+        "critChance": 0.25
+      },
+      "effect_tags": [
+        "shadow",
+        "beam",
+        "weaken",
+        "pierce"
+      ],
+      "effect_params": {
+        "baseDamage": 45,
+        "beam_range": 12.0,
+        "beam_width": 1.5,
+        "pierce_count": 5,
+        "weaken_percent": 0.3,
+        "weaken_duration": 8.0
+      },
+      "description": "Spear that fires void beams through multiple targets",
+      "narrative": "Forged from crystallized void essence, this spear doesn't throw\u2014it tears. A beam of pure darkness lances through your enemies, weakening each it touches as it passes through flesh and armor alike."
+    },
+    {
+      "itemId": "frostbite_hammer",
+      "name": "Frostbite Hammer",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "equipment",
+      "type": "mace",
+      "slot": "mainHand",
+      "stats": {
+        "damage": [
+          45,
+          65
+        ],
+        "attackSpeed": 0.8,
+        "durability": 600,
+        "critChance": 0.1
+      },
+      "effect_tags": [
+        "ice",
+        "circle",
+        "freeze",
+        "knockback"
+      ],
+      "effect_params": {
+        "baseDamage": 60,
+        "circle_radius": 4.0,
+        "origin": "target",
+        "freeze_duration": 3.0,
+        "knockback_distance": 3.0
+      },
+      "description": "Hammer that freezes and repels nearby foes",
+      "narrative": "Each impact sends a shockwave of absolute zero. Enemies freeze mid-motion as they're blasted backward, turned into icy statues before they even hit the ground."
+    },
+    {
+      "itemId": "blood_reaver",
+      "name": "Blood Reaver",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "equipment",
+      "type": "weapon",
+      "slot": "mainHand",
+      "stats": {
+        "damage": [
+          35,
+          50
+        ],
+        "attackSpeed": 1.3,
+        "durability": 400,
+        "critChance": 0.18
+      },
+      "effect_tags": [
+        "physical",
+        "single",
+        "bleed",
+        "lifesteal"
+      ],
+      "effect_params": {
+        "baseDamage": 42,
+        "bleed_duration": 10.0,
+        "bleed_damage_per_second": 6.0,
+        "lifesteal_percent": 0.25
+      },
+      "description": "Cursed blade that feeds on lifeblood",
+      "narrative": "This weapon hungers. Each strike opens wounds that refuse to close, and as your enemies bleed, the blade drinks\u2014and so do you. Feel their vitality flow into you with each passing second."
+    }
+  ]
+}

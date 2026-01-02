@@ -1,0 +1,583 @@
+{
+  "_meta": {
+    "category": "consumables",
+    "description": "Potions, elixirs, food, and other consumable items - alchemy output",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.370452",
+    "total_items": 16,
+    "source_files": [
+      "items.JSON/items-alchemy-1.JSON"
+    ]
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "category": {
+      "values": [
+        "consumable"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "minor_health_potion",
+        "health_potion",
+        "greater_health_potion"
+      ]
+    },
+    "duration": {
+      "values": [
+        0,
+        240,
+        300,
+        360,
+        3600,
+        480,
+        60,
+        600,
+        7200
+      ],
+      "total_unique": 9,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "minor_health_potion",
+        "health_potion",
+        "greater_health_potion"
+      ]
+    },
+    "effect": {
+      "values": [
+        "+20% defense",
+        "+20% physical damage",
+        "+25% movement and attack speed",
+        "+50% max HP and +40% physical damage",
+        "50% fire damage reduction",
+        "50% ice damage reduction",
+        "Apply to armor for +10% defense for 2 hours",
+        "Apply to tools for +15% gathering speed for 1 hour",
+        "Apply to weapons for +10% damage for 2 hours",
+        "Can dissolve most materials, use carefully",
+        "Grants resistance to all elements for 10 minutes",
+        "Restores 100 HP instantly",
+        "Restores 200 HP instantly",
+        "Restores 5 HP per second",
+        "Restores 50 HP instantly",
+        "Used in engineering recipes for bombs and explosives"
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "minor_health_potion",
+        "health_potion",
+        "greater_health_potion"
+      ]
+    },
+    "flags.consumable": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "flags.repairable": {
+      "values": [
+        false
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "flags.stackable": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "itemId": {
+      "values": [
+        "armor_polish",
+        "blast_powder",
+        "efficiency_oil",
+        "elemental_harmony_potion",
+        "fire_resistance_potion",
+        "frost_resistance_potion",
+        "greater_health_potion",
+        "health_potion",
+        "iron_skin_potion",
+        "minor_health_potion",
+        "regeneration_tonic",
+        "strength_elixir",
+        "swiftness_draught",
+        "titans_brew",
+        "universal_solvent",
+        "weapon_oil"
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "minor_health_potion",
+        "health_potion",
+        "greater_health_potion"
+      ]
+    },
+    "metadata.narrative": {
+      "values": [
+        "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation. Tastes terrible, works wonderfully. Wounds close and pain fades within moments.",
+        "Combining all basic elements into a harmony potion. Balance in a bottle. All elemental forces recognize you as kin and refuse to harm their own.",
+        "Creating universal solvent that can dissolve anything. Handle with extreme care. The void essence makes it unstable, the shadow core makes it hungry. It wants to unmake things.",
+        "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal, blows that should fell you merely bruise. Stand firm, unbreakable.",
+        "Explosive powder from concentrated elemental volatility. Handle with extreme care. Do not shake, drop, or look at funny. Used in engineering recipes for bombs and explosives.",
+        "Fire resistance potion using water and frost essences. Body temperature regulates perfectly. Walk through flames unscathed, fire becomes a gentle warmth.",
+        "Frost resistance potion using fire crystals to create internal warmth. Cold cannot touch you. Ice shatters against your skin, blizzards feel like spring breezes.",
+        "Improved healing potion using water crystals to amplify restorative properties. The liquid shimmers with captured vitality. One swallow and you feel strength returning.",
+        "Legendary brew combining dragon essence with phoenix ash. Maximum HP surges, strength magnifies. For a brief time, you become something more than mortal.",
+        "Oil that makes tools work faster and smoother. Craftsmen swear by this formula. Apply it before work and watch efficiency soar.",
+        "Oil that makes weapons strike true. Edges stay sharp impossibly long. Warriors whisper prayers to the alchemist who made this.",
+        "Polish that makes armor gleam and deflect attacks. Knights pay fortunes for this. The sheen isn't just for show - it actually turns blades.",
+        "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly, mends broken bones, restores vitality. The taste of life itself.",
+        "Regeneration tonic that mends wounds over time. Light gems infused with living essence create a sustained healing effect. Your body remembers how to heal itself.",
+        "Speed-enhancing draught using air crystals and spectral thread. Time seems to slow around you. Your movements blur, strikes land before enemies can react.",
+        "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power, every strike hits harder. Feel the beast's ferocity flowing through you."
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "metadata.tags": {
+      "values": [
+        "advanced",
+        "agility",
+        "armor",
+        "buff",
+        "combat",
+        "consumable",
+        "crafting",
+        "dangerous",
+        "defense",
+        "elemental",
+        "engineering",
+        "enhancement",
+        "explosive",
+        "fire",
+        "frost",
+        "harmony",
+        "healing",
+        "legendary",
+        "potion",
+        "power",
+        "protection",
+        "quality",
+        "regeneration",
+        "resistance",
+        "solvent",
+        "speed",
+        "standard",
+        "starter",
+        "strength",
+        "tool",
+        "utility",
+        "void",
+        "weapon"
+      ],
+      "total_unique": 33,
+      "types": [
+        "array"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "name": {
+      "values": [
+        "Armor Polish",
+        "Blast Powder",
+        "Efficiency Oil",
+        "Elemental Harmony Potion",
+        "Fire Resistance Potion",
+        "Frost Resistance Potion",
+        "Greater Health Potion",
+        "Health Potion",
+        "Iron Skin Potion",
+        "Minor Health Potion",
+        "Regeneration Tonic",
+        "Strength Elixir",
+        "Swiftness Draught",
+        "Titan's Brew",
+        "Universal Solvent",
+        "Weapon Oil"
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "minor_health_potion",
+        "health_potion",
+        "greater_health_potion"
+      ]
+    },
+    "rarity": {
+      "values": [
+        "common",
+        "epic",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "minor_health_potion",
+        "health_potion",
+        "greater_health_potion"
+      ]
+    },
+    "requirements.level": {
+      "values": [
+        1,
+        12,
+        14,
+        15,
+        20,
+        5,
+        6,
+        7
+      ],
+      "total_unique": 8,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stackSize": {
+      "values": [
+        10,
+        20,
+        5,
+        50
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "minor_health_potion",
+        "health_potion",
+        "greater_health_potion"
+      ]
+    },
+    "statMultipliers.weight": {
+      "values": [
+        0.2,
+        0.3,
+        0.4,
+        0.5
+      ],
+      "total_unique": 4,
+      "types": [
+        "number"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "subtype": {
+      "values": [
+        "buff",
+        "explosive",
+        "healing",
+        "resistance",
+        "solvent",
+        "utility"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "minor_health_potion",
+        "health_potion",
+        "greater_health_potion"
+      ]
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "minor_health_potion",
+        "health_potion",
+        "greater_health_potion"
+      ]
+    },
+    "type": {
+      "values": [
+        "material",
+        "oil",
+        "potion",
+        "utility"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16,
+      "example_items": [
+        "minor_health_potion",
+        "health_potion",
+        "greater_health_potion"
+      ]
+    }
+  },
+  "_usable_template": {
+    "category": "consumable",
+    "duration": 0,
+    "effect": "Restores 100 HP instantly",
+    "flags": {
+      "consumable": true,
+      "repairable": true,
+      "stackable": true
+    },
+    "itemId": "strength_elixir",
+    "metadata": {
+      "narrative": "Creating universal solvent that can dissolve anything. Handle with extreme care. The void essence makes it unstable, the shadow core makes it hungry. It wants to unmake things.",
+      "tags": [
+        "resistance",
+        "agility",
+        "buff"
+      ]
+    },
+    "name": "Weapon Oil",
+    "rarity": "common",
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "stackSize": 10,
+    "statMultipliers": {
+      "weight": 0.2
+    },
+    "subtype": "resistance",
+    "tier": 1,
+    "type": "utility"
+  },
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation. Tastes terrible, works wonderfully. Wounds close and pain fades within moments.",
+        "tags": [
+          "potion",
+          "healing",
+          "consumable",
+          "starter"
+        ]
+      },
+      "itemId": "minor_health_potion",
+      "name": "Minor Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Restores 50 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Improved healing potion using water crystals to amplify restorative properties. The liquid shimmers with captured vitality. One swallow and you feel strength returning.",
+        "tags": [
+          "potion",
+          "healing",
+          "consumable",
+          "standard"
+        ]
+      },
+      "itemId": "health_potion",
+      "name": "Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 2,
+      "rarity": "common",
+      "effect": "Restores 100 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly, mends broken bones, restores vitality. The taste of life itself.",
+        "tags": [
+          "potion",
+          "healing",
+          "consumable",
+          "quality"
+        ]
+      },
+      "itemId": "greater_health_potion",
+      "name": "Greater Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "uncommon",
+      "effect": "Restores 200 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Regeneration tonic that mends wounds over time. Light gems infused with living essence create a sustained healing effect. Your body remembers how to heal itself.",
+        "tags": [
+          "potion",
+          "healing",
+          "regeneration",
+          "advanced"
+        ]
+      },
+      "itemId": "regeneration_tonic",
+      "name": "Regeneration Tonic",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Restores 5 HP per second",
+      "duration": 60,
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power, every strike hits harder. Feel the beast's ferocity flowing through you.",
+        "tags": [
+          "potion",
+          "buff",
+          "strength",
+          "combat"
+        ]
+      },
+      "itemId": "strength_elixir",
+      "name": "Strength Elixir",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "+20% physical damage",
+      "duration": 300,
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  ]
+}

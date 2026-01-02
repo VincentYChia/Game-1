@@ -1,0 +1,478 @@
+{
+  "_meta": {
+    "category": "devices",
+    "description": "Engineering devices (turrets, traps, bombs)",
+    "purpose": "LLM fine-tuning template",
+    "generated_at": "2026-01-02T01:26:25.371274",
+    "total_items": 5,
+    "source_files": [
+      "items.JSON/items-engineering-1.JSON"
+    ]
+  },
+  "_field_documentation": {},
+  "_all_possible_values": {
+    "category": {
+      "values": [
+        "device"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "healing_beacon",
+        "net_launcher",
+        "emp_device"
+      ]
+    },
+    "effect": {
+      "values": [
+        "Disables all mechanical devices in 8 unit radius for 30 seconds",
+        "Enables flight for up to 30 seconds, recharge time 2 minutes",
+        "Fires net that slows enemies by 80% for 10 seconds",
+        "Heals 10 HP/sec in 5 unit radius for 2 minutes",
+        "Launches grappling hook up to 15 units, pulls player to location"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "healing_beacon",
+        "net_launcher",
+        "emp_device"
+      ]
+    },
+    "flags.placeable": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "flags.repairable": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "flags.stackable": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "itemId": {
+      "values": [
+        "emp_device",
+        "grappling_hook",
+        "healing_beacon",
+        "jetpack",
+        "net_launcher"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "healing_beacon",
+        "net_launcher",
+        "emp_device"
+      ]
+    },
+    "metadata.narrative": {
+      "values": [
+        "EMP device that disables electronic enemies and devices. Technology's worst nightmare. Lightning contained, waiting to be unleashed.",
+        "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces. The spectral thread never breaks, the iron hook never fails.",
+        "Healing beacon that emanates restorative energy. Heals allies in radius continuously. The light feels warm, comforting, alive.",
+        "Jetpack for brief flight. Fuel not included (but fire crystals work great). The mithril construction keeps it lightweight while phoenix ash provides sustained thrust.",
+        "Net launcher that ensnares enemies. Reduces movement speed dramatically. Spectral thread nets are nearly unbreakable."
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "metadata.tags": {
+      "values": [
+        "crowd-control",
+        "device",
+        "disable",
+        "flight",
+        "healing",
+        "mobility",
+        "projectile",
+        "support",
+        "tech",
+        "tool",
+        "utility"
+      ],
+      "total_unique": 11,
+      "types": [
+        "array"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "name": {
+      "values": [
+        "EMP Device",
+        "Grappling Hook",
+        "Healing Beacon",
+        "Jetpack",
+        "Net Launcher"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "healing_beacon",
+        "net_launcher",
+        "emp_device"
+      ]
+    },
+    "rarity": {
+      "values": [
+        "epic",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "healing_beacon",
+        "net_launcher",
+        "emp_device"
+      ]
+    },
+    "requirements.level": {
+      "values": [
+        13,
+        16,
+        18,
+        8,
+        9
+      ],
+      "total_unique": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "stackSize": {
+      "values": [
+        1,
+        3,
+        5
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "healing_beacon",
+        "net_launcher",
+        "emp_device"
+      ]
+    },
+    "statMultipliers.weight": {
+      "values": [
+        1.0,
+        1.3,
+        1.5,
+        2.5
+      ],
+      "total_unique": 4,
+      "types": [
+        "number"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "unknown"
+      ]
+    },
+    "subtype": {
+      "values": [
+        "control",
+        "disable",
+        "mobility",
+        "support"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "healing_beacon",
+        "net_launcher",
+        "emp_device"
+      ]
+    },
+    "tier": {
+      "values": [
+        2,
+        3
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "healing_beacon",
+        "net_launcher",
+        "emp_device"
+      ]
+    },
+    "type": {
+      "values": [
+        "utility"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5,
+      "example_items": [
+        "healing_beacon",
+        "net_launcher",
+        "emp_device"
+      ]
+    }
+  },
+  "_usable_template": {
+    "category": "device",
+    "effect": "Launches grappling hook up to 15 units, pulls player to location",
+    "flags": {
+      "placeable": true,
+      "repairable": true,
+      "stackable": true
+    },
+    "itemId": "jetpack",
+    "metadata": {
+      "narrative": "Healing beacon that emanates restorative energy. Heals allies in radius continuously. The light feels warm, comforting, alive.",
+      "tags": [
+        "crowd-control",
+        "device",
+        "mobility"
+      ]
+    },
+    "name": "Jetpack",
+    "rarity": "rare",
+    "requirements": {
+      "level": 8,
+      "stats": {}
+    },
+    "stackSize": 1,
+    "statMultipliers": {
+      "weight": 1.5
+    },
+    "subtype": "support",
+    "tier": 2,
+    "type": "utility"
+  },
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "Healing beacon that emanates restorative energy. Heals allies in radius continuously. The light feels warm, comforting, alive.",
+        "tags": [
+          "device",
+          "utility",
+          "healing",
+          "support"
+        ]
+      },
+      "itemId": "healing_beacon",
+      "name": "Healing Beacon",
+      "category": "device",
+      "type": "utility",
+      "subtype": "support",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Heals 10 HP/sec in 5 unit radius for 2 minutes",
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 13,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Net launcher that ensnares enemies. Reduces movement speed dramatically. Spectral thread nets are nearly unbreakable.",
+        "tags": [
+          "device",
+          "utility",
+          "crowd-control",
+          "projectile"
+        ]
+      },
+      "itemId": "net_launcher",
+      "name": "Net Launcher",
+      "category": "device",
+      "type": "utility",
+      "subtype": "control",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Fires net that slows enemies by 80% for 10 seconds",
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 1.3
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "EMP device that disables electronic enemies and devices. Technology's worst nightmare. Lightning contained, waiting to be unleashed.",
+        "tags": [
+          "device",
+          "utility",
+          "disable",
+          "tech"
+        ]
+      },
+      "itemId": "emp_device",
+      "name": "EMP Device",
+      "category": "device",
+      "type": "utility",
+      "subtype": "disable",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Disables all mechanical devices in 8 unit radius for 30 seconds",
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces. The spectral thread never breaks, the iron hook never fails.",
+        "tags": [
+          "device",
+          "utility",
+          "mobility",
+          "tool"
+        ]
+      },
+      "itemId": "grappling_hook",
+      "name": "Grappling Hook",
+      "category": "device",
+      "type": "utility",
+      "subtype": "mobility",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Launches grappling hook up to 15 units, pulls player to location",
+      "stackSize": 1,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 9,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": false,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Jetpack for brief flight. Fuel not included (but fire crystals work great). The mithril construction keeps it lightweight while phoenix ash provides sustained thrust.",
+        "tags": [
+          "device",
+          "utility",
+          "flight",
+          "mobility"
+        ]
+      },
+      "itemId": "jetpack",
+      "name": "Jetpack",
+      "category": "device",
+      "type": "utility",
+      "subtype": "mobility",
+      "tier": 3,
+      "rarity": "epic",
+      "effect": "Enables flight for up to 30 seconds, recharge time 2 minutes",
+      "stackSize": 1,
+      "statMultipliers": {
+        "weight": 2.5
+      },
+      "requirements": {
+        "level": 18,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": false,
+        "repairable": true
+      }
+    }
+  ]
+}
