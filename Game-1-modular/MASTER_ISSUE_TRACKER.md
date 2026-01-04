@@ -18,6 +18,7 @@
 | UI | Class Selection Tags | LOW | Enhancement | 1-2 hrs |
 | UI | Crafting Missing Items | LOW | Consistent | N/A |
 | Content | Crafting Stations JSON | WAITLIST | Placeholder | 2-3 hrs |
+| **Overhaul** | Crafting UI & Minigames | **HIGH** | Planning Complete | Multi-week |
 
 ---
 
@@ -453,6 +454,73 @@ These mechanics are documented but have NO code implementation:
 
 ---
 
+## SECTION 6.5: CRAFTING UI & MINIGAME OVERHAUL
+
+**Plan Document**: `docs/CRAFTING_UI_MINIGAME_OVERHAUL_PLAN.md`
+**Created**: January 4, 2026
+**Status**: Planning Complete - Implementation Pending
+
+### Overview
+
+Major overhaul of crafting system with:
+- Material-based difficulty calculation (not just tier)
+- Polished, distinct UI for each discipline
+- Proportional rewards tied to difficulty
+
+### Implementation Phases
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | Foundation (difficulty calculator, UI components) | Pending |
+| 2 | Smithing overhaul | Pending |
+| 3 | Refining overhaul | Pending |
+| 4 | Alchemy overhaul | Pending |
+| 5 | Engineering major redesign | Pending |
+| 6 | Polish & integration | Pending |
+
+### DEFERRED Items (Tracked Here)
+
+| Item | Reason | Priority |
+|------|--------|----------|
+| Enchanting pattern minigame | Requires UI framework + recipe creation | Medium |
+| User recipe creation system | Requires validation, persistence, UI | Low |
+| Material-based sub-modifiers | Complexity - implement after core overhaul | Low |
+| Sub-specialization mechanics | Complexity - implement after core overhaul | Low |
+| Refining fuel system | Keep in V6 docs but skip implementation | Low |
+
+### Key Design Decisions
+
+1. **Difficulty Formula**: `material_points × diversity_multiplier`
+   - Material points: `2^(tier-1) × quantity` (exponential scaling)
+   - Diversity: `1.0 + (unique_materials - 1) × 0.1`
+
+2. **Discipline-Specific Modifiers**:
+   - Alchemy: Vowel-based volatility + `1.2^avg_tier`
+   - Engineering: Slot count × `1.0 + (N-1) × 0.1`
+
+3. **Reward Scaling**: Harder difficulty = higher max bonus potential
+
+4. **Tier-Scaled Penalties**: T1: 30% loss → T4: 90% loss on failure
+
+5. **First-Try Bonus**: Feeds into performance calculation
+
+### Files to Create
+
+- `core/difficulty_calculator.py` - NEW
+- `core/reward_calculator.py` - NEW
+- `rendering/ui_components.py` - NEW
+
+### Files to Modify
+
+- `Crafting-subdisciplines/smithing.py`
+- `Crafting-subdisciplines/refining.py`
+- `Crafting-subdisciplines/alchemy.py`
+- `Crafting-subdisciplines/engineering.py` (major rewrite)
+- `rendering/renderer.py`
+- `core/game_engine.py`
+
+---
+
 ## SECTION 7: FILE QUICK REFERENCE
 
 | System | Primary Files |
@@ -467,4 +535,4 @@ These mechanics are documented but have NO code implementation:
 
 ---
 
-**Last Updated**: 2025-12-30
+**Last Updated**: 2026-01-04
