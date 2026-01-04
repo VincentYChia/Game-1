@@ -5,13 +5,24 @@ Framework:
 - Python module ready for main.py integration
 - Loads recipes from JSON files
 - REQUIRED minigame (no skip option for adornments)
-- Difficulty based on tier (affects grid size and pattern complexity)
+- Difficulty based on material tier points (affects wheel green/red distribution)
 
-Minigame: Pattern-matching (like enchanting-pattern-designer.py in survival mode)
-- Player must recreate the target pattern from placements JSON
-- Place shapes (triangles, squares) at correct positions with correct rotations
-- Assign correct materials to vertices
-- Validation checks for exact match
+Difficulty System (v2):
+- Material points: tier × quantity per material (LINEAR)
+- Diversity multiplier: 1.0 + (unique_materials - 1) × 0.1
+- Higher difficulty = fewer green slices, more red slices on wheel
+- Wheel distribution directly affects gambling risk/reward
+
+Minigame: Spinning Wheel (gambling-based)
+- 20-slice wheel with green, red, grey colors
+- 3 spins total per minigame
+- Start with 100 currency, bet and spin
+- Green = win multiplier, Grey = neutral, Red = lose
+- Final currency difference = efficacy boost (±50% max)
+
+Failure Penalty System:
+- Common: 30% material loss (if quit early)
+- Legendary: 90% material loss
 
 NOTE: Enchanting is unique - minigame is REQUIRED, cannot be skipped
 """
@@ -34,20 +45,32 @@ class SpinningWheelMinigame:
     - Bet currency, spin wheel, win/lose based on color
     - Different multipliers per spin
     - Final currency difference from 100 = efficacy boost (±50% max)
+
+    Difficulty affects wheel distribution:
+    - Lower difficulty = more green slices (easier wins)
+    - Higher difficulty = more red slices (riskier)
     """
 
-    def __init__(self, recipe, tier, target_item=None):
+    def __init__(self, recipe, buff_time_bonus=0.0, buff_quality_bonus=0.0, target_item=None):
         """
         Initialize spinning wheel minigame
 
         Args:
-            recipe: Recipe dict from JSON
-            tier: Recipe tier (1-4)
+            recipe: Recipe dict from JSON (includes inputs for difficulty calculation)
+            buff_time_bonus: Skill buff bonus (0.0-1.0+)
+            buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
             target_item: Item being enchanted (optional)
         """
         self.recipe = recipe
-        self.tier = tier
         self.target_item = target_item
+        self.buff_time_bonus = buff_time_bonus
+        self.buff_quality_bonus = buff_quality_bonus
+
+        # Track attempts for first-try bonus
+        self.attempt = 1
+
+        # Calculate difficulty from materials
+        self._setup_difficulty_from_materials()
 
         # Currency system
         self.starting_currency = 100
@@ -76,8 +99,53 @@ class SpinningWheelMinigame:
         self.result = None
         self.phase = 'betting'  # 'betting', 'spinning', 'result', 'completed'
 
-        # Generate all 3 wheels upfront
+        # Generate all 3 wheels upfront (uses difficulty-based distribution)
         self._generate_wheels()
+
+    def _setup_difficulty_from_materials(self):
+        """
+        Setup wheel distribution based on material tier points.
+
+        Uses the centralized difficulty calculator for consistent scaling.
+        """
+        try:
+            from core.difficulty_calculator import calculate_enchanting_difficulty
+            params = calculate_enchanting_difficulty(self.recipe)
+
+            self.difficulty_points = params['difficulty_points']
+            self.difficulty_tier = params.get('difficulty_tier', 'common')
+            self.green_slices = params['green_slices']
+            self.red_slices = params['red_slices']
+            self.grey_slices = params.get('grey_slices', 20 - self.green_slices - self.red_slices)
+
+            print(f"[Enchanting] Difficulty: {self.difficulty_points:.1f} pts ({self.difficulty_tier})")
+            print(f"             Wheel: {self.green_slices}G / {self.red_slices}R / {self.grey_slices}Grey")
+
+        except ImportError:
+            # Fallback to legacy tier-based system
+            tier = self.recipe.get('stationTier', 1)
+            self._setup_difficulty_legacy(tier)
+
+    def _setup_difficulty_legacy(self, tier):
+        """Legacy tier-based difficulty for backward compatibility."""
+        self.difficulty_points = tier * 15
+        self.difficulty_tier = ['common', 'uncommon', 'rare', 'epic'][min(tier - 1, 3)]
+
+        # Default wheel distribution based on tier
+        if tier == 1:
+            self.green_slices = 10
+            self.red_slices = 3
+        elif tier == 2:
+            self.green_slices = 8
+            self.red_slices = 5
+        elif tier == 3:
+            self.green_slices = 7
+            self.red_slices = 7
+        else:  # tier 4
+            self.green_slices = 5
+            self.red_slices = 9
+
+        self.grey_slices = 20 - self.green_slices - self.red_slices
 
     def _generate_wheels(self):
         """Generate 3 wheels with constraints"""
@@ -89,13 +157,13 @@ class SpinningWheelMinigame:
 
     def _generate_single_wheel(self, spin_num):
         """
-        Generate a single wheel with constraints
+        Generate a single wheel with difficulty-based distribution.
 
-        Constraints:
-        - Spin 0 (first): min 10 green, min 3 red, rest grey
-        - Spin 1 (second): min 8 green, min 5 red, rest grey
-        - Spin 2 (third): min 8 green, min 8 red, rest grey
-        After minimums met, remaining slots are 33% split
+        Base distribution comes from difficulty calculator (green_slices, red_slices).
+        Each spin modifies the distribution slightly:
+        - Spin 0: Base distribution (most favorable)
+        - Spin 1: -1 green, +1 red (slightly harder)
+        - Spin 2: -2 green, +2 red (hardest)
 
         Args:
             spin_num: 0, 1, or 2
@@ -105,25 +173,29 @@ class SpinningWheelMinigame:
         """
         import random
 
-        # Define minimum requirements per spin
-        if spin_num == 0:
-            min_green = 10
-            min_red = 3
-        elif spin_num == 1:
-            min_green = 8
-            min_red = 5
-        else:  # spin_num == 2
-            min_green = 8
-            min_red = 8
+        # Base distribution from difficulty calculation
+        base_green = getattr(self, 'green_slices', 10)
+        base_red = getattr(self, 'red_slices', 3)
+
+        # Modify per spin (later spins are harder)
+        green_modifier = spin_num  # 0, 1, or 2
+        red_modifier = spin_num
+
+        min_green = max(3, base_green - green_modifier)  # Never less than 3 green
+        min_red = min(12, base_red + red_modifier)  # Never more than 12 red
+
+        # Ensure we don't exceed 20 slices
+        if min_green + min_red > 17:
+            # Cap and leave room for grey
+            overflow = (min_green + min_red) - 17
+            min_green = max(3, min_green - overflow)
 
         # Create wheel with minimums
         wheel = ['green'] * min_green + ['red'] * min_red
 
-        # Fill remaining slots with 33% split
+        # Fill remaining slots with grey
         remaining_slots = 20 - min_green - min_red
-        colors = ['green', 'red', 'grey']
-        for _ in range(remaining_slots):
-            wheel.append(random.choice(colors))
+        wheel.extend(['grey'] * remaining_slots)
 
         # Shuffle to randomize positions
         random.shuffle(wheel)
@@ -278,7 +350,7 @@ class SpinningWheelMinigame:
             return True
 
     def complete(self):
-        """Complete the minigame and calculate final efficacy"""
+        """Complete the minigame and calculate final efficacy with rewards."""
         self.active = False
         self.phase = 'completed'
 
@@ -294,13 +366,42 @@ class SpinningWheelMinigame:
         # Convert to decimal (e.g., 25% = 0.25)
         efficacy = efficacy_percent / 100.0
 
+        # Calculate performance (0.0-1.0) based on final currency
+        # 0 currency = 0.0 performance, 100 = 0.5, 200+ = 1.0
+        performance = min(1.0, max(0.0, self.current_currency / 200.0))
+
+        # Apply first-try bonus
+        if self.attempt == 1:
+            performance = min(1.0, performance + 0.10)
+
+        # Calculate rewards using centralized calculator
+        try:
+            from core.reward_calculator import calculate_enchanting_rewards
+            rewards = calculate_enchanting_rewards(
+                getattr(self, 'difficulty_points', 10),
+                performance,
+                efficacy=efficacy
+            )
+        except ImportError:
+            # Fallback to basic rewards
+            rewards = {
+                'quality_tier': 'common',
+                'xp_multiplier': 1.0,
+                'rarity_upgrade_chance': 0.0,
+                'bonus_output_chance': 0.0
+            }
+
         self.result = {
             "success": True,  # Always succeeds (but efficacy can be negative)
             "efficacy": efficacy,
             "efficacy_percent": efficacy_percent,
+            "performance": performance,
             "final_currency": self.current_currency,
             "currency_diff": currency_diff,
             "spin_results": self.spin_results,
+            "difficulty_points": getattr(self, 'difficulty_points', 0),
+            "difficulty_tier": getattr(self, 'difficulty_tier', 'common'),
+            "rewards": rewards,
             "message": f"Minigame complete! Efficacy: {efficacy_percent:+.1f}%"
         }
 
@@ -1103,13 +1204,17 @@ class EnchantingCrafter:
 
         return shapes
 
-    def create_minigame(self, recipe_id, target_item=None):
+    def create_minigame(self, recipe_id, target_item=None, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
-        Create an enchanting minigame for this recipe
+        Create an enchanting minigame for this recipe.
+
+        Difficulty is now calculated from material tier points, not station tier.
 
         Args:
             recipe_id: Recipe ID to craft
             target_item: Item to enchant (can be None for accessories)
+            buff_time_bonus: Skill buff bonus (0.0-1.0+)
+            buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
 
         Returns:
             SpinningWheelMinigame instance or None
@@ -1118,30 +1223,35 @@ class EnchantingCrafter:
             return None
 
         recipe = self.recipes[recipe_id]
-        tier = recipe.get('stationTier', 1)
 
-        # Create spinning wheel minigame
-        return SpinningWheelMinigame(recipe, tier, target_item)
+        # Pass full recipe - difficulty calculated from material inputs
+        return SpinningWheelMinigame(recipe, buff_time_bonus, buff_quality_bonus, target_item)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result, target_item=None, item_metadata=None):
         """
-        Craft with minigame result - apply enchantment with rarity
+        Craft with minigame result - apply enchantment with rarity and rewards.
+
+        Note: Enchanting minigame always succeeds (spinning wheel), but efficacy
+        can be negative. Materials are always consumed.
 
         Args:
             recipe_id: Recipe ID to craft
             inventory: Dict of {material_id: quantity} (will be modified)
-            minigame_result: Result dict from PatternMatchingMinigame
+            minigame_result: Result dict from SpinningWheelMinigame
             target_item: Item to enchant (modified in place)
             item_metadata: Optional dict of item metadata
 
         Returns:
-            dict: Result with success, enchantment details, rarity
+            dict: Result with success, enchantment details, rarity, rewards
         """
         recipe = self.recipes[recipe_id]
 
         # Detect input rarity before consuming materials
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+
+        # Get difficulty tier from minigame result
+        difficulty_tier = minigame_result.get('difficulty_tier', 'common')
 
         # Always consume materials (even on failure)
         for inp in recipe['inputs']:
@@ -1153,17 +1263,20 @@ class EnchantingCrafter:
                 "success": False,
                 "message": minigame_result.get('message'),
                 "errors": minigame_result.get('errors', []),
-                "materials_lost": True
+                "materials_lost": True,
+                "difficulty_tier": difficulty_tier
             }
 
         # Success - apply enchantment with efficacy from minigame
         # Efficacy ranges from -0.5 to +0.5 (-50% to +50%)
         efficacy = minigame_result.get('efficacy', 0.0)
         efficacy_percent = minigame_result.get('efficacy_percent', 0.0)
+        performance = minigame_result.get('performance', 0.5)
+        rewards = minigame_result.get('rewards', {})
 
-        # Base bonus from tier
-        tier = recipe.get('stationTier', 1)
-        base_bonus = tier * 5  # T1=5%, T2=10%, T3=15%, T4=20%
+        # Base bonus from difficulty points (not just tier)
+        difficulty_points = minigame_result.get('difficulty_points', 10)
+        base_bonus = max(5, int(difficulty_points / 3))  # Scale with difficulty
 
         # Apply rarity modifier to base
         rarity_multipliers = {
@@ -1192,7 +1305,8 @@ class EnchantingCrafter:
             "bonus_magnitude": final_bonus,
             "efficacy": efficacy,
             "efficacy_percent": efficacy_percent,
-            "rarity": input_rarity
+            "rarity": input_rarity,
+            "difficulty_tier": difficulty_tier
         }
 
         if target_item:
@@ -1210,14 +1324,18 @@ class EnchantingCrafter:
                     "message": f"{input_rarity.capitalize()} {enchantment_name} applied to {target_item.name}! (Efficacy: {efficacy_percent:+.1f}%)",
                     "enchantment": enchantment_data,
                     "enchanted_item": target_item,
-                    "rarity": input_rarity
+                    "rarity": input_rarity,
+                    "performance": performance,
+                    "difficulty_tier": difficulty_tier,
+                    "rewards": rewards
                 }
             else:
                 # Enchantment failed (e.g., tier protection, duplicate, etc.)
                 return {
                     "success": False,
                     "message": f"Failed to apply enchantment: {message}",
-                    "rarity": input_rarity
+                    "rarity": input_rarity,
+                    "difficulty_tier": difficulty_tier
                 }
         else:
             # Create new enchanted accessory
@@ -1228,7 +1346,10 @@ class EnchantingCrafter:
                 "enchantmentName": enchantment_name,
                 "message": f"Created {input_rarity} {enchantment_name}",
                 "enchantment": enchantment_data,
-                "rarity": input_rarity
+                "rarity": input_rarity,
+                "performance": performance,
+                "difficulty_tier": difficulty_tier,
+                "rewards": rewards
             }
 
     def get_recipe(self, recipe_id):

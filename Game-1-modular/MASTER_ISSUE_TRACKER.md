@@ -458,7 +458,7 @@ These mechanics are documented but have NO code implementation:
 
 **Plan Document**: `docs/CRAFTING_UI_MINIGAME_OVERHAUL_PLAN.md`
 **Created**: January 4, 2026
-**Status**: Phase 1 Complete - Phase 2 In Progress
+**Status**: Phase 1 & 2 Complete - Phase 3 (Polish/Balance) Pending
 
 ### Overview
 
@@ -472,8 +472,8 @@ Major overhaul of crafting system with:
 | Phase | Description | Status |
 |-------|-------------|--------|
 | 1 | Foundation + Smithing + Refining | ✅ **COMPLETE** |
-| 2 | Alchemy + Engineering + Enchanting | 🔄 In Progress |
-| 3 | Polish & balance tuning | Pending |
+| 2 | Alchemy + Engineering + Enchanting | ✅ **COMPLETE** |
+| 3 | Polish & balance tuning | 🔜 Pending Playtest |
 
 ### Phase 1 Completed Items
 
@@ -486,6 +486,18 @@ Major overhaul of crafting system with:
 - ✅ Rarity-named difficulty thresholds (Common → Legendary)
 - ✅ Tier-scaled failure penalties (30% → 90%)
 
+### Phase 2 Completed Items
+
+- ✅ Alchemy: Vowel-based volatility + `1.2^avg_tier` modifier
+- ✅ Alchemy: Ingredient-type visual indicators (base/catalyst/reactive)
+- ✅ Alchemy: Reward calculator integration with first-try bonus
+- ✅ Engineering: Slot count × diversity formula
+- ✅ Engineering: Rarity-based puzzle selection (common→legendary)
+- ✅ Engineering: Reward calculator with puzzle completion scoring
+- ✅ Enchanting: Material-based wheel distribution (green/red slices)
+- ✅ Enchanting: Spin-progressive difficulty (later spins harder)
+- ✅ Enchanting: Reward calculator with efficacy-based bonuses
+
 ### BALANCE TUNING REQUIRED (Post-Implementation)
 
 | Item | Issue | Priority |
@@ -495,7 +507,7 @@ Major overhaul of crafting system with:
 | **Timing windows** | May need further tightening for challenge | MEDIUM |
 | **Quality tier thresholds** | May need adjustment for rarity feel | MEDIUM |
 
-*Note: Balance tuning deferred until all disciplines implemented and playtested*
+*Note: Balance tuning deferred until all disciplines implemented and playtested (Phase 3)*
 
 ### DEFERRED Items (Tracked Here)
 
@@ -536,14 +548,14 @@ Major overhaul of crafting system with:
 
 | File | Status |
 |------|--------|
-| `core/difficulty_calculator.py` | ✅ Created |
-| `core/reward_calculator.py` | ✅ Created |
-| `Crafting-subdisciplines/smithing.py` | ✅ Updated |
-| `Crafting-subdisciplines/refining.py` | ✅ Updated |
+| `core/difficulty_calculator.py` | ✅ Created + Phase 2 functions |
+| `core/reward_calculator.py` | ✅ Created + Phase 2 functions |
+| `Crafting-subdisciplines/smithing.py` | ✅ Updated (Phase 1) |
+| `Crafting-subdisciplines/refining.py` | ✅ Updated (Phase 1) |
 | `core/game_engine.py` | ✅ Updated (visual polish) |
-| `Crafting-subdisciplines/alchemy.py` | 🔄 Phase 2 |
-| `Crafting-subdisciplines/engineering.py` | 🔄 Phase 2 |
-| `Crafting-subdisciplines/enchanting.py` | 🔄 Phase 2 |
+| `Crafting-subdisciplines/alchemy.py` | ✅ Updated (Phase 2) |
+| `Crafting-subdisciplines/engineering.py` | ✅ Updated (Phase 2) |
+| `Crafting-subdisciplines/enchanting.py` | ✅ Updated (Phase 2) |
 
 ---
 
