@@ -7,13 +7,20 @@ tier point values, replacing the previous tier-only system.
 Core Principle:
     Difficulty = f(material_tiers, material_count, discipline_modifiers)
 
-Material Point System:
-    - Each material contributes: 2^(tier-1) * quantity
-    - T1: 1 point, T2: 2 points, T3: 4 points, T4: 8 points per item
+Material Point System (Linear):
+    - Each material contributes: tier * quantity
+    - T1: 1 point, T2: 2 points, T3: 3 points, T4: 4 points per item
 
 Diversity Multiplier (for Refining, Alchemy, Engineering):
     - More unique materials = higher difficulty
     - Formula: 1.0 + (unique_count - 1) * 0.1
+
+Difficulty Tiers (match rarity naming):
+    - Common (1-8 points): Basic single-material recipes
+    - Uncommon (9-20 points): Multi-material or T2 recipes
+    - Rare (21-40 points): Complex T3 recipes
+    - Epic (41-70 points): High-tier multi-material recipes
+    - Legendary (71+ points): Extreme T4 complex recipes
 """
 
 from typing import Dict, List, Tuple, Optional
@@ -24,39 +31,81 @@ from dataclasses import dataclass
 # CONSTANTS
 # =============================================================================
 
-# Tier point values (exponential scaling)
+# Tier point values (LINEAR scaling as requested)
 TIER_POINTS = {
-    1: 1,   # 2^0 = 1
-    2: 2,   # 2^1 = 2
-    3: 4,   # 2^2 = 4
-    4: 8,   # 2^3 = 8
+    1: 1,   # T1 = 1 point per item
+    2: 2,   # T2 = 2 points per item
+    3: 3,   # T3 = 3 points per item
+    4: 4,   # T4 = 4 points per item
 }
 
-# Difficulty scaling ranges
+# Difficulty thresholds (matching rarity naming)
+DIFFICULTY_THRESHOLDS = {
+    'common': (0, 8),       # Easy beginner recipes
+    'uncommon': (9, 20),    # Moderate challenge
+    'rare': (21, 40),       # Skilled crafters
+    'epic': (41, 70),       # Expert level
+    'legendary': (71, 150), # Master crafters only
+}
+
+# Default scaling range for interpolation
 DIFFICULTY_RANGES = {
-    'min_points': 1.0,    # Single T1 material
-    'max_points': 100.0,  # Large T4 recipe
+    'min_points': 1.0,      # Single T1 material
+    'max_points': 80.0,     # Adjusted for linear scaling (was 100 for exponential)
 }
 
-# Smithing parameter ranges (easy_value, hard_value)
+
+# =============================================================================
+# SMITHING PARAMETERS - Forge/Anvil minigame
+# =============================================================================
+
 SMITHING_PARAMS = {
-    'time_limit': (60, 20),
-    'temp_ideal_range': (30, 2),
-    'temp_decay_rate': (0.3, 1.5),
-    'temp_fan_increment': (4, 1),
-    'required_hits': (3, 15),
-    'target_width': (120, 30),
-    'perfect_width': (60, 10),
-    'hammer_speed': (2.0, 7.0),
+    # Time limit: generous at low difficulty, tight at high
+    'time_limit': (60, 25),
+
+    # Temperature ideal range: wide at low difficulty, narrow at high
+    'temp_ideal_range': (25, 5),  # Degrees of acceptable range
+
+    # Temperature decay: slow at low, fast at high
+    'temp_decay_rate': (0.3, 1.2),
+
+    # Fan increment: big boost at low, small at high
+    'temp_fan_increment': (4, 1.5),
+
+    # Required hammer hits
+    'required_hits': (3, 12),
+
+    # Target zone width (pixels) - where hits count
+    'target_width': (100, 35),
+
+    # Perfect zone width (pixels) - for bonus score
+    'perfect_width': (50, 12),
+
+    # Hammer oscillation speed
+    'hammer_speed': (2.0, 6.0),
 }
 
-# Refining parameter ranges (easy_value, hard_value)
+
+# =============================================================================
+# REFINING PARAMETERS - Lock/Tumbler minigame (MADE HARDER)
+# =============================================================================
+
 REFINING_PARAMS = {
-    'time_limit': (60, 10),
-    'cylinder_count': (2, 18),
-    'timing_window': (1.2, 0.15),
-    'rotation_speed': (0.8, 3.0),
-    'allowed_failures': (3, 0),
+    # Time limit: reasonable at low, tight at high
+    'time_limit': (45, 15),
+
+    # Cylinder count: few at low, MANY at high (can go past 3!)
+    'cylinder_count': (3, 12),
+
+    # Timing window in SECONDS - this was too large before!
+    # Now: 0.4s at easy (still requires timing), 0.08s at hard (very precise)
+    'timing_window': (0.4, 0.08),
+
+    # Rotation speed: slow at low, fast at high
+    'rotation_speed': (0.6, 2.5),
+
+    # Allowed failures: forgiving at low, zero tolerance at high
+    'allowed_failures': (2, 0),
 }
 
 
@@ -68,11 +117,11 @@ def calculate_material_points(inputs: List[Dict]) -> float:
     """
     Calculate total difficulty points from recipe inputs.
 
-    Each material contributes: 2^(tier-1) * quantity
+    Each material contributes: tier * quantity (LINEAR)
     - T1: 1 point per item
     - T2: 2 points per item
-    - T3: 4 points per item
-    - T4: 8 points per item
+    - T3: 3 points per item
+    - T4: 4 points per item
 
     Args:
         inputs: List of {'materialId': str, 'quantity': int}
@@ -105,8 +154,8 @@ def calculate_material_points(inputs: List[Dict]) -> float:
             if material:
                 tier = material.tier
 
-        # Calculate points: 2^(tier-1) * quantity
-        tier_points = TIER_POINTS.get(tier, 2 ** (tier - 1))
+        # Calculate points: tier * quantity (LINEAR)
+        tier_points = TIER_POINTS.get(tier, tier)
         total_points += tier_points * quantity
 
     return max(1.0, total_points)
@@ -199,20 +248,11 @@ def interpolate_difficulty(
     Args:
         points: Calculated difficulty points
         param_ranges: Dict of {param_name: (easy_value, hard_value)}
-        min_points: Points value for easiest difficulty (default from DIFFICULTY_RANGES)
-        max_points: Points value for hardest difficulty (default from DIFFICULTY_RANGES)
+        min_points: Points value for easiest difficulty
+        max_points: Points value for hardest difficulty
 
     Returns:
         Dict of {param_name: interpolated_value}
-
-    Example:
-        param_ranges = {
-            'time_limit': (60, 20),
-            'required_hits': (3, 15),
-        }
-        points = 50  # Middle difficulty
-
-        Result: {'time_limit': 40, 'required_hits': 9}
     """
     if min_points is None:
         min_points = DIFFICULTY_RANGES['min_points']
@@ -246,27 +286,26 @@ def calculate_smithing_difficulty(recipe: Dict) -> Dict:
     """
     inputs = recipe.get('inputs', [])
 
-    # Calculate base points
-    base_points = calculate_material_points(inputs)
-
-    # Smithing doesn't use diversity multiplier
-    total_points = base_points
+    # Calculate base points (no diversity for smithing)
+    total_points = calculate_material_points(inputs)
 
     # Interpolate parameters
     params = interpolate_difficulty(total_points, SMITHING_PARAMS)
 
     # Convert temp_ideal_range to min/max values
-    # Range is centered at 50 (neutral temperature)
+    # Ideal zone centered around 70°C
     temp_range = params['temp_ideal_range']
-    params['temp_ideal_min'] = 50 + int((100 - temp_range) / 2) - 25
-    params['temp_ideal_max'] = 50 + int((100 + temp_range) / 2) - 25
+    center_temp = 70
+    params['temp_ideal_min'] = center_temp - temp_range / 2
+    params['temp_ideal_max'] = center_temp + temp_range / 2
 
-    # Clamp values to sensible ranges
-    params['temp_ideal_min'] = max(50, min(75, params['temp_ideal_min']))
-    params['temp_ideal_max'] = max(params['temp_ideal_min'] + 2, min(90, params['temp_ideal_max']))
+    # Ensure reasonable bounds
+    params['temp_ideal_min'] = max(55, min(75, params['temp_ideal_min']))
+    params['temp_ideal_max'] = max(params['temp_ideal_min'] + 3, min(85, params['temp_ideal_max']))
 
     # Add metadata
     params['difficulty_points'] = total_points
+    params['difficulty_tier'] = get_difficulty_tier(total_points)
     params['tier_fallback'] = recipe.get('stationTier', 1)
 
     return params
@@ -298,12 +337,14 @@ def calculate_refining_difficulty(recipe: Dict) -> Dict:
     # Round integer parameters
     params['cylinder_count'] = max(2, int(round(params['cylinder_count'])))
     params['allowed_failures'] = max(0, int(round(params['allowed_failures'])))
+    params['time_limit'] = int(round(params['time_limit']))
 
-    # Enable multi-speed for high difficulty
-    params['multi_speed'] = total_points >= 60
+    # Enable multi-speed for Rare+ difficulty
+    params['multi_speed'] = total_points >= DIFFICULTY_THRESHOLDS['rare'][0]
 
     # Add metadata
     params['difficulty_points'] = total_points
+    params['difficulty_tier'] = get_difficulty_tier(total_points)
     params['diversity_multiplier'] = diversity_mult
     params['tier_fallback'] = recipe.get('stationTier', 1)
 
@@ -321,28 +362,28 @@ def get_legacy_smithing_params(tier: int) -> Dict:
     """
     tier_configs = {
         1: {
-            'time_limit': 45, 'temp_ideal_min': 60, 'temp_ideal_max': 80,
-            'temp_decay_rate': 0.5, 'temp_fan_increment': 3, 'required_hits': 5,
-            'target_width': 100, 'perfect_width': 40, 'hammer_speed': 2.5,
-            'difficulty_points': 5
+            'time_limit': 50, 'temp_ideal_min': 60, 'temp_ideal_max': 80,
+            'temp_decay_rate': 0.4, 'temp_fan_increment': 3.5, 'required_hits': 4,
+            'target_width': 90, 'perfect_width': 40, 'hammer_speed': 2.5,
+            'difficulty_points': 4, 'difficulty_tier': 'common'
         },
         2: {
-            'time_limit': 40, 'temp_ideal_min': 65, 'temp_ideal_max': 75,
-            'temp_decay_rate': 0.7, 'temp_fan_increment': 2.5, 'required_hits': 7,
-            'target_width': 80, 'perfect_width': 30, 'hammer_speed': 3.5,
-            'difficulty_points': 20
+            'time_limit': 40, 'temp_ideal_min': 62, 'temp_ideal_max': 78,
+            'temp_decay_rate': 0.6, 'temp_fan_increment': 2.8, 'required_hits': 6,
+            'target_width': 70, 'perfect_width': 30, 'hammer_speed': 3.5,
+            'difficulty_points': 12, 'difficulty_tier': 'uncommon'
         },
         3: {
-            'time_limit': 35, 'temp_ideal_min': 68, 'temp_ideal_max': 72,
+            'time_limit': 32, 'temp_ideal_min': 66, 'temp_ideal_max': 74,
             'temp_decay_rate': 0.9, 'temp_fan_increment': 2, 'required_hits': 9,
-            'target_width': 60, 'perfect_width': 20, 'hammer_speed': 4.5,
-            'difficulty_points': 50
+            'target_width': 50, 'perfect_width': 18, 'hammer_speed': 4.8,
+            'difficulty_points': 30, 'difficulty_tier': 'rare'
         },
         4: {
-            'time_limit': 30, 'temp_ideal_min': 69, 'temp_ideal_max': 71,
-            'temp_decay_rate': 1.1, 'temp_fan_increment': 1.5, 'required_hits': 12,
-            'target_width': 40, 'perfect_width': 15, 'hammer_speed': 5.5,
-            'difficulty_points': 80
+            'time_limit': 25, 'temp_ideal_min': 68, 'temp_ideal_max': 72,
+            'temp_decay_rate': 1.1, 'temp_fan_increment': 1.5, 'required_hits': 11,
+            'target_width': 38, 'perfect_width': 14, 'hammer_speed': 5.8,
+            'difficulty_points': 60, 'difficulty_tier': 'epic'
         },
     }
     return tier_configs.get(tier, tier_configs[1])
@@ -355,24 +396,24 @@ def get_legacy_refining_params(tier: int) -> Dict:
     """
     tier_configs = {
         1: {
-            'time_limit': 45, 'cylinder_count': 3, 'timing_window': 0.8,
-            'rotation_speed': 1.0, 'allowed_failures': 2, 'multi_speed': False,
-            'difficulty_points': 5, 'diversity_multiplier': 1.0
+            'time_limit': 40, 'cylinder_count': 3, 'timing_window': 0.35,
+            'rotation_speed': 0.7, 'allowed_failures': 2, 'multi_speed': False,
+            'difficulty_points': 4, 'difficulty_tier': 'common', 'diversity_multiplier': 1.0
         },
         2: {
-            'time_limit': 30, 'cylinder_count': 6, 'timing_window': 0.5,
-            'rotation_speed': 1.3, 'allowed_failures': 1, 'multi_speed': False,
-            'difficulty_points': 20, 'diversity_multiplier': 1.0
+            'time_limit': 30, 'cylinder_count': 5, 'timing_window': 0.25,
+            'rotation_speed': 1.0, 'allowed_failures': 1, 'multi_speed': False,
+            'difficulty_points': 12, 'difficulty_tier': 'uncommon', 'diversity_multiplier': 1.0
         },
         3: {
-            'time_limit': 20, 'cylinder_count': 10, 'timing_window': 0.3,
-            'rotation_speed': 1.6, 'allowed_failures': 0, 'multi_speed': False,
-            'difficulty_points': 50, 'diversity_multiplier': 1.0
+            'time_limit': 22, 'cylinder_count': 8, 'timing_window': 0.15,
+            'rotation_speed': 1.5, 'allowed_failures': 1, 'multi_speed': True,
+            'difficulty_points': 30, 'difficulty_tier': 'rare', 'diversity_multiplier': 1.0
         },
         4: {
-            'time_limit': 15, 'cylinder_count': 15, 'timing_window': 0.2,
+            'time_limit': 18, 'cylinder_count': 10, 'timing_window': 0.10,
             'rotation_speed': 2.0, 'allowed_failures': 0, 'multi_speed': True,
-            'difficulty_points': 80, 'diversity_multiplier': 1.0
+            'difficulty_points': 60, 'difficulty_tier': 'epic', 'diversity_multiplier': 1.0
         },
     }
     return tier_configs.get(tier, tier_configs[1])
@@ -382,26 +423,38 @@ def get_legacy_refining_params(tier: int) -> Dict:
 # UTILITY FUNCTIONS
 # =============================================================================
 
-def get_difficulty_description(points: float) -> str:
+def get_difficulty_tier(points: float) -> str:
     """
-    Get a human-readable difficulty description.
+    Get the rarity-style difficulty tier name.
 
     Args:
         points: Difficulty points
 
     Returns:
-        Description string (e.g., "Easy", "Moderate", "Hard", "Extreme")
+        Tier name: 'common', 'uncommon', 'rare', 'epic', or 'legendary'
     """
-    if points < 10:
-        return "Easy"
-    elif points < 30:
-        return "Moderate"
-    elif points < 60:
-        return "Hard"
-    elif points < 90:
-        return "Very Hard"
-    else:
-        return "Extreme"
+    for tier_name, (min_pts, max_pts) in DIFFICULTY_THRESHOLDS.items():
+        if min_pts <= points <= max_pts:
+            return tier_name
+
+    # If above all thresholds, it's legendary
+    if points > DIFFICULTY_THRESHOLDS['legendary'][1]:
+        return 'legendary'
+
+    return 'common'
+
+
+def get_difficulty_description(points: float) -> str:
+    """
+    Get a human-readable difficulty description (capitalized tier name).
+
+    Args:
+        points: Difficulty points
+
+    Returns:
+        Description string (e.g., "Common", "Rare", "Legendary")
+    """
+    return get_difficulty_tier(points).capitalize()
 
 
 def estimate_completion_time(points: float, discipline: str) -> int:
@@ -421,7 +474,7 @@ def estimate_completion_time(points: float, discipline: str) -> int:
         return int(params['time_limit'] * 0.8)
     elif discipline == 'refining':
         params = interpolate_difficulty(points, REFINING_PARAMS)
-        # Refining time = cylinders * ~3 seconds each
-        return int(params['cylinder_count'] * 3)
+        # Refining time = cylinders * ~2.5 seconds each
+        return int(params['cylinder_count'] * 2.5)
     else:
         return 30  # Default estimate

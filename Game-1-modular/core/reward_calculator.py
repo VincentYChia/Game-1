@@ -19,9 +19,10 @@ from typing import Dict, Tuple, Optional
 # =============================================================================
 
 # Difficulty scaling ranges (for max reward calculation)
+# Aligned with linear tier system: T1=1, T2=2, T3=3, T4=4
 DIFFICULTY_RANGES = {
     'min_points': 1.0,    # Single T1 material
-    'max_points': 100.0,  # Large T4 recipe
+    'max_points': 80.0,   # Adjusted for linear scaling (e.g., 20x T4 materials)
 }
 
 # Reward multiplier range

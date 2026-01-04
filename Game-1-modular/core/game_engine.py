@@ -3173,7 +3173,7 @@ class GameEngine:
                 # Normal crafting - add output to inventory with minigame bonuses
                 output_id = craft_result.get('outputId', recipe.output_id)
                 output_qty = craft_result.get('quantity', recipe.output_qty)
-                rarity = craft_result.get('rarity', 'common')
+                rarity = craft_result.get('rarity') or 'common'  # Ensure not None
                 stats = craft_result.get('stats', {})
                 bonus_pct = craft_result.get('bonus', 0)
 
