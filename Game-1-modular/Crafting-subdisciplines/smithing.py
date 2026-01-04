@@ -28,26 +28,29 @@ class SmithingMinigame:
     - Click HAMMER button: Execute hammer strike when indicator is in target zone
 
     Goal: Maintain ideal temperature while hitting perfect timing on hammer strikes
+
+    Difficulty System (v2):
+    - Difficulty calculated from material tier point values
+    - Each material: 2^(tier-1) * quantity points
+    - Higher points = harder minigame = better potential rewards
     """
 
-    def __init__(self, recipe, tier=1, buff_time_bonus=0.0, buff_quality_bonus=0.0):
+    def __init__(self, recipe, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
         Initialize smithing minigame
 
         Args:
-            recipe: Recipe dict from JSON
-            tier: Recipe tier (1-4) - affects difficulty
+            recipe: Recipe dict from JSON (includes inputs for difficulty calculation)
             buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
             buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
         """
         self.recipe = recipe
-        self.tier = tier
         self.buff_time_bonus = buff_time_bonus
         self.buff_quality_bonus = buff_quality_bonus
+        self.attempt = 1  # Track attempt number for first-try bonus
 
-        # Difficulty scaling based on tier
-        # NOTE: Future updates may include additional factors (tier + X + Y = difficulty)
-        self._setup_difficulty()
+        # Calculate difficulty from materials using new system
+        self._setup_difficulty_from_materials()
 
         # Apply skill buff bonuses to time limit
         if self.buff_time_bonus > 0:
@@ -65,56 +68,90 @@ class SmithingMinigame:
         self.last_temp_update = 0
         self.result = None
 
-    def _setup_difficulty(self):
+    def _setup_difficulty_from_materials(self):
         """
-        Setup difficulty parameters based on tier
+        Setup difficulty parameters based on material tier point values.
 
-        NOTE: Difficulty formula may be expanded in future updates
-        Currently: tier-based only
-        Future: tier + material_complexity + recipe_size + etc.
+        Uses core.difficulty_calculator for centralized calculation.
+        Falls back to legacy tier-based system if calculator unavailable.
         """
-        # Temperature params
-        if self.tier == 1:
-            self.TEMP_IDEAL_MIN = 60
-            self.TEMP_IDEAL_MAX = 80
-            self.TEMP_DECAY = 0.5
-            self.TEMP_FAN_INCREMENT = 3
-            self.HAMMER_SPEED = 2.5
-            self.REQUIRED_HITS = 5
-            self.TARGET_WIDTH = 100
-            self.PERFECT_WIDTH = 40
-            self.time_limit = 45
-        elif self.tier == 2:
-            self.TEMP_IDEAL_MIN = 65
-            self.TEMP_IDEAL_MAX = 75
-            self.TEMP_DECAY = 0.7
-            self.TEMP_FAN_INCREMENT = 2.5
-            self.HAMMER_SPEED = 3.5
-            self.REQUIRED_HITS = 7
-            self.TARGET_WIDTH = 80
-            self.PERFECT_WIDTH = 30
-            self.time_limit = 40
-        elif self.tier == 3:
-            self.TEMP_IDEAL_MIN = 68
-            self.TEMP_IDEAL_MAX = 72
-            self.TEMP_DECAY = 0.9
-            self.TEMP_FAN_INCREMENT = 2
-            self.HAMMER_SPEED = 4.5
-            self.REQUIRED_HITS = 9
-            self.TARGET_WIDTH = 60
-            self.PERFECT_WIDTH = 20
-            self.time_limit = 35
-        else:  # tier 4
-            self.TEMP_IDEAL_MIN = 69
-            self.TEMP_IDEAL_MAX = 71
-            self.TEMP_DECAY = 1.1
-            self.TEMP_FAN_INCREMENT = 1.5
-            self.HAMMER_SPEED = 5.5
-            self.REQUIRED_HITS = 12
-            self.TARGET_WIDTH = 40
-            self.PERFECT_WIDTH = 15
-            self.time_limit = 30
+        try:
+            from core.difficulty_calculator import (
+                calculate_smithing_difficulty,
+                get_legacy_smithing_params,
+                get_difficulty_description
+            )
 
+            # Calculate difficulty from recipe materials
+            params = calculate_smithing_difficulty(self.recipe)
+
+            # Store difficulty points for reward calculation
+            self.difficulty_points = params['difficulty_points']
+
+            # Apply parameters
+            self.TEMP_IDEAL_MIN = int(params['temp_ideal_min'])
+            self.TEMP_IDEAL_MAX = int(params['temp_ideal_max'])
+            self.TEMP_DECAY = params['temp_decay_rate']
+            self.TEMP_FAN_INCREMENT = params['temp_fan_increment']
+            self.HAMMER_SPEED = params['hammer_speed']
+            self.REQUIRED_HITS = int(params['required_hits'])
+            self.TARGET_WIDTH = int(params['target_width'])
+            self.PERFECT_WIDTH = int(params['perfect_width'])
+            self.time_limit = int(params['time_limit'])
+            self.HAMMER_BAR_WIDTH = 400
+
+            # Log difficulty info
+            difficulty_desc = get_difficulty_description(self.difficulty_points)
+            print(f"🔥 Smithing difficulty: {difficulty_desc} ({self.difficulty_points:.1f} points)")
+            print(f"   Hits: {self.REQUIRED_HITS}, Target: {self.TARGET_WIDTH}px, Time: {self.time_limit}s")
+
+        except ImportError:
+            # Fallback to legacy tier-based system
+            print("⚠️ Difficulty calculator not available, using legacy tier system")
+            self._setup_difficulty_legacy()
+
+    def _setup_difficulty_legacy(self):
+        """
+        Legacy difficulty setup based on station tier only.
+        Used as fallback when difficulty_calculator is unavailable.
+        """
+        tier = self.recipe.get('stationTier', 1)
+
+        try:
+            from core.difficulty_calculator import get_legacy_smithing_params
+            params = get_legacy_smithing_params(tier)
+        except ImportError:
+            # Hardcoded fallback
+            tier_configs = {
+                1: {'time_limit': 45, 'temp_ideal_min': 60, 'temp_ideal_max': 80,
+                    'temp_decay_rate': 0.5, 'temp_fan_increment': 3, 'required_hits': 5,
+                    'target_width': 100, 'perfect_width': 40, 'hammer_speed': 2.5,
+                    'difficulty_points': 5},
+                2: {'time_limit': 40, 'temp_ideal_min': 65, 'temp_ideal_max': 75,
+                    'temp_decay_rate': 0.7, 'temp_fan_increment': 2.5, 'required_hits': 7,
+                    'target_width': 80, 'perfect_width': 30, 'hammer_speed': 3.5,
+                    'difficulty_points': 20},
+                3: {'time_limit': 35, 'temp_ideal_min': 68, 'temp_ideal_max': 72,
+                    'temp_decay_rate': 0.9, 'temp_fan_increment': 2, 'required_hits': 9,
+                    'target_width': 60, 'perfect_width': 20, 'hammer_speed': 4.5,
+                    'difficulty_points': 50},
+                4: {'time_limit': 30, 'temp_ideal_min': 69, 'temp_ideal_max': 71,
+                    'temp_decay_rate': 1.1, 'temp_fan_increment': 1.5, 'required_hits': 12,
+                    'target_width': 40, 'perfect_width': 15, 'hammer_speed': 5.5,
+                    'difficulty_points': 80},
+            }
+            params = tier_configs.get(tier, tier_configs[1])
+
+        self.difficulty_points = params.get('difficulty_points', tier * 20)
+        self.TEMP_IDEAL_MIN = params.get('temp_ideal_min', 60)
+        self.TEMP_IDEAL_MAX = params.get('temp_ideal_max', 80)
+        self.TEMP_DECAY = params.get('temp_decay_rate', 0.5)
+        self.TEMP_FAN_INCREMENT = params.get('temp_fan_increment', 3)
+        self.HAMMER_SPEED = params.get('hammer_speed', 2.5)
+        self.REQUIRED_HITS = params.get('required_hits', 5)
+        self.TARGET_WIDTH = params.get('target_width', 100)
+        self.PERFECT_WIDTH = params.get('perfect_width', 40)
+        self.time_limit = params.get('time_limit', 45)
         self.HAMMER_BAR_WIDTH = 400
 
     def start(self):
@@ -187,7 +224,7 @@ class SmithingMinigame:
 
     def end(self, completed, reason=None):
         """
-        End the minigame and calculate results
+        End the minigame and calculate results using reward calculator.
 
         Args:
             completed: Whether all hammer hits were completed
@@ -200,42 +237,86 @@ class SmithingMinigame:
                 "success": False,
                 "message": reason or "Failed to complete",
                 "score": 0,
-                "bonus": 0
+                "bonus": 0,
+                "difficulty_points": self.difficulty_points
             }
             return
 
-        # Calculate score
+        # Calculate performance metrics
         avg_hammer_score = sum(self.hammer_scores) / len(self.hammer_scores) if self.hammer_scores else 0
-
-        # Temperature multiplier
         in_ideal_range = self.TEMP_IDEAL_MIN <= self.temperature <= self.TEMP_IDEAL_MAX
-        temp_mult = 1.5 if in_ideal_range else 1.0
+        temp_mult = 1.2 if in_ideal_range else 1.0
 
         final_score = avg_hammer_score * temp_mult
 
-        # Bonus stats based on score
-        if final_score >= 140:
-            bonus = 15  # +15% bonus stats
-        elif final_score >= 100:
-            bonus = 10  # +10% bonus stats
-        elif final_score >= 70:
-            bonus = 5   # +5% bonus stats
-        else:
-            bonus = 0   # Base stats only
+        # Use reward calculator for scaling bonuses
+        try:
+            from core.reward_calculator import calculate_smithing_rewards
 
-        # Apply skill buff quality bonus (empower/elevate)
-        if self.buff_quality_bonus > 0:
-            bonus += int(self.buff_quality_bonus * 10)  # Convert 0.5 bonus to +5% stats
-            print(f"⚡ Quality buff applied: +{int(self.buff_quality_bonus * 10)}% bonus (total: {bonus}%)")
+            rewards = calculate_smithing_rewards(
+                self.difficulty_points,
+                {
+                    'avg_hammer_score': avg_hammer_score,
+                    'temp_in_ideal': in_ideal_range,
+                    'attempt': self.attempt
+                }
+            )
 
-        self.result = {
-            "success": True,
-            "score": final_score,
-            "bonus": bonus,
-            "temp_mult": temp_mult,
-            "avg_hammer": avg_hammer_score,
-            "message": f"Crafted with {bonus}% bonus!"
-        }
+            bonus = rewards['bonus_pct']
+            quality_tier = rewards['quality_tier']
+            stat_multiplier = rewards['stat_multiplier']
+            first_try_eligible = rewards['first_try_eligible']
+
+            # Apply skill buff quality bonus (empower/elevate)
+            if self.buff_quality_bonus > 0:
+                buff_bonus = int(self.buff_quality_bonus * 10)
+                bonus += buff_bonus
+                print(f"⚡ Quality buff applied: +{buff_bonus}% bonus (total: {bonus}%)")
+
+            # Log reward info
+            print(f"🎯 Smithing result: {quality_tier} (+{bonus}%)")
+            if first_try_eligible:
+                print(f"   ✨ First-try bonus eligible!")
+
+            self.result = {
+                "success": True,
+                "score": final_score,
+                "bonus": bonus,
+                "quality_tier": quality_tier,
+                "stat_multiplier": stat_multiplier,
+                "temp_mult": temp_mult,
+                "avg_hammer": avg_hammer_score,
+                "difficulty_points": self.difficulty_points,
+                "first_try_eligible": first_try_eligible,
+                "message": f"Crafted {quality_tier} item with +{bonus}% bonus!"
+            }
+
+        except ImportError:
+            # Fallback to legacy calculation
+            if final_score >= 140:
+                bonus = 15
+            elif final_score >= 100:
+                bonus = 10
+            elif final_score >= 70:
+                bonus = 5
+            else:
+                bonus = 0
+
+            if self.buff_quality_bonus > 0:
+                bonus += int(self.buff_quality_bonus * 10)
+
+            self.result = {
+                "success": True,
+                "score": final_score,
+                "bonus": bonus,
+                "quality_tier": "Normal" if bonus == 0 else "Fine" if bonus <= 5 else "Superior",
+                "stat_multiplier": 1.0 + (bonus / 100),
+                "temp_mult": temp_mult,
+                "avg_hammer": avg_hammer_score,
+                "difficulty_points": self.difficulty_points,
+                "first_try_eligible": False,
+                "message": f"Crafted with {bonus}% bonus!"
+            }
 
     def get_state(self):
         """Get current minigame state for rendering"""
@@ -501,9 +582,9 @@ class SmithingCrafter:
             return None
 
         recipe = self.recipes[recipe_id]
-        tier = recipe.get('stationTier', 1)
 
-        return SmithingMinigame(recipe, tier, buff_time_bonus, buff_quality_bonus)
+        # Pass full recipe for material-based difficulty calculation
+        return SmithingMinigame(recipe, buff_time_bonus, buff_quality_bonus)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result, item_metadata=None):
         """
@@ -519,19 +600,34 @@ class SmithingCrafter:
             dict: Result with outputId, quantity, bonus, rarity, stats, tags, success
         """
         if not minigame_result.get('success'):
-            # Failure - lose some materials (50% for now)
+            # Failure - lose materials based on difficulty (tier-scaled penalty)
             recipe = self.recipes[recipe_id]
+            difficulty_points = minigame_result.get('difficulty_points', 50)
+
+            # Calculate loss fraction using reward calculator
+            try:
+                from core.reward_calculator import calculate_failure_penalty
+                loss_fraction = calculate_failure_penalty(difficulty_points)
+            except ImportError:
+                loss_fraction = 0.5  # Fallback to 50%
+
+            # Apply material loss
+            total_lost = 0
             for inp in recipe['inputs']:
                 mat_id = inp.get('materialId') or inp.get('itemId')
-                loss = inp['quantity'] // 2
+                loss = int(inp['quantity'] * loss_fraction)
                 if mat_id not in inventory:
                     inventory[mat_id] = 0
                 inventory[mat_id] = max(0, inventory[mat_id] - loss)
+                total_lost += loss
+
+            print(f"❌ Smithing failed! Lost {int(loss_fraction * 100)}% of materials ({total_lost} items)")
 
             return {
                 "success": False,
                 "message": minigame_result.get('message', 'Crafting failed'),
-                "materials_lost": True
+                "materials_lost": True,
+                "loss_fraction": loss_fraction
             }
 
         # Success - deduct full materials
