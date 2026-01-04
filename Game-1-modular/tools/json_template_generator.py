@@ -1,31 +1,22 @@
 #!/usr/bin/env python3
 """
-JSON Template Generator for Game-1 - LLM Fine-Tuning Edition
+JSON Template Generator for Game-1 - LLM Model Training Edition
 
-This script analyzes all JSON files in the game and generates comprehensive
-templates organized by CONTENT TYPE (not file source) for LLM fine-tuning.
+Organizes game JSON data into categories matching the planned LLM architecture:
 
-Key Features:
-- Classifies items by their fields, not their source file
-- Handles mixed/update JSONs by sorting individual items
-- Merges related content (e.g., all weapons go to "equipment")
-- Excludes metadata-only files
+CRAFTING LLMs (2 per discipline × 5 disciplines = 10 model types):
+  - {discipline}_recipes: Recipe definitions for that discipline
+  - {discipline}_items: Items produced by that discipline
 
-LLM Categories:
-- equipment: Weapons, armor, shields, accessories
-- materials: Raw and processed materials
-- consumables: Potions, elixirs, food
-- devices: Turrets, traps, bombs
-- stations: Placeable crafting tools
-- recipes_smithing, recipes_alchemy, etc.: Recipes by discipline
-- skills: Player skills
-- enemies: Enemy definitions
-- abilities: Enemy abilities
-- npcs: NPC definitions
-- quests: Quest definitions
-- classes: Starting classes
-- titles: Achievement titles
-- resource_nodes: Gatherable resources
+OTHER LLMs:
+  - hostiles: Enemy mobs and abilities (combined for now)
+  - skills: Player skill definitions
+  - titles: Achievement title definitions
+  - chunk_types: World generation chunk templates
+  - node_types: Resource node definitions
+  - npcs: NPC definitions
+  - quests: Quest definitions
+  - classifier_requirements: Compiled skill/title unlock requirements
 
 Usage:
     python json_template_generator.py [--output-dir OUTPUT_DIR]
@@ -52,301 +43,11 @@ class FieldInfo:
     example_items: List[str] = field(default_factory=list)
 
 
-@dataclass
-class ContentCategory:
-    """Definition of a content category for LLM fine-tuning."""
-    name: str
-    description: str
-    identifying_fields: Dict[str, Any]  # Fields that identify this category
-    priority: int = 0  # Higher priority = checked first
-
-
 class JSONTemplateGenerator:
-    """Generates comprehensive JSON templates organized by content type."""
+    """Generates comprehensive JSON templates organized by LLM model type."""
 
-    # Content categories for LLM fine-tuning
-    # Order matters - more specific categories should come first
-    CONTENT_CATEGORIES = [
-        # Equipment subtypes (check before generic equipment)
-        # Check both type: "weapon" AND category: "weapon" for different JSON formats
-        ContentCategory(
-            name="equipment_weapons",
-            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
-            identifying_fields={"type": "weapon"},
-            priority=100
-        ),
-        ContentCategory(
-            name="equipment_weapons",
-            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
-            identifying_fields={"category": "weapon"},
-            priority=100
-        ),
-        ContentCategory(
-            name="equipment_armor",
-            description="Armor pieces (helmets, chestplates, leggings, boots) - smithing output",
-            identifying_fields={"type": "armor"},
-            priority=100
-        ),
-        ContentCategory(
-            name="equipment_armor",
-            description="Armor pieces (helmets, chestplates, leggings, boots) - smithing output",
-            identifying_fields={"category": "armor"},
-            priority=100
-        ),
-        ContentCategory(
-            name="equipment_shields",
-            description="Shields and off-hand defensive items - smithing output",
-            identifying_fields={"type": "shield"},
-            priority=100
-        ),
-        ContentCategory(
-            name="equipment_accessories",
-            description="Accessories (rings, amulets, belts) - smithing/enchanting output",
-            identifying_fields={"type": "accessory"},
-            priority=100
-        ),
-        # Tools (pickaxes, axes) - have type: "tool"
-        ContentCategory(
-            name="equipment_tools",
-            description="Gathering tools (pickaxes, axes) - smithing output",
-            identifying_fields={"type": "tool"},
-            priority=99
-        ),
-        # Catch-all for other weapon subtypes (mace, sword, bow, staff, etc.)
-        ContentCategory(
-            name="equipment_weapons",
-            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
-            identifying_fields={"type": "sword"},
-            priority=98
-        ),
-        ContentCategory(
-            name="equipment_weapons",
-            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
-            identifying_fields={"type": "mace"},
-            priority=98
-        ),
-        ContentCategory(
-            name="equipment_weapons",
-            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
-            identifying_fields={"type": "bow"},
-            priority=98
-        ),
-        ContentCategory(
-            name="equipment_weapons",
-            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
-            identifying_fields={"type": "staff"},
-            priority=98
-        ),
-        ContentCategory(
-            name="equipment_weapons",
-            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
-            identifying_fields={"type": "spear"},
-            priority=98
-        ),
-        ContentCategory(
-            name="equipment_weapons",
-            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
-            identifying_fields={"type": "dagger"},
-            priority=98
-        ),
-        ContentCategory(
-            name="equipment_weapons",
-            description="Weapons (swords, axes, spears, bows, staffs) - smithing output",
-            identifying_fields={"type": "axe"},
-            priority=98
-        ),
-
-        # Consumables
-        ContentCategory(
-            name="consumables",
-            description="Potions, elixirs, food, and other consumable items - alchemy output",
-            identifying_fields={"category": "consumable"},
-            priority=90
-        ),
-
-        # Devices (engineering)
-        ContentCategory(
-            name="devices_turrets",
-            description="Automated turret defenses - engineering output",
-            identifying_fields={"type": "turret"},
-            priority=85
-        ),
-        ContentCategory(
-            name="devices_traps",
-            description="Trap devices - engineering output",
-            identifying_fields={"type": "trap"},
-            priority=85
-        ),
-        ContentCategory(
-            name="devices_bombs",
-            description="Explosive devices - engineering output",
-            identifying_fields={"type": "bomb"},
-            priority=85
-        ),
-        ContentCategory(
-            name="devices",
-            description="Engineering devices (turrets, traps, bombs)",
-            identifying_fields={"category": "device"},
-            priority=80
-        ),
-
-        # Stations (placeable crafting stations)
-        ContentCategory(
-            name="stations",
-            description="Placeable crafting stations and tools",
-            identifying_fields={"category": "station"},
-            priority=75
-        ),
-
-        # Refined/crafted materials (have itemId and category: "material")
-        ContentCategory(
-            name="materials_refined",
-            description="Refined crafting materials (ingots, planks, alloys) - refining output",
-            identifying_fields={"category": "material"},
-            priority=72
-        ),
-
-        # Raw materials (have materialId field)
-        ContentCategory(
-            name="materials_raw",
-            description="Raw crafting materials (ores, logs, crystals) - gathered resources",
-            identifying_fields={"_has_field": "materialId"},
-            priority=70
-        ),
-
-        # Recipes by discipline
-        ContentCategory(
-            name="recipes_smithing",
-            description="Smithing recipes for weapons, armor, and tools",
-            identifying_fields={"stationType": "smithing"},
-            priority=60
-        ),
-        ContentCategory(
-            name="recipes_alchemy",
-            description="Alchemy recipes for potions and consumables",
-            identifying_fields={"stationType": "alchemy"},
-            priority=60
-        ),
-        ContentCategory(
-            name="recipes_refining",
-            description="Refining recipes for processing raw materials",
-            identifying_fields={"stationType": "refining"},
-            priority=60
-        ),
-        ContentCategory(
-            name="recipes_engineering",
-            description="Engineering recipes for devices and gadgets",
-            identifying_fields={"stationType": "engineering"},
-            priority=60
-        ),
-        ContentCategory(
-            name="recipes_enchanting",
-            description="Enchanting recipes for magical enhancements",
-            identifying_fields={"stationType": "enchanting"},
-            priority=60
-        ),
-        ContentCategory(
-            name="recipes_adornments",
-            description="Adornment recipes for decorative items",
-            identifying_fields={"stationType": "adornments"},
-            priority=60
-        ),
-        # Fallback for recipes without stationType (test/placeholder recipes)
-        ContentCategory(
-            name="recipes_generic",
-            description="Generic recipes (test/placeholder without specific discipline)",
-            identifying_fields={"_has_field": "recipeId"},
-            priority=55
-        ),
-
-        # Skills and skill unlocks
-        ContentCategory(
-            name="skill_unlocks",
-            description="Skill unlock definitions - how players acquire skills",
-            identifying_fields={"_has_field": "unlockId"},
-            priority=52
-        ),
-        ContentCategory(
-            name="skills",
-            description="Player skills with effects, costs, and evolution paths",
-            identifying_fields={"_has_field": "skillId"},
-            priority=50
-        ),
-
-        # Enemies and abilities
-        ContentCategory(
-            name="abilities",
-            description="Enemy abilities with tags and effect parameters",
-            identifying_fields={"_has_field": "abilityId"},
-            priority=45
-        ),
-        ContentCategory(
-            name="enemies",
-            description="Enemy definitions with stats, behavior, and loot",
-            identifying_fields={"_has_field": "enemyId"},
-            priority=44
-        ),
-
-        # NPCs and Quests
-        ContentCategory(
-            name="npcs",
-            description="NPC definitions with dialogue and quest associations",
-            identifying_fields={"_has_field": "npc_id"},
-            priority=40
-        ),
-        ContentCategory(
-            name="quests",
-            description="Quest definitions with objectives and rewards",
-            identifying_fields={"_has_field": "quest_id"},
-            priority=40
-        ),
-
-        # Progression
-        ContentCategory(
-            name="classes",
-            description="Starting class definitions with bonuses and skills",
-            identifying_fields={"_has_field": "classId"},
-            priority=35
-        ),
-        ContentCategory(
-            name="titles",
-            description="Achievement titles with prerequisites and bonuses",
-            identifying_fields={"_has_field": "titleId"},
-            priority=35
-        ),
-
-        # Resource nodes
-        ContentCategory(
-            name="resource_nodes",
-            description="Gatherable resource node definitions",
-            identifying_fields={"_has_field": "resourceId"},
-            priority=30
-        ),
-
-        # World generation
-        ContentCategory(
-            name="world_chunks",
-            description="World chunk templates for procedural generation",
-            identifying_fields={"_has_field": "chunkType"},
-            priority=25
-        ),
-
-        # Placements (minigame grids) - have placementMap field
-        # Priority must be higher than recipes_generic (55) since placements also have recipeId
-        ContentCategory(
-            name="placements",
-            description="Minigame placement patterns for crafting",
-            identifying_fields={"_has_field": "placementMap"},
-            priority=57
-        ),
-        # Refining placements use coreInputs/surroundingInputs instead of placementMap
-        ContentCategory(
-            name="placements_refining",
-            description="Refining placement patterns (hub-and-spoke format)",
-            identifying_fields={"_has_field": "coreInputs"},
-            priority=56
-        ),
-    ]
+    # Crafting disciplines
+    DISCIPLINES = ['smithing', 'alchemy', 'refining', 'engineering', 'enchanting']
 
     # Files to completely skip (metadata/config only, not game content)
     SKIP_FILES = [
@@ -354,10 +55,10 @@ class JSONTemplateGenerator:
         'value-translation',
         'stats-calculations',
         'skills-translation',
-        'rarity-modifiers',      # Configuration file, not content
-        'templates-crafting',    # Documentation/reference, not content
-        'combat-config',         # Game config, not content
-        'updates_manifest',      # Package manifest, not content
+        'rarity-modifiers',
+        'templates-crafting',
+        'combat-config',
+        'updates_manifest',
     ]
 
     # Directories to scan
@@ -374,7 +75,6 @@ class JSONTemplateGenerator:
         'Update-3',
     ]
 
-    # Skip patterns
     SKIP_PATTERNS = [
         'json_templates',
         'saves',
@@ -388,8 +88,7 @@ class JSONTemplateGenerator:
         self.field_registry: Dict[str, Dict[str, FieldInfo]] = defaultdict(lambda: defaultdict(FieldInfo))
         self.source_files_by_category: Dict[str, Set[str]] = defaultdict(set)
         self.all_tags: Set[str] = set()
-        self.all_material_ids: Set[str] = set()
-        self.all_item_ids: Set[str] = set()
+        self.classifier_requirements: List[Dict] = []
         self.unclassified_items: List[Tuple[str, Dict]] = []
 
     def find_all_json_files(self) -> List[Path]:
@@ -402,83 +101,184 @@ class JSONTemplateGenerator:
                 all_files.extend(dir_path.glob('*.JSON'))
                 all_files.extend(dir_path.glob('*.json'))
 
-        # Also scan root
         all_files.extend(self.base_path.glob('*.JSON'))
         all_files.extend(self.base_path.glob('*.json'))
 
-        # Filter
         filtered = []
         for f in all_files:
             if f.is_dir():
                 continue
-
-            # Skip metadata files
             skip = False
             filename_lower = f.name.lower()
             for skip_file in self.SKIP_FILES:
                 if skip_file in filename_lower:
                     skip = True
                     break
-
             for pattern in self.SKIP_PATTERNS:
                 if pattern in str(f):
                     skip = True
                     break
-
             if not skip:
                 filtered.append(f)
 
         return list(set(filtered))
 
-    def classify_item(self, item: Dict) -> Optional[str]:
-        """Classify an item based on its fields, returning the category name."""
+    def classify_item(self, item: Dict, source_file: str) -> Optional[str]:
+        """Classify an item into an LLM model category."""
         if not isinstance(item, dict):
             return None
 
-        # Sort categories by priority (highest first)
-        sorted_categories = sorted(self.CONTENT_CATEGORIES, key=lambda c: -c.priority)
+        # === RECIPES (by discipline) ===
+        if 'recipeId' in item:
+            station_type = item.get('stationType', '').lower()
+            if station_type in self.DISCIPLINES:
+                return f"{station_type}_recipes"
+            # Infer from recipeId prefix
+            recipe_id = item.get('recipeId', '').lower()
+            for disc in self.DISCIPLINES:
+                if recipe_id.startswith(disc) or recipe_id.startswith(f"recipe_{disc}"):
+                    return f"{disc}_recipes"
+            # Check filename for discipline
+            filename_lower = source_file.lower()
+            for disc in self.DISCIPLINES:
+                if disc in filename_lower:
+                    return f"{disc}_recipes"
+            # Default to smithing for unknown recipes
+            return "smithing_recipes"
 
-        for category in sorted_categories:
-            matches = True
-            for field_key, expected_value in category.identifying_fields.items():
-                if field_key == "_has_field":
-                    # Special case: just check if field exists
-                    if expected_value not in item:
-                        matches = False
-                        break
-                elif field_key not in item:
-                    matches = False
-                    break
-                elif item[field_key] != expected_value:
-                    matches = False
-                    break
+        # === PLACEMENTS (go with recipes for their discipline) ===
+        if 'placementMap' in item or 'coreInputs' in item:
+            # Placements support recipe creation, classify by discipline
+            recipe_id = item.get('recipeId', '').lower()
+            for disc in self.DISCIPLINES:
+                if disc in recipe_id:
+                    return f"{disc}_recipes"
+            filename_lower = source_file.lower()
+            for disc in self.DISCIPLINES:
+                if disc in filename_lower:
+                    return f"{disc}_recipes"
+            return "smithing_recipes"
 
-            if matches:
-                return category.name
+        # === SKILL UNLOCKS (check before skills since unlocks have skillId too) ===
+        if 'unlockId' in item:
+            # Extract requirements for classifier
+            self._extract_unlock_requirements(item, 'skill')
+            return "classifier_requirements"
+
+        # === SKILLS ===
+        if 'skillId' in item:
+            return "skills"
+
+        # === TITLES ===
+        if 'titleId' in item:
+            # Also extract requirements for classifier
+            self._extract_title_requirements(item)
+            return "titles"
+
+        # === HOSTILES (enemies + abilities) ===
+        if 'enemyId' in item or 'abilityId' in item:
+            return "hostiles"
+
+        # === QUESTS (check before NPCs since quests have npc_id too) ===
+        if 'quest_id' in item:
+            return "quests"
+
+        # === NPCs ===
+        if 'npc_id' in item:
+            return "npcs"
+
+        # === RESOURCE NODES ===
+        if 'resourceId' in item:
+            return "node_types"
+
+        # === CHUNK TYPES ===
+        if 'chunkType' in item:
+            return "chunk_types"
+
+        # === CLASSES (include with skills for now) ===
+        if 'classId' in item:
+            return "skills"
+
+        # === CRAFTING STATIONS (smithing items) ===
+        if item.get('category') == 'station':
+            return "smithing_items"
+
+        # === ITEMS (by what discipline produces them) ===
+        item_type = item.get('type', '').lower()
+        item_category = item.get('category', '').lower()
+
+        # Smithing items: weapons, armor, shields, tools, accessories
+        if item_type in ['weapon', 'armor', 'shield', 'accessory', 'tool']:
+            return "smithing_items"
+        if item_type in ['sword', 'mace', 'bow', 'staff', 'spear', 'dagger', 'axe',
+                         'shortsword', 'longsword', 'greatsword', 'hammer', 'wand']:
+            return "smithing_items"
+        if item_category in ['weapon', 'armor', 'equipment']:
+            return "smithing_items"
+
+        # Alchemy items: potions, consumables, elixirs
+        if item_category == 'consumable' or item_type == 'potion':
+            return "alchemy_items"
+
+        # Refining items: materials with itemId (crafted materials)
+        if item_category == 'material' and 'itemId' in item:
+            return "refining_items"
+
+        # Raw materials: have materialId (gathered, not crafted)
+        if 'materialId' in item:
+            return "refining_items"  # Include raw materials for reference
+
+        # Engineering items: devices, turrets, traps, bombs
+        if item_category == 'device' or item_type in ['turret', 'trap', 'bomb']:
+            return "engineering_items"
+
+        # Enchanting items: check for enchantment-related fields
+        if 'enchantmentId' in item or item_type == 'enchantment':
+            return "enchanting_items"
 
         return None
 
+    def _extract_unlock_requirements(self, item: Dict, unlock_type: str):
+        """Extract requirements from skill unlock definitions."""
+        requirements = {
+            'type': unlock_type,
+            'id': item.get('skillId', item.get('unlockId', 'unknown')),
+            'unlockMethod': item.get('unlockMethod', 'unknown'),
+            'conditions': item.get('conditions', {}),
+            'cost': item.get('cost', {})
+        }
+        self.classifier_requirements.append(requirements)
+
+    def _extract_title_requirements(self, item: Dict):
+        """Extract requirements from title definitions."""
+        requirements = {
+            'type': 'title',
+            'id': item.get('titleId', 'unknown'),
+            'titleType': item.get('titleType', 'unknown'),
+            'difficultyTier': item.get('difficultyTier', 'unknown'),
+            'prerequisites': item.get('prerequisites', {}),
+            'acquisitionMethod': item.get('acquisitionMethod', 'unknown')
+        }
+        self.classifier_requirements.append(requirements)
+
     def extract_items_from_json(self, data: Any, source_file: str) -> List[Tuple[str, Dict]]:
-        """Extract individual items from a JSON structure, classifying each one."""
+        """Extract individual items from a JSON structure."""
         items = []
 
         if isinstance(data, list):
-            # Top-level array
             for item in data:
                 if isinstance(item, dict):
-                    category = self.classify_item(item)
+                    category = self.classify_item(item, source_file)
                     if category:
                         items.append((category, item))
                     else:
                         self.unclassified_items.append((source_file, item))
 
         elif isinstance(data, dict):
-            # Check if it's a single item or a container
-            category = self.classify_item(data)
+            category = self.classify_item(data, source_file)
             if category:
                 items.append((category, data))
             else:
-                # It's a container - iterate through all keys
                 for key, value in data.items():
                     if key.lower() == 'metadata':
                         continue
@@ -486,26 +286,24 @@ class JSONTemplateGenerator:
                     if isinstance(value, list):
                         for item in value:
                             if isinstance(item, dict):
-                                cat = self.classify_item(item)
+                                cat = self.classify_item(item, source_file)
                                 if cat:
                                     items.append((cat, item))
                                 else:
                                     self.unclassified_items.append((source_file, item))
 
                     elif isinstance(value, dict):
-                        # Could be nested containers or a single item
-                        cat = self.classify_item(value)
+                        cat = self.classify_item(value, source_file)
                         if cat:
                             items.append((cat, value))
                         else:
-                            # Check if it's a container of lists
                             for subkey, subvalue in value.items():
                                 if subkey.lower() == 'metadata':
                                     continue
                                 if isinstance(subvalue, list):
                                     for item in subvalue:
                                         if isinstance(item, dict):
-                                            cat2 = self.classify_item(item)
+                                            cat2 = self.classify_item(item, source_file)
                                             if cat2:
                                                 items.append((cat2, item))
 
@@ -519,10 +317,12 @@ class JSONTemplateGenerator:
             field_info.occurrences += 1
 
             if len(field_info.example_items) < 3:
-                item_id = item.get('itemId') or item.get('materialId') or item.get('recipeId') or \
-                          item.get('skillId') or item.get('enemyId') or item.get('quest_id') or \
-                          item.get('npc_id') or item.get('classId') or item.get('titleId') or \
-                          item.get('abilityId') or item.get('name') or 'unknown'
+                item_id = (item.get('itemId') or item.get('materialId') or
+                          item.get('recipeId') or item.get('skillId') or
+                          item.get('enemyId') or item.get('quest_id') or
+                          item.get('npc_id') or item.get('classId') or
+                          item.get('titleId') or item.get('abilityId') or
+                          item.get('name') or 'unknown')
                 if item_id not in field_info.example_items:
                     field_info.example_items.append(str(item_id))
 
@@ -541,12 +341,8 @@ class JSONTemplateGenerator:
             elif isinstance(value, str):
                 field_info.values.add(value)
                 field_info.types.add('string')
-                # Track special values
                 if 'tag' in path.lower():
                     self.all_tags.add(value)
-                if path.endswith('materialId') or path.endswith('itemId'):
-                    self.all_material_ids.add(value)
-                    self.all_item_ids.add(value)
             elif isinstance(value, list):
                 field_info.is_array = True
                 field_info.types.add('array')
@@ -570,7 +366,7 @@ class JSONTemplateGenerator:
         return obj
 
     def process_file(self, json_file: Path):
-        """Process a single JSON file, extracting and classifying all items."""
+        """Process a single JSON file."""
         try:
             with open(json_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -588,28 +384,23 @@ class JSONTemplateGenerator:
 
     def generate_category_template(self, category: str) -> Dict:
         """Generate a comprehensive template for a category."""
-        # Find category description
-        description = "Unknown category"
-        for cat in self.CONTENT_CATEGORIES:
-            if cat.name == category:
-                description = cat.description
-                break
-
         items = self.items_by_category.get(category, [])
         fields = self.field_registry.get(category, {})
+
+        # Determine LLM purpose
+        purpose = self._get_category_purpose(category)
 
         template = {
             "_meta": {
                 "category": category,
-                "description": description,
-                "purpose": "LLM fine-tuning template",
+                "llm_purpose": purpose,
                 "generated_at": datetime.now().isoformat(),
                 "total_items": len(items),
                 "source_files": sorted(self.source_files_by_category.get(category, set())),
             },
-            "_field_documentation": {},
             "_all_possible_values": {},
             "_usable_template": {},
+            "_sample_items": items[:5] if len(items) > 5 else items,
         }
 
         # Build field documentation
@@ -626,23 +417,43 @@ class JSONTemplateGenerator:
                               key=lambda x: str(x))
 
             if values:
-                # Limit to reasonable number
                 display_values = values[:100] if len(values) > 100 else values
                 template["_all_possible_values"][path] = {
                     "values": display_values,
                     "total_unique": len(values),
                     "types": list(field_info.types),
                     "occurrences": field_info.occurrences,
-                    "example_items": field_info.example_items[:3]
                 }
 
-        # Build usable template
         template["_usable_template"] = self._build_usable_template(fields)
 
-        # Add sample items
-        template["_sample_items"] = items[:5] if len(items) > 5 else items
-
         return template
+
+    def _get_category_purpose(self, category: str) -> str:
+        """Get the LLM purpose description for a category."""
+        purposes = {
+            # Crafting disciplines
+            'smithing_recipes': 'Recipe LLM for smithing - creates weapon/armor/tool crafting recipes',
+            'smithing_items': 'Item LLM for smithing - creates weapons, armor, shields, tools with tags',
+            'alchemy_recipes': 'Recipe LLM for alchemy - creates potion/consumable crafting recipes',
+            'alchemy_items': 'Item LLM for alchemy - creates potions, elixirs, consumables with effects',
+            'refining_recipes': 'Recipe LLM for refining - creates material processing recipes',
+            'refining_items': 'Item LLM for refining - creates ingots, planks, alloys, processed materials',
+            'engineering_recipes': 'Recipe LLM for engineering - creates device/gadget crafting recipes',
+            'engineering_items': 'Item LLM for engineering - creates turrets, traps, bombs, devices',
+            'enchanting_recipes': 'Recipe LLM for enchanting - creates enchantment/adornment recipes',
+            'enchanting_items': 'Item LLM for enchanting - creates enchanted items and adornments',
+            # Other models
+            'hostiles': 'Hostile LLM - creates enemy mobs with stats, behavior, abilities, and drops',
+            'skills': 'Skills LLM - creates player skills with effects, costs, and evolution paths',
+            'titles': 'Titles LLM - creates achievement titles with prerequisites and bonuses',
+            'chunk_types': 'Chunk Types LLM - creates world generation chunk templates',
+            'node_types': 'Node Types LLM - creates gatherable resource node definitions',
+            'npcs': 'NPC LLM - creates NPC definitions with dialogue and quest associations',
+            'quests': 'Quest LLM - creates quest definitions with objectives and rewards',
+            'classifier_requirements': 'Classifier LLM - determines when to trigger skill/title generation',
+        }
+        return purposes.get(category, f'Unknown LLM purpose for {category}')
 
     def _build_usable_template(self, fields: Dict[str, FieldInfo]) -> Dict:
         """Build a clean, copy-paste ready template."""
@@ -655,7 +466,6 @@ class JSONTemplateGenerator:
             parts = path.split('.')
             current = usable
 
-            # Navigate to correct nested location
             valid_path = True
             for part in parts[:-1]:
                 if part not in current:
@@ -692,23 +502,45 @@ class JSONTemplateGenerator:
 
         return usable
 
+    def generate_classifier_template(self) -> Dict:
+        """Generate the classifier requirements template."""
+        # Organize requirements by type
+        skill_requirements = [r for r in self.classifier_requirements if r['type'] == 'skill']
+        title_requirements = [r for r in self.classifier_requirements if r['type'] == 'title']
+
+        return {
+            "_meta": {
+                "category": "classifier_requirements",
+                "llm_purpose": "Classifier LLM - determines when to trigger new skill/title generation",
+                "generated_at": datetime.now().isoformat(),
+                "total_skill_unlocks": len(skill_requirements),
+                "total_title_requirements": len(title_requirements),
+            },
+            "skill_unlock_requirements": skill_requirements,
+            "title_requirements": title_requirements,
+            "_summary": {
+                "unlock_methods": list(set(str(r.get('unlockMethod', 'unknown')) for r in skill_requirements)),
+                "title_types": list(set(str(r.get('titleType', 'unknown')) for r in title_requirements)),
+                "difficulty_tiers": list(set(str(r.get('difficultyTier', 'unknown')) for r in title_requirements)),
+                "acquisition_methods": list(set(str(r.get('acquisitionMethod', 'unknown')) for r in title_requirements)),
+            }
+        }
+
     def generate_master_reference(self) -> Dict:
         """Generate a master reference of all values."""
         return {
             "_meta": {
-                "description": "Master reference of all values for LLM fine-tuning",
+                "description": "Master reference for LLM fine-tuning",
                 "generated_at": datetime.now().isoformat(),
                 "total_categories": len(self.items_by_category),
                 "total_items": sum(len(items) for items in self.items_by_category.values()),
                 "total_unique_tags": len(self.all_tags),
-                "total_unique_material_ids": len(self.all_material_ids),
             },
             "all_tags": sorted(self.all_tags),
-            "all_material_ids": sorted(self.all_material_ids),
-            "all_item_ids": sorted(self.all_item_ids),
             "categories_summary": {
                 cat: {
                     "count": len(items),
+                    "llm_purpose": self._get_category_purpose(cat),
                     "sources": sorted(self.source_files_by_category.get(cat, set()))
                 }
                 for cat, items in sorted(self.items_by_category.items())
@@ -721,34 +553,45 @@ class JSONTemplateGenerator:
         output_path.mkdir(parents=True, exist_ok=True)
 
         print("=" * 70)
-        print("JSON Template Generator - LLM Fine-Tuning Edition")
+        print("JSON Template Generator - LLM Model Training Edition")
         print("=" * 70)
         print(f"\nBase path: {self.base_path}")
         print(f"Output dir: {output_path}")
         print()
 
-        # Find all JSON files
+        # Find and process all JSON files
         all_files = self.find_all_json_files()
         print(f"Found {len(all_files)} JSON files to process")
         print()
 
-        # Process each file
         for json_file in all_files:
             print(f"  Processing: {json_file.parent.name}/{json_file.name}")
             self.process_file(json_file)
 
         print()
         print("=" * 70)
-        print("Content Classification Results:")
+        print("LLM Model Categories:")
         print("=" * 70)
 
         # Show what was classified
-        for category, items in sorted(self.items_by_category.items()):
-            sources = self.source_files_by_category.get(category, set())
-            print(f"  {category}: {len(items)} items from {len(sources)} files")
+        print("\nCRAFTING LLMs:")
+        for disc in self.DISCIPLINES:
+            recipe_cat = f"{disc}_recipes"
+            item_cat = f"{disc}_items"
+            recipe_count = len(self.items_by_category.get(recipe_cat, []))
+            item_count = len(self.items_by_category.get(item_cat, []))
+            print(f"  {disc.upper()}: {recipe_count} recipes, {item_count} items")
+
+        print("\nOTHER LLMs:")
+        other_cats = ['hostiles', 'skills', 'titles', 'chunk_types', 'node_types', 'npcs', 'quests']
+        for cat in other_cats:
+            count = len(self.items_by_category.get(cat, []))
+            print(f"  {cat}: {count} items")
+
+        print(f"\nCLASSIFIER: {len(self.classifier_requirements)} requirements")
 
         if self.unclassified_items:
-            print(f"\n  Unclassified: {len(self.unclassified_items)} items")
+            print(f"\nUnclassified: {len(self.unclassified_items)} items")
             for source, item in self.unclassified_items[:5]:
                 keys = list(item.keys())[:5]
                 print(f"    - {source}: keys={keys}")
@@ -758,14 +601,23 @@ class JSONTemplateGenerator:
 
         # Generate individual category templates
         for category in sorted(self.items_by_category.keys()):
+            if category == 'classifier_requirements':
+                continue  # Handle separately
             if not self.items_by_category[category]:
                 continue
 
             template = self.generate_category_template(category)
-            output_file = output_path / f"template_{category}.json"
+            output_file = output_path / f"{category}.json"
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(template, f, indent=2, default=str)
             print(f"  Created: {output_file.name} ({len(self.items_by_category[category])} items)")
+
+        # Generate classifier requirements
+        classifier_template = self.generate_classifier_template()
+        classifier_file = output_path / "classifier_requirements.json"
+        with open(classifier_file, 'w', encoding='utf-8') as f:
+            json.dump(classifier_template, f, indent=2, default=str)
+        print(f"  Created: {classifier_file.name} ({len(self.classifier_requirements)} requirements)")
 
         # Generate master reference
         master = self.generate_master_reference()
@@ -780,7 +632,7 @@ class JSONTemplateGenerator:
         print()
         print("=" * 70)
         print(f"Done! Templates saved to: {output_path}")
-        print(f"Total categories: {len(self.items_by_category)}")
+        print(f"Total LLM categories: {len(self.items_by_category)}")
         print(f"Total items classified: {sum(len(items) for items in self.items_by_category.values())}")
         print(f"Total unique tags: {len(self.all_tags)}")
         print("=" * 70)
@@ -788,74 +640,57 @@ class JSONTemplateGenerator:
     def generate_markdown_summary(self, output_path: Path):
         """Generate a human-readable markdown summary."""
         md_lines = [
-            "# JSON Template Library - LLM Fine-Tuning",
+            "# JSON Template Library - LLM Model Training",
             "",
             f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             "",
-            "## Purpose",
+            "## LLM Architecture Overview",
             "",
-            "These templates are organized by **content type** for training specialized LLMs.",
-            "Each category represents a distinct type of game content that could be handled",
-            "by a dedicated fine-tuned model.",
+            "### Crafting LLMs (2 per discipline × 5 disciplines)",
             "",
-            "## Categories Overview",
-            "",
-            "| Category | Items | Description |",
-            "|----------|-------|-------------|",
+            "| Discipline | Recipe LLM | Item LLM |",
+            "|------------|------------|----------|",
         ]
 
-        for category in sorted(self.items_by_category.keys()):
-            items = self.items_by_category[category]
-            desc = "Unknown"
-            for cat in self.CONTENT_CATEGORIES:
-                if cat.name == category:
-                    desc = cat.description
-                    break
-            md_lines.append(f"| {category} | {len(items)} | {desc} |")
+        for disc in self.DISCIPLINES:
+            recipe_count = len(self.items_by_category.get(f"{disc}_recipes", []))
+            item_count = len(self.items_by_category.get(f"{disc}_items", []))
+            md_lines.append(f"| {disc.capitalize()} | {recipe_count} recipes | {item_count} items |")
 
         md_lines.extend([
             "",
+            "### Other LLMs",
+            "",
+            "| Model | Items | Purpose |",
+            "|-------|-------|---------|",
+        ])
+
+        other_cats = [
+            ('hostiles', 'Enemy mobs and abilities'),
+            ('skills', 'Player skill definitions'),
+            ('titles', 'Achievement titles'),
+            ('chunk_types', 'World generation chunks'),
+            ('node_types', 'Resource nodes'),
+            ('npcs', 'NPC definitions'),
+            ('quests', 'Quest definitions'),
+        ]
+
+        for cat, purpose in other_cats:
+            count = len(self.items_by_category.get(cat, []))
+            md_lines.append(f"| {cat} | {count} | {purpose} |")
+
+        md_lines.extend([
+            "",
+            f"### Classifier LLM: {len(self.classifier_requirements)} requirements",
+            "",
             "---",
             "",
-            "## Category Details",
+            "## All Tags",
+            "",
+            f"Total unique tags: {len(self.all_tags)}",
             "",
         ])
 
-        for category in sorted(self.items_by_category.keys()):
-            items = self.items_by_category[category]
-            sources = self.source_files_by_category.get(category, set())
-            fields = self.field_registry.get(category, {})
-
-            desc = "Unknown"
-            for cat in self.CONTENT_CATEGORIES:
-                if cat.name == category:
-                    desc = cat.description
-                    break
-
-            md_lines.append(f"### {category}")
-            md_lines.append(f"**Description**: {desc}")
-            md_lines.append(f"**Total Items**: {len(items)}")
-            md_lines.append(f"**Source Files**: {', '.join(sorted(sources))}")
-            md_lines.append("")
-            md_lines.append("**Key Fields**:")
-
-            for path, field_info in sorted(fields.items())[:15]:
-                if not path or '[]' in path:
-                    continue
-                types_str = ', '.join(field_info.types)
-                sample = list(field_info.values)[:3] if not field_info.is_array else list(field_info.array_item_values)[:3]
-                sample_str = ', '.join(str(s)[:40] for s in sample)
-                md_lines.append(f"- `{path}` ({types_str}): {sample_str}")
-
-            md_lines.append("")
-            md_lines.append("---")
-            md_lines.append("")
-
-        # Add all tags section
-        md_lines.append("## All Tags")
-        md_lines.append("")
-        md_lines.append(f"Total unique tags: {len(self.all_tags)}")
-        md_lines.append("")
         for tag in sorted(self.all_tags):
             md_lines.append(f"- `{tag}`")
 
@@ -867,22 +702,13 @@ class JSONTemplateGenerator:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate JSON templates organized by content type for LLM fine-tuning'
+        description='Generate JSON templates organized by LLM model type'
     )
-    parser.add_argument(
-        '--base-path',
-        default=None,
-        help='Base path to Game-1-modular directory'
-    )
-    parser.add_argument(
-        '--output-dir',
-        default=None,
-        help='Output directory for templates'
-    )
+    parser.add_argument('--base-path', default=None, help='Base path to Game-1-modular directory')
+    parser.add_argument('--output-dir', default=None, help='Output directory for templates')
 
     args = parser.parse_args()
 
-    # Determine base path
     if args.base_path:
         base_path = Path(args.base_path)
     else:
@@ -891,7 +717,6 @@ def main():
         if not (base_path / 'items.JSON').exists():
             base_path = Path.cwd()
 
-    # Determine output directory
     if args.output_dir:
         output_dir = args.output_dir
     else:

@@ -1,44 +1,43 @@
 {
   "_meta": {
-    "category": "equipment_weapons",
-    "description": "Weapons (swords, axes, spears, bows, staffs) - smithing output",
-    "purpose": "LLM fine-tuning template",
-    "generated_at": "2026-01-02T01:26:25.379200",
-    "total_items": 30,
+    "category": "smithing_items",
+    "llm_purpose": "Item LLM for smithing - creates weapons, armor, shields, tools with tags",
+    "generated_at": "2026-01-04T04:41:13.678947",
+    "total_items": 73,
     "source_files": [
+      "Definitions.JSON/crafting-stations-1.JSON",
       "Update-1/items-testing-integration.JSON",
       "items.JSON/items-smithing-2.JSON",
       "items.JSON/items-testing-integration.JSON",
-      "items.JSON/items-testing-tags.JSON"
+      "items.JSON/items-testing-tags.JSON",
+      "items.JSON/items-tools-1.JSON"
     ]
   },
-  "_field_documentation": {},
   "_all_possible_values": {
     "attributes[].effect": {
       "values": [
+        "Adds fire damage to attacks",
+        "Adds lightning damage to attacks",
+        "Adds water damage to attacks",
         "Elemental attacks deal bonus fire damage"
       ],
-      "total_unique": 1,
+      "total_unique": 4,
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 4
     },
     "attributes[].element": {
       "values": [
-        "fire"
+        "fire",
+        "lightning",
+        "water"
       ],
-      "total_unique": 1,
+      "total_unique": 3,
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 4
     },
     "attributes[].type": {
       "values": [
@@ -48,39 +47,32 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 4
     },
     "attributes[].value": {
       "values": [
-        15
+        10,
+        15,
+        20,
+        5
       ],
-      "total_unique": 1,
+      "total_unique": 4,
       "types": [
         "integer"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 4
     },
     "category": {
       "values": [
         "equipment",
+        "station",
         "weapon"
       ],
-      "total_unique": 2,
+      "total_unique": 3,
       "types": [
         "string"
       ],
-      "occurrences": 30,
-      "example_items": [
-        "lightning_chain_whip",
-        "inferno_blade",
-        "void_piercer"
-      ]
+      "occurrences": 73
     },
     "description": {
       "values": [
@@ -94,37 +86,33 @@
       "types": [
         "string"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "lightning_chain_whip",
-        "inferno_blade",
-        "void_piercer"
-      ]
+      "occurrences": 10
     },
     "effectParams.baseDamage": {
       "values": [
+        10,
         18,
         20,
-        25.0,
+        22,
+        25,
         28.0,
-        30.0,
-        35.0,
-        40.0,
+        30,
+        35,
+        37,
+        40,
         42,
         45,
         5.0,
-        50.0,
-        60.0
+        50,
+        60.0,
+        75
       ],
-      "total_unique": 12,
+      "total_unique": 16,
       "types": [
-        "integer",
-        "number"
+        "number",
+        "integer"
       ],
-      "occurrences": 18,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 27
     },
     "effectParams.burn_damage_per_second": {
       "values": [
@@ -135,10 +123,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 4
     },
     "effectParams.burn_duration": {
       "values": [
@@ -149,10 +134,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 3
     },
     "effectParams.chain_count": {
       "values": [
@@ -163,10 +145,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effectParams.chain_damage_falloff": {
       "values": [
@@ -176,10 +155,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "effectParams.chrono_slow": {
       "values": [
@@ -189,10 +165,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "effectParams.circle_radius": {
       "values": [
@@ -202,10 +175,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "effectParams.cone_angle": {
       "values": [
@@ -215,10 +185,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "effectParams.cone_length": {
       "values": [
@@ -228,10 +195,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "effectParams.freeze_duration": {
       "values": [
@@ -242,10 +206,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effectParams.quantum_collapse_chance": {
       "values": [
@@ -255,10 +216,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "effectParams.shock_chance": {
       "values": [
@@ -268,10 +226,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "effectParams.shock_damage": {
       "values": [
@@ -281,10 +236,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "effectParams.slow_duration": {
       "values": [
@@ -295,10 +247,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effectParams.slow_percent": {
       "values": [
@@ -309,10 +258,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effectTags": {
       "values": [
@@ -344,12 +290,7 @@
       "types": [
         "array"
       ],
-      "occurrences": 20,
-      "example_items": [
-        "test_weapon_simple",
-        "test_weapon_conflicting_elements",
-        "test_weapon_multi_geometry"
-      ]
+      "occurrences": 29
     },
     "effect_params.baseDamage": {
       "values": [
@@ -363,10 +304,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 10
     },
     "effect_params.beam_range": {
       "values": [
@@ -376,10 +314,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.beam_width": {
       "values": [
@@ -389,10 +324,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.bleed_damage_per_second": {
       "values": [
@@ -402,10 +334,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.bleed_duration": {
       "values": [
@@ -415,10 +344,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.burn_damage_per_second": {
       "values": [
@@ -428,10 +354,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.burn_duration": {
       "values": [
@@ -441,10 +364,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.chain_count": {
       "values": [
@@ -454,10 +374,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.chain_range": {
       "values": [
@@ -467,10 +384,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.circle_radius": {
       "values": [
@@ -480,10 +394,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.cone_angle": {
       "values": [
@@ -493,10 +404,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.cone_range": {
       "values": [
@@ -506,10 +414,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.freeze_duration": {
       "values": [
@@ -519,10 +424,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.knockback_distance": {
       "values": [
@@ -532,10 +434,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.lifesteal_percent": {
       "values": [
@@ -545,10 +444,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.origin": {
       "values": [
@@ -558,10 +454,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.pierce_count": {
       "values": [
@@ -571,10 +464,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.shock_damage_per_tick": {
       "values": [
@@ -584,10 +474,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.shock_duration": {
       "values": [
@@ -597,10 +484,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.shock_tick_rate": {
       "values": [
@@ -610,10 +494,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.weaken_duration": {
       "values": [
@@ -623,10 +504,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_params.weaken_percent": {
       "values": [
@@ -636,10 +514,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "effect_tags": {
       "values": [
@@ -666,12 +541,7 @@
       "types": [
         "array"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "lightning_chain_whip",
-        "inferno_blade",
-        "void_piercer"
-      ]
+      "occurrences": 10
     },
     "flags.equippable": {
       "values": [
@@ -681,12 +551,9 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 20,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 40
     },
-    "flags.repairable": {
+    "flags.placeable": {
       "values": [
         true
       ],
@@ -694,10 +561,18 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 23
+    },
+    "flags.repairable": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 53
     },
     "flags.stackable": {
       "values": [
@@ -707,10 +582,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 53
     },
     "flags.tradeable": {
       "values": [
@@ -720,27 +592,57 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 6
     },
     "itemId": {
       "values": [
+        "alchemy_table_t1",
+        "alchemy_table_t2",
+        "bamboo_fishing_rod",
         "blood_reaver",
         "composite_longbow",
+        "copper_axe",
         "copper_dagger",
+        "copper_fire_ring",
+        "copper_pickaxe",
         "copper_spear",
+        "enchanting_table_t1",
+        "enchanting_table_t2",
+        "engineering_bench_t1",
+        "engineering_bench_t2",
         "fire_crystal_staff",
+        "forge_t1",
+        "forge_t2",
+        "forge_t3",
+        "forge_t4",
         "frostbite_hammer",
         "inferno_blade",
+        "iron_axe",
+        "iron_boots",
+        "iron_chestplate",
+        "iron_pickaxe",
+        "iron_round_shield",
         "iron_shortsword",
+        "iron_studded_gauntlets",
         "iron_warhammer",
+        "iron_water_amulet",
+        "leather_tunic",
         "lightning_chain_whip",
+        "mithril_axe",
         "mithril_dagger",
+        "mithril_pickaxe",
         "pine_shortbow",
+        "refinery_t1",
+        "refinery_t2",
+        "refinery_t3",
+        "steel_axe",
         "steel_battleaxe",
+        "steel_helm",
+        "steel_leggings",
+        "steel_lightning_bracelet",
         "steel_longsword",
+        "steel_pickaxe",
+        "steel_sickle",
         "test_case_sensitivity",
         "test_duplicate_tags",
         "test_empty_tags",
@@ -753,100 +655,210 @@
         "test_weapon_unknown_tags",
         "void_piercer"
       ],
-      "total_unique": 25,
+      "total_unique": 58,
       "types": [
         "string"
       ],
-      "occurrences": 30,
-      "example_items": [
-        "lightning_chain_whip",
-        "inferno_blade",
-        "void_piercer"
-      ]
+      "occurrences": 73
     },
     "metadata.narrative": {
       "values": [
         "A simple iron blade with a wooden handle. Every warrior's first step on the path to mastery. The weight feels right in your hand - not perfect, but yours.",
         "A simple test weapon with valid tags.",
+        "Advanced alchemy station with steel vessels and crystal-infused apparatus. Handles volatile reactions with ease. The fire crystals maintain precise temperature control.",
+        "Advanced engineering station with steel construction and precision measuring tools. Complex mechanisms and intricate devices are possible here. Lightning crystals power automated tools.",
+        "Advanced refinery with better heat retention. Processes materials more efficiently with less waste.",
+        "Advanced refinery with improved efficiency and heat control. Can process higher-grade ores and create complex alloys. The granite construction handles intense heat without cracking.",
+        "Arcane enchanting table surrounded by floating crystals. Channels magical energies precisely.",
         "Balanced steel longsword that flows like water and strikes like thunder. The blade sings when it cuts through air, a testament to its quality.",
+        "Basic copper pickaxe with a wooden handle. Your first step into the mining profession - crude but functional.",
+        "Basic leather protection stitched from wolf pelts and bound with slime gel. Better than nothing, lighter than metal, and it might just save your life.",
+        "Basic limestone refinery for turning raw ores into usable ingots. Essential for any metalworker. The crucible glows red-hot as impurities burn away.",
+        "Basic stone forge suitable for working copper and iron. The foundation of smithing - crude but functional. Every master started with a forge like this.",
+        "Basic stone furnace for refining raw ores into usable materials. Essential for any aspiring metalworker.",
+        "Basic workbench with simple tools for assembling mechanical devices.",
         "Complex but valid combo: lightning chain with shock and slow.",
         "Composite longbow of ash wood and sinew, strung with silk-spider thread. The draw is heavy, demanding both hands and steady arms, but arrows fly true and far. Distance is your advantage.",
         "Contains unknown/typo tags to test error handling.",
+        "Curved steel blade designed for harvesting herbs, grains, and fibrous plants. The razor edge cuts clean without bruising delicate materials. Adequate for self-defense in a pinch.",
+        "Ethereal mithril axe that seems to phase through wood fibers. Cuts with minimal resistance.",
+        "Flexible bamboo rod with silk line and bronze hook. Patient hands pull dinner from rivers and lakes. Not much use in a fight, but starvation kills just as surely as swords.",
         "Has duplicate tags in the array.",
         "Has effectTags field but it's empty.",
         "Has only status tags, no damage type tags.",
         "Has tags but missing required effectParams.",
         "Heavy iron warhammer that crushes armor and bone alike. The weight demands both hands, but the devastation it delivers makes that trade worthwhile. Favored by those who prefer decisive, crushing blows.",
+        "Improved forge with better heat retention and basalt construction. Can work steel reliably. Fire crystals enhance the heat, pushing temperatures higher.",
+        "Improved forge with reinforced stone and efficient airflow. Reaches temperatures needed for steel.",
+        "Iron amulet cradling water crystals. Feels cool against your skin, like a gentle stream running across your chest. The crystals shimmer with captured tides.",
+        "Iron plates protecting vital organs with beetle carapace reinforcement. Heavy but reliable. When arrows fly and blades swing, you'll appreciate every ounce of protection.",
         "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
+        "Leather gloves reinforced with iron studs across the knuckles. Light enough for dexterity, strong enough to turn a blade. Your hands are tools - protect them.",
+        "Legendary forge that bends reality itself. Can work metals that shouldn't exist.",
+        "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective.",
+        "Master forge with crystal-enhanced heating. Can reach temperatures that would melt lesser furnaces.",
+        "Master forge with obsidian construction and crystal enhancement. Can reach extreme temperatures needed for legendary metals. Phoenix ash ensures the flames never die.",
+        "Master refinery capable of processing legendary materials. Obsidian crucibles contain temperatures that would vaporize lesser equipment. Mithril chambers prevent contamination.",
         "Mithril dagger that seems to shimmer out of existence. Wickedly sharp and impossibly light, it strikes faster than the eye can follow. The blade whispers through air and flesh alike.",
+        "Precision engineering station with specialized tools for complex device assembly.",
+        "Professional alchemy setup with distillation equipment and precise measuring tools.",
+        "Reinforced leather boots with iron caps. Protects your feet without slowing you down. Essential for anyone who values both mobility and survival.",
+        "Reliable iron pickaxe. Durable enough to tackle tougher deposits and efficient for standard mining work.",
+        "Round iron shield with oak backing. Not just for blocking - bash enemies with the rim or use it to create openings. Defense and offense in one hand.",
+        "Simple alchemy table with mortar, pestle, and basic glassware. Sufficient for brewing basic potions.",
+        "Simple copper axe with oak handle. Every woodcutter's first companion on the journey to mastery.",
+        "Simple copper band holding a fire crystal. Radiates gentle warmth against your skin. The crystal pulses with contained flames, never dimming, never burning.",
         "Simple copper dagger, light and quick. Not much reach, but what it lacks in power it makes up for in speed. Perfect for those who value precision over brute force.",
         "Simple copper-tipped spear with ash wood shaft. The extra reach keeps danger at arm's length. Perfect for those who prefer distance over direct confrontation.",
+        "Simple enchanting table with basic rune-carving tools. Sufficient for minor enchantments.",
         "Simple pine shortbow strung with treated slime gel. Not powerful, but reliable and easy to maintain. Perfect for learning the basics of archery.",
+        "Simple stone forge with basic bellows. Hot enough for copper and iron work, but struggles with harder metals.",
         "Steel battleaxe with brutal cleaving power. Grip it with both hands and watch enemies fall like timber. Equally deadly in one hand for those strong enough to wield it.",
+        "Steel bracelet woven with lightning shards and spectral thread. Crackles with stored static electricity. Touch it and feel the power humming beneath the surface.",
+        "Steel helm with full face protection and wolf pelt padding. Your head stays attached, which is nice. The padding reduces the ringing when you take a hit.",
+        "Steel pickaxe with perfect balance. Bites into hard rock with confidence.",
+        "Steel plate leggings with articulated joints. Heavy but protective, they guard your legs without restricting movement. Every smith's second major armor piece after the chestplate.",
+        "Stone pedestal inlaid with crystalline channels that pulse with latent energy. Place items here and inscribe patterns of power to enhance them. Where mundane becomes magical.",
+        "Sturdy iron axe that bites deep into wood. The standard tool for serious forestry work.",
+        "Sturdy iron workbench equipped with precision tools, vises, and gear assemblies. Here mechanisms take shape - springs tension, gears mesh, devices come to life.",
         "Tests if tag matching is case-sensitive.",
         "Tests multiple geometry tags (cone + chain + circle).",
-        "Tests what happens with conflicting elemental tags (fire + ice)."
+        "Tests what happens with conflicting elemental tags (fire + ice).",
+        "Well-balanced steel axe with a razor edge. Fells even ancient trees with steady, powerful strikes.",
+        "Wooden workbench fitted with glass vials, copper cauldrons, and measuring instruments. This is where plants become potions and careful mixing creates powerful effects."
       ],
-      "total_unique": 20,
+      "total_unique": 63,
       "types": [
         "string"
       ],
-      "occurrences": 20,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 63
     },
     "metadata.tags": {
       "values": [
         "1H",
         "2H",
+        "accessory",
+        "alchemy",
+        "amulet",
+        "armor",
         "armor_breaker",
         "axe",
+        "bash",
         "bow",
+        "bracelet",
+        "brewing",
+        "chest",
         "cleaving",
         "crushing",
         "dagger",
+        "defensive",
         "elemental",
+        "enchanting",
+        "engineering",
+        "enhancement",
         "fast",
+        "feet",
         "fire",
+        "fishing",
+        "flexible",
+        "forge",
+        "forging",
+        "gathering",
+        "hands",
+        "harvesting",
+        "head",
+        "heavy",
+        "herbs",
         "legendary",
+        "legs",
+        "light",
+        "lightning",
         "mace",
+        "master",
+        "mechanical",
         "melee",
+        "metal",
+        "pickaxe",
         "precision",
         "quality",
         "ranged",
         "reach",
+        "refinery",
+        "refining",
+        "ring",
+        "shield",
+        "smithing",
         "spear",
         "staff",
+        "standard",
         "starter",
+        "station",
         "sword",
-        "versatile"
+        "tool",
+        "versatile",
+        "water"
       ],
-      "total_unique": 23,
+      "total_unique": 62,
       "types": [
         "array"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 53
     },
     "name": {
       "values": [
+        "Advanced Alchemy Table",
+        "Advanced Engineering Bench",
+        "Advanced Refinery",
+        "Arcane Enchanting Table",
+        "Bamboo Fishing Rod",
+        "Basic Alchemy Table",
+        "Basic Enchanting Altar",
+        "Basic Enchanting Table",
+        "Basic Engineering Bench",
+        "Basic Forge",
+        "Basic Refinery",
+        "Basic Stone Forge",
         "Blood Reaver",
         "Composite Longbow",
+        "Copper Axe",
         "Copper Dagger",
+        "Copper Fire Ring",
+        "Copper Pickaxe",
         "Copper Spear",
+        "Eternal Forge",
         "Fire Crystal Staff",
         "Frostbite Hammer",
         "Inferno Blade",
+        "Iron Axe",
+        "Iron Boots",
+        "Iron Chestplate",
+        "Iron Pickaxe",
+        "Iron Round Shield",
         "Iron Shortsword",
         "Iron Warhammer",
+        "Iron Water Amulet",
+        "Iron-Studded Gauntlets",
+        "Leather Tunic",
         "Lightning Chain Whip",
+        "Master Forge",
+        "Master Refinery",
+        "Mithril Axe",
         "Mithril Dagger",
+        "Mithril Pickaxe",
         "Pine Shortbow",
+        "Reinforced Forge",
+        "Steel Alchemy Table",
+        "Steel Axe",
         "Steel Battleaxe",
+        "Steel Engineering Bench",
+        "Steel Forge",
+        "Steel Helm",
+        "Steel Leggings",
+        "Steel Lightning Bracelet",
         "Steel Longsword",
+        "Steel Pickaxe",
+        "Steel Refinery",
+        "Steel Sickle",
         "Test Item (Empty Tags Array)",
         "Test Weapon (Case Sensitivity)",
         "Test Weapon (Complex Valid)",
@@ -859,16 +871,11 @@
         "Test Weapon (Unknown Tags)",
         "Void Piercer"
       ],
-      "total_unique": 25,
+      "total_unique": 64,
       "types": [
         "string"
       ],
-      "occurrences": 30,
-      "example_items": [
-        "lightning_chain_whip",
-        "inferno_blade",
-        "void_piercer"
-      ]
+      "occurrences": 73
     },
     "narrative": {
       "values": [
@@ -882,34 +889,26 @@
       "types": [
         "string"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "lightning_chain_whip",
-        "inferno_blade",
-        "void_piercer"
-      ]
+      "occurrences": 10
     },
     "range": {
       "values": [
+        0,
         0.5,
         1,
         1.5,
         10,
         15,
         2,
+        5,
         8
       ],
-      "total_unique": 7,
+      "total_unique": 9,
       "types": [
-        "integer",
-        "number"
+        "number",
+        "integer"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "iron_shortsword",
-        "copper_spear",
-        "steel_longsword"
-      ]
+      "occurrences": 33
     },
     "rarity": {
       "values": [
@@ -923,30 +922,31 @@
       "types": [
         "string"
       ],
-      "occurrences": 30,
-      "example_items": [
-        "lightning_chain_whip",
-        "inferno_blade",
-        "void_piercer"
-      ]
+      "occurrences": 73
     },
     "requirements.level": {
       "values": [
         1,
         10,
+        12,
+        14,
         15,
         16,
+        2,
+        20,
+        25,
+        3,
+        5,
+        6,
+        7,
         8,
         9
       ],
-      "total_unique": 6,
+      "total_unique": 15,
       "types": [
         "integer"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 53
     },
     "requirements.stats.AGI": {
       "values": [
@@ -959,10 +959,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 4
     },
     "requirements.stats.INT": {
       "values": [
@@ -972,40 +969,36 @@
       "types": [
         "integer"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "requirements.stats.STR": {
       "values": [
         10,
         12,
-        15
+        15,
+        8
       ],
-      "total_unique": 3,
+      "total_unique": 4,
       "types": [
         "integer"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 4
     },
     "slot": {
       "values": [
+        "accessory",
+        "chest",
+        "feet",
+        "hands",
+        "head",
+        "legs",
         "mainHand"
       ],
-      "total_unique": 1,
+      "total_unique": 7,
       "types": [
         "string"
       ],
-      "occurrences": 20,
-      "example_items": [
-        "lightning_chain_whip",
-        "inferno_blade",
-        "void_piercer"
-      ]
+      "occurrences": 32
     },
     "stackSize": {
       "values": [
@@ -1015,12 +1008,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "test_weapon_simple",
-        "test_weapon_conflicting_elements",
-        "test_weapon_multi_geometry"
-      ]
+      "occurrences": 10
     },
     "statMultipliers.attackSpeed": {
       "values": [
@@ -1036,27 +1024,34 @@
       "types": [
         "number"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 11
     },
     "statMultipliers.damage": {
       "values": [
+        0.5,
+        0.6,
+        0.7,
         0.85,
         0.9,
         1.0,
         1.1,
         1.3
       ],
-      "total_unique": 5,
+      "total_unique": 8,
       "types": [
         "number"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 13
+    },
+    "statMultipliers.defense": {
+      "values": [
+        1.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
     },
     "statMultipliers.durability": {
       "values": [
@@ -1065,19 +1060,30 @@
         1.0,
         1.1,
         1.3,
-        1.5
+        1.5,
+        1.8
       ],
-      "total_unique": 6,
+      "total_unique": 7,
       "types": [
         "number"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 19
+    },
+    "statMultipliers.gathering": {
+      "values": [
+        1.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
     },
     "statMultipliers.weight": {
       "values": [
+        0.1,
+        0.2,
+        0.3,
         0.5,
         0.6,
         0.7,
@@ -1085,16 +1091,14 @@
         0.9,
         1.0,
         1.2,
+        1.3,
         1.5
       ],
-      "total_unique": 8,
+      "total_unique": 12,
       "types": [
         "number"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 33
     },
     "stats.attackSpeed": {
       "values": [
@@ -1111,10 +1115,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 16
     },
     "stats.baseDamage": {
       "values": [
@@ -1132,10 +1133,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 10
     },
     "stats.critChance": {
       "values": [
@@ -1150,13 +1148,13 @@
       "types": [
         "number"
       ],
-      "occurrences": 15,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 15
     },
     "stats.damage": {
       "values": [
+        12,
+        15,
+        22,
         30,
         35,
         40,
@@ -1164,60 +1162,130 @@
         50,
         55,
         60,
-        65
+        65,
+        8,
+        90
       ],
-      "total_unique": 8,
+      "total_unique": 13,
       "types": [
         "array"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 18
     },
     "stats.durability": {
       "values": [
-        400,
-        450,
+        1000,
+        2000,
+        4000,
         500,
-        600
+        9999
+      ],
+      "total_unique": 5,
+      "types": [
+        "integer",
+        "array"
+      ],
+      "occurrences": 30
+    },
+    "stats.forestry": {
+      "values": [
+        10,
+        20,
+        40,
+        80
       ],
       "total_unique": 4,
       "types": [
         "integer"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 4
+    },
+    "stats.mining": {
+      "values": [
+        10,
+        20,
+        40,
+        80
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    },
+    "stats.weight": {
+      "values": [
+        100.0,
+        150.0,
+        2.5,
+        3.0,
+        3.5,
+        30.0,
+        35.0,
+        4.0,
+        4.5,
+        40.0,
+        45.0,
+        5.0,
+        5.5,
+        50.0,
+        55.0,
+        60.0,
+        65.0,
+        75.0
+      ],
+      "total_unique": 18,
+      "types": [
+        "number"
+      ],
+      "occurrences": 20
     },
     "subtype": {
       "values": [
+        "alchemy",
+        "alchemy_table",
+        "altar",
+        "amulet",
         "arcane_staff",
+        "axe",
         "battle_axe",
         "battle_staff",
         "battleaxe",
+        "boots",
+        "bracelet",
+        "buckler",
+        "chestplate",
         "dagger",
+        "enchanting",
+        "engineering",
+        "engineering_bench",
+        "fishing_rod",
+        "forge",
+        "gauntlets",
+        "helmet",
+        "leggings",
         "longbow",
         "longsword",
+        "pickaxe",
+        "refinery",
+        "refining",
+        "ring",
         "shortbow",
         "shortsword",
+        "sickle",
+        "smithing",
         "spear",
         "special_bow",
         "staff",
+        "tunic",
         "war_hammer",
         "warhammer"
       ],
-      "total_unique": 14,
+      "total_unique": 38,
       "types": [
         "string"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "test_weapon_simple",
-        "test_weapon_conflicting_elements",
-        "test_weapon_multi_geometry"
-      ]
+      "occurrences": 59
     },
     "tier": {
       "values": [
@@ -1230,45 +1298,45 @@
       "types": [
         "integer"
       ],
-      "occurrences": 30,
-      "example_items": [
-        "lightning_chain_whip",
-        "inferno_blade",
-        "void_piercer"
-      ]
+      "occurrences": 73
     },
     "type": {
       "values": [
+        "accessory",
+        "adornments",
+        "alchemy",
+        "armor",
         "axe",
         "bow",
+        "crafting",
         "dagger",
+        "engineering",
         "hammer",
         "mace",
+        "refining",
+        "shield",
+        "smithing",
         "staff",
         "sword",
+        "tool",
         "wand",
         "weapon"
       ],
-      "total_unique": 9,
+      "total_unique": 19,
       "types": [
         "string"
       ],
-      "occurrences": 30,
-      "example_items": [
-        "lightning_chain_whip",
-        "inferno_blade",
-        "void_piercer"
-      ]
+      "occurrences": 73
     }
   },
   "_usable_template": {
     "attributes": [
       "<value>"
     ],
-    "category": "weapon",
-    "description": "Whip that arcs lightning between foes",
+    "category": "station",
+    "description": "Blade that projects waves of flame",
     "effectParams": {
-      "baseDamage": 42,
+      "baseDamage": 35,
       "burn_damage_per_second": 10.0,
       "burn_duration": 3.0,
       "chain_count": 3,
@@ -1285,9 +1353,9 @@
       "slow_percent": 0.4
     },
     "effectTags": [
-      "void",
-      "crushing",
-      "bleed"
+      "freeze",
+      "single",
+      "BURN"
     ],
     "effect_params": {
       "baseDamage": 40,
@@ -1314,43 +1382,46 @@
       "weaken_percent": 0.3
     },
     "effect_tags": [
-      "physical",
-      "beam",
-      "bleed"
+      "bleed",
+      "freeze",
+      "single"
     ],
     "flags": {
       "equippable": true,
+      "placeable": true,
       "repairable": true,
       "stackable": true,
       "tradeable": true
     },
-    "itemId": "test_weapon_complex_valid",
+    "itemId": "test_case_sensitivity",
     "metadata": {
-      "narrative": "A simple test weapon with valid tags.",
+      "narrative": "Advanced refinery with improved efficiency and heat control. Can process higher-grade ores and create complex alloys. The granite construction handles intense heat without cracking.",
       "tags": [
-        "ranged",
-        "bow",
-        "2H"
+        "standard",
+        "mace",
+        "armor"
       ]
     },
-    "name": "Steel Battleaxe",
+    "name": "Copper Pickaxe",
     "narrative": "Crackling with elemental fury, this whip doesn't just strike\u2014it hunts. Each lash leaps from victim to victim, leaving a trail of shocked enemies in its wake.",
-    "range": 1,
-    "rarity": "common",
+    "range": 0,
+    "rarity": "uncommon",
     "requirements": {
       "level": 1,
       "stats": {
         "AGI": 8,
         "INT": 18,
-        "STR": 10
+        "STR": 8
       }
     },
-    "slot": "mainHand",
+    "slot": "feet",
     "stackSize": 1,
     "statMultipliers": {
       "attackSpeed": 0.95,
       "damage": 0.9,
+      "defense": 1.0,
       "durability": 0.8,
+      "gathering": 1.0,
       "weight": 0.9
     },
     "stats": {
@@ -1360,178 +1431,186 @@
       "damage": [
         65,
         35,
-        40
+        8
       ],
-      "durability": 400
+      "durability": [
+        4000,
+        1000,
+        9999
+      ],
+      "forestry": 40,
+      "mining": 40,
+      "weight": 65.0
     },
-    "subtype": "staff",
+    "subtype": "longbow",
     "tier": 1,
-    "type": "staff"
+    "type": "mace"
   },
   "_sample_items": [
     {
-      "itemId": "lightning_chain_whip",
-      "name": "Lightning Chain Whip",
-      "tier": 3,
-      "rarity": "epic",
-      "category": "equipment",
-      "type": "weapon",
-      "slot": "mainHand",
+      "metadata": {
+        "narrative": "Simple stone forge with basic bellows. Hot enough for copper and iron work, but struggles with harder metals.",
+        "tags": [
+          "station",
+          "smithing",
+          "starter"
+        ]
+      },
+      "itemId": "forge_t1",
+      "name": "Basic Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0,
       "stats": {
-        "damage": [
-          30,
-          45
+        "durability": [
+          9999,
+          9999
         ],
-        "attackSpeed": 1.5,
-        "durability": 400,
-        "critChance": 0.15
+        "weight": 50.0
       },
-      "effect_tags": [
-        "lightning",
-        "chain",
-        "shock"
-      ],
-      "effect_params": {
-        "baseDamage": 40,
-        "chain_count": 3,
-        "chain_range": 6.0,
-        "shock_duration": 4.0,
-        "shock_damage_per_tick": 5.0,
-        "shock_tick_rate": 1.0
+      "requirements": {
+        "level": 1
       },
-      "description": "Whip that arcs lightning between foes",
-      "narrative": "Crackling with elemental fury, this whip doesn't just strike\u2014it hunts. Each lash leaps from victim to victim, leaving a trail of shocked enemies in its wake."
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
     },
     {
-      "itemId": "inferno_blade",
-      "name": "Inferno Blade",
-      "tier": 4,
-      "rarity": "legendary",
-      "category": "equipment",
-      "type": "weapon",
-      "slot": "mainHand",
+      "metadata": {
+        "narrative": "Improved forge with reinforced stone and efficient airflow. Reaches temperatures needed for steel.",
+        "tags": [
+          "station",
+          "smithing",
+          "standard"
+        ]
+      },
+      "itemId": "forge_t2",
+      "name": "Reinforced Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 0,
       "stats": {
-        "damage": [
-          40,
-          60
+        "durability": [
+          9999,
+          9999
         ],
-        "attackSpeed": 1.2,
-        "durability": 500,
-        "critChance": 0.2
+        "weight": 75.0
       },
-      "effect_tags": [
-        "fire",
-        "cone",
-        "burn"
-      ],
-      "effect_params": {
-        "baseDamage": 50,
-        "cone_angle": 60.0,
-        "cone_range": 8.0,
-        "burn_duration": 10.0,
-        "burn_damage_per_second": 8.0
+      "requirements": {
+        "level": 8
       },
-      "description": "Blade that projects waves of flame",
-      "narrative": "The blade itself never cools. Each swing projects a wave of searing flame that engulfs all before you. The heat is so intense that victims continue burning long after the strike."
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
     },
     {
-      "itemId": "void_piercer",
-      "name": "Void Piercer",
-      "tier": 4,
-      "rarity": "legendary",
-      "category": "equipment",
-      "type": "weapon",
-      "slot": "mainHand",
-      "stats": {
-        "damage": [
-          35,
-          55
-        ],
-        "attackSpeed": 1.4,
-        "durability": 450,
-        "critChance": 0.25
+      "metadata": {
+        "narrative": "Master forge with crystal-enhanced heating. Can reach temperatures that would melt lesser furnaces.",
+        "tags": [
+          "station",
+          "smithing",
+          "quality"
+        ]
       },
-      "effect_tags": [
-        "shadow",
-        "beam",
-        "weaken",
-        "pierce"
-      ],
-      "effect_params": {
-        "baseDamage": 45,
-        "beam_range": 12.0,
-        "beam_width": 1.5,
-        "pierce_count": 5,
-        "weaken_percent": 0.3,
-        "weaken_duration": 8.0
-      },
-      "description": "Spear that fires void beams through multiple targets",
-      "narrative": "Forged from crystallized void essence, this spear doesn't throw\u2014it tears. A beam of pure darkness lances through your enemies, weakening each it touches as it passes through flesh and armor alike."
-    },
-    {
-      "itemId": "frostbite_hammer",
-      "name": "Frostbite Hammer",
+      "itemId": "forge_t3",
+      "name": "Master Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
       "tier": 3,
       "rarity": "rare",
-      "category": "equipment",
-      "type": "mace",
-      "slot": "mainHand",
+      "range": 0,
       "stats": {
-        "damage": [
-          45,
-          65
+        "durability": [
+          9999,
+          9999
         ],
-        "attackSpeed": 0.8,
-        "durability": 600,
-        "critChance": 0.1
+        "weight": 100.0
       },
-      "effect_tags": [
-        "ice",
-        "circle",
-        "freeze",
-        "knockback"
-      ],
-      "effect_params": {
-        "baseDamage": 60,
-        "circle_radius": 4.0,
-        "origin": "target",
-        "freeze_duration": 3.0,
-        "knockback_distance": 3.0
+      "requirements": {
+        "level": 15
       },
-      "description": "Hammer that freezes and repels nearby foes",
-      "narrative": "Each impact sends a shockwave of absolute zero. Enemies freeze mid-motion as they're blasted backward, turned into icy statues before they even hit the ground."
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
     },
     {
-      "itemId": "blood_reaver",
-      "name": "Blood Reaver",
-      "tier": 3,
+      "metadata": {
+        "narrative": "Legendary forge that bends reality itself. Can work metals that shouldn't exist.",
+        "tags": [
+          "station",
+          "smithing",
+          "legendary"
+        ]
+      },
+      "itemId": "forge_t4",
+      "name": "Eternal Forge",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "smithing",
+      "tier": 4,
       "rarity": "epic",
-      "category": "equipment",
-      "type": "weapon",
-      "slot": "mainHand",
+      "range": 0,
       "stats": {
-        "damage": [
-          35,
-          50
+        "durability": [
+          9999,
+          9999
         ],
-        "attackSpeed": 1.3,
-        "durability": 400,
-        "critChance": 0.18
+        "weight": 150.0
       },
-      "effect_tags": [
-        "physical",
-        "single",
-        "bleed",
-        "lifesteal"
-      ],
-      "effect_params": {
-        "baseDamage": 42,
-        "bleed_duration": 10.0,
-        "bleed_damage_per_second": 6.0,
-        "lifesteal_percent": 0.25
+      "requirements": {
+        "level": 25
       },
-      "description": "Cursed blade that feeds on lifeblood",
-      "narrative": "This weapon hungers. Each strike opens wounds that refuse to close, and as your enemies bleed, the blade drinks\u2014and so do you. Feel their vitality flow into you with each passing second."
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Basic stone furnace for refining raw ores into usable materials. Essential for any aspiring metalworker.",
+        "tags": [
+          "station",
+          "refining",
+          "starter"
+        ]
+      },
+      "itemId": "refinery_t1",
+      "name": "Basic Refinery",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "refining",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0,
+      "stats": {
+        "durability": [
+          9999,
+          9999
+        ],
+        "weight": 45.0
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
     }
   ]
 }

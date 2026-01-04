@@ -1,15 +1,13 @@
 {
   "_meta": {
-    "category": "consumables",
-    "description": "Potions, elixirs, food, and other consumable items - alchemy output",
-    "purpose": "LLM fine-tuning template",
-    "generated_at": "2026-01-02T01:26:25.370452",
+    "category": "alchemy_items",
+    "llm_purpose": "Item LLM for alchemy - creates potions, elixirs, consumables with effects",
+    "generated_at": "2026-01-04T04:41:13.657283",
     "total_items": 16,
     "source_files": [
       "items.JSON/items-alchemy-1.JSON"
     ]
   },
-  "_field_documentation": {},
   "_all_possible_values": {
     "category": {
       "values": [
@@ -19,12 +17,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "minor_health_potion",
-        "health_potion",
-        "greater_health_potion"
-      ]
+      "occurrences": 16
     },
     "duration": {
       "values": [
@@ -42,12 +35,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "minor_health_potion",
-        "health_potion",
-        "greater_health_potion"
-      ]
+      "occurrences": 16
     },
     "effect": {
       "values": [
@@ -72,12 +60,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "minor_health_potion",
-        "health_potion",
-        "greater_health_potion"
-      ]
+      "occurrences": 16
     },
     "flags.consumable": {
       "values": [
@@ -88,10 +71,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 16
     },
     "flags.repairable": {
       "values": [
@@ -101,10 +81,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 16
     },
     "flags.stackable": {
       "values": [
@@ -114,10 +91,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 16
     },
     "itemId": {
       "values": [
@@ -142,12 +116,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "minor_health_potion",
-        "health_potion",
-        "greater_health_potion"
-      ]
+      "occurrences": 16
     },
     "metadata.narrative": {
       "values": [
@@ -172,10 +141,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 16
     },
     "metadata.tags": {
       "values": [
@@ -217,10 +183,7 @@
       "types": [
         "array"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 16
     },
     "name": {
       "values": [
@@ -245,12 +208,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "minor_health_potion",
-        "health_potion",
-        "greater_health_potion"
-      ]
+      "occurrences": 16
     },
     "rarity": {
       "values": [
@@ -263,12 +221,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "minor_health_potion",
-        "health_potion",
-        "greater_health_potion"
-      ]
+      "occurrences": 16
     },
     "requirements.level": {
       "values": [
@@ -285,10 +238,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 16
     },
     "stackSize": {
       "values": [
@@ -301,12 +251,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "minor_health_potion",
-        "health_potion",
-        "greater_health_potion"
-      ]
+      "occurrences": 16
     },
     "statMultipliers.weight": {
       "values": [
@@ -319,10 +264,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 16
     },
     "subtype": {
       "values": [
@@ -337,12 +279,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "minor_health_potion",
-        "health_potion",
-        "greater_health_potion"
-      ]
+      "occurrences": 16
     },
     "tier": {
       "values": [
@@ -355,12 +292,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "minor_health_potion",
-        "health_potion",
-        "greater_health_potion"
-      ]
+      "occurrences": 16
     },
     "type": {
       "values": [
@@ -373,34 +305,29 @@
       "types": [
         "string"
       ],
-      "occurrences": 16,
-      "example_items": [
-        "minor_health_potion",
-        "health_potion",
-        "greater_health_potion"
-      ]
+      "occurrences": 16
     }
   },
   "_usable_template": {
     "category": "consumable",
     "duration": 0,
-    "effect": "Restores 100 HP instantly",
+    "effect": "+20% physical damage",
     "flags": {
       "consumable": true,
       "repairable": true,
       "stackable": true
     },
-    "itemId": "strength_elixir",
+    "itemId": "regeneration_tonic",
     "metadata": {
-      "narrative": "Creating universal solvent that can dissolve anything. Handle with extreme care. The void essence makes it unstable, the shadow core makes it hungry. It wants to unmake things.",
+      "narrative": "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal, blows that should fell you merely bruise. Stand firm, unbreakable.",
       "tags": [
-        "resistance",
-        "agility",
-        "buff"
+        "standard",
+        "armor",
+        "explosive"
       ]
     },
-    "name": "Weapon Oil",
-    "rarity": "common",
+    "name": "Health Potion",
+    "rarity": "rare",
     "requirements": {
       "level": 1,
       "stats": {}
@@ -409,9 +336,9 @@
     "statMultipliers": {
       "weight": 0.2
     },
-    "subtype": "resistance",
+    "subtype": "explosive",
     "tier": 1,
-    "type": "utility"
+    "type": "oil"
   },
   "_sample_items": [
     {

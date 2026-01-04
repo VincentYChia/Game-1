@@ -1,737 +1,462 @@
 {
   "_meta": {
-    "category": "placements",
-    "description": "Minigame placement patterns for crafting",
-    "purpose": "LLM fine-tuning template",
-    "generated_at": "2026-01-02T01:26:25.383933",
-    "total_items": 62,
+    "category": "enchanting_recipes",
+    "llm_purpose": "Recipe LLM for enchanting - creates enchantment/adornment recipes",
+    "generated_at": "2026-01-04T04:41:13.661489",
+    "total_items": 75,
     "source_files": [
       "placements.JSON/placements-adornments-1.JSON",
-      "placements.JSON/placements-smithing-1.JSON"
+      "recipes.JSON/recipes-adornments-1.json",
+      "recipes.JSON/recipes-enchanting-1.JSON"
     ]
   },
-  "_field_documentation": {},
   "_all_possible_values": {
-    "metadata.gridSize": {
+    "applicableTo": {
       "values": [
-        "3x3",
-        "5x5",
-        "7x7"
+        "accessory",
+        "armor",
+        "tool",
+        "weapon"
+      ],
+      "total_unique": 4,
+      "types": [
+        "array"
+      ],
+      "occurrences": 50
+    },
+    "effect.chainCount": {
+      "values": [
+        2
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effect.chainRange": {
+      "values": [
+        3
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effect.conflictsWith": {
+      "values": [
+        "efficiency_1",
+        "efficiency_2",
+        "fortune_1",
+        "fortune_2",
+        "protection_1",
+        "protection_2",
+        "protection_3",
+        "sharpness_1",
+        "sharpness_2",
+        "sharpness_3",
+        "silk_touch",
+        "unbreaking_1",
+        "unbreaking_2"
+      ],
+      "total_unique": 13,
+      "types": [
+        "array"
+      ],
+      "occurrences": 50
+    },
+    "effect.damagePerSecond": {
+      "values": [
+        10,
+        8
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    },
+    "effect.damagePercent": {
+      "values": [
+        0.5
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect.duration": {
+      "values": [
+        4,
+        5,
+        8
       ],
       "total_unique": 3,
       "types": [
-        "string"
+        "integer"
       ],
-      "occurrences": 37,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 6
     },
-    "metadata.narrative": {
+    "effect.element": {
       "values": [
-        "A dagger is deceptively simple - just a blade and a grip. But the balance must be perfect for quick, precise strikes.",
-        "A simple round shield - iron face with oak backing. Protects and strikes in equal measure.",
-        "Advanced refinery with better efficiency and heat control.",
-        "Balanced steel longsword. The blade flows like water, strikes like thunder.",
-        "Basic alchemy table with mortar, pestle, and glassware.",
-        "Basic axe for woodcutting. Simple but essential for any aspiring adventurer.",
-        "Basic leather protection. Better than nothing, lighter than metal.",
-        "Basic refinery for turning raw ores into usable ingots. Essential for any metalworker.",
-        "Basic stone forge suitable for working copper and iron. The foundation of smithing.",
-        "Basic workbench for assembling mechanical devices.",
-        "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis.",
-        "Crafting a composite bow requires laminating different materials - wood for flexibility, sinew for power, silk for the string. Patience yields deadly accuracy.",
-        "Crafting a warhammer is about managing weight distribution. The crushing head must be perfectly balanced on the shaft, or it becomes a liability rather than a weapon.",
-        "Curved steel blade perfect for harvesting delicate plants. Clean cuts preserve quality and maximize yield.",
-        "Ethereal mithril axe that phases through wood fibers. Cuts with minimal resistance.",
-        "Flexible bamboo rod with silk line and bronze hook. Patience and the right tool can pull dinner from any water.",
-        "Forging a steel battleaxe requires balance - too heavy and it's unwieldy, too light and it lacks impact. This versatile weapon can devastate with two hands or still threaten with one.",
-        "Improved forge with better heat retention. Can work steel reliably.",
-        "Iron amulet holding a water crystal. Feels cool against your skin.",
-        "Iron plates protect vital organs. Heavy but reliable.",
-        "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective.",
-        "Master forge with crystal enhancement. Can reach extreme temperatures.",
-        "Mithril dagger that seems to shimmer out of existence. Wickedly sharp, impossibly light.",
-        "Razor-edged steel axe. Ancient trees fall before it.",
-        "Reinforced leather boots with iron caps. Protects your feet without slowing you down.",
-        "Reinforced leather gloves with iron studs across the knuckles. Your hands are your tools - protect them properly.",
-        "Simple copper band with fire crystal. Radiates gentle warmth.",
-        "Simple pine bow strung with treated sinew. Not powerful, but reliable.",
-        "Simple spear with copper tip. Keep your enemies at a distance.",
-        "Solid iron axe for serious forestry work. Bites deep and true.",
-        "Steel bracelet with lightning shard. Crackles with stored static.",
-        "Steel helm with full face protection. Your head stays attached, which is nice.",
-        "Steel pickaxe with perfect balance. Makes hard rock feel like clay.",
-        "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor.",
-        "The foundational smithing technique - blade, tang, handle. Simple in concept, demanding in execution. Every smith remembers their first sword.",
-        "Upgraded pickaxe that can tackle tougher deposits. Iron reliability meets practical design.",
-        "Your first pickaxe. The gateway to greater resources and deeper discoveries."
-      ],
-      "total_unique": 37,
-      "types": [
-        "string"
-      ],
-      "occurrences": 37,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.1,1": {
-      "values": [
-        "beetle_carapace",
-        "granite",
-        "iron_ingot",
-        "limestone",
-        "mithril_ingot",
-        "slime_gel",
-        "steel_ingot",
-        "water_crystal",
-        "wolf_pelt"
-      ],
-      "total_unique": 9,
-      "types": [
-        "string"
-      ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.1,2": {
-      "values": [
-        "beetle_carapace",
-        "copper_ingot",
-        "iron_ingot",
-        "ironwood_plank",
-        "mithril_ingot",
-        "oak_plank",
-        "pine_plank",
-        "spectral_thread",
-        "steel_ingot",
-        "wolf_pelt"
-      ],
-      "total_unique": 10,
-      "types": [
-        "string"
-      ],
-      "occurrences": 17,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.1,3": {
-      "values": [
-        "beetle_carapace",
-        "copper_ingot",
-        "granite",
-        "iron_ingot",
-        "ironwood_plank",
-        "limestone",
-        "mithril_ingot",
-        "oak_log",
-        "slime_gel",
-        "steel_ingot",
-        "water_crystal",
-        "wolf_pelt"
-      ],
-      "total_unique": 12,
-      "types": [
-        "string"
-      ],
-      "occurrences": 22,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.1,4": {
-      "values": [
-        "iron_ingot",
-        "ironwood_plank",
-        "mithril_ingot",
-        "steel_ingot",
-        "wolf_pelt"
-      ],
-      "total_unique": 5,
-      "types": [
-        "string"
-      ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.1,5": {
-      "values": [
-        "dire_fang",
-        "fire_crystal",
-        "mithril_ingot",
-        "steel_ingot"
+        "fire",
+        "ice",
+        "lightning",
+        "poison"
       ],
       "total_unique": 4,
       "types": [
         "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 8
     },
-    "placementMap.1,6": {
+    "effect.maxStacks": {
       "values": [
-        "mithril_ingot"
-      ],
-      "total_unique": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.1,7": {
-      "values": [
-        "fire_crystal"
-      ],
-      "total_unique": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.2,1": {
-      "values": [
-        "air_crystal",
-        "basalt",
-        "copper_ingot",
-        "granite",
-        "iron_ingot",
-        "obsidian",
-        "slime_gel",
-        "steel_ingot",
-        "wolf_pelt"
-      ],
-      "total_unique": 9,
-      "types": [
-        "string"
-      ],
-      "occurrences": 14,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.2,2": {
-      "values": [
-        "ash_log",
-        "ash_plank",
-        "beetle_carapace",
-        "birch_plank",
-        "copper_ingot",
-        "fire_crystal",
-        "iron_ingot",
-        "oak_log",
-        "oak_plank",
-        "phoenix_ash",
-        "pine_log",
-        "spectral_thread",
-        "steel_ingot",
-        "wolf_pelt"
-      ],
-      "total_unique": 14,
-      "types": [
-        "string"
-      ],
-      "occurrences": 22,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.2,3": {
-      "values": [
-        "basalt",
-        "copper_ingot",
-        "granite",
-        "iron_ingot",
-        "oak_plank",
-        "obsidian",
-        "phoenix_ash",
-        "pine_plank",
-        "slime_gel",
-        "spectral_thread",
-        "steel_ingot",
-        "wolf_pelt"
-      ],
-      "total_unique": 12,
-      "types": [
-        "string"
-      ],
-      "occurrences": 26,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.2,4": {
-      "values": [
-        "ash_plank",
-        "beetle_carapace",
-        "fire_crystal",
-        "granite",
-        "iron_ingot",
-        "ironwood_plank",
-        "mithril_ingot",
-        "phoenix_ash",
-        "steel_ingot"
-      ],
-      "total_unique": 9,
-      "types": [
-        "string"
-      ],
-      "occurrences": 12,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.2,5": {
-      "values": [
-        "fire_crystal",
-        "iron_ingot",
-        "ironwood_plank",
-        "mithril_ingot",
-        "obsidian",
-        "steel_ingot"
-      ],
-      "total_unique": 6,
-      "types": [
-        "string"
-      ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.2,6": {
-      "values": [
-        "fire_crystal",
-        "mithril_ingot"
+        3,
+        5
       ],
       "total_unique": 2,
       "types": [
-        "string"
+        "integer"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 4
     },
-    "placementMap.2,7": {
+    "effect.perMinute": {
       "values": [
-        "mithril_ingot"
+        true
       ],
       "total_unique": 1,
       "types": [
+        "boolean"
+      ],
+      "occurrences": 2
+    },
+    "effect.slowPercent": {
+      "values": [
+        0.3
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effect.stackable": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 50
+    },
+    "effect.type": {
+      "values": [
+        "bonus_yield_chance",
+        "chain_damage",
+        "damage_multiplier",
+        "damage_over_time",
+        "damage_reduction",
+        "durability_multiplier",
+        "durability_regeneration",
+        "gathering_speed_multiplier",
+        "harvest_original_form",
+        "health_regeneration",
+        "knockback",
+        "lifesteal",
+        "movement_speed_multiplier",
+        "reflect_damage",
+        "slow",
+        "soulbound",
+        "weight_multiplier"
+      ],
+      "total_unique": 17,
+      "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 50
     },
-    "placementMap.3,1": {
+    "effect.value": {
       "values": [
-        "ash_log",
+        -0.5,
+        0.1,
+        0.12,
+        0.15,
+        0.2,
+        0.3,
+        0.35,
+        0.4,
+        0.6,
+        1.0,
+        3
+      ],
+      "total_unique": 11,
+      "types": [
+        "number",
+        "integer"
+      ],
+      "occurrences": 42
+    },
+    "enchantmentId": {
+      "values": [
+        "efficiency_1",
+        "efficiency_2",
+        "fire_aspect",
+        "fortune_1",
+        "fortune_2",
+        "frost_touch",
+        "knockback",
+        "lifesteal",
+        "lightning_strike",
+        "poison",
+        "protection_1",
+        "protection_2",
+        "protection_3",
+        "regeneration",
+        "self_repair",
+        "sharpness_1",
+        "sharpness_2",
+        "sharpness_3",
+        "silk_touch",
+        "soulbound",
+        "swiftness",
+        "thorns",
+        "unbreaking_1",
+        "unbreaking_2",
+        "weightless"
+      ],
+      "total_unique": 25,
+      "types": [
+        "string"
+      ],
+      "occurrences": 50
+    },
+    "enchantmentName": {
+      "values": [
+        "Efficiency I",
+        "Efficiency II",
+        "Fire Aspect",
+        "Fortune I",
+        "Fortune II",
+        "Frost Touch",
+        "Knockback",
+        "Lifesteal",
+        "Lightning Strike",
+        "Poison",
+        "Protection I",
+        "Protection II",
+        "Protection III",
+        "Regeneration",
+        "Self-Repair",
+        "Sharpness I",
+        "Sharpness II",
+        "Sharpness III",
+        "Silk Touch",
+        "Soulbound",
+        "Swiftness",
+        "Thorns",
+        "Unbreaking I",
+        "Unbreaking II",
+        "Weightless"
+      ],
+      "total_unique": 25,
+      "types": [
+        "string"
+      ],
+      "occurrences": 50
+    },
+    "inputs[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "air_crystal",
         "ash_plank",
-        "basalt",
         "beetle_carapace",
-        "birch_plank",
-        "copper_ingot",
+        "chaos_matrix",
+        "crystal_quartz",
+        "diamond",
+        "dire_fang",
         "earth_crystal",
+        "ebony_log",
+        "ebony_plank",
+        "essence_blood",
+        "eternity_stone",
+        "fire_crystal",
+        "frost_essence",
+        "genesis_lattice",
+        "golem_core",
         "granite",
         "iron_ingot",
-        "oak_log",
-        "oak_plank",
-        "obsidian",
-        "slime_gel",
-        "steel_ingot",
-        "wolf_pelt"
-      ],
-      "total_unique": 15,
-      "types": [
-        "string"
-      ],
-      "occurrences": 19,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.3,2": {
-      "values": [
-        "basalt",
-        "birch_plank",
-        "granite",
-        "iron_ingot",
-        "limestone",
-        "oak_plank",
-        "phoenix_ash",
-        "pine_log",
-        "pine_plank",
-        "spectral_thread",
-        "steel_ingot",
-        "wolf_pelt"
-      ],
-      "total_unique": 12,
-      "types": [
-        "string"
-      ],
-      "occurrences": 17,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.3,3": {
-      "values": [
-        "basalt",
-        "birch_plank",
-        "copper_ingot",
-        "earth_crystal",
-        "granite",
-        "iron_ingot",
+        "iron_ore",
+        "iron_scales",
         "ironwood_plank",
-        "oak_plank",
+        "light_gem",
+        "lightning_shard",
+        "living_ichor",
+        "maple_plank",
+        "marble",
+        "mithril_ingot",
+        "obsidian",
+        "orichalcum_ingot",
+        "phoenix_ash",
+        "primordial_crystal",
+        "shadow_core",
+        "shale",
+        "slime_gel",
         "spectral_thread",
         "steel_ingot",
         "storm_heart",
-        "wolf_pelt"
-      ],
-      "total_unique": 12,
-      "types": [
-        "string"
-      ],
-      "occurrences": 17,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.3,4": {
-      "values": [
-        "ash_plank",
-        "iron_ingot",
-        "lightning_shard",
-        "mithril_ingot",
-        "phoenix_ash",
-        "steel_ingot"
-      ],
-      "total_unique": 6,
-      "types": [
-        "string"
-      ],
-      "occurrences": 9,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.3,5": {
-      "values": [
-        "beetle_carapace",
-        "ebony_plank",
-        "golem_core",
-        "iron_ingot",
-        "ironwood_plank",
-        "mithril_ingot",
-        "obsidian",
-        "steel_ingot"
-      ],
-      "total_unique": 8,
-      "types": [
-        "string"
-      ],
-      "occurrences": 12,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.3,6": {
-      "values": [
-        "fire_crystal",
-        "mithril_ingot"
-      ],
-      "total_unique": 2,
-      "types": [
-        "string"
-      ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.3,7": {
-      "values": [
-        "fire_crystal",
-        "mithril_ingot"
-      ],
-      "total_unique": 2,
-      "types": [
-        "string"
-      ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.4,1": {
-      "values": [
-        "beetle_carapace",
-        "dire_fang",
-        "obsidian",
-        "spectral_thread",
-        "wolf_pelt"
-      ],
-      "total_unique": 5,
-      "types": [
-        "string"
-      ],
-      "occurrences": 5,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.4,2": {
-      "values": [
-        "ebony_plank",
-        "iron_ingot",
-        "ironwood_plank",
-        "oak_plank",
-        "obsidian",
-        "spectral_thread",
-        "steel_ingot",
-        "water_crystal"
-      ],
-      "total_unique": 8,
-      "types": [
-        "string"
-      ],
-      "occurrences": 12,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.4,3": {
-      "values": [
-        "birch_plank",
-        "iron_ingot",
-        "obsidian",
-        "steel_ingot"
-      ],
-      "total_unique": 4,
-      "types": [
-        "string"
-      ],
-      "occurrences": 4,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.4,4": {
-      "values": [
-        "ash_plank",
-        "ebony_plank",
-        "iron_ingot",
-        "ironwood_plank",
-        "lightning_shard",
-        "mithril_ingot",
-        "obsidian",
-        "steel_ingot",
-        "water_crystal"
-      ],
-      "total_unique": 9,
-      "types": [
-        "string"
-      ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.4,5": {
-      "values": [
-        "beetle_carapace",
-        "ironwood_plank",
-        "mithril_ingot",
-        "obsidian",
-        "steel_ingot",
-        "wolf_pelt"
-      ],
-      "total_unique": 6,
-      "types": [
-        "string"
-      ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.4,6": {
-      "values": [
-        "fire_crystal",
-        "mithril_ingot",
-        "steel_ingot"
-      ],
-      "total_unique": 3,
-      "types": [
-        "string"
-      ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.4,7": {
-      "values": [
-        "mithril_ingot",
-        "spectral_thread"
-      ],
-      "total_unique": 2,
-      "types": [
-        "string"
-      ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.5,1": {
-      "values": [
-        "dire_fang",
-        "granite",
-        "ironwood_plank",
-        "maple_plank"
-      ],
-      "total_unique": 4,
-      "types": [
-        "string"
-      ],
-      "occurrences": 5,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.5,2": {
-      "values": [
-        "dire_fang",
-        "spectral_thread",
-        "wolf_pelt"
-      ],
-      "total_unique": 3,
-      "types": [
-        "string"
-      ],
-      "occurrences": 4,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.5,3": {
-      "values": [
-        "birch_plank",
-        "ebony_plank",
-        "ironwood_plank",
-        "slime_gel",
+        "tin_ore",
+        "void_essence",
+        "voidstone",
         "water_crystal",
-        "wolf_pelt"
+        "wolf_pelt",
+        "worldtree_plank"
       ],
-      "total_unique": 6,
+      "total_unique": 44,
       "types": [
         "string"
       ],
-      "occurrences": 8,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 164
     },
-    "placementMap.5,4": {
+    "inputs[].quantity": {
       "values": [
-        "lightning_shard",
-        "wolf_pelt"
+        1,
+        10,
+        12,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
       ],
-      "total_unique": 2,
+      "total_unique": 11,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 164
+    },
+    "metadata.narrative": {
+      "values": [
+        "Advanced durability enchantment using diamond. Nearly indestructible.",
+        "Advanced efficiency using storm essence. Tools blur with speed.",
+        "Advanced protection using golem essence. Stone-like resilience.",
+        "Basic durability enchantment. Items last longer before needing repair.",
+        "Basic sharpening enchantment using fire crystals. The edge never dulls.",
+        "Efficiency enchantment for tools. Gather resources faster.",
+        "Fire enchantment for weapons. Strikes leave burning wounds.",
+        "Fortune enchantment for tools. Better yields from resources.",
+        "Frost enchantment for weapons. Enemies slow and freeze.",
+        "Improved sharpening using lightning shards. The blade crackles with energy.",
+        "Knockback enchantment. Send enemies flying with each hit.",
+        "Lifesteal enchantment. Drain life from enemies with each strike.",
+        "Lightning enchantment for weapons. Chain attacks to nearby enemies.",
+        "Master fortune using chaos essence. Reality bends toward abundance.",
+        "Master protection with void essence. Damage dissipates into nothing.",
+        "Master sharpening using phoenix ash. The edge exists between states of matter.",
+        "Poison enchantment. Attacks inflict lingering toxins.",
+        "Protection enchantment. Incoming damage reduced.",
+        "Regeneration enchantment. Slowly heal over time.",
+        "Self-repair enchantment. Items slowly fix themselves over time.",
+        "Silk touch enchantment. Harvest blocks exactly as they are.",
+        "Soul bound enchantment. Item returns to you upon death.",
+        "Speed enchantment. Move faster while wearing this armor.",
+        "Thorns enchantment. Attackers hurt themselves.",
+        "Weightless enchantment. Items become lighter without losing strength."
+      ],
+      "total_unique": 25,
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 50
     },
-    "placementMap.5,5": {
+    "metadata.tags": {
       "values": [
-        "mithril_ingot"
+        "advanced",
+        "armor",
+        "basic",
+        "damage",
+        "defense",
+        "durability",
+        "efficiency",
+        "elemental",
+        "fire",
+        "fortune",
+        "frost",
+        "healing",
+        "knockback",
+        "legendary",
+        "lifesteal",
+        "lightning",
+        "luck",
+        "master",
+        "mobility",
+        "poison",
+        "reflect",
+        "regeneration",
+        "repair",
+        "silk-touch",
+        "soulbound",
+        "special",
+        "speed",
+        "thorns",
+        "tool",
+        "universal",
+        "utility",
+        "vampiric",
+        "weapon",
+        "weight"
+      ],
+      "total_unique": 34,
+      "types": [
+        "array"
+      ],
+      "occurrences": 50
+    },
+    "miniGame.baseTime": {
+      "values": [
+        30,
+        40,
+        45,
+        55,
+        60,
+        80,
+        90
+      ],
+      "total_unique": 7,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 50
+    },
+    "miniGame.difficulty": {
+      "values": [
+        "easy",
+        "extreme",
+        "hard",
+        "moderate"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 50
+    },
+    "miniGame.type": {
+      "values": [
+        "enchanting"
       ],
       "total_unique": 1,
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.5,6": {
-      "values": [
-        "mithril_ingot",
-        "phoenix_ash"
-      ],
-      "total_unique": 2,
-      "types": [
-        "string"
-      ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.6,2": {
-      "values": [
-        "ebony_plank",
-        "ironwood_plank"
-      ],
-      "total_unique": 2,
-      "types": [
-        "string"
-      ],
-      "occurrences": 4,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.6,4": {
-      "values": [
-        "ebony_plank"
-      ],
-      "total_unique": 1,
-      "types": [
-        "string"
-      ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
-    },
-    "placementMap.7,1": {
-      "values": [
-        "ebony_plank",
-        "essence_blood",
-        "phoenix_ash"
-      ],
-      "total_unique": 3,
-      "types": [
-        "string"
-      ],
-      "occurrences": 4,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 50
     },
     "placementMap.gridType": {
       "values": [
@@ -744,10 +469,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 25,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 25
     },
     "placementMap.shapes[].rotation": {
       "values": [
@@ -764,10 +486,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 218,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 218
     },
     "placementMap.shapes[].type": {
       "values": [
@@ -782,10 +501,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 218,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 218
     },
     "placementMap.shapes[].vertices": {
       "values": [
@@ -894,10 +610,7 @@
       "types": [
         "array"
       ],
-      "occurrences": 218,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 218
     },
     "placementMap.vertices.-1,-1.isKey": {
       "values": [
@@ -907,12 +620,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "diamond",
-        "earth_crystal",
-        "water_crystal"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.-1,-1.materialId": {
       "values": [
@@ -928,12 +636,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "diamond",
-        "earth_crystal",
-        "water_crystal"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.-1,-2.isKey": {
       "values": [
@@ -943,12 +646,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "air_crystal",
-        "wolf_pelt",
-        "void_essence"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-1,-2.materialId": {
       "values": [
@@ -961,12 +659,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "air_crystal",
-        "wolf_pelt",
-        "void_essence"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-1,-3.isKey": {
       "values": [
@@ -976,12 +669,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "steel_ingot",
-        "genesis_lattice",
-        "light_gem"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.-1,-3.materialId": {
       "values": [
@@ -996,12 +684,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "steel_ingot",
-        "genesis_lattice",
-        "light_gem"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.-1,-4.isKey": {
       "values": [
@@ -1011,12 +694,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "marble",
-        "granite",
-        "light_gem"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-1,-4.materialId": {
       "values": [
@@ -1028,12 +706,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "marble",
-        "granite",
-        "light_gem"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-1,-5.isKey": {
       "values": [
@@ -1043,12 +716,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "mithril_ingot",
-        "maple_plank",
-        "genesis_lattice"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.-1,-5.materialId": {
       "values": [
@@ -1063,12 +731,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "mithril_ingot",
-        "maple_plank",
-        "genesis_lattice"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.-1,-7.isKey": {
       "values": [
@@ -1078,10 +741,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "worldtree_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-1,-7.materialId": {
       "values": [
@@ -1091,10 +751,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "worldtree_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-1,0.isKey": {
       "values": [
@@ -1104,11 +761,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "fire_crystal",
-        "light_gem"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-1,0.materialId": {
       "values": [
@@ -1119,11 +772,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "fire_crystal",
-        "light_gem"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-1,1.isKey": {
       "values": [
@@ -1133,12 +782,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 8,
-      "example_items": [
-        "diamond",
-        "earth_crystal",
-        "storm_heart"
-      ]
+      "occurrences": 8
     },
     "placementMap.vertices.-1,1.materialId": {
       "values": [
@@ -1155,12 +799,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 8,
-      "example_items": [
-        "diamond",
-        "earth_crystal",
-        "storm_heart"
-      ]
+      "occurrences": 8
     },
     "placementMap.vertices.-1,2.isKey": {
       "values": [
@@ -1170,12 +809,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "wolf_pelt",
-        "void_essence",
-        "lightning_shard"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-1,2.materialId": {
       "values": [
@@ -1188,12 +822,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "wolf_pelt",
-        "void_essence",
-        "lightning_shard"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-1,3.isKey": {
       "values": [
@@ -1203,12 +832,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown",
-        "light_gem",
-        "frost_essence"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.-1,3.materialId": {
       "values": [
@@ -1220,15 +844,10 @@
       ],
       "total_unique": 5,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown",
-        "light_gem",
-        "frost_essence"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.-1,4.isKey": {
       "values": [
@@ -1238,10 +857,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "air_crystal"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-1,4.materialId": {
       "values": [
@@ -1251,10 +867,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "air_crystal"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-1,5.isKey": {
       "values": [
@@ -1264,12 +877,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "mithril_ingot",
-        "crystal_quartz",
-        "marble"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-1,5.materialId": {
       "values": [
@@ -1281,12 +889,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "mithril_ingot",
-        "crystal_quartz",
-        "marble"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-1,7.isKey": {
       "values": [
@@ -1296,10 +899,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "eternity_stone"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-1,7.materialId": {
       "values": [
@@ -1309,10 +909,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "eternity_stone"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-2,-1.isKey": {
       "values": [
@@ -1322,12 +919,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "mithril_ingot",
-        "wolf_pelt",
-        "light_gem"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-2,-1.materialId": {
       "values": [
@@ -1340,12 +932,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "mithril_ingot",
-        "wolf_pelt",
-        "light_gem"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-2,-2.isKey": {
       "values": [
@@ -1355,11 +942,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "storm_heart",
-        "essence_blood"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-2,-2.materialId": {
       "values": [
@@ -1370,11 +953,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "storm_heart",
-        "essence_blood"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-2,-3.isKey": {
       "values": [
@@ -1384,11 +963,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "storm_heart",
-        "iron_ore"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-2,-3.materialId": {
       "values": [
@@ -1399,11 +974,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "storm_heart",
-        "iron_ore"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-2,-4.isKey": {
       "values": [
@@ -1413,10 +984,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "iron_scales"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-2,-4.materialId": {
       "values": [
@@ -1426,10 +994,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "iron_scales"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-2,-5.isKey": {
       "values": [
@@ -1439,11 +1004,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "obsidian",
-        "crystal_quartz"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-2,-5.materialId": {
       "values": [
@@ -1454,11 +1015,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "obsidian",
-        "crystal_quartz"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-2,-6.isKey": {
       "values": [
@@ -1468,10 +1025,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "lightning_shard"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-2,-6.materialId": {
       "values": [
@@ -1481,10 +1035,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "lightning_shard"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-2,0.isKey": {
       "values": [
@@ -1494,12 +1045,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "slime_gel",
-        "fire_crystal",
-        "mithril_ingot"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.-2,0.materialId": {
       "values": [
@@ -1515,12 +1061,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "slime_gel",
-        "fire_crystal",
-        "mithril_ingot"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.-2,1.isKey": {
       "values": [
@@ -1530,11 +1071,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "essence_blood",
-        "light_gem"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-2,1.materialId": {
       "values": [
@@ -1545,11 +1082,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "essence_blood",
-        "light_gem"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-2,2.isKey": {
       "values": [
@@ -1559,10 +1092,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "essence_blood"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-2,2.materialId": {
       "values": [
@@ -1572,10 +1102,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "essence_blood"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-2,3.isKey": {
       "values": [
@@ -1585,11 +1112,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "air_crystal",
-        "iron_ore"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-2,3.materialId": {
       "values": [
@@ -1600,11 +1123,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "air_crystal",
-        "iron_ore"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-2,4.isKey": {
       "values": [
@@ -1614,12 +1133,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "crystal_quartz",
-        "iron_scales",
-        "spectral_thread"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-2,4.materialId": {
       "values": [
@@ -1632,12 +1146,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "crystal_quartz",
-        "iron_scales",
-        "spectral_thread"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-2,5.isKey": {
       "values": [
@@ -1647,12 +1156,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "obsidian",
-        "living_ichor",
-        "crystal_quartz"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-2,5.materialId": {
       "values": [
@@ -1664,12 +1168,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "obsidian",
-        "living_ichor",
-        "crystal_quartz"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-2,6.isKey": {
       "values": [
@@ -1679,10 +1178,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "lightning_shard"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-2,6.materialId": {
       "values": [
@@ -1692,10 +1188,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "lightning_shard"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-3,-1.isKey": {
       "values": [
@@ -1705,12 +1198,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "light_gem",
-        "dire_fang",
-        "primordial_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-3,-1.materialId": {
       "values": [
@@ -1722,12 +1210,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "light_gem",
-        "dire_fang",
-        "primordial_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-3,-2.isKey": {
       "values": [
@@ -1737,12 +1220,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "crystal_quartz",
-        "iron_ore",
-        "living_ichor"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-3,-2.materialId": {
       "values": [
@@ -1755,12 +1233,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "crystal_quartz",
-        "iron_ore",
-        "living_ichor"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-3,-3.isKey": {
       "values": [
@@ -1770,11 +1243,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "spectral_thread",
-        "maple_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-3,-3.materialId": {
       "values": [
@@ -1785,11 +1254,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "spectral_thread",
-        "maple_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-3,-4.isKey": {
       "values": [
@@ -1799,12 +1264,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "diamond",
-        "lightning_shard",
-        "living_ichor"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-3,-4.materialId": {
       "values": [
@@ -1816,12 +1276,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "diamond",
-        "lightning_shard",
-        "living_ichor"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-3,-5.isKey": {
       "values": [
@@ -1831,10 +1286,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "maple_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-3,-5.materialId": {
       "values": [
@@ -1844,10 +1296,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "maple_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-3,-6.isKey": {
       "values": [
@@ -1857,10 +1306,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "chaos_matrix"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-3,-6.materialId": {
       "values": [
@@ -1870,10 +1316,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "chaos_matrix"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-3,0.isKey": {
       "values": [
@@ -1883,12 +1326,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "adamantine_ingot",
-        "beetle_carapace",
-        "air_crystal"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.-3,0.materialId": {
       "values": [
@@ -1904,12 +1342,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "adamantine_ingot",
-        "beetle_carapace",
-        "air_crystal"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.-3,1.isKey": {
       "values": [
@@ -1919,11 +1352,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor",
-        "worldtree_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-3,1.materialId": {
       "values": [
@@ -1934,11 +1363,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor",
-        "worldtree_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-3,2.isKey": {
       "values": [
@@ -1948,12 +1373,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "storm_heart",
-        "living_ichor",
-        "air_crystal"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.-3,2.materialId": {
       "values": [
@@ -1967,12 +1387,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "storm_heart",
-        "living_ichor",
-        "air_crystal"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.-3,3.isKey": {
       "values": [
@@ -1982,11 +1397,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "spectral_thread",
-        "marble"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-3,3.materialId": {
       "values": [
@@ -1997,11 +1408,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "spectral_thread",
-        "marble"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-3,4.isKey": {
       "values": [
@@ -2011,10 +1418,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-3,4.materialId": {
       "values": [
@@ -2024,10 +1428,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-3,5.isKey": {
       "values": [
@@ -2037,11 +1438,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "marble",
-        "ash_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-3,5.materialId": {
       "values": [
@@ -2052,11 +1449,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "marble",
-        "ash_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-3,6.isKey": {
       "values": [
@@ -2066,10 +1459,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "ironwood_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-3,6.materialId": {
       "values": [
@@ -2079,10 +1469,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "ironwood_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-3,7.isKey": {
       "values": [
@@ -2092,10 +1479,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "light_gem"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-3,7.materialId": {
       "values": [
@@ -2105,10 +1489,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "light_gem"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-4,-1.isKey": {
       "values": [
@@ -2118,10 +1499,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-4,-1.materialId": {
       "values": [
@@ -2131,10 +1509,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-4,-2.isKey": {
       "values": [
@@ -2144,12 +1519,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "lightning_shard",
-        "iron_scales",
-        "air_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-4,-2.materialId": {
       "values": [
@@ -2161,12 +1531,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "lightning_shard",
-        "iron_scales",
-        "air_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-4,-3.isKey": {
       "values": [
@@ -2176,10 +1541,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-4,-3.materialId": {
       "values": [
@@ -2189,10 +1551,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-4,-4.isKey": {
       "values": [
@@ -2202,11 +1561,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "earth_crystal",
-        "marble"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-4,-4.materialId": {
       "values": [
@@ -2217,11 +1572,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "earth_crystal",
-        "marble"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-4,-5.isKey": {
       "values": [
@@ -2231,10 +1582,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-4,-5.materialId": {
       "values": [
@@ -2244,10 +1592,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-4,0.isKey": {
       "values": [
@@ -2257,12 +1602,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown",
-        "granite",
-        "void_essence"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.-4,0.materialId": {
       "values": [
@@ -2273,15 +1613,10 @@
       ],
       "total_unique": 4,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown",
-        "granite",
-        "void_essence"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.-4,2.isKey": {
       "values": [
@@ -2291,12 +1626,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "living_ichor",
-        "storm_heart",
-        "iron_scales"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-4,2.materialId": {
       "values": [
@@ -2309,12 +1639,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "living_ichor",
-        "storm_heart",
-        "iron_scales"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-4,3.isKey": {
       "values": [
@@ -2324,11 +1649,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor",
-        "adamantine_ingot"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-4,3.materialId": {
       "values": [
@@ -2339,11 +1660,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor",
-        "adamantine_ingot"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-4,4.isKey": {
       "values": [
@@ -2353,12 +1670,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "lightning_shard",
-        "earth_crystal",
-        "marble"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-4,4.materialId": {
       "values": [
@@ -2371,12 +1683,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "lightning_shard",
-        "earth_crystal",
-        "marble"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-4,5.isKey": {
       "values": [
@@ -2386,10 +1693,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "light_gem"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-4,5.materialId": {
       "values": [
@@ -2399,10 +1703,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "light_gem"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-5,-1.isKey": {
       "values": [
@@ -2412,11 +1713,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "mithril_ingot",
-        "adamantine_ingot"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-5,-1.materialId": {
       "values": [
@@ -2427,11 +1724,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "mithril_ingot",
-        "adamantine_ingot"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-5,-2.isKey": {
       "values": [
@@ -2441,11 +1734,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "shadow_core",
-        "orichalcum_ingot"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-5,-2.materialId": {
       "values": [
@@ -2456,11 +1745,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "shadow_core",
-        "orichalcum_ingot"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-5,-3.isKey": {
       "values": [
@@ -2470,12 +1755,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown",
-        "light_gem",
-        "obsidian"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-5,-3.materialId": {
       "values": [
@@ -2484,15 +1764,10 @@
       ],
       "total_unique": 2,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown",
-        "light_gem",
-        "obsidian"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-5,-5.isKey": {
       "values": [
@@ -2502,11 +1777,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown",
-        "crystal_quartz"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-5,-5.materialId": {
       "values": [
@@ -2514,14 +1785,10 @@
       ],
       "total_unique": 1,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown",
-        "crystal_quartz"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-5,0.isKey": {
       "values": [
@@ -2531,12 +1798,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown",
-        "earth_crystal",
-        "air_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-5,0.materialId": {
       "values": [
@@ -2545,15 +1807,10 @@
       ],
       "total_unique": 2,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown",
-        "earth_crystal",
-        "air_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-5,1.isKey": {
       "values": [
@@ -2563,12 +1820,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "mithril_ingot",
-        "spectral_thread",
-        "voidstone"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-5,1.materialId": {
       "values": [
@@ -2580,12 +1832,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "mithril_ingot",
-        "spectral_thread",
-        "voidstone"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.-5,2.isKey": {
       "values": [
@@ -2595,10 +1842,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "orichalcum_ingot"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-5,2.materialId": {
       "values": [
@@ -2608,10 +1852,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "orichalcum_ingot"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-5,3.isKey": {
       "values": [
@@ -2621,10 +1862,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-5,4.isKey": {
       "values": [
@@ -2634,10 +1872,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-5,4.materialId": {
       "values": [
@@ -2647,10 +1882,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-5,5.isKey": {
       "values": [
@@ -2660,11 +1892,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "crystal_quartz",
-        "eternity_stone"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-5,5.materialId": {
       "values": [
@@ -2675,11 +1903,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "crystal_quartz",
-        "eternity_stone"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-6,-1.isKey": {
       "values": [
@@ -2689,11 +1913,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "air_crystal",
-        "diamond"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-6,-1.materialId": {
       "values": [
@@ -2704,11 +1924,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "air_crystal",
-        "diamond"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.-6,-4.isKey": {
       "values": [
@@ -2718,10 +1934,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,-4.materialId": {
       "values": [
@@ -2731,10 +1944,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,-6.isKey": {
       "values": [
@@ -2744,10 +1954,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,-6.materialId": {
       "values": [
@@ -2757,10 +1964,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,0.isKey": {
       "values": [
@@ -2770,12 +1974,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "spectral_thread",
-        "light_gem",
-        "crystal_quartz"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-6,0.materialId": {
       "values": [
@@ -2787,12 +1986,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "spectral_thread",
-        "light_gem",
-        "crystal_quartz"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.-6,1.isKey": {
       "values": [
@@ -2802,10 +1996,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "ebony_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,1.materialId": {
       "values": [
@@ -2815,10 +2006,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "ebony_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,2.isKey": {
       "values": [
@@ -2828,10 +2016,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,2.materialId": {
       "values": [
@@ -2841,10 +2026,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,3.isKey": {
       "values": [
@@ -2854,10 +2036,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "voidstone"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,3.materialId": {
       "values": [
@@ -2867,10 +2046,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "voidstone"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,6.isKey": {
       "values": [
@@ -2880,10 +2056,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-6,6.materialId": {
       "values": [
@@ -2893,10 +2066,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-7,5.isKey": {
       "values": [
@@ -2906,10 +2076,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "chaos_matrix"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.-7,5.materialId": {
       "values": [
@@ -2919,10 +2086,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "chaos_matrix"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.0,-1.isKey": {
       "values": [
@@ -2932,12 +2096,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "fire_crystal",
-        "diamond",
-        "golem_core"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,-1.materialId": {
       "values": [
@@ -2950,12 +2109,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "fire_crystal",
-        "diamond",
-        "golem_core"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,-2.isKey": {
       "values": [
@@ -2965,12 +2119,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "air_crystal",
-        "frost_essence",
-        "earth_crystal"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.0,-2.materialId": {
       "values": [
@@ -2986,12 +2135,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "air_crystal",
-        "frost_essence",
-        "earth_crystal"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.0,-3.isKey": {
       "values": [
@@ -3001,12 +2145,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "adamantine_ingot",
-        "beetle_carapace",
-        "slime_gel"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.0,-3.materialId": {
       "values": [
@@ -3022,12 +2161,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "adamantine_ingot",
-        "beetle_carapace",
-        "slime_gel"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.0,-4.isKey": {
       "values": [
@@ -3037,12 +2171,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "steel_ingot",
-        "granite",
-        "golem_core"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,-4.materialId": {
       "values": [
@@ -3056,12 +2185,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "steel_ingot",
-        "granite",
-        "golem_core"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,-5.isKey": {
       "values": [
@@ -3071,12 +2195,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "air_crystal",
-        "earth_crystal",
-        "ebony_log"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.0,-5.materialId": {
       "values": [
@@ -3089,12 +2208,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "air_crystal",
-        "earth_crystal",
-        "ebony_log"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.0,-6.isKey": {
       "values": [
@@ -3104,12 +2218,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "spectral_thread",
-        "marble",
-        "orichalcum_ingot"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.0,-6.materialId": {
       "values": [
@@ -3121,12 +2230,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "spectral_thread",
-        "marble",
-        "orichalcum_ingot"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.0,-7.isKey": {
       "values": [
@@ -3136,10 +2240,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.0,-7.materialId": {
       "values": [
@@ -3149,10 +2250,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.0,0.isKey": {
       "values": [
@@ -3162,12 +2260,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "golem_core",
-        "air_crystal",
-        "fire_crystal"
-      ]
+      "occurrences": 9
     },
     "placementMap.vertices.0,0.materialId": {
       "values": [
@@ -3184,12 +2277,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "golem_core",
-        "air_crystal",
-        "fire_crystal"
-      ]
+      "occurrences": 9
     },
     "placementMap.vertices.0,1.isKey": {
       "values": [
@@ -3199,12 +2287,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "frost_essence",
-        "maple_plank",
-        "golem_core"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,1.materialId": {
       "values": [
@@ -3217,12 +2300,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "frost_essence",
-        "maple_plank",
-        "golem_core"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,2.isKey": {
       "values": [
@@ -3232,12 +2310,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "light_gem",
-        "chaos_matrix",
-        "essence_blood"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,2.materialId": {
       "values": [
@@ -3251,12 +2324,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "light_gem",
-        "chaos_matrix",
-        "essence_blood"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,3.isKey": {
       "values": [
@@ -3266,12 +2334,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "adamantine_ingot",
-        "beetle_carapace",
-        "ash_plank"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.0,3.materialId": {
       "values": [
@@ -3287,12 +2350,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "adamantine_ingot",
-        "beetle_carapace",
-        "ash_plank"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.0,4.isKey": {
       "values": [
@@ -3302,12 +2360,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 8,
-      "example_items": [
-        "storm_heart",
-        "light_gem",
-        "granite"
-      ]
+      "occurrences": 8
     },
     "placementMap.vertices.0,4.materialId": {
       "values": [
@@ -3324,12 +2377,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 8,
-      "example_items": [
-        "storm_heart",
-        "light_gem",
-        "granite"
-      ]
+      "occurrences": 8
     },
     "placementMap.vertices.0,5.isKey": {
       "values": [
@@ -3339,12 +2387,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "diamond",
-        "earth_crystal",
-        "ebony_plank"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,5.materialId": {
       "values": [
@@ -3358,12 +2401,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "diamond",
-        "earth_crystal",
-        "ebony_plank"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,6.isKey": {
       "values": [
@@ -3373,12 +2411,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "spectral_thread",
-        "marble",
-        "orichalcum_ingot"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.0,6.materialId": {
       "values": [
@@ -3392,12 +2425,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "spectral_thread",
-        "marble",
-        "orichalcum_ingot"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.1,-1.isKey": {
       "values": [
@@ -3407,12 +2435,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 8,
-      "example_items": [
-        "diamond",
-        "earth_crystal",
-        "water_crystal"
-      ]
+      "occurrences": 8
     },
     "placementMap.vertices.1,-1.materialId": {
       "values": [
@@ -3429,12 +2452,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 8,
-      "example_items": [
-        "diamond",
-        "earth_crystal",
-        "water_crystal"
-      ]
+      "occurrences": 8
     },
     "placementMap.vertices.1,-2.isKey": {
       "values": [
@@ -3444,12 +2462,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "air_crystal",
-        "wolf_pelt",
-        "void_essence"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.1,-2.materialId": {
       "values": [
@@ -3462,12 +2475,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "air_crystal",
-        "wolf_pelt",
-        "void_essence"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.1,-3.isKey": {
       "values": [
@@ -3477,12 +2485,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "steel_ingot",
-        "genesis_lattice",
-        "light_gem"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.1,-3.materialId": {
       "values": [
@@ -3497,12 +2500,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "steel_ingot",
-        "genesis_lattice",
-        "light_gem"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.1,-4.isKey": {
       "values": [
@@ -3512,12 +2510,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "marble",
-        "granite",
-        "light_gem"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.1,-4.materialId": {
       "values": [
@@ -3529,12 +2522,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "marble",
-        "granite",
-        "light_gem"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.1,-5.isKey": {
       "values": [
@@ -3544,12 +2532,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "mithril_ingot",
-        "maple_plank",
-        "genesis_lattice"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.1,-5.materialId": {
       "values": [
@@ -3564,12 +2547,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "mithril_ingot",
-        "maple_plank",
-        "genesis_lattice"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.1,-7.isKey": {
       "values": [
@@ -3579,10 +2557,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "worldtree_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.1,-7.materialId": {
       "values": [
@@ -3592,10 +2567,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "worldtree_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.1,0.isKey": {
       "values": [
@@ -3605,11 +2577,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "fire_crystal",
-        "light_gem"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.1,0.materialId": {
       "values": [
@@ -3620,11 +2588,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "fire_crystal",
-        "light_gem"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.1,1.isKey": {
       "values": [
@@ -3634,12 +2598,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "diamond",
-        "earth_crystal",
-        "storm_heart"
-      ]
+      "occurrences": 9
     },
     "placementMap.vertices.1,1.materialId": {
       "values": [
@@ -3657,12 +2616,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "diamond",
-        "earth_crystal",
-        "storm_heart"
-      ]
+      "occurrences": 9
     },
     "placementMap.vertices.1,2.isKey": {
       "values": [
@@ -3672,12 +2626,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "wolf_pelt",
-        "void_essence",
-        "lightning_shard"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.1,2.materialId": {
       "values": [
@@ -3690,12 +2639,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "wolf_pelt",
-        "void_essence",
-        "lightning_shard"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.1,3.isKey": {
       "values": [
@@ -3705,12 +2649,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown",
-        "light_gem",
-        "frost_essence"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.1,3.materialId": {
       "values": [
@@ -3722,15 +2661,10 @@
       ],
       "total_unique": 5,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown",
-        "light_gem",
-        "frost_essence"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.1,4.isKey": {
       "values": [
@@ -3740,10 +2674,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "air_crystal"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.1,4.materialId": {
       "values": [
@@ -3753,10 +2684,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "air_crystal"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.1,5.isKey": {
       "values": [
@@ -3766,12 +2694,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "mithril_ingot",
-        "crystal_quartz",
-        "marble"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.1,5.materialId": {
       "values": [
@@ -3783,12 +2706,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "mithril_ingot",
-        "crystal_quartz",
-        "marble"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.1,7.isKey": {
       "values": [
@@ -3798,10 +2716,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "eternity_stone"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.1,7.materialId": {
       "values": [
@@ -3811,10 +2726,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "eternity_stone"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.2,-1.isKey": {
       "values": [
@@ -3824,12 +2736,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "mithril_ingot",
-        "wolf_pelt",
-        "air_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.2,-1.materialId": {
       "values": [
@@ -3841,12 +2748,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "mithril_ingot",
-        "wolf_pelt",
-        "air_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.2,-2.isKey": {
       "values": [
@@ -3856,11 +2758,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "storm_heart",
-        "essence_blood"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.2,-2.materialId": {
       "values": [
@@ -3871,11 +2769,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "storm_heart",
-        "essence_blood"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.2,-3.isKey": {
       "values": [
@@ -3885,11 +2779,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "storm_heart",
-        "iron_ore"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.2,-3.materialId": {
       "values": [
@@ -3900,11 +2790,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "storm_heart",
-        "iron_ore"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.2,-4.isKey": {
       "values": [
@@ -3914,10 +2800,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "iron_scales"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.2,-4.materialId": {
       "values": [
@@ -3927,10 +2810,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "iron_scales"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.2,-5.isKey": {
       "values": [
@@ -3940,11 +2820,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "obsidian",
-        "crystal_quartz"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.2,-5.materialId": {
       "values": [
@@ -3955,11 +2831,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "obsidian",
-        "crystal_quartz"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.2,-6.isKey": {
       "values": [
@@ -3969,10 +2841,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "lightning_shard"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.2,-6.materialId": {
       "values": [
@@ -3982,10 +2851,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "lightning_shard"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.2,0.isKey": {
       "values": [
@@ -3995,12 +2861,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "slime_gel",
-        "fire_crystal",
-        "mithril_ingot"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.2,0.materialId": {
       "values": [
@@ -4016,12 +2877,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "slime_gel",
-        "fire_crystal",
-        "mithril_ingot"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.2,1.isKey": {
       "values": [
@@ -4031,10 +2887,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "essence_blood"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.2,1.materialId": {
       "values": [
@@ -4044,10 +2897,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "essence_blood"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.2,2.isKey": {
       "values": [
@@ -4057,10 +2907,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "essence_blood"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.2,2.materialId": {
       "values": [
@@ -4070,10 +2917,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "essence_blood"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.2,3.isKey": {
       "values": [
@@ -4083,11 +2927,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "air_crystal",
-        "iron_ore"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.2,3.materialId": {
       "values": [
@@ -4098,11 +2938,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "air_crystal",
-        "iron_ore"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.2,4.isKey": {
       "values": [
@@ -4112,12 +2948,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "crystal_quartz",
-        "iron_scales",
-        "spectral_thread"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.2,4.materialId": {
       "values": [
@@ -4130,12 +2961,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "crystal_quartz",
-        "iron_scales",
-        "spectral_thread"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.2,5.isKey": {
       "values": [
@@ -4145,12 +2971,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "obsidian",
-        "living_ichor",
-        "crystal_quartz"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.2,5.materialId": {
       "values": [
@@ -4162,12 +2983,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "obsidian",
-        "living_ichor",
-        "crystal_quartz"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.2,6.isKey": {
       "values": [
@@ -4177,10 +2993,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "lightning_shard"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.2,6.materialId": {
       "values": [
@@ -4190,10 +3003,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "lightning_shard"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.3,-1.isKey": {
       "values": [
@@ -4203,12 +3013,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "light_gem",
-        "dire_fang",
-        "primordial_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.3,-1.materialId": {
       "values": [
@@ -4220,12 +3025,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "light_gem",
-        "dire_fang",
-        "primordial_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.3,-2.isKey": {
       "values": [
@@ -4235,12 +3035,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "crystal_quartz",
-        "iron_ore",
-        "living_ichor"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.3,-2.materialId": {
       "values": [
@@ -4253,12 +3048,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "crystal_quartz",
-        "iron_ore",
-        "living_ichor"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.3,-3.isKey": {
       "values": [
@@ -4268,11 +3058,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "spectral_thread",
-        "maple_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.3,-3.materialId": {
       "values": [
@@ -4283,11 +3069,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "spectral_thread",
-        "maple_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.3,-4.isKey": {
       "values": [
@@ -4297,12 +3079,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "diamond",
-        "lightning_shard",
-        "living_ichor"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.3,-4.materialId": {
       "values": [
@@ -4314,12 +3091,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "diamond",
-        "lightning_shard",
-        "living_ichor"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.3,-5.isKey": {
       "values": [
@@ -4329,10 +3101,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "maple_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.3,-5.materialId": {
       "values": [
@@ -4342,10 +3111,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "maple_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.3,-6.isKey": {
       "values": [
@@ -4355,10 +3121,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "chaos_matrix"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.3,-6.materialId": {
       "values": [
@@ -4368,10 +3131,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "chaos_matrix"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.3,0.isKey": {
       "values": [
@@ -4381,12 +3141,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "adamantine_ingot",
-        "beetle_carapace",
-        "air_crystal"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.3,0.materialId": {
       "values": [
@@ -4402,12 +3157,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 7,
-      "example_items": [
-        "adamantine_ingot",
-        "beetle_carapace",
-        "air_crystal"
-      ]
+      "occurrences": 7
     },
     "placementMap.vertices.3,1.isKey": {
       "values": [
@@ -4417,11 +3167,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor",
-        "worldtree_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.3,1.materialId": {
       "values": [
@@ -4432,11 +3178,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor",
-        "worldtree_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.3,2.isKey": {
       "values": [
@@ -4446,12 +3188,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "storm_heart",
-        "living_ichor",
-        "air_crystal"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.3,2.materialId": {
       "values": [
@@ -4465,12 +3202,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "storm_heart",
-        "living_ichor",
-        "air_crystal"
-      ]
+      "occurrences": 6
     },
     "placementMap.vertices.3,3.isKey": {
       "values": [
@@ -4480,11 +3212,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "spectral_thread",
-        "marble"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.3,3.materialId": {
       "values": [
@@ -4495,11 +3223,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "spectral_thread",
-        "marble"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.3,4.isKey": {
       "values": [
@@ -4509,10 +3233,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.3,4.materialId": {
       "values": [
@@ -4522,10 +3243,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.3,5.isKey": {
       "values": [
@@ -4535,11 +3253,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "marble",
-        "ash_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.3,5.materialId": {
       "values": [
@@ -4550,11 +3264,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "marble",
-        "ash_plank"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.3,6.isKey": {
       "values": [
@@ -4564,10 +3274,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "ironwood_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.3,6.materialId": {
       "values": [
@@ -4577,10 +3284,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "ironwood_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.3,7.isKey": {
       "values": [
@@ -4590,10 +3294,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "light_gem"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.3,7.materialId": {
       "values": [
@@ -4603,10 +3304,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "light_gem"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.4,-1.isKey": {
       "values": [
@@ -4616,10 +3314,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.4,-1.materialId": {
       "values": [
@@ -4629,10 +3324,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.4,-2.isKey": {
       "values": [
@@ -4642,11 +3334,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "lightning_shard",
-        "iron_scales"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.4,-2.materialId": {
       "values": [
@@ -4657,11 +3345,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "lightning_shard",
-        "iron_scales"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.4,-3.isKey": {
       "values": [
@@ -4671,10 +3355,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.4,-3.materialId": {
       "values": [
@@ -4684,10 +3365,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "living_ichor"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.4,-4.isKey": {
       "values": [
@@ -4697,11 +3375,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "earth_crystal",
-        "marble"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.4,-4.materialId": {
       "values": [
@@ -4712,11 +3386,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "earth_crystal",
-        "marble"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.4,-5.isKey": {
       "values": [
@@ -4726,10 +3396,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.4,-5.materialId": {
       "values": [
@@ -4739,10 +3406,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.4,0.isKey": {
       "values": [
@@ -4752,12 +3416,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "unknown",
-        "granite",
-        "void_essence"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.4,0.materialId": {
       "values": [
@@ -4768,15 +3427,10 @@
       ],
       "total_unique": 4,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "unknown",
-        "granite",
-        "void_essence"
-      ]
+      "occurrences": 5
     },
     "placementMap.vertices.4,2.isKey": {
       "values": [
@@ -4786,12 +3440,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "living_ichor",
-        "storm_heart",
-        "iron_scales"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.4,2.materialId": {
       "values": [
@@ -4803,12 +3452,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "living_ichor",
-        "storm_heart",
-        "iron_scales"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.4,3.isKey": {
       "values": [
@@ -4818,11 +3462,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor",
-        "adamantine_ingot"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.4,3.materialId": {
       "values": [
@@ -4833,11 +3473,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "living_ichor",
-        "adamantine_ingot"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.4,4.isKey": {
       "values": [
@@ -4847,12 +3483,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "lightning_shard",
-        "earth_crystal",
-        "marble"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.4,4.materialId": {
       "values": [
@@ -4865,12 +3496,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "lightning_shard",
-        "earth_crystal",
-        "marble"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.4,5.isKey": {
       "values": [
@@ -4880,10 +3506,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "light_gem"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.4,5.materialId": {
       "values": [
@@ -4893,10 +3516,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "light_gem"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.5,-1.isKey": {
       "values": [
@@ -4906,12 +3526,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "mithril_ingot",
-        "adamantine_ingot",
-        "air_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.5,-1.materialId": {
       "values": [
@@ -4923,12 +3538,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "mithril_ingot",
-        "adamantine_ingot",
-        "air_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.5,-2.isKey": {
       "values": [
@@ -4938,11 +3548,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "shadow_core",
-        "orichalcum_ingot"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.5,-2.materialId": {
       "values": [
@@ -4953,11 +3559,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "shadow_core",
-        "orichalcum_ingot"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.5,-3.isKey": {
       "values": [
@@ -4967,12 +3569,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown",
-        "light_gem",
-        "obsidian"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.5,-3.materialId": {
       "values": [
@@ -4981,15 +3578,10 @@
       ],
       "total_unique": 2,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown",
-        "light_gem",
-        "obsidian"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.5,-5.isKey": {
       "values": [
@@ -4999,11 +3591,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown",
-        "crystal_quartz"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.5,-5.materialId": {
       "values": [
@@ -5011,14 +3599,10 @@
       ],
       "total_unique": 1,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown",
-        "crystal_quartz"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.5,0.isKey": {
       "values": [
@@ -5028,12 +3612,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown",
-        "earth_crystal",
-        "air_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.5,0.materialId": {
       "values": [
@@ -5042,15 +3621,10 @@
       ],
       "total_unique": 2,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown",
-        "earth_crystal",
-        "air_crystal"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.5,1.isKey": {
       "values": [
@@ -5060,12 +3634,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "mithril_ingot",
-        "spectral_thread",
-        "voidstone"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.5,1.materialId": {
       "values": [
@@ -5078,12 +3647,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "mithril_ingot",
-        "spectral_thread",
-        "voidstone"
-      ]
+      "occurrences": 4
     },
     "placementMap.vertices.5,2.isKey": {
       "values": [
@@ -5093,10 +3657,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "orichalcum_ingot"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.5,2.materialId": {
       "values": [
@@ -5106,10 +3667,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "orichalcum_ingot"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.5,3.isKey": {
       "values": [
@@ -5119,10 +3677,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.5,4.isKey": {
       "values": [
@@ -5132,10 +3687,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.5,4.materialId": {
       "values": [
@@ -5145,10 +3697,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.5,5.isKey": {
       "values": [
@@ -5158,11 +3707,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "crystal_quartz",
-        "eternity_stone"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.5,5.materialId": {
       "values": [
@@ -5173,11 +3718,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "crystal_quartz",
-        "eternity_stone"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.6,-1.isKey": {
       "values": [
@@ -5187,11 +3728,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "air_crystal",
-        "diamond"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.6,-1.materialId": {
       "values": [
@@ -5202,11 +3739,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "air_crystal",
-        "diamond"
-      ]
+      "occurrences": 2
     },
     "placementMap.vertices.6,-4.isKey": {
       "values": [
@@ -5216,10 +3749,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,-4.materialId": {
       "values": [
@@ -5229,10 +3759,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,-6.isKey": {
       "values": [
@@ -5242,10 +3769,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,-6.materialId": {
       "values": [
@@ -5255,10 +3779,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,0.isKey": {
       "values": [
@@ -5268,12 +3789,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "spectral_thread",
-        "light_gem",
-        "crystal_quartz"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.6,0.materialId": {
       "values": [
@@ -5285,12 +3801,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "spectral_thread",
-        "light_gem",
-        "crystal_quartz"
-      ]
+      "occurrences": 3
     },
     "placementMap.vertices.6,1.isKey": {
       "values": [
@@ -5300,10 +3811,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "ebony_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,1.materialId": {
       "values": [
@@ -5313,10 +3821,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "ebony_plank"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,2.isKey": {
       "values": [
@@ -5326,10 +3831,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,2.materialId": {
       "values": [
@@ -5339,10 +3841,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "obsidian"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,3.isKey": {
       "values": [
@@ -5352,10 +3851,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "voidstone"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,3.materialId": {
       "values": [
@@ -5365,10 +3861,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "voidstone"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,6.isKey": {
       "values": [
@@ -5378,10 +3871,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.6,6.materialId": {
       "values": [
@@ -5391,10 +3881,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "diamond"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.7,5.isKey": {
       "values": [
@@ -5404,10 +3891,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "chaos_matrix"
-      ]
+      "occurrences": 1
     },
     "placementMap.vertices.7,5.materialId": {
       "values": [
@@ -5417,10 +3901,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "chaos_matrix"
-      ]
+      "occurrences": 1
     },
     "recipeId": {
       "values": [
@@ -5448,112 +3929,94 @@
         "enchanting_soulbound",
         "enchanting_swiftness",
         "enchanting_thorns",
-        "enchanting_weightless",
-        "smithing_alchemy_table_t1",
-        "smithing_bamboo_fishing_rod",
-        "smithing_composite_longbow",
-        "smithing_copper_axe",
-        "smithing_copper_dagger",
-        "smithing_copper_fire_ring",
-        "smithing_copper_pickaxe",
-        "smithing_copper_spear",
-        "smithing_engineering_bench_t1",
-        "smithing_fire_crystal_staff",
-        "smithing_forge_t1",
-        "smithing_forge_t2",
-        "smithing_forge_t3",
-        "smithing_iron_axe",
-        "smithing_iron_boots",
-        "smithing_iron_chestplate",
-        "smithing_iron_pickaxe",
-        "smithing_iron_round_shield",
-        "smithing_iron_shortsword",
-        "smithing_iron_studded_gauntlets",
-        "smithing_iron_warhammer",
-        "smithing_iron_water_amulet",
-        "smithing_leather_tunic",
-        "smithing_mithril_axe",
-        "smithing_mithril_dagger",
-        "smithing_mithril_pickaxe",
-        "smithing_pine_shortbow",
-        "smithing_refinery_t1",
-        "smithing_refinery_t2",
-        "smithing_steel_axe",
-        "smithing_steel_battleaxe",
-        "smithing_steel_helm",
-        "smithing_steel_leggings",
-        "smithing_steel_lightning_bracelet",
-        "smithing_steel_longsword",
-        "smithing_steel_pickaxe",
-        "smithing_steel_sickle"
+        "enchanting_weightless"
       ],
-      "total_unique": 62,
+      "total_unique": 25,
       "types": [
         "string"
       ],
-      "occurrences": 62,
-      "example_items": [
-        "smithing_alchemy_table_t1",
-        "smithing_bamboo_fishing_rod",
-        "smithing_composite_longbow"
-      ]
+      "occurrences": 75
+    },
+    "stationTier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 50
+    },
+    "stationType": {
+      "values": [
+        "enchanting"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 50
     }
   },
   "_usable_template": {
+    "applicableTo": [
+      "accessory",
+      "tool",
+      "armor"
+    ],
+    "effect": {
+      "chainCount": 2,
+      "chainRange": 3,
+      "conflictsWith": [
+        "efficiency_1",
+        "fortune_2",
+        "protection_2"
+      ],
+      "damagePerSecond": 8,
+      "damagePercent": 0.5,
+      "duration": 8,
+      "element": "ice",
+      "maxStacks": 3,
+      "perMinute": true,
+      "slowPercent": 0.3,
+      "stackable": true,
+      "type": "movement_speed_multiplier",
+      "value": 3
+    },
+    "enchantmentId": "protection_2",
+    "enchantmentName": "Unbreaking I",
+    "inputs": [
+      "<value>"
+    ],
     "metadata": {
-      "gridSize": "3x3",
-      "narrative": "Basic alchemy table with mortar, pestle, and glassware."
+      "narrative": "Speed enchantment. Move faster while wearing this armor.",
+      "tags": [
+        "durability",
+        "armor",
+        "weight"
+      ]
+    },
+    "miniGame": {
+      "baseTime": 40,
+      "difficulty": "easy",
+      "type": "enchanting"
     },
     "placementMap": {
-      "1,1": "steel_ingot",
-      "1,2": "steel_ingot",
-      "1,3": "steel_ingot",
-      "1,4": "steel_ingot",
-      "1,5": "steel_ingot",
-      "1,6": "mithril_ingot",
-      "1,7": "fire_crystal",
-      "2,1": "steel_ingot",
-      "2,2": "phoenix_ash",
-      "2,3": "phoenix_ash",
-      "2,4": "phoenix_ash",
-      "2,5": "steel_ingot",
-      "2,6": "mithril_ingot",
-      "2,7": "mithril_ingot",
-      "3,1": "steel_ingot",
-      "3,2": "phoenix_ash",
-      "3,3": "steel_ingot",
-      "3,4": "phoenix_ash",
-      "3,5": "steel_ingot",
-      "3,6": "mithril_ingot",
-      "3,7": "mithril_ingot",
-      "4,1": "obsidian",
-      "4,2": "steel_ingot",
-      "4,3": "steel_ingot",
-      "4,4": "steel_ingot",
-      "4,5": "steel_ingot",
-      "4,6": "steel_ingot",
-      "4,7": "mithril_ingot",
-      "5,1": "dire_fang",
-      "5,2": "dire_fang",
-      "5,3": "water_crystal",
-      "5,4": "lightning_shard",
-      "5,5": "mithril_ingot",
-      "5,6": "phoenix_ash",
-      "6,2": "ebony_plank",
-      "6,4": "ebony_plank",
-      "7,1": "phoenix_ash",
-      "gridType": "square_10x10",
+      "gridType": "square_8x8",
       "shapes": [
         "<value>"
       ],
       "vertices": {
         "-1,-1": {
           "isKey": true,
-          "materialId": "phoenix_ash"
+          "materialId": "beetle_carapace"
         },
         "-1,-2": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "wolf_pelt"
         },
         "-1,-3": {
           "isKey": true,
@@ -5565,7 +4028,7 @@
         },
         "-1,-5": {
           "isKey": true,
-          "materialId": "genesis_lattice"
+          "materialId": "void_essence"
         },
         "-1,-7": {
           "isKey": true,
@@ -5573,19 +4036,19 @@
         },
         "-1,0": {
           "isKey": true,
-          "materialId": "light_gem"
+          "materialId": "fire_crystal"
         },
         "-1,1": {
           "isKey": true,
-          "materialId": "storm_heart"
+          "materialId": "chaos_matrix"
         },
         "-1,2": {
           "isKey": true,
-          "materialId": "void_essence"
+          "materialId": "iron_ingot"
         },
         "-1,3": {
           "isKey": true,
-          "materialId": "light_gem"
+          "materialId": "storm_heart"
         },
         "-1,4": {
           "isKey": true,
@@ -5593,7 +4056,7 @@
         },
         "-1,5": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "mithril_ingot"
         },
         "-1,7": {
           "isKey": true,
@@ -5601,7 +4064,7 @@
         },
         "-2,-1": {
           "isKey": true,
-          "materialId": "air_crystal"
+          "materialId": "mithril_ingot"
         },
         "-2,-2": {
           "isKey": true,
@@ -5617,7 +4080,7 @@
         },
         "-2,-5": {
           "isKey": true,
-          "materialId": "obsidian"
+          "materialId": "crystal_quartz"
         },
         "-2,-6": {
           "isKey": true,
@@ -5625,7 +4088,7 @@
         },
         "-2,0": {
           "isKey": true,
-          "materialId": "water_crystal"
+          "materialId": "fire_crystal"
         },
         "-2,1": {
           "isKey": true,
@@ -5641,7 +4104,7 @@
         },
         "-2,4": {
           "isKey": true,
-          "materialId": "slime_gel"
+          "materialId": "spectral_thread"
         },
         "-2,5": {
           "isKey": true,
@@ -5657,7 +4120,7 @@
         },
         "-3,-2": {
           "isKey": true,
-          "materialId": "iron_ore"
+          "materialId": "diamond"
         },
         "-3,-3": {
           "isKey": true,
@@ -5677,19 +4140,19 @@
         },
         "-3,0": {
           "isKey": true,
-          "materialId": "lightning_shard"
+          "materialId": "beetle_carapace"
         },
         "-3,1": {
           "isKey": true,
-          "materialId": "living_ichor"
+          "materialId": "worldtree_plank"
         },
         "-3,2": {
           "isKey": true,
-          "materialId": "iron_ore"
+          "materialId": "air_crystal"
         },
         "-3,3": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "spectral_thread"
         },
         "-3,4": {
           "isKey": true,
@@ -5713,7 +4176,7 @@
         },
         "-4,-2": {
           "isKey": true,
-          "materialId": "lightning_shard"
+          "materialId": "air_crystal"
         },
         "-4,-3": {
           "isKey": true,
@@ -5721,7 +4184,7 @@
         },
         "-4,-4": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "earth_crystal"
         },
         "-4,-5": {
           "isKey": true,
@@ -5729,19 +4192,19 @@
         },
         "-4,0": {
           "isKey": true,
-          "materialId": "light_gem"
+          "materialId": "void_essence"
         },
         "-4,2": {
           "isKey": true,
-          "materialId": "living_ichor"
+          "materialId": "air_crystal"
         },
         "-4,3": {
           "isKey": true,
-          "materialId": "living_ichor"
+          "materialId": "adamantine_ingot"
         },
         "-4,4": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "earth_crystal"
         },
         "-4,5": {
           "isKey": true,
@@ -5753,7 +4216,7 @@
         },
         "-5,-2": {
           "isKey": true,
-          "materialId": "shadow_core"
+          "materialId": "orichalcum_ingot"
         },
         "-5,-3": {
           "isKey": true,
@@ -5769,7 +4232,7 @@
         },
         "-5,1": {
           "isKey": true,
-          "materialId": "voidstone"
+          "materialId": "mithril_ingot"
         },
         "-5,2": {
           "isKey": true,
@@ -5801,7 +4264,7 @@
         },
         "-6,0": {
           "isKey": true,
-          "materialId": "crystal_quartz"
+          "materialId": "spectral_thread"
         },
         "-6,1": {
           "isKey": true,
@@ -5825,15 +4288,15 @@
         },
         "0,-1": {
           "isKey": true,
-          "materialId": "diamond"
+          "materialId": "fire_crystal"
         },
         "0,-2": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "fire_crystal"
         },
         "0,-3": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "beetle_carapace"
         },
         "0,-4": {
           "isKey": true,
@@ -5845,7 +4308,7 @@
         },
         "0,-6": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "spectral_thread"
         },
         "0,-7": {
           "isKey": true,
@@ -5853,7 +4316,7 @@
         },
         "0,0": {
           "isKey": true,
-          "materialId": "obsidian"
+          "materialId": "fire_crystal"
         },
         "0,1": {
           "isKey": true,
@@ -5861,31 +4324,31 @@
         },
         "0,2": {
           "isKey": true,
-          "materialId": "phoenix_ash"
+          "materialId": "chaos_matrix"
         },
         "0,3": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "beetle_carapace"
         },
         "0,4": {
           "isKey": true,
-          "materialId": "light_gem"
+          "materialId": "iron_ingot"
         },
         "0,5": {
           "isKey": true,
-          "materialId": "ebony_plank"
+          "materialId": "ash_plank"
         },
         "0,6": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "spectral_thread"
         },
         "1,-1": {
           "isKey": true,
-          "materialId": "phoenix_ash"
+          "materialId": "beetle_carapace"
         },
         "1,-2": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "wolf_pelt"
         },
         "1,-3": {
           "isKey": true,
@@ -5897,7 +4360,7 @@
         },
         "1,-5": {
           "isKey": true,
-          "materialId": "genesis_lattice"
+          "materialId": "void_essence"
         },
         "1,-7": {
           "isKey": true,
@@ -5905,19 +4368,19 @@
         },
         "1,0": {
           "isKey": true,
-          "materialId": "light_gem"
+          "materialId": "fire_crystal"
         },
         "1,1": {
           "isKey": true,
-          "materialId": "storm_heart"
+          "materialId": "chaos_matrix"
         },
         "1,2": {
           "isKey": true,
-          "materialId": "void_essence"
+          "materialId": "iron_ingot"
         },
         "1,3": {
           "isKey": true,
-          "materialId": "light_gem"
+          "materialId": "storm_heart"
         },
         "1,4": {
           "isKey": true,
@@ -5925,7 +4388,7 @@
         },
         "1,5": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "mithril_ingot"
         },
         "1,7": {
           "isKey": true,
@@ -5949,7 +4412,7 @@
         },
         "2,-5": {
           "isKey": true,
-          "materialId": "obsidian"
+          "materialId": "crystal_quartz"
         },
         "2,-6": {
           "isKey": true,
@@ -5957,7 +4420,7 @@
         },
         "2,0": {
           "isKey": true,
-          "materialId": "water_crystal"
+          "materialId": "fire_crystal"
         },
         "2,1": {
           "isKey": true,
@@ -5973,7 +4436,7 @@
         },
         "2,4": {
           "isKey": true,
-          "materialId": "slime_gel"
+          "materialId": "spectral_thread"
         },
         "2,5": {
           "isKey": true,
@@ -5989,7 +4452,7 @@
         },
         "3,-2": {
           "isKey": true,
-          "materialId": "iron_ore"
+          "materialId": "diamond"
         },
         "3,-3": {
           "isKey": true,
@@ -6009,19 +4472,19 @@
         },
         "3,0": {
           "isKey": true,
-          "materialId": "lightning_shard"
+          "materialId": "beetle_carapace"
         },
         "3,1": {
           "isKey": true,
-          "materialId": "living_ichor"
+          "materialId": "worldtree_plank"
         },
         "3,2": {
           "isKey": true,
-          "materialId": "iron_ore"
+          "materialId": "air_crystal"
         },
         "3,3": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "spectral_thread"
         },
         "3,4": {
           "isKey": true,
@@ -6045,7 +4508,7 @@
         },
         "4,-2": {
           "isKey": true,
-          "materialId": "lightning_shard"
+          "materialId": "iron_scales"
         },
         "4,-3": {
           "isKey": true,
@@ -6053,7 +4516,7 @@
         },
         "4,-4": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "earth_crystal"
         },
         "4,-5": {
           "isKey": true,
@@ -6061,19 +4524,19 @@
         },
         "4,0": {
           "isKey": true,
-          "materialId": "light_gem"
+          "materialId": "void_essence"
         },
         "4,2": {
           "isKey": true,
-          "materialId": "living_ichor"
+          "materialId": "iron_scales"
         },
         "4,3": {
           "isKey": true,
-          "materialId": "living_ichor"
+          "materialId": "adamantine_ingot"
         },
         "4,4": {
           "isKey": true,
-          "materialId": "marble"
+          "materialId": "earth_crystal"
         },
         "4,5": {
           "isKey": true,
@@ -6085,7 +4548,7 @@
         },
         "5,-2": {
           "isKey": true,
-          "materialId": "shadow_core"
+          "materialId": "orichalcum_ingot"
         },
         "5,-3": {
           "isKey": true,
@@ -6101,7 +4564,7 @@
         },
         "5,1": {
           "isKey": true,
-          "materialId": "air_crystal"
+          "materialId": "mithril_ingot"
         },
         "5,2": {
           "isKey": true,
@@ -6133,7 +4596,7 @@
         },
         "6,0": {
           "isKey": true,
-          "materialId": "crystal_quartz"
+          "materialId": "spectral_thread"
         },
         "6,1": {
           "isKey": true,
@@ -6157,83 +4620,706 @@
         }
       }
     },
-    "recipeId": "smithing_refinery_t1"
+    "recipeId": "enchanting_thorns",
+    "stationTier": 1,
+    "stationType": "enchanting"
   },
   "_sample_items": [
     {
-      "recipeId": "smithing_alchemy_table_t1",
+      "recipeId": "enchanting_durability_advanced",
       "placementMap": {
-        "1,1": "water_crystal",
-        "1,3": "water_crystal",
-        "2,1": "granite",
-        "3,1": "granite",
-        "3,2": "granite",
-        "3,3": "granite",
-        "2,3": "granite",
-        "2,2": "oak_plank",
-        "1,2": "oak_plank"
-      },
-      "metadata": {
-        "gridSize": "3x3",
-        "narrative": "Basic alchemy table with mortar, pestle, and glassware."
+        "gridType": "square_12x12",
+        "vertices": {
+          "0,0": {
+            "materialId": "golem_core",
+            "isKey": false
+          },
+          "3,3": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "6,0": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "3,-3": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "-3,3": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "0,6": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "-6,0": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "-3,-3": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "0,-6": {
+            "materialId": "spectral_thread",
+            "isKey": false
+          },
+          "0,3": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "1,5": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-1,5": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "0,-3": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-1,-1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-3,0": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "-5,1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-5,-1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "3,0": {
+            "materialId": "adamantine_ingot",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "-1,-5": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "1,-5": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "diamond",
+            "isKey": false
+          },
+          "5,-1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          },
+          "5,1": {
+            "materialId": "mithril_ingot",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_large",
+            "vertices": [
+              "0,0",
+              "3,3",
+              "6,0",
+              "3,-3"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "-3,3",
+              "0,6",
+              "3,3",
+              "0,0"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "-6,0",
+              "-3,3",
+              "0,0",
+              "-3,-3"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "square_large",
+            "vertices": [
+              "-3,-3",
+              "0,0",
+              "3,-3",
+              "0,-6"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,3",
+              "1,5",
+              "-1,5"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-3",
+              "1,-1",
+              "-1,-1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,0",
+              "-5,1",
+              "-5,-1"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,0",
+              "1,1",
+              "1,-1"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-3",
+              "-1,-5",
+              "1,-5"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,3",
+              "-1,1",
+              "1,1"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,0",
+              "-1,-1",
+              "-1,1"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,0",
+              "5,-1",
+              "5,1"
+            ],
+            "rotation": 90
+          }
+        ]
       }
     },
     {
-      "recipeId": "smithing_bamboo_fishing_rod",
+      "recipeId": "enchanting_durability_basic",
       "placementMap": {
-        "2,2": "oak_log",
-        "1,3": "oak_log",
-        "3,1": "copper_ingot",
-        "2,3": "spectral_thread",
-        "3,3": "spectral_thread"
-      },
-      "metadata": {
-        "gridSize": "3x3",
-        "narrative": "Flexible bamboo rod with silk line and bronze hook. Patience and the right tool can pull dinner from any water."
+        "gridType": "square_8x8",
+        "vertices": {
+          "1,1": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "-1,-1": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "earth_crystal",
+            "isKey": false
+          },
+          "0,3": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          },
+          "0,-3": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          },
+          "3,0": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          },
+          "-3,0": {
+            "materialId": "beetle_carapace",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,1",
+              "1,-1",
+              "-1,-1",
+              "-1,1"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,3",
+              "-1,1",
+              "1,1"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,-3",
+              "1,-1",
+              "-1,-1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "3,0",
+              "1,1",
+              "1,-1"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-3,0",
+              "-1,-1",
+              "-1,1"
+            ],
+            "rotation": 90
+          }
+        ]
       }
     },
     {
-      "recipeId": "smithing_composite_longbow",
+      "recipeId": "enchanting_efficiency_advanced",
       "placementMap": {
-        "1,3": "slime_gel",
-        "5,3": "slime_gel",
-        "2,4": "ash_plank",
-        "4,4": "ash_plank",
-        "3,4": "ash_plank",
-        "1,2": "spectral_thread",
-        "2,2": "spectral_thread",
-        "3,2": "spectral_thread",
-        "4,2": "spectral_thread",
-        "5,2": "spectral_thread"
-      },
-      "metadata": {
-        "gridSize": "5x5",
-        "narrative": "Crafting a composite bow requires laminating different materials - wood for flexibility, sinew for power, silk for the string. Patience yields deadly accuracy."
+        "gridType": "square_12x12",
+        "vertices": {
+          "0,-5": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "2,-2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-2,-2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-3,2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-6,-1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "6,-1": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "3,2": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "0,4": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "-3,6": {
+            "materialId": "ironwood_plank",
+            "isKey": false
+          },
+          "3,6": {
+            "materialId": "ironwood_plank",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "storm_heart",
+            "isKey": false
+          },
+          "0,-2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "0,-5",
+              "2,-2",
+              "-2,-2"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "-2,-2",
+              "-3,2",
+              "-6,-1"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "2,-2",
+              "6,-1",
+              "3,2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "0,4",
+              "-3,6",
+              "-3,2"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "0,4",
+              "3,2",
+              "3,6"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,4",
+              "-1,1",
+              "1,1"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,-2",
+              "1,1",
+              "-1,1"
+            ],
+            "rotation": 180
+          }
+        ]
       }
     },
     {
-      "recipeId": "smithing_copper_axe",
+      "recipeId": "enchanting_efficiency_basic",
       "placementMap": {
-        "3,2": "pine_log",
-        "2,2": "pine_log",
-        "1,2": "copper_ingot",
-        "1,3": "copper_ingot",
-        "2,3": "copper_ingot"
-      },
-      "metadata": {
-        "gridSize": "3x3",
-        "narrative": "Basic axe for woodcutting. Simple but essential for any aspiring adventurer."
+        "gridType": "square_8x8",
+        "vertices": {
+          "0,-3": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "-1,-2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "0,0": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "1,-2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "ash_plank",
+            "isKey": false
+          },
+          "0,3": {
+            "materialId": "ash_plank",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "ash_plank",
+            "isKey": false
+          },
+          "2,0": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "-2,0": {
+            "materialId": "slime_gel",
+            "isKey": false
+          },
+          "2,3": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-2,3": {
+            "materialId": "air_crystal",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,-3",
+              "-1,-2",
+              "0,0",
+              "1,-2"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,0",
+              "-1,1",
+              "0,3",
+              "1,1"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,1",
+              "2,0",
+              "1,-2",
+              "0,0"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "-1,1",
+              "0,0",
+              "-1,-2",
+              "-2,0"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "1,1",
+              "2,3",
+              "0,3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "-1,1",
+              "0,3",
+              "-2,3"
+            ],
+            "rotation": 180
+          }
+        ]
       }
     },
     {
-      "recipeId": "smithing_copper_dagger",
+      "recipeId": "enchanting_fire_aspect",
       "placementMap": {
-        "3,1": "wolf_pelt",
-        "2,2": "copper_ingot"
-      },
-      "metadata": {
-        "gridSize": "3x3",
-        "narrative": "A dagger is deceptively simple - just a blade and a grip. But the balance must be perfect for quick, precise strikes."
+        "gridType": "square_10x10",
+        "vertices": {
+          "-3,-3": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "-1,-3": {
+            "materialId": "steel_ingot",
+            "isKey": false
+          },
+          "-1,-5": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "-3,-5": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "1,-3": {
+            "materialId": "steel_ingot",
+            "isKey": false
+          },
+          "3,-3": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "3,-5": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "1,-5": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "0,-4": {
+            "materialId": "steel_ingot",
+            "isKey": false
+          },
+          "0,-1": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "-2,0": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "2,0": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "0,2": {
+            "materialId": "light_gem",
+            "isKey": false
+          },
+          "1,1": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "-1,1": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          },
+          "0,0": {
+            "materialId": "fire_crystal",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "square_small",
+            "vertices": [
+              "-3,-3",
+              "-1,-3",
+              "-1,-5",
+              "-3,-5"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,-3",
+              "3,-3",
+              "3,-5",
+              "1,-5"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,-4",
+              "-1,-3",
+              "0,-1",
+              "1,-3"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-2,0",
+              "-3,-3",
+              "-1,-3"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "2,0",
+              "1,-3",
+              "3,-3"
+            ],
+            "rotation": 0
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,2",
+              "1,1",
+              "0,-1",
+              "-1,1"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "-1,-3",
+              "0,0",
+              "-2,0"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "1,-3",
+              "2,0",
+              "0,0"
+            ],
+            "rotation": 180
+          }
+        ]
       }
     }
   ]

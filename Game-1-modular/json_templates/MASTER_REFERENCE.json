@@ -1,11 +1,10 @@
 {
   "_meta": {
-    "description": "Master reference of all values for LLM fine-tuning",
-    "generated_at": "2026-01-02T01:26:25.403272",
-    "total_categories": 30,
+    "description": "Master reference for LLM fine-tuning",
+    "generated_at": "2026-01-04T04:41:13.684002",
+    "total_categories": 17,
     "total_items": 716,
-    "total_unique_tags": 315,
-    "total_unique_material_ids": 182
+    "total_unique_tags": 315
   },
   "all_tags": [
     "1H",
@@ -324,576 +323,148 @@
     "wraith",
     "yield"
   ],
-  "all_material_ids": [
-    "adamantine_ingot",
-    "adamantine_ore",
-    "air_crystal",
-    "alchemy_table_t1",
-    "alchemy_table_t2",
-    "animal_hide",
-    "arcane_dust",
-    "armor_polish",
-    "ash_log",
-    "ash_plank",
-    "bamboo_fishing_rod",
-    "basalt",
-    "basic_arrow_turret",
-    "bear_trap",
-    "beetle_carapace",
-    "birch_log",
-    "birch_plank",
-    "blast_powder",
-    "blood_reaver",
-    "bronze_ingot",
-    "chaos_matrix",
-    "clay",
-    "cluster_bomb",
-    "coal",
-    "composite_longbow",
-    "copper_axe",
-    "copper_dagger",
-    "copper_fire_ring",
-    "copper_ingot",
-    "copper_ore",
-    "copper_pickaxe",
-    "copper_spear",
-    "crystal_quartz",
-    "diamond",
-    "dire_fang",
-    "dragon_scale",
-    "drake_scale",
-    "earth_crystal",
-    "ebony_log",
-    "ebony_plank",
-    "efficiency_oil",
-    "elemental_harmony_potion",
-    "emp_device",
-    "enchanting_table_t1",
-    "enchanting_table_t2",
-    "engineering_bench_t1",
-    "engineering_bench_t2",
-    "essence_blood",
-    "eternity_stone",
-    "etherion_ingot",
-    "etherion_ore",
-    "fire_arrow_turret",
-    "fire_bomb",
-    "fire_crystal",
-    "fire_crystal_staff",
-    "fire_resistance_potion",
-    "fire_steel_ingot",
-    "flamethrower_turret",
-    "forge_t1",
-    "forge_t2",
-    "forge_t3",
-    "forge_t4",
-    "frost_essence",
-    "frost_mine",
-    "frost_resistance_potion",
-    "frost_steel_ingot",
-    "frostbite_hammer",
-    "genesis_lattice",
-    "gold_ingot",
-    "gold_ore",
-    "golem_core",
-    "granite",
-    "grappling_hook",
-    "greater_health_potion",
-    "healing_beacon",
-    "health_potion",
-    "inferno_blade",
-    "iron_axe",
-    "iron_boots",
-    "iron_chestplate",
-    "iron_ingot",
-    "iron_ore",
-    "iron_pickaxe",
-    "iron_round_shield",
-    "iron_scales",
-    "iron_shortsword",
-    "iron_skin_potion",
-    "iron_studded_gauntlets",
-    "iron_warhammer",
-    "iron_water_amulet",
-    "ironwood_log",
-    "ironwood_plank",
-    "jetpack",
-    "laser_turret",
-    "leather_tunic",
-    "light_gem",
-    "lightning_cannon",
-    "lightning_chain_whip",
-    "lightning_copper_ingot",
-    "lightning_essence",
-    "lightning_shard",
-    "limestone",
-    "living_ichor",
-    "maple_log",
-    "maple_plank",
-    "marble",
-    "minor_health_potion",
-    "minor_mana_potion",
-    "minor_strength_potion",
-    "mithril_axe",
-    "mithril_dagger",
-    "mithril_ingot",
-    "mithril_ore",
-    "mithril_pickaxe",
-    "net_launcher",
-    "oak_log",
-    "oak_plank",
-    "obsidian",
-    "orichalcum_ingot",
-    "orichalcum_ore",
-    "phoenix_ash",
-    "pine_log",
-    "pine_plank",
-    "pine_shortbow",
-    "platinum_ingot",
-    "platinum_ore",
-    "primordial_crystal",
-    "refinery_t1",
-    "refinery_t2",
-    "refinery_t3",
-    "regeneration_tonic",
-    "sand",
-    "shadow_core",
-    "shadow_crystal",
-    "shale",
-    "silver_ingot",
-    "silver_ore",
-    "simple_bomb",
-    "slime_gel",
-    "spectral_thread",
-    "spike_trap",
-    "steel_axe",
-    "steel_battleaxe",
-    "steel_helm",
-    "steel_ingot",
-    "steel_leggings",
-    "steel_lightning_bracelet",
-    "steel_longsword",
-    "steel_ore",
-    "steel_pickaxe",
-    "steel_sickle",
-    "storm_core",
-    "storm_heart",
-    "strength_elixir",
-    "swiftness_draught",
-    "test_bomb_massive_aoe",
-    "test_case_sensitivity",
-    "test_device_chain_cone_hybrid",
-    "test_duplicate_tags",
-    "test_empty_tags",
-    "test_only_status_tags",
-    "test_trap_conflicting_status",
-    "test_turret_beam_burn",
-    "test_turret_no_tags",
-    "test_weapon_complex_valid",
-    "test_weapon_conflicting_elements",
-    "test_weapon_missing_params",
-    "test_weapon_multi_geometry",
-    "test_weapon_simple",
-    "test_weapon_unknown_tags",
-    "tin_ingot",
-    "tin_ore",
-    "titans_brew",
-    "universal_solvent",
-    "void_essence",
-    "void_piercer",
-    "voidstone",
-    "water_crystal",
-    "weapon_oil",
-    "wolf_pelt",
-    "worldtree_log",
-    "worldtree_plank"
-  ],
-  "all_item_ids": [
-    "adamantine_ingot",
-    "adamantine_ore",
-    "air_crystal",
-    "alchemy_table_t1",
-    "alchemy_table_t2",
-    "animal_hide",
-    "arcane_dust",
-    "armor_polish",
-    "ash_log",
-    "ash_plank",
-    "bamboo_fishing_rod",
-    "basalt",
-    "basic_arrow_turret",
-    "bear_trap",
-    "beetle_carapace",
-    "birch_log",
-    "birch_plank",
-    "blast_powder",
-    "blood_reaver",
-    "bronze_ingot",
-    "chaos_matrix",
-    "clay",
-    "cluster_bomb",
-    "coal",
-    "composite_longbow",
-    "copper_axe",
-    "copper_dagger",
-    "copper_fire_ring",
-    "copper_ingot",
-    "copper_ore",
-    "copper_pickaxe",
-    "copper_spear",
-    "crystal_quartz",
-    "diamond",
-    "dire_fang",
-    "dragon_scale",
-    "drake_scale",
-    "earth_crystal",
-    "ebony_log",
-    "ebony_plank",
-    "efficiency_oil",
-    "elemental_harmony_potion",
-    "emp_device",
-    "enchanting_table_t1",
-    "enchanting_table_t2",
-    "engineering_bench_t1",
-    "engineering_bench_t2",
-    "essence_blood",
-    "eternity_stone",
-    "etherion_ingot",
-    "etherion_ore",
-    "fire_arrow_turret",
-    "fire_bomb",
-    "fire_crystal",
-    "fire_crystal_staff",
-    "fire_resistance_potion",
-    "fire_steel_ingot",
-    "flamethrower_turret",
-    "forge_t1",
-    "forge_t2",
-    "forge_t3",
-    "forge_t4",
-    "frost_essence",
-    "frost_mine",
-    "frost_resistance_potion",
-    "frost_steel_ingot",
-    "frostbite_hammer",
-    "genesis_lattice",
-    "gold_ingot",
-    "gold_ore",
-    "golem_core",
-    "granite",
-    "grappling_hook",
-    "greater_health_potion",
-    "healing_beacon",
-    "health_potion",
-    "inferno_blade",
-    "iron_axe",
-    "iron_boots",
-    "iron_chestplate",
-    "iron_ingot",
-    "iron_ore",
-    "iron_pickaxe",
-    "iron_round_shield",
-    "iron_scales",
-    "iron_shortsword",
-    "iron_skin_potion",
-    "iron_studded_gauntlets",
-    "iron_warhammer",
-    "iron_water_amulet",
-    "ironwood_log",
-    "ironwood_plank",
-    "jetpack",
-    "laser_turret",
-    "leather_tunic",
-    "light_gem",
-    "lightning_cannon",
-    "lightning_chain_whip",
-    "lightning_copper_ingot",
-    "lightning_essence",
-    "lightning_shard",
-    "limestone",
-    "living_ichor",
-    "maple_log",
-    "maple_plank",
-    "marble",
-    "minor_health_potion",
-    "minor_mana_potion",
-    "minor_strength_potion",
-    "mithril_axe",
-    "mithril_dagger",
-    "mithril_ingot",
-    "mithril_ore",
-    "mithril_pickaxe",
-    "net_launcher",
-    "oak_log",
-    "oak_plank",
-    "obsidian",
-    "orichalcum_ingot",
-    "orichalcum_ore",
-    "phoenix_ash",
-    "pine_log",
-    "pine_plank",
-    "pine_shortbow",
-    "platinum_ingot",
-    "platinum_ore",
-    "primordial_crystal",
-    "refinery_t1",
-    "refinery_t2",
-    "refinery_t3",
-    "regeneration_tonic",
-    "sand",
-    "shadow_core",
-    "shadow_crystal",
-    "shale",
-    "silver_ingot",
-    "silver_ore",
-    "simple_bomb",
-    "slime_gel",
-    "spectral_thread",
-    "spike_trap",
-    "steel_axe",
-    "steel_battleaxe",
-    "steel_helm",
-    "steel_ingot",
-    "steel_leggings",
-    "steel_lightning_bracelet",
-    "steel_longsword",
-    "steel_ore",
-    "steel_pickaxe",
-    "steel_sickle",
-    "storm_core",
-    "storm_heart",
-    "strength_elixir",
-    "swiftness_draught",
-    "test_bomb_massive_aoe",
-    "test_case_sensitivity",
-    "test_device_chain_cone_hybrid",
-    "test_duplicate_tags",
-    "test_empty_tags",
-    "test_only_status_tags",
-    "test_trap_conflicting_status",
-    "test_turret_beam_burn",
-    "test_turret_no_tags",
-    "test_weapon_complex_valid",
-    "test_weapon_conflicting_elements",
-    "test_weapon_missing_params",
-    "test_weapon_multi_geometry",
-    "test_weapon_simple",
-    "test_weapon_unknown_tags",
-    "tin_ingot",
-    "tin_ore",
-    "titans_brew",
-    "universal_solvent",
-    "void_essence",
-    "void_piercer",
-    "voidstone",
-    "water_crystal",
-    "weapon_oil",
-    "wolf_pelt",
-    "worldtree_log",
-    "worldtree_plank"
-  ],
   "categories_summary": {
-    "abilities": {
-      "count": 30,
-      "sources": [
-        "Definitions.JSON/hostiles-1.JSON",
-        "Update-1/hostiles-testing-integration.JSON"
-      ]
-    },
-    "classes": {
-      "count": 6,
-      "sources": [
-        "progression/classes-1.JSON"
-      ]
-    },
-    "consumables": {
+    "alchemy_items": {
       "count": 16,
+      "llm_purpose": "Item LLM for alchemy - creates potions, elixirs, consumables with effects",
       "sources": [
         "items.JSON/items-alchemy-1.JSON"
       ]
     },
-    "devices": {
-      "count": 5,
+    "alchemy_recipes": {
+      "count": 54,
+      "llm_purpose": "Recipe LLM for alchemy - creates potion/consumable crafting recipes",
       "sources": [
-        "items.JSON/items-engineering-1.JSON"
+        "placements.JSON/placements-alchemy-1.JSON",
+        "recipes.JSON/recipes-alchemy-1.JSON",
+        "recipes.JSON/recipes-tag-tests.JSON"
       ]
     },
-    "devices_bombs": {
-      "count": 4,
+    "chunk_types": {
+      "count": 9,
+      "llm_purpose": "Chunk Types LLM - creates world generation chunk templates",
+      "sources": [
+        "Definitions.JSON/Chunk-templates-1.JSON"
+      ]
+    },
+    "classifier_requirements": {
+      "count": 14,
+      "llm_purpose": "Classifier LLM - determines when to trigger skill/title generation",
+      "sources": [
+        "progression/skill-unlocks.JSON"
+      ]
+    },
+    "enchanting_recipes": {
+      "count": 75,
+      "llm_purpose": "Recipe LLM for enchanting - creates enchantment/adornment recipes",
+      "sources": [
+        "placements.JSON/placements-adornments-1.JSON",
+        "recipes.JSON/recipes-adornments-1.json",
+        "recipes.JSON/recipes-enchanting-1.JSON"
+      ]
+    },
+    "engineering_items": {
+      "count": 21,
+      "llm_purpose": "Item LLM for engineering - creates turrets, traps, bombs, devices",
       "sources": [
         "items.JSON/items-engineering-1.JSON",
         "items.JSON/items-testing-tags.JSON"
       ]
     },
-    "devices_traps": {
-      "count": 4,
+    "engineering_recipes": {
+      "count": 41,
+      "llm_purpose": "Recipe LLM for engineering - creates device/gadget crafting recipes",
       "sources": [
-        "items.JSON/items-engineering-1.JSON",
-        "items.JSON/items-testing-tags.JSON"
+        "placements.JSON/placements-engineering-1.JSON",
+        "recipes.JSON/recipes-engineering-1.JSON"
       ]
     },
-    "devices_turrets": {
-      "count": 8,
-      "sources": [
-        "items.JSON/items-engineering-1.JSON",
-        "items.JSON/items-testing-tags.JSON"
-      ]
-    },
-    "enemies": {
-      "count": 19,
+    "hostiles": {
+      "count": 49,
+      "llm_purpose": "Hostile LLM - creates enemy mobs with stats, behavior, abilities, and drops",
       "sources": [
         "Definitions.JSON/hostiles-1.JSON",
         "Definitions.JSON/hostiles-testing-integration.JSON",
         "Update-1/hostiles-testing-integration.JSON"
       ]
     },
-    "equipment_accessories": {
-      "count": 3,
-      "sources": [
-        "items.JSON/items-smithing-2.JSON"
-      ]
-    },
-    "equipment_armor": {
-      "count": 6,
-      "sources": [
-        "items.JSON/items-smithing-2.JSON"
-      ]
-    },
-    "equipment_shields": {
-      "count": 1,
-      "sources": [
-        "items.JSON/items-smithing-2.JSON"
-      ]
-    },
-    "equipment_tools": {
-      "count": 10,
-      "sources": [
-        "items.JSON/items-smithing-2.JSON",
-        "items.JSON/items-tools-1.JSON"
-      ]
-    },
-    "equipment_weapons": {
-      "count": 30,
-      "sources": [
-        "Update-1/items-testing-integration.JSON",
-        "items.JSON/items-smithing-2.JSON",
-        "items.JSON/items-testing-integration.JSON",
-        "items.JSON/items-testing-tags.JSON"
-      ]
-    },
-    "materials_raw": {
-      "count": 65,
-      "sources": [
-        "items.JSON/items-materials-1.JSON"
-      ]
-    },
-    "materials_refined": {
-      "count": 16,
-      "sources": [
-        "items.JSON/items-refining-1.JSON"
-      ]
-    },
-    "npcs": {
-      "count": 12,
-      "sources": [
-        "progression/npcs-1.JSON",
-        "progression/npcs-enhanced.JSON",
-        "progression/quests-1.JSON",
-        "progression/quests-enhanced.JSON"
-      ]
-    },
-    "placements": {
-      "count": 62,
-      "sources": [
-        "placements.JSON/placements-adornments-1.JSON",
-        "placements.JSON/placements-smithing-1.JSON"
-      ]
-    },
-    "placements_refining": {
-      "count": 54,
-      "sources": [
-        "placements.JSON/placements-refining-1.JSON"
-      ]
-    },
-    "recipes_alchemy": {
-      "count": 24,
-      "sources": [
-        "recipes.JSON/recipes-alchemy-1.JSON",
-        "recipes.JSON/recipes-tag-tests.JSON"
-      ]
-    },
-    "recipes_enchanting": {
-      "count": 50,
-      "sources": [
-        "recipes.JSON/recipes-adornments-1.json",
-        "recipes.JSON/recipes-enchanting-1.JSON"
-      ]
-    },
-    "recipes_engineering": {
-      "count": 16,
-      "sources": [
-        "recipes.JSON/recipes-engineering-1.JSON"
-      ]
-    },
-    "recipes_generic": {
-      "count": 103,
-      "sources": [
-        "Update-1/recipes-smithing-testing.JSON",
-        "placements.JSON/placements-alchemy-1.JSON",
-        "placements.JSON/placements-engineering-1.JSON",
-        "recipes.JSON/recipes-refining-1.JSON"
-      ]
-    },
-    "recipes_refining": {
-      "count": 5,
-      "sources": [
-        "recipes.JSON/recipes-tag-tests.JSON"
-      ]
-    },
-    "recipes_smithing": {
-      "count": 41,
-      "sources": [
-        "recipes.JSON/recipes-smithing-3.JSON",
-        "recipes.JSON/recipes-tag-tests.JSON"
-      ]
-    },
-    "resource_nodes": {
+    "node_types": {
       "count": 28,
+      "llm_purpose": "Node Types LLM - creates gatherable resource node definitions",
       "sources": [
         "Definitions.JSON/resource-node-1.JSON"
       ]
     },
-    "skill_unlocks": {
-      "count": 14,
+    "npcs": {
+      "count": 6,
+      "llm_purpose": "NPC LLM - creates NPC definitions with dialogue and quest associations",
       "sources": [
-        "progression/skill-unlocks.JSON"
+        "progression/npcs-1.JSON",
+        "progression/npcs-enhanced.JSON"
+      ]
+    },
+    "quests": {
+      "count": 6,
+      "llm_purpose": "Quest LLM - creates quest definitions with objectives and rewards",
+      "sources": [
+        "progression/quests-1.JSON",
+        "progression/quests-enhanced.JSON"
+      ]
+    },
+    "refining_items": {
+      "count": 81,
+      "llm_purpose": "Item LLM for refining - creates ingots, planks, alloys, processed materials",
+      "sources": [
+        "items.JSON/items-materials-1.JSON",
+        "items.JSON/items-refining-1.JSON"
+      ]
+    },
+    "refining_recipes": {
+      "count": 102,
+      "llm_purpose": "Recipe LLM for refining - creates material processing recipes",
+      "sources": [
+        "placements.JSON/placements-refining-1.JSON",
+        "recipes.JSON/recipes-refining-1.JSON",
+        "recipes.JSON/recipes-tag-tests.JSON"
       ]
     },
     "skills": {
-      "count": 42,
+      "count": 48,
+      "llm_purpose": "Skills LLM - creates player skills with effects, costs, and evolution paths",
       "sources": [
         "Skills/skills-skills-1.JSON",
         "Skills/skills-testing-integration.JSON",
-        "Update-1/skills-testing-integration.JSON"
+        "Update-1/skills-testing-integration.JSON",
+        "progression/classes-1.JSON"
       ]
     },
-    "stations": {
-      "count": 23,
+    "smithing_items": {
+      "count": 73,
+      "llm_purpose": "Item LLM for smithing - creates weapons, armor, shields, tools with tags",
       "sources": [
         "Definitions.JSON/crafting-stations-1.JSON",
-        "items.JSON/items-smithing-2.JSON"
+        "Update-1/items-testing-integration.JSON",
+        "items.JSON/items-smithing-2.JSON",
+        "items.JSON/items-testing-integration.JSON",
+        "items.JSON/items-testing-tags.JSON",
+        "items.JSON/items-tools-1.JSON"
+      ]
+    },
+    "smithing_recipes": {
+      "count": 83,
+      "llm_purpose": "Recipe LLM for smithing - creates weapon/armor/tool crafting recipes",
+      "sources": [
+        "Update-1/recipes-smithing-testing.JSON",
+        "placements.JSON/placements-smithing-1.JSON",
+        "recipes.JSON/recipes-smithing-3.JSON",
+        "recipes.JSON/recipes-tag-tests.JSON"
       ]
     },
     "titles": {
       "count": 10,
+      "llm_purpose": "Titles LLM - creates achievement titles with prerequisites and bonuses",
       "sources": [
         "progression/titles-1.JSON"
-      ]
-    },
-    "world_chunks": {
-      "count": 9,
-      "sources": [
-        "Definitions.JSON/Chunk-templates-1.JSON"
       ]
     }
   }

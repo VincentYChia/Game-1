@@ -1,15 +1,13 @@
 {
   "_meta": {
-    "category": "resource_nodes",
-    "description": "Gatherable resource node definitions",
-    "purpose": "LLM fine-tuning template",
-    "generated_at": "2026-01-02T01:26:25.396214",
+    "category": "node_types",
+    "llm_purpose": "Node Types LLM - creates gatherable resource node definitions",
+    "generated_at": "2026-01-04T04:41:13.672534",
     "total_items": 28,
     "source_files": [
       "Definitions.JSON/resource-node-1.JSON"
     ]
   },
-  "_field_documentation": {},
   "_all_possible_values": {
     "baseHealth": {
       "values": [
@@ -22,12 +20,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 28,
-      "example_items": [
-        "Oak Tree",
-        "Pine Tree",
-        "Ash Tree"
-      ]
+      "occurrences": 28
     },
     "category": {
       "values": [
@@ -39,12 +32,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 28,
-      "example_items": [
-        "Oak Tree",
-        "Pine Tree",
-        "Ash Tree"
-      ]
+      "occurrences": 28
     },
     "drops[].chance": {
       "values": [
@@ -59,12 +47,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 38,
-      "example_items": [
-        "oak_log",
-        "pine_log",
-        "ash_log"
-      ]
+      "occurrences": 38
     },
     "drops[].materialId": {
       "values": [
@@ -110,12 +93,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 38,
-      "example_items": [
-        "oak_log",
-        "pine_log",
-        "ash_log"
-      ]
+      "occurrences": 38
     },
     "drops[].quantity": {
       "values": [
@@ -128,12 +106,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 38,
-      "example_items": [
-        "oak_log",
-        "pine_log",
-        "ash_log"
-      ]
+      "occurrences": 38
     },
     "metadata.narrative": {
       "values": [
@@ -170,10 +143,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 28,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 28
     },
     "metadata.tags": {
       "values": [
@@ -213,10 +183,7 @@
       "types": [
         "array"
       ],
-      "occurrences": 28,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 28
     },
     "name": {
       "values": [
@@ -253,12 +220,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 28,
-      "example_items": [
-        "Oak Tree",
-        "Pine Tree",
-        "Ash Tree"
-      ]
+      "occurrences": 28
     },
     "requiredTool": {
       "values": [
@@ -269,12 +231,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 28,
-      "example_items": [
-        "Oak Tree",
-        "Pine Tree",
-        "Ash Tree"
-      ]
+      "occurrences": 28
     },
     "resourceId": {
       "values": [
@@ -311,12 +268,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 28,
-      "example_items": [
-        "Oak Tree",
-        "Pine Tree",
-        "Ash Tree"
-      ]
+      "occurrences": 28
     },
     "respawnTime": {
       "values": [
@@ -326,15 +278,10 @@
       ],
       "total_unique": 3,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 28,
-      "example_items": [
-        "Oak Tree",
-        "Pine Tree",
-        "Ash Tree"
-      ]
+      "occurrences": 28
     },
     "tier": {
       "values": [
@@ -347,32 +294,27 @@
       "types": [
         "integer"
       ],
-      "occurrences": 28,
-      "example_items": [
-        "Oak Tree",
-        "Pine Tree",
-        "Ash Tree"
-      ]
+      "occurrences": 28
     }
   },
   "_usable_template": {
     "baseHealth": 200,
-    "category": "stone",
+    "category": "tree",
     "drops": [
       "<value>"
     ],
     "metadata": {
-      "narrative": "Speckled igneous rock with visible crystals. Harder and more reliable than limestone.",
+      "narrative": "Common copper deposit showing green-blue oxidation. Perfect for learning the basics of mining.",
       "tags": [
-        "radiant",
-        "void",
-        "flexible"
+        "standard",
+        "durable",
+        "quality"
       ]
     },
-    "name": "Ironwood Tree",
-    "requiredTool": "pickaxe",
-    "resourceId": "genesis_structure",
-    "respawnTime": "very_slow",
+    "name": "Primordial Formation",
+    "requiredTool": "axe",
+    "resourceId": "birch_tree",
+    "respawnTime": "slow",
     "tier": 1
   },
   "_sample_items": [

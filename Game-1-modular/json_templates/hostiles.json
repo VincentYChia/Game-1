@@ -1,0 +1,1998 @@
+{
+  "_meta": {
+    "category": "hostiles",
+    "llm_purpose": "Hostile LLM - creates enemy mobs with stats, behavior, abilities, and drops",
+    "generated_at": "2026-01-04T04:41:13.670386",
+    "total_items": 49,
+    "source_files": [
+      "Definitions.JSON/hostiles-1.JSON",
+      "Definitions.JSON/hostiles-testing-integration.JSON",
+      "Update-1/hostiles-testing-integration.JSON"
+    ]
+  },
+  "_all_possible_values": {
+    "abilityId": {
+      "values": [
+        "acid_damage_over_time",
+        "chain_lightning",
+        "chaos_burst",
+        "charge_attack",
+        "crystal_beam",
+        "earthquake_stomp",
+        "elemental_burst",
+        "fire_breath",
+        "gravity_pull",
+        "ground_slam",
+        "howl_buff",
+        "leap_attack",
+        "life_drain",
+        "meteor_strike",
+        "phase_shift",
+        "rampage",
+        "reality_warp",
+        "refraction_shield",
+        "shell_shield",
+        "split_on_damage",
+        "static_field",
+        "stone_armor",
+        "summon_shards",
+        "teleport",
+        "temporal_distortion",
+        "thunder_slam",
+        "void_beam",
+        "void_explosion",
+        "void_rift",
+        "wing_buffet"
+      ],
+      "total_unique": 30,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "ai.aggroRange": {
+      "values": [
+        12.0,
+        14.0,
+        15.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "ai.attackCooldown": {
+      "values": [
+        1.5,
+        1.8,
+        2.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "ai.behavior": {
+      "values": [
+        "aggressive"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "ai.chaseRange": {
+      "values": [
+        18.0,
+        20.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "aiPattern.aggroOnDamage": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16
+    },
+    "aiPattern.aggroOnProximity": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16
+    },
+    "aiPattern.callForHelpRadius": {
+      "values": [
+        0.0,
+        10.0,
+        12,
+        15,
+        20,
+        8
+      ],
+      "total_unique": 6,
+      "types": [
+        "number",
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "aiPattern.defaultState": {
+      "values": [
+        "guard",
+        "idle",
+        "patrol",
+        "wander"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "aiPattern.fleeAtHealth": {
+      "values": [
+        0.0,
+        0.2,
+        0.3
+      ],
+      "total_unique": 3,
+      "types": [
+        "number",
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "aiPattern.packCoordination": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5
+    },
+    "aiPattern.specialAbilities": {
+      "values": [
+        "acid_damage_over_time",
+        "chain_lightning",
+        "chaos_burst",
+        "charge_attack",
+        "crystal_beam",
+        "earthquake_stomp",
+        "elemental_burst",
+        "fire_breath",
+        "gravity_pull",
+        "ground_slam",
+        "howl_buff",
+        "leap_attack",
+        "life_drain",
+        "meteor_strike",
+        "phase_shift",
+        "rampage",
+        "reality_warp",
+        "refraction_shield",
+        "shell_shield",
+        "split_on_damage",
+        "static_field",
+        "stone_armor",
+        "summon_shards",
+        "teleport",
+        "temporal_distortion",
+        "thunder_slam",
+        "void_beam",
+        "void_explosion",
+        "void_rift",
+        "wing_buffet"
+      ],
+      "total_unique": 30,
+      "types": [
+        "array"
+      ],
+      "occurrences": 12
+    },
+    "behavior": {
+      "values": [
+        "aggressive_flying",
+        "aggressive_melee",
+        "aggressive_pack",
+        "aggressive_phase",
+        "aggressive_ranged",
+        "aggressive_swarm",
+        "boss_encounter",
+        "docile_wander",
+        "passive_patrol",
+        "stationary",
+        "territorial"
+      ],
+      "total_unique": 11,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "category": {
+      "values": [
+        "aberration",
+        "beast",
+        "construct",
+        "elemental",
+        "insect",
+        "ooze",
+        "undead"
+      ],
+      "total_unique": 7,
+      "types": [
+        "string"
+      ],
+      "occurrences": 19
+    },
+    "cooldown": {
+      "values": [
+        10.0,
+        12.0,
+        15.0,
+        18.0,
+        20.0,
+        25.0,
+        30.0,
+        35.0,
+        40.0,
+        45.0,
+        60.0,
+        8.0
+      ],
+      "total_unique": 12,
+      "types": [
+        "number"
+      ],
+      "occurrences": 30
+    },
+    "drops[].chance": {
+      "values": [
+        "guaranteed",
+        "high",
+        "low",
+        "moderate",
+        "rare"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 51
+    },
+    "drops[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "arcane_dust",
+        "beetle_carapace",
+        "chaos_matrix",
+        "crystal_quartz",
+        "diamond",
+        "dire_fang",
+        "drake_scale",
+        "earth_crystal",
+        "essence_blood",
+        "etherion_ingot",
+        "fire_crystal",
+        "genesis_lattice",
+        "golem_core",
+        "granite",
+        "iron_scales",
+        "light_gem",
+        "lightning_essence",
+        "living_ichor",
+        "primordial_crystal",
+        "shadow_core",
+        "shadow_crystal",
+        "slime_gel",
+        "spectral_thread",
+        "storm_core",
+        "void_essence",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "total_unique": 28,
+      "types": [
+        "string"
+      ],
+      "occurrences": 51
+    },
+    "drops[].quantity": {
+      "values": [
+        1,
+        10,
+        12,
+        15,
+        2,
+        20,
+        25,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "total_unique": 13,
+      "types": [
+        "array"
+      ],
+      "occurrences": 51
+    },
+    "effectParams.baseDamage": {
+      "values": [
+        100,
+        120,
+        25,
+        30,
+        35,
+        40,
+        50,
+        60,
+        65,
+        70,
+        75,
+        80,
+        90
+      ],
+      "total_unique": 13,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 20
+    },
+    "effectParams.beam_range": {
+      "values": [
+        12.0,
+        15.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "effectParams.beam_width": {
+      "values": [
+        1.5,
+        2.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "effectParams.bleed_damage_per_second": {
+      "values": [
+        5.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.bleed_duration": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.burn_damage_per_second": {
+      "values": [
+        10.0,
+        8.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.burn_duration": {
+      "values": [
+        12.0,
+        15.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.chain_count": {
+      "values": [
+        4
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.chain_falloff": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.chain_range": {
+      "values": [
+        6.0,
+        8.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.chargeSpeed": {
+      "values": [
+        3.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.circle_radius": {
+      "values": [
+        10.0,
+        12.0,
+        3.0,
+        5.0,
+        6.0,
+        8.0
+      ],
+      "total_unique": 6,
+      "types": [
+        "number"
+      ],
+      "occurrences": 14
+    },
+    "effectParams.cone_angle": {
+      "values": [
+        60.0,
+        90.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "effectParams.cone_range": {
+      "values": [
+        10.0,
+        8.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "effectParams.confuse_duration": {
+      "values": [
+        5.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.duration": {
+      "values": [
+        10.0,
+        12.0,
+        15.0,
+        4.0,
+        8.0
+      ],
+      "total_unique": 5,
+      "types": [
+        "number"
+      ],
+      "occurrences": 8
+    },
+    "effectParams.empower_percent": {
+      "values": [
+        0.2,
+        0.5
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.fortify_damage_reduction": {
+      "values": [
+        0.5,
+        0.6
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.haste_speed_bonus": {
+      "values": [
+        0.15,
+        0.4
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.healthPercent": {
+      "values": [
+        0.5
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.invisible_duration": {
+      "values": [
+        3.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.knockback_distance": {
+      "values": [
+        3.0,
+        4.0,
+        5.0,
+        6.0
+      ],
+      "total_unique": 4,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "effectParams.leapRange": {
+      "values": [
+        8.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.lifesteal_percent": {
+      "values": [
+        0.8
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.minDistance": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.origin": {
+      "values": [
+        "source",
+        "target"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9
+    },
+    "effectParams.pierce_count": {
+      "values": [
+        5
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.poison_damage_per_second": {
+      "values": [
+        8.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.poison_duration": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.pull_distance": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.pull_strength": {
+      "values": [
+        5.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.reflect_percent": {
+      "values": [
+        0.5
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.shield_health": {
+      "values": [
+        150,
+        200
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.shock_damage_per_tick": {
+      "values": [
+        5.0,
+        6.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.shock_duration": {
+      "values": [
+        10.0,
+        8.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.shock_tick_rate": {
+      "values": [
+        1.0,
+        1.5
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.silence_duration": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.slow_duration": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.slow_percent": {
+      "values": [
+        0.3,
+        0.6
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "effectParams.stun_duration": {
+      "values": [
+        2.0,
+        3.0,
+        4.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "effectParams.summonCount": {
+      "values": [
+        2,
+        3
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.summonId": {
+      "values": [
+        "crystal_shard_minion",
+        "slime_tiny"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.teleport_range": {
+      "values": [
+        10.0,
+        12.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.vulnerable_duration": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.vulnerable_percent": {
+      "values": [
+        0.3
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.weaken_duration": {
+      "values": [
+        12.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.weaken_percent": {
+      "values": [
+        0.35
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "enemyId": {
+      "values": [
+        "beetle_armored",
+        "beetle_brown",
+        "beetle_titan",
+        "entity_primordial",
+        "golem_crystal",
+        "golem_stone",
+        "inferno_drake",
+        "slime_acid",
+        "slime_crystal",
+        "slime_green",
+        "storm_titan",
+        "void_archon",
+        "void_wraith",
+        "wolf_dire",
+        "wolf_elder",
+        "wolf_grey"
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 19
+    },
+    "loot[].chance": {
+      "values": [
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.8,
+        0.9,
+        1.0
+      ],
+      "total_unique": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 7
+    },
+    "loot[].itemId": {
+      "values": [
+        "arcane_dust",
+        "drake_scale",
+        "fire_crystal",
+        "lightning_essence",
+        "shadow_crystal",
+        "storm_core",
+        "void_essence"
+      ],
+      "total_unique": 7,
+      "types": [
+        "string"
+      ],
+      "occurrences": 7
+    },
+    "loot[].maxQuantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total_unique": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 7
+    },
+    "loot[].minQuantity": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 7
+    },
+    "metadata.narrative": {
+      "values": [
+        "A drake infused with elemental flame. It bathes foes in fire breath, knocks them back with wing beats, and calls down meteors when desperate.",
+        "A living storm given form. Lightning arcs from its body, chaining between victims as it slams the ground with thunderous force.",
+        "An archon corrupted by the void. It bends space and shadow to pull victims close before tearing them apart with beams of pure darkness.",
+        "Ancient wolf wreathed in shadow. Pack leader that has survived countless battles.",
+        "Animated stone construct that guards ancient places. Slow but nearly indestructible.",
+        "Common brown beetle with hard carapace. Docile unless threatened, then surprisingly fierce.",
+        "Common grey wolf that roams grasslands and forests. More curious than aggressive, but will defend territory if threatened.",
+        "Corrosive slime that dissolves anything it touches. Highly aggressive and surprisingly fast.",
+        "Crystalline golem pulsing with magical energy. Rare guardian of legendary deposits.",
+        "Crystalline slime formed from pure elemental energy. Extremely rare and dangerously powerful.",
+        "Heavily armored beetle with metallic shell. Territorial and aggressive when its area is invaded.",
+        "Larger, more aggressive wolf. Alpha predator that hunts in coordinated packs.",
+        "Massive beetle with diamond-hard shell. Ancient guardian that has survived eons.",
+        "Reality-warped entity from beyond comprehension. Existence itself bends around it. Only the most prepared dare engage.",
+        "Small green slime that oozes slowly across terrain. Mostly harmless unless you step on it.",
+        "Spectral entity that phases between dimensions. Attacks pass through it unpredictably."
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "metadata.tags": {
+      "values": [
+        "aggressive",
+        "beetle",
+        "boss",
+        "common",
+        "construct",
+        "docile",
+        "end-game",
+        "entity",
+        "epic",
+        "golem",
+        "mid-game",
+        "mythical",
+        "passive",
+        "phase",
+        "rare",
+        "reality-bender",
+        "slime",
+        "starter",
+        "territorial",
+        "uncommon",
+        "wolf",
+        "wraith"
+      ],
+      "total_unique": 22,
+      "types": [
+        "array"
+      ],
+      "occurrences": 13
+    },
+    "name": {
+      "values": [
+        "Acid Slime",
+        "Acid Splash",
+        "Armored Beetle",
+        "Brown Beetle",
+        "Chain Lightning",
+        "Chaos Burst",
+        "Charge",
+        "Crystal Beam",
+        "Crystal Golem",
+        "Crystal Slime",
+        "Defensive Shell",
+        "Dire Wolf",
+        "Earthquake Stomp",
+        "Elder Wolf",
+        "Elemental Burst",
+        "Fire Breath",
+        "Gravity Pull",
+        "Green Slime",
+        "Grey Wolf",
+        "Ground Slam",
+        "Inferno Drake",
+        "Life Drain",
+        "Meteor Strike",
+        "Mitosis",
+        "Phase Shift",
+        "Pounce",
+        "Primordial Entity",
+        "Rallying Howl",
+        "Rampage",
+        "Reality Warp",
+        "Refraction Shield",
+        "Static Field",
+        "Stone Armor",
+        "Stone Golem",
+        "Storm Titan",
+        "Summon Crystal Shards",
+        "Teleport",
+        "Temporal Distortion",
+        "Thunder Slam",
+        "Titan Beetle",
+        "Void Archon",
+        "Void Beam",
+        "Void Explosion",
+        "Void Rift",
+        "Void Wraith",
+        "Wing Buffet"
+      ],
+      "total_unique": 46,
+      "types": [
+        "string"
+      ],
+      "occurrences": 49
+    },
+    "narrative": {
+      "values": [
+        "A drake infused with elemental flame. It bathes foes in fire breath, knocks them back with wing beats, and calls down meteors when desperate.",
+        "A living storm given form. Lightning arcs from its body, chaining between victims as it slams the ground with thunderous force.",
+        "An archon corrupted by the void. It bends space and shadow to pull victims close before tearing them apart with beams of pure darkness."
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "specialAbilities[].abilityId": {
+      "values": [
+        "chain_lightning",
+        "fire_breath",
+        "gravity_pull",
+        "meteor_strike",
+        "static_field",
+        "thunder_slam",
+        "void_beam",
+        "void_explosion",
+        "wing_buffet"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9
+    },
+    "specialAbilities[].cooldown": {
+      "values": [
+        10.0,
+        12.0,
+        15.0,
+        18.0,
+        20.0,
+        25.0,
+        8.0
+      ],
+      "total_unique": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 9
+    },
+    "specialAbilities[].effectParams.baseDamage": {
+      "values": [
+        100,
+        120,
+        30,
+        40,
+        65,
+        70,
+        75,
+        80
+      ],
+      "total_unique": 8,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 9
+    },
+    "specialAbilities[].effectParams.beam_range": {
+      "values": [
+        15.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.beam_width": {
+      "values": [
+        2.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.burn_damage_per_second": {
+      "values": [
+        10.0,
+        8.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "specialAbilities[].effectParams.burn_duration": {
+      "values": [
+        12.0,
+        15.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "specialAbilities[].effectParams.chain_count": {
+      "values": [
+        4
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.chain_range": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.circle_radius": {
+      "values": [
+        10.0,
+        5.0,
+        6.0,
+        8.0
+      ],
+      "total_unique": 4,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "specialAbilities[].effectParams.cone_angle": {
+      "values": [
+        60.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.cone_range": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.knockback_distance": {
+      "values": [
+        4.0,
+        5.0,
+        6.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 4
+    },
+    "specialAbilities[].effectParams.origin": {
+      "values": [
+        "source",
+        "target"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "specialAbilities[].effectParams.pierce_count": {
+      "values": [
+        5
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.pull_distance": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.shock_damage_per_tick": {
+      "values": [
+        5.0,
+        6.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "specialAbilities[].effectParams.shock_duration": {
+      "values": [
+        10.0,
+        8.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "specialAbilities[].effectParams.shock_tick_rate": {
+      "values": [
+        1.0,
+        1.5
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "specialAbilities[].effectParams.slow_duration": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.slow_percent": {
+      "values": [
+        0.6
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.stun_duration": {
+      "values": [
+        4.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.vulnerable_duration": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.vulnerable_percent": {
+      "values": [
+        0.3
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.weaken_duration": {
+      "values": [
+        12.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].effectParams.weaken_percent": {
+      "values": [
+        0.35
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].name": {
+      "values": [
+        "Chain Lightning",
+        "Fire Breath",
+        "Gravity Pull",
+        "Meteor Strike",
+        "Static Field",
+        "Thunder Slam",
+        "Void Beam",
+        "Void Explosion",
+        "Wing Buffet"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9
+    },
+    "specialAbilities[].tags": {
+      "values": [
+        "arcane",
+        "beam",
+        "burn",
+        "chain",
+        "circle",
+        "cone",
+        "fire",
+        "knockback",
+        "lightning",
+        "physical",
+        "pierce",
+        "player",
+        "pull",
+        "shadow",
+        "shock",
+        "slow",
+        "stun",
+        "vulnerable",
+        "weaken"
+      ],
+      "total_unique": 19,
+      "types": [
+        "array"
+      ],
+      "occurrences": 9
+    },
+    "specialAbilities[].triggerConditions.distanceMax": {
+      "values": [
+        10.0,
+        12.0,
+        15.0,
+        5.0,
+        6.0,
+        8.0
+      ],
+      "total_unique": 6,
+      "types": [
+        "number"
+      ],
+      "occurrences": 9
+    },
+    "specialAbilities[].triggerConditions.distanceMin": {
+      "values": [
+        4.0,
+        5.0,
+        6.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 3
+    },
+    "specialAbilities[].triggerConditions.healthThreshold": {
+      "values": [
+        0.3,
+        0.4,
+        0.6,
+        0.7,
+        1.0
+      ],
+      "total_unique": 5,
+      "types": [
+        "number"
+      ],
+      "occurrences": 9
+    },
+    "specialAbilities[].triggerConditions.maxUsesPerFight": {
+      "values": [
+        2
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "specialAbilities[].triggerConditions.oncePerFight": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "stats.aggroRange": {
+      "values": [
+        10,
+        12,
+        14,
+        15,
+        20,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "total_unique": 11,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "stats.armor": {
+      "values": [
+        25,
+        30,
+        40
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "stats.attackSpeed": {
+      "values": [
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.2,
+        1.3,
+        1.4,
+        1.5
+      ],
+      "total_unique": 9,
+      "types": [
+        "number"
+      ],
+      "occurrences": 19
+    },
+    "stats.damage": {
+      "values": [
+        10,
+        110,
+        12,
+        120,
+        15,
+        18,
+        180,
+        20,
+        22,
+        28,
+        30,
+        40,
+        45,
+        5,
+        50,
+        55,
+        6,
+        60,
+        65,
+        70,
+        8,
+        80,
+        90
+      ],
+      "total_unique": 23,
+      "types": [
+        "integer",
+        "array"
+      ],
+      "occurrences": 19
+    },
+    "stats.defense": {
+      "values": [
+        12,
+        15,
+        2,
+        25,
+        30,
+        40,
+        45,
+        5,
+        50,
+        60,
+        8
+      ],
+      "total_unique": 11,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "stats.health": {
+      "values": [
+        100,
+        1000,
+        120,
+        1200,
+        200,
+        2000,
+        250,
+        400,
+        50,
+        500,
+        600,
+        650,
+        80,
+        800
+      ],
+      "total_unique": 14,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 19
+    },
+    "stats.speed": {
+      "values": [
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+        1.2,
+        1.4,
+        1.5,
+        1.6,
+        1.8,
+        2.0
+      ],
+      "total_unique": 12,
+      "types": [
+        "number"
+      ],
+      "occurrences": 19
+    },
+    "tags": {
+      "values": [
+        "ally",
+        "arcane",
+        "beam",
+        "bleed",
+        "burn",
+        "chain",
+        "chaos",
+        "circle",
+        "cone",
+        "confuse",
+        "empower",
+        "enrage",
+        "fire",
+        "fortify",
+        "haste",
+        "invisible",
+        "knockback",
+        "lifesteal",
+        "lightning",
+        "physical",
+        "pierce",
+        "player",
+        "poison",
+        "poison_status",
+        "pull",
+        "random",
+        "reflect",
+        "self",
+        "shadow",
+        "shield",
+        "shock",
+        "silence",
+        "single",
+        "slow",
+        "stun",
+        "summon",
+        "teleport",
+        "vulnerable",
+        "weaken"
+      ],
+      "total_unique": 39,
+      "types": [
+        "array"
+      ],
+      "occurrences": 30
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 19
+    },
+    "triggerConditions.allyCount": {
+      "values": [
+        2
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "triggerConditions.distanceMax": {
+      "values": [
+        10.0,
+        12.0,
+        15.0,
+        3.0,
+        5.0,
+        6.0,
+        8.0
+      ],
+      "total_unique": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 18
+    },
+    "triggerConditions.distanceMin": {
+      "values": [
+        4.0,
+        5.0,
+        6.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "triggerConditions.enemyCount": {
+      "values": [
+        1
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "triggerConditions.healthThreshold": {
+      "values": [
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        1.0
+      ],
+      "total_unique": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 26
+    },
+    "triggerConditions.maxUsesPerFight": {
+      "values": [
+        2,
+        3
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "triggerConditions.oncePerFight": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 3
+    }
+  },
+  "_usable_template": {
+    "abilityId": "temporal_distortion",
+    "ai": {
+      "aggroRange": 12.0,
+      "attackCooldown": 1.8,
+      "behavior": "aggressive",
+      "chaseRange": 18.0
+    },
+    "aiPattern": {
+      "aggroOnDamage": true,
+      "aggroOnProximity": true,
+      "callForHelpRadius": 8,
+      "defaultState": "guard",
+      "fleeAtHealth": 0,
+      "packCoordination": true,
+      "specialAbilities": [
+        "temporal_distortion",
+        "refraction_shield",
+        "chaos_burst"
+      ]
+    },
+    "behavior": "aggressive_swarm",
+    "category": "insect",
+    "cooldown": 35.0,
+    "drops": [
+      "<value>"
+    ],
+    "effectParams": {
+      "baseDamage": 65,
+      "beam_range": 12.0,
+      "beam_width": 1.5,
+      "bleed_damage_per_second": 5.0,
+      "bleed_duration": 6.0,
+      "burn_damage_per_second": 8.0,
+      "burn_duration": 12.0,
+      "chain_count": 4,
+      "chain_falloff": 0.1,
+      "chain_range": 8.0,
+      "chargeSpeed": 3.0,
+      "circle_radius": 3.0,
+      "cone_angle": 90.0,
+      "cone_range": 8.0,
+      "confuse_duration": 5.0,
+      "duration": 4.0,
+      "empower_percent": 0.2,
+      "fortify_damage_reduction": 0.5,
+      "haste_speed_bonus": 0.15,
+      "healthPercent": 0.5,
+      "invisible_duration": 3.0,
+      "knockback_distance": 3.0,
+      "leapRange": 8.0,
+      "lifesteal_percent": 0.8,
+      "minDistance": 6.0,
+      "origin": "target",
+      "pierce_count": 5,
+      "poison_damage_per_second": 8.0,
+      "poison_duration": 10.0,
+      "pull_distance": 6.0,
+      "pull_strength": 5.0,
+      "reflect_percent": 0.5,
+      "shield_health": 200,
+      "shock_damage_per_tick": 5.0,
+      "shock_duration": 8.0,
+      "shock_tick_rate": 1.0,
+      "silence_duration": 6.0,
+      "slow_duration": 10.0,
+      "slow_percent": 0.6,
+      "stun_duration": 2.0,
+      "summonCount": 2,
+      "summonId": "crystal_shard_minion",
+      "teleport_range": 10.0,
+      "vulnerable_duration": 10.0,
+      "vulnerable_percent": 0.3,
+      "weaken_duration": 12.0,
+      "weaken_percent": 0.35
+    },
+    "enemyId": "golem_stone",
+    "loot": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Animated stone construct that guards ancient places. Slow but nearly indestructible.",
+      "tags": [
+        "phase",
+        "aggressive",
+        "wolf"
+      ]
+    },
+    "name": "Crystal Slime",
+    "narrative": "An archon corrupted by the void. It bends space and shadow to pull victims close before tearing them apart with beams of pure darkness.",
+    "specialAbilities": [
+      "<value>"
+    ],
+    "stats": {
+      "aggroRange": 3,
+      "armor": 40,
+      "attackSpeed": 0.8,
+      "damage": [
+        5,
+        6,
+        8
+      ],
+      "defense": 2,
+      "health": 800,
+      "speed": 0.5
+    },
+    "tags": [
+      "vulnerable",
+      "empower",
+      "single"
+    ],
+    "tier": 1,
+    "triggerConditions": {
+      "allyCount": 2,
+      "distanceMax": 3.0,
+      "distanceMin": 4.0,
+      "enemyCount": 1,
+      "healthThreshold": 0.7,
+      "maxUsesPerFight": 2,
+      "oncePerFight": true
+    }
+  },
+  "_sample_items": [
+    {
+      "abilityId": "void_beam",
+      "name": "Void Beam",
+      "tags": [
+        "shadow",
+        "beam",
+        "weaken",
+        "pierce",
+        "player"
+      ],
+      "effectParams": {
+        "baseDamage": 70,
+        "beam_range": 15.0,
+        "beam_width": 2.0,
+        "pierce_count": 5,
+        "weaken_percent": 0.35,
+        "weaken_duration": 12.0
+      },
+      "cooldown": 10.0,
+      "triggerConditions": {
+        "healthThreshold": 1.0,
+        "distanceMin": 6.0,
+        "distanceMax": 15.0
+      }
+    },
+    {
+      "abilityId": "gravity_pull",
+      "name": "Gravity Pull",
+      "tags": [
+        "arcane",
+        "circle",
+        "pull",
+        "player"
+      ],
+      "effectParams": {
+        "baseDamage": 30,
+        "circle_radius": 10.0,
+        "origin": "source",
+        "pull_distance": 6.0
+      },
+      "cooldown": 15.0,
+      "triggerConditions": {
+        "healthThreshold": 0.7,
+        "distanceMin": 4.0,
+        "distanceMax": 10.0
+      }
+    },
+    {
+      "abilityId": "void_explosion",
+      "name": "Void Explosion",
+      "tags": [
+        "shadow",
+        "circle",
+        "knockback",
+        "vulnerable",
+        "player"
+      ],
+      "effectParams": {
+        "baseDamage": 100,
+        "circle_radius": 8.0,
+        "origin": "source",
+        "knockback_distance": 6.0,
+        "vulnerable_percent": 0.3,
+        "vulnerable_duration": 10.0
+      },
+      "cooldown": 25.0,
+      "triggerConditions": {
+        "healthThreshold": 0.3,
+        "distanceMax": 8.0,
+        "maxUsesPerFight": 2
+      }
+    },
+    {
+      "abilityId": "chain_lightning",
+      "name": "Chain Lightning",
+      "tags": [
+        "lightning",
+        "chain",
+        "shock",
+        "player"
+      ],
+      "effectParams": {
+        "baseDamage": 65,
+        "chain_count": 4,
+        "chain_range": 6.0,
+        "shock_duration": 8.0,
+        "shock_damage_per_tick": 6.0,
+        "shock_tick_rate": 1.0
+      },
+      "cooldown": 8.0,
+      "triggerConditions": {
+        "healthThreshold": 1.0,
+        "distanceMax": 12.0
+      }
+    },
+    {
+      "abilityId": "thunder_slam",
+      "name": "Thunder Slam",
+      "tags": [
+        "lightning",
+        "circle",
+        "stun",
+        "knockback",
+        "player"
+      ],
+      "effectParams": {
+        "baseDamage": 80,
+        "circle_radius": 6.0,
+        "origin": "source",
+        "stun_duration": 4.0,
+        "knockback_distance": 4.0
+      },
+      "cooldown": 12.0,
+      "triggerConditions": {
+        "healthThreshold": 0.6,
+        "distanceMax": 6.0
+      }
+    }
+  ]
+}

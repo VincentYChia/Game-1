@@ -1,0 +1,921 @@
+{
+  "_meta": {
+    "category": "engineering_items",
+    "llm_purpose": "Item LLM for engineering - creates turrets, traps, bombs, devices",
+    "generated_at": "2026-01-04T04:41:13.668337",
+    "total_items": 21,
+    "source_files": [
+      "items.JSON/items-engineering-1.JSON",
+      "items.JSON/items-testing-tags.JSON"
+    ]
+  },
+  "_all_possible_values": {
+    "category": {
+      "values": [
+        "device"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 21
+    },
+    "effect": {
+      "values": [
+        "Basic turret with no tag system support",
+        "Disables all mechanical devices in 8 unit radius for 30 seconds",
+        "Enables flight for up to 30 seconds, recharge time 2 minutes",
+        "Explodes for 40 damage in 3 unit radius",
+        "Explodes for 75 fire damage + lingering flames",
+        "Fires a burning laser beam",
+        "Fires arrows at enemies, 20 damage, 5 unit range",
+        "Fires concentrated light beam, 80 damage, 12 unit range",
+        "Fires flaming arrows, 35 damage + burn, 7 unit range",
+        "Fires lightning bolts, 70 damage + chain, 10 unit range",
+        "Fires net that slows enemies by 80% for 10 seconds",
+        "Heals 10 HP/sec in 5 unit radius for 2 minutes",
+        "Hybrid turret with chain AND cone",
+        "Launches grappling hook up to 15 units, pulls player to location",
+        "Massive explosion with huge radius",
+        "Splits into 8 smaller explosions, total 120 damage over wide area",
+        "Sweeps cone of fire, 60 damage + lingering burn",
+        "Trap with all status effects",
+        "Triggers on contact, 25 damage + immobilize for 5 seconds",
+        "Triggers on contact, 30 damage + bleed",
+        "Triggers on proximity, 50 damage + slow"
+      ],
+      "total_unique": 21,
+      "types": [
+        "string"
+      ],
+      "occurrences": 21
+    },
+    "effectParams.baseDamage": {
+      "values": [
+        120,
+        150.0,
+        20,
+        25,
+        30,
+        35,
+        40,
+        50,
+        60,
+        70,
+        75,
+        80
+      ],
+      "total_unique": 12,
+      "types": [
+        "number",
+        "integer"
+      ],
+      "occurrences": 15
+    },
+    "effectParams.beam_length": {
+      "values": [
+        15.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.beam_range": {
+      "values": [
+        12.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.beam_width": {
+      "values": [
+        1.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.bleed_damage_per_second": {
+      "values": [
+        3.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.bleed_duration": {
+      "values": [
+        8.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.burn_damage_per_second": {
+      "values": [
+        10.0,
+        15.0,
+        5.0,
+        8.0
+      ],
+      "total_unique": 4,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "effectParams.burn_duration": {
+      "values": [
+        10.0,
+        5.0,
+        6.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "effectParams.chain_count": {
+      "values": [
+        2,
+        3
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.chain_damage_falloff": {
+      "values": [
+        0.9
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.chain_range": {
+      "values": [
+        5.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.circle_radius": {
+      "values": [
+        2.0,
+        20.0,
+        3.0,
+        4.0,
+        5.0
+      ],
+      "total_unique": 5,
+      "types": [
+        "number"
+      ],
+      "occurrences": 7
+    },
+    "effectParams.cone_angle": {
+      "values": [
+        45,
+        60.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number",
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.cone_length": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.cone_range": {
+      "values": [
+        8.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.freeze_duration": {
+      "values": [
+        2.0,
+        3.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.range": {
+      "values": [
+        10.0,
+        12.0,
+        15.0,
+        5.0,
+        7.0,
+        8.0
+      ],
+      "total_unique": 6,
+      "types": [
+        "number"
+      ],
+      "occurrences": 7
+    },
+    "effectParams.root_duration": {
+      "values": [
+        3.0,
+        5.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.shock_chance": {
+      "values": [
+        0.5
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.shock_damage": {
+      "values": [
+        20.0,
+        5.0
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "effectParams.shock_duration": {
+      "values": [
+        2.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.slow_duration": {
+      "values": [
+        4.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.slow_factor": {
+      "values": [
+        0.5
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectParams.slow_percent": {
+      "values": [
+        0.5
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "effectTags": {
+      "values": [
+        "beam",
+        "bleed",
+        "burn",
+        "chain",
+        "circle",
+        "cone",
+        "crushing",
+        "energy",
+        "fire",
+        "freeze",
+        "ice",
+        "lightning",
+        "physical",
+        "piercing",
+        "root",
+        "shock",
+        "single",
+        "slow"
+      ],
+      "total_unique": 18,
+      "types": [
+        "array"
+      ],
+      "occurrences": 15
+    },
+    "flags.placeable": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 20
+    },
+    "flags.repairable": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16
+    },
+    "flags.stackable": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 21
+    },
+    "flags.tradeable": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 5
+    },
+    "itemId": {
+      "values": [
+        "basic_arrow_turret",
+        "bear_trap",
+        "cluster_bomb",
+        "emp_device",
+        "fire_arrow_turret",
+        "fire_bomb",
+        "flamethrower_turret",
+        "frost_mine",
+        "grappling_hook",
+        "healing_beacon",
+        "jetpack",
+        "laser_turret",
+        "lightning_cannon",
+        "net_launcher",
+        "simple_bomb",
+        "spike_trap",
+        "test_bomb_massive_aoe",
+        "test_device_chain_cone_hybrid",
+        "test_trap_conflicting_status",
+        "test_turret_beam_burn",
+        "test_turret_no_tags"
+      ],
+      "total_unique": 21,
+      "types": [
+        "string"
+      ],
+      "occurrences": 21
+    },
+    "metadata.narrative": {
+      "values": [
+        "Basic arrow turret using simple springs and levers. Point away from face. Automated defense that never sleeps, never misses... well, rarely misses.",
+        "Beam geometry with burn status effect.",
+        "Bear trap with brutal steel jaws. Immobilizes anything that steps on it. The teeth dig deep and don't let go.",
+        "Cluster bomb that splits into multiple explosives. Maximum coverage. One becomes many, the sky rains destruction.",
+        "EMP device that disables electronic enemies and devices. Technology's worst nightmare. Lightning contained, waiting to be unleashed.",
+        "Extremely large AOE to test geometry limits.",
+        "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense. Each arrow trails flames, lighting up enemies and the night.",
+        "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone. The explosion is just the beginning - the flames linger, hungry.",
+        "Flamethrower turret that sweeps area with fire. Excellent for crowd control. The roar is almost as terrifying as the flames themselves.",
+        "Frost mine that erupts in a blast of ice shards. Triggers on proximity. The cold bites deep, slowing everything it touches.",
+        "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces. The spectral thread never breaks, the iron hook never fails.",
+        "Healing beacon that emanates restorative energy. Heals allies in radius continuously. The light feels warm, comforting, alive.",
+        "Jetpack for brief flight. Fuel not included (but fire crystals work great). The mithril construction keeps it lightweight while phoenix ash provides sustained thrust.",
+        "Laser turret using focused light crystals. Precise and devastating. The beam cuts through armor like it's not even there.",
+        "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous. The bolts arc between enemies, chain lightning made manifest.",
+        "Net launcher that ensnares enemies. Reduces movement speed dramatically. Spectral thread nets are nearly unbreakable.",
+        "Simple explosive using blast powder in iron casing. The universal problem solver. Pull pin, throw, run. In that order.",
+        "Spike trap with spring-loaded iron spikes. Triggers on contact. Simple, brutal, effective. The spikes punch through leather and flesh alike.",
+        "Tests conflicting status effects (freeze + burn + slow + root).",
+        "Tests what happens when chain and cone geometry are both specified.",
+        "Turret with NO tags to test fallback behavior."
+      ],
+      "total_unique": 21,
+      "types": [
+        "string"
+      ],
+      "occurrences": 21
+    },
+    "metadata.tags": {
+      "values": [
+        "advanced",
+        "area",
+        "basic",
+        "bomb",
+        "cluster",
+        "crowd-control",
+        "device",
+        "disable",
+        "elemental",
+        "explosive",
+        "fire",
+        "flight",
+        "frost",
+        "healing",
+        "immobilize",
+        "light",
+        "lightning",
+        "mobility",
+        "physical",
+        "precision",
+        "projectile",
+        "support",
+        "tech",
+        "tool",
+        "trap",
+        "turret",
+        "utility"
+      ],
+      "total_unique": 27,
+      "types": [
+        "array"
+      ],
+      "occurrences": 16
+    },
+    "name": {
+      "values": [
+        "Basic Arrow Turret",
+        "Bear Trap",
+        "Cluster Bomb",
+        "EMP Device",
+        "Fire Arrow Turret",
+        "Fire Bomb",
+        "Flamethrower Turret",
+        "Frost Mine",
+        "Grappling Hook",
+        "Healing Beacon",
+        "Jetpack",
+        "Laser Turret",
+        "Lightning Cannon",
+        "Net Launcher",
+        "Simple Bomb",
+        "Spike Trap",
+        "Test Bomb (Massive AOE)",
+        "Test Device (Chain + Cone Hybrid)",
+        "Test Trap (Conflicting Status)",
+        "Test Turret (Beam + Burn)",
+        "Test Turret (No Tags)"
+      ],
+      "total_unique": 21,
+      "types": [
+        "string"
+      ],
+      "occurrences": 21
+    },
+    "rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 21
+    },
+    "requirements.level": {
+      "values": [
+        13,
+        14,
+        15,
+        16,
+        18,
+        2,
+        3,
+        6,
+        7,
+        8,
+        9
+      ],
+      "total_unique": 11,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "stackSize": {
+      "values": [
+        1,
+        10,
+        15,
+        3,
+        5
+      ],
+      "total_unique": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 21
+    },
+    "statMultipliers.weight": {
+      "values": [
+        0.5,
+        0.6,
+        0.8,
+        1.0,
+        1.2,
+        1.3,
+        1.5,
+        1.8,
+        2.0,
+        2.5
+      ],
+      "total_unique": 10,
+      "types": [
+        "number"
+      ],
+      "occurrences": 16
+    },
+    "subtype": {
+      "values": [
+        "area",
+        "arrow_turret",
+        "cluster_bomb",
+        "control",
+        "disable",
+        "elemental",
+        "energy",
+        "explosive",
+        "hybrid_turret",
+        "laser_turret",
+        "mobility",
+        "physical",
+        "projectile",
+        "status_trap",
+        "support"
+      ],
+      "total_unique": 15,
+      "types": [
+        "string"
+      ],
+      "occurrences": 21
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 21
+    },
+    "type": {
+      "values": [
+        "bomb",
+        "trap",
+        "turret",
+        "utility"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 21
+    }
+  },
+  "_usable_template": {
+    "category": "device",
+    "effect": "Fires arrows at enemies, 20 damage, 5 unit range",
+    "effectParams": {
+      "baseDamage": 35,
+      "beam_length": 15.0,
+      "beam_range": 12.0,
+      "beam_width": 1.0,
+      "bleed_damage_per_second": 3.0,
+      "bleed_duration": 8.0,
+      "burn_damage_per_second": 8.0,
+      "burn_duration": 10.0,
+      "chain_count": 2,
+      "chain_damage_falloff": 0.9,
+      "chain_range": 5.0,
+      "circle_radius": 2.0,
+      "cone_angle": 45,
+      "cone_length": 10.0,
+      "cone_range": 8.0,
+      "freeze_duration": 2.0,
+      "range": 5.0,
+      "root_duration": 3.0,
+      "shock_chance": 0.5,
+      "shock_damage": 20.0,
+      "shock_duration": 2.0,
+      "slow_duration": 4.0,
+      "slow_factor": 0.5,
+      "slow_percent": 0.5
+    },
+    "effectTags": [
+      "bleed",
+      "freeze",
+      "piercing"
+    ],
+    "flags": {
+      "placeable": true,
+      "repairable": true,
+      "stackable": true,
+      "tradeable": true
+    },
+    "itemId": "jetpack",
+    "metadata": {
+      "narrative": "Laser turret using focused light crystals. Precise and devastating. The beam cuts through armor like it's not even there.",
+      "tags": [
+        "bomb",
+        "explosive",
+        "immobilize"
+      ]
+    },
+    "name": "Test Device (Chain + Cone Hybrid)",
+    "rarity": "uncommon",
+    "requirements": {
+      "level": 2,
+      "stats": {}
+    },
+    "stackSize": 1,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "subtype": "mobility",
+    "tier": 1,
+    "type": "utility"
+  },
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "Basic arrow turret using simple springs and levers. Point away from face. Automated defense that never sleeps, never misses... well, rarely misses.",
+        "tags": [
+          "device",
+          "turret",
+          "basic",
+          "projectile"
+        ]
+      },
+      "itemId": "basic_arrow_turret",
+      "name": "Basic Arrow Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "projectile",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Fires arrows at enemies, 20 damage, 5 unit range",
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 20,
+        "range": 5.0
+      },
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense. Each arrow trails flames, lighting up enemies and the night.",
+        "tags": [
+          "device",
+          "turret",
+          "fire",
+          "elemental"
+        ]
+      },
+      "itemId": "fire_arrow_turret",
+      "name": "Fire Arrow Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "projectile",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Fires flaming arrows, 35 damage + burn, 7 unit range",
+      "effectTags": [
+        "fire",
+        "piercing",
+        "single",
+        "burn"
+      ],
+      "effectParams": {
+        "baseDamage": 35,
+        "range": 7.0,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 5.0
+      },
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous. The bolts arc between enemies, chain lightning made manifest.",
+        "tags": [
+          "device",
+          "turret",
+          "lightning",
+          "advanced"
+        ]
+      },
+      "itemId": "lightning_cannon",
+      "name": "Lightning Cannon",
+      "category": "device",
+      "type": "turret",
+      "subtype": "energy",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Fires lightning bolts, 70 damage + chain, 10 unit range",
+      "effectTags": [
+        "lightning",
+        "chain",
+        "shock"
+      ],
+      "effectParams": {
+        "baseDamage": 70,
+        "range": 10.0,
+        "chain_count": 2,
+        "chain_range": 5.0,
+        "shock_duration": 2.0,
+        "shock_damage": 5.0
+      },
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 2.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Flamethrower turret that sweeps area with fire. Excellent for crowd control. The roar is almost as terrifying as the flames themselves.",
+        "tags": [
+          "device",
+          "turret",
+          "fire",
+          "area"
+        ]
+      },
+      "itemId": "flamethrower_turret",
+      "name": "Flamethrower Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "area",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Sweeps cone of fire, 60 damage + lingering burn",
+      "effectTags": [
+        "fire",
+        "cone",
+        "burn"
+      ],
+      "effectParams": {
+        "baseDamage": 60,
+        "range": 8.0,
+        "cone_angle": 60.0,
+        "cone_range": 8.0,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 8.0
+      },
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 2.0
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Laser turret using focused light crystals. Precise and devastating. The beam cuts through armor like it's not even there.",
+        "tags": [
+          "device",
+          "turret",
+          "light",
+          "precision"
+        ]
+      },
+      "itemId": "laser_turret",
+      "name": "Laser Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "energy",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Fires concentrated light beam, 80 damage, 12 unit range",
+      "effectTags": [
+        "energy",
+        "beam"
+      ],
+      "effectParams": {
+        "baseDamage": 80,
+        "range": 12.0,
+        "beam_range": 12.0,
+        "beam_width": 1.0
+      },
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 1.8
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  ]
+}

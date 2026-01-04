@@ -1,17 +1,16 @@
 {
   "_meta": {
     "category": "skills",
-    "description": "Player skills with effects, costs, and evolution paths",
-    "purpose": "LLM fine-tuning template",
-    "generated_at": "2026-01-02T01:26:25.397858",
-    "total_items": 42,
+    "llm_purpose": "Skills LLM - creates player skills with effects, costs, and evolution paths",
+    "generated_at": "2026-01-04T04:41:13.676973",
+    "total_items": 48,
     "source_files": [
       "Skills/skills-skills-1.JSON",
       "Skills/skills-testing-integration.JSON",
-      "Update-1/skills-testing-integration.JSON"
+      "Update-1/skills-testing-integration.JSON",
+      "progression/classes-1.JSON"
     ]
   },
-  "_field_documentation": {},
   "_all_possible_values": {
     "categories": {
       "values": [
@@ -39,12 +38,22 @@
       "types": [
         "array"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "meteor_strike",
-        "chain_lightning",
-        "arctic_cone"
-      ]
+      "occurrences": 42
+    },
+    "classId": {
+      "values": [
+        "adventurer",
+        "artisan",
+        "ranger",
+        "scavenger",
+        "scholar",
+        "warrior"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
     },
     "combatParams.baseDamage": {
       "values": [
@@ -59,10 +68,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 12,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 12
     },
     "combatParams.beam_range": {
       "values": [
@@ -72,10 +78,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.beam_width": {
       "values": [
@@ -85,10 +88,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.burn_damage_per_second": {
       "values": [
@@ -98,10 +98,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.burn_duration": {
       "values": [
@@ -111,10 +108,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.chain_count": {
       "values": [
@@ -124,10 +118,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.chain_range": {
       "values": [
@@ -137,10 +128,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.circle_radius": {
       "values": [
@@ -152,10 +140,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 6
     },
     "combatParams.cone_angle": {
       "values": [
@@ -165,10 +150,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.cone_range": {
       "values": [
@@ -178,10 +160,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.freeze_duration": {
       "values": [
@@ -191,10 +170,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.knockback_distance": {
       "values": [
@@ -204,10 +180,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.lifesteal_percent": {
       "values": [
@@ -217,10 +190,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.origin": {
       "values": [
@@ -231,10 +201,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 6
     },
     "combatParams.pierce_count": {
       "values": [
@@ -244,10 +211,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.pull_distance": {
       "values": [
@@ -257,10 +221,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.shock_damage_per_tick": {
       "values": [
@@ -270,10 +231,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.shock_duration": {
       "values": [
@@ -283,10 +241,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.shock_tick_rate": {
       "values": [
@@ -296,10 +251,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.slow_duration": {
       "values": [
@@ -309,10 +261,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.slow_percent": {
       "values": [
@@ -322,10 +271,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.stun_duration": {
       "values": [
@@ -335,10 +281,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.weaken_duration": {
       "values": [
@@ -348,10 +291,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatParams.weaken_percent": {
       "values": [
@@ -361,10 +301,7 @@
       "types": [
         "number"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "combatTags": {
       "values": [
@@ -392,12 +329,7 @@
       "types": [
         "array"
       ],
-      "occurrences": 12,
-      "example_items": [
-        "meteor_strike",
-        "chain_lightning",
-        "arctic_cone"
-      ]
+      "occurrences": 12
     },
     "cost.cooldown": {
       "values": [
@@ -410,10 +342,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 42
     },
     "cost.mana": {
       "values": [
@@ -426,10 +355,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 42
     },
     "description": {
       "values": [
@@ -437,6 +363,7 @@
         "Attack all enemies in a wide radius around you.",
         "Attack much faster for a short burst of time.",
         "Aura that drains life from all nearby enemies",
+        "Balanced generalists who dabble in everything. Adventurers have flexibility and choice.",
         "Blast of freezing wind in a cone that slows and freezes enemies",
         "Brace yourself against incoming attacks, reducing damage taken significantly.",
         "Call down a meteor that devastates an area and ignites all enemies",
@@ -457,29 +384,29 @@
         "Improve your refining mini-game time and material quality output.",
         "Instantly restore a moderate amount of health.",
         "Instantly restore durability to your equipped tools and weapons.",
+        "Intellectuals who master alchemy and magical arts. Scholars excel at discovery and experimentation.",
         "Lightning that jumps between enemies, shocking each target",
+        "Lucky opportunists who find better loot and resources. Scavengers thrive on discovery.",
         "Massively extend all mini-game timers, giving you all the time you need.",
         "Massively increase critical chance and rarity for all actions.",
+        "Master crafters who excel at all creation disciplines. Artisans create better items faster.",
+        "Masters of combat and physical might. Warriors excel at dealing and taking damage in melee combat.",
         "Move significantly faster for a brief period.",
         "Piercing beam of darkness that weakens all it touches",
         "Restore health and mana simultaneously when you need it most.",
         "Significantly increase critical hit chance for all actions.",
         "Slowly restore health over time while active.",
+        "Swift explorers and natural harvesters. Rangers move quickly and gather resources efficiently.",
         "Temporarily ignore all tier restrictions and requirements. Use any tool on any material, craft at any station.",
         "Unleash catastrophic damage in a massive area, obliterating everything.",
         "Your next attack hits with devastating force, dealing massive damage.",
         "Your tools consume durability much more slowly."
       ],
-      "total_unique": 36,
+      "total_unique": 42,
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "meteor_strike",
-        "chain_lightning",
-        "arctic_cone"
-      ]
+      "occurrences": 48
     },
     "effect.additionalEffects[].category": {
       "values": [
@@ -497,10 +424,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 10
     },
     "effect.additionalEffects[].duration": {
       "values": [
@@ -513,10 +437,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 10
     },
     "effect.additionalEffects[].magnitude": {
       "values": [
@@ -529,10 +450,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 10
     },
     "effect.additionalEffects[].target": {
       "values": [
@@ -544,10 +462,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 10
     },
     "effect.additionalEffects[].type": {
       "values": [
@@ -561,10 +476,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 10,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 10
     },
     "effect.category": {
       "values": [
@@ -585,10 +497,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 42
     },
     "effect.duration": {
       "values": [
@@ -602,10 +511,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 42
     },
     "effect.magnitude": {
       "values": [
@@ -617,10 +523,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 42
     },
     "effect.target": {
       "values": [
@@ -634,10 +537,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 42
     },
     "effect.type": {
       "values": [
@@ -656,10 +556,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 42
     },
     "evolution.canEvolve": {
       "values": [
@@ -670,10 +567,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 30,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 30
     },
     "evolution.nextSkillId": {
       "values": [
@@ -700,13 +594,10 @@
       ],
       "total_unique": 20,
       "types": [
-        "string",
-        "null"
+        "null",
+        "string"
       ],
-      "occurrences": 30,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 30
     },
     "evolution.requirement": {
       "values": [
@@ -737,16 +628,15 @@
       "types": [
         "string"
       ],
-      "occurrences": 30,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 30
     },
     "name": {
       "values": [
         "Absolute Destruction",
+        "Adventurer",
         "Alchemist's Insight",
         "Arctic Cone",
+        "Artisan",
         "Battle Fury",
         "Battle Stance",
         "Bountiful Harvest",
@@ -768,9 +658,12 @@
         "Phoenix Resurrection",
         "Power Strike",
         "Quick Repair",
+        "Ranger",
         "Reality Breach",
         "Refiner's Touch",
         "Regenerative Aura",
+        "Scavenger",
+        "Scholar",
         "Second Wind",
         "Shadow Beam",
         "Smith's Focus",
@@ -779,18 +672,14 @@
         "Tool Preservation",
         "Treasure Sense",
         "Vampiric Aura",
+        "Warrior",
         "Whirlwind Strike"
       ],
-      "total_unique": 36,
+      "total_unique": 42,
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "meteor_strike",
-        "chain_lightning",
-        "arctic_cone"
-      ]
+      "occurrences": 48
     },
     "narrative": {
       "values": [
@@ -805,6 +694,7 @@
         "Exhale winter itself. A cone of absolute zero flash-freezes everything before you, leaving your enemies slowed or frozen solid.",
         "From ashes, rise. From wounds, strength. Death is merely an inconvenience.",
         "Impurities burn away when you know exactly how hot, exactly how long.",
+        "Knowledge is power, and you wield both. Potions brew faster in your hands, recipes reveal themselves, and magic bends to your will.",
         "Listen to the forest. Find the heartbeat. Match your swing to the ancient pulse.",
         "Luck is what happens when preparation meets opportunity. This is what happens when luck meets steroids.",
         "Magic flows where intention directs it. Unless you sneeze. Then it flows everywhere.",
@@ -820,27 +710,73 @@
         "Sometimes subtlety fails. Sometimes you just need to hit something really, really hard.",
         "Sometimes the best strategy is running away. Fast.",
         "Spin. Strike. Repeat. Simple tactics are often the deadliest.",
+        "Steel and strength. You are the immovable wall, the unstoppable force. When enemies see you, they know: their time has come.",
         "Subtlety is for people who can't level mountains.",
         "The brew reveals its secrets to those patient enough to watch. And lucky enough to not explode.",
         "The earth provides for those who know its secrets. And sometimes, it just really likes you.",
         "The generous earth rewards those who know where to look. And how to ask nicely.",
         "The mountain yields to those who show it proper respect. Or, failing that, overwhelming force.",
+        "The wilderness is your home. Trees fall faster before you, and you move like the wind. Nature bends to those who respect it.",
         "Time is relative. Especially when you're cheating.",
+        "Where others see rocks, you see treasures. Fortune favors the prepared, and you are always prepared.",
         "Why harvest one at a time when you can harvest all of them?",
         "Wounds close. Bones knit. Given enough time, everything heals.",
+        "You are not confined by tradition or specialty. Every path is open, every skill within reach. You are limitless.",
         "You tear a fragment from the heavens itself. The meteor crashes down with the fury of a dying star, leaving nothing but scorched earth and burning foes.",
-        "You're not done yet. Get up."
+        "You're not done yet. Get up.",
+        "Your hands shape reality. What takes others hours, you complete in moments. What they craft once, you perfect instantly."
       ],
-      "total_unique": 36,
+      "total_unique": 42,
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "meteor_strike",
-        "chain_lightning",
-        "arctic_cone"
-      ]
+      "occurrences": 48
+    },
+    "playstyle": {
+      "values": [
+        "Crafting-centric, quality-focused, efficient production",
+        "Direct combat, high survivability, straightforward gameplay",
+        "Exploration-heavy, loot-focused, opportunistic",
+        "Fast-paced, mobility-focused, efficient gathering",
+        "Flexible, self-directed, balanced progression",
+        "Research-focused, crafting-heavy, magic-oriented"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "preferredArmorType": {
+      "values": [
+        "heavy",
+        "light",
+        "medium",
+        "robes"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "preferredDamageTypes": {
+      "values": [
+        "arcane",
+        "crushing",
+        "fire",
+        "frost",
+        "lightning",
+        "physical",
+        "piercing",
+        "poison",
+        "slashing"
+      ],
+      "total_unique": 9,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
     },
     "rarity": {
       "values": [
@@ -855,12 +791,50 @@
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "meteor_strike",
-        "chain_lightning",
-        "arctic_cone"
-      ]
+      "occurrences": 42
+    },
+    "recommendedStats.avoid": {
+      "values": [
+        "DEF",
+        "INT",
+        "LCK",
+        "None - true flexibility",
+        "STR"
+      ],
+      "total_unique": 5,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
+    },
+    "recommendedStats.primary": {
+      "values": [
+        "AGI",
+        "Balanced - player choice",
+        "DEF",
+        "INT",
+        "LCK",
+        "STR",
+        "VIT"
+      ],
+      "total_unique": 7,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
+    },
+    "recommendedStats.secondary": {
+      "values": [
+        "AGI",
+        "All stats viable",
+        "STR",
+        "VIT"
+      ],
+      "total_unique": 4,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
     },
     "requirements.characterLevel": {
       "values": [
@@ -888,10 +862,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 42
     },
     "requirements.stats.AGI": {
       "values": [
@@ -903,10 +874,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 5,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 5
     },
     "requirements.stats.DEF": {
       "values": [
@@ -916,10 +884,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "requirements.stats.INT": {
       "values": [
@@ -937,10 +902,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 20,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 20
     },
     "requirements.stats.LCK": {
       "values": [
@@ -955,10 +917,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 6,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 6
     },
     "requirements.stats.STR": {
       "values": [
@@ -971,10 +930,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 9
     },
     "requirements.stats.VIT": {
       "values": [
@@ -987,10 +943,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 4,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 4
     },
     "skillId": {
       "values": [
@@ -1035,25 +988,324 @@
       "types": [
         "string"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "meteor_strike",
-        "chain_lightning",
-        "arctic_cone"
-      ]
+      "occurrences": 42
+    },
+    "startingBonuses.allCrafting": {
+      "values": [
+        0.05
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.allCraftingTime": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.allGathering": {
+      "values": [
+        0.05
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.baseHP": {
+      "values": [
+        0,
+        30,
+        50
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.baseMana": {
+      "values": [
+        0,
+        100,
+        50
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.carryCapacity": {
+      "values": [
+        0,
+        100
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.critChance": {
+      "values": [
+        0.0,
+        0.1
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "startingBonuses.defense": {
+      "values": [
+        0.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.firstTryBonus": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.forestryBonus": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.inventorySlots": {
+      "values": [
+        0,
+        20
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.itemDurability": {
+      "values": [
+        0.05
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.meleeDamage": {
+      "values": [
+        0.0,
+        0.1
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.movementSpeed": {
+      "values": [
+        0.0,
+        0.15
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.rareDropRate": {
+      "values": [
+        0.2
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.recipeDiscovery": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.resourceQuality": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.skillExpGain": {
+      "values": [
+        0.05
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingSkill.availableChoices": {
+      "values": [
+        "any_tier1_skill"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "startingSkill.description": {
+      "values": [
+        "Dramatically increases wood gathering speed for a short duration",
+        "Increases damage and attack speed temporarily in combat",
+        "Increases potion effectiveness and brewing speed",
+        "Increases smithing mini-game performance and quality",
+        "Player chooses ANY skill from the available skill pool to start with",
+        "Temporarily increases rare drop rates and material quality"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "startingSkill.initialLevel": {
+      "values": [
+        1
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "startingSkill.isChoice": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "startingSkill.skillId": {
+      "values": [
+        "alchemists_touch",
+        "battle_rage",
+        "forestry_frenzy",
+        "smithing_focus",
+        "treasure_hunters_luck",
+        "versatile_start"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "startingSkill.skillName": {
+      "values": [
+        "Alchemist's Touch",
+        "Battle Rage",
+        "Forestry Frenzy",
+        "Smithing Focus",
+        "Treasure Hunter's Luck",
+        "Versatile Beginning"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "strengths": {
+      "values": [
+        "10% better resource quality",
+        "10% higher chance at first-try bonuses",
+        "100 bonus carry capacity for hoarding",
+        "20% better rare drop rates",
+        "5% bonus to all crafting activities",
+        "5% bonus to all gathering activities",
+        "All crafting 10% faster from the start",
+        "Balanced HP and mana pools",
+        "Bonus melee damage from the start",
+        "Bonus to forestry from the start",
+        "Choice of starting skill for personalization",
+        "Discovers recipes faster than other classes",
+        "Excellent for players who prefer straightforward combat",
+        "Extra inventory for carrying loot and supplies",
+        "Fastest movement speed for exploration",
+        "Gains skill experience 5% faster",
+        "Great for players who enjoy mobility and gathering",
+        "Great for players who love collecting and exploring",
+        "High critical hit chance for combat",
+        "High health pool for survivability",
+        "Ideal for players who love crafting systems",
+        "Items have 5% more durability",
+        "Large mana pool for magical skills",
+        "Perfect for players who love experimentation",
+        "Perfect for players who want to explore everything"
+      ],
+      "total_unique": 25,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
     },
     "tags": {
       "values": [
         "abundance",
+        "adaptive",
+        "adventurer",
+        "agile",
         "alchemy",
         "aoe",
         "arcane",
+        "artisan",
         "attack_speed",
+        "balanced",
         "basic",
         "berserker",
         "bonus",
         "burst",
         "bypass",
+        "caster",
         "chain",
         "combat",
         "control",
@@ -1070,28 +1322,40 @@
         "elemental",
         "enchanting",
         "engineering",
+        "explorer",
         "finisher",
         "fire",
+        "frontline",
         "gathering",
+        "generalist",
         "healing",
         "ice",
         "instant",
         "lightning",
         "luck",
+        "magic",
         "mana",
         "mastery",
+        "melee",
+        "mobile",
         "mobility",
         "movement",
         "multi_purpose",
+        "nature",
         "over_time",
+        "physical",
         "pierce",
         "precision",
         "quality",
+        "ranged",
+        "ranger",
         "rarity",
         "recovery",
         "refining",
         "regeneration",
         "repair",
+        "scavenger",
+        "scholar",
         "shadow",
         "single_hit",
         "single_target",
@@ -1100,23 +1364,38 @@
         "speed_boost",
         "survival",
         "sustain",
+        "tanky",
         "tier",
         "time",
         "transcendence",
+        "treasure",
         "ultimate",
         "universal",
+        "utility",
+        "versatile",
+        "warrior",
         "yield"
       ],
-      "total_unique": 62,
+      "total_unique": 85,
       "types": [
         "array"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "meteor_strike",
-        "chain_lightning",
-        "arctic_cone"
-      ]
+      "occurrences": 48
+    },
+    "thematicIdentity": {
+      "values": [
+        "frontline_fighter",
+        "jack_of_all_trades",
+        "loot_hunter",
+        "magical_researcher",
+        "master_crafter",
+        "mobile_gatherer"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
     },
     "tier": {
       "values": [
@@ -1129,20 +1408,43 @@
       "types": [
         "integer"
       ],
-      "occurrences": 42,
-      "example_items": [
-        "meteor_strike",
-        "chain_lightning",
-        "arctic_cone"
-      ]
+      "occurrences": 42
+    },
+    "weaknesses": {
+      "values": [
+        "Fragile in direct combat",
+        "Less efficient at physical gathering",
+        "Less focused on crafting disciplines",
+        "Limited range options",
+        "Lower base health than warrior",
+        "Master of none until late game",
+        "No combat bonuses",
+        "No crafting speed bonuses",
+        "No direct combat improvements",
+        "No gathering bonuses",
+        "No mana for utility skills initially",
+        "No strong specialization bonuses",
+        "Relies heavily on RNG",
+        "Relies on evasion rather than tanking",
+        "Requires access to crafting stations",
+        "Requires preparation and planning",
+        "Slower at gathering and crafting",
+        "Smaller individual bonuses than specialists"
+      ],
+      "total_unique": 18,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
     }
   },
   "_usable_template": {
     "categories": [
-      "gathering",
-      "defense",
-      "refining"
+      "forestry",
+      "durability",
+      "defense"
     ],
+    "classId": "ranger",
     "combatParams": {
       "baseDamage": 100,
       "beam_range": 15.0,
@@ -1157,7 +1459,7 @@
       "freeze_duration": 4.0,
       "knockback_distance": 5.0,
       "lifesteal_percent": 0.6,
-      "origin": "source",
+      "origin": "target",
       "pierce_count": 10,
       "pull_distance": 5.0,
       "shock_damage_per_tick": 4.0,
@@ -1170,33 +1472,57 @@
       "weaken_percent": 0.4
     },
     "combatTags": [
-      "beam",
-      "burn",
-      "pull"
+      "freeze",
+      "cone",
+      "pierce"
     ],
     "cost": {
-      "cooldown": "long",
-      "mana": "extreme"
+      "cooldown": "moderate",
+      "mana": "moderate"
     },
-    "description": "Fall into a steady rhythm, chopping wood much faster than normal.",
+    "description": "Gain extra time for your alchemy mini-game and increase potion quality.",
     "effect": {
       "additionalEffects": [
         "<value>"
       ],
-      "category": "engineering",
+      "category": "smithing",
       "duration": "long",
-      "magnitude": "extreme",
-      "target": "line",
-      "type": "empower"
+      "magnitude": "moderate",
+      "target": "enemy",
+      "type": "devastate"
     },
     "evolution": {
       "canEvolve": true,
-      "nextSkillId": "decimating_blow",
-      "requirement": "Reach level 10 and heal 50000 HP"
+      "nextSkillId": "master_maintenance",
+      "requirement": "Reach level 10 and enchant 100 items"
     },
-    "name": "Phoenix Resurrection",
-    "narrative": "One strike. One chance. One ending.",
-    "rarity": "common",
+    "name": "Regenerative Aura",
+    "narrative": "Master smiths don't rush. They breathe. They focus. They strike true.",
+    "playstyle": "Flexible, self-directed, balanced progression",
+    "preferredArmorType": "light",
+    "preferredDamageTypes": [
+      "slashing",
+      "piercing",
+      "crushing"
+    ],
+    "rarity": "mythic",
+    "recommendedStats": {
+      "avoid": [
+        "LCK",
+        "INT",
+        "None - true flexibility"
+      ],
+      "primary": [
+        "AGI",
+        "LCK",
+        "INT"
+      ],
+      "secondary": [
+        "All stats viable",
+        "AGI",
+        "VIT"
+      ]
+    },
     "requirements": {
       "characterLevel": 1,
       "stats": {
@@ -1211,13 +1537,52 @@
         "<value>"
       ]
     },
-    "skillId": "lumberjacks_rhythm",
-    "tags": [
-      "berserker",
-      "time",
-      "elemental"
+    "skillId": "sprint",
+    "startingBonuses": {
+      "allCrafting": 0.05,
+      "allCraftingTime": 0.1,
+      "allGathering": 0.05,
+      "baseHP": 0,
+      "baseMana": 0,
+      "carryCapacity": 0,
+      "critChance": 0.0,
+      "defense": 0.0,
+      "firstTryBonus": 0.1,
+      "forestryBonus": 0.1,
+      "inventorySlots": 0,
+      "itemDurability": 0.05,
+      "meleeDamage": 0.1,
+      "movementSpeed": 0.0,
+      "rareDropRate": 0.2,
+      "recipeDiscovery": 0.1,
+      "resourceQuality": 0.1,
+      "skillExpGain": 0.05
+    },
+    "startingSkill": {
+      "availableChoices": "any_tier1_skill",
+      "description": "Temporarily increases rare drop rates and material quality",
+      "initialLevel": 1,
+      "isChoice": true,
+      "skillId": "smithing_focus",
+      "skillName": "Treasure Hunter's Luck"
+    },
+    "strengths": [
+      "100 bonus carry capacity for hoarding",
+      "20% better rare drop rates",
+      "Great for players who enjoy mobility and gathering"
     ],
-    "tier": 1
+    "tags": [
+      "pierce",
+      "abundance",
+      "treasure"
+    ],
+    "thematicIdentity": "loot_hunter",
+    "tier": 1,
+    "weaknesses": [
+      "No gathering bonuses",
+      "Fragile in direct combat",
+      "Requires access to crafting stations"
+    ]
   },
   "_sample_items": [
     {

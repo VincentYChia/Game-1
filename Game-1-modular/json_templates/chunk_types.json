@@ -1,15 +1,13 @@
 {
   "_meta": {
-    "category": "world_chunks",
-    "description": "World chunk templates for procedural generation",
-    "purpose": "LLM fine-tuning template",
-    "generated_at": "2026-01-02T01:26:25.401347",
+    "category": "chunk_types",
+    "llm_purpose": "Chunk Types LLM - creates world generation chunk templates",
+    "generated_at": "2026-01-04T04:41:13.659462",
     "total_items": 9,
     "source_files": [
       "Definitions.JSON/Chunk-templates-1.JSON"
     ]
   },
-  "_field_documentation": {},
   "_all_possible_values": {
     "category": {
       "values": [
@@ -21,12 +19,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "Peaceful Forest",
-        "Peaceful Quarry",
-        "Peaceful Cave"
-      ]
+      "occurrences": 9
     },
     "chunkType": {
       "values": [
@@ -44,12 +37,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "Peaceful Forest",
-        "Peaceful Quarry",
-        "Peaceful Cave"
-      ]
+      "occurrences": 9
     },
     "enemySpawns.beetle_armored.behavior": {
       "values": [
@@ -60,10 +48,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 3
     },
     "enemySpawns.beetle_armored.density": {
       "values": [
@@ -75,10 +60,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 3
     },
     "enemySpawns.beetle_brown.behavior": {
       "values": [
@@ -89,10 +71,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "enemySpawns.beetle_brown.density": {
       "values": [
@@ -103,10 +82,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "enemySpawns.entity_primordial.behavior": {
       "values": [
@@ -116,10 +92,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.entity_primordial.density": {
       "values": [
@@ -129,10 +102,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.golem_crystal.behavior": {
       "values": [
@@ -142,10 +112,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.golem_crystal.density": {
       "values": [
@@ -155,10 +122,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.golem_stone.behavior": {
       "values": [
@@ -168,10 +132,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.golem_stone.density": {
       "values": [
@@ -181,10 +142,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.slime_acid.behavior": {
       "values": [
@@ -194,10 +152,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.slime_acid.density": {
       "values": [
@@ -207,10 +162,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.slime_crystal.behavior": {
       "values": [
@@ -220,10 +172,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.slime_crystal.density": {
       "values": [
@@ -233,10 +182,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.slime_green.behavior": {
       "values": [
@@ -247,10 +193,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "enemySpawns.slime_green.density": {
       "values": [
@@ -261,10 +204,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "enemySpawns.void_wraith.behavior": {
       "values": [
@@ -274,10 +214,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.void_wraith.density": {
       "values": [
@@ -287,10 +224,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.wolf_dire.behavior": {
       "values": [
@@ -302,10 +236,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 3
     },
     "enemySpawns.wolf_dire.density": {
       "values": [
@@ -316,10 +247,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 3
     },
     "enemySpawns.wolf_elder.behavior": {
       "values": [
@@ -329,10 +257,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.wolf_elder.density": {
       "values": [
@@ -342,10 +267,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "enemySpawns.wolf_grey.behavior": {
       "values": [
@@ -356,10 +278,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "enemySpawns.wolf_grey.density": {
       "values": [
@@ -370,10 +289,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "generationRules.adjacencyPreference": {
       "values": [
@@ -391,10 +307,7 @@
       "types": [
         "array"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 9
     },
     "generationRules.rollWeight": {
       "values": [
@@ -406,10 +319,7 @@
       "types": [
         "integer"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 9
     },
     "generationRules.spawnAreaAllowed": {
       "values": [
@@ -420,10 +330,7 @@
       "types": [
         "boolean"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 9
     },
     "metadata.narrative": {
       "values": [
@@ -441,10 +348,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 9
     },
     "metadata.tags": {
       "values": [
@@ -471,10 +375,7 @@
       "types": [
         "array"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 9
     },
     "name": {
       "values": [
@@ -492,12 +393,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "Peaceful Forest",
-        "Peaceful Quarry",
-        "Peaceful Cave"
-      ]
+      "occurrences": 9
     },
     "resourceDensity.adamantine_lode.density": {
       "values": [
@@ -507,10 +403,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.adamantine_lode.tierBias": {
       "values": [
@@ -520,10 +413,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.ash_tree.density": {
       "values": [
@@ -533,10 +423,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.ash_tree.tierBias": {
       "values": [
@@ -546,10 +433,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.basalt_column.density": {
       "values": [
@@ -559,10 +443,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.basalt_column.tierBias": {
       "values": [
@@ -572,10 +453,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.birch_tree.density": {
       "values": [
@@ -586,10 +464,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.birch_tree.tierBias": {
       "values": [
@@ -599,10 +474,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.copper_vein.density": {
       "values": [
@@ -613,10 +485,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.copper_vein.tierBias": {
       "values": [
@@ -626,10 +495,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.diamond_geode.density": {
       "values": [
@@ -639,10 +505,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.diamond_geode.tierBias": {
       "values": [
@@ -652,10 +515,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.ebony_tree.density": {
       "values": [
@@ -665,10 +525,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.ebony_tree.tierBias": {
       "values": [
@@ -678,10 +535,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.eternity_monolith.density": {
       "values": [
@@ -691,10 +545,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.eternity_monolith.tierBias": {
       "values": [
@@ -704,10 +555,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.etherion_nexus.density": {
       "values": [
@@ -717,10 +565,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.etherion_nexus.tierBias": {
       "values": [
@@ -730,10 +575,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.genesis_structure.density": {
       "values": [
@@ -743,10 +585,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.genesis_structure.tierBias": {
       "values": [
@@ -756,10 +595,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.granite_formation.density": {
       "values": [
@@ -770,10 +606,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.granite_formation.tierBias": {
       "values": [
@@ -783,10 +616,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.iron_deposit.density": {
       "values": [
@@ -796,10 +626,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 3
     },
     "resourceDensity.iron_deposit.tierBias": {
       "values": [
@@ -809,10 +636,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 3
     },
     "resourceDensity.ironwood_tree.density": {
       "values": [
@@ -823,10 +647,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.ironwood_tree.tierBias": {
       "values": [
@@ -836,10 +657,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.limestone_outcrop.density": {
       "values": [
@@ -850,10 +668,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.limestone_outcrop.tierBias": {
       "values": [
@@ -863,10 +678,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.maple_tree.density": {
       "values": [
@@ -877,10 +689,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.maple_tree.tierBias": {
       "values": [
@@ -890,10 +699,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.marble_quarry.density": {
       "values": [
@@ -903,10 +709,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.marble_quarry.tierBias": {
       "values": [
@@ -916,10 +719,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.mithril_cache.density": {
       "values": [
@@ -929,10 +729,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.mithril_cache.tierBias": {
       "values": [
@@ -942,10 +739,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.oak_tree.density": {
       "values": [
@@ -957,10 +751,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 3
     },
     "resourceDensity.oak_tree.tierBias": {
       "values": [
@@ -970,10 +761,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 3,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 3
     },
     "resourceDensity.obsidian_flow.density": {
       "values": [
@@ -983,10 +771,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.obsidian_flow.tierBias": {
       "values": [
@@ -996,10 +781,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.orichalcum_trove.density": {
       "values": [
@@ -1009,10 +791,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.orichalcum_trove.tierBias": {
       "values": [
@@ -1022,10 +801,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.pine_tree.density": {
       "values": [
@@ -1035,10 +811,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.pine_tree.tierBias": {
       "values": [
@@ -1048,10 +821,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.primordial_formation.density": {
       "values": [
@@ -1061,10 +831,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.primordial_formation.tierBias": {
       "values": [
@@ -1074,10 +841,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.quartz_cluster.density": {
       "values": [
@@ -1087,10 +851,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.quartz_cluster.tierBias": {
       "values": [
@@ -1100,10 +861,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.shale_bed.density": {
       "values": [
@@ -1113,10 +871,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.shale_bed.tierBias": {
       "values": [
@@ -1126,10 +881,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.steel_node.density": {
       "values": [
@@ -1140,10 +892,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.steel_node.tierBias": {
       "values": [
@@ -1153,10 +902,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.voidstone_shard.density": {
       "values": [
@@ -1166,10 +912,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.voidstone_shard.tierBias": {
       "values": [
@@ -1179,10 +922,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 2,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 2
     },
     "resourceDensity.worldtree_sapling.density": {
       "values": [
@@ -1192,10 +932,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "resourceDensity.worldtree_sapling.tierBias": {
       "values": [
@@ -1205,10 +942,7 @@
       "types": [
         "string"
       ],
-      "occurrences": 1,
-      "example_items": [
-        "unknown"
-      ]
+      "occurrences": 1
     },
     "theme": {
       "values": [
@@ -1220,21 +954,16 @@
       "types": [
         "string"
       ],
-      "occurrences": 9,
-      "example_items": [
-        "Peaceful Forest",
-        "Peaceful Quarry",
-        "Peaceful Cave"
-      ]
+      "occurrences": 9
     }
   },
   "_usable_template": {
-    "category": "peaceful",
-    "chunkType": "peaceful_forest",
+    "category": "rare",
+    "chunkType": "peaceful_quarry",
     "enemySpawns": {
       "beetle_armored": {
-        "behavior": "aggressive_territory",
-        "density": "high"
+        "behavior": "aggressive_guard",
+        "density": "moderate"
       },
       "beetle_brown": {
         "behavior": "territorial",
@@ -1262,7 +991,7 @@
       },
       "slime_green": {
         "behavior": "aggressive_swarm",
-        "density": "high"
+        "density": "very_low"
       },
       "void_wraith": {
         "behavior": "aggressive_phase",
@@ -1278,27 +1007,27 @@
       },
       "wolf_grey": {
         "behavior": "passive_patrol",
-        "density": "high"
+        "density": "very_low"
       }
     },
     "generationRules": {
       "adjacencyPreference": [
-        "peaceful_forest",
-        "rare_forest",
-        "rare_quarry"
+        "peaceful_quarry",
+        "dangerous_forest",
+        "peaceful_forest"
       ],
       "rollWeight": 1,
       "spawnAreaAllowed": true
     },
     "metadata": {
-      "narrative": "Rocky quarry with exposed stone and mineral deposits. Small deposits of copper and iron glint in the sunlight. A few slimes ooze between rocks, but they're slow and easy to avoid.",
+      "narrative": "Shallow cave entrance with basic resources and minimal danger. Beetles occasionally wander through, but they're docile unless provoked. Good for early exploration.",
       "tags": [
+        "cave",
         "legendary-ore",
-        "wood-rich",
-        "quarry"
+        "mixed-quality"
       ]
     },
-    "name": "Peaceful Cave",
+    "name": "Dangerous Cave",
     "resourceDensity": {
       "adamantine_lode": {
         "density": "moderate",
@@ -1313,11 +1042,11 @@
         "tierBias": "mid"
       },
       "birch_tree": {
-        "density": "high",
+        "density": "moderate",
         "tierBias": "mid"
       },
       "copper_vein": {
-        "density": "high",
+        "density": "moderate",
         "tierBias": "low"
       },
       "diamond_geode": {
@@ -1357,7 +1086,7 @@
         "tierBias": "low"
       },
       "maple_tree": {
-        "density": "high",
+        "density": "low",
         "tierBias": "mid"
       },
       "marble_quarry": {
@@ -1397,7 +1126,7 @@
         "tierBias": "low"
       },
       "steel_node": {
-        "density": "high",
+        "density": "moderate",
         "tierBias": "mid"
       },
       "voidstone_shard": {
@@ -1409,7 +1138,7 @@
         "tierBias": "legendary"
       }
     },
-    "theme": "forest"
+    "theme": "cave"
   },
   "_sample_items": [
     {
