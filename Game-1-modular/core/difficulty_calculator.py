@@ -352,6 +352,262 @@ def calculate_refining_difficulty(recipe: Dict) -> Dict:
 
 
 # =============================================================================
+# ALCHEMY PARAMETERS - Reaction chain minigame
+# =============================================================================
+
+ALCHEMY_PARAMS = {
+    # Time limit per reaction stage
+    'time_limit': (60, 20),
+
+    # Reaction count (ingredients to chain)
+    'reaction_count': (2, 6),
+
+    # Sweet spot duration (seconds) - when to chain
+    'sweet_spot_duration': (2.0, 0.4),
+
+    # Base stage duration (seconds)
+    'stage_duration': (2.5, 0.8),
+
+    # False peak count (visual distractions)
+    'false_peaks': (0, 5),
+
+    # Volatility modifier (affects timing unpredictability)
+    'volatility': (0.0, 1.0),
+}
+
+
+def calculate_alchemy_difficulty(recipe: Dict) -> Dict:
+    """
+    Calculate alchemy difficulty based on material points × diversity × volatility.
+
+    Alchemy-specific modifiers:
+    - Vowel-based volatility: Materials with vowel-heavy names are more volatile
+    - Tier exponential: 1.2^avg_tier modifier
+
+    Args:
+        recipe: Full recipe dictionary with 'inputs' list
+
+    Returns:
+        Dict with all alchemy parameters plus 'difficulty_points'
+    """
+    inputs = recipe.get('inputs', [])
+
+    # Calculate base points with diversity
+    base_points = calculate_material_points(inputs)
+    diversity_mult = calculate_diversity_multiplier(inputs)
+    avg_tier = calculate_average_tier(inputs)
+
+    # Alchemy tier exponential modifier
+    tier_modifier = 1.2 ** (avg_tier - 1)
+
+    # Calculate volatility from material names (vowel ratio)
+    volatility = _calculate_volatility(inputs)
+
+    # Total difficulty with alchemy modifiers
+    total_points = base_points * diversity_mult * tier_modifier * (1 + volatility * 0.3)
+
+    # Interpolate parameters
+    params = interpolate_difficulty(total_points, ALCHEMY_PARAMS)
+
+    # Round integer parameters
+    params['reaction_count'] = max(2, int(round(params['reaction_count'])))
+    params['false_peaks'] = max(0, int(round(params['false_peaks'])))
+    params['time_limit'] = int(round(params['time_limit']))
+
+    # Add metadata
+    params['difficulty_points'] = total_points
+    params['difficulty_tier'] = get_difficulty_tier(total_points)
+    params['diversity_multiplier'] = diversity_mult
+    params['tier_modifier'] = tier_modifier
+    params['volatility'] = volatility
+    params['avg_tier'] = avg_tier
+    params['tier_fallback'] = recipe.get('stationTier', 1)
+
+    return params
+
+
+def _calculate_volatility(inputs: List[Dict]) -> float:
+    """
+    Calculate volatility based on vowel ratio in material names.
+
+    More vowels = more volatile/unpredictable reactions.
+
+    Returns:
+        Volatility score 0.0 to 1.0
+    """
+    if not inputs:
+        return 0.0
+
+    vowels = set('aeiouAEIOU')
+    total_chars = 0
+    vowel_count = 0
+
+    for inp in inputs:
+        material_id = inp.get('materialId', inp.get('itemId', ''))
+        for char in material_id:
+            if char.isalpha():
+                total_chars += 1
+                if char in vowels:
+                    vowel_count += 1
+
+    if total_chars == 0:
+        return 0.0
+
+    # Normal vowel ratio is ~40%, so normalize around that
+    vowel_ratio = vowel_count / total_chars
+    volatility = max(0.0, min(1.0, (vowel_ratio - 0.3) * 2.5))
+    return volatility
+
+
+# =============================================================================
+# ENGINEERING PARAMETERS - Puzzle minigame
+# =============================================================================
+
+ENGINEERING_PARAMS = {
+    # Time limit (generous since it's puzzle-based)
+    'time_limit': (300, 60),  # 5 min to 1 min
+
+    # Puzzle count per device
+    'puzzle_count': (1, 4),
+
+    # Grid size for puzzles
+    'grid_size': (3, 6),
+
+    # Puzzle complexity (affects piece types available)
+    'complexity': (1, 4),
+
+    # Hint count allowed
+    'hints_allowed': (3, 0),
+}
+
+
+def calculate_engineering_difficulty(recipe: Dict) -> Dict:
+    """
+    Calculate engineering difficulty based on slot count × diversity.
+
+    Engineering uses puzzle-based minigames where:
+    - More materials = more puzzles
+    - Higher tier = larger/harder puzzles
+
+    Args:
+        recipe: Full recipe dictionary with 'inputs' list
+
+    Returns:
+        Dict with all engineering parameters plus 'difficulty_points'
+    """
+    inputs = recipe.get('inputs', [])
+
+    # Calculate base points with diversity
+    base_points = calculate_material_points(inputs)
+    diversity_mult = calculate_diversity_multiplier(inputs)
+
+    # Count total slots used (sum of quantities)
+    total_slots = sum(inp.get('quantity', 1) for inp in inputs)
+
+    # Engineering modifier: slot count matters more
+    slot_modifier = 1.0 + (total_slots - 1) * 0.05
+
+    total_points = base_points * diversity_mult * slot_modifier
+
+    # Interpolate parameters
+    params = interpolate_difficulty(total_points, ENGINEERING_PARAMS)
+
+    # Round integer parameters
+    params['puzzle_count'] = max(1, int(round(params['puzzle_count'])))
+    params['grid_size'] = max(3, int(round(params['grid_size'])))
+    params['complexity'] = max(1, min(4, int(round(params['complexity']))))
+    params['hints_allowed'] = max(0, int(round(params['hints_allowed'])))
+    params['time_limit'] = int(round(params['time_limit']))
+
+    # Add metadata
+    params['difficulty_points'] = total_points
+    params['difficulty_tier'] = get_difficulty_tier(total_points)
+    params['diversity_multiplier'] = diversity_mult
+    params['slot_modifier'] = slot_modifier
+    params['total_slots'] = total_slots
+    params['tier_fallback'] = recipe.get('stationTier', 1)
+
+    return params
+
+
+# =============================================================================
+# ENCHANTING PARAMETERS - Wheel spin minigame
+# =============================================================================
+
+ENCHANTING_PARAMS = {
+    # Starting currency
+    'starting_currency': (100, 100),  # Always starts at 100
+
+    # Green slice count (favorable outcomes)
+    'green_slices': (12, 6),  # More green at easy, less at hard
+
+    # Red slice count (unfavorable outcomes)
+    'red_slices': (3, 10),  # Less red at easy, more at hard
+
+    # Green multiplier
+    'green_multiplier': (1.5, 1.2),  # Better payoff at easy
+
+    # Red multiplier (loss)
+    'red_multiplier': (0.8, 0.0),  # Less punishing at easy
+
+    # Spin count
+    'spin_count': (3, 3),  # Always 3 spins
+}
+
+
+def calculate_enchanting_difficulty(recipe: Dict) -> Dict:
+    """
+    Calculate enchanting difficulty for wheel spin minigame.
+
+    Higher difficulty = worse odds on the wheel.
+
+    Args:
+        recipe: Full recipe dictionary with 'inputs' list
+
+    Returns:
+        Dict with all enchanting parameters plus 'difficulty_points'
+    """
+    inputs = recipe.get('inputs', [])
+
+    # Calculate base points (enchanting uses materials too)
+    base_points = calculate_material_points(inputs)
+    diversity_mult = calculate_diversity_multiplier(inputs)
+
+    total_points = base_points * diversity_mult
+
+    # Interpolate parameters
+    params = interpolate_difficulty(total_points, ENCHANTING_PARAMS)
+
+    # Round slice counts (must total 20)
+    green = max(4, min(14, int(round(params['green_slices']))))
+    red = max(2, min(12, int(round(params['red_slices']))))
+
+    # Ensure total is 20
+    grey = 20 - green - red
+    if grey < 2:
+        # Adjust to ensure at least 2 grey
+        excess = 2 - grey
+        if green > red:
+            green -= excess
+        else:
+            red -= excess
+        grey = 2
+
+    params['green_slices'] = green
+    params['red_slices'] = red
+    params['grey_slices'] = grey
+    params['spin_count'] = 3
+
+    # Add metadata
+    params['difficulty_points'] = total_points
+    params['difficulty_tier'] = get_difficulty_tier(total_points)
+    params['diversity_multiplier'] = diversity_mult
+    params['tier_fallback'] = recipe.get('stationTier', 1)
+
+    return params
+
+
+# =============================================================================
 # LEGACY FALLBACK (for recipes without proper material data)
 # =============================================================================
 

@@ -458,7 +458,7 @@ These mechanics are documented but have NO code implementation:
 
 **Plan Document**: `docs/CRAFTING_UI_MINIGAME_OVERHAUL_PLAN.md`
 **Created**: January 4, 2026
-**Status**: Planning Complete - Implementation Pending
+**Status**: Phase 1 Complete - Phase 2 In Progress
 
 ### Overview
 
@@ -471,18 +471,37 @@ Major overhaul of crafting system with:
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 1 | Foundation (difficulty calculator, UI components) | Pending |
-| 2 | Smithing overhaul | Pending |
-| 3 | Refining overhaul | Pending |
-| 4 | Alchemy overhaul | Pending |
-| 5 | Engineering major redesign | Pending |
-| 6 | Polish & integration | Pending |
+| 1 | Foundation + Smithing + Refining | ✅ **COMPLETE** |
+| 2 | Alchemy + Engineering + Enchanting | 🔄 In Progress |
+| 3 | Polish & balance tuning | Pending |
+
+### Phase 1 Completed Items
+
+- ✅ `core/difficulty_calculator.py` - Linear tier points (T1=1, T2=2, T3=3, T4=4)
+- ✅ `core/reward_calculator.py` - Proportional rewards with quality tiers
+- ✅ Smithing difficulty/reward integration
+- ✅ Smithing visual polish (forge/anvil aesthetic)
+- ✅ Refining difficulty/reward integration with diversity multiplier
+- ✅ Refining visual polish (lock mechanism aesthetic)
+- ✅ Rarity-named difficulty thresholds (Common → Legendary)
+- ✅ Tier-scaled failure penalties (30% → 90%)
+
+### BALANCE TUNING REQUIRED (Post-Implementation)
+
+| Item | Issue | Priority |
+|------|-------|----------|
+| **Difficulty scaling** | Currently too easy across all tiers | HIGH |
+| **Reward scaling** | Currently too generous for difficulty | HIGH |
+| **Timing windows** | May need further tightening for challenge | MEDIUM |
+| **Quality tier thresholds** | May need adjustment for rarity feel | MEDIUM |
+
+*Note: Balance tuning deferred until all disciplines implemented and playtested*
 
 ### DEFERRED Items (Tracked Here)
 
 | Item | Reason | Priority |
 |------|--------|----------|
-| Enchanting pattern minigame | Requires UI framework + recipe creation | Medium |
+| Enchanting pattern minigame | Keep wheel spin, apply same difficulty system | Medium |
 | User recipe creation system | Requires validation, persistence, UI | Low |
 | Material-based sub-modifiers | Complexity - implement after core overhaul | Low |
 | Sub-specialization mechanics | Complexity - implement after core overhaul | Low |
@@ -491,33 +510,40 @@ Major overhaul of crafting system with:
 ### Key Design Decisions
 
 1. **Difficulty Formula**: `material_points × diversity_multiplier`
-   - Material points: `2^(tier-1) × quantity` (exponential scaling)
+   - Material points: `tier × quantity` (LINEAR scaling)
    - Diversity: `1.0 + (unique_materials - 1) × 0.1`
 
-2. **Discipline-Specific Modifiers**:
-   - Alchemy: Vowel-based volatility + `1.2^avg_tier`
-   - Engineering: Slot count × `1.0 + (N-1) × 0.1`
+2. **Difficulty Thresholds** (rarity naming):
+   - Common: 1-8 points
+   - Uncommon: 9-20 points
+   - Rare: 21-40 points
+   - Epic: 41-70 points
+   - Legendary: 71+ points
 
-3. **Reward Scaling**: Harder difficulty = higher max bonus potential
+3. **Discipline-Specific Modifiers**:
+   - Smithing: No diversity (single-focus craft)
+   - Refining: Diversity multiplier applied
+   - Alchemy: Vowel-based volatility + `1.2^avg_tier` (Phase 2)
+   - Engineering: Slot count × diversity (Phase 2)
 
-4. **Tier-Scaled Penalties**: T1: 30% loss → T4: 90% loss on failure
+4. **Reward Scaling**: Harder difficulty = higher max bonus potential (1.0x to 2.5x)
 
-5. **First-Try Bonus**: Feeds into performance calculation
+5. **Tier-Scaled Penalties**: Common: 30% loss → Legendary: 90% loss on failure
 
-### Files to Create
+6. **First-Try Bonus**: +10% performance boost on first attempt
 
-- `core/difficulty_calculator.py` - NEW
-- `core/reward_calculator.py` - NEW
-- `rendering/ui_components.py` - NEW
+### Files Created/Modified
 
-### Files to Modify
-
-- `Crafting-subdisciplines/smithing.py`
-- `Crafting-subdisciplines/refining.py`
-- `Crafting-subdisciplines/alchemy.py`
-- `Crafting-subdisciplines/engineering.py` (major rewrite)
-- `rendering/renderer.py`
-- `core/game_engine.py`
+| File | Status |
+|------|--------|
+| `core/difficulty_calculator.py` | ✅ Created |
+| `core/reward_calculator.py` | ✅ Created |
+| `Crafting-subdisciplines/smithing.py` | ✅ Updated |
+| `Crafting-subdisciplines/refining.py` | ✅ Updated |
+| `core/game_engine.py` | ✅ Updated (visual polish) |
+| `Crafting-subdisciplines/alchemy.py` | 🔄 Phase 2 |
+| `Crafting-subdisciplines/engineering.py` | 🔄 Phase 2 |
+| `Crafting-subdisciplines/enchanting.py` | 🔄 Phase 2 |
 
 ---
 

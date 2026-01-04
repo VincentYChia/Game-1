@@ -270,6 +270,199 @@ def calculate_refining_rewards(
     }
 
 
+def calculate_alchemy_rewards(
+    difficulty_points: float,
+    performance: Dict
+) -> Dict:
+    """
+    Calculate alchemy rewards based on reaction chain performance.
+
+    Args:
+        difficulty_points: Total recipe difficulty
+        performance: {
+            'chains_completed': int,
+            'total_chains': int,
+            'avg_timing_score': 0-100,
+            'explosions': int,
+            'attempt': int
+        }
+
+    Returns:
+        {
+            'potency_multiplier': float,
+            'quality_tier': str,
+            'bonus_pct': int,
+            'duration_multiplier': float (for timed effects)
+        }
+    """
+    max_multiplier = calculate_max_reward_multiplier(difficulty_points)
+
+    # Calculate base performance
+    chains = performance.get('chains_completed', 0)
+    total = performance.get('total_chains', 1)
+    timing = performance.get('avg_timing_score', 50)
+    explosions = performance.get('explosions', 0)
+    attempt = performance.get('attempt', 1)
+
+    # Chain completion ratio
+    chain_score = chains / max(1, total)
+
+    # Timing precision
+    timing_score = timing / 100
+
+    # Explosion penalty
+    explosion_penalty = explosions * 0.15
+
+    # Base performance
+    base_performance = (chain_score * 0.6 + timing_score * 0.4) - explosion_penalty
+    base_performance = max(0.0, min(1.0, base_performance))
+
+    # First-try bonus
+    first_try_applied = False
+    if attempt == 1:
+        base_performance = min(1.0, base_performance + FIRST_TRY_BONUS['performance_boost'])
+        first_try_applied = True
+
+    bonus_pct = calculate_bonus_pct(base_performance, max_multiplier)
+    quality_tier = get_quality_tier(base_performance)
+
+    # Potency affects effect strength, duration affects how long
+    potency_mult = 1.0 + (base_performance * (max_multiplier - 1.0) * 0.5)
+    duration_mult = 1.0 + (base_performance * (max_multiplier - 1.0) * 0.3)
+
+    return {
+        'potency_multiplier': potency_mult,
+        'duration_multiplier': duration_mult,
+        'quality_tier': quality_tier,
+        'bonus_pct': bonus_pct,
+        'performance_score': base_performance,
+        'max_multiplier': max_multiplier,
+        'first_try_bonus_applied': first_try_applied,
+    }
+
+
+def calculate_engineering_rewards(
+    difficulty_points: float,
+    performance: Dict
+) -> Dict:
+    """
+    Calculate engineering rewards based on puzzle completion.
+
+    Args:
+        difficulty_points: Total recipe difficulty
+        performance: {
+            'puzzles_solved': int,
+            'total_puzzles': int,
+            'hints_used': int,
+            'time_remaining': float (fraction of time left),
+            'attempt': int
+        }
+
+    Returns:
+        {
+            'efficiency_multiplier': float,
+            'quality_tier': str,
+            'bonus_pct': int,
+            'durability_bonus': int
+        }
+    """
+    max_multiplier = calculate_max_reward_multiplier(difficulty_points)
+
+    solved = performance.get('puzzles_solved', 0)
+    total = performance.get('total_puzzles', 1)
+    hints = performance.get('hints_used', 0)
+    time_remaining = performance.get('time_remaining', 0.5)
+    attempt = performance.get('attempt', 1)
+
+    # Puzzle completion is primary
+    completion_score = solved / max(1, total)
+
+    # Time bonus for finishing early
+    time_bonus = time_remaining * 0.2
+
+    # Hint penalty
+    hint_penalty = hints * 0.1
+
+    base_performance = completion_score + time_bonus - hint_penalty
+    base_performance = max(0.0, min(1.0, base_performance))
+
+    # First-try bonus
+    first_try_applied = False
+    if attempt == 1:
+        base_performance = min(1.0, base_performance + FIRST_TRY_BONUS['performance_boost'])
+        first_try_applied = True
+
+    bonus_pct = calculate_bonus_pct(base_performance, max_multiplier)
+    quality_tier = get_quality_tier(base_performance)
+
+    # Engineering devices get efficiency and durability bonuses
+    efficiency_mult = 1.0 + (base_performance * (max_multiplier - 1.0) * 0.4)
+    durability_bonus = int(base_performance * 50)  # Up to +50 durability
+
+    return {
+        'efficiency_multiplier': efficiency_mult,
+        'durability_bonus': durability_bonus,
+        'quality_tier': quality_tier,
+        'bonus_pct': bonus_pct,
+        'performance_score': base_performance,
+        'max_multiplier': max_multiplier,
+        'first_try_bonus_applied': first_try_applied,
+    }
+
+
+def calculate_enchanting_rewards(
+    difficulty_points: float,
+    performance: Dict
+) -> Dict:
+    """
+    Calculate enchanting rewards based on wheel spin outcomes.
+
+    Args:
+        difficulty_points: Total recipe difficulty
+        performance: {
+            'final_currency': int (out of starting 100),
+            'spins_completed': int,
+            'green_hits': int,
+            'red_hits': int
+        }
+
+    Returns:
+        {
+            'efficacy_multiplier': float (affects enchantment strength),
+            'quality_tier': str,
+            'bonus_pct': int
+        }
+    """
+    max_multiplier = calculate_max_reward_multiplier(difficulty_points)
+
+    final_currency = performance.get('final_currency', 100)
+    starting = 100
+
+    # Currency difference determines efficacy
+    # +100 = +50% efficacy, -100 = -50% efficacy
+    currency_diff = final_currency - starting
+    efficacy_modifier = currency_diff / 200  # -0.5 to +0.5
+
+    # Performance score based on final currency
+    # 0 currency = 0%, 100 = 50%, 200 = 100%
+    base_performance = min(1.0, max(0.0, final_currency / 200))
+
+    bonus_pct = calculate_bonus_pct(base_performance, max_multiplier)
+    quality_tier = get_quality_tier(base_performance)
+
+    # Efficacy multiplier affects enchantment power
+    efficacy_mult = 1.0 + efficacy_modifier
+
+    return {
+        'efficacy_multiplier': efficacy_mult,
+        'quality_tier': quality_tier,
+        'bonus_pct': bonus_pct,
+        'performance_score': base_performance,
+        'max_multiplier': max_multiplier,
+        'currency_change': currency_diff,
+    }
+
+
 # =============================================================================
 # FAILURE PENALTY CALCULATION
 # =============================================================================
