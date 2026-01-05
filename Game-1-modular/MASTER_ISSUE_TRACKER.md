@@ -498,16 +498,40 @@ Major overhaul of crafting system with:
 - ✅ Enchanting: Spin-progressive difficulty (later spins harder)
 - ✅ Enchanting: Reward calculator with efficacy-based bonuses
 
-### BALANCE TUNING REQUIRED (Post-Implementation)
+### Phase 3: Balance & UI Polish
 
-| Item | Issue | Priority |
-|------|-------|----------|
-| **Difficulty scaling** | Currently too easy across all tiers | HIGH |
-| **Reward scaling** | Currently too generous for difficulty | HIGH |
-| **Timing windows** | May need further tightening for challenge | MEDIUM |
-| **Quality tier thresholds** | May need adjustment for rarity feel | MEDIUM |
+**Status**: In Progress
 
-*Note: Balance tuning deferred until all disciplines implemented and playtested (Phase 3)*
+#### Balance Tuning (COMPLETED)
+
+| Item | Issue | Fix Applied |
+|------|-------|-------------|
+| **Difficulty thresholds** | 54% of recipes were "common" | ✅ Lowered thresholds: Common 0-4, Uncommon 5-10, Rare 11-20, Epic 21-40, Legendary 41+ |
+| **Refining distribution** | 100% of recipes were "common" | ✅ Added station tier multiplier (T1=1.5x to T4=4.5x) |
+| **Engineering difficulty** | Too hard and slow | ✅ Reduced puzzle count (1-2), grid size (3-4), added hints |
+
+**New Distribution**: Common 19.5%, Uncommon 39%, Rare 28.7%, Epic 9.1%, Legendary 3.7%
+
+#### UI VISUAL POLISH (PENDING)
+
+Each discipline needs distinct aesthetic to match its theme:
+
+| Discipline | Current State | Target Aesthetic | Priority |
+|------------|---------------|------------------|----------|
+| **Smithing** | ✅ Forge aesthetic (embers, flames, gradient) | Complete | DONE |
+| **Alchemy** | ❌ Basic dark background + bubble | Cauldron/bubbling, potion colors, steam effects | HIGH |
+| **Engineering** | ❌ Basic dark background + grids | Blueprint paper, gear decorations, technical drawings | HIGH |
+| **Refining** | ❌ Basic with cylinder animation | Lock mechanism, industrial, furnace glow | MEDIUM |
+| **Enchanting** | ⚠️ Wheel exists but plain | Magical glow, rune circles, mystic particles | MEDIUM |
+
+**UI Polish Requirements**:
+1. Each minigame should have unique background gradient/texture
+2. Thematic particle effects (sparks, bubbles, gears, runes)
+3. Distinct color palettes per discipline
+4. Animated decorative elements matching the craft type
+5. Clear visual feedback for difficulty tier (harder = more intense visuals)
+
+**Files to Modify**: `core/game_engine.py` lines 3211-3950 (minigame render functions)
 
 ### DEFERRED Items (Tracked Here)
 
@@ -525,12 +549,12 @@ Major overhaul of crafting system with:
    - Material points: `tier × quantity` (LINEAR scaling)
    - Diversity: `1.0 + (unique_materials - 1) × 0.1`
 
-2. **Difficulty Thresholds** (rarity naming):
-   - Common: 1-8 points
-   - Uncommon: 9-20 points
-   - Rare: 21-40 points
-   - Epic: 41-70 points
-   - Legendary: 71+ points
+2. **Difficulty Thresholds** (rarity naming, updated Phase 3):
+   - Common: 0-4 points (basic single-material)
+   - Uncommon: 5-10 points (multi-material or T2)
+   - Rare: 11-20 points (complex T2/T3)
+   - Epic: 21-40 points (high-tier multi-material)
+   - Legendary: 41+ points (extreme T4 complex)
 
 3. **Discipline-Specific Modifiers**:
    - Smithing: No diversity (single-focus craft)
