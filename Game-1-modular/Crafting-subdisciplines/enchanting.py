@@ -379,8 +379,12 @@ class SpinningWheelMinigame:
             from core.reward_calculator import calculate_enchanting_rewards
             rewards = calculate_enchanting_rewards(
                 getattr(self, 'difficulty_points', 10),
-                performance,
-                efficacy=efficacy
+                {
+                    'final_currency': self.current_currency,
+                    'spins_completed': len(self.spin_results),
+                    'green_hits': sum(1 for r in self.spin_results if r.get('color') == 'green'),
+                    'red_hits': sum(1 for r in self.spin_results if r.get('color') == 'red')
+                }
             )
         except ImportError:
             # Fallback to basic rewards

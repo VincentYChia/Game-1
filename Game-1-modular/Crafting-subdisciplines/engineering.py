@@ -698,9 +698,13 @@ class EngineeringMinigame:
             from core.reward_calculator import calculate_engineering_rewards
             rewards = calculate_engineering_rewards(
                 self.difficulty_points,
-                performance,
-                puzzles_solved=puzzles_solved,
-                total_puzzles=self.puzzle_count
+                {
+                    'puzzles_solved': puzzles_solved,
+                    'total_puzzles': self.puzzle_count,
+                    'hints_used': self.hints_used,
+                    'time_remaining': 0.5,  # No time limit in current implementation
+                    'attempt': self.attempt
+                }
             )
         except ImportError:
             # Fallback to basic rewards
