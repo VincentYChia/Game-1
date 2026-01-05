@@ -40,12 +40,16 @@ TIER_POINTS = {
 }
 
 # Difficulty thresholds (matching rarity naming)
+# Adjusted based on actual recipe difficulty distribution analysis:
+# - Most recipes fall in 1-20 point range
+# - Engineering has widest spread (6-85 pts)
+# - Need lower thresholds for meaningful difficulty progression
 DIFFICULTY_THRESHOLDS = {
-    'common': (0, 8),       # Easy beginner recipes
-    'uncommon': (9, 20),    # Moderate challenge
-    'rare': (21, 40),       # Skilled crafters
-    'epic': (41, 70),       # Expert level
-    'legendary': (71, 150), # Master crafters only
+    'common': (0, 4),       # Basic single-material recipes (bottom ~20%)
+    'uncommon': (5, 10),    # Multi-material or T2 recipes (next ~25%)
+    'rare': (11, 20),       # Complex T2/T3 recipes (next ~30%)
+    'epic': (21, 40),       # High-tier multi-material (next ~20%)
+    'legendary': (41, 150), # Extreme T4 complex recipes (top ~5%)
 }
 
 # Default scaling range for interpolation
@@ -313,9 +317,11 @@ def calculate_smithing_difficulty(recipe: Dict) -> Dict:
 
 def calculate_refining_difficulty(recipe: Dict) -> Dict:
     """
-    Calculate refining difficulty based on material points × diversity multiplier.
+    Calculate refining difficulty based on material points × station tier × diversity.
 
-    More unique materials = harder (narratively: complex reactions)
+    Refining uses station tier as a key multiplier since:
+    - Higher tier stations = more complex refining processes
+    - Single materials are common, so tier matters more
 
     Args:
         recipe: Full recipe dictionary with 'inputs' list
@@ -329,7 +335,11 @@ def calculate_refining_difficulty(recipe: Dict) -> Dict:
     base_points = calculate_material_points(inputs)
     diversity_mult = calculate_diversity_multiplier(inputs)
 
-    total_points = base_points * diversity_mult
+    # Station tier multiplier (T1=1.5x, T2=2.5x, T3=3.5x, T4=4.5x)
+    station_tier = recipe.get('stationTierRequired', recipe.get('stationTier', 1))
+    station_mult = 1.0 + (station_tier * 0.5)
+
+    total_points = base_points * diversity_mult * station_mult
 
     # Interpolate parameters
     params = interpolate_difficulty(total_points, REFINING_PARAMS)
@@ -346,6 +356,7 @@ def calculate_refining_difficulty(recipe: Dict) -> Dict:
     params['difficulty_points'] = total_points
     params['difficulty_tier'] = get_difficulty_tier(total_points)
     params['diversity_multiplier'] = diversity_mult
+    params['station_multiplier'] = station_mult
     params['tier_fallback'] = recipe.get('stationTier', 1)
 
     return params
@@ -464,20 +475,23 @@ def _calculate_volatility(inputs: List[Dict]) -> float:
 # =============================================================================
 
 ENGINEERING_PARAMS = {
-    # Time limit (generous since it's puzzle-based)
-    'time_limit': (300, 60),  # 5 min to 1 min
+    # Time limit (generous since it's puzzle-based, no failure)
+    'time_limit': (300, 120),  # 5 min to 2 min (more generous)
 
-    # Puzzle count per device
-    'puzzle_count': (1, 4),
+    # Puzzle count per device - REDUCED for faster completion
+    # Base: 1 puzzle, Max: 2 puzzles (was 1-4)
+    'puzzle_count': (1, 2),
 
-    # Grid size for puzzles
-    'grid_size': (3, 6),
+    # Grid size for puzzles - REDUCED for easier solving
+    # 3x3 is easy, 4x4 is hard (was 3-6)
+    'grid_size': (3, 4),
 
     # Puzzle complexity (affects piece types available)
-    'complexity': (1, 4),
+    # Lower range for easier base puzzles
+    'complexity': (1, 3),
 
-    # Hint count allowed
-    'hints_allowed': (3, 0),
+    # Hint count allowed - MORE hints for accessibility
+    'hints_allowed': (4, 1),
 }
 
 

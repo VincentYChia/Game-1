@@ -44,6 +44,7 @@ def find_recipe_files() -> Dict[str, List[Path]]:
         Path("recipes.JSON"),
         Path("../recipes.JSON"),
         Path("Game-1-modular/recipes.JSON"),
+        Path("./recipes.JSON"),
     ]
 
     recipe_files = {
@@ -58,9 +59,10 @@ def find_recipe_files() -> Dict[str, List[Path]]:
         if not base_path.exists():
             continue
 
-        for f in base_path.glob("*.json"):
+        # Search for both .json and .JSON extensions
+        for f in list(base_path.glob("*.json")) + list(base_path.glob("*.JSON")):
             name = f.name.lower()
-            if 'smithing' in name:
+            if 'smithing' in name and 'testing' not in name:
                 recipe_files['smithing'].append(f)
             elif 'refining' in name:
                 recipe_files['refining'].append(f)
