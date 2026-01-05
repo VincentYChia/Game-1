@@ -5,15 +5,25 @@ Framework:
 - Python module ready for main.py integration
 - Loads recipes from JSON files
 - Optional minigame (sequential cognitive puzzles)
-- Difficulty based on tier (tier + X + Y in future updates)
+- Difficulty based on material tier points × diversity × slot count
+
+Difficulty System (v2):
+- Material points: tier × quantity per material (LINEAR)
+- Diversity multiplier: 1.0 + (unique_materials - 1) × 0.1
+- Slot modifier: 1.0 + (total_slots - 1) × 0.05
+- Higher difficulty = more puzzles, larger grids, fewer hints
 
 Minigame: Sequential cognitive puzzle solving
 - Pure problem-solving, no timing, no dexterity
-- Multiple puzzles per device (tier-dependent)
-- Rotation pipe puzzles (T1)
-- Sliding tile puzzles (T2+)
-- Traffic jam puzzles (T3+) [PLACEHOLDER]
-- Pattern matching + logic grids (T4+) [PLACEHOLDER]
+- Multiple puzzles per device (1-4 based on difficulty)
+- Rotation pipe puzzles (Common/Uncommon)
+- Sliding tile puzzles (Rare+)
+- Traffic jam puzzles (Epic+) [PLACEHOLDER]
+- Pattern matching + logic grids (Legendary) [PLACEHOLDER]
+
+Failure Penalty System:
+- Low difficulty: 30% material loss (if quit early)
+- High difficulty: 90% material loss
 """
 
 import pygame
@@ -420,25 +430,26 @@ class EngineeringMinigame:
     5. Can save and resume progress
     """
 
-    def __init__(self, recipe, tier=1, material_rarity="common", buff_time_bonus=0.0, buff_quality_bonus=0.0):
+    def __init__(self, recipe, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
         Initialize engineering minigame
 
         Args:
-            recipe: Recipe dict from JSON
-            tier: Recipe tier (1-4)
-            material_rarity: Highest material rarity (affects puzzle count)
+            recipe: Recipe dict from JSON (includes inputs for difficulty calculation)
             buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
             buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
         """
         self.recipe = recipe
-        self.tier = tier
-        self.material_rarity = material_rarity
         self.buff_time_bonus = buff_time_bonus
         self.buff_quality_bonus = buff_quality_bonus
 
-        # Determine puzzle count based on tier and rarity
-        self._setup_difficulty()
+        # Track attempts for first-try bonus
+        self.attempt = 1
+        self.hints_used = 0
+        self.start_time = None
+
+        # Determine puzzle count based on material difficulty
+        self._setup_difficulty_from_materials()
 
         # Game state
         self.active = False
@@ -447,33 +458,54 @@ class EngineeringMinigame:
         self.solved_puzzles = []
         self.result = None
 
-    def _setup_difficulty(self):
+    def _setup_difficulty_from_materials(self):
         """
-        Setup puzzle count and types based on tier and rarity
+        Setup puzzle count and complexity based on material tier points.
 
-        NOTE: Puzzle count formula may be expanded in future updates
-        Currently: tier + rarity based
+        Uses the centralized difficulty calculator for consistent scaling.
         """
-        # Puzzle count based on tier and rarity
-        if self.tier == 1:
-            base_count = 1
-        elif self.tier == 2:
-            base_count = 2
-        elif self.tier == 3:
-            base_count = 3
+        try:
+            from core.difficulty_calculator import calculate_engineering_difficulty
+            params = calculate_engineering_difficulty(self.recipe)
+
+            self.difficulty_points = params['difficulty_points']
+            self.difficulty_tier = params.get('difficulty_tier', 'common')
+            self.time_limit = params['time_limit']
+            self.puzzle_count = params['puzzle_count']
+            self.grid_size = params['grid_size']
+            self.complexity = params['complexity']
+            self.hints_allowed = params['hints_allowed']
+            self.slot_modifier = params.get('slot_modifier', 1.0)
+            self.total_slots = params.get('total_slots', 1)
+
+            print(f"[Engineering] Difficulty: {self.difficulty_points:.1f} pts ({self.difficulty_tier})")
+            print(f"             Puzzles: {self.puzzle_count}, Grid: {self.grid_size}x{self.grid_size}")
+
+        except ImportError:
+            # Fallback to legacy tier-based system
+            tier = self.recipe.get('stationTier', 1)
+            self._setup_difficulty_legacy(tier)
+
+    def _setup_difficulty_legacy(self, tier):
+        """Legacy tier-based difficulty for backward compatibility."""
+        self.difficulty_points = tier * 15
+        self.difficulty_tier = ['common', 'uncommon', 'rare', 'epic'][min(tier - 1, 3)]
+        self.time_limit = 300
+        self.grid_size = 3 + tier
+        self.complexity = tier
+        self.hints_allowed = max(0, 4 - tier)
+        self.slot_modifier = 1.0
+        self.total_slots = 1
+
+        # Puzzle count based on tier
+        if tier == 1:
+            self.puzzle_count = 1
+        elif tier == 2:
+            self.puzzle_count = 2
+        elif tier == 3:
+            self.puzzle_count = 3
         else:  # tier 4
-            base_count = 4
-
-        # Add puzzles for rarity
-        rarity_bonus = {
-            "common": 0,
-            "uncommon": 1,
-            "rare": 2,
-            "epic": 2,
-            "legendary": 3
-        }
-        self.puzzle_count = base_count + rarity_bonus.get(self.material_rarity, 0)
-        self.puzzle_count = min(6, self.puzzle_count)  # Max 6 puzzles
+            self.puzzle_count = 4
 
     def start(self):
         """Start the minigame"""
@@ -490,7 +522,7 @@ class EngineeringMinigame:
 
     def _create_puzzle_for_tier(self, index):
         """
-        Create appropriate puzzle based on tier
+        Create appropriate puzzle based on difficulty tier (rarity-based).
 
         Args:
             index: Puzzle index in sequence
@@ -498,29 +530,38 @@ class EngineeringMinigame:
         Returns:
             Puzzle instance
         """
-        if self.tier == 1:
-            # T1: Only rotation puzzles
-            grid_size = 3 if index == 0 else 4
-            return RotationPipePuzzle(grid_size, "easy")
-        elif self.tier == 2:
-            # T2: Rotation and sliding
+        tier = self.difficulty_tier  # Now uses rarity-named tiers
+
+        if tier in ('common', 'uncommon'):
+            # Common/Uncommon: Rotation puzzles only
+            grid = self.grid_size if hasattr(self, 'grid_size') else (3 if tier == 'common' else 4)
+            difficulty = "easy" if tier == 'common' else "medium"
+            return RotationPipePuzzle(grid, difficulty)
+
+        elif tier == 'rare':
+            # Rare: Rotation and sliding puzzles
+            grid = self.grid_size if hasattr(self, 'grid_size') else 4
             if index % 2 == 0:
-                return RotationPipePuzzle(5, "medium")
+                return RotationPipePuzzle(grid, "medium")
             else:
                 return SlidingTilePuzzle(3)
-        elif self.tier == 3:
-            # T3: Include traffic jam (placeholder)
+
+        elif tier == 'epic':
+            # Epic: Include traffic jam (placeholder)
+            grid = self.grid_size if hasattr(self, 'grid_size') else 5
             if index % 3 == 0:
-                return RotationPipePuzzle(5, "hard")
+                return RotationPipePuzzle(grid, "hard")
             elif index % 3 == 1:
                 return SlidingTilePuzzle(4)
             else:
                 return TrafficJamPuzzle()  # Placeholder
-        else:  # tier 4
-            # T4: All puzzle types including pattern matching
+
+        else:  # legendary
+            # Legendary: All puzzle types including pattern matching
+            grid = self.grid_size if hasattr(self, 'grid_size') else 5
             puzzle_type = index % 4
             if puzzle_type == 0:
-                return RotationPipePuzzle(5, "hard")
+                return RotationPipePuzzle(grid, "hard")
             elif puzzle_type == 1:
                 return SlidingTilePuzzle(4)
             elif puzzle_type == 2:
@@ -619,8 +660,12 @@ class EngineeringMinigame:
         pass
 
     def end(self):
-        """Complete device creation with stat modifications (Game Mechanics v5)"""
+        """Complete device creation with stat modifications and reward calculation."""
         self.active = False
+
+        # Calculate performance score based on puzzle completion
+        puzzles_solved = len(self.solved_puzzles)
+        completion_ratio = puzzles_solved / max(1, self.puzzle_count)
 
         # Calculate device stats based on puzzle performance
         # Each puzzle affects a different aspect of the device
@@ -639,16 +684,51 @@ class EngineeringMinigame:
             bonus = 15  # Could be adjusted based on puzzle difficulty
             stats[stat_type] += bonus
 
+        # Calculate performance (0.0-1.0) based on puzzles solved and hints used
+        base_performance = completion_ratio
+        hint_penalty = self.hints_used * 0.05  # 5% penalty per hint
+        performance = max(0.0, min(1.0, base_performance - hint_penalty))
+
+        # Apply first-try bonus
+        if self.attempt == 1:
+            performance = min(1.0, performance + 0.10)
+
+        # Calculate rewards using centralized calculator
+        try:
+            from core.reward_calculator import calculate_engineering_rewards
+            rewards = calculate_engineering_rewards(
+                self.difficulty_points,
+                {
+                    'puzzles_solved': puzzles_solved,
+                    'total_puzzles': self.puzzle_count,
+                    'hints_used': self.hints_used,
+                    'time_remaining': 0.5,  # No time limit in current implementation
+                    'attempt': self.attempt
+                }
+            )
+        except ImportError:
+            # Fallback to basic rewards
+            rewards = {
+                'quality_tier': 'common',
+                'xp_multiplier': 1.0,
+                'rarity_upgrade_chance': 0.0,
+                'bonus_output_chance': 0.0
+            }
+
         # Calculate overall quality (avg of all stats)
         quality = sum(stats.values()) / (len(stats) * 100)
 
         self.result = {
             "success": True,
-            "puzzles_solved": len(self.solved_puzzles),
+            "puzzles_solved": puzzles_solved,
             "total_puzzles": self.puzzle_count,
             "stats": stats,
             "quality": quality,
-            "message": f"Device created! Solved {len(self.solved_puzzles)} puzzles."
+            "performance": performance,
+            "difficulty_points": getattr(self, 'difficulty_points', 0),
+            "difficulty_tier": getattr(self, 'difficulty_tier', 'common'),
+            "rewards": rewards,
+            "message": f"Device created! Solved {puzzles_solved}/{self.puzzle_count} puzzles."
         }
 
     def get_state(self):
@@ -793,13 +873,15 @@ class EngineeringCrafter:
 
     def create_minigame(self, recipe_id, buff_time_bonus=0.0, buff_quality_bonus=0.0, material_rarity="common"):
         """
-        Create an engineering minigame for this recipe
+        Create an engineering minigame for this recipe.
+
+        Difficulty is now calculated from material tier points, not station tier.
 
         Args:
             recipe_id: Recipe ID to craft
             buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
             buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
-            material_rarity: Highest material rarity used
+            material_rarity: Highest material rarity used (deprecated, kept for compatibility)
 
         Returns:
             EngineeringMinigame instance or None
@@ -808,13 +890,20 @@ class EngineeringCrafter:
             return None
 
         recipe = self.recipes[recipe_id]
-        tier = recipe.get('stationTier', 1)
 
-        return EngineeringMinigame(recipe, tier, material_rarity, buff_time_bonus, buff_quality_bonus)
+        # Pass full recipe - difficulty calculated from material inputs
+        return EngineeringMinigame(recipe, buff_time_bonus, buff_quality_bonus)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result, item_metadata=None):
         """
-        Craft with minigame result with rarity modifiers
+        Craft with minigame result with rarity modifiers and tier-scaled penalties.
+
+        Failure Penalties (by difficulty tier):
+        - Common: 30% material loss
+        - Uncommon: 45% material loss
+        - Rare: 60% material loss
+        - Epic: 75% material loss
+        - Legendary: 90% material loss
 
         Args:
             recipe_id: Recipe ID to craft
@@ -827,16 +916,32 @@ class EngineeringCrafter:
         """
         recipe = self.recipes[recipe_id]
 
+        # Get difficulty tier from minigame result for tier-scaled penalties
+        difficulty_tier = minigame_result.get('difficulty_tier', 'common')
+
+        # Tier-scaled failure penalties
+        FAILURE_PENALTIES = {
+            'common': 0.30,
+            'uncommon': 0.45,
+            'rare': 0.60,
+            'epic': 0.75,
+            'legendary': 0.90
+        }
+        penalty = FAILURE_PENALTIES.get(difficulty_tier, 0.30)
+
         if minigame_result.get('abandoned'):
-            # Abandoned - return 50% materials
+            # Abandoned - return materials minus tier-scaled penalty
+            materials_returned = 1.0 - penalty
             for inp in recipe['inputs']:
-                returned = inp['quantity'] // 2
-                inventory[inp['materialId']] += returned
+                returned = int(inp['quantity'] * materials_returned)
+                if returned > 0:
+                    inventory[inp['materialId']] = inventory.get(inp['materialId'], 0) + returned
 
             return {
                 "success": False,
-                "message": "Device creation abandoned",
-                "materials_returned": True
+                "message": f"Device creation abandoned ({int(materials_returned * 100)}% materials returned)",
+                "materials_returned": True,
+                "materials_returned_pct": materials_returned
             }
 
         if not minigame_result.get('success'):
@@ -866,11 +971,17 @@ class EngineeringCrafter:
         item_category = rarity_system.get_item_category(output_id, item_metadata)
         modified_stats = rarity_system.apply_rarity_modifiers(base_stats, item_category, input_rarity)
 
+        # Extract rewards from minigame result
+        rewards = minigame_result.get('rewards', {})
+
         result = {
             "success": True,
             "outputId": output_id,
             "quantity": recipe['outputQty'],
             "rarity": input_rarity,
+            "performance": minigame_result.get('performance', 1.0),
+            "difficulty_tier": difficulty_tier,
+            "rewards": rewards,
             "message": f"Created {input_rarity} device successfully!"
         }
 

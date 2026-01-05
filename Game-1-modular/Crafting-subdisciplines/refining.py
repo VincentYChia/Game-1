@@ -5,13 +5,24 @@ Framework:
 - Python module ready for main.py integration
 - Loads recipes from JSON files
 - Optional minigame (lockpicking-style cylinder alignment)
-- Difficulty based on tier (tier + X + Y in future updates)
+- Difficulty based on material tier points × diversity multiplier
+
+Difficulty System (v2):
+- Material points: 2^(tier-1) × quantity per material
+- Diversity multiplier: 1.0 + (unique_materials - 1) × 0.1
+- Total difficulty = material_points × diversity_multiplier
+- Higher difficulty = harder minigame = better potential rewards
 
 Minigame: Lockpicking-style timing game
 - Watch rotating cylinders align with target zones
 - Press key when aligned (spacebar or number keys)
 - All-or-nothing success (no partial completion)
-- Difficulty scales with tier
+- Cylinder count and timing window scale with difficulty
+
+Failure Penalty System:
+- Low difficulty: 30% material loss
+- High difficulty: 90% material loss
+- Scales linearly with difficulty points
 """
 
 import pygame
@@ -30,30 +41,33 @@ class RefiningMinigame:
     - Visual rotating cylinders
     - Audio/visual feedback on successful alignment
     - All-or-nothing success
+
+    Difficulty System (v2):
+    - Difficulty calculated from material tier point values × diversity multiplier
+    - More unique materials = harder (complex reactions)
+    - Higher points = harder minigame = better potential rewards
     """
 
-    def __init__(self, recipe, tier=1, buff_time_bonus=0.0, buff_quality_bonus=0.0):
+    def __init__(self, recipe, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
         Initialize refining minigame
 
         Args:
-            recipe: Recipe dict from JSON
-            tier: Recipe tier (1-4) - affects difficulty
+            recipe: Recipe dict from JSON (includes inputs for difficulty calculation)
             buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
             buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
         """
         self.recipe = recipe
-        self.tier = tier
         self.buff_time_bonus = buff_time_bonus
         self.buff_quality_bonus = buff_quality_bonus
 
-        # Difficulty scaling based on tier
-        # NOTE: Future updates may include additional factors
-        self._setup_difficulty()
+        # Calculate difficulty from materials using new system
+        self._setup_difficulty_from_materials()
 
         # Apply skill buff bonuses to time limit
         if self.buff_time_bonus > 0:
             self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
+            print(f"⚡ Quicken buff applied: {self.time_limit}s minigame time")
 
         # Game state
         self.active = False
@@ -65,40 +79,81 @@ class RefiningMinigame:
         self.result = None
         self.feedback_timer = 0  # For visual/audio feedback
 
-    def _setup_difficulty(self):
+    def _setup_difficulty_from_materials(self):
         """
-        Setup difficulty parameters based on tier
+        Setup difficulty parameters based on material tier points × diversity.
 
-        NOTE: Difficulty formula may be expanded in future updates
-        Currently: tier-based only
-        Future: tier + material_rarity + recipe_complexity + etc.
+        Uses core.difficulty_calculator for centralized calculation.
+        Falls back to legacy tier-based system if calculator unavailable.
         """
-        if self.tier == 1:
-            self.cylinder_count = 3
-            self.timing_window = 0.8  # seconds
-            self.rotation_speed = 1.0  # rotations per second
-            self.allowed_failures = 2
-            self.time_limit = 45
-        elif self.tier == 2:
-            self.cylinder_count = 6
-            self.timing_window = 0.5
-            self.rotation_speed = 1.3
-            self.allowed_failures = 1
-            self.time_limit = 30
-        elif self.tier == 3:
-            self.cylinder_count = 10
-            self.timing_window = 0.3
-            self.rotation_speed = 1.6
-            self.allowed_failures = 0  # Perfect required
-            self.time_limit = 20
-        else:  # tier 4
-            self.cylinder_count = 15
-            self.timing_window = 0.2
-            self.rotation_speed = 2.0
-            self.allowed_failures = 0  # Perfect required
-            self.time_limit = 15
-            # Additional complexity for T4
-            self.multi_speed = True  # Different cylinders rotate at different speeds
+        try:
+            from core.difficulty_calculator import (
+                calculate_refining_difficulty,
+                get_legacy_refining_params,
+                get_difficulty_description
+            )
+
+            # Calculate difficulty from recipe materials with diversity
+            params = calculate_refining_difficulty(self.recipe)
+
+            # Store for reward calculation
+            self.difficulty_points = params['difficulty_points']
+            self.diversity_multiplier = params.get('diversity_multiplier', 1.0)
+
+            # Apply parameters
+            self.cylinder_count = int(params['cylinder_count'])
+            self.timing_window = params['timing_window']
+            self.rotation_speed = params['rotation_speed']
+            self.allowed_failures = int(params['allowed_failures'])
+            self.time_limit = int(params['time_limit'])
+            self.multi_speed = params.get('multi_speed', False)
+
+            # Log difficulty info
+            difficulty_desc = get_difficulty_description(self.difficulty_points)
+            print(f"⚗️ Refining difficulty: {difficulty_desc} ({self.difficulty_points:.1f} points)")
+            print(f"   Cylinders: {self.cylinder_count}, Window: {self.timing_window:.2f}s, Diversity: {self.diversity_multiplier:.1f}x")
+
+        except ImportError:
+            # Fallback to legacy tier-based system
+            print("⚠️ Difficulty calculator not available, using legacy tier system")
+            self._setup_difficulty_legacy()
+
+    def _setup_difficulty_legacy(self):
+        """
+        Legacy difficulty setup based on station tier only.
+        Used as fallback when difficulty_calculator is unavailable.
+        """
+        tier = self.recipe.get('stationTier', 1)
+
+        try:
+            from core.difficulty_calculator import get_legacy_refining_params
+            params = get_legacy_refining_params(tier)
+        except ImportError:
+            # Hardcoded fallback
+            tier_configs = {
+                1: {'time_limit': 45, 'cylinder_count': 3, 'timing_window': 0.8,
+                    'rotation_speed': 1.0, 'allowed_failures': 2, 'multi_speed': False,
+                    'difficulty_points': 5, 'diversity_multiplier': 1.0},
+                2: {'time_limit': 30, 'cylinder_count': 6, 'timing_window': 0.5,
+                    'rotation_speed': 1.3, 'allowed_failures': 1, 'multi_speed': False,
+                    'difficulty_points': 20, 'diversity_multiplier': 1.0},
+                3: {'time_limit': 20, 'cylinder_count': 10, 'timing_window': 0.3,
+                    'rotation_speed': 1.6, 'allowed_failures': 0, 'multi_speed': False,
+                    'difficulty_points': 50, 'diversity_multiplier': 1.0},
+                4: {'time_limit': 15, 'cylinder_count': 15, 'timing_window': 0.2,
+                    'rotation_speed': 2.0, 'allowed_failures': 0, 'multi_speed': True,
+                    'difficulty_points': 80, 'diversity_multiplier': 1.0},
+            }
+            params = tier_configs.get(tier, tier_configs[1])
+
+        self.difficulty_points = params.get('difficulty_points', tier * 20)
+        self.diversity_multiplier = params.get('diversity_multiplier', 1.0)
+        self.cylinder_count = params.get('cylinder_count', 3)
+        self.timing_window = params.get('timing_window', 0.8)
+        self.rotation_speed = params.get('rotation_speed', 1.0)
+        self.allowed_failures = params.get('allowed_failures', 2)
+        self.time_limit = params.get('time_limit', 45)
+        self.multi_speed = params.get('multi_speed', False)
 
     def start(self):
         """Start the minigame"""
@@ -116,10 +171,10 @@ class RefiningMinigame:
             # Randomize starting positions
             start_angle = random.uniform(0, 360)
 
-            # For T4, vary rotation speeds
-            if self.tier >= 4 and i % 2 == 0:
+            # For high difficulty (multi_speed enabled), vary rotation speeds
+            if self.multi_speed and i % 2 == 0:
                 speed = self.rotation_speed * 0.7
-            elif self.tier >= 4 and i % 3 == 0:
+            elif self.multi_speed and i % 3 == 0:
                 speed = self.rotation_speed * 1.3
             else:
                 speed = self.rotation_speed
@@ -219,17 +274,31 @@ class RefiningMinigame:
         self.active = False
 
         if success:
+            print(f"🎯 Refining successful! ({self.current_cylinder} alignments, {self.failed_attempts} failures)")
+
             self.result = {
                 "success": True,
                 "message": "Refinement successful!",
                 "attempts": self.current_cylinder + self.failed_attempts,
-                "quality_bonus": self.buff_quality_bonus  # Store for rarity upgrade chance
+                "quality_bonus": self.buff_quality_bonus,
+                "difficulty_points": self.difficulty_points,
+                "diversity_multiplier": self.diversity_multiplier
             }
         else:
+            # Calculate tier-scaled material loss
+            try:
+                from core.reward_calculator import calculate_failure_penalty
+                loss_fraction = calculate_failure_penalty(self.difficulty_points)
+            except ImportError:
+                loss_fraction = 0.5  # Fallback
+
+            print(f"❌ Refining failed! {int(loss_fraction * 100)}% materials will be lost")
+
             self.result = {
                 "success": False,
                 "message": reason or "Refinement failed",
-                "materials_lost": 0.5  # 50% material loss on failure
+                "materials_lost": loss_fraction,
+                "difficulty_points": self.difficulty_points
             }
 
     def get_state(self):
@@ -454,6 +523,9 @@ class RefiningCrafter:
         """
         Create a refining minigame for this recipe
 
+        Difficulty is now calculated from material tier points × diversity multiplier
+        rather than station tier alone.
+
         Args:
             recipe_id: Recipe ID to craft
             buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
@@ -466,14 +538,18 @@ class RefiningCrafter:
             return None
 
         recipe = self.recipes[recipe_id]
-        tier = recipe.get('stationTier', 1)
 
-        return RefiningMinigame(recipe, tier, buff_time_bonus, buff_quality_bonus)
+        # Pass full recipe for material-based difficulty calculation
+        return RefiningMinigame(recipe, buff_time_bonus, buff_quality_bonus)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result):
         """
         Craft with minigame result - all-or-nothing with probabilistic tag bonuses
         Refining outputs materials with rarity but NO stat bonuses
+
+        Failure penalty scales with difficulty:
+        - Low difficulty (T1): 30% material loss
+        - High difficulty (T4): 90% material loss
 
         Args:
             recipe_id: Recipe ID to craft
@@ -486,15 +562,22 @@ class RefiningCrafter:
         recipe = self.recipes[recipe_id]
 
         if not minigame_result.get('success'):
-            # Failure - lose 50% of materials
+            # Use tier-scaled material loss from minigame result
+            loss_fraction = minigame_result.get('materials_lost', 0.5)
+
+            materials_lost_detail = {}
             for inp in recipe['inputs']:
-                loss = inp['quantity'] // 2
-                inventory[inp['materialId']] = max(0, inventory[inp['materialId']] - loss)
+                loss = int(inp['quantity'] * loss_fraction)
+                if loss > 0:
+                    inventory[inp['materialId']] = max(0, inventory[inp['materialId']] - loss)
+                    materials_lost_detail[inp['materialId']] = loss
 
             return {
                 "success": False,
                 "message": minigame_result.get('message', 'Refining failed'),
-                "materials_lost": True
+                "materials_lost": True,
+                "materials_lost_detail": materials_lost_detail,
+                "loss_percentage": int(loss_fraction * 100)
             }
 
         # Success - deduct full materials and give output

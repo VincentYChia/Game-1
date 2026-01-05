@@ -18,6 +18,7 @@
 | UI | Class Selection Tags | LOW | Enhancement | 1-2 hrs |
 | UI | Crafting Missing Items | LOW | Consistent | N/A |
 | Content | Crafting Stations JSON | WAITLIST | Placeholder | 2-3 hrs |
+| **Overhaul** | Crafting UI & Minigames | **HIGH** | Planning Complete | Multi-week |
 
 ---
 
@@ -453,6 +454,135 @@ These mechanics are documented but have NO code implementation:
 
 ---
 
+## SECTION 6.5: CRAFTING UI & MINIGAME OVERHAUL
+
+**Plan Document**: `docs/CRAFTING_UI_MINIGAME_OVERHAUL_PLAN.md`
+**Created**: January 4, 2026
+**Status**: Phase 1 & 2 Complete - Phase 3 (Polish/Balance) Pending
+
+### Overview
+
+Major overhaul of crafting system with:
+- Material-based difficulty calculation (not just tier)
+- Polished, distinct UI for each discipline
+- Proportional rewards tied to difficulty
+
+### Implementation Phases
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | Foundation + Smithing + Refining | ✅ **COMPLETE** |
+| 2 | Alchemy + Engineering + Enchanting | ✅ **COMPLETE** |
+| 3 | Polish & balance tuning | 🔜 Pending Playtest |
+
+### Phase 1 Completed Items
+
+- ✅ `core/difficulty_calculator.py` - Linear tier points (T1=1, T2=2, T3=3, T4=4)
+- ✅ `core/reward_calculator.py` - Proportional rewards with quality tiers
+- ✅ Smithing difficulty/reward integration
+- ✅ Smithing visual polish (forge/anvil aesthetic)
+- ✅ Refining difficulty/reward integration with diversity multiplier
+- ✅ Refining visual polish (lock mechanism aesthetic)
+- ✅ Rarity-named difficulty thresholds (Common → Legendary)
+- ✅ Tier-scaled failure penalties (30% → 90%)
+
+### Phase 2 Completed Items
+
+- ✅ Alchemy: Vowel-based volatility + `1.2^avg_tier` modifier
+- ✅ Alchemy: Ingredient-type visual indicators (base/catalyst/reactive)
+- ✅ Alchemy: Reward calculator integration with first-try bonus
+- ✅ Engineering: Slot count × diversity formula
+- ✅ Engineering: Rarity-based puzzle selection (common→legendary)
+- ✅ Engineering: Reward calculator with puzzle completion scoring
+- ✅ Enchanting: Material-based wheel distribution (green/red slices)
+- ✅ Enchanting: Spin-progressive difficulty (later spins harder)
+- ✅ Enchanting: Reward calculator with efficacy-based bonuses
+
+### Phase 3: Balance & UI Polish
+
+**Status**: In Progress
+
+#### Balance Tuning (COMPLETED)
+
+| Item | Issue | Fix Applied |
+|------|-------|-------------|
+| **Difficulty thresholds** | 54% of recipes were "common" | ✅ Lowered thresholds: Common 0-4, Uncommon 5-10, Rare 11-20, Epic 21-40, Legendary 41+ |
+| **Refining distribution** | 100% of recipes were "common" | ✅ Added station tier multiplier (T1=1.5x to T4=4.5x) |
+| **Engineering difficulty** | Too hard and slow | ✅ Reduced puzzle count (1-2), grid size (3-4), added hints |
+
+**New Distribution**: Common 19.5%, Uncommon 39%, Rare 28.7%, Epic 9.1%, Legendary 3.7%
+
+#### UI VISUAL POLISH (PENDING)
+
+Each discipline needs distinct aesthetic to match its theme:
+
+| Discipline | Current State | Target Aesthetic | Priority |
+|------------|---------------|------------------|----------|
+| **Smithing** | ✅ Forge aesthetic (embers, flames, gradient) | Complete | DONE |
+| **Alchemy** | ❌ Basic dark background + bubble | Cauldron/bubbling, potion colors, steam effects | HIGH |
+| **Engineering** | ❌ Basic dark background + grids | Blueprint paper, gear decorations, technical drawings | HIGH |
+| **Refining** | ❌ Basic with cylinder animation | Lock mechanism, industrial, furnace glow | MEDIUM |
+| **Enchanting** | ⚠️ Wheel exists but plain | Magical glow, rune circles, mystic particles | MEDIUM |
+
+**UI Polish Requirements**:
+1. Each minigame should have unique background gradient/texture
+2. Thematic particle effects (sparks, bubbles, gears, runes)
+3. Distinct color palettes per discipline
+4. Animated decorative elements matching the craft type
+5. Clear visual feedback for difficulty tier (harder = more intense visuals)
+
+**Files to Modify**: `core/game_engine.py` lines 3211-3950 (minigame render functions)
+
+### DEFERRED Items (Tracked Here)
+
+| Item | Reason | Priority |
+|------|--------|----------|
+| Enchanting pattern minigame | Keep wheel spin, apply same difficulty system | Medium |
+| User recipe creation system | Requires validation, persistence, UI | Low |
+| Material-based sub-modifiers | Complexity - implement after core overhaul | Low |
+| Sub-specialization mechanics | Complexity - implement after core overhaul | Low |
+| Refining fuel system | Keep in V6 docs but skip implementation | Low |
+
+### Key Design Decisions
+
+1. **Difficulty Formula**: `material_points × diversity_multiplier`
+   - Material points: `tier × quantity` (LINEAR scaling)
+   - Diversity: `1.0 + (unique_materials - 1) × 0.1`
+
+2. **Difficulty Thresholds** (rarity naming, updated Phase 3):
+   - Common: 0-4 points (basic single-material)
+   - Uncommon: 5-10 points (multi-material or T2)
+   - Rare: 11-20 points (complex T2/T3)
+   - Epic: 21-40 points (high-tier multi-material)
+   - Legendary: 41+ points (extreme T4 complex)
+
+3. **Discipline-Specific Modifiers**:
+   - Smithing: No diversity (single-focus craft)
+   - Refining: Diversity multiplier applied
+   - Alchemy: Vowel-based volatility + `1.2^avg_tier` (Phase 2)
+   - Engineering: Slot count × diversity (Phase 2)
+
+4. **Reward Scaling**: Harder difficulty = higher max bonus potential (1.0x to 2.5x)
+
+5. **Tier-Scaled Penalties**: Common: 30% loss → Legendary: 90% loss on failure
+
+6. **First-Try Bonus**: +10% performance boost on first attempt
+
+### Files Created/Modified
+
+| File | Status |
+|------|--------|
+| `core/difficulty_calculator.py` | ✅ Created + Phase 2 functions |
+| `core/reward_calculator.py` | ✅ Created + Phase 2 functions |
+| `Crafting-subdisciplines/smithing.py` | ✅ Updated (Phase 1) |
+| `Crafting-subdisciplines/refining.py` | ✅ Updated (Phase 1) |
+| `core/game_engine.py` | ✅ Updated (visual polish) |
+| `Crafting-subdisciplines/alchemy.py` | ✅ Updated (Phase 2) |
+| `Crafting-subdisciplines/engineering.py` | ✅ Updated (Phase 2) |
+| `Crafting-subdisciplines/enchanting.py` | ✅ Updated (Phase 2) |
+
+---
+
 ## SECTION 7: FILE QUICK REFERENCE
 
 | System | Primary Files |
@@ -467,4 +597,4 @@ These mechanics are documented but have NO code implementation:
 
 ---
 
-**Last Updated**: 2025-12-30
+**Last Updated**: 2026-01-04

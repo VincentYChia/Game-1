@@ -5,13 +5,24 @@ Framework:
 - Python module ready for main.py integration
 - Loads recipes from JSON files
 - Optional minigame (reaction chain management)
-- Difficulty based on tier (tier + X + Y in future updates)
+- Difficulty based on material tier points × diversity × volatility
+
+Difficulty System (v2):
+- Material points: tier × quantity per material (LINEAR)
+- Diversity multiplier: 1.0 + (unique_materials - 1) × 0.1
+- Tier exponential: 1.2^avg_tier modifier
+- Volatility: Vowel-based modifier (more vowels = more volatile)
+- Higher difficulty = faster reactions, narrower sweet spots
 
 Minigame: Reaction chain management - reading visual cues
 - Watch reactions grow through stages
 - Add next ingredient at optimal time (CHAIN)
 - Or stabilize to end process
 - Gradient success system (progress-based quality)
+
+Failure Penalty System:
+- Low difficulty: 30% material loss
+- High difficulty: 90% material loss
 """
 
 import pygame
@@ -205,24 +216,25 @@ class AlchemyMinigame:
     6. Total progress = sum of all locked reaction qualities
     """
 
-    def __init__(self, recipe, tier=1, buff_time_bonus=0.0, buff_quality_bonus=0.0):
+    def __init__(self, recipe, buff_time_bonus=0.0, buff_quality_bonus=0.0):
         """
         Initialize alchemy minigame
 
         Args:
-            recipe: Recipe dict from JSON
-            tier: Recipe tier (1-4) - affects difficulty
+            recipe: Recipe dict from JSON (includes inputs for difficulty calculation)
             buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
             buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
         """
         self.recipe = recipe
-        self.tier = tier
         self.buff_time_bonus = buff_time_bonus
         self.buff_quality_bonus = buff_quality_bonus
         self.ingredients = recipe.get('inputs', [])
 
-        # Difficulty scaling
-        self._setup_difficulty()
+        # Track attempts for first-try bonus
+        self.attempt = 1
+
+        # Difficulty scaling from materials
+        self._setup_difficulty_from_materials()
 
         # Apply skill buff bonuses to time limit
         if self.buff_time_bonus > 0:
@@ -234,22 +246,90 @@ class AlchemyMinigame:
         self.current_reaction = None
         self.locked_reactions = []
         self.total_progress = 0.0
+        self.explosions = 0
         self.time_left = self.time_limit
         self.result = None
 
-    def _setup_difficulty(self):
+    def _setup_difficulty_from_materials(self):
         """
-        Setup difficulty parameters based on tier
+        Setup difficulty parameters based on material tier points and volatility.
 
-        NOTE: Difficulty formula may be expanded in future updates
+        Uses the centralized difficulty calculator for consistent scaling.
         """
-        if self.tier == 1:
+        try:
+            from core.difficulty_calculator import calculate_alchemy_difficulty
+            params = calculate_alchemy_difficulty(self.recipe)
+
+            self.difficulty_points = params['difficulty_points']
+            self.difficulty_tier = params.get('difficulty_tier', 'common')
+            self.time_limit = params['time_limit']
+            self.reaction_count = params['reaction_count']
+            self.sweet_spot_duration = params['sweet_spot_duration']
+            self.stage_duration = params['stage_duration']
+            self.false_peaks = params['false_peaks']
+            self.volatility = params.get('volatility', 0.0)
+            self.tier_modifier = params.get('tier_modifier', 1.0)
+
+            # Map difficulty to ingredient types
+            self._assign_ingredient_types()
+
+            print(f"[Alchemy] Difficulty: {self.difficulty_points:.1f} pts ({self.difficulty_tier})")
+            print(f"         Volatility: {self.volatility:.2f}, Tier mod: {self.tier_modifier:.2f}")
+
+        except ImportError:
+            # Fallback to legacy tier-based system
+            tier = self.recipe.get('stationTier', 1)
+            self._setup_difficulty_legacy(tier)
+
+    def _assign_ingredient_types(self):
+        """
+        Assign ingredient types based on difficulty and volatility.
+        """
+        num_ingredients = len(self.ingredients)
+        self.ingredient_types = []
+
+        # Base type distribution based on difficulty tier
+        if self.difficulty_tier == 'common':
+            base_types = ['stable', 'stable', 'moderate']
+        elif self.difficulty_tier == 'uncommon':
+            base_types = ['stable', 'moderate', 'moderate']
+        elif self.difficulty_tier == 'rare':
+            base_types = ['moderate', 'moderate', 'volatile']
+        elif self.difficulty_tier == 'epic':
+            base_types = ['moderate', 'volatile', 'volatile']
+        else:  # legendary
+            base_types = ['volatile', 'volatile', 'legendary']
+
+        # Assign types to each ingredient
+        for i in range(num_ingredients):
+            if i < len(base_types):
+                ing_type = base_types[i]
+            else:
+                # For extra ingredients, use volatility to determine type
+                if self.volatility > 0.7:
+                    ing_type = 'legendary'
+                elif self.volatility > 0.4:
+                    ing_type = 'volatile'
+                elif self.volatility > 0.2:
+                    ing_type = 'moderate'
+                else:
+                    ing_type = 'stable'
+            self.ingredient_types.append(ing_type)
+
+    def _setup_difficulty_legacy(self, tier):
+        """Legacy tier-based difficulty for backward compatibility."""
+        self.difficulty_points = tier * 15
+        self.difficulty_tier = ['common', 'uncommon', 'rare', 'epic'][min(tier - 1, 3)]
+        self.volatility = 0.0
+        self.tier_modifier = 1.0
+
+        if tier == 1:
             self.time_limit = 60
             self.ingredient_types = ["stable", "stable", "moderate"]
-        elif self.tier == 2:
+        elif tier == 2:
             self.time_limit = 45
             self.ingredient_types = ["stable", "moderate", "moderate"]
-        elif self.tier == 3:
+        elif tier == 3:
             self.time_limit = 30
             self.ingredient_types = ["moderate", "volatile", "volatile"]
         else:  # tier 4
@@ -368,55 +448,97 @@ class AlchemyMinigame:
         """
         self.active = False
 
+        # Get difficulty points for tier-scaled penalties
+        difficulty_points = getattr(self, 'difficulty_points', 30)
+
         if explosion:
+            self.explosions += 1
+            # Use tier-scaled penalty for explosion
+            try:
+                from core.reward_calculator import calculate_failure_penalty
+                materials_lost = min(0.9, calculate_failure_penalty(difficulty_points) + 0.1)  # Extra 10% for explosion
+            except ImportError:
+                materials_lost = 0.75
+
             self.result = {
                 "success": False,
                 "progress": 0.0,
                 "quality": "Complete Failure",
                 "message": "The brew exploded!",
-                "materials_lost": 0.75  # 75% loss on explosion
+                "materials_lost": materials_lost,
+                "difficulty_points": difficulty_points,
+                "explosions": self.explosions
             }
             return
 
         # Calculate final quality based on total progress
         progress = self.total_progress
 
-        if progress < 0.25:
-            quality = "Complete Failure"
-            success = False
-            materials_lost = 0.5
-            duration_mult = 0.0
-            effect_mult = 0.0
-        elif progress < 0.50:
-            quality = "Weak Success"
-            success = True
-            materials_lost = 0.0
-            duration_mult = 0.5
-            effect_mult = 0.5
-        elif progress < 0.75:
-            quality = "Standard Success"
-            success = True
-            materials_lost = 0.0
-            duration_mult = 0.75
-            effect_mult = 0.75
-        elif progress < 0.90:
-            quality = "Quality Success"
-            success = True
-            materials_lost = 0.0
-            duration_mult = 1.0
-            effect_mult = 1.0
-        elif progress < 0.99:
-            quality = "Superior Success"
-            success = True
-            materials_lost = 0.0
-            duration_mult = 1.2
-            effect_mult = 1.1
-        else:  # >= 0.99
-            quality = "Perfect Success"
-            success = True
-            materials_lost = 0.0
-            duration_mult = 1.5
-            effect_mult = 1.25
+        # Use reward calculator for consistent quality tiers
+        try:
+            from core.reward_calculator import calculate_alchemy_rewards, calculate_failure_penalty
+
+            performance = {
+                'chains_completed': len(self.locked_reactions),
+                'total_chains': len(self.ingredients),
+                'avg_timing_score': int(progress * 100),
+                'explosions': self.explosions,
+                'attempt': self.attempt
+            }
+
+            rewards = calculate_alchemy_rewards(difficulty_points, performance)
+
+            if progress < 0.25:
+                success = False
+                materials_lost = calculate_failure_penalty(difficulty_points)
+                quality = "Complete Failure"
+                duration_mult = 0.0
+                effect_mult = 0.0
+            else:
+                success = True
+                materials_lost = 0.0
+                quality = rewards['quality_tier']
+                duration_mult = rewards['duration_multiplier']
+                effect_mult = rewards['potency_multiplier']
+
+        except ImportError:
+            # Fallback to legacy quality calculation
+            if progress < 0.25:
+                quality = "Complete Failure"
+                success = False
+                materials_lost = 0.5
+                duration_mult = 0.0
+                effect_mult = 0.0
+            elif progress < 0.50:
+                quality = "Weak Success"
+                success = True
+                materials_lost = 0.0
+                duration_mult = 0.5
+                effect_mult = 0.5
+            elif progress < 0.75:
+                quality = "Standard Success"
+                success = True
+                materials_lost = 0.0
+                duration_mult = 0.75
+                effect_mult = 0.75
+            elif progress < 0.90:
+                quality = "Quality Success"
+                success = True
+                materials_lost = 0.0
+                duration_mult = 1.0
+                effect_mult = 1.0
+            elif progress < 0.99:
+                quality = "Superior Success"
+                success = True
+                materials_lost = 0.0
+                duration_mult = 1.2
+                effect_mult = 1.1
+            else:  # >= 0.99
+                quality = "Perfect Success"
+                success = True
+                materials_lost = 0.0
+                duration_mult = 1.5
+                effect_mult = 1.25
 
         # Apply skill buff quality bonus (empower/elevate)
         if self.buff_quality_bonus > 0:
@@ -427,9 +549,12 @@ class AlchemyMinigame:
             "success": success,
             "progress": progress,
             "quality": quality,
+            "quality_tier": quality,  # Alias for consistency
             "duration_mult": duration_mult,
             "effect_mult": effect_mult,
             "materials_lost": materials_lost,
+            "difficulty_points": difficulty_points,
+            "explosions": self.explosions,
             "message": f"{quality}! Duration: {int(duration_mult*100)}%, Effect: {int(effect_mult*100)}%"
         }
 
@@ -596,18 +721,36 @@ class AlchemyCrafter:
         }
 
     def create_minigame(self, recipe_id, buff_time_bonus=0.0, buff_quality_bonus=0.0):
-        """Create an alchemy minigame for this recipe"""
+        """
+        Create an alchemy minigame for this recipe
+
+        Difficulty is now calculated from material tier points × diversity × volatility
+        rather than station tier alone.
+
+        Args:
+            recipe_id: Recipe ID to craft
+            buff_time_bonus: Skill buff bonus to time limit (0.0-1.0+)
+            buff_quality_bonus: Skill buff bonus to quality (0.0-1.0+)
+
+        Returns:
+            AlchemyMinigame instance or None if recipe not found
+        """
         if recipe_id not in self.recipes:
             return None
 
         recipe = self.recipes[recipe_id]
-        tier = recipe.get('stationTier', 1)
 
-        return AlchemyMinigame(recipe, tier, buff_time_bonus, buff_quality_bonus)
+        # Pass full recipe for material-based difficulty calculation
+        return AlchemyMinigame(recipe, buff_time_bonus, buff_quality_bonus)
 
     def craft_with_minigame(self, recipe_id, inventory, minigame_result, item_metadata=None):
         """
         Craft with minigame result - gradient success with rarity modifiers
+
+        Failure penalty scales with difficulty:
+        - Low difficulty (Common): 30% material loss
+        - High difficulty (Legendary): 90% material loss
+        - Explosion adds extra 10% penalty
 
         Args:
             recipe_id: Recipe ID to craft
@@ -621,16 +764,23 @@ class AlchemyCrafter:
         recipe = self.recipes[recipe_id]
 
         if not minigame_result.get('success'):
-            # Failure - lose some materials
-            materials_lost = minigame_result.get('materials_lost', 0.5)
+            # Failure - use tier-scaled material loss from minigame result
+            loss_fraction = minigame_result.get('materials_lost', 0.5)
+
+            materials_lost_detail = {}
             for inp in recipe['inputs']:
-                loss = int(inp['quantity'] * materials_lost)
-                inventory[inp['materialId']] = max(0, inventory[inp['materialId']] - loss)
+                loss = int(inp['quantity'] * loss_fraction)
+                if loss > 0:
+                    inventory[inp['materialId']] = max(0, inventory[inp['materialId']] - loss)
+                    materials_lost_detail[inp['materialId']] = loss
 
             return {
                 "success": False,
                 "message": minigame_result.get('message', 'Brewing failed'),
-                "materials_lost": True
+                "materials_lost": True,
+                "materials_lost_detail": materials_lost_detail,
+                "loss_percentage": int(loss_fraction * 100),
+                "explosions": minigame_result.get('explosions', 0)
             }
 
         # Success - deduct full materials
