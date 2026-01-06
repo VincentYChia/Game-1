@@ -641,9 +641,10 @@ class EngineeringMinigame:
             self.hints_allowed = params['hints_allowed']
             self.slot_modifier = params.get('slot_modifier', 1.0)
             self.total_slots = params.get('total_slots', 1)
+            self.ideal_moves = params.get('ideal_moves', 7)  # 6-8 range based on difficulty
 
             print(f"[Engineering] Difficulty: {self.difficulty_points:.1f} pts ({self.difficulty_tier})")
-            print(f"             Puzzles: {self.puzzle_count}, Grid: {self.grid_size}x{self.grid_size}")
+            print(f"             Puzzles: {self.puzzle_count}, Grid: {self.grid_size}x{self.grid_size}, Ideal moves: {self.ideal_moves}")
 
         except ImportError:
             # Fallback to legacy tier-based system
@@ -660,6 +661,8 @@ class EngineeringMinigame:
         self.hints_allowed = max(0, 4 - tier)
         self.slot_modifier = 1.0
         self.total_slots = 1
+        # Ideal moves scales with tier: T1=6, T2=6, T3=7, T4=8
+        self.ideal_moves = min(8, 5 + tier)
 
         # Puzzle count based on tier
         if tier == 1:
@@ -719,6 +722,8 @@ class EngineeringMinigame:
             Puzzle instance
         """
         tier = self.difficulty_tier  # Now uses rarity-named tiers
+        # Get ideal_moves from difficulty calculation (6-8 range)
+        ideal_moves = getattr(self, 'ideal_moves', 7)
 
         if tier in ('common', 'uncommon'):
             # Common/Uncommon: Rotation puzzles only
@@ -732,7 +737,7 @@ class EngineeringMinigame:
             if index % 2 == 0:
                 return RotationPipePuzzle(grid, "medium")
             else:
-                return LogicSwitchPuzzle(grid, "easy")
+                return LogicSwitchPuzzle(grid, "easy", max_moves=ideal_moves)
 
         elif tier == 'epic':
             # Epic: Larger grids, harder logic puzzles
@@ -740,9 +745,9 @@ class EngineeringMinigame:
             if index % 3 == 0:
                 return RotationPipePuzzle(grid, "hard")
             elif index % 3 == 1:
-                return LogicSwitchPuzzle(grid, "medium")
+                return LogicSwitchPuzzle(grid, "medium", max_moves=ideal_moves)
             else:
-                return LogicSwitchPuzzle(min(grid + 1, 6), "hard")
+                return LogicSwitchPuzzle(min(grid + 1, 6), "hard", max_moves=ideal_moves)
 
         else:  # legendary
             # Legendary: All puzzle types with maximum difficulty
@@ -751,9 +756,9 @@ class EngineeringMinigame:
             if puzzle_type == 0:
                 return RotationPipePuzzle(min(grid + 1, 6), "hard")
             elif puzzle_type == 1:
-                return LogicSwitchPuzzle(min(grid + 1, 6), "hard")
+                return LogicSwitchPuzzle(min(grid + 1, 6), "hard", max_moves=ideal_moves)
             else:
-                return LogicSwitchPuzzle(6, "hard")  # Max difficulty
+                return LogicSwitchPuzzle(6, "hard", max_moves=ideal_moves)
 
     def handle_action(self, action_type, **kwargs):
         """

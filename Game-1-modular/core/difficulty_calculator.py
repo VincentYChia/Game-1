@@ -492,7 +492,49 @@ ENGINEERING_PARAMS = {
 
     # Hint count allowed - MORE hints for accessibility
     'hints_allowed': (4, 1),
+
+    # Ideal moves for logic switch puzzle (6-8 range)
+    # Lower = easier puzzle, higher = more complex
+    'ideal_moves': (6, 8),
 }
+
+# 12-tier thresholds for engineering ideal_moves distribution
+# Maps difficulty_points ranges to ideal_moves (6, 7, or 8)
+# Designed for roughly equal distribution across existing recipes
+ENGINEERING_IDEAL_MOVES_TIERS = [
+    # (max_difficulty_points, ideal_moves)
+    (3, 6),    # Tier 1: Very easy - 6 moves
+    (5, 6),    # Tier 2: Easy - 6 moves
+    (8, 6),    # Tier 3: Easy+ - 6 moves
+    (12, 6),   # Tier 4: Moderate-easy - 6 moves
+    (16, 7),   # Tier 5: Moderate - 7 moves
+    (22, 7),   # Tier 6: Moderate+ - 7 moves
+    (30, 7),   # Tier 7: Challenging - 7 moves
+    (40, 7),   # Tier 8: Hard - 7 moves
+    (52, 8),   # Tier 9: Very hard - 8 moves
+    (68, 8),   # Tier 10: Expert - 8 moves
+    (85, 8),   # Tier 11: Master - 8 moves
+    (999, 8),  # Tier 12: Legendary - 8 moves
+]
+
+
+def get_engineering_ideal_moves(difficulty_points: float) -> int:
+    """
+    Get ideal moves for logic switch puzzle based on 12-tier difficulty system.
+
+    Maps difficulty_points to ideal_moves (6, 7, or 8) using tiered thresholds
+    for roughly equal distribution across existing recipes.
+
+    Args:
+        difficulty_points: Calculated difficulty points
+
+    Returns:
+        Ideal moves (6, 7, or 8)
+    """
+    for max_pts, ideal_moves in ENGINEERING_IDEAL_MOVES_TIERS:
+        if difficulty_points <= max_pts:
+            return ideal_moves
+    return 8  # Default to max if above all tiers
 
 
 def calculate_engineering_difficulty(recipe: Dict) -> Dict:
@@ -532,6 +574,9 @@ def calculate_engineering_difficulty(recipe: Dict) -> Dict:
     params['complexity'] = max(1, min(4, int(round(params['complexity']))))
     params['hints_allowed'] = max(0, int(round(params['hints_allowed'])))
     params['time_limit'] = int(round(params['time_limit']))
+
+    # Calculate ideal_moves using 12-tier system (6-8 range)
+    params['ideal_moves'] = get_engineering_ideal_moves(total_points)
 
     # Add metadata
     params['difficulty_points'] = total_points
