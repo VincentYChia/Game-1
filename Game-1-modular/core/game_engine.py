@@ -1332,7 +1332,7 @@ class GameEngine:
                                     'difficulty_tier': f'Puzzle {puzzle_idx + 1}/{total}',
                                     'difficulty_points': self.active_minigame.difficulty_points,
                                     'time_limit': None,  # No time limit display for puzzle info
-                                    'max_bonus': 1.0,
+                                    'max_bonus': 1.0 + self.active_minigame.difficulty_points * 0.02,
                                     'special_params': {
                                         'Puzzle Mode': puzzle_mode,
                                         'Grid Size': f'{grid_size}x{grid_size}',
@@ -5100,22 +5100,26 @@ class GameEngine:
                             ('toggle', r, c)
                         ))
 
-                    # Cell background - simple ON (green) / OFF (dark) states only
+                    # Cell background - ON (green) / OFF (dark), with subtle orange if ON but should be OFF
                     if is_on:
-                        base_color = (80, 180, 110)  # Bright green for ON
+                        if matches_target:
+                            base_color = (80, 180, 110)  # Bright green for correct ON
+                        else:
+                            base_color = (160, 120, 70)  # Subtle orange for ON but should be OFF
                     else:
                         base_color = (50, 65, 75)    # Dark gray for OFF
 
                     pygame.draw.rect(surf, base_color, (int(x) + 2, y + 2, cell_size - 4, cell_size - 4), border_radius=8)
 
-                    # Border - normal border, but blue trace if OFF but should be ON
+                    # Border - blue trace if OFF but should be ON, orange if ON but should be OFF
                     if matches_target:
                         border_color = (130, 220, 150) if is_on else (80, 120, 100)
                     elif not is_on and target_is_on:
                         # OFF but should be ON - blue trace on surrounding square
                         border_color = (80, 140, 220)  # Noticeable blue
                     else:
-                        border_color = (100, 110, 120)  # Neutral for ON but should be OFF
+                        # ON but should be OFF - orange border
+                        border_color = (200, 150, 100)
                     pygame.draw.rect(surf, border_color, (int(x) + 2, y + 2, cell_size - 4, cell_size - 4), 2, border_radius=8)
 
                     # Switch indicator
@@ -5128,11 +5132,7 @@ class GameEngine:
                         pygame.draw.circle(glow_surf, (100, 220, 130, 100),
                                           (indicator_size * 3 // 2, indicator_size * 3 // 2), indicator_size * 3 // 2)
                         surf.blit(glow_surf, (cx - indicator_size * 3 // 2, cy - indicator_size * 3 // 2))
-                        if not matches_target:
-                            # ON but should be OFF - RED central dot
-                            pygame.draw.circle(surf, (220, 80, 80), (cx, cy), indicator_size)
-                        else:
-                            pygame.draw.circle(surf, (130, 240, 160), (cx, cy), indicator_size)
+                        pygame.draw.circle(surf, (130, 240, 160), (cx, cy), indicator_size)
                     else:
                         if not matches_target:
                             # OFF but should be ON - blue trace on circle too
