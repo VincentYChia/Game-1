@@ -500,21 +500,24 @@ ENGINEERING_PARAMS = {
 
 # 12-tier thresholds for engineering ideal_moves distribution
 # Maps difficulty_points ranges to ideal_moves (6, 7, or 8)
-# Designed for roughly equal distribution across existing recipes
+# Based on actual recipe distribution analysis:
+#   6 moves: 5 recipes (6.6 - 22.6 pts)
+#   7 moves: 5 recipes (31.9 - 55.8 pts)
+#   8 moves: 6 recipes (62.4 - 122.2 pts)
 ENGINEERING_IDEAL_MOVES_TIERS = [
     # (max_difficulty_points, ideal_moves)
-    (3, 6),    # Tier 1: Very easy - 6 moves
-    (5, 6),    # Tier 2: Easy - 6 moves
-    (8, 6),    # Tier 3: Easy+ - 6 moves
-    (12, 6),   # Tier 4: Moderate-easy - 6 moves
-    (16, 7),   # Tier 5: Moderate - 7 moves
-    (22, 7),   # Tier 6: Moderate+ - 7 moves
-    (30, 7),   # Tier 7: Challenging - 7 moves
-    (40, 7),   # Tier 8: Hard - 7 moves
-    (52, 8),   # Tier 9: Very hard - 8 moves
-    (68, 8),   # Tier 10: Expert - 8 moves
-    (85, 8),   # Tier 11: Master - 8 moves
-    (999, 8),  # Tier 12: Legendary - 8 moves
+    (8, 6),    # Tier 1: simple_bomb (6.6) - 6 moves
+    (13, 6),   # Tier 2: spike_trap (12.0) - 6 moves
+    (18, 6),   # Tier 3: frost_mine (17.8) - 6 moves
+    (23, 6),   # Tier 4: basic_arrow_turret (21.8), fire_bomb (22.6) - 6 moves
+    (35, 7),   # Tier 5: bear_trap (31.9) - 7 moves
+    (44, 7),   # Tier 6: fire_arrow_turret (42.8) - 7 moves
+    (50, 7),   # Tier 7: grappling_hook (44.6) - 7 moves
+    (56, 7),   # Tier 8: healing_beacon (55.8), emp_device (55.8) - 7 moves
+    (68, 8),   # Tier 9: cluster_bomb (62.4), net_launcher (67.2) - 8 moves
+    (76, 8),   # Tier 10: lightning_cannon (71.4), flamethrower (75.2) - 8 moves
+    (100, 8),  # Tier 11: laser_turret (93.6) - 8 moves
+    (999, 8),  # Tier 12: jetpack (122.2) - 8 moves
 ]
 
 
