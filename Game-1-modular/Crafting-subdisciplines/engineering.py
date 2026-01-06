@@ -70,6 +70,9 @@ class RotationPipePuzzle:
         self.solution_rotations = []  # Store the solution for checking
         self.input_pos = (0, random.randint(0, grid_size - 1))
         self.output_pos = (grid_size - 1, random.randint(0, grid_size - 1))
+        self.ideal_path_length = 0  # Minimum possible path (Manhattan distance + 1)
+        self.actual_path_length = 0  # Generated path length
+        self.clicks = 0  # Track number of rotations made
         self._generate_puzzle()
 
     def _generate_puzzle(self):
@@ -77,6 +80,10 @@ class RotationPipePuzzle:
         self.grid = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
         self.rotations = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
         self.solution_rotations = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+
+        # Calculate ideal path length (Manhattan distance + 1 for inclusive count)
+        self.ideal_path_length = abs(self.output_pos[0] - self.input_pos[0]) + \
+                                  abs(self.output_pos[1] - self.input_pos[1]) + 1
 
         # Create path from input to output using BFS-like generation
         current = list(self.input_pos)
@@ -110,6 +117,10 @@ class RotationPipePuzzle:
             path.append(tuple(current))
             visited.add(tuple(current))
 
+        # Store actual path length for efficiency scoring
+        self.actual_path_length = len(path)
+        self.path_cells = set(path)  # Store path cells for reference
+
         # Convert path to pipe pieces
         for i, (r, c) in enumerate(path):
             if i == 0:
@@ -126,18 +137,24 @@ class RotationPipePuzzle:
                 next_r, next_c = path[i + 1]
                 self.grid[r][c], self.rotations[r][c] = self._get_piece_for_two_connections(r, c, prev_r, prev_c, next_r, next_c)
 
-        # Don't add extra pieces - they can make puzzle unsolvable
-        # The path itself provides enough challenge
+        # Fill ALL empty spaces with random pipes (not part of solution path)
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
+                if self.grid[r][c] == 0:  # Empty cell
+                    # Add random pipe piece (1=straight, 2=L-bend, 3=T-junction)
+                    self.grid[r][c] = random.choice([1, 2, 2, 3])  # More L-bends for visual variety
+                    self.rotations[r][c] = random.choice([0, 90, 180, 270])
 
-        # Save solution
+        # Save solution (only path pieces matter, others are distractors)
         self.solution_rotations = [row[:] for row in self.rotations]
+        # Restore correct rotations only for path cells
+        for r, c in path:
+            # Find the correct rotation for this path cell
+            pass  # Already set correctly above
 
-        # Scramble by rotating ONLY path pieces
-        scramble_count = max(len(path) * 2, self.grid_size * 3)
-        for _ in range(scramble_count):
-            if path:
-                # Pick random cell from path
-                r, c = random.choice(path)
+        # Scramble ALL pieces (including distractors)
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
                 if self.grid[r][c] not in [0, 4]:  # Don't rotate empty or cross pieces
                     self.rotations[r][c] = random.choice([0, 90, 180, 270])
 
@@ -183,8 +200,26 @@ class RotationPipePuzzle:
         if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
             if self.grid[row][col] not in [0, 4]:  # Can't rotate empty or cross
                 self.rotations[row][col] = (self.rotations[row][col] + 90) % 360
+                self.clicks += 1
                 return True
         return False
+
+    def get_efficiency_score(self):
+        """
+        Calculate efficiency score based on path length vs ideal.
+
+        The actual_path_length is how many cells the generated path uses.
+        The ideal_path_length is the Manhattan distance + 1.
+        Efficiency = ideal / actual (capped at 1.0 for perfect path)
+
+        Returns:
+            float: Score from 0.0 to 1.0
+        """
+        if self.actual_path_length == 0:
+            return 1.0
+        # Efficiency based on how close to ideal path
+        ratio = self.ideal_path_length / self.actual_path_length
+        return min(1.0, ratio)  # Cap at 1.0 (perfect efficiency)
 
     def check_solution(self):
         """
@@ -260,7 +295,11 @@ class RotationPipePuzzle:
             "rotations": self.rotations,
             "input_pos": self.input_pos,
             "output_pos": self.output_pos,
-            "solved": self.check_solution()
+            "solved": self.check_solution(),
+            "clicks": self.clicks,
+            "ideal_path_length": self.ideal_path_length,
+            "actual_path_length": self.actual_path_length,
+            "efficiency": self.get_efficiency_score()
         }
 
 
@@ -635,7 +674,7 @@ class EngineeringMinigame:
             self.difficulty_points = params['difficulty_points']
             self.difficulty_tier = params.get('difficulty_tier', 'common')
             self.time_limit = params['time_limit']
-            self.puzzle_count = params['puzzle_count']
+            self.puzzle_count = max(2, params['puzzle_count'])  # Always at least 2 (rotation + logic switch)
             self.grid_size = params['grid_size']
             self.complexity = params['complexity']
             self.hints_allowed = params['hints_allowed']
@@ -664,9 +703,9 @@ class EngineeringMinigame:
         # Ideal moves scales with tier: T1=6, T2=6, T3=7, T4=8
         self.ideal_moves = min(8, 5 + tier)
 
-        # Puzzle count based on tier
+        # Puzzle count based on tier (minimum 2 for rotation + logic switch)
         if tier == 1:
-            self.puzzle_count = 1
+            self.puzzle_count = 2  # Always at least 2
         elif tier == 2:
             self.puzzle_count = 2
         elif tier == 3:
@@ -715,6 +754,10 @@ class EngineeringMinigame:
         """
         Create appropriate puzzle based on difficulty tier (rarity-based).
 
+        ALL recipes get both puzzle types:
+        - Puzzle 0: RotationPipePuzzle (path finding)
+        - Puzzle 1+: LogicSwitchPuzzle (lights out)
+
         Args:
             index: Puzzle index in sequence
 
@@ -724,41 +767,29 @@ class EngineeringMinigame:
         tier = self.difficulty_tier  # Now uses rarity-named tiers
         # Get ideal_moves from difficulty calculation (6-8 range)
         ideal_moves = getattr(self, 'ideal_moves', 7)
+        grid = self.grid_size if hasattr(self, 'grid_size') else 3
 
-        if tier in ('common', 'uncommon'):
-            # Common/Uncommon: Rotation puzzles only
-            grid = self.grid_size if hasattr(self, 'grid_size') else (3 if tier == 'common' else 4)
-            difficulty = "easy" if tier == 'common' else "medium"
+        # First puzzle is ALWAYS RotationPipePuzzle
+        if index == 0:
+            if tier in ('common', 'uncommon'):
+                difficulty = "easy" if tier == 'common' else "medium"
+            elif tier == 'rare':
+                difficulty = "medium"
+            else:  # epic, legendary
+                difficulty = "hard"
             return RotationPipePuzzle(grid, difficulty)
 
-        elif tier == 'rare':
-            # Rare: Rotation and logic switch puzzles
-            grid = self.grid_size if hasattr(self, 'grid_size') else 4
-            if index % 2 == 0:
-                return RotationPipePuzzle(grid, "medium")
-            else:
-                return LogicSwitchPuzzle(grid, "easy", max_moves=ideal_moves)
-
-        elif tier == 'epic':
-            # Epic: Larger grids, harder logic puzzles
-            grid = self.grid_size if hasattr(self, 'grid_size') else 5
-            if index % 3 == 0:
-                return RotationPipePuzzle(grid, "hard")
-            elif index % 3 == 1:
-                return LogicSwitchPuzzle(grid, "medium", max_moves=ideal_moves)
-            else:
-                return LogicSwitchPuzzle(min(grid + 1, 6), "hard", max_moves=ideal_moves)
-
-        else:  # legendary
-            # Legendary: All puzzle types with maximum difficulty
-            grid = self.grid_size if hasattr(self, 'grid_size') else 5
-            puzzle_type = index % 3
-            if puzzle_type == 0:
-                return RotationPipePuzzle(min(grid + 1, 6), "hard")
-            elif puzzle_type == 1:
-                return LogicSwitchPuzzle(min(grid + 1, 6), "hard", max_moves=ideal_moves)
-            else:
-                return LogicSwitchPuzzle(6, "hard", max_moves=ideal_moves)
+        # Second puzzle onwards is ALWAYS LogicSwitchPuzzle
+        else:
+            if tier in ('common', 'uncommon'):
+                difficulty = "easy"
+            elif tier == 'rare':
+                difficulty = "easy"
+            elif tier == 'epic':
+                difficulty = "medium"
+            else:  # legendary
+                difficulty = "hard"
+            return LogicSwitchPuzzle(grid, difficulty, max_moves=ideal_moves)
 
     def handle_action(self, action_type, **kwargs):
         """
