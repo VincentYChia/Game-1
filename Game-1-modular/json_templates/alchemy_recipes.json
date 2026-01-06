@@ -1,0 +1,590 @@
+{
+  "_meta": {
+    "category": "alchemy_recipes",
+    "llm_purpose": "Recipe LLM for alchemy - creates potion/consumable crafting recipes",
+    "generated_at": "2026-01-04T04:41:13.658441",
+    "total_items": 54,
+    "source_files": [
+      "placements.JSON/placements-alchemy-1.JSON",
+      "recipes.JSON/recipes-alchemy-1.JSON",
+      "recipes.JSON/recipes-tag-tests.JSON"
+    ]
+  },
+  "_all_possible_values": {
+    "ingredients[].materialId": {
+      "values": [
+        "air_crystal",
+        "beetle_carapace",
+        "coal",
+        "copper_ingot",
+        "crystal_quartz",
+        "dire_fang",
+        "dragon_scale",
+        "earth_crystal",
+        "essence_blood",
+        "fire_crystal",
+        "frost_essence",
+        "gold_ingot",
+        "golem_core",
+        "iron_ingot",
+        "iron_scales",
+        "light_gem",
+        "lightning_shard",
+        "limestone",
+        "living_ichor",
+        "phoenix_ash",
+        "shadow_core",
+        "slime_gel",
+        "spectral_thread",
+        "storm_heart",
+        "void_essence",
+        "voidstone",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "total_unique": 28,
+      "types": [
+        "string"
+      ],
+      "occurrences": 91
+    },
+    "ingredients[].quantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total_unique": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 91
+    },
+    "ingredients[].slot": {
+      "values": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "total_unique": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 91
+    },
+    "inputs[].materialId": {
+      "values": [
+        "air_crystal",
+        "beetle_carapace",
+        "coal",
+        "copper_ingot",
+        "dire_fang",
+        "earth_crystal",
+        "essence_blood",
+        "fire_crystal",
+        "frost_essence",
+        "golem_core",
+        "iron_ingot",
+        "light_gem",
+        "limestone",
+        "living_ichor",
+        "phoenix_ash",
+        "shadow_core",
+        "slime_gel",
+        "spectral_thread",
+        "storm_heart",
+        "void_essence",
+        "voidstone",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "total_unique": 23,
+      "types": [
+        "string"
+      ],
+      "occurrences": 53
+    },
+    "inputs[].quantity": {
+      "values": [
+        1,
+        10,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total_unique": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 53
+    },
+    "metadata.narrative": {
+      "values": [
+        "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation.",
+        "Combining all basic elements into a harmony potion. Balance in bottle.",
+        "Crystallizing fire essence from raw materials. Chaos becomes order.",
+        "Defense-boosting potion using earth crystals. Skin hardens like stone.",
+        "Fire resistance potion using phoenix ash. Flames cannot harm you.",
+        "Frost resistance potion using frost essence. Cold cannot touch you.",
+        "Improved healing potion using water crystals to amplify restorative properties.",
+        "Oil that makes tools work faster and smoother. Efficiency soars.",
+        "Polish that makes armor gleam and deflect attacks. Sheen turns blades.",
+        "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly.",
+        "Refining raw life force into pure essence blood. No impurities, pure vitality.",
+        "Regeneration tonic that mends wounds over time. Body remembers how to heal continuously.",
+        "Speed-enhancing draught using air crystals and spectral thread. Time seems to slow.",
+        "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power.",
+        "TEST: Alchemy with BOTH potion and transmutation tags (potion should win)",
+        "TEST: Alchemy with EMPTY tags array",
+        "TEST: Alchemy with NO potion/transmutation tag (should default to transmutation)",
+        "TEST: Alchemy with explicit 'potion' tag",
+        "TEST: Alchemy with explicit 'transmutation' tag",
+        "TEST: Alchemy with multiple effect tags",
+        "Transmuting basic copper into tin. Foundation of alchemical wealth.",
+        "Transmuting iron into steel through alchemical process. Alchemy surpasses forging.",
+        "Ultimate power brew using legendary materials. You feel unstoppable.",
+        "Universal solvent that dissolves anything. Miss timing, dissolves cauldron itself."
+      ],
+      "total_unique": 24,
+      "types": [
+        "string"
+      ],
+      "occurrences": 24
+    },
+    "metadata.tags": {
+      "values": [
+        "advanced",
+        "armor",
+        "basic",
+        "buff",
+        "crystallization",
+        "dangerous",
+        "defense",
+        "elemental",
+        "enhancement",
+        "essence",
+        "fire",
+        "frost",
+        "gold",
+        "healing",
+        "legendary",
+        "metal",
+        "potion",
+        "purification",
+        "quality",
+        "regeneration",
+        "resistance",
+        "speed",
+        "standard",
+        "starter",
+        "strength",
+        "tool",
+        "transmutation",
+        "utility"
+      ],
+      "total_unique": 28,
+      "types": [
+        "array"
+      ],
+      "occurrences": 24
+    },
+    "miniGame.baseTime": {
+      "values": [
+        20,
+        30,
+        35,
+        40,
+        45,
+        50,
+        60,
+        75,
+        90
+      ],
+      "total_unique": 9,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 18
+    },
+    "miniGame.difficulty": {
+      "values": [
+        "easy",
+        "extreme",
+        "hard",
+        "moderate"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 18
+    },
+    "miniGame.type": {
+      "values": [
+        "alchemy"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 18
+    },
+    "narrative": {
+      "values": [
+        "Air crystal creates speed foundation. Lightning shard adds electric quickness. Spectral thread binds temporal acceleration. Move like lightning.",
+        "Air crystals create fluid motion essence. Spectral thread lightens body, quickens reflexes. Slime gel binds to living form. World seems to slow.",
+        "Air crystals deny gravity. Spectral thread lightens physical form. Void essence completes separation from earth. Living ichor binds to body. You float.",
+        "Copper dissolves first into base form. Fire crystal catalyzes transformation to tin. Foundation of alchemical wealth.",
+        "Crystal quartz creates magical base, pure potential. Light gems infuse arcane energy. Water crystals stabilize volatile magic into drinkable form. Mana floods back.",
+        "Dire fangs dissolve first, releasing strength essence. Fire crystals amplify power. Beetle carapace adds durability to effect. Too early blocks absorption, too late makes it brief.",
+        "Dire fangs release primal fury. Fire crystals ignite rage. Storm heart adds raw power. Living ichor binds controlled chaos. Unleash inner beast.",
+        "Dire fangs release venom. Shadow core amplifies toxicity. Slime gel stabilizes for storage. Coat weapons with deadly brew.",
+        "Essence blood provides foundation. Light gem illuminates and purifies. Living ichor amplifies. Miss a peak, lose potency - catch them all, wounds close rapidly.",
+        "Fire crystals generate inner warmth. Phoenix ash adds perpetual heat never fading. Slime gel spreads throughout body. Cold cannot touch you.",
+        "Fire then water - must balance before adding earth. Air completes cycle. Balance in bottle - all elements recognize you as kin.",
+        "Gold base for perfection. Dragon scale adds ancient power. Essence blood provides life. Void essence enables transmutation. Phoenix ash grants rebirth. Storm heart completes opus. Magnum achievement of alchemy.",
+        "Golem core provides titan strength. Storm heart adds raw power. Phoenix ash ensures perpetual effect. Essence blood binds all. You feel unstoppable.",
+        "Iron dissolves to potential. Coal provides carbon. Fire crystal bonds them into steel. Alchemy surpasses forging.",
+        "Iron scales dissolve into liquid stone base. Earth crystal adds flexible protection. Golem core solidifies without rigidity. Skin hardens like metal.",
+        "Light gems infuse eyes with illumination. Shadow core teaches seeing through darkness. Living ichor carries to vision. Darkness becomes irrelevant.",
+        "Limestone dissolves, creating crystalline matrix. Phoenix ash ignites transformation. Chaos becomes order - heat solidifies into stable crystal.",
+        "Limestone grinds to powder. Light gem infuses protective shimmer. Slime gel binds into paste. Sheen turns blades.",
+        "Living ichor creates sustained healing potential. Light gems infuse persistent illumination. Essence blood binds regenerative effect. Body remembers how to heal continuously.",
+        "Living ichor provides life force base. Water crystals amplify properties. Slime gel completes stabilization. Each stage must settle before next.",
+        "Living ichor provides raw life force. Light gems purify and concentrate. Pure essence emerges - no impurities, pure vitality.",
+        "Living ichor purges toxins from blood. Light gem illuminates and neutralizes poison. Simple but effective - corruption burns away.",
+        "Shadow cores create concealment base. Spectral thread bends light around you. Void essence completes erasure. Living ichor binds to living form. You become absence.",
+        "Slime gel creates base. Fire crystal adds warming confidence. Simple but effective - fear melts away.",
+        "Slime gel creates slick base. Spectral thread adds supernatural efficiency. Water crystal prevents evaporation. Productivity soars.",
+        "Slime gel dissolves first, creating restorative base. Wolf pelt binds mixture second. Watch for gentle green glow - too quick and they won't merge.",
+        "Storm heart provides raw lightning. Crystal quartz captures and stabilizes. Electricity crystallizes into solid form.",
+        "Void essence unmakes matter. Shadow cores channel dissolution. Voidstone stabilizes impossible. Miss timing, dissolves cauldron itself.",
+        "Water crystals attune body to aquatic existence. Air crystals teach lungs extracting oxygen from water. Living ichor completes transformation. Breathe liquid as air.",
+        "Water crystals create cooling base. Frost essence adds cold countering flame. Slime gel binds protection to skin. Fire cannot touch you."
+      ],
+      "total_unique": 30,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "outputId": {
+      "values": [
+        "antidote",
+        "armor_polish",
+        "berserker_rage_potion",
+        "efficiency_oil",
+        "elemental_harmony_potion",
+        "essence_blood",
+        "fire_crystal",
+        "fire_resistance_potion",
+        "frost_resistance_potion",
+        "greater_health_potion",
+        "haste_potion",
+        "health_potion",
+        "invisibility_potion",
+        "iron_skin_potion",
+        "levitation_elixir",
+        "lightning_shard",
+        "liquid_courage",
+        "mana_potion",
+        "minor_health_potion",
+        "night_vision_elixir",
+        "philosophers_stone",
+        "poison_vial",
+        "regeneration_tonic",
+        "steel_ingot",
+        "strength_elixir",
+        "swiftness_draught",
+        "test_conflicting_output",
+        "test_default_output",
+        "test_gold_nugget",
+        "test_healing_potion",
+        "test_multi_effect_potion",
+        "test_tagless_output",
+        "tin_ingot",
+        "titans_brew",
+        "universal_solvent",
+        "water_breathing_potion"
+      ],
+      "total_unique": 36,
+      "types": [
+        "string"
+      ],
+      "occurrences": 54
+    },
+    "outputQty": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 24
+    },
+    "recipeId": {
+      "values": [
+        "alchemy_antidote",
+        "alchemy_armor_polish",
+        "alchemy_berserker_rage",
+        "alchemy_crystallize_fire",
+        "alchemy_crystallize_lightning",
+        "alchemy_efficiency_oil",
+        "alchemy_elemental_harmony",
+        "alchemy_fire_resistance_potion",
+        "alchemy_frost_resistance_potion",
+        "alchemy_greater_health_potion",
+        "alchemy_haste_potion",
+        "alchemy_health_potion",
+        "alchemy_invisibility_potion",
+        "alchemy_iron_skin_potion",
+        "alchemy_levitation_elixir",
+        "alchemy_liquid_courage",
+        "alchemy_mana_potion",
+        "alchemy_minor_health_potion",
+        "alchemy_night_vision_elixir",
+        "alchemy_philosophers_stone",
+        "alchemy_poison_vial",
+        "alchemy_refine_essence_blood",
+        "alchemy_regeneration_tonic",
+        "alchemy_strength_elixir",
+        "alchemy_swiftness_draught",
+        "alchemy_titans_brew",
+        "alchemy_transmute_copper_tin",
+        "alchemy_transmute_iron_steel",
+        "alchemy_universal_solvent",
+        "alchemy_water_breathing_potion",
+        "test_alchemy_conflicting_type",
+        "test_alchemy_default_type",
+        "test_alchemy_empty_tags",
+        "test_alchemy_explicit_potion",
+        "test_alchemy_explicit_transmutation",
+        "test_alchemy_multiple_effects"
+      ],
+      "total_unique": 36,
+      "types": [
+        "string"
+      ],
+      "occurrences": 54
+    },
+    "stationTier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 54
+    },
+    "stationType": {
+      "values": [
+        "alchemy"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 24
+    }
+  },
+  "_usable_template": {
+    "ingredients": [
+      "<value>"
+    ],
+    "inputs": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Transmuting basic copper into tin. Foundation of alchemical wealth.",
+      "tags": [
+        "standard",
+        "armor",
+        "defense"
+      ]
+    },
+    "miniGame": {
+      "baseTime": 35,
+      "difficulty": "easy",
+      "type": "alchemy"
+    },
+    "narrative": "Limestone dissolves, creating crystalline matrix. Phoenix ash ignites transformation. Chaos becomes order - heat solidifies into stable crystal.",
+    "outputId": "regeneration_tonic",
+    "outputQty": 1,
+    "recipeId": "alchemy_frost_resistance_potion",
+    "stationTier": 1,
+    "stationType": "alchemy"
+  },
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation.",
+        "tags": [
+          "potion",
+          "healing",
+          "starter"
+        ]
+      },
+      "recipeId": "alchemy_minor_health_potion",
+      "outputId": "minor_health_potion",
+      "outputQty": 3,
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "inputs": [
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "easy",
+        "baseTime": 20
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Improved healing potion using water crystals to amplify restorative properties.",
+        "tags": [
+          "potion",
+          "healing",
+          "standard"
+        ]
+      },
+      "recipeId": "alchemy_health_potion",
+      "outputId": "health_potion",
+      "outputQty": 3,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {
+          "materialId": "living_ichor",
+          "quantity": 2
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 30
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly.",
+        "tags": [
+          "potion",
+          "healing",
+          "quality"
+        ]
+      },
+      "recipeId": "alchemy_greater_health_potion",
+      "outputId": "greater_health_potion",
+      "outputQty": 3,
+      "stationTier": 3,
+      "stationType": "alchemy",
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 3
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "hard",
+        "baseTime": 45
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power.",
+        "tags": [
+          "potion",
+          "buff",
+          "strength"
+        ]
+      },
+      "recipeId": "alchemy_strength_elixir",
+      "outputId": "strength_elixir",
+      "outputQty": 2,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 3
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 35
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Defense-boosting potion using earth crystals. Skin hardens like stone.",
+        "tags": [
+          "potion",
+          "buff",
+          "defense"
+        ]
+      },
+      "recipeId": "alchemy_iron_skin_potion",
+      "outputId": "iron_skin_potion",
+      "outputQty": 2,
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 4
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "alchemy",
+        "difficulty": "moderate",
+        "baseTime": 35
+      }
+    }
+  ]
+}

@@ -1,0 +1,513 @@
+{
+  "_meta": {
+    "category": "engineering_recipes",
+    "llm_purpose": "Recipe LLM for engineering - creates device/gadget crafting recipes",
+    "generated_at": "2026-01-04T04:41:13.669553",
+    "total_items": 41,
+    "source_files": [
+      "placements.JSON/placements-engineering-1.JSON",
+      "recipes.JSON/recipes-engineering-1.JSON"
+    ]
+  },
+  "_all_possible_values": {
+    "inputs[].materialId": {
+      "values": [
+        "air_crystal",
+        "beetle_carapace",
+        "blast_powder",
+        "crystal_quartz",
+        "dire_fang",
+        "fire_crystal",
+        "frost_essence",
+        "iron_ingot",
+        "light_gem",
+        "lightning_shard",
+        "living_ichor",
+        "mithril_ingot",
+        "orichalcum_ingot",
+        "phoenix_ash",
+        "pine_plank",
+        "spectral_thread",
+        "steel_ingot",
+        "storm_heart",
+        "water_crystal"
+      ],
+      "total_unique": 19,
+      "types": [
+        "string"
+      ],
+      "occurrences": 48
+    },
+    "inputs[].quantity": {
+      "values": [
+        10,
+        12,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8
+      ],
+      "total_unique": 8,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 48
+    },
+    "metadata.narrative": {
+      "values": [
+        "Basic arrow turret using simple springs and levers. Point away from face.",
+        "Bear trap with brutal steel jaws. Immobilizes anything that steps on it.",
+        "Cluster bomb that splits into multiple explosives. Maximum coverage.",
+        "EMP device that disables electronic enemies and devices. Technology's worst nightmare.",
+        "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense.",
+        "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone.",
+        "Flamethrower turret that sweeps area with fire. Excellent for crowd control.",
+        "Frost mine that erupts in a blast of ice shards. The cold bites deep.",
+        "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces.",
+        "Healing beacon that emanates restorative energy. The light feels warm, comforting.",
+        "Jetpack for brief flight. Fuel not included (but fire crystals work great).",
+        "Laser turret using focused light crystals. Precise and devastating.",
+        "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous.",
+        "Net launcher that ensnares enemies. Reduces movement speed dramatically.",
+        "Simple explosive using blast powder in iron casing. Universal problem solver.",
+        "Spike trap with spring-loaded iron spikes. Simple, brutal, effective."
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "metadata.tags": {
+      "values": [
+        "advanced",
+        "area",
+        "basic",
+        "bomb",
+        "cluster",
+        "crowd-control",
+        "disable",
+        "elemental",
+        "explosive",
+        "fire",
+        "flight",
+        "frost",
+        "healing",
+        "immobilize",
+        "light",
+        "lightning",
+        "mobility",
+        "physical",
+        "precision",
+        "projectile",
+        "support",
+        "tech",
+        "tool",
+        "trap",
+        "turret",
+        "utility"
+      ],
+      "total_unique": 26,
+      "types": [
+        "array"
+      ],
+      "occurrences": 16
+    },
+    "miniGame.baseTime": {
+      "values": [
+        25,
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        60,
+        65,
+        70,
+        75
+      ],
+      "total_unique": 11,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "miniGame.difficulty": {
+      "values": [
+        "easy",
+        "extreme",
+        "hard",
+        "moderate"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "miniGame.type": {
+      "values": [
+        "engineering"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "narrative": {
+      "values": [
+        "Automated collector - iron houses mechanism, light gem identifies targets, spectral thread extends reach, slime gel provides adhesive grip. Saves countless trips.",
+        "Basic arrow turret - iron frame for stability, oak mechanism for firing, beetle carapace provides spring tension. Point away from face.",
+        "Bear trap - steel forms jaw mechanism, dire fangs form serrated edges. Once closed, nothing escapes. Perfect spring tension required.",
+        "Cluster bomb - steel casing fragments, blast powder creates multiple charges, air crystals ensure wide dispersal. Maximum coverage.",
+        "EMP device - orichalcum frame channels energy, lightning shards provide pulse, storm heart amplifies. Technology's nightmare.",
+        "Fire arrow turret - steel frame withstands heat, birch mechanism fires, fire crystals ignite projectiles. Warm touch to home defense.",
+        "Fire bomb - steel casing survives blast, blast powder creates explosion, fire crystals add burning. Melts stone.",
+        "Flamethrower turret - steel frame withstands heat, fire crystals fuel inferno, phoenix ash ensures perpetual burn. Excellent crowd control.",
+        "Frost mine - iron casing protects mechanism, blast powder triggers, frost essence provides freezing blast. Bury and wait.",
+        "Grappling hook - iron forms hook, spectral thread creates unbreakable line, air crystals enable vertical mobility. Hooks distant surfaces.",
+        "Healing beacon - steel frame supports, light gems project aura, living ichor provides life force, water crystals extend radius. Continuous healing.",
+        "Jetpack for brief flight - mithril frame lightweight, fire crystals provide thrust, air crystals stabilize, phoenix ash ensures sustained burn. Fuel not included.",
+        "Laser turret - mithril frame reflects energy, light gems provide power, crystal quartz lenses focus to cutting intensity. Precise and devastating.",
+        "Lightning cannon - mithril frame conducts perfectly, ironwood mechanism directs, lightning shards provide power, storm heart amplifies. Extremely effective, extremely dangerous.",
+        "Net launcher - iron frame launches, spectral thread forms unbreakable net, beetle carapace weights edges. Reduces movement dramatically.",
+        "Poison gas trap - iron casing contains, slime gel creates gas, shadow cores amplify toxicity. Choking clouds on trigger.",
+        "Proximity alarm - iron housing protects, light gem detects movement, beetle carapace creates sound. Simple but effective early warning.",
+        "Repair drone - mithril frame enables flight, light gem powers systems, spectral thread manipulates tools, living ichor enables restoration. Fixes what breaks.",
+        "Scanner detecting resources - steel houses sensors, light gems power scanning, crystal quartz focuses detection, air crystals enable remote sensing. Knowledge is power.",
+        "Shield generator creating barrier - steel supports projectors, light gems power field, crystal quartz shapes barrier, water crystals distribute energy. Damage breaks on barrier.",
+        "Simple explosive - iron casing contains, blast powder explodes. Universal problem solver.",
+        "Slow field generator - iron anchors reality, frost essence creates temporal drag, crystal projects field, water stabilizes. Everything moves through frozen honey.",
+        "Spike trap - iron base forms platform, steel spikes deliver damage, beetle carapace provides snap force. Simple but brutal.",
+        "Teleporter folding space - etherion anchors reality, chaos matrix enables impossible, void essence tears dimensions, genesis lattice stabilizes. Science or magic? Yes.",
+        "Void bomb creating spatial tears - adamantine contains impossible, void essence tears reality, blast powder triggers, voidstone amplifies. Do not use indoors."
+      ],
+      "total_unique": 25,
+      "types": [
+        "string"
+      ],
+      "occurrences": 25
+    },
+    "outputId": {
+      "values": [
+        "auto_collector",
+        "basic_arrow_turret",
+        "bear_trap",
+        "cluster_bomb",
+        "emp_device",
+        "fire_arrow_turret",
+        "fire_bomb",
+        "flamethrower_turret",
+        "frost_mine",
+        "grappling_hook",
+        "healing_beacon",
+        "jetpack",
+        "laser_turret",
+        "lightning_cannon",
+        "net_launcher",
+        "poison_trap",
+        "proximity_alarm",
+        "repair_drone",
+        "resource_scanner",
+        "shield_generator",
+        "simple_bomb",
+        "slow_field_generator",
+        "spike_trap",
+        "teleporter_pad",
+        "void_bomb"
+      ],
+      "total_unique": 25,
+      "types": [
+        "string"
+      ],
+      "occurrences": 41
+    },
+    "outputQty": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "recipeId": {
+      "values": [
+        "engineering_auto_collector",
+        "engineering_basic_arrow_turret",
+        "engineering_bear_trap",
+        "engineering_cluster_bomb",
+        "engineering_emp_device",
+        "engineering_fire_arrow_turret",
+        "engineering_fire_bomb",
+        "engineering_flamethrower_turret",
+        "engineering_frost_mine",
+        "engineering_grappling_hook",
+        "engineering_healing_beacon",
+        "engineering_jetpack",
+        "engineering_laser_turret",
+        "engineering_lightning_cannon",
+        "engineering_net_launcher",
+        "engineering_poison_trap",
+        "engineering_proximity_alarm",
+        "engineering_repair_drone",
+        "engineering_resource_scanner",
+        "engineering_shield_generator",
+        "engineering_simple_bomb",
+        "engineering_slow_field_generator",
+        "engineering_spike_trap",
+        "engineering_teleporter",
+        "engineering_void_bomb"
+      ],
+      "total_unique": 25,
+      "types": [
+        "string"
+      ],
+      "occurrences": 41
+    },
+    "slots[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "air_crystal",
+        "beetle_carapace",
+        "birch_plank",
+        "blast_powder",
+        "chaos_matrix",
+        "crystal_quartz",
+        "dire_fang",
+        "etherion_ingot",
+        "fire_crystal",
+        "frost_essence",
+        "genesis_lattice",
+        "iron_ingot",
+        "ironwood_plank",
+        "light_gem",
+        "lightning_shard",
+        "living_ichor",
+        "mithril_ingot",
+        "oak_plank",
+        "orichalcum_ingot",
+        "phoenix_ash",
+        "shadow_core",
+        "slime_gel",
+        "spectral_thread",
+        "steel_ingot",
+        "storm_heart",
+        "void_essence",
+        "voidstone",
+        "water_crystal"
+      ],
+      "total_unique": 29,
+      "types": [
+        "string"
+      ],
+      "occurrences": 83
+    },
+    "slots[].quantity": {
+      "values": [
+        1,
+        10,
+        12,
+        2,
+        3,
+        4,
+        5,
+        6,
+        8
+      ],
+      "total_unique": 9,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 83
+    },
+    "slots[].type": {
+      "values": [
+        "FRAME",
+        "FUNCTION",
+        "MODIFIER",
+        "POWER",
+        "UTILITY"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 83
+    },
+    "stationTier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 41
+    },
+    "stationType": {
+      "values": [
+        "engineering"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    }
+  },
+  "_usable_template": {
+    "inputs": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Laser turret using focused light crystals. Precise and devastating.",
+      "tags": [
+        "bomb",
+        "explosive",
+        "immobilize"
+      ]
+    },
+    "miniGame": {
+      "baseTime": 65,
+      "difficulty": "easy",
+      "type": "engineering"
+    },
+    "narrative": "Slow field generator - iron anchors reality, frost essence creates temporal drag, crystal projects field, water stabilizes. Everything moves through frozen honey.",
+    "outputId": "shield_generator",
+    "outputQty": 1,
+    "recipeId": "engineering_basic_arrow_turret",
+    "slots": [
+      "<value>"
+    ],
+    "stationTier": 1,
+    "stationType": "engineering"
+  },
+  "_sample_items": [
+    {
+      "recipeId": "engineering_basic_arrow_turret",
+      "outputId": "basic_arrow_turret",
+      "stationTier": 1,
+      "slots": [
+        {
+          "type": "FRAME",
+          "materialId": "iron_ingot",
+          "quantity": 4
+        },
+        {
+          "type": "FUNCTION",
+          "materialId": "oak_plank",
+          "quantity": 3
+        },
+        {
+          "type": "POWER",
+          "materialId": "beetle_carapace",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Basic arrow turret - iron frame for stability, oak mechanism for firing, beetle carapace provides spring tension. Point away from face."
+    },
+    {
+      "recipeId": "engineering_fire_arrow_turret",
+      "outputId": "fire_arrow_turret",
+      "stationTier": 2,
+      "slots": [
+        {
+          "type": "FRAME",
+          "materialId": "steel_ingot",
+          "quantity": 5
+        },
+        {
+          "type": "FUNCTION",
+          "materialId": "birch_plank",
+          "quantity": 3
+        },
+        {
+          "type": "POWER",
+          "materialId": "fire_crystal",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Fire arrow turret - steel frame withstands heat, birch mechanism fires, fire crystals ignite projectiles. Warm touch to home defense."
+    },
+    {
+      "recipeId": "engineering_lightning_cannon",
+      "outputId": "lightning_cannon",
+      "stationTier": 3,
+      "slots": [
+        {
+          "type": "FRAME",
+          "materialId": "mithril_ingot",
+          "quantity": 6
+        },
+        {
+          "type": "FUNCTION",
+          "materialId": "ironwood_plank",
+          "quantity": 4
+        },
+        {
+          "type": "POWER",
+          "materialId": "lightning_shard",
+          "quantity": 6
+        },
+        {
+          "type": "MODIFIER",
+          "materialId": "storm_heart",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Lightning cannon - mithril frame conducts perfectly, ironwood mechanism directs, lightning shards provide power, storm heart amplifies. Extremely effective, extremely dangerous."
+    },
+    {
+      "recipeId": "engineering_simple_bomb",
+      "outputId": "simple_bomb",
+      "stationTier": 1,
+      "slots": [
+        {
+          "type": "FRAME",
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "type": "FUNCTION",
+          "materialId": "blast_powder",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Simple explosive - iron casing contains, blast powder explodes. Universal problem solver."
+    },
+    {
+      "recipeId": "engineering_fire_bomb",
+      "outputId": "fire_bomb",
+      "stationTier": 2,
+      "slots": [
+        {
+          "type": "FRAME",
+          "materialId": "steel_ingot",
+          "quantity": 3
+        },
+        {
+          "type": "FUNCTION",
+          "materialId": "blast_powder",
+          "quantity": 4
+        },
+        {
+          "type": "POWER",
+          "materialId": "fire_crystal",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Fire bomb - steel casing survives blast, blast powder creates explosion, fire crystals add burning. Melts stone."
+    }
+  ]
+}

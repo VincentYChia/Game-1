@@ -1,0 +1,652 @@
+{
+  "_meta": {
+    "category": "refining_items",
+    "llm_purpose": "Item LLM for refining - creates ingots, planks, alloys, processed materials",
+    "generated_at": "2026-01-04T04:41:13.675272",
+    "total_items": 81,
+    "source_files": [
+      "items.JSON/items-materials-1.JSON",
+      "items.JSON/items-refining-1.JSON"
+    ]
+  },
+  "_all_possible_values": {
+    "attributes[].effect": {
+      "values": [
+        "Items crafted with this add fire damage",
+        "Items crafted with this add frost damage",
+        "Items crafted with this add lightning damage"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "attributes[].element": {
+      "values": [
+        "fire",
+        "frost",
+        "lightning"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "attributes[].type": {
+      "values": [
+        "elemental"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "attributes[].value": {
+      "values": [
+        10
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 3
+    },
+    "category": {
+      "values": [
+        "elemental",
+        "material",
+        "metal",
+        "monster_drop",
+        "stone",
+        "wood"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 81
+    },
+    "flags.consumable": {
+      "values": [
+        false
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16
+    },
+    "flags.repairable": {
+      "values": [
+        false
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16
+    },
+    "flags.stackable": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 16
+    },
+    "itemId": {
+      "values": [
+        "adamantine_ingot",
+        "ash_plank",
+        "bronze_ingot",
+        "copper_ingot",
+        "ebony_plank",
+        "fire_steel_ingot",
+        "frost_steel_ingot",
+        "iron_ingot",
+        "ironwood_plank",
+        "lightning_copper_ingot",
+        "mithril_ingot",
+        "oak_plank",
+        "orichalcum_ingot",
+        "steel_ingot",
+        "tin_ingot",
+        "worldtree_plank"
+      ],
+      "total_unique": 16,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "materialId": {
+      "values": [
+        "adamantine_ingot",
+        "adamantine_ore",
+        "air_crystal",
+        "ash_log",
+        "ash_plank",
+        "basalt",
+        "beetle_carapace",
+        "birch_log",
+        "birch_plank",
+        "chaos_matrix",
+        "copper_ingot",
+        "copper_ore",
+        "crystal_quartz",
+        "diamond",
+        "dire_fang",
+        "earth_crystal",
+        "ebony_log",
+        "ebony_plank",
+        "essence_blood",
+        "eternity_stone",
+        "etherion_ingot",
+        "etherion_ore",
+        "fire_crystal",
+        "frost_essence",
+        "genesis_lattice",
+        "golem_core",
+        "granite",
+        "iron_ingot",
+        "iron_ore",
+        "iron_scales",
+        "ironwood_log",
+        "ironwood_plank",
+        "light_gem",
+        "lightning_shard",
+        "limestone",
+        "living_ichor",
+        "maple_log",
+        "maple_plank",
+        "marble",
+        "mithril_ingot",
+        "mithril_ore",
+        "oak_log",
+        "oak_plank",
+        "obsidian",
+        "orichalcum_ingot",
+        "orichalcum_ore",
+        "phoenix_ash",
+        "pine_log",
+        "pine_plank",
+        "primordial_crystal",
+        "shadow_core",
+        "shale",
+        "slime_gel",
+        "spectral_thread",
+        "steel_ingot",
+        "steel_ore",
+        "storm_heart",
+        "tin_ingot",
+        "tin_ore",
+        "void_essence",
+        "voidstone",
+        "water_crystal",
+        "wolf_pelt",
+        "worldtree_log",
+        "worldtree_plank"
+      ],
+      "total_unique": 65,
+      "types": [
+        "string"
+      ],
+      "occurrences": 65
+    },
+    "metadata.narrative": {
+      "values": [
+        "A soft, reddish metal found in shallow veins near the surface. Easy to work with basic tools but lacks the durability needed for serious combat. The foundation of all smithing - every blacksmith's first lesson.",
+        "Ash-grey substance from legendary phoenix nests. Burns eternally without being consumed.",
+        "Black adamantine ingot, heavy as sin and harder than anything known. This material refuses to yield, laughs at damage, and never breaks. Forged in earth's deepest fires.",
+        "Black ebony planks that absorb light. The wood feels cold, slightly wrong. Mages favor it for staves - it dampens unwanted magical interference while channeling intended power.",
+        "Blue crystal filled with flowing liquid. Cool and calming, perpetually damp.",
+        "Brilliant white stone that glows faintly with captured sunlight. Used in temples and monuments.",
+        "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+        "Captured lightning from primordial storms. Contains raw creation energy.",
+        "Common sedimentary rock with fine grain. Compressed clay particles form water-resistant layers.",
+        "Common sedimentary rock. Soft enough to carve with basic tools yet strong enough for simple construction.",
+        "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
+        "Crackling crystal surrounded by static discharge. Handle with insulated gloves.",
+        "Creamy-white wood from elegant trees. Highly valued for its fine grain and excellent carving properties.",
+        "Crystallized blood from elemental beasts. Pulses with residual power.",
+        "Crystallized darkness that absorbs light. Uncomfortable to look at directly.",
+        "Dark, impossibly hard metal that absorbs light. Found only in the deepest caverns where the world's bones are exposed.",
+        "Deep black wood from ancient forests. Absorbs and nullifies magical energies.",
+        "Dense hardwood with beautiful figuring. Resists warping and holds its shape through temperature extremes.",
+        "Dense metamorphic rock with distinctive banding. Exceptional compression strength.",
+        "Dense steel ingot, dark grey with a bluish tint. Carbon-rich iron forged under intense heat. Holds an edge far better than common iron, the mark of quality craftsmanship.",
+        "Ethereal substance from creatures between worlds. Exists partially out of phase.",
+        "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+        "Flexible ash planks with excellent shock absorption. Bowyers and spearmakers favor this wood - it bends without breaking, springs back without warping. The wood of warriors.",
+        "Frost-blue crystal cold enough to burn. Creates rime patterns on nearby surfaces.",
+        "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+        "Gleaming golden metal with an otherworldly green-blue sheen. Ancient civilizations built empires on its discovery.",
+        "Golden-green orichalcum ingot humming with elemental forces. Fire, ice, lightning course through its crystalline structure. The gods' preferred metal when they walked among mortals.",
+        "Green-brown crystal with swirling sediment. Surprisingly heavy, grounds magical energies.",
+        "Harder and more durable than pure iron. The secret of its strength lies in its carbon-rich structure. A true warrior's metal.",
+        "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is.",
+        "Iridescent shell segment. Lightweight yet remarkably impact-resistant.",
+        "Ironwood planks, dense and metallic. Dulls saw blades quickly but the result is worth it - wood as strong as iron, light as oak. Nature's answer to steel.",
+        "Legendary mithril ingot, silvery-blue and impossibly light. The metal seems to defy natural laws - feather-light yet stronger than steel. Legends claim it fell from the stars.",
+        "Legendary silver-white metal that seems to drink in moonlight and starshine. Impossibly light yet incredibly strong.",
+        "Light, flexible wood harvested from tall conifers. Works easily under a blade, bends without breaking.",
+        "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+        "Liquid darkness given physical form. Absorbs heat, light, and hope.",
+        "Living wood from the World Tree's roots. Contains millennia of accumulated magical essence.",
+        "Metal that simultaneously exists in multiple states. Scholars argue whether it's matter or energy, present or future. It is all of these and none.",
+        "Metallic scales from armored creatures. Can deflect sword strikes.",
+        "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+        "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
+        "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
+        "Pale crystal that drifts upward if not secured. Contains compressed winds.",
+        "Pale wood with excellent shock absorption. Weapon handles made from ash feel alive in your grip.",
+        "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
+        "Petrified remains from ancient guardians. Contains geological memories.",
+        "Pitch-black stone that seems to pull light into itself. Radiates subtle wrongness.",
+        "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
+        "Rare wood with metallic properties. As hard as soft metals, holds edges almost as well as iron.",
+        "Razor-sharp fang from alpha predators. Still warm from the kill.",
+        "Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.",
+        "Refined ash planks with superior shock absorption properties.",
+        "Refined birch planks, perfect for detailed craftwork.",
+        "Refined copper ingot, reddish and malleable. The foundation of metallurgy - every smith's first metal. Soft enough to work easily, strong enough to be useful.",
+        "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+        "Refined ebony planks, perfect for anti-magic applications.",
+        "Refined ironwood planks, nearly as strong as actual metal.",
+        "Refined maple planks, ideal for items requiring stability.",
+        "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+        "Refined oak planks with improved durability and quality.",
+        "Refined pine planks, perfect for bows and flexible constructions.",
+        "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
+        "Refined worldtree planks that remember their connection to the source.",
+        "Reliable, sturdy timber from ancient oaks. Dense grain, strong fibers, and a warm golden-brown hue. The standard by which all other woods are measured.",
+        "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
+        "Silvery tin ingot with a subtle sheen. Rarely used alone, but essential for creating bronze alloys. The metal that teaches smiths about the power of combination.",
+        "Soft, silvery-white metal with a mysterious sheen that glows faintly in moonlight. Ancient texts speak of its lunar affinity.",
+        "Solidified probability space. Can be shaped into predetermined or random outcomes.",
+        "Speckled igneous rock with visible crystalline structure. Harder than limestone, more reliable for load-bearing structures.",
+        "Stone that remembers everything it witnesses. Contains geological memory of eons.",
+        "Sturdy grey metal from common deposits throughout the land. The workhorse of civilization - reliable, abundant, and strong enough for most purposes.",
+        "Sturdy iron ingot, grey and reliable. The workhorse of civilization - strong enough for weapons, durable enough for tools, abundant enough to be practical.",
+        "Sturdy oak planks, well-seasoned and straight-grained. The standard for all woodworking - reliable, abundant, and easy to work with. Handles bear this wood with pride.",
+        "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+        "Suspended in perpetual crystallization. Neither fully solid nor energy, exists in quantum superposition.",
+        "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+        "Translucent crystal that amplifies magical energies passing through it. Hums softly when near power sources.",
+        "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
+        "Volcanic glass born in the heart of eruptions. Extremely sharp edges, incredibly brittle structure.",
+        "Worldtree planks that remember being part of something greater. The wood hums with ancient power. Items crafted from this are said to carry the world's will."
+      ],
+      "total_unique": 81,
+      "types": [
+        "string"
+      ],
+      "occurrences": 81
+    },
+    "metadata.tags": {
+      "values": [
+        "adamantine",
+        "advanced",
+        "air",
+        "alloy",
+        "ancient",
+        "ash",
+        "basic",
+        "blood",
+        "bronze",
+        "carapace",
+        "chaos",
+        "common",
+        "copper",
+        "dark",
+        "durable",
+        "earth",
+        "ebony",
+        "elemental",
+        "essence",
+        "exotic",
+        "fang",
+        "fine",
+        "fire",
+        "flexible",
+        "frost",
+        "gel",
+        "ice",
+        "impossible",
+        "iron",
+        "ironwood",
+        "layered",
+        "leather",
+        "legendary",
+        "light",
+        "lightning",
+        "living",
+        "magical",
+        "material",
+        "memory",
+        "metal",
+        "metallic",
+        "mithril",
+        "monster",
+        "mythical",
+        "oak",
+        "orichalcum",
+        "plank",
+        "precious",
+        "quality",
+        "quantum",
+        "radiant",
+        "rare",
+        "refined",
+        "scales",
+        "sharp",
+        "spectral",
+        "standard",
+        "starter",
+        "steel",
+        "stone",
+        "strong",
+        "temporal",
+        "tin",
+        "uncommon",
+        "versatile",
+        "void",
+        "water",
+        "wood",
+        "worldtree"
+      ],
+      "total_unique": 69,
+      "types": [
+        "array"
+      ],
+      "occurrences": 81
+    },
+    "name": {
+      "values": [
+        "Adamantine Ingot",
+        "Adamantine Ore",
+        "Air Crystal",
+        "Ash Log",
+        "Ash Plank",
+        "Basalt",
+        "Beetle Carapace",
+        "Birch Log",
+        "Birch Plank",
+        "Bronze Ingot",
+        "Chaos Matrix",
+        "Copper Ingot",
+        "Copper Ore",
+        "Crystal Quartz",
+        "Diamond",
+        "Dire Fang",
+        "Earth Crystal",
+        "Ebony Log",
+        "Ebony Plank",
+        "Essence Blood",
+        "Eternity Stone",
+        "Etherion Ingot",
+        "Etherion Ore",
+        "Fire Crystal",
+        "Fire Steel Ingot",
+        "Frost Essence",
+        "Frost Steel Ingot",
+        "Genesis Lattice",
+        "Golem Core",
+        "Granite",
+        "Iron Ingot",
+        "Iron Ore",
+        "Iron Scales",
+        "Ironwood Log",
+        "Ironwood Plank",
+        "Light Gem",
+        "Lightning Copper Ingot",
+        "Lightning Shard",
+        "Limestone",
+        "Living Ichor",
+        "Maple Log",
+        "Maple Plank",
+        "Marble",
+        "Mithril Ingot",
+        "Mithril Ore",
+        "Oak Log",
+        "Oak Plank",
+        "Obsidian",
+        "Orichalcum Ingot",
+        "Orichalcum Ore",
+        "Phoenix Ash",
+        "Pine Log",
+        "Pine Plank",
+        "Primordial Crystal",
+        "Shadow Core",
+        "Shale",
+        "Slime Gel",
+        "Spectral Thread",
+        "Steel Ingot",
+        "Steel Ore",
+        "Storm Heart",
+        "Tin Ingot",
+        "Tin Ore",
+        "Void Essence",
+        "Voidstone",
+        "Water Crystal",
+        "Wolf Pelt",
+        "Worldtree Log",
+        "Worldtree Plank"
+      ],
+      "total_unique": 69,
+      "types": [
+        "string"
+      ],
+      "occurrences": 81
+    },
+    "rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 81
+    },
+    "requirements.level": {
+      "values": [
+        1,
+        12,
+        15,
+        18,
+        20,
+        3,
+        5,
+        8
+      ],
+      "total_unique": 8,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "stackSize": {
+      "values": [
+        256
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 16
+    },
+    "statMultipliers.weight": {
+      "values": [
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.8,
+        1.5
+      ],
+      "total_unique": 7,
+      "types": [
+        "number"
+      ],
+      "occurrences": 16
+    },
+    "subtype": {
+      "values": [
+        "alloy",
+        "ingot",
+        "plank"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 81
+    },
+    "type": {
+      "values": [
+        "metal",
+        "wood"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 16
+    }
+  },
+  "_usable_template": {
+    "attributes": [
+      "<value>"
+    ],
+    "category": "monster_drop",
+    "flags": {
+      "consumable": true,
+      "repairable": true,
+      "stackable": true
+    },
+    "itemId": "steel_ingot",
+    "materialId": "copper_ingot",
+    "metadata": {
+      "narrative": "Soft, silvery-white metal with a mysterious sheen that glows faintly in moonlight. Ancient texts speak of its lunar affinity.",
+      "tags": [
+        "standard",
+        "durable",
+        "orichalcum"
+      ]
+    },
+    "name": "Maple Plank",
+    "rarity": "uncommon",
+    "requirements": {
+      "level": 1,
+      "stats": {}
+    },
+    "stackSize": 256,
+    "statMultipliers": {
+      "weight": 0.5
+    },
+    "subtype": "alloy",
+    "tier": 1,
+    "type": "wood"
+  },
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "A soft, reddish metal found in shallow veins near the surface. Easy to work with basic tools but lacks the durability needed for serious combat. The foundation of all smithing - every blacksmith's first lesson.",
+        "tags": [
+          "basic",
+          "metal",
+          "starter"
+        ]
+      },
+      "materialId": "copper_ore",
+      "name": "Copper Ore",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+        "tags": [
+          "refined",
+          "metal",
+          "starter"
+        ]
+      },
+      "materialId": "copper_ingot",
+      "name": "Copper Ingot",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Sturdy grey metal from common deposits throughout the land. The workhorse of civilization - reliable, abundant, and strong enough for most purposes.",
+        "tags": [
+          "basic",
+          "metal",
+          "standard"
+        ]
+      },
+      "materialId": "iron_ore",
+      "name": "Iron Ore",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+        "tags": [
+          "refined",
+          "metal",
+          "standard"
+        ]
+      },
+      "materialId": "iron_ingot",
+      "name": "Iron Ingot",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Soft, silvery-white metal with a mysterious sheen that glows faintly in moonlight. Ancient texts speak of its lunar affinity.",
+        "tags": [
+          "basic",
+          "metal",
+          "magical"
+        ]
+      },
+      "materialId": "tin_ore",
+      "name": "Tin Ore",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
+    }
+  ]
+}

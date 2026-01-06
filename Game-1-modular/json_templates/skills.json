@@ -1,0 +1,1832 @@
+{
+  "_meta": {
+    "category": "skills",
+    "llm_purpose": "Skills LLM - creates player skills with effects, costs, and evolution paths",
+    "generated_at": "2026-01-04T04:41:13.676973",
+    "total_items": 48,
+    "source_files": [
+      "Skills/skills-skills-1.JSON",
+      "Skills/skills-testing-integration.JSON",
+      "Update-1/skills-testing-integration.JSON",
+      "progression/classes-1.JSON"
+    ]
+  },
+  "_all_possible_values": {
+    "categories": {
+      "values": [
+        "alchemy",
+        "arcane",
+        "combat",
+        "crafting",
+        "defense",
+        "durability",
+        "enchanting",
+        "engineering",
+        "fire",
+        "forestry",
+        "gathering",
+        "ice",
+        "lightning",
+        "mining",
+        "movement",
+        "refining",
+        "shadow",
+        "smithing",
+        "utility"
+      ],
+      "total_unique": 19,
+      "types": [
+        "array"
+      ],
+      "occurrences": 42
+    },
+    "classId": {
+      "values": [
+        "adventurer",
+        "artisan",
+        "ranger",
+        "scavenger",
+        "scholar",
+        "warrior"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "combatParams.baseDamage": {
+      "values": [
+        100,
+        150,
+        40,
+        45,
+        55,
+        60
+      ],
+      "total_unique": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 12
+    },
+    "combatParams.beam_range": {
+      "values": [
+        15.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.beam_width": {
+      "values": [
+        2.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.burn_damage_per_second": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.burn_duration": {
+      "values": [
+        12.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.chain_count": {
+      "values": [
+        5
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.chain_range": {
+      "values": [
+        7.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.circle_radius": {
+      "values": [
+        6.0,
+        7.0,
+        8.0
+      ],
+      "total_unique": 3,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "combatParams.cone_angle": {
+      "values": [
+        90.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.cone_range": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.freeze_duration": {
+      "values": [
+        4.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.knockback_distance": {
+      "values": [
+        5.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.lifesteal_percent": {
+      "values": [
+        0.6
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.origin": {
+      "values": [
+        "source",
+        "target"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "combatParams.pierce_count": {
+      "values": [
+        10
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.pull_distance": {
+      "values": [
+        5.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.shock_damage_per_tick": {
+      "values": [
+        4.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.shock_duration": {
+      "values": [
+        6.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.shock_tick_rate": {
+      "values": [
+        1.5
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.slow_duration": {
+      "values": [
+        8.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.slow_percent": {
+      "values": [
+        0.5
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.stun_duration": {
+      "values": [
+        3.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.weaken_duration": {
+      "values": [
+        10.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatParams.weaken_percent": {
+      "values": [
+        0.4
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "combatTags": {
+      "values": [
+        "arcane",
+        "beam",
+        "burn",
+        "chain",
+        "circle",
+        "cone",
+        "fire",
+        "freeze",
+        "ice",
+        "knockback",
+        "lifesteal",
+        "lightning",
+        "pierce",
+        "pull",
+        "shadow",
+        "shock",
+        "slow",
+        "stun",
+        "weaken"
+      ],
+      "total_unique": 19,
+      "types": [
+        "array"
+      ],
+      "occurrences": 12
+    },
+    "cost.cooldown": {
+      "values": [
+        "extreme",
+        "long",
+        "moderate",
+        "short"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 42
+    },
+    "cost.mana": {
+      "values": [
+        "extreme",
+        "high",
+        "low",
+        "moderate"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 42
+    },
+    "description": {
+      "values": [
+        "A single attack of unimaginable power that ignores defenses and deals catastrophic damage.",
+        "Attack all enemies in a wide radius around you.",
+        "Attack much faster for a short burst of time.",
+        "Aura that drains life from all nearby enemies",
+        "Balanced generalists who dabble in everything. Adventurers have flexibility and choice.",
+        "Blast of freezing wind in a cone that slows and freezes enemies",
+        "Brace yourself against incoming attacks, reducing damage taken significantly.",
+        "Call down a meteor that devastates an area and ignites all enemies",
+        "Channel raw strength into your pickaxe, doubling mining damage for a sustained period.",
+        "Continuously regenerate massive health and repair equipment durability.",
+        "Create a point of intense gravity that pulls and crushes all nearby foes",
+        "Dramatically boost crafted item quality and gain massive rarity upgrade chance.",
+        "Dramatically increase attack damage and speed simultaneously.",
+        "Dramatically increase the chance of finding rare materials while gathering.",
+        "Extend engineering puzzle time and improve device quality significantly.",
+        "Extend your smithing mini-game timer, giving more time for perfect strikes.",
+        "Fall into a steady rhythm, chopping wood much faster than normal.",
+        "Gain extra time for your alchemy mini-game and increase potion quality.",
+        "Gain increased chance for perfect enchantment patterns and rarity upgrades.",
+        "Gain massive bonus materials from every gather for an extended period.",
+        "Gather extra materials from each resource node you harvest.",
+        "Gather from multiple resource nodes in a small area simultaneously.",
+        "Improve your refining mini-game time and material quality output.",
+        "Instantly restore a moderate amount of health.",
+        "Instantly restore durability to your equipped tools and weapons.",
+        "Intellectuals who master alchemy and magical arts. Scholars excel at discovery and experimentation.",
+        "Lightning that jumps between enemies, shocking each target",
+        "Lucky opportunists who find better loot and resources. Scavengers thrive on discovery.",
+        "Massively extend all mini-game timers, giving you all the time you need.",
+        "Massively increase critical chance and rarity for all actions.",
+        "Master crafters who excel at all creation disciplines. Artisans create better items faster.",
+        "Masters of combat and physical might. Warriors excel at dealing and taking damage in melee combat.",
+        "Move significantly faster for a brief period.",
+        "Piercing beam of darkness that weakens all it touches",
+        "Restore health and mana simultaneously when you need it most.",
+        "Significantly increase critical hit chance for all actions.",
+        "Slowly restore health over time while active.",
+        "Swift explorers and natural harvesters. Rangers move quickly and gather resources efficiently.",
+        "Temporarily ignore all tier restrictions and requirements. Use any tool on any material, craft at any station.",
+        "Unleash catastrophic damage in a massive area, obliterating everything.",
+        "Your next attack hits with devastating force, dealing massive damage.",
+        "Your tools consume durability much more slowly."
+      ],
+      "total_unique": 42,
+      "types": [
+        "string"
+      ],
+      "occurrences": 48
+    },
+    "effect.additionalEffects[].category": {
+      "values": [
+        "alchemy",
+        "combat",
+        "damage",
+        "durability",
+        "enchanting",
+        "engineering",
+        "mining",
+        "refining",
+        "smithing"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect.additionalEffects[].duration": {
+      "values": [
+        "extended",
+        "instant",
+        "long",
+        "moderate"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect.additionalEffects[].magnitude": {
+      "values": [
+        "extreme",
+        "major",
+        "minor",
+        "moderate"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect.additionalEffects[].target": {
+      "values": [
+        "area",
+        "enemy",
+        "self"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect.additionalEffects[].type": {
+      "values": [
+        "elevate",
+        "empower",
+        "pierce",
+        "quicken",
+        "regenerate"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "effect.category": {
+      "values": [
+        "alchemy",
+        "combat",
+        "damage",
+        "defense",
+        "durability",
+        "enchanting",
+        "engineering",
+        "forestry",
+        "mining",
+        "movement",
+        "refining",
+        "smithing"
+      ],
+      "total_unique": 12,
+      "types": [
+        "string"
+      ],
+      "occurrences": 42
+    },
+    "effect.duration": {
+      "values": [
+        "brief",
+        "extended",
+        "instant",
+        "long",
+        "moderate"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 42
+    },
+    "effect.magnitude": {
+      "values": [
+        "extreme",
+        "major",
+        "moderate"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 42
+    },
+    "effect.target": {
+      "values": [
+        "area",
+        "enemy",
+        "line",
+        "resource_node",
+        "self"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 42
+    },
+    "effect.type": {
+      "values": [
+        "devastate",
+        "elevate",
+        "empower",
+        "enrich",
+        "fortify",
+        "pierce",
+        "quicken",
+        "regenerate",
+        "restore",
+        "transcend"
+      ],
+      "total_unique": 10,
+      "types": [
+        "string"
+      ],
+      "occurrences": 42
+    },
+    "evolution.canEvolve": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 30
+    },
+    "evolution.nextSkillId": {
+      "values": [
+        "archmage_mastery",
+        "berserker_rage",
+        "decimating_blow",
+        "eagle_vision",
+        "eternal_edge",
+        "iron_fortress",
+        "legendary_prospector",
+        "master_alchemist",
+        "master_maintenance",
+        "master_mechanic",
+        "master_refiner",
+        "miracle_cure",
+        "natures_bounty",
+        "natures_tempo",
+        "phoenix_rebirth",
+        "timeless_forge",
+        "titans_excavation",
+        "undying_resolve",
+        "whirlwind_fury",
+        "wind_runner"
+      ],
+      "total_unique": 20,
+      "types": [
+        "null",
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "evolution.requirement": {
+      "values": [
+        "Maximum evolution - cannot evolve further",
+        "Reach level 10 - LLM generates evolution",
+        "Reach level 10 and block 5000 damage",
+        "Reach level 10 and brew 150 potions",
+        "Reach level 10 and craft 100 devices",
+        "Reach level 10 and craft 100 smithed items",
+        "Reach level 10 and deal 10000 damage",
+        "Reach level 10 and defeat 500 enemies",
+        "Reach level 10 and enchant 100 items",
+        "Reach level 10 and find 50 rare+ materials",
+        "Reach level 10 and gather 5000 materials",
+        "Reach level 10 and harvest 500 trees",
+        "Reach level 10 and heal 50000 HP",
+        "Reach level 10 and land 1000 attacks",
+        "Reach level 10 and land 500 critical hits",
+        "Reach level 10 and mine 1000 ore nodes",
+        "Reach level 10 and refine 200 materials",
+        "Reach level 10 and regenerate 100000 HP",
+        "Reach level 10 and repair 50000 durability",
+        "Reach level 10 and save 50000 durability",
+        "Reach level 10 and survive at <10% HP 50 times",
+        "Reach level 10 and travel 100000 tiles"
+      ],
+      "total_unique": 22,
+      "types": [
+        "string"
+      ],
+      "occurrences": 30
+    },
+    "name": {
+      "values": [
+        "Absolute Destruction",
+        "Adventurer",
+        "Alchemist's Insight",
+        "Arctic Cone",
+        "Artisan",
+        "Battle Fury",
+        "Battle Stance",
+        "Bountiful Harvest",
+        "Chain Harvest",
+        "Chain Lightning",
+        "Combat Rush",
+        "Enchanter's Grace",
+        "Endless Bounty",
+        "Engineer's Precision",
+        "Field Medic",
+        "Fortune's Favor",
+        "Gravity Well",
+        "Keen Eye",
+        "Lumberjack's Rhythm",
+        "Master Craftsman",
+        "Meteor Strike",
+        "Miner's Fury",
+        "Omega Strike",
+        "Phoenix Resurrection",
+        "Power Strike",
+        "Quick Repair",
+        "Ranger",
+        "Reality Breach",
+        "Refiner's Touch",
+        "Regenerative Aura",
+        "Scavenger",
+        "Scholar",
+        "Second Wind",
+        "Shadow Beam",
+        "Smith's Focus",
+        "Sprint",
+        "Time Dilation",
+        "Tool Preservation",
+        "Treasure Sense",
+        "Vampiric Aura",
+        "Warrior",
+        "Whirlwind Strike"
+      ],
+      "total_unique": 42,
+      "types": [
+        "string"
+      ],
+      "occurrences": 48
+    },
+    "narrative": {
+      "values": [
+        "A lance of pure darkness tears through reality. Those touched by the void find their strength sapped, their attacks feeble.",
+        "A single bolt becomes many. Watch as lightning leaps from foe to foe, each target convulsing as the shock spreads through the battlefield.",
+        "A warrior who maintains their tools never finds themselves defenseless.",
+        "A well-maintained tool is an investment. A broken tool is an expensive lesson.",
+        "Bandages are for people with time. This is for people who don't.",
+        "Become the void. An aura of darkness surrounds you, leeching the life force from all who dare come close. Their pain is your healing.",
+        "Bend space itself to your will. A singularity forms at your target, pulling enemies inward before crushing them with arcane force.",
+        "Complex mechanisms demand careful attention. Rush the gears, get your fingers caught.",
+        "Exhale winter itself. A cone of absolute zero flash-freezes everything before you, leaving your enemies slowed or frozen solid.",
+        "From ashes, rise. From wounds, strength. Death is merely an inconvenience.",
+        "Impurities burn away when you know exactly how hot, exactly how long.",
+        "Knowledge is power, and you wield both. Potions brew faster in your hands, recipes reveal themselves, and magic bends to your will.",
+        "Listen to the forest. Find the heartbeat. Match your swing to the ancient pulse.",
+        "Luck is what happens when preparation meets opportunity. This is what happens when luck meets steroids.",
+        "Magic flows where intention directs it. Unless you sneeze. Then it flows everywhere.",
+        "Master smiths don't rush. They breathe. They focus. They strike true.",
+        "Mastery isn't a destination. It's a standard you refuse to compromise.",
+        "One strike. One chance. One ending.",
+        "Plant your feet. Lower your center. Become the immovable object.",
+        "Precision is overrated when you can just hit them twelve times before they blink.",
+        "Rage is a weapon. Control it, channel it, unleash it.",
+        "Rules are for people who lack imagination. And sufficient mana reserves.",
+        "See the weaknesses others miss. Strike where it matters most.",
+        "Some call it luck. Some call it intuition. Mostly it's just knowing where to dig.",
+        "Sometimes subtlety fails. Sometimes you just need to hit something really, really hard.",
+        "Sometimes the best strategy is running away. Fast.",
+        "Spin. Strike. Repeat. Simple tactics are often the deadliest.",
+        "Steel and strength. You are the immovable wall, the unstoppable force. When enemies see you, they know: their time has come.",
+        "Subtlety is for people who can't level mountains.",
+        "The brew reveals its secrets to those patient enough to watch. And lucky enough to not explode.",
+        "The earth provides for those who know its secrets. And sometimes, it just really likes you.",
+        "The generous earth rewards those who know where to look. And how to ask nicely.",
+        "The mountain yields to those who show it proper respect. Or, failing that, overwhelming force.",
+        "The wilderness is your home. Trees fall faster before you, and you move like the wind. Nature bends to those who respect it.",
+        "Time is relative. Especially when you're cheating.",
+        "Where others see rocks, you see treasures. Fortune favors the prepared, and you are always prepared.",
+        "Why harvest one at a time when you can harvest all of them?",
+        "Wounds close. Bones knit. Given enough time, everything heals.",
+        "You are not confined by tradition or specialty. Every path is open, every skill within reach. You are limitless.",
+        "You tear a fragment from the heavens itself. The meteor crashes down with the fury of a dying star, leaving nothing but scorched earth and burning foes.",
+        "You're not done yet. Get up.",
+        "Your hands shape reality. What takes others hours, you complete in moments. What they craft once, you perfect instantly."
+      ],
+      "total_unique": 42,
+      "types": [
+        "string"
+      ],
+      "occurrences": 48
+    },
+    "playstyle": {
+      "values": [
+        "Crafting-centric, quality-focused, efficient production",
+        "Direct combat, high survivability, straightforward gameplay",
+        "Exploration-heavy, loot-focused, opportunistic",
+        "Fast-paced, mobility-focused, efficient gathering",
+        "Flexible, self-directed, balanced progression",
+        "Research-focused, crafting-heavy, magic-oriented"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "preferredArmorType": {
+      "values": [
+        "heavy",
+        "light",
+        "medium",
+        "robes"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "preferredDamageTypes": {
+      "values": [
+        "arcane",
+        "crushing",
+        "fire",
+        "frost",
+        "lightning",
+        "physical",
+        "piercing",
+        "poison",
+        "slashing"
+      ],
+      "total_unique": 9,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
+    },
+    "rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "mythic",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 42
+    },
+    "recommendedStats.avoid": {
+      "values": [
+        "DEF",
+        "INT",
+        "LCK",
+        "None - true flexibility",
+        "STR"
+      ],
+      "total_unique": 5,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
+    },
+    "recommendedStats.primary": {
+      "values": [
+        "AGI",
+        "Balanced - player choice",
+        "DEF",
+        "INT",
+        "LCK",
+        "STR",
+        "VIT"
+      ],
+      "total_unique": 7,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
+    },
+    "recommendedStats.secondary": {
+      "values": [
+        "AGI",
+        "All stats viable",
+        "STR",
+        "VIT"
+      ],
+      "total_unique": 4,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
+    },
+    "requirements.characterLevel": {
+      "values": [
+        1,
+        10,
+        12,
+        15,
+        16,
+        17,
+        18,
+        19,
+        2,
+        20,
+        22,
+        25,
+        28,
+        3,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "total_unique": 19,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 42
+    },
+    "requirements.stats.AGI": {
+      "values": [
+        10,
+        15,
+        25
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 5
+    },
+    "requirements.stats.DEF": {
+      "values": [
+        5
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "requirements.stats.INT": {
+      "values": [
+        10,
+        12,
+        15,
+        18,
+        20,
+        22,
+        30,
+        32,
+        8
+      ],
+      "total_unique": 9,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 20
+    },
+    "requirements.stats.LCK": {
+      "values": [
+        10,
+        15,
+        20,
+        25,
+        5,
+        8
+      ],
+      "total_unique": 6,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "requirements.stats.STR": {
+      "values": [
+        15,
+        20,
+        25,
+        30
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 9
+    },
+    "requirements.stats.VIT": {
+      "values": [
+        10,
+        12,
+        25,
+        5
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    },
+    "skillId": {
+      "values": [
+        "absolute_destruction",
+        "alchemists_insight",
+        "arctic_cone",
+        "battle_fury",
+        "battle_stance",
+        "bountiful_harvest",
+        "chain_harvest",
+        "chain_lightning",
+        "combat_rush",
+        "combat_strike",
+        "enchanters_grace",
+        "endless_bounty",
+        "engineers_precision",
+        "field_medic",
+        "fortunes_favor",
+        "gravity_well",
+        "keen_eye",
+        "lumberjacks_rhythm",
+        "master_craftsman",
+        "meteor_strike",
+        "miners_fury",
+        "omega_strike",
+        "phoenix_resurrection",
+        "quick_repair",
+        "reality_breach",
+        "refiners_touch",
+        "regenerative_aura",
+        "second_wind",
+        "shadow_beam",
+        "smiths_focus",
+        "sprint",
+        "time_dilation",
+        "tool_preservation",
+        "treasure_sense",
+        "vampiric_aura",
+        "whirlwind_strike"
+      ],
+      "total_unique": 36,
+      "types": [
+        "string"
+      ],
+      "occurrences": 42
+    },
+    "startingBonuses.allCrafting": {
+      "values": [
+        0.05
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.allCraftingTime": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.allGathering": {
+      "values": [
+        0.05
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.baseHP": {
+      "values": [
+        0,
+        30,
+        50
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.baseMana": {
+      "values": [
+        0,
+        100,
+        50
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.carryCapacity": {
+      "values": [
+        0,
+        100
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.critChance": {
+      "values": [
+        0.0,
+        0.1
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 2
+    },
+    "startingBonuses.defense": {
+      "values": [
+        0.0
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.firstTryBonus": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.forestryBonus": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.inventorySlots": {
+      "values": [
+        0,
+        20
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.itemDurability": {
+      "values": [
+        0.05
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.meleeDamage": {
+      "values": [
+        0.0,
+        0.1
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.movementSpeed": {
+      "values": [
+        0.0,
+        0.15
+      ],
+      "total_unique": 2,
+      "types": [
+        "number"
+      ],
+      "occurrences": 6
+    },
+    "startingBonuses.rareDropRate": {
+      "values": [
+        0.2
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.recipeDiscovery": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.resourceQuality": {
+      "values": [
+        0.1
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingBonuses.skillExpGain": {
+      "values": [
+        0.05
+      ],
+      "total_unique": 1,
+      "types": [
+        "number"
+      ],
+      "occurrences": 1
+    },
+    "startingSkill.availableChoices": {
+      "values": [
+        "any_tier1_skill"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "startingSkill.description": {
+      "values": [
+        "Dramatically increases wood gathering speed for a short duration",
+        "Increases damage and attack speed temporarily in combat",
+        "Increases potion effectiveness and brewing speed",
+        "Increases smithing mini-game performance and quality",
+        "Player chooses ANY skill from the available skill pool to start with",
+        "Temporarily increases rare drop rates and material quality"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "startingSkill.initialLevel": {
+      "values": [
+        1
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 6
+    },
+    "startingSkill.isChoice": {
+      "values": [
+        true
+      ],
+      "total_unique": 1,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 1
+    },
+    "startingSkill.skillId": {
+      "values": [
+        "alchemists_touch",
+        "battle_rage",
+        "forestry_frenzy",
+        "smithing_focus",
+        "treasure_hunters_luck",
+        "versatile_start"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "startingSkill.skillName": {
+      "values": [
+        "Alchemist's Touch",
+        "Battle Rage",
+        "Forestry Frenzy",
+        "Smithing Focus",
+        "Treasure Hunter's Luck",
+        "Versatile Beginning"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "strengths": {
+      "values": [
+        "10% better resource quality",
+        "10% higher chance at first-try bonuses",
+        "100 bonus carry capacity for hoarding",
+        "20% better rare drop rates",
+        "5% bonus to all crafting activities",
+        "5% bonus to all gathering activities",
+        "All crafting 10% faster from the start",
+        "Balanced HP and mana pools",
+        "Bonus melee damage from the start",
+        "Bonus to forestry from the start",
+        "Choice of starting skill for personalization",
+        "Discovers recipes faster than other classes",
+        "Excellent for players who prefer straightforward combat",
+        "Extra inventory for carrying loot and supplies",
+        "Fastest movement speed for exploration",
+        "Gains skill experience 5% faster",
+        "Great for players who enjoy mobility and gathering",
+        "Great for players who love collecting and exploring",
+        "High critical hit chance for combat",
+        "High health pool for survivability",
+        "Ideal for players who love crafting systems",
+        "Items have 5% more durability",
+        "Large mana pool for magical skills",
+        "Perfect for players who love experimentation",
+        "Perfect for players who want to explore everything"
+      ],
+      "total_unique": 25,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
+    },
+    "tags": {
+      "values": [
+        "abundance",
+        "adaptive",
+        "adventurer",
+        "agile",
+        "alchemy",
+        "aoe",
+        "arcane",
+        "artisan",
+        "attack_speed",
+        "balanced",
+        "basic",
+        "berserker",
+        "bonus",
+        "burst",
+        "bypass",
+        "caster",
+        "chain",
+        "combat",
+        "control",
+        "crafting",
+        "critical",
+        "damage",
+        "damage_boost",
+        "damage_reduction",
+        "debuff",
+        "defense",
+        "destruction",
+        "durability",
+        "efficiency",
+        "elemental",
+        "enchanting",
+        "engineering",
+        "explorer",
+        "finisher",
+        "fire",
+        "frontline",
+        "gathering",
+        "generalist",
+        "healing",
+        "ice",
+        "instant",
+        "lightning",
+        "luck",
+        "magic",
+        "mana",
+        "mastery",
+        "melee",
+        "mobile",
+        "mobility",
+        "movement",
+        "multi_purpose",
+        "nature",
+        "over_time",
+        "physical",
+        "pierce",
+        "precision",
+        "quality",
+        "ranged",
+        "ranger",
+        "rarity",
+        "recovery",
+        "refining",
+        "regeneration",
+        "repair",
+        "scavenger",
+        "scholar",
+        "shadow",
+        "single_hit",
+        "single_target",
+        "smithing",
+        "speed",
+        "speed_boost",
+        "survival",
+        "sustain",
+        "tanky",
+        "tier",
+        "time",
+        "transcendence",
+        "treasure",
+        "ultimate",
+        "universal",
+        "utility",
+        "versatile",
+        "warrior",
+        "yield"
+      ],
+      "total_unique": 85,
+      "types": [
+        "array"
+      ],
+      "occurrences": 48
+    },
+    "thematicIdentity": {
+      "values": [
+        "frontline_fighter",
+        "jack_of_all_trades",
+        "loot_hunter",
+        "magical_researcher",
+        "master_crafter",
+        "mobile_gatherer"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "tier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 42
+    },
+    "weaknesses": {
+      "values": [
+        "Fragile in direct combat",
+        "Less efficient at physical gathering",
+        "Less focused on crafting disciplines",
+        "Limited range options",
+        "Lower base health than warrior",
+        "Master of none until late game",
+        "No combat bonuses",
+        "No crafting speed bonuses",
+        "No direct combat improvements",
+        "No gathering bonuses",
+        "No mana for utility skills initially",
+        "No strong specialization bonuses",
+        "Relies heavily on RNG",
+        "Relies on evasion rather than tanking",
+        "Requires access to crafting stations",
+        "Requires preparation and planning",
+        "Slower at gathering and crafting",
+        "Smaller individual bonuses than specialists"
+      ],
+      "total_unique": 18,
+      "types": [
+        "array"
+      ],
+      "occurrences": 6
+    }
+  },
+  "_usable_template": {
+    "categories": [
+      "forestry",
+      "durability",
+      "defense"
+    ],
+    "classId": "ranger",
+    "combatParams": {
+      "baseDamage": 100,
+      "beam_range": 15.0,
+      "beam_width": 2.0,
+      "burn_damage_per_second": 10.0,
+      "burn_duration": 12.0,
+      "chain_count": 5,
+      "chain_range": 7.0,
+      "circle_radius": 8.0,
+      "cone_angle": 90.0,
+      "cone_range": 10.0,
+      "freeze_duration": 4.0,
+      "knockback_distance": 5.0,
+      "lifesteal_percent": 0.6,
+      "origin": "target",
+      "pierce_count": 10,
+      "pull_distance": 5.0,
+      "shock_damage_per_tick": 4.0,
+      "shock_duration": 6.0,
+      "shock_tick_rate": 1.5,
+      "slow_duration": 8.0,
+      "slow_percent": 0.5,
+      "stun_duration": 3.0,
+      "weaken_duration": 10.0,
+      "weaken_percent": 0.4
+    },
+    "combatTags": [
+      "freeze",
+      "cone",
+      "pierce"
+    ],
+    "cost": {
+      "cooldown": "moderate",
+      "mana": "moderate"
+    },
+    "description": "Gain extra time for your alchemy mini-game and increase potion quality.",
+    "effect": {
+      "additionalEffects": [
+        "<value>"
+      ],
+      "category": "smithing",
+      "duration": "long",
+      "magnitude": "moderate",
+      "target": "enemy",
+      "type": "devastate"
+    },
+    "evolution": {
+      "canEvolve": true,
+      "nextSkillId": "master_maintenance",
+      "requirement": "Reach level 10 and enchant 100 items"
+    },
+    "name": "Regenerative Aura",
+    "narrative": "Master smiths don't rush. They breathe. They focus. They strike true.",
+    "playstyle": "Flexible, self-directed, balanced progression",
+    "preferredArmorType": "light",
+    "preferredDamageTypes": [
+      "slashing",
+      "piercing",
+      "crushing"
+    ],
+    "rarity": "mythic",
+    "recommendedStats": {
+      "avoid": [
+        "LCK",
+        "INT",
+        "None - true flexibility"
+      ],
+      "primary": [
+        "AGI",
+        "LCK",
+        "INT"
+      ],
+      "secondary": [
+        "All stats viable",
+        "AGI",
+        "VIT"
+      ]
+    },
+    "requirements": {
+      "characterLevel": 1,
+      "stats": {
+        "AGI": 25,
+        "DEF": 5,
+        "INT": 32,
+        "LCK": 5,
+        "STR": 25,
+        "VIT": 25
+      },
+      "titles": [
+        "<value>"
+      ]
+    },
+    "skillId": "sprint",
+    "startingBonuses": {
+      "allCrafting": 0.05,
+      "allCraftingTime": 0.1,
+      "allGathering": 0.05,
+      "baseHP": 0,
+      "baseMana": 0,
+      "carryCapacity": 0,
+      "critChance": 0.0,
+      "defense": 0.0,
+      "firstTryBonus": 0.1,
+      "forestryBonus": 0.1,
+      "inventorySlots": 0,
+      "itemDurability": 0.05,
+      "meleeDamage": 0.1,
+      "movementSpeed": 0.0,
+      "rareDropRate": 0.2,
+      "recipeDiscovery": 0.1,
+      "resourceQuality": 0.1,
+      "skillExpGain": 0.05
+    },
+    "startingSkill": {
+      "availableChoices": "any_tier1_skill",
+      "description": "Temporarily increases rare drop rates and material quality",
+      "initialLevel": 1,
+      "isChoice": true,
+      "skillId": "smithing_focus",
+      "skillName": "Treasure Hunter's Luck"
+    },
+    "strengths": [
+      "100 bonus carry capacity for hoarding",
+      "20% better rare drop rates",
+      "Great for players who enjoy mobility and gathering"
+    ],
+    "tags": [
+      "pierce",
+      "abundance",
+      "treasure"
+    ],
+    "thematicIdentity": "loot_hunter",
+    "tier": 1,
+    "weaknesses": [
+      "No gathering bonuses",
+      "Fragile in direct combat",
+      "Requires access to crafting stations"
+    ]
+  },
+  "_sample_items": [
+    {
+      "skillId": "meteor_strike",
+      "name": "Meteor Strike",
+      "tier": 4,
+      "rarity": "legendary",
+      "categories": [
+        "combat",
+        "fire"
+      ],
+      "description": "Call down a meteor that devastates an area and ignites all enemies",
+      "narrative": "You tear a fragment from the heavens itself. The meteor crashes down with the fury of a dying star, leaving nothing but scorched earth and burning foes.",
+      "tags": [
+        "damage",
+        "fire",
+        "aoe",
+        "elemental"
+      ],
+      "effect": {
+        "type": "devastate",
+        "category": "damage",
+        "magnitude": "extreme",
+        "target": "area",
+        "duration": "instant"
+      },
+      "combatTags": [
+        "fire",
+        "circle",
+        "burn",
+        "knockback"
+      ],
+      "combatParams": {
+        "baseDamage": 150,
+        "circle_radius": 8.0,
+        "origin": "target",
+        "burn_duration": 12.0,
+        "burn_damage_per_second": 10.0,
+        "knockback_distance": 5.0
+      },
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+      "requirements": {
+        "characterLevel": 25,
+        "stats": {
+          "INT": 30,
+          "STR": 20
+        }
+      }
+    },
+    {
+      "skillId": "chain_lightning",
+      "name": "Chain Lightning",
+      "tier": 3,
+      "rarity": "epic",
+      "categories": [
+        "combat",
+        "lightning"
+      ],
+      "description": "Lightning that jumps between enemies, shocking each target",
+      "narrative": "A single bolt becomes many. Watch as lightning leaps from foe to foe, each target convulsing as the shock spreads through the battlefield.",
+      "tags": [
+        "damage",
+        "lightning",
+        "chain",
+        "elemental"
+      ],
+      "effect": {
+        "type": "empower",
+        "category": "damage",
+        "magnitude": "major",
+        "target": "area",
+        "duration": "instant"
+      },
+      "combatTags": [
+        "lightning",
+        "chain",
+        "shock"
+      ],
+      "combatParams": {
+        "baseDamage": 60,
+        "chain_count": 5,
+        "chain_range": 7.0,
+        "shock_duration": 6.0,
+        "shock_damage_per_tick": 4.0,
+        "shock_tick_rate": 1.5
+      },
+      "cost": {
+        "mana": "high",
+        "cooldown": "long"
+      },
+      "requirements": {
+        "characterLevel": 18,
+        "stats": {
+          "INT": 20
+        }
+      }
+    },
+    {
+      "skillId": "arctic_cone",
+      "name": "Arctic Cone",
+      "tier": 2,
+      "rarity": "uncommon",
+      "categories": [
+        "combat",
+        "ice"
+      ],
+      "description": "Blast of freezing wind in a cone that slows and freezes enemies",
+      "narrative": "Exhale winter itself. A cone of absolute zero flash-freezes everything before you, leaving your enemies slowed or frozen solid.",
+      "tags": [
+        "damage",
+        "ice",
+        "aoe",
+        "control"
+      ],
+      "effect": {
+        "type": "fortify",
+        "category": "damage",
+        "magnitude": "moderate",
+        "target": "area",
+        "duration": "instant"
+      },
+      "combatTags": [
+        "ice",
+        "cone",
+        "freeze",
+        "slow"
+      ],
+      "combatParams": {
+        "baseDamage": 45,
+        "cone_angle": 90.0,
+        "cone_range": 10.0,
+        "freeze_duration": 4.0,
+        "slow_percent": 0.5,
+        "slow_duration": 8.0
+      },
+      "cost": {
+        "mana": "moderate",
+        "cooldown": "moderate"
+      },
+      "requirements": {
+        "characterLevel": 12,
+        "stats": {
+          "INT": 15
+        }
+      }
+    },
+    {
+      "skillId": "shadow_beam",
+      "name": "Shadow Beam",
+      "tier": 3,
+      "rarity": "rare",
+      "categories": [
+        "combat",
+        "shadow"
+      ],
+      "description": "Piercing beam of darkness that weakens all it touches",
+      "narrative": "A lance of pure darkness tears through reality. Those touched by the void find their strength sapped, their attacks feeble.",
+      "tags": [
+        "damage",
+        "shadow",
+        "pierce",
+        "debuff"
+      ],
+      "effect": {
+        "type": "empower",
+        "category": "damage",
+        "magnitude": "major",
+        "target": "line",
+        "duration": "instant"
+      },
+      "combatTags": [
+        "shadow",
+        "beam",
+        "weaken",
+        "pierce"
+      ],
+      "combatParams": {
+        "baseDamage": 55,
+        "beam_range": 15.0,
+        "beam_width": 2.0,
+        "pierce_count": 10,
+        "weaken_percent": 0.4,
+        "weaken_duration": 10.0
+      },
+      "cost": {
+        "mana": "high",
+        "cooldown": "long"
+      },
+      "requirements": {
+        "characterLevel": 16,
+        "stats": {
+          "INT": 18
+        }
+      }
+    },
+    {
+      "skillId": "vampiric_aura",
+      "name": "Vampiric Aura",
+      "tier": 3,
+      "rarity": "epic",
+      "categories": [
+        "combat",
+        "shadow"
+      ],
+      "description": "Aura that drains life from all nearby enemies",
+      "narrative": "Become the void. An aura of darkness surrounds you, leeching the life force from all who dare come close. Their pain is your healing.",
+      "tags": [
+        "damage",
+        "shadow",
+        "aoe",
+        "sustain"
+      ],
+      "effect": {
+        "type": "devastate",
+        "category": "damage",
+        "magnitude": "moderate",
+        "target": "area",
+        "duration": "instant"
+      },
+      "combatTags": [
+        "shadow",
+        "circle",
+        "lifesteal"
+      ],
+      "combatParams": {
+        "baseDamage": 40,
+        "circle_radius": 6.0,
+        "origin": "source",
+        "lifesteal_percent": 0.6
+      },
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "long"
+      },
+      "requirements": {
+        "characterLevel": 20,
+        "stats": {
+          "INT": 22,
+          "STR": 15
+        }
+      }
+    }
+  ]
+}

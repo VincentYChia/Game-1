@@ -1,0 +1,463 @@
+{
+  "_meta": {
+    "category": "classifier_requirements",
+    "llm_purpose": "Classifier LLM - determines when to trigger new skill/title generation",
+    "generated_at": "2026-01-04T04:41:13.683235",
+    "total_skill_unlocks": 14,
+    "total_title_requirements": 10
+  },
+  "skill_unlock_requirements": [
+    {
+      "type": "skill",
+      "id": "miners_fury",
+      "unlockMethod": "automatic",
+      "conditions": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": [],
+        "completedQuests": [],
+        "activityMilestones": []
+      },
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skillPoints": 0
+      }
+    },
+    {
+      "type": "skill",
+      "id": "sprint",
+      "unlockMethod": "quest_reward",
+      "conditions": {
+        "characterLevel": 1,
+        "completedQuests": [
+          "tutorial_quest"
+        ]
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "miners_endurance",
+      "unlockMethod": "quest_reward",
+      "conditions": {
+        "characterLevel": 1,
+        "completedQuests": [
+          "gathering_quest"
+        ]
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "combat_strike",
+      "unlockMethod": "quest_reward",
+      "conditions": {
+        "characterLevel": 1,
+        "completedQuests": [
+          "combat_quest"
+        ]
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "fortify",
+      "unlockMethod": "quest_reward",
+      "conditions": {
+        "characterLevel": 1,
+        "completedQuests": [
+          "combat_quest"
+        ]
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "smiths_focus",
+      "unlockMethod": "milestone_unlock",
+      "conditions": {
+        "characterLevel": 3,
+        "stats": {},
+        "activityMilestones": [
+          {
+            "type": "craft_count",
+            "discipline": "smithing",
+            "count": 10
+          }
+        ]
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "alchemists_insight",
+      "unlockMethod": "milestone_unlock",
+      "conditions": {
+        "characterLevel": 5,
+        "stats": {
+          "intelligence": 8
+        },
+        "activityMilestones": [
+          {
+            "type": "craft_count",
+            "discipline": "alchemy",
+            "count": 25
+          }
+        ]
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "treasure_sense",
+      "unlockMethod": "npc_purchase",
+      "conditions": {
+        "characterLevel": 8,
+        "stats": {
+          "luck": 10
+        },
+        "completedQuests": []
+      },
+      "cost": {
+        "gold": 2500,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "battle_fury",
+      "unlockMethod": "milestone_unlock",
+      "conditions": {
+        "characterLevel": 10,
+        "stats": {
+          "strength": 15
+        },
+        "activityMilestones": [
+          {
+            "type": "kill_count",
+            "count": 50
+          }
+        ]
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "keen_eye",
+      "unlockMethod": "milestone_unlock",
+      "conditions": {
+        "characterLevel": 8,
+        "stats": {
+          "luck": 12
+        },
+        "activityMilestones": [
+          {
+            "type": "gather_count",
+            "count": 200
+          }
+        ]
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "chain_harvest",
+      "unlockMethod": "title_unlock",
+      "conditions": {
+        "characterLevel": 15,
+        "stats": {},
+        "titles": [
+          "master_gatherer"
+        ],
+        "activityMilestones": []
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "whirlwind_strike",
+      "unlockMethod": "title_unlock",
+      "conditions": {
+        "characterLevel": 15,
+        "stats": {},
+        "titles": [
+          "master_warrior"
+        ],
+        "activityMilestones": []
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": "master_craftsman",
+      "unlockMethod": "title_unlock",
+      "conditions": {
+        "characterLevel": 20,
+        "stats": {},
+        "titles": [
+          "master_smith"
+        ],
+        "activityMilestones": []
+      },
+      "cost": {
+        "gold": 0,
+        "materials": []
+      }
+    },
+    {
+      "type": "skill",
+      "id": {
+        "description": "References skillId from Skills/skills-skills-1.JSON",
+        "required": true,
+        "note": "This is the skill being unlocked"
+      },
+      "unlockMethod": {
+        "description": "How this skill is unlocked",
+        "options": [
+          "automatic",
+          "quest_reward",
+          "npc_purchase",
+          "milestone_unlock",
+          "title_unlock",
+          "skill_evolution",
+          "discovery",
+          "class_specific",
+          "random_drop"
+        ],
+        "required": true
+      },
+      "conditions": {
+        "characterLevel": "Minimum level required",
+        "stats": "Object like {strength: 5, luck: 10}",
+        "titles": "Array of titleIds required",
+        "completedQuests": "Array of questIds required",
+        "activityMilestones": "Array of activity requirements"
+      },
+      "cost": {
+        "gold": "Gold required to unlock",
+        "materials": "Array of {materialId, quantity}",
+        "skillPoints": "Special skill points if system uses them",
+        "note": "Cost is paid AFTER conditions met"
+      }
+    }
+  ],
+  "title_requirements": [
+    {
+      "type": "title",
+      "id": "novice_miner",
+      "titleType": "gathering",
+      "difficultyTier": "novice",
+      "prerequisites": {
+        "activities": {
+          "oresMined": 100
+        },
+        "requiredTitles": [],
+        "characterLevel": 0
+      },
+      "acquisitionMethod": "guaranteed_milestone"
+    },
+    {
+      "type": "title",
+      "id": "novice_lumberjack",
+      "titleType": "gathering",
+      "difficultyTier": "novice",
+      "prerequisites": {
+        "activities": {
+          "treesChopped": 100
+        },
+        "requiredTitles": [],
+        "characterLevel": 0
+      },
+      "acquisitionMethod": "guaranteed_milestone"
+    },
+    {
+      "type": "title",
+      "id": "novice_smith",
+      "titleType": "crafting",
+      "difficultyTier": "novice",
+      "prerequisites": {
+        "activities": {
+          "itemsSmithed": 50
+        },
+        "requiredTitles": [],
+        "characterLevel": 0
+      },
+      "acquisitionMethod": "guaranteed_milestone"
+    },
+    {
+      "type": "title",
+      "id": "novice_warrior",
+      "titleType": "combat",
+      "difficultyTier": "novice",
+      "prerequisites": {
+        "activities": {
+          "enemiesDefeated": 50
+        },
+        "requiredTitles": [],
+        "characterLevel": 0
+      },
+      "acquisitionMethod": "guaranteed_milestone"
+    },
+    {
+      "type": "title",
+      "id": "apprentice_flame_miner",
+      "titleType": "gathering",
+      "difficultyTier": "apprentice",
+      "prerequisites": {
+        "activities": {
+          "oresMined": 1000,
+          "fireOresMined": 200
+        },
+        "requiredTitles": [
+          "novice_miner"
+        ],
+        "characterLevel": 5
+      },
+      "acquisitionMethod": "event_based_rng"
+    },
+    {
+      "type": "title",
+      "id": "journeyman_refiner",
+      "titleType": "crafting",
+      "difficultyTier": "journeyman",
+      "prerequisites": {
+        "activities": {
+          "materialsRefined": 500,
+          "alloysCreated": 50
+        },
+        "requiredTitles": [
+          "novice_refiner"
+        ],
+        "characterLevel": 10
+      },
+      "acquisitionMethod": "event_based_rng"
+    },
+    {
+      "type": "title",
+      "id": "expert_battle_sage",
+      "titleType": "combat",
+      "difficultyTier": "expert",
+      "prerequisites": {
+        "activities": {
+          "enemiesDefeated": 1000,
+          "criticalHits": 500,
+          "perfectDodges": 100
+        },
+        "requiredTitles": [
+          "journeyman_warrior"
+        ],
+        "characterLevel": 20
+      },
+      "acquisitionMethod": "event_based_rng"
+    },
+    {
+      "type": "title",
+      "id": "master_eternal_smith",
+      "titleType": "crafting",
+      "difficultyTier": "master",
+      "prerequisites": {
+        "activities": {
+          "itemsSmithed": 5000,
+          "legendaryItemsCreated": 10,
+          "perfectCrafts": 500
+        },
+        "requiredTitles": [
+          "expert_master_smith"
+        ],
+        "characterLevel": 40
+      },
+      "acquisitionMethod": "special_achievement"
+    },
+    {
+      "type": "title",
+      "id": "hidden_dragons_bane",
+      "titleType": "combat",
+      "difficultyTier": "special",
+      "prerequisites": {
+        "activities": {
+          "dragonBossDefeated": 1,
+          "usedFireWeapon": true
+        },
+        "requiredTitles": [],
+        "characterLevel": 25
+      },
+      "acquisitionMethod": "hidden_discovery"
+    },
+    {
+      "type": "title",
+      "id": "hidden_lucky_bastard",
+      "titleType": "utility",
+      "difficultyTier": "special",
+      "prerequisites": {
+        "activities": {
+          "consecutiveFirstTryBonuses": 10,
+          "rareDropsFound": 50
+        },
+        "requiredTitles": [],
+        "characterLevel": 15
+      },
+      "acquisitionMethod": "hidden_discovery"
+    }
+  ],
+  "_summary": {
+    "unlock_methods": [
+      "{'description': 'How this skill is unlocked', 'options': ['automatic', 'quest_reward', 'npc_purchase', 'milestone_unlock', 'title_unlock', 'skill_evolution', 'discovery', 'class_specific', 'random_drop'], 'required': True}",
+      "milestone_unlock",
+      "title_unlock",
+      "automatic",
+      "quest_reward",
+      "npc_purchase"
+    ],
+    "title_types": [
+      "combat",
+      "crafting",
+      "utility",
+      "gathering"
+    ],
+    "difficulty_tiers": [
+      "master",
+      "apprentice",
+      "expert",
+      "novice",
+      "journeyman",
+      "special"
+    ],
+    "acquisition_methods": [
+      "special_achievement",
+      "event_based_rng",
+      "guaranteed_milestone",
+      "hidden_discovery"
+    ]
+  }
+}

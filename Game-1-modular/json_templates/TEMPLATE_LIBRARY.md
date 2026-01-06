@@ -1,0 +1,351 @@
+# JSON Template Library - LLM Model Training
+
+Generated: 2026-01-04 04:41:13
+
+## LLM Architecture Overview
+
+### Crafting LLMs (2 per discipline × 5 disciplines)
+
+| Discipline | Recipe LLM | Item LLM |
+|------------|------------|----------|
+| Smithing | 83 recipes | 73 items |
+| Alchemy | 54 recipes | 16 items |
+| Refining | 102 recipes | 81 items |
+| Engineering | 41 recipes | 21 items |
+| Enchanting | 75 recipes | 0 items |
+
+### Other LLMs
+
+| Model | Items | Purpose |
+|-------|-------|---------|
+| hostiles | 49 | Enemy mobs and abilities |
+| skills | 48 | Player skill definitions |
+| titles | 10 | Achievement titles |
+| chunk_types | 9 | World generation chunks |
+| node_types | 28 | Resource nodes |
+| npcs | 6 | NPC definitions |
+| quests | 6 | Quest definitions |
+
+### Classifier LLM: 24 requirements
+
+---
+
+## All Tags
+
+Total unique tags: 315
+
+- `1H`
+- `2H`
+- `BURN`
+- `Physical`
+- `SLASHING`
+- `Single`
+- `abundance`
+- `accessory`
+- `adamantine`
+- `adaptive`
+- `advanced`
+- `adventurer`
+- `aggressive`
+- `agile`
+- `agility`
+- `air`
+- `alchemy`
+- `alloy`
+- `alloying`
+- `ally`
+- `amulet`
+- `ancient`
+- `aoe`
+- `arcane`
+- `area`
+- `armor`
+- `armor_breaker`
+- `artisan`
+- `ash`
+- `attack_speed`
+- `axe`
+- `balanced`
+- `bash`
+- `basic`
+- `beam`
+- `beetle`
+- `berserker`
+- `bleed`
+- `blood`
+- `bomb`
+- `bonus`
+- `boss`
+- `bow`
+- `bracelet`
+- `brewing`
+- `bronze`
+- `buff`
+- `burn`
+- `burst`
+- `bypass`
+- `carapace`
+- `caster`
+- `cave`
+- `chain`
+- `chaos`
+- `chest`
+- `chrono`
+- `circle`
+- `cleaving`
+- `cluster`
+- `combat`
+- `common`
+- `composite`
+- `cone`
+- `confuse`
+- `construct`
+- `consumable`
+- `control`
+- `copper`
+- `crafting`
+- `critical`
+- `crowd-control`
+- `crushing`
+- `crystal`
+- `crystallization`
+- `dagger`
+- `damage`
+- `damage_boost`
+- `damage_reduction`
+- `dangerous`
+- `dark`
+- `debuff`
+- `defense`
+- `defensive`
+- `destruction`
+- `device`
+- `disable`
+- `docile`
+- `durability`
+- `durable`
+- `earth`
+- `ebony`
+- `efficiency`
+- `elemental`
+- `empower`
+- `enchanting`
+- `end-game`
+- `energy`
+- `engineering`
+- `enhancement`
+- `enrage`
+- `entity`
+- `epic`
+- `essence`
+- `essential`
+- `etherion`
+- `exotic`
+- `explorer`
+- `explosive`
+- `fang`
+- `fast`
+- `feet`
+- `fine`
+- `finisher`
+- `fire`
+- `fishing`
+- `flexible`
+- `flight`
+- `forest`
+- `forge`
+- `forging`
+- `fortify`
+- `fortune`
+- `freeze`
+- `frontline`
+- `frost`
+- `gathering`
+- `gel`
+- `generalist`
+- `gold`
+- `golem`
+- `grinding`
+- `hands`
+- `harmony`
+- `harvesting`
+- `haste`
+- `head`
+- `healing`
+- `heavy`
+- `herbs`
+- `ice`
+- `immobilize`
+- `impossible`
+- `instant`
+- `invisible`
+- `iron`
+- `ironwood`
+- `knockback`
+- `layered`
+- `leather`
+- `legendary`
+- `legendary-ore`
+- `legendary-wood`
+- `legs`
+- `lifesteal`
+- `light`
+- `lightning`
+- `living`
+- `luck`
+- `mace`
+- `magic`
+- `magical`
+- `mana`
+- `master`
+- `mastery`
+- `material`
+- `mechanical`
+- `melee`
+- `memory`
+- `metal`
+- `metallic`
+- `mid-game`
+- `minerals`
+- `mining`
+- `mithril`
+- `mixed`
+- `mixed-quality`
+- `mobile`
+- `mobility`
+- `monster`
+- `movement`
+- `multi_purpose`
+- `mythical`
+- `mythical-materials`
+- `nature`
+- `oak`
+- `ore`
+- `ore-quality`
+- `orichalcum`
+- `over_time`
+- `passive`
+- `phase`
+- `physical`
+- `pickaxe`
+- `pierce`
+- `piercing`
+- `plank`
+- `player`
+- `poison`
+- `poison_status`
+- `potion`
+- `power`
+- `precious`
+- `precision`
+- `projectile`
+- `protection`
+- `pull`
+- `purification`
+- `purifying`
+- `quality`
+- `quantum`
+- `quarry`
+- `radiant`
+- `random`
+- `ranged`
+- `ranger`
+- `rare`
+- `rarity`
+- `reach`
+- `reality-bender`
+- `recovery`
+- `refined`
+- `refinery`
+- `refining`
+- `reflect`
+- `regeneration`
+- `repair`
+- `repeatable`
+- `resistance`
+- `ring`
+- `root`
+- `safe`
+- `sawing`
+- `scales`
+- `scavenger`
+- `scholar`
+- `self`
+- `shadow`
+- `sharp`
+- `shield`
+- `shock`
+- `silence`
+- `silk-touch`
+- `single`
+- `single_hit`
+- `single_target`
+- `slashing`
+- `slime`
+- `slow`
+- `smelting`
+- `smithing`
+- `solvent`
+- `soulbound`
+- `spear`
+- `special`
+- `spectral`
+- `speed`
+- `speed_boost`
+- `staff`
+- `standard`
+- `starter`
+- `station`
+- `steel`
+- `stone`
+- `stone-rich`
+- `strength`
+- `strong`
+- `stun`
+- `summon`
+- `support`
+- `survival`
+- `sustain`
+- `sword`
+- `tanky`
+- `tech`
+- `teleport`
+- `temporal`
+- `territorial`
+- `thorns`
+- `tier`
+- `time`
+- `tin`
+- `tool`
+- `trader`
+- `trainer`
+- `transcendence`
+- `transmutation`
+- `trap`
+- `treasure`
+- `tree`
+- `turret`
+- `tutorial`
+- `ultimate`
+- `uncommon`
+- `universal`
+- `upgrade`
+- `utility`
+- `vampiric`
+- `versatile`
+- `void`
+- `volcanic`
+- `vulnerable`
+- `wandering`
+- `warrior`
+- `water`
+- `weaken`
+- `weapon`
+- `weight`
+- `wolf`
+- `wood`
+- `wood-quality`
+- `wood-rich`
+- `worldtree`
+- `wraith`
+- `yield`

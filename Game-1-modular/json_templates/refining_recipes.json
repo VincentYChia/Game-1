@@ -1,0 +1,667 @@
+{
+  "_meta": {
+    "category": "refining_recipes",
+    "llm_purpose": "Recipe LLM for refining - creates material processing recipes",
+    "generated_at": "2026-01-04T04:41:13.676130",
+    "total_items": 102,
+    "source_files": [
+      "placements.JSON/placements-refining-1.JSON",
+      "recipes.JSON/recipes-refining-1.JSON",
+      "recipes.JSON/recipes-tag-tests.JSON"
+    ]
+  },
+  "_all_possible_values": {
+    "coreInputs[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "adamantine_ore",
+        "animal_hide",
+        "ash_log",
+        "birch_log",
+        "bronze_ingot",
+        "clay",
+        "coal",
+        "copper_ingot",
+        "copper_ore",
+        "ebony_log",
+        "etherion_ingot",
+        "etherion_ore",
+        "gold_ingot",
+        "gold_ore",
+        "iron_ingot",
+        "iron_ore",
+        "ironwood_log",
+        "limestone",
+        "maple_log",
+        "mithril_ingot",
+        "mithril_ore",
+        "oak_log",
+        "orichalcum_ingot",
+        "orichalcum_ore",
+        "pine_log",
+        "platinum_ingot",
+        "platinum_ore",
+        "sand",
+        "silver_ingot",
+        "silver_ore",
+        "steel_ingot",
+        "steel_ore",
+        "tin_ingot",
+        "tin_ore"
+      ],
+      "total_unique": 35,
+      "types": [
+        "string"
+      ],
+      "occurrences": 54
+    },
+    "coreInputs[].quantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "total_unique": 5,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 54
+    },
+    "coreInputs[].rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 27
+    },
+    "fuelRequired.materialId": {
+      "values": [
+        "phoenix_ash"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "fuelRequired.quantity": {
+      "values": [
+        1
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 1
+    },
+    "inputs[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "adamantine_ore",
+        "ash_log",
+        "birch_log",
+        "bronze_ingot",
+        "copper_ingot",
+        "copper_ore",
+        "ebony_log",
+        "etherion_ingot",
+        "etherion_ore",
+        "fire_crystal",
+        "frost_essence",
+        "iron_ingot",
+        "iron_ore",
+        "ironwood_log",
+        "lightning_shard",
+        "maple_log",
+        "mithril_ingot",
+        "mithril_ore",
+        "oak_log",
+        "orichalcum_ingot",
+        "orichalcum_ore",
+        "pine_log",
+        "steel_ingot",
+        "steel_ore",
+        "tin_ingot",
+        "tin_ore",
+        "worldtree_log"
+      ],
+      "total_unique": 28,
+      "types": [
+        "string"
+      ],
+      "occurrences": 52
+    },
+    "inputs[].quantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 52
+    },
+    "inputs[].rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 23
+    },
+    "metadata.narrative": {
+      "values": [
+        "Creating bronze through ancient metallurgical alloying. Harder than copper, more workable than iron. Rarely produces exceptional quality ingots.",
+        "Forging steel from carbon-rich ore. Requires intense heat.",
+        "Forging steel with frost essence. The metal is cold to touch, always.",
+        "Infusing copper with storm essence. Perfect magical conductivity.",
+        "Infusing steel with fire essence. The metal burns without being consumed.",
+        "Milling ash into planks. Superior shock absorption.",
+        "Milling maple wood. Resists warping beautifully.",
+        "Processing birch into fine planks. Excellent for detail work.",
+        "Processing ebony. The wood absorbs light as you work.",
+        "Processing pine into planks. Light, flexible wood.",
+        "Refining common copper into uncommon quality. Careful heat and patience.",
+        "Refining common iron into uncommon quality. Patient work and precise heat.",
+        "Refining epic adamantine into legendary quality. Hardness beyond measurement.",
+        "Refining epic copper into legendary quality. Perfect molecular alignment achieved.",
+        "Refining epic iron into legendary quality. Transcending conventional limits.",
+        "Refining epic mithril into legendary quality. The impossible made real.",
+        "Refining epic orichalcum into legendary quality. Ancient metal awakens fully.",
+        "Refining epic steel into legendary quality. Perfection crystallized in metal.",
+        "Refining legendary etherion into mythical quality. Temporal boundaries dissolve entirely.",
+        "Refining legendary mithril into mythical quality. The metal sings in harmonic perfection.",
+        "Refining legendary mithril. The metal seems to purify itself, occasionally yielding higher quality ingots.",
+        "Refining legendary orichalcum into mythical quality. The ancient metal awakens completely.",
+        "Refining metal that exists in multiple states. Reality bends during the process.",
+        "Refining rare adamantine into epic quality. Nearly indestructible becomes truly eternal.",
+        "Refining rare bronze into epic quality. Surpassing even the legendary smiths of old.",
+        "Refining rare copper into epic quality. Approaching theoretical perfection.",
+        "Refining rare iron into epic quality. Metal that defies conventional limits.",
+        "Refining rare mithril into epic quality. The metal sings as it transforms.",
+        "Refining rare steel into epic quality. Months of dedication distilled into perfection.",
+        "Refining rare tin into epic quality. Perfect magical conductivity achieved.",
+        "Refining the ancient metal. Channels both physical and magical forces.",
+        "Refining tin ore into silvery metal. Essential for alloys.",
+        "Refining uncommon bronze into rare quality. The ancient alloy perfected.",
+        "Refining uncommon copper into rare quality. The grain becomes perfect.",
+        "Refining uncommon iron into rare quality. Crystalline structure perfecting.",
+        "Refining uncommon steel into rare quality. Perfect crystalline structure.",
+        "Refining uncommon tin into rare quality. Silvery sheen becomes mirror-bright.",
+        "Sawing ironwood requires special blades. Wood dulls them quickly.",
+        "Sawing oak logs into usable planks. Basic carpentry.",
+        "Smelting adamantine requires extreme heat and purification techniques. Sometimes yields exceptionally pure ingots.",
+        "Smelting iron ore into reliable metal. Backbone of civilization. Crushing the ore first increases yield.",
+        "Smelting raw copper into usable ingots. The foundation of metallurgy.",
+        "TEST: Refining with EMPTY tags array",
+        "TEST: Refining with MULTIPLE bonus process tags (crushing + grinding + purifying + alloying)",
+        "TEST: Refining with NO bonus tags (pure smelting)",
+        "TEST: Refining with ONLY high-probability tags (grinding 40% + purifying 30%)",
+        "TEST: Refining with alloying tag for maximum rarity upgrade (+2 tiers)",
+        "Working worldtree wood. It remembers being part of something greater."
+      ],
+      "total_unique": 48,
+      "types": [
+        "string"
+      ],
+      "occurrences": 48
+    },
+    "metadata.tags": {
+      "values": [
+        "adamantine",
+        "advanced",
+        "alloying",
+        "ancient",
+        "basic",
+        "bronze",
+        "copper",
+        "crushing",
+        "durable",
+        "elemental",
+        "epic",
+        "etherion",
+        "fine",
+        "fire",
+        "frost",
+        "grinding",
+        "iron",
+        "legendary",
+        "lightning",
+        "magical",
+        "metallic",
+        "mithril",
+        "mythical",
+        "orichalcum",
+        "purifying",
+        "quality",
+        "rare",
+        "rarity",
+        "sawing",
+        "smelting",
+        "steel",
+        "tin",
+        "uncommon",
+        "upgrade",
+        "wood"
+      ],
+      "total_unique": 35,
+      "types": [
+        "array"
+      ],
+      "occurrences": 48
+    },
+    "narrative": {
+      "values": [
+        "Calcining limestone. Creates reactive quicklime - foundation of many processes.",
+        "Creating bronze. Copper in core determines base, tin in surrounding modifies to alloy - classic 3:1 ratio creates stronger alloy. T1 allows 1 core + 2 surrounding.",
+        "Firing clay to brick. Soft earth becomes hard construction material.",
+        "Forging steel from carbon-rich ore. Requires intense heat - cylinders resist then yield.",
+        "Forging steel with frost. Perpetually cold metal - crystallizing impossible cold.",
+        "Infusing copper with storm. Perfect conductivity - arcs jump between shards and metal.",
+        "Infusing steel with fire. Metal burns without consumption - crystals seep energy in.",
+        "Melting sand to glass. Extreme heat transforms granules to clarity.",
+        "Milling ash logs. Dense wood, clean grain - satisfying precision.",
+        "Milling legendary ironwood. Dense as metal - cylinders strain against it.",
+        "Processing birch. White wood with subtle grain - reveals silver interior.",
+        "Processing coal to charcoal. Burns hotter, cleaner - essential for advanced work.",
+        "Processing maple logs. Light colored wood with fine grain - quality timber.",
+        "Processing pine logs. Soft wood cuts easily - resinous scent fills air.",
+        "Processing rare ebony. Black as night, hard as steel - exceptional quality.",
+        "Refining ancient metal. Channels physical and magical forces - harmonic resonance.",
+        "Refining common copper to uncommon. Four compress into one - structure perfects.",
+        "Refining common iron to uncommon. Patient work and precise heat.",
+        "Refining common steel to uncommon. Carbon bonds align perfectly.",
+        "Refining epic adamantine to legendary. Hardness beyond measurement.",
+        "Refining epic copper to legendary. Perfect molecular alignment achieved.",
+        "Refining epic iron to legendary. Ultimate iron - theoretically perfect.",
+        "Refining epic mithril to legendary. Defies physics completely.",
+        "Refining epic orichalcum to legendary. Ancient metal awakens fully.",
+        "Refining epic platinum to legendary. Ultimate precious metal perfection.",
+        "Refining epic steel to legendary. Perfect steel - master smiths weep.",
+        "Refining legendary etherion to mythical. Temporal boundaries dissolve.",
+        "Refining legendary mithril to mythical. Metal sings in harmonic perfection.",
+        "Refining legendary mithril. Metal purifies itself - cylinders align eagerly.",
+        "Refining legendary orichalcum to mythical. Complete awakening achieved.",
+        "Refining multidimensional metal. Reality bends - impossible configurations work.",
+        "Refining platinum ore. Dense white metal - rarer than gold, harder than steel.",
+        "Refining rare adamantine to epic. Nearly indestructible becomes truly eternal.",
+        "Refining rare bronze to epic. Surpassing legendary smiths of old.",
+        "Refining rare copper to epic. Approaching theoretical perfection.",
+        "Refining rare iron to epic. Bonds align with supernatural precision.",
+        "Refining rare mithril to epic. Weightless perfection approaches.",
+        "Refining rare silver to epic. Magical conductivity maximizes.",
+        "Refining rare steel to epic. Edge retention becomes legendary.",
+        "Refining rare tin to epic. Perfect magical conductivity achieved.",
+        "Refining silver ore. Gleaming white metal - resonates with unseen forces.",
+        "Refining tin ore. Essential for alloys - cylinders click with different tone than iron.",
+        "Refining uncommon bronze to rare. Ancient alloy perfected.",
+        "Refining uncommon copper to rare. Grain becomes perfect - impurities purged.",
+        "Refining uncommon gold to rare. Lustrous perfection achieved.",
+        "Refining uncommon iron to rare. Crystalline structure perfecting.",
+        "Refining uncommon steel to rare. Metal sings as imperfections vanish.",
+        "Refining uncommon tin to rare. Silvery sheen becomes mirror-bright.",
+        "Sawing oak into planks. Basic carpentry - blade sings as grain splits clean.",
+        "Smelting adamantine. Extreme heat required - cylinders groan under strain.",
+        "Smelting gold ore. Soft lustrous metal - eternal and untarnishing.",
+        "Smelting iron ore. Backbone of civilization - each cylinder reveals metal within stone.",
+        "Smelting raw copper. Foundation of metallurgy - heat purifies ore, impurities burn away.",
+        "Tanning hide to leather. Curing and treating makes it durable and workable."
+      ],
+      "total_unique": 54,
+      "types": [
+        "string"
+      ],
+      "occurrences": 54
+    },
+    "outputId": {
+      "values": [
+        "adamantine_ingot",
+        "ash_plank",
+        "birch_plank",
+        "brick",
+        "bronze_ingot",
+        "charcoal",
+        "copper_ingot",
+        "ebony_plank",
+        "etherion_ingot",
+        "fire_steel_ingot",
+        "frost_steel_ingot",
+        "glass",
+        "gold_ingot",
+        "iron_ingot",
+        "ironwood_plank",
+        "leather",
+        "lightning_copper_ingot",
+        "maple_plank",
+        "mithril_ingot",
+        "oak_plank",
+        "orichalcum_ingot",
+        "pine_plank",
+        "platinum_ingot",
+        "quicklime",
+        "silver_ingot",
+        "steel_ingot",
+        "tin_ingot"
+      ],
+      "total_unique": 27,
+      "types": [
+        "string"
+      ],
+      "occurrences": 54
+    },
+    "outputs[].materialId": {
+      "values": [
+        "adamantine_ingot",
+        "ash_plank",
+        "birch_plank",
+        "bronze_ingot",
+        "copper_ingot",
+        "ebony_plank",
+        "etherion_ingot",
+        "fire_steel_ingot",
+        "frost_steel_ingot",
+        "iron_ingot",
+        "ironwood_plank",
+        "lightning_copper_ingot",
+        "maple_plank",
+        "mithril_ingot",
+        "oak_plank",
+        "orichalcum_ingot",
+        "pine_plank",
+        "steel_ingot",
+        "tin_ingot",
+        "worldtree_plank"
+      ],
+      "total_unique": 20,
+      "types": [
+        "string"
+      ],
+      "occurrences": 48
+    },
+    "outputs[].quantity": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 48
+    },
+    "outputs[].rarity": {
+      "values": [
+        "common",
+        "epic",
+        "legendary",
+        "mythical",
+        "rare",
+        "uncommon"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 48
+    },
+    "recipeId": {
+      "values": [
+        "refining_adamantine_ore_to_ingot",
+        "refining_ash_log_to_plank",
+        "refining_birch_log_to_plank",
+        "refining_bronze_alloy",
+        "refining_clay_to_brick",
+        "refining_coal_to_charcoal",
+        "refining_copper_ore_to_ingot",
+        "refining_ebony_log_to_plank",
+        "refining_etherion_ore_to_ingot",
+        "refining_fire_steel",
+        "refining_frost_steel",
+        "refining_gold_ore_to_ingot",
+        "refining_hide_to_leather",
+        "refining_iron_ore_to_ingot",
+        "refining_ironwood_log_to_plank",
+        "refining_lightning_copper",
+        "refining_limestone_to_quicklime",
+        "refining_maple_log_to_plank",
+        "refining_mithril_ore_to_ingot",
+        "refining_oak_log_to_plank",
+        "refining_orichalcum_ore_to_ingot",
+        "refining_pine_log_to_plank",
+        "refining_platinum_ore_to_ingot",
+        "refining_rarity_adamantine_epic",
+        "refining_rarity_adamantine_legendary",
+        "refining_rarity_bronze_epic",
+        "refining_rarity_bronze_rare",
+        "refining_rarity_copper_epic",
+        "refining_rarity_copper_legendary",
+        "refining_rarity_copper_rare",
+        "refining_rarity_copper_uncommon",
+        "refining_rarity_etherion_mythical",
+        "refining_rarity_gold_rare",
+        "refining_rarity_iron_epic",
+        "refining_rarity_iron_legendary",
+        "refining_rarity_iron_rare",
+        "refining_rarity_iron_uncommon",
+        "refining_rarity_mithril_epic",
+        "refining_rarity_mithril_legendary",
+        "refining_rarity_mithril_mythical",
+        "refining_rarity_orichalcum_legendary",
+        "refining_rarity_orichalcum_mythical",
+        "refining_rarity_platinum_legendary",
+        "refining_rarity_silver_epic",
+        "refining_rarity_steel_epic",
+        "refining_rarity_steel_legendary",
+        "refining_rarity_steel_rare",
+        "refining_rarity_steel_uncommon",
+        "refining_rarity_tin_epic",
+        "refining_rarity_tin_rare",
+        "refining_sand_to_glass",
+        "refining_silver_ore_to_ingot",
+        "refining_steel_ore_to_ingot",
+        "refining_tin_ore_to_ingot",
+        "refining_worldtree_log_to_plank",
+        "test_refining_all_bonuses",
+        "test_refining_alloying_upgrade",
+        "test_refining_empty_tags",
+        "test_refining_high_probability",
+        "test_refining_no_bonuses"
+      ],
+      "total_unique": 60,
+      "types": [
+        "string"
+      ],
+      "occurrences": 102
+    },
+    "stationRequired": {
+      "values": [
+        "refinery"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 43
+    },
+    "stationTier": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 59
+    },
+    "stationTierRequired": {
+      "values": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "total_unique": 4,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 43
+    },
+    "stationType": {
+      "values": [
+        "refining"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "surroundingInputs[].materialId": {
+      "values": [
+        "fire_crystal",
+        "frost_essence",
+        "lightning_shard",
+        "tin_ingot"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 4
+    },
+    "surroundingInputs[].quantity": {
+      "values": [
+        1,
+        3
+      ],
+      "total_unique": 2,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 4
+    }
+  },
+  "_usable_template": {
+    "coreInputs": [
+      "<value>"
+    ],
+    "fuelRequired": {
+      "materialId": "phoenix_ash",
+      "quantity": 1
+    },
+    "inputs": [
+      "<value>"
+    ],
+    "metadata": {
+      "narrative": "Refining common iron into uncommon quality. Patient work and precise heat.",
+      "tags": [
+        "durable",
+        "orichalcum",
+        "quality"
+      ]
+    },
+    "narrative": "Refining epic adamantine to legendary. Hardness beyond measurement.",
+    "outputId": "copper_ingot",
+    "outputs": [
+      "<value>"
+    ],
+    "recipeId": "refining_tin_ore_to_ingot",
+    "stationRequired": "refinery",
+    "stationTier": 1,
+    "stationTierRequired": 1,
+    "stationType": "refining",
+    "surroundingInputs": [
+      "<value>"
+    ]
+  },
+  "_sample_items": [
+    {
+      "recipeId": "refining_copper_ore_to_ingot",
+      "outputId": "copper_ingot",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "copper_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Smelting raw copper. Foundation of metallurgy - heat purifies ore, impurities burn away."
+    },
+    {
+      "recipeId": "refining_iron_ore_to_ingot",
+      "outputId": "iron_ingot",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "iron_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Smelting iron ore. Backbone of civilization - each cylinder reveals metal within stone."
+    },
+    {
+      "recipeId": "refining_tin_ore_to_ingot",
+      "outputId": "tin_ingot",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "tin_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining tin ore. Essential for alloys - cylinders click with different tone than iron."
+    },
+    {
+      "recipeId": "refining_steel_ore_to_ingot",
+      "outputId": "steel_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "steel_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Forging steel from carbon-rich ore. Requires intense heat - cylinders resist then yield."
+    },
+    {
+      "recipeId": "refining_mithril_ore_to_ingot",
+      "outputId": "mithril_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "mithril_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining legendary mithril. Metal purifies itself - cylinders align eagerly."
+    }
+  ]
+}

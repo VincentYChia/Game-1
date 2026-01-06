@@ -1,0 +1,1096 @@
+{
+  "_meta": {
+    "category": "smithing_recipes",
+    "llm_purpose": "Recipe LLM for smithing - creates weapon/armor/tool crafting recipes",
+    "generated_at": "2026-01-04T04:41:13.680781",
+    "total_items": 83,
+    "source_files": [
+      "Update-1/recipes-smithing-testing.JSON",
+      "placements.JSON/placements-smithing-1.JSON",
+      "recipes.JSON/recipes-smithing-3.JSON",
+      "recipes.JSON/recipes-tag-tests.JSON"
+    ]
+  },
+  "_all_possible_values": {
+    "gridSize": {
+      "values": [
+        "3x3",
+        "5x5",
+        "7x7"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    },
+    "inputs[].materialId": {
+      "values": [
+        "air_crystal",
+        "ash_log",
+        "ash_plank",
+        "basalt",
+        "beetle_carapace",
+        "birch_plank",
+        "copper_ingot",
+        "dire_fang",
+        "earth_crystal",
+        "ebony_plank",
+        "essence_blood",
+        "fire_crystal",
+        "golem_core",
+        "granite",
+        "iron_ingot",
+        "ironwood_plank",
+        "lightning_shard",
+        "limestone",
+        "maple_plank",
+        "mithril_ingot",
+        "oak_log",
+        "oak_plank",
+        "obsidian",
+        "phoenix_ash",
+        "pine_log",
+        "pine_plank",
+        "slime_gel",
+        "spectral_thread",
+        "steel_ingot",
+        "storm_heart",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "total_unique": 32,
+      "types": [
+        "string"
+      ],
+      "occurrences": 105
+    },
+    "inputs[].quantity": {
+      "values": [
+        1,
+        10,
+        11,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "total_unique": 11,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 105
+    },
+    "metadata.gridSize": {
+      "values": [
+        "3x3",
+        "5x5",
+        "7x7"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    },
+    "metadata.narrative": {
+      "values": [
+        "A dagger is deceptively simple - just a blade and a grip. But the balance must be perfect for quick, precise strikes.",
+        "A simple round shield - iron face with oak backing. Protects and strikes in equal measure.",
+        "Advanced refinery with better efficiency and heat control.",
+        "Balanced steel longsword. The blade flows like water, strikes like thunder.",
+        "Basic alchemy table with mortar, pestle, and glassware.",
+        "Basic axe for woodcutting. Simple but essential for any aspiring adventurer.",
+        "Basic leather protection. Better than nothing, lighter than metal.",
+        "Basic refinery for turning raw ores into usable ingots. Essential for any metalworker.",
+        "Basic stone forge suitable for working copper and iron. The foundation of smithing.",
+        "Basic workbench for assembling mechanical devices.",
+        "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis.",
+        "Crafting a composite bow requires laminating different materials - wood for flexibility, sinew for power, silk for the string. Patience yields deadly accuracy.",
+        "Crafting a warhammer is about managing weight distribution. The crushing head must be perfectly balanced on the shaft, or it becomes a liability rather than a weapon.",
+        "Curved steel blade perfect for harvesting delicate plants. Clean cuts preserve quality and maximize yield.",
+        "Ethereal mithril axe that phases through wood fibers. Cuts with minimal resistance.",
+        "Flexible bamboo rod with silk line and bronze hook. Patience and the right tool can pull dinner from any water.",
+        "Forging a steel battleaxe requires balance - too heavy and it's unwieldy, too light and it lacks impact. This versatile weapon can devastate with two hands or still threaten with one.",
+        "Improved forge with better heat retention. Can work steel reliably.",
+        "Iron amulet holding a water crystal. Feels cool against your skin.",
+        "Iron plates protect vital organs. Heavy but reliable.",
+        "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective.",
+        "Master forge with crystal enhancement. Can reach extreme temperatures.",
+        "Mithril dagger that seems to shimmer out of existence. Wickedly sharp, impossibly light.",
+        "Razor-edged steel axe. Ancient trees fall before it.",
+        "Reinforced leather boots with iron caps. Protects your feet without slowing you down.",
+        "Reinforced leather gloves with iron studs across the knuckles. Your hands are your tools - protect them properly.",
+        "Simple copper band with fire crystal. Radiates gentle warmth.",
+        "Simple pine bow strung with treated sinew. Not powerful, but reliable.",
+        "Simple spear with copper tip. Keep your enemies at a distance.",
+        "Solid iron axe for serious forestry work. Bites deep and true.",
+        "Steel bracelet with lightning shard. Crackles with stored static.",
+        "Steel helm with full face protection. Your head stays attached, which is nice.",
+        "Steel pickaxe with perfect balance. Makes hard rock feel like clay.",
+        "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor.",
+        "TEST: Weapon with ALL functional combat tags inherited",
+        "TEST: Weapon with CONFLICTING hand requirement tags (1H + 2H)",
+        "TEST: Weapon with EMPTY tags array",
+        "TEST: Weapon with NO functional tags (only metadata tags)",
+        "The foundational smithing technique - blade, tang, handle. Simple in concept, demanding in execution. Every smith remembers their first sword.",
+        "Upgraded pickaxe that can tackle tougher deposits. Iron reliability meets practical design.",
+        "Your first pickaxe. The gateway to greater resources and deeper discoveries."
+      ],
+      "total_unique": 41,
+      "types": [
+        "string"
+      ],
+      "occurrences": 78
+    },
+    "metadata.tags": {
+      "values": [
+        "1H",
+        "2H",
+        "accessory",
+        "alchemy",
+        "amulet",
+        "armor",
+        "armor_breaker",
+        "axe",
+        "bash",
+        "basic",
+        "bow",
+        "bracelet",
+        "chest",
+        "cleaving",
+        "composite",
+        "crushing",
+        "dagger",
+        "defensive",
+        "elemental",
+        "engineering",
+        "fast",
+        "feet",
+        "fire",
+        "fishing",
+        "flexible",
+        "forge",
+        "gathering",
+        "hands",
+        "harvesting",
+        "head",
+        "heavy",
+        "legendary",
+        "legs",
+        "light",
+        "lightning",
+        "mace",
+        "melee",
+        "metal",
+        "pickaxe",
+        "piercing",
+        "precision",
+        "quality",
+        "ranged",
+        "reach",
+        "refinery",
+        "ring",
+        "shield",
+        "slashing",
+        "spear",
+        "staff",
+        "standard",
+        "starter",
+        "station",
+        "sword",
+        "tool",
+        "versatile",
+        "water",
+        "weapon"
+      ],
+      "total_unique": 58,
+      "types": [
+        "array"
+      ],
+      "occurrences": 41
+    },
+    "miniGame.baseTime": {
+      "values": [
+        25,
+        28,
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        60,
+        65,
+        70,
+        90
+      ],
+      "total_unique": 12,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 37
+    },
+    "miniGame.difficulty": {
+      "values": [
+        "easy",
+        "extreme",
+        "hard",
+        "moderate"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    },
+    "miniGame.type": {
+      "values": [
+        "smithing"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 37
+    },
+    "outputId": {
+      "values": [
+        "alchemy_table_t1",
+        "bamboo_fishing_rod",
+        "blood_reaver",
+        "composite_longbow",
+        "copper_axe",
+        "copper_dagger",
+        "copper_fire_ring",
+        "copper_pickaxe",
+        "copper_spear",
+        "engineering_bench_t1",
+        "fire_crystal_staff",
+        "forge_t1",
+        "forge_t2",
+        "forge_t3",
+        "frostbite_hammer",
+        "inferno_blade",
+        "iron_axe",
+        "iron_boots",
+        "iron_chestplate",
+        "iron_pickaxe",
+        "iron_round_shield",
+        "iron_shortsword",
+        "iron_studded_gauntlets",
+        "iron_warhammer",
+        "iron_water_amulet",
+        "leather_tunic",
+        "lightning_chain_whip",
+        "mithril_axe",
+        "mithril_dagger",
+        "mithril_pickaxe",
+        "pine_shortbow",
+        "refinery_t1",
+        "refinery_t2",
+        "steel_axe",
+        "steel_battleaxe",
+        "steel_helm",
+        "steel_leggings",
+        "steel_lightning_bracelet",
+        "steel_longsword",
+        "steel_pickaxe",
+        "steel_sickle",
+        "test_conflicting_sword",
+        "test_plain_sword",
+        "test_tagless_sword",
+        "test_ultimate_sword",
+        "void_piercer"
+      ],
+      "total_unique": 46,
+      "types": [
+        "string"
+      ],
+      "occurrences": 46
+    },
+    "outputQty": {
+      "values": [
+        1
+      ],
+      "total_unique": 1,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 46
+    },
+    "placementMap.1,1": {
+      "values": [
+        "beetle_carapace",
+        "granite",
+        "iron_ingot",
+        "limestone",
+        "mithril_ingot",
+        "slime_gel",
+        "steel_ingot",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "placementMap.1,2": {
+      "values": [
+        "beetle_carapace",
+        "copper_ingot",
+        "iron_ingot",
+        "ironwood_plank",
+        "mithril_ingot",
+        "oak_plank",
+        "pine_plank",
+        "spectral_thread",
+        "steel_ingot",
+        "wolf_pelt"
+      ],
+      "total_unique": 10,
+      "types": [
+        "string"
+      ],
+      "occurrences": 17
+    },
+    "placementMap.1,3": {
+      "values": [
+        "beetle_carapace",
+        "copper_ingot",
+        "granite",
+        "iron_ingot",
+        "ironwood_plank",
+        "limestone",
+        "mithril_ingot",
+        "oak_log",
+        "slime_gel",
+        "steel_ingot",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "total_unique": 12,
+      "types": [
+        "string"
+      ],
+      "occurrences": 22
+    },
+    "placementMap.1,4": {
+      "values": [
+        "iron_ingot",
+        "ironwood_plank",
+        "mithril_ingot",
+        "steel_ingot",
+        "wolf_pelt"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "placementMap.1,5": {
+      "values": [
+        "dire_fang",
+        "fire_crystal",
+        "mithril_ingot",
+        "steel_ingot"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "placementMap.1,6": {
+      "values": [
+        "mithril_ingot"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "placementMap.1,7": {
+      "values": [
+        "fire_crystal"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "placementMap.2,1": {
+      "values": [
+        "air_crystal",
+        "basalt",
+        "copper_ingot",
+        "granite",
+        "iron_ingot",
+        "obsidian",
+        "slime_gel",
+        "steel_ingot",
+        "wolf_pelt"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 14
+    },
+    "placementMap.2,2": {
+      "values": [
+        "ash_log",
+        "ash_plank",
+        "beetle_carapace",
+        "birch_plank",
+        "copper_ingot",
+        "fire_crystal",
+        "iron_ingot",
+        "oak_log",
+        "oak_plank",
+        "phoenix_ash",
+        "pine_log",
+        "spectral_thread",
+        "steel_ingot",
+        "wolf_pelt"
+      ],
+      "total_unique": 14,
+      "types": [
+        "string"
+      ],
+      "occurrences": 22
+    },
+    "placementMap.2,3": {
+      "values": [
+        "basalt",
+        "copper_ingot",
+        "granite",
+        "iron_ingot",
+        "oak_plank",
+        "obsidian",
+        "phoenix_ash",
+        "pine_plank",
+        "slime_gel",
+        "spectral_thread",
+        "steel_ingot",
+        "wolf_pelt"
+      ],
+      "total_unique": 12,
+      "types": [
+        "string"
+      ],
+      "occurrences": 26
+    },
+    "placementMap.2,4": {
+      "values": [
+        "ash_plank",
+        "beetle_carapace",
+        "fire_crystal",
+        "granite",
+        "iron_ingot",
+        "ironwood_plank",
+        "mithril_ingot",
+        "phoenix_ash",
+        "steel_ingot"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "placementMap.2,5": {
+      "values": [
+        "fire_crystal",
+        "iron_ingot",
+        "ironwood_plank",
+        "mithril_ingot",
+        "obsidian",
+        "steel_ingot"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "placementMap.2,6": {
+      "values": [
+        "fire_crystal",
+        "mithril_ingot"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 4
+    },
+    "placementMap.2,7": {
+      "values": [
+        "mithril_ingot"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "placementMap.3,1": {
+      "values": [
+        "ash_log",
+        "ash_plank",
+        "basalt",
+        "beetle_carapace",
+        "birch_plank",
+        "copper_ingot",
+        "earth_crystal",
+        "granite",
+        "iron_ingot",
+        "oak_log",
+        "oak_plank",
+        "obsidian",
+        "slime_gel",
+        "steel_ingot",
+        "wolf_pelt"
+      ],
+      "total_unique": 15,
+      "types": [
+        "string"
+      ],
+      "occurrences": 19
+    },
+    "placementMap.3,2": {
+      "values": [
+        "basalt",
+        "birch_plank",
+        "granite",
+        "iron_ingot",
+        "limestone",
+        "oak_plank",
+        "phoenix_ash",
+        "pine_log",
+        "pine_plank",
+        "spectral_thread",
+        "steel_ingot",
+        "wolf_pelt"
+      ],
+      "total_unique": 12,
+      "types": [
+        "string"
+      ],
+      "occurrences": 17
+    },
+    "placementMap.3,3": {
+      "values": [
+        "basalt",
+        "birch_plank",
+        "copper_ingot",
+        "earth_crystal",
+        "granite",
+        "iron_ingot",
+        "ironwood_plank",
+        "oak_plank",
+        "spectral_thread",
+        "steel_ingot",
+        "storm_heart",
+        "wolf_pelt"
+      ],
+      "total_unique": 12,
+      "types": [
+        "string"
+      ],
+      "occurrences": 17
+    },
+    "placementMap.3,4": {
+      "values": [
+        "ash_plank",
+        "iron_ingot",
+        "lightning_shard",
+        "mithril_ingot",
+        "phoenix_ash",
+        "steel_ingot"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9
+    },
+    "placementMap.3,5": {
+      "values": [
+        "beetle_carapace",
+        "ebony_plank",
+        "golem_core",
+        "iron_ingot",
+        "ironwood_plank",
+        "mithril_ingot",
+        "obsidian",
+        "steel_ingot"
+      ],
+      "total_unique": 8,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "placementMap.3,6": {
+      "values": [
+        "fire_crystal",
+        "mithril_ingot"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "placementMap.3,7": {
+      "values": [
+        "fire_crystal",
+        "mithril_ingot"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "placementMap.4,1": {
+      "values": [
+        "beetle_carapace",
+        "dire_fang",
+        "obsidian",
+        "spectral_thread",
+        "wolf_pelt"
+      ],
+      "total_unique": 5,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "placementMap.4,2": {
+      "values": [
+        "ebony_plank",
+        "iron_ingot",
+        "ironwood_plank",
+        "oak_plank",
+        "obsidian",
+        "spectral_thread",
+        "steel_ingot",
+        "water_crystal"
+      ],
+      "total_unique": 8,
+      "types": [
+        "string"
+      ],
+      "occurrences": 12
+    },
+    "placementMap.4,3": {
+      "values": [
+        "birch_plank",
+        "iron_ingot",
+        "obsidian",
+        "steel_ingot"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 4
+    },
+    "placementMap.4,4": {
+      "values": [
+        "ash_plank",
+        "ebony_plank",
+        "iron_ingot",
+        "ironwood_plank",
+        "lightning_shard",
+        "mithril_ingot",
+        "obsidian",
+        "steel_ingot",
+        "water_crystal"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 10
+    },
+    "placementMap.4,5": {
+      "values": [
+        "beetle_carapace",
+        "ironwood_plank",
+        "mithril_ingot",
+        "obsidian",
+        "steel_ingot",
+        "wolf_pelt"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 6
+    },
+    "placementMap.4,6": {
+      "values": [
+        "fire_crystal",
+        "mithril_ingot",
+        "steel_ingot"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "placementMap.4,7": {
+      "values": [
+        "mithril_ingot",
+        "spectral_thread"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "placementMap.5,1": {
+      "values": [
+        "dire_fang",
+        "granite",
+        "ironwood_plank",
+        "maple_plank"
+      ],
+      "total_unique": 4,
+      "types": [
+        "string"
+      ],
+      "occurrences": 5
+    },
+    "placementMap.5,2": {
+      "values": [
+        "dire_fang",
+        "spectral_thread",
+        "wolf_pelt"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 4
+    },
+    "placementMap.5,3": {
+      "values": [
+        "birch_plank",
+        "ebony_plank",
+        "ironwood_plank",
+        "slime_gel",
+        "water_crystal",
+        "wolf_pelt"
+      ],
+      "total_unique": 6,
+      "types": [
+        "string"
+      ],
+      "occurrences": 8
+    },
+    "placementMap.5,4": {
+      "values": [
+        "lightning_shard",
+        "wolf_pelt"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "placementMap.5,5": {
+      "values": [
+        "mithril_ingot"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "placementMap.5,6": {
+      "values": [
+        "mithril_ingot",
+        "phoenix_ash"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "placementMap.6,2": {
+      "values": [
+        "ebony_plank",
+        "ironwood_plank"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 4
+    },
+    "placementMap.6,4": {
+      "values": [
+        "ebony_plank"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "placementMap.7,1": {
+      "values": [
+        "ebony_plank",
+        "essence_blood",
+        "phoenix_ash"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 4
+    },
+    "recipeId": {
+      "values": [
+        "recipe_blood_reaver",
+        "recipe_frostbite_hammer",
+        "recipe_inferno_blade",
+        "recipe_lightning_chain_whip",
+        "recipe_void_piercer",
+        "smithing_alchemy_table_t1",
+        "smithing_bamboo_fishing_rod",
+        "smithing_composite_longbow",
+        "smithing_copper_axe",
+        "smithing_copper_dagger",
+        "smithing_copper_fire_ring",
+        "smithing_copper_pickaxe",
+        "smithing_copper_spear",
+        "smithing_engineering_bench_t1",
+        "smithing_fire_crystal_staff",
+        "smithing_forge_t1",
+        "smithing_forge_t2",
+        "smithing_forge_t3",
+        "smithing_iron_axe",
+        "smithing_iron_boots",
+        "smithing_iron_chestplate",
+        "smithing_iron_pickaxe",
+        "smithing_iron_round_shield",
+        "smithing_iron_shortsword",
+        "smithing_iron_studded_gauntlets",
+        "smithing_iron_warhammer",
+        "smithing_iron_water_amulet",
+        "smithing_leather_tunic",
+        "smithing_mithril_axe",
+        "smithing_mithril_dagger",
+        "smithing_mithril_pickaxe",
+        "smithing_pine_shortbow",
+        "smithing_refinery_t1",
+        "smithing_refinery_t2",
+        "smithing_steel_axe",
+        "smithing_steel_battleaxe",
+        "smithing_steel_helm",
+        "smithing_steel_leggings",
+        "smithing_steel_lightning_bracelet",
+        "smithing_steel_longsword",
+        "smithing_steel_pickaxe",
+        "smithing_steel_sickle",
+        "test_smithing_conflicting_hands",
+        "test_smithing_empty_tags",
+        "test_smithing_max_tags",
+        "test_smithing_no_functional_tags"
+      ],
+      "total_unique": 46,
+      "types": [
+        "string"
+      ],
+      "occurrences": 83
+    },
+    "stationTier": {
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 46
+    },
+    "stationType": {
+      "values": [
+        "smithing"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 41
+    }
+  },
+  "_usable_template": {
+    "gridSize": "7x7",
+    "inputs": [
+      "<value>"
+    ],
+    "metadata": {
+      "gridSize": "7x7",
+      "narrative": "Master forge with crystal enhancement. Can reach extreme temperatures.",
+      "tags": [
+        "standard",
+        "armor",
+        "mace"
+      ]
+    },
+    "miniGame": {
+      "baseTime": 65,
+      "difficulty": "easy",
+      "type": "smithing"
+    },
+    "outputId": "steel_longsword",
+    "outputQty": 1,
+    "placementMap": {
+      "1,1": "steel_ingot",
+      "1,2": "steel_ingot",
+      "1,3": "steel_ingot",
+      "1,4": "steel_ingot",
+      "1,5": "mithril_ingot",
+      "1,6": "mithril_ingot",
+      "1,7": "fire_crystal",
+      "2,1": "steel_ingot",
+      "2,2": "steel_ingot",
+      "2,3": "steel_ingot",
+      "2,4": "steel_ingot",
+      "2,5": "steel_ingot",
+      "2,6": "mithril_ingot",
+      "2,7": "mithril_ingot",
+      "3,1": "steel_ingot",
+      "3,2": "steel_ingot",
+      "3,3": "ironwood_plank",
+      "3,4": "steel_ingot",
+      "3,5": "ironwood_plank",
+      "3,6": "mithril_ingot",
+      "3,7": "mithril_ingot",
+      "4,1": "beetle_carapace",
+      "4,2": "ironwood_plank",
+      "4,3": "steel_ingot",
+      "4,4": "ironwood_plank",
+      "4,5": "steel_ingot",
+      "4,6": "mithril_ingot",
+      "4,7": "mithril_ingot",
+      "5,1": "ironwood_plank",
+      "5,2": "spectral_thread",
+      "5,3": "ironwood_plank",
+      "5,4": "wolf_pelt",
+      "5,5": "mithril_ingot",
+      "5,6": "mithril_ingot",
+      "6,2": "ironwood_plank",
+      "6,4": "ebony_plank",
+      "7,1": "essence_blood"
+    },
+    "recipeId": "smithing_forge_t3",
+    "stationTier": 1,
+    "stationType": "smithing"
+  },
+  "_sample_items": [
+    {
+      "recipeId": "recipe_lightning_chain_whip",
+      "outputId": "lightning_chain_whip",
+      "outputQty": 1,
+      "stationTier": 1,
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "copper_ingot",
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "recipeId": "recipe_inferno_blade",
+      "outputId": "inferno_blade",
+      "outputQty": 1,
+      "stationTier": 1,
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "copper_ingot",
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "recipeId": "recipe_void_piercer",
+      "outputId": "void_piercer",
+      "outputQty": 1,
+      "stationTier": 1,
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "copper_ingot",
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "recipeId": "recipe_frostbite_hammer",
+      "outputId": "frostbite_hammer",
+      "outputQty": 1,
+      "stationTier": 1,
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "copper_ingot",
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "recipeId": "recipe_blood_reaver",
+      "outputId": "blood_reaver",
+      "outputQty": 1,
+      "stationTier": 1,
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "copper_ingot",
+          "quantity": 2
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1400 @@
+{
+  "_meta": {
+    "category": "chunk_types",
+    "llm_purpose": "Chunk Types LLM - creates world generation chunk templates",
+    "generated_at": "2026-01-04T04:41:13.659462",
+    "total_items": 9,
+    "source_files": [
+      "Definitions.JSON/Chunk-templates-1.JSON"
+    ]
+  },
+  "_all_possible_values": {
+    "category": {
+      "values": [
+        "dangerous",
+        "peaceful",
+        "rare"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9
+    },
+    "chunkType": {
+      "values": [
+        "dangerous_cave",
+        "dangerous_forest",
+        "dangerous_quarry",
+        "peaceful_cave",
+        "peaceful_forest",
+        "peaceful_quarry",
+        "rare_cave",
+        "rare_forest",
+        "rare_quarry"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9
+    },
+    "enemySpawns.beetle_armored.behavior": {
+      "values": [
+        "aggressive_guard",
+        "aggressive_territory"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "enemySpawns.beetle_armored.density": {
+      "values": [
+        "high",
+        "low",
+        "moderate"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "enemySpawns.beetle_brown.behavior": {
+      "values": [
+        "docile_wander",
+        "territorial"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "enemySpawns.beetle_brown.density": {
+      "values": [
+        "moderate",
+        "very_low"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "enemySpawns.entity_primordial.behavior": {
+      "values": [
+        "boss_encounter"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.entity_primordial.density": {
+      "values": [
+        "very_low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.golem_crystal.behavior": {
+      "values": [
+        "aggressive_guard"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.golem_crystal.density": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.golem_stone.behavior": {
+      "values": [
+        "boss_encounter"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.golem_stone.density": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.slime_acid.behavior": {
+      "values": [
+        "aggressive_swarm"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.slime_acid.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.slime_crystal.behavior": {
+      "values": [
+        "aggressive_swarm"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.slime_crystal.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.slime_green.behavior": {
+      "values": [
+        "aggressive_swarm",
+        "stationary"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "enemySpawns.slime_green.density": {
+      "values": [
+        "high",
+        "very_low"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "enemySpawns.void_wraith.behavior": {
+      "values": [
+        "aggressive_phase"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.void_wraith.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.wolf_dire.behavior": {
+      "values": [
+        "aggressive_alpha",
+        "aggressive_hunter",
+        "aggressive_pack"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "enemySpawns.wolf_dire.density": {
+      "values": [
+        "low",
+        "moderate"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "enemySpawns.wolf_elder.behavior": {
+      "values": [
+        "boss_encounter"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.wolf_elder.density": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "enemySpawns.wolf_grey.behavior": {
+      "values": [
+        "aggressive_pack",
+        "passive_patrol"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "enemySpawns.wolf_grey.density": {
+      "values": [
+        "high",
+        "very_low"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "generationRules.adjacencyPreference": {
+      "values": [
+        "dangerous_cave",
+        "dangerous_forest",
+        "dangerous_quarry",
+        "peaceful_cave",
+        "peaceful_forest",
+        "peaceful_quarry",
+        "rare_cave",
+        "rare_forest",
+        "rare_quarry"
+      ],
+      "total_unique": 9,
+      "types": [
+        "array"
+      ],
+      "occurrences": 9
+    },
+    "generationRules.rollWeight": {
+      "values": [
+        1,
+        3,
+        5
+      ],
+      "total_unique": 3,
+      "types": [
+        "integer"
+      ],
+      "occurrences": 9
+    },
+    "generationRules.spawnAreaAllowed": {
+      "values": [
+        false,
+        true
+      ],
+      "total_unique": 2,
+      "types": [
+        "boolean"
+      ],
+      "occurrences": 9
+    },
+    "metadata.narrative": {
+      "values": [
+        "Active quarry teeming with aggressive slimes and beetles. Better ore deposits and stone, but constant combat. Bring potions.",
+        "Ancient forest where the World Tree's influence lingers. Legendary wood materials grow here, impossibly rare. Only the most dedicated woodcutters will find this place, and even fewer survive long enough to harvest.",
+        "Crystalline quarry where reality bends and legendary metals form. Orichalcum and adamantine deposits shimmer in the darkness. Elite enemies guard these treasures jealously.",
+        "Deep cave system crawling with hostile creatures. Rich deposits of rare materials, but survival is not guaranteed. Form a party or come prepared.",
+        "Dense woodland where ancient trees stand guard over abundant resources. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft. Occasional wolves patrol, but they're more curious than aggressive.",
+        "Reality-warped depths where the impossible becomes mundane. Etherion deposits exist in superposition, primordial crystals defy physics. Only masters dare enter. Death is common, but the rewards transcend mortal crafting.",
+        "Rocky quarry with exposed stone and mineral deposits. Small deposits of copper and iron glint in the sunlight. A few slimes ooze between rocks, but they're slow and easy to avoid.",
+        "Shallow cave entrance with basic resources and minimal danger. Beetles occasionally wander through, but they're docile unless provoked. Good for early exploration.",
+        "Wild forest where predators hunt and danger lurks behind every tree. Higher tier wood is common, but aggressive wolf packs make harvesting risky. High risk, high reward."
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9
+    },
+    "metadata.tags": {
+      "values": [
+        "cave",
+        "combat",
+        "end-game",
+        "forest",
+        "legendary-ore",
+        "legendary-wood",
+        "mid-game",
+        "mixed",
+        "mixed-quality",
+        "mythical-materials",
+        "ore-quality",
+        "quarry",
+        "rare",
+        "safe",
+        "starter",
+        "stone-rich",
+        "wood-quality",
+        "wood-rich"
+      ],
+      "total_unique": 18,
+      "types": [
+        "array"
+      ],
+      "occurrences": 9
+    },
+    "name": {
+      "values": [
+        "Ancient Heartwood",
+        "Dangerous Cave",
+        "Dangerous Forest",
+        "Dangerous Quarry",
+        "Paradox Hollow",
+        "Peaceful Cave",
+        "Peaceful Forest",
+        "Peaceful Quarry",
+        "Primordial Vein"
+      ],
+      "total_unique": 9,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9
+    },
+    "resourceDensity.adamantine_lode.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.adamantine_lode.tierBias": {
+      "values": [
+        "high"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.ash_tree.density": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.ash_tree.tierBias": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.basalt_column.density": {
+      "values": [
+        "high"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.basalt_column.tierBias": {
+      "values": [
+        "mid"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.birch_tree.density": {
+      "values": [
+        "high",
+        "moderate"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.birch_tree.tierBias": {
+      "values": [
+        "mid"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.copper_vein.density": {
+      "values": [
+        "high",
+        "moderate"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.copper_vein.tierBias": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.diamond_geode.density": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.diamond_geode.tierBias": {
+      "values": [
+        "high"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.ebony_tree.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.ebony_tree.tierBias": {
+      "values": [
+        "high"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.eternity_monolith.density": {
+      "values": [
+        "very_low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.eternity_monolith.tierBias": {
+      "values": [
+        "legendary"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.etherion_nexus.density": {
+      "values": [
+        "very_low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.etherion_nexus.tierBias": {
+      "values": [
+        "legendary"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.genesis_structure.density": {
+      "values": [
+        "very_low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.genesis_structure.tierBias": {
+      "values": [
+        "legendary"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.granite_formation.density": {
+      "values": [
+        "high",
+        "very_high"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.granite_formation.tierBias": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.iron_deposit.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "resourceDensity.iron_deposit.tierBias": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "resourceDensity.ironwood_tree.density": {
+      "values": [
+        "low",
+        "moderate"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.ironwood_tree.tierBias": {
+      "values": [
+        "high"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.limestone_outcrop.density": {
+      "values": [
+        "low",
+        "very_high"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.limestone_outcrop.tierBias": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.maple_tree.density": {
+      "values": [
+        "high",
+        "low"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.maple_tree.tierBias": {
+      "values": [
+        "mid"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.marble_quarry.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.marble_quarry.tierBias": {
+      "values": [
+        "mid"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.mithril_cache.density": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.mithril_cache.tierBias": {
+      "values": [
+        "mid"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.oak_tree.density": {
+      "values": [
+        "low",
+        "moderate",
+        "very_high"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "resourceDensity.oak_tree.tierBias": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 3
+    },
+    "resourceDensity.obsidian_flow.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.obsidian_flow.tierBias": {
+      "values": [
+        "high"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.orichalcum_trove.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.orichalcum_trove.tierBias": {
+      "values": [
+        "high"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.pine_tree.density": {
+      "values": [
+        "very_high"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.pine_tree.tierBias": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.primordial_formation.density": {
+      "values": [
+        "very_low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.primordial_formation.tierBias": {
+      "values": [
+        "legendary"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.quartz_cluster.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.quartz_cluster.tierBias": {
+      "values": [
+        "mid"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.shale_bed.density": {
+      "values": [
+        "moderate"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.shale_bed.tierBias": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.steel_node.density": {
+      "values": [
+        "high",
+        "moderate"
+      ],
+      "total_unique": 2,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.steel_node.tierBias": {
+      "values": [
+        "mid"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.voidstone_shard.density": {
+      "values": [
+        "low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.voidstone_shard.tierBias": {
+      "values": [
+        "high"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 2
+    },
+    "resourceDensity.worldtree_sapling.density": {
+      "values": [
+        "very_low"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "resourceDensity.worldtree_sapling.tierBias": {
+      "values": [
+        "legendary"
+      ],
+      "total_unique": 1,
+      "types": [
+        "string"
+      ],
+      "occurrences": 1
+    },
+    "theme": {
+      "values": [
+        "cave",
+        "forest",
+        "quarry"
+      ],
+      "total_unique": 3,
+      "types": [
+        "string"
+      ],
+      "occurrences": 9
+    }
+  },
+  "_usable_template": {
+    "category": "rare",
+    "chunkType": "peaceful_quarry",
+    "enemySpawns": {
+      "beetle_armored": {
+        "behavior": "aggressive_guard",
+        "density": "moderate"
+      },
+      "beetle_brown": {
+        "behavior": "territorial",
+        "density": "moderate"
+      },
+      "entity_primordial": {
+        "behavior": "boss_encounter",
+        "density": "very_low"
+      },
+      "golem_crystal": {
+        "behavior": "aggressive_guard",
+        "density": "low"
+      },
+      "golem_stone": {
+        "behavior": "boss_encounter",
+        "density": "low"
+      },
+      "slime_acid": {
+        "behavior": "aggressive_swarm",
+        "density": "moderate"
+      },
+      "slime_crystal": {
+        "behavior": "aggressive_swarm",
+        "density": "moderate"
+      },
+      "slime_green": {
+        "behavior": "aggressive_swarm",
+        "density": "very_low"
+      },
+      "void_wraith": {
+        "behavior": "aggressive_phase",
+        "density": "moderate"
+      },
+      "wolf_dire": {
+        "behavior": "aggressive_alpha",
+        "density": "moderate"
+      },
+      "wolf_elder": {
+        "behavior": "boss_encounter",
+        "density": "low"
+      },
+      "wolf_grey": {
+        "behavior": "passive_patrol",
+        "density": "very_low"
+      }
+    },
+    "generationRules": {
+      "adjacencyPreference": [
+        "peaceful_quarry",
+        "dangerous_forest",
+        "peaceful_forest"
+      ],
+      "rollWeight": 1,
+      "spawnAreaAllowed": true
+    },
+    "metadata": {
+      "narrative": "Shallow cave entrance with basic resources and minimal danger. Beetles occasionally wander through, but they're docile unless provoked. Good for early exploration.",
+      "tags": [
+        "cave",
+        "legendary-ore",
+        "mixed-quality"
+      ]
+    },
+    "name": "Dangerous Cave",
+    "resourceDensity": {
+      "adamantine_lode": {
+        "density": "moderate",
+        "tierBias": "high"
+      },
+      "ash_tree": {
+        "density": "low",
+        "tierBias": "low"
+      },
+      "basalt_column": {
+        "density": "high",
+        "tierBias": "mid"
+      },
+      "birch_tree": {
+        "density": "moderate",
+        "tierBias": "mid"
+      },
+      "copper_vein": {
+        "density": "moderate",
+        "tierBias": "low"
+      },
+      "diamond_geode": {
+        "density": "low",
+        "tierBias": "high"
+      },
+      "ebony_tree": {
+        "density": "moderate",
+        "tierBias": "high"
+      },
+      "eternity_monolith": {
+        "density": "very_low",
+        "tierBias": "legendary"
+      },
+      "etherion_nexus": {
+        "density": "very_low",
+        "tierBias": "legendary"
+      },
+      "genesis_structure": {
+        "density": "very_low",
+        "tierBias": "legendary"
+      },
+      "granite_formation": {
+        "density": "very_high",
+        "tierBias": "low"
+      },
+      "iron_deposit": {
+        "density": "moderate",
+        "tierBias": "low"
+      },
+      "ironwood_tree": {
+        "density": "moderate",
+        "tierBias": "high"
+      },
+      "limestone_outcrop": {
+        "density": "very_high",
+        "tierBias": "low"
+      },
+      "maple_tree": {
+        "density": "low",
+        "tierBias": "mid"
+      },
+      "marble_quarry": {
+        "density": "moderate",
+        "tierBias": "mid"
+      },
+      "mithril_cache": {
+        "density": "low",
+        "tierBias": "mid"
+      },
+      "oak_tree": {
+        "density": "very_high",
+        "tierBias": "low"
+      },
+      "obsidian_flow": {
+        "density": "moderate",
+        "tierBias": "high"
+      },
+      "orichalcum_trove": {
+        "density": "moderate",
+        "tierBias": "high"
+      },
+      "pine_tree": {
+        "density": "very_high",
+        "tierBias": "low"
+      },
+      "primordial_formation": {
+        "density": "very_low",
+        "tierBias": "legendary"
+      },
+      "quartz_cluster": {
+        "density": "moderate",
+        "tierBias": "mid"
+      },
+      "shale_bed": {
+        "density": "moderate",
+        "tierBias": "low"
+      },
+      "steel_node": {
+        "density": "moderate",
+        "tierBias": "mid"
+      },
+      "voidstone_shard": {
+        "density": "low",
+        "tierBias": "high"
+      },
+      "worldtree_sapling": {
+        "density": "very_low",
+        "tierBias": "legendary"
+      }
+    },
+    "theme": "cave"
+  },
+  "_sample_items": [
+    {
+      "metadata": {
+        "narrative": "Dense woodland where ancient trees stand guard over abundant resources. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft. Occasional wolves patrol, but they're more curious than aggressive.",
+        "tags": [
+          "forest",
+          "safe",
+          "wood-rich",
+          "starter"
+        ]
+      },
+      "chunkType": "peaceful_forest",
+      "name": "Peaceful Forest",
+      "category": "peaceful",
+      "theme": "forest",
+      "resourceDensity": {
+        "oak_tree": {
+          "density": "very_high",
+          "tierBias": "low"
+        },
+        "pine_tree": {
+          "density": "very_high",
+          "tierBias": "low"
+        },
+        "birch_tree": {
+          "density": "moderate",
+          "tierBias": "mid"
+        },
+        "ash_tree": {
+          "density": "low",
+          "tierBias": "low"
+        },
+        "limestone_outcrop": {
+          "density": "low",
+          "tierBias": "low"
+        }
+      },
+      "enemySpawns": {
+        "wolf_grey": {
+          "density": "very_low",
+          "behavior": "passive_patrol"
+        }
+      },
+      "generationRules": {
+        "rollWeight": 5,
+        "spawnAreaAllowed": true,
+        "adjacencyPreference": [
+          "peaceful_forest",
+          "peaceful_quarry"
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Rocky quarry with exposed stone and mineral deposits. Small deposits of copper and iron glint in the sunlight. A few slimes ooze between rocks, but they're slow and easy to avoid.",
+        "tags": [
+          "quarry",
+          "safe",
+          "stone-rich",
+          "starter"
+        ]
+      },
+      "chunkType": "peaceful_quarry",
+      "name": "Peaceful Quarry",
+      "category": "peaceful",
+      "theme": "quarry",
+      "resourceDensity": {
+        "limestone_outcrop": {
+          "density": "very_high",
+          "tierBias": "low"
+        },
+        "granite_formation": {
+          "density": "very_high",
+          "tierBias": "low"
+        },
+        "copper_vein": {
+          "density": "high",
+          "tierBias": "low"
+        },
+        "iron_deposit": {
+          "density": "moderate",
+          "tierBias": "low"
+        },
+        "oak_tree": {
+          "density": "low",
+          "tierBias": "low"
+        }
+      },
+      "enemySpawns": {
+        "slime_green": {
+          "density": "very_low",
+          "behavior": "stationary"
+        }
+      },
+      "generationRules": {
+        "rollWeight": 5,
+        "spawnAreaAllowed": true,
+        "adjacencyPreference": [
+          "peaceful_quarry",
+          "peaceful_forest"
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Shallow cave entrance with basic resources and minimal danger. Beetles occasionally wander through, but they're docile unless provoked. Good for early exploration.",
+        "tags": [
+          "cave",
+          "safe",
+          "mixed",
+          "starter"
+        ]
+      },
+      "chunkType": "peaceful_cave",
+      "name": "Peaceful Cave",
+      "category": "peaceful",
+      "theme": "cave",
+      "resourceDensity": {
+        "granite_formation": {
+          "density": "high",
+          "tierBias": "low"
+        },
+        "iron_deposit": {
+          "density": "moderate",
+          "tierBias": "low"
+        },
+        "copper_vein": {
+          "density": "moderate",
+          "tierBias": "low"
+        },
+        "shale_bed": {
+          "density": "moderate",
+          "tierBias": "low"
+        }
+      },
+      "enemySpawns": {
+        "beetle_brown": {
+          "density": "very_low",
+          "behavior": "docile_wander"
+        }
+      },
+      "generationRules": {
+        "rollWeight": 3,
+        "spawnAreaAllowed": true,
+        "adjacencyPreference": [
+          "peaceful_cave",
+          "peaceful_quarry"
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Wild forest where predators hunt and danger lurks behind every tree. Higher tier wood is common, but aggressive wolf packs make harvesting risky. High risk, high reward.",
+        "tags": [
+          "forest",
+          "combat",
+          "wood-quality",
+          "mid-game"
+        ]
+      },
+      "chunkType": "dangerous_forest",
+      "name": "Dangerous Forest",
+      "category": "dangerous",
+      "theme": "forest",
+      "resourceDensity": {
+        "birch_tree": {
+          "density": "high",
+          "tierBias": "mid"
+        },
+        "maple_tree": {
+          "density": "high",
+          "tierBias": "mid"
+        },
+        "oak_tree": {
+          "density": "moderate",
+          "tierBias": "low"
+        },
+        "ironwood_tree": {
+          "density": "low",
+          "tierBias": "high"
+        }
+      },
+      "enemySpawns": {
+        "wolf_grey": {
+          "density": "high",
+          "behavior": "aggressive_pack"
+        },
+        "wolf_dire": {
+          "density": "low",
+          "behavior": "aggressive_alpha"
+        }
+      },
+      "generationRules": {
+        "rollWeight": 3,
+        "spawnAreaAllowed": false,
+        "adjacencyPreference": [
+          "dangerous_forest",
+          "dangerous_quarry"
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Active quarry teeming with aggressive slimes and beetles. Better ore deposits and stone, but constant combat. Bring potions.",
+        "tags": [
+          "quarry",
+          "combat",
+          "ore-quality",
+          "mid-game"
+        ]
+      },
+      "chunkType": "dangerous_quarry",
+      "name": "Dangerous Quarry",
+      "category": "dangerous",
+      "theme": "quarry",
+      "resourceDensity": {
+        "basalt_column": {
+          "density": "high",
+          "tierBias": "mid"
+        },
+        "steel_node": {
+          "density": "high",
+          "tierBias": "mid"
+        },
+        "iron_deposit": {
+          "density": "moderate",
+          "tierBias": "low"
+        },
+        "marble_quarry": {
+          "density": "moderate",
+          "tierBias": "mid"
+        }
+      },
+      "enemySpawns": {
+        "slime_green": {
+          "density": "high",
+          "behavior": "aggressive_swarm"
+        },
+        "beetle_brown": {
+          "density": "moderate",
+          "behavior": "territorial"
+        },
+        "beetle_armored": {
+          "density": "low",
+          "behavior": "aggressive_guard"
+        }
+      },
+      "generationRules": {
+        "rollWeight": 3,
+        "spawnAreaAllowed": false,
+        "adjacencyPreference": [
+          "dangerous_quarry",
+          "dangerous_cave"
+        ]
+      }
+    }
+  ]
+}
