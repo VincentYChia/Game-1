@@ -5108,11 +5108,14 @@ class GameEngine:
 
                     pygame.draw.rect(surf, base_color, (int(x) + 2, y + 2, cell_size - 4, cell_size - 4), border_radius=8)
 
-                    # Border - subtle indicator if cell matches target
+                    # Border - normal border, but blue trace if OFF but should be ON
                     if matches_target:
                         border_color = (130, 220, 150) if is_on else (80, 120, 100)
+                    elif not is_on and target_is_on:
+                        # OFF but should be ON - blue trace on surrounding square
+                        border_color = (80, 140, 220)  # Noticeable blue
                     else:
-                        border_color = (200, 150, 100) if is_on else (150, 100, 80)  # Subtle orange hint
+                        border_color = (100, 110, 120)  # Neutral for ON but should be OFF
                     pygame.draw.rect(surf, border_color, (int(x) + 2, y + 2, cell_size - 4, cell_size - 4), 2, border_radius=8)
 
                     # Switch indicator
@@ -5125,9 +5128,18 @@ class GameEngine:
                         pygame.draw.circle(glow_surf, (100, 220, 130, 100),
                                           (indicator_size * 3 // 2, indicator_size * 3 // 2), indicator_size * 3 // 2)
                         surf.blit(glow_surf, (cx - indicator_size * 3 // 2, cy - indicator_size * 3 // 2))
-                        pygame.draw.circle(surf, (130, 240, 160), (cx, cy), indicator_size)
+                        if not matches_target:
+                            # ON but should be OFF - RED central dot
+                            pygame.draw.circle(surf, (220, 80, 80), (cx, cy), indicator_size)
+                        else:
+                            pygame.draw.circle(surf, (130, 240, 160), (cx, cy), indicator_size)
                     else:
-                        pygame.draw.circle(surf, (60, 75, 90), (cx, cy), indicator_size)
+                        if not matches_target:
+                            # OFF but should be ON - blue trace on circle too
+                            pygame.draw.circle(surf, (60, 100, 160), (cx, cy), indicator_size)
+                            pygame.draw.circle(surf, (80, 140, 220), (cx, cy), indicator_size, 2)  # Blue ring
+                        else:
+                            pygame.draw.circle(surf, (60, 75, 90), (cx, cy), indicator_size)
 
         # Draw TARGET grid (reference only)
         if show_target and target_x > -grid_width and target_x < 1000 + grid_width:
