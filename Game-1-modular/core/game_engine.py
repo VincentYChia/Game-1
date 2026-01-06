@@ -1291,11 +1291,17 @@ class GameEngine:
                                 else:
                                     self._logic_switch_view = 'current'
                             return  # Don't check puzzle completion for view toggle
+                        elif action_type == 'reset':
+                            # Reset current puzzle to initial state
+                            self.active_minigame.handle_action('reset')
+                            self.add_notification("Puzzle reset to initial state", (200, 200, 100))
+                            return  # Don't check puzzle completion for reset
                         elif action_type == 'slide':
                             # Slide tile (legacy)
                             self.active_minigame.handle_action('slide', row=row, col=col)
 
                         # Check if puzzle was solved
+                        prev_puzzle_idx = self.active_minigame.current_puzzle_index
                         if self.active_minigame.check_current_puzzle():
                             puzzle_idx = self.active_minigame.current_puzzle_index
                             total = self.active_minigame.puzzle_count
@@ -1305,6 +1311,34 @@ class GameEngine:
                                 print(f"✅ Puzzle {puzzle_idx}/{total} solved! Efficiency: {eff:.0f}%")
                             else:
                                 print(f"✅ Puzzle {puzzle_idx}/{total} solved!")
+
+                            # If we moved to a new puzzle (not completed all), show info overlay
+                            if puzzle_idx < total and puzzle_idx > prev_puzzle_idx:
+                                # Reset logic switch view state for new puzzle
+                                self._logic_switch_view = 'current'
+                                self._logic_switch_slide_start = 0
+                                self._logic_switch_slide_from = 'current'
+
+                                # Show info overlay for the new puzzle
+                                effects = get_effects_manager()
+                                current_puzzle = self.active_minigame.puzzles[puzzle_idx]
+                                puzzle_state = current_puzzle.get_state()
+                                puzzle_mode = puzzle_state.get('puzzle_mode', 'Unknown')
+                                ideal_moves = puzzle_state.get('ideal_moves', 10)
+                                grid_size = puzzle_state.get('grid_size', 4)
+
+                                effects.show_metadata({
+                                    'discipline': 'Engineering',
+                                    'difficulty_tier': f'Puzzle {puzzle_idx + 1}/{total}',
+                                    'difficulty_points': self.active_minigame.difficulty_points,
+                                    'time_limit': None,  # No time limit display for puzzle info
+                                    'max_bonus': 1.0,
+                                    'special_params': {
+                                        'Puzzle Mode': puzzle_mode,
+                                        'Grid Size': f'{grid_size}x{grid_size}',
+                                        'Ideal Moves': ideal_moves
+                                    }
+                                })
                         return
 
             if hasattr(self, 'minigame_button_rect') and self.minigame_button_rect:
@@ -4539,23 +4573,54 @@ class GameEngine:
             self._logic_switch_view = 'current'
             self._logic_switch_slide_start = 0
             self._logic_switch_slide_from = 'current'
-            # Show metadata overlay
+            # Track last shown puzzle index
+            self._engineering_last_puzzle_shown = -1
+
+        # Show info overlay for each new puzzle (including first)
+        current_puzzle_idx = self.active_minigame.current_puzzle_index
+        if not hasattr(self, '_engineering_last_puzzle_shown'):
+            self._engineering_last_puzzle_shown = -1
+
+        if current_puzzle_idx > self._engineering_last_puzzle_shown:
+            self._engineering_last_puzzle_shown = current_puzzle_idx
+            # Reset logic switch view state for new puzzle
+            self._logic_switch_view = 'current'
+            self._logic_switch_slide_start = 0
+            self._logic_switch_slide_from = 'current'
+
+            # Get puzzle info
             difficulty_tier = getattr(self.active_minigame, 'difficulty_tier', 'Unknown')
             difficulty_points = getattr(self.active_minigame, 'difficulty_points', 0)
-            # Get puzzle mode from current puzzle
             current_puzzle = state.get('current_puzzle', {})
-            puzzle_mode = current_puzzle.get('puzzle_mode', 'random -> uniform')
+            total_puzzles = state.get('total_puzzles', 1)
+
+            # Detect puzzle type and mode
+            puzzle_type = current_puzzle.get('puzzle_type', 'rotation_pipe')
+            if puzzle_type == 'logic_switch':
+                puzzle_mode = current_puzzle.get('puzzle_mode', 'random -> uniform')
+                ideal_moves = current_puzzle.get('ideal_moves', 10)
+                grid_size = current_puzzle.get('grid_size', 4)
+                special_params = {
+                    'Puzzle Type': 'Logic Switch',
+                    'Puzzle Mode': puzzle_mode,
+                    'Grid Size': f'{grid_size}x{grid_size}',
+                    'Ideal Moves': ideal_moves
+                }
+            else:
+                grid_size = current_puzzle.get('grid_size', 4)
+                special_params = {
+                    'Puzzle Type': 'Pipe Rotation',
+                    'Grid Size': f'{grid_size}x{grid_size}',
+                    'Goal': 'Connect input to output'
+                }
+
             effects.show_metadata({
                 'discipline': 'Engineering',
-                'difficulty_tier': difficulty_tier,
+                'difficulty_tier': f'Puzzle {current_puzzle_idx + 1}/{total_puzzles}' if total_puzzles > 1 else difficulty_tier,
                 'difficulty_points': difficulty_points,
-                'time_limit': state.get('time_limit', 120),
+                'time_limit': state.get('time_limit', 120) if current_puzzle_idx == 0 else None,
                 'max_bonus': 1.0 + difficulty_points * 0.02,
-                'special_params': {
-                    'Total Puzzles': state.get('total_puzzles', 2),
-                    'Grid Size': getattr(self.active_minigame, 'grid_size', 4),
-                    'Puzzle Mode': puzzle_mode
-                }
+                'special_params': special_params
             })
 
         dt = 1/60
@@ -5097,14 +5162,15 @@ class GameEngine:
                     else:
                         pygame.draw.circle(surf, (55, 65, 75), (cx, cy), indicator_size)
 
-        # View toggle button
+        # Buttons row: View Toggle and Reset
         btn_y = start_y + grid_width + 25
-        btn_w, btn_h = 200, 40
-        btn_x = center_x - btn_w // 2
-        btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
-
-        # Button styling
+        btn_w, btn_h = 160, 40
         is_animating = self._logic_switch_slide_start > 0
+
+        # View toggle button (left)
+        view_btn_x = center_x - btn_w - 10
+        view_btn_rect = pygame.Rect(view_btn_x, btn_y, btn_w, btn_h)
+
         if is_animating:
             btn_color = (60, 65, 70)
             btn_border = (90, 100, 110)
@@ -5112,23 +5178,39 @@ class GameEngine:
             btn_color = (70, 90, 110)
             btn_border = (120, 160, 200)
 
-        pygame.draw.rect(surf, btn_color, btn_rect, border_radius=8)
-        pygame.draw.rect(surf, btn_border, btn_rect, 2, border_radius=8)
+        pygame.draw.rect(surf, btn_color, view_btn_rect, border_radius=8)
+        pygame.draw.rect(surf, btn_border, view_btn_rect, 2, border_radius=8)
 
-        # Button text with arrow indicator
         if self._logic_switch_view == 'current':
             btn_text = "◄ View TARGET ►"
         else:
             btn_text = "◄ View CURRENT ►"
         _temp_surf = self.renderer.small_font.render(btn_text, True, (180, 200, 220))
-        surf.blit(_temp_surf, (btn_x + btn_w // 2 - _temp_surf.get_width() // 2, btn_y + btn_h // 2 - _temp_surf.get_height() // 2))
+        surf.blit(_temp_surf, (view_btn_x + btn_w // 2 - _temp_surf.get_width() // 2, btn_y + btn_h // 2 - _temp_surf.get_height() // 2))
 
-        # Store button rect for click detection (only when not animating)
         if not is_animating:
             self.engineering_puzzle_rects.append((
-                pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h),
+                pygame.Rect(wx + view_btn_x, wy + btn_y, btn_w, btn_h),
                 ('view_toggle', 0, 0)
             ))
+
+        # Reset button (right)
+        reset_btn_x = center_x + 10
+        reset_btn_rect = pygame.Rect(reset_btn_x, btn_y, btn_w, btn_h)
+
+        reset_color = (110, 70, 70)
+        reset_border = (180, 100, 100)
+        pygame.draw.rect(surf, reset_color, reset_btn_rect, border_radius=8)
+        pygame.draw.rect(surf, reset_border, reset_btn_rect, 2, border_radius=8)
+
+        reset_text = "↻ RESET"
+        _temp_surf = self.renderer.small_font.render(reset_text, True, (255, 200, 200))
+        surf.blit(_temp_surf, (reset_btn_x + btn_w // 2 - _temp_surf.get_width() // 2, btn_y + btn_h // 2 - _temp_surf.get_height() // 2))
+
+        self.engineering_puzzle_rects.append((
+            pygame.Rect(wx + reset_btn_x, wy + btn_y, btn_w, btn_h),
+            ('reset', 0, 0)
+        ))
 
         # Hint about toggle mechanic
         hint = "Click switch to toggle it + adjacent cells"
