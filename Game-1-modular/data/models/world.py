@@ -179,6 +179,8 @@ class PlacedEntity:
     visual_effects: Set[str] = None  # Visual indicators (burning, shocked, frozen, etc.)
     # Trap-specific fields
     triggered: bool = False  # For one-time traps
+    # Crafted item stats (preserve minigame bonuses)
+    crafted_stats: Dict[str, Any] = None  # Stats from minigame crafting
 
     def __post_init__(self):
         """Initialize mutable default values"""
@@ -190,6 +192,8 @@ class PlacedEntity:
             self.status_effects = []
         if self.visual_effects is None:
             self.visual_effects = set()
+        if self.crafted_stats is None:
+            self.crafted_stats = {}
 
     def get_color(self) -> Tuple[int, int, int]:
         """Get display color for this entity"""

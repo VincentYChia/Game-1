@@ -1520,7 +1520,8 @@ class GameEngine:
                                             if damage_match:
                                                 damage_val = float(damage_match.group(1))
 
-                                        # Place the entity (with tags)
+                                        # Place the entity (with tags and crafted_stats to preserve minigame bonuses)
+                                        item_crafted_stats = item_stack.crafted_stats if hasattr(item_stack, 'crafted_stats') else None
                                         self.world.place_entity(
                                             player_pos,
                                             item_stack.item_id,
@@ -1529,7 +1530,8 @@ class GameEngine:
                                             range=range_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0,
                                             damage=damage_val if entity_type != PlacedEntityType.CRAFTING_STATION else 0.0,
                                             tags=effect_tags,
-                                            effect_params=effect_params
+                                            effect_params=effect_params,
+                                            crafted_stats=item_crafted_stats
                                         )
 
                                         # Remove one item from inventory
@@ -1643,17 +1645,23 @@ class GameEngine:
                     # Check if player is in range (use 2.0 units as pickup range)
                     dist = self.character.position.distance_to(placed_entity.position)
                     if dist <= 2.0:
-                        # Add item back to inventory
+                        # Add item back to inventory with preserved crafted_stats (minigame bonuses)
                         mat_db = MaterialDatabase.get_instance()
                         mat_def = mat_db.get_material(placed_entity.item_id)
                         if mat_def:
-                            # Try to add to inventory
-                            success = self.character.inventory.add_item(placed_entity.item_id, 1)
+                            # Restore crafted_stats from placed entity
+                            entity_crafted_stats = placed_entity.crafted_stats if hasattr(placed_entity, 'crafted_stats') and placed_entity.crafted_stats else None
+                            # Try to add to inventory with preserved stats
+                            success = self.character.inventory.add_item(
+                                placed_entity.item_id, 1,
+                                crafted_stats=entity_crafted_stats
+                            )
                             if success:
                                 # Remove from world
                                 self.world.placed_entities.remove(placed_entity)
-                                self.add_notification(f"Picked up {mat_def.name}", (100, 255, 100))
-                                print(f"✓ Picked up {mat_def.name}")
+                                bonus_msg = " (with bonuses)" if entity_crafted_stats else ""
+                                self.add_notification(f"Picked up {mat_def.name}{bonus_msg}", (100, 255, 100))
+                                print(f"✓ Picked up {mat_def.name}{bonus_msg}")
                                 return
                             else:
                                 self.add_notification("Inventory full!", (255, 100, 100))
@@ -3527,10 +3535,12 @@ class GameEngine:
         highlight_rect = pygame.Rect(metal_rect.x + 3, metal_rect.y + 2, metal_rect.width - 6, metal_rect.height // 3)
         pygame.draw.rect(surf, highlight_color, highlight_rect, border_radius=2)
 
-        # Target zones on anvil
+        # Target zones on anvil - scale from game bar width to visual anvil width
+        hammer_bar_width_for_zones = state.get('hammer_bar_width', 400)
+        scale_factor = anvil_width / hammer_bar_width_for_zones
         center = anvil_width / 2
-        target_w = state['target_width']
-        perfect_w = state['perfect_width']
+        target_w = state['target_width'] * scale_factor
+        perfect_w = state['perfect_width'] * scale_factor
         target_x = anvil_x + int(center - target_w / 2)
         perfect_x = anvil_x + int(center - perfect_w / 2)
 
@@ -3542,9 +3552,10 @@ class GameEngine:
         pygame.draw.line(surf, (150, 200, 80), (perfect_x, anvil_y + 30), (perfect_x, anvil_y + anvil_height - 10), 3)
         pygame.draw.line(surf, (150, 200, 80), (perfect_x + int(perfect_w), anvil_y + 30), (perfect_x + int(perfect_w), anvil_y + anvil_height - 10), 3)
 
-        # Hammer indicator
-        hammer_pos = int(state['hammer_position'])
-        hammer_head_x = anvil_x + hammer_pos
+        # Hammer indicator - scale to visual anvil width
+        hammer_bar_width = state.get('hammer_bar_width', 400)
+        hammer_pos_scaled = int(state['hammer_position'] * anvil_width / hammer_bar_width)
+        hammer_head_x = anvil_x + hammer_pos_scaled
         hammer_head_y = anvil_y - 55
 
         # Hammer oscillation animation

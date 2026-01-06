@@ -272,53 +272,79 @@ class LogicSwitchPuzzle:
     - Has calculable minimum solution for scoring
     - Easy to understand, difficulty scales with grid size and pattern complexity
 
+    Puzzle Modes (in order of difficulty):
+    A. random -> fully_lit: Random start, all-on target (easiest)
+    B. random -> fully_dim: Random start, all-off target
+    C. fully_dim -> random: All-off start, random target
+    D. fully_lit -> random: All-on start, random target (hardest)
+
     Scoring: Based on moves vs ideal solution
     - Perfect (ideal moves) = 100% reward
     - More moves = exponential decay: reward * e^-(moves/ideal - 1)
     - Time limit adds pressure without failing instantly
     """
 
-    def __init__(self, grid_size=3, difficulty="easy"):
+    def __init__(self, grid_size=3, difficulty="easy", max_moves=10):
         """
         Initialize logic switch puzzle
 
         Args:
             grid_size: Grid size (3-6)
-            difficulty: "easy", "medium", "hard" - affects pattern complexity
+            difficulty: "easy", "medium", "hard" - affects puzzle mode
+            max_moves: Maximum ideal moves (default 10 for solvability)
         """
         self.grid_size = grid_size
         self.difficulty = difficulty
+        self.max_moves = max_moves
         self.grid = []  # Current state (0=off, 1=on)
         self.target = []  # Target pattern to match
         self.moves = 0
         self.ideal_moves = 0  # Minimum moves to solve
         self.solution_path = []  # Cells to toggle for ideal solution
+        self.puzzle_mode = ""  # Describes the puzzle type
         self._generate_puzzle()
 
     def _generate_puzzle(self):
-        """Generate solvable puzzle by working backwards from solution"""
-        # Start with all switches off (or on for variety)
-        base_state = random.choice([0, 1])
-        self.target = [[base_state for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+        """Generate solvable puzzle capped at max_moves"""
+        # Determine puzzle mode based on difficulty
+        # Easy: random -> uniform (lit or dim)
+        # Medium: uniform -> random (reversed, harder)
+        # Hard: full reversal with more moves
 
-        # Create starting state by applying random toggles
-        # The number of toggles = ideal solution length
         if self.difficulty == "easy":
-            num_toggles = max(2, self.grid_size)
+            # Mode A or B: Random start, uniform target
+            target_state = random.choice([0, 1])  # All lit or all dim
+            self.puzzle_mode = f"random -> {'fully_lit' if target_state == 1 else 'fully_dim'}"
+            num_toggles = min(self.max_moves, max(3, self.grid_size))
+            self._generate_forward(target_state, num_toggles)
+
         elif self.difficulty == "medium":
-            num_toggles = self.grid_size + 2
+            # Mode C or D: Uniform start, random target (reversed)
+            start_state = random.choice([0, 1])
+            self.puzzle_mode = f"{'fully_lit' if start_state == 1 else 'fully_dim'} -> random"
+            num_toggles = min(self.max_moves, self.grid_size + 3)
+            self._generate_reversed(start_state, num_toggles)
+
         else:  # hard
-            num_toggles = self.grid_size * 2
+            # Mode D preferred: All lit -> random (hardest visual)
+            start_state = 1  # All lit is harder to see changes
+            self.puzzle_mode = "fully_lit -> random"
+            num_toggles = min(self.max_moves, self.grid_size * 2)
+            self._generate_reversed(start_state, num_toggles)
+
+    def _generate_forward(self, target_state, num_toggles):
+        """Generate puzzle: random start -> uniform target"""
+        # Target is uniform (all lit or all dim)
+        self.target = [[target_state for _ in range(self.grid_size)] for _ in range(self.grid_size)]
 
         # Start with target state
         self.grid = [row[:] for row in self.target]
 
-        # Apply random toggles to create the puzzle (these become the solution)
+        # Apply random toggles to create the puzzle starting state
         self.solution_path = []
         cells_used = set()
 
         for _ in range(num_toggles):
-            # Pick a cell we haven't used (or any if all used)
             available = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size)
                         if (r, c) not in cells_used]
             if not available:
@@ -331,6 +357,39 @@ class LogicSwitchPuzzle:
 
         self.ideal_moves = len(self.solution_path)
         self.moves = 0
+
+    def _generate_reversed(self, start_state, num_toggles):
+        """Generate puzzle: uniform start -> random target (reversed mode)"""
+        # Start is uniform (all lit or all dim)
+        self.grid = [[start_state for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+
+        # Build target by applying random toggles to a copy
+        self.target = [row[:] for row in self.grid]
+        self.solution_path = []
+        cells_used = set()
+
+        for _ in range(num_toggles):
+            available = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size)
+                        if (r, c) not in cells_used]
+            if not available:
+                available = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size)]
+
+            r, c = random.choice(available)
+            cells_used.add((r, c))
+            self.solution_path.append((r, c))
+            # Toggle in target, not in grid
+            self._toggle_in_grid(self.target, r, c)
+
+        self.ideal_moves = len(self.solution_path)
+        self.moves = 0
+
+    def _toggle_in_grid(self, grid, row, col):
+        """Toggle a cell and its neighbors in a specific grid"""
+        grid[row][col] = 1 - grid[row][col]
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = row + dr, col + dc
+            if 0 <= nr < self.grid_size and 0 <= nc < self.grid_size:
+                grid[nr][nc] = 1 - grid[nr][nc]
 
     def _do_toggle(self, row, col):
         """Toggle a cell and its neighbors (internal, doesn't count moves)"""
@@ -387,11 +446,13 @@ class LogicSwitchPuzzle:
         """Get puzzle state"""
         return {
             "puzzle_type": "logic_switch",
+            "puzzle_mode": self.puzzle_mode,
             "grid_size": self.grid_size,
             "grid": self.grid,
             "target": self.target,
             "moves": self.moves,
             "ideal_moves": self.ideal_moves,
+            "max_moves": self.max_moves,
             "efficiency": self.get_efficiency_score(),
             "solved": self.check_solution()
         }
