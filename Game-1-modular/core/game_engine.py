@@ -15,6 +15,19 @@ from .camera import Camera
 from .notifications import Notification
 from .testing import CraftingSystemTester
 from .paths import get_resource_path
+from .minigame_effects import (
+    get_effects_manager,
+    ColorPalette,
+    SparkParticle,
+    EmberParticle,
+    BubbleParticle,
+    SteamParticle,
+    GearToothParticle,
+    AnimatedProgressBar,
+    AnimatedButton,
+    lerp_color,
+    ease_out_cubic,
+)
 
 # Entities
 from entities import Character, DamageNumber
@@ -3209,478 +3222,1175 @@ class GameEngine:
         self.minigame_recipe = None
 
     def _render_smithing_minigame(self):
-        """Render smithing minigame UI with forge/anvil aesthetic"""
+        """Render smithing minigame UI with enhanced forge/anvil aesthetic"""
         state = self.active_minigame.get_state()
+        effects = get_effects_manager()
 
         # Create overlay
         ww, wh = 1000, 700
         wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
+        # Initialize effects if needed
+        if not hasattr(self, '_smithing_effects_initialized') or not self._smithing_effects_initialized:
+            effects.initialize_discipline('smithing', pygame.Rect(wx, wy, ww, wh))
+            self._smithing_effects_initialized = True
+            self._smithing_metal_progress = 0.0
+            self._smithing_last_hit_time = 0
+            self._smithing_sparks_active = False
+            # Show metadata overlay
+            difficulty_tier = getattr(self.active_minigame, 'difficulty_tier', 'Unknown')
+            difficulty_points = getattr(self.active_minigame, 'difficulty_points', 0)
+            effects.show_metadata({
+                'discipline': 'Smithing',
+                'difficulty_tier': difficulty_tier,
+                'difficulty_points': difficulty_points,
+                'time_limit': state.get('time_limit', 60),
+                'max_bonus': 1.0 + difficulty_points * 0.015,
+                'special_params': {
+                    'Required Strikes': state.get('required_hits', 5),
+                    'Temperature Range': f"{state.get('temp_ideal_min', 60)}-{state.get('temp_ideal_max', 80)}°C"
+                }
+            })
+
+        # Update effects
+        dt = 1/60  # Approximate delta time
+        effects.update(dt)
+
+        # Update metal progress based on hits
+        if state['hammer_hits'] > 0:
+            self._smithing_metal_progress = min(1.0, state['hammer_hits'] / state['required_hits'])
+
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Forge gradient background (dark at top, warm glow at bottom)
+        # Enhanced forge gradient background
         for y in range(wh):
             progress = y / wh
-            r = int(20 + 40 * progress)
-            g = int(15 + 20 * progress)
-            b = int(25 - 10 * progress)
-            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
+            # Darker at top, warm glow at bottom
+            r = int(25 + 55 * progress * progress)
+            g = int(15 + 25 * progress * progress)
+            b = int(20 - 15 * progress)
+            pygame.draw.line(surf, (max(0, r), max(0, g), max(0, b)), (0, y), (ww, y))
 
-        # Semi-transparent overlay for UI elements
-        overlay = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 100))
-        surf.blit(overlay, (0, 0))
-
-        # Ember particles (animated)
+        # Forge glow at bottom
         tick = pygame.time.get_ticks()
-        for i in range(15):
-            x = (tick // 20 + i * 67) % ww
-            y = wh - 50 - ((tick // 30 + i * 31) % 200)
-            size = 2 + (i % 3)
-            alpha = 100 + (i % 100)
-            ember_surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
-            pygame.draw.circle(ember_surf, (255, 150, 50, alpha), (size, size), size)
-            surf.blit(ember_surf, (x, y))
+        glow_intensity = 0.7 + 0.3 * math.sin(tick * 0.003)
+        for y in range(150):
+            alpha = int(80 * (1 - y / 150) * glow_intensity)
+            glow_color = (255, 100 + int(50 * glow_intensity), 20, alpha)
+            glow_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
+            glow_surf.fill(glow_color)
+            surf.blit(glow_surf, (0, wh - 150 + y))
 
-        # Header with glow effect
-        _temp_surf = self.renderer.font.render("SMITHING MINIGAME", True, (255, 215, 0))
-        surf.blit(_temp_surf, (ww//2 - 100, 20))
-        _temp_surf = self.renderer.small_font.render("[SPACE] Fan Flames | [CLICK HAMMER BUTTON] Strike", True, (180, 180, 180))
-        surf.blit(_temp_surf, (20, 50))
+        # Animated flames at bottom
+        flame_base_y = wh - 30
+        for i in range(16):
+            flame_x = 30 + i * 60
+            flame_phase = tick * 0.008 + i * 0.7
+            flame_height = 40 + 25 * math.sin(flame_phase) + 15 * math.sin(flame_phase * 2.3)
 
-        # Temperature display with forge flame visualization
-        temp_x, temp_y = 50, 100
-        temp_width = 120
-        temp_height = 200
+            # Multi-layer flames
+            for layer in range(3):
+                layer_height = flame_height * (1 - layer * 0.25)
+                layer_width = 25 - layer * 5
+
+                if state['temperature'] > 70:
+                    colors = [(255, 240, 180), (255, 180, 50), (255, 100, 20)]
+                elif state['temperature'] > 50:
+                    colors = [(255, 200, 100), (255, 140, 30), (200, 60, 10)]
+                else:
+                    colors = [(100, 120, 200), (60, 80, 180), (40, 50, 120)]
+
+                flame_points = [
+                    (flame_x - layer_width//2, flame_base_y),
+                    (flame_x - layer_width//4, flame_base_y - layer_height * 0.5),
+                    (flame_x, flame_base_y - layer_height),
+                    (flame_x + layer_width//4, flame_base_y - layer_height * 0.6),
+                    (flame_x + layer_width//2, flame_base_y),
+                ]
+                pygame.draw.polygon(surf, colors[layer], flame_points)
+
+        # Animated ember particles
+        for i in range(20):
+            ember_phase = tick * 0.002 + i * 1.3
+            ember_x = 50 + (i * 47 + int(tick * 0.05)) % (ww - 100)
+            ember_y = wh - 80 - (int(tick * 0.03 + i * 17) % 250)
+            ember_size = 2 + int(2 * math.sin(ember_phase))
+            ember_alpha = int(150 + 80 * math.sin(ember_phase * 1.5))
+            ember_alpha = max(50, min(230, ember_alpha))
+
+            ember_surf = pygame.Surface((ember_size * 3, ember_size * 3), pygame.SRCALPHA)
+            # Glow
+            pygame.draw.circle(ember_surf, (255, 150, 50, ember_alpha // 3),
+                             (ember_size * 1.5, ember_size * 1.5), ember_size * 1.5)
+            # Core
+            pygame.draw.circle(ember_surf, (255, 200, 100, ember_alpha),
+                             (ember_size * 1.5, ember_size * 1.5), ember_size)
+            surf.blit(ember_surf, (int(ember_x), int(ember_y)))
+
+        # Header with forge theme
+        header_surf = self.renderer.font.render("FORGE", True, (255, 200, 100))
+        surf.blit(header_surf, (ww//2 - header_surf.get_width()//2, 15))
+        sub_header = self.renderer.small_font.render("Shape the metal with precise strikes", True, (180, 160, 140))
+        surf.blit(sub_header, (ww//2 - sub_header.get_width()//2, 45))
+
+        # Temperature display with enhanced forge visualization
+        temp_x, temp_y = 50, 85
+        temp_width = 100
+        temp_height = 180
 
         temp = state['temperature']
         ideal_min = state['temp_ideal_min']
         ideal_max = state['temp_ideal_max']
         in_ideal = ideal_min <= temp <= ideal_max
 
-        # Fire container (brick frame)
-        pygame.draw.rect(surf, (80, 40, 30), (temp_x - 5, temp_y - 5, temp_width + 10, temp_height + 10))
-        pygame.draw.rect(surf, (60, 30, 20), (temp_x, temp_y, temp_width, temp_height))
+        # Forge container with brick texture
+        for row in range(12):
+            for col in range(4):
+                brick_x = temp_x - 8 + col * 30
+                brick_y = temp_y - 8 + row * 17
+                brick_color = (90 + (row + col) % 3 * 10, 45 + (row * col) % 15, 30)
+                pygame.draw.rect(surf, brick_color, (brick_x, brick_y, 28, 15))
+                pygame.draw.rect(surf, (60, 30, 20), (brick_x, brick_y, 28, 15), 1)
 
-        # Flame visualization
-        flame_height = int((temp / 100) * temp_height)
-        tick = pygame.time.get_ticks()
+        # Inner furnace (dark)
+        pygame.draw.rect(surf, (30, 20, 15), (temp_x, temp_y, temp_width, temp_height))
 
-        # Multiple flame layers for depth
-        for layer in range(3):
-            wave = math.sin(tick / 200 + layer) * 8
-            layer_width = temp_width - layer * 20
-            layer_x = temp_x + layer * 10
+        # Flame visualization with temperature-based colors
+        flame_height = int((temp / 100) * temp_height * 0.9)
 
-            # Flame color based on temperature
-            if temp > 80:
-                color = (255, 255 - layer * 30, 200 - layer * 50)  # White-hot
-            elif temp > 60:
-                color = (255, 180 - layer * 30, 50)  # Orange
-            elif temp > 40:
-                color = (255, 120 - layer * 20, 20)  # Red
+        for layer in range(4):
+            wave = math.sin(tick / 150 + layer * 0.8) * 6
+            layer_width = temp_width - layer * 15
+            layer_x = temp_x + layer * 7
+
+            # Flame color palette based on temperature
+            if temp > 85:
+                colors = [(255, 255, 240), (255, 240, 180), (255, 200, 100), (255, 150, 50)]
+            elif temp > 70:
+                colors = [(255, 220, 150), (255, 180, 80), (255, 130, 40), (220, 80, 20)]
+            elif temp > 50:
+                colors = [(255, 180, 80), (255, 130, 40), (220, 80, 20), (180, 50, 10)]
+            elif temp > 30:
+                colors = [(255, 120, 40), (200, 70, 20), (150, 40, 10), (100, 30, 10)]
             else:
-                color = (100, 80, 200 - layer * 30)  # Blue (cool)
+                colors = [(80, 100, 180), (60, 80, 150), (40, 60, 120), (30, 40, 90)]
 
-            # Draw flame polygon
-            if flame_height > 10:
+            color = colors[layer]
+
+            if flame_height > 15:
                 points = [
                     (layer_x, temp_y + temp_height),
-                    (layer_x + layer_width // 4, temp_y + temp_height - flame_height * 0.6 + wave),
-                    (layer_x + layer_width // 2, temp_y + temp_height - flame_height),
-                    (layer_x + layer_width * 3 // 4, temp_y + temp_height - flame_height * 0.7 - wave),
+                    (layer_x + layer_width * 0.2, temp_y + temp_height - flame_height * 0.5 + wave),
+                    (layer_x + layer_width * 0.4, temp_y + temp_height - flame_height * 0.8 - wave * 0.5),
+                    (layer_x + layer_width * 0.5, temp_y + temp_height - flame_height),
+                    (layer_x + layer_width * 0.6, temp_y + temp_height - flame_height * 0.85 + wave * 0.3),
+                    (layer_x + layer_width * 0.8, temp_y + temp_height - flame_height * 0.55 - wave),
                     (layer_x + layer_width, temp_y + temp_height),
                 ]
                 pygame.draw.polygon(surf, color, points)
 
-        # Ideal range indicator (glowing marks on sides)
+        # Ideal range markers with glow when in range
         ideal_y_min = temp_y + temp_height - int((ideal_min / 100) * temp_height)
         ideal_y_max = temp_y + temp_height - int((ideal_max / 100) * temp_height)
 
-        mark_color = (100, 255, 100) if in_ideal else (200, 200, 200)
-        pygame.draw.line(surf, mark_color, (temp_x - 12, ideal_y_min), (temp_x - 2, ideal_y_min), 3)
-        pygame.draw.line(surf, mark_color, (temp_x - 12, ideal_y_max), (temp_x - 2, ideal_y_max), 3)
-        pygame.draw.line(surf, mark_color, (temp_x + temp_width + 2, ideal_y_min), (temp_x + temp_width + 12, ideal_y_min), 3)
-        pygame.draw.line(surf, mark_color, (temp_x + temp_width + 2, ideal_y_max), (temp_x + temp_width + 12, ideal_y_max), 3)
-
-        # Temperature label with color based on status
-        label_color = (100, 255, 100) if in_ideal else (255, 255, 255)
-        _temp_surf = self.renderer.small_font.render(f"Forge: {int(temp)}°C", True, label_color)
-        surf.blit(_temp_surf, (temp_x, temp_y - 25))
-
         if in_ideal:
-            _temp_surf = self.renderer.tiny_font.render("✓ IDEAL", True, (100, 255, 100))
-            surf.blit(_temp_surf, (temp_x + 30, temp_y - 25))
+            # Draw glow band for ideal zone
+            zone_surf = pygame.Surface((temp_width + 30, ideal_y_min - ideal_y_max + 10), pygame.SRCALPHA)
+            zone_surf.fill((100, 255, 100, 40))
+            surf.blit(zone_surf, (temp_x - 15, ideal_y_max - 5))
 
-        # Anvil and hammer display (moved right to avoid flame overlap)
-        hammer_x, hammer_y = 200, 150
-        hammer_width = state['hammer_bar_width']
-        hammer_height = 60
+        mark_color = (100, 255, 100) if in_ideal else (180, 180, 180)
+        pygame.draw.line(surf, mark_color, (temp_x - 15, ideal_y_min), (temp_x - 3, ideal_y_min), 3)
+        pygame.draw.line(surf, mark_color, (temp_x - 15, ideal_y_max), (temp_x - 3, ideal_y_max), 3)
+        pygame.draw.line(surf, mark_color, (temp_x + temp_width + 3, ideal_y_min), (temp_x + temp_width + 15, ideal_y_min), 3)
+        pygame.draw.line(surf, mark_color, (temp_x + temp_width + 3, ideal_y_max), (temp_x + temp_width + 15, ideal_y_max), 3)
 
-        # Anvil shape (trapezoid body)
-        anvil_color = (80, 80, 90)
+        # Temperature label
+        label_color = (100, 255, 100) if in_ideal else (255, 200, 150)
+        temp_label = self.renderer.small_font.render(f"{int(temp)}°C", True, label_color)
+        surf.blit(temp_label, (temp_x + temp_width//2 - temp_label.get_width()//2, temp_y - 22))
+
+        status_text = "IDEAL" if in_ideal else ("TOO HOT" if temp > ideal_max else "TOO COLD")
+        status_color = (100, 255, 100) if in_ideal else ((255, 100, 100) if temp > ideal_max else (100, 150, 255))
+        status_label = self.renderer.tiny_font.render(status_text, True, status_color)
+        surf.blit(status_label, (temp_x + temp_width//2 - status_label.get_width()//2, temp_y + temp_height + 8))
+
+        # Fan flames instruction
+        fan_label = self.renderer.tiny_font.render("[SPACE] Fan", True, (180, 160, 140))
+        surf.blit(fan_label, (temp_x + temp_width//2 - fan_label.get_width()//2, temp_y + temp_height + 25))
+
+        # Enhanced Anvil and Metal display
+        anvil_x, anvil_y = 200, 130
+        anvil_width = 500
+        anvil_height = 80
+
+        # Draw anvil base (3D effect)
+        anvil_dark = (50, 50, 60)
+        anvil_mid = (70, 70, 80)
+        anvil_light = (90, 90, 100)
         anvil_highlight = (120, 120, 130)
-        anvil_points = [
-            (hammer_x + 20, hammer_y),
-            (hammer_x + hammer_width - 20, hammer_y),
-            (hammer_x + hammer_width, hammer_y + hammer_height),
-            (hammer_x, hammer_y + hammer_height),
-        ]
-        pygame.draw.polygon(surf, anvil_color, anvil_points)
-        pygame.draw.polygon(surf, anvil_highlight, anvil_points, 3)
 
-        # Target zone glow on anvil surface
-        center = hammer_width / 2
+        # Anvil shadow
+        pygame.draw.ellipse(surf, (20, 15, 15), (anvil_x + 20, anvil_y + anvil_height + 5, anvil_width - 40, 20))
+
+        # Anvil body (main surface)
+        anvil_body = [
+            (anvil_x + 30, anvil_y + 10),
+            (anvil_x + anvil_width - 30, anvil_y + 10),
+            (anvil_x + anvil_width - 10, anvil_y + anvil_height),
+            (anvil_x + 10, anvil_y + anvil_height),
+        ]
+        pygame.draw.polygon(surf, anvil_mid, anvil_body)
+
+        # Anvil top surface (lighter)
+        anvil_top = [
+            (anvil_x + 30, anvil_y + 10),
+            (anvil_x + anvil_width - 30, anvil_y + 10),
+            (anvil_x + anvil_width - 50, anvil_y + 25),
+            (anvil_x + 50, anvil_y + 25),
+        ]
+        pygame.draw.polygon(surf, anvil_light, anvil_top)
+        pygame.draw.polygon(surf, anvil_highlight, anvil_body, 2)
+
+        # Horn on left side
+        horn_points = [(anvil_x + 30, anvil_y + 35), (anvil_x - 20, anvil_y + 45), (anvil_x + 30, anvil_y + 55)]
+        pygame.draw.polygon(surf, anvil_mid, horn_points)
+        pygame.draw.polygon(surf, anvil_highlight, horn_points, 2)
+
+        # Metal workpiece on anvil (transforms based on progress)
+        metal_x = anvil_x + anvil_width // 2
+        metal_y = anvil_y + 5
+        progress = self._smithing_metal_progress
+
+        # Metal color based on temperature
+        if temp > 80:
+            metal_color = (255, 230, 180)  # White-hot
+            metal_glow = (255, 200, 100, 100)
+        elif temp > 60:
+            metal_color = (255, 160, 80)   # Orange-hot
+            metal_glow = (255, 120, 50, 80)
+        elif temp > 40:
+            metal_color = (200, 80, 50)    # Red-hot
+            metal_glow = (200, 50, 30, 60)
+        else:
+            metal_color = (100, 100, 110)  # Cold metal
+            metal_glow = None
+
+        # Metal shape transforms from ingot to elongated shape
+        base_width = 60
+        base_height = 25
+        # As progress increases, metal gets longer and thinner
+        metal_width = int(base_width + progress * 120)
+        metal_height = int(base_height - progress * 10)
+
+        metal_rect = pygame.Rect(metal_x - metal_width//2, metal_y, metal_width, max(12, metal_height))
+
+        # Draw glow if hot
+        if metal_glow:
+            glow_surf = pygame.Surface((metal_width + 30, metal_height + 30), pygame.SRCALPHA)
+            pygame.draw.ellipse(glow_surf, metal_glow, (0, 0, metal_width + 30, metal_height + 30))
+            surf.blit(glow_surf, (metal_rect.x - 15, metal_rect.y - 15))
+
+        # Draw metal
+        pygame.draw.rect(surf, metal_color, metal_rect, border_radius=3)
+        # Highlight on top
+        highlight_color = lerp_color(metal_color, (255, 255, 255), 0.3)
+        highlight_rect = pygame.Rect(metal_rect.x + 3, metal_rect.y + 2, metal_rect.width - 6, metal_rect.height // 3)
+        pygame.draw.rect(surf, highlight_color, highlight_rect, border_radius=2)
+
+        # Target zones on anvil
+        center = anvil_width / 2
         target_w = state['target_width']
         perfect_w = state['perfect_width']
-        target_x = hammer_x + int(center - target_w / 2)
-        perfect_x = hammer_x + int(center - perfect_w / 2)
+        target_x = anvil_x + int(center - target_w / 2)
+        perfect_x = anvil_x + int(center - perfect_w / 2)
 
-        # Target zone (semi-transparent glow)
-        target_surf = pygame.Surface((int(target_w), hammer_height), pygame.SRCALPHA)
-        target_surf.fill((100, 100, 60, 80))
-        surf.blit(target_surf, (target_x, hammer_y))
+        # Target zone indicator (subtle lines)
+        pygame.draw.line(surf, (100, 100, 60, 150), (target_x, anvil_y + 30), (target_x, anvil_y + anvil_height - 10), 2)
+        pygame.draw.line(surf, (100, 100, 60, 150), (target_x + int(target_w), anvil_y + 30), (target_x + int(target_w), anvil_y + anvil_height - 10), 2)
 
-        # Perfect zone (brighter glow)
-        perfect_surf = pygame.Surface((int(perfect_w), hammer_height), pygame.SRCALPHA)
-        perfect_surf.fill((150, 180, 80, 120))
-        surf.blit(perfect_surf, (perfect_x, hammer_y))
+        # Perfect zone indicator
+        pygame.draw.line(surf, (150, 200, 80), (perfect_x, anvil_y + 30), (perfect_x, anvil_y + anvil_height - 10), 3)
+        pygame.draw.line(surf, (150, 200, 80), (perfect_x + int(perfect_w), anvil_y + 30), (perfect_x + int(perfect_w), anvil_y + anvil_height - 10), 3)
 
-        # Hammer indicator (hammer head shape above anvil)
+        # Hammer indicator
         hammer_pos = int(state['hammer_position'])
-        hammer_head_x = hammer_x + hammer_pos
-        hammer_head_y = hammer_y - 40
+        hammer_head_x = anvil_x + hammer_pos
+        hammer_head_y = anvil_y - 55
 
-        # Hammer head
-        pygame.draw.rect(surf, (60, 50, 50), (hammer_head_x - 15, hammer_head_y, 30, 25))
-        pygame.draw.rect(surf, (100, 90, 80), (hammer_head_x - 15, hammer_head_y, 30, 25), 2)
+        # Hammer oscillation animation
+        hammer_bob = math.sin(tick * 0.015) * 3
+
+        # Hammer head (3D effect)
+        head_width, head_height = 40, 30
+        pygame.draw.rect(surf, (50, 45, 45), (hammer_head_x - head_width//2 + 2, hammer_head_y + hammer_bob + 2, head_width, head_height))
+        pygame.draw.rect(surf, (80, 75, 70), (hammer_head_x - head_width//2, hammer_head_y + hammer_bob, head_width, head_height))
+        pygame.draw.rect(surf, (100, 95, 85), (hammer_head_x - head_width//2, hammer_head_y + hammer_bob, head_width, head_height // 3))
+        pygame.draw.rect(surf, (60, 55, 50), (hammer_head_x - head_width//2, hammer_head_y + hammer_bob, head_width, head_height), 2)
 
         # Hammer handle
-        pygame.draw.rect(surf, (100, 70, 40), (hammer_head_x - 5, hammer_head_y + 25, 10, 30))
+        pygame.draw.rect(surf, (120, 80, 50), (hammer_head_x - 6, hammer_head_y + head_height + hammer_bob, 12, 40))
+        pygame.draw.rect(surf, (100, 65, 40), (hammer_head_x - 6, hammer_head_y + head_height + hammer_bob, 12, 40), 1)
 
-        # Impact line showing where hammer will strike
-        pygame.draw.line(surf, (255, 255, 200), (hammer_head_x, hammer_head_y + 25), (hammer_head_x, hammer_y + hammer_height), 1)
+        # Impact indicator line
+        pygame.draw.line(surf, (255, 255, 200, 100), (hammer_head_x, hammer_head_y + head_height + hammer_bob), (hammer_head_x, anvil_y + 30), 1)
 
-        _temp_surf = self.renderer.small_font.render(f"Strikes: {state['hammer_hits']}/{state['required_hits']}", True, (255, 255, 255))
-        surf.blit(_temp_surf, (hammer_x, hammer_y - 65))
+        # Strike counter with progress bar
+        strikes_x = anvil_x
+        strikes_y = anvil_y - 30
+        strikes_label = self.renderer.small_font.render(f"Strikes: {state['hammer_hits']}/{state['required_hits']}", True, (255, 220, 180))
+        surf.blit(strikes_label, (strikes_x, strikes_y))
 
-        # Hammer button (styled to match forge theme)
-        btn_w, btn_h = 200, 60
-        btn_x, btn_y = 200 + hammer_width // 2 - btn_w // 2, 250
+        # Progress bar for strikes
+        prog_width = 150
+        prog_height = 8
+        prog_x = strikes_x + strikes_label.get_width() + 15
+        pygame.draw.rect(surf, (40, 35, 30), (prog_x, strikes_y + 5, prog_width, prog_height), border_radius=3)
+        fill_width = int(prog_width * progress)
+        if fill_width > 0:
+            prog_color = (255, 200, 100) if progress < 1 else (100, 255, 100)
+            pygame.draw.rect(surf, prog_color, (prog_x, strikes_y + 5, fill_width, prog_height), border_radius=3)
+        pygame.draw.rect(surf, (100, 90, 80), (prog_x, strikes_y + 5, prog_width, prog_height), 1, border_radius=3)
+
+        # Strike button (styled to match forge theme)
+        btn_w, btn_h = 180, 55
+        btn_x, btn_y = anvil_x + anvil_width // 2 - btn_w // 2, 230
         btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
-        pygame.draw.rect(surf, (80, 60, 20), btn_rect, border_radius=5)
-        pygame.draw.rect(surf, (255, 215, 0), btn_rect, 3, border_radius=5)
-        _temp_surf = self.renderer.font.render("⚒ STRIKE", True, (255, 215, 0))
-        surf.blit(_temp_surf, (btn_x + 30, btn_y + 15))
 
-        # Timer with urgency coloring
+        # Button with metallic style
+        pygame.draw.rect(surf, (60, 45, 25), (btn_x + 3, btn_y + 3, btn_w, btn_h), border_radius=8)
+        pygame.draw.rect(surf, (100, 75, 40), btn_rect, border_radius=8)
+        pygame.draw.rect(surf, (130, 100, 60), (btn_x, btn_y, btn_w, btn_h // 3), border_radius=8)
+        pygame.draw.rect(surf, (255, 200, 100), btn_rect, 3, border_radius=8)
+
+        strike_text = self.renderer.font.render("STRIKE", True, (255, 220, 150))
+        surf.blit(strike_text, (btn_x + btn_w//2 - strike_text.get_width()//2, btn_y + btn_h//2 - strike_text.get_height()//2))
+
+        # Timer display (bottom left panel)
+        timer_panel_x, timer_panel_y = 50, 320
+        timer_panel_w, timer_panel_h = 140, 80
+
+        pygame.draw.rect(surf, (40, 30, 25), (timer_panel_x, timer_panel_y, timer_panel_w, timer_panel_h), border_radius=8)
+        pygame.draw.rect(surf, (80, 60, 45), (timer_panel_x, timer_panel_y, timer_panel_w, timer_panel_h), 2, border_radius=8)
+
         time_left = int(state['time_left'])
-        time_color = (255, 100, 100) if time_left < 10 else (255, 215, 0) if time_left < 20 else (255, 255, 255)
-        _temp_surf = self.renderer.font.render(f"Time: {time_left}s", True, time_color)
-        surf.blit(_temp_surf, (50, 330))
+        if time_left < 10:
+            time_color = (255, 80, 80)
+            pulse = 1 + 0.1 * math.sin(tick * 0.02)
+        elif time_left < 20:
+            time_color = (255, 200, 100)
+            pulse = 1
+        else:
+            time_color = (200, 200, 200)
+            pulse = 1
 
-        # Hammer scores with spark feedback
+        time_label = self.renderer.tiny_font.render("TIME", True, (150, 130, 110))
+        surf.blit(time_label, (timer_panel_x + timer_panel_w//2 - time_label.get_width()//2, timer_panel_y + 8))
+
+        time_value = self.renderer.font.render(f"{time_left}s", True, time_color)
+        surf.blit(time_value, (timer_panel_x + timer_panel_w//2 - time_value.get_width()//2, timer_panel_y + 30))
+
+        # Strike quality panel (right side)
+        quality_panel_x, quality_panel_y = 750, 100
+        quality_panel_w, quality_panel_h = 220, 200
+
+        pygame.draw.rect(surf, (35, 30, 28), (quality_panel_x, quality_panel_y, quality_panel_w, quality_panel_h), border_radius=8)
+        pygame.draw.rect(surf, (70, 55, 45), (quality_panel_x, quality_panel_y, quality_panel_w, quality_panel_h), 2, border_radius=8)
+
+        quality_title = self.renderer.small_font.render("Strike Quality", True, (200, 180, 150))
+        surf.blit(quality_title, (quality_panel_x + quality_panel_w//2 - quality_title.get_width()//2, quality_panel_y + 10))
+
         if state['hammer_scores']:
-            _temp_surf = self.renderer.small_font.render("Strike Quality:", True, (200, 200, 200))
-            surf.blit(_temp_surf, (50, 370))
-            for i, score in enumerate(state['hammer_scores'][-5:]):  # Last 5 scores
+            for i, score in enumerate(state['hammer_scores'][-6:]):
+                y_pos = quality_panel_y + 40 + i * 25
                 if score >= 90:
-                    color = (255, 255, 100)  # Gold - perfect
-                    quality = "⭐"
+                    color = (255, 215, 100)
+                    quality = "PERFECT"
+                    bar_color = (255, 200, 50)
                 elif score >= 70:
-                    color = (255, 180, 50)  # Orange - good
-                    quality = "✓"
+                    color = (100, 255, 100)
+                    quality = "Good"
+                    bar_color = (100, 200, 80)
+                elif score >= 50:
+                    color = (200, 200, 100)
+                    quality = "Fair"
+                    bar_color = (180, 180, 80)
                 else:
-                    color = (150, 150, 150)  # Gray - poor
-                    quality = "○"
-                _temp_surf = self.renderer.small_font.render(f"{quality} {score}", True, color)
-                surf.blit(_temp_surf, (70, 400 + i * 25))
+                    color = (150, 100, 100)
+                    quality = "Miss"
+                    bar_color = (150, 80, 80)
+
+                # Score bar
+                bar_width = int((score / 100) * 100)
+                pygame.draw.rect(surf, (50, 45, 40), (quality_panel_x + 15, y_pos, 100, 12), border_radius=3)
+                pygame.draw.rect(surf, bar_color, (quality_panel_x + 15, y_pos, bar_width, 12), border_radius=3)
+
+                # Quality text
+                qual_text = self.renderer.tiny_font.render(quality, True, color)
+                surf.blit(qual_text, (quality_panel_x + 125, y_pos - 2))
 
         # Result (if completed)
         if state['result']:
             result = state['result']
-            result_surf = pygame.Surface((600, 350), pygame.SRCALPHA)
-            result_surf.fill((10, 10, 20, 240))
-            pygame.draw.rect(result_surf, (80, 60, 20), (0, 0, 600, 350), 3, border_radius=10)
+            result_w, result_h = 550, 320
+            result_x, result_y = ww//2 - result_w//2, wh//2 - result_h//2
+
+            result_surf = pygame.Surface((result_w, result_h), pygame.SRCALPHA)
+
+            # Background with forge theme
+            pygame.draw.rect(result_surf, (25, 20, 18, 245), (0, 0, result_w, result_h), border_radius=12)
+            pygame.draw.rect(result_surf, (100, 75, 50), (0, 0, result_w, result_h), 4, border_radius=12)
 
             if result['success']:
-                # Success header with glow
-                _temp_surf = self.renderer.font.render("⚒ FORGING COMPLETE!", True, (100, 255, 100))
-                result_surf.blit(_temp_surf, (140, 30))
+                # Success header with warm glow
+                header_text = "FORGING COMPLETE"
+                header_surf = self.renderer.font.render(header_text, True, (100, 255, 100))
+                result_surf.blit(header_surf, (result_w//2 - header_surf.get_width()//2, 25))
 
-                # Quality tier display
+                # Decorative line
+                pygame.draw.line(result_surf, (100, 80, 60), (50, 60), (result_w - 50, 60), 2)
+
+                # Quality tier display with special styling
                 quality = result.get('quality_tier', 'Normal')
                 quality_colors = {
-                    'Normal': (200, 200, 200),
-                    'Fine': (100, 200, 100),
-                    'Superior': (100, 150, 255),
-                    'Masterwork': (200, 100, 255),
-                    'Legendary': (255, 215, 0)
+                    'Normal': (180, 180, 180),
+                    'Fine': (100, 220, 100),
+                    'Superior': (100, 160, 255),
+                    'Masterwork': (220, 100, 255),
+                    'Legendary': (255, 215, 50)
                 }
                 q_color = quality_colors.get(quality, (200, 200, 200))
-                _temp_surf = self.renderer.font.render(f"Quality: {quality}", True, q_color)
-                result_surf.blit(_temp_surf, (150, 90))
 
-                # Stats
-                _temp_surf = self.renderer.small_font.render(f"Performance: {int(result.get('score', 0))}%", True, (255, 255, 255))
-                result_surf.blit(_temp_surf, (150, 140))
+                quality_label = self.renderer.small_font.render("Quality:", True, (180, 160, 140))
+                result_surf.blit(quality_label, (60, 85))
+                quality_value = self.renderer.font.render(quality, True, q_color)
+                result_surf.blit(quality_value, (160, 80))
+
+                # Performance stats
+                score = int(result.get('score', 0))
+                perf_label = self.renderer.small_font.render("Performance:", True, (180, 160, 140))
+                result_surf.blit(perf_label, (60, 125))
+
+                # Performance bar
+                bar_x, bar_y, bar_w, bar_h = 180, 128, 200, 16
+                pygame.draw.rect(result_surf, (50, 45, 40), (bar_x, bar_y, bar_w, bar_h), border_radius=4)
+                fill_w = int(bar_w * score / 100)
+                perf_color = (100, 255, 100) if score >= 80 else ((255, 200, 100) if score >= 50 else (255, 100, 100))
+                pygame.draw.rect(result_surf, perf_color, (bar_x, bar_y, fill_w, bar_h), border_radius=4)
+                score_text = self.renderer.small_font.render(f"{score}%", True, (255, 255, 255))
+                result_surf.blit(score_text, (bar_x + bar_w + 15, bar_y - 2))
+
+                # Stat bonus
                 bonus = result.get('bonus', result.get('bonus_pct', 0))
-                _temp_surf = self.renderer.small_font.render(f"Stat Bonus: +{bonus}%", True, (255, 215, 0))
-                result_surf.blit(_temp_surf, (150, 170))
+                bonus_label = self.renderer.small_font.render("Stat Bonus:", True, (180, 160, 140))
+                result_surf.blit(bonus_label, (60, 165))
+                bonus_value = self.renderer.font.render(f"+{bonus}%", True, (255, 200, 100))
+                result_surf.blit(bonus_value, (180, 160))
 
-                # First-try bonus notification
+                # First-try bonus
                 if result.get('first_try_bonus_applied'):
-                    _temp_surf = self.renderer.small_font.render("✨ First-Try Bonus Applied!", True, (255, 180, 100))
-                    result_surf.blit(_temp_surf, (150, 210))
+                    ftb_surf = pygame.Surface((result_w - 80, 30), pygame.SRCALPHA)
+                    ftb_surf.fill((255, 180, 100, 40))
+                    result_surf.blit(ftb_surf, (40, 205))
+                    ftb_text = self.renderer.small_font.render("First-Try Bonus Applied! (+10%)", True, (255, 200, 150))
+                    result_surf.blit(ftb_text, (result_w//2 - ftb_text.get_width()//2, 210))
 
-                _temp_surf = self.renderer.small_font.render(result.get('message', ''), True, (200, 200, 200))
-                result_surf.blit(_temp_surf, (150, 250))
+                # Message
+                msg = result.get('message', 'Item crafted successfully!')
+                msg_text = self.renderer.small_font.render(msg, True, (200, 180, 160))
+                result_surf.blit(msg_text, (result_w//2 - msg_text.get_width()//2, 255))
+
             else:
-                _temp_surf = self.renderer.font.render("⚠ FORGING FAILED!", True, (255, 100, 100))
-                result_surf.blit(_temp_surf, (160, 50))
+                # Failure header
+                header_text = "FORGING FAILED"
+                header_surf = self.renderer.font.render(header_text, True, (255, 100, 100))
+                result_surf.blit(header_surf, (result_w//2 - header_surf.get_width()//2, 35))
 
-                # Show material loss percentage
+                pygame.draw.line(result_surf, (100, 60, 50), (50, 75), (result_w - 50, 75), 2)
+
+                # Material loss
                 loss_pct = result.get('loss_percentage', 50)
-                _temp_surf = self.renderer.small_font.render(f"Materials Lost: {loss_pct}%", True, (255, 150, 100))
-                result_surf.blit(_temp_surf, (150, 120))
+                loss_label = self.renderer.small_font.render("Materials Lost:", True, (200, 160, 140))
+                result_surf.blit(loss_label, (60, 110))
+                loss_value = self.renderer.font.render(f"{loss_pct}%", True, (255, 120, 100))
+                result_surf.blit(loss_value, (220, 105))
 
-                _temp_surf = self.renderer.small_font.render(result.get('message', ''), True, (200, 200, 200))
-                result_surf.blit(_temp_surf, (150, 170))
+                # Message
+                msg = result.get('message', 'The forging process failed.')
+                msg_text = self.renderer.small_font.render(msg, True, (200, 180, 160))
+                result_surf.blit(msg_text, (result_w//2 - msg_text.get_width()//2, 180))
 
-            surf.blit(result_surf, (200, 180))
+            # Close hint
+            close_text = self.renderer.tiny_font.render("Press any key to continue", True, (140, 120, 100))
+            result_surf.blit(close_text, (result_w//2 - close_text.get_width()//2, result_h - 30))
+
+            surf.blit(result_surf, (result_x, result_y))
+
+        # Draw metadata overlay if active
+        effects.metadata_overlay.draw(surf, (ww//2, wh//2), self.renderer.small_font)
 
         self.screen.blit(surf, (wx, wy))
 
         # Store button rect for click detection (relative to screen)
         self.minigame_button_rect = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
 
-    def _render_alchemy_minigame(self):
-        """Render alchemy minigame UI"""
-        state = self.active_minigame.get_state()
+        # Reset effects when minigame ends
+        if state['result']:
+            self._smithing_effects_initialized = False
 
-        # Create overlay
+    def _render_alchemy_minigame(self):
+        """Render alchemy minigame UI with lab/wizard tower aesthetic"""
+        state = self.active_minigame.get_state()
+        effects = get_effects_manager()
+
         ww, wh = 1000, 700
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
+        wx = Config.VIEWPORT_WIDTH - ww - 20
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
+        # Initialize effects if needed
+        if not hasattr(self, '_alchemy_effects_initialized') or not self._alchemy_effects_initialized:
+            effects.initialize_discipline('alchemy', pygame.Rect(wx, wy, ww, wh))
+            self._alchemy_effects_initialized = True
+            self._alchemy_bubbles = []
+            self._alchemy_steam = []
+            # Show metadata overlay
+            difficulty_tier = getattr(self.active_minigame, 'difficulty_tier', 'Unknown')
+            difficulty_points = getattr(self.active_minigame, 'difficulty_points', 0)
+            effects.show_metadata({
+                'discipline': 'Alchemy',
+                'difficulty_tier': difficulty_tier,
+                'difficulty_points': difficulty_points,
+                'time_limit': state.get('time_limit', 90),
+                'max_bonus': 1.0 + difficulty_points * 0.018,
+                'special_params': {
+                    'Ingredients': state.get('total_ingredients', 3),
+                    'Volatility': getattr(self.active_minigame, 'volatility', 'Normal')
+                }
+            })
+
+        dt = 1/60
+        effects.update(dt)
+        tick = pygame.time.get_ticks()
+
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.fill((20, 20, 30, 250))
+
+        # Clean lab-style gradient background (light professional)
+        for y in range(wh):
+            progress = y / wh
+            r = int(240 - 30 * progress)
+            g = int(245 - 25 * progress)
+            b = int(250 - 20 * progress)
+            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
+
+        # Wood paneling at bottom (lab workbench)
+        wood_y = wh - 120
+        pygame.draw.rect(surf, (120, 85, 55), (0, wood_y, ww, 120))
+        for i in range(8):
+            line_y = wood_y + 15 + i * 14
+            pygame.draw.line(surf, (100, 70, 45), (0, line_y), (ww, line_y), 1)
+        pygame.draw.rect(surf, (90, 65, 40), (0, wood_y, ww, 8))
+
+        # Lab shelves on left with bottles
+        shelf_y = 100
+        pygame.draw.rect(surf, (100, 75, 50), (30, shelf_y, 150, 12))
+        pygame.draw.rect(surf, (80, 60, 40), (30, shelf_y + 8, 150, 4))
+
+        # Decorative bottles on shelf
+        bottle_positions = [(50, shelf_y - 35, (100, 200, 150)), (90, shelf_y - 30, (180, 120, 200)),
+                          (130, shelf_y - 40, (200, 180, 100))]
+        for bx, by, bcolor in bottle_positions:
+            pygame.draw.rect(surf, bcolor, (bx, by, 20, 35), border_radius=3)
+            pygame.draw.rect(surf, (80, 80, 90), (bx + 5, by - 8, 10, 10))
+
+        # Second shelf
+        pygame.draw.rect(surf, (100, 75, 50), (30, shelf_y + 80, 150, 12))
+
+        # Mystical elements - floating runes on right side
+        for i in range(5):
+            rune_x = ww - 100 + math.sin(tick * 0.001 + i) * 30
+            rune_y = 150 + i * 70 + math.cos(tick * 0.0015 + i * 0.5) * 20
+            rune_alpha = int(100 + 50 * math.sin(tick * 0.003 + i))
+            rune_surf = pygame.Surface((30, 30), pygame.SRCALPHA)
+            pygame.draw.circle(rune_surf, (100, 180, 150, rune_alpha), (15, 15), 12, 2)
+            # Simple rune symbol
+            pygame.draw.line(rune_surf, (100, 180, 150, rune_alpha), (15, 5), (15, 25), 2)
+            pygame.draw.line(rune_surf, (100, 180, 150, rune_alpha), (8, 10), (22, 20), 2)
+            surf.blit(rune_surf, (int(rune_x), int(rune_y)))
 
         # Header
-        _temp_surf = self.renderer.font.render("ALCHEMY MINIGAME", True, (60, 180, 60))
-        surf.blit(_temp_surf, (ww//2 - 100, 20))
-        _temp_surf = self.renderer.small_font.render("[C] Chain Ingredient | [S] Stabilize & Complete", True, (180, 180, 180))
-        surf.blit(_temp_surf, (20, 50))
+        header = self.renderer.font.render("ALCHEMIST'S WORKSHOP", True, (60, 120, 80))
+        surf.blit(header, (ww//2 - header.get_width()//2, 18))
+        sub_header = self.renderer.small_font.render("Time your chains to create the perfect mixture", True, (100, 130, 110))
+        surf.blit(sub_header, (ww//2 - sub_header.get_width()//2, 48))
 
-        # Progress bar
+        # Enhanced progress bar
         progress = state['total_progress']
-        prog_x, prog_y = 50, 100
-        prog_width = 600
-        prog_height = 30
-        pygame.draw.rect(surf, (40, 40, 40), (prog_x, prog_y, prog_width, prog_height))
-        pygame.draw.rect(surf, (60, 180, 60), (prog_x, prog_y, int(progress * prog_width), prog_height))
-        pygame.draw.rect(surf, (200, 200, 200), (prog_x, prog_y, prog_width, prog_height), 2)
-        _temp_surf = self.renderer.small_font.render(f"Total Progress: {int(progress * 100)}%", True, (255, 255, 255))
-        surf.blit(_temp_surf, (prog_x, prog_y - 25))
+        prog_x, prog_y = 250, 85
+        prog_width = 500
+        prog_height = 25
 
-        # Current reaction visualization
+        # Progress bar background with lab styling
+        pygame.draw.rect(surf, (180, 185, 190), (prog_x - 3, prog_y - 3, prog_width + 6, prog_height + 6), border_radius=5)
+        pygame.draw.rect(surf, (220, 225, 230), (prog_x, prog_y, prog_width, prog_height), border_radius=4)
+
+        # Progress fill with gradient
+        fill_width = int(progress * prog_width)
+        if fill_width > 0:
+            for x in range(fill_width):
+                ratio = x / max(fill_width, 1)
+                color = lerp_color((80, 180, 120), (100, 220, 140), ratio)
+                pygame.draw.line(surf, color, (prog_x + x, prog_y + 2), (prog_x + x, prog_y + prog_height - 2))
+
+        pygame.draw.rect(surf, (100, 110, 100), (prog_x, prog_y, prog_width, prog_height), 2, border_radius=4)
+
+        prog_label = self.renderer.small_font.render(f"Completion: {int(progress * 100)}%", True, (60, 80, 70))
+        surf.blit(prog_label, (prog_x + prog_width//2 - prog_label.get_width()//2, prog_y + 3))
+
+        # Central cauldron visualization
+        cauldron_x, cauldron_y = ww // 2, 340
+        cauldron_w, cauldron_h = 200, 140
+
+        # Cauldron body with 3D effect
+        pygame.draw.ellipse(surf, (50, 45, 50), (cauldron_x - cauldron_w//2 + 5, cauldron_y - 20 + 5, cauldron_w, cauldron_h))
+        pygame.draw.ellipse(surf, (70, 65, 75), (cauldron_x - cauldron_w//2, cauldron_y - 20, cauldron_w, cauldron_h))
+
+        # Cauldron rim
+        pygame.draw.ellipse(surf, (90, 85, 95), (cauldron_x - cauldron_w//2 - 8, cauldron_y - 35, cauldron_w + 16, 35))
+        pygame.draw.ellipse(surf, (60, 55, 65), (cauldron_x - cauldron_w//2, cauldron_y - 30, cauldron_w, 25))
+
+        # Liquid in cauldron - color based on reaction stage
         if state['current_reaction']:
             reaction = state['current_reaction']
-            rx, ry = 50, 180
+            stage = reaction.get('stage', 1)
 
-            # Reaction bubble
-            bubble_size = int(100 * reaction['size'])
-            bubble_color = (int(60 + 140 * reaction['color_shift']), int(180 * reaction['glow']), int(60 + 140 * reaction['color_shift']))
-            pygame.draw.circle(surf, bubble_color, (rx + 100, ry + 100), bubble_size)
-            pygame.draw.circle(surf, (200, 200, 200), (rx + 100, ry + 100), bubble_size, 2)
+            # Liquid color changes with stage
+            if stage == 1:
+                liquid_color = (80, 160, 120)  # Green-blue
+            elif stage == 2:
+                liquid_color = (100, 200, 140)  # Brighter green
+            elif stage == 3:
+                liquid_color = (200, 220, 100)  # Golden (sweet spot)
+            elif stage == 4:
+                liquid_color = (200, 150, 80)  # Orange
+            else:
+                liquid_color = (200, 80, 80)  # Red (danger)
 
-            # Stage info
+            # Animated liquid surface
+            liquid_points = []
+            for i in range(20):
+                lx = cauldron_x - cauldron_w//2 + 20 + i * 8
+                ly = cauldron_y - 15 + math.sin(tick * 0.005 + i * 0.5) * 5
+                liquid_points.append((lx, ly))
+
+            liquid_points.append((cauldron_x + cauldron_w//2 - 20, cauldron_y + 40))
+            liquid_points.append((cauldron_x - cauldron_w//2 + 20, cauldron_y + 40))
+
+            pygame.draw.polygon(surf, liquid_color, liquid_points)
+            pygame.draw.polygon(surf, lerp_color(liquid_color, (255, 255, 255), 0.2), liquid_points, 2)
+
+            # Bubbles rising from liquid
+            for i in range(8):
+                bubble_phase = tick * 0.003 + i * 1.2
+                bubble_x = cauldron_x - 60 + i * 18 + math.sin(bubble_phase * 2) * 10
+                bubble_y = cauldron_y - 20 - (tick * 0.05 + i * 30) % 80
+                bubble_size = 4 + int(3 * math.sin(bubble_phase))
+                bubble_alpha = int(150 - (tick * 0.05 + i * 30) % 80 * 1.5)
+                if bubble_alpha > 0:
+                    bubble_surf = pygame.Surface((bubble_size * 2 + 4, bubble_size * 2 + 4), pygame.SRCALPHA)
+                    pygame.draw.circle(bubble_surf, (*liquid_color, bubble_alpha), (bubble_size + 2, bubble_size + 2), bubble_size)
+                    pygame.draw.circle(bubble_surf, (255, 255, 255, bubble_alpha // 2), (bubble_size, bubble_size), bubble_size // 2)
+                    surf.blit(bubble_surf, (int(bubble_x), int(bubble_y)))
+
+            # Steam rising above cauldron
+            for i in range(5):
+                steam_phase = tick * 0.002 + i * 0.8
+                steam_x = cauldron_x - 40 + i * 20 + math.sin(steam_phase) * 15
+                steam_y = cauldron_y - 60 - (tick * 0.02 + i * 20) % 100
+                steam_size = 15 + int(10 * ((tick * 0.02 + i * 20) % 100) / 100)
+                steam_alpha = int(80 - (tick * 0.02 + i * 20) % 100 * 0.7)
+                if steam_alpha > 0:
+                    steam_surf = pygame.Surface((steam_size * 2, steam_size * 2), pygame.SRCALPHA)
+                    pygame.draw.circle(steam_surf, (240, 245, 250, steam_alpha), (steam_size, steam_size), steam_size)
+                    surf.blit(steam_surf, (int(steam_x), int(steam_y)))
+
+        # Stirring spoon animation
+        spoon_angle = math.sin(tick * 0.004) * 0.3
+        spoon_x = cauldron_x + 60
+        spoon_y = cauldron_y - 50
+
+        # Spoon handle
+        handle_end_x = spoon_x + math.sin(spoon_angle) * 80
+        handle_end_y = spoon_y - math.cos(spoon_angle) * 80
+        pygame.draw.line(surf, (140, 100, 60), (spoon_x, spoon_y), (handle_end_x, handle_end_y), 8)
+        pygame.draw.line(surf, (160, 120, 80), (spoon_x, spoon_y), (handle_end_x, handle_end_y), 4)
+
+        # Spoon bowl
+        pygame.draw.ellipse(surf, (120, 90, 55), (spoon_x - 20, spoon_y - 10, 35, 20))
+
+        # Current reaction visualization - stage indicator
+        if state['current_reaction']:
+            reaction = state['current_reaction']
             stage_names = ["Initiation", "Building", "SWEET SPOT", "Degrading", "Critical", "EXPLOSION!"]
             stage_idx = reaction['stage'] - 1
             stage_name = stage_names[stage_idx] if 0 <= stage_idx < len(stage_names) else "Unknown"
-            stage_color = (255, 215, 0) if reaction['stage'] == 3 else (255, 100, 100) if reaction['stage'] >= 5 else (200, 200, 200)
+            stage_color = (200, 180, 80) if reaction['stage'] == 3 else ((200, 100, 80) if reaction['stage'] >= 5 else (100, 140, 120))
 
-            _temp_surf = self.renderer.font.render(f"Stage: {stage_name}", True, stage_color)
-            surf.blit(_temp_surf, (rx, ry + 220))
-            _temp_surf = self.renderer.small_font.render(f"Quality: {int(reaction['quality'] * 100)}%", True, (200, 200, 200))
-            surf.blit(_temp_surf, (rx, ry + 250))
+            # Stage panel on left side
+            stage_panel_x, stage_panel_y = 50, 130
+            stage_panel_w, stage_panel_h = 180, 150
 
-        # Ingredient progress
-        _temp_surf = self.renderer.small_font.render(f"Ingredient: {state['current_ingredient_index'] + 1}/{state['total_ingredients']}", True, (255, 255, 255))
-        surf.blit(_temp_surf, (50, 450))
+            pygame.draw.rect(surf, (230, 235, 240), (stage_panel_x, stage_panel_y, stage_panel_w, stage_panel_h), border_radius=8)
+            pygame.draw.rect(surf, (150, 160, 155), (stage_panel_x, stage_panel_y, stage_panel_w, stage_panel_h), 2, border_radius=8)
 
-        # Buttons
-        btn_w, btn_h = 150, 50
-        chain_btn = pygame.Rect(ww // 2 - btn_w - 10, 550, btn_w, btn_h)
-        stabilize_btn = pygame.Rect(ww // 2 + 10, 550, btn_w, btn_h)
+            stage_label = self.renderer.small_font.render("Reaction Stage", True, (80, 100, 90))
+            surf.blit(stage_label, (stage_panel_x + stage_panel_w//2 - stage_label.get_width()//2, stage_panel_y + 10))
 
-        pygame.draw.rect(surf, (60, 80, 20), chain_btn)
-        pygame.draw.rect(surf, (255, 215, 0), chain_btn, 2)
-        _temp_surf = self.renderer.small_font.render("CHAIN [C]", True, (255, 215, 0))
-        surf.blit(_temp_surf, (chain_btn.x + 30, chain_btn.y + 15))
+            stage_text = self.renderer.font.render(stage_name, True, stage_color)
+            surf.blit(stage_text, (stage_panel_x + stage_panel_w//2 - stage_text.get_width()//2, stage_panel_y + 40))
 
-        pygame.draw.rect(surf, (20, 60, 80), stabilize_btn)
-        pygame.draw.rect(surf, (100, 200, 255), stabilize_btn, 2)
-        _temp_surf = self.renderer.small_font.render("STABILIZE [S]", True, (100, 200, 255))
-        surf.blit(_temp_surf, (stabilize_btn.x + 15, stabilize_btn.y + 15))
+            # Quality indicator
+            quality = reaction.get('quality', 0.5)
+            qual_label = self.renderer.small_font.render(f"Quality: {int(quality * 100)}%", True, (80, 100, 90))
+            surf.blit(qual_label, (stage_panel_x + stage_panel_w//2 - qual_label.get_width()//2, stage_panel_y + 85))
 
-        # Timer
-        _temp_surf = self.renderer.font.render(f"Time: {int(state['time_left'])}s", True, (255, 255, 255))
-        surf.blit(_temp_surf, (50, 620))
+            # Quality bar
+            qbar_w = 140
+            qbar_h = 12
+            qbar_x = stage_panel_x + stage_panel_w//2 - qbar_w//2
+            qbar_y = stage_panel_y + 110
+            pygame.draw.rect(surf, (200, 205, 210), (qbar_x, qbar_y, qbar_w, qbar_h), border_radius=4)
+            qfill = int(quality * qbar_w)
+            if qfill > 0:
+                qcolor = (80, 180, 100) if quality >= 0.7 else ((180, 180, 80) if quality >= 0.4 else (180, 100, 80))
+                pygame.draw.rect(surf, qcolor, (qbar_x, qbar_y, qfill, qbar_h), border_radius=4)
+            pygame.draw.rect(surf, (140, 150, 145), (qbar_x, qbar_y, qbar_w, qbar_h), 1, border_radius=4)
 
-        # Result
+        # Ingredient progress panel on right
+        ingr_panel_x, ingr_panel_y = ww - 230, 130
+        ingr_panel_w, ingr_panel_h = 180, 100
+
+        pygame.draw.rect(surf, (230, 235, 240), (ingr_panel_x, ingr_panel_y, ingr_panel_w, ingr_panel_h), border_radius=8)
+        pygame.draw.rect(surf, (150, 160, 155), (ingr_panel_x, ingr_panel_y, ingr_panel_w, ingr_panel_h), 2, border_radius=8)
+
+        ingr_label = self.renderer.small_font.render("Ingredients", True, (80, 100, 90))
+        surf.blit(ingr_label, (ingr_panel_x + ingr_panel_w//2 - ingr_label.get_width()//2, ingr_panel_y + 10))
+
+        current_ingr = state['current_ingredient_index'] + 1
+        total_ingr = state['total_ingredients']
+        ingr_text = self.renderer.font.render(f"{current_ingr} / {total_ingr}", True, (60, 120, 80))
+        surf.blit(ingr_text, (ingr_panel_x + ingr_panel_w//2 - ingr_text.get_width()//2, ingr_panel_y + 45))
+
+        # Timer panel
+        timer_panel_x, timer_panel_y = ww - 230, 250
+        timer_panel_w, timer_panel_h = 180, 80
+
+        pygame.draw.rect(surf, (230, 235, 240), (timer_panel_x, timer_panel_y, timer_panel_w, timer_panel_h), border_radius=8)
+        pygame.draw.rect(surf, (150, 160, 155), (timer_panel_x, timer_panel_y, timer_panel_w, timer_panel_h), 2, border_radius=8)
+
+        time_left = int(state['time_left'])
+        time_color = (180, 80, 80) if time_left < 15 else ((180, 150, 80) if time_left < 30 else (80, 120, 100))
+        time_label = self.renderer.small_font.render("Time", True, (80, 100, 90))
+        surf.blit(time_label, (timer_panel_x + timer_panel_w//2 - time_label.get_width()//2, timer_panel_y + 10))
+        time_text = self.renderer.font.render(f"{time_left}s", True, time_color)
+        surf.blit(time_text, (timer_panel_x + timer_panel_w//2 - time_text.get_width()//2, timer_panel_y + 35))
+
+        # Action buttons with lab styling
+        btn_w, btn_h = 160, 50
+        chain_btn = pygame.Rect(ww // 2 - btn_w - 20, wh - 180, btn_w, btn_h)
+        stabilize_btn = pygame.Rect(ww // 2 + 20, wh - 180, btn_w, btn_h)
+
+        # Chain button
+        pygame.draw.rect(surf, (70, 130, 90), chain_btn, border_radius=8)
+        pygame.draw.rect(surf, (100, 180, 120), (chain_btn.x, chain_btn.y, chain_btn.width, chain_btn.height // 3), border_radius=8)
+        pygame.draw.rect(surf, (50, 100, 70), chain_btn, 2, border_radius=8)
+        chain_text = self.renderer.small_font.render("CHAIN [C]", True, (220, 240, 230))
+        surf.blit(chain_text, (chain_btn.centerx - chain_text.get_width()//2, chain_btn.centery - chain_text.get_height()//2))
+
+        # Stabilize button
+        pygame.draw.rect(surf, (80, 120, 160), stabilize_btn, border_radius=8)
+        pygame.draw.rect(surf, (100, 150, 200), (stabilize_btn.x, stabilize_btn.y, stabilize_btn.width, stabilize_btn.height // 3), border_radius=8)
+        pygame.draw.rect(surf, (60, 90, 130), stabilize_btn, 2, border_radius=8)
+        stab_text = self.renderer.small_font.render("STABILIZE [S]", True, (220, 230, 250))
+        surf.blit(stab_text, (stabilize_btn.centerx - stab_text.get_width()//2, stabilize_btn.centery - stab_text.get_height()//2))
+
+        # Result display
         if state['result']:
             result = state['result']
-            result_surf = pygame.Surface((600, 300), pygame.SRCALPHA)
-            result_surf.fill((10, 10, 20, 240))
-            if result['success']:
-                _temp_surf = self.renderer.font.render(result['quality'], True, (100, 255, 100))
-                result_surf.blit(_temp_surf, (200, 50))
-                _temp_surf = self.renderer.small_font.render(f"Progress: {int(result['progress'] * 100)}%", True, (255, 255, 255))
-                result_surf.blit(_temp_surf, (150, 120))
-                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
-                result_surf.blit(_temp_surf, (150, 150))
-            else:
-                _temp_surf = self.renderer.font.render("FAILED!", True, (255, 100, 100))
-                result_surf.blit(_temp_surf, (200, 50))
-                _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
-                result_surf.blit(_temp_surf, (150, 120))
+            result_w, result_h = 500, 280
+            result_x, result_y = ww//2 - result_w//2, wh//2 - result_h//2
 
-            surf.blit(result_surf, (200, 200))
+            result_surf = pygame.Surface((result_w, result_h), pygame.SRCALPHA)
+            pygame.draw.rect(result_surf, (235, 240, 245, 250), (0, 0, result_w, result_h), border_radius=12)
+            pygame.draw.rect(result_surf, (100, 130, 110), (0, 0, result_w, result_h), 4, border_radius=12)
+
+            if result['success']:
+                header = "POTION COMPLETE"
+                header_surf = self.renderer.font.render(header, True, (60, 150, 80))
+                result_surf.blit(header_surf, (result_w//2 - header_surf.get_width()//2, 25))
+
+                pygame.draw.line(result_surf, (150, 170, 155), (50, 65), (result_w - 50, 65), 2)
+
+                quality_text = result.get('quality', 'Standard')
+                qual_surf = self.renderer.font.render(quality_text, True, (80, 140, 100))
+                result_surf.blit(qual_surf, (result_w//2 - qual_surf.get_width()//2, 90))
+
+                prog_text = f"Final Progress: {int(result.get('progress', 0) * 100)}%"
+                prog_surf = self.renderer.small_font.render(prog_text, True, (80, 100, 90))
+                result_surf.blit(prog_surf, (result_w//2 - prog_surf.get_width()//2, 140))
+
+                msg = result.get('message', 'Potion brewed successfully!')
+                msg_surf = self.renderer.small_font.render(msg, True, (100, 120, 110))
+                result_surf.blit(msg_surf, (result_w//2 - msg_surf.get_width()//2, 180))
+            else:
+                header = "BREWING FAILED"
+                header_surf = self.renderer.font.render(header, True, (180, 80, 80))
+                result_surf.blit(header_surf, (result_w//2 - header_surf.get_width()//2, 35))
+
+                pygame.draw.line(result_surf, (180, 140, 140), (50, 75), (result_w - 50, 75), 2)
+
+                msg = result.get('message', 'The mixture became unstable.')
+                msg_surf = self.renderer.small_font.render(msg, True, (120, 100, 100))
+                result_surf.blit(msg_surf, (result_w//2 - msg_surf.get_width()//2, 120))
+
+            close_text = self.renderer.tiny_font.render("Press any key to continue", True, (130, 140, 135))
+            result_surf.blit(close_text, (result_w//2 - close_text.get_width()//2, result_h - 30))
+
+            surf.blit(result_surf, (result_x, result_y))
+
+        # Draw metadata overlay if active
+        effects.metadata_overlay.draw(surf, (ww//2, wh//2), self.renderer.small_font)
 
         self.screen.blit(surf, (wx, wy))
         self.minigame_button_rect = pygame.Rect(wx + chain_btn.x, wy + chain_btn.y, chain_btn.width, chain_btn.height)
         self.minigame_button_rect2 = pygame.Rect(wx + stabilize_btn.x, wy + stabilize_btn.y, stabilize_btn.width, stabilize_btn.height)
 
+        # Reset effects when minigame ends
+        if state['result']:
+            self._alchemy_effects_initialized = False
+
     def _render_refining_minigame(self):
-        """Render refining minigame UI with lock mechanism aesthetic"""
+        """Render refining minigame UI with enhanced kiln/foundry aesthetic"""
         state = self.active_minigame.get_state()
+        effects = get_effects_manager()
 
         ww, wh = 1000, 700
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
+        wx = Config.VIEWPORT_WIDTH - ww - 20
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
+
+        # Initialize effects if needed
+        if not hasattr(self, '_refining_effects_initialized') or not self._refining_effects_initialized:
+            effects.initialize_discipline('refining', pygame.Rect(wx, wy, ww, wh))
+            self._refining_effects_initialized = True
+            # Show metadata overlay
+            difficulty_tier = getattr(self.active_minigame, 'difficulty_tier', 'Unknown')
+            difficulty_points = getattr(self.active_minigame, 'difficulty_points', 0)
+            effects.show_metadata({
+                'discipline': 'Refining',
+                'difficulty_tier': difficulty_tier,
+                'difficulty_points': difficulty_points,
+                'time_limit': state.get('time_limit', 60),
+                'max_bonus': 1.0 + difficulty_points * 0.012,
+                'special_params': {
+                    'Tumblers': state.get('total_cylinders', 3),
+                    'Attempts': state.get('allowed_failures', 2)
+                }
+            })
+
+        dt = 1/60
+        effects.update(dt)
+        tick = pygame.time.get_ticks()
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Dark metallic gradient background
+        # Bronze/copper gradient background
         for y in range(wh):
             progress = y / wh
-            r = int(25 + 15 * (1 - progress))
-            g = int(25 + 15 * (1 - progress))
-            b = int(35 + 10 * (1 - progress))
+            r = int(45 + 25 * progress)
+            g = int(32 + 15 * progress)
+            b = int(22 + 8 * progress)
             pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-        # Header with metallic theme
-        _temp_surf = self.renderer.font.render("🔒 MATERIAL REFINEMENT", True, (180, 160, 120))
-        surf.blit(_temp_surf, (ww//2 - 120, 20))
-        _temp_surf = self.renderer.small_font.render("[SPACE] Align Tumbler", True, (150, 150, 160))
-        surf.blit(_temp_surf, (20, 50))
+        # Kiln arch glow at bottom
+        glow_intensity = 0.6 + 0.3 * math.sin(tick * 0.002)
+        for y in range(180):
+            alpha = int(100 * (1 - y / 180) * glow_intensity)
+            glow_color = (255, 160 + int(40 * glow_intensity), 60, alpha)
+            glow_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
+            glow_surf.fill(glow_color)
+            surf.blit(glow_surf, (0, wh - 180 + y))
 
-        # Progress panel (left side)
-        panel_x, panel_y = 50, 100
-        pygame.draw.rect(surf, (40, 40, 50), (panel_x, panel_y, 200, 150), border_radius=5)
-        pygame.draw.rect(surf, (70, 70, 80), (panel_x, panel_y, 200, 150), 2, border_radius=5)
+        # Kiln mouth arch
+        arch_center_x = ww // 2
+        arch_y = wh - 100
+        arch_width, arch_height = 400, 120
 
-        _temp_surf = self.renderer.small_font.render(f"Tumblers: {state['aligned_count']}/{state['total_cylinders']}", True, (200, 200, 200))
-        surf.blit(_temp_surf, (panel_x + 15, panel_y + 15))
+        # Outer brickwork
+        for row in range(8):
+            for col in range(14):
+                brick_x = arch_center_x - 210 + col * 30
+                brick_y = wh - 130 + row * 16
+                if row < 3 or abs(col - 7) > 4 - row:
+                    brick_color = (120 + (row * col) % 20, 70 + (row + col) % 15, 45)
+                    pygame.draw.rect(surf, brick_color, (brick_x, brick_y, 28, 14))
+                    pygame.draw.rect(surf, (80, 50, 35), (brick_x, brick_y, 28, 14), 1)
 
+        # Inner kiln glow
+        inner_rect = pygame.Rect(arch_center_x - 150, wh - 90, 300, 90)
+        for i in range(5):
+            shrink = i * 15
+            glow_alpha = int(150 * (1 - i/5) * glow_intensity)
+            inner_glow = pygame.Surface((300 - shrink*2, 90), pygame.SRCALPHA)
+            inner_glow.fill((255, 180 - i*20, 80 - i*15, glow_alpha))
+            surf.blit(inner_glow, (inner_rect.x + shrink, inner_rect.y))
+
+        # Animated flames inside kiln
+        for i in range(8):
+            flame_x = arch_center_x - 100 + i * 28
+            flame_phase = tick * 0.01 + i * 0.9
+            flame_height = 50 + 20 * math.sin(flame_phase) + 10 * math.sin(flame_phase * 2.1)
+
+            for layer in range(3):
+                lh = flame_height * (1 - layer * 0.25)
+                lw = 18 - layer * 4
+                colors = [(255, 220, 140), (255, 160, 60), (255, 100, 30)]
+
+                pts = [
+                    (flame_x - lw//2, wh - 10),
+                    (flame_x - lw//4, wh - 10 - lh * 0.5),
+                    (flame_x, wh - 10 - lh),
+                    (flame_x + lw//4, wh - 10 - lh * 0.6),
+                    (flame_x + lw//2, wh - 10),
+                ]
+                pygame.draw.polygon(surf, colors[layer], pts)
+
+        # Decorative gears in corners
+        gear_positions = [
+            (80, 80, 45, 10, 25),
+            (ww - 80, 80, 40, 8, -30),
+            (100, wh - 200, 35, 8, 20),
+            (ww - 100, wh - 200, 50, 12, -18),
+        ]
+
+        for gx, gy, radius, teeth, speed in gear_positions:
+            angle = (tick * speed / 1000) % 360
+            gear_color = (180, 140, 80)
+            gear_dark = (120, 90, 55)
+
+            # Outer ring
+            pygame.draw.circle(surf, gear_color, (gx, gy), radius, 4)
+            pygame.draw.circle(surf, gear_dark, (gx, gy), radius - 8, 2)
+
+            # Teeth
+            for t in range(teeth):
+                tooth_angle = math.radians(angle + t * (360 / teeth))
+                inner_tx = gx + math.cos(tooth_angle) * radius
+                inner_ty = gy + math.sin(tooth_angle) * radius
+                outer_tx = gx + math.cos(tooth_angle) * (radius + 10)
+                outer_ty = gy + math.sin(tooth_angle) * (radius + 10)
+                pygame.draw.line(surf, gear_color, (inner_tx, inner_ty), (outer_tx, outer_ty), 4)
+
+            # Center
+            pygame.draw.circle(surf, gear_dark, (gx, gy), radius // 4)
+
+        # Header
+        header = self.renderer.font.render("MATERIAL REFINERY", True, (220, 180, 120))
+        surf.blit(header, (ww//2 - header.get_width()//2, 18))
+        sub_header = self.renderer.small_font.render("Align the tumblers to unlock the refined material", True, (180, 150, 120))
+        surf.blit(sub_header, (ww//2 - sub_header.get_width()//2, 48))
+
+        # Progress panel (left side) - styled with bronze theme
+        panel_x, panel_y = 50, 90
+        panel_w, panel_h = 180, 170
+
+        pygame.draw.rect(surf, (50, 38, 28), (panel_x, panel_y, panel_w, panel_h), border_radius=8)
+        pygame.draw.rect(surf, (140, 100, 60), (panel_x, panel_y, panel_w, panel_h), 3, border_radius=8)
+
+        # Tumbler progress
+        tumbler_label = self.renderer.small_font.render("Tumblers", True, (200, 170, 130))
+        surf.blit(tumbler_label, (panel_x + panel_w//2 - tumbler_label.get_width()//2, panel_y + 12))
+
+        aligned = state['aligned_count']
+        total = state['total_cylinders']
+
+        # Visual tumbler indicators
+        tumbler_y = panel_y + 45
+        tumbler_spacing = min(25, (panel_w - 30) // max(total, 1))
+        tumbler_start_x = panel_x + panel_w//2 - (total * tumbler_spacing) // 2
+
+        for i in range(total):
+            tx = tumbler_start_x + i * tumbler_spacing
+            if i < aligned:
+                pygame.draw.circle(surf, (100, 220, 100), (tx + 10, tumbler_y), 10)
+                pygame.draw.circle(surf, (150, 255, 150), (tx + 10, tumbler_y), 10, 2)
+            elif i == aligned:
+                pulse = 0.7 + 0.3 * math.sin(tick * 0.01)
+                pygame.draw.circle(surf, (int(255 * pulse), int(200 * pulse), 50), (tx + 10, tumbler_y), 10)
+                pygame.draw.circle(surf, (255, 215, 100), (tx + 10, tumbler_y), 10, 2)
+            else:
+                pygame.draw.circle(surf, (80, 60, 50), (tx + 10, tumbler_y), 10)
+                pygame.draw.circle(surf, (120, 90, 70), (tx + 10, tumbler_y), 10, 2)
+
+        # Attempts remaining
         failures_left = max(0, state['allowed_failures'] - state['failed_attempts'])
-        fail_color = (255, 100, 100) if failures_left == 0 else (255, 200, 100) if failures_left <= 1 else (200, 200, 200)
-        _temp_surf = self.renderer.small_font.render(f"Attempts Left: {failures_left}", True, fail_color)
-        surf.blit(_temp_surf, (panel_x + 15, panel_y + 50))
+        attempts_label = self.renderer.small_font.render("Attempts", True, (200, 170, 130))
+        surf.blit(attempts_label, (panel_x + panel_w//2 - attempts_label.get_width()//2, panel_y + 70))
 
+        fail_color = (255, 80, 80) if failures_left == 0 else ((255, 180, 80) if failures_left <= 1 else (200, 200, 180))
+        attempts_value = self.renderer.font.render(str(failures_left), True, fail_color)
+        surf.blit(attempts_value, (panel_x + panel_w//2 - attempts_value.get_width()//2, panel_y + 92))
+
+        # Timer
         time_left = int(state['time_left'])
-        time_color = (255, 100, 100) if time_left < 10 else (255, 200, 100) if time_left < 20 else (200, 200, 200)
-        _temp_surf = self.renderer.small_font.render(f"Time: {time_left}s", True, time_color)
-        surf.blit(_temp_surf, (panel_x + 15, panel_y + 85))
+        time_color = (255, 80, 80) if time_left < 10 else ((255, 180, 80) if time_left < 20 else (200, 200, 180))
+        time_label = self.renderer.small_font.render("Time", True, (200, 170, 130))
+        surf.blit(time_label, (panel_x + panel_w//2 - time_label.get_width()//2, panel_y + 125))
+        time_value = self.renderer.font.render(f"{time_left}s", True, time_color)
+        surf.blit(time_value, (panel_x + panel_w//2 - time_value.get_width()//2, panel_y + 142))
 
-        # Main lock mechanism visualization
-        cx, cy = ww // 2, 320
-        radius = 120
+        # Main lock mechanism visualization with bronze/brass theme
+        cx, cy = ww // 2, 300
+        radius = 130
         current_cyl = state['current_cylinder']
         total = state['total_cylinders']
 
-        # Lock body background (metallic casing)
-        lock_w = radius * 2 + 60
-        lock_h = radius * 2 + 80
+        # Lock body - ornate brass/bronze casing
+        lock_w = radius * 2 + 80
+        lock_h = radius * 2 + 100
         lock_x = cx - lock_w // 2
-        lock_y = cy - radius - 30
+        lock_y = cy - radius - 40
 
-        # Metallic lock body with depth
-        pygame.draw.rect(surf, (50, 50, 60), (lock_x + 5, lock_y + 5, lock_w, lock_h), border_radius=12)
-        pygame.draw.rect(surf, (70, 70, 80), (lock_x, lock_y, lock_w, lock_h), border_radius=12)
-        pygame.draw.rect(surf, (100, 100, 110), (lock_x, lock_y, lock_w, lock_h), 3, border_radius=12)
+        # Shadow
+        pygame.draw.ellipse(surf, (30, 25, 20, 100), (lock_x + 10, lock_y + lock_h - 10, lock_w, 30))
+
+        # Main body layers for depth
+        pygame.draw.rect(surf, (60, 45, 35), (lock_x + 6, lock_y + 6, lock_w, lock_h), border_radius=15)
+        pygame.draw.rect(surf, (100, 75, 50), (lock_x, lock_y, lock_w, lock_h), border_radius=15)
+
+        # Inner decorative border
+        pygame.draw.rect(surf, (140, 105, 65), (lock_x + 8, lock_y + 8, lock_w - 16, lock_h - 16), 3, border_radius=12)
+
+        # Outer frame highlight
+        pygame.draw.rect(surf, (180, 140, 90), (lock_x, lock_y, lock_w, lock_h), 4, border_radius=15)
+
+        # Corner rivets
+        rivet_positions = [
+            (lock_x + 20, lock_y + 20),
+            (lock_x + lock_w - 20, lock_y + 20),
+            (lock_x + 20, lock_y + lock_h - 20),
+            (lock_x + lock_w - 20, lock_y + lock_h - 20),
+        ]
+        for rx, ry in rivet_positions:
+            pygame.draw.circle(surf, (160, 120, 70), (rx, ry), 8)
+            pygame.draw.circle(surf, (200, 160, 100), (rx, ry), 8, 2)
+            pygame.draw.circle(surf, (120, 90, 55), (rx, ry), 4)
 
         # Keyhole at bottom
-        pygame.draw.ellipse(surf, (30, 30, 35), (cx - 15, cy + radius + 20, 30, 20))
-        pygame.draw.rect(surf, (30, 30, 35), (cx - 8, cy + radius + 35, 16, 25))
+        pygame.draw.ellipse(surf, (40, 35, 30), (cx - 18, cy + radius + 25, 36, 24))
+        pygame.draw.rect(surf, (40, 35, 30), (cx - 10, cy + radius + 42, 20, 30))
+        pygame.draw.ellipse(surf, (60, 50, 40), (cx - 18, cy + radius + 25, 36, 24), 2)
 
-        # Main tumbler cylinder (layered for depth)
-        pygame.draw.circle(surf, (45, 45, 50), (cx, cy), radius)
-        pygame.draw.circle(surf, (65, 65, 70), (cx, cy), radius - 12)
-        pygame.draw.circle(surf, (55, 55, 60), (cx, cy), radius - 24)
+        # Main tumbler cylinder with bronze/brass colors
+        # Outer glow when in ideal zone
+        pygame.draw.circle(surf, (60, 50, 40), (cx, cy), radius + 5)
+        pygame.draw.circle(surf, (80, 65, 50), (cx, cy), radius)
+        pygame.draw.circle(surf, (100, 80, 60), (cx, cy), radius - 15)
+        pygame.draw.circle(surf, (70, 55, 45), (cx, cy), radius - 30)
 
-        # Outer ring (metallic with shine)
-        pygame.draw.circle(surf, (120, 120, 130), (cx, cy), radius, 4)
-        pygame.draw.circle(surf, (80, 80, 90), (cx, cy), radius - 1, 1)
+        # Outer ring (brass with shine)
+        pygame.draw.circle(surf, (200, 160, 100), (cx, cy), radius, 5)
+        pygame.draw.circle(surf, (140, 110, 70), (cx, cy), radius - 3, 2)
+
+        # Decorative inner rings
+        pygame.draw.circle(surf, (150, 120, 80), (cx, cy), radius - 40, 2)
+        pygame.draw.circle(surf, (120, 95, 65), (cx, cy), radius - 60, 2)
 
         # Pin indicators around the edge (showing progress)
         for i in range(total):
             angle = (i / total) * 2 * math.pi - math.pi / 2  # Start from top
-            pin_x = cx + int((radius + 35) * math.cos(angle))
-            pin_y = cy + int((radius + 35) * math.sin(angle))
+            pin_x = cx + int((radius + 40) * math.cos(angle))
+            pin_y = cy + int((radius + 40) * math.sin(angle))
 
             if i < len(state.get('aligned_cylinders', [])):
-                pin_color = (100, 200, 100)  # Aligned - green
+                pin_color = (80, 200, 80)
+                pin_border = (120, 255, 120)
             elif i == current_cyl:
-                pin_color = (255, 215, 0)  # Current - gold
+                pulse = 0.7 + 0.3 * math.sin(tick * 0.01)
+                pin_color = (int(255 * pulse), int(180 * pulse), 50)
+                pin_border = (255, 220, 100)
             else:
-                pin_color = (60, 60, 70)  # Pending - dark
+                pin_color = (70, 55, 45)
+                pin_border = (100, 80, 60)
 
-            pygame.draw.circle(surf, pin_color, (pin_x, pin_y), 10)
-            pygame.draw.circle(surf, (40, 40, 45), (pin_x, pin_y), 10, 2)
+            pygame.draw.circle(surf, pin_color, (pin_x, pin_y), 12)
+            pygame.draw.circle(surf, pin_border, (pin_x, pin_y), 12, 2)
+            pygame.draw.circle(surf, (50, 40, 35), (pin_x, pin_y), 5)
 
         # Current cylinder tumbler
         if current_cyl < len(state['cylinders']):
             cyl = state['cylinders'][current_cyl]
             angle = cyl['angle']
-            inner_radius = radius - 35
+            inner_radius = radius - 40
 
-            # Draw notch pattern (lockpicking style)
-            notch_count = 8
+            # Draw notch pattern with brass styling
+            notch_count = 12
             for i in range(notch_count):
                 notch_angle = (i / notch_count) * 2 * math.pi
                 outer_x = cx + int(inner_radius * math.cos(notch_angle))
                 outer_y = cy + int(inner_radius * math.sin(notch_angle))
-                inner_x = cx + int((inner_radius - 15) * math.cos(notch_angle))
-                inner_y = cy + int((inner_radius - 15) * math.sin(notch_angle))
-                pygame.draw.line(surf, (40, 40, 45), (inner_x, inner_y), (outer_x, outer_y), 3)
+                inner_x = cx + int((inner_radius - 18) * math.cos(notch_angle))
+                inner_y = cy + int((inner_radius - 18) * math.sin(notch_angle))
+                pygame.draw.line(surf, (50, 40, 35), (inner_x, inner_y), (outer_x, outer_y), 3)
 
-            # Rotating indicator (the "pick")
-            angle_rad = math.radians(angle - 90)  # -90 to start from top
-            ind_inner = 25
-            ind_outer = inner_radius - 5
+            # Target zone at top (green arc with glow)
+            target_width_deg = state['timing_window'] * cyl['speed'] * 360
+            target_half = target_width_deg / 2
+
+            # Target zone glow
+            for a in range(int(-target_half * 1.2), int(target_half * 1.2) + 1):
+                rad = math.radians(a - 90)
+                x1 = cx + int((inner_radius - 15) * math.cos(rad))
+                y1 = cy + int((inner_radius - 15) * math.sin(rad))
+                x2 = cx + int((inner_radius + 12) * math.cos(rad))
+                y2 = cy + int((inner_radius + 12) * math.sin(rad))
+                glow_alpha = int(80 * (1 - abs(a) / (target_half * 1.2)))
+                pygame.draw.line(surf, (80, 200, 80), (x1, y1), (x2, y2), 3)
+
+            # Target zone markers
+            for a in range(int(-target_half), int(target_half) + 1, 2):
+                rad = math.radians(a - 90)
+                x1 = cx + int((inner_radius - 10) * math.cos(rad))
+                y1 = cy + int((inner_radius - 10) * math.sin(rad))
+                x2 = cx + int((inner_radius + 8) * math.cos(rad))
+                y2 = cy + int((inner_radius + 8) * math.sin(rad))
+                pygame.draw.line(surf, (100, 255, 100), (x1, y1), (x2, y2), 2)
+
+            # Rotating indicator (the "pick") with brass styling
+            angle_rad = math.radians(angle - 90)
+            ind_inner = 30
+            ind_outer = inner_radius - 8
+
+            # Pick shadow
+            shadow_offset = 3
+            shadow_inner_x = cx + int(ind_inner * math.cos(angle_rad)) + shadow_offset
+            shadow_inner_y = cy + int(ind_inner * math.sin(angle_rad)) + shadow_offset
+            shadow_outer_x = cx + int(ind_outer * math.cos(angle_rad)) + shadow_offset
+            shadow_outer_y = cy + int(ind_outer * math.sin(angle_rad)) + shadow_offset
+            pygame.draw.line(surf, (40, 35, 30), (shadow_inner_x, shadow_inner_y), (shadow_outer_x, shadow_outer_y), 6)
+
+            # Main pick
             inner_x = cx + int(ind_inner * math.cos(angle_rad))
             inner_y = cy + int(ind_inner * math.sin(angle_rad))
             outer_x = cx + int(ind_outer * math.cos(angle_rad))
             outer_y = cy + int(ind_outer * math.sin(angle_rad))
 
-            pygame.draw.line(surf, (200, 180, 100), (inner_x, inner_y), (outer_x, outer_y), 4)
-            pygame.draw.circle(surf, (255, 215, 0), (outer_x, outer_y), 10)
+            pygame.draw.line(surf, (180, 140, 80), (inner_x, inner_y), (outer_x, outer_y), 5)
+            pygame.draw.line(surf, (220, 180, 120), (inner_x, inner_y), (outer_x, outer_y), 3)
 
-            # Target zone at top (green arc)
-            target_width_deg = state['timing_window'] * cyl['speed'] * 360
-            target_half = target_width_deg / 2
-
-            # Draw target zone as arc
-            for a in range(int(-target_half), int(target_half) + 1):
-                rad = math.radians(a - 90)  # -90 to position at top
-                x1 = cx + int((inner_radius - 8) * math.cos(rad))
-                y1 = cy + int((inner_radius - 8) * math.sin(rad))
-                x2 = cx + int((inner_radius + 5) * math.cos(rad))
-                y2 = cy + int((inner_radius + 5) * math.sin(rad))
-                pygame.draw.line(surf, (80, 180, 80), (x1, y1), (x2, y2), 2)
+            # Pick head
+            pygame.draw.circle(surf, (200, 160, 90), (outer_x, outer_y), 12)
+            pygame.draw.circle(surf, (255, 215, 100), (outer_x, outer_y), 12, 3)
+            pygame.draw.circle(surf, (150, 120, 70), (outer_x, outer_y), 5)
 
         # Feedback flash
         feedback_timer = state.get('feedback_timer', 0)
@@ -3689,71 +4399,202 @@ class GameEngine:
             aligned_count = len(state.get('aligned_cylinders', []))
 
             if aligned_count > 0 and state.get('current_cylinder', 0) > 0:
-                # Success flash
-                flash_surf = pygame.Surface((200, 200), pygame.SRCALPHA)
-                pygame.draw.circle(flash_surf, (100, 255, 100, alpha), (100, 100), 80)
-                surf.blit(flash_surf, (cx - 100, cy - 100))
+                # Success flash with brass color
+                flash_surf = pygame.Surface((220, 220), pygame.SRCALPHA)
+                pygame.draw.circle(flash_surf, (100, 255, 100, alpha), (110, 110), 90)
+                pygame.draw.circle(flash_surf, (150, 255, 150, alpha // 2), (110, 110), 110)
+                surf.blit(flash_surf, (cx - 110, cy - 110))
 
-                _temp_surf = self.renderer.small_font.render("CLICK!", True, (100, 255, 100))
-                surf.blit(_temp_surf, (cx - 25, cy - radius - 50))
+                click_text = self.renderer.font.render("ALIGNED!", True, (100, 255, 100))
+                surf.blit(click_text, (cx - click_text.get_width()//2, cy - radius - 55))
 
         # Instructions
-        _temp_surf = self.renderer.small_font.render("Press SPACE when the pick reaches the green zone!", True, (180, 180, 180))
-        surf.blit(_temp_surf, (ww//2 - 180, 530))
+        instruction = self.renderer.small_font.render("[SPACE] Align when pick reaches green zone", True, (200, 170, 130))
+        surf.blit(instruction, (ww//2 - instruction.get_width()//2, wh - 195))
 
         # Result (if completed)
         if state['result']:
             result = state['result']
-            result_surf = pygame.Surface((600, 250), pygame.SRCALPHA)
-            result_surf.fill((15, 15, 25, 245))
-            pygame.draw.rect(result_surf, (100, 100, 110), (0, 0, 600, 250), 3, border_radius=10)
+            result_w, result_h = 500, 280
+            result_x, result_y = ww//2 - result_w//2, wh//2 - result_h//2
+
+            result_surf = pygame.Surface((result_w, result_h), pygame.SRCALPHA)
+
+            # Background with bronze theme
+            pygame.draw.rect(result_surf, (45, 35, 28, 248), (0, 0, result_w, result_h), border_radius=12)
+            pygame.draw.rect(result_surf, (160, 120, 70), (0, 0, result_w, result_h), 4, border_radius=12)
 
             if result['success']:
-                _temp_surf = self.renderer.font.render("🔓 LOCK OPENED!", True, (100, 255, 100))
-                result_surf.blit(_temp_surf, (180, 30))
-                _temp_surf = self.renderer.small_font.render("Material refinement successful!", True, (200, 200, 200))
-                result_surf.blit(_temp_surf, (150, 90))
-                _temp_surf = self.renderer.small_font.render(result.get('message', ''), True, (180, 160, 120))
-                result_surf.blit(_temp_surf, (150, 130))
+                header_text = "REFINEMENT COMPLETE"
+                header_surf = self.renderer.font.render(header_text, True, (100, 255, 100))
+                result_surf.blit(header_surf, (result_w//2 - header_surf.get_width()//2, 25))
+
+                pygame.draw.line(result_surf, (140, 105, 65), (50, 65), (result_w - 50, 65), 2)
+
+                # Success message
+                msg = "Material successfully refined!"
+                msg_text = self.renderer.small_font.render(msg, True, (200, 180, 150))
+                result_surf.blit(msg_text, (result_w//2 - msg_text.get_width()//2, 90))
+
+                # Quality if available
+                quality = result.get('quality_tier', result.get('quality', 'Standard'))
+                qual_label = self.renderer.small_font.render("Quality:", True, (180, 150, 120))
+                result_surf.blit(qual_label, (60, 130))
+                qual_value = self.renderer.font.render(str(quality), True, (100, 220, 100))
+                result_surf.blit(qual_value, (160, 125))
+
+                # Additional message
+                detail = result.get('message', '')
+                if detail:
+                    detail_text = self.renderer.small_font.render(detail, True, (180, 160, 130))
+                    result_surf.blit(detail_text, (result_w//2 - detail_text.get_width()//2, 180))
+
             else:
-                _temp_surf = self.renderer.font.render("🔒 LOCK JAMMED!", True, (255, 100, 100))
-                result_surf.blit(_temp_surf, (180, 30))
+                header_text = "REFINEMENT FAILED"
+                header_surf = self.renderer.font.render(header_text, True, (255, 100, 100))
+                result_surf.blit(header_surf, (result_w//2 - header_surf.get_width()//2, 25))
 
-                # Show material loss
+                pygame.draw.line(result_surf, (120, 70, 50), (50, 65), (result_w - 50, 65), 2)
+
+                # Material loss
                 loss_pct = result.get('loss_percentage', 50)
-                _temp_surf = self.renderer.small_font.render(f"Materials Lost: {loss_pct}%", True, (255, 150, 100))
-                result_surf.blit(_temp_surf, (150, 90))
+                loss_label = self.renderer.small_font.render("Materials Lost:", True, (200, 150, 130))
+                result_surf.blit(loss_label, (60, 100))
+                loss_value = self.renderer.font.render(f"{loss_pct}%", True, (255, 120, 100))
+                result_surf.blit(loss_value, (220, 95))
 
-                _temp_surf = self.renderer.small_font.render(result.get('message', ''), True, (200, 200, 200))
-                result_surf.blit(_temp_surf, (150, 130))
+                msg = result.get('message', 'The lock mechanism jammed.')
+                msg_text = self.renderer.small_font.render(msg, True, (200, 170, 150))
+                result_surf.blit(msg_text, (result_w//2 - msg_text.get_width()//2, 160))
 
-            surf.blit(result_surf, (200, 220))
+            # Close hint
+            close_text = self.renderer.tiny_font.render("Press any key to continue", True, (150, 120, 90))
+            result_surf.blit(close_text, (result_w//2 - close_text.get_width()//2, result_h - 30))
+
+            surf.blit(result_surf, (result_x, result_y))
+
+        # Draw metadata overlay if active
+        effects.metadata_overlay.draw(surf, (ww//2, wh//2), self.renderer.small_font)
 
         self.screen.blit(surf, (wx, wy))
         self.minigame_button_rect = None
 
+        # Reset effects when minigame ends
+        if state['result']:
+            self._refining_effects_initialized = False
+
     def _render_engineering_minigame(self):
-        """Render engineering minigame UI with actual puzzle visualization"""
+        """Render engineering minigame UI with workbench aesthetic"""
         state = self.active_minigame.get_state()
+        effects = get_effects_manager()
 
         ww, wh = 1000, 700
-        wx = Config.VIEWPORT_WIDTH - ww - 20  # Right-aligned with margin
+        wx = Config.VIEWPORT_WIDTH - ww - 20
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
+        # Initialize effects if needed
+        if not hasattr(self, '_engineering_effects_initialized') or not self._engineering_effects_initialized:
+            effects.initialize_discipline('engineering', pygame.Rect(wx, wy, ww, wh))
+            self._engineering_effects_initialized = True
+            # Show metadata overlay
+            difficulty_tier = getattr(self.active_minigame, 'difficulty_tier', 'Unknown')
+            difficulty_points = getattr(self.active_minigame, 'difficulty_points', 0)
+            effects.show_metadata({
+                'discipline': 'Engineering',
+                'difficulty_tier': difficulty_tier,
+                'difficulty_points': difficulty_points,
+                'time_limit': state.get('time_limit', 120),
+                'max_bonus': 1.0 + difficulty_points * 0.02,
+                'special_params': {
+                    'Total Puzzles': state.get('total_puzzles', 2),
+                    'Grid Size': getattr(self.active_minigame, 'grid_size', 4)
+                }
+            })
+
+        dt = 1/60
+        effects.update(dt)
+        tick = pygame.time.get_ticks()
+
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.fill((20, 20, 30, 250))
 
-        # Header
-        _temp_surf = self.renderer.font.render("ENGINEERING MINIGAME", True, (60, 120, 180))
-        surf.blit(_temp_surf, (ww//2 - 120, 20))
-        _temp_surf = self.renderer.small_font.render("Solve puzzles to complete device", True, (180, 180, 180))
-        surf.blit(_temp_surf, (20, 50))
+        # Workbench wood background
+        for y in range(wh):
+            progress = y / wh
+            r = int(100 + 30 * math.sin(y * 0.02))
+            g = int(70 + 20 * math.sin(y * 0.02))
+            b = int(50 + 10 * math.sin(y * 0.02))
+            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-        # Progress
-        _temp_surf = self.renderer.font.render(f"Puzzle: {state['current_puzzle_index'] + 1}/{state['total_puzzles']}", True, (255, 255, 255))
-        surf.blit(_temp_surf, (50, 100))
-        _temp_surf = self.renderer.font.render(f"Solved: {state['solved_count']}", True, (100, 255, 100))
-        surf.blit(_temp_surf, (50, 140))
+        # Wood grain texture
+        for i in range(0, wh, 25):
+            grain_intensity = 10 + int(10 * math.sin(i * 0.1))
+            pygame.draw.line(surf, (90 + grain_intensity, 60 + grain_intensity, 45), (0, i), (ww, i), 1)
+
+        # Warm overhead lighting effect
+        light_intensity = 0.85 + 0.1 * math.sin(tick * 0.001)
+        for y in range(200):
+            alpha = int(60 * (1 - y / 200) * light_intensity)
+            light_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
+            light_surf.fill((255, 230, 180, alpha))
+            surf.blit(light_surf, (0, y))
+
+        # Scattered tools decoration
+        tool_positions = [
+            ('wrench', 50, 80, 20),
+            ('screwdriver', ww - 80, 100, -15),
+            ('pliers', 70, wh - 120, 30),
+            ('hammer', ww - 100, wh - 100, -25),
+        ]
+
+        for tool_type, tx, ty, angle in tool_positions:
+            tool_surf = pygame.Surface((60, 60), pygame.SRCALPHA)
+            tool_color = (120, 125, 130)
+            handle_color = (140, 100, 60)
+
+            if tool_type == 'wrench':
+                pygame.draw.line(tool_surf, tool_color, (10, 30), (50, 30), 5)
+                pygame.draw.circle(tool_surf, tool_color, (50, 30), 10, 3)
+                pygame.draw.circle(tool_surf, tool_color, (10, 30), 8, 3)
+            elif tool_type == 'screwdriver':
+                pygame.draw.line(tool_surf, handle_color, (10, 30), (35, 30), 8)
+                pygame.draw.line(tool_surf, tool_color, (35, 30), (55, 30), 4)
+            elif tool_type == 'pliers':
+                pygame.draw.line(tool_surf, tool_color, (15, 25), (45, 35), 4)
+                pygame.draw.line(tool_surf, tool_color, (15, 35), (45, 25), 4)
+                pygame.draw.circle(tool_surf, (80, 80, 85), (30, 30), 5)
+            elif tool_type == 'hammer':
+                pygame.draw.line(tool_surf, handle_color, (10, 35), (35, 35), 7)
+                pygame.draw.rect(tool_surf, tool_color, (35, 22, 20, 26))
+
+            rotated = pygame.transform.rotate(tool_surf, angle)
+            surf.blit(rotated, (tx - rotated.get_width()//2, ty - rotated.get_height()//2))
+
+        # Header with workbench theme
+        header = self.renderer.font.render("ENGINEER'S WORKBENCH", True, (60, 80, 100))
+        surf.blit(header, (ww//2 - header.get_width()//2, 18))
+        sub_header = self.renderer.small_font.render("Solve the puzzles to assemble the device", True, (90, 100, 110))
+        surf.blit(sub_header, (ww//2 - sub_header.get_width()//2, 48))
+
+        # Progress panel (left side)
+        panel_x, panel_y = 50, 120
+        panel_w, panel_h = 160, 130
+
+        pygame.draw.rect(surf, (70, 55, 45), (panel_x, panel_y, panel_w, panel_h), border_radius=8)
+        pygame.draw.rect(surf, (140, 120, 100), (panel_x, panel_y, panel_w, panel_h), 3, border_radius=8)
+
+        puzzle_label = self.renderer.small_font.render("Puzzle", True, (180, 170, 160))
+        surf.blit(puzzle_label, (panel_x + panel_w//2 - puzzle_label.get_width()//2, panel_y + 12))
+
+        current_puzzle = state['current_puzzle_index'] + 1
+        total_puzzles = state['total_puzzles']
+        puzzle_text = self.renderer.font.render(f"{current_puzzle} / {total_puzzles}", True, (220, 210, 200))
+        surf.blit(puzzle_text, (panel_x + panel_w//2 - puzzle_text.get_width()//2, panel_y + 40))
+
+        solved_label = self.renderer.small_font.render("Solved", True, (180, 170, 160))
+        surf.blit(solved_label, (panel_x + panel_w//2 - solved_label.get_width()//2, panel_y + 78))
+
+        solved_text = self.renderer.font.render(str(state['solved_count']), True, (100, 200, 120))
+        surf.blit(solved_text, (panel_x + panel_w//2 - solved_text.get_width()//2, panel_y + 98))
 
         # Store puzzle cell rects for click detection
         self.engineering_puzzle_rects = []
@@ -3795,15 +4636,40 @@ class GameEngine:
         # Result
         if state['result']:
             result = state['result']
-            result_surf = pygame.Surface((600, 200), pygame.SRCALPHA)
-            result_surf.fill((10, 10, 20, 240))
-            _temp_surf = self.renderer.font.render("DEVICE CREATED!", True, (100, 255, 100))
-            result_surf.blit(_temp_surf, (200, 50))
-            _temp_surf = self.renderer.small_font.render(result['message'], True, (200, 200, 200))
-            result_surf.blit(_temp_surf, (150, 100))
-            surf.blit(result_surf, (200, 250))
+            result_w, result_h = 500, 250
+            result_x, result_y = ww//2 - result_w//2, wh//2 - result_h//2
+
+            result_surf = pygame.Surface((result_w, result_h), pygame.SRCALPHA)
+            pygame.draw.rect(result_surf, (60, 50, 42, 248), (0, 0, result_w, result_h), border_radius=12)
+            pygame.draw.rect(result_surf, (140, 120, 100), (0, 0, result_w, result_h), 4, border_radius=12)
+
+            header = "DEVICE ASSEMBLED"
+            header_surf = self.renderer.font.render(header, True, (100, 200, 120))
+            result_surf.blit(header_surf, (result_w//2 - header_surf.get_width()//2, 25))
+
+            pygame.draw.line(result_surf, (120, 100, 80), (50, 65), (result_w - 50, 65), 2)
+
+            msg = result.get('message', 'Device successfully constructed!')
+            msg_surf = self.renderer.small_font.render(msg, True, (200, 190, 180))
+            result_surf.blit(msg_surf, (result_w//2 - msg_surf.get_width()//2, 100))
+
+            puzzles_text = f"Puzzles Solved: {state['solved_count']}/{state['total_puzzles']}"
+            puzzles_surf = self.renderer.small_font.render(puzzles_text, True, (180, 170, 160))
+            result_surf.blit(puzzles_surf, (result_w//2 - puzzles_surf.get_width()//2, 145))
+
+            close_text = self.renderer.tiny_font.render("Press any key to continue", True, (150, 130, 110))
+            result_surf.blit(close_text, (result_w//2 - close_text.get_width()//2, result_h - 30))
+
+            surf.blit(result_surf, (result_x, result_y))
+
+        # Draw metadata overlay if active
+        effects.metadata_overlay.draw(surf, (ww//2, wh//2), self.renderer.small_font)
 
         self.screen.blit(surf, (wx, wy))
+
+        # Reset effects when minigame ends
+        if state['result']:
+            self._engineering_effects_initialized = False
 
     def _render_rotation_pipe_puzzle(self, surf, puzzle, wx, wy):
         """Render rotation pipe puzzle with visual pipe pieces"""
@@ -3944,71 +4810,148 @@ class GameEngine:
                     surf.blit(_temp_surf, text_rect)
 
     def _render_enchanting_minigame(self):
-        """Render spinning wheel gambling minigame UI"""
+        """Render enchanting wheel minigame UI with light blue spirit aesthetic"""
         if not self.active_minigame:
             return
 
         state = self.active_minigame.get_state()
+        effects = get_effects_manager()
 
         ww, wh = 1000, 700
         wx = Config.VIEWPORT_WIDTH - ww - 20
         wy = (Config.VIEWPORT_HEIGHT - wh) // 2
 
+        # Initialize effects if needed
+        if not hasattr(self, '_enchanting_effects_initialized') or not self._enchanting_effects_initialized:
+            effects.initialize_discipline('enchanting', pygame.Rect(wx, wy, ww, wh))
+            self._enchanting_effects_initialized = True
+            # Show metadata overlay
+            difficulty_tier = getattr(self.active_minigame, 'difficulty_tier', 'Unknown')
+            difficulty_points = getattr(self.active_minigame, 'difficulty_points', 0)
+            effects.show_metadata({
+                'discipline': 'Enchanting',
+                'difficulty_tier': difficulty_tier,
+                'difficulty_points': difficulty_points,
+                'time_limit': None,  # No time limit for enchanting
+                'max_bonus': 1.0 + difficulty_points * 0.025,
+                'special_params': {
+                    'Starting Currency': state.get('current_currency', 100),
+                    'Spins': '3'
+                }
+            })
+
+        dt = 1/60
+        effects.update(dt)
+        tick = pygame.time.get_ticks()
+
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
-        surf.fill((20, 20, 30, 250))
 
-        # Header
-        _temp_surf = self.renderer.font.render("SPINNING WHEEL MINIGAME", True, (255, 215, 0))
-        surf.blit(_temp_surf, (ww//2 - 180, 20))
+        # Light blue spirit gradient background
+        for y in range(wh):
+            progress = y / wh
+            r = int(20 + 25 * progress)
+            g = int(35 + 30 * progress)
+            b = int(55 + 20 * progress)
+            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-        # Currency display
+        # Floating spirit particles
+        for i in range(25):
+            particle_phase = tick * 0.001 + i * 0.5
+            px = 50 + (i * 37) % (ww - 100) + math.sin(particle_phase) * 30
+            py = 50 + (i * 53) % (wh - 100) + math.cos(particle_phase * 0.7) * 25
+            particle_size = 3 + int(2 * math.sin(particle_phase * 2))
+            particle_alpha = int(80 + 60 * math.sin(particle_phase * 1.5))
+
+            particle_surf = pygame.Surface((particle_size * 4, particle_size * 4), pygame.SRCALPHA)
+            # Soft glow
+            pygame.draw.circle(particle_surf, (150, 200, 255, particle_alpha // 3),
+                             (particle_size * 2, particle_size * 2), particle_size * 2)
+            # Core
+            pygame.draw.circle(particle_surf, (180, 220, 255, particle_alpha),
+                             (particle_size * 2, particle_size * 2), particle_size)
+            surf.blit(particle_surf, (int(px), int(py)))
+
+        # Central aura glow
+        aura_intensity = 0.5 + 0.3 * math.sin(tick * 0.002)
+        for r in range(150, 0, -10):
+            alpha = int(25 * (r / 150) * aura_intensity)
+            aura_surf = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+            pygame.draw.circle(aura_surf, (100, 180, 240, alpha), (r, r), r)
+            surf.blit(aura_surf, (ww//2 - r, 350 - r))
+
+        # Header with spirit theme
+        header = self.renderer.font.render("SPIRIT WHEEL", True, (150, 200, 255))
+        surf.blit(header, (ww//2 - header.get_width()//2, 18))
+        sub_header = self.renderer.small_font.render("Channel the spirits to enhance your item", True, (120, 160, 200))
+        surf.blit(sub_header, (ww//2 - sub_header.get_width()//2, 48))
+
+        # Currency panel (left side)
+        currency_panel_x, currency_panel_y = 50, 90
+        currency_panel_w, currency_panel_h = 160, 80
+
+        pygame.draw.rect(surf, (30, 45, 60, 200), (currency_panel_x, currency_panel_y, currency_panel_w, currency_panel_h), border_radius=10)
+        pygame.draw.rect(surf, (100, 150, 200), (currency_panel_x, currency_panel_y, currency_panel_w, currency_panel_h), 2, border_radius=10)
+
+        currency_label = self.renderer.small_font.render("Essence", True, (150, 180, 210))
+        surf.blit(currency_label, (currency_panel_x + currency_panel_w//2 - currency_label.get_width()//2, currency_panel_y + 10))
+
         current_currency = state.get('current_currency', 100)
-        _temp_surf = self.renderer.font.render(f"Currency: {current_currency}", True, (100, 255, 100))
-        surf.blit(_temp_surf, (50, 80))
+        currency_text = self.renderer.font.render(str(current_currency), True, (150, 255, 200))
+        surf.blit(currency_text, (currency_panel_x + currency_panel_w//2 - currency_text.get_width()//2, currency_panel_y + 35))
 
-        # Spin counter
+        # Spin counter panel (right side)
+        spin_panel_x, spin_panel_y = ww - 210, 90
+        spin_panel_w, spin_panel_h = 160, 80
+
+        pygame.draw.rect(surf, (30, 45, 60, 200), (spin_panel_x, spin_panel_y, spin_panel_w, spin_panel_h), border_radius=10)
+        pygame.draw.rect(surf, (100, 150, 200), (spin_panel_x, spin_panel_y, spin_panel_w, spin_panel_h), 2, border_radius=10)
+
+        spin_label = self.renderer.small_font.render("Spin", True, (150, 180, 210))
+        surf.blit(spin_label, (spin_panel_x + spin_panel_w//2 - spin_label.get_width()//2, spin_panel_y + 10))
+
         spin_num = state.get('current_spin_number', 0) + 1
-        _temp_surf = self.renderer.small_font.render(f"Spin {spin_num} / 3", True, (200, 200, 200))
-        surf.blit(_temp_surf, (ww - 150, 80))
+        spin_text = self.renderer.font.render(f"{spin_num} / 3", True, (180, 200, 230))
+        surf.blit(spin_text, (spin_panel_x + spin_panel_w//2 - spin_text.get_width()//2, spin_panel_y + 35))
 
         # Phase-specific rendering
         phase = state.get('phase', 'betting')
 
-        # Wheel area
+        # Wheel area with spirit theme
         wheel_center = (ww // 2, 350)
-        wheel_radius = 180
+        wheel_radius = 170
         wheel_visible = state.get('wheel_visible', False)
 
         if wheel_visible:
-            # Draw spinning wheel
+            # Draw spinning wheel with spirit colors
             current_wheel = state.get('current_wheel', [])
             wheel_rotation = state.get('wheel_rotation', 0.0)
 
             if current_wheel:
-                # Draw wheel background
-                pygame.draw.circle(surf, (40, 40, 50), wheel_center, wheel_radius)
-                pygame.draw.circle(surf, (200, 200, 200), wheel_center, wheel_radius, 4)
+                # Outer glow ring
+                for r in range(wheel_radius + 30, wheel_radius, -3):
+                    glow_alpha = int(40 * (1 - (r - wheel_radius) / 30))
+                    glow_surf = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+                    pygame.draw.circle(glow_surf, (100, 180, 255, glow_alpha), (r, r), r, 3)
+                    surf.blit(glow_surf, (wheel_center[0] - r, wheel_center[1] - r))
 
-                # Draw 20 slices
-                slice_angle = 360 / 20  # 18 degrees per slice
+                # Wheel background
+                pygame.draw.circle(surf, (35, 50, 65), wheel_center, wheel_radius)
+
+                # Draw 20 slices with spirit-themed colors
+                slice_angle = 360 / 20
                 color_map = {
-                    'green': (50, 200, 50),
-                    'red': (200, 50, 50),
-                    'grey': (120, 120, 120)
+                    'green': (80, 200, 150),   # Spirit green
+                    'red': (200, 100, 120),    # Soft red
+                    'grey': (100, 130, 160)    # Spirit grey
                 }
 
                 for i, color_name in enumerate(current_wheel):
-                    # Calculate slice angles
-                    start_angle = i * slice_angle - wheel_rotation - 90  # -90 to start at top
+                    start_angle = i * slice_angle - wheel_rotation - 90
                     end_angle = (i + 1) * slice_angle - wheel_rotation - 90
-
-                    # Convert to radians
                     start_rad = math.radians(start_angle)
                     end_rad = math.radians(end_angle)
 
-                    # Draw slice as a polygon (triangle fan from center)
                     points = [wheel_center]
-                    # Generate arc points
                     num_arc_points = 5
                     for j in range(num_arc_points + 1):
                         angle = start_rad + (end_rad - start_rad) * (j / num_arc_points)
@@ -4016,81 +4959,92 @@ class GameEngine:
                         py = wheel_center[1] + int(wheel_radius * math.sin(angle))
                         points.append((px, py))
 
-                    color = color_map.get(color_name, (100, 100, 100))
+                    color = color_map.get(color_name, (100, 130, 160))
                     pygame.draw.polygon(surf, color, points)
-                    pygame.draw.polygon(surf, (0, 0, 0), points, 2)
+                    pygame.draw.polygon(surf, (60, 80, 100), points, 2)
 
-                # Draw pointer at top
+                # Spirit pointer at top
                 pointer_points = [
-                    (wheel_center[0], wheel_center[1] - wheel_radius - 20),
-                    (wheel_center[0] - 15, wheel_center[1] - wheel_radius - 5),
-                    (wheel_center[0] + 15, wheel_center[1] - wheel_radius - 5)
+                    (wheel_center[0], wheel_center[1] - wheel_radius - 25),
+                    (wheel_center[0] - 18, wheel_center[1] - wheel_radius - 5),
+                    (wheel_center[0] + 18, wheel_center[1] - wheel_radius - 5)
                 ]
-                pygame.draw.polygon(surf, (255, 255, 0), pointer_points)
-                pygame.draw.polygon(surf, (0, 0, 0), pointer_points, 2)
+                pygame.draw.polygon(surf, (150, 220, 255), pointer_points)
+                pygame.draw.polygon(surf, (100, 160, 200), pointer_points, 2)
 
-                # Draw center circle
-                pygame.draw.circle(surf, (60, 60, 70), wheel_center, 30)
-                pygame.draw.circle(surf, (200, 200, 200), wheel_center, 30, 3)
+                # Center spirit orb
+                orb_pulse = 0.8 + 0.2 * math.sin(tick * 0.005)
+                pygame.draw.circle(surf, (50, 70, 90), wheel_center, 35)
+                pygame.draw.circle(surf, (100, 160, 220), wheel_center, int(25 * orb_pulse))
+                pygame.draw.circle(surf, (150, 200, 255), wheel_center, int(15 * orb_pulse))
+                pygame.draw.circle(surf, (120, 170, 220), wheel_center, 35, 3)
         else:
-            # Wheel hidden
-            _temp_surf = self.renderer.font.render("???", True, (100, 100, 100))
-            text_rect = _temp_surf.get_rect(center=wheel_center)
-            surf.blit(_temp_surf, text_rect)
-            _temp_surf = self.renderer.small_font.render("Place bet to reveal wheel", True, (150, 150, 150))
-            text_rect = _temp_surf.get_rect(center=(wheel_center[0], wheel_center[1] + 40))
-            surf.blit(_temp_surf, text_rect)
+            # Wheel hidden - mysterious spirit orb
+            orb_pulse = 0.7 + 0.3 * math.sin(tick * 0.003)
+            pygame.draw.circle(surf, (40, 55, 70), wheel_center, int(100 * orb_pulse))
+            pygame.draw.circle(surf, (60, 90, 120), wheel_center, int(70 * orb_pulse))
+            pygame.draw.circle(surf, (80, 130, 170, 150), wheel_center, int(100 * orb_pulse), 3)
 
-        # Payout display panel (right side)
+            mystery_text = self.renderer.font.render("?", True, (120, 170, 220))
+            text_rect = mystery_text.get_rect(center=wheel_center)
+            surf.blit(mystery_text, text_rect)
+
+            hint_text = self.renderer.small_font.render("Place bet to reveal the wheel", True, (100, 140, 180))
+            hint_rect = hint_text.get_rect(center=(wheel_center[0], wheel_center[1] + 60))
+            surf.blit(hint_text, hint_rect)
+
+        # Payout display panel (right side) - Spirit themed
         current_multiplier = state.get('current_multiplier', {})
         if current_multiplier:
             panel_x = ww - 220
-            panel_y = 140
+            panel_y = 180
             panel_w = 200
-            panel_h = 280
+            panel_h = 260
 
-            # Draw panel background
-            pygame.draw.rect(surf, (30, 30, 40, 200), (panel_x, panel_y, panel_w, panel_h))
-            pygame.draw.rect(surf, (100, 100, 120), (panel_x, panel_y, panel_w, panel_h), 2)
+            # Spirit panel background with soft glow
+            panel_surf = pygame.Surface((panel_w + 10, panel_h + 10), pygame.SRCALPHA)
+            pygame.draw.rect(panel_surf, (30, 45, 60, 200), (5, 5, panel_w, panel_h), border_radius=12)
+            pygame.draw.rect(panel_surf, (100, 160, 200, 150), (5, 5, panel_w, panel_h), 2, border_radius=12)
+            surf.blit(panel_surf, (panel_x - 5, panel_y - 5))
 
-            # Title
-            _temp_surf = self.renderer.small_font.render("PAYOUTS", True, (255, 215, 0))
-            surf.blit(_temp_surf, (panel_x + 55, panel_y + 10))
+            # Title with spirit glow
+            _temp_surf = self.renderer.small_font.render("SPIRIT PAYOUTS", True, (150, 200, 255))
+            surf.blit(_temp_surf, (panel_x + panel_w//2 - _temp_surf.get_width()//2, panel_y + 10))
 
-            _temp_surf = self.renderer.tiny_font.render(f"(Spin {spin_num})", True, (180, 180, 180))
-            surf.blit(_temp_surf, (panel_x + 65, panel_y + 35))
+            _temp_surf = self.renderer.tiny_font.render(f"(Spin {spin_num})", True, (120, 160, 190))
+            surf.blit(_temp_surf, (panel_x + panel_w//2 - _temp_surf.get_width()//2, panel_y + 32))
 
             # Color labels and multipliers
-            color_y = panel_y + 65
+            color_y = panel_y + 60
             spacing = 60
 
-            # Green
-            pygame.draw.rect(surf, (50, 200, 50), (panel_x + 20, color_y, 40, 40))
-            pygame.draw.rect(surf, (0, 0, 0), (panel_x + 20, color_y, 40, 40), 2)
-            _temp_surf = self.renderer.small_font.render("GREEN", True, (255, 255, 255))
+            # Green - Spirit green
+            pygame.draw.rect(surf, (80, 200, 150), (panel_x + 20, color_y, 40, 40), border_radius=6)
+            pygame.draw.rect(surf, (100, 220, 170), (panel_x + 20, color_y, 40, 40), 2, border_radius=6)
+            _temp_surf = self.renderer.small_font.render("GREEN", True, (180, 220, 200))
             surf.blit(_temp_surf, (panel_x + 70, color_y + 5))
             mult_text = f"{current_multiplier.get('green', 0)}x"
-            _temp_surf = self.renderer.font.render(mult_text, True, (100, 255, 100))
+            _temp_surf = self.renderer.font.render(mult_text, True, (100, 255, 180))
             surf.blit(_temp_surf, (panel_x + 70, color_y + 20))
 
-            # Grey
+            # Grey - Spirit grey
             color_y += spacing
-            pygame.draw.rect(surf, (120, 120, 120), (panel_x + 20, color_y, 40, 40))
-            pygame.draw.rect(surf, (0, 0, 0), (panel_x + 20, color_y, 40, 40), 2)
-            _temp_surf = self.renderer.small_font.render("GREY", True, (255, 255, 255))
+            pygame.draw.rect(surf, (100, 130, 160), (panel_x + 20, color_y, 40, 40), border_radius=6)
+            pygame.draw.rect(surf, (120, 150, 180), (panel_x + 20, color_y, 40, 40), 2, border_radius=6)
+            _temp_surf = self.renderer.small_font.render("GREY", True, (160, 180, 200))
             surf.blit(_temp_surf, (panel_x + 70, color_y + 5))
             mult_text = f"{current_multiplier.get('grey', 0)}x"
-            _temp_surf = self.renderer.font.render(mult_text, True, (200, 200, 200))
+            _temp_surf = self.renderer.font.render(mult_text, True, (180, 200, 220))
             surf.blit(_temp_surf, (panel_x + 70, color_y + 20))
 
-            # Red
+            # Red - Soft spirit red
             color_y += spacing
-            pygame.draw.rect(surf, (200, 50, 50), (panel_x + 20, color_y, 40, 40))
-            pygame.draw.rect(surf, (0, 0, 0), (panel_x + 20, color_y, 40, 40), 2)
-            _temp_surf = self.renderer.small_font.render("RED", True, (255, 255, 255))
+            pygame.draw.rect(surf, (200, 100, 120), (panel_x + 20, color_y, 40, 40), border_radius=6)
+            pygame.draw.rect(surf, (220, 120, 140), (panel_x + 20, color_y, 40, 40), 2, border_radius=6)
+            _temp_surf = self.renderer.small_font.render("RED", True, (220, 180, 190))
             surf.blit(_temp_surf, (panel_x + 70, color_y + 5))
             mult_text = f"{current_multiplier.get('red', 0)}x"
-            _temp_surf = self.renderer.font.render(mult_text, True, (255, 100, 100))
+            _temp_surf = self.renderer.font.render(mult_text, True, (255, 150, 170))
             surf.blit(_temp_surf, (panel_x + 70, color_y + 20))
 
         # Betting controls
@@ -4149,11 +5103,17 @@ class GameEngine:
                 btn_rect = pygame.Rect(btn_x, btn_y + 20, btn_w, btn_h)
 
                 btn_text = "ALL" if i == 3 else f"${amount}"
-                btn_color = (80, 100, 60) if amount <= current_currency else (60, 60, 60)
+                # Spirit themed button colors
+                if amount <= current_currency:
+                    btn_color = (50, 80, 100)
+                    border_color = (100, 160, 200)
+                else:
+                    btn_color = (40, 50, 60)
+                    border_color = (70, 90, 110)
 
-                pygame.draw.rect(surf, btn_color, btn_rect)
-                pygame.draw.rect(surf, (150, 180, 120), btn_rect, 2)
-                _temp_surf = self.renderer.tiny_font.render(btn_text, True, (255, 255, 255))
+                pygame.draw.rect(surf, btn_color, btn_rect, border_radius=6)
+                pygame.draw.rect(surf, border_color, btn_rect, 2, border_radius=6)
+                _temp_surf = self.renderer.tiny_font.render(btn_text, True, (180, 210, 240))
                 text_rect = _temp_surf.get_rect(center=(btn_x + btn_w//2, btn_y + 20 + btn_h//2))
                 surf.blit(_temp_surf, text_rect)
 
@@ -4162,107 +5122,164 @@ class GameEngine:
 
             self.wheel_bet_buttons = bet_button_rects
 
-            # Confirm bet button
+            # Confirm bet button - Spirit themed
             confirm_x, confirm_y = ww//2 - 100, 630
             confirm_w, confirm_h = 200, 50
             confirm_btn_rect = pygame.Rect(confirm_x, confirm_y, confirm_w, confirm_h)
             confirm_enabled = self.wheel_slider_bet_amount > 0 and self.wheel_slider_bet_amount <= current_currency
-            confirm_color = (100, 60, 120) if confirm_enabled else (60, 40, 60)
 
-            pygame.draw.rect(surf, confirm_color, confirm_btn_rect)
-            pygame.draw.rect(surf, (200, 120, 240), confirm_btn_rect, 3)
-            _temp_surf = self.renderer.font.render("PLACE BET", True, (255, 255, 255))
+            if confirm_enabled:
+                confirm_color = (60, 100, 140)
+                border_color = (100, 180, 240)
+            else:
+                confirm_color = (40, 55, 70)
+                border_color = (70, 100, 130)
+
+            pygame.draw.rect(surf, confirm_color, confirm_btn_rect, border_radius=10)
+            pygame.draw.rect(surf, border_color, confirm_btn_rect, 3, border_radius=10)
+            _temp_surf = self.renderer.font.render("CHANNEL SPIRITS", True, (150, 200, 255))
             text_rect = _temp_surf.get_rect(center=(confirm_x + confirm_w//2, confirm_y + confirm_h//2))
             surf.blit(_temp_surf, text_rect)
 
             self.wheel_confirm_bet_button = pygame.Rect(wx + confirm_x, wy + confirm_y, confirm_w, confirm_h)
 
         elif phase == 'ready_to_spin':
-            # Show current bet and spin button
+            # Show current bet and spin button - Spirit themed
             current_bet = state.get('current_bet', 0)
-            _temp_surf = self.renderer.small_font.render(f"Current Bet: ${current_bet}", True, (255, 215, 0))
+            _temp_surf = self.renderer.small_font.render(f"Essence Wagered: {current_bet}", True, (150, 200, 255))
             surf.blit(_temp_surf, (50, 600))
 
-            # Spin button
+            # Spin button - Spirit themed with glow
             btn_x, btn_y = ww//2 - 100, 620
             btn_w, btn_h = 200, 50
             spin_btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
-            pygame.draw.rect(surf, (100, 60, 120), spin_btn_rect)
-            pygame.draw.rect(surf, (200, 120, 240), spin_btn_rect, 3)
-            _temp_surf = self.renderer.font.render("SPIN!", True, (255, 255, 255))
+
+            # Button glow effect
+            glow_intensity = 0.7 + 0.3 * math.sin(tick * 0.005)
+            glow_surf = pygame.Surface((btn_w + 20, btn_h + 20), pygame.SRCALPHA)
+            pygame.draw.rect(glow_surf, (100, 180, 240, int(60 * glow_intensity)),
+                           (0, 0, btn_w + 20, btn_h + 20), border_radius=15)
+            surf.blit(glow_surf, (btn_x - 10, btn_y - 10))
+
+            pygame.draw.rect(surf, (60, 100, 140), spin_btn_rect, border_radius=10)
+            pygame.draw.rect(surf, (100, 180, 240), spin_btn_rect, 3, border_radius=10)
+            _temp_surf = self.renderer.font.render("SPIN THE WHEEL", True, (180, 220, 255))
             text_rect = _temp_surf.get_rect(center=(btn_x + btn_w//2, btn_y + btn_h//2))
             surf.blit(_temp_surf, text_rect)
 
             self.wheel_spin_button = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
 
         elif phase == 'spinning':
-            # Show spinning message
-            _temp_surf = self.renderer.font.render("SPINNING...", True, (255, 215, 0))
+            # Show spinning message - Spirit themed with pulsing
+            pulse = 0.7 + 0.3 * math.sin(tick * 0.008)
+            spin_color = (int(150 * pulse), int(200 * pulse), 255)
+            _temp_surf = self.renderer.font.render("CHANNELING...", True, spin_color)
             text_rect = _temp_surf.get_rect(center=(ww//2, 620))
             surf.blit(_temp_surf, text_rect)
             self.wheel_spin_button = None
 
         elif phase == 'spin_result':
-            # Show result of this spin
+            # Show result of this spin - Spirit themed
             spin_results = state.get('spin_results', [])
             if spin_results:
                 last_result = spin_results[-1]
-                result_y = 590
+                result_y = 580
 
                 color_text = last_result['color'].upper()
                 profit = last_result['profit']
-                profit_text = f"+${profit}" if profit >= 0 else f"-${abs(profit)}"
-                profit_color = (100, 255, 100) if profit >= 0 else (255, 100, 100)
+                profit_text = f"+{profit}" if profit >= 0 else f"-{abs(profit)}"
 
-                _temp_surf = self.renderer.font.render(f"Result: {color_text}", True, (255, 255, 255))
-                surf.blit(_temp_surf, (ww//2 - 100, result_y))
+                # Spirit-themed result colors
+                if profit >= 0:
+                    profit_color = (100, 255, 180)  # Spirit green
+                else:
+                    profit_color = (255, 150, 170)  # Spirit red
+
+                # Result panel
+                result_panel = pygame.Surface((300, 80), pygame.SRCALPHA)
+                pygame.draw.rect(result_panel, (30, 45, 60, 200), (0, 0, 300, 80), border_radius=10)
+                pygame.draw.rect(result_panel, (100, 160, 200), (0, 0, 300, 80), 2, border_radius=10)
+                surf.blit(result_panel, (ww//2 - 150, result_y - 10))
+
+                _temp_surf = self.renderer.small_font.render(f"Spirit landed on: {color_text}", True, (180, 210, 240))
+                surf.blit(_temp_surf, (ww//2 - _temp_surf.get_width()//2, result_y))
                 _temp_surf = self.renderer.font.render(profit_text, True, profit_color)
-                surf.blit(_temp_surf, (ww//2 - 60, result_y + 35))
+                surf.blit(_temp_surf, (ww//2 - _temp_surf.get_width()//2, result_y + 28))
 
-            # Next button
-            btn_x, btn_y = ww//2 - 100, 635
+            # Next button - Spirit themed
+            btn_x, btn_y = ww//2 - 100, 650
             btn_w, btn_h = 200, 40
             next_btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
-            pygame.draw.rect(surf, (60, 100, 80), next_btn_rect)
-            pygame.draw.rect(surf, (120, 200, 160), next_btn_rect, 3)
-            btn_text = "NEXT SPIN" if spin_num < 3 else "FINISH"
-            _temp_surf = self.renderer.small_font.render(btn_text, True, (255, 255, 255))
+            pygame.draw.rect(surf, (50, 80, 100), next_btn_rect, border_radius=8)
+            pygame.draw.rect(surf, (100, 160, 200), next_btn_rect, 2, border_radius=8)
+            btn_text = "CONTINUE" if spin_num < 3 else "COMPLETE RITUAL"
+            _temp_surf = self.renderer.small_font.render(btn_text, True, (180, 210, 240))
             text_rect = _temp_surf.get_rect(center=(btn_x + btn_w//2, btn_y + btn_h//2))
             surf.blit(_temp_surf, text_rect)
 
             self.wheel_next_button = pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h)
 
         elif phase == 'completed':
-            # Show final result
+            # Show final result - Spirit themed
             result = state.get('result', {})
             if result:
                 efficacy_percent = result.get('efficacy_percent', 0)
                 final_currency = result.get('final_currency', 100)
                 currency_diff = result.get('currency_diff', 0)
 
-                result_surf = pygame.Surface((800, 400), pygame.SRCALPHA)
-                result_surf.fill((10, 10, 20, 240))
+                # Spirit-themed result panel
+                result_surf = pygame.Surface((600, 350), pygame.SRCALPHA)
 
-                _temp_surf = self.renderer.font.render("MINIGAME COMPLETE!", True, (255, 215, 0))
-                result_surf.blit(_temp_surf, (250, 50))
+                # Gradient background
+                for y in range(350):
+                    progress = y / 350
+                    r = int(25 + 15 * progress)
+                    g = int(40 + 20 * progress)
+                    b = int(60 + 15 * progress)
+                    pygame.draw.line(result_surf, (r, g, b, 240), (0, y), (600, y))
 
-                _temp_surf = self.renderer.small_font.render(f"Final Currency: ${final_currency}", True, (200, 200, 200))
-                result_surf.blit(_temp_surf, (270, 120))
+                # Border with glow
+                pygame.draw.rect(result_surf, (100, 160, 200), (0, 0, 600, 350), 3, border_radius=15)
 
-                diff_text = f"+${currency_diff}" if currency_diff >= 0 else f"-${abs(currency_diff)}"
-                diff_color = (100, 255, 100) if currency_diff >= 0 else (255, 100, 100)
-                _temp_surf = self.renderer.small_font.render(f"Profit/Loss: {diff_text}", True, diff_color)
-                result_surf.blit(_temp_surf, (270, 150))
+                # Title with spirit glow
+                title_text = "SPIRITS APPEASED"
+                _temp_surf = self.renderer.font.render(title_text, True, (150, 220, 255))
+                result_surf.blit(_temp_surf, (300 - _temp_surf.get_width()//2, 30))
 
+                # Decorative spirit swirl
+                for i in range(8):
+                    angle = tick * 0.002 + i * (math.pi / 4)
+                    r = 40 + 10 * math.sin(tick * 0.003 + i)
+                    px = 300 + int(r * math.cos(angle))
+                    py = 80 + int(r * 0.3 * math.sin(angle))
+                    pygame.draw.circle(result_surf, (100, 180, 240, 100), (px, py), 4)
+
+                # Stats display
+                _temp_surf = self.renderer.small_font.render(f"Final Essence: {final_currency}", True, (180, 200, 220))
+                result_surf.blit(_temp_surf, (300 - _temp_surf.get_width()//2, 120))
+
+                diff_text = f"+{currency_diff}" if currency_diff >= 0 else f"-{abs(currency_diff)}"
+                diff_color = (100, 255, 180) if currency_diff >= 0 else (255, 150, 170)
+                _temp_surf = self.renderer.small_font.render(f"Spirit Gift: {diff_text}", True, diff_color)
+                result_surf.blit(_temp_surf, (300 - _temp_surf.get_width()//2, 155))
+
+                # Main efficacy display
                 eff_text = f"{efficacy_percent:+.1f}%"
-                eff_color = (100, 255, 100) if efficacy_percent >= 0 else (255, 100, 100)
-                _temp_surf = self.renderer.font.render(f"Efficacy Bonus: {eff_text}", True, eff_color)
-                result_surf.blit(_temp_surf, (220, 200))
+                eff_color = (100, 255, 180) if efficacy_percent >= 0 else (255, 150, 170)
+                _temp_surf = self.renderer.font.render(f"Enchantment Power: {eff_text}", True, eff_color)
+                result_surf.blit(_temp_surf, (300 - _temp_surf.get_width()//2, 210))
 
-                _temp_surf = self.renderer.small_font.render("Click anywhere to continue", True, (150, 150, 150))
-                result_surf.blit(_temp_surf, (250, 320))
+                _temp_surf = self.renderer.small_font.render("Click anywhere to continue", True, (120, 150, 180))
+                result_surf.blit(_temp_surf, (300 - _temp_surf.get_width()//2, 290))
 
-                surf.blit(result_surf, (100, 150))
+                surf.blit(result_surf, (ww//2 - 300, wh//2 - 175))
+
+        # Draw metadata overlay if active
+        effects.metadata_overlay.draw(surf, (ww//2, wh//2), self.renderer.small_font)
+
+        # Reset effects when minigame ends
+        if state.get('result'):
+            self._enchanting_effects_initialized = False
 
         self.screen.blit(surf, (wx, wy))
         self.enchanting_minigame_window = pygame.Rect(wx, wy, ww, wh)
