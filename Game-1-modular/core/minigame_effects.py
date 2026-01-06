@@ -858,12 +858,14 @@ class AnimatedButton:
 class MinigameMetadataOverlay:
     """Displays difficulty, timers, and rewards at minigame start."""
 
-    def __init__(self, duration: float = 3.0):
+    def __init__(self, duration: float = 8.0):
         self.duration = duration
         self.display_time = 0
         self.active = False
+        self.blocking = False  # Blocks minigame input while True
         self.metadata = {}
         self.fade_duration = 0.5
+        self.min_display_time = 0.5  # Minimum time before can dismiss
 
     def show(self, metadata: Dict):
         """
@@ -873,19 +875,31 @@ class MinigameMetadataOverlay:
         - discipline: str (e.g., "Smithing")
         - difficulty_tier: str (e.g., "Rare")
         - difficulty_points: float
-        - time_limit: float (optional)
+        - time_limit: float (optional, can be None)
         - rewards: dict (optional)
         - special_params: dict (optional, discipline-specific)
         """
         self.metadata = metadata
         self.display_time = self.duration
         self.active = True
+        self.blocking = True  # Block minigame until dismissed
+
+    def dismiss(self):
+        """Dismiss the overlay early (via click or key press)."""
+        if self.active and (self.duration - self.display_time) >= self.min_display_time:
+            self.display_time = min(self.display_time, self.fade_duration)
+            self.blocking = False
+
+    def is_blocking(self) -> bool:
+        """Check if overlay is blocking minigame interaction."""
+        return self.blocking and self.active
 
     def update(self, dt: float):
         if self.active:
             self.display_time -= dt
             if self.display_time <= 0:
                 self.active = False
+                self.blocking = False
 
     def draw(self, surface: pygame.Surface, center: Tuple[int, int], font: pygame.font.Font):
         if not self.active:
@@ -938,10 +952,10 @@ class MinigameMetadataOverlay:
         points_text.set_alpha(alpha)
         overlay.blit(points_text, (20, 80))
 
-        # Time limit if present
+        # Time limit if present and not None
         y_offset = 105
-        if 'time_limit' in self.metadata:
-            time_limit = self.metadata['time_limit']
+        time_limit = self.metadata.get('time_limit')
+        if time_limit is not None:
             time_text = font.render(f"Time: {time_limit:.0f}s", True, (200, 200, 200))
             time_text.set_alpha(alpha)
             overlay.blit(time_text, (20, y_offset))
@@ -963,9 +977,14 @@ class MinigameMetadataOverlay:
                 overlay.blit(param_text, (20, y_offset))
                 y_offset += 25
 
-        # "Press any key to dismiss" hint
-        hint_text = font.render("Starting...", True, (150, 150, 150))
-        hint_text.set_alpha(int(alpha * 0.7))
+        # Show remaining time and click hint
+        remaining = max(0, self.display_time - self.fade_duration)
+        if self.blocking:
+            hint_msg = f"Starting in {remaining:.0f}s - Click to begin"
+        else:
+            hint_msg = "Starting..."
+        hint_text = font.render(hint_msg, True, (150, 200, 150))
+        hint_text.set_alpha(int(alpha * 0.8))
         overlay.blit(hint_text, (overlay_width // 2 - hint_text.get_width() // 2,
                                 overlay_height - 30))
 

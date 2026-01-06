@@ -1201,6 +1201,12 @@ class GameEngine:
 
         # Minigame button clicks (highest priority)
         if self.active_minigame:
+            # Check if metadata overlay is blocking - dismiss on click
+            effects = get_effects_manager()
+            if effects.metadata_overlay.is_blocking():
+                effects.metadata_overlay.dismiss()
+                return
+
             # Check spinning wheel minigame clicks
             if self.minigame_type == 'adornments':
                 state = self.active_minigame.get_state()
@@ -1262,7 +1268,7 @@ class GameEngine:
                             delattr(self, 'wheel_slider_bet_amount')
                         return
 
-            # Check engineering puzzle cells first (rotation/sliding)
+            # Check engineering puzzle cells first (rotation/toggle)
             if self.minigame_type == 'engineering' and hasattr(self, 'engineering_puzzle_rects'):
                 for rect, action_data in self.engineering_puzzle_rects:
                     if rect.collidepoint(mouse_pos):
@@ -1272,13 +1278,23 @@ class GameEngine:
                         if action_type == 'rotate':
                             # Rotate pipe piece
                             self.active_minigame.handle_action('rotate', row=row, col=col)
+                        elif action_type == 'toggle':
+                            # Toggle logic switch
+                            self.active_minigame.handle_action('toggle', row=row, col=col)
                         elif action_type == 'slide':
-                            # Slide tile
+                            # Slide tile (legacy)
                             self.active_minigame.handle_action('slide', row=row, col=col)
 
                         # Check if puzzle was solved
                         if self.active_minigame.check_current_puzzle():
-                            print(f"✅ Puzzle {self.active_minigame.current_puzzle_index}/{self.active_minigame.puzzle_count} solved!")
+                            puzzle_idx = self.active_minigame.current_puzzle_index
+                            total = self.active_minigame.puzzle_count
+                            efficiencies = getattr(self.active_minigame, 'puzzle_efficiencies', [])
+                            if efficiencies:
+                                eff = efficiencies[-1] * 100
+                                print(f"✅ Puzzle {puzzle_idx}/{total} solved! Efficiency: {eff:.0f}%")
+                            else:
+                                print(f"✅ Puzzle {puzzle_idx}/{total} solved!")
                         return
 
             if hasattr(self, 'minigame_button_rect') and self.minigame_button_rect:
@@ -2959,8 +2975,10 @@ class GameEngine:
             # Update turret system
             self.turret_system.update(self.world.placed_entities, self.combat_manager, dt)
         else:
-            # Update active minigame (skip for engineering - it's turn-based)
-            if self.minigame_type != 'engineering':
+            # Update active minigame
+            # Skip update while metadata overlay is blocking
+            effects = get_effects_manager()
+            if not effects.metadata_overlay.is_blocking():
                 self.active_minigame.update(dt)
 
             # Check if minigame completed
@@ -4576,8 +4594,8 @@ class GameEngine:
         surf.blit(sub_header, (ww//2 - sub_header.get_width()//2, 48))
 
         # Progress panel (left side)
-        panel_x, panel_y = 50, 120
-        panel_w, panel_h = 160, 130
+        panel_x, panel_y = 50, 90
+        panel_w, panel_h = 160, 100
 
         pygame.draw.rect(surf, (70, 55, 45), (panel_x, panel_y, panel_w, panel_h), border_radius=8)
         pygame.draw.rect(surf, (140, 120, 100), (panel_x, panel_y, panel_w, panel_h), 3, border_radius=8)
@@ -4590,11 +4608,45 @@ class GameEngine:
         puzzle_text = self.renderer.font.render(f"{current_puzzle} / {total_puzzles}", True, (220, 210, 200))
         surf.blit(puzzle_text, (panel_x + panel_w//2 - puzzle_text.get_width()//2, panel_y + 40))
 
-        solved_label = self.renderer.small_font.render("Solved", True, (180, 170, 160))
-        surf.blit(solved_label, (panel_x + panel_w//2 - solved_label.get_width()//2, panel_y + 78))
+        # Time panel (right side)
+        time_x, time_y = ww - 210, 90
+        time_w, time_h = 160, 100
 
-        solved_text = self.renderer.font.render(str(state['solved_count']), True, (100, 200, 120))
-        surf.blit(solved_text, (panel_x + panel_w//2 - solved_text.get_width()//2, panel_y + 98))
+        time_remaining = state.get('time_remaining', 0)
+        time_limit = state.get('time_limit', 1)
+        time_ratio = time_remaining / max(1, time_limit)
+
+        # Color based on time remaining
+        if time_ratio > 0.5:
+            time_color = (100, 180, 100)
+        elif time_ratio > 0.25:
+            time_color = (200, 180, 80)
+        else:
+            time_color = (220, 100, 80)
+
+        pygame.draw.rect(surf, (70, 55, 45), (time_x, time_y, time_w, time_h), border_radius=8)
+        pygame.draw.rect(surf, (140, 120, 100), (time_x, time_y, time_w, time_h), 3, border_radius=8)
+
+        time_label = self.renderer.small_font.render("Time Left", True, (180, 170, 160))
+        surf.blit(time_label, (time_x + time_w//2 - time_label.get_width()//2, time_y + 12))
+
+        minutes = int(time_remaining) // 60
+        seconds = int(time_remaining) % 60
+        time_text = self.renderer.font.render(f"{minutes}:{seconds:02d}", True, time_color)
+        surf.blit(time_text, (time_x + time_w//2 - time_text.get_width()//2, time_y + 40))
+
+        # Time bar
+        bar_x, bar_y = time_x + 10, time_y + 75
+        bar_w, bar_h = time_w - 20, 10
+        pygame.draw.rect(surf, (50, 45, 40), (bar_x, bar_y, bar_w, bar_h), border_radius=3)
+        pygame.draw.rect(surf, time_color, (bar_x, bar_y, int(bar_w * time_ratio), bar_h), border_radius=3)
+
+        # Solved counter (smaller, below puzzle count)
+        solved_label = self.renderer.small_font.render("Solved", True, (180, 170, 160))
+        surf.blit(solved_label, (panel_x + 10, panel_y + 68))
+
+        solved_text = self.renderer.small_font.render(str(state['solved_count']), True, (100, 200, 120))
+        surf.blit(solved_text, (panel_x + panel_w - 30, panel_y + 68))
 
         # Store puzzle cell rects for click detection
         self.engineering_puzzle_rects = []
@@ -4604,18 +4656,22 @@ class GameEngine:
             puzzle = state['current_puzzle']
 
             # Detect puzzle type and render accordingly
-            if 'grid' in puzzle and 'rotations' in puzzle:
+            if puzzle.get('puzzle_type') == 'logic_switch':
+                # Logic Switch Puzzle (new)
+                self._render_logic_switch_puzzle(surf, puzzle, wx, wy)
+            elif 'grid' in puzzle and 'rotations' in puzzle:
                 # Rotation Pipe Puzzle
                 self._render_rotation_pipe_puzzle(surf, puzzle, wx, wy)
-            elif 'grid' in puzzle and 'moves' in puzzle:
-                # Sliding Tile Puzzle
+            elif 'grid' in puzzle and 'moves' in puzzle and not puzzle.get('deprecated'):
+                # Sliding Tile Puzzle (legacy)
                 self._render_sliding_tile_puzzle(surf, puzzle, wx, wy)
-            elif puzzle.get('placeholder'):
-                # Placeholder puzzle
+            elif puzzle.get('placeholder') or puzzle.get('deprecated'):
+                # Placeholder or deprecated puzzle - auto-complete
                 puzzle_rect = pygame.Rect(200, 250, 600, 300)
                 pygame.draw.rect(surf, (40, 40, 40), puzzle_rect)
                 pygame.draw.rect(surf, (100, 100, 100), puzzle_rect, 2)
-                _temp_surf = self.renderer.small_font.render("Puzzle placeholder - Click COMPLETE", True, (200, 200, 200))
+                msg = "Deprecated puzzle - Click COMPLETE" if puzzle.get('deprecated') else "Puzzle placeholder - Click COMPLETE"
+                _temp_surf = self.renderer.small_font.render(msg, True, (200, 200, 200))
                 surf.blit(_temp_surf, (puzzle_rect.x + 20, puzzle_rect.y + 20))
 
         # Complete button (for placeholder/testing only)
@@ -4645,20 +4701,53 @@ class GameEngine:
 
             header = "DEVICE ASSEMBLED"
             header_surf = self.renderer.font.render(header, True, (100, 200, 120))
-            result_surf.blit(header_surf, (result_w//2 - header_surf.get_width()//2, 25))
+            result_surf.blit(header_surf, (result_w//2 - header_surf.get_width()//2, 20))
 
-            pygame.draw.line(result_surf, (120, 100, 80), (50, 65), (result_w - 50, 65), 2)
-
-            msg = result.get('message', 'Device successfully constructed!')
-            msg_surf = self.renderer.small_font.render(msg, True, (200, 190, 180))
-            result_surf.blit(msg_surf, (result_w//2 - msg_surf.get_width()//2, 100))
+            pygame.draw.line(result_surf, (120, 100, 80), (50, 55), (result_w - 50, 55), 2)
 
             puzzles_text = f"Puzzles Solved: {state['solved_count']}/{state['total_puzzles']}"
             puzzles_surf = self.renderer.small_font.render(puzzles_text, True, (180, 170, 160))
-            result_surf.blit(puzzles_surf, (result_w//2 - puzzles_surf.get_width()//2, 145))
+            result_surf.blit(puzzles_surf, (result_w//2 - puzzles_surf.get_width()//2, 70))
+
+            # Show efficiency score
+            efficiency = result.get('efficiency', 1.0)
+            eff_pct = int(efficiency * 100)
+            if efficiency >= 0.9:
+                eff_color = (100, 255, 100)
+                eff_label = "Perfect!"
+            elif efficiency >= 0.7:
+                eff_color = (200, 200, 100)
+                eff_label = "Good"
+            elif efficiency >= 0.5:
+                eff_color = (200, 150, 80)
+                eff_label = "Okay"
+            else:
+                eff_color = (200, 100, 100)
+                eff_label = "Needs Work"
+
+            eff_text = f"Efficiency: {eff_pct}% - {eff_label}"
+            eff_surf = self.renderer.small_font.render(eff_text, True, eff_color)
+            result_surf.blit(eff_surf, (result_w//2 - eff_surf.get_width()//2, 100))
+
+            # Show performance
+            performance = result.get('performance', 0)
+            perf_pct = int(performance * 100)
+            perf_text = f"Overall Performance: {perf_pct}%"
+            perf_surf = self.renderer.small_font.render(perf_text, True, (180, 190, 200))
+            result_surf.blit(perf_surf, (result_w//2 - perf_surf.get_width()//2, 130))
+
+            # Time expired warning
+            if result.get('time_expired'):
+                warn_text = "Time Expired - Partial Completion"
+                warn_surf = self.renderer.small_font.render(warn_text, True, (220, 100, 80))
+                result_surf.blit(warn_surf, (result_w//2 - warn_surf.get_width()//2, 165))
+
+            msg = result.get('message', 'Device successfully constructed!')
+            msg_surf = self.renderer.tiny_font.render(msg, True, (150, 140, 130))
+            result_surf.blit(msg_surf, (result_w//2 - msg_surf.get_width()//2, 195))
 
             close_text = self.renderer.tiny_font.render("Press any key to continue", True, (150, 130, 110))
-            result_surf.blit(close_text, (result_w//2 - close_text.get_width()//2, result_h - 30))
+            result_surf.blit(close_text, (result_w//2 - close_text.get_width()//2, result_h - 25))
 
             surf.blit(result_surf, (result_x, result_y))
 
@@ -4808,6 +4897,129 @@ class GameEngine:
                     _temp_surf = self.renderer.font.render(str(tile_num), True, (255, 255, 255))
                     text_rect = _temp_surf.get_rect(center=(x + cell_size//2, y + cell_size//2))
                     surf.blit(_temp_surf, text_rect)
+
+    def _render_logic_switch_puzzle(self, surf, puzzle, wx, wy):
+        """Render logic switch puzzle - toggle cells to match target pattern"""
+        grid_size = puzzle['grid_size']
+        grid = puzzle['grid']
+        target = puzzle['target']
+        moves = puzzle.get('moves', 0)
+        ideal_moves = puzzle.get('ideal_moves', 0)
+        efficiency = puzzle.get('efficiency', 1.0)
+
+        # Calculate cell size and position
+        puzzle_area_size = min(400, 400)
+        cell_size = puzzle_area_size // grid_size
+        start_x = (1000 - (cell_size * grid_size)) // 2
+        start_y = 180
+
+        # Header with instructions
+        instruction = "Toggle switches to match the target pattern"
+        _temp_surf = self.renderer.small_font.render(instruction, True, (180, 200, 160))
+        surf.blit(_temp_surf, (start_x, start_y - 55))
+
+        # Moves and efficiency info
+        moves_text = f"Moves: {moves}"
+        if ideal_moves > 0:
+            moves_text += f" (Ideal: {ideal_moves})"
+        _temp_surf = self.renderer.small_font.render(moves_text, True, (150, 180, 140))
+        surf.blit(_temp_surf, (start_x, start_y - 30))
+
+        efficiency_pct = int(efficiency * 100)
+        if efficiency >= 0.9:
+            eff_color = (100, 255, 100)
+        elif efficiency >= 0.7:
+            eff_color = (200, 200, 100)
+        else:
+            eff_color = (255, 150, 100)
+        _temp_surf = self.renderer.small_font.render(f"Efficiency: {efficiency_pct}%", True, eff_color)
+        surf.blit(_temp_surf, (start_x + 250, start_y - 30))
+
+        # Draw current grid (left side)
+        grid_label = self.renderer.small_font.render("Current", True, (150, 180, 200))
+        surf.blit(grid_label, (start_x + cell_size * grid_size // 2 - grid_label.get_width() // 2 - 120, start_y - 8))
+
+        current_offset_x = start_x - 120
+
+        for r in range(grid_size):
+            for c in range(grid_size):
+                x = current_offset_x + c * cell_size
+                y = start_y + r * cell_size
+
+                is_on = grid[r][c] == 1
+                target_is_on = target[r][c] == 1
+                matches_target = is_on == target_is_on
+
+                # Store rect for click detection
+                self.engineering_puzzle_rects.append((
+                    pygame.Rect(wx + x, wy + y, cell_size, cell_size),
+                    ('toggle', r, c)
+                ))
+
+                # Cell background
+                if is_on:
+                    base_color = (80, 160, 100) if matches_target else (160, 140, 80)
+                else:
+                    base_color = (50, 60, 70) if matches_target else (90, 60, 60)
+
+                # Draw cell with lighting effect
+                pygame.draw.rect(surf, base_color, (x + 2, y + 2, cell_size - 4, cell_size - 4), border_radius=6)
+
+                # Highlight border for active switches
+                border_color = (120, 200, 140) if is_on else (80, 90, 100)
+                pygame.draw.rect(surf, border_color, (x + 2, y + 2, cell_size - 4, cell_size - 4), 2, border_radius=6)
+
+                # Draw switch indicator
+                indicator_size = cell_size // 4
+                center_x = x + cell_size // 2
+                center_y = y + cell_size // 2
+
+                if is_on:
+                    # Draw "on" glow
+                    glow_surf = pygame.Surface((indicator_size * 3, indicator_size * 3), pygame.SRCALPHA)
+                    pygame.draw.circle(glow_surf, (100, 200, 120, 80),
+                                      (indicator_size * 3 // 2, indicator_size * 3 // 2), indicator_size * 3 // 2)
+                    surf.blit(glow_surf, (center_x - indicator_size * 3 // 2, center_y - indicator_size * 3 // 2))
+                    pygame.draw.circle(surf, (120, 220, 140), (center_x, center_y), indicator_size)
+                else:
+                    pygame.draw.circle(surf, (60, 70, 80), (center_x, center_y), indicator_size)
+                    pygame.draw.circle(surf, (40, 50, 60), (center_x, center_y), indicator_size - 2)
+
+        # Draw target pattern (right side)
+        target_offset_x = start_x + cell_size * grid_size + 40
+        target_label = self.renderer.small_font.render("Target", True, (150, 180, 200))
+        surf.blit(target_label, (target_offset_x + cell_size * grid_size // 2 - target_label.get_width() // 2, start_y - 8))
+
+        for r in range(grid_size):
+            for c in range(grid_size):
+                x = target_offset_x + c * cell_size
+                y = start_y + r * cell_size
+
+                is_on = target[r][c] == 1
+
+                # Cell background (dimmer for target display)
+                if is_on:
+                    base_color = (60, 120, 80)
+                else:
+                    base_color = (35, 45, 55)
+
+                pygame.draw.rect(surf, base_color, (x + 2, y + 2, cell_size - 4, cell_size - 4), border_radius=6)
+                pygame.draw.rect(surf, (70, 80, 90), (x + 2, y + 2, cell_size - 4, cell_size - 4), 1, border_radius=6)
+
+                # Draw switch indicator
+                indicator_size = cell_size // 5
+                center_x = x + cell_size // 2
+                center_y = y + cell_size // 2
+
+                if is_on:
+                    pygame.draw.circle(surf, (100, 180, 120), (center_x, center_y), indicator_size)
+                else:
+                    pygame.draw.circle(surf, (50, 60, 70), (center_x, center_y), indicator_size)
+
+        # Hint about toggle mechanic
+        hint = "Clicking toggles center + adjacent cells"
+        _temp_surf = self.renderer.tiny_font.render(hint, True, (120, 130, 140))
+        surf.blit(_temp_surf, (start_x + puzzle_area_size // 2 - _temp_surf.get_width() // 2, start_y + cell_size * grid_size + 15))
 
     def _render_enchanting_minigame(self):
         """Render enchanting wheel minigame UI with light blue spirit aesthetic"""
