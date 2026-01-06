@@ -1281,6 +1281,16 @@ class GameEngine:
                         elif action_type == 'toggle':
                             # Toggle logic switch
                             self.active_minigame.handle_action('toggle', row=row, col=col)
+                        elif action_type == 'view_toggle':
+                            # Toggle between current and target view with slide animation
+                            if hasattr(self, '_logic_switch_view'):
+                                self._logic_switch_slide_start = pygame.time.get_ticks()
+                                self._logic_switch_slide_from = self._logic_switch_view
+                                if self._logic_switch_view == 'current':
+                                    self._logic_switch_view = 'target'
+                                else:
+                                    self._logic_switch_view = 'current'
+                            return  # Don't check puzzle completion for view toggle
                         elif action_type == 'slide':
                             # Slide tile (legacy)
                             self.active_minigame.handle_action('slide', row=row, col=col)
@@ -4514,6 +4524,10 @@ class GameEngine:
         if not hasattr(self, '_engineering_effects_initialized') or not self._engineering_effects_initialized:
             effects.initialize_discipline('engineering', pygame.Rect(wx, wy, ww, wh))
             self._engineering_effects_initialized = True
+            # Reset logic switch view state for new puzzle
+            self._logic_switch_view = 'current'
+            self._logic_switch_slide_start = 0
+            self._logic_switch_slide_from = 'current'
             # Show metadata overlay
             difficulty_tier = getattr(self.active_minigame, 'difficulty_tier', 'Unknown')
             difficulty_points = getattr(self.active_minigame, 'difficulty_points', 0)
@@ -4899,31 +4913,52 @@ class GameEngine:
                     surf.blit(_temp_surf, text_rect)
 
     def _render_logic_switch_puzzle(self, surf, puzzle, wx, wy):
-        """Render logic switch puzzle - toggle cells to match target pattern"""
+        """Render logic switch puzzle with sliding view toggle between current and target"""
         grid_size = puzzle['grid_size']
         grid = puzzle['grid']
         target = puzzle['target']
         moves = puzzle.get('moves', 0)
         ideal_moves = puzzle.get('ideal_moves', 0)
         efficiency = puzzle.get('efficiency', 1.0)
+        tick = pygame.time.get_ticks()
 
-        # Calculate cell size and position
-        puzzle_area_size = min(400, 400)
+        # Initialize view state if needed
+        if not hasattr(self, '_logic_switch_view'):
+            self._logic_switch_view = 'current'  # 'current' or 'target'
+            self._logic_switch_slide_start = 0
+            self._logic_switch_slide_from = 'current'
+
+        # Calculate slide animation progress (0.0 to 1.0)
+        slide_duration = 300  # ms
+        slide_progress = 1.0
+        if self._logic_switch_slide_start > 0:
+            elapsed = tick - self._logic_switch_slide_start
+            if elapsed < slide_duration:
+                # Easing function (ease out cubic)
+                t = elapsed / slide_duration
+                slide_progress = 1 - (1 - t) ** 3
+            else:
+                self._logic_switch_slide_start = 0
+                slide_progress = 1.0
+
+        # Calculate cell size and centered position
+        puzzle_area_size = min(420, 420)
         cell_size = puzzle_area_size // grid_size
-        start_x = (1000 - (cell_size * grid_size)) // 2
-        start_y = 180
+        grid_width = cell_size * grid_size
+        center_x = 500  # Center of 1000px width
+        start_y = 200
 
         # Header with instructions
         instruction = "Toggle switches to match the target pattern"
         _temp_surf = self.renderer.small_font.render(instruction, True, (180, 200, 160))
-        surf.blit(_temp_surf, (start_x, start_y - 55))
+        surf.blit(_temp_surf, (center_x - _temp_surf.get_width() // 2, start_y - 75))
 
         # Moves and efficiency info
         moves_text = f"Moves: {moves}"
         if ideal_moves > 0:
             moves_text += f" (Ideal: {ideal_moves})"
         _temp_surf = self.renderer.small_font.render(moves_text, True, (150, 180, 140))
-        surf.blit(_temp_surf, (start_x, start_y - 30))
+        surf.blit(_temp_surf, (center_x - 150, start_y - 50))
 
         efficiency_pct = int(efficiency * 100)
         if efficiency >= 0.9:
@@ -4933,93 +4968,154 @@ class GameEngine:
         else:
             eff_color = (255, 150, 100)
         _temp_surf = self.renderer.small_font.render(f"Efficiency: {efficiency_pct}%", True, eff_color)
-        surf.blit(_temp_surf, (start_x + 250, start_y - 30))
+        surf.blit(_temp_surf, (center_x + 50, start_y - 50))
 
-        # Draw current grid (left side)
-        grid_label = self.renderer.small_font.render("Current", True, (150, 180, 200))
-        surf.blit(grid_label, (start_x + cell_size * grid_size // 2 - grid_label.get_width() // 2 - 120, start_y - 8))
+        # Calculate slide offset for animation
+        slide_offset = 0
+        if self._logic_switch_slide_start > 0:
+            full_offset = grid_width + 50  # Distance to slide
+            if self._logic_switch_slide_from == 'current':
+                # Sliding from current to target (slide left)
+                slide_offset = int(-full_offset * slide_progress)
+            else:
+                # Sliding from target to current (slide right)
+                slide_offset = int(full_offset * slide_progress)
 
-        current_offset_x = start_x - 120
+        # Determine which grid(s) to draw based on animation state
+        show_current = self._logic_switch_view == 'current' or self._logic_switch_slide_start > 0
+        show_target = self._logic_switch_view == 'target' or self._logic_switch_slide_start > 0
 
-        for r in range(grid_size):
-            for c in range(grid_size):
-                x = current_offset_x + c * cell_size
-                y = start_y + r * cell_size
+        # Current grid position (centered or sliding)
+        if self._logic_switch_view == 'current':
+            current_x = center_x - grid_width // 2 + slide_offset
+        else:
+            current_x = center_x - grid_width // 2 + (grid_width + 50) + slide_offset
 
-                is_on = grid[r][c] == 1
-                target_is_on = target[r][c] == 1
-                matches_target = is_on == target_is_on
+        # Target grid position
+        if self._logic_switch_view == 'target':
+            target_x = center_x - grid_width // 2 + slide_offset
+        else:
+            target_x = center_x - grid_width // 2 - (grid_width + 50) + slide_offset
 
-                # Store rect for click detection
-                self.engineering_puzzle_rects.append((
-                    pygame.Rect(wx + x, wy + y, cell_size, cell_size),
-                    ('toggle', r, c)
-                ))
+        # Draw CURRENT grid (interactive)
+        if show_current and current_x > -grid_width and current_x < 1000 + grid_width:
+            # Label
+            label_color = (100, 200, 140) if self._logic_switch_view == 'current' else (100, 130, 150)
+            grid_label = self.renderer.font.render("CURRENT", True, label_color)
+            surf.blit(grid_label, (current_x + grid_width // 2 - grid_label.get_width() // 2, start_y - 28))
 
-                # Cell background
-                if is_on:
-                    base_color = (80, 160, 100) if matches_target else (160, 140, 80)
-                else:
-                    base_color = (50, 60, 70) if matches_target else (90, 60, 60)
+            for r in range(grid_size):
+                for c in range(grid_size):
+                    x = current_x + c * cell_size
+                    y = start_y + r * cell_size
 
-                # Draw cell with lighting effect
-                pygame.draw.rect(surf, base_color, (x + 2, y + 2, cell_size - 4, cell_size - 4), border_radius=6)
+                    is_on = grid[r][c] == 1
+                    target_is_on = target[r][c] == 1
+                    matches_target = is_on == target_is_on
 
-                # Highlight border for active switches
-                border_color = (120, 200, 140) if is_on else (80, 90, 100)
-                pygame.draw.rect(surf, border_color, (x + 2, y + 2, cell_size - 4, cell_size - 4), 2, border_radius=6)
+                    # Only register click rects if current view is active and visible
+                    if self._logic_switch_view == 'current' and self._logic_switch_slide_start == 0:
+                        self.engineering_puzzle_rects.append((
+                            pygame.Rect(wx + int(x), wy + y, cell_size, cell_size),
+                            ('toggle', r, c)
+                        ))
 
-                # Draw switch indicator
-                indicator_size = cell_size // 4
-                center_x = x + cell_size // 2
-                center_y = y + cell_size // 2
+                    # Cell background with match indicator
+                    if is_on:
+                        base_color = (80, 180, 110) if matches_target else (180, 150, 70)
+                    else:
+                        base_color = (50, 65, 75) if matches_target else (100, 60, 60)
 
-                if is_on:
-                    # Draw "on" glow
-                    glow_surf = pygame.Surface((indicator_size * 3, indicator_size * 3), pygame.SRCALPHA)
-                    pygame.draw.circle(glow_surf, (100, 200, 120, 80),
-                                      (indicator_size * 3 // 2, indicator_size * 3 // 2), indicator_size * 3 // 2)
-                    surf.blit(glow_surf, (center_x - indicator_size * 3 // 2, center_y - indicator_size * 3 // 2))
-                    pygame.draw.circle(surf, (120, 220, 140), (center_x, center_y), indicator_size)
-                else:
-                    pygame.draw.circle(surf, (60, 70, 80), (center_x, center_y), indicator_size)
-                    pygame.draw.circle(surf, (40, 50, 60), (center_x, center_y), indicator_size - 2)
+                    pygame.draw.rect(surf, base_color, (int(x) + 2, y + 2, cell_size - 4, cell_size - 4), border_radius=8)
 
-        # Draw target pattern (right side)
-        target_offset_x = start_x + cell_size * grid_size + 40
-        target_label = self.renderer.small_font.render("Target", True, (150, 180, 200))
-        surf.blit(target_label, (target_offset_x + cell_size * grid_size // 2 - target_label.get_width() // 2, start_y - 8))
+                    # Border
+                    border_color = (130, 220, 150) if is_on else (80, 95, 110)
+                    pygame.draw.rect(surf, border_color, (int(x) + 2, y + 2, cell_size - 4, cell_size - 4), 2, border_radius=8)
 
-        for r in range(grid_size):
-            for c in range(grid_size):
-                x = target_offset_x + c * cell_size
-                y = start_y + r * cell_size
+                    # Switch indicator
+                    indicator_size = cell_size // 4
+                    cx = int(x) + cell_size // 2
+                    cy = y + cell_size // 2
 
-                is_on = target[r][c] == 1
+                    if is_on:
+                        glow_surf = pygame.Surface((indicator_size * 3, indicator_size * 3), pygame.SRCALPHA)
+                        pygame.draw.circle(glow_surf, (100, 220, 130, 100),
+                                          (indicator_size * 3 // 2, indicator_size * 3 // 2), indicator_size * 3 // 2)
+                        surf.blit(glow_surf, (cx - indicator_size * 3 // 2, cy - indicator_size * 3 // 2))
+                        pygame.draw.circle(surf, (130, 240, 160), (cx, cy), indicator_size)
+                    else:
+                        pygame.draw.circle(surf, (60, 75, 90), (cx, cy), indicator_size)
 
-                # Cell background (dimmer for target display)
-                if is_on:
-                    base_color = (60, 120, 80)
-                else:
-                    base_color = (35, 45, 55)
+        # Draw TARGET grid (reference only)
+        if show_target and target_x > -grid_width and target_x < 1000 + grid_width:
+            # Label
+            label_color = (100, 200, 140) if self._logic_switch_view == 'target' else (100, 130, 150)
+            grid_label = self.renderer.font.render("TARGET", True, label_color)
+            surf.blit(grid_label, (target_x + grid_width // 2 - grid_label.get_width() // 2, start_y - 28))
 
-                pygame.draw.rect(surf, base_color, (x + 2, y + 2, cell_size - 4, cell_size - 4), border_radius=6)
-                pygame.draw.rect(surf, (70, 80, 90), (x + 2, y + 2, cell_size - 4, cell_size - 4), 1, border_radius=6)
+            for r in range(grid_size):
+                for c in range(grid_size):
+                    x = target_x + c * cell_size
+                    y = start_y + r * cell_size
 
-                # Draw switch indicator
-                indicator_size = cell_size // 5
-                center_x = x + cell_size // 2
-                center_y = y + cell_size // 2
+                    is_on = target[r][c] == 1
 
-                if is_on:
-                    pygame.draw.circle(surf, (100, 180, 120), (center_x, center_y), indicator_size)
-                else:
-                    pygame.draw.circle(surf, (50, 60, 70), (center_x, center_y), indicator_size)
+                    # Softer colors for target (reference only)
+                    if is_on:
+                        base_color = (60, 130, 90)
+                    else:
+                        base_color = (40, 50, 60)
+
+                    pygame.draw.rect(surf, base_color, (int(x) + 2, y + 2, cell_size - 4, cell_size - 4), border_radius=8)
+                    pygame.draw.rect(surf, (80, 100, 120), (int(x) + 2, y + 2, cell_size - 4, cell_size - 4), 2, border_radius=8)
+
+                    # Switch indicator
+                    indicator_size = cell_size // 4
+                    cx = int(x) + cell_size // 2
+                    cy = y + cell_size // 2
+
+                    if is_on:
+                        pygame.draw.circle(surf, (100, 180, 130), (cx, cy), indicator_size)
+                    else:
+                        pygame.draw.circle(surf, (55, 65, 75), (cx, cy), indicator_size)
+
+        # View toggle button
+        btn_y = start_y + grid_width + 25
+        btn_w, btn_h = 200, 40
+        btn_x = center_x - btn_w // 2
+        btn_rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+
+        # Button styling
+        is_animating = self._logic_switch_slide_start > 0
+        if is_animating:
+            btn_color = (60, 65, 70)
+            btn_border = (90, 100, 110)
+        else:
+            btn_color = (70, 90, 110)
+            btn_border = (120, 160, 200)
+
+        pygame.draw.rect(surf, btn_color, btn_rect, border_radius=8)
+        pygame.draw.rect(surf, btn_border, btn_rect, 2, border_radius=8)
+
+        # Button text with arrow indicator
+        if self._logic_switch_view == 'current':
+            btn_text = "◄ View TARGET ►"
+        else:
+            btn_text = "◄ View CURRENT ►"
+        _temp_surf = self.renderer.small_font.render(btn_text, True, (180, 200, 220))
+        surf.blit(_temp_surf, (btn_x + btn_w // 2 - _temp_surf.get_width() // 2, btn_y + btn_h // 2 - _temp_surf.get_height() // 2))
+
+        # Store button rect for click detection (only when not animating)
+        if not is_animating:
+            self.engineering_puzzle_rects.append((
+                pygame.Rect(wx + btn_x, wy + btn_y, btn_w, btn_h),
+                ('view_toggle', 0, 0)
+            ))
 
         # Hint about toggle mechanic
-        hint = "Clicking toggles center + adjacent cells"
-        _temp_surf = self.renderer.tiny_font.render(hint, True, (120, 130, 140))
-        surf.blit(_temp_surf, (start_x + puzzle_area_size // 2 - _temp_surf.get_width() // 2, start_y + cell_size * grid_size + 15))
+        hint = "Click switch to toggle it + adjacent cells"
+        _temp_surf = self.renderer.tiny_font.render(hint, True, (120, 140, 160))
+        surf.blit(_temp_surf, (center_x - _temp_surf.get_width() // 2, btn_y + btn_h + 15))
 
     def _render_enchanting_minigame(self):
         """Render enchanting wheel minigame UI with light blue spirit aesthetic"""
