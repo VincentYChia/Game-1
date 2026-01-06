@@ -21,8 +21,14 @@ Transform the current static crafting UI into an interactive system where player
 ### 1.1 Current State Analysis
 
 **Existing tools (Tkinter GUI - for developers):**
-- `tools/smithing-grid-designer.py` (585 lines) - Full grid designer
-- `tools/enchanting-pattern-designer.py` (1,050 lines) - Vertex/shape pattern designer
+- `archive/Game-1-singular/tools/smithing-grid-designer.py` - Full grid designer (OUTDATED but valuable reference)
+- `archive/Game-1-singular/tools/enchanting-pattern-designer.py` - Vertex/shape pattern designer (OUTDATED but valuable reference)
+
+**Note:** These are in the archive folder and are outdated. Extract only the useful/applicable aspects:
+- Grid/vertex placement logic
+- Material drag-and-drop patterns
+- Validation visual feedback
+- DO NOT use the file I/O or recipe creation portions
 
 **Key differences for survival mode:**
 | Feature | Designer Tool | Survival Mode |

@@ -4542,6 +4542,9 @@ class GameEngine:
             # Show metadata overlay
             difficulty_tier = getattr(self.active_minigame, 'difficulty_tier', 'Unknown')
             difficulty_points = getattr(self.active_minigame, 'difficulty_points', 0)
+            # Get puzzle mode from current puzzle
+            current_puzzle = state.get('current_puzzle', {})
+            puzzle_mode = current_puzzle.get('puzzle_mode', 'random -> uniform')
             effects.show_metadata({
                 'discipline': 'Engineering',
                 'difficulty_tier': difficulty_tier,
@@ -4550,7 +4553,8 @@ class GameEngine:
                 'max_bonus': 1.0 + difficulty_points * 0.02,
                 'special_params': {
                     'Total Puzzles': state.get('total_puzzles', 2),
-                    'Grid Size': getattr(self.active_minigame, 'grid_size', 4)
+                    'Grid Size': getattr(self.active_minigame, 'grid_size', 4),
+                    'Puzzle Mode': puzzle_mode
                 }
             })
 
@@ -5031,16 +5035,19 @@ class GameEngine:
                             ('toggle', r, c)
                         ))
 
-                    # Cell background with match indicator
+                    # Cell background - simple ON (green) / OFF (dark) states only
                     if is_on:
-                        base_color = (80, 180, 110) if matches_target else (180, 150, 70)
+                        base_color = (80, 180, 110)  # Bright green for ON
                     else:
-                        base_color = (50, 65, 75) if matches_target else (100, 60, 60)
+                        base_color = (50, 65, 75)    # Dark gray for OFF
 
                     pygame.draw.rect(surf, base_color, (int(x) + 2, y + 2, cell_size - 4, cell_size - 4), border_radius=8)
 
-                    # Border
-                    border_color = (130, 220, 150) if is_on else (80, 95, 110)
+                    # Border - subtle indicator if cell matches target
+                    if matches_target:
+                        border_color = (130, 220, 150) if is_on else (80, 120, 100)
+                    else:
+                        border_color = (200, 150, 100) if is_on else (150, 100, 80)  # Subtle orange hint
                     pygame.draw.rect(surf, border_color, (int(x) + 2, y + 2, cell_size - 4, cell_size - 4), 2, border_radius=8)
 
                     # Switch indicator
