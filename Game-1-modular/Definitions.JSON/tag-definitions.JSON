@@ -8,7 +8,7 @@
   "categories": {
     "equipment": ["1H", "2H", "versatile"],
     "geometry": ["single_target", "chain", "cone", "circle", "beam", "projectile", "pierce", "splash"],
-    "damage_type": ["physical", "slashing", "piercing", "crushing", "fire", "frost", "lightning", "poison", "holy", "shadow", "arcane", "chaos"],
+    "damage_type": ["physical", "slashing", "piercing", "crushing", "fire", "frost", "lightning", "poison", "holy", "shadow", "arcane", "chaos", "energy"],
     "status_debuff": ["burn", "freeze", "chill", "slow", "stun", "root", "bleed", "poison_status", "shock", "weaken"],
     "status_buff": ["haste", "quicken", "empower", "fortify", "regeneration", "shield", "barrier", "invisible"],
     "special": ["lifesteal", "vampiric", "reflect", "thorns", "knockback", "pull", "teleport", "summon", "dash", "charge", "phase", "execute", "critical"],
@@ -196,6 +196,11 @@
       "category": "damage_type",
       "description": "Chaotic damage, random type each hit",
       "aliases": ["void"]
+    },
+    "energy": {
+      "category": "damage_type",
+      "description": "Pure energy damage, used by laser turrets and energy weapons",
+      "aliases": ["laser"]
     },
 
     "burn": {

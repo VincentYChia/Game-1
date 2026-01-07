@@ -325,10 +325,10 @@ class RefiningTagProcessor:
     # Process type bonuses (probabilistic chances, not deterministic multipliers)
     PROCESS_BONUSES = {
         "smelting": {
-            "bonus_yield_chance": 0.0,    # No bonus (standard process)
-            "bonus_yield_amount": 0,
-            "quality_upgrade_chance": 0.0,
-            "quality_tiers": 0
+            "bonus_yield_chance": 0.15,   # 15% chance for bonus yield (base reward)
+            "bonus_yield_amount": 1,
+            "quality_upgrade_chance": 0.10, # 10% chance for quality upgrade
+            "quality_tiers": 1
         },
         "crushing": {
             "bonus_yield_chance": 0.25,   # 25% chance for bonus yield

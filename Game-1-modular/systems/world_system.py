@@ -104,7 +104,8 @@ class WorldSystem:
 
     def place_entity(self, position: Position, item_id: str, entity_type: PlacedEntityType,
                      tier: int = 1, range: float = 5.0, damage: float = 20.0,
-                     tags: List[str] = None, effect_params: dict = None) -> PlacedEntity:
+                     tags: List[str] = None, effect_params: dict = None,
+                     crafted_stats: dict = None) -> PlacedEntity:
         """Place an entity (turret, trap, station, etc.) in the world"""
         entity = PlacedEntity(
             position=position.snap_to_grid(),
@@ -114,7 +115,8 @@ class WorldSystem:
             range=range,
             damage=damage,
             tags=tags,
-            effect_params=effect_params
+            effect_params=effect_params,
+            crafted_stats=crafted_stats
         )
         self.placed_entities.append(entity)
         return entity

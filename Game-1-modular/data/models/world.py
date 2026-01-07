@@ -179,9 +179,11 @@ class PlacedEntity:
     visual_effects: Set[str] = None  # Visual indicators (burning, shocked, frozen, etc.)
     # Trap-specific fields
     triggered: bool = False  # For one-time traps
+    # Crafted item stats (preserve minigame bonuses)
+    crafted_stats: Dict[str, Any] = None  # Stats from minigame crafting
 
     def __post_init__(self):
-        """Initialize mutable default values"""
+        """Initialize mutable default values and apply crafted stats"""
         if self.tags is None:
             self.tags = []
         if self.effect_params is None:
@@ -190,6 +192,63 @@ class PlacedEntity:
             self.status_effects = []
         if self.visual_effects is None:
             self.visual_effects = set()
+        if self.crafted_stats is None:
+            self.crafted_stats = {}
+
+        # Apply crafted stats from minigame bonuses
+        self._apply_crafted_stats()
+
+    def _apply_crafted_stats(self):
+        """
+        Apply crafted_stats bonuses to actual entity stats.
+
+        Stats:
+        - power: +X% damage
+        - durability: +X% lifetime/time_remaining
+        - efficiency: +X% attack speed (100 = 2x speed, capped so reload never hits 0)
+        - accuracy: Reserved for future use (miss chance reduction)
+        """
+        if not self.crafted_stats:
+            return
+
+        # Store base values for reference
+        base_damage = self.damage
+        base_lifetime = self.lifetime
+        base_attack_speed = self.attack_speed
+
+        # Power affects damage
+        power = self.crafted_stats.get('power', 0)
+        if power > 0:
+            self.damage = base_damage * (1 + power / 100)
+            # Also update effect_params baseDamage if present
+            if self.effect_params and 'baseDamage' in self.effect_params:
+                self.effect_params['baseDamage'] = self.effect_params['baseDamage'] * (1 + power / 100)
+
+        # Durability affects lifetime (how long the device lasts)
+        durability = self.crafted_stats.get('durability', 0)
+        if durability > 0:
+            self.lifetime = base_lifetime * (1 + durability / 100)
+            self.time_remaining = self.lifetime  # Reset time_remaining to new lifetime
+
+        # Efficiency affects attack speed
+        # 100 efficiency = 2x attack speed (double fire rate)
+        # Formula: attack_speed *= (1 + efficiency/100)
+        # But ensure reload time never reaches 0 (cap at 10x speed = 90% efficiency gain max)
+        efficiency = self.crafted_stats.get('efficiency', 0)
+        if efficiency > 0:
+            # Cap effective efficiency at 900% to prevent near-zero reload times
+            effective_efficiency = min(efficiency, 900)
+            self.attack_speed = base_attack_speed * (1 + effective_efficiency / 100)
+
+        # Debug output
+        if any([power, durability, efficiency]):
+            print(f"[PlacedEntity] Applied crafted stats to {self.item_id}:")
+            if power > 0:
+                print(f"   Power +{power}%: {base_damage:.1f} → {self.damage:.1f} damage")
+            if durability > 0:
+                print(f"   Durability +{durability}%: {base_lifetime:.1f}s → {self.lifetime:.1f}s lifetime")
+            if efficiency > 0:
+                print(f"   Efficiency +{efficiency}%: {base_attack_speed:.1f} → {self.attack_speed:.1f} attacks/sec")
 
     def get_color(self) -> Tuple[int, int, int]:
         """Get display color for this entity"""

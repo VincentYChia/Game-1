@@ -1253,6 +1253,9 @@ class EnchantingCrafter:
         # Detect input rarity before consuming materials
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+        # Default to 'common' if rarity couldn't be determined
+        if input_rarity is None:
+            input_rarity = 'common'
 
         # Get difficulty tier from minigame result
         difficulty_tier = minigame_result.get('difficulty_tier', 'common')

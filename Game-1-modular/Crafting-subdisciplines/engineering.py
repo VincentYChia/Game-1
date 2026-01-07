@@ -70,6 +70,9 @@ class RotationPipePuzzle:
         self.solution_rotations = []  # Store the solution for checking
         self.input_pos = (0, random.randint(0, grid_size - 1))
         self.output_pos = (grid_size - 1, random.randint(0, grid_size - 1))
+        self.ideal_path_length = 0  # Minimum possible path (Manhattan distance + 1)
+        self.actual_path_length = 0  # Generated path length
+        self.clicks = 0  # Track number of rotations made
         self._generate_puzzle()
 
     def _generate_puzzle(self):
@@ -77,6 +80,10 @@ class RotationPipePuzzle:
         self.grid = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
         self.rotations = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
         self.solution_rotations = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+
+        # Calculate ideal path length (Manhattan distance + 1 for inclusive count)
+        self.ideal_path_length = abs(self.output_pos[0] - self.input_pos[0]) + \
+                                  abs(self.output_pos[1] - self.input_pos[1]) + 1
 
         # Create path from input to output using BFS-like generation
         current = list(self.input_pos)
@@ -110,6 +117,10 @@ class RotationPipePuzzle:
             path.append(tuple(current))
             visited.add(tuple(current))
 
+        # Store actual path length for efficiency scoring
+        self.actual_path_length = len(path)
+        self.path_cells = set(path)  # Store path cells for reference
+
         # Convert path to pipe pieces
         for i, (r, c) in enumerate(path):
             if i == 0:
@@ -126,18 +137,24 @@ class RotationPipePuzzle:
                 next_r, next_c = path[i + 1]
                 self.grid[r][c], self.rotations[r][c] = self._get_piece_for_two_connections(r, c, prev_r, prev_c, next_r, next_c)
 
-        # Don't add extra pieces - they can make puzzle unsolvable
-        # The path itself provides enough challenge
+        # Fill ALL empty spaces with random pipes (not part of solution path)
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
+                if self.grid[r][c] == 0:  # Empty cell
+                    # Add random pipe piece (1=straight, 2=L-bend, 3=T-junction)
+                    self.grid[r][c] = random.choice([1, 2, 2, 3])  # More L-bends for visual variety
+                    self.rotations[r][c] = random.choice([0, 90, 180, 270])
 
-        # Save solution
+        # Save solution (only path pieces matter, others are distractors)
         self.solution_rotations = [row[:] for row in self.rotations]
+        # Restore correct rotations only for path cells
+        for r, c in path:
+            # Find the correct rotation for this path cell
+            pass  # Already set correctly above
 
-        # Scramble by rotating ONLY path pieces
-        scramble_count = max(len(path) * 2, self.grid_size * 3)
-        for _ in range(scramble_count):
-            if path:
-                # Pick random cell from path
-                r, c = random.choice(path)
+        # Scramble ALL pieces (including distractors)
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
                 if self.grid[r][c] not in [0, 4]:  # Don't rotate empty or cross pieces
                     self.rotations[r][c] = random.choice([0, 90, 180, 270])
 
@@ -183,8 +200,26 @@ class RotationPipePuzzle:
         if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
             if self.grid[row][col] not in [0, 4]:  # Can't rotate empty or cross
                 self.rotations[row][col] = (self.rotations[row][col] + 90) % 360
+                self.clicks += 1
                 return True
         return False
+
+    def get_efficiency_score(self):
+        """
+        Calculate efficiency score based on path length vs ideal.
+
+        The actual_path_length is how many cells the generated path uses.
+        The ideal_path_length is the Manhattan distance + 1.
+        Efficiency = ideal / actual (capped at 1.0 for perfect path)
+
+        Returns:
+            float: Score from 0.0 to 1.0
+        """
+        if self.actual_path_length == 0:
+            return 1.0
+        # Efficiency based on how close to ideal path
+        ratio = self.ideal_path_length / self.actual_path_length
+        return min(1.0, ratio)  # Cap at 1.0 (perfect efficiency)
 
     def check_solution(self):
         """
@@ -254,128 +289,296 @@ class RotationPipePuzzle:
     def get_state(self):
         """Get puzzle state for rendering"""
         return {
+            "puzzle_type": "rotation_pipe",
             "grid_size": self.grid_size,
             "grid": self.grid,
             "rotations": self.rotations,
             "input_pos": self.input_pos,
             "output_pos": self.output_pos,
+            "solved": self.check_solution(),
+            "clicks": self.clicks,
+            "ideal_path_length": self.ideal_path_length,
+            "actual_path_length": self.actual_path_length,
+            "efficiency": self.get_efficiency_score()
+        }
+
+
+class LogicSwitchPuzzle:
+    """
+    Logic Switch Puzzle - Replacement for sliding tile puzzle
+
+    Goal: Toggle switches to match the target pattern
+    - Clicking a switch toggles it AND its orthogonal neighbors (lights-out style)
+    - Has calculable minimum solution for scoring
+    - Easy to understand, difficulty scales with grid size and pattern complexity
+
+    Puzzle Modes (in order of difficulty):
+    A. random -> fully_lit: Random start, all-on target (easiest)
+    B. random -> fully_dim: Random start, all-off target
+    C. fully_dim -> random: All-off start, random target
+    D. fully_lit -> random: All-on start, random target (hardest)
+
+    Scoring: Based on moves vs ideal solution
+    - Perfect (ideal moves) = 100% reward
+    - More moves = exponential decay: reward * e^-(moves/ideal - 1)
+    - Time limit adds pressure without failing instantly
+    """
+
+    def __init__(self, grid_size=3, difficulty="easy", max_moves=10, force_mode=None):
+        """
+        Initialize logic switch puzzle
+
+        Args:
+            grid_size: Grid size (3-6)
+            difficulty: "easy", "medium", "hard" - affects puzzle mode
+            max_moves: Maximum ideal moves (default 10 for solvability)
+            force_mode: Optional specific mode to use ("random_to_lit", "random_to_dim",
+                       "dim_to_random", "lit_to_random")
+        """
+        self.grid_size = grid_size
+        self.difficulty = difficulty
+        self.max_moves = max_moves
+        self.force_mode = force_mode
+        self.grid = []  # Current state (0=off, 1=on)
+        self.target = []  # Target pattern to match
+        self.initial_grid = []  # Store initial state for reset
+        self.moves = 0
+        self.ideal_moves = 0  # Minimum moves to solve
+        self.solution_path = []  # Cells to toggle for ideal solution
+        self.puzzle_mode = ""  # Describes the puzzle type
+        self._generate_puzzle()
+
+    def _generate_puzzle(self):
+        """Generate solvable puzzle using exactly max_moves (10) random clicks"""
+        # Use forced mode if specified, otherwise determine from difficulty
+        if self.force_mode:
+            self._generate_from_mode(self.force_mode)
+        elif self.difficulty == "easy":
+            # Mode A or B: Random start, uniform target
+            mode = random.choice(["random_to_lit", "random_to_dim"])
+            self._generate_from_mode(mode)
+        elif self.difficulty == "medium":
+            # Mode C or D: Uniform start, random target (reversed)
+            mode = random.choice(["dim_to_random", "lit_to_random"])
+            self._generate_from_mode(mode)
+        else:  # hard
+            # Mode D preferred: All lit -> random (hardest visual)
+            self._generate_from_mode("lit_to_random")
+
+    def _generate_from_mode(self, mode):
+        """Generate puzzle from specific mode using exactly max_moves toggles"""
+        num_toggles = self.max_moves  # Always use exactly max_moves (10)
+
+        if mode == "random_to_lit":
+            # Start from all lit, apply 10 toggles -> that becomes player start
+            # Target is all lit
+            self.puzzle_mode = "random -> fully_lit"
+            self._generate_forward(target_state=1, num_toggles=num_toggles)
+
+        elif mode == "random_to_dim":
+            # Start from all dim, apply 10 toggles -> that becomes player start
+            # Target is all dim
+            self.puzzle_mode = "random -> fully_dim"
+            self._generate_forward(target_state=0, num_toggles=num_toggles)
+
+        elif mode == "dim_to_random":
+            # Player starts at all dim
+            # Apply 10 toggles to get target pattern
+            self.puzzle_mode = "fully_dim -> random"
+            self._generate_reversed(start_state=0, num_toggles=num_toggles)
+
+        elif mode == "lit_to_random":
+            # Player starts at all lit
+            # Apply 10 toggles to get target pattern
+            self.puzzle_mode = "fully_lit -> random"
+            self._generate_reversed(start_state=1, num_toggles=num_toggles)
+
+    def _generate_forward(self, target_state, num_toggles):
+        """Generate puzzle: random start -> uniform target
+
+        Process:
+        1. Set target to uniform state (all lit or all dim)
+        2. Start grid at target state
+        3. Apply exactly num_toggles random clicks to create scrambled start
+        4. The solution is reversing those clicks
+        """
+        # Target is uniform (all lit or all dim)
+        self.target = [[target_state for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+
+        # Start with target state
+        self.grid = [row[:] for row in self.target]
+
+        # Apply exactly num_toggles random toggles to create the puzzle starting state
+        self.solution_path = []
+        cells_used = set()
+
+        for _ in range(num_toggles):
+            available = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size)
+                        if (r, c) not in cells_used]
+            if not available:
+                # Reset used cells if we've used all (shouldn't happen with 10 moves on 3x3+)
+                cells_used.clear()
+                available = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size)]
+
+            r, c = random.choice(available)
+            cells_used.add((r, c))
+            self.solution_path.append((r, c))
+            self._do_toggle(r, c)
+
+        self.ideal_moves = len(self.solution_path)
+        self.moves = 0
+        # Store initial grid state for reset
+        self.initial_grid = [row[:] for row in self.grid]
+
+    def _generate_reversed(self, start_state, num_toggles):
+        """Generate puzzle: uniform start -> random target (reversed mode)
+
+        Process:
+        1. Set player start to uniform state (all lit or all dim)
+        2. Copy to target
+        3. Apply exactly num_toggles random clicks to target to create goal
+        4. The solution is those same clicks applied to start
+        """
+        # Start is uniform (all lit or all dim)
+        self.grid = [[start_state for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+
+        # Build target by applying random toggles to a copy
+        self.target = [row[:] for row in self.grid]
+        self.solution_path = []
+        cells_used = set()
+
+        for _ in range(num_toggles):
+            available = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size)
+                        if (r, c) not in cells_used]
+            if not available:
+                cells_used.clear()
+                available = [(r, c) for r in range(self.grid_size) for c in range(self.grid_size)]
+
+            r, c = random.choice(available)
+            cells_used.add((r, c))
+            self.solution_path.append((r, c))
+            # Toggle in target, not in grid
+            self._toggle_in_grid(self.target, r, c)
+
+        self.ideal_moves = len(self.solution_path)
+        self.moves = 0
+        # Store initial grid state for reset
+        self.initial_grid = [row[:] for row in self.grid]
+
+    def _toggle_in_grid(self, grid, row, col):
+        """Toggle a cell and its neighbors in a specific grid"""
+        grid[row][col] = 1 - grid[row][col]
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = row + dr, col + dc
+            if 0 <= nr < self.grid_size and 0 <= nc < self.grid_size:
+                grid[nr][nc] = 1 - grid[nr][nc]
+
+    def _do_toggle(self, row, col):
+        """Toggle a cell and its neighbors (internal, doesn't count moves)"""
+        # Toggle center
+        self.grid[row][col] = 1 - self.grid[row][col]
+
+        # Toggle orthogonal neighbors
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = row + dr, col + dc
+            if 0 <= nr < self.grid_size and 0 <= nc < self.grid_size:
+                self.grid[nr][nc] = 1 - self.grid[nr][nc]
+
+    def toggle_switch(self, row, col):
+        """
+        Toggle switch at position (player action)
+
+        Args:
+            row, col: Position to toggle
+
+        Returns:
+            bool: True if toggle was valid
+        """
+        if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
+            self._do_toggle(row, col)
+            self.moves += 1
+            return True
+        return False
+
+    def reset(self):
+        """Reset grid to initial state (for retry)"""
+        self.grid = [row[:] for row in self.initial_grid]
+        self.moves = 0
+
+    def check_solution(self):
+        """Check if current grid matches target pattern"""
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
+                if self.grid[r][c] != self.target[r][c]:
+                    return False
+        return True
+
+    def get_efficiency_score(self):
+        """
+        Calculate efficiency score based on moves vs ideal
+
+        Returns:
+            float: Score from 0.0 to 1.0
+        """
+        import math
+        if self.ideal_moves == 0:
+            return 1.0
+        ratio = self.moves / self.ideal_moves
+        if ratio <= 1.0:
+            return 1.0
+        # Exponential decay: e^-(ratio - 1)
+        return math.exp(-(ratio - 1))
+
+    def get_state(self):
+        """Get puzzle state"""
+        return {
+            "puzzle_type": "logic_switch",
+            "puzzle_mode": self.puzzle_mode,
+            "grid_size": self.grid_size,
+            "grid": self.grid,
+            "target": self.target,
+            "initial_grid": self.initial_grid,
+            "moves": self.moves,
+            "ideal_moves": self.ideal_moves,
+            "max_moves": self.max_moves,
+            "efficiency": self.get_efficiency_score(),
             "solved": self.check_solution()
         }
 
 
 class SlidingTilePuzzle:
     """
-    Sliding tile puzzle - T2 Engineering
+    DEPRECATED: Replaced by LogicSwitchPuzzle
 
-    Goal: Arrange numbered tiles in order by sliding into empty space
-    Classic sliding puzzle (3x3 or 4x4)
-
-    Solution state:
-    3x3: [1,2,3,4,5,6,7,8,0] (0 = empty)
-    4x4: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]
+    Kept for backwards compatibility with existing save files.
+    New games should use LogicSwitchPuzzle instead.
     """
 
     def __init__(self, grid_size=3):
-        """
-        Initialize sliding tile puzzle
-
-        Args:
-            grid_size: Grid size (3 or 4)
-        """
+        """Initialize as a simple auto-solve puzzle for compatibility"""
         self.grid_size = grid_size
-        self.grid = []
-        self.empty_pos = (grid_size - 1, grid_size - 1)
+        self.grid = [[0 for _ in range(grid_size)] for _ in range(grid_size)]
         self.moves = 0
-        self._generate_puzzle()
-
-    def _generate_puzzle(self):
-        """Generate solvable sliding puzzle by making random moves from solution"""
-        # Start with solved state
-        self.grid = [[0 for _ in range(self.grid_size)] for _ in range(self.grid_size)]
-        num = 1
-        for r in range(self.grid_size):
-            for c in range(self.grid_size):
-                if (r, c) != (self.grid_size - 1, self.grid_size - 1):
-                    self.grid[r][c] = num
-                    num += 1
-
-        self.empty_pos = (self.grid_size - 1, self.grid_size - 1)
-
-        # Make random moves to scramble (guarantees solvability)
-        # Reduced difficulty: fewer scrambles for easier solving
-        scramble_moves = self.grid_size * self.grid_size * 3  # 3x area (was 10x - too hard!)
-        last_move = None
-
-        for _ in range(scramble_moves):
-            # Get valid moves (tiles that can slide into empty space)
-            valid_moves = []
-            er, ec = self.empty_pos
-
-            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                nr, nc = er + dr, ec + dc
-                if 0 <= nr < self.grid_size and 0 <= nc < self.grid_size:
-                    # Don't immediately undo the last move
-                    if last_move is None or (nr, nc) != last_move:
-                        valid_moves.append((nr, nc))
-
-            if valid_moves:
-                # Pick random valid move
-                tile_pos = random.choice(valid_moves)
-                last_move = self.empty_pos
-                self._do_slide(tile_pos[0], tile_pos[1])
-
-        self.moves = 0  # Reset move counter
-
-    def _do_slide(self, row, col):
-        """Internal method to slide tile without validation"""
-        er, ec = self.empty_pos
-        # Swap tile with empty space
-        self.grid[er][ec], self.grid[row][col] = self.grid[row][col], self.grid[er][ec]
-        self.empty_pos = (row, col)
+        self.solved = False
+        # Mark as deprecated - auto-completes
+        print("[WARNING] SlidingTilePuzzle is deprecated, using auto-complete")
 
     def slide_tile(self, row, col):
-        """
-        Slide tile at position into empty space if adjacent
-
-        Args:
-            row, col: Position of tile to slide
-
-        Returns:
-            bool: True if slide was valid and executed
-        """
-        er, ec = self.empty_pos
-
-        # Check if tile is adjacent to empty space
-        if (abs(row - er) == 1 and col == ec) or (abs(col - ec) == 1 and row == er):
-            self._do_slide(row, col)
-            self.moves += 1
-            return True
-
-        return False
+        """Auto-solve on any action"""
+        self.solved = True
+        return True
 
     def check_solution(self):
-        """Check if puzzle is in solved state"""
-        num = 1
-        for r in range(self.grid_size):
-            for c in range(self.grid_size):
-                # Last position should be 0 (empty)
-                if r == self.grid_size - 1 and c == self.grid_size - 1:
-                    if self.grid[r][c] != 0:
-                        return False
-                else:
-                    if self.grid[r][c] != num:
-                        return False
-                    num += 1
+        """Always returns True (deprecated puzzle)"""
         return True
 
     def get_state(self):
-        """Get puzzle state"""
         return {
             "grid_size": self.grid_size,
             "grid": self.grid,
-            "empty_pos": self.empty_pos,
             "moves": self.moves,
-            "solved": self.check_solution()
+            "solved": True,
+            "deprecated": True
         }
 
 
@@ -471,15 +674,16 @@ class EngineeringMinigame:
             self.difficulty_points = params['difficulty_points']
             self.difficulty_tier = params.get('difficulty_tier', 'common')
             self.time_limit = params['time_limit']
-            self.puzzle_count = params['puzzle_count']
+            self.puzzle_count = max(2, params['puzzle_count'])  # Always at least 2 (rotation + logic switch)
             self.grid_size = params['grid_size']
             self.complexity = params['complexity']
             self.hints_allowed = params['hints_allowed']
             self.slot_modifier = params.get('slot_modifier', 1.0)
             self.total_slots = params.get('total_slots', 1)
+            self.ideal_moves = params.get('ideal_moves', 7)  # 6-8 range based on difficulty
 
             print(f"[Engineering] Difficulty: {self.difficulty_points:.1f} pts ({self.difficulty_tier})")
-            print(f"             Puzzles: {self.puzzle_count}, Grid: {self.grid_size}x{self.grid_size}")
+            print(f"             Puzzles: {self.puzzle_count}, Grid: {self.grid_size}x{self.grid_size}, Ideal moves: {self.ideal_moves}")
 
         except ImportError:
             # Fallback to legacy tier-based system
@@ -496,10 +700,12 @@ class EngineeringMinigame:
         self.hints_allowed = max(0, 4 - tier)
         self.slot_modifier = 1.0
         self.total_slots = 1
+        # Ideal moves scales with tier: T1=6, T2=6, T3=7, T4=8
+        self.ideal_moves = min(8, 5 + tier)
 
-        # Puzzle count based on tier
+        # Puzzle count based on tier (minimum 2 for rotation + logic switch)
         if tier == 1:
-            self.puzzle_count = 1
+            self.puzzle_count = 2  # Always at least 2
         elif tier == 2:
             self.puzzle_count = 2
         elif tier == 3:
@@ -509,10 +715,14 @@ class EngineeringMinigame:
 
     def start(self):
         """Start the minigame"""
+        import time
         self.active = True
         self.current_puzzle_index = 0
         self.solved_puzzles = []
+        self.puzzle_efficiencies = []  # Track efficiency per puzzle
         self.result = None
+        self.start_time = time.time()
+        self.time_expired = False
 
         # Generate puzzles based on tier
         self.puzzles = []
@@ -520,9 +730,33 @@ class EngineeringMinigame:
             puzzle = self._create_puzzle_for_tier(i)
             self.puzzles.append(puzzle)
 
+    def update(self, dt):
+        """Update time tracking (called from game engine)"""
+        import time
+        if not self.active or self.time_expired:
+            return
+
+        elapsed = time.time() - self.start_time
+        if elapsed >= self.time_limit:
+            self.time_expired = True
+            # Auto-complete with current progress
+            self.end()
+
+    def get_time_remaining(self):
+        """Get remaining time in seconds"""
+        import time
+        if not self.active:
+            return 0
+        elapsed = time.time() - self.start_time
+        return max(0, self.time_limit - elapsed)
+
     def _create_puzzle_for_tier(self, index):
         """
         Create appropriate puzzle based on difficulty tier (rarity-based).
+
+        ALL recipes get both puzzle types:
+        - Puzzle 0: RotationPipePuzzle (path finding)
+        - Puzzle 1+: LogicSwitchPuzzle (lights out)
 
         Args:
             index: Puzzle index in sequence
@@ -531,50 +765,38 @@ class EngineeringMinigame:
             Puzzle instance
         """
         tier = self.difficulty_tier  # Now uses rarity-named tiers
+        # Get ideal_moves from difficulty calculation (6-8 range)
+        ideal_moves = getattr(self, 'ideal_moves', 7)
+        grid = self.grid_size if hasattr(self, 'grid_size') else 3
 
-        if tier in ('common', 'uncommon'):
-            # Common/Uncommon: Rotation puzzles only
-            grid = self.grid_size if hasattr(self, 'grid_size') else (3 if tier == 'common' else 4)
-            difficulty = "easy" if tier == 'common' else "medium"
+        # First puzzle is ALWAYS RotationPipePuzzle
+        if index == 0:
+            if tier in ('common', 'uncommon'):
+                difficulty = "easy" if tier == 'common' else "medium"
+            elif tier == 'rare':
+                difficulty = "medium"
+            else:  # epic, legendary
+                difficulty = "hard"
             return RotationPipePuzzle(grid, difficulty)
 
-        elif tier == 'rare':
-            # Rare: Rotation and sliding puzzles
-            grid = self.grid_size if hasattr(self, 'grid_size') else 4
-            if index % 2 == 0:
-                return RotationPipePuzzle(grid, "medium")
-            else:
-                return SlidingTilePuzzle(3)
-
-        elif tier == 'epic':
-            # Epic: Include traffic jam (placeholder)
-            grid = self.grid_size if hasattr(self, 'grid_size') else 5
-            if index % 3 == 0:
-                return RotationPipePuzzle(grid, "hard")
-            elif index % 3 == 1:
-                return SlidingTilePuzzle(4)
-            else:
-                return TrafficJamPuzzle()  # Placeholder
-
-        else:  # legendary
-            # Legendary: All puzzle types including pattern matching
-            grid = self.grid_size if hasattr(self, 'grid_size') else 5
-            puzzle_type = index % 4
-            if puzzle_type == 0:
-                return RotationPipePuzzle(grid, "hard")
-            elif puzzle_type == 1:
-                return SlidingTilePuzzle(4)
-            elif puzzle_type == 2:
-                return TrafficJamPuzzle()  # Placeholder
-            else:
-                return PatternMatchingPuzzle()  # Placeholder
+        # Second puzzle onwards is ALWAYS LogicSwitchPuzzle
+        else:
+            if tier in ('common', 'uncommon'):
+                difficulty = "easy"
+            elif tier == 'rare':
+                difficulty = "easy"
+            elif tier == 'epic':
+                difficulty = "medium"
+            else:  # legendary
+                difficulty = "hard"
+            return LogicSwitchPuzzle(grid, difficulty, max_moves=ideal_moves)
 
     def handle_action(self, action_type, **kwargs):
         """
-        Handle puzzle action (rotate, slide, etc.)
+        Handle puzzle action (rotate, toggle, reset, etc.)
 
         Args:
-            action_type: Type of action ("rotate", "slide", etc.)
+            action_type: Type of action ("rotate", "toggle", "reset", etc.)
             **kwargs: Action parameters
 
         Returns:
@@ -589,11 +811,30 @@ class EngineeringMinigame:
             row = kwargs.get('row', 0)
             col = kwargs.get('col', 0)
             return current_puzzle.rotate_piece(row, col)
+        elif action_type == "toggle" and isinstance(current_puzzle, LogicSwitchPuzzle):
+            row = kwargs.get('row', 0)
+            col = kwargs.get('col', 0)
+            return current_puzzle.toggle_switch(row, col)
+        elif action_type == "reset":
+            # Reset current puzzle to initial state
+            return self.reset_current_puzzle()
+        # Legacy support for slide action (deprecated)
         elif action_type == "slide" and isinstance(current_puzzle, SlidingTilePuzzle):
             row = kwargs.get('row', 0)
             col = kwargs.get('col', 0)
             return current_puzzle.slide_tile(row, col)
 
+        return False
+
+    def reset_current_puzzle(self):
+        """Reset the current puzzle to its initial state"""
+        if self.current_puzzle_index >= len(self.puzzles):
+            return False
+
+        current_puzzle = self.puzzles[self.current_puzzle_index]
+        if hasattr(current_puzzle, 'reset'):
+            current_puzzle.reset()
+            return True
         return False
 
     def check_current_puzzle(self):
@@ -609,8 +850,16 @@ class EngineeringMinigame:
         current_puzzle = self.puzzles[self.current_puzzle_index]
 
         if current_puzzle.check_solution():
-            # Puzzle solved! Move to next
+            # Puzzle solved! Track efficiency for scoring
             self.solved_puzzles.append(current_puzzle)
+
+            # Get efficiency score if puzzle supports it
+            if hasattr(current_puzzle, 'get_efficiency_score'):
+                efficiency = current_puzzle.get_efficiency_score()
+            else:
+                efficiency = 1.0  # Default for puzzles without efficiency tracking
+            self.puzzle_efficiencies.append(efficiency)
+
             self.current_puzzle_index += 1
 
             # Check if all puzzles done
@@ -661,11 +910,22 @@ class EngineeringMinigame:
 
     def end(self):
         """Complete device creation with stat modifications and reward calculation."""
+        import time
         self.active = False
 
-        # Calculate performance score based on puzzle completion
+        # Calculate performance score based on puzzle completion and efficiency
         puzzles_solved = len(self.solved_puzzles)
         completion_ratio = puzzles_solved / max(1, self.puzzle_count)
+
+        # Calculate average efficiency from solved puzzles
+        if hasattr(self, 'puzzle_efficiencies') and self.puzzle_efficiencies:
+            avg_efficiency = sum(self.puzzle_efficiencies) / len(self.puzzle_efficiencies)
+        else:
+            avg_efficiency = 1.0
+
+        # Calculate time factor
+        time_remaining = self.get_time_remaining()
+        time_ratio = time_remaining / max(1, self.time_limit)  # 0 to 1
 
         # Calculate device stats based on puzzle performance
         # Each puzzle affects a different aspect of the device
@@ -676,22 +936,33 @@ class EngineeringMinigame:
             "power": 100
         }
 
-        # Each solved puzzle adds +10-20% to its corresponding stat
+        # Each solved puzzle adds bonus based on efficiency (5-20%)
         stat_types = ["durability", "efficiency", "accuracy", "power"]
         for i, puzzle in enumerate(self.solved_puzzles):
             stat_type = stat_types[i % len(stat_types)]
-            # Bonus based on how well puzzle was solved (10-20%)
-            bonus = 15  # Could be adjusted based on puzzle difficulty
+            # Bonus scales with efficiency: 5% at 0 efficiency, 20% at 100% efficiency
+            efficiency = self.puzzle_efficiencies[i] if i < len(self.puzzle_efficiencies) else 1.0
+            bonus = int(5 + 15 * efficiency)
             stats[stat_type] += bonus
 
-        # Calculate performance (0.0-1.0) based on puzzles solved and hints used
-        base_performance = completion_ratio
+        # Calculate performance (0.0-1.0) based on:
+        # - Completion ratio (50% weight)
+        # - Efficiency score (30% weight)
+        # - Time bonus (20% weight, only if completed before time expires)
+        base_performance = completion_ratio * 0.5 + avg_efficiency * 0.3
+
+        # Time bonus only applies if all puzzles solved before time expired
+        if not getattr(self, 'time_expired', False) and puzzles_solved == self.puzzle_count:
+            base_performance += time_ratio * 0.2
+        elif puzzles_solved == self.puzzle_count:
+            base_performance += 0.1  # Partial time bonus for completion
+
         hint_penalty = self.hints_used * 0.05  # 5% penalty per hint
         performance = max(0.0, min(1.0, base_performance - hint_penalty))
 
         # Apply first-try bonus
         if self.attempt == 1:
-            performance = min(1.0, performance + 0.10)
+            performance = min(1.0, performance + 0.05)
 
         # Calculate rewards using centralized calculator
         try:
@@ -702,7 +973,8 @@ class EngineeringMinigame:
                     'puzzles_solved': puzzles_solved,
                     'total_puzzles': self.puzzle_count,
                     'hints_used': self.hints_used,
-                    'time_remaining': 0.5,  # No time limit in current implementation
+                    'time_remaining': time_ratio,
+                    'efficiency': avg_efficiency,
                     'attempt': self.attempt
                 }
             )
@@ -725,10 +997,12 @@ class EngineeringMinigame:
             "stats": stats,
             "quality": quality,
             "performance": performance,
+            "efficiency": avg_efficiency,
+            "time_expired": getattr(self, 'time_expired', False),
             "difficulty_points": getattr(self, 'difficulty_points', 0),
             "difficulty_tier": getattr(self, 'difficulty_tier', 'common'),
             "rewards": rewards,
-            "message": f"Device created! Solved {puzzles_solved}/{self.puzzle_count} puzzles."
+            "message": f"Device created! Solved {puzzles_solved}/{self.puzzle_count} puzzles. Efficiency: {avg_efficiency*100:.0f}%"
         }
 
     def get_state(self):
@@ -743,6 +1017,10 @@ class EngineeringMinigame:
             "total_puzzles": self.puzzle_count,
             "current_puzzle": current_puzzle,
             "solved_count": len(self.solved_puzzles),
+            "time_remaining": self.get_time_remaining(),
+            "time_limit": self.time_limit,
+            "time_expired": getattr(self, 'time_expired', False),
+            "efficiency_scores": getattr(self, 'puzzle_efficiencies', []),
             "result": self.result
         }
 
