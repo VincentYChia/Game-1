@@ -476,11 +476,293 @@ rendering/
 
 ---
 
-## Summary
+## ADDENDUM: Implementation Attempt & Findings (2026-01-07)
 
-This implementation creates a unified interactive crafting system that:
-- Reuses existing placement validation logic
-- Respects survival mode restrictions (inventory, tiers)
-- Provides discipline-specific themed UIs
-- Integrates seamlessly with existing minigame system
-- Maintains backwards compatibility with recipe-selection mode
+### Attempt Overview
+
+An implementation was created with full integration hooks, but encountered critical issues requiring restart. This addendum documents:
+- What was built
+- Architectural decisions made
+- Integration points identified
+- Critical learnings for next attempt
+
+### What Was Built
+
+**3 Files Created/Modified:**
+
+1. **core/interactive_crafting.py** (582 lines)
+   - InteractiveBaseUI abstract base class with shared utilities
+   - Material palette organization: tier (ascending) → category (custom order) → name (alphabetically)
+   - 5 discipline-specific UI classes:
+     - InteractiveSmithingUI: Grid placement {(x,y): material_id}
+     - InteractiveRefiningUI: Hub-and-spoke (core + 6 surrounding slots)
+     - InteractiveAlchemyUI: Sequential slots [slot_index]: material (order matters)
+     - InteractiveEngineeringUI: Slot-type mapping {slot_type: [materials]}
+     - InteractiveAdornmentsUI: Grid placement {(x,y): material_id} with vertex support
+   - Recipe matching methods per discipline type
+   - Factory function: create_interactive_ui(station_type, tier, inventory)
+
+2. **rendering/renderer_interactive_crafting.py** (402 lines)
+   - Separate InteractiveCraftingRenderer class (NOT integrated into main Renderer)
+   - Material palette rendering with scrollable list
+   - Discipline-specific placement area rendering
+   - Always-visible buttons: Minigame, Instant, Clear
+   - Recipe status display (matched/unmatched)
+
+3. **core/game_engine.py** (modifications)
+   - Imports: InteractiveCraftingRenderer, create_interactive_ui
+   - State variables added to __init__:
+     - interactive_crafting_active (bool)
+     - interactive_ui (instance reference)
+     - interactive_renderer (InteractiveCraftingRenderer instance)
+     - interactive_material_palette_rects (list for click detection)
+     - interactive_grid_rects (list for click detection)
+     - interactive_button_rects (dict for button click detection)
+     - interactive_selected_material (currently selected ItemStack)
+   - Methods added:
+     - _open_interactive_crafting(): Creates UI instance, sets active flag
+     - _close_interactive_crafting(): Cleans up state
+     - _handle_interactive_click(mouse_pos): Routes clicks to palette/grid/buttons
+   - ESC key handler: Added priority check for interactive_crafting_active
+   - Click routing: Added interactive UI check before regular crafting UI
+   - Render loop: Added interactive UI render call with priority over regular crafting UI
+
+### Architecture Decisions
+
+#### 1. Separate Renderer Class
+**Decision**: Create InteractiveCraftingRenderer as STANDALONE class, not integrated into main Renderer
+**Rationale**: Avoid polluting existing renderer.py, keep systems modular
+**Risk**: Two render pipelines could cause state confusion
+
+#### 2. Material Palette Organization
+**Order Used**:
+```python
+(tier, category_index, name)
+```
+MATERIAL_CATEGORIES_ORDER constant defined as:
+['metal', 'wood', 'stone', 'elemental', 'monster_drop', 'fabric', 'herb', 'other']
+
+**Rationale**: Matches user's JSON structure inspection
+**Risk**: Category order hardcoded, not configurable
+
+#### 3. Recipe Matching Per Discipline
+**Approach**: Each UI class implements own _placement_matches() logic
+- Smithing/Adornments: Exact grid match {(x,y): mat_id}
+- Refining: Core match + surrounding slot flexibility
+- Alchemy: Sequential slot exact order match
+- Engineering: Slot-type grouping match
+
+**Risk**: Discipline-specific matching could diverge from actual PlacementDatabase format
+
+#### 4. State Management
+**Priority Order** (lowest first):
+1. Regular crafting UI (existing)
+2. Interactive crafting UI (new) - OVERRIDES regular UI
+3. Both mutually exclusive via if/elif in render loop
+
+**Risk**: No clear API for switching between modes; implicit state management
+
+### Integration Points (Critical for Next Attempt)
+
+#### Point 1: Character Station Type Tracking
+**What's needed**: `self.character.current_station_type` and `self.character.current_station_tier`
+**Status**: Code assumes these exist but NOT VERIFIED
+**How used**: In _open_interactive_crafting() to determine which UI to create
+**Risk**: If these don't exist, UI creation silently fails
+
+#### Point 2: Inventory Compatibility
+**What's needed**: Character.inventory must have:
+- .slots (list of ItemStack objects)
+- ItemStack must have .item_id, .quantity, .crafted_stats
+**Status**: Code assumes existing inventory system works
+**How used**: Material palette reads inventory to populate available materials
+**Risk**: If ItemStack structure differs, material organization fails
+
+#### Point 3: Recipe Database Querying
+**What's needed**: RecipeDatabase must support:
+- .get_recipes_for_station(station_type, tier)
+- Recipe objects must have matched_recipe attribute compatibility
+**Status**: Assumed from existing code
+**How used**: Recipe matching to find valid placements
+**Risk**: Query method signature mismatch = no recipes found
+
+#### Point 4: Placement Database Format
+**What's needed**: PlacementDatabase must have placements keyed by recipe_id with:
+- .placement_map for smithing/adornments
+- .core_inputs + surrounding for refining
+- .slot_sequence for alchemy
+- .slot_types for engineering
+**Status**: Code reads but doesn't validate structure
+**How used**: Recipe matching compares current placement to saved patterns
+**Risk**: Format mismatch = recipe never matches despite correct materials
+
+#### Point 5: Minigame System Integration
+**What's needed**: self._start_minigame(recipe) method must exist
+**Status**: Called from button handler, assumed to exist
+**How used**: "Minigame" button calls this with matched recipe
+**Risk**: Method signature mismatch = crash
+
+#### Point 6: Renderer Click Detection
+**What's needed**: Button rects must be valid pygame.Rect objects
+**Status**: Returned from interactive_renderer.render(), used directly
+**How used**: Click collision detection in _handle_interactive_click()
+**Risk**: If rects are None or malformed, all clicks fail
+
+### Potential Failure Points
+
+#### High Risk:
+1. **Character doesn't have current_station_type/tier** - UI creation silently fails
+2. **PlacementDatabase format mismatch** - Recipe never matches
+3. **Inventory/ItemStack structure differs** - Material palette breaks
+4. **_start_minigame() signature different** - Crash on minigame button
+
+#### Medium Risk:
+5. **Render loop priority conflict** - Both regular and interactive UI render simultaneously
+6. **Click detection rect generation broken** - All clicks fail silently
+7. **Material consumed without inventory check** - Inventory goes negative
+
+#### Low Risk:
+8. **Minor UI rendering issues** - Cosmetic, doesn't break functionality
+
+### Testing Strategy for Next Attempt
+
+#### Phase 1: Verify Integration Points
+```bash
+# Check if character has required attributes
+player = character
+assert hasattr(player, 'current_station_type'), "Missing current_station_type"
+assert hasattr(player, 'current_station_tier'), "Missing current_station_tier"
+
+# Check inventory structure
+assert hasattr(player.inventory, 'slots'), "Inventory slots missing"
+if player.inventory.slots:
+    assert hasattr(player.inventory.slots[0], 'item_id'), "ItemStack item_id missing"
+
+# Check database queries
+db = RecipeDatabase.get_instance()
+recipes = db.get_recipes_for_station('smithing', 1)
+print(f"Found {len(recipes)} smithing recipes")
+```
+
+#### Phase 2: Test UI Creation
+```python
+# Try creating each UI type
+from core.interactive_crafting import create_interactive_ui
+
+for station_type in ['smithing', 'refining', 'alchemy', 'engineering', 'adornments']:
+    ui = create_interactive_ui(station_type, 1, character.inventory)
+    assert ui is not None, f"Failed to create {station_type} UI"
+    print(f"✓ Created {station_type} UI")
+```
+
+#### Phase 3: Test Material Palette
+```python
+# Verify materials are organized correctly
+materials = ui.get_available_materials()
+print(f"Available materials: {len(materials)}")
+for mat in materials[:5]:
+    print(f"  - {mat.item_id}")
+```
+
+#### Phase 4: Test Recipe Matching
+```python
+# Place some materials and check matching
+ui.place_material((0, 0), materials[0])
+print(f"Matched recipe: {ui.matched_recipe}")
+```
+
+### Known Gaps/Limitations
+
+1. **No "Interactive Mode" button in existing UI** - Plan says add button to crafting UI header, but this wasn't implemented
+   - Still requires modification to renderer.py or game_engine.py to add button click handler
+   - Button must call _open_interactive_crafting()
+
+2. **Material handling on placement change** - Code doesn't return materials to inventory when player changes placement
+   - Current code overwrites placement without refund logic
+   - Plan suggests "borrowed" materials model
+
+3. **Minigame failure handling** - Code doesn't handle player clicking buttons without recipe matched
+   - Error message shown but UI doesn't close
+   - Could get stuck in bad state
+
+4. **No visual feedback** - Materials don't highlight when selected
+   - Code sets self.interactive_selected_material but renderer doesn't use it
+   - Player won't know what they're placing
+
+5. **Limited error checking** - Most failures are silent
+   - If material can't be placed, nothing happens
+   - If recipe match fails, UI just shows "No recipe"
+
+### Commit That Was Attempted
+
+**Hash**: 998ad6d (forced push to claude/interactive-crafting-ui-IgMtt)
+**Message**: "FEAT: Complete interactive crafting UI system for all 5 disciplines with full integration"
+
+This commit was rejected due to:
+1. Integration with game loop may have been incomplete
+2. Potential missing dependencies or API mismatches
+3. State management conflicts with existing UI
+
+### Recommendations for Next Attempt
+
+1. **Start with smallest discipline** - Test refining first (hub-and-spoke is simplest)
+2. **Verify integration points first** - Don't write UI code until character/inventory/database confirmed compatible
+3. **Add button to existing UI FIRST** - Get the toggle working before building UI system
+4. **Test incrementally** - Each method should be testable in isolation
+5. **Use manual testing** - Add debug prints at each integration point
+6. **Consider simpler architecture** - Maybe integrate into existing Renderer instead of separate class
+
+### Key Files Reference for Next Developer
+
+- **PlacementDatabase usage**: Check `data/databases/placement_db.py`
+- **Recipe validation pattern**: See `_instant_craft()` in game_engine.py around line 2679
+- **Minigame launching**: See `_start_minigame()` method (search for location)
+- **Button handling pattern**: See how "Interactive Mode" button is handled if it exists
+- **Render integration pattern**: Study how crafting_ui_open flag works with renderer
+
+### Data Structures That Must Match
+
+```python
+# ItemStack (from entities/components/inventory.py)
+class ItemStack:
+    item_id: str
+    quantity: int
+    crafted_stats: dict  # Optional
+
+# Recipe (from data/models/recipes.py)
+class Recipe:
+    recipe_id: str
+    station_type: str  # 'smithing', 'refining', etc.
+    inputs: List[Dict]  # [{'materialId': 'id', 'qty': 1}, ...]
+    output_id: str
+    output_qty: int
+
+# PlacementData (from data/models/recipes.py)
+class PlacementData:
+    recipe_id: str
+    placement_map: Dict  # For grid-based (smithing/adornments)
+    core_inputs: List  # For refining
+    surrounding: List  # For refining
+    slot_sequence: List  # For alchemy
+    slot_types: Dict  # For engineering
+```
+
+### Critical Code Patterns to Match
+
+```python
+# How existing code gets materials from inventory
+for slot in character.inventory.slots:
+    if slot and slot.quantity > 0:
+        mat = mat_db.get_material(slot.item_id)
+        if mat and mat.tier <= station_tier:
+            available.append(slot)
+
+# How existing code validates recipes
+can_craft = recipe_db.consume_materials(recipe, character.inventory)
+
+# How existing code consumes materials
+character.inventory.remove_item(material_id, quantity)
+character.inventory.add_item(output_id, output_qty)
+```
+
+---
