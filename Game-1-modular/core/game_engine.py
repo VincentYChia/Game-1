@@ -55,6 +55,8 @@ from systems.save_manager import SaveManager
 
 # Rendering
 from rendering import Renderer
+from rendering.renderer_interactive_crafting import InteractiveCraftingRenderer
+from .interactive_crafting import create_interactive_ui
 
 # Combat system
 sys.path.insert(0, str(Path(__file__).parent.parent / "Combat"))
@@ -298,6 +300,16 @@ class GameEngine:
         self.minigame_button_rect = None  # For click detection on minigame buttons
         self.minigame_button_rect2 = None  # For secondary buttons (e.g., alchemy stabilize)
 
+        # Interactive crafting UI state
+        self.interactive_crafting_active = False
+        self.interactive_ui = None
+        self.interactive_renderer = InteractiveCraftingRenderer(self.renderer)
+        self.interactive_mode_button_rect = None
+        self.interactive_material_palette_rects = []
+        self.interactive_grid_rects = []
+        self.interactive_button_rects = {}
+        self.interactive_selected_material = None
+
         self.keys_pressed = set()
         self.mouse_buttons_pressed = set()  # Track which mouse buttons are held down
         self.mouse_pos = (0, 0)
@@ -463,7 +475,9 @@ class GameEngine:
                     continue
 
                 if event.key == pygame.K_ESCAPE:
-                    if self.enchantment_selection_active:
+                    if self.interactive_crafting_active:
+                        self._close_interactive_crafting()
+                    elif self.enchantment_selection_active:
                         self._close_enchantment_selection()
                         print("🚫 Enchantment selection cancelled")
                     elif self.character.crafting_ui_open:
@@ -1427,6 +1441,16 @@ class GameEngine:
             # Click outside equipment UI - close it
             else:
                 self.character.toggle_equipment_ui()
+                return
+
+        # Interactive Crafting UI (takes priority over regular crafting UI)
+        if self.interactive_crafting_active and self.crafting_window_rect:
+            if self.crafting_window_rect.collidepoint(mouse_pos):
+                self._handle_interactive_click(mouse_pos)
+                return
+            # Click outside interactive crafting UI - close it
+            else:
+                self._close_interactive_crafting()
                 return
 
         # Crafting UI
@@ -2757,6 +2781,85 @@ class GameEngine:
                 self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
                 self.add_notification(f"Crafted (legacy) {recipe.output_id} x{recipe.output_qty}", (100, 255, 100))
 
+    def _open_interactive_crafting(self):
+        """Open interactive crafting mode for current station"""
+        if not self.character or not self.character.current_station_type:
+            return
+
+        station_type = self.character.current_station_type
+        station_tier = getattr(self.character, 'current_station_tier', 1)
+
+        # Create interactive UI for this discipline
+        self.interactive_ui = create_interactive_ui(
+            station_type, station_tier, self.character.inventory
+        )
+
+        if self.interactive_ui:
+            self.interactive_crafting_active = True
+            self.interactive_selected_material = None
+            print(f"🎨 Opened interactive {station_type} crafting UI")
+        else:
+            self.add_notification(f"Cannot open {station_type} interactive UI", (255, 100, 100))
+
+    def _close_interactive_crafting(self):
+        """Close interactive crafting mode"""
+        self.interactive_crafting_active = False
+        self.interactive_ui = None
+        self.interactive_material_palette_rects = []
+        self.interactive_grid_rects = []
+        self.interactive_button_rects = {}
+        self.interactive_selected_material = None
+        print("🚫 Closed interactive crafting UI")
+
+    def _handle_interactive_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicks in interactive crafting UI"""
+        if not self.interactive_ui:
+            return
+
+        # Check material palette clicks
+        for i, rect in enumerate(self.interactive_material_palette_rects):
+            if rect.collidepoint(mouse_pos):
+                # Select this material
+                available = self.interactive_ui.get_available_materials()
+                if i < len(available):
+                    self.interactive_selected_material = available[i]
+                    print(f"✓ Selected material: {available[i].item_id}")
+                return
+
+        # Check grid/placement area clicks
+        for rect_data in self.interactive_grid_rects:
+            if isinstance(rect_data, tuple) and len(rect_data) >= 2:
+                rect, placement_key = rect_data[0], rect_data[1]
+                if rect.collidepoint(mouse_pos):
+                    if self.interactive_selected_material:
+                        self.interactive_ui.place_material(placement_key, self.interactive_selected_material)
+                        self.interactive_selected_material = None
+                        print(f"✓ Placed material at {placement_key}")
+                    return
+
+        # Check button clicks (Minigame, Instant, Clear)
+        for button_name, button_rect in self.interactive_button_rects.items():
+            if button_rect and button_rect.collidepoint(mouse_pos):
+                if button_name == 'minigame':
+                    if self.interactive_ui.matched_recipe:
+                        # Start minigame with matched recipe
+                        print(f"🎮 Starting minigame for {self.interactive_ui.matched_recipe.recipe_id}")
+                        self._start_minigame(self.interactive_ui.matched_recipe)
+                    else:
+                        self.add_notification("No recipe matched!", (255, 100, 100))
+                elif button_name == 'instant':
+                    if self.interactive_ui.matched_recipe:
+                        # Instant craft with matched recipe
+                        print(f"⚡ Instant crafting {self.interactive_ui.matched_recipe.recipe_id}")
+                        self._instant_craft(self.interactive_ui.matched_recipe)
+                        self._close_interactive_crafting()
+                    else:
+                        self.add_notification("No recipe matched!", (255, 100, 100))
+                elif button_name == 'clear':
+                    self.interactive_ui.clear_placement()
+                    print("🗑 Cleared placement")
+                return
+
     def _apply_enchantment(self, recipe: Recipe):
         """Apply an enchantment to an item - shows selection UI"""
         # Find compatible items in inventory
@@ -3079,7 +3182,12 @@ class GameEngine:
             self.class_selection_rect = None
             self.class_buttons = []
 
-            if self.character.crafting_ui_open:
+            if self.interactive_crafting_active and self.interactive_ui:
+                # Render interactive crafting UI
+                result = self.interactive_renderer.render(self.character, self.interactive_ui, self.mouse_pos)
+                if result:
+                    self.crafting_window_rect, self.interactive_material_palette_rects, self.interactive_grid_rects, self.interactive_button_rects, recipe_matched = result
+            elif self.character.crafting_ui_open:
                 # Pass scroll offset via temporary attribute (renderer doesn't have direct access to game state)
                 self.renderer._temp_scroll_offset = self.recipe_scroll_offset
                 result = self.renderer.render_crafting_ui(self.character, self.mouse_pos, self.selected_recipe, self.user_placement, self.active_minigame is not None)
