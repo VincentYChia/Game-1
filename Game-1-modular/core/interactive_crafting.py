@@ -51,15 +51,33 @@ class InteractiveBaseUI(ABC):
         """
         Get materials from inventory that can be used at this station.
         Organized by: tier (ascending) → category (custom order) → name (alphabetically)
+
+        In debug mode (Config.DEBUG_INFINITE_RESOURCES), shows 99 of every material
+        up to the station tier.
         """
+        from core.config import Config
+
         mat_db = MaterialDatabase.get_instance()
         available = []
 
-        for slot in self.inventory.slots:
-            if slot and slot.quantity > 0:
-                mat_def = mat_db.get_material(slot.item_id)
-                if mat_def and mat_def.tier <= self.station_tier:
-                    available.append(slot)
+        # DEBUG MODE: Show 99 of every material up to station tier
+        if Config.DEBUG_INFINITE_RESOURCES:
+            for material_id, mat_def in mat_db.materials.items():
+                if mat_def.tier <= self.station_tier:
+                    # Create a temporary ItemStack with 99 quantity
+                    debug_stack = ItemStack(
+                        item_id=material_id,
+                        quantity=99,
+                        rarity=mat_def.rarity
+                    )
+                    available.append(debug_stack)
+        else:
+            # NORMAL MODE: Show only inventory materials
+            for slot in self.inventory.slots:
+                if slot and slot.quantity > 0:
+                    mat_def = mat_db.get_material(slot.item_id)
+                    if mat_def and mat_def.tier <= self.station_tier:
+                        available.append(slot)
 
         # Sort by tier, then category, then name
         def sort_key(item_stack: ItemStack):
@@ -131,30 +149,45 @@ class InteractiveBaseUI(ABC):
 
 class InteractiveRefiningUI(InteractiveBaseUI):
     """
-    Hub-and-spoke model for refining:
-          [0]
-           |
-    [5]--[CORE]--[1]
-           |
-         [2]
-    [4]     [3]
+    Hub-and-spoke model for refining with tier-varying slot counts:
+    T1: 1 core + 2 surrounding
+    T2: 1 core + 4 surrounding
+    T3: 2 cores + 5 surrounding
+    T4: 3 cores + 6 surrounding
     """
 
     def __init__(self, station_type: str, station_tier: int, inventory: Inventory):
         super().__init__(station_type, station_tier, inventory)
-        self.core_slot: Optional[PlacedMaterial] = None
-        self.surrounding_slots: List[Optional[PlacedMaterial]] = [None] * 6
+        # CORRECT slot configuration by tier from GAME_MECHANICS_V6.md
+        slot_config = {
+            1: {'core': 1, 'surrounding': 2},
+            2: {'core': 1, 'surrounding': 4},
+            3: {'core': 2, 'surrounding': 5},
+            4: {'core': 3, 'surrounding': 6}
+        }
+        config = slot_config.get(station_tier, {'core': 1, 'surrounding': 2})
+        self.num_core_slots = config['core']
+        self.num_surrounding_slots = config['surrounding']
+
+        self.core_slots: List[Optional[PlacedMaterial]] = [None] * self.num_core_slots
+        self.surrounding_slots: List[Optional[PlacedMaterial]] = [None] * self.num_surrounding_slots
 
     def place_material(self, position: Any, item_stack: ItemStack) -> bool:
-        """Position can be 'core' or an index 0-5 for surrounding slots"""
-        if position == 'core':
+        """Position is a tuple: ('core', index) or ('surrounding', index)"""
+        if not isinstance(position, tuple) or len(position) != 2:
+            return False
+
+        slot_type, index = position
+
+        if slot_type == 'core' and 0 <= index < self.num_core_slots:
             # Return previous material if exists
-            if self.core_slot:
-                self.return_material(self.core_slot.item_id, self.core_slot.quantity)
+            if self.core_slots[index]:
+                old = self.core_slots[index]
+                self.return_material(old.item_id, old.quantity)
 
             # Borrow new material
             if self.borrow_material(item_stack.item_id, 1):
-                self.core_slot = PlacedMaterial(
+                self.core_slots[index] = PlacedMaterial(
                     item_id=item_stack.item_id,
                     quantity=1,
                     crafted_stats=item_stack.crafted_stats,
@@ -163,15 +196,15 @@ class InteractiveRefiningUI(InteractiveBaseUI):
                 self.matched_recipe = self.check_recipe_match()
                 return True
 
-        elif isinstance(position, int) and 0 <= position < 6:
+        elif slot_type == 'surrounding' and 0 <= index < self.num_surrounding_slots:
             # Return previous material if exists
-            if self.surrounding_slots[position]:
-                old = self.surrounding_slots[position]
+            if self.surrounding_slots[index]:
+                old = self.surrounding_slots[index]
                 self.return_material(old.item_id, old.quantity)
 
             # Borrow new material
             if self.borrow_material(item_stack.item_id, 1):
-                self.surrounding_slots[position] = PlacedMaterial(
+                self.surrounding_slots[index] = PlacedMaterial(
                     item_id=item_stack.item_id,
                     quantity=1,
                     crafted_stats=item_stack.crafted_stats,
@@ -183,29 +216,38 @@ class InteractiveRefiningUI(InteractiveBaseUI):
         return False
 
     def remove_material(self, position: Any) -> Optional[PlacedMaterial]:
-        if position == 'core' and self.core_slot:
-            mat = self.core_slot
+        if not isinstance(position, tuple) or len(position) != 2:
+            return None
+
+        slot_type, index = position
+
+        if slot_type == 'core' and 0 <= index < self.num_core_slots and self.core_slots[index]:
+            mat = self.core_slots[index]
             self.return_material(mat.item_id, mat.quantity)
-            self.core_slot = None
+            self.core_slots[index] = None
             self.matched_recipe = self.check_recipe_match()
             return mat
 
-        elif isinstance(position, int) and 0 <= position < 6:
-            if self.surrounding_slots[position]:
-                mat = self.surrounding_slots[position]
+        elif slot_type == 'surrounding' and 0 <= index < self.num_surrounding_slots:
+            if self.surrounding_slots[index]:
+                mat = self.surrounding_slots[index]
                 self.return_material(mat.item_id, mat.quantity)
-                self.surrounding_slots[position] = None
+                self.surrounding_slots[index] = None
                 self.matched_recipe = self.check_recipe_match()
                 return mat
 
         return None
 
     def clear_placement(self):
-        if self.core_slot:
-            self.return_material(self.core_slot.item_id, self.core_slot.quantity)
-            self.core_slot = None
+        # Clear all core slots
+        for i in range(self.num_core_slots):
+            if self.core_slots[i]:
+                mat = self.core_slots[i]
+                self.return_material(mat.item_id, mat.quantity)
+                self.core_slots[i] = None
 
-        for i in range(6):
+        # Clear all surrounding slots
+        for i in range(self.num_surrounding_slots):
             if self.surrounding_slots[i]:
                 mat = self.surrounding_slots[i]
                 self.return_material(mat.item_id, mat.quantity)
@@ -215,7 +257,8 @@ class InteractiveRefiningUI(InteractiveBaseUI):
 
     def check_recipe_match(self) -> Optional[Recipe]:
         """Match against refining recipes"""
-        if not self.core_slot:
+        # Check if at least one core slot is filled
+        if not any(self.core_slots):
             return None
 
         placement_db = PlacementDatabase.get_instance()
@@ -229,15 +272,12 @@ class InteractiveRefiningUI(InteractiveBaseUI):
             if not placement or placement.discipline != 'refining':
                 continue
 
-            # Match core inputs
-            core_match = False
-            if placement.core_inputs:
-                for core_input in placement.core_inputs:
-                    if core_input.get('materialId') == self.core_slot.item_id:
-                        core_match = True
-                        break
+            # Get placed core materials
+            placed_cores = [s.item_id for s in self.core_slots if s is not None]
+            required_cores = [inp.get('materialId') for inp in placement.core_inputs]
 
-            if not core_match:
+            # Match core inputs (order doesn't matter)
+            if sorted(placed_cores) != sorted(required_cores):
                 continue
 
             # Match surrounding inputs (order doesn't matter for refining)
@@ -253,8 +293,10 @@ class InteractiveRefiningUI(InteractiveBaseUI):
     def get_placement_data(self) -> Dict[str, Any]:
         return {
             'type': 'refining',
-            'core': self.core_slot,
-            'surrounding': self.surrounding_slots
+            'core_slots': self.core_slots,
+            'surrounding_slots': self.surrounding_slots,
+            'num_core_slots': self.num_core_slots,
+            'num_surrounding_slots': self.num_surrounding_slots
         }
 
 
@@ -263,12 +305,15 @@ class InteractiveAlchemyUI(InteractiveBaseUI):
     Sequential slots model for alchemy:
     [Slot 0] -> [Slot 1] -> [Slot 2] -> [Result]
        Base      Reagent    Catalyst
+
+    Max slots by tier: T1=2, T2=3, T3=4, T4=6
     """
 
     def __init__(self, station_type: str, station_tier: int, inventory: Inventory):
         super().__init__(station_type, station_tier, inventory)
-        # More slots at higher tiers (3 + tier)
-        num_slots = min(3 + station_tier, 7)
+        # CORRECT max slots by tier from placements-alchemy-1.JSON
+        max_slots_by_tier = {1: 2, 2: 3, 3: 4, 4: 6}
+        num_slots = max_slots_by_tier.get(station_tier, 2)
         self.slots: List[Optional[PlacedMaterial]] = [None] * num_slots
 
     def place_material(self, position: Any, item_stack: ItemStack) -> bool:
@@ -361,12 +406,14 @@ class InteractiveAlchemyUI(InteractiveBaseUI):
 class InteractiveEngineeringUI(InteractiveBaseUI):
     """
     Slot-type model for engineering:
-    [Core] [Core]        <- Core components
-    [Spring] [Gear]      <- Mechanical parts
-    [Wiring]             <- Optional enhancements
+    Canvas system with 5 slot types: FRAME, FUNCTION, POWER, MODIFIER, UTILITY
+
+    Each slot type can hold specific materials that define the device's behavior.
+    Recipes specify which slot types are required and what materials go in each.
     """
 
-    SLOT_TYPES = ['core', 'spring', 'gear', 'wiring', 'enhancement']
+    # CORRECT slot types from placements-engineering-1.JSON
+    SLOT_TYPES = ['FRAME', 'FUNCTION', 'POWER', 'MODIFIER', 'UTILITY']
 
     def __init__(self, station_type: str, station_tier: int, inventory: Inventory):
         super().__init__(station_type, station_tier, inventory)
@@ -477,12 +524,14 @@ class InteractiveEngineeringUI(InteractiveBaseUI):
 class InteractiveSmithingUI(InteractiveBaseUI):
     """
     Grid-based placement for smithing:
-    Grid size depends on station tier (T1=4x4, T2=5x5, T3=6x6, T4=6x6)
+    Grid size depends on station tier (T1=3x3, T2=5x5, T3=7x7, T4=9x9)
     """
 
     def __init__(self, station_type: str, station_tier: int, inventory: Inventory):
         super().__init__(station_type, station_tier, inventory)
-        self.grid_size = min(3 + station_tier, 6)  # T1=4, T2=5, T3=6, T4=6
+        # CORRECT grid sizes by tier from GAME_MECHANICS_V6.md
+        grid_sizes = {1: 3, 2: 5, 3: 7, 4: 9}
+        self.grid_size = grid_sizes.get(station_tier, 3)
         self.grid: Dict[Tuple[int, int], PlacedMaterial] = {}
 
     def place_material(self, position: Any, item_stack: ItemStack) -> bool:
@@ -564,32 +613,53 @@ class InteractiveSmithingUI(InteractiveBaseUI):
 
 class InteractiveAdornmentsUI(InteractiveBaseUI):
     """
-    Grid-based placement with pattern support for adornments/enchanting.
-    Similar to smithing but with vertex-based patterns.
+    Vertex-based Cartesian coordinate system for adornments/enchanting.
+
+    Uses a coordinate system where materials are placed at specific (x,y) vertices.
+    Coordinate range: -7 to +7 for all tiers (origin at 0,0)
+    Grid templates by tier: T1=8x8, T2=10x10, T3=12x12, T4=14x14
+
+    Recipes are matched against exact vertex coordinate patterns stored in
+    placement_map with keys like "0,0", "3,3", "-3,-3", etc.
     """
 
     def __init__(self, station_type: str, station_tier: int, inventory: Inventory):
         super().__init__(station_type, station_tier, inventory)
-        self.grid_size = min(3 + station_tier, 6)
-        self.grid: Dict[Tuple[int, int], PlacedMaterial] = {}
+
+        # CORRECT grid templates by tier from placements-adornments-1.JSON
+        grid_templates = {
+            1: 'square_8x8',
+            2: 'square_10x10',
+            3: 'square_12x12',
+            4: 'square_14x14'
+        }
+        self.grid_template = grid_templates.get(station_tier, 'square_8x8')
+
+        # Vertex coordinate system (-7 to +7 range)
+        self.coordinate_range = 7  # All tiers use same range
+        self.vertices: Dict[str, PlacedMaterial] = {}  # "x,y" -> PlacedMaterial
 
     def place_material(self, position: Any, item_stack: ItemStack) -> bool:
-        """Position is a tuple (x, y)"""
+        """Position is a tuple (x, y) in Cartesian coordinates (-7 to +7)"""
         if not isinstance(position, tuple) or len(position) != 2:
             return False
 
         x, y = position
-        if not (0 <= x < self.grid_size and 0 <= y < self.grid_size):
+        if not (-self.coordinate_range <= x <= self.coordinate_range and
+                -self.coordinate_range <= y <= self.coordinate_range):
             return False
 
-        # Return previous material if exists
-        if position in self.grid:
-            old = self.grid[position]
+        # Convert to string key
+        coord_key = f"{x},{y}"
+
+        # Return previous material if exists at this vertex
+        if coord_key in self.vertices:
+            old = self.vertices[coord_key]
             self.return_material(old.item_id, old.quantity)
 
         # Borrow new material
         if self.borrow_material(item_stack.item_id, 1):
-            self.grid[position] = PlacedMaterial(
+            self.vertices[coord_key] = PlacedMaterial(
                 item_id=item_stack.item_id,
                 quantity=1,
                 crafted_stats=item_stack.crafted_stats,
@@ -601,31 +671,38 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
         return False
 
     def remove_material(self, position: Any) -> Optional[PlacedMaterial]:
-        if position in self.grid:
-            mat = self.grid[position]
+        if not isinstance(position, tuple) or len(position) != 2:
+            return None
+
+        x, y = position
+        coord_key = f"{x},{y}"
+
+        if coord_key in self.vertices:
+            mat = self.vertices[coord_key]
             self.return_material(mat.item_id, mat.quantity)
-            del self.grid[position]
+            del self.vertices[coord_key]
             self.matched_recipe = self.check_recipe_match()
             return mat
+
         return None
 
     def clear_placement(self):
-        for pos, mat in list(self.grid.items()):
+        for coord_key, mat in list(self.vertices.items()):
             self.return_material(mat.item_id, mat.quantity)
-        self.grid.clear()
+        self.vertices.clear()
         self.matched_recipe = None
 
     def check_recipe_match(self) -> Optional[Recipe]:
-        """Match against adornment recipes - supports both grid and pattern matching"""
-        if not self.grid:
+        """Match against adornment recipes using vertex-based coordinate matching"""
+        if not self.vertices:
             return None
 
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # Convert current grid to string-key format
+        # Build current placement map
         current_placement = {
-            f"{x},{y}": mat.item_id for (x, y), mat in self.grid.items()
+            coord_key: mat.item_id for coord_key, mat in self.vertices.items()
         }
 
         # Get all adornment recipes for this tier
@@ -636,20 +713,23 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
             if not placement or placement.discipline != 'adornments':
                 continue
 
-            # Try grid-based match first
-            if placement.placement_map and current_placement == placement.placement_map:
-                return recipe
+            # Match against vertex-based placement_map
+            # The placement_map has "vertices" key containing coordinate -> materialId mappings
+            if placement.placement_map and 'vertices' in placement.placement_map:
+                required_vertices = placement.placement_map['vertices']
 
-            # TODO: Pattern-based matching for complex enchantments
-            # This would involve checking placement.pattern for vertex-based shapes
+                # Exact match required
+                if current_placement == required_vertices:
+                    return recipe
 
         return None
 
     def get_placement_data(self) -> Dict[str, Any]:
         return {
             'type': 'adornments',
-            'grid_size': self.grid_size,
-            'grid': self.grid
+            'grid_template': self.grid_template,
+            'coordinate_range': self.coordinate_range,
+            'vertices': self.vertices
         }
 
 
