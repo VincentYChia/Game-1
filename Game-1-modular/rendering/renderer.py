@@ -3499,9 +3499,23 @@ class Renderer:
                             icon_x = core_rect.centerx - icon_size // 2
                             icon_y = core_rect.centery - icon_size // 2 + s(8)
                             surf.blit(icon, (icon_x, icon_y))
+
+                            # Quantity indicator (if > 1)
+                            if core_mat.quantity > 1:
+                                qty_text = self.tiny_font.render(f"x{core_mat.quantity}", True, (255, 255, 255))
+                                qty_bg = pygame.Rect(icon_x + icon_size - qty_text.get_width() - s(4),
+                                                     icon_y + icon_size - s(18),
+                                                     qty_text.get_width() + s(6), s(16))
+                                pygame.draw.rect(surf, (20, 20, 20, 200), qty_bg, border_radius=s(3))
+                                surf.blit(qty_text, (qty_bg.x + s(3), qty_bg.y + s(2)))
                         else:
                             mat_text = self.tiny_font.render(mat_def.name[:6], True, (220, 220, 220))
                             surf.blit(mat_text, (core_rect.centerx - mat_text.get_width() // 2, core_rect.centery + s(5)))
+
+                            # Quantity indicator for text fallback
+                            if core_mat.quantity > 1:
+                                qty_text = self.tiny_font.render(f"(x{core_mat.quantity})", True, (180, 180, 180))
+                                surf.blit(qty_text, (core_rect.centerx - qty_text.get_width() // 2, core_rect.centery + s(20)))
 
                 abs_core_rect = core_rect.move(wx, wy)
                 placement_rects.append((abs_core_rect, ('core', core_idx)))
@@ -3543,10 +3557,24 @@ class Renderer:
                             icon_x = slot_rect.centerx - icon_size // 2
                             icon_y = slot_rect.centery - icon_size // 2 + s(8)
                             surf.blit(icon, (icon_x, icon_y))
+
+                            # Quantity indicator (if > 1)
+                            if slot_mat.quantity > 1:
+                                qty_text = self.tiny_font.render(f"x{slot_mat.quantity}", True, (255, 255, 255))
+                                qty_bg = pygame.Rect(icon_x + icon_size - qty_text.get_width() - s(4),
+                                                     icon_y + icon_size - s(18),
+                                                     qty_text.get_width() + s(6), s(16))
+                                pygame.draw.rect(surf, (20, 20, 20, 200), qty_bg, border_radius=s(3))
+                                surf.blit(qty_text, (qty_bg.x + s(3), qty_bg.y + s(2)))
                         else:
                             abbrev = mat_def.name[:4].upper()
                             mat_text = self.tiny_font.render(abbrev, True, (220, 220, 220))
                             surf.blit(mat_text, (slot_rect.centerx - mat_text.get_width() // 2, slot_rect.centery + s(5)))
+
+                            # Quantity indicator for text fallback
+                            if slot_mat.quantity > 1:
+                                qty_text = self.tiny_font.render(f"(x{slot_mat.quantity})", True, (180, 180, 180))
+                                surf.blit(qty_text, (slot_rect.centerx - qty_text.get_width() // 2, slot_rect.centery + s(18)))
 
                 abs_slot_rect = slot_rect.move(wx, wy)
                 placement_rects.append((abs_slot_rect, ('surrounding', i)))
@@ -3656,6 +3684,12 @@ class Renderer:
                         # Material name
                         mat_text = self.tiny_font.render(mat_def.name[:12], True, (220, 220, 220))
                         surf.blit(mat_text, (chip_rect.x + s(5), chip_rect.centery - mat_text.get_height() // 2))
+
+                        # Quantity indicator (if > 1) - show on right side
+                        if mat.quantity > 1:
+                            qty_text = self.tiny_font.render(f"x{mat.quantity}", True, (255, 255, 100))
+                            qty_x = chip_rect.right - qty_text.get_width() - s(5)
+                            surf.blit(qty_text, (qty_x, chip_rect.centery - qty_text.get_height() // 2))
 
                         abs_chip_rect = chip_rect.move(wx, wy)
                         placement_rects.append((abs_chip_rect, (slot_type, i)))

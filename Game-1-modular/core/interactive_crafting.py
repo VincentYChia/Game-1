@@ -60,17 +60,17 @@ class InteractiveBaseUI(ABC):
         mat_db = MaterialDatabase.get_instance()
         available = []
 
-        # DEBUG MODE: Show 99 of every material up to station tier
+        # DEBUG MODE: Show 99 of every material (all tiers, not limited by station tier)
+        # This allows testing recipes that require higher-tier materials
         if Config.DEBUG_INFINITE_RESOURCES:
             for material_id, mat_def in mat_db.materials.items():
-                if mat_def.tier <= self.station_tier:
-                    # Create a temporary ItemStack with 99 quantity
-                    debug_stack = ItemStack(
-                        item_id=material_id,
-                        quantity=99,
-                        rarity=mat_def.rarity
-                    )
-                    available.append(debug_stack)
+                # Create a temporary ItemStack with 99 quantity
+                debug_stack = ItemStack(
+                    item_id=material_id,
+                    quantity=99,
+                    rarity=mat_def.rarity
+                )
+                available.append(debug_stack)
         else:
             # NORMAL MODE: Show only inventory materials
             for slot in self.inventory.slots:
@@ -674,9 +674,12 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # Convert current grid to string-key format (1-indexed to match JSON)
+        # Convert current grid to string-key format
+        # JSON uses 1-indexed Cartesian coordinates (y=1 is bottom, y=grid_size is top)
+        # UI uses 0-indexed screen coordinates (y=0 is top, y=grid_size-1 is bottom)
+        # So we need to: 1) add 1 for x indexing, 2) invert y coordinate
         current_placement = {
-            f"{x+1},{y+1}": mat.item_id for (x, y), mat in self.grid.items()
+            f"{x+1},{self.grid_size - y}": mat.item_id for (x, y), mat in self.grid.items()
         }
 
         # Get all smithing recipes for this tier
