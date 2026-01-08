@@ -3310,7 +3310,7 @@ class Renderer:
             icon_y = item_rect.y + s(5)
             icon_size = s(32)
             image_cache = ImageCache.get_instance()
-            icon = image_cache.get_material_icon(mat_stack.item_id, size=icon_size)
+            icon = image_cache.get_image(f"materials/{mat_stack.item_id}-2.png", target_size=(icon_size, icon_size))
             if icon:
                 surf.blit(icon, (icon_x, icon_y))
 
@@ -3398,7 +3398,7 @@ class Renderer:
                             # Try to show PNG icon
                             icon_size = min(cell_size - s(10), s(40))
                             image_cache = ImageCache.get_instance()
-                            icon = image_cache.get_material_icon(placed_mat.item_id, size=icon_size)
+                            icon = image_cache.get_image(f"materials/{placed_mat.item_id}-2.png", target_size=(icon_size, icon_size))
                             if icon:
                                 icon_x = cell_rect.centerx - icon_size // 2
                                 icon_y = cell_rect.centery - icon_size // 2
@@ -3465,7 +3465,7 @@ class Renderer:
                         # Try PNG icon
                         icon_size = s(40)
                         image_cache = ImageCache.get_instance()
-                        icon = image_cache.get_material_icon(core_mat.item_id, size=icon_size)
+                        icon = image_cache.get_image(f"materials/{core_mat.item_id}-2.png", target_size=(icon_size, icon_size))
                         if icon:
                             icon_x = core_rect.centerx - icon_size // 2
                             icon_y = core_rect.centery - icon_size // 2 + s(8)
@@ -3509,7 +3509,7 @@ class Renderer:
                         # Try PNG icon
                         icon_size = s(35)
                         image_cache = ImageCache.get_instance()
-                        icon = image_cache.get_material_icon(slot_mat.item_id, size=icon_size)
+                        icon = image_cache.get_image(f"materials/{slot_mat.item_id}-2.png", target_size=(icon_size, icon_size))
                         if icon:
                             icon_x = slot_rect.centerx - icon_size // 2
                             icon_y = slot_rect.centery - icon_size // 2 + s(8)
@@ -3558,7 +3558,7 @@ class Renderer:
                         # Try PNG icon
                         icon_size = s(40)
                         image_cache = ImageCache.get_instance()
-                        icon = image_cache.get_material_icon(slot_mat.item_id, size=icon_size)
+                        icon = image_cache.get_image(f"materials/{slot_mat.item_id}-2.png", target_size=(icon_size, icon_size))
                         if icon:
                             icon_x = slot_rect.centerx - icon_size // 2
                             icon_y = slot_rect.centery - icon_size // 2 + s(5)
@@ -3689,7 +3689,7 @@ class Renderer:
                         if mat_def:
                             icon_size = max(s(12), cell_size - s(4))
                             image_cache = ImageCache.get_instance()
-                            icon = image_cache.get_material_icon(placed_mat.item_id, size=icon_size)
+                            icon = image_cache.get_image(f"materials/{placed_mat.item_id}-2.png", target_size=(icon_size, icon_size))
                             if icon:
                                 icon_x = cell_rect.centerx - icon_size // 2
                                 icon_y = cell_rect.centery - icon_size // 2
