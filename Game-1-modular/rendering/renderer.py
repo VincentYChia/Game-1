@@ -3790,31 +3790,35 @@ class Renderer:
                 py = grid_offset_y + (coord_range - cart_y) * cell_size + cell_size // 2
                 return (px, py)
 
-            # Draw grid background and axes
+            # Draw grid as dots at vertices (not filled squares)
             for y in range(grid_size):
                 for x in range(grid_size):
                     cart_x = x - coord_range
                     cart_y = coord_range - y
-                    px = grid_offset_x + x * cell_size
-                    py = grid_offset_y + y * cell_size
+                    px = grid_offset_x + x * cell_size + cell_size // 2
+                    py = grid_offset_y + y * cell_size + cell_size // 2
 
                     is_origin = (cart_x == 0 and cart_y == 0)
                     is_axis = (cart_x == 0 or cart_y == 0)
 
+                    # Draw dot at vertex position
                     if is_origin:
-                        cell_color = (70, 70, 100)
+                        dot_color = (150, 150, 200)  # Bright blue for origin
+                        dot_radius = s(4)
                     elif is_axis:
-                        cell_color = (45, 50, 55)
+                        dot_color = (100, 100, 120)  # Medium gray for axes
+                        dot_radius = s(3)
                     else:
-                        cell_color = (35, 40, 45)
+                        dot_color = (70, 75, 80)     # Dark gray for regular vertices
+                        dot_radius = s(2)
 
-                    cell_rect = pygame.Rect(px, py, cell_size - s(1), cell_size - s(1))
-                    pygame.draw.rect(surf, cell_color, cell_rect)
-                    pygame.draw.rect(surf, (60, 65, 70), cell_rect, s(1))
+                    pygame.draw.circle(surf, dot_color, (px, py), dot_radius)
 
-                    # Create click region for this grid cell (for shape placement)
-                    abs_cell_rect = cell_rect.move(wx, wy)
-                    placement_rects.append((abs_cell_rect, (cart_x, cart_y)))
+                    # Create click region for this grid vertex (for shape placement)
+                    # Use larger rect for easier clicking
+                    click_rect = pygame.Rect(px - cell_size // 2, py - cell_size // 2, cell_size, cell_size)
+                    abs_click_rect = click_rect.move(wx, wy)
+                    placement_rects.append((abs_click_rect, (cart_x, cart_y)))
 
             # Draw shape lines
             for shape in interactive_ui.shapes:
