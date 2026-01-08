@@ -2148,10 +2148,69 @@ class GameEngine:
                 return
 
         # Check placement area clicks
-        if self.interactive_ui.selected_material:
-            for placement_rect, position in self.interactive_placement_rects:
-                if placement_rect.collidepoint(mouse_pos):
-                    # Place material at position
+        from core.interactive_crafting import InteractiveAdornmentsUI
+        for placement_rect, position in self.interactive_placement_rects:
+            if placement_rect.collidepoint(mouse_pos):
+                # Handle adornments-specific controls
+                if isinstance(self.interactive_ui, InteractiveAdornmentsUI):
+                    if isinstance(position, tuple) and len(position) == 2:
+                        if position[0] == 'shape_select':
+                            # Shape selection button clicked
+                            shape_type = position[1]
+                            self.interactive_ui.selected_shape_type = shape_type
+                            print(f"✓ Selected shape: {shape_type}")
+                            return
+
+                        elif position[0] == 'rotation':
+                            # Rotation button clicked
+                            rot_delta = position[1]
+                            self.interactive_ui.selected_rotation = (self.interactive_ui.selected_rotation + rot_delta) % 360
+                            print(f"✓ Rotation: {self.interactive_ui.selected_rotation}°")
+                            return
+
+                        elif position[0] == 'delete_shape':
+                            # Delete shape button clicked
+                            shape_idx = position[1]
+                            success = self.interactive_ui.remove_shape(shape_idx)
+                            if success:
+                                print(f"✓ Deleted shape {shape_idx + 1}")
+                                self.add_notification("Shape removed", (200, 200, 200))
+                            return
+
+                        # Otherwise it's a grid click for shape placement or vertex material assignment
+                        cart_x, cart_y = position
+
+                        # If a shape is selected, try to place the shape
+                        if self.interactive_ui.selected_shape_type:
+                            success = self.interactive_ui.place_shape(
+                                self.interactive_ui.selected_shape_type,
+                                cart_x, cart_y,
+                                self.interactive_ui.selected_rotation
+                            )
+                            if success:
+                                print(f"✓ Placed shape {self.interactive_ui.selected_shape_type} at ({cart_x},{cart_y})")
+                                self.add_notification("Shape placed", (100, 255, 100))
+                            else:
+                                print(f"✗ Failed to place shape at ({cart_x},{cart_y})")
+                                self.add_notification("Cannot place shape there", (255, 100, 100))
+                            return
+
+                        # If material is selected and this is a vertex, assign material
+                        elif self.interactive_ui.selected_material:
+                            success = self.interactive_ui.place_material(position, self.interactive_ui.selected_material)
+                            if success:
+                                print(f"✓ Assigned {self.interactive_ui.selected_material.item_id} to vertex ({cart_x},{cart_y})")
+                                if self.interactive_ui.matched_recipe:
+                                    recipe = self.interactive_ui.matched_recipe
+                                    print(f"🎯 RECIPE MATCHED: {recipe.recipe_id}")
+                                    self.add_notification(f"Recipe Matched!", (100, 255, 100))
+                            else:
+                                print(f"✗ Cannot assign material to ({cart_x},{cart_y}) - not a vertex")
+                                self.add_notification("Not a valid vertex", (255, 100, 100))
+                            return
+
+                # Handle normal placement for other disciplines
+                elif self.interactive_ui.selected_material:
                     success = self.interactive_ui.place_material(position, self.interactive_ui.selected_material)
                     if success:
                         print(f"✓ Placed {self.interactive_ui.selected_material.item_id} at {position}")
