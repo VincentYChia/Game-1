@@ -805,6 +805,17 @@ class GameEngine:
                 if self.character is None:
                     continue
 
+                # Handle mouse wheel scrolling for interactive crafting material palette
+                if self.interactive_crafting_active and self.interactive_ui and self.crafting_window_rect:
+                    if self.crafting_window_rect.collidepoint(self.mouse_pos):
+                        # Scroll the material palette
+                        self.interactive_ui.material_palette_scroll -= event.y  # event.y is positive for scroll up
+                        # Clamp to valid range (0 to max materials)
+                        available_materials = self.interactive_ui.get_available_materials()
+                        max_scroll = max(0, len(available_materials) - 10)  # Assume ~10 visible items
+                        self.interactive_ui.material_palette_scroll = max(0, min(self.interactive_ui.material_palette_scroll, max_scroll))
+                        continue  # Skip other scroll handlers
+
                 # Handle mouse wheel scrolling for recipe list
                 if self.character.crafting_ui_open and self.crafting_window_rect:
                     if self.crafting_window_rect.collidepoint(self.mouse_pos):
@@ -882,7 +893,7 @@ class GameEngine:
                 self.mouse_buttons_pressed.discard(3)
 
     def handle_right_click(self, mouse_pos: Tuple[int, int], shift_held: bool = False):
-        """Handle right-click events (SHIFT+right for consumables, right-click for offhand attacks)"""
+        """Handle right-click events (SHIFT+right for consumables, right-click for offhand attacks, right-click to remove materials in interactive crafting)"""
         # Check if clicking on UI elements first (high priority)
         if self.start_menu_open or self.active_minigame or self.enchantment_selection_active:
             return  # Don't handle right-click on UI
@@ -899,6 +910,17 @@ class GameEngine:
 
         if self.npc_dialogue_open or self.character.equipment_ui_open:
             return  # Don't handle right-click on UI
+
+        # Handle right-click in interactive crafting UI to remove materials
+        if self.interactive_crafting_active and self.interactive_ui:
+            for placement_rect, position in self.interactive_placement_rects:
+                if placement_rect.collidepoint(mouse_pos):
+                    # Remove material from this position
+                    removed = self.interactive_ui.remove_material(position)
+                    if removed:
+                        print(f"✓ Removed {removed.item_id} from position {position}")
+                        self.add_notification("Material removed", (200, 200, 200))
+                    return  # Don't process world clicks
 
         # Handle inventory SHIFT+right-clicks for consumables
         if shift_held and mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
