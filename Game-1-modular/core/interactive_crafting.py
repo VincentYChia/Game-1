@@ -318,19 +318,19 @@ class InteractiveRefiningUI(InteractiveBaseUI):
             if not placement or placement.discipline != 'refining':
                 continue
 
-            # Get placed core materials
-            placed_cores = [s.item_id for s in self.core_slots if s is not None]
-            required_cores = [inp.get('materialId') for inp in placement.core_inputs]
+            # Get placed core materials with quantities
+            placed_cores = [(s.item_id, s.quantity) for s in self.core_slots if s is not None]
+            required_cores = [(inp.get('materialId'), inp.get('quantity', 1)) for inp in placement.core_inputs]
 
-            # Match core inputs (order doesn't matter)
+            # Match core inputs (order doesn't matter, but quantities must match)
             if sorted(placed_cores) != sorted(required_cores):
                 continue
 
             # Match surrounding inputs (order doesn't matter for refining)
-            placed_surrounding = [s.item_id for s in self.surrounding_slots if s is not None]
-            required_surrounding = [inp.get('materialId') for inp in placement.surrounding_inputs]
+            placed_surrounding = [(s.item_id, s.quantity) for s in self.surrounding_slots if s is not None]
+            required_surrounding = [(inp.get('materialId'), inp.get('quantity', 1)) for inp in placement.surrounding_inputs]
 
-            # Check if all required surrounding materials are present
+            # Check if all required surrounding materials with quantities are present
             if sorted(placed_surrounding) == sorted(required_surrounding):
                 return recipe
 
@@ -436,9 +436,10 @@ class InteractiveAlchemyUI(InteractiveBaseUI):
                 continue
 
             # Build required sequence from placement ingredients
+            # NOTE: JSON uses 1-indexed slots, but UI uses 0-indexed arrays
             required_sequence = []
             for ingredient in placement.ingredients:
-                slot_idx = ingredient.get('slot', 0)
+                slot_idx = ingredient.get('slot', 1) - 1  # Convert 1-indexed to 0-indexed
                 mat_id = ingredient.get('materialId', '')
                 quantity = ingredient.get('quantity', 1)
                 # Extend list if needed
@@ -568,11 +569,11 @@ class InteractiveEngineeringUI(InteractiveBaseUI):
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # Build current placement by slot type
-        current_by_type: Dict[str, List[str]] = {}
+        # Build current placement by slot type (material_id, quantity) tuples
+        current_by_type: Dict[str, List[Tuple[str, int]]] = {}
         for slot_type, materials in self.slots.items():
             if materials:
-                current_by_type[slot_type] = sorted([m.item_id for m in materials])
+                current_by_type[slot_type] = sorted([(m.item_id, m.quantity) for m in materials])
 
         # Get all engineering recipes for this tier
         recipes = recipe_db.get_recipes_for_station(self.station_type, self.station_tier)
@@ -582,15 +583,16 @@ class InteractiveEngineeringUI(InteractiveBaseUI):
             if not placement or placement.discipline != 'engineering':
                 continue
 
-            # Build required placement by slot type
-            required_by_type: Dict[str, List[str]] = {}
+            # Build required placement by slot type with quantities
+            required_by_type: Dict[str, List[Tuple[str, int]]] = {}
             for slot_entry in placement.slots:
                 slot_type = slot_entry.get('type', '')
                 mat_id = slot_entry.get('materialId', '')
+                quantity = slot_entry.get('quantity', 1)
                 if slot_type and mat_id:
                     if slot_type not in required_by_type:
                         required_by_type[slot_type] = []
-                    required_by_type[slot_type].append(mat_id)
+                    required_by_type[slot_type].append((mat_id, quantity))
 
             # Sort each type's materials for comparison
             for slot_type in required_by_type:
