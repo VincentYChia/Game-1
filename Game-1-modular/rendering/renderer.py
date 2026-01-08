@@ -3812,6 +3812,10 @@ class Renderer:
                     pygame.draw.rect(surf, cell_color, cell_rect)
                     pygame.draw.rect(surf, (60, 65, 70), cell_rect, s(1))
 
+                    # Create click region for this grid cell (for shape placement)
+                    abs_cell_rect = cell_rect.move(wx, wy)
+                    placement_rects.append((abs_cell_rect, (cart_x, cart_y)))
+
             # Draw shape lines
             for shape in interactive_ui.shapes:
                 vertices_str = shape['vertices']
