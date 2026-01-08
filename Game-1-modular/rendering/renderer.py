@@ -3305,13 +3305,22 @@ class Renderer:
                 border_color = (255, 215, 0)  # Gold for selected
             pygame.draw.rect(surf, border_color, item_rect, s(2), border_radius=s(3))
 
-            # Material name
-            name_text = self.tiny_font.render(mat_def.name, True, (220, 220, 220))
-            surf.blit(name_text, (item_rect.x + s(5), item_rect.y + s(5)))
+            # Material PNG icon (left side)
+            icon_x = item_rect.x + s(5)
+            icon_y = item_rect.y + s(5)
+            icon_size = s(32)
+            image_cache = ImageCache.get_instance()
+            icon = image_cache.get_material_icon(mat_stack.item_id, size=icon_size)
+            if icon:
+                surf.blit(icon, (icon_x, icon_y))
 
-            # Quantity and tier
+            # Material name (right of icon)
+            name_text = self.tiny_font.render(mat_def.name, True, (220, 220, 220))
+            surf.blit(name_text, (icon_x + icon_size + s(8), item_rect.y + s(5)))
+
+            # Quantity and tier (right of icon)
             qty_text = self.tiny_font.render(f"x{mat_stack.quantity} (T{mat_def.tier})", True, (180, 180, 180))
-            surf.blit(qty_text, (item_rect.x + s(5), item_rect.y + s(22)))
+            surf.blit(qty_text, (icon_x + icon_size + s(8), item_rect.y + s(22)))
 
             # Store for click detection
             abs_rect = item_rect.move(wx, wy)
@@ -3343,15 +3352,15 @@ class Renderer:
         # Render discipline-specific placement area
         placement_rects = []
 
-        if isinstance(interactive_ui, InteractiveSmithingUI) or isinstance(interactive_ui, InteractiveAdornmentsUI):
-            # GRID-BASED (Smithing / Adornments)
+        if isinstance(interactive_ui, InteractiveSmithingUI):
+            # GRID-BASED (Smithing only)
             grid_size = interactive_ui.grid_size
             cell_size = min(s(60), (placement_w - s(40)) // grid_size)
             grid_offset_x = placement_x + (placement_w - grid_size * cell_size) // 2
             grid_offset_y = placement_y + s(30)
 
             # Header
-            header_text = f"GRID PLACEMENT ({grid_size}x{grid_size})"
+            header_text = f"SMITHING GRID ({grid_size}x{grid_size})"
             surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
 
             # Render grid
@@ -3386,58 +3395,99 @@ class Renderer:
                     if placed_mat:
                         mat_def = mat_db.get_material(placed_mat.item_id)
                         if mat_def:
-                            # Show material name abbreviation
-                            abbrev = mat_def.name[:3].upper()
-                            text = self.tiny_font.render(abbrev, True, (220, 220, 220))
-                            text_x = cell_rect.centerx - text.get_width() // 2
-                            text_y = cell_rect.centery - text.get_height() // 2
-                            surf.blit(text, (text_x, text_y))
+                            # Try to show PNG icon
+                            icon_size = min(cell_size - s(10), s(40))
+                            image_cache = ImageCache.get_instance()
+                            icon = image_cache.get_material_icon(placed_mat.item_id, size=icon_size)
+                            if icon:
+                                icon_x = cell_rect.centerx - icon_size // 2
+                                icon_y = cell_rect.centery - icon_size // 2
+                                surf.blit(icon, (icon_x, icon_y))
+                            else:
+                                # Fallback to text abbreviation if no icon
+                                abbrev = mat_def.name[:3].upper()
+                                text = self.tiny_font.render(abbrev, True, (220, 220, 220))
+                                text_x = cell_rect.centerx - text.get_width() // 2
+                                text_y = cell_rect.centery - text.get_height() // 2
+                                surf.blit(text, (text_x, text_y))
 
                     # Store for click detection
                     abs_rect = cell_rect.move(wx, wy)
                     placement_rects.append((abs_rect, pos))
 
         elif isinstance(interactive_ui, InteractiveRefiningUI):
-            # HUB-AND-SPOKE (Refining)
-            header_text = "HUB-AND-SPOKE PLACEMENT"
+            # HUB-AND-SPOKE (Refining) with tier-varying core slots
+            num_cores = interactive_ui.num_core_slots
+            header_text = f"HUB-AND-SPOKE PLACEMENT ({num_cores} core, {interactive_ui.num_surrounding_slots} surrounding)"
             surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
 
-            # Center hub
-            hub_size = s(80)
-            hub_x = placement_x + placement_w // 2 - hub_size // 2
-            hub_y = placement_y + placement_h // 2 - hub_size // 2
-            hub_rect = pygame.Rect(hub_x, hub_y, hub_size, hub_size)
+            # Render core slots (center area)
+            core_size = s(70)
+            center_x = placement_x + placement_w // 2
+            center_y = placement_y + placement_h // 2
 
-            # Core slot rendering
-            is_hovered = hub_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
-            core_color = (80, 100, 80) if interactive_ui.core_slot else ((70, 80, 90) if is_hovered else (50, 60, 70))
-            pygame.draw.rect(surf, core_color, hub_rect, border_radius=s(8))
-            pygame.draw.rect(surf, (140, 160, 180) if is_hovered else (100, 120, 140), hub_rect, s(3), border_radius=s(8))
+            # Layout core slots based on count
+            if num_cores == 1:
+                core_positions = [(0, 0)]
+            elif num_cores == 2:
+                core_positions = [(-40, 0), (40, 0)]
+            elif num_cores == 3:
+                core_positions = [(-50, -30), (50, -30), (0, 40)]
+            else:  # More than 3
+                # Arrange in a small circle
+                import math
+                core_positions = []
+                for i in range(num_cores):
+                    angle = (i / num_cores) * 2 * math.pi - math.pi/2
+                    core_positions.append((int(35 * math.cos(angle)), int(35 * math.sin(angle))))
 
-            # Core label
-            core_label = self.tiny_font.render("CORE", True, (200, 200, 200))
-            surf.blit(core_label, (hub_rect.centerx - core_label.get_width() // 2, hub_rect.y + s(5)))
+            for core_idx, (offset_x, offset_y) in enumerate(core_positions):
+                core_x = center_x + s(offset_x) - core_size // 2
+                core_y = center_y + s(offset_y) - core_size // 2
+                core_rect = pygame.Rect(core_x, core_y, core_size, core_size)
 
-            # Material name if placed
-            if interactive_ui.core_slot:
-                mat_def = mat_db.get_material(interactive_ui.core_slot.item_id)
-                if mat_def:
-                    mat_text = self.tiny_font.render(mat_def.name[:8], True, (220, 220, 220))
-                    surf.blit(mat_text, (hub_rect.centerx - mat_text.get_width() // 2, hub_rect.centery))
+                # Check if slot has material
+                core_mat = interactive_ui.core_slots[core_idx]
+                is_hovered = core_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
 
-            abs_hub_rect = hub_rect.move(wx, wy)
-            placement_rects.append((abs_hub_rect, 'core'))
+                core_color = (80, 100, 80) if core_mat else ((70, 80, 90) if is_hovered else (50, 60, 70))
+                pygame.draw.rect(surf, core_color, core_rect, border_radius=s(8))
+                pygame.draw.rect(surf, (140, 160, 180) if is_hovered else (100, 120, 140), core_rect, s(3), border_radius=s(8))
 
-            # Surrounding slots (6 positions in circle)
+                # Core label
+                core_label = self.tiny_font.render(f"C{core_idx+1}", True, (200, 200, 200))
+                surf.blit(core_label, (core_rect.centerx - core_label.get_width() // 2, core_rect.y + s(5)))
+
+                # Material icon or name
+                if core_mat:
+                    mat_def = mat_db.get_material(core_mat.item_id)
+                    if mat_def:
+                        # Try PNG icon
+                        icon_size = s(40)
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_material_icon(core_mat.item_id, size=icon_size)
+                        if icon:
+                            icon_x = core_rect.centerx - icon_size // 2
+                            icon_y = core_rect.centery - icon_size // 2 + s(8)
+                            surf.blit(icon, (icon_x, icon_y))
+                        else:
+                            mat_text = self.tiny_font.render(mat_def.name[:6], True, (220, 220, 220))
+                            surf.blit(mat_text, (core_rect.centerx - mat_text.get_width() // 2, core_rect.centery + s(5)))
+
+                abs_core_rect = core_rect.move(wx, wy)
+                placement_rects.append((abs_core_rect, ('core', core_idx)))
+
+            # Surrounding slots (tier-varying count in circle)
             surrounding_size = s(60)
             radius = s(130)
-            angles = [270, 330, 30, 90, 150, 210]  # Degrees (starting top, going clockwise)
+            num_surrounding = interactive_ui.num_surrounding_slots
 
-            for i, angle_deg in enumerate(angles):
-                import math
-                angle_rad = math.radians(angle_deg)
-                slot_x = hub_rect.centerx + int(radius * math.cos(angle_rad)) - surrounding_size // 2
-                slot_y = hub_rect.centery + int(radius * math.sin(angle_rad)) - surrounding_size // 2
+            # Generate angles evenly distributed around circle
+            import math
+            for i in range(num_surrounding):
+                angle_rad = (i / num_surrounding) * 2 * math.pi - math.pi/2  # Start at top
+                slot_x = center_x + int(radius * math.cos(angle_rad)) - surrounding_size // 2
+                slot_y = center_y + int(radius * math.sin(angle_rad)) - surrounding_size // 2
                 slot_rect = pygame.Rect(slot_x, slot_y, surrounding_size, surrounding_size)
 
                 # Check if slot has material
@@ -3449,19 +3499,28 @@ class Renderer:
                 pygame.draw.rect(surf, (120, 140, 160) if is_hovered else (90, 110, 130), slot_rect, s(2), border_radius=s(6))
 
                 # Slot number
-                num_text = self.tiny_font.render(str(i), True, (150, 150, 150))
+                num_text = self.tiny_font.render(str(i+1), True, (150, 150, 150))
                 surf.blit(num_text, (slot_rect.x + s(5), slot_rect.y + s(5)))
 
-                # Material abbreviation if placed
+                # Material icon or abbreviation
                 if slot_mat:
                     mat_def = mat_db.get_material(slot_mat.item_id)
                     if mat_def:
-                        abbrev = mat_def.name[:4].upper()
-                        mat_text = self.tiny_font.render(abbrev, True, (220, 220, 220))
-                        surf.blit(mat_text, (slot_rect.centerx - mat_text.get_width() // 2, slot_rect.centery))
+                        # Try PNG icon
+                        icon_size = s(35)
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_material_icon(slot_mat.item_id, size=icon_size)
+                        if icon:
+                            icon_x = slot_rect.centerx - icon_size // 2
+                            icon_y = slot_rect.centery - icon_size // 2 + s(8)
+                            surf.blit(icon, (icon_x, icon_y))
+                        else:
+                            abbrev = mat_def.name[:4].upper()
+                            mat_text = self.tiny_font.render(abbrev, True, (220, 220, 220))
+                            surf.blit(mat_text, (slot_rect.centerx - mat_text.get_width() // 2, slot_rect.centery + s(5)))
 
                 abs_slot_rect = slot_rect.move(wx, wy)
-                placement_rects.append((abs_slot_rect, i))
+                placement_rects.append((abs_slot_rect, ('surrounding', i)))
 
         elif isinstance(interactive_ui, InteractiveAlchemyUI):
             # SEQUENTIAL SLOTS (Alchemy)
@@ -3492,23 +3551,32 @@ class Renderer:
                 label_text = self.tiny_font.render(f"Slot {i+1}", True, (180, 180, 180))
                 surf.blit(label_text, (slot_rect.centerx - label_text.get_width() // 2, slot_rect.y + s(5)))
 
-                # Material name if placed
+                # Material icon or name
                 if slot_mat:
                     mat_def = mat_db.get_material(slot_mat.item_id)
                     if mat_def:
-                        mat_text = self.tiny_font.render(mat_def.name[:10], True, (220, 220, 220))
-                        surf.blit(mat_text, (slot_rect.centerx - mat_text.get_width() // 2, slot_rect.centery))
+                        # Try PNG icon
+                        icon_size = s(40)
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_material_icon(slot_mat.item_id, size=icon_size)
+                        if icon:
+                            icon_x = slot_rect.centerx - icon_size // 2
+                            icon_y = slot_rect.centery - icon_size // 2 + s(5)
+                            surf.blit(icon, (icon_x, icon_y))
+                        else:
+                            mat_text = self.tiny_font.render(mat_def.name[:10], True, (220, 220, 220))
+                            surf.blit(mat_text, (slot_rect.centerx - mat_text.get_width() // 2, slot_rect.centery))
 
                 abs_slot_rect = slot_rect.move(wx, wy)
                 placement_rects.append((abs_slot_rect, i))
 
         elif isinstance(interactive_ui, InteractiveEngineeringUI):
             # SLOT-TYPE GROUPING (Engineering)
-            header_text = "COMPONENT PLACEMENT"
+            header_text = "COMPONENT PLACEMENT (Slot-Type Canvas)"
             surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
 
-            # Render slot types vertically
-            slot_types = ['core', 'spring', 'gear', 'wiring', 'enhancement']
+            # CORRECT slot types from specification
+            slot_types = ['FRAME', 'FUNCTION', 'POWER', 'MODIFIER', 'UTILITY']
             slot_h = s(60)
             type_y = placement_y + s(40)
 
@@ -3554,6 +3622,107 @@ class Renderer:
                 placement_rects.append((abs_add_rect, (slot_type, len(materials))))
 
                 type_y += slot_h
+
+        elif isinstance(interactive_ui, InteractiveAdornmentsUI):
+            # VERTEX-BASED CARTESIAN COORDINATE SYSTEM (Adornments/Enchanting)
+            header_text = f"VERTEX PLACEMENT ({interactive_ui.grid_template})"
+            surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
+
+            # Cartesian coordinate system with origin at center
+            coord_range = interactive_ui.coordinate_range  # -7 to +7
+            grid_size = coord_range * 2 + 1  # 15x15 for range of 7
+            cell_size = min(s(30), (placement_w - s(80)) // grid_size, (placement_h - s(80)) // grid_size)
+
+            grid_width = grid_size * cell_size
+            grid_height = grid_size * cell_size
+            grid_offset_x = placement_x + (placement_w - grid_width) // 2
+            grid_offset_y = placement_y + s(50) + (placement_h - s(80) - grid_height) // 2
+
+            # Draw grid with coordinate labels
+            for y in range(grid_size):
+                for x in range(grid_size):
+                    # Convert grid position to Cartesian coordinates
+                    cart_x = x - coord_range
+                    cart_y = coord_range - y  # Invert y for Cartesian
+
+                    cell_x = grid_offset_x + x * cell_size
+                    cell_y = grid_offset_y + y * cell_size
+                    cell_rect = pygame.Rect(cell_x, cell_y, cell_size - s(1), cell_size - s(1))
+
+                    # Check if vertex has material
+                    coord_key = f"{cart_x},{cart_y}"
+                    placed_mat = interactive_ui.vertices.get(coord_key)
+
+                    # Cell color
+                    is_hovered = cell_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+
+                    # Highlight origin (0,0)
+                    is_origin = (cart_x == 0 and cart_y == 0)
+
+                    if placed_mat:
+                        mat_def = mat_db.get_material(placed_mat.item_id)
+                        tier_colors = {1: (60, 60, 70), 2: (60, 80, 60), 3: (60, 70, 90), 4: (90, 60, 90)}
+                        cell_color = tier_colors.get(mat_def.tier if mat_def else 1, (50, 50, 60))
+                    elif is_origin:
+                        cell_color = (70, 70, 100) if not is_hovered else (90, 90, 120)
+                    elif is_hovered:
+                        cell_color = (60, 70, 80)
+                    else:
+                        cell_color = (35, 40, 45)
+
+                    pygame.draw.rect(surf, cell_color, cell_rect)
+
+                    # Border
+                    if is_origin:
+                        border_color = (150, 150, 200)  # Highlight origin
+                        pygame.draw.rect(surf, border_color, cell_rect, s(2))
+                    elif is_hovered:
+                        border_color = (120, 140, 160)
+                        pygame.draw.rect(surf, border_color, cell_rect, s(1))
+                    else:
+                        border_color = (60, 70, 80)
+                        pygame.draw.rect(surf, border_color, cell_rect, s(1))
+
+                    # Material icon if placed (very small)
+                    if placed_mat:
+                        mat_def = mat_db.get_material(placed_mat.item_id)
+                        if mat_def:
+                            icon_size = max(s(12), cell_size - s(4))
+                            image_cache = ImageCache.get_instance()
+                            icon = image_cache.get_material_icon(placed_mat.item_id, size=icon_size)
+                            if icon:
+                                icon_x = cell_rect.centerx - icon_size // 2
+                                icon_y = cell_rect.centery - icon_size // 2
+                                surf.blit(icon, (icon_x, icon_y))
+                            else:
+                                # Very small dot if no icon
+                                pygame.draw.circle(surf, (220, 220, 220), cell_rect.center, s(3))
+
+                    # Store for click detection (use Cartesian coords as position)
+                    abs_rect = cell_rect.move(wx, wy)
+                    placement_rects.append((abs_rect, (cart_x, cart_y)))
+
+            # Coordinate axis labels
+            # X-axis labels (bottom)
+            for x in range(0, grid_size, max(1, grid_size // 8)):
+                cart_x = x - coord_range
+                label_x = grid_offset_x + x * cell_size + cell_size // 2
+                label_y = grid_offset_y + grid_height + s(5)
+                label = self.tiny_font.render(str(cart_x), True, (150, 150, 150))
+                surf.blit(label, (label_x - label.get_width() // 2, label_y))
+
+            # Y-axis labels (left)
+            for y in range(0, grid_size, max(1, grid_size // 8)):
+                cart_y = coord_range - y
+                label_x = grid_offset_x - s(20)
+                label_y = grid_offset_y + y * cell_size + cell_size // 2
+                label = self.tiny_font.render(str(cart_y), True, (150, 150, 150))
+                surf.blit(label, (label_x - label.get_width(), label_y - label.get_height() // 2))
+
+            # Coordinate hint
+            hint_text = "Cartesian grid: origin (0,0) at center"
+            hint_surf = self.tiny_font.render(hint_text, True, (120, 120, 140))
+            surf.blit(hint_surf, (placement_x + s(15), placement_y + s(25)))
 
         # ==============================================================================
         # BOTTOM PANEL: Recipe Status + Buttons
