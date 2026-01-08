@@ -100,7 +100,18 @@ class InteractiveBaseUI(ABC):
         """
         Temporarily remove material from inventory for placement.
         Returns True if successful, False if insufficient quantity.
+
+        In debug mode, always returns True without touching inventory.
         """
+        from core.config import Config
+
+        # DEBUG MODE: Skip inventory operations
+        if Config.DEBUG_INFINITE_RESOURCES:
+            # Track borrowed materials for consistency but don't touch inventory
+            self.borrowed_materials[item_id] = self.borrowed_materials.get(item_id, 0) + quantity
+            return True
+
+        # NORMAL MODE: Remove from inventory
         removed = self.inventory.remove_item(item_id, quantity)
         if removed > 0:
             self.borrowed_materials[item_id] = self.borrowed_materials.get(item_id, 0) + removed
@@ -109,6 +120,17 @@ class InteractiveBaseUI(ABC):
 
     def return_material(self, item_id: str, quantity: int = 1):
         """Return a borrowed material to inventory"""
+        from core.config import Config
+
+        # DEBUG MODE: Skip inventory operations
+        if Config.DEBUG_INFINITE_RESOURCES:
+            if item_id in self.borrowed_materials and self.borrowed_materials[item_id] >= quantity:
+                self.borrowed_materials[item_id] -= quantity
+                if self.borrowed_materials[item_id] == 0:
+                    del self.borrowed_materials[item_id]
+            return
+
+        # NORMAL MODE: Return to inventory
         if item_id in self.borrowed_materials and self.borrowed_materials[item_id] >= quantity:
             self.inventory.add_item(item_id, quantity)
             self.borrowed_materials[item_id] -= quantity
@@ -117,6 +139,14 @@ class InteractiveBaseUI(ABC):
 
     def return_all_materials(self):
         """Return all borrowed materials to inventory (called on cancel/close)"""
+        from core.config import Config
+
+        # DEBUG MODE: Just clear the tracking dict
+        if Config.DEBUG_INFINITE_RESOURCES:
+            self.borrowed_materials.clear()
+            return
+
+        # NORMAL MODE: Return to inventory
         for item_id, quantity in list(self.borrowed_materials.items()):
             self.inventory.add_item(item_id, quantity)
         self.borrowed_materials.clear()
@@ -317,14 +347,27 @@ class InteractiveAlchemyUI(InteractiveBaseUI):
         self.slots: List[Optional[PlacedMaterial]] = [None] * num_slots
 
     def place_material(self, position: Any, item_stack: ItemStack) -> bool:
-        """Position is an integer index"""
+        """
+        Position is an integer index.
+        If placing the same material that's already in the slot, increment quantity.
+        Otherwise, replace with new material.
+        """
         if not isinstance(position, int) or position < 0 or position >= len(self.slots):
             return False
 
-        # Return previous material if exists
-        if self.slots[position]:
-            old = self.slots[position]
-            self.return_material(old.item_id, old.quantity)
+        existing = self.slots[position]
+
+        # If same material already in slot, increment quantity
+        if existing and existing.item_id == item_stack.item_id:
+            if self.borrow_material(item_stack.item_id, 1):
+                existing.quantity += 1
+                self.matched_recipe = self.check_recipe_match()
+                return True
+            return False
+
+        # Different material or empty slot - replace
+        if existing:
+            self.return_material(existing.item_id, existing.quantity)
 
         # Borrow new material
         if self.borrow_material(item_stack.item_id, 1):
@@ -358,12 +401,15 @@ class InteractiveAlchemyUI(InteractiveBaseUI):
         self.matched_recipe = None
 
     def check_recipe_match(self) -> Optional[Recipe]:
-        """Match against alchemy recipes - order matters!"""
+        """Match against alchemy recipes - order AND quantities matter!"""
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # Get current placement sequence
-        current_sequence = [s.item_id if s else None for s in self.slots]
+        # Get current placement sequence (material_id, quantity) tuples
+        current_sequence = [
+            (s.item_id, s.quantity) if s else (None, 0)
+            for s in self.slots
+        ]
 
         # Get all alchemy recipes for this tier
         recipes = recipe_db.get_recipes_for_station(self.station_type, self.station_tier)
@@ -378,18 +424,21 @@ class InteractiveAlchemyUI(InteractiveBaseUI):
             for ingredient in placement.ingredients:
                 slot_idx = ingredient.get('slot', 0)
                 mat_id = ingredient.get('materialId', '')
+                quantity = ingredient.get('quantity', 1)
                 # Extend list if needed
                 while len(required_sequence) <= slot_idx:
-                    required_sequence.append(None)
-                required_sequence[slot_idx] = mat_id
+                    required_sequence.append((None, 0))
+                required_sequence[slot_idx] = (mat_id, quantity)
 
-            # Match exact sequence (None values are wildcards)
+            # Match exact sequence with quantities (None values are wildcards)
             if len(current_sequence) >= len(required_sequence):
                 match = True
-                for i, required_mat in enumerate(required_sequence):
-                    if required_mat and current_sequence[i] != required_mat:
-                        match = False
-                        break
+                for i, (required_mat, required_qty) in enumerate(required_sequence):
+                    current_mat, current_qty = current_sequence[i]
+                    if required_mat:  # Not a wildcard
+                        if current_mat != required_mat or current_qty != required_qty:
+                            match = False
+                            break
 
                 if match:
                     return recipe
@@ -613,44 +662,170 @@ class InteractiveSmithingUI(InteractiveBaseUI):
 
 class InteractiveAdornmentsUI(InteractiveBaseUI):
     """
-    Vertex-based Cartesian coordinate system for adornments/enchanting.
+    Shape-based Cartesian coordinate system for adornments/enchanting.
 
-    Uses a coordinate system where materials are placed at specific (x,y) vertices.
-    Coordinate range: -7 to +7 for all tiers (origin at 0,0)
-    Grid templates by tier: T1=8x8, T2=10x10, T3=12x12, T4=14x14
+    Players place geometric shapes (triangles, squares) on a grid, which creates
+    vertices at specific coordinates. Materials are then assigned to these vertices.
 
-    Recipes are matched against exact vertex coordinate patterns stored in
-    placement_map with keys like "0,0", "3,3", "-3,-3", etc.
+    Grid size by tier: T1=8x8, T2=10x10, T3=12x12, T4=14x14
+    Coordinate range: -7 to +7 (origin at 0,0)
+
+    Available shapes by tier (cumulative):
+    - T1: triangle_equilateral_small, square_small
+    - T2: + triangle_isosceles_small
+    - T3: + triangle_equilateral_large, square_large
+    - T4: + triangle_isosceles_large
+
+    Recipe matching validates both shapes AND vertex materials.
     """
+
+    # Shape vertex templates (offsets from anchor point)
+    SHAPE_TEMPLATES = {
+        # Small shapes (2-3 units)
+        "triangle_equilateral_small": [(0, 0), (-1, -2), (1, -2)],  # Width 2, height 2
+        "square_small": [(0, 0), (2, 0), (2, -2), (0, -2)],  # Side length 2
+        "triangle_isosceles_small": [(0, 0), (-1, -3), (1, -3)],  # Width 2, height 3
+
+        # Large shapes (4-6 units)
+        "triangle_equilateral_large": [(0, 0), (-2, -3), (2, -3)],  # Width 4, height 3
+        "square_large": [(0, 0), (4, 0), (4, -4), (0, -4)],  # Side length 4
+        "triangle_isosceles_large": [(0, 0), (-1, -5), (1, -5)],  # Width 2, height 5
+    }
 
     def __init__(self, station_type: str, station_tier: int, inventory: Inventory):
         super().__init__(station_type, station_tier, inventory)
 
-        # CORRECT grid templates by tier from placements-adornments-1.JSON
-        grid_templates = {
-            1: 'square_8x8',
-            2: 'square_10x10',
-            3: 'square_12x12',
-            4: 'square_14x14'
-        }
-        self.grid_template = grid_templates.get(station_tier, 'square_8x8')
+        # Grid configuration
+        grid_sizes = {1: 8, 2: 10, 3: 12, 4: 14}
+        self.grid_size = grid_sizes.get(station_tier, 8)
+        self.grid_template = f'square_{self.grid_size}x{self.grid_size}'
+        self.coordinate_range = 7
 
-        # Vertex coordinate system (-7 to +7 range)
-        self.coordinate_range = 7  # All tiers use same range
+        # Shape and vertex storage
+        self.shapes: List[Dict[str, Any]] = []  # [{type, anchor, rotation, vertices}]
         self.vertices: Dict[str, PlacedMaterial] = {}  # "x,y" -> PlacedMaterial
 
+        # UI state
+        self.selected_shape_type: Optional[str] = None
+        self.selected_rotation: int = 0  # degrees (0, 45, 90, 135, 180, 225, 270, 315)
+
+    def get_available_shapes(self) -> List[str]:
+        """Get available shape types for this tier (cumulative)"""
+        shapes = []
+        if self.station_tier >= 1:
+            shapes.extend(["triangle_equilateral_small", "square_small"])
+        if self.station_tier >= 2:
+            shapes.append("triangle_isosceles_small")
+        if self.station_tier >= 3:
+            shapes.extend(["triangle_equilateral_large", "square_large"])
+        if self.station_tier >= 4:
+            shapes.append("triangle_isosceles_large")
+        return shapes
+
+    @staticmethod
+    def rotate_point(x: int, y: int, degrees: int) -> Tuple[int, int]:
+        """Rotate a point around origin by degrees"""
+        import math
+        rad = math.radians(degrees)
+        cos_a = math.cos(rad)
+        sin_a = math.sin(rad)
+        new_x = round(x * cos_a - y * sin_a)
+        new_y = round(x * sin_a + y * cos_a)
+        return (new_x, new_y)
+
+    def get_shape_vertices(self, shape_type: str, anchor_x: int, anchor_y: int, rotation: int) -> List[Tuple[int, int]]:
+        """Get absolute vertices for a shape at anchor position with rotation"""
+        if shape_type not in self.SHAPE_TEMPLATES:
+            return []
+
+        template = self.SHAPE_TEMPLATES[shape_type]
+        vertices = []
+        for dx, dy in template:
+            # Rotate offset around origin
+            rx, ry = self.rotate_point(dx, dy, rotation)
+            # Add anchor position
+            vertices.append((anchor_x + rx, anchor_y + ry))
+        return vertices
+
+    def place_shape(self, shape_type: str, anchor_x: int, anchor_y: int, rotation: int = 0) -> bool:
+        """Place a geometric shape at anchor position"""
+        if shape_type not in self.get_available_shapes():
+            return False
+
+        # Get shape vertices
+        vertices = self.get_shape_vertices(shape_type, anchor_x, anchor_y, rotation)
+
+        # Validate all vertices fit in grid
+        for vx, vy in vertices:
+            if not (-self.coordinate_range <= vx <= self.coordinate_range and
+                    -self.coordinate_range <= vy <= self.coordinate_range):
+                return False
+
+        # Add shape
+        shape_data = {
+            "type": shape_type,
+            "anchor": (anchor_x, anchor_y),
+            "rotation": rotation,
+            "vertices": [f"{v[0]},{v[1]}" for v in vertices]
+        }
+        self.shapes.append(shape_data)
+
+        # Activate vertices (create empty slots for material assignment)
+        for vx, vy in vertices:
+            coord_key = f"{vx},{vy}"
+            if coord_key not in self.vertices:
+                # Don't create a PlacedMaterial yet - just mark vertex as available
+                pass
+
+        return True
+
+    def remove_shape(self, shape_index: int) -> bool:
+        """Remove a shape by index"""
+        if not (0 <= shape_index < len(self.shapes)):
+            return False
+
+        shape = self.shapes[shape_index]
+        shape_vertices = set(shape['vertices'])
+
+        # Check if any other shape uses these vertices
+        other_shapes_vertices = set()
+        for i, s in enumerate(self.shapes):
+            if i != shape_index:
+                other_shapes_vertices.update(s['vertices'])
+
+        # Remove materials from vertices not used by other shapes
+        vertices_to_clear = shape_vertices - other_shapes_vertices
+        for coord_key in vertices_to_clear:
+            if coord_key in self.vertices:
+                mat = self.vertices[coord_key]
+                self.return_material(mat.item_id, mat.quantity)
+                del self.vertices[coord_key]
+
+        # Remove shape
+        self.shapes.pop(shape_index)
+        self.matched_recipe = self.check_recipe_match()
+        return True
+
     def place_material(self, position: Any, item_stack: ItemStack) -> bool:
-        """Position is a tuple (x, y) in Cartesian coordinates (-7 to +7)"""
+        """
+        Position is a tuple (x, y) in Cartesian coordinates.
+        Materials can only be placed at vertices that are part of a shape.
+        """
         if not isinstance(position, tuple) or len(position) != 2:
             return False
 
         x, y = position
-        if not (-self.coordinate_range <= x <= self.coordinate_range and
-                -self.coordinate_range <= y <= self.coordinate_range):
-            return False
-
-        # Convert to string key
         coord_key = f"{x},{y}"
+
+        # Check if this coordinate is part of any shape
+        is_valid_vertex = False
+        for shape in self.shapes:
+            if coord_key in shape['vertices']:
+                is_valid_vertex = True
+                break
+
+        if not is_valid_vertex:
+            return False
 
         # Return previous material if exists at this vertex
         if coord_key in self.vertices:
@@ -671,6 +846,7 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
         return False
 
     def remove_material(self, position: Any) -> Optional[PlacedMaterial]:
+        """Remove material from a vertex"""
         if not isinstance(position, tuple) or len(position) != 2:
             return None
 
@@ -687,23 +863,39 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
         return None
 
     def clear_placement(self):
+        """Clear all shapes and materials"""
         for coord_key, mat in list(self.vertices.items()):
             self.return_material(mat.item_id, mat.quantity)
         self.vertices.clear()
+        self.shapes.clear()
         self.matched_recipe = None
 
     def check_recipe_match(self) -> Optional[Recipe]:
-        """Match against adornment recipes using vertex-based coordinate matching"""
-        if not self.vertices:
+        """
+        Match against adornment recipes using shape-based pattern matching.
+        Validates both shapes AND vertex materials.
+        """
+        if not self.shapes or not self.vertices:
             return None
 
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # Build current placement map
-        current_placement = {
+        # Build current placement
+        current_vertices = {
             coord_key: mat.item_id for coord_key, mat in self.vertices.items()
         }
+
+        # Normalize shapes for comparison (sort by vertices to handle order differences)
+        def normalize_shape(shape):
+            return {
+                'type': shape['type'],
+                'rotation': shape['rotation'],
+                'vertices': tuple(sorted(shape['vertices']))
+            }
+
+        current_shapes_normalized = [normalize_shape(s) for s in self.shapes]
+        current_shapes_normalized.sort(key=lambda s: (s['type'], s['rotation'], s['vertices']))
 
         # Get all adornment recipes for this tier
         recipes = recipe_db.get_recipes_for_station(self.station_type, self.station_tier)
@@ -713,23 +905,43 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
             if not placement or placement.discipline != 'adornments':
                 continue
 
-            # Match against vertex-based placement_map
-            # The placement_map has "vertices" key containing coordinate -> materialId mappings
-            if placement.placement_map and 'vertices' in placement.placement_map:
-                required_vertices = placement.placement_map['vertices']
+            if not placement.placement_map:
+                continue
 
-                # Exact match required
-                if current_placement == required_vertices:
-                    return recipe
+            # Check shapes match
+            required_shapes = placement.placement_map.get('shapes', [])
+            required_shapes_normalized = [normalize_shape(s) for s in required_shapes]
+            required_shapes_normalized.sort(key=lambda s: (s['type'], s['rotation'], s['vertices']))
+
+            if current_shapes_normalized != required_shapes_normalized:
+                continue
+
+            # Check vertices match
+            required_vertices = placement.placement_map.get('vertices', {})
+
+            # Only check vertices that have materials assigned
+            # Required vertices should have materialId
+            required_materials = {
+                coord: data['materialId']
+                for coord, data in required_vertices.items()
+                if data.get('materialId')
+            }
+
+            if current_vertices == required_materials:
+                return recipe
 
         return None
 
     def get_placement_data(self) -> Dict[str, Any]:
+        """Get current placement data for rendering"""
         return {
             'type': 'adornments',
+            'grid_size': self.grid_size,
             'grid_template': self.grid_template,
             'coordinate_range': self.coordinate_range,
-            'vertices': self.vertices
+            'shapes': self.shapes,
+            'vertices': self.vertices,
+            'available_shapes': self.get_available_shapes()
         }
 
 
