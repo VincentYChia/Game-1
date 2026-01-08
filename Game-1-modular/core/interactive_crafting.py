@@ -633,9 +633,9 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # Convert current grid to string-key format
+        # Convert current grid to string-key format (1-indexed to match JSON)
         current_placement = {
-            f"{x},{y}": mat.item_id for (x, y), mat in self.grid.items()
+            f"{x+1},{y+1}": mat.item_id for (x, y), mat in self.grid.items()
         }
 
         # Get all smithing recipes for this tier
