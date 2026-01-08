@@ -2450,36 +2450,11 @@ class GameEngine:
             if not self.selected_recipe:
                 return  # No recipe selected, nothing to interact with
 
-            # First check for placement slot clicks (grid cells or hub slots)
-            for cell_rect, slot_data in self.placement_grid_rects:
-                if cell_rect.collidepoint(mouse_pos):
-                    # Slot clicked!
-                    # slot_data can be either (grid_x, grid_y) tuple for grids or "slot_id" string for others
-                    if isinstance(slot_data, tuple):
-                        # Grid-based (smithing, adornments)
-                        grid_x, grid_y = slot_data
-                        slot_key = f"{grid_x},{grid_y}"
-                        slot_display = f"({grid_x}, {grid_y})"
-                    else:
-                        # Slot-based (refining, alchemy, engineering)
-                        slot_key = slot_data
-                        slot_display = slot_key
+            # DISABLED: Material replacement functionality removed in favor of interactive mode
+            # Placement slots now only show tooltips (no clicking to add/remove materials)
+            # Use "Interactive Mode" button to manually place materials
 
-                    if slot_key in self.user_placement:
-                        # Slot already has material - remove it
-                        removed_mat = self.user_placement.pop(slot_key)
-                        print(f"🗑️ Removed {removed_mat} from {slot_display}")
-                    else:
-                        # Slot is empty - place first material from recipe inputs
-                        # This is a simple approach; later we can add material picker UI
-                        if self.selected_recipe.inputs:
-                            first_mat_id = self.selected_recipe.inputs[0].get('materialId', '')
-                            if first_mat_id:
-                                self.user_placement[slot_key] = first_mat_id
-                                print(f"✅ Placed {first_mat_id} in {slot_display}")
-                    return  # Slot click handled
-
-            # Then check for craft buttons
+            # Check for craft buttons
             recipe = self.selected_recipe
             can_craft = recipe_db.can_craft(recipe, self.character.inventory)
 

@@ -4627,6 +4627,43 @@ class Renderer:
         self.screen.blit(surf, (wx, wy))
         return pygame.Rect(wx, wy, ww, wh), stat_buttons
 
+    def render_tooltip(self, text: str, mouse_pos: Tuple[int, int], offset_x: int = 15, offset_y: int = 15):
+        """
+        Render a tooltip near the mouse cursor.
+
+        Args:
+            text: Text to display in tooltip
+            mouse_pos: Current mouse position (x, y)
+            offset_x: Horizontal offset from mouse (default 15px right)
+            offset_y: Vertical offset from mouse (default 15px down)
+        """
+        if not text:
+            return
+
+        # Render text
+        text_surf = self.small_font.render(text, True, (255, 255, 255))
+        padding = 8
+        tooltip_w = text_surf.get_width() + padding * 2
+        tooltip_h = text_surf.get_height() + padding * 2
+
+        # Position tooltip near mouse, with edge clamping
+        tooltip_x = mouse_pos[0] + offset_x
+        tooltip_y = mouse_pos[1] + offset_y
+
+        # Clamp to screen bounds
+        if tooltip_x + tooltip_w > Config.VIEWPORT_WIDTH + Config.SIDE_PANEL_W:
+            tooltip_x = mouse_pos[0] - tooltip_w - 5
+        if tooltip_y + tooltip_h > Config.VIEWPORT_HEIGHT:
+            tooltip_y = mouse_pos[1] - tooltip_h - 5
+
+        # Draw tooltip background
+        tooltip_rect = pygame.Rect(tooltip_x, tooltip_y, tooltip_w, tooltip_h)
+        pygame.draw.rect(self.screen, (20, 20, 20, 230), tooltip_rect)
+        pygame.draw.rect(self.screen, (200, 200, 100), tooltip_rect, 2)
+
+        # Draw text
+        self.screen.blit(text_surf, (tooltip_x + padding, tooltip_y + padding))
+
     def render_text(self, text: str, x: int, y: int, bold: bool = False, small: bool = False):
         font = self.small_font if small else self.font
         if bold:
