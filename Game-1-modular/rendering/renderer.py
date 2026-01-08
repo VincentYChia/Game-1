@@ -2863,11 +2863,19 @@ class Renderer:
         self._temp_user_placement = user_placement
         self._temp_minigame_active = minigame_active
 
+        # Initialize tooltip tracking for this frame
+        self._pending_tooltips = []
+
         # Always render recipe list on the left (pass scroll offset from game engine)
         # Note: Renderer doesn't have direct access to game engine, so we need to get it via a hack
         # Check if there's a scroll offset to use (this will be set by the caller)
         scroll_offset = getattr(self, '_temp_scroll_offset', 0)
         recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos, scroll_offset)
+
+        # Render any pending tooltips (after main surface is blitted)
+        if self._pending_tooltips:
+            # Show first tooltip only (avoid clutter)
+            self.render_tooltip(self._pending_tooltips[0], mouse_pos)
 
         # If a recipe is selected, render placement UI on the right
         # (Note: Placement UI rendering is handled by the recipe selection sidebar)
@@ -3021,7 +3029,7 @@ class Renderer:
                     surf.blit(self.font.render(f"{out_name} x{recipe.output_qty}", True, color),
                               (btn.x + s(10), btn.y + s(8)))
 
-                    # Material requirements (compact)
+                    # Material requirements (compact) with tooltips
                     req_y = btn.y + s(30)
                     for inp in recipe.inputs:
                         mat_id = inp.get('materialId', '')
@@ -3030,8 +3038,21 @@ class Renderer:
                         mat = mat_db.get_material(mat_id)
                         mat_name = mat.name if mat else mat_id
                         req_color = (100, 255, 100) if avail >= req or Config.DEBUG_INFINITE_RESOURCES else (255, 100, 100)
-                        surf.blit(self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color),
-                                  (btn.x + s(15), req_y))
+
+                        # Render material requirement text
+                        mat_text = self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color)
+                        surf.blit(mat_text, (btn.x + s(15), req_y))
+
+                        # Check for hover and add tooltip (use relative coordinates)
+                        mat_rect = pygame.Rect(btn.x + s(15), req_y, mat_text.get_width(), mat_text.get_height())
+                        rel_mouse_x, rel_mouse_y = mouse_pos[0] - wx, mouse_pos[1] - wy
+                        if mat_rect.collidepoint(rel_mouse_x, rel_mouse_y):
+                            if mat:
+                                tooltip_text = f"{mat.name} (Tier {mat.tier}) - Need: {req}, Have: {avail}"
+                                if not hasattr(self, '_pending_tooltips'):
+                                    self._pending_tooltips = []
+                                self._pending_tooltips.append(tooltip_text)
+
                         req_y += s(16)
 
                     y_off += btn_height + s(8)
@@ -4799,10 +4820,13 @@ class Renderer:
         tooltip_x = mouse_pos[0] + offset_x
         tooltip_y = mouse_pos[1] + offset_y
 
-        # Clamp to screen bounds
-        if tooltip_x + tooltip_w > Config.VIEWPORT_WIDTH + Config.SIDE_PANEL_W:
+        # Clamp to screen bounds (total width = viewport + UI panel)
+        screen_width = Config.VIEWPORT_WIDTH + Config.UI_PANEL_WIDTH
+        screen_height = Config.VIEWPORT_HEIGHT
+
+        if tooltip_x + tooltip_w > screen_width:
             tooltip_x = mouse_pos[0] - tooltip_w - 5
-        if tooltip_y + tooltip_h > Config.VIEWPORT_HEIGHT:
+        if tooltip_y + tooltip_h > screen_height:
             tooltip_y = mouse_pos[1] - tooltip_h - 5
 
         # Draw tooltip background
