@@ -210,10 +210,18 @@ class InteractiveRefiningUI(InteractiveBaseUI):
         slot_type, index = position
 
         if slot_type == 'core' and 0 <= index < self.num_core_slots:
-            # Return previous material if exists
-            if self.core_slots[index]:
-                old = self.core_slots[index]
-                self.return_material(old.item_id, old.quantity)
+            existing = self.core_slots[index]
+
+            # If same material already in slot, increment quantity
+            if existing and existing.item_id == item_stack.item_id:
+                if self.borrow_material(item_stack.item_id, 1):
+                    existing.quantity += 1
+                    self.matched_recipe = self.check_recipe_match()
+                    return True
+
+            # Different material - return previous and place new
+            if existing:
+                self.return_material(existing.item_id, existing.quantity)
 
             # Borrow new material
             if self.borrow_material(item_stack.item_id, 1):
@@ -227,10 +235,18 @@ class InteractiveRefiningUI(InteractiveBaseUI):
                 return True
 
         elif slot_type == 'surrounding' and 0 <= index < self.num_surrounding_slots:
-            # Return previous material if exists
-            if self.surrounding_slots[index]:
-                old = self.surrounding_slots[index]
-                self.return_material(old.item_id, old.quantity)
+            existing = self.surrounding_slots[index]
+
+            # If same material already in slot, increment quantity
+            if existing and existing.item_id == item_stack.item_id:
+                if self.borrow_material(item_stack.item_id, 1):
+                    existing.quantity += 1
+                    self.matched_recipe = self.check_recipe_match()
+                    return True
+
+            # Different material - return previous and place new
+            if existing:
+                self.return_material(existing.item_id, existing.quantity)
 
             # Borrow new material
             if self.borrow_material(item_stack.item_id, 1):
@@ -461,14 +477,24 @@ class InteractiveEngineeringUI(InteractiveBaseUI):
     Recipes specify which slot types are required and what materials go in each.
     """
 
-    # CORRECT slot types from placements-engineering-1.JSON
-    SLOT_TYPES = ['FRAME', 'FUNCTION', 'POWER', 'MODIFIER', 'UTILITY']
+    # All possible slot types
+    ALL_SLOT_TYPES = ['FRAME', 'FUNCTION', 'POWER', 'MODIFIER', 'UTILITY']
+
+    # Slot types available by tier (based on actual recipe usage in placements-engineering-1.JSON)
+    TIER_SLOT_TYPES = {
+        1: ['FRAME', 'FUNCTION', 'POWER'],
+        2: ['FRAME', 'FUNCTION', 'POWER'],
+        3: ['FRAME', 'FUNCTION', 'POWER', 'MODIFIER', 'UTILITY'],
+        4: ['FRAME', 'FUNCTION', 'POWER', 'MODIFIER', 'UTILITY']
+    }
 
     def __init__(self, station_type: str, station_tier: int, inventory: Inventory):
         super().__init__(station_type, station_tier, inventory)
-        # Each slot type can hold multiple materials
+        # Get available slot types for this tier
+        self.available_slot_types = self.TIER_SLOT_TYPES.get(station_tier, self.ALL_SLOT_TYPES)
+        # Each slot type can hold multiple materials (only create slots for available types)
         self.slots: Dict[str, List[PlacedMaterial]] = {
-            slot_type: [] for slot_type in self.SLOT_TYPES
+            slot_type: [] for slot_type in self.available_slot_types
         }
 
     def place_material(self, position: Any, item_stack: ItemStack) -> bool:
@@ -480,26 +506,39 @@ class InteractiveEngineeringUI(InteractiveBaseUI):
         if slot_type not in self.slots:
             return False
 
-        # Borrow material
-        if self.borrow_material(item_stack.item_id, 1):
-            mat = PlacedMaterial(
-                item_id=item_stack.item_id,
-                quantity=1,
-                crafted_stats=item_stack.crafted_stats,
-                rarity=item_stack.rarity
-            )
+        # If index is within current list, check for stacking
+        if index < len(self.slots[slot_type]):
+            existing = self.slots[slot_type][index]
+            # If same material, increment quantity
+            if existing.item_id == item_stack.item_id:
+                if self.borrow_material(item_stack.item_id, 1):
+                    existing.quantity += 1
+                    self.matched_recipe = self.check_recipe_match()
+                    return True
+                return False
 
-            # If index is within current list, replace; otherwise append
-            if index < len(self.slots[slot_type]):
-                # Return old material
-                old = self.slots[slot_type][index]
-                self.return_material(old.item_id, old.quantity)
-                self.slots[slot_type][index] = mat
-            else:
-                self.slots[slot_type].append(mat)
-
-            self.matched_recipe = self.check_recipe_match()
-            return True
+            # Different material - return old and place new
+            if self.borrow_material(item_stack.item_id, 1):
+                self.return_material(existing.item_id, existing.quantity)
+                self.slots[slot_type][index] = PlacedMaterial(
+                    item_id=item_stack.item_id,
+                    quantity=1,
+                    crafted_stats=item_stack.crafted_stats,
+                    rarity=item_stack.rarity
+                )
+                self.matched_recipe = self.check_recipe_match()
+                return True
+        else:
+            # Append new material
+            if self.borrow_material(item_stack.item_id, 1):
+                self.slots[slot_type].append(PlacedMaterial(
+                    item_id=item_stack.item_id,
+                    quantity=1,
+                    crafted_stats=item_stack.crafted_stats,
+                    rarity=item_stack.rarity
+                ))
+                self.matched_recipe = self.check_recipe_match()
+                return True
 
         return False
 

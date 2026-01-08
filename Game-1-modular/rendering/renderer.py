@@ -3253,8 +3253,8 @@ class Renderer:
         # Initialize tooltip tracking
         self._pending_tooltips = []
 
-        # Window dimensions
-        ww, wh = Config.MENU_XLARGE_W, Config.MENU_LARGE_H
+        # Window dimensions - use LARGE menu for better fit
+        ww, wh = Config.MENU_LARGE_W, Config.MENU_LARGE_H
         wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)
         wy = max(0, (Config.VIEWPORT_HEIGHT - wh) // 2)
 
@@ -3272,9 +3272,9 @@ class Renderer:
         # LEFT PANEL: Material Palette
         # ==============================================================================
         palette_x = s(20)
-        palette_y = s(70)
-        palette_w = s(300)
-        palette_h = wh - s(100)
+        palette_y = s(60)
+        palette_w = s(250)  # Reduced from 300
+        palette_h = wh - s(80)  # Reduced from 100
 
         # Background
         palette_rect = pygame.Rect(palette_x, palette_y, palette_w, palette_h)
@@ -3368,10 +3368,10 @@ class Renderer:
         # ==============================================================================
         # RIGHT PANEL: Placement Area
         # ==============================================================================
-        placement_x = palette_rect.right + s(30)
-        placement_y = s(70)
+        placement_x = palette_rect.right + s(20)  # Reduced spacing
+        placement_y = s(60)
         placement_w = ww - placement_x - s(20)
-        placement_h = wh - s(280)  # Reduced from 200 to 280 to fix overlap
+        placement_h = wh - s(220)  # Leave 220px for bottom buttons and status
 
         # Background
         placement_rect = pygame.Rect(placement_x, placement_y, placement_w, placement_h)
@@ -3626,8 +3626,8 @@ class Renderer:
             header_text = "COMPONENT PLACEMENT (Slot-Type Canvas)"
             surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
 
-            # CORRECT slot types from specification
-            slot_types = ['FRAME', 'FUNCTION', 'POWER', 'MODIFIER', 'UTILITY']
+            # Get available slot types for this tier
+            slot_types = interactive_ui.available_slot_types
             slot_h = s(60)
             type_y = placement_y + s(40)
 

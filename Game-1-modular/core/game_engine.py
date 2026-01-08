@@ -2144,6 +2144,10 @@ class GameEngine:
             if mat_rect.collidepoint(mouse_pos):
                 # Select material
                 self.interactive_ui.selected_material = item_stack
+                # Deselect shape if this is adornments (material and shape are mutually exclusive)
+                from core.interactive_crafting import InteractiveAdornmentsUI
+                if isinstance(self.interactive_ui, InteractiveAdornmentsUI):
+                    self.interactive_ui.selected_shape_type = None
                 print(f"✓ Selected material: {item_stack.item_id}")
                 return
 
@@ -2158,6 +2162,8 @@ class GameEngine:
                             # Shape selection button clicked
                             shape_type = position[1]
                             self.interactive_ui.selected_shape_type = shape_type
+                            # Deselect material (shape and material are mutually exclusive)
+                            self.interactive_ui.selected_material = None
                             print(f"✓ Selected shape: {shape_type}")
                             return
 
