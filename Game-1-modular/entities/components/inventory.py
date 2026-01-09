@@ -66,7 +66,8 @@ class ItemStack:
         Items can stack if:
         1. Same item_id
         2. Both are not equipment (equipment never stacks)
-        3. Both have identical crafted_stats (or both have None/empty stats)
+        3. Both have identical rarity
+        4. Both have identical crafted_stats (or both have None/empty stats)
 
         Args:
             other: Another ItemStack to check compatibility with
@@ -80,6 +81,10 @@ class ItemStack:
 
         # Equipment never stacks
         if self.is_equipment() or other.is_equipment():
+            return False
+
+        # Must have same rarity
+        if self.rarity != other.rarity:
             return False
 
         # Check crafted_stats compatibility
