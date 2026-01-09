@@ -318,25 +318,26 @@ class InteractiveRefiningUI(InteractiveBaseUI):
             if not placement or placement.discipline != 'refining':
                 continue
 
-            # Get placed core materials with quantities and rarities
-            placed_cores = [(s.item_id, s.quantity, s.rarity) for s in self.core_slots if s is not None]
+            # Get placed core materials with quantities (ignore rarity for matching)
+            # Different rarities should be usable in mixed recipes
+            placed_cores = [(s.item_id, s.quantity) for s in self.core_slots if s is not None]
             required_cores = [
-                (inp.get('materialId'), inp.get('quantity', 1), inp.get('rarity', 'common'))
+                (inp.get('materialId'), inp.get('quantity', 1))
                 for inp in placement.core_inputs
             ]
 
-            # Match core inputs (order doesn't matter, but quantities and rarities must match)
+            # Match core inputs (order doesn't matter, but quantities must match)
             if sorted(placed_cores) != sorted(required_cores):
                 continue
 
             # Match surrounding inputs (order doesn't matter for refining)
-            placed_surrounding = [(s.item_id, s.quantity, s.rarity) for s in self.surrounding_slots if s is not None]
+            placed_surrounding = [(s.item_id, s.quantity) for s in self.surrounding_slots if s is not None]
             required_surrounding = [
-                (inp.get('materialId'), inp.get('quantity', 1), inp.get('rarity', 'common'))
+                (inp.get('materialId'), inp.get('quantity', 1))
                 for inp in placement.surrounding_inputs
             ]
 
-            # Check if all required surrounding materials with quantities and rarities are present
+            # Check if all required surrounding materials with quantities are present
             if sorted(placed_surrounding) == sorted(required_surrounding):
                 return recipe
 
@@ -683,9 +684,9 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         # Convert current grid to string-key format
         # JSON format is "Y,X" where Y=row (1=top), X=col (1=left)
         # UI uses 0-indexed screen coordinates where (0,0) is top-left
-        # Need to mirror X-axis: UI left → JSON right
+        # Direct 1-indexed conversion (no mirroring needed)
         current_placement = {
-            f"{y+1},{self.grid_size - x}": mat.item_id for (x, y), mat in self.grid.items()
+            f"{y+1},{x+1}": mat.item_id for (x, y), mat in self.grid.items()
         }
 
         # Get all smithing recipes for this tier

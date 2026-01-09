@@ -1,7 +1,7 @@
 {
   "metadata": {
     "discipline": "refining",
-    "totalRecipes": 55,
+    "totalRecipes": 56,
     "description": "Complete hub-and-spoke placement templates for ALL refining recipes",
     "note": "Core slots determine output, surrounding slots are modifiers"
   },
@@ -120,16 +120,24 @@
       "narrative": "Processing rare ebony. Black as night, hard as steel - exceptional quality."
     },
     {
+      "recipeId": "refining_worldtree_log_to_plank",
+      "outputId": "worldtree_plank",
+      "stationTier": 4,
+      "coreInputs": [{"materialId": "worldtree_log", "quantity": 1}],
+      "surroundingInputs": [],
+      "narrative": "Working worldtree wood. It remembers being part of something greater."
+    },
+    {
       "recipeId": "refining_bronze_alloy",
       "outputId": "bronze_ingot",
       "stationTier": 1,
       "coreInputs": [
-        {"materialId": "copper_ingot", "quantity": 3}
+        {"materialId": "copper_ingot", "quantity": 2}
       ],
       "surroundingInputs": [
         {"materialId": "tin_ingot", "quantity": 1}
       ],
-      "narrative": "Creating bronze. Copper in core determines base, tin in surrounding modifies to alloy - classic 3:1 ratio creates stronger alloy. T1 allows 1 core + 2 surrounding."
+      "narrative": "Creating bronze. Copper in core determines base, tin in surrounding modifies to alloy. T1 allows 1 core + 2 surrounding."
     },
     {
       "recipeId": "refining_fire_steel",
