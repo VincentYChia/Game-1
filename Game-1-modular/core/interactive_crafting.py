@@ -318,19 +318,25 @@ class InteractiveRefiningUI(InteractiveBaseUI):
             if not placement or placement.discipline != 'refining':
                 continue
 
-            # Get placed core materials with quantities
-            placed_cores = [(s.item_id, s.quantity) for s in self.core_slots if s is not None]
-            required_cores = [(inp.get('materialId'), inp.get('quantity', 1)) for inp in placement.core_inputs]
+            # Get placed core materials with quantities and rarities
+            placed_cores = [(s.item_id, s.quantity, s.rarity) for s in self.core_slots if s is not None]
+            required_cores = [
+                (inp.get('materialId'), inp.get('quantity', 1), inp.get('rarity', 'common'))
+                for inp in placement.core_inputs
+            ]
 
-            # Match core inputs (order doesn't matter, but quantities must match)
+            # Match core inputs (order doesn't matter, but quantities and rarities must match)
             if sorted(placed_cores) != sorted(required_cores):
                 continue
 
             # Match surrounding inputs (order doesn't matter for refining)
-            placed_surrounding = [(s.item_id, s.quantity) for s in self.surrounding_slots if s is not None]
-            required_surrounding = [(inp.get('materialId'), inp.get('quantity', 1)) for inp in placement.surrounding_inputs]
+            placed_surrounding = [(s.item_id, s.quantity, s.rarity) for s in self.surrounding_slots if s is not None]
+            required_surrounding = [
+                (inp.get('materialId'), inp.get('quantity', 1), inp.get('rarity', 'common'))
+                for inp in placement.surrounding_inputs
+            ]
 
-            # Check if all required surrounding materials with quantities are present
+            # Check if all required surrounding materials with quantities and rarities are present
             if sorted(placed_surrounding) == sorted(required_surrounding):
                 return recipe
 
@@ -675,11 +681,11 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         recipe_db = RecipeDatabase.get_instance()
 
         # Convert current grid to string-key format
-        # JSON uses 1-indexed Cartesian coordinates (y=1 is bottom, y=grid_size is top)
-        # UI uses 0-indexed screen coordinates (y=0 is top, y=grid_size-1 is bottom)
-        # So we need to: 1) add 1 for x indexing, 2) invert y coordinate
+        # JSON format is "Y,X" where Y=row (1=top), X=col (1=left)
+        # UI uses 0-indexed screen coordinates where (0,0) is top-left
+        # Need to mirror X-axis: UI left → JSON right
         current_placement = {
-            f"{x+1},{self.grid_size - y}": mat.item_id for (x, y), mat in self.grid.items()
+            f"{y+1},{self.grid_size - x}": mat.item_id for (x, y), mat in self.grid.items()
         }
 
         # Get all smithing recipes for this tier
