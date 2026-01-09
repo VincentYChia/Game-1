@@ -2863,11 +2863,19 @@ class Renderer:
         self._temp_user_placement = user_placement
         self._temp_minigame_active = minigame_active
 
+        # Initialize tooltip tracking for this frame
+        self._pending_tooltips = []
+
         # Always render recipe list on the left (pass scroll offset from game engine)
         # Note: Renderer doesn't have direct access to game engine, so we need to get it via a hack
         # Check if there's a scroll offset to use (this will be set by the caller)
         scroll_offset = getattr(self, '_temp_scroll_offset', 0)
         recipe_result = self._render_recipe_selection_sidebar(character, mouse_pos, scroll_offset)
+
+        # Render any pending tooltips (after main surface is blitted)
+        if self._pending_tooltips:
+            # Show first tooltip only (avoid clutter)
+            self.render_tooltip(self._pending_tooltips[0], mouse_pos)
 
         # If a recipe is selected, render placement UI on the right
         # (Note: Placement UI rendering is handled by the recipe selection sidebar)
@@ -2896,7 +2904,27 @@ class Renderer:
         # Header
         header = f"{character.active_station.station_type.value.upper()} (T{character.active_station.tier})"
         surf.blit(self.font.render(header, True, character.active_station.get_color()), (s(20), s(20)))
-        surf.blit(self.small_font.render("[ESC] Close | Select recipe to place materials", True, (180, 180, 180)), (ww - s(400), s(20)))
+
+        # Interactive Mode button (top-right of header)
+        interactive_btn_w, interactive_btn_h = s(140), s(32)
+        interactive_btn_x = ww - interactive_btn_w - s(20)
+        interactive_btn_y = s(15)
+        interactive_btn_rect = pygame.Rect(interactive_btn_x, interactive_btn_y, interactive_btn_w, interactive_btn_h)
+
+        # Button styling
+        is_btn_hovered = interactive_btn_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+        btn_color = (70, 100, 70) if is_btn_hovered else (50, 80, 50)
+        pygame.draw.rect(surf, btn_color, interactive_btn_rect, border_radius=s(5))
+        pygame.draw.rect(surf, (100, 180, 100), interactive_btn_rect, s(2), border_radius=s(5))
+
+        # Button text
+        btn_text = self.small_font.render("Interactive Mode", True, (220, 255, 220))
+        text_x = interactive_btn_x + (interactive_btn_w - btn_text.get_width()) // 2
+        text_y = interactive_btn_y + (interactive_btn_h - btn_text.get_height()) // 2
+        surf.blit(btn_text, (text_x, text_y))
+
+        # Help text (moved down to make room for button)
+        surf.blit(self.small_font.render("[ESC] Close | Select recipe to place materials", True, (180, 180, 180)), (s(20), s(48)))
 
         # Get recipes for this station
         recipes = recipe_db.get_recipes_for_station(character.active_station.station_type.value,
@@ -3001,7 +3029,7 @@ class Renderer:
                     surf.blit(self.font.render(f"{out_name} x{recipe.output_qty}", True, color),
                               (btn.x + s(10), btn.y + s(8)))
 
-                    # Material requirements (compact)
+                    # Material requirements (compact) with tooltips
                     req_y = btn.y + s(30)
                     for inp in recipe.inputs:
                         mat_id = inp.get('materialId', '')
@@ -3010,8 +3038,21 @@ class Renderer:
                         mat = mat_db.get_material(mat_id)
                         mat_name = mat.name if mat else mat_id
                         req_color = (100, 255, 100) if avail >= req or Config.DEBUG_INFINITE_RESOURCES else (255, 100, 100)
-                        surf.blit(self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color),
-                                  (btn.x + s(15), req_y))
+
+                        # Render material requirement text
+                        mat_text = self.small_font.render(f"{mat_name}: {avail}/{req}", True, req_color)
+                        surf.blit(mat_text, (btn.x + s(15), req_y))
+
+                        # Check for hover and add tooltip (use relative coordinates)
+                        mat_rect = pygame.Rect(btn.x + s(15), req_y, mat_text.get_width(), mat_text.get_height())
+                        rel_mouse_x, rel_mouse_y = mouse_pos[0] - wx, mouse_pos[1] - wy
+                        if mat_rect.collidepoint(rel_mouse_x, rel_mouse_y):
+                            if mat:
+                                tooltip_text = f"{mat.name} (Tier {mat.tier}) - Need: {req}, Have: {avail}"
+                                if not hasattr(self, '_pending_tooltips'):
+                                    self._pending_tooltips = []
+                                self._pending_tooltips.append(tooltip_text)
+
                         req_y += s(16)
 
                     y_off += btn_height + s(8)
@@ -3176,7 +3217,826 @@ class Renderer:
                 grid_rects_absolute.append((abs_rect, grid_pos))
         # Return full recipe list (not just visible) so scroll calculation works
         return_recipes = recipes if recipes else []
-        return pygame.Rect(wx, wy, ww, wh), return_recipes, grid_rects_absolute
+
+        # Convert interactive button rect to absolute coordinates
+        interactive_btn_abs = interactive_btn_rect.move(wx, wy)
+
+        return pygame.Rect(wx, wy, ww, wh), return_recipes, grid_rects_absolute, interactive_btn_abs
+
+    def render_interactive_crafting_ui(self, character: Character, interactive_ui, mouse_pos: Tuple[int, int]):
+        """
+        Render the interactive crafting UI where players manually place materials.
+
+        Args:
+            character: Player character
+            interactive_ui: InteractiveBaseUI instance (from core.interactive_crafting)
+            mouse_pos: Current mouse position
+
+        Returns:
+            Dict with click regions for game engine handling:
+            {
+                'window_rect': pygame.Rect,
+                'material_rects': [(rect, item_stack), ...],
+                'placement_rects': [(rect, position), ...],
+                'button_rects': {'clear': rect, 'instant': rect, 'minigame': rect}
+            }
+        """
+        from core.interactive_crafting import (
+            InteractiveSmithingUI, InteractiveRefiningUI, InteractiveAlchemyUI,
+            InteractiveEngineeringUI, InteractiveAdornmentsUI
+        )
+
+        s = Config.scale
+        mat_db = MaterialDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Initialize tooltip tracking
+        self._pending_tooltips = []
+
+        # Window dimensions - use LARGE menu for better fit
+        ww, wh = Config.MENU_LARGE_W, Config.MENU_LARGE_H
+        wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)
+        wy = max(0, (Config.VIEWPORT_HEIGHT - wh) // 2)
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        surf.fill((20, 20, 30, 240))
+
+        # Header
+        station_name = character.active_station.station_type.value.upper()
+        tier = character.active_station.tier
+        header = f"INTERACTIVE {station_name} (T{tier})"
+        surf.blit(self.font.render(header, True, character.active_station.get_color()), (s(20), s(20)))
+        surf.blit(self.small_font.render("[ESC] Close", True, (180, 180, 180)), (ww - s(120), s(20)))
+
+        # ==============================================================================
+        # LEFT PANEL: Material Palette
+        # ==============================================================================
+        palette_x = s(20)
+        palette_y = s(60)
+        palette_w = s(250)  # Reduced from 300
+        palette_h = wh - s(80)  # Reduced from 100
+
+        # Background
+        palette_rect = pygame.Rect(palette_x, palette_y, palette_w, palette_h)
+        pygame.draw.rect(surf, (30, 30, 40), palette_rect)
+        pygame.draw.rect(surf, (100, 100, 120), palette_rect, 2)
+
+        # Header
+        palette_header = self.small_font.render("MATERIALS (Click to Select)", True, (200, 200, 200))
+        surf.blit(palette_header, (palette_x + s(10), palette_y + s(8)))
+
+        # Get available materials
+        available_materials = interactive_ui.get_available_materials()
+
+        # Render materials (scrollable list)
+        material_rects = []
+        item_h = s(45)
+        visible_count = int((palette_h - s(40)) / item_h)
+        scroll_offset = interactive_ui.material_palette_scroll
+        start_idx = min(scroll_offset, max(0, len(available_materials) - visible_count))
+
+        mat_y = palette_y + s(35)
+        for i in range(start_idx, min(start_idx + visible_count, len(available_materials))):
+            mat_stack = available_materials[i]
+            mat_def = mat_db.get_material(mat_stack.item_id)
+            if not mat_def:
+                continue
+
+            # Item rect
+            item_rect = pygame.Rect(palette_x + s(10), mat_y, palette_w - s(20), item_h - s(5))
+
+            # Check if selected
+            is_selected = (interactive_ui.selected_material and
+                          interactive_ui.selected_material.item_id == mat_stack.item_id)
+
+            # Check if hovered
+            is_hovered = item_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+
+            # Background color
+            if is_selected:
+                bg_color = (80, 100, 80)
+            elif is_hovered:
+                bg_color = (60, 70, 80)
+            else:
+                bg_color = (40, 45, 55)
+
+            pygame.draw.rect(surf, bg_color, item_rect, border_radius=s(3))
+
+            # Border (tier color)
+            tier_colors = {1: (150, 150, 150), 2: (100, 200, 100), 3: (100, 150, 255), 4: (200, 100, 255)}
+            border_color = tier_colors.get(mat_def.tier, (100, 100, 100))
+            if is_selected:
+                border_color = (255, 215, 0)  # Gold for selected
+            pygame.draw.rect(surf, border_color, item_rect, s(2), border_radius=s(3))
+
+            # Material PNG icon (left side)
+            icon_x = item_rect.x + s(5)
+            icon_y = item_rect.y + s(5)
+            icon_size = s(32)
+            image_cache = ImageCache.get_instance()
+            icon = image_cache.get_image(f"materials/{mat_stack.item_id}.png", target_size=(icon_size, icon_size))
+            if icon:
+                surf.blit(icon, (icon_x, icon_y))
+
+            # Material name (right of icon)
+            name_text = self.tiny_font.render(mat_def.name, True, (220, 220, 220))
+            surf.blit(name_text, (icon_x + icon_size + s(8), item_rect.y + s(5)))
+
+            # Quantity and tier (right of icon)
+            qty_text = self.tiny_font.render(f"x{mat_stack.quantity} (T{mat_def.tier})", True, (180, 180, 180))
+            surf.blit(qty_text, (icon_x + icon_size + s(8), item_rect.y + s(22)))
+
+            # Tooltip on hover
+            if is_hovered:
+                tooltip_text = f"{mat_def.name} (Tier {mat_def.tier}) x{mat_stack.quantity}"
+                self._pending_tooltips.append(tooltip_text)
+
+            # Store for click detection
+            abs_rect = item_rect.move(wx, wy)
+            material_rects.append((abs_rect, mat_stack))
+
+            mat_y += item_h
+
+        # Scroll indicators
+        if start_idx > 0:
+            scroll_up_text = self.tiny_font.render("▲ Scroll Up (Mouse Wheel)", True, (150, 200, 150))
+            surf.blit(scroll_up_text, (palette_x + s(20), palette_y + s(12)))
+        if start_idx + visible_count < len(available_materials):
+            scroll_down_text = self.tiny_font.render("▼ Scroll Down", True, (150, 200, 150))
+            surf.blit(scroll_down_text, (palette_x + s(20), palette_rect.bottom - s(18)))
+
+        # ==============================================================================
+        # RIGHT PANEL: Placement Area
+        # ==============================================================================
+        placement_x = palette_rect.right + s(20)  # Reduced spacing
+        placement_y = s(60)
+        placement_w = ww - placement_x - s(20)
+        placement_h = wh - s(220)  # Leave 220px for bottom buttons and status
+
+        # Background
+        placement_rect = pygame.Rect(placement_x, placement_y, placement_w, placement_h)
+        pygame.draw.rect(surf, (25, 30, 35), placement_rect)
+        pygame.draw.rect(surf, (100, 120, 140), placement_rect, 2)
+
+        # Render discipline-specific placement area
+        placement_rects = []
+
+        if isinstance(interactive_ui, InteractiveSmithingUI):
+            # GRID-BASED (Smithing only)
+            grid_size = interactive_ui.grid_size
+            cell_size = min(s(60), (placement_w - s(40)) // grid_size)
+            grid_offset_x = placement_x + (placement_w - grid_size * cell_size) // 2
+            grid_offset_y = placement_y + s(30)
+
+            # Header
+            header_text = f"SMITHING GRID ({grid_size}x{grid_size})"
+            surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
+
+            # Render grid
+            for y in range(grid_size):
+                for x in range(grid_size):
+                    cell_x = grid_offset_x + x * cell_size
+                    cell_y = grid_offset_y + y * cell_size
+                    cell_rect = pygame.Rect(cell_x, cell_y, cell_size - s(2), cell_size - s(2))
+
+                    # Check if cell has material
+                    pos = (x, y)
+                    placed_mat = interactive_ui.grid.get(pos)
+
+                    # Cell color
+                    is_hovered = cell_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+                    if placed_mat:
+                        mat_def = mat_db.get_material(placed_mat.item_id)
+                        tier_colors = {1: (60, 60, 70), 2: (60, 80, 60), 3: (60, 70, 90), 4: (90, 60, 90)}
+                        cell_color = tier_colors.get(mat_def.tier if mat_def else 1, (50, 50, 60))
+                    elif is_hovered:
+                        cell_color = (70, 80, 90)
+                    else:
+                        cell_color = (40, 45, 50)
+
+                    pygame.draw.rect(surf, cell_color, cell_rect, border_radius=s(3))
+
+                    # Border
+                    border_color = (120, 140, 160) if is_hovered else (80, 90, 100)
+                    pygame.draw.rect(surf, border_color, cell_rect, s(2), border_radius=s(3))
+
+                    # Material icon/text
+                    if placed_mat:
+                        mat_def = mat_db.get_material(placed_mat.item_id)
+                        if mat_def:
+                            # Try to show PNG icon
+                            icon_size = min(cell_size - s(10), s(40))
+                            image_cache = ImageCache.get_instance()
+                            icon = image_cache.get_image(f"materials/{placed_mat.item_id}.png", target_size=(icon_size, icon_size))
+                            if icon:
+                                icon_x = cell_rect.centerx - icon_size // 2
+                                icon_y = cell_rect.centery - icon_size // 2
+                                surf.blit(icon, (icon_x, icon_y))
+                            else:
+                                # Fallback to text abbreviation if no icon
+                                abbrev = mat_def.name[:3].upper()
+                                text = self.tiny_font.render(abbrev, True, (220, 220, 220))
+                                text_x = cell_rect.centerx - text.get_width() // 2
+                                text_y = cell_rect.centery - text.get_height() // 2
+                                surf.blit(text, (text_x, text_y))
+
+                    # Store for click detection
+                    abs_rect = cell_rect.move(wx, wy)
+                    placement_rects.append((abs_rect, pos))
+
+        elif isinstance(interactive_ui, InteractiveRefiningUI):
+            # HUB-AND-SPOKE (Refining) with tier-varying core slots
+            num_cores = interactive_ui.num_core_slots
+            header_text = f"HUB-AND-SPOKE PLACEMENT ({num_cores} core, {interactive_ui.num_surrounding_slots} surrounding)"
+            surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
+
+            # Render core slots (center area)
+            core_size = s(70)
+            center_x = placement_x + placement_w // 2
+            center_y = placement_y + placement_h // 2
+
+            # Layout core slots based on count
+            if num_cores == 1:
+                core_positions = [(0, 0)]
+            elif num_cores == 2:
+                core_positions = [(-40, 0), (40, 0)]
+            elif num_cores == 3:
+                core_positions = [(-50, -30), (50, -30), (0, 40)]
+            else:  # More than 3
+                # Arrange in a small circle
+                import math
+                core_positions = []
+                for i in range(num_cores):
+                    angle = (i / num_cores) * 2 * math.pi - math.pi/2
+                    core_positions.append((int(35 * math.cos(angle)), int(35 * math.sin(angle))))
+
+            for core_idx, (offset_x, offset_y) in enumerate(core_positions):
+                core_x = center_x + s(offset_x) - core_size // 2
+                core_y = center_y + s(offset_y) - core_size // 2
+                core_rect = pygame.Rect(core_x, core_y, core_size, core_size)
+
+                # Check if slot has material
+                core_mat = interactive_ui.core_slots[core_idx]
+                is_hovered = core_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+
+                core_color = (80, 100, 80) if core_mat else ((70, 80, 90) if is_hovered else (50, 60, 70))
+                pygame.draw.rect(surf, core_color, core_rect, border_radius=s(8))
+                pygame.draw.rect(surf, (140, 160, 180) if is_hovered else (100, 120, 140), core_rect, s(3), border_radius=s(8))
+
+                # Core label
+                core_label = self.tiny_font.render(f"C{core_idx+1}", True, (200, 200, 200))
+                surf.blit(core_label, (core_rect.centerx - core_label.get_width() // 2, core_rect.y + s(5)))
+
+                # Material icon or name
+                if core_mat:
+                    mat_def = mat_db.get_material(core_mat.item_id)
+                    if mat_def:
+                        # Try PNG icon
+                        icon_size = s(40)
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_image(f"materials/{core_mat.item_id}.png", target_size=(icon_size, icon_size))
+                        if icon:
+                            icon_x = core_rect.centerx - icon_size // 2
+                            icon_y = core_rect.centery - icon_size // 2 + s(8)
+                            surf.blit(icon, (icon_x, icon_y))
+
+                            # Quantity indicator (if > 1)
+                            if core_mat.quantity > 1:
+                                qty_text = self.tiny_font.render(f"x{core_mat.quantity}", True, (255, 255, 255))
+                                qty_bg = pygame.Rect(icon_x + icon_size - qty_text.get_width() - s(4),
+                                                     icon_y + icon_size - s(18),
+                                                     qty_text.get_width() + s(6), s(16))
+                                pygame.draw.rect(surf, (20, 20, 20, 200), qty_bg, border_radius=s(3))
+                                surf.blit(qty_text, (qty_bg.x + s(3), qty_bg.y + s(2)))
+                        else:
+                            mat_text = self.tiny_font.render(mat_def.name[:6], True, (220, 220, 220))
+                            surf.blit(mat_text, (core_rect.centerx - mat_text.get_width() // 2, core_rect.centery + s(5)))
+
+                            # Quantity indicator for text fallback
+                            if core_mat.quantity > 1:
+                                qty_text = self.tiny_font.render(f"(x{core_mat.quantity})", True, (180, 180, 180))
+                                surf.blit(qty_text, (core_rect.centerx - qty_text.get_width() // 2, core_rect.centery + s(20)))
+
+                abs_core_rect = core_rect.move(wx, wy)
+                placement_rects.append((abs_core_rect, ('core', core_idx)))
+
+            # Surrounding slots (tier-varying count in circle)
+            surrounding_size = s(60)
+            radius = s(130)
+            num_surrounding = interactive_ui.num_surrounding_slots
+
+            # Generate angles evenly distributed around circle
+            import math
+            for i in range(num_surrounding):
+                angle_rad = (i / num_surrounding) * 2 * math.pi - math.pi/2  # Start at top
+                slot_x = center_x + int(radius * math.cos(angle_rad)) - surrounding_size // 2
+                slot_y = center_y + int(radius * math.sin(angle_rad)) - surrounding_size // 2
+                slot_rect = pygame.Rect(slot_x, slot_y, surrounding_size, surrounding_size)
+
+                # Check if slot has material
+                slot_mat = interactive_ui.surrounding_slots[i]
+                is_hovered = slot_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+
+                slot_color = (70, 90, 70) if slot_mat else ((65, 75, 85) if is_hovered else (45, 55, 65))
+                pygame.draw.rect(surf, slot_color, slot_rect, border_radius=s(6))
+                pygame.draw.rect(surf, (120, 140, 160) if is_hovered else (90, 110, 130), slot_rect, s(2), border_radius=s(6))
+
+                # Slot number
+                num_text = self.tiny_font.render(str(i+1), True, (150, 150, 150))
+                surf.blit(num_text, (slot_rect.x + s(5), slot_rect.y + s(5)))
+
+                # Material icon or abbreviation
+                if slot_mat:
+                    mat_def = mat_db.get_material(slot_mat.item_id)
+                    if mat_def:
+                        # Try PNG icon
+                        icon_size = s(35)
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_image(f"materials/{slot_mat.item_id}.png", target_size=(icon_size, icon_size))
+                        if icon:
+                            icon_x = slot_rect.centerx - icon_size // 2
+                            icon_y = slot_rect.centery - icon_size // 2 + s(8)
+                            surf.blit(icon, (icon_x, icon_y))
+
+                            # Quantity indicator (if > 1)
+                            if slot_mat.quantity > 1:
+                                qty_text = self.tiny_font.render(f"x{slot_mat.quantity}", True, (255, 255, 255))
+                                qty_bg = pygame.Rect(icon_x + icon_size - qty_text.get_width() - s(4),
+                                                     icon_y + icon_size - s(18),
+                                                     qty_text.get_width() + s(6), s(16))
+                                pygame.draw.rect(surf, (20, 20, 20, 200), qty_bg, border_radius=s(3))
+                                surf.blit(qty_text, (qty_bg.x + s(3), qty_bg.y + s(2)))
+                        else:
+                            abbrev = mat_def.name[:4].upper()
+                            mat_text = self.tiny_font.render(abbrev, True, (220, 220, 220))
+                            surf.blit(mat_text, (slot_rect.centerx - mat_text.get_width() // 2, slot_rect.centery + s(5)))
+
+                            # Quantity indicator for text fallback
+                            if slot_mat.quantity > 1:
+                                qty_text = self.tiny_font.render(f"(x{slot_mat.quantity})", True, (180, 180, 180))
+                                surf.blit(qty_text, (slot_rect.centerx - qty_text.get_width() // 2, slot_rect.centery + s(18)))
+
+                abs_slot_rect = slot_rect.move(wx, wy)
+                placement_rects.append((abs_slot_rect, ('surrounding', i)))
+
+        elif isinstance(interactive_ui, InteractiveAlchemyUI):
+            # SEQUENTIAL SLOTS (Alchemy)
+            header_text = f"SEQUENTIAL PLACEMENT ({len(interactive_ui.slots)} slots)"
+            surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
+
+            # Render slots in a horizontal row
+            slot_w = s(100)
+            slot_h = s(80)
+            spacing = s(15)
+            total_width = len(interactive_ui.slots) * slot_w + (len(interactive_ui.slots) - 1) * spacing
+            start_x = placement_x + (placement_w - total_width) // 2
+            slot_y = placement_y + s(60)
+
+            for i in range(len(interactive_ui.slots)):
+                slot_x = start_x + i * (slot_w + spacing)
+                slot_rect = pygame.Rect(slot_x, slot_y, slot_w, slot_h)
+
+                # Check if slot has material
+                slot_mat = interactive_ui.slots[i]
+                is_hovered = slot_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+
+                slot_color = (70, 80, 90) if slot_mat else ((60, 70, 80) if is_hovered else (40, 50, 60))
+                pygame.draw.rect(surf, slot_color, slot_rect, border_radius=s(5))
+                pygame.draw.rect(surf, (120, 140, 160) if is_hovered else (90, 110, 130), slot_rect, s(2), border_radius=s(5))
+
+                # Slot label
+                label_text = self.tiny_font.render(f"Slot {i+1}", True, (180, 180, 180))
+                surf.blit(label_text, (slot_rect.centerx - label_text.get_width() // 2, slot_rect.y + s(5)))
+
+                # Material icon or name
+                if slot_mat:
+                    mat_def = mat_db.get_material(slot_mat.item_id)
+                    if mat_def:
+                        # Try PNG icon
+                        icon_size = s(40)
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_image(f"materials/{slot_mat.item_id}.png", target_size=(icon_size, icon_size))
+                        if icon:
+                            icon_x = slot_rect.centerx - icon_size // 2
+                            icon_y = slot_rect.centery - icon_size // 2 + s(5)
+                            surf.blit(icon, (icon_x, icon_y))
+
+                            # Quantity indicator (if > 1)
+                            if slot_mat.quantity > 1:
+                                qty_text = self.tiny_font.render(f"x{slot_mat.quantity}", True, (255, 255, 255))
+                                qty_bg = pygame.Rect(icon_x + icon_size - qty_text.get_width() - s(4),
+                                                     icon_y + icon_size - s(18),
+                                                     qty_text.get_width() + s(6), s(16))
+                                pygame.draw.rect(surf, (20, 20, 20, 200), qty_bg, border_radius=s(3))
+                                surf.blit(qty_text, (qty_bg.x + s(3), qty_bg.y + s(2)))
+                        else:
+                            mat_text = self.tiny_font.render(mat_def.name[:10], True, (220, 220, 220))
+                            surf.blit(mat_text, (slot_rect.centerx - mat_text.get_width() // 2, slot_rect.centery))
+
+                            # Quantity indicator for text fallback
+                            if slot_mat.quantity > 1:
+                                qty_text = self.tiny_font.render(f"(x{slot_mat.quantity})", True, (180, 180, 180))
+                                surf.blit(qty_text, (slot_rect.centerx - qty_text.get_width() // 2, slot_rect.centery + s(15)))
+
+                    # Tooltip on hover
+                    if is_hovered and mat_def:
+                        tooltip_text = f"{mat_def.name} x{slot_mat.quantity}" if slot_mat.quantity > 1 else mat_def.name
+                        # Store for later rendering (after main surface blit)
+                        if not hasattr(self, '_pending_tooltips'):
+                            self._pending_tooltips = []
+                        self._pending_tooltips.append(tooltip_text)
+
+                abs_slot_rect = slot_rect.move(wx, wy)
+                placement_rects.append((abs_slot_rect, i))
+
+        elif isinstance(interactive_ui, InteractiveEngineeringUI):
+            # SLOT-TYPE GROUPING (Engineering)
+            header_text = "COMPONENT PLACEMENT (Slot-Type Canvas)"
+            surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
+
+            # Get available slot types for this tier
+            slot_types = interactive_ui.available_slot_types
+            slot_h = s(60)
+            type_y = placement_y + s(40)
+
+            for slot_type in slot_types:
+                # Type label
+                type_label = self.small_font.render(slot_type.upper(), True, (200, 200, 200))
+                surf.blit(type_label, (placement_x + s(15), type_y + s(5)))
+
+                # Render materials in this type
+                materials = interactive_ui.slots.get(slot_type, [])
+                slot_x = placement_x + s(150)
+
+                for i, mat in enumerate(materials):
+                    mat_def = mat_db.get_material(mat.item_id)
+                    if mat_def:
+                        # Material chip
+                        chip_w = s(120)
+                        chip_h = s(35)
+                        chip_rect = pygame.Rect(slot_x + i * (chip_w + s(10)), type_y, chip_w, chip_h)
+
+                        is_hovered = chip_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+                        chip_color = (70, 90, 70) if not is_hovered else (85, 105, 85)
+                        pygame.draw.rect(surf, chip_color, chip_rect, border_radius=s(4))
+                        pygame.draw.rect(surf, (120, 160, 120), chip_rect, s(2), border_radius=s(4))
+
+                        # Material name
+                        mat_text = self.tiny_font.render(mat_def.name[:12], True, (220, 220, 220))
+                        surf.blit(mat_text, (chip_rect.x + s(5), chip_rect.centery - mat_text.get_height() // 2))
+
+                        # Quantity indicator (if > 1) - show on right side
+                        if mat.quantity > 1:
+                            qty_text = self.tiny_font.render(f"x{mat.quantity}", True, (255, 255, 100))
+                            qty_x = chip_rect.right - qty_text.get_width() - s(5)
+                            surf.blit(qty_text, (qty_x, chip_rect.centery - qty_text.get_height() // 2))
+
+                        abs_chip_rect = chip_rect.move(wx, wy)
+                        placement_rects.append((abs_chip_rect, (slot_type, i)))
+
+                # Add button (slot for new material)
+                add_btn_x = slot_x + len(materials) * (s(120) + s(10))
+                add_btn_rect = pygame.Rect(add_btn_x, type_y + s(5), s(60), s(25))
+                is_add_hovered = add_btn_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+                add_color = (60, 80, 100) if is_add_hovered else (50, 70, 90)
+                pygame.draw.rect(surf, add_color, add_btn_rect, border_radius=s(3))
+                add_text = self.tiny_font.render("+Add", True, (180, 200, 220))
+                surf.blit(add_text, (add_btn_rect.centerx - add_text.get_width() // 2, add_btn_rect.centery - add_text.get_height() // 2))
+
+                abs_add_rect = add_btn_rect.move(wx, wy)
+                placement_rects.append((abs_add_rect, (slot_type, len(materials))))
+
+                type_y += slot_h
+
+        elif isinstance(interactive_ui, InteractiveAdornmentsUI):
+            # SHAPE-BASED CARTESIAN SYSTEM (Adornments/Enchanting)
+            header_text = f"PATTERN DESIGNER ({interactive_ui.grid_template})"
+            surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
+
+            # ==== LEFT CONTROLS: Shape Selection ====
+            controls_x = placement_x + s(10)
+            controls_y = placement_y + s(35)
+            controls_w = s(180)
+
+            # Shape selection title
+            surf.blit(self.tiny_font.render("SHAPE TYPE:", True, (180, 180, 180)), (controls_x, controls_y))
+            controls_y += s(18)
+
+            # Get available shapes for this tier
+            available_shapes = interactive_ui.get_available_shapes()
+            shape_display_names = {
+                "triangle_equilateral_small": "△ Equi (S)",
+                "square_small": "□ Square (S)",
+                "triangle_isosceles_small": "△ Isos (S)",
+                "triangle_equilateral_large": "△ Equi (L)",
+                "square_large": "□ Square (L)",
+                "triangle_isosceles_large": "△ Isos (L)"
+            }
+
+            # Render shape buttons
+            shape_btn_h = s(28)
+            for shape_type in available_shapes:
+                shape_btn_rect = pygame.Rect(controls_x, controls_y, controls_w, shape_btn_h)
+                is_selected = interactive_ui.selected_shape_type == shape_type
+                is_hovered = shape_btn_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+
+                btn_color = (80, 100, 80) if is_selected else ((60, 75, 75) if is_hovered else (50, 60, 70))
+                pygame.draw.rect(surf, btn_color, shape_btn_rect, border_radius=s(3))
+                border_color = (120, 200, 120) if is_selected else (100, 120, 140)
+                pygame.draw.rect(surf, border_color, shape_btn_rect, s(2) if is_selected else s(1), border_radius=s(3))
+
+                btn_text = self.tiny_font.render(shape_display_names.get(shape_type, shape_type), True, (220, 220, 220))
+                surf.blit(btn_text, (shape_btn_rect.x + s(8), shape_btn_rect.centery - btn_text.get_height() // 2))
+
+                # Store for click detection
+                abs_btn_rect = shape_btn_rect.move(wx, wy)
+                placement_rects.append((abs_btn_rect, ('shape_select', shape_type)))
+
+                controls_y += shape_btn_h + s(5)
+
+            # Rotation controls
+            controls_y += s(10)
+            surf.blit(self.tiny_font.render("ROTATION:", True, (180, 180, 180)), (controls_x, controls_y))
+            controls_y += s(18)
+
+            rotation_text = f"{interactive_ui.selected_rotation}°"
+            rotation_display = self.small_font.render(rotation_text, True, (220, 220, 220))
+            surf.blit(rotation_display, (controls_x + controls_w // 2 - rotation_display.get_width() // 2, controls_y))
+            controls_y += s(25)
+
+            # Rotation buttons (- and +)
+            rot_btn_w = s(60)
+            rot_btn_h = s(30)
+            rot_minus_rect = pygame.Rect(controls_x, controls_y, rot_btn_w, rot_btn_h)
+            rot_plus_rect = pygame.Rect(controls_x + rot_btn_w + s(10), controls_y, rot_btn_w, rot_btn_h)
+
+            for rot_rect, rot_label, rot_delta in [(rot_minus_rect, "◄ -45°", -45), (rot_plus_rect, "+45° ►", 45)]:
+                is_hovered = rot_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+                btn_color = (70, 90, 110) if is_hovered else (50, 70, 90)
+                pygame.draw.rect(surf, btn_color, rot_rect, border_radius=s(3))
+                pygame.draw.rect(surf, (120, 140, 160), rot_rect, s(1), border_radius=s(3))
+                rot_text = self.tiny_font.render(rot_label, True, (200, 200, 200))
+                surf.blit(rot_text, (rot_rect.centerx - rot_text.get_width() // 2, rot_rect.centery - rot_text.get_height() // 2))
+                abs_rot_rect = rot_rect.move(wx, wy)
+                placement_rects.append((abs_rot_rect, ('rotation', rot_delta)))
+
+            # Shape list
+            controls_y += rot_btn_h + s(15)
+            surf.blit(self.tiny_font.render("PLACED SHAPES:", True, (180, 180, 180)), (controls_x, controls_y))
+            controls_y += s(18)
+
+            for i, shape in enumerate(interactive_ui.shapes):
+                shape_item_rect = pygame.Rect(controls_x, controls_y, controls_w - s(35), s(22))
+                is_hovered = shape_item_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+                pygame.draw.rect(surf, (60, 70, 80) if is_hovered else (50, 60, 70), shape_item_rect, border_radius=s(2))
+                shape_name = shape_display_names.get(shape['type'], shape['type'])[:12]
+                shape_text = self.tiny_font.render(f"{i+1}. {shape_name}", True, (200, 200, 200))
+                surf.blit(shape_text, (shape_item_rect.x + s(5), shape_item_rect.centery - shape_text.get_height() // 2))
+
+                # Delete button
+                del_btn_rect = pygame.Rect(controls_x + controls_w - s(30), controls_y, s(25), s(22))
+                is_del_hovered = del_btn_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+                del_color = (120, 60, 60) if is_del_hovered else (80, 50, 50)
+                pygame.draw.rect(surf, del_color, del_btn_rect, border_radius=s(2))
+                del_text = self.tiny_font.render("✕", True, (255, 200, 200))
+                surf.blit(del_text, (del_btn_rect.centerx - del_text.get_width() // 2, del_btn_rect.centery - del_text.get_height() // 2))
+
+                abs_del_rect = del_btn_rect.move(wx, wy)
+                placement_rects.append((abs_del_rect, ('delete_shape', i)))
+
+                controls_y += s(24)
+
+            # ==== RIGHT SIDE: Cartesian Grid ====
+            coord_range = interactive_ui.coordinate_range
+            grid_size = coord_range * 2 + 1
+            grid_area_w = placement_w - controls_w - s(40)
+            grid_area_h = placement_h - s(60)
+            cell_size = min(s(24), grid_area_w // grid_size, grid_area_h // grid_size)
+
+            grid_width = grid_size * cell_size
+            grid_height = grid_size * cell_size
+            grid_offset_x = placement_x + controls_w + s(30) + (grid_area_w - grid_width) // 2
+            grid_offset_y = placement_y + s(40) + (grid_area_h - grid_height) // 2
+
+            # Helper function to convert Cartesian to pixel
+            def cart_to_pixel(cart_x, cart_y):
+                px = grid_offset_x + (cart_x + coord_range) * cell_size + cell_size // 2
+                py = grid_offset_y + (coord_range - cart_y) * cell_size + cell_size // 2
+                return (px, py)
+
+            # Draw grid as dots at vertices (not filled squares)
+            for y in range(grid_size):
+                for x in range(grid_size):
+                    cart_x = x - coord_range
+                    cart_y = coord_range - y
+                    px = grid_offset_x + x * cell_size + cell_size // 2
+                    py = grid_offset_y + y * cell_size + cell_size // 2
+
+                    is_origin = (cart_x == 0 and cart_y == 0)
+                    is_axis = (cart_x == 0 or cart_y == 0)
+
+                    # Draw dot at vertex position
+                    if is_origin:
+                        dot_color = (150, 150, 200)  # Bright blue for origin
+                        dot_radius = s(4)
+                    elif is_axis:
+                        dot_color = (100, 100, 120)  # Medium gray for axes
+                        dot_radius = s(3)
+                    else:
+                        dot_color = (70, 75, 80)     # Dark gray for regular vertices
+                        dot_radius = s(2)
+
+                    pygame.draw.circle(surf, dot_color, (px, py), dot_radius)
+
+                    # Create click region for this grid vertex (for shape placement)
+                    # Use larger rect for easier clicking
+                    click_rect = pygame.Rect(px - cell_size // 2, py - cell_size // 2, cell_size, cell_size)
+                    abs_click_rect = click_rect.move(wx, wy)
+                    placement_rects.append((abs_click_rect, (cart_x, cart_y)))
+
+            # Draw shape lines
+            for shape in interactive_ui.shapes:
+                vertices_str = shape['vertices']
+                vertices = []
+                for v_str in vertices_str:
+                    parts = v_str.split(',')
+                    vx, vy = int(parts[0]), int(parts[1])
+                    vertices.append((vx, vy))
+
+                # Draw lines between vertices
+                for i in range(len(vertices)):
+                    v1 = vertices[i]
+                    v2 = vertices[(i + 1) % len(vertices)]
+                    p1 = cart_to_pixel(v1[0], v1[1])
+                    p2 = cart_to_pixel(v2[0], v2[1])
+                    pygame.draw.line(surf, (100, 150, 200), p1, p2, s(2))
+
+            # Draw vertices (dots at shape corners)
+            for shape in interactive_ui.shapes:
+                for v_str in shape['vertices']:
+                    parts = v_str.split(',')
+                    vx, vy = int(parts[0]), int(parts[1])
+                    coord_key = f"{vx},{vy}"
+                    placed_mat = interactive_ui.vertices.get(coord_key)
+
+                    px, py = cart_to_pixel(vx, vy)
+
+                    # Draw vertex circle
+                    if placed_mat:
+                        # Material assigned - larger colored dot
+                        mat_def = mat_db.get_material(placed_mat.item_id)
+                        tier_colors = {1: (150, 150, 170), 2: (120, 200, 120), 3: (120, 170, 255), 4: (200, 120, 255)}
+                        vertex_color = tier_colors.get(mat_def.tier if mat_def else 1, (150, 150, 170))
+                        pygame.draw.circle(surf, vertex_color, (px, py), s(6))
+                        pygame.draw.circle(surf, (255, 255, 255), (px, py), s(6), s(1))
+
+                        # Material icon (very small)
+                        if mat_def:
+                            icon_size = s(14)
+                            image_cache = ImageCache.get_instance()
+                            icon = image_cache.get_image(f"materials/{placed_mat.item_id}.png", target_size=(icon_size, icon_size))
+                            if icon:
+                                surf.blit(icon, (px - icon_size // 2, py - icon_size // 2))
+                    else:
+                        # Empty vertex - hollow circle
+                        pygame.draw.circle(surf, (200, 200, 100), (px, py), s(5))
+                        pygame.draw.circle(surf, (255, 255, 150), (px, py), s(5), s(2))
+
+                    # Click detection for vertex
+                    vertex_rect = pygame.Rect(px - s(8), py - s(8), s(16), s(16))
+                    abs_vertex_rect = vertex_rect.move(wx, wy)
+                    placement_rects.append((abs_vertex_rect, (vx, vy)))
+
+            # Axis labels
+            for x in range(-coord_range, coord_range + 1, max(1, coord_range // 2)):
+                px, py = cart_to_pixel(x, -coord_range)
+                label = self.tiny_font.render(str(x), True, (120, 120, 140))
+                surf.blit(label, (px - label.get_width() // 2, py + s(8)))
+
+            for y in range(-coord_range, coord_range + 1, max(1, coord_range // 2)):
+                px, py = cart_to_pixel(-coord_range, y)
+                label = self.tiny_font.render(str(y), True, (120, 120, 140))
+                surf.blit(label, (px - label.get_width() - s(8), py - label.get_height() // 2))
+
+            # Instructions
+            inst_y = placement_y + s(25)
+            instructions = [
+                "1. Select shape & rotation",
+                "2. Click grid to place shape",
+                "3. Click vertices to assign materials"
+            ]
+            for inst in instructions:
+                inst_text = self.tiny_font.render(inst, True, (150, 150, 170))
+                surf.blit(inst_text, (grid_offset_x, inst_y))
+                inst_y += s(13)
+
+        # ==============================================================================
+        # BOTTOM PANEL: Recipe Status + Buttons
+        # ==============================================================================
+        bottom_y = placement_rect.bottom + s(20)
+
+        # Recipe status
+        if interactive_ui.matched_recipe:
+            recipe = interactive_ui.matched_recipe
+            # Get output name
+            if equip_db.is_equipment(recipe.output_id):
+                output = equip_db.create_equipment_from_id(recipe.output_id)
+                output_name = output.name if output else recipe.output_id
+            else:
+                mat = mat_db.get_material(recipe.output_id)
+                output_name = mat.name if mat else recipe.output_id
+
+            # Status message
+            status_text = f"✓ RECIPE MATCHED: {output_name} (x{recipe.output_qty})"
+            status_color = (100, 255, 100)
+        else:
+            status_text = "No recipe matched"
+            status_color = (200, 200, 200)
+
+        status_surf = self.font.render(status_text, True, status_color)
+        surf.blit(status_surf, (placement_x, bottom_y))
+
+        # Buttons (CLEAR, INSTANT CRAFT, MINIGAME)
+        button_y = bottom_y + s(35)
+        button_w = s(150)
+        button_h = s(40)
+        button_spacing = s(20)
+
+        button_rects = {}
+
+        # CLEAR button (always enabled)
+        clear_x = placement_x
+        clear_rect = pygame.Rect(clear_x, button_y, button_w, button_h)
+        is_clear_hovered = clear_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+        clear_color = (100, 60, 60) if is_clear_hovered else (80, 50, 50)
+        pygame.draw.rect(surf, clear_color, clear_rect, border_radius=s(5))
+        pygame.draw.rect(surf, (180, 100, 100), clear_rect, s(2), border_radius=s(5))
+        clear_text = self.small_font.render("CLEAR", True, (255, 200, 200))
+        surf.blit(clear_text, (clear_rect.centerx - clear_text.get_width() // 2, clear_rect.centery - clear_text.get_height() // 2))
+        button_rects['clear'] = clear_rect.move(wx, wy)
+
+        # INSTANT CRAFT button (enabled if recipe matched)
+        instant_x = clear_x + button_w + button_spacing
+        instant_rect = pygame.Rect(instant_x, button_y, button_w, button_h)
+        instant_enabled = interactive_ui.matched_recipe is not None
+        is_instant_hovered = instant_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+
+        if instant_enabled:
+            instant_color = (60, 100, 60) if is_instant_hovered else (50, 80, 50)
+            instant_border = (120, 180, 120)
+            instant_text_color = (220, 255, 220)
+        else:
+            instant_color = (40, 40, 40)
+            instant_border = (80, 80, 80)
+            instant_text_color = (120, 120, 120)
+
+        pygame.draw.rect(surf, instant_color, instant_rect, border_radius=s(5))
+        pygame.draw.rect(surf, instant_border, instant_rect, s(2), border_radius=s(5))
+        instant_text = self.small_font.render("INSTANT CRAFT", True, instant_text_color)
+        surf.blit(instant_text, (instant_rect.centerx - instant_text.get_width() // 2, instant_rect.centery - instant_text.get_height() // 2 - s(5)))
+        instant_sub = self.tiny_font.render("0 XP", True, instant_text_color)
+        surf.blit(instant_sub, (instant_rect.centerx - instant_sub.get_width() // 2, instant_rect.centery + s(8)))
+        button_rects['instant'] = instant_rect.move(wx, wy) if instant_enabled else None
+
+        # MINIGAME button (enabled if recipe matched)
+        minigame_x = instant_x + button_w + button_spacing
+        minigame_rect = pygame.Rect(minigame_x, button_y, button_w, button_h)
+        minigame_enabled = interactive_ui.matched_recipe is not None
+        is_minigame_hovered = minigame_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+
+        if minigame_enabled:
+            minigame_color = (80, 100, 60) if is_minigame_hovered else (60, 80, 50)
+            minigame_border = (140, 180, 120)
+            minigame_text_color = (230, 255, 220)
+        else:
+            minigame_color = (40, 40, 40)
+            minigame_border = (80, 80, 80)
+            minigame_text_color = (120, 120, 120)
+
+        pygame.draw.rect(surf, minigame_color, minigame_rect, border_radius=s(5))
+        pygame.draw.rect(surf, minigame_border, minigame_rect, s(2), border_radius=s(5))
+        minigame_text = self.small_font.render("MINIGAME", True, minigame_text_color)
+        surf.blit(minigame_text, (minigame_rect.centerx - minigame_text.get_width() // 2, minigame_rect.centery - minigame_text.get_height() // 2 - s(5)))
+        minigame_sub = self.tiny_font.render("1.5x XP", True, (255, 200, 100) if minigame_enabled else minigame_text_color)
+        surf.blit(minigame_sub, (minigame_rect.centerx - minigame_sub.get_width() // 2, minigame_rect.centery + s(8)))
+        button_rects['minigame'] = minigame_rect.move(wx, wy) if minigame_enabled else None
+
+        # Blit to screen
+        self.screen.blit(surf, (wx, wy))
+
+        # Render any pending tooltips (after main surface is blitted)
+        if self._pending_tooltips:
+            # Show first tooltip only (avoid clutter)
+            tooltip_text = self._pending_tooltips[0]
+            self.render_tooltip(tooltip_text, mouse_pos)
+
+        # Return click regions
+        return {
+            'window_rect': pygame.Rect(wx, wy, ww, wh),
+            'material_rects': material_rects,
+            'placement_rects': placement_rects,
+            'button_rects': button_rects
+        }
 
     def render_equipment_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         if not character.equipment_ui_open:
@@ -3978,6 +4838,46 @@ class Renderer:
 
         self.screen.blit(surf, (wx, wy))
         return pygame.Rect(wx, wy, ww, wh), stat_buttons
+
+    def render_tooltip(self, text: str, mouse_pos: Tuple[int, int], offset_x: int = 15, offset_y: int = 15):
+        """
+        Render a tooltip near the mouse cursor.
+
+        Args:
+            text: Text to display in tooltip
+            mouse_pos: Current mouse position (x, y)
+            offset_x: Horizontal offset from mouse (default 15px right)
+            offset_y: Vertical offset from mouse (default 15px down)
+        """
+        if not text:
+            return
+
+        # Render text
+        text_surf = self.small_font.render(text, True, (255, 255, 255))
+        padding = 8
+        tooltip_w = text_surf.get_width() + padding * 2
+        tooltip_h = text_surf.get_height() + padding * 2
+
+        # Position tooltip near mouse, with edge clamping
+        tooltip_x = mouse_pos[0] + offset_x
+        tooltip_y = mouse_pos[1] + offset_y
+
+        # Clamp to screen bounds (total width = viewport + UI panel)
+        screen_width = Config.VIEWPORT_WIDTH + Config.UI_PANEL_WIDTH
+        screen_height = Config.VIEWPORT_HEIGHT
+
+        if tooltip_x + tooltip_w > screen_width:
+            tooltip_x = mouse_pos[0] - tooltip_w - 5
+        if tooltip_y + tooltip_h > screen_height:
+            tooltip_y = mouse_pos[1] - tooltip_h - 5
+
+        # Draw tooltip background
+        tooltip_rect = pygame.Rect(tooltip_x, tooltip_y, tooltip_w, tooltip_h)
+        pygame.draw.rect(self.screen, (20, 20, 20, 230), tooltip_rect)
+        pygame.draw.rect(self.screen, (200, 200, 100), tooltip_rect, 2)
+
+        # Draw text
+        self.screen.blit(text_surf, (tooltip_x + padding, tooltip_y + padding))
 
     def render_text(self, text: str, x: int, y: int, bold: bool = False, small: bool = False):
         font = self.small_font if small else self.font
