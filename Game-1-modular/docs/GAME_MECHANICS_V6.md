@@ -1297,7 +1297,7 @@ Format: JSON or binary (TBD based on size/performance)
 - **Unified Damage Stat:** Tools use same damage field as weapons (mining pickaxe has damage value, not separate mining stat)
 - **Narrative First:** Narrative field at top of JSON so LLM processes story/context before mechanics
 - **Tradeable:** Everything is tradeable by default, no flag needed
-- **Rarity Tiers:** common → uncommon → rare → epic → legendary → mythical → unique
+- **Rarity Tiers:** common → uncommon → rare → epic → mythic → legendary → unique
   - **Unique rarity:** Virtually impossible to obtain, devoted players might have 2-3 after a year
 
 **Template:**
