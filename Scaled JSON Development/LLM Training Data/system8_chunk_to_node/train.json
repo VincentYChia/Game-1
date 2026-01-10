@@ -1,1 +1,1308 @@
-[]
+[
+  {
+    "input": {
+      "chunkType": "peaceful_forest",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "oak_tree": {
+          "density": "very_high",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.",
+        "tags": [
+          "tree",
+          "wood",
+          "starter"
+        ]
+      },
+      "resourceId": "oak_tree",
+      "name": "Oak Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "oak_log",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": "normal"
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_forest",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "pine_tree": {
+          "density": "very_high",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Tall conifer reaching toward the sky. Flexible wood perfect for bows and lightweight construction.",
+        "tags": [
+          "tree",
+          "wood",
+          "flexible"
+        ]
+      },
+      "resourceId": "pine_tree",
+      "name": "Pine Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "pine_log",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": "normal"
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_forest",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "birch_tree": {
+          "density": "moderate",
+          "tierBias": "mid"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Elegant tree with papery white bark. Fine grain makes it ideal for detailed carving work.",
+        "tags": [
+          "tree",
+          "wood",
+          "fine"
+        ]
+      },
+      "resourceId": "birch_tree",
+      "name": "Birch Tree",
+      "category": "tree",
+      "tier": 2,
+      "requiredTool": "axe",
+      "baseHealth": 200,
+      "drops": [
+        {
+          "materialId": "birch_log",
+          "quantity": "several",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": "slow"
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_forest",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "ash_tree": {
+          "density": "low",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Pale-barked tree with wood that absorbs shock beautifully. Weapon smiths prize these for handle material.",
+        "tags": [
+          "tree",
+          "wood",
+          "quality"
+        ]
+      },
+      "resourceId": "ash_tree",
+      "name": "Ash Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "ash_log",
+          "quantity": "several",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": "slow"
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_forest",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "limestone_outcrop": {
+          "density": "low",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Pale sedimentary stone easy to work with basic tools. Foundation for simple construction.",
+        "tags": [
+          "stone",
+          "common"
+        ]
+      },
+      "resourceId": "limestone_outcrop",
+      "name": "Limestone Outcrop",
+      "category": "stone",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "limestone",
+          "quantity": "abundant",
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": "few",
+          "chance": "low"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_quarry",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "limestone_outcrop": {
+          "density": "very_high",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Pale sedimentary stone easy to work with basic tools. Foundation for simple construction.",
+        "tags": [
+          "stone",
+          "common"
+        ]
+      },
+      "resourceId": "limestone_outcrop",
+      "name": "Limestone Outcrop",
+      "category": "stone",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "limestone",
+          "quantity": "abundant",
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": "few",
+          "chance": "low"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_quarry",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "granite_formation": {
+          "density": "very_high",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Speckled igneous rock with visible crystals. Harder and more reliable than limestone.",
+        "tags": [
+          "stone",
+          "durable"
+        ]
+      },
+      "resourceId": "granite_formation",
+      "name": "Granite Formation",
+      "category": "stone",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "granite",
+          "quantity": "abundant",
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": "few",
+          "chance": "low"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_quarry",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "copper_vein": {
+          "density": "high",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Common copper deposit showing green-blue oxidation. Perfect for learning the basics of mining.",
+        "tags": [
+          "ore",
+          "metal",
+          "starter"
+        ]
+      },
+      "resourceId": "copper_vein",
+      "name": "Copper Vein",
+      "category": "ore",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "copper_ore",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_quarry",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "iron_deposit": {
+          "density": "moderate",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Grey metallic deposits throughout the rock face. The backbone of civilization's tools and weapons.",
+        "tags": [
+          "ore",
+          "metal",
+          "standard"
+        ]
+      },
+      "resourceId": "iron_deposit",
+      "name": "Iron Deposit",
+      "category": "ore",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "iron_ore",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_quarry",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "oak_tree": {
+          "density": "low",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.",
+        "tags": [
+          "tree",
+          "wood",
+          "starter"
+        ]
+      },
+      "resourceId": "oak_tree",
+      "name": "Oak Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "oak_log",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": "normal"
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_cave",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "cave",
+      "resourceDensity": {
+        "granite_formation": {
+          "density": "high",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Speckled igneous rock with visible crystals. Harder and more reliable than limestone.",
+        "tags": [
+          "stone",
+          "durable"
+        ]
+      },
+      "resourceId": "granite_formation",
+      "name": "Granite Formation",
+      "category": "stone",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "granite",
+          "quantity": "abundant",
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": "few",
+          "chance": "low"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_cave",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "cave",
+      "resourceDensity": {
+        "iron_deposit": {
+          "density": "moderate",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Grey metallic deposits throughout the rock face. The backbone of civilization's tools and weapons.",
+        "tags": [
+          "ore",
+          "metal",
+          "standard"
+        ]
+      },
+      "resourceId": "iron_deposit",
+      "name": "Iron Deposit",
+      "category": "ore",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "iron_ore",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_cave",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "cave",
+      "resourceDensity": {
+        "copper_vein": {
+          "density": "moderate",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Common copper deposit showing green-blue oxidation. Perfect for learning the basics of mining.",
+        "tags": [
+          "ore",
+          "metal",
+          "starter"
+        ]
+      },
+      "resourceId": "copper_vein",
+      "name": "Copper Vein",
+      "category": "ore",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "copper_ore",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "peaceful_cave",
+      "chunkCategory": "peaceful",
+      "chunkTheme": "cave",
+      "resourceDensity": {
+        "shale_bed": {
+          "density": "moderate",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Layered sedimentary rock with fine grain. Compressed clay creates water-resistant sheets.",
+        "tags": [
+          "stone",
+          "layered"
+        ]
+      },
+      "resourceId": "shale_bed",
+      "name": "Shale Bed",
+      "category": "stone",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "shale",
+          "quantity": "many",
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": "few",
+          "chance": "rare"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_forest",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "birch_tree": {
+          "density": "high",
+          "tierBias": "mid"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Elegant tree with papery white bark. Fine grain makes it ideal for detailed carving work.",
+        "tags": [
+          "tree",
+          "wood",
+          "fine"
+        ]
+      },
+      "resourceId": "birch_tree",
+      "name": "Birch Tree",
+      "category": "tree",
+      "tier": 2,
+      "requiredTool": "axe",
+      "baseHealth": 200,
+      "drops": [
+        {
+          "materialId": "birch_log",
+          "quantity": "several",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": "slow"
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_forest",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "maple_tree": {
+          "density": "high",
+          "tierBias": "mid"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Dense hardwood tree that survives temperature extremes. The wood holds its shape through any condition.",
+        "tags": [
+          "tree",
+          "wood",
+          "durable"
+        ]
+      },
+      "resourceId": "maple_tree",
+      "name": "Maple Tree",
+      "category": "tree",
+      "tier": 2,
+      "requiredTool": "axe",
+      "baseHealth": 200,
+      "drops": [
+        {
+          "materialId": "maple_log",
+          "quantity": "several",
+          "chance": "high"
+        }
+      ],
+      "respawnTime": "very_slow"
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_forest",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "oak_tree": {
+          "density": "moderate",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.",
+        "tags": [
+          "tree",
+          "wood",
+          "starter"
+        ]
+      },
+      "resourceId": "oak_tree",
+      "name": "Oak Tree",
+      "category": "tree",
+      "tier": 1,
+      "requiredTool": "axe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "oak_log",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": "normal"
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_forest",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "ironwood_tree": {
+          "density": "low",
+          "tierBias": "high"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Rare tree whose wood rivals soft metals in hardness. Almost metallic ring when struck.",
+        "tags": [
+          "tree",
+          "wood",
+          "rare",
+          "metallic"
+        ]
+      },
+      "resourceId": "ironwood_tree",
+      "name": "Ironwood Tree",
+      "category": "tree",
+      "tier": 3,
+      "requiredTool": "axe",
+      "baseHealth": 400,
+      "drops": [
+        {
+          "materialId": "ironwood_log",
+          "quantity": "few",
+          "chance": "high"
+        }
+      ],
+      "respawnTime": "very_slow"
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_quarry",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "basalt_column": {
+          "density": "high",
+          "tierBias": "mid"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Dense volcanic rock with distinctive dark banding. Exceptional compression strength.",
+        "tags": [
+          "stone",
+          "volcanic"
+        ]
+      },
+      "resourceId": "basalt_column",
+      "name": "Basalt Column",
+      "category": "stone",
+      "tier": 2,
+      "requiredTool": "pickaxe",
+      "baseHealth": 200,
+      "drops": [
+        {
+          "materialId": "basalt",
+          "quantity": "several",
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": "few",
+          "chance": "moderate"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_quarry",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "steel_node": {
+          "density": "high",
+          "tierBias": "mid"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Dense, dark ore with carbon-rich composition. Superior to plain iron in every way.",
+        "tags": [
+          "ore",
+          "metal",
+          "advanced"
+        ]
+      },
+      "resourceId": "steel_node",
+      "name": "Steel Node",
+      "category": "ore",
+      "tier": 2,
+      "requiredTool": "pickaxe",
+      "baseHealth": 200,
+      "drops": [
+        {
+          "materialId": "steel_ore",
+          "quantity": "several",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_quarry",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "iron_deposit": {
+          "density": "moderate",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Grey metallic deposits throughout the rock face. The backbone of civilization's tools and weapons.",
+        "tags": [
+          "ore",
+          "metal",
+          "standard"
+        ]
+      },
+      "resourceId": "iron_deposit",
+      "name": "Iron Deposit",
+      "category": "ore",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "iron_ore",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_quarry",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "marble_quarry": {
+          "density": "moderate",
+          "tierBias": "mid"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Brilliant white stone that glows faintly with captured sunlight. Prized for temples and monuments.",
+        "tags": [
+          "stone",
+          "radiant"
+        ]
+      },
+      "resourceId": "marble_quarry",
+      "name": "Marble Quarry",
+      "category": "stone",
+      "tier": 2,
+      "requiredTool": "pickaxe",
+      "baseHealth": 200,
+      "drops": [
+        {
+          "materialId": "marble",
+          "quantity": "several",
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": "few",
+          "chance": "low"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_cave",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "cave",
+      "resourceDensity": {
+        "iron_deposit": {
+          "density": "moderate",
+          "tierBias": "low"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Grey metallic deposits throughout the rock face. The backbone of civilization's tools and weapons.",
+        "tags": [
+          "ore",
+          "metal",
+          "standard"
+        ]
+      },
+      "resourceId": "iron_deposit",
+      "name": "Iron Deposit",
+      "category": "ore",
+      "tier": 1,
+      "requiredTool": "pickaxe",
+      "baseHealth": 100,
+      "drops": [
+        {
+          "materialId": "iron_ore",
+          "quantity": "many",
+          "chance": "guaranteed"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_cave",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "cave",
+      "resourceDensity": {
+        "mithril_cache": {
+          "density": "low",
+          "tierBias": "mid"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Legendary silver-white deposits that seem to drink in moonlight. Incredibly light yet impossibly strong.",
+        "tags": [
+          "ore",
+          "metal",
+          "legendary"
+        ]
+      },
+      "resourceId": "mithril_cache",
+      "name": "Mithril Cache",
+      "category": "ore",
+      "tier": 2,
+      "requiredTool": "pickaxe",
+      "baseHealth": 200,
+      "drops": [
+        {
+          "materialId": "mithril_ore",
+          "quantity": "few",
+          "chance": "high"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_cave",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "cave",
+      "resourceDensity": {
+        "quartz_cluster": {
+          "density": "moderate",
+          "tierBias": "mid"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Translucent crystal formation that hums near magical power sources. Amplifies energies passing through it.",
+        "tags": [
+          "stone",
+          "magical",
+          "crystal"
+        ]
+      },
+      "resourceId": "quartz_cluster",
+      "name": "Quartz Cluster",
+      "category": "stone",
+      "tier": 2,
+      "requiredTool": "pickaxe",
+      "baseHealth": 200,
+      "drops": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": "several",
+          "chance": "high"
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": "few",
+          "chance": "rare"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "dangerous_cave",
+      "chunkCategory": "dangerous",
+      "chunkTheme": "cave",
+      "resourceDensity": {
+        "voidstone_shard": {
+          "density": "low",
+          "tierBias": "high"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Pitch-black stone that pulls light into itself. Radiates subtle wrongness.",
+        "tags": [
+          "stone",
+          "void",
+          "rare"
+        ]
+      },
+      "resourceId": "voidstone_shard",
+      "name": "Voidstone Shard",
+      "category": "stone",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        {
+          "materialId": "voidstone",
+          "quantity": "few",
+          "chance": "moderate"
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": "few",
+          "chance": "low"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_forest",
+      "chunkCategory": "rare",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "worldtree_sapling": {
+          "density": "very_low",
+          "tierBias": "legendary"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Legendary tree connected to the World Tree's root network. The wood hums with accumulated magical essence.",
+        "tags": [
+          "tree",
+          "wood",
+          "legendary",
+          "living"
+        ]
+      },
+      "resourceId": "worldtree_sapling",
+      "name": "Worldtree Sapling",
+      "category": "tree",
+      "tier": 4,
+      "requiredTool": "axe",
+      "baseHealth": 800,
+      "drops": [
+        {
+          "materialId": "worldtree_log",
+          "quantity": "few",
+          "chance": "low"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_forest",
+      "chunkCategory": "rare",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "ebony_tree": {
+          "density": "moderate",
+          "tierBias": "high"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ancient tree with jet-black wood. Seems to absorb light and magic equally.",
+        "tags": [
+          "tree",
+          "wood",
+          "rare",
+          "magical"
+        ]
+      },
+      "resourceId": "ebony_tree",
+      "name": "Ebony Tree",
+      "category": "tree",
+      "tier": 3,
+      "requiredTool": "axe",
+      "baseHealth": 400,
+      "drops": [
+        {
+          "materialId": "ebony_log",
+          "quantity": "few",
+          "chance": "moderate"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_forest",
+      "chunkCategory": "rare",
+      "chunkTheme": "forest",
+      "resourceDensity": {
+        "ironwood_tree": {
+          "density": "moderate",
+          "tierBias": "high"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Rare tree whose wood rivals soft metals in hardness. Almost metallic ring when struck.",
+        "tags": [
+          "tree",
+          "wood",
+          "rare",
+          "metallic"
+        ]
+      },
+      "resourceId": "ironwood_tree",
+      "name": "Ironwood Tree",
+      "category": "tree",
+      "tier": 3,
+      "requiredTool": "axe",
+      "baseHealth": 400,
+      "drops": [
+        {
+          "materialId": "ironwood_log",
+          "quantity": "few",
+          "chance": "high"
+        }
+      ],
+      "respawnTime": "very_slow"
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_quarry",
+      "chunkCategory": "rare",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "primordial_formation": {
+          "density": "very_low",
+          "tierBias": "legendary"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Crystal suspended in perpetual crystallization. Neither solid nor energy, exists in quantum superposition.",
+        "tags": [
+          "stone",
+          "mythical",
+          "quantum"
+        ]
+      },
+      "resourceId": "primordial_formation",
+      "name": "Primordial Formation",
+      "category": "stone",
+      "tier": 4,
+      "requiredTool": "pickaxe",
+      "baseHealth": 800,
+      "drops": [
+        {
+          "materialId": "primordial_crystal",
+          "quantity": "few",
+          "chance": "improbable"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_quarry",
+      "chunkCategory": "rare",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "adamantine_lode": {
+          "density": "moderate",
+          "tierBias": "high"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Dark, impossibly hard ore found only in the deepest caverns. The world's exposed bones.",
+        "tags": [
+          "ore",
+          "metal",
+          "rare"
+        ]
+      },
+      "resourceId": "adamantine_lode",
+      "name": "Adamantine Lode",
+      "category": "ore",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        {
+          "materialId": "adamantine_ore",
+          "quantity": "few",
+          "chance": "moderate"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_quarry",
+      "chunkCategory": "rare",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "orichalcum_trove": {
+          "density": "moderate",
+          "tierBias": "high"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Gleaming golden-green ore from ancient civilizations. Entire empires were built on its discovery.",
+        "tags": [
+          "ore",
+          "metal",
+          "ancient"
+        ]
+      },
+      "resourceId": "orichalcum_trove",
+      "name": "Orichalcum Trove",
+      "category": "ore",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        {
+          "materialId": "orichalcum_ore",
+          "quantity": "few",
+          "chance": "low"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_quarry",
+      "chunkCategory": "rare",
+      "chunkTheme": "quarry",
+      "resourceDensity": {
+        "diamond_geode": {
+          "density": "low",
+          "tierBias": "high"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
+        "tags": [
+          "stone",
+          "precious",
+          "rare"
+        ]
+      },
+      "resourceId": "diamond_geode",
+      "name": "Diamond Geode",
+      "category": "stone",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        {
+          "materialId": "diamond",
+          "quantity": "few",
+          "chance": "low"
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": "few",
+          "chance": "improbable"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_cave",
+      "chunkCategory": "rare",
+      "chunkTheme": "cave",
+      "resourceDensity": {
+        "etherion_nexus": {
+          "density": "very_low",
+          "tierBias": "legendary"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Reality-bending ore that exists in multiple states simultaneously. Defies conventional physics.",
+        "tags": [
+          "ore",
+          "metal",
+          "mythical",
+          "temporal"
+        ]
+      },
+      "resourceId": "etherion_nexus",
+      "name": "Etherion Nexus",
+      "category": "ore",
+      "tier": 4,
+      "requiredTool": "pickaxe",
+      "baseHealth": 800,
+      "drops": [
+        {
+          "materialId": "etherion_ore",
+          "quantity": "few",
+          "chance": "improbable"
+        }
+      ],
+      "respawnTime": null
+    }
+  }
+]

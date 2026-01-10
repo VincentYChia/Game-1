@@ -44,7 +44,8 @@
       },
       "enemySpawns": {
         "wolf_grey": {
-          "density": "very_low"
+          "density": "very_low",
+          "tier": 1
         }
       },
       "generationRules": {
@@ -86,10 +87,12 @@
       },
       "enemySpawns": {
         "slime_green": {
-          "density": "very_low"
+          "density": "very_low",
+          "tier": 1
         },
         "beetle_brown": {
-          "density": "low"
+          "density": "low",
+          "tier": 1
         }
       },
       "generationRules": {
@@ -127,10 +130,12 @@
       },
       "enemySpawns": {
         "beetle_brown": {
-          "density": "very_low"
+          "density": "very_low",
+          "tier": 1
         },
         "slime_green": {
-          "density": "low"
+          "density": "low",
+          "tier": 1
         }
       },
       "generationRules": {
@@ -168,10 +173,12 @@
       },
       "enemySpawns": {
         "wolf_grey": {
-          "density": "high"
+          "density": "high",
+          "tier": 1
         },
         "wolf_dire": {
-          "density": "moderate"
+          "density": "moderate",
+          "tier": 2
         }
       },
       "generationRules": {
@@ -209,16 +216,20 @@
       },
       "enemySpawns": {
         "slime_green": {
-          "density": "high"
+          "density": "high",
+          "tier": 1
         },
         "slime_acid": {
-          "density": "moderate"
+          "density": "moderate",
+          "tier": 2
         },
         "beetle_brown": {
-          "density": "moderate"
+          "density": "moderate",
+          "tier": 1
         },
         "beetle_armored": {
-          "density": "low"
+          "density": "low",
+          "tier": 2
         }
       },
       "generationRules": {
@@ -256,16 +267,20 @@
       },
       "enemySpawns": {
         "beetle_brown": {
-          "density": "high"
+          "density": "high",
+          "tier": 1
         },
         "beetle_armored": {
-          "density": "moderate"
+          "density": "moderate",
+          "tier": 2
         },
         "slime_acid": {
-          "density": "low"
+          "density": "low",
+          "tier": 2
         },
         "golem_stone": {
-          "density": "very_low"
+          "density": "very_low",
+          "tier": 3
         }
       },
       "generationRules": {
@@ -299,10 +314,12 @@
       },
       "enemySpawns": {
         "wolf_dire": {
-          "density": "moderate"
+          "density": "moderate",
+          "tier": 2
         },
         "wolf_elder": {
-          "density": "low"
+          "density": "low",
+          "tier": 3
         }
       },
       "generationRules": {
@@ -340,16 +357,20 @@
       },
       "enemySpawns": {
         "beetle_armored": {
-          "density": "high"
+          "density": "high",
+          "tier": 2
         },
         "slime_acid": {
-          "density": "moderate"
+          "density": "moderate",
+          "tier": 2
         },
         "slime_crystal": {
-          "density": "low"
+          "density": "low",
+          "tier": 3
         },
         "golem_crystal": {
-          "density": "very_low"
+          "density": "very_low",
+          "tier": 4
         }
       },
       "generationRules": {
@@ -391,16 +412,20 @@
       },
       "enemySpawns": {
         "void_wraith": {
-          "density": "moderate"
+          "density": "moderate",
+          "tier": 4
         },
         "golem_stone": {
-          "density": "low"
+          "density": "low",
+          "tier": 3
         },
         "beetle_titan": {
-          "density": "very_low"
+          "density": "very_low",
+          "tier": 4
         },
         "entity_primordial": {
-          "density": "very_low"
+          "density": "very_low",
+          "tier": 4
         }
       },
       "generationRules": {

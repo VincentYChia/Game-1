@@ -15,9 +15,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from collections import defaultdict
 
-# Configure paths (relative to where script is run from, expected: /home/user/Game-1/)
-GAME_ROOT = Path("Game-1-modular")
-OUTPUT_DIR = Path("Scaled JSON Development/LLM Training Data")
+# Configure paths (relative to where script is run from, expected: /home/user/Game-1/Scaled JSON Development/)
+GAME_ROOT = Path("../Game-1-modular")
+OUTPUT_DIR = Path("LLM Training Data")
 
 # File paths
 PATHS = {
@@ -615,64 +615,53 @@ def extract_enchanting_placement_pairs():
 # SYSTEM 6: HOSTILES (Chunk Assignment → Hostile)
 # ============================================================================
 def extract_hostile_pairs():
-    """Extract chunk assignment → hostile training pairs"""
-    print("\n[System 6] Extracting Chunk Assignment → Hostile pairs...")
+    """
+    Extract chunk → hostile training pairs.
+
+    For each chunk template, create pairs where:
+    - INPUT: chunk metadata + enemySpawns object (with tier info)
+    - OUTPUT: complete hostile JSON for each enemy in that chunk
+    """
+    print("\n[System 6] Extracting Chunk → Hostile pairs...")
 
     hostiles_data = load_json(PATHS["hostiles"])
     chunk_templates = load_json(PATHS["chunk_templates"])
 
-    # Build reverse mapping: hostile → chunks
-    hostile_to_chunks = {}
+    # Index hostiles by enemyId for quick lookup
+    hostiles_by_id = {h["enemyId"]: h for h in hostiles_data.get("enemies", [])}
+
+    # Extract pairs: one pair per (chunk, enemy) combination
+    pairs = []
     for template in chunk_templates.get("templates", []):
         chunk_type = template["chunkType"]
         chunk_category = template["category"]
         chunk_theme = template["theme"]
+        enemy_spawns = template.get("enemySpawns", {})
 
-        for enemy_id, spawn_info in template.get("enemySpawns", {}).items():
-            if enemy_id not in hostile_to_chunks:
-                hostile_to_chunks[enemy_id] = []
+        # Create a training pair for each enemy in this chunk
+        for enemy_id, spawn_info in enemy_spawns.items():
+            hostile = hostiles_by_id.get(enemy_id)
+            if not hostile:
+                print(f"  ⚠️  Missing hostile definition for: {enemy_id}")
+                continue
 
-            hostile_to_chunks[enemy_id].append({
+            # Build INPUT: chunk metadata + enemySpawns entry for this enemy
+            input_data = {
                 "chunkType": chunk_type,
-                "category": chunk_category,
-                "theme": chunk_theme,
-                "density": spawn_info["density"]
+                "chunkCategory": chunk_category,
+                "chunkTheme": chunk_theme,
+                "enemySpawns": {
+                    enemy_id: spawn_info  # Includes density and tier
+                }
+            }
+
+            # Build OUTPUT: complete hostile JSON
+            output_data = hostile
+
+            pairs.append({
+                "input": input_data,
+                "output": output_data
             })
-
-    # Extract pairs
-    pairs = []
-    for hostile in hostiles_data.get("enemies", []):
-        enemy_id = hostile.get("enemyId")
-        if not enemy_id:
-            continue
-
-        chunk_assignments = hostile_to_chunks.get(enemy_id, [])
-        if not chunk_assignments:
-            print(f"  ⚠️  No chunk assignments for hostile: {enemy_id}")
-            continue
-
-        # Get primary chunk (first assignment)
-        primary_chunk = chunk_assignments[0]
-
-        # Build INPUT
-        input_data = {
-            "primaryChunk": primary_chunk["chunkType"],
-            "chunkCategory": primary_chunk["category"],
-            "chunkTheme": primary_chunk["theme"],
-            "spawnDensity": primary_chunk["density"],
-            "allChunks": [c["chunkType"] for c in chunk_assignments],
-            "tier": hostile.get("tier", 1),
-            "category": hostile.get("category", ""),
-            "tags": hostile.get("metadata", {}).get("tags", [])
-        }
-
-        # Build OUTPUT (complete hostile JSON)
-        output_data = hostile
-
-        pairs.append({
-            "input": input_data,
-            "output": output_data
-        })
 
     save_training_pairs("system6_chunk_to_hostile", pairs)
     return pairs
@@ -761,66 +750,53 @@ def extract_material_pairs():
 # SYSTEM 8: NODES (Chunk Assignment → Resource Node)
 # ============================================================================
 def extract_node_pairs():
-    """Extract chunk assignment → resource node training pairs"""
-    print("\n[System 8] Extracting Chunk Assignment → Resource Node pairs...")
+    """
+    Extract chunk → resource node training pairs.
+
+    For each chunk template, create pairs where:
+    - INPUT: chunk metadata + resourceDensity entry (with density, tierBias)
+    - OUTPUT: complete resource node JSON for each node in that chunk
+    """
+    print("\n[System 8] Extracting Chunk → Resource Node pairs...")
 
     nodes_data = load_json(PATHS["nodes"])
     chunk_templates = load_json(PATHS["chunk_templates"])
 
-    # Build reverse mapping: node → chunks (using drop IDs as node references)
-    node_to_chunks = {}
+    # Index nodes by resourceId for quick lookup
+    nodes_by_id = {n["resourceId"]: n for n in nodes_data.get("nodes", [])}
+
+    # Extract pairs: one pair per (chunk, resource) combination
+    pairs = []
     for template in chunk_templates.get("templates", []):
         chunk_type = template["chunkType"]
         chunk_category = template["category"]
         chunk_theme = template["theme"]
+        resource_density = template.get("resourceDensity", {})
 
-        for resource_id, resource_info in template.get("resourceDensity", {}).items():
-            if resource_id not in node_to_chunks:
-                node_to_chunks[resource_id] = []
+        # Create a training pair for each resource in this chunk
+        for resource_id, density_info in resource_density.items():
+            node = nodes_by_id.get(resource_id)
+            if not node:
+                print(f"  ⚠️  Missing node definition for: {resource_id}")
+                continue
 
-            node_to_chunks[resource_id].append({
+            # Build INPUT: chunk metadata + resourceDensity entry for this node
+            input_data = {
                 "chunkType": chunk_type,
-                "category": chunk_category,
-                "theme": chunk_theme,
-                "density": resource_info["density"],
-                "tierBias": resource_info.get("tierBias", "low")
+                "chunkCategory": chunk_category,
+                "chunkTheme": chunk_theme,
+                "resourceDensity": {
+                    resource_id: density_info  # Includes density and tierBias
+                }
+            }
+
+            # Build OUTPUT: complete node JSON
+            output_data = node
+
+            pairs.append({
+                "input": input_data,
+                "output": output_data
             })
-
-    # Extract pairs
-    pairs = []
-    for node in nodes_data.get("nodes", []):
-        node_id = node.get("nodeId")
-        if not node_id:
-            continue
-
-        chunk_assignments = node_to_chunks.get(node_id, [])
-        if not chunk_assignments:
-            print(f"  ⚠️  No chunk assignments for node: {node_id}")
-            continue
-
-        # Get primary chunk
-        primary_chunk = chunk_assignments[0]
-
-        # Build INPUT
-        input_data = {
-            "primaryChunk": primary_chunk["chunkType"],
-            "chunkCategory": primary_chunk["category"],
-            "chunkTheme": primary_chunk["theme"],
-            "spawnDensity": primary_chunk["density"],
-            "tierBias": primary_chunk["tierBias"],
-            "allChunks": [c["chunkType"] for c in chunk_assignments],
-            "tier": node.get("tier", 1),
-            "category": node.get("category", ""),
-            "tags": node.get("metadata", {}).get("tags", [])
-        }
-
-        # Build OUTPUT (complete node JSON)
-        output_data = node
-
-        pairs.append({
-            "input": input_data,
-            "output": output_data
-        })
 
     save_training_pairs("system8_chunk_to_node", pairs)
     return pairs

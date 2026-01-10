@@ -1,59 +1,146 @@
 [
   {
     "input": {
-      "primaryChunk": "rare_cave",
+      "chunkType": "rare_cave",
       "chunkCategory": "rare",
       "chunkTheme": "cave",
-      "spawnDensity": "moderate",
-      "allChunks": [
-        "rare_cave"
-      ],
-      "tier": 4,
-      "category": "undead",
-      "tags": [
-        "wraith",
-        "rare",
-        "phase",
-        "end-game"
-      ]
+      "enemySpawns": {
+        "golem_stone": {
+          "density": "low",
+          "tier": 3
+        }
+      }
     },
     "output": {
       "metadata": {
-        "narrative": "Spectral entity that phases between dimensions. Attacks pass through it unpredictably.",
+        "narrative": "Animated stone construct that guards ancient places. Slow but nearly indestructible.",
         "tags": [
-          "wraith",
+          "golem",
           "rare",
-          "phase",
-          "end-game"
+          "boss",
+          "construct"
         ]
       },
-      "enemyId": "void_wraith",
-      "name": "Void Wraith",
-      "tier": 4,
-      "category": "undead",
-      "behavior": "aggressive_phase",
+      "enemyId": "golem_stone",
+      "name": "Stone Golem",
+      "tier": 3,
+      "category": "construct",
+      "behavior": "boss_encounter",
       "stats": {
-        "health": 400,
+        "health": 800,
         "damage": [
-          60,
-          90
+          50,
+          80
         ],
-        "defense": 15,
-        "speed": 1.5,
-        "aggroRange": 15,
-        "attackSpeed": 1.3
+        "defense": 40,
+        "speed": 0.5,
+        "aggroRange": 10,
+        "attackSpeed": 0.6
       },
       "drops": [
         {
-          "materialId": "spectral_thread",
+          "materialId": "golem_core",
           "quantity": [
-            5,
-            10
+            2,
+            4
           ],
           "chance": "guaranteed"
         },
         {
-          "materialId": "void_essence",
+          "materialId": "granite",
+          "quantity": [
+            10,
+            15
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": [
+            5,
+            8
+          ],
+          "chance": "high"
+        },
+        {
+          "materialId": "diamond",
+          "quantity": [
+            1,
+            2
+          ],
+          "chance": "moderate"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "guard",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0,
+        "callForHelpRadius": 0,
+        "specialAbilities": [
+          "ground_slam",
+          "stone_armor"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_cave",
+      "chunkCategory": "rare",
+      "chunkTheme": "cave",
+      "enemySpawns": {
+        "beetle_titan": {
+          "density": "very_low",
+          "tier": 4
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Massive beetle with diamond-hard shell. Ancient guardian that has survived eons.",
+        "tags": [
+          "beetle",
+          "rare",
+          "boss",
+          "end-game"
+        ]
+      },
+      "enemyId": "beetle_titan",
+      "name": "Titan Beetle",
+      "tier": 4,
+      "category": "insect",
+      "behavior": "boss_encounter",
+      "stats": {
+        "health": 1200,
+        "damage": [
+          70,
+          110
+        ],
+        "defense": 50,
+        "speed": 0.6,
+        "aggroRange": 15,
+        "attackSpeed": 0.7
+      },
+      "drops": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": [
+            15,
+            25
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "iron_scales",
+          "quantity": [
+            10,
+            15
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "golem_core",
           "quantity": [
             3,
             5
@@ -61,18 +148,10 @@
           "chance": "high"
         },
         {
-          "materialId": "shadow_core",
+          "materialId": "adamantine_ingot",
           "quantity": [
-            4,
-            6
-          ],
-          "chance": "high"
-        },
-        {
-          "materialId": "essence_blood",
-          "quantity": [
-            3,
-            4
+            2,
+            3
           ],
           "chance": "moderate"
         }
@@ -84,30 +163,24 @@
         "fleeAtHealth": 0,
         "callForHelpRadius": 0,
         "specialAbilities": [
-          "phase_shift",
-          "life_drain",
-          "teleport"
+          "earthquake_stomp",
+          "shell_shield",
+          "rampage"
         ]
       }
     }
   },
   {
     "input": {
-      "primaryChunk": "rare_cave",
+      "chunkType": "rare_cave",
       "chunkCategory": "rare",
       "chunkTheme": "cave",
-      "spawnDensity": "very_low",
-      "allChunks": [
-        "rare_cave"
-      ],
-      "tier": 4,
-      "category": "aberration",
-      "tags": [
-        "entity",
-        "mythical",
-        "boss",
-        "reality-bender"
-      ]
+      "enemySpawns": {
+        "entity_primordial": {
+          "density": "very_low",
+          "tier": 4
+        }
+      }
     },
     "output": {
       "metadata": {
