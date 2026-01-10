@@ -381,12 +381,579 @@ INPUT Construction
 def extract_refining_placement_input(recipe, material):
     """Extract INPUT for System 2 x2"""
     tier = recipe["stationTierRequired"]
-    
+
     return {
         "item": material,  # COMPLETE material JSON
         "recipe": recipe,  # COMPLETE recipe JSON
         "tierRules": REFINING_TIER_RULES[tier]
     }
+
+
+System 3: Alchemy (Recipe → Item)
+File Locations
+Recipes: Game-1-modular/recipes.JSON/recipes-alchemy-1.JSON
+Items: Game-1-modular/items.JSON/items-alchemy-1.JSON
+CRITICAL: Alchemy Items Organized by Subsections!
+Items are organized into subsections: potions_healing, potions_mana, elixirs, etc.
+Real Example: Minor Health Potion
+RECIPE (from recipes-alchemy-1.JSON):
+{
+  "metadata": {
+    "narrative": "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation.",
+    "tags": ["potion", "healing", "starter"]
+  },
+  "recipeId": "alchemy_minor_health_potion",
+  "outputId": "minor_health_potion",
+  "outputQty": 3,
+  "stationTier": 1,
+  "stationType": "alchemy",
+  "inputs": [
+    {"materialId": "slime_gel", "quantity": 2},
+    {"materialId": "wolf_pelt", "quantity": 1}
+  ],
+  "miniGame": {
+    "type": "alchemy",
+    "difficulty": "easy",
+    "baseTime": 20
+  }
+}
+
+ITEM (from items-alchemy-1.JSON - potions_healing section):
+{
+  "metadata": {
+    "narrative": "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation. Tastes terrible, works wonderfully. Wounds close and pain fades within moments.",
+    "tags": ["potion", "healing", "consumable", "starter"]
+  },
+  "itemId": "minor_health_potion",
+  "name": "Minor Health Potion",
+  "category": "consumable",
+  "type": "potion",
+  "subtype": "healing",
+  "tier": 1,
+  "rarity": "common",
+  "effect": "Restores 50 HP instantly",
+  "duration": 0,
+  "stackSize": 20,
+  "statMultipliers": {
+    "weight": 0.2
+  },
+  "requirements": {
+    "level": 1,
+    "stats": {}
+  },
+  "flags": {
+    "stackable": true,
+    "consumable": true,
+    "repairable": false
+  }
+}
+
+INPUT Extraction
+def extract_alchemy_input(recipe):
+    """Extract INPUT for System 3"""
+    return {
+        "inputs": recipe["inputs"],  # List[{materialId: str, quantity: int}]
+        "stationTier": recipe["stationTier"],  # int: 1-4
+        "stationType": recipe["stationType"],  # str: "alchemy"
+        "narrative": recipe.get("metadata", {}).get("narrative", "")
+    }
+
+# Example result:
+INPUT = {
+    "inputs": [
+        {"materialId": "slime_gel", "quantity": 2},
+        {"materialId": "wolf_pelt", "quantity": 1}
+    ],
+    "stationTier": 1,
+    "stationType": "alchemy",
+    "narrative": "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation."
+}
+
+OUTPUT Definition
+OUTPUT = item  # Complete item JSON - ALL fields preserved exactly as-is
+
+Matching Logic
+def find_matching_alchemy_item(recipe, alchemy_items):
+    """Find item that matches recipe.outputId"""
+    output_id = recipe["outputId"]
+
+    # Search all subsections (potions_healing, potions_mana, elixirs, etc.)
+    for section_name, items in alchemy_items.items():
+        if section_name == "metadata":
+            continue  # Skip metadata section
+
+        for item in items:
+            if item["itemId"] == output_id:
+                return item
+
+    return None  # Recipe without matching item
+
+Data Quality Notes
+Alchemy recipes output multiple quantities (outputQty: 3) - this is normal
+All alchemy items are consumables with stackable=true
+Items organized by subsections - must search all sections
+Check that effect field matches recipe's intended purpose
+
+
+System 3 x2: Alchemy Placement (Item + Recipe → Placement)
+File Locations
+Placements: Game-1-modular/placements.JSON/placements-alchemy-1.JSON
+CRITICAL: Alchemy Uses Sequential Slot System!
+Ingredients are added in specific order (slot 1, slot 2, slot 3...)
+Order matters for the alchemy reaction simulation
+Real Example: Minor Health Potion (continued)
+PLACEMENT (from placements-alchemy-1.JSON):
+{
+  "recipeId": "alchemy_minor_health_potion",
+  "outputId": "minor_health_potion",
+  "stationTier": 1,
+  "ingredients": [
+    {"slot": 1, "materialId": "slime_gel", "quantity": 2},
+    {"slot": 2, "materialId": "wolf_pelt", "quantity": 1}
+  ],
+  "narrative": "Slime gel dissolves first, creating restorative base. Wolf pelt binds mixture second. Watch for gentle green glow - too quick and they won't merge."
+}
+
+Tier Rules for Alchemy
+ALCHEMY_TIER_RULES = {
+    1: {"maxIngredientSlots": 2, "maxUniqueIngredients": 2},
+    2: {"maxIngredientSlots": 3, "maxUniqueIngredients": 3},
+    3: {"maxIngredientSlots": 4, "maxUniqueIngredients": 4},
+    4: {"maxIngredientSlots": 5, "maxUniqueIngredients": 5}
+}
+
+INPUT Construction
+def extract_alchemy_placement_input(recipe, item):
+    """Extract INPUT for System 3 x2"""
+    tier = recipe["stationTier"]
+
+    return {
+        "item": item,  # COMPLETE item JSON
+        "recipe": recipe,  # COMPLETE recipe JSON
+        "tierRules": ALCHEMY_TIER_RULES[tier]
+    }
+
+# Example result:
+INPUT = {
+    "item": {
+        "itemId": "minor_health_potion",
+        "name": "Minor Health Potion",
+        # ... all fields from item JSON ...
+    },
+    "recipe": {
+        "recipeId": "alchemy_minor_health_potion",
+        "outputId": "minor_health_potion",
+        # ... all fields from recipe JSON ...
+    },
+    "tierRules": {"maxIngredientSlots": 2, "maxUniqueIngredients": 2}
+}
+
+OUTPUT Definition
+OUTPUT = placement  # Complete placement JSON - ALL fields preserved
+
+Matching Logic
+# placement["recipeId"] MUST EQUAL recipe["recipeId"]
+matches = placement["recipeId"] == recipe["recipeId"]
+
+Key Patterns
+Sequential ordering: Slots numbered 1, 2, 3... (not 0-indexed!)
+Narrative describes reaction sequence and timing
+Higher tiers = more complex ingredient sequences
+
+
+System 4: Engineering (Recipe → Item)
+File Locations
+Recipes: Game-1-modular/recipes.JSON/recipes-engineering-1.JSON
+Items: Game-1-modular/items.JSON/items-engineering-1.JSON
+CRITICAL: Engineering Items Are Devices!
+All engineering outputs are placeable devices (turrets, bombs, traps)
+Items have effectTags and effectParams for combat/utility mechanics
+Real Example: Basic Arrow Turret
+RECIPE (from recipes-engineering-1.JSON):
+{
+  "metadata": {
+    "narrative": "Basic arrow turret using simple springs and levers. Point away from face.",
+    "tags": ["turret", "basic", "projectile"]
+  },
+  "recipeId": "engineering_basic_arrow_turret",
+  "outputId": "basic_arrow_turret",
+  "outputQty": 1,
+  "stationTier": 1,
+  "stationType": "engineering",
+  "inputs": [
+    {"materialId": "iron_ingot", "quantity": 4},
+    {"materialId": "pine_plank", "quantity": 3},
+    {"materialId": "spectral_thread", "quantity": 2}
+  ],
+  "miniGame": {
+    "type": "engineering",
+    "difficulty": "easy",
+    "baseTime": 40
+  }
+}
+
+ITEM (from items-engineering-1.JSON - turrets section):
+{
+  "metadata": {
+    "narrative": "Basic arrow turret using simple springs and levers. Point away from face. Automated defense that never sleeps, never misses... well, rarely misses.",
+    "tags": ["device", "turret", "basic", "projectile"]
+  },
+  "itemId": "basic_arrow_turret",
+  "name": "Basic Arrow Turret",
+  "category": "device",
+  "type": "turret",
+  "subtype": "projectile",
+  "tier": 1,
+  "rarity": "common",
+  "effect": "Fires arrows at enemies, 20 damage, 5 unit range",
+  "effectTags": ["physical", "piercing", "single"],
+  "effectParams": {
+    "baseDamage": 20,
+    "range": 5.0
+  },
+  "stackSize": 5,
+  "statMultipliers": {
+    "weight": 1.5
+  },
+  "requirements": {
+    "level": 3,
+    "stats": {}
+  },
+  "flags": {
+    "stackable": true,
+    "placeable": true,
+    "repairable": false
+  }
+}
+
+INPUT Extraction
+def extract_engineering_input(recipe):
+    """Extract INPUT for System 4"""
+    return {
+        "inputs": recipe["inputs"],  # List[{materialId: str, quantity: int}]
+        "stationTier": recipe["stationTier"],  # int: 1-4
+        "stationType": recipe["stationType"],  # str: "engineering"
+        "narrative": recipe.get("metadata", {}).get("narrative", ""),
+        "tags": recipe.get("metadata", {}).get("tags", [])  # Important for device type!
+    }
+
+# Example result:
+INPUT = {
+    "inputs": [
+        {"materialId": "iron_ingot", "quantity": 4},
+        {"materialId": "pine_plank", "quantity": 3},
+        {"materialId": "spectral_thread", "quantity": 2}
+    ],
+    "stationTier": 1,
+    "stationType": "engineering",
+    "narrative": "Basic arrow turret using simple springs and levers. Point away from face.",
+    "tags": ["turret", "basic", "projectile"]
+}
+
+OUTPUT Definition
+OUTPUT = item  # Complete item JSON - ALL fields preserved
+
+Matching Logic
+def find_matching_engineering_item(recipe, engineering_items):
+    """Find item that matches recipe.outputId"""
+    output_id = recipe["outputId"]
+
+    # Search all subsections (turrets, bombs, traps, etc.)
+    for section_name, items in engineering_items.items():
+        if section_name == "metadata":
+            continue
+
+        for item in items:
+            if item["itemId"] == output_id:
+                return item
+
+    return None
+
+Key Requirements
+LLM must generate appropriate effectTags based on device type
+LLM must provide balanced effectParams (damage, range, etc.)
+Tags in metadata should guide what type of device is created
+
+
+System 4 x2: Engineering Placement (Item + Recipe → Placement)
+File Locations
+Placements: Game-1-modular/placements.JSON/placements-engineering-1.JSON
+CRITICAL: Engineering Uses Slot-Type System!
+Slots have types: FRAME, FUNCTION, POWER, MODIFIER, etc.
+Different tiers allow different numbers of slots and slot types
+Real Example: Basic Arrow Turret (continued)
+PLACEMENT (from placements-engineering-1.JSON):
+{
+  "recipeId": "engineering_basic_arrow_turret",
+  "outputId": "basic_arrow_turret",
+  "stationTier": 1,
+  "slots": [
+    {"type": "FRAME", "materialId": "iron_ingot", "quantity": 4},
+    {"type": "FUNCTION", "materialId": "oak_plank", "quantity": 3},
+    {"type": "POWER", "materialId": "beetle_carapace", "quantity": 2}
+  ],
+  "narrative": "Basic arrow turret - iron frame for stability, oak mechanism for firing, beetle carapace provides spring tension. Point away from face."
+}
+
+Tier Rules for Engineering
+ENGINEERING_TIER_RULES = {
+    1: {
+        "maxSlots": 3,
+        "allowedSlotTypes": ["FRAME", "FUNCTION", "POWER"]
+    },
+    2: {
+        "maxSlots": 5,
+        "allowedSlotTypes": ["FRAME", "FUNCTION", "POWER", "MODIFIER"]
+    },
+    3: {
+        "maxSlots": 5,
+        "allowedSlotTypes": ["FRAME", "FUNCTION", "POWER", "MODIFIER", "CATALYST"]
+    },
+    4: {
+        "maxSlots": 7,
+        "allowedSlotTypes": ["FRAME", "FUNCTION", "POWER", "MODIFIER", "CATALYST", "AMPLIFIER", "CORE"]
+    }
+}
+
+INPUT Construction
+def extract_engineering_placement_input(recipe, item):
+    """Extract INPUT for System 4 x2"""
+    tier = recipe["stationTier"]
+
+    return {
+        "item": item,  # COMPLETE item JSON
+        "recipe": recipe,  # COMPLETE recipe JSON
+        "tierRules": ENGINEERING_TIER_RULES[tier]
+    }
+
+OUTPUT Definition
+OUTPUT = placement  # Complete placement JSON - ALL fields preserved
+
+Slot Type Guidelines
+FRAME: Structural materials (ingots, planks) - determines durability
+FUNCTION: Mechanism materials (wood, gears) - determines device behavior
+POWER: Energy sources (crystals, essences) - determines damage/effect strength
+MODIFIER: Enhancement materials - modifies base behavior
+CATALYST: Rare materials that enable special effects
+AMPLIFIER: Materials that boost power/range
+CORE: Legendary materials that define device identity
+
+
+System 5: Adornments/Enchanting (Recipe → Enchantment Definition)
+File Locations
+Recipes: Game-1-modular/recipes.JSON/recipes-adornments-1.json
+Items: NO SEPARATE ITEM FILE - Recipe contains the enchantment definition!
+CRITICAL: Enchanting Is Different From Other Systems!
+No separate item JSON - the recipe IS the enchantment definition
+Uses enchantmentId instead of outputId
+Includes applicableTo array (what can be enchanted)
+Includes effect object with type, value, stackable, conflictsWith
+Real Example: Sharpness I
+RECIPE/ENCHANTMENT (from recipes-adornments-1.json):
+{
+  "metadata": {
+    "narrative": "Basic sharpening enchantment using fire crystals. The edge never dulls.",
+    "tags": ["weapon", "damage", "basic"]
+  },
+  "recipeId": "enchanting_sharpness_basic",
+  "enchantmentId": "sharpness_1",
+  "enchantmentName": "Sharpness I",
+  "applicableTo": ["weapon"],
+  "stationTier": 1,
+  "stationType": "enchanting",
+  "inputs": [
+    {"materialId": "fire_crystal", "quantity": 4},
+    {"materialId": "granite", "quantity": 2},
+    {"materialId": "iron_ingot", "quantity": 3},
+    {"materialId": "tin_ore", "quantity": 2}
+  ],
+  "miniGame": {
+    "type": "enchanting",
+    "difficulty": "easy",
+    "baseTime": 30
+  },
+  "effect": {
+    "type": "damage_multiplier",
+    "value": 0.1,
+    "stackable": false,
+    "conflictsWith": ["sharpness_2", "sharpness_3"]
+  }
+}
+
+INPUT Extraction
+def extract_enchanting_input(recipe):
+    """Extract INPUT for System 5"""
+    return {
+        "inputs": recipe["inputs"],  # List[{materialId: str, quantity: int}]
+        "stationTier": recipe["stationTier"],  # int: 1-4
+        "stationType": recipe["stationType"],  # str: "enchanting"
+        "narrative": recipe.get("metadata", {}).get("narrative", ""),
+        "tags": recipe.get("metadata", {}).get("tags", [])
+    }
+
+# Example result:
+INPUT = {
+    "inputs": [
+        {"materialId": "fire_crystal", "quantity": 4},
+        {"materialId": "granite", "quantity": 2},
+        {"materialId": "iron_ingot", "quantity": 3},
+        {"materialId": "tin_ore", "quantity": 2}
+    ],
+    "stationTier": 1,
+    "stationType": "enchanting",
+    "narrative": "Basic sharpening enchantment using fire crystals. The edge never dulls.",
+    "tags": ["weapon", "damage", "basic"]
+}
+
+OUTPUT Definition
+OUTPUT = recipe  # Complete recipe JSON INCLUDING effect definition - ALL fields preserved
+
+Critical OUTPUT Fields the LLM Must Generate
+enchantmentId: Unique ID (format: enchantment_name_tier)
+enchantmentName: Display name (format: "Name I/II/III")
+applicableTo: Array of equipment types ["weapon"], ["armor"], ["weapon", "tool"], etc.
+effect: Object containing:
+  - type: Effect type (damage_multiplier, defense_bonus, speed_boost, etc.)
+  - value: Numeric value (0.1 = +10%, 50 = +50 flat, etc.)
+  - stackable: Boolean (can multiple of same enchantment stack?)
+  - conflictsWith: Array of enchantmentIds that conflict
+
+Effect Types Reference
+damage_multiplier: Increases damage by % (value: 0.1 = +10%)
+defense_bonus: Adds flat defense (value: 10 = +10 defense)
+speed_boost: Increases speed by % (value: 0.15 = +15%)
+lifesteal: Heal % of damage dealt (value: 0.05 = 5% lifesteal)
+durability_bonus: Increases max durability by % (value: 0.2 = +20%)
+elemental_damage: Adds elemental damage (value: 15 = +15 fire damage)
+
+Matching Logic
+# For enchanting, INPUT = recipe (minus effect), OUTPUT = complete recipe
+# The LLM learns to generate the effect field based on inputs and narrative
+
+
+System 5 x2: Enchanting Placement (Recipe → Placement)
+File Locations
+Placements: Game-1-modular/placements.JSON/placements-adornments-1.JSON
+CRITICAL: Enchanting Uses Geometric Pattern System!
+Placements use vertices (x,y coordinates) on a grid
+Vertices form geometric shapes (squares, triangles, circles)
+Shapes have types and rotations - creates symbolic patterns
+Real Example: Sharpness I (continued)
+PLACEMENT (from placements-adornments-1.JSON):
+{
+  "recipeId": "enchanting_sharpness_basic",
+  "placementMap": {
+    "gridType": "square_8x8",
+    "vertices": {
+      "0,1": {"materialId": "fire_crystal", "isKey": false},
+      "-1,2": {"materialId": "iron_ingot", "isKey": false},
+      "0,4": {"materialId": "iron_ingot", "isKey": false},
+      "1,2": {"materialId": "iron_ingot", "isKey": false},
+      "2,0": {"materialId": "tin_ore", "isKey": false},
+      "-2,0": {"materialId": "tin_ore", "isKey": false},
+      "1,0": {"materialId": "fire_crystal", "isKey": false},
+      "0,-2": {"materialId": "fire_crystal", "isKey": false},
+      "-1,0": {"materialId": "fire_crystal", "isKey": false},
+      "-1,-4": {"materialId": "granite", "isKey": false},
+      "1,-4": {"materialId": "granite", "isKey": false}
+    },
+    "shapes": [
+      {
+        "type": "square_small",
+        "vertices": ["0,1", "-1,2", "0,4", "1,2"],
+        "rotation": 135
+      },
+      {
+        "type": "triangle_equilateral_small",
+        "vertices": ["2,0", "1,2", "0,1"],
+        "rotation": 225
+      },
+      {
+        "type": "triangle_equilateral_small",
+        "vertices": ["-2,0", "0,1", "-1,2"],
+        "rotation": 135
+      },
+      {
+        "type": "square_small",
+        "vertices": ["0,1", "1,0", "0,-2", "-1,0"],
+        "rotation": 315
+      },
+      {
+        "type": "triangle_equilateral_small",
+        "vertices": ["0,-2", "-1,-4", "1,-4"],
+        "rotation": 0
+      }
+    ]
+  }
+}
+
+Tier Rules for Enchanting
+ENCHANTING_TIER_RULES = {
+    1: {
+        "gridSize": "square_8x8",
+        "maxVertices": 11,
+        "allowedShapes": ["square_small", "triangle_equilateral_small"]
+    },
+    2: {
+        "gridSize": "square_10x10",
+        "maxVertices": 17,
+        "allowedShapes": ["square_small", "square_medium", "triangle_equilateral_small", "circle_small"]
+    },
+    3: {
+        "gridSize": "square_12x12",
+        "maxVertices": 25,
+        "allowedShapes": ["square_small", "square_medium", "square_large", "triangle_equilateral_small", "triangle_equilateral_medium", "circle_small", "circle_medium"]
+    },
+    4: {
+        "gridSize": "square_14x14",
+        "maxVertices": 35,
+        "allowedShapes": ["square_small", "square_medium", "square_large", "triangle_equilateral_small", "triangle_equilateral_medium", "triangle_equilateral_large", "circle_small", "circle_medium", "circle_large", "hexagon", "star"]
+    }
+}
+
+INPUT Construction
+def extract_enchanting_placement_input(recipe):
+    """Extract INPUT for System 5 x2"""
+    tier = recipe["stationTier"]
+
+    return {
+        "recipe": recipe,  # COMPLETE recipe JSON (includes enchantment definition)
+        "tierRules": ENCHANTING_TIER_RULES[tier]
+    }
+
+# Example result:
+INPUT = {
+    "recipe": {
+        "recipeId": "enchanting_sharpness_basic",
+        "enchantmentId": "sharpness_1",
+        # ... all fields from recipe JSON including effect ...
+    },
+    "tierRules": {
+        "gridSize": "square_8x8",
+        "maxVertices": 11,
+        "allowedShapes": ["square_small", "triangle_equilateral_small"]
+    }
+}
+
+OUTPUT Definition
+OUTPUT = placement  # Complete placement JSON - ALL fields preserved
+
+Key Pattern Requirements
+Vertices must form coherent geometric patterns
+Shapes must use only allowed shape types for tier
+Materials should be distributed to create visual symbolism
+Higher tiers = more complex, intricate patterns
+Pattern should relate to enchantment purpose (sharp edges for sharpness, circles for protection, etc.)
+
+Shape Types Reference
+square_small, square_medium, square_large
+triangle_equilateral_small, triangle_equilateral_medium, triangle_equilateral_large
+circle_small, circle_medium, circle_large
+hexagon, star (T4 only)
+
+Matching Logic
+# placement["recipeId"] MUST EQUAL recipe["recipeId"]
+matches = placement["recipeId"] == recipe["recipeId"]
 
 
 System 6: Hostiles (Chunk Definition → Hostile)
@@ -708,49 +1275,61 @@ from pathlib import Path
 def load_all_data():
     """Load all JSON files needed for training data extraction"""
     base_path = Path("Game-1-modular")
-    
+
     data = {
         # Recipes
         "smithing_recipes": load_json(base_path / "recipes.JSON/recipes-smithing-3.JSON"),
         "refining_recipes": load_json(base_path / "recipes.JSON/recipes-refining-1.JSON"),
         "alchemy_recipes": load_json(base_path / "recipes.JSON/recipes-alchemy-1.JSON"),
         "engineering_recipes": load_json(base_path / "recipes.JSON/recipes-engineering-1.JSON"),
-        
+        "enchanting_recipes": load_json(base_path / "recipes.JSON/recipes-adornments-1.json"),
+
         # Items
         "smithing_items": load_json(base_path / "items.JSON/items-smithing-2.JSON"),
         "tools": load_json(base_path / "items.JSON/items-tools-1.JSON"),
         "refining_items": load_json(base_path / "items.JSON/items-refining-1.JSON"),
+        "alchemy_items": load_json(base_path / "items.JSON/items-alchemy-1.JSON"),
+        "engineering_items": load_json(base_path / "items.JSON/items-engineering-1.JSON"),
         "materials": load_json(base_path / "items.JSON/items-materials-1.JSON"),
-        
+
         # Placements
         "smithing_placements": load_json(base_path / "placements.JSON/placements-smithing-1.JSON"),
         "refining_placements": load_json(base_path / "placements.JSON/placements-refining-1.JSON"),
-        
+        "alchemy_placements": load_json(base_path / "placements.JSON/placements-alchemy-1.JSON"),
+        "engineering_placements": load_json(base_path / "placements.JSON/placements-engineering-1.JSON"),
+        "enchanting_placements": load_json(base_path / "placements.JSON/placements-adornments-1.JSON"),
+
         # Other
         "hostiles": load_json(base_path / "Definitions.JSON/hostiles-1.JSON"),
         "nodes": load_json(base_path / "Definitions.JSON/resource-node-1.JSON"),
         "skills": load_json(base_path / "Skills/skills-skills-1.JSON"),
         "titles": load_json(base_path / "progression/titles-1.JSON"),
     }
-    
+
     return data
 
 Step 2: Extract Training Pairs
 def extract_all_training_pairs(data):
     """Extract all training pairs for all systems"""
-    
+
     training_data = {
         "system_1_smithing": [],
         "system_1x2_smithing_placement": [],
         "system_2_refining": [],
         "system_2x2_refining_placement": [],
+        "system_3_alchemy": [],
+        "system_3x2_alchemy_placement": [],
+        "system_4_engineering": [],
+        "system_4x2_engineering_placement": [],
+        "system_5_enchanting": [],
+        "system_5x2_enchanting_placement": [],
         "system_6_hostiles": [],
         "system_7_materials": [],
         "system_8_nodes": [],
         "system_10_skills": [],
         "system_11_titles": [],
     }
-    
+
     # System 1: Smithing Recipe → Item
     smithing_items_combined = (
         data["smithing_items"]["weapons"] +
@@ -759,7 +1338,7 @@ def extract_all_training_pairs(data):
         data["smithing_items"]["stations"] +
         data["tools"]["tools"]
     )
-    
+
     for recipe in data["smithing_recipes"]["recipes"]:
         item = find_item_by_id(recipe["outputId"], smithing_items_combined)
         if item:
@@ -769,7 +1348,7 @@ def extract_all_training_pairs(data):
                 "input": input_data,
                 "output": output_data
             })
-    
+
     # System 1 x2: Smithing Placement
     for placement in data["smithing_placements"]["placements"]:
         recipe = find_recipe_by_id(placement["recipeId"], data["smithing_recipes"]["recipes"])
@@ -781,9 +1360,117 @@ def extract_all_training_pairs(data):
                 "input": input_data,
                 "output": output_data
             })
-    
-    # ... Continue for all systems ...
-    
+
+    # System 2: Refining Recipe → Material
+    for recipe in data["refining_recipes"]["recipes"]:
+        material = find_matching_material(recipe, data["refining_items"])
+        if material:
+            input_data = extract_refining_input(recipe)
+            output_data = material
+            training_data["system_2_refining"].append({
+                "input": input_data,
+                "output": output_data
+            })
+
+    # System 2 x2: Refining Placement
+    for placement in data["refining_placements"]["placements"]:
+        recipe = find_recipe_by_id(placement["recipeId"], data["refining_recipes"]["recipes"])
+        material = find_matching_material(recipe, data["refining_items"])
+        if recipe and material:
+            input_data = extract_refining_placement_input(recipe, material)
+            output_data = placement
+            training_data["system_2x2_refining_placement"].append({
+                "input": input_data,
+                "output": output_data
+            })
+
+    # System 3: Alchemy Recipe → Item
+    for recipe in data["alchemy_recipes"]["recipes"]:
+        item = find_matching_alchemy_item(recipe, data["alchemy_items"])
+        if item:
+            input_data = extract_alchemy_input(recipe)
+            output_data = item
+            training_data["system_3_alchemy"].append({
+                "input": input_data,
+                "output": output_data
+            })
+
+    # System 3 x2: Alchemy Placement
+    for placement in data["alchemy_placements"]["placements"]:
+        recipe = find_recipe_by_id(placement["recipeId"], data["alchemy_recipes"]["recipes"])
+        item = find_matching_alchemy_item(recipe, data["alchemy_items"])
+        if recipe and item:
+            input_data = extract_alchemy_placement_input(recipe, item)
+            output_data = placement
+            training_data["system_3x2_alchemy_placement"].append({
+                "input": input_data,
+                "output": output_data
+            })
+
+    # System 4: Engineering Recipe → Item
+    for recipe in data["engineering_recipes"]["recipes"]:
+        item = find_matching_engineering_item(recipe, data["engineering_items"])
+        if item:
+            input_data = extract_engineering_input(recipe)
+            output_data = item
+            training_data["system_4_engineering"].append({
+                "input": input_data,
+                "output": output_data
+            })
+
+    # System 4 x2: Engineering Placement
+    for placement in data["engineering_placements"]["placements"]:
+        recipe = find_recipe_by_id(placement["recipeId"], data["engineering_recipes"]["recipes"])
+        item = find_matching_engineering_item(recipe, data["engineering_items"])
+        if recipe and item:
+            input_data = extract_engineering_placement_input(recipe, item)
+            output_data = placement
+            training_data["system_4x2_engineering_placement"].append({
+                "input": input_data,
+                "output": output_data
+            })
+
+    # System 5: Enchanting Recipe (contains enchantment definition)
+    for recipe in data["enchanting_recipes"]["recipes"]:
+        input_data = extract_enchanting_input(recipe)
+        output_data = recipe  # Recipe IS the enchantment definition
+        training_data["system_5_enchanting"].append({
+            "input": input_data,
+            "output": output_data
+        })
+
+    # System 5 x2: Enchanting Placement
+    for placement in data["enchanting_placements"]["placements"]:
+        recipe = find_recipe_by_id(placement["recipeId"], data["enchanting_recipes"]["recipes"])
+        if recipe:
+            input_data = extract_enchanting_placement_input(recipe)
+            output_data = placement
+            training_data["system_5x2_enchanting_placement"].append({
+                "input": input_data,
+                "output": output_data
+            })
+
+    # System 10: Skills
+    for skill in data["skills"]["skills"]:
+        input_data = extract_skill_input(skill)
+        output_data = skill
+        training_data["system_10_skills"].append({
+            "input": input_data,
+            "output": output_data
+        })
+
+    # System 11: Titles
+    for title in data["titles"]["titles"]:
+        input_data = extract_title_input(title)
+        output_data = title
+        training_data["system_11_titles"].append({
+            "input": input_data,
+            "output": output_data
+        })
+
+    # Note: Systems 6, 7, 8 (Hostiles, Materials, Nodes) require manual chunk mapping
+    # See individual system documentation for implementation details
+
     return training_data
 
 Step 3: Validate Data Quality
@@ -839,9 +1526,24 @@ System 2 (Refining)
 System 2 x2 (Refining Placement)
 56
 56 placements (from metadata)
-System 3-5 (Alchemy/Engineering)
-TBD
-Need to count
+System 3 (Alchemy)
+18
+18 recipes (from metadata)
+System 3 x2 (Alchemy Placement)
+30
+30 placements (from metadata)
+System 4 (Engineering)
+16
+16 recipes (from metadata)
+System 4 x2 (Engineering Placement)
+25
+25 placements (from metadata)
+System 5 (Enchanting)
+25
+25 recipes (from metadata)
+System 5 x2 (Enchanting Placement)
+25
+25 placements (from metadata)
 System 6 (Hostiles)
 49
 49 hostiles (from template)
@@ -860,8 +1562,15 @@ System 11 (Titles)
 
 
 Critical Reminders
-Smithing items are split across TWO files - search both!
-Refining recipes use different structure - outputs not outputId
+SMITHING: Items split across TWO files (items-smithing-2.JSON + items-tools-1.JSON) - search both!
+REFINING: Recipes use different structure - outputs[] array not outputId
+ALCHEMY: Items organized in subsections (potions_healing, potions_mana, elixirs) - search all sections
+ALCHEMY: Placement uses sequential slots (1, 2, 3...) - order matters!
+ENGINEERING: Items organized in subsections (turrets, bombs, traps) - search all sections
+ENGINEERING: Placement uses slot-type system (FRAME, FUNCTION, POWER, etc.)
+ENCHANTING: NO separate item file - recipe contains enchantment definition
+ENCHANTING: Uses enchantmentId not outputId, includes applicableTo and effect fields
+ENCHANTING: Placement uses geometric pattern system with vertices and shapes
 Tier rules must be constructed - they're patterns, not in JSON
 Hostiles/Nodes lack chunk fields - use manual mapping
 Materials require cross-referencing - search all drop tables
