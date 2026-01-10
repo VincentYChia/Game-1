@@ -1,0 +1,199 @@
+[
+  {
+    "input": {
+      "recipeId": "smithing_fire_crystal_staff",
+      "itemId": "fire_crystal_staff",
+      "tier": 3,
+      "gridSize": "7x7",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 8
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
+        "tags": [
+          "melee",
+          "staff",
+          "versatile",
+          "elemental",
+          "fire"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "smithing_fire_crystal_staff",
+      "placementMap": {
+        "1,7": "fire_crystal",
+        "2,6": "fire_crystal",
+        "2,5": "fire_crystal",
+        "3,6": "fire_crystal",
+        "6,2": "ironwood_plank",
+        "5,3": "ironwood_plank",
+        "4,4": "ironwood_plank",
+        "7,1": "phoenix_ash",
+        "3,5": "ironwood_plank",
+        "4,6": "fire_crystal",
+        "3,7": "fire_crystal",
+        "1,5": "fire_crystal",
+        "2,4": "fire_crystal",
+        "1,6": "mithril_ingot",
+        "2,7": "mithril_ingot",
+        "5,6": "phoenix_ash",
+        "2,3": "phoenix_ash"
+      },
+      "metadata": {
+        "gridSize": "7x7",
+        "narrative": "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis."
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_round_shield",
+      "itemId": "iron_round_shield",
+      "tier": 1,
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Round iron shield with oak backing. Not just for blocking - bash enemies with the rim or use it to create openings. Defense and offense in one hand.",
+        "tags": [
+          "melee",
+          "shield",
+          "1H",
+          "defensive",
+          "bash"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "smithing_iron_round_shield",
+      "placementMap": {
+        "2,2": "iron_ingot",
+        "2,1": "wolf_pelt",
+        "1,2": "oak_plank",
+        "2,3": "oak_plank",
+        "3,2": "oak_plank"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "A simple round shield - iron face with oak backing. Protects and strikes in equal measure."
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_leggings",
+      "itemId": "steel_leggings",
+      "tier": 2,
+      "gridSize": "5x5",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 7
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 5
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Steel plate leggings with articulated joints. Heavy but protective, they guard your legs without restricting movement. Every smith's second major armor piece after the chestplate.",
+        "tags": [
+          "armor",
+          "legs",
+          "metal",
+          "heavy"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "smithing_steel_leggings",
+      "placementMap": {
+        "5,4": "wolf_pelt",
+        "5,2": "wolf_pelt",
+        "4,2": "steel_ingot",
+        "3,2": "steel_ingot",
+        "2,2": "steel_ingot",
+        "2,4": "steel_ingot",
+        "3,4": "steel_ingot",
+        "4,4": "steel_ingot",
+        "1,2": "wolf_pelt",
+        "1,4": "wolf_pelt",
+        "2,3": "steel_ingot",
+        "1,3": "wolf_pelt"
+      },
+      "metadata": {
+        "gridSize": "5x5",
+        "narrative": "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor."
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_studded_gauntlets",
+      "itemId": "iron_studded_gauntlets",
+      "tier": 1,
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 3
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Leather gloves reinforced with iron studs across the knuckles. Light enough for dexterity, strong enough to turn a blade. Your hands are tools - protect them.",
+        "tags": [
+          "armor",
+          "hands",
+          "light",
+          "flexible"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "smithing_iron_studded_gauntlets",
+      "placementMap": {
+        "1,2": "iron_ingot",
+        "2,3": "iron_ingot",
+        "2,1": "wolf_pelt",
+        "3,2": "wolf_pelt",
+        "2,2": "wolf_pelt"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Reinforced leather gloves with iron studs across the knuckles. Your hands are your tools - protect them properly."
+      }
+    }
+  }
+]

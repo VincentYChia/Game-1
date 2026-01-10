@@ -1,0 +1,145 @@
+[
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Dire Wolf",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "wolf_dire",
+        "slime_acid",
+        "beetle_armored"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
+        "tags": [
+          "monster",
+          "uncommon",
+          "essence"
+        ]
+      },
+      "materialId": "living_ichor",
+      "name": "Living Ichor",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Armored Beetle",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "beetle_armored",
+        "beetle_titan"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Metallic scales from armored creatures. Can deflect sword strikes.",
+        "tags": [
+          "monster",
+          "uncommon",
+          "scales"
+        ]
+      },
+      "materialId": "iron_scales",
+      "name": "Iron Scales",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Elder Wolf",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "wolf_elder",
+        "slime_crystal",
+        "void_wraith"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
+        "tags": [
+          "monster",
+          "rare",
+          "blood"
+        ]
+      },
+      "materialId": "essence_blood",
+      "name": "Essence Blood",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Elder Wolf",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "wolf_elder",
+        "void_wraith"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
+        "tags": [
+          "monster",
+          "rare",
+          "spectral"
+        ]
+      },
+      "materialId": "spectral_thread",
+      "name": "Spectral Thread",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Titan Beetle",
+      "sourceTier": 4,
+      "materialTier": 3,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "beetle_titan",
+        "golem_stone",
+        "golem_crystal"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Petrified remains from ancient guardians. Contains geological memories.",
+        "tags": [
+          "monster",
+          "rare",
+          "ancient"
+        ]
+      },
+      "materialId": "golem_core",
+      "name": "Golem Core",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    }
+  }
+]

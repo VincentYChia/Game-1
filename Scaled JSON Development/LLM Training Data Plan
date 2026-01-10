@@ -991,12 +991,13 @@ Matching Logic
 matches = placement["recipeId"] == recipe["recipeId"]
 
 
-System 6: Hostiles (Chunk Type Assignment → Hostile)
+System 6: Hostiles (Chunk Type Assignment → Hostile) ✅ IMPLEMENTED
 File Locations
 Hostiles: Game-1-modular/Definitions.JSON/hostiles-1.JSON
-Chunk Templates: Game-1-modular/Definitions.JSON/Chunk-templates-1.JSON
+Chunk Templates: Game-1-modular/Definitions.JSON/Chunk-templates-2.JSON ⚡ UPDATED
 CRITICAL: Bidirectional Chunk-Hostile Relationship!
-Chunk templates have enemySpawns field listing hostiles with density/behavior
+Chunk templates have enemySpawns field listing hostiles with density (NO behavior field)
+Weighted spawn system implemented in combat_manager.py (see System-6-Hostile-Chunk-Assignment-Plan.md)
 This enables backwards-compatible hostile generation and chunk assignment
 Real Example: Wolf Grey (in peaceful_forest chunk)
 HOSTILE (from hostiles-1.JSON):
@@ -1031,7 +1032,7 @@ HOSTILE (from hostiles-1.JSON):
   }
 }
 
-CHUNK ASSIGNMENT (from peaceful_forest in Chunk-templates-1.JSON):
+CHUNK ASSIGNMENT (from peaceful_forest in Chunk-templates-2.JSON):
 {
   "chunkType": "peaceful_forest",
   "name": "Peaceful Forest",
@@ -1039,8 +1040,7 @@ CHUNK ASSIGNMENT (from peaceful_forest in Chunk-templates-1.JSON):
   "theme": "forest",
   "enemySpawns": {
     "wolf_grey": {
-      "density": "very_low",
-      "behavior": "passive_patrol"
+      "density": "very_low"
     }
   }
   // ... other chunk fields
@@ -1065,8 +1065,7 @@ def extract_hostile_chunk_assignments(chunk_templates):
                 "chunkType": chunk_type,
                 "category": chunk_category,
                 "theme": chunk_theme,
-                "density": spawn_info["density"],
-                "behavior": spawn_info["behavior"]
+                "density": spawn_info["density"]
             })
 
     return hostile_to_chunks
@@ -1078,15 +1077,13 @@ CHUNK_ASSIGNMENTS = {
             "chunkType": "peaceful_forest",
             "category": "peaceful",
             "theme": "forest",
-            "density": "very_low",
-            "behavior": "passive_patrol"
+            "density": "very_low"
         },
         {
             "chunkType": "dangerous_forest",
             "category": "dangerous",
             "theme": "forest",
-            "density": "high",
-            "behavior": "aggressive_pack"
+            "density": "high"
         }
     ]
 }
@@ -1148,7 +1145,7 @@ Learns behavior patterns (passive in peaceful, aggressive in dangerous)
 Enables new chunk types to automatically get appropriate enemies
 
 Backwards Compatibility Strategy
-Existing hostiles: Extract chunk assignments from Chunk-templates-1.JSON
+Existing hostiles: Extract chunk assignments from Chunk-templates-2.JSON
 New hostiles: LLM generates based on target chunk type
 Chunk updates: Add new enemies to enemySpawns, automatically available for hostile generation
 Higher spawn rates: Enemies listed in chunk enemySpawns have priority spawning
@@ -1246,7 +1243,7 @@ Material drops from both hostile AND node: Prioritize hostile drops
 System 8: Nodes (Chunk Type Assignment → Node)
 File Locations
 Nodes: Game-1-modular/Definitions.JSON/Resource-node-1.JSON
-Chunk Templates: Game-1-modular/Definitions.JSON/Chunk-templates-1.JSON
+Chunk Templates: Game-1-modular/Definitions.JSON/Chunk-templates-2.JSON
 CRITICAL: Bidirectional Chunk-Node Relationship!
 Chunk templates have resourceDensity field listing nodes with density/tierBias
 Same pattern as System 6 (hostiles) - backwards-compatible extraction
@@ -1269,7 +1266,7 @@ NODE (from Resource-node-1.JSON):
   "respawnTime": "normal"
 }
 
-CHUNK ASSIGNMENT (from peaceful_forest in Chunk-templates-1.JSON):
+CHUNK ASSIGNMENT (from peaceful_forest in Chunk-templates-2.JSON):
 {
   "chunkType": "peaceful_forest",
   "name": "Peaceful Forest",
@@ -1405,7 +1402,7 @@ Enables new chunk types to automatically get appropriate resource nodes
 
 System 9: Chunk Types (Player Metadata → Chunk Type)
 File Locations
-Chunk Templates: Game-1-modular/Definitions.JSON/Chunk-templates-1.JSON
+Chunk Templates: Game-1-modular/Definitions.JSON/Chunk-templates-2.JSON
 STATUS: BENCHED - Requires Player Metadata Not Available
 This system would generate new chunk types based on player progression/playstyle
 Requires player metadata: stats, achievements, playstyle analysis
@@ -1582,7 +1579,7 @@ def load_all_data():
         "enchanting_placements": load_json(base_path / "placements.JSON/placements-adornments-1.JSON"),
 
         # Other
-        "chunk_templates": load_json(base_path / "Definitions.JSON/Chunk-templates-1.JSON"),
+        "chunk_templates": load_json(base_path / "Definitions.JSON/Chunk-templates-2.JSON"),
         "hostiles": load_json(base_path / "Definitions.JSON/hostiles-1.JSON"),
         "nodes": load_json(base_path / "Definitions.JSON/Resource-node-1.JSON"),
         "materials": load_json(base_path / "items.JSON/items-materials-1.JSON"),
@@ -1900,9 +1897,9 @@ ENCHANTING: Uses enchantmentId not outputId, includes applicableTo and effect fi
 ENCHANTING: Placement uses geometric pattern system with vertices and shapes
 
 Critical Reminders - World Systems
-HOSTILES: Extract chunk assignments from Chunk-templates-1.JSON enemySpawns field
+HOSTILES: Extract chunk assignments from Chunk-templates-2.JSON enemySpawns field
 HOSTILES: Bidirectional relationship - chunk → hostiles and hostiles → chunks
-NODES: Extract chunk assignments from Chunk-templates-1.JSON resourceDensity field
+NODES: Extract chunk assignments from Chunk-templates-2.JSON resourceDensity field
 NODES: Same bidirectional pattern as hostiles
 MATERIALS: Require cross-referencing hostile/node drop tables - only include materials with drop sources
 CHUNK TYPES: System benched - requires player metadata not available

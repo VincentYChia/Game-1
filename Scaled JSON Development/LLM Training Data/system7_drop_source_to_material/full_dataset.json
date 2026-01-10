@@ -1,0 +1,1364 @@
+[
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Copper Vein",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "metal",
+      "allSources": [
+        "copper_vein"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "A soft, reddish metal found in shallow veins near the surface. Easy to work with basic tools but lacks the durability needed for serious combat. The foundation of all smithing - every blacksmith's first lesson.",
+        "tags": [
+          "basic",
+          "metal",
+          "starter"
+        ]
+      },
+      "materialId": "copper_ore",
+      "name": "Copper Ore",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Iron Deposit",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "metal",
+      "allSources": [
+        "iron_deposit"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Sturdy grey metal from common deposits throughout the land. The workhorse of civilization - reliable, abundant, and strong enough for most purposes.",
+        "tags": [
+          "basic",
+          "metal",
+          "standard"
+        ]
+      },
+      "materialId": "iron_ore",
+      "name": "Iron Ore",
+      "tier": 1,
+      "rarity": "common",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Tin Seam",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "metal",
+      "allSources": [
+        "tin_seam"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Soft, silvery-white metal with a mysterious sheen that glows faintly in moonlight. Ancient texts speak of its lunar affinity.",
+        "tags": [
+          "basic",
+          "metal",
+          "magical"
+        ]
+      },
+      "materialId": "tin_ore",
+      "name": "Tin Ore",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Steel Node",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "metal",
+      "allSources": [
+        "steel_node"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Harder and more durable than pure iron. The secret of its strength lies in its carbon-rich structure. A true warrior's metal.",
+        "tags": [
+          "basic",
+          "metal",
+          "advanced"
+        ]
+      },
+      "materialId": "steel_ore",
+      "name": "Steel Ore",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Mithril Cache",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "metal",
+      "allSources": [
+        "mithril_cache"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Legendary silver-white metal that seems to drink in moonlight and starshine. Impossibly light yet incredibly strong.",
+        "tags": [
+          "basic",
+          "metal",
+          "legendary"
+        ]
+      },
+      "materialId": "mithril_ore",
+      "name": "Mithril Ore",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Adamantine Lode",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "metal",
+      "allSources": [
+        "adamantine_lode"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Dark, impossibly hard metal that absorbs light. Found only in the deepest caverns where the world's bones are exposed.",
+        "tags": [
+          "basic",
+          "metal",
+          "rare"
+        ]
+      },
+      "materialId": "adamantine_ore",
+      "name": "Adamantine Ore",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Titan Beetle",
+      "sourceTier": 4,
+      "materialTier": 3,
+      "materialCategory": "metal",
+      "allSources": [
+        "beetle_titan"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
+        "tags": [
+          "refined",
+          "metal",
+          "rare"
+        ]
+      },
+      "materialId": "adamantine_ingot",
+      "name": "Adamantine Ingot",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Orichalcum Trove",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "metal",
+      "allSources": [
+        "orichalcum_trove"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Gleaming golden metal with an otherworldly green-blue sheen. Ancient civilizations built empires on its discovery.",
+        "tags": [
+          "basic",
+          "metal",
+          "ancient"
+        ]
+      },
+      "materialId": "orichalcum_ore",
+      "name": "Orichalcum Ore",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Etherion Nexus",
+      "sourceTier": 4,
+      "materialTier": 4,
+      "materialCategory": "metal",
+      "allSources": [
+        "etherion_nexus"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Metal that simultaneously exists in multiple states. Scholars argue whether it's matter or energy, present or future. It is all of these and none.",
+        "tags": [
+          "basic",
+          "metal",
+          "mythical",
+          "temporal"
+        ]
+      },
+      "materialId": "etherion_ore",
+      "name": "Etherion Ore",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Primordial Entity",
+      "sourceTier": 4,
+      "materialTier": 4,
+      "materialCategory": "metal",
+      "allSources": [
+        "entity_primordial"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.",
+        "tags": [
+          "refined",
+          "metal",
+          "mythical",
+          "temporal"
+        ]
+      },
+      "materialId": "etherion_ingot",
+      "name": "Etherion Ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Oak Tree",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "wood",
+      "allSources": [
+        "oak_tree"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Reliable, sturdy timber from ancient oaks. Dense grain, strong fibers, and a warm golden-brown hue. The standard by which all other woods are measured.",
+        "tags": [
+          "basic",
+          "wood",
+          "versatile"
+        ]
+      },
+      "materialId": "oak_log",
+      "name": "Oak Log",
+      "tier": 1,
+      "rarity": "common",
+      "category": "wood"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Pine Tree",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "wood",
+      "allSources": [
+        "pine_tree"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Light, flexible wood harvested from tall conifers. Works easily under a blade, bends without breaking.",
+        "tags": [
+          "basic",
+          "wood",
+          "flexible"
+        ]
+      },
+      "materialId": "pine_log",
+      "name": "Pine Log",
+      "tier": 1,
+      "rarity": "common",
+      "category": "wood"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Ash Tree",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "wood",
+      "allSources": [
+        "ash_tree"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Pale wood with excellent shock absorption. Weapon handles made from ash feel alive in your grip.",
+        "tags": [
+          "basic",
+          "wood",
+          "quality"
+        ]
+      },
+      "materialId": "ash_log",
+      "name": "Ash Log",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "wood"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Birch Tree",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "wood",
+      "allSources": [
+        "birch_tree"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Creamy-white wood from elegant trees. Highly valued for its fine grain and excellent carving properties.",
+        "tags": [
+          "basic",
+          "wood",
+          "fine"
+        ]
+      },
+      "materialId": "birch_log",
+      "name": "Birch Log",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "wood"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Maple Tree",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "wood",
+      "allSources": [
+        "maple_tree"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Dense hardwood with beautiful figuring. Resists warping and holds its shape through temperature extremes.",
+        "tags": [
+          "basic",
+          "wood",
+          "durable"
+        ]
+      },
+      "materialId": "maple_log",
+      "name": "Maple Log",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "wood"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Ironwood Tree",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "wood",
+      "allSources": [
+        "ironwood_tree"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Rare wood with metallic properties. As hard as soft metals, holds edges almost as well as iron.",
+        "tags": [
+          "basic",
+          "wood",
+          "metallic"
+        ]
+      },
+      "materialId": "ironwood_log",
+      "name": "Ironwood Log",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "wood"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Ebony Tree",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "wood",
+      "allSources": [
+        "ebony_tree"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Deep black wood from ancient forests. Absorbs and nullifies magical energies.",
+        "tags": [
+          "basic",
+          "wood",
+          "magical"
+        ]
+      },
+      "materialId": "ebony_log",
+      "name": "Ebony Log",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "wood"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Worldtree Sapling",
+      "sourceTier": 4,
+      "materialTier": 4,
+      "materialCategory": "wood",
+      "allSources": [
+        "worldtree_sapling"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Living wood from the World Tree's roots. Contains millennia of accumulated magical essence.",
+        "tags": [
+          "basic",
+          "wood",
+          "legendary",
+          "living"
+        ]
+      },
+      "materialId": "worldtree_log",
+      "name": "Worldtree Log",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "wood"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Limestone Outcrop",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "stone",
+      "allSources": [
+        "limestone_outcrop"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Common sedimentary rock. Soft enough to carve with basic tools yet strong enough for simple construction.",
+        "tags": [
+          "basic",
+          "stone",
+          "common"
+        ]
+      },
+      "materialId": "limestone",
+      "name": "Limestone",
+      "tier": 1,
+      "rarity": "common",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Stone Golem",
+      "sourceTier": 3,
+      "materialTier": 1,
+      "materialCategory": "stone",
+      "allSources": [
+        "golem_stone",
+        "granite_formation"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Speckled igneous rock with visible crystalline structure. Harder than limestone, more reliable for load-bearing structures.",
+        "tags": [
+          "basic",
+          "stone",
+          "durable"
+        ]
+      },
+      "materialId": "granite",
+      "name": "Granite",
+      "tier": 1,
+      "rarity": "common",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Shale Bed",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "stone",
+      "allSources": [
+        "shale_bed"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Common sedimentary rock with fine grain. Compressed clay particles form water-resistant layers.",
+        "tags": [
+          "basic",
+          "stone",
+          "layered"
+        ]
+      },
+      "materialId": "shale",
+      "name": "Shale",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Basalt Column",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "stone",
+      "allSources": [
+        "basalt_column"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Dense metamorphic rock with distinctive banding. Exceptional compression strength.",
+        "tags": [
+          "basic",
+          "stone",
+          "strong"
+        ]
+      },
+      "materialId": "basalt",
+      "name": "Basalt",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Marble Quarry",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "stone",
+      "allSources": [
+        "marble_quarry"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Brilliant white stone that glows faintly with captured sunlight. Used in temples and monuments.",
+        "tags": [
+          "basic",
+          "stone",
+          "radiant"
+        ]
+      },
+      "materialId": "marble",
+      "name": "Marble",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Crystal Slime",
+      "sourceTier": 3,
+      "materialTier": 2,
+      "materialCategory": "stone",
+      "allSources": [
+        "slime_crystal",
+        "golem_crystal",
+        "quartz_cluster"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Translucent crystal that amplifies magical energies passing through it. Hums softly when near power sources.",
+        "tags": [
+          "basic",
+          "stone",
+          "magical"
+        ]
+      },
+      "materialId": "crystal_quartz",
+      "name": "Crystal Quartz",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Obsidian Flow",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "stone",
+      "allSources": [
+        "obsidian_flow"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Volcanic glass born in the heart of eruptions. Extremely sharp edges, incredibly brittle structure.",
+        "tags": [
+          "basic",
+          "stone",
+          "sharp"
+        ]
+      },
+      "materialId": "obsidian",
+      "name": "Obsidian",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Voidstone Shard",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "stone",
+      "allSources": [
+        "voidstone_shard"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Pitch-black stone that seems to pull light into itself. Radiates subtle wrongness.",
+        "tags": [
+          "basic",
+          "stone",
+          "void"
+        ]
+      },
+      "materialId": "voidstone",
+      "name": "Voidstone",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Stone Golem",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "stone",
+      "allSources": [
+        "golem_stone",
+        "golem_crystal",
+        "diamond_geode"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
+        "tags": [
+          "basic",
+          "stone",
+          "precious"
+        ]
+      },
+      "materialId": "diamond",
+      "name": "Diamond",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Eternity Monolith",
+      "sourceTier": 4,
+      "materialTier": 4,
+      "materialCategory": "stone",
+      "allSources": [
+        "eternity_monolith"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Stone that remembers everything it witnesses. Contains geological memory of eons.",
+        "tags": [
+          "basic",
+          "stone",
+          "mythical",
+          "memory"
+        ]
+      },
+      "materialId": "eternity_stone",
+      "name": "Eternity Stone",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Crystal Golem",
+      "sourceTier": 4,
+      "materialTier": 4,
+      "materialCategory": "stone",
+      "allSources": [
+        "golem_crystal",
+        "entity_primordial",
+        "primordial_formation"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Suspended in perpetual crystallization. Neither fully solid nor energy, exists in quantum superposition.",
+        "tags": [
+          "basic",
+          "stone",
+          "mythical",
+          "quantum"
+        ]
+      },
+      "materialId": "primordial_crystal",
+      "name": "Primordial Crystal",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Primordial Entity",
+      "sourceTier": 4,
+      "materialTier": 4,
+      "materialCategory": "stone",
+      "allSources": [
+        "entity_primordial",
+        "genesis_structure"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is.",
+        "tags": [
+          "basic",
+          "stone",
+          "mythical",
+          "impossible"
+        ]
+      },
+      "materialId": "genesis_lattice",
+      "name": "Genesis Lattice",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "stone"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Limestone Outcrop",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "elemental",
+      "allSources": [
+        "limestone_outcrop",
+        "basalt_column"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
+        "tags": [
+          "elemental",
+          "fire",
+          "common"
+        ]
+      },
+      "materialId": "fire_crystal",
+      "name": "Fire Crystal",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "elemental"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Green Slime",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "elemental",
+      "allSources": [
+        "slime_green",
+        "granite_formation"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Blue crystal filled with flowing liquid. Cool and calming, perpetually damp.",
+        "tags": [
+          "elemental",
+          "water",
+          "common"
+        ]
+      },
+      "materialId": "water_crystal",
+      "name": "Water Crystal",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "elemental"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Brown Beetle",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "elemental",
+      "allSources": [
+        "beetle_brown",
+        "golem_stone",
+        "shale_bed"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Green-brown crystal with swirling sediment. Surprisingly heavy, grounds magical energies.",
+        "tags": [
+          "elemental",
+          "earth",
+          "common"
+        ]
+      },
+      "materialId": "earth_crystal",
+      "name": "Earth Crystal",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "elemental"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Quartz Cluster",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "elemental",
+      "allSources": [
+        "quartz_cluster"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Crackling crystal surrounded by static discharge. Handle with insulated gloves.",
+        "tags": [
+          "elemental",
+          "lightning",
+          "rare"
+        ]
+      },
+      "materialId": "lightning_shard",
+      "name": "Lightning Shard",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "elemental"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Crystal Slime",
+      "sourceTier": 3,
+      "materialTier": 2,
+      "materialCategory": "elemental",
+      "allSources": [
+        "slime_crystal",
+        "marble_quarry"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
+        "tags": [
+          "elemental",
+          "light",
+          "rare"
+        ]
+      },
+      "materialId": "light_gem",
+      "name": "Light Gem",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "elemental"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Acid Slime",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "elemental",
+      "allSources": [
+        "slime_acid",
+        "void_wraith"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Crystallized darkness that absorbs light. Uncomfortable to look at directly.",
+        "tags": [
+          "elemental",
+          "dark",
+          "rare"
+        ]
+      },
+      "materialId": "shadow_core",
+      "name": "Shadow Core",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "elemental"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Obsidian Flow",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "elemental",
+      "allSources": [
+        "obsidian_flow"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ash-grey substance from legendary phoenix nests. Burns eternally without being consumed.",
+        "tags": [
+          "elemental",
+          "fire",
+          "legendary"
+        ]
+      },
+      "materialId": "phoenix_ash",
+      "name": "Phoenix Ash",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "elemental"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Void Wraith",
+      "sourceTier": 4,
+      "materialTier": 3,
+      "materialCategory": "elemental",
+      "allSources": [
+        "void_wraith",
+        "entity_primordial",
+        "voidstone_shard"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Liquid darkness given physical form. Absorbs heat, light, and hope.",
+        "tags": [
+          "elemental",
+          "void",
+          "legendary"
+        ]
+      },
+      "materialId": "void_essence",
+      "name": "Void Essence",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "elemental"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "node",
+      "sourceName": "Diamond Geode",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "elemental",
+      "allSources": [
+        "diamond_geode"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Captured lightning from primordial storms. Contains raw creation energy.",
+        "tags": [
+          "elemental",
+          "lightning",
+          "legendary"
+        ]
+      },
+      "materialId": "storm_heart",
+      "name": "Storm Heart",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "elemental"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Primordial Entity",
+      "sourceTier": 4,
+      "materialTier": 4,
+      "materialCategory": "elemental",
+      "allSources": [
+        "entity_primordial",
+        "genesis_structure"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Solidified probability space. Can be shaped into predetermined or random outcomes.",
+        "tags": [
+          "elemental",
+          "chaos",
+          "mythical"
+        ]
+      },
+      "materialId": "chaos_matrix",
+      "name": "Chaos Matrix",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "elemental"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Grey Wolf",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "wolf_grey",
+        "wolf_dire",
+        "wolf_elder"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
+        "tags": [
+          "monster",
+          "common",
+          "leather"
+        ]
+      },
+      "materialId": "wolf_pelt",
+      "name": "Wolf Pelt",
+      "tier": 1,
+      "rarity": "common",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Green Slime",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "slime_green",
+        "slime_acid",
+        "slime_crystal"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
+        "tags": [
+          "monster",
+          "common",
+          "gel"
+        ]
+      },
+      "materialId": "slime_gel",
+      "name": "Slime Gel",
+      "tier": 1,
+      "rarity": "common",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Brown Beetle",
+      "sourceTier": 1,
+      "materialTier": 1,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "beetle_brown",
+        "beetle_armored",
+        "beetle_titan"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Iridescent shell segment. Lightweight yet remarkably impact-resistant.",
+        "tags": [
+          "monster",
+          "common",
+          "carapace"
+        ]
+      },
+      "materialId": "beetle_carapace",
+      "name": "Beetle Carapace",
+      "tier": 1,
+      "rarity": "common",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Grey Wolf",
+      "sourceTier": 1,
+      "materialTier": 2,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "wolf_grey",
+        "wolf_dire",
+        "wolf_elder"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Razor-sharp fang from alpha predators. Still warm from the kill.",
+        "tags": [
+          "monster",
+          "uncommon",
+          "fang"
+        ]
+      },
+      "materialId": "dire_fang",
+      "name": "Dire Fang",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Dire Wolf",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "wolf_dire",
+        "slime_acid",
+        "beetle_armored"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
+        "tags": [
+          "monster",
+          "uncommon",
+          "essence"
+        ]
+      },
+      "materialId": "living_ichor",
+      "name": "Living Ichor",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Armored Beetle",
+      "sourceTier": 2,
+      "materialTier": 2,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "beetle_armored",
+        "beetle_titan"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Metallic scales from armored creatures. Can deflect sword strikes.",
+        "tags": [
+          "monster",
+          "uncommon",
+          "scales"
+        ]
+      },
+      "materialId": "iron_scales",
+      "name": "Iron Scales",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Elder Wolf",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "wolf_elder",
+        "slime_crystal",
+        "void_wraith"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
+        "tags": [
+          "monster",
+          "rare",
+          "blood"
+        ]
+      },
+      "materialId": "essence_blood",
+      "name": "Essence Blood",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Elder Wolf",
+      "sourceTier": 3,
+      "materialTier": 3,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "wolf_elder",
+        "void_wraith"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
+        "tags": [
+          "monster",
+          "rare",
+          "spectral"
+        ]
+      },
+      "materialId": "spectral_thread",
+      "name": "Spectral Thread",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "sourceType": "hostile",
+      "sourceName": "Titan Beetle",
+      "sourceTier": 4,
+      "materialTier": 3,
+      "materialCategory": "monster_drop",
+      "allSources": [
+        "beetle_titan",
+        "golem_stone",
+        "golem_crystal"
+      ]
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Petrified remains from ancient guardians. Contains geological memories.",
+        "tags": [
+          "monster",
+          "rare",
+          "ancient"
+        ]
+      },
+      "materialId": "golem_core",
+      "name": "Golem Core",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    }
+  }
+]
