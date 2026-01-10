@@ -1,6 +1,35 @@
 # System 6: Hostile-Chunk Assignment Plan
 **Created**: 2026-01-10
+**Updated**: 2026-01-10
 **Purpose**: Fix enemySpawns data and design spawn rate implementation
+
+## ⚠️ CRITICAL FINDINGS
+
+### Finding 1: Behavior Field is NOT Used
+**Discovery**: The "behavior" field in `enemySpawns` is **descriptive only** and does NOT control actual AI behavior.
+
+**Actual AI Behavior Source**: `aiPattern` object in hostile definition (hostiles-1.JSON):
+```json
+{
+  "enemyId": "wolf_grey",
+  "aiPattern": {
+    "defaultState": "wander",      // Controls actual AI
+    "aggroOnDamage": true,
+    "aggroOnProximity": false,
+    "fleeAtHealth": 0.2
+  }
+}
+```
+
+**Decision**: **Removed** behavior field from enemySpawns in Chunk-templates-2.JSON. Only `density` field affects spawn mechanics.
+
+### Finding 2: Chunk Templates Not Actually Loaded
+**Discovery**: Current `chunk.py` is **hardcoded** and doesn't load from Chunk-templates JSON.
+
+**Impact**:
+- Chunk-templates-2.JSON is properly structured
+- Implementation needed in `chunk.py` to actually use the template system
+- Current spawn system in `combat_manager.py` ignores chunk themes entirely
 
 ---
 
@@ -46,13 +75,12 @@
   "chunkType": "peaceful_forest",
   "enemySpawns": {
     "wolf_grey": {
-      "density": "very_low",
-      "behavior": "passive_patrol"
+      "density": "very_low"
     }
   }
 }
 ```
-**Rationale**: Grey wolves roam forests. Passive, low density for starter area.
+**Rationale**: Grey wolves roam forests. Low density for starter area.
 
 ---
 
@@ -62,12 +90,10 @@
   "chunkType": "peaceful_quarry",
   "enemySpawns": {
     "slime_green": {
-      "density": "very_low",
-      "behavior": "stationary"
+      "density": "very_low"
     },
     "beetle_brown": {
-      "density": "low",
-      "behavior": "docile_wander"
+      "density": "low"
     }
   }
 }
@@ -82,12 +108,10 @@
   "chunkType": "peaceful_cave",
   "enemySpawns": {
     "beetle_brown": {
-      "density": "very_low",
-      "behavior": "docile_wander"
+      "density": "very_low"
     },
     "slime_green": {
-      "density": "low",
-      "behavior": "stationary"
+      "density": "low"
     }
   }
 }
@@ -102,12 +126,10 @@
   "chunkType": "dangerous_forest",
   "enemySpawns": {
     "wolf_grey": {
-      "density": "high",
-      "behavior": "aggressive_pack"
+      "density": "high"
     },
     "wolf_dire": {
-      "density": "moderate",
-      "behavior": "aggressive_alpha"
+      "density": "moderate"
     }
   }
 }
@@ -125,20 +147,16 @@
   "chunkType": "dangerous_quarry",
   "enemySpawns": {
     "slime_green": {
-      "density": "high",
-      "behavior": "aggressive_swarm"
+      "density": "high"
     },
     "slime_acid": {
-      "density": "moderate",
-      "behavior": "aggressive_swarm"
+      "density": "moderate"
     },
     "beetle_brown": {
-      "density": "moderate",
-      "behavior": "territorial"
+      "density": "moderate"
     },
     "beetle_armored": {
-      "density": "low",
-      "behavior": "aggressive_guard"
+      "density": "low"
     }
   }
 }
@@ -156,20 +174,16 @@
   "chunkType": "dangerous_cave",
   "enemySpawns": {
     "beetle_brown": {
-      "density": "high",
-      "behavior": "territorial"
+      "density": "high"
     },
     "beetle_armored": {
-      "density": "moderate",
-      "behavior": "aggressive_territory"
+      "density": "moderate"
     },
     "slime_acid": {
-      "density": "low",
-      "behavior": "aggressive_swarm"
+      "density": "low"
     },
     "golem_stone": {
-      "density": "very_low",
-      "behavior": "boss_encounter"
+      "density": "very_low"
     }
   }
 }
@@ -187,12 +201,10 @@
   "chunkType": "rare_forest",
   "enemySpawns": {
     "wolf_dire": {
-      "density": "moderate",
-      "behavior": "aggressive_hunter"
+      "density": "moderate"
     },
     "wolf_elder": {
-      "density": "low",
-      "behavior": "boss_encounter"
+      "density": "low"
     }
   }
 }
@@ -210,20 +222,16 @@
   "chunkType": "rare_quarry",
   "enemySpawns": {
     "beetle_armored": {
-      "density": "high",
-      "behavior": "aggressive_guard"
+      "density": "high"
     },
     "slime_acid": {
-      "density": "moderate",
-      "behavior": "aggressive_swarm"
+      "density": "moderate"
     },
     "slime_crystal": {
-      "density": "low",
-      "behavior": "boss_encounter"
+      "density": "low"
     },
     "golem_crystal": {
-      "density": "very_low",
-      "behavior": "aggressive_guard"
+      "density": "very_low"
     }
   }
 }
@@ -241,20 +249,16 @@
   "chunkType": "rare_cave",
   "enemySpawns": {
     "void_wraith": {
-      "density": "moderate",
-      "behavior": "aggressive_phase"
+      "density": "moderate"
     },
     "golem_stone": {
-      "density": "low",
-      "behavior": "boss_encounter"
+      "density": "low"
     },
     "beetle_titan": {
-      "density": "very_low",
-      "behavior": "boss_encounter"
+      "density": "very_low"
     },
     "entity_primordial": {
-      "density": "very_low",
-      "behavior": "boss_encounter"
+      "density": "very_low"
     }
   }
 }
@@ -313,7 +317,7 @@ def spawn_enemies_in_chunk_NEW(chunk, chunk_template):
     # Build weighted spawn pool
     spawn_pool = []
 
-    # 1. Add priority enemies from enemySpawns (HIGH WEIGHT)
+    # 1. Add priority enemies from enemySpawns (WEIGHTED)
     if "enemySpawns" in chunk_template:
         for enemy_id, spawn_info in chunk_template["enemySpawns"].items():
             weight = get_density_weight(spawn_info["density"])
@@ -321,7 +325,6 @@ def spawn_enemies_in_chunk_NEW(chunk, chunk_template):
 
             spawn_pool.append({
                 "enemy": enemy_def,
-                "behavior": spawn_info["behavior"],
                 "weight": weight,
                 "priority": True
             })
@@ -335,11 +338,10 @@ def spawn_enemies_in_chunk_NEW(chunk, chunk_template):
             if any(e["enemy"].enemyId == enemy.enemyId for e in spawn_pool):
                 continue
 
-            # Add with low weight
+            # Add with base weight
             spawn_pool.append({
                 "enemy": enemy,
-                "behavior": enemy.behavior,  # Use default
-                "weight": 1,  # Base weight
+                "weight": 1.0,  # Base weight
                 "priority": False
             })
 
@@ -348,9 +350,9 @@ def spawn_enemies_in_chunk_NEW(chunk, chunk_template):
         selected = weighted_random_choice(spawn_pool)
         spawn_enemy(
             enemy_def=selected["enemy"],
-            behavior=selected["behavior"],
             chunk=chunk
         )
+        # Note: AI behavior comes from enemy.aiPattern, not chunk config
 ```
 
 ---
@@ -358,16 +360,18 @@ def spawn_enemies_in_chunk_NEW(chunk, chunk_template):
 ### Density to Weight Mapping
 ```python
 DENSITY_WEIGHTS = {
-    "very_low": 2,      # 2x more likely than base
-    "low": 3,           # 3x more likely
-    "moderate": 5,      # 5x more likely
-    "high": 8,          # 8x more likely
-    "very_high": 12     # 12x more likely
+    "very_low": 0.5,    # 0.5x base (less common, but still increases spawn for specific enemy)
+    "low": 0.75,        # 0.75x base
+    "moderate": 1.0,    # 1x base (equal to general pool)
+    "high": 2.0,        # 2x base
+    "very_high": 3.0    # 3x base (most likely)
 }
 
-def get_density_weight(density: str) -> int:
-    return DENSITY_WEIGHTS.get(density, 1)
+def get_density_weight(density: str) -> float:
+    return DENSITY_WEIGHTS.get(density, 1.0)
 ```
+
+**Rationale**: Lower multipliers allow more spawn diversity. Multiple enemies per chunk type can coexist without completely dominating the spawn pool.
 
 ---
 
@@ -376,56 +380,34 @@ def get_density_weight(density: str) -> int:
 **Scenario**: Spawning in `dangerous_forest`
 
 **Priority Pool** (from enemySpawns):
-- `wolf_grey` (density: high, weight: 8)
-- `wolf_dire` (density: moderate, weight: 5)
+- `wolf_grey` (density: high, weight: 2.0)
+- `wolf_dire` (density: moderate, weight: 1.0)
 
 **General Pool** (tier 1-3, not in priority):
-- `slime_green` (T1, weight: 1)
-- `slime_acid` (T2, weight: 1)
-- `beetle_brown` (T1, weight: 1)
-- `beetle_armored` (T2, weight: 1)
+- `slime_green` (T1, weight: 1.0)
+- `slime_acid` (T2, weight: 1.0)
+- `beetle_brown` (T1, weight: 1.0)
+- `beetle_armored` (T2, weight: 1.0)
 
-**Total Weight**: 8 + 5 + 1 + 1 + 1 + 1 = 17
+**Total Weight**: 2.0 + 1.0 + 1.0 + 1.0 + 1.0 + 1.0 = 7.0
 
 **Spawn Probabilities**:
-- `wolf_grey`: 8/17 = **47%**
-- `wolf_dire`: 5/17 = **29%**
-- Other enemies: 4/17 = **24%** total (6% each)
+- `wolf_grey`: 2.0/7.0 = **28.6%**
+- `wolf_dire`: 1.0/7.0 = **14.3%**
+- Other enemies: 4.0/7.0 = **57.1%** total (14.3% each)
 
-**Result**: Wolves spawn 76% of the time, non-forest enemies 24%
-
----
-
-### Behavior Override
-
-**Key Feature**: enemySpawns can override default behavior!
-
-```python
-# Example: Grey wolf normally passive
-wolf_grey_default.behavior = "passive_patrol"
-
-# But in dangerous_forest:
-enemySpawns: {
-  "wolf_grey": {
-    "density": "high",
-    "behavior": "aggressive_pack"  # OVERRIDE
-  }
-}
-
-# Result: Wolf spawns with aggressive_pack behavior
-```
-
-**Use Cases**:
-- Peaceful chunks: Enemies spawn with docile behaviors
-- Dangerous chunks: Same enemies spawn aggressive
-- Rare chunks: Unique boss behaviors for normally common enemies
+**Result**: Wolves spawn 42.9% of the time, other enemies 57.1% - balanced spawn distribution while still prioritizing thematic enemies
 
 ---
+
 
 ## PART 4: IMPLEMENTATION STEPS
 
-### Step 1: Update Chunk Templates JSON
-Replace current `Chunk-templates-1.JSON` with proper enemySpawns assignments (see Part 2).
+### Step 1: Update Chunk Templates JSON ✅ COMPLETED
+**Status**: `Chunk-templates-2.JSON` created with proper assignments
+- All 13 hostiles assigned to appropriate chunk types
+- Behavior field removed (not used by game code)
+- Original file archived to `archive/Chunk-templates-1.JSON.backup-20260110`
 
 ### Step 2: Modify `combat_manager.py`
 Add weighted spawn pool logic:
@@ -445,11 +427,11 @@ def _spawn_enemies_in_chunk(self, chunk, chunk_template):
 # combat_config.JSON additions:
 {
   "spawnWeights": {
-    "very_low": 2,
-    "low": 3,
-    "moderate": 5,
-    "high": 8,
-    "very_high": 12
+    "very_low": 0.5,
+    "low": 0.75,
+    "moderate": 1.0,
+    "high": 2.0,
+    "very_high": 3.0
   },
   "enableEnemySpawnsField": true,  # Feature flag
   "fallbackToGeneralPool": true    # Allow non-listed enemies
@@ -460,8 +442,8 @@ def _spawn_enemies_in_chunk(self, chunk, chunk_template):
 1. **Test peaceful chunks**: Only T1 enemies, low density
 2. **Test dangerous chunks**: Mix of priority (wolves/beetles) and general pool
 3. **Test rare chunks**: High-tier bosses spawn appropriately
-4. **Test behavior overrides**: Same enemy, different behavior per chunk
-5. **Test weights**: Priority enemies spawn significantly more often
+4. **Test weights**: Priority enemies spawn at higher rates while maintaining diversity
+5. **Verify AI behaviors**: Confirm behaviors come from enemy.aiPattern, not chunk config
 
 ---
 
@@ -483,8 +465,7 @@ def extract_hostile_chunk_assignments(chunk_templates):
                 "chunkType": template["chunkType"],
                 "category": template["category"],
                 "theme": template["theme"],
-                "density": spawn_info["density"],
-                "behavior": spawn_info["behavior"]
+                "density": spawn_info["density"]
             })
 
     return hostile_to_chunks
@@ -497,7 +478,6 @@ INPUT = {
   "chunkCategory": "dangerous",
   "chunkTheme": "forest",
   "spawnDensity": "high",
-  "spawnBehavior": "aggressive_pack",
   "allChunks": ["peaceful_forest", "dangerous_forest"],
   "tier": 1,
   "category": "beast",
@@ -505,15 +485,16 @@ INPUT = {
 }
 
 OUTPUT = {
-  // Complete wolf_grey hostile JSON
+  // Complete wolf_grey hostile JSON including aiPattern
 }
 ```
 
 **LLM Learns**:
 - Forest chunks → wolf/beast enemies
-- Cave/quarry chunks → beetle/slime enemies
-- Dangerous chunks → aggressive behaviors
-- Rare chunks → boss encounters, high-tier enemies
+- Cave/quarry chunks → beetle/slime/golem enemies
+- Peaceful chunks → T1 enemies, low densities
+- Dangerous chunks → T1-T2 enemies, moderate-high densities
+- Rare chunks → T2-T4 enemies, boss-tier hostiles
 
 ---
 
@@ -527,8 +508,7 @@ OUTPUT = {
   "theme": "volcanic",
   "enemySpawns": {
     "fire_elemental": {  // NEW ENEMY
-      "density": "moderate",
-      "behavior": "aggressive_burn"
+      "density": "moderate"
     }
   }
 }
@@ -538,7 +518,7 @@ OUTPUT = {
 - Chunk theme (volcanic)
 - Expected tier (rare → T3-T4)
 - Spawn density (moderate)
-- Behavior (aggressive_burn)
+- Thematic fit (fire-based enemy for volcanic environment)
 
 ### Dynamic Difficulty Scaling
 ```python

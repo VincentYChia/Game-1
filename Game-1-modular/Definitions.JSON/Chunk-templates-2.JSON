@@ -2,8 +2,12 @@
   "metadata": {
     "version": "2.0",
     "description": "UPDATED: 9 predefined chunk templates with PROPER enemySpawns assignments",
-    "note": "All 13 hostiles properly assigned based on tier, theme, and behavior",
-    "changes": "Fixed enemySpawns to include all hostiles with appropriate densities and behaviors"
+    "note": "All 13 hostiles properly assigned based on tier and theme. Density affects spawn weight: very_low=0.5x, low=0.75x, moderate=1x, high=2x, very_high=3x (vs base 1x for general pool)",
+    "changes": [
+      "Fixed enemySpawns to include all appropriate hostiles",
+      "Removed 'behavior' field (not used by code - AI behavior comes from aiPattern in hostile definition)",
+      "Adjusted density weights for better spawn balance"
+    ]
   },
 
   "templates": [
@@ -40,8 +44,7 @@
       },
       "enemySpawns": {
         "wolf_grey": {
-          "density": "very_low",
-          "behavior": "passive_patrol"
+          "density": "very_low"
         }
       },
       "generationRules": {
@@ -83,12 +86,10 @@
       },
       "enemySpawns": {
         "slime_green": {
-          "density": "very_low",
-          "behavior": "stationary"
+          "density": "very_low"
         },
         "beetle_brown": {
-          "density": "low",
-          "behavior": "docile_wander"
+          "density": "low"
         }
       },
       "generationRules": {
@@ -126,12 +127,10 @@
       },
       "enemySpawns": {
         "beetle_brown": {
-          "density": "very_low",
-          "behavior": "docile_wander"
+          "density": "very_low"
         },
         "slime_green": {
-          "density": "low",
-          "behavior": "stationary"
+          "density": "low"
         }
       },
       "generationRules": {
@@ -169,12 +168,10 @@
       },
       "enemySpawns": {
         "wolf_grey": {
-          "density": "high",
-          "behavior": "aggressive_pack"
+          "density": "high"
         },
         "wolf_dire": {
-          "density": "moderate",
-          "behavior": "aggressive_alpha"
+          "density": "moderate"
         }
       },
       "generationRules": {
@@ -212,20 +209,16 @@
       },
       "enemySpawns": {
         "slime_green": {
-          "density": "high",
-          "behavior": "aggressive_swarm"
+          "density": "high"
         },
         "slime_acid": {
-          "density": "moderate",
-          "behavior": "aggressive_swarm"
+          "density": "moderate"
         },
         "beetle_brown": {
-          "density": "moderate",
-          "behavior": "territorial"
+          "density": "moderate"
         },
         "beetle_armored": {
-          "density": "low",
-          "behavior": "aggressive_guard"
+          "density": "low"
         }
       },
       "generationRules": {
@@ -263,20 +256,16 @@
       },
       "enemySpawns": {
         "beetle_brown": {
-          "density": "high",
-          "behavior": "territorial"
+          "density": "high"
         },
         "beetle_armored": {
-          "density": "moderate",
-          "behavior": "aggressive_territory"
+          "density": "moderate"
         },
         "slime_acid": {
-          "density": "low",
-          "behavior": "aggressive_swarm"
+          "density": "low"
         },
         "golem_stone": {
-          "density": "very_low",
-          "behavior": "boss_encounter"
+          "density": "very_low"
         }
       },
       "generationRules": {
@@ -310,12 +299,10 @@
       },
       "enemySpawns": {
         "wolf_dire": {
-          "density": "moderate",
-          "behavior": "aggressive_hunter"
+          "density": "moderate"
         },
         "wolf_elder": {
-          "density": "low",
-          "behavior": "boss_encounter"
+          "density": "low"
         }
       },
       "generationRules": {
@@ -353,20 +340,16 @@
       },
       "enemySpawns": {
         "beetle_armored": {
-          "density": "high",
-          "behavior": "aggressive_guard"
+          "density": "high"
         },
         "slime_acid": {
-          "density": "moderate",
-          "behavior": "aggressive_swarm"
+          "density": "moderate"
         },
         "slime_crystal": {
-          "density": "low",
-          "behavior": "boss_encounter"
+          "density": "low"
         },
         "golem_crystal": {
-          "density": "very_low",
-          "behavior": "aggressive_guard"
+          "density": "very_low"
         }
       },
       "generationRules": {
@@ -408,20 +391,16 @@
       },
       "enemySpawns": {
         "void_wraith": {
-          "density": "moderate",
-          "behavior": "aggressive_phase"
+          "density": "moderate"
         },
         "golem_stone": {
-          "density": "low",
-          "behavior": "boss_encounter"
+          "density": "low"
         },
         "beetle_titan": {
-          "density": "very_low",
-          "behavior": "boss_encounter"
+          "density": "very_low"
         },
         "entity_primordial": {
-          "density": "very_low",
-          "behavior": "boss_encounter"
+          "density": "very_low"
         }
       },
       "generationRules": {
