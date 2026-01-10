@@ -374,6 +374,10 @@ class EnemyDatabase:
     def get_enemy(self, enemy_id: str) -> Optional[EnemyDefinition]:
         return self.enemies.get(enemy_id)
 
+    def get_enemies_by_tier(self, tier: int) -> List[EnemyDefinition]:
+        """Get all enemies of specified tier"""
+        return self.enemies_by_tier.get(tier, [])
+
     def get_random_enemy(self, tier: int) -> Optional[EnemyDefinition]:
         """Get random enemy of specified tier"""
         enemies = self.enemies_by_tier.get(tier, [])
