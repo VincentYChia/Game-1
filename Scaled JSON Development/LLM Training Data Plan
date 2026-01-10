@@ -78,8 +78,43 @@ Output (22): Player narration (summarized player experience from stats/past acti
 
 **These do not have any meaningful amount of existing input data to serve as training. As such these should be benched for now.
 
-Comprehensive Training Data Extraction Guide
+═══════════════════════════════════════════════════════════════════════════════
+COMPREHENSIVE TRAINING DATA EXTRACTION GUIDE
 With Real Examples from Actual JSON Files
+═══════════════════════════════════════════════════════════════════════════════
+
+SYSTEMS OVERVIEW
+════════════════
+CRAFTING SYSTEMS (1-5):
+  System 1: Smithing Recipe → Item (37 pairs + 37 placements)
+  System 2: Refining Recipe → Material (55 pairs + 56 placements)
+  System 3: Alchemy Recipe → Item (18 pairs + 30 placements)
+  System 4: Engineering Recipe → Device (16 pairs + 25 placements)
+  System 5: Enchanting Recipe → Enchantment (25 pairs + 25 placements)
+
+WORLD GENERATION SYSTEMS (6-9):
+  System 6: Chunk Assignment → Hostile (~49 pairs)
+  System 7: Drop Source → Material (variable, ~30-40 pairs)
+  System 8: Chunk Assignment → Resource Node (~28 pairs)
+  System 9: Player Metadata → Chunk Type (BENCHED - no player data)
+
+PROGRESSION SYSTEMS (10-11):
+  System 10: Requirements → Skill (48 pairs)
+  System 11: Prerequisites → Title (10 pairs)
+
+TOTAL EXPECTED PAIRS: ~400+ training examples across all systems
+
+KEY ARCHITECTURAL PATTERNS
+═══════════════════════════
+1. CRAFTING: Recipe → Item/Material, then Item + Recipe → Placement
+2. WORLD: Chunk Assignment → Entity (hostiles/nodes use chunk templates)
+3. PROGRESSION: Requirements → Reward (skills/titles unlock based on conditions)
+4. BACKWARDS COMPATIBILITY: Extract chunk assignments from existing templates
+
+All systems follow: INPUT (context) → OUTPUT (complete JSON)
+LLM learns to generate valid, balanced game content from contextual clues
+
+═══════════════════════════════════════════════════════════════════════════════
 
 CRITICAL DISCOVERY: Item File Distribution
 Smithing items are SPLIT across multiple files:
@@ -956,10 +991,14 @@ Matching Logic
 matches = placement["recipeId"] == recipe["recipeId"]
 
 
-System 6: Hostiles (Chunk Definition → Hostile)
+System 6: Hostiles (Chunk Type Assignment → Hostile)
 File Locations
 Hostiles: Game-1-modular/Definitions.JSON/hostiles-1.JSON
-Real Example: Grey Wolf
+Chunk Templates: Game-1-modular/Definitions.JSON/Chunk-templates-1.JSON
+CRITICAL: Bidirectional Chunk-Hostile Relationship!
+Chunk templates have enemySpawns field listing hostiles with density/behavior
+This enables backwards-compatible hostile generation and chunk assignment
+Real Example: Wolf Grey (in peaceful_forest chunk)
 HOSTILE (from hostiles-1.JSON):
 {
   "metadata": {
@@ -992,50 +1031,127 @@ HOSTILE (from hostiles-1.JSON):
   }
 }
 
-CRITICAL ISSUE: No Chunk Fields in Existing Data!
-Existing hostiles do NOT have spawnsIn or chunk-related fields. For training:
-Option A: Manual Chunk Definitions (RECOMMENDED)
-# Create manual associations based on hostile tier/category
-MANUAL_CHUNK_MAPPING = {
-    "wolf_grey": {"chunkType": "forest_common", "tier": 1, "biome": "forest"},
-    "slime_green": {"chunkType": "cave_damp", "tier": 1, "biome": "cave"},
-    "beetle_brown": {"chunkType": "grassland", "tier": 1, "biome": "plains"},
-    # ... etc
+CHUNK ASSIGNMENT (from peaceful_forest in Chunk-templates-1.JSON):
+{
+  "chunkType": "peaceful_forest",
+  "name": "Peaceful Forest",
+  "category": "peaceful",
+  "theme": "forest",
+  "enemySpawns": {
+    "wolf_grey": {
+      "density": "very_low",
+      "behavior": "passive_patrol"
+    }
+  }
+  // ... other chunk fields
 }
 
-def extract_hostile_input(hostile):
-    """Extract INPUT for System 6 using manual mapping"""
+Backwards-Compatible Solution
+Extract chunk assignments from existing chunk templates:
+def extract_hostile_chunk_assignments(chunk_templates):
+    """Build reverse mapping: hostile → list of chunks where it spawns"""
+    hostile_to_chunks = {}
+
+    for template in chunk_templates["templates"]:
+        chunk_type = template["chunkType"]
+        chunk_category = template["category"]
+        chunk_theme = template["theme"]
+
+        for enemy_id, spawn_info in template.get("enemySpawns", {}).items():
+            if enemy_id not in hostile_to_chunks:
+                hostile_to_chunks[enemy_id] = []
+
+            hostile_to_chunks[enemy_id].append({
+                "chunkType": chunk_type,
+                "category": chunk_category,
+                "theme": chunk_theme,
+                "density": spawn_info["density"],
+                "behavior": spawn_info["behavior"]
+            })
+
+    return hostile_to_chunks
+
+# Example result for wolf_grey:
+CHUNK_ASSIGNMENTS = {
+    "wolf_grey": [
+        {
+            "chunkType": "peaceful_forest",
+            "category": "peaceful",
+            "theme": "forest",
+            "density": "very_low",
+            "behavior": "passive_patrol"
+        },
+        {
+            "chunkType": "dangerous_forest",
+            "category": "dangerous",
+            "theme": "forest",
+            "density": "high",
+            "behavior": "aggressive_pack"
+        }
+    ]
+}
+
+INPUT Extraction
+def extract_hostile_input(hostile, chunk_assignments):
+    """Extract INPUT for System 6"""
     enemy_id = hostile["enemyId"]
-    
-    if enemy_id in MANUAL_CHUNK_MAPPING:
-        return MANUAL_CHUNK_MAPPING[enemy_id]
-    else:
-        # Default based on tier/category
+
+    # Get chunk assignments from chunk templates
+    assignments = chunk_assignments.get(enemy_id, [])
+
+    if not assignments:
+        # Hostile not assigned to any chunks - generate default based on tier/category
         return {
-            "chunkType": "generic",
+            "primaryChunk": None,
             "tier": hostile["tier"],
-            "biome": "any"
+            "category": hostile["category"],
+            "tags": hostile.get("metadata", {}).get("tags", []),
+            "narrative": hostile.get("metadata", {}).get("narrative", "")
         }
 
-Option B: Add Chunk Fields to Existing Data
-# Modify hostile JSONs to include:
-{
-  "enemyId": "wolf_grey",
-  "spawnsIn": ["forest_common", "forest_dense"],  # ADD THIS
-  "biomePreference": "forest",  # ADD THIS
-  # ... rest of hostile fields
-}
+    # Use primary assignment (usually first/most common chunk)
+    primary = assignments[0]
 
-INPUT Definition
-# Using Option A (manual mapping)
+    return {
+        "primaryChunk": primary["chunkType"],
+        "chunkCategory": primary["category"],
+        "chunkTheme": primary["theme"],
+        "spawnDensity": primary["density"],
+        "spawnBehavior": primary["behavior"],
+        "allChunks": [a["chunkType"] for a in assignments],  # All chunk types
+        "tier": hostile["tier"],
+        "category": hostile["category"],
+        "tags": hostile.get("metadata", {}).get("tags", [])
+    }
+
+# Example result for wolf_grey:
 INPUT = {
-    "chunkType": "forest_common",
+    "primaryChunk": "peaceful_forest",
+    "chunkCategory": "peaceful",
+    "chunkTheme": "forest",
+    "spawnDensity": "very_low",
+    "spawnBehavior": "passive_patrol",
+    "allChunks": ["peaceful_forest", "dangerous_forest"],
     "tier": 1,
-    "biome": "forest"
+    "category": "beast",
+    "tags": ["wolf", "common", "passive", "starter"]
 }
 
 OUTPUT Definition
 OUTPUT = hostile  # Complete hostile JSON - ALL fields preserved
+
+Purpose of This System
+LLM learns to generate hostiles that fit specific chunk types
+Given a chunk type (peaceful_forest), LLM generates appropriate enemy (wolf, not dragon)
+Learns tier progression (T1 enemies in peaceful, T3-4 in rare chunks)
+Learns behavior patterns (passive in peaceful, aggressive in dangerous)
+Enables new chunk types to automatically get appropriate enemies
+
+Backwards Compatibility Strategy
+Existing hostiles: Extract chunk assignments from Chunk-templates-1.JSON
+New hostiles: LLM generates based on target chunk type
+Chunk updates: Add new enemies to enemySpawns, automatically available for hostile generation
+Higher spawn rates: Enemies listed in chunk enemySpawns have priority spawning
 
 
 System 7: Materials (Drop Source → Material)
@@ -1127,11 +1243,15 @@ Material drops from multiple sources: Choose primary/most common source
 Material not in any drop table: Skip or flag for manual review
 Material drops from both hostile AND node: Prioritize hostile drops
 
-System 8: Nodes (Chunk Definition → Node)
+System 8: Nodes (Chunk Type Assignment → Node)
 File Locations
-Nodes: Game-1-modular/Definitions.JSON/resource-node-1.JSON
-Real Example: Oak Tree
-NODE (from resource-node-1.JSON):
+Nodes: Game-1-modular/Definitions.JSON/Resource-node-1.JSON
+Chunk Templates: Game-1-modular/Definitions.JSON/Chunk-templates-1.JSON
+CRITICAL: Bidirectional Chunk-Node Relationship!
+Chunk templates have resourceDensity field listing nodes with density/tierBias
+Same pattern as System 6 (hostiles) - backwards-compatible extraction
+Real Example: Oak Tree (in peaceful_forest chunk)
+NODE (from Resource-node-1.JSON):
 {
   "metadata": {
     "narrative": "Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.",
@@ -1149,23 +1269,185 @@ NODE (from resource-node-1.JSON):
   "respawnTime": "normal"
 }
 
-INPUT Definition (Same Issue as System 6)
-# Nodes also lack chunk fields - use manual mapping
-MANUAL_NODE_CHUNKS = {
-    "oak_tree": {"chunkType": "forest_common", "tier": 1, "biome": "forest"},
-    "copper_vein": {"chunkType": "cave_mineral", "tier": 1, "biome": "cave"},
-    # ... etc
+CHUNK ASSIGNMENT (from peaceful_forest in Chunk-templates-1.JSON):
+{
+  "chunkType": "peaceful_forest",
+  "name": "Peaceful Forest",
+  "theme": "forest",
+  "resourceDensity": {
+    "oak_tree": {
+      "density": "very_high",
+      "tierBias": "low"
+    },
+    "pine_tree": {
+      "density": "very_high",
+      "tierBias": "low"
+    },
+    "birch_tree": {
+      "density": "moderate",
+      "tierBias": "mid"
+    }
+  }
+  // ... other chunk fields
 }
 
+Backwards-Compatible Solution
+Extract chunk assignments from existing chunk templates:
+def extract_node_chunk_assignments(chunk_templates):
+    """Build reverse mapping: node → list of chunks where it spawns"""
+    node_to_chunks = {}
+
+    for template in chunk_templates["templates"]:
+        chunk_type = template["chunkType"]
+        chunk_category = template["category"]
+        chunk_theme = template["theme"]
+
+        for resource_id, density_info in template.get("resourceDensity", {}).items():
+            if resource_id not in node_to_chunks:
+                node_to_chunks[resource_id] = []
+
+            node_to_chunks[resource_id].append({
+                "chunkType": chunk_type,
+                "category": chunk_category,
+                "theme": chunk_theme,
+                "density": density_info["density"],
+                "tierBias": density_info["tierBias"]
+            })
+
+    return node_to_chunks
+
+# Example result for oak_tree:
+CHUNK_ASSIGNMENTS = {
+    "oak_tree": [
+        {
+            "chunkType": "peaceful_forest",
+            "category": "peaceful",
+            "theme": "forest",
+            "density": "very_high",
+            "tierBias": "low"
+        },
+        {
+            "chunkType": "peaceful_quarry",
+            "category": "peaceful",
+            "theme": "quarry",
+            "density": "low",
+            "tierBias": "low"
+        },
+        {
+            "chunkType": "dangerous_forest",
+            "category": "dangerous",
+            "theme": "forest",
+            "density": "moderate",
+            "tierBias": "low"
+        }
+    ]
+}
+
+INPUT Extraction
+def extract_node_input(node, chunk_assignments):
+    """Extract INPUT for System 8"""
+    resource_id = node["resourceId"]
+
+    # Get chunk assignments from chunk templates
+    assignments = chunk_assignments.get(resource_id, [])
+
+    if not assignments:
+        # Node not assigned to any chunks - generate default based on tier/category
+        return {
+            "primaryChunk": None,
+            "tier": node["tier"],
+            "category": node["category"],
+            "requiredTool": node.get("requiredTool", ""),
+            "tags": node.get("metadata", {}).get("tags", []),
+            "narrative": node.get("metadata", {}).get("narrative", "")
+        }
+
+    # Use primary assignment (usually first/most common chunk)
+    primary = assignments[0]
+
+    return {
+        "primaryChunk": primary["chunkType"],
+        "chunkCategory": primary["category"],
+        "chunkTheme": primary["theme"],
+        "density": primary["density"],
+        "tierBias": primary["tierBias"],
+        "allChunks": [a["chunkType"] for a in assignments],
+        "tier": node["tier"],
+        "category": node["category"],
+        "requiredTool": node.get("requiredTool", ""),
+        "tags": node.get("metadata", {}).get("tags", [])
+    }
+
+# Example result for oak_tree:
 INPUT = {
-    "chunkType": "forest_common",
+    "primaryChunk": "peaceful_forest",
+    "chunkCategory": "peaceful",
+    "chunkTheme": "forest",
+    "density": "very_high",
+    "tierBias": "low",
+    "allChunks": ["peaceful_forest", "peaceful_quarry", "dangerous_forest"],
     "tier": 1,
-    "biome": "forest",
-    "resourceCategory": "tree"  # tree, ore, stone
+    "category": "tree",
+    "requiredTool": "axe",
+    "tags": ["tree", "wood", "starter"]
 }
 
 OUTPUT Definition
 OUTPUT = node  # Complete node JSON - ALL fields preserved
+
+Purpose of This System
+LLM learns to generate nodes that fit specific chunk types
+Given a chunk type (peaceful_forest), LLM generates appropriate resources (oak trees, not diamonds)
+Learns resource distribution patterns (common resources in peaceful, rare in rare chunks)
+Learns tier bias patterns (low tier bias in peaceful, high/legendary in rare chunks)
+Enables new chunk types to automatically get appropriate resource nodes
+
+
+System 9: Chunk Types (Player Metadata → Chunk Type)
+File Locations
+Chunk Templates: Game-1-modular/Definitions.JSON/Chunk-templates-1.JSON
+STATUS: BENCHED - Requires Player Metadata Not Available
+This system would generate new chunk types based on player progression/playstyle
+Requires player metadata: stats, achievements, playstyle analysis
+Current chunk templates (9 total) are manually created
+Real Example Structure:
+{
+  "chunkType": "primordial_depths",
+  "name": "Primordial Depths",
+  "category": "rare",
+  "theme": "cave",
+  "resourceDensity": {
+    "etherion_nexus": {"density": "very_low", "tierBias": "legendary"},
+    "primordial_formation": {"density": "very_low", "tierBias": "legendary"}
+  },
+  "enemySpawns": {
+    "entity_primordial": {"density": "very_low", "behavior": "boss_encounter"},
+    "void_wraith": {"density": "moderate", "behavior": "aggressive_phase"}
+  },
+  "generationRules": {
+    "rollWeight": 1,
+    "spawnAreaAllowed": false,
+    "adjacencyPreference": ["rare_cave", "dangerous_cave"]
+  },
+  "metadata": {
+    "narrative": "Reality-warped depths where impossible becomes mundane...",
+    "tags": ["cave", "end-game", "mythical-materials", "combat"]
+  }
+}
+
+Why Benched
+INPUT requires player data: experience level, favorite activities, play time, etc.
+No existing player metadata to train on
+Chunk generation requires balancing resource density, enemy difficulty, adjacency
+Manual chunk creation works well for now (9 templates cover all themes × difficulty)
+Can be revisited when player telemetry data becomes available
+
+Alternative Approach (Without Player Data)
+Use theme + difficulty as INPUT instead:
+INPUT = {"theme": "forest", "difficulty": "dangerous"}
+OUTPUT = complete chunk template
+This could work but provides less value than other systems
+Priority should be on Systems 1-8 which have clear training data
 
 
 System 10: Skills (Requirements → Skill)
@@ -1300,8 +1582,10 @@ def load_all_data():
         "enchanting_placements": load_json(base_path / "placements.JSON/placements-adornments-1.JSON"),
 
         # Other
+        "chunk_templates": load_json(base_path / "Definitions.JSON/Chunk-templates-1.JSON"),
         "hostiles": load_json(base_path / "Definitions.JSON/hostiles-1.JSON"),
-        "nodes": load_json(base_path / "Definitions.JSON/resource-node-1.JSON"),
+        "nodes": load_json(base_path / "Definitions.JSON/Resource-node-1.JSON"),
+        "materials": load_json(base_path / "items.JSON/items-materials-1.JSON"),
         "skills": load_json(base_path / "Skills/skills-skills-1.JSON"),
         "titles": load_json(base_path / "progression/titles-1.JSON"),
     }
@@ -1459,6 +1743,50 @@ def extract_all_training_pairs(data):
             "output": output_data
         })
 
+    # System 6: Hostiles (requires chunk assignment extraction)
+    hostile_chunk_assignments = extract_hostile_chunk_assignments(data["chunk_templates"])
+    for hostile in data["hostiles"].get("hostiles", []):
+        input_data = extract_hostile_input(hostile, hostile_chunk_assignments)
+        output_data = hostile
+        training_data["system_6_hostiles"].append({
+            "input": input_data,
+            "output": output_data
+        })
+
+    # System 7: Materials (requires drop source cross-reference)
+    for material in data["materials"].get("materials", []):
+        drop_source = find_material_drop_source(
+            material["materialId"],
+            data["hostiles"].get("hostiles", []),
+            data["nodes"].get("resources", [])
+        )
+        if drop_source:  # Only include materials with drop sources
+            input_data = drop_source
+            output_data = material
+            training_data["system_7_materials"].append({
+                "input": input_data,
+                "output": output_data
+            })
+
+    # System 8: Nodes (requires chunk assignment extraction)
+    node_chunk_assignments = extract_node_chunk_assignments(data["chunk_templates"])
+    for node in data["nodes"].get("resources", []):
+        input_data = extract_node_input(node, node_chunk_assignments)
+        output_data = node
+        training_data["system_8_nodes"].append({
+            "input": input_data,
+            "output": output_data
+        })
+
+    # System 10: Skills
+    for skill in data["skills"]["skills"]:
+        input_data = extract_skill_input(skill)
+        output_data = skill
+        training_data["system_10_skills"].append({
+            "input": input_data,
+            "output": output_data
+        })
+
     # System 11: Titles
     for title in data["titles"]["titles"]:
         input_data = extract_title_input(title)
@@ -1468,8 +1796,7 @@ def extract_all_training_pairs(data):
             "output": output_data
         })
 
-    # Note: Systems 6, 7, 8 (Hostiles, Materials, Nodes) require manual chunk mapping
-    # See individual system documentation for implementation details
+    # Note: System 9 (Chunk Types) benched - requires player metadata not available
 
     return training_data
 
@@ -1561,7 +1888,7 @@ System 11 (Titles)
 10 titles (from actual file)
 
 
-Critical Reminders
+Critical Reminders - Crafting Systems
 SMITHING: Items split across TWO files (items-smithing-2.JSON + items-tools-1.JSON) - search both!
 REFINING: Recipes use different structure - outputs[] array not outputId
 ALCHEMY: Items organized in subsections (potions_healing, potions_mana, elixirs) - search all sections
@@ -1571,10 +1898,20 @@ ENGINEERING: Placement uses slot-type system (FRAME, FUNCTION, POWER, etc.)
 ENCHANTING: NO separate item file - recipe contains enchantment definition
 ENCHANTING: Uses enchantmentId not outputId, includes applicableTo and effect fields
 ENCHANTING: Placement uses geometric pattern system with vertices and shapes
+
+Critical Reminders - World Systems
+HOSTILES: Extract chunk assignments from Chunk-templates-1.JSON enemySpawns field
+HOSTILES: Bidirectional relationship - chunk → hostiles and hostiles → chunks
+NODES: Extract chunk assignments from Chunk-templates-1.JSON resourceDensity field
+NODES: Same bidirectional pattern as hostiles
+MATERIALS: Require cross-referencing hostile/node drop tables - only include materials with drop sources
+CHUNK TYPES: System benched - requires player metadata not available
+
+Critical Reminders - General
 Tier rules must be constructed - they're patterns, not in JSON
-Hostiles/Nodes lack chunk fields - use manual mapping
-Materials require cross-referencing - search all drop tables
 Always preserve complete OUTPUT - never truncate or modify
+Chunk assignments enable backwards-compatible LLM generation
+New chunk types automatically get appropriate enemies/resources through LLM training
 
 Next Steps
 Run load_all_data() to verify all files load correctly
