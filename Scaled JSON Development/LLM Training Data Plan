@@ -1,0 +1,878 @@
+LLMs + Systems - Training 1/7/26
+System Components (numbered list at top):
+{ Smithing } x2
+{ Refining } x2
+{ Adornments } x2
+{ Alchemy } x2 
+{ Engineering } x2
+x2 = recipe & placement model
+[ Hostiles ]
+[ Materials ]
+[ Nodes ]
+[ Chunk types ]
+( Skills )
+( Titles )
+( Quests )
+( NPCs )
+Management Systems:
+5x { Recipe Validators } 14-19
+[ Material Manager] 20.S - Manage unused materials for future priority generation
+( Achievement Manager ) 21.S
+( Story Manager ) 22
+.S = System not LLM
+General Sorting of System: {}=Crafting []=Interactable ()=world
+
+Use Cases of New Generation:
+① Player Driven → 14-19 → 1-5 or → 21.S/22 → 10-13
+② Update Generation → 1-5 → 1-5 x2  or → 6-9 → 20.S → 1-5 x2 → 1-5 or → 10-13
+
+Training Input and Output (JSON construction guide)
+All outputs should be in the proper JSON template found in Github. 
+Input {1-5}
+Respective recipes with list of materials with metadata but no placement data and no tags from metadata.
+Output {1-5}
+Absolute necessity: Complete valid Item JSON
+Emphasis by discipline: 
+Proper tags driving functionality
+Narrative reasoning for refining
+Tag driven effect and permissions for where adornment can be applied
+Balance and reasonable tag driven effects
+Balance and reasonable tag driven effects.
+Input {1-5} x2
+Item JSON (item data + metadata ) + tier emphasis (tier rules need to be put in each prompt)
+Output {1-5} x2
+Follows tier based grid size rules. Placements have proper shape and some detail
+Follows tier based core and spoke rules. Reasonable quantities and recipes.
+Follow tier based shape rules + coherent end shape + reasonable recipe/resources used
+Follows tier based slot rule + non random ordering of materials + suitable tier of material
+Follows tier based slot type rules + reasonable selection of material
+
+Section 6-9
+** Input [9]: Player stats/achievements/personality (player metadata/in game past)
+Output [9]: New properly defined chunk types
+
+Input [8]: Use the output from [9] or manual chunk definitions (because [9] requires player data to train but its outputs can easily be made manually by dev).
+Output [8]: Thematic nodes with meaningfully new drops
+
+Input [6]: Use the output from [9] or manual chunk definitions (because [9] requires player data to train but its outputs can easily be made manually by dev).
+Output [6]: Functioning hostile mob with defined drops. Semi-balance, and tag driven attacks.
+
+Input [7]: New drop item name [6 if from hostile mob or 8 if from node] and metadata or where its from to guide better output
+Output [7]: New Material defined with comprehensive JSON. Special attention to narrative, and reasonable field values
+
+Section (10-13)
+Input (10): Unlock condition for existing skills 
+Output (10): Completed JSON w/ reasonable narrative and effect. Tag driven and working
+
+Input (11): Unlock condition for existing titles
+Output (11): Completed JSON w/ reasonable narrative and effect. Tag driven and working
+
+**Input (12): NPC JSON + player narration (summarized player experience from stats/past actions in the form of a narrative)
+Output (12): Complete quest JSON with emphasis on clear condition and reward. 
+
+**Input (13): Player narration(summarized player experience from stats/past actions in the form of a narrative)
+Output (13): NPC JSON. Emphasis on NPC being linked to a quest
+
+**Input (22): World/player metadata
+Output (22): Player narration (summarized player experience from stats/past actions in the form of a narrative)
+
+**These do not have any meaningful amount of existing input data to serve as training. As such these should be benched for now.
+
+Comprehensive Training Data Extraction Guide
+With Real Examples from Actual JSON Files
+
+CRITICAL DISCOVERY: Item File Distribution
+Smithing items are SPLIT across multiple files:
+items.JSON/items-smithing-2.JSON: 29 items (weapons, armor, accessories, stations)
+items.JSON/items-tools-1.JSON: 8 tools (copper/iron/steel/mithril pickaxe + axe)
+Total smithing-crafted items: 37 (matches 37 recipes in recipes-smithing-3.json)
+This explains the apparent discrepancy. When extracting training data, YOU MUST search BOTH files for smithing items.
+
+System 1: Smithing (Recipe → Item)
+File Locations
+Recipes: Game-1-modular/recipes.JSON/recipes-smithing-3.JSON
+Items:
+Game-1-modular/items.JSON/items-smithing-2.JSON (weapons, armor, stations)
+Game-1-modular/items.JSON/items-tools-1.JSON (tools ONLY)
+Real Example: Copper Pickaxe
+RECIPE (from recipes-smithing-3.JSON):
+{
+  "metadata": {
+    "narrative": "Your first pickaxe. The gateway to greater resources and deeper discoveries.",
+    "tags": ["tool", "pickaxe", "starter"]
+  },
+  "recipeId": "smithing_copper_pickaxe",
+  "outputId": "copper_pickaxe",
+  "outputQty": 1,
+  "stationTier": 1,
+  "stationType": "smithing",
+  "gridSize": "3x3",
+  "inputs": [
+    {"materialId": "copper_ingot", "quantity": 3},
+    {"materialId": "oak_log", "quantity": 2}
+  ],
+  "miniGame": {
+    "type": "smithing",
+    "difficulty": "easy",
+    "baseTime": 25
+  }
+}
+
+ITEM (from items-tools-1.JSON):
+{
+  "metadata": {
+    "narrative": "Basic copper pickaxe with a wooden handle. Your first step into the mining profession - crude but functional.",
+    "tags": ["tool", "pickaxe", "starter"]
+  },
+  "itemId": "copper_pickaxe",
+  "name": "Copper Pickaxe",
+  "category": "equipment",
+  "type": "tool",
+  "subtype": "pickaxe",
+  "tier": 1,
+  "rarity": "common",
+  "range": 1,
+  "effectTags": ["physical", "piercing", "single"],
+  "effectParams": {"baseDamage": 10},
+  "stats": {
+    "damage": [8, 12],
+    "mining": 10,
+    "durability": [500, 500],
+    "weight": 4.0
+  },
+  "requirements": {"level": 1},
+  "flags": {
+    "stackable": false,
+    "equippable": true,
+    "repairable": true
+  }
+}
+
+INPUT Extraction (Python)
+def extract_smithing_input(recipe):
+    """Extract INPUT for System 1"""
+    return {
+        "inputs": recipe["inputs"],  # List[{materialId: str, quantity: int}]
+        "stationTier": recipe["stationTier"],  # int: 1-4
+        "stationType": recipe["stationType"],  # str: "smithing"
+        "narrative": recipe.get("metadata", {}).get("narrative", "")  # str (may be empty)
+    }
+
+# Example result:
+INPUT = {
+    "inputs": [
+        {"materialId": "copper_ingot", "quantity": 3},
+        {"materialId": "oak_log", "quantity": 2}
+    ],
+    "stationTier": 1,
+    "stationType": "smithing",
+    "narrative": "Your first pickaxe. The gateway to greater resources and deeper discoveries."
+}
+
+OUTPUT Definition
+OUTPUT = item  # Complete item JSON - ALL fields preserved exactly as-is
+
+Matching Logic
+def find_matching_item(recipe, smithing_items, tool_items):
+    """Find item that matches recipe.outputId"""
+    output_id = recipe["outputId"]
+    
+    # Search smithing items first
+    for item in smithing_items:
+        if item["itemId"] == output_id:
+            return item
+    
+    # Search tools second
+    for item in tool_items:
+        if item["itemId"] == output_id:
+            return item
+    
+    return None  # Recipe without matching item (data quality issue)
+
+Data Quality Issues
+Missing narratives: Some recipes have no metadata.narrative → use empty string ""
+Orphaned recipes: recipe.outputId has no matching item.itemId → skip these
+Orphaned items: item.itemId not referenced by any recipe → skip these
+
+System 1 x2: Smithing Placement (Item + Recipe → Placement)
+File Locations
+Placements: Game-1-modular/placements.JSON/placements-smithing-1.JSON
+Real Example: Copper Pickaxe (continued)
+PLACEMENT (from placements-smithing-1.JSON):
+{
+  "recipeId": "smithing_copper_pickaxe",
+  "placementMap": {
+    "3,1": "oak_log",
+    "2,2": "oak_log",
+    "1,2": "copper_ingot",
+    "1,3": "copper_ingot",
+    "2,3": "copper_ingot"
+  },
+  "metadata": {
+    "gridSize": "3x3",
+    "narrative": "Your first pickaxe. The gateway to greater resources and deeper discoveries."
+  }
+}
+
+INPUT Construction
+# Tier rules MUST be constructed programmatically
+SMITHING_TIER_RULES = {
+    1: {"gridSize": "3x3", "rows": 3, "cols": 3},
+    2: {"gridSize": "5x5", "rows": 5, "cols": 5},
+    3: {"gridSize": "7x7", "rows": 7, "cols": 7},
+    4: {"gridSize": "9x9", "rows": 9, "cols": 9}
+}
+
+def extract_smithing_placement_input(recipe, item):
+    """Extract INPUT for System 1 x2"""
+    tier = recipe["stationTier"]
+    
+    return {
+        "item": item,  # COMPLETE item JSON (all fields)
+        "recipe": recipe,  # COMPLETE recipe JSON (all fields)
+        "tierRules": SMITHING_TIER_RULES[tier]
+    }
+
+# Example result:
+INPUT = {
+    "item": {
+        "itemId": "copper_pickaxe",
+        "name": "Copper Pickaxe",
+        # ... all fields from item JSON ...
+    },
+    "recipe": {
+        "recipeId": "smithing_copper_pickaxe",
+        "outputId": "copper_pickaxe",
+        # ... all fields from recipe JSON ...
+    },
+    "tierRules": {"gridSize": "3x3", "rows": 3, "cols": 3}
+}
+
+OUTPUT Definition
+OUTPUT = placement  # Complete placement JSON - ALL fields preserved
+
+Matching Logic
+# placement["recipeId"] MUST EQUAL recipe["recipeId"]
+matches = placement["recipeId"] == recipe["recipeId"]
+
+
+System 2: Refining (Recipe → Material)
+File Locations
+Recipes: Game-1-modular/recipes.JSON/recipes-refining-1.JSON
+Materials: Game-1-modular/items.JSON/items-refining-1.JSON
+CRITICAL: Refining Has Different Structure!
+Recipes use inputs and outputs arrays (NOT outputId)
+Real Example: Copper Ore to Ingot
+RECIPE (from recipes-refining-1.JSON):
+{
+  "recipeId": "refining_copper_ore_to_ingot",
+  "inputs": [
+    {"materialId": "copper_ore", "quantity": 1}
+  ],
+  "outputs": [
+    {"materialId": "copper_ingot", "quantity": 1, "rarity": "common"}
+  ],
+  "stationRequired": "refinery",
+  "stationTierRequired": 1,
+  "fuelRequired": null,
+  "metadata": {
+    "narrative": "Smelting raw copper into usable ingots. The foundation of metallurgy.",
+    "tags": ["smelting", "copper", "basic"]
+  }
+}
+
+MATERIAL (from items-refining-1.JSON - structure needed):
+{
+  "metadata": {
+    "narrative": "Refined copper ready for crafting",
+    "tags": ["metal", "ingot", "processed"]
+  },
+  "itemId": "copper_ingot",
+  "name": "Copper Ingot",
+  "category": "material",
+  "type": "metal",
+  "subtype": "ingot",
+  "tier": 1,
+  "rarity": "common",
+  "stackSize": 256
+  // ... other fields ...
+}
+
+INPUT Extraction
+def extract_refining_input(recipe):
+    """Extract INPUT for System 2"""
+    return {
+        "inputs": recipe["inputs"],  # List[{materialId: str, quantity: int}]
+        "stationTierRequired": recipe["stationTierRequired"],  # int: 1-4
+        "narrative": recipe.get("metadata", {}).get("narrative", "")
+    }
+
+# Example result:
+INPUT = {
+    "inputs": [{"materialId": "copper_ore", "quantity": 1}],
+    "stationTierRequired": 1,
+    "narrative": "Smelting raw copper into usable ingots. The foundation of metallurgy."
+}
+
+OUTPUT Definition
+OUTPUT = material  # Complete material JSON - ALL fields preserved
+
+Matching Logic
+def find_matching_material(recipe, materials):
+    """Find material that matches recipe.outputs[0].materialId"""
+    # Note: Refining recipes can have multiple outputs, but typically one primary
+    primary_output = recipe["outputs"][0]
+    output_material_id = primary_output["materialId"]
+    
+    for material in materials:
+        # Materials use 'itemId' not 'materialId' in the items file!
+        if material.get("itemId") == output_material_id:
+            return material
+    
+    return None
+
+
+System 2 x2: Refining Placement (Item + Recipe → Placement)
+File Locations
+Placements: Game-1-modular/placements.JSON/placements-refining-1.JSON
+Real Example: Bronze Alloy
+RECIPE (from recipes-refining-1.JSON):
+{
+  "recipeId": "refining_bronze_alloy",
+  "inputs": [
+    {"materialId": "copper_ingot", "quantity": 2},
+    {"materialId": "tin_ingot", "quantity": 1}
+  ],
+  "outputs": [
+    {"materialId": "bronze_ingot", "quantity": 1, "rarity": "uncommon"}
+  ],
+  "stationRequired": "refinery",
+  "stationTierRequired": 1,
+  "fuelRequired": null,
+  "metadata": {
+    "narrative": "Creating bronze alloy. Harder than copper, more workable than iron.",
+    "tags": ["alloying", "bronze", "basic"]
+  }
+}
+
+PLACEMENT (from placements-refining-1.JSON):
+{
+  "recipeId": "refining_bronze_alloy",
+  "outputId": "bronze_ingot",
+  "stationTier": 1,
+  "coreInputs": [
+    {"materialId": "copper_ingot", "quantity": 2}
+  ],
+  "surroundingInputs": [
+    {"materialId": "tin_ingot", "quantity": 1}
+  ],
+  "narrative": "Creating bronze. Copper in core determines base, tin in surrounding modifies to alloy."
+}
+
+Tier Rules for Refining
+REFINING_TIER_RULES = {
+    1: {"coreSlots": 1, "surroundingSlots": 2},
+    2: {"coreSlots": 1, "surroundingSlots": 4},
+    3: {"coreSlots": 2, "surroundingSlots": 5},
+    4: {"coreSlots": 3, "surroundingSlots": 6}
+}
+
+INPUT Construction
+def extract_refining_placement_input(recipe, material):
+    """Extract INPUT for System 2 x2"""
+    tier = recipe["stationTierRequired"]
+    
+    return {
+        "item": material,  # COMPLETE material JSON
+        "recipe": recipe,  # COMPLETE recipe JSON
+        "tierRules": REFINING_TIER_RULES[tier]
+    }
+
+
+System 6: Hostiles (Chunk Definition → Hostile)
+File Locations
+Hostiles: Game-1-modular/Definitions.JSON/hostiles-1.JSON
+Real Example: Grey Wolf
+HOSTILE (from hostiles-1.JSON):
+{
+  "metadata": {
+    "narrative": "Common grey wolf. More curious than aggressive, but will defend territory if threatened.",
+    "tags": ["wolf", "common", "passive", "starter"]
+  },
+  "enemyId": "wolf_grey",
+  "name": "Grey Wolf",
+  "tier": 1,
+  "category": "beast",
+  "behavior": "passive_patrol",
+  "stats": {
+    "health": 80,
+    "damage": [8, 12],
+    "defense": 5,
+    "speed": 1.2,
+    "aggroRange": 5,
+    "attackSpeed": 1.0
+  },
+  "drops": [
+    {"materialId": "wolf_pelt", "quantity": [2, 4], "chance": "guaranteed"},
+    {"materialId": "dire_fang", "quantity": [1, 1], "chance": "low"}
+  ],
+  "aiPattern": {
+    "defaultState": "wander",
+    "aggroOnDamage": true,
+    "aggroOnProximity": false,
+    "fleeAtHealth": 0.2,
+    "callForHelpRadius": 8
+  }
+}
+
+CRITICAL ISSUE: No Chunk Fields in Existing Data!
+Existing hostiles do NOT have spawnsIn or chunk-related fields. For training:
+Option A: Manual Chunk Definitions (RECOMMENDED)
+# Create manual associations based on hostile tier/category
+MANUAL_CHUNK_MAPPING = {
+    "wolf_grey": {"chunkType": "forest_common", "tier": 1, "biome": "forest"},
+    "slime_green": {"chunkType": "cave_damp", "tier": 1, "biome": "cave"},
+    "beetle_brown": {"chunkType": "grassland", "tier": 1, "biome": "plains"},
+    # ... etc
+}
+
+def extract_hostile_input(hostile):
+    """Extract INPUT for System 6 using manual mapping"""
+    enemy_id = hostile["enemyId"]
+    
+    if enemy_id in MANUAL_CHUNK_MAPPING:
+        return MANUAL_CHUNK_MAPPING[enemy_id]
+    else:
+        # Default based on tier/category
+        return {
+            "chunkType": "generic",
+            "tier": hostile["tier"],
+            "biome": "any"
+        }
+
+Option B: Add Chunk Fields to Existing Data
+# Modify hostile JSONs to include:
+{
+  "enemyId": "wolf_grey",
+  "spawnsIn": ["forest_common", "forest_dense"],  # ADD THIS
+  "biomePreference": "forest",  # ADD THIS
+  # ... rest of hostile fields
+}
+
+INPUT Definition
+# Using Option A (manual mapping)
+INPUT = {
+    "chunkType": "forest_common",
+    "tier": 1,
+    "biome": "forest"
+}
+
+OUTPUT Definition
+OUTPUT = hostile  # Complete hostile JSON - ALL fields preserved
+
+
+System 7: Materials (Drop Source → Material)
+File Locations
+Materials: Game-1-modular/items.JSON/items-materials-1.JSON
+Drop Sources:
+Game-1-modular/Definitions.JSON/hostiles-1.JSON (check drops arrays)
+Game-1-modular/Definitions.JSON/resource-node-1.JSON (check drops arrays)
+Real Example: Wolf Pelt
+MATERIAL (from items-materials-1.JSON):
+{
+  "metadata": {
+    "narrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
+    "tags": ["animal", "leather", "common"]
+  },
+  "materialId": "wolf_pelt",
+  "name": "Wolf Pelt",
+  "tier": 1,
+  "rarity": "common",
+  "category": "animal_product"
+}
+
+DROP SOURCE (from wolf_grey in hostiles-1.JSON):
+{
+  "enemyId": "wolf_grey",
+  // ... other hostile fields ...
+  "drops": [
+    {"materialId": "wolf_pelt", "quantity": [2, 4], "chance": "guaranteed"},
+    {"materialId": "dire_fang", "quantity": [1, 1], "chance": "low"}
+  ]
+}
+
+Finding Drop Sources
+def find_material_drop_source(material_id, hostiles, nodes):
+    """Search all drop tables to find where material drops"""
+    
+    # Search hostiles first
+    for hostile in hostiles:
+        for drop in hostile.get("drops", []):
+            if drop["materialId"] == material_id:
+                return {
+                    "materialName": material_id,
+                    "droppedBy": {
+                        "type": "hostile",
+                        "sourceId": hostile["enemyId"],
+                        "sourceName": hostile["name"],
+                        "sourceTier": hostile["tier"],
+                        "dropChance": drop["chance"],
+                        "quantityRange": drop["quantity"]
+                    }
+                }
+    
+    # Search nodes second
+    for node in nodes:
+        for drop in node.get("drops", []):
+            if drop["materialId"] == material_id:
+                return {
+                    "materialName": material_id,
+                    "droppedBy": {
+                        "type": "node",
+                        "sourceId": node["resourceId"],
+                        "sourceName": node["name"],
+                        "sourceTier": node["tier"],
+                        "dropChance": drop["chance"],
+                        "quantityRange": drop["quantity"]
+                    }
+                }
+    
+    return None  # Material not found in any drop tables
+
+# Example result:
+INPUT = {
+    "materialName": "wolf_pelt",
+    "droppedBy": {
+        "type": "hostile",
+        "sourceId": "wolf_grey",
+        "sourceName": "Grey Wolf",
+        "sourceTier": 1,
+        "dropChance": "guaranteed",
+        "quantityRange": [2, 4]
+    }
+}
+
+OUTPUT Definition
+OUTPUT = material  # Complete material JSON - ALL fields preserved
+
+Edge Cases
+Material drops from multiple sources: Choose primary/most common source
+Material not in any drop table: Skip or flag for manual review
+Material drops from both hostile AND node: Prioritize hostile drops
+
+System 8: Nodes (Chunk Definition → Node)
+File Locations
+Nodes: Game-1-modular/Definitions.JSON/resource-node-1.JSON
+Real Example: Oak Tree
+NODE (from resource-node-1.JSON):
+{
+  "metadata": {
+    "narrative": "Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.",
+    "tags": ["tree", "wood", "starter"]
+  },
+  "resourceId": "oak_tree",
+  "name": "Oak Tree",
+  "category": "tree",
+  "tier": 1,
+  "requiredTool": "axe",
+  "baseHealth": 100,
+  "drops": [
+    {"materialId": "oak_log", "quantity": "many", "chance": "guaranteed"}
+  ],
+  "respawnTime": "normal"
+}
+
+INPUT Definition (Same Issue as System 6)
+# Nodes also lack chunk fields - use manual mapping
+MANUAL_NODE_CHUNKS = {
+    "oak_tree": {"chunkType": "forest_common", "tier": 1, "biome": "forest"},
+    "copper_vein": {"chunkType": "cave_mineral", "tier": 1, "biome": "cave"},
+    # ... etc
+}
+
+INPUT = {
+    "chunkType": "forest_common",
+    "tier": 1,
+    "biome": "forest",
+    "resourceCategory": "tree"  # tree, ore, stone
+}
+
+OUTPUT Definition
+OUTPUT = node  # Complete node JSON - ALL fields preserved
+
+
+System 10: Skills (Requirements → Skill)
+File Locations
+Skills: Game-1-modular/Skills/skills-skills-1.JSON
+Real Example: Miner's Fury
+SKILL (from skills-skills-1.JSON):
+{
+  "skillId": "miners_fury",
+  "name": "Miner's Fury",
+  "description": "Strike with increased mining power for a short duration.",
+  "categories": ["mining"],
+  "effect": {
+    "type": "empower",
+    "category": "mining",
+    "magnitude": "moderate",
+    "duration": "brief",
+    "target": "self"
+  },
+  "combatParams": {"baseDamage": 0},
+  "cost": {"manaCost": 20, "cooldown": 15.0},
+  "requirements": {
+    "characterLevel": 1,
+    "stats": {},
+    "titles": []
+  },
+  "evolution": {
+    "canEvolve": true,
+    "nextSkillId": "titans_excavation",
+    "requirement": "Reach level 10 and mine 1000 ore nodes"
+  }
+}
+
+INPUT Extraction
+def extract_skill_input(skill):
+    """Extract INPUT for System 10"""
+    return {
+        "requirements": skill["requirements"]  # ONLY this field
+    }
+
+# Example result:
+INPUT = {
+    "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+    }
+}
+
+OUTPUT Definition
+OUTPUT = skill  # Complete skill JSON - ALL fields preserved
+
+Purpose
+The LLM learns to generate balanced skill effects, costs, and evolution paths based on unlock requirements.
+
+System 11: Titles (Prerequisites → Title)
+File Locations
+Titles: Game-1-modular/progression/titles-1.JSON
+Real Example: Novice Miner
+TITLE (from titles-1.JSON):
+{
+  "titleId": "novice_miner",
+  "name": "Novice Miner",
+  "titleType": "gathering",
+  "difficultyTier": "novice",
+  "description": "Your first steps into the depths. Every mine begins with a single swing.",
+  "bonuses": {
+    "miningDamage": 0.10,
+    "miningSpeed": 0.0,
+    "rareOreChance": 0.0
+  },
+  "prerequisites": {
+    "activities": {"oresMined": 100},
+    "requiredTitles": [],
+    "characterLevel": 0
+  },
+  "acquisitionMethod": "guaranteed_milestone",
+  "isHidden": false,
+  "narrative": "The stone remembers your first strike. Keep swinging."
+}
+
+INPUT Extraction
+def extract_title_input(title):
+    """Extract INPUT for System 11"""
+    return {
+        "prerequisites": title["prerequisites"]  # ONLY this field
+    }
+
+# Example result:
+INPUT = {
+    "prerequisites": {
+        "activities": {"oresMined": 100},
+        "requiredTitles": [],
+        "characterLevel": 0
+    }
+}
+
+OUTPUT Definition
+OUTPUT = title  # Complete title JSON - ALL fields preserved
+
+
+Complete Extraction Pipeline
+Step 1: Load All Data Files
+import json
+from pathlib import Path
+
+def load_all_data():
+    """Load all JSON files needed for training data extraction"""
+    base_path = Path("Game-1-modular")
+    
+    data = {
+        # Recipes
+        "smithing_recipes": load_json(base_path / "recipes.JSON/recipes-smithing-3.JSON"),
+        "refining_recipes": load_json(base_path / "recipes.JSON/recipes-refining-1.JSON"),
+        "alchemy_recipes": load_json(base_path / "recipes.JSON/recipes-alchemy-1.JSON"),
+        "engineering_recipes": load_json(base_path / "recipes.JSON/recipes-engineering-1.JSON"),
+        
+        # Items
+        "smithing_items": load_json(base_path / "items.JSON/items-smithing-2.JSON"),
+        "tools": load_json(base_path / "items.JSON/items-tools-1.JSON"),
+        "refining_items": load_json(base_path / "items.JSON/items-refining-1.JSON"),
+        "materials": load_json(base_path / "items.JSON/items-materials-1.JSON"),
+        
+        # Placements
+        "smithing_placements": load_json(base_path / "placements.JSON/placements-smithing-1.JSON"),
+        "refining_placements": load_json(base_path / "placements.JSON/placements-refining-1.JSON"),
+        
+        # Other
+        "hostiles": load_json(base_path / "Definitions.JSON/hostiles-1.JSON"),
+        "nodes": load_json(base_path / "Definitions.JSON/resource-node-1.JSON"),
+        "skills": load_json(base_path / "Skills/skills-skills-1.JSON"),
+        "titles": load_json(base_path / "progression/titles-1.JSON"),
+    }
+    
+    return data
+
+Step 2: Extract Training Pairs
+def extract_all_training_pairs(data):
+    """Extract all training pairs for all systems"""
+    
+    training_data = {
+        "system_1_smithing": [],
+        "system_1x2_smithing_placement": [],
+        "system_2_refining": [],
+        "system_2x2_refining_placement": [],
+        "system_6_hostiles": [],
+        "system_7_materials": [],
+        "system_8_nodes": [],
+        "system_10_skills": [],
+        "system_11_titles": [],
+    }
+    
+    # System 1: Smithing Recipe → Item
+    smithing_items_combined = (
+        data["smithing_items"]["weapons"] +
+        data["smithing_items"]["armor"] +
+        data["smithing_items"]["accessories"] +
+        data["smithing_items"]["stations"] +
+        data["tools"]["tools"]
+    )
+    
+    for recipe in data["smithing_recipes"]["recipes"]:
+        item = find_item_by_id(recipe["outputId"], smithing_items_combined)
+        if item:
+            input_data = extract_smithing_input(recipe)
+            output_data = item
+            training_data["system_1_smithing"].append({
+                "input": input_data,
+                "output": output_data
+            })
+    
+    # System 1 x2: Smithing Placement
+    for placement in data["smithing_placements"]["placements"]:
+        recipe = find_recipe_by_id(placement["recipeId"], data["smithing_recipes"]["recipes"])
+        item = find_item_by_id(recipe["outputId"], smithing_items_combined)
+        if recipe and item:
+            input_data = extract_smithing_placement_input(recipe, item)
+            output_data = placement
+            training_data["system_1x2_smithing_placement"].append({
+                "input": input_data,
+                "output": output_data
+            })
+    
+    # ... Continue for all systems ...
+    
+    return training_data
+
+Step 3: Validate Data Quality
+def validate_training_data(data):
+    """Validate data quality before training"""
+    
+    issues = {
+        "orphaned_recipes": [],
+        "orphaned_items": [],
+        "missing_placements": [],
+        "missing_narratives": [],
+        "materials_without_drops": []
+    }
+    
+    # Check for orphaned recipes
+    smithing_items_combined = get_all_smithing_items(data)
+    for recipe in data["smithing_recipes"]["recipes"]:
+        if not find_item_by_id(recipe["outputId"], smithing_items_combined):
+            issues["orphaned_recipes"].append(recipe["recipeId"])
+    
+    # Check for missing narratives
+    for recipe in data["smithing_recipes"]["recipes"]:
+        if "narrative" not in recipe.get("metadata", {}):
+            issues["missing_narratives"].append(recipe["recipeId"])
+    
+    # Check for materials without drop sources
+    for material in data["materials"]:
+        source = find_material_drop_source(
+            material["materialId"],
+            data["hostiles"],
+            data["nodes"]
+        )
+        if not source:
+            issues["materials_without_drops"].append(material["materialId"])
+    
+    return issues
+
+
+Expected Dataset Sizes
+Based on actual file counts:
+System
+Expected Pairs
+Source Files
+System 1 (Smithing)
+37
+37 recipes, 29 items + 8 tools
+System 1 x2 (Smithing Placement)
+37
+37 placements
+System 2 (Refining)
+55
+55 recipes (from metadata)
+System 2 x2 (Refining Placement)
+56
+56 placements (from metadata)
+System 3-5 (Alchemy/Engineering)
+TBD
+Need to count
+System 6 (Hostiles)
+49
+49 hostiles (from template)
+System 7 (Materials)
+~Variable~
+Depends on drop coverage
+System 8 (Nodes)
+28
+28 nodes (from template)
+System 10 (Skills)
+48
+48 skills (from template)
+System 11 (Titles)
+10
+10 titles (from actual file)
+
+
+Critical Reminders
+Smithing items are split across TWO files - search both!
+Refining recipes use different structure - outputs not outputId
+Tier rules must be constructed - they're patterns, not in JSON
+Hostiles/Nodes lack chunk fields - use manual mapping
+Materials require cross-referencing - search all drop tables
+Always preserve complete OUTPUT - never truncate or modify
+
+Next Steps
+Run load_all_data() to verify all files load correctly
+Run validate_training_data() to identify data quality issues
+Fix data quality issues (add missing narratives, remove orphaned entries)
+Run extract_all_training_pairs() to generate training datasets
+Split into train/val sets (90/10 or 80/20)
+Save as JSON or CSV for training
+
+
