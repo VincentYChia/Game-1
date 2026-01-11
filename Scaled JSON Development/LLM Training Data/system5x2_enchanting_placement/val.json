@@ -1,0 +1,467 @@
+[
+  {
+    "input": {
+      "recipeId": "enchanting_knockback",
+      "enchantmentId": "knockback",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 6
+        },
+        {
+          "materialId": "maple_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "shale",
+          "quantity": 4
+        }
+      ],
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "knockback",
+        "value": 3,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    "output": {
+      "recipeId": "enchanting_knockback",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "0,1": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "1,4": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-1,4": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-3,2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "-3,0": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "3,0": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "3,2": {
+            "materialId": "air_crystal",
+            "isKey": false
+          },
+          "1,-5": {
+            "materialId": "shale",
+            "isKey": false
+          },
+          "-1,-5": {
+            "materialId": "shale",
+            "isKey": false
+          },
+          "-1,-3": {
+            "materialId": "shale",
+            "isKey": false
+          },
+          "1,-3": {
+            "materialId": "shale",
+            "isKey": false
+          },
+          "-1,-1": {
+            "materialId": "maple_plank",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "maple_plank",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,1",
+              "1,4",
+              "-1,4"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,1",
+              "-1,4",
+              "-3,2"
+            ],
+            "rotation": 225
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,1",
+              "-3,2",
+              "-3,0"
+            ],
+            "rotation": 270
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,1",
+              "3,0",
+              "3,2"
+            ],
+            "rotation": 90
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,1",
+              "3,2",
+              "1,4"
+            ],
+            "rotation": 135
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,-5",
+              "-1,-5",
+              "-1,-3",
+              "1,-3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "1,-3",
+              "-1,-3",
+              "-1,-1",
+              "1,-1"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,1",
+              "-1,-1",
+              "1,-1"
+            ],
+            "rotation": 0
+          }
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_poison",
+      "enchantmentId": "poison",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 4
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 3
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 6
+        }
+      ],
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "damage_over_time",
+        "element": "poison",
+        "damagePerSecond": 8,
+        "duration": 8,
+        "stackable": true,
+        "conflictsWith": []
+      }
+    },
+    "output": {
+      "recipeId": "enchanting_poison",
+      "placementMap": {
+        "gridType": "square_10x10",
+        "vertices": {
+          "0,0": {
+            "materialId": "shadow_core",
+            "isKey": false
+          },
+          "1,2": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "-1,2": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "-2,-1": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "-1,-2": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "1,-2": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "2,-1": {
+            "materialId": "wolf_pelt",
+            "isKey": false
+          },
+          "1,-3": {
+            "materialId": "shadow_core",
+            "isKey": false
+          },
+          "3,-1": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "1,3": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "-1,3": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "-3,-1": {
+            "materialId": "dire_fang",
+            "isKey": false
+          },
+          "-1,-3": {
+            "materialId": "shadow_core",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,0",
+              "1,2",
+              "-1,2"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,0",
+              "-2,-1",
+              "-1,-2"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_small",
+            "vertices": [
+              "0,0",
+              "1,-2",
+              "2,-1"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,0",
+              "1,-3",
+              "3,-1"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,0",
+              "1,3",
+              "-1,3"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,0",
+              "-3,-1",
+              "-1,-3"
+            ],
+            "rotation": 315
+          }
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_lifesteal",
+      "enchantmentId": "lifesteal",
+      "tier": 3,
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 4
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 3
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 2
+        }
+      ],
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "lifesteal",
+        "value": 0.12,
+        "stackable": false,
+        "conflictsWith": []
+      }
+    },
+    "output": {
+      "recipeId": "enchanting_lifesteal",
+      "placementMap": {
+        "gridType": "square_12x12",
+        "vertices": {
+          "0,2": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "2,5": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-2,5": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "1,-1": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "3,1": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-3,1": {
+            "materialId": "living_ichor",
+            "isKey": false
+          },
+          "-1,-1": {
+            "materialId": "essence_blood",
+            "isKey": false
+          },
+          "2,-5": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "5,-2": {
+            "materialId": "shadow_core",
+            "isKey": false
+          },
+          "-5,-2": {
+            "materialId": "shadow_core",
+            "isKey": false
+          },
+          "-2,-5": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "0,0": {
+            "materialId": "obsidian",
+            "isKey": false
+          },
+          "0,-3": {
+            "materialId": "essence_blood",
+            "isKey": false
+          }
+        },
+        "shapes": [
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "0,2",
+              "2,5",
+              "-2,5"
+            ],
+            "rotation": 180
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,2",
+              "1,-1",
+              "3,1"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_isosceles_small",
+            "vertices": [
+              "0,2",
+              "-3,1",
+              "-1,-1"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "1,-1",
+              "2,-5",
+              "5,-2"
+            ],
+            "rotation": 45
+          },
+          {
+            "type": "triangle_equilateral_large",
+            "vertices": [
+              "-1,-1",
+              "-5,-2",
+              "-2,-5"
+            ],
+            "rotation": 315
+          },
+          {
+            "type": "square_small",
+            "vertices": [
+              "0,0",
+              "1,-1",
+              "0,-3",
+              "-1,-1"
+            ],
+            "rotation": 315
+          }
+        ]
+      }
+    }
+  }
+]

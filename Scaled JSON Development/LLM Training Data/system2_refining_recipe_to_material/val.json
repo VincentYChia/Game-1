@@ -1,0 +1,123 @@
+[
+  {
+    "input": {
+      "recipeId": "refining_rarity_orichalcum_mythical",
+      "stationTier": 1,
+      "stationType": "refining",
+      "inputs": [
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 4,
+          "rarity": "legendary"
+        }
+      ],
+      "narrative": "Refining legendary orichalcum into mythical quality. The ancient metal awakens completely."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+        "tags": [
+          "refined",
+          "metal",
+          "ancient"
+        ]
+      },
+      "materialId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_etherion_mythical",
+      "stationTier": 1,
+      "stationType": "refining",
+      "inputs": [
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 4,
+          "rarity": "legendary"
+        }
+      ],
+      "narrative": "Refining legendary etherion into mythical quality. Temporal boundaries dissolve entirely."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.",
+        "tags": [
+          "refined",
+          "metal",
+          "mythical",
+          "temporal"
+        ]
+      },
+      "materialId": "etherion_ingot",
+      "name": "Etherion Ingot",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_tin_rare",
+      "stationTier": 1,
+      "stationType": "refining",
+      "inputs": [
+        {
+          "materialId": "tin_ingot",
+          "quantity": 4,
+          "rarity": "uncommon"
+        }
+      ],
+      "narrative": "Refining uncommon tin into rare quality. Silvery sheen becomes mirror-bright."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
+        "tags": [
+          "refined",
+          "metal",
+          "magical"
+        ]
+      },
+      "materialId": "tin_ingot",
+      "name": "Tin Ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_tin_epic",
+      "stationTier": 1,
+      "stationType": "refining",
+      "inputs": [
+        {
+          "materialId": "tin_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "narrative": "Refining rare tin into epic quality. Perfect magical conductivity achieved."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
+        "tags": [
+          "refined",
+          "metal",
+          "magical"
+        ]
+      },
+      "materialId": "tin_ingot",
+      "name": "Tin Ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
+    }
+  }
+]

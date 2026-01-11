@@ -35,6 +35,15 @@ class CombatConfig:
         self.spawn_rates = {}
         self.respawn_times = {}
 
+        # Density weight mapping (for weighted spawn pool)
+        self.density_weights = {
+            "very_low": 0.5,
+            "low": 0.75,
+            "moderate": 1.0,
+            "high": 2.0,
+            "very_high": 3.0
+        }
+
         # Attack ranges are now determined by equipped weapon
         self.base_attack_cooldown = 1.0
         self.tool_attack_cooldown = 0.5
@@ -85,6 +94,12 @@ class CombatConfig:
             self.corpse_lifetime = mechanics.get('enemyCorpseLifetime', 60)
             self.combat_timeout = mechanics.get('combatTimeout', 5.0)
 
+            # Load spawn weights (optional, uses defaults if not present)
+            spawn_weights = data.get('spawnWeights', {})
+            if spawn_weights:
+                for density, weight in spawn_weights.items():
+                    self.density_weights[density] = float(weight)
+
             print(f"✓ Loaded combat configuration")
             return True
 
@@ -109,6 +124,21 @@ class CombatManager:
         self.effect_executor = get_effect_executor()
         self.debugger = get_tag_debugger()
 
+        # Chunk templates for weighted spawn pool
+        self.chunk_templates: Dict[str, dict] = {}
+        self.chunk_type_mapping = {
+            # Map ChunkType enum values to template chunkType strings
+            "peaceful_forest": "peaceful_forest",
+            "peaceful_quarry": "peaceful_quarry",
+            "peaceful_cave": "peaceful_cave",
+            "dangerous_forest": "dangerous_forest",
+            "dangerous_quarry": "dangerous_quarry",
+            "dangerous_cave": "dangerous_cave",
+            "rare_hidden_forest": "rare_forest",
+            "rare_ancient_quarry": "rare_quarry",
+            "rare_deep_cave": "rare_cave"
+        }
+
         # Active enemies by chunk
         self.enemies: Dict[Tuple[int, int], List[Enemy]] = {}
 
@@ -122,10 +152,41 @@ class CombatManager:
         self.player_last_combat_time = 0.0
         self.player_in_combat = False
 
-    def load_config(self, config_path: str, enemies_path: str):
-        """Load combat configuration and enemy definitions"""
+    def load_config(self, config_path: str, enemies_path: str, chunk_templates_path: Optional[str] = None):
+        """Load combat configuration, enemy definitions, and chunk templates"""
         self.config.load_from_file(config_path)
         self.enemy_db.load_from_file(enemies_path)
+
+        # Load chunk templates if provided
+        if chunk_templates_path:
+            self._load_chunk_templates(chunk_templates_path)
+        else:
+            # Try default path (relative to game root directory)
+            default_path = Path("Definitions.JSON/Chunk-templates-2.JSON")
+            if default_path.exists():
+                self._load_chunk_templates(str(default_path))
+
+    def _load_chunk_templates(self, filepath: str):
+        """Load chunk template definitions for weighted spawn pools"""
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            templates = data.get('templates', [])
+            for template in templates:
+                chunk_type = template.get('chunkType')
+                if chunk_type:
+                    self.chunk_templates[chunk_type] = template
+
+            print(f"✓ Loaded {len(self.chunk_templates)} chunk templates for spawning")
+            return True
+
+        except FileNotFoundError:
+            print(f"⚠ Chunk templates not found at {filepath}, using tier-only spawning")
+            return False
+        except Exception as e:
+            print(f"⚠ Error loading chunk templates: {e}")
+            return False
 
     def is_in_safe_zone(self, x: float, y: float) -> bool:
         """Check if position is in safe zone (no spawning)"""
@@ -144,6 +205,16 @@ class CombatManager:
         elif "rare" in chunk_type_str:
             return "rare"
         return "normal"
+
+    def _get_chunk_template(self, chunk) -> Optional[dict]:
+        """Get chunk template for a given chunk"""
+        chunk_type_str = chunk.chunk_type.value
+        template_key = self.chunk_type_mapping.get(chunk_type_str, chunk_type_str)
+        return self.chunk_templates.get(template_key)
+
+    def _get_density_weight(self, density: str) -> float:
+        """Get spawn weight for a density level"""
+        return self.config.density_weights.get(density, 1.0)
 
     def _get_allowed_tiers_for_danger_level(self, danger_level: str) -> set:
         """Get allowed tiers for a given danger level (tier caps)"""
@@ -172,8 +243,77 @@ class CombatManager:
 
         return filtered
 
+    def _build_weighted_spawn_pool(self, chunk, danger_level: str, spawn_config: dict) -> List[Tuple[EnemyDefinition, float]]:
+        """
+        Build weighted spawn pool for a chunk.
+        Returns list of (enemy_definition, weight) tuples.
+        Uses chunk template enemySpawns if available, otherwise falls back to tier-based spawning.
+        """
+        spawn_pool = []
+
+        # Try to get chunk template
+        chunk_template = self._get_chunk_template(chunk)
+
+        # 1. Add priority enemies from enemySpawns (if template exists)
+        priority_enemy_ids = set()
+        if chunk_template and 'enemySpawns' in chunk_template:
+            enemy_spawns = chunk_template['enemySpawns']
+            for enemy_id, spawn_info in enemy_spawns.items():
+                # Get enemy definition
+                enemy_def = self.enemy_db.get_enemy(enemy_id)
+                if not enemy_def:
+                    continue
+
+                # Get density weight
+                density = spawn_info.get('density', 'moderate')
+                weight = self._get_density_weight(density)
+
+                # Add to pool
+                spawn_pool.append((enemy_def, weight))
+                priority_enemy_ids.add(enemy_id)
+
+        # 2. Add general pool enemies (tier-based, but exclude priority enemies)
+        tier_weights = spawn_config.get('tierWeights', {'tier1': 1.0})
+        filtered_weights = self._filter_tier_weights_for_danger(tier_weights, danger_level)
+
+        # Get all enemies from allowed tiers
+        for tier_name, tier_weight in filtered_weights.items():
+            tier = int(tier_name.replace('tier', ''))
+            tier_enemies = self.enemy_db.get_enemies_by_tier(tier)
+
+            for enemy_def in tier_enemies:
+                # Skip if already in priority pool
+                if enemy_def.enemy_id in priority_enemy_ids:
+                    continue
+
+                # Add with base weight (1.0)
+                spawn_pool.append((enemy_def, 1.0))
+
+        # If pool is empty, fallback to T1 enemies
+        if not spawn_pool:
+            tier1_enemies = self.enemy_db.get_enemies_by_tier(1)
+            for enemy_def in tier1_enemies:
+                spawn_pool.append((enemy_def, 1.0))
+
+        return spawn_pool
+
+    def _select_from_weighted_pool(self, spawn_pool: List[Tuple[EnemyDefinition, float]]) -> Optional[EnemyDefinition]:
+        """Select an enemy from weighted spawn pool using weighted random selection"""
+        if not spawn_pool:
+            return None
+
+        # Build lists for weighted selection
+        enemies = [enemy_def for enemy_def, weight in spawn_pool]
+        weights = [weight for enemy_def, weight in spawn_pool]
+
+        # Weighted random choice
+        return random.choices(enemies, weights=weights, k=1)[0]
+
     def spawn_enemies_in_chunk(self, chunk, initial_spawn=False):
-        """Spawn enemies in a chunk based on its danger level"""
+        """
+        Spawn enemies in a chunk using weighted spawn pool system.
+        Uses chunk template enemySpawns if available, otherwise falls back to tier-based spawning.
+        """
         chunk_coords = (chunk.chunk_x, chunk.chunk_y)
 
         # Don't spawn if in safe zone
@@ -205,15 +345,13 @@ class CombatManager:
         target_count = random.randint(min_enemies, max_enemies)
         to_spawn = max(0, target_count - current_count)
 
-        # Spawn enemies
-        for _ in range(to_spawn):
-            # Pick tier based on weights, filtered by danger level restrictions
-            tier_weights = spawn_config.get('tierWeights', {'tier1': 1.0})
-            filtered_weights = self._filter_tier_weights_for_danger(tier_weights, danger_level)
-            tier = self._pick_weighted_tier(filtered_weights)
+        # Build weighted spawn pool (uses chunk template enemySpawns + general tier pool)
+        spawn_pool = self._build_weighted_spawn_pool(chunk, danger_level, spawn_config)
 
-            # Get random enemy of that tier
-            enemy_def = self.enemy_db.get_random_enemy(tier)
+        # Spawn enemies using weighted selection
+        for _ in range(to_spawn):
+            # Select enemy from weighted pool
+            enemy_def = self._select_from_weighted_pool(spawn_pool)
             if not enemy_def:
                 continue
 

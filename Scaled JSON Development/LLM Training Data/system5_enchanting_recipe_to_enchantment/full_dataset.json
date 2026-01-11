@@ -1,0 +1,1260 @@
+[
+  {
+    "input": {
+      "recipeId": "enchanting_sharpness_basic",
+      "enchantmentId": "sharpness_1",
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 4
+        },
+        {
+          "materialId": "granite",
+          "quantity": 2
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "tin_ore",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Basic sharpening enchantment using fire crystals. The edge never dulls."
+    },
+    "output": {
+      "enchantmentId": "sharpness_1",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.1,
+        "stackable": false,
+        "conflictsWith": [
+          "sharpness_2",
+          "sharpness_3"
+        ]
+      },
+      "metadata": {
+        "narrative": "Basic sharpening enchantment using fire crystals. The edge never dulls.",
+        "tags": [
+          "weapon",
+          "damage",
+          "basic"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_sharpness_advanced",
+      "enchantmentId": "sharpness_2",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 3
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 2
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3
+        },
+        {
+          "materialId": "marble",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Improved sharpening using lightning shards. The blade crackles with energy."
+    },
+    "output": {
+      "enchantmentId": "sharpness_2",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": [
+          "sharpness_1",
+          "sharpness_3"
+        ]
+      },
+      "metadata": {
+        "narrative": "Improved sharpening using lightning shards. The blade crackles with energy.",
+        "tags": [
+          "weapon",
+          "damage",
+          "advanced"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_sharpness_master",
+      "enchantmentId": "sharpness_3",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 5
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 2
+        },
+        {
+          "materialId": "marble",
+          "quantity": 1
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Master sharpening using phoenix ash. The edge exists between states of matter."
+    },
+    "output": {
+      "enchantmentId": "sharpness_3",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "damage_multiplier",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": [
+          "sharpness_1",
+          "sharpness_2"
+        ]
+      },
+      "metadata": {
+        "narrative": "Master sharpening using phoenix ash. The edge exists between states of matter.",
+        "tags": [
+          "weapon",
+          "damage",
+          "legendary"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_durability_basic",
+      "enchantmentId": "unbreaking_1",
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 4
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Basic durability enchantment. Items last longer before needing repair."
+    },
+    "output": {
+      "enchantmentId": "unbreaking_1",
+      "name": "",
+      "applicableTo": [
+        "weapon",
+        "tool",
+        "armor"
+      ],
+      "effect": {
+        "type": "durability_multiplier",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": [
+          "unbreaking_2"
+        ]
+      },
+      "metadata": {
+        "narrative": "Basic durability enchantment. Items last longer before needing repair.",
+        "tags": [
+          "universal",
+          "durability",
+          "basic"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_durability_advanced",
+      "enchantmentId": "unbreaking_2",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 4
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 1
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 8
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 8
+        }
+      ],
+      "narrative": "Advanced durability enchantment using diamond. Nearly indestructible."
+    },
+    "output": {
+      "enchantmentId": "unbreaking_2",
+      "name": "",
+      "applicableTo": [
+        "weapon",
+        "tool",
+        "armor"
+      ],
+      "effect": {
+        "type": "durability_multiplier",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": [
+          "unbreaking_1"
+        ]
+      },
+      "metadata": {
+        "narrative": "Advanced durability enchantment using diamond. Nearly indestructible.",
+        "tags": [
+          "universal",
+          "durability",
+          "advanced"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_fire_aspect",
+      "enchantmentId": "fire_aspect",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 6
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 1
+        },
+        {
+          "materialId": "maple_plank",
+          "quantity": 6
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Fire enchantment for weapons. Strikes leave burning wounds."
+    },
+    "output": {
+      "enchantmentId": "fire_aspect",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "damage_over_time",
+        "element": "fire",
+        "damagePerSecond": 10,
+        "duration": 5,
+        "stackable": true,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Fire enchantment for weapons. Strikes leave burning wounds.",
+        "tags": [
+          "weapon",
+          "elemental",
+          "fire"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_frost_touch",
+      "enchantmentId": "frost_touch",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "frost_essence",
+          "quantity": 5
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 1
+        },
+        {
+          "materialId": "marble",
+          "quantity": 6
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Frost enchantment for weapons. Enemies slow and freeze."
+    },
+    "output": {
+      "enchantmentId": "frost_touch",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "slow",
+        "element": "ice",
+        "slowPercent": 0.3,
+        "duration": 4,
+        "stackable": true,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Frost enchantment for weapons. Enemies slow and freeze.",
+        "tags": [
+          "weapon",
+          "elemental",
+          "frost"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_lightning_strike",
+      "enchantmentId": "lightning_strike",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "light_gem",
+          "quantity": 4
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 10
+        },
+        {
+          "materialId": "marble",
+          "quantity": 4
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 8
+        }
+      ],
+      "narrative": "Lightning enchantment for weapons. Chain attacks to nearby enemies."
+    },
+    "output": {
+      "enchantmentId": "lightning_strike",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "chain_damage",
+        "element": "lightning",
+        "chainCount": 2,
+        "chainRange": 3,
+        "damagePercent": 0.5,
+        "stackable": false,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Lightning enchantment for weapons. Chain attacks to nearby enemies.",
+        "tags": [
+          "weapon",
+          "elemental",
+          "lightning"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_protection_basic",
+      "enchantmentId": "protection_1",
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "earth_crystal",
+          "quantity": 8
+        },
+        {
+          "materialId": "granite",
+          "quantity": 4
+        },
+        {
+          "materialId": "iron_ore",
+          "quantity": 8
+        }
+      ],
+      "narrative": "Protection enchantment. Incoming damage reduced."
+    },
+    "output": {
+      "enchantmentId": "protection_1",
+      "name": "",
+      "applicableTo": [
+        "armor"
+      ],
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.1,
+        "stackable": false,
+        "conflictsWith": [
+          "protection_2",
+          "protection_3"
+        ]
+      },
+      "metadata": {
+        "narrative": "Protection enchantment. Incoming damage reduced.",
+        "tags": [
+          "armor",
+          "defense",
+          "basic"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_protection_advanced",
+      "enchantmentId": "protection_2",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 8
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": 4
+        },
+        {
+          "materialId": "iron_scales",
+          "quantity": 8
+        }
+      ],
+      "narrative": "Advanced protection using golem essence. Stone-like resilience."
+    },
+    "output": {
+      "enchantmentId": "protection_2",
+      "name": "",
+      "applicableTo": [
+        "armor"
+      ],
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": [
+          "protection_1",
+          "protection_3"
+        ]
+      },
+      "metadata": {
+        "narrative": "Advanced protection using golem essence. Stone-like resilience.",
+        "tags": [
+          "armor",
+          "defense",
+          "advanced"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_protection_master",
+      "enchantmentId": "protection_3",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 6
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 4
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 4
+        },
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Master protection with void essence. Damage dissipates into nothing."
+    },
+    "output": {
+      "enchantmentId": "protection_3",
+      "name": "",
+      "applicableTo": [
+        "armor"
+      ],
+      "effect": {
+        "type": "damage_reduction",
+        "value": 0.35,
+        "stackable": false,
+        "conflictsWith": [
+          "protection_1",
+          "protection_2"
+        ]
+      },
+      "metadata": {
+        "narrative": "Master protection with void essence. Damage dissipates into nothing.",
+        "tags": [
+          "armor",
+          "defense",
+          "legendary"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_thorns",
+      "enchantmentId": "thorns",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 4
+        },
+        {
+          "materialId": "dire_fang",
+          "quantity": 4
+        },
+        {
+          "materialId": "iron_scales",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Thorns enchantment. Attackers hurt themselves."
+    },
+    "output": {
+      "enchantmentId": "thorns",
+      "name": "",
+      "applicableTo": [
+        "armor"
+      ],
+      "effect": {
+        "type": "reflect_damage",
+        "value": 0.15,
+        "stackable": false,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Thorns enchantment. Attackers hurt themselves.",
+        "tags": [
+          "armor",
+          "reflect",
+          "thorns"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_efficiency_basic",
+      "enchantmentId": "efficiency_1",
+      "stationTier": 1,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 5
+        },
+        {
+          "materialId": "ash_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Efficiency enchantment for tools. Gather resources faster."
+    },
+    "output": {
+      "enchantmentId": "efficiency_1",
+      "name": "",
+      "applicableTo": [
+        "tool"
+      ],
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.2,
+        "stackable": false,
+        "conflictsWith": [
+          "efficiency_2"
+        ]
+      },
+      "metadata": {
+        "narrative": "Efficiency enchantment for tools. Gather resources faster.",
+        "tags": [
+          "tool",
+          "efficiency",
+          "basic"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_efficiency_advanced",
+      "enchantmentId": "efficiency_2",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 4
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 2
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 7
+        }
+      ],
+      "narrative": "Advanced efficiency using storm essence. Tools blur with speed."
+    },
+    "output": {
+      "enchantmentId": "efficiency_2",
+      "name": "",
+      "applicableTo": [
+        "tool"
+      ],
+      "effect": {
+        "type": "gathering_speed_multiplier",
+        "value": 0.4,
+        "stackable": false,
+        "conflictsWith": [
+          "efficiency_1"
+        ]
+      },
+      "metadata": {
+        "narrative": "Advanced efficiency using storm essence. Tools blur with speed.",
+        "tags": [
+          "tool",
+          "efficiency",
+          "advanced"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_fortune_basic",
+      "enchantmentId": "fortune_1",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 8
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 4
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 2
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Fortune enchantment for tools. Better yields from resources."
+    },
+    "output": {
+      "enchantmentId": "fortune_1",
+      "name": "",
+      "applicableTo": [
+        "tool"
+      ],
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.3,
+        "stackable": false,
+        "conflictsWith": [
+          "fortune_2",
+          "silk_touch"
+        ]
+      },
+      "metadata": {
+        "narrative": "Fortune enchantment for tools. Better yields from resources.",
+        "tags": [
+          "tool",
+          "fortune",
+          "luck"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_fortune_advanced",
+      "enchantmentId": "fortune_2",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 3
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 9
+        },
+        {
+          "materialId": "genesis_lattice",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 4
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 6
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Master fortune using chaos essence. Reality bends toward abundance."
+    },
+    "output": {
+      "enchantmentId": "fortune_2",
+      "name": "",
+      "applicableTo": [
+        "tool"
+      ],
+      "effect": {
+        "type": "bonus_yield_chance",
+        "value": 0.6,
+        "stackable": false,
+        "conflictsWith": [
+          "fortune_1",
+          "silk_touch"
+        ]
+      },
+      "metadata": {
+        "narrative": "Master fortune using chaos essence. Reality bends toward abundance.",
+        "tags": [
+          "tool",
+          "fortune",
+          "master"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_silk_touch",
+      "enchantmentId": "silk_touch",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 5
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Silk touch enchantment. Harvest blocks exactly as they are."
+    },
+    "output": {
+      "enchantmentId": "silk_touch",
+      "name": "",
+      "applicableTo": [
+        "tool"
+      ],
+      "effect": {
+        "type": "harvest_original_form",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": [
+          "fortune_1",
+          "fortune_2"
+        ]
+      },
+      "metadata": {
+        "narrative": "Silk touch enchantment. Harvest blocks exactly as they are.",
+        "tags": [
+          "tool",
+          "silk-touch",
+          "special"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_swiftness",
+      "enchantmentId": "swiftness",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 6
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 3
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Speed enchantment. Move faster while wearing this armor."
+    },
+    "output": {
+      "enchantmentId": "swiftness",
+      "name": "",
+      "applicableTo": [
+        "armor"
+      ],
+      "effect": {
+        "type": "movement_speed_multiplier",
+        "value": 0.15,
+        "stackable": true,
+        "conflictsWith": [],
+        "maxStacks": 3
+      },
+      "metadata": {
+        "narrative": "Speed enchantment. Move faster while wearing this armor.",
+        "tags": [
+          "armor",
+          "speed",
+          "mobility"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_regeneration",
+      "enchantmentId": "regeneration",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 12
+        },
+        {
+          "materialId": "marble",
+          "quantity": 6
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Regeneration enchantment. Slowly heal over time."
+    },
+    "output": {
+      "enchantmentId": "regeneration",
+      "name": "",
+      "applicableTo": [
+        "armor"
+      ],
+      "effect": {
+        "type": "health_regeneration",
+        "value": 1,
+        "stackable": true,
+        "conflictsWith": [],
+        "maxStacks": 5
+      },
+      "metadata": {
+        "narrative": "Regeneration enchantment. Slowly heal over time.",
+        "tags": [
+          "armor",
+          "regeneration",
+          "healing"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_weightless",
+      "enchantmentId": "weightless",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 5
+        },
+        {
+          "materialId": "ash_plank",
+          "quantity": 5
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 5
+        }
+      ],
+      "narrative": "Weightless enchantment. Items become lighter without losing strength."
+    },
+    "output": {
+      "enchantmentId": "weightless",
+      "name": "",
+      "applicableTo": [
+        "weapon",
+        "tool",
+        "armor"
+      ],
+      "effect": {
+        "type": "weight_multiplier",
+        "value": -0.5,
+        "stackable": false,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Weightless enchantment. Items become lighter without losing strength.",
+        "tags": [
+          "universal",
+          "weight",
+          "utility"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_self_repair",
+      "enchantmentId": "self_repair",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "ebony_log",
+          "quantity": 1
+        },
+        {
+          "materialId": "ebony_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 2
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Self-repair enchantment. Items slowly fix themselves over time."
+    },
+    "output": {
+      "enchantmentId": "self_repair",
+      "name": "",
+      "applicableTo": [
+        "weapon",
+        "tool",
+        "armor"
+      ],
+      "effect": {
+        "type": "durability_regeneration",
+        "value": 1,
+        "perMinute": true,
+        "stackable": false,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Self-repair enchantment. Items slowly fix themselves over time.",
+        "tags": [
+          "universal",
+          "repair",
+          "utility"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_soulbound",
+      "enchantmentId": "soulbound",
+      "stationTier": 4,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 4
+        },
+        {
+          "materialId": "eternity_stone",
+          "quantity": 4
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 4
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": 3
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 5
+        },
+        {
+          "materialId": "worldtree_plank",
+          "quantity": 5
+        }
+      ],
+      "narrative": "Soul bound enchantment. Item returns to you upon death."
+    },
+    "output": {
+      "enchantmentId": "soulbound",
+      "name": "",
+      "applicableTo": [
+        "weapon",
+        "tool",
+        "armor",
+        "accessory"
+      ],
+      "effect": {
+        "type": "soulbound",
+        "value": 1.0,
+        "stackable": false,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Soul bound enchantment. Item returns to you upon death.",
+        "tags": [
+          "universal",
+          "soulbound",
+          "special"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_knockback",
+      "enchantmentId": "knockback",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 6
+        },
+        {
+          "materialId": "maple_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "shale",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Knockback enchantment. Send enemies flying with each hit."
+    },
+    "output": {
+      "enchantmentId": "knockback",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "knockback",
+        "value": 3,
+        "stackable": false,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Knockback enchantment. Send enemies flying with each hit.",
+        "tags": [
+          "weapon",
+          "knockback",
+          "utility"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_poison",
+      "enchantmentId": "poison",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 4
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 3
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Poison enchantment. Attacks inflict lingering toxins."
+    },
+    "output": {
+      "enchantmentId": "poison",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "damage_over_time",
+        "element": "poison",
+        "damagePerSecond": 8,
+        "duration": 8,
+        "stackable": true,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Poison enchantment. Attacks inflict lingering toxins.",
+        "tags": [
+          "weapon",
+          "poison",
+          "damage"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_lifesteal",
+      "enchantmentId": "lifesteal",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 4
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 3
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Lifesteal enchantment. Drain life from enemies with each strike."
+    },
+    "output": {
+      "enchantmentId": "lifesteal",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "lifesteal",
+        "value": 0.12,
+        "stackable": false,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Lifesteal enchantment. Drain life from enemies with each strike.",
+        "tags": [
+          "weapon",
+          "lifesteal",
+          "vampiric"
+        ]
+      }
+    }
+  }
+]

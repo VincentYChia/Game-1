@@ -1,0 +1,140 @@
+[
+  {
+    "input": {
+      "recipeId": "enchanting_knockback",
+      "enchantmentId": "knockback",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 6
+        },
+        {
+          "materialId": "maple_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "shale",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Knockback enchantment. Send enemies flying with each hit."
+    },
+    "output": {
+      "enchantmentId": "knockback",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "knockback",
+        "value": 3,
+        "stackable": false,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Knockback enchantment. Send enemies flying with each hit.",
+        "tags": [
+          "weapon",
+          "knockback",
+          "utility"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_poison",
+      "enchantmentId": "poison",
+      "stationTier": 2,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 4
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 3
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Poison enchantment. Attacks inflict lingering toxins."
+    },
+    "output": {
+      "enchantmentId": "poison",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "damage_over_time",
+        "element": "poison",
+        "damagePerSecond": 8,
+        "duration": 8,
+        "stackable": true,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Poison enchantment. Attacks inflict lingering toxins.",
+        "tags": [
+          "weapon",
+          "poison",
+          "damage"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "enchanting_lifesteal",
+      "enchantmentId": "lifesteal",
+      "stationTier": 3,
+      "stationType": "enchanting",
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 4
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 3
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Lifesteal enchantment. Drain life from enemies with each strike."
+    },
+    "output": {
+      "enchantmentId": "lifesteal",
+      "name": "",
+      "applicableTo": [
+        "weapon"
+      ],
+      "effect": {
+        "type": "lifesteal",
+        "value": 0.12,
+        "stackable": false,
+        "conflictsWith": []
+      },
+      "metadata": {
+        "narrative": "Lifesteal enchantment. Drain life from enemies with each strike.",
+        "tags": [
+          "weapon",
+          "lifesteal",
+          "vampiric"
+        ]
+      }
+    }
+  }
+]

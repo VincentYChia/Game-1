@@ -1,0 +1,328 @@
+[
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "novice_miner",
+      "name": "Novice Miner",
+      "titleType": "gathering",
+      "difficultyTier": "novice",
+      "description": "Your first steps into the depths. Every mine begins with a single swing.",
+      "bonuses": {
+        "miningDamage": 0.1,
+        "miningSpeed": 0.0,
+        "rareOreChance": 0.0
+      },
+      "prerequisites": {
+        "activities": {
+          "oresMined": 100
+        },
+        "requiredTitles": [],
+        "characterLevel": 0
+      },
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "The stone remembers your first strike. Keep swinging."
+    }
+  },
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "novice_lumberjack",
+      "name": "Novice Lumberjack",
+      "titleType": "gathering",
+      "difficultyTier": "novice",
+      "description": "The forest acknowledges your presence. Trees fall before you.",
+      "bonuses": {
+        "forestryDamage": 0.1,
+        "forestrySpeed": 0.0,
+        "rareWoodChance": 0.0
+      },
+      "prerequisites": {
+        "activities": {
+          "treesChopped": 100
+        },
+        "requiredTitles": [],
+        "characterLevel": 0
+      },
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "Every great lumberjack started by felling their hundredth tree."
+    }
+  },
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "novice_smith",
+      "name": "Novice Smith",
+      "titleType": "crafting",
+      "difficultyTier": "novice",
+      "description": "The forge accepts you. Your hammer rings with purpose.",
+      "bonuses": {
+        "smithingTime": 0.1,
+        "smithingQuality": 0.0,
+        "firstTryBonus": 0.0
+      },
+      "prerequisites": {
+        "activities": {
+          "itemsSmithed": 50
+        },
+        "requiredTitles": [],
+        "characterLevel": 0
+      },
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "Heat, hammer, shape. The trinity of the smith begins with you."
+    }
+  },
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "novice_warrior",
+      "name": "Novice Warrior",
+      "titleType": "combat",
+      "difficultyTier": "novice",
+      "description": "First blood has been drawn. You've tasted battle and survived.",
+      "bonuses": {
+        "meleeDamage": 0.1,
+        "criticalChance": 0.0,
+        "attackSpeed": 0.0
+      },
+      "prerequisites": {
+        "activities": {
+          "enemiesDefeated": 50
+        },
+        "requiredTitles": [],
+        "characterLevel": 0
+      },
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "Fifty foes have fallen. You're no longer prey."
+    }
+  },
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "apprentice_flame_miner",
+      "name": "Apprentice Flame Miner",
+      "titleType": "gathering",
+      "difficultyTier": "apprentice",
+      "description": "Fire-veined ores call to you. The heat of the deep welcomes your touch.",
+      "bonuses": {
+        "miningDamage": 0.25,
+        "fireOreChance": 0.15,
+        "elementalAfinity": "fire"
+      },
+      "prerequisites": {
+        "activities": {
+          "oresMined": 1000,
+          "fireOresMined": 200
+        },
+        "requiredTitles": [
+          "novice_miner"
+        ],
+        "characterLevel": 5
+      },
+      "acquisitionMethod": "event_based_rng",
+      "generationChance": 0.2,
+      "isHidden": false,
+      "narrative": "The forge burns hotter with ores touched by flame. You seek them instinctively."
+    }
+  },
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "journeyman_refiner",
+      "name": "Journeyman Refiner",
+      "titleType": "crafting",
+      "difficultyTier": "journeyman",
+      "description": "Impurities flee before your knowledge. Material transformation is your domain.",
+      "bonuses": {
+        "refiningPrecision": 0.5,
+        "alloyQuality": 0.25,
+        "materialYield": 0.1
+      },
+      "prerequisites": {
+        "activities": {
+          "materialsRefined": 500,
+          "alloysCreated": 50
+        },
+        "requiredTitles": [
+          "novice_refiner"
+        ],
+        "characterLevel": 10
+      },
+      "acquisitionMethod": "event_based_rng",
+      "generationChance": 0.1,
+      "isHidden": false,
+      "narrative": "You see what others miss: the potential locked within raw matter."
+    }
+  },
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "expert_battle_sage",
+      "name": "Expert Battle Sage",
+      "titleType": "combat",
+      "difficultyTier": "expert",
+      "description": "Combat flows through you like water. Blade and mind move as one.",
+      "bonuses": {
+        "meleeDamage": 1.0,
+        "criticalChance": 0.2,
+        "combatSkillExp": 0.25,
+        "counterChance": 0.15
+      },
+      "prerequisites": {
+        "activities": {
+          "enemiesDefeated": 1000,
+          "criticalHits": 500,
+          "perfectDodges": 100
+        },
+        "requiredTitles": [
+          "journeyman_warrior"
+        ],
+        "characterLevel": 20
+      },
+      "acquisitionMethod": "event_based_rng",
+      "generationChance": 0.05,
+      "isHidden": false,
+      "narrative": "You don't fight. You dance. And everything around you dies beautifully."
+    }
+  },
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "master_eternal_smith",
+      "name": "Master Eternal Smith",
+      "titleType": "crafting",
+      "difficultyTier": "master",
+      "description": "Legends speak of smiths who forged the impossible. You are one of them.",
+      "bonuses": {
+        "smithingTime": 2.0,
+        "smithingQuality": 0.5,
+        "firstTryBonus": 0.1,
+        "durabilityBonus": 0.25,
+        "legendaryChance": 0.05
+      },
+      "prerequisites": {
+        "activities": {
+          "itemsSmithed": 5000,
+          "legendaryItemsCreated": 10,
+          "perfectCrafts": 500
+        },
+        "requiredTitles": [
+          "expert_master_smith"
+        ],
+        "characterLevel": 40
+      },
+      "acquisitionMethod": "special_achievement",
+      "generationChance": 0.02,
+      "isHidden": false,
+      "narrative": "When you strike the anvil, gods pause to listen. Your work transcends mortality."
+    }
+  },
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "hidden_dragons_bane",
+      "name": "Dragon's Bane",
+      "titleType": "combat",
+      "difficultyTier": "special",
+      "description": "Wyrms fear your name. The great beasts fall before you.",
+      "bonuses": {
+        "dragonDamage": 0.5,
+        "fireResistance": 0.3,
+        "legendaryDropRate": 0.1
+      },
+      "prerequisites": {
+        "activities": {
+          "dragonBossDefeated": 1,
+          "usedFireWeapon": true
+        },
+        "requiredTitles": [],
+        "characterLevel": 25
+      },
+      "acquisitionMethod": "hidden_discovery",
+      "generationChance": 1.0,
+      "isHidden": true,
+      "narrative": "The dragon's roar becomes silence. You are the end of their age."
+    }
+  },
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "hidden_lucky_bastard",
+      "name": "Lucky Bastard",
+      "titleType": "utility",
+      "difficultyTier": "special",
+      "description": "Fortune herself smiles upon you. Or perhaps you've rigged the dice.",
+      "bonuses": {
+        "luckStat": 0.25,
+        "rareDropRate": 0.15,
+        "firstTryBonus": 0.1,
+        "criticalChance": 0.1
+      },
+      "prerequisites": {
+        "activities": {
+          "consecutiveFirstTryBonuses": 10,
+          "rareDropsFound": 50
+        },
+        "requiredTitles": [],
+        "characterLevel": 15
+      },
+      "acquisitionMethod": "hidden_discovery",
+      "generationChance": 1.0,
+      "isHidden": true,
+      "narrative": "You don't believe in luck. You ARE luck."
+    }
+  }
+]

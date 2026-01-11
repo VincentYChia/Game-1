@@ -1,0 +1,57 @@
+[
+  {
+    "input": {
+      "recipeId": "alchemy_regeneration_tonic",
+      "stationTier": 3,
+      "stationType": "alchemy",
+      "inputs": [
+        {
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 3
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Regeneration tonic that mends wounds over time. Body remembers how to heal continuously."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Regeneration tonic that mends wounds over time. Light gems infused with living essence create a sustained healing effect. Your body remembers how to heal itself.",
+        "tags": [
+          "potion",
+          "healing",
+          "regeneration",
+          "advanced"
+        ]
+      },
+      "itemId": "regeneration_tonic",
+      "name": "Regeneration Tonic",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Restores 5 HP per second",
+      "duration": 60,
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  }
+]

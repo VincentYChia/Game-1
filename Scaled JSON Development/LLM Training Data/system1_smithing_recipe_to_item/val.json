@@ -1,0 +1,246 @@
+[
+  {
+    "input": {
+      "recipeId": "smithing_fire_crystal_staff",
+      "stationTier": 3,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 8
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
+        "tags": [
+          "melee",
+          "staff",
+          "versatile",
+          "elemental",
+          "fire"
+        ]
+      },
+      "itemId": "fire_crystal_staff",
+      "name": "Fire Crystal Staff",
+      "category": "equipment",
+      "type": "staff",
+      "subtype": "staff",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 8,
+      "slot": "mainHand",
+      "effectTags": [
+        "fire",
+        "single",
+        "burn"
+      ],
+      "effectParams": {
+        "baseDamage": 45,
+        "burn_duration": 3.0,
+        "burn_damage_per_second": 5.0
+      },
+      "statMultipliers": {
+        "damage": 0.85,
+        "attackSpeed": 1.1,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 15,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 15,
+        "stats": {
+          "INT": 18
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_round_shield",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "narrative": "A simple round shield - iron face with oak backing. Protects and strikes in equal measure."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Round iron shield with oak backing. Not just for blocking - bash enemies with the rim or use it to create openings. Defense and offense in one hand.",
+        "tags": [
+          "melee",
+          "shield",
+          "1H",
+          "defensive",
+          "bash"
+        ]
+      },
+      "itemId": "iron_round_shield",
+      "name": "Iron Round Shield",
+      "category": "equipment",
+      "type": "shield",
+      "subtype": "buckler",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.6,
+        "attackSpeed": 1.1,
+        "durability": 1.8,
+        "weight": 1.3
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {
+          "STR": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_leggings",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 7
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 5
+        }
+      ],
+      "narrative": "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Steel plate leggings with articulated joints. Heavy but protective, they guard your legs without restricting movement. Every smith's second major armor piece after the chestplate.",
+        "tags": [
+          "armor",
+          "legs",
+          "metal",
+          "heavy"
+        ]
+      },
+      "itemId": "steel_leggings",
+      "name": "Steel Leggings",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "leggings",
+      "tier": 2,
+      "rarity": "common",
+      "slot": "legs",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_studded_gauntlets",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Reinforced leather gloves with iron studs across the knuckles. Your hands are your tools - protect them properly."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Leather gloves reinforced with iron studs across the knuckles. Light enough for dexterity, strong enough to turn a blade. Your hands are tools - protect them.",
+        "tags": [
+          "armor",
+          "hands",
+          "light",
+          "flexible"
+        ]
+      },
+      "itemId": "iron_studded_gauntlets",
+      "name": "Iron-Studded Gauntlets",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "gauntlets",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "hands",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  }
+]

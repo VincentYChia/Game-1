@@ -1,0 +1,55 @@
+[
+  {
+    "input": {
+      "recipeId": "alchemy_regeneration_tonic",
+      "itemId": "regeneration_tonic",
+      "tier": 3,
+      "inputs": [
+        {
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 3
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 2
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Regeneration tonic that mends wounds over time. Light gems infused with living essence create a sustained healing effect. Your body remembers how to heal itself.",
+        "tags": [
+          "potion",
+          "healing",
+          "regeneration",
+          "advanced"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_regeneration_tonic",
+      "outputId": "regeneration_tonic",
+      "stationTier": 3,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "slot": 2,
+          "materialId": "light_gem",
+          "quantity": 3
+        },
+        {
+          "slot": 3,
+          "materialId": "essence_blood",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Living ichor creates sustained healing potential. Light gems infuse persistent illumination. Essence blood binds regenerative effect. Body remembers how to heal continuously."
+    }
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "input": {
+      "category": "",
+      "tier": 1,
+      "requirements": {},
+      "tags": []
+    },
+    "output": {
+      "titleId": "hidden_lucky_bastard",
+      "name": "Lucky Bastard",
+      "titleType": "utility",
+      "difficultyTier": "special",
+      "description": "Fortune herself smiles upon you. Or perhaps you've rigged the dice.",
+      "bonuses": {
+        "luckStat": 0.25,
+        "rareDropRate": 0.15,
+        "firstTryBonus": 0.1,
+        "criticalChance": 0.1
+      },
+      "prerequisites": {
+        "activities": {
+          "consecutiveFirstTryBonuses": 10,
+          "rareDropsFound": 50
+        },
+        "requiredTitles": [],
+        "characterLevel": 15
+      },
+      "acquisitionMethod": "hidden_discovery",
+      "generationChance": 1.0,
+      "isHidden": true,
+      "narrative": "You don't believe in luck. You ARE luck."
+    }
+  }
+]

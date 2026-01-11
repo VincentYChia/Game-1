@@ -1,0 +1,1136 @@
+[
+  {
+    "input": {
+      "recipeId": "refining_copper_ore_to_ingot",
+      "materialId": "copper_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+        "tags": [
+          "refined",
+          "metal",
+          "starter"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_copper_ore_to_ingot",
+      "outputId": "copper_ingot",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "copper_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Smelting raw copper. Foundation of metallurgy - heat purifies ore, impurities burn away."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_iron_ore_to_ingot",
+      "materialId": "iron_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+        "tags": [
+          "refined",
+          "metal",
+          "standard"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_iron_ore_to_ingot",
+      "outputId": "iron_ingot",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "iron_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Smelting iron ore. Backbone of civilization - each cylinder reveals metal within stone."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_tin_ore_to_ingot",
+      "materialId": "tin_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
+        "tags": [
+          "refined",
+          "metal",
+          "magical"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_tin_ore_to_ingot",
+      "outputId": "tin_ingot",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "tin_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining tin ore. Essential for alloys - cylinders click with different tone than iron."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_steel_ore_to_ingot",
+      "materialId": "steel_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+        "tags": [
+          "refined",
+          "metal",
+          "advanced"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_steel_ore_to_ingot",
+      "outputId": "steel_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "steel_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Forging steel from carbon-rich ore. Requires intense heat - cylinders resist then yield."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_mithril_ore_to_ingot",
+      "materialId": "mithril_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+        "tags": [
+          "refined",
+          "metal",
+          "legendary"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_mithril_ore_to_ingot",
+      "outputId": "mithril_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "mithril_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining legendary mithril. Metal purifies itself - cylinders align eagerly."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_adamantine_ore_to_ingot",
+      "materialId": "adamantine_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
+        "tags": [
+          "refined",
+          "metal",
+          "rare"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_adamantine_ore_to_ingot",
+      "outputId": "adamantine_ingot",
+      "stationTier": 3,
+      "coreInputs": [
+        {
+          "materialId": "adamantine_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Smelting adamantine. Extreme heat required - cylinders groan under strain."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_orichalcum_ore_to_ingot",
+      "materialId": "orichalcum_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+        "tags": [
+          "refined",
+          "metal",
+          "ancient"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_orichalcum_ore_to_ingot",
+      "outputId": "orichalcum_ingot",
+      "stationTier": 3,
+      "coreInputs": [
+        {
+          "materialId": "orichalcum_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining ancient metal. Channels physical and magical forces - harmonic resonance."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_etherion_ore_to_ingot",
+      "materialId": "etherion_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.",
+        "tags": [
+          "refined",
+          "metal",
+          "mythical",
+          "temporal"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_etherion_ore_to_ingot",
+      "outputId": "etherion_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "etherion_ore",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining multidimensional metal. Reality bends - impossible configurations work."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_oak_log_to_plank",
+      "materialId": "oak_plank",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined oak planks with improved durability and quality.",
+        "tags": [
+          "refined",
+          "wood",
+          "versatile"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_oak_log_to_plank",
+      "outputId": "oak_plank",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "oak_log",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Sawing oak into planks. Basic carpentry - blade sings as grain splits clean."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_pine_log_to_plank",
+      "materialId": "pine_plank",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined pine planks, perfect for bows and flexible constructions.",
+        "tags": [
+          "refined",
+          "wood",
+          "flexible"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_pine_log_to_plank",
+      "outputId": "pine_plank",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "pine_log",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Processing pine logs. Soft wood cuts easily - resinous scent fills air."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_ash_log_to_plank",
+      "materialId": "ash_plank",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined ash planks with superior shock absorption properties.",
+        "tags": [
+          "refined",
+          "wood",
+          "quality"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_ash_log_to_plank",
+      "outputId": "ash_plank",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "ash_log",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Milling ash logs. Dense wood, clean grain - satisfying precision."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_birch_log_to_plank",
+      "materialId": "birch_plank",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined birch planks, perfect for detailed craftwork.",
+        "tags": [
+          "refined",
+          "wood",
+          "fine"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_birch_log_to_plank",
+      "outputId": "birch_plank",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "birch_log",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Processing birch. White wood with subtle grain - reveals silver interior."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_maple_log_to_plank",
+      "materialId": "maple_plank",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined maple planks, ideal for items requiring stability.",
+        "tags": [
+          "refined",
+          "wood",
+          "durable"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_maple_log_to_plank",
+      "outputId": "maple_plank",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "maple_log",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Processing maple logs. Light colored wood with fine grain - quality timber."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_ironwood_log_to_plank",
+      "materialId": "ironwood_plank",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined ironwood planks, nearly as strong as actual metal.",
+        "tags": [
+          "refined",
+          "wood",
+          "metallic"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_ironwood_log_to_plank",
+      "outputId": "ironwood_plank",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "ironwood_log",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Milling legendary ironwood. Dense as metal - cylinders strain against it."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_ebony_log_to_plank",
+      "materialId": "ebony_plank",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined ebony planks, perfect for anti-magic applications.",
+        "tags": [
+          "refined",
+          "wood",
+          "magical"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_ebony_log_to_plank",
+      "outputId": "ebony_plank",
+      "stationTier": 3,
+      "coreInputs": [
+        {
+          "materialId": "ebony_log",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Processing rare ebony. Black as night, hard as steel - exceptional quality."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_worldtree_log_to_plank",
+      "materialId": "worldtree_plank",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined worldtree planks that remember their connection to the source.",
+        "tags": [
+          "refined",
+          "wood",
+          "legendary",
+          "living"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_worldtree_log_to_plank",
+      "outputId": "worldtree_plank",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "worldtree_log",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Working worldtree wood. It remembers being part of something greater."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_copper_uncommon",
+      "materialId": "copper_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+        "tags": [
+          "refined",
+          "metal",
+          "starter"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_copper_uncommon",
+      "outputId": "copper_ingot",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 4,
+          "rarity": "common"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining common copper to uncommon. Four compress into one - structure perfects."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_copper_rare",
+      "materialId": "copper_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+        "tags": [
+          "refined",
+          "metal",
+          "starter"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_copper_rare",
+      "outputId": "copper_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 4,
+          "rarity": "uncommon"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining uncommon copper to rare. Grain becomes perfect - impurities purged."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_copper_epic",
+      "materialId": "copper_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+        "tags": [
+          "refined",
+          "metal",
+          "starter"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_copper_epic",
+      "outputId": "copper_ingot",
+      "stationTier": 3,
+      "coreInputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining rare copper to epic. Approaching theoretical perfection."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_copper_legendary",
+      "materialId": "copper_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+        "tags": [
+          "refined",
+          "metal",
+          "starter"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_copper_legendary",
+      "outputId": "copper_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining epic copper to legendary. Perfect molecular alignment achieved."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_iron_uncommon",
+      "materialId": "iron_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+        "tags": [
+          "refined",
+          "metal",
+          "standard"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_iron_uncommon",
+      "outputId": "iron_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4,
+          "rarity": "common"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining common iron to uncommon. Patient work and precise heat."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_iron_rare",
+      "materialId": "iron_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+        "tags": [
+          "refined",
+          "metal",
+          "standard"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_iron_rare",
+      "outputId": "iron_ingot",
+      "stationTier": 3,
+      "coreInputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4,
+          "rarity": "uncommon"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining uncommon iron to rare. Crystalline structure perfecting."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_iron_epic",
+      "materialId": "iron_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+        "tags": [
+          "refined",
+          "metal",
+          "standard"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_iron_epic",
+      "outputId": "iron_ingot",
+      "stationTier": 3,
+      "coreInputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining rare iron to epic. Bonds align with supernatural precision."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_iron_legendary",
+      "materialId": "iron_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+        "tags": [
+          "refined",
+          "metal",
+          "standard"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_iron_legendary",
+      "outputId": "iron_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining epic iron to legendary. Ultimate iron - theoretically perfect."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_steel_rare",
+      "materialId": "steel_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+        "tags": [
+          "refined",
+          "metal",
+          "advanced"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_steel_rare",
+      "outputId": "steel_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4,
+          "rarity": "uncommon"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining uncommon steel to rare. Metal sings as imperfections vanish."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_steel_epic",
+      "materialId": "steel_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+        "tags": [
+          "refined",
+          "metal",
+          "advanced"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_steel_epic",
+      "outputId": "steel_ingot",
+      "stationTier": 3,
+      "coreInputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining rare steel to epic. Edge retention becomes legendary."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_steel_legendary",
+      "materialId": "steel_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+        "tags": [
+          "refined",
+          "metal",
+          "advanced"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_steel_legendary",
+      "outputId": "steel_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining epic steel to legendary. Perfect steel - master smiths weep."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_mithril_epic",
+      "materialId": "mithril_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+        "tags": [
+          "refined",
+          "metal",
+          "legendary"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_mithril_epic",
+      "outputId": "mithril_ingot",
+      "stationTier": 3,
+      "coreInputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining rare mithril to epic. Weightless perfection approaches."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_mithril_legendary",
+      "materialId": "mithril_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+        "tags": [
+          "refined",
+          "metal",
+          "legendary"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_mithril_legendary",
+      "outputId": "mithril_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining epic mithril to legendary. Defies physics completely."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_mithril_mythical",
+      "materialId": "mithril_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+        "tags": [
+          "refined",
+          "metal",
+          "legendary"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_mithril_mythical",
+      "outputId": "mithril_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 4,
+          "rarity": "legendary"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining legendary mithril to mythical. Metal sings in harmonic perfection."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_adamantine_epic",
+      "materialId": "adamantine_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
+        "tags": [
+          "refined",
+          "metal",
+          "rare"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_adamantine_epic",
+      "outputId": "adamantine_ingot",
+      "stationTier": 3,
+      "coreInputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining rare adamantine to epic. Nearly indestructible becomes truly eternal."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_adamantine_legendary",
+      "materialId": "adamantine_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
+        "tags": [
+          "refined",
+          "metal",
+          "rare"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_adamantine_legendary",
+      "outputId": "adamantine_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining epic adamantine to legendary. Hardness beyond measurement."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_orichalcum_legendary",
+      "materialId": "orichalcum_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+        "tags": [
+          "refined",
+          "metal",
+          "ancient"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_orichalcum_legendary",
+      "outputId": "orichalcum_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 4,
+          "rarity": "epic"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining epic orichalcum to legendary. Ancient metal awakens fully."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_orichalcum_mythical",
+      "materialId": "orichalcum_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+        "tags": [
+          "refined",
+          "metal",
+          "ancient"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_orichalcum_mythical",
+      "outputId": "orichalcum_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 4,
+          "rarity": "legendary"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining legendary orichalcum to mythical. Complete awakening achieved."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_etherion_mythical",
+      "materialId": "etherion_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.",
+        "tags": [
+          "refined",
+          "metal",
+          "mythical",
+          "temporal"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_etherion_mythical",
+      "outputId": "etherion_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 4,
+          "rarity": "legendary"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining legendary etherion to mythical. Temporal boundaries dissolve."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_tin_rare",
+      "materialId": "tin_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
+        "tags": [
+          "refined",
+          "metal",
+          "magical"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_tin_rare",
+      "outputId": "tin_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "tin_ingot",
+          "quantity": 4,
+          "rarity": "uncommon"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining uncommon tin to rare. Silvery sheen becomes mirror-bright."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_tin_epic",
+      "materialId": "tin_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
+        "tags": [
+          "refined",
+          "metal",
+          "magical"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_tin_epic",
+      "outputId": "tin_ingot",
+      "stationTier": 3,
+      "coreInputs": [
+        {
+          "materialId": "tin_ingot",
+          "quantity": 4,
+          "rarity": "rare"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining rare tin to epic. Perfect magical conductivity achieved."
+    }
+  }
+]

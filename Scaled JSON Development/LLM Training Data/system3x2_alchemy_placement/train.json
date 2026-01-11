@@ -1,0 +1,152 @@
+[
+  {
+    "input": {
+      "recipeId": "alchemy_minor_health_potion",
+      "itemId": "minor_health_potion",
+      "tier": 1,
+      "inputs": [
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation. Tastes terrible, works wonderfully. Wounds close and pain fades within moments.",
+        "tags": [
+          "potion",
+          "healing",
+          "consumable",
+          "starter"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_minor_health_potion",
+      "outputId": "minor_health_potion",
+      "stationTier": 1,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "slime_gel",
+          "quantity": 2
+        },
+        {
+          "slot": 2,
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Slime gel dissolves first, creating restorative base. Wolf pelt binds mixture second. Watch for gentle green glow - too quick and they won't merge."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_health_potion",
+      "itemId": "health_potion",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "living_ichor",
+          "quantity": 2
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 1
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Improved healing potion using water crystals to amplify restorative properties. The liquid shimmers with captured vitality. One swallow and you feel strength returning.",
+        "tags": [
+          "potion",
+          "healing",
+          "consumable",
+          "standard"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_health_potion",
+      "outputId": "health_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "living_ichor",
+          "quantity": 2
+        },
+        {
+          "slot": 2,
+          "materialId": "water_crystal",
+          "quantity": 2
+        },
+        {
+          "slot": 3,
+          "materialId": "slime_gel",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Living ichor provides life force base. Water crystals amplify properties. Slime gel completes stabilization. Each stage must settle before next."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_greater_health_potion",
+      "itemId": "greater_health_potion",
+      "tier": 3,
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 3
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 2
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly, mends broken bones, restores vitality. The taste of life itself.",
+        "tags": [
+          "potion",
+          "healing",
+          "consumable",
+          "quality"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_greater_health_potion",
+      "outputId": "greater_health_potion",
+      "stationTier": 3,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "essence_blood",
+          "quantity": 3
+        },
+        {
+          "slot": 2,
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "slot": 3,
+          "materialId": "living_ichor",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Essence blood provides foundation. Light gem illuminates and purifies. Living ichor amplifies. Miss a peak, lose potency - catch them all, wounds close rapidly."
+    }
+  }
+]

@@ -1,0 +1,2088 @@
+[
+  {
+    "input": {
+      "recipeId": "smithing_iron_shortsword",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 1
+        }
+      ],
+      "narrative": "The foundational smithing technique - blade, tang, handle. Simple in concept, demanding in execution. Every smith remembers their first sword."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "A simple iron blade with a wooden handle. Every warrior's first step on the path to mastery. The weight feels right in your hand - not perfect, but yours.",
+        "tags": [
+          "melee",
+          "sword",
+          "versatile",
+          "starter"
+        ]
+      },
+      "itemId": "iron_shortsword",
+      "name": "Iron Shortsword",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "shortsword",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 30
+      },
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_copper_pickaxe",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "oak_log",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Your first pickaxe. The gateway to greater resources and deeper discoveries."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Basic copper pickaxe with a wooden handle. Your first step into the mining profession - crude but functional.",
+        "tags": [
+          "tool",
+          "pickaxe",
+          "starter"
+        ]
+      },
+      "itemId": "copper_pickaxe",
+      "name": "Copper Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 10
+      },
+      "stats": {
+        "damage": [
+          8,
+          12
+        ],
+        "mining": 10,
+        "durability": [
+          500,
+          500
+        ],
+        "weight": 4.0
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_copper_axe",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "pine_log",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Basic axe for woodcutting. Simple but essential for any aspiring adventurer."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Simple copper axe with oak handle. Every woodcutter's first companion on the journey to mastery.",
+        "tags": [
+          "tool",
+          "axe",
+          "starter"
+        ]
+      },
+      "itemId": "copper_axe",
+      "name": "Copper Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "effectTags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 10
+      },
+      "stats": {
+        "damage": [
+          8,
+          12
+        ],
+        "forestry": 10,
+        "durability": [
+          500,
+          500
+        ],
+        "weight": 3.5
+      },
+      "requirements": {
+        "level": 1
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_copper_spear",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "ash_log",
+          "quantity": 2
+        },
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Simple spear with copper tip. Keep your enemies at a distance."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Simple copper-tipped spear with ash wood shaft. The extra reach keeps danger at arm's length. Perfect for those who prefer distance over direct confrontation.",
+        "tags": [
+          "melee",
+          "spear",
+          "versatile",
+          "reach"
+        ]
+      },
+      "itemId": "copper_spear",
+      "name": "Copper Spear",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "spear",
+      "tier": 1,
+      "rarity": "common",
+      "range": 2,
+      "slot": "mainHand",
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 25
+      },
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.0,
+        "durability": 1.0,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_leather_tunic",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Basic leather protection. Better than nothing, lighter than metal."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Basic leather protection stitched from wolf pelts and bound with slime gel. Better than nothing, lighter than metal, and it might just save your life.",
+        "tags": [
+          "armor",
+          "chest",
+          "light",
+          "starter"
+        ]
+      },
+      "itemId": "leather_tunic",
+      "name": "Leather Tunic",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "tunic",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "chest",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_boots",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Reinforced leather boots with iron caps. Protects your feet without slowing you down."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Reinforced leather boots with iron caps. Protects your feet without slowing you down. Essential for anyone who values both mobility and survival.",
+        "tags": [
+          "armor",
+          "feet",
+          "light",
+          "starter"
+        ]
+      },
+      "itemId": "iron_boots",
+      "name": "Iron Boots",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "boots",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "feet",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_pickaxe",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "ash_plank",
+          "quantity": 2
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Upgraded pickaxe that can tackle tougher deposits. Iron reliability meets practical design."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Reliable iron pickaxe. Durable enough to tackle tougher deposits and efficient for standard mining work.",
+        "tags": [
+          "tool",
+          "pickaxe",
+          "standard"
+        ]
+      },
+      "itemId": "iron_pickaxe",
+      "name": "Iron Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 2,
+      "rarity": "common",
+      "range": 1,
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 18
+      },
+      "stats": {
+        "damage": [
+          15,
+          22
+        ],
+        "mining": 20,
+        "durability": [
+          1000,
+          1000
+        ],
+        "weight": 5.0
+      },
+      "requirements": {
+        "level": 5
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_axe",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "birch_plank",
+          "quantity": 2
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Solid iron axe for serious forestry work. Bites deep and true."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Sturdy iron axe that bites deep into wood. The standard tool for serious forestry work.",
+        "tags": [
+          "tool",
+          "axe",
+          "standard"
+        ]
+      },
+      "itemId": "iron_axe",
+      "name": "Iron Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 2,
+      "rarity": "common",
+      "range": 1,
+      "effectTags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 18
+      },
+      "stats": {
+        "damage": [
+          15,
+          22
+        ],
+        "forestry": 20,
+        "durability": [
+          1000,
+          1000
+        ],
+        "weight": 4.5
+      },
+      "requirements": {
+        "level": 5
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_longsword",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 2
+        },
+        {
+          "materialId": "maple_plank",
+          "quantity": 1
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Balanced steel longsword. The blade flows like water, strikes like thunder."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Balanced steel longsword that flows like water and strikes like thunder. The blade sings when it cuts through air, a testament to its quality.",
+        "tags": [
+          "melee",
+          "sword",
+          "versatile",
+          "quality"
+        ]
+      },
+      "itemId": "steel_longsword",
+      "name": "Steel Longsword",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "longsword",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 40
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 1.0,
+        "durability": 1.1,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {
+          "STR": 10
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_chestplate",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 6
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 7
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 5
+        }
+      ],
+      "narrative": "Iron plates protect vital organs. Heavy but reliable."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Iron plates protecting vital organs with beetle carapace reinforcement. Heavy but reliable. When arrows fly and blades swing, you'll appreciate every ounce of protection.",
+        "tags": [
+          "armor",
+          "chest",
+          "heavy",
+          "standard"
+        ]
+      },
+      "itemId": "iron_chestplate",
+      "name": "Iron Chestplate",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "chestplate",
+      "tier": 2,
+      "rarity": "common",
+      "slot": "chest",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_helm",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 10
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Steel helm with full face protection. Your head stays attached, which is nice."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Steel helm with full face protection and wolf pelt padding. Your head stays attached, which is nice. The padding reduces the ringing when you take a hit.",
+        "tags": [
+          "armor",
+          "head",
+          "heavy",
+          "quality"
+        ]
+      },
+      "itemId": "steel_helm",
+      "name": "Steel Helm",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "helmet",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "head",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_pickaxe",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 10
+        }
+      ],
+      "narrative": "Steel pickaxe with perfect balance. Makes hard rock feel like clay."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Steel pickaxe with perfect balance. Bites into hard rock with confidence.",
+        "tags": [
+          "tool",
+          "pickaxe",
+          "quality"
+        ]
+      },
+      "itemId": "steel_pickaxe",
+      "name": "Steel Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 3,
+      "rarity": "uncommon",
+      "range": 1,
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 37
+      },
+      "stats": {
+        "damage": [
+          30,
+          45
+        ],
+        "mining": 40,
+        "durability": [
+          2000,
+          2000
+        ],
+        "weight": 5.5
+      },
+      "requirements": {
+        "level": 12
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_axe",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Razor-edged steel axe. Ancient trees fall before it."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Well-balanced steel axe with a razor edge. Fells even ancient trees with steady, powerful strikes.",
+        "tags": [
+          "tool",
+          "axe",
+          "quality"
+        ]
+      },
+      "itemId": "steel_axe",
+      "name": "Steel Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 3,
+      "rarity": "uncommon",
+      "range": 1,
+      "effectTags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 37
+      },
+      "stats": {
+        "damage": [
+          30,
+          45
+        ],
+        "forestry": 40,
+        "durability": [
+          2000,
+          2000
+        ],
+        "weight": 5.0
+      },
+      "requirements": {
+        "level": 12
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_mithril_dagger",
+      "stationTier": 3,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "ebony_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 1
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Mithril dagger that seems to shimmer out of existence. Wickedly sharp, impossibly light."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Mithril dagger that seems to shimmer out of existence. Wickedly sharp and impossibly light, it strikes faster than the eye can follow. The blade whispers through air and flesh alike.",
+        "tags": [
+          "melee",
+          "dagger",
+          "1H",
+          "fast",
+          "precision",
+          "legendary"
+        ]
+      },
+      "itemId": "mithril_dagger",
+      "name": "Mithril Dagger",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "dagger",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 0.5,
+      "slot": "mainHand",
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 42
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 1.2,
+        "durability": 1.5,
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {
+          "AGI": 20
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_mithril_pickaxe",
+      "stationTier": 3,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "ebony_plank",
+          "quantity": 5
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 9
+        }
+      ],
+      "narrative": "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective.",
+        "tags": [
+          "tool",
+          "pickaxe",
+          "legendary"
+        ]
+      },
+      "itemId": "mithril_pickaxe",
+      "name": "Mithril Pickaxe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "pickaxe",
+      "tier": 4,
+      "rarity": "rare",
+      "range": 1,
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 75
+      },
+      "stats": {
+        "damage": [
+          60,
+          90
+        ],
+        "mining": 80,
+        "durability": [
+          4000,
+          4000
+        ],
+        "weight": 3.0
+      },
+      "requirements": {
+        "level": 20
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_mithril_axe",
+      "stationTier": 3,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "ebony_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": 1
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 11
+        }
+      ],
+      "narrative": "Ethereal mithril axe that phases through wood fibers. Cuts with minimal resistance."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ethereal mithril axe that seems to phase through wood fibers. Cuts with minimal resistance.",
+        "tags": [
+          "tool",
+          "axe",
+          "legendary"
+        ]
+      },
+      "itemId": "mithril_axe",
+      "name": "Mithril Axe",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "axe",
+      "tier": 4,
+      "rarity": "rare",
+      "range": 1,
+      "effectTags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 75
+      },
+      "stats": {
+        "damage": [
+          60,
+          90
+        ],
+        "forestry": 80,
+        "durability": [
+          4000,
+          4000
+        ],
+        "weight": 2.5
+      },
+      "requirements": {
+        "level": 20
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_copper_fire_ring",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Simple copper band with fire crystal. Radiates gentle warmth."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Simple copper band holding a fire crystal. Radiates gentle warmth against your skin. The crystal pulses with contained flames, never dimming, never burning.",
+        "tags": [
+          "accessory",
+          "ring",
+          "fire",
+          "elemental"
+        ]
+      },
+      "itemId": "copper_fire_ring",
+      "name": "Copper Fire Ring",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "ring",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.1
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 5,
+          "effect": "Adds fire damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_water_amulet",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Iron amulet holding a water crystal. Feels cool against your skin."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Iron amulet cradling water crystals. Feels cool against your skin, like a gentle stream running across your chest. The crystals shimmer with captured tides.",
+        "tags": [
+          "accessory",
+          "amulet",
+          "water",
+          "elemental"
+        ]
+      },
+      "itemId": "iron_water_amulet",
+      "name": "Iron Water Amulet",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "amulet",
+      "tier": 2,
+      "rarity": "uncommon",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "water",
+          "value": 10,
+          "effect": "Adds water damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_lightning_bracelet",
+      "stationTier": 3,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Steel bracelet with lightning shard. Crackles with stored static."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Steel bracelet woven with lightning shards and spectral thread. Crackles with stored static electricity. Touch it and feel the power humming beneath the surface.",
+        "tags": [
+          "accessory",
+          "bracelet",
+          "lightning",
+          "elemental"
+        ]
+      },
+      "itemId": "steel_lightning_bracelet",
+      "name": "Steel Lightning Bracelet",
+      "category": "equipment",
+      "type": "accessory",
+      "subtype": "bracelet",
+      "tier": 3,
+      "rarity": "rare",
+      "slot": "accessory",
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "lightning",
+          "value": 20,
+          "effect": "Adds lightning damage to attacks"
+        }
+      ],
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_forge_t1",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "granite",
+          "quantity": 5
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Basic stone forge suitable for working copper and iron. The foundation of smithing."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Basic stone forge suitable for working copper and iron. The foundation of smithing - crude but functional. Every master started with a forge like this.",
+        "tags": [
+          "station",
+          "forge",
+          "smithing",
+          "starter"
+        ]
+      },
+      "itemId": "forge_t1",
+      "name": "Basic Stone Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_forge_t2",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "basalt",
+          "quantity": 5
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 1
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Improved forge with better heat retention. Can work steel reliably."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Improved forge with better heat retention and basalt construction. Can work steel reliably. Fire crystals enhance the heat, pushing temperatures higher.",
+        "tags": [
+          "station",
+          "forge",
+          "smithing",
+          "standard"
+        ]
+      },
+      "itemId": "forge_t2",
+      "name": "Steel Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_forge_t3",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 10
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 4
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Master forge with crystal enhancement. Can reach extreme temperatures."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Master forge with obsidian construction and crystal enhancement. Can reach extreme temperatures needed for legendary metals. Phoenix ash ensures the flames never die.",
+        "tags": [
+          "station",
+          "forge",
+          "smithing",
+          "master"
+        ]
+      },
+      "itemId": "forge_t3",
+      "name": "Master Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_refinery_t1",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "limestone",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Basic refinery for turning raw ores into usable ingots. Essential for any metalworker."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Basic limestone refinery for turning raw ores into usable ingots. Essential for any metalworker. The crucible glows red-hot as impurities burn away.",
+        "tags": [
+          "station",
+          "refinery",
+          "forging",
+          "starter"
+        ]
+      },
+      "itemId": "refinery_t1",
+      "name": "Basic Refinery",
+      "category": "station",
+      "type": "refining",
+      "subtype": "refinery",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_refinery_t2",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "earth_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "granite",
+          "quantity": 5
+        }
+      ],
+      "narrative": "Advanced refinery with better efficiency and heat control."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Advanced refinery with improved efficiency and heat control. Can process higher-grade ores and create complex alloys. The granite construction handles intense heat without cracking.",
+        "tags": [
+          "station",
+          "refinery",
+          "forging",
+          "standard"
+        ]
+      },
+      "itemId": "refinery_t2",
+      "name": "Steel Refinery",
+      "category": "station",
+      "type": "refining",
+      "subtype": "refinery",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_pine_shortbow",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 1
+        },
+        {
+          "materialId": "pine_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Simple pine bow strung with treated sinew. Not powerful, but reliable."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Simple pine shortbow strung with treated slime gel. Not powerful, but reliable and easy to maintain. Perfect for learning the basics of archery.",
+        "tags": [
+          "ranged",
+          "bow",
+          "2H",
+          "starter"
+        ]
+      },
+      "itemId": "pine_shortbow",
+      "name": "Pine Shortbow",
+      "category": "equipment",
+      "type": "weapon",
+      "subtype": "shortbow",
+      "tier": 1,
+      "rarity": "common",
+      "range": 10,
+      "slot": "mainHand",
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 20
+      },
+      "statMultipliers": {
+        "damage": 1.0,
+        "attackSpeed": 1.0,
+        "durability": 0.8,
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {
+          "AGI": 6
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_alchemy_table_t1",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "granite",
+          "quantity": 5
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 2
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Basic alchemy table with mortar, pestle, and glassware."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Wooden workbench fitted with glass vials, copper cauldrons, and measuring instruments. This is where plants become potions and careful mixing creates powerful effects.",
+        "tags": [
+          "station",
+          "alchemy",
+          "brewing",
+          "starter"
+        ]
+      },
+      "itemId": "alchemy_table_t1",
+      "name": "Basic Alchemy Table",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_engineering_bench_t1",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 3
+        },
+        {
+          "materialId": "birch_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Basic workbench for assembling mechanical devices."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Sturdy iron workbench equipped with precision tools, vises, and gear assemblies. Here mechanisms take shape - springs tension, gears mesh, devices come to life.",
+        "tags": [
+          "station",
+          "engineering",
+          "mechanical",
+          "starter"
+        ]
+      },
+      "itemId": "engineering_bench_t1",
+      "name": "Basic Engineering Bench",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 1,
+      "rarity": "common",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_battleaxe",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 2
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Forging a steel battleaxe requires balance - too heavy and it's unwieldy, too light and it lacks impact. This versatile weapon can devastate with two hands or still threaten with one."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Steel battleaxe with brutal cleaving power. Grip it with both hands and watch enemies fall like timber. Equally deadly in one hand for those strong enough to wield it.",
+        "tags": [
+          "melee",
+          "axe",
+          "versatile",
+          "cleaving"
+        ]
+      },
+      "itemId": "steel_battleaxe",
+      "name": "Steel Battleaxe",
+      "category": "equipment",
+      "type": "axe",
+      "subtype": "battleaxe",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 1,
+      "slot": "mainHand",
+      "effectTags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 50
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 0.95,
+        "durability": 1.1,
+        "weight": 1.2
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {
+          "STR": 12
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_warhammer",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "granite",
+          "quantity": 2
+        },
+        {
+          "materialId": "iron_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Crafting a warhammer is about managing weight distribution. The crushing head must be perfectly balanced on the shaft, or it becomes a liability rather than a weapon."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Heavy iron warhammer that crushes armor and bone alike. The weight demands both hands, but the devastation it delivers makes that trade worthwhile. Favored by those who prefer decisive, crushing blows.",
+        "tags": [
+          "melee",
+          "mace",
+          "2H",
+          "crushing",
+          "armor_breaker"
+        ]
+      },
+      "itemId": "iron_warhammer",
+      "name": "Iron Warhammer",
+      "category": "equipment",
+      "type": "mace",
+      "subtype": "warhammer",
+      "tier": 2,
+      "rarity": "common",
+      "range": 1.5,
+      "slot": "mainHand",
+      "effectTags": [
+        "physical",
+        "crushing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 45
+      },
+      "statMultipliers": {
+        "damage": 1.3,
+        "attackSpeed": 0.75,
+        "durability": 1.3,
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 10,
+        "stats": {
+          "STR": 15
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_copper_dagger",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "narrative": "A dagger is deceptively simple - just a blade and a grip. But the balance must be perfect for quick, precise strikes."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Simple copper dagger, light and quick. Not much reach, but what it lacks in power it makes up for in speed. Perfect for those who value precision over brute force.",
+        "tags": [
+          "melee",
+          "dagger",
+          "1H",
+          "fast",
+          "precision"
+        ]
+      },
+      "itemId": "copper_dagger",
+      "name": "Copper Dagger",
+      "category": "equipment",
+      "type": "dagger",
+      "subtype": "dagger",
+      "tier": 1,
+      "rarity": "common",
+      "range": 0.5,
+      "slot": "mainHand",
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 18
+      },
+      "statMultipliers": {
+        "damage": 0.9,
+        "attackSpeed": 1.3,
+        "durability": 0.8,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {
+          "AGI": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_composite_longbow",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "ash_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 5
+        }
+      ],
+      "narrative": "Crafting a composite bow requires laminating different materials - wood for flexibility, sinew for power, silk for the string. Patience yields deadly accuracy."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Composite longbow of ash wood and sinew, strung with silk-spider thread. The draw is heavy, demanding both hands and steady arms, but arrows fly true and far. Distance is your advantage.",
+        "tags": [
+          "ranged",
+          "bow",
+          "2H",
+          "precision"
+        ]
+      },
+      "itemId": "composite_longbow",
+      "name": "Composite Longbow",
+      "category": "equipment",
+      "type": "bow",
+      "subtype": "longbow",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 15,
+      "slot": "mainHand",
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 35
+      },
+      "statMultipliers": {
+        "damage": 1.1,
+        "attackSpeed": 0.85,
+        "durability": 0.9,
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 9,
+        "stats": {
+          "AGI": 14
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_fire_crystal_staff",
+      "stationTier": 3,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 8
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
+        "tags": [
+          "melee",
+          "staff",
+          "versatile",
+          "elemental",
+          "fire"
+        ]
+      },
+      "itemId": "fire_crystal_staff",
+      "name": "Fire Crystal Staff",
+      "category": "equipment",
+      "type": "staff",
+      "subtype": "staff",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 8,
+      "slot": "mainHand",
+      "effectTags": [
+        "fire",
+        "single",
+        "burn"
+      ],
+      "effectParams": {
+        "baseDamage": 45,
+        "burn_duration": 3.0,
+        "burn_damage_per_second": 5.0
+      },
+      "statMultipliers": {
+        "damage": 0.85,
+        "attackSpeed": 1.1,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 15,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 15,
+        "stats": {
+          "INT": 18
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_round_shield",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "narrative": "A simple round shield - iron face with oak backing. Protects and strikes in equal measure."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Round iron shield with oak backing. Not just for blocking - bash enemies with the rim or use it to create openings. Defense and offense in one hand.",
+        "tags": [
+          "melee",
+          "shield",
+          "1H",
+          "defensive",
+          "bash"
+        ]
+      },
+      "itemId": "iron_round_shield",
+      "name": "Iron Round Shield",
+      "category": "equipment",
+      "type": "shield",
+      "subtype": "buckler",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.6,
+        "attackSpeed": 1.1,
+        "durability": 1.8,
+        "weight": 1.3
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {
+          "STR": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_leggings",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 7
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 5
+        }
+      ],
+      "narrative": "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Steel plate leggings with articulated joints. Heavy but protective, they guard your legs without restricting movement. Every smith's second major armor piece after the chestplate.",
+        "tags": [
+          "armor",
+          "legs",
+          "metal",
+          "heavy"
+        ]
+      },
+      "itemId": "steel_leggings",
+      "name": "Steel Leggings",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "leggings",
+      "tier": 2,
+      "rarity": "common",
+      "slot": "legs",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_studded_gauntlets",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Reinforced leather gloves with iron studs across the knuckles. Your hands are your tools - protect them properly."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Leather gloves reinforced with iron studs across the knuckles. Light enough for dexterity, strong enough to turn a blade. Your hands are tools - protect them.",
+        "tags": [
+          "armor",
+          "hands",
+          "light",
+          "flexible"
+        ]
+      },
+      "itemId": "iron_studded_gauntlets",
+      "name": "Iron-Studded Gauntlets",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "gauntlets",
+      "tier": 1,
+      "rarity": "common",
+      "slot": "hands",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 0.9
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  }
+]

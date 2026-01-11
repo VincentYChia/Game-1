@@ -1,0 +1,218 @@
+[
+  {
+    "input": {
+      "recipeId": "alchemy_minor_health_potion",
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "inputs": [
+        {
+          "materialId": "slime_gel",
+          "quantity": 2
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Basic healing potion from natural herbs and slime gel. Every alchemist's first creation. Tastes terrible, works wonderfully. Wounds close and pain fades within moments.",
+        "tags": [
+          "potion",
+          "healing",
+          "consumable",
+          "starter"
+        ]
+      },
+      "itemId": "minor_health_potion",
+      "name": "Minor Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Restores 50 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_health_potion",
+      "stationTier": 2,
+      "stationType": "alchemy",
+      "inputs": [
+        {
+          "materialId": "living_ichor",
+          "quantity": 2
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Improved healing potion using water crystals to amplify restorative properties."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Improved healing potion using water crystals to amplify restorative properties. The liquid shimmers with captured vitality. One swallow and you feel strength returning.",
+        "tags": [
+          "potion",
+          "healing",
+          "consumable",
+          "standard"
+        ]
+      },
+      "itemId": "health_potion",
+      "name": "Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 2,
+      "rarity": "common",
+      "effect": "Restores 100 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 5,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_greater_health_potion",
+      "stationTier": 3,
+      "stationType": "alchemy",
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 3
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Powerful healing elixir using essence blood and light gems. Closes wounds rapidly, mends broken bones, restores vitality. The taste of life itself.",
+        "tags": [
+          "potion",
+          "healing",
+          "consumable",
+          "quality"
+        ]
+      },
+      "itemId": "greater_health_potion",
+      "name": "Greater Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "uncommon",
+      "effect": "Restores 200 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 12,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_regeneration_tonic",
+      "stationTier": 3,
+      "stationType": "alchemy",
+      "inputs": [
+        {
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 3
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Regeneration tonic that mends wounds over time. Body remembers how to heal continuously."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Regeneration tonic that mends wounds over time. Light gems infused with living essence create a sustained healing effect. Your body remembers how to heal itself.",
+        "tags": [
+          "potion",
+          "healing",
+          "regeneration",
+          "advanced"
+        ]
+      },
+      "itemId": "regeneration_tonic",
+      "name": "Regeneration Tonic",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Restores 5 HP per second",
+      "duration": 60,
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.3
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    }
+  }
+]

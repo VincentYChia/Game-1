@@ -1,0 +1,173 @@
+[
+  {
+    "input": {
+      "requiredLevel": 1,
+      "requiredSkills": [],
+      "discipline": "",
+      "tags": [
+        "time",
+        "crafting",
+        "universal",
+        "mastery"
+      ]
+    },
+    "output": {
+      "skillId": "time_dilation",
+      "name": "Time Dilation",
+      "tier": 3,
+      "rarity": "epic",
+      "categories": [
+        "crafting"
+      ],
+      "description": "Massively extend all mini-game timers, giving you all the time you need.",
+      "narrative": "Time is relative. Especially when you're cheating.",
+      "tags": [
+        "time",
+        "crafting",
+        "universal",
+        "mastery"
+      ],
+      "effect": {
+        "type": "quicken",
+        "category": "smithing",
+        "magnitude": "extreme",
+        "target": "self",
+        "duration": "instant",
+        "additionalEffects": []
+      },
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "long"
+      },
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": null,
+        "requirement": "Reach level 10 - LLM generates evolution"
+      },
+      "requirements": {
+        "characterLevel": 19,
+        "stats": {
+          "INT": 22
+        },
+        "titles": []
+      }
+    }
+  },
+  {
+    "input": {
+      "requiredLevel": 1,
+      "requiredSkills": [],
+      "discipline": "",
+      "tags": [
+        "bypass",
+        "tier",
+        "ultimate",
+        "transcendence"
+      ]
+    },
+    "output": {
+      "skillId": "reality_breach",
+      "name": "Reality Breach",
+      "tier": 4,
+      "rarity": "mythic",
+      "categories": [
+        "utility"
+      ],
+      "description": "Temporarily ignore all tier restrictions and requirements. Use any tool on any material, craft at any station.",
+      "narrative": "Rules are for people who lack imagination. And sufficient mana reserves.",
+      "tags": [
+        "bypass",
+        "tier",
+        "ultimate",
+        "transcendence"
+      ],
+      "effect": {
+        "type": "transcend",
+        "category": "mining",
+        "magnitude": "extreme",
+        "target": "self",
+        "duration": "moderate",
+        "additionalEffects": []
+      },
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+      "evolution": {
+        "canEvolve": false,
+        "nextSkillId": null,
+        "requirement": "Maximum evolution - cannot evolve further"
+      },
+      "requirements": {
+        "characterLevel": 25,
+        "stats": {
+          "INT": 30
+        },
+        "titles": []
+      }
+    }
+  },
+  {
+    "input": {
+      "requiredLevel": 1,
+      "requiredSkills": [],
+      "discipline": "",
+      "tags": [
+        "damage",
+        "ultimate",
+        "single_target",
+        "finisher"
+      ]
+    },
+    "output": {
+      "skillId": "omega_strike",
+      "name": "Omega Strike",
+      "tier": 4,
+      "rarity": "legendary",
+      "categories": [
+        "combat"
+      ],
+      "description": "A single attack of unimaginable power that ignores defenses and deals catastrophic damage.",
+      "narrative": "One strike. One chance. One ending.",
+      "tags": [
+        "damage",
+        "ultimate",
+        "single_target",
+        "finisher"
+      ],
+      "effect": {
+        "type": "empower",
+        "category": "damage",
+        "magnitude": "extreme",
+        "target": "enemy",
+        "duration": "instant",
+        "additionalEffects": [
+          {
+            "type": "pierce",
+            "category": "damage",
+            "magnitude": "extreme",
+            "target": "enemy",
+            "duration": "instant"
+          }
+        ]
+      },
+      "cost": {
+        "mana": "extreme",
+        "cooldown": "extreme"
+      },
+      "evolution": {
+        "canEvolve": false,
+        "nextSkillId": null,
+        "requirement": "Maximum evolution - cannot evolve further"
+      },
+      "requirements": {
+        "characterLevel": 28,
+        "stats": {
+          "STR": 30,
+          "AGI": 25
+        },
+        "titles": []
+      }
+    }
+  }
+]
