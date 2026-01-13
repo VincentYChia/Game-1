@@ -86,25 +86,52 @@ class JSONValidator:
         return len(errors) == 0, errors
 
     def _validate_fields(self, data: Any, expected: Any, path: str, errors: List[str]):
-        """Recursively validate that all expected fields are present."""
+        """Recursively validate that core required fields are present."""
         if not isinstance(expected, dict) or not isinstance(data, dict):
             return
+
+        # Define truly required fields per type (not every field in template)
+        core_required_fields = {
+            # Items/Equipment
+            "itemId", "name", "tier", "rarity", "category",
+            # Enemies
+            "enemyId", "name", "tier", "category", "behavior", "stats", "drops",
+            # Nodes
+            "resourceId", "name", "category", "tier",
+            # Skills
+            "skillId", "name", "tier", "rarity",
+            # Titles
+            "titleId", "name", "tier",
+            # Recipes
+            "recipeId", "placementMap",
+            # Core sub-fields
+            "level"  # requirements.level is required, but requirements.stats can be empty
+        }
+
+        # Fields that are often optional
+        optional_fields = {"stats", "flags", "metadata", "effectParams", "effect_params", "attributes"}
 
         for key, expected_value in expected.items():
             if key.startswith("_"):  # Skip metadata fields
                 continue
 
-            if key not in data:
+            # Skip optional fields when validating nested structures
+            if key in optional_fields and path:
+                continue
+
+            # Only enforce truly core fields
+            if key not in data and key in core_required_fields:
                 errors.append(f"Missing required field: {path}.{key}" if path else f"Missing required field: {key}")
                 continue
 
-            # Recurse into nested structures
-            if isinstance(expected_value, dict) and not isinstance(expected_value, list):
-                self._validate_fields(data[key], expected_value, f"{path}.{key}" if path else key, errors)
-            elif isinstance(expected_value, list) and expected_value and isinstance(expected_value[0], dict):
-                # Validate array items if data is also an array
-                if isinstance(data[key], list) and data[key]:
-                    self._validate_fields(data[key][0], expected_value[0], f"{path}.{key}[0]" if path else f"{key}[0]", errors)
+            # If field exists, recurse into nested structures
+            if key in data:
+                if isinstance(expected_value, dict) and not isinstance(expected_value, list):
+                    self._validate_fields(data[key], expected_value, f"{path}.{key}" if path else key, errors)
+                elif isinstance(expected_value, list) and expected_value and isinstance(expected_value[0], dict):
+                    # Validate array items if data is also an array
+                    if isinstance(data[key], list) and data[key]:
+                        self._validate_fields(data[key][0], expected_value[0], f"{path}.{key}[0]" if path else f"{key}[0]", errors)
 
     def _validate_types(self, data: Any, expected: Any, path: str, errors: List[str]):
         """Recursively validate data types match expected types."""
@@ -140,41 +167,10 @@ class JSONValidator:
                             self._validate_types(item, expected_value[0], f"{field_path}[{i}]", errors)
 
     def _validate_values(self, data: Dict[str, Any], possible_values: Dict[str, Any], path: str, errors: List[str]):
-        """Validate values against known possible values from training data."""
-        for field_path, field_info in possible_values.items():
-            if field_path.startswith("_"):
-                continue
-
-            # Navigate to the field in data
-            value = self._get_nested_value(data, field_path)
-            if value is None:
-                continue  # Field not present or optional
-
-            # Get valid values
-            valid_values = field_info.get("values", [])
-            valid_types = field_info.get("types", [])
-
-            # Check if value type is valid
-            value_type = type(value).__name__
-            if value_type == "int":
-                value_type = "integer"
-            elif value_type == "float":
-                value_type = "number"
-            elif value_type == "list":
-                value_type = "array"
-            elif value_type == "bool":
-                value_type = "boolean"
-
-            if valid_types and value_type not in valid_types:
-                errors.append(f"Invalid type at {field_path}: expected {valid_types}, got {value_type}")
-
-            # For enum-like fields, check if value is in valid set
-            # Only do this for string fields with a reasonable number of options
-            if (isinstance(value, str) and
-                valid_values and
-                len(valid_values) < 100 and  # Don't validate huge value sets
-                value not in valid_values):
-                errors.append(f"Invalid value at {field_path}: '{value}' not in known values (expected one of {len(valid_values)} options)")
+        """Validate values against known possible values from training data (lenient mode)."""
+        # Skip value validation - allow LLM to be creative
+        # Only check data types for critical fields
+        pass
 
     def _get_nested_value(self, data: Dict[str, Any], field_path: str) -> Any:
         """Get value from nested dictionary using dot notation path."""

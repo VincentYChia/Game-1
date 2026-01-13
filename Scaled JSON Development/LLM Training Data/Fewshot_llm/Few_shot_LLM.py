@@ -24,108 +24,26 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # SYSTEM PROMPTS & FEW-SHOT EXAMPLES
 # ============================================================================
 
-SYSTEMS = {
-    "1": {
-        "name": "Smith Recipe->Item",
-        "system_prompt": "You are a crafting expert for a fantasy RPG. Given smithing recipes with materials and metadata, generate complete item definitions with stats, tags, and properties. Return ONLY valid JSON matching the expected schema.",
-        "few_shot_examples": [
-            {
-                "input": json.dumps({
-                    "recipeId": "smithing_iron_shortsword",
-                    "stationTier": 1,
-                    "stationType": "smithing",
-                    "inputs": [
-                        {"materialId": "iron_ingot", "quantity": 2},
-                        {"materialId": "oak_plank", "quantity": 1}
-                    ],
-                    "narrative": "The foundational smithing technique - blade, tang, handle."
-                }, indent=2),
-                "output": json.dumps({
-                    "itemId": "iron_shortsword",
-                    "name": "Iron Shortsword",
-                    "category": "equipment",
-                    "type": "weapon",
-                    "subtype": "shortsword",
-                    "tier": 1,
-                    "rarity": "common",
-                    "range": 1,
-                    "slot": "mainHand",
-                    "effectTags": ["physical", "slashing", "single"],
-                    "effectParams": {"baseDamage": 30},
-                    "statMultipliers": {"damage": 1.0, "attackSpeed": 1.0, "durability": 1.0, "weight": 1.0},
-                    "requirements": {"level": 1, "stats": {}},
-                    "flags": {"stackable": False, "equippable": True, "repairable": True},
-                    "metadata": {
-                        "narrative": "A simple iron blade with a wooden handle. Every warrior's first step.",
-                        "tags": ["melee", "sword", "versatile", "starter"]
-                    }
-                }, indent=2)
-            },
-            {
-                "input": json.dumps({
-                    "recipeId": "smithing_copper_pickaxe",
-                    "stationTier": 1,
-                    "stationType": "smithing",
-                    "inputs": [
-                        {"materialId": "copper_ingot", "quantity": 3},
-                        {"materialId": "oak_log", "quantity": 2}
-                    ]
-                }, indent=2),
-                "output": json.dumps({
-                    "itemId": "copper_pickaxe",
-                    "name": "Copper Pickaxe",
-                    "category": "equipment",
-                    "type": "tool",
-                    "subtype": "pickaxe",
-                    "tier": 1,
-                    "rarity": "common",
-                    "range": 1,
-                    "effectTags": ["physical", "piercing", "single"],
-                    "effectParams": {"baseDamage": 10},
-                    "stats": {"damage": [8, 12], "mining": 10, "durability": [500, 500], "weight": 4.0},
-                    "requirements": {"level": 1},
-                    "flags": {"stackable": False, "equippable": True, "repairable": True},
-                    "metadata": {
-                        "narrative": "Basic copper pickaxe. Your first step into mining.",
-                        "tags": ["tool", "pickaxe", "starter"]
-                    }
-                }, indent=2)
-            },
-            {
-                "input": json.dumps({
-                    "recipeId": "smithing_steel_longsword",
-                    "stationTier": 2,
-                    "stationType": "smithing",
-                    "inputs": [
-                        {"materialId": "steel_ingot", "quantity": 4},
-                        {"materialId": "maple_plank", "quantity": 1},
-                        {"materialId": "dire_fang", "quantity": 2}
-                    ],
-                    "narrative": "Balanced steel longsword. The blade flows like water, strikes like thunder."
-                }, indent=2),
-                "output": json.dumps({
-                    "itemId": "steel_longsword",
-                    "name": "Steel Longsword",
-                    "category": "equipment",
-                    "type": "weapon",
-                    "subtype": "longsword",
-                    "tier": 2,
-                    "rarity": "uncommon",
-                    "range": 1,
-                    "slot": "mainHand",
-                    "effectTags": ["physical", "slashing", "single"],
-                    "effectParams": {"baseDamage": 40},
-                    "statMultipliers": {"damage": 1.1, "attackSpeed": 1.0, "durability": 1.1, "weight": 1.0},
-                    "requirements": {"level": 8, "stats": {"STR": 10}},
-                    "flags": {"stackable": False, "equippable": True, "repairable": True},
-                    "metadata": {
-                        "narrative": "Balanced steel longsword that flows like water and strikes like thunder.",
-                        "tags": ["melee", "sword", "versatile", "quality"]
-                    }
-                }, indent=2)
-            }
-        ],
-        "test_prompt": """Create an item definition for this smithing recipe:
+# Try to load extracted examples
+try:
+    from extracted_examples import EXTRACTED_EXAMPLES
+    USING_EXTRACTED_EXAMPLES = True
+    print(f"✓ Loaded {len(EXTRACTED_EXAMPLES)} systems from extracted_examples.py")
+except ImportError:
+    EXTRACTED_EXAMPLES = {}
+    USING_EXTRACTED_EXAMPLES = False
+    print("⚠ Warning: Could not load extracted_examples.py, using manual examples")
+
+
+def build_systems_dict():
+    """Build SYSTEMS dictionary with prompts and examples."""
+
+    # System metadata (names, prompts, test prompts)
+    system_info = {
+        "1": {
+            "name": "Smithing Recipe→Item",
+            "system_prompt": "You are a crafting expert for an action fantasy sandbox RPG. Given smithing recipes with materials and metadata, generate complete item definitions with stats, tags, and properties. Return ONLY valid JSON matching the expected schema.",
+            "test_prompt": """Create an item definition for this smithing recipe:
 
 {
   "recipeId": "smithing_iron_axe",
@@ -139,239 +57,46 @@ SYSTEMS = {
 }
 
 Return ONLY the JSON item definition, no extra text."""
-    },
-
-    "1x2": {
-        "name": "Smithing Placement",
-        "system_prompt": "You determine optimal placement patterns for smithing recipes.",
-        "few_shot_examples": [
-            {"input": "Sword crafting", "output": "Vertical placement: Handle bottom, blade top"},
-            {"input": "Shield crafting", "output": "Center placement with rim materials"},
-        ],
-        "test_prompt": ""
-    },
-
-    "2": {
-        "name": "Refining Recipe->Material",
-        "system_prompt": "You are a refining expert. Predict refined materials from raw inputs.",
-        "few_shot_examples": [
-            {"input": "Iron Ore + Heat = ?", "output": "Iron Ingot"},
-            {"input": "Raw Gold + Flux = ?", "output": "Pure Gold Bar"},
-        ],
-        "test_prompt": ""
-    },
-
-    "2x2": {
-        "name": "Refining Placement",
-        "system_prompt": "You determine optimal placement for refining processes.",
-        "few_shot_examples": [
-            {"input": "Ore smelting", "output": "Ore in center, fuel below"},
-            {"input": "Metal purification", "output": "Raw metal top, catalyst bottom"},
-        ],
-        "test_prompt": ""
-    },
-
-    "3": {
-        "name": "Alchemy Recipe->Item",
-        "system_prompt": "You are an alchemy master. Predict potion outcomes from ingredients.",
-        "few_shot_examples": [
-            {"input": "Red Herb + Blue Mushroom = ?", "output": "Health Potion"},
-            {"input": "Spider Eye + Sugar = ?", "output": "Speed Potion"},
-        ],
-        "test_prompt": ""
-    },
-
-    "3x2": {
-        "name": "Alchemy Placement",
-        "system_prompt": "You determine ingredient placement for alchemical reactions.",
-        "few_shot_examples": [
-            {"input": "Brewing health potion", "output": "Base liquid bottom, herbs floating"},
-            {"input": "Mixing mana elixir", "output": "Crystal dust dissolved first, essence after"},
-        ],
-        "test_prompt": ""
-    },
-
-    "4": {
-        "name": "Engineering Recipe->Device",
-        "system_prompt": "You are an engineering expert. Predict devices from component recipes.",
-        "few_shot_examples": [
-            {"input": "Gears + Spring + Casing = ?", "output": "Mechanical Clock"},
-            {"input": "Wire + Battery + Bulb = ?", "output": "Flashlight"},
-        ],
-        "test_prompt": ""
-    },
-
-    "4x2": {
-        "name": "Engineering Placement",
-        "system_prompt": "You determine component placement for engineering assemblies.",
-        "few_shot_examples": [
-            {"input": "Building a motor", "output": "Rotor center, coils surrounding, casing last"},
-            {"input": "Creating circuit", "output": "Power source left, components middle, output right"},
-        ],
-        "test_prompt": ""
-    },
-
-    "5": {
-        "name": "Enchanting Recipe->Enchantment",
-        "system_prompt": "You are an enchanting expert. Predict enchantments from materials.",
-        "few_shot_examples": [
-            {"input": "Diamond + Fire Essence = ?", "output": "Flame Edge Enchantment"},
-            {"input": "Moonstone + Feather = ?", "output": "Levitation Enchantment"},
-        ],
-        "test_prompt": ""
-    },
-
-    "5x2": {
-        "name": "Enchanting Placement",
-        "system_prompt": "You determine rune and material placement for enchanting.",
-        "few_shot_examples": [
-            {"input": "Weapon enchanting", "output": "Runes on blade edge, essence at hilt"},
-            {"input": "Armor enchanting", "output": "Protective runes at chest, enhancement runes at joints"},
-        ],
-        "test_prompt": ""
-    },
-
-    "6": {
-        "name": "Chunk->Hostile",
-        "system_prompt": "You are an enemy designer for a fantasy RPG. Given chunk types and spawn data, generate complete hostile enemy definitions with stats, AI behavior, and loot drops. Return ONLY valid JSON.",
-        "few_shot_examples": [
-            {
-                "input": json.dumps({
-                    "chunkType": "peaceful_forest",
-                    "chunkCategory": "peaceful",
-                    "chunkTheme": "forest",
-                    "enemySpawns": {
-                        "wolf_grey": {
-                            "density": "very_low",
-                            "tier": 1
-                        }
-                    }
-                }, indent=2),
-                "output": json.dumps({
-                    "enemyId": "wolf_grey",
-                    "name": "Grey Wolf",
-                    "tier": 1,
-                    "category": "beast",
-                    "behavior": "passive_patrol",
-                    "stats": {
-                        "health": 80,
-                        "damage": [8, 12],
-                        "defense": 5,
-                        "speed": 1.2,
-                        "aggroRange": 5,
-                        "attackSpeed": 1.0
-                    },
-                    "drops": [
-                        {"materialId": "wolf_pelt", "quantity": [2, 4], "chance": "guaranteed"},
-                        {"materialId": "dire_fang", "quantity": [1, 1], "chance": "low"}
-                    ],
-                    "aiPattern": {
-                        "defaultState": "wander",
-                        "aggroOnDamage": True,
-                        "aggroOnProximity": False,
-                        "fleeAtHealth": 0.2,
-                        "callForHelpRadius": 8
-                    },
-                    "metadata": {
-                        "narrative": "Common grey wolf that roams grasslands. More curious than aggressive.",
-                        "tags": ["wolf", "common", "passive", "starter"]
-                    }
-                }, indent=2)
-            },
-            {
-                "input": json.dumps({
-                    "chunkType": "dangerous_quarry",
-                    "chunkCategory": "dangerous",
-                    "chunkTheme": "quarry",
-                    "enemySpawns": {
-                        "slime_acid": {
-                            "density": "moderate",
-                            "tier": 2
-                        }
-                    }
-                }, indent=2),
-                "output": json.dumps({
-                    "enemyId": "slime_acid",
-                    "name": "Acid Slime",
-                    "tier": 2,
-                    "category": "ooze",
-                    "behavior": "aggressive_swarm",
-                    "stats": {
-                        "health": 120,
-                        "damage": [15, 22],
-                        "defense": 8,
-                        "speed": 0.9,
-                        "aggroRange": 6,
-                        "attackSpeed": 1.0
-                    },
-                    "drops": [
-                        {"materialId": "slime_gel", "quantity": [5, 10], "chance": "guaranteed"},
-                        {"materialId": "living_ichor", "quantity": [2, 3], "chance": "high"},
-                        {"materialId": "shadow_core", "quantity": [1, 1], "chance": "low"}
-                    ],
-                    "aiPattern": {
-                        "defaultState": "patrol",
-                        "aggroOnDamage": True,
-                        "aggroOnProximity": True,
-                        "fleeAtHealth": 0,
-                        "callForHelpRadius": 10,
-                        "specialAbilities": ["acid_damage_over_time"]
-                    },
-                    "metadata": {
-                        "narrative": "Corrosive slime that dissolves anything it touches. Highly aggressive.",
-                        "tags": ["slime", "uncommon", "aggressive", "mid-game"]
-                    }
-                }, indent=2)
-            },
-            {
-                "input": json.dumps({
-                    "chunkType": "rare_forest",
-                    "chunkCategory": "rare",
-                    "chunkTheme": "forest",
-                    "enemySpawns": {
-                        "wolf_elder": {
-                            "density": "low",
-                            "tier": 3
-                        }
-                    }
-                }, indent=2),
-                "output": json.dumps({
-                    "enemyId": "wolf_elder",
-                    "name": "Elder Wolf",
-                    "tier": 3,
-                    "category": "beast",
-                    "behavior": "boss_encounter",
-                    "stats": {
-                        "health": 600,
-                        "damage": [45, 70],
-                        "defense": 25,
-                        "speed": 1.6,
-                        "aggroRange": 12,
-                        "attackSpeed": 1.5
-                    },
-                    "drops": [
-                        {"materialId": "wolf_pelt", "quantity": [8, 12], "chance": "guaranteed"},
-                        {"materialId": "dire_fang", "quantity": [6, 10], "chance": "guaranteed"},
-                        {"materialId": "essence_blood", "quantity": [3, 5], "chance": "high"},
-                        {"materialId": "spectral_thread", "quantity": [2, 3], "chance": "moderate"}
-                    ],
-                    "aiPattern": {
-                        "defaultState": "patrol",
-                        "aggroOnDamage": True,
-                        "aggroOnProximity": True,
-                        "fleeAtHealth": 0,
-                        "callForHelpRadius": 20,
-                        "packCoordination": True,
-                        "specialAbilities": ["howl_buff", "leap_attack"]
-                    },
-                    "metadata": {
-                        "narrative": "Ancient wolf wreathed in shadow. Pack leader that has survived countless battles.",
-                        "tags": ["wolf", "rare", "boss", "end-game"]
-                    }
-                }, indent=2)
-            }
-        ],
-        "test_prompt": """Create an enemy definition for this chunk spawn:
+        },
+        "1x2": {
+            "name": "Smithing Placement",
+            "system_prompt": "You are a crafting designer for an action fantasy sandbox RPG. Given smithing recipes and grid constraints, determine optimal material placement patterns on the crafting grid. Return ONLY valid JSON with placement coordinates.",
+            "test_prompt": ""
+        },
+        "2": {
+            "name": "Refining Recipe→Material",
+            "system_prompt": "You are a refining expert for an action fantasy sandbox RPG. Given refining recipes, generate material definitions for refined outputs like ingots, planks, and processed goods. Return ONLY valid JSON.",
+            "test_prompt": ""
+        },
+        "2x2": {
+            "name": "Refining Placement",
+            "system_prompt": "You are a refining designer for an action fantasy sandbox RPG. Given refining recipes, determine optimal material placement on refinery grids. Return ONLY valid JSON with placement coordinates.",
+            "test_prompt": ""
+        },
+        "3": {
+            "name": "Alchemy Recipe→Potion",
+            "system_prompt": "You are an alchemy master for an action fantasy sandbox RPG. Given alchemy recipes with ingredients, generate complete potion and consumable definitions with effects and durations. Return ONLY valid JSON.",
+            "test_prompt": ""
+        },
+        "3x2": {
+            "name": "Alchemy Placement",
+            "system_prompt": "You are an alchemy designer for an action fantasy sandbox RPG. Given alchemy recipes, determine optimal ingredient placement on brewing grids. Return ONLY valid JSON with placement coordinates.",
+            "test_prompt": ""
+        },
+        "5": {
+            "name": "Enchanting Recipe→Enchantment",
+            "system_prompt": "You are an enchantment crafter for an action fantasy sandbox RPG. Given enchanting recipes and base items, generate enchantment definitions with magical effects and stat bonuses. Return ONLY valid JSON.",
+            "test_prompt": ""
+        },
+        "5x2": {
+            "name": "Enchanting Placement",
+            "system_prompt": "You are an enchantment designer for an action fantasy sandbox RPG. Given enchanting recipes, determine optimal rune and essence placement on enchanting grids. Return ONLY valid JSON with placement coordinates.",
+            "test_prompt": ""
+        },
+        "6": {
+            "name": "Chunk→Hostile Enemy",
+            "system_prompt": "You are an enemy designer for an action fantasy sandbox RPG. Given world chunk types and spawn data, generate complete hostile enemy definitions with stats, AI behaviors, and loot drops. Return ONLY valid JSON.",
+            "test_prompt": """Create an enemy definition for this chunk spawn:
 
 {
   "chunkType": "dangerous_cave",
@@ -386,60 +111,81 @@ Return ONLY the JSON item definition, no extra text."""
 }
 
 Return ONLY the JSON enemy definition, no extra text."""
-    },
+        },
+        "7": {
+            "name": "Drop Source→Material",
+            "system_prompt": "You are a loot designer for an action fantasy sandbox RPG. Given drop sources (enemies, nodes, chests), predict material drop tables with quantities and probabilities. Return ONLY valid JSON.",
+            "test_prompt": ""
+        },
+        "8": {
+            "name": "Chunk→Resource Node",
+            "system_prompt": "You are a world designer for an action fantasy sandbox RPG. Given world chunk characteristics, generate resource node definitions with gathering requirements and yield tables. Return ONLY valid JSON.",
+            "test_prompt": """Create a resource node definition for this chunk:
 
-    "7": {
-        "name": "Drop Source->Material",
-        "system_prompt": "You predict material drops from various sources.",
-        "few_shot_examples": [
-            {"input": "Mining iron ore", "output": "Raw Iron, Stone"},
-            {"input": "Defeating zombie", "output": "Rotten Flesh, rarely Iron Ingot"},
-        ],
-        "test_prompt": ""
-    },
-
-    "8": {
-        "name": "Chunk->Node",
-        "system_prompt": "You predict resource nodes in chunks based on characteristics.",
-        "few_shot_examples": [
-            {"input": "Mountain chunk, high altitude", "output": "Iron Ore, Coal, Emeralds"},
-            {"input": "Desert chunk, surface level", "output": "Sand, Sandstone, Cactus"},
-        ],
-        "test_prompt": ""
-    },
-
-    "10": {
-        "name": "Req->Skill",
-        "system_prompt": "You determine skill unlocks based on requirements met.",
-        "few_shot_examples": [
-            {"input": "Mining Level 10, 100 ore mined", "output": "Unlocked: Efficient Mining Skill"},
-            {"input": "Combat Level 5, defeated 50 enemies", "output": "Unlocked: Power Strike Skill"},
-        ],
-        "test_prompt": ""
-    },
-
-    "11": {
-        "name": "Pre->Title",
-        "system_prompt": "You determine title unlocks based on prerequisites.",
-        "few_shot_examples": [
-            {"input": "Completed 10 quests, helped 20 NPCs", "output": "Title: 'The Helpful'"},
-            {"input": "Defeated dragon, max level achieved", "output": "Title: 'Dragonslayer Supreme'"},
-        ],
-        "test_prompt": ""
-    },
-
-    "15": {
-        "name": "Custom System",
-        "system_prompt": "Custom system prompt here.",
-        "few_shot_examples": [
-            {"input": "Example input 1", "output": "Example output 1"},
-        ],
-        "test_prompt": ""
+{
+  "chunkType": "peaceful_forest",
+  "chunkCategory": "peaceful",
+  "chunkTheme": "forest",
+  "resourceDensity": {
+    "oak_tree": {
+      "density": "very_high",
+      "tierBias": "low"
     }
+  }
 }
 
+Return ONLY the JSON node definition, no extra text."""
+        },
+        "10": {
+            "name": "Requirements→Skill",
+            "system_prompt": "You are a skill designer for an action fantasy sandbox RPG. Given character requirements and gameplay tags, generate skill definitions with effects, costs, and progression paths. Return ONLY valid JSON.",
+            "test_prompt": """Create a skill definition for these requirements:
 
-# ============================================================================
+{
+  "requiredLevel": 5,
+  "requiredSkills": [],
+  "discipline": "combat",
+  "tags": ["damage_boost", "melee", "temporary"]
+}
+
+Return ONLY the JSON skill definition, no extra text."""
+        },
+        "11": {
+            "name": "Prerequisites→Title",
+            "system_prompt": "You are a progression designer for an action fantasy sandbox RPG. Given achievement prerequisites, generate title definitions with bonuses and unlock requirements. Return ONLY valid JSON.",
+            "test_prompt": ""
+        }
+    }
+
+    # Build complete SYSTEMS dictionary
+    systems = {}
+
+    for key, info in system_info.items():
+        systems[key] = {
+            "name": info["name"],
+            "system_prompt": info["system_prompt"],
+            "few_shot_examples": EXTRACTED_EXAMPLES.get(key, []) if USING_EXTRACTED_EXAMPLES else _get_manual_examples(key),
+            "test_prompt": info["test_prompt"]
+        }
+
+    return systems
+
+
+def _get_manual_examples(system_key):
+    """Fallback manual examples if extracted examples not available."""
+    # If extracted examples aren't available, return minimal examples
+    return [
+        {
+            "input": '{"message": "Example input for system ' + system_key + '"}',
+            "output": '{"message": "Example output for system ' + system_key + '"}'
+        }
+    ]
+
+
+# Build the SYSTEMS dictionary
+SYSTEMS = build_systems_dict()
+
+
 # CORE FUNCTIONS
 # ============================================================================
 
@@ -546,19 +292,150 @@ def run_model(system_key):
 
 
 # ============================================================================
+# INTERACTIVE MENU
+# ============================================================================
+
+def display_systems_menu():
+    """Display available systems with descriptions."""
+    print("\n" + "="*80)
+    print("FEW-SHOT LLM - ACTION FANTASY SANDBOX RPG")
+    print("="*80)
+    print("\nAvailable Systems:")
+    print("-"*80)
+
+    for key in sorted(SYSTEMS.keys(), key=lambda x: (x.replace("x", "."), len(x))):
+        system = SYSTEMS[key]
+        name = system["name"]
+        examples_count = len(system.get("few_shot_examples", []))
+        has_test = "✓" if system.get("test_prompt", "").strip() else "✗"
+        print(f"  [{key:4s}] {name:30s} ({examples_count} examples) Test: {has_test}")
+
+    print("-"*80)
+
+
+def get_system_selection():
+    """Get user's system selection."""
+    while True:
+        print("\nOptions:")
+        print("  1. Run ALL systems with test prompts")
+        print("  2. Run a SINGLE system")
+        print("  3. Run a RANGE of systems (e.g., 1-6)")
+        print("  4. Run SPECIFIC systems (e.g., 1,6,8)")
+        print("  5. Exit")
+
+        choice = input("\nEnter your choice (1-5): ").strip()
+
+        if choice == "1":
+            # All systems with test prompts
+            return [key for key, system in SYSTEMS.items() if system.get("test_prompt", "").strip()]
+
+        elif choice == "2":
+            # Single system
+            display_systems_menu()
+            system_key = input("\nEnter system key (e.g., 1, 6, 1x2): ").strip()
+            if system_key in SYSTEMS:
+                return [system_key]
+            else:
+                print(f"Error: System '{system_key}' not found")
+                continue
+
+        elif choice == "3":
+            # Range
+            range_input = input("\nEnter range (e.g., 1-6): ").strip()
+            try:
+                start, end = range_input.split("-")
+                start, end = int(start.strip()), int(end.strip())
+                return [str(i) for i in range(start, end + 1) if str(i) in SYSTEMS]
+            except:
+                print("Error: Invalid range format")
+                continue
+
+        elif choice == "4":
+            # Specific systems
+            systems_input = input("\nEnter system keys separated by commas (e.g., 1,6,8): ").strip()
+            systems = [s.strip() for s in systems_input.split(",")]
+            valid_systems = [s for s in systems if s in SYSTEMS]
+
+            if valid_systems:
+                return valid_systems
+            else:
+                print("Error: No valid systems found")
+                continue
+
+        elif choice == "5":
+            print("\nExiting...")
+            return None
+
+        else:
+            print("Error: Invalid choice")
+
+
+def run_interactive():
+    """Run interactive mode."""
+    display_systems_menu()
+
+    systems_to_run = get_system_selection()
+
+    if not systems_to_run:
+        return
+
+    print(f"\n{'='*80}")
+    print(f"Running {len(systems_to_run)} system(s): {', '.join(systems_to_run)}")
+    print(f"{'='*80}\n")
+
+    results = []
+    for system_key in systems_to_run:
+        print(f"\n{'#'*80}")
+        print(f"# System {system_key}: {SYSTEMS[system_key]['name']}")
+        print(f"{'#'*80}\n")
+
+        result = run_model(system_key)
+        results.append((system_key, result))
+
+        print(f"\n{'='*80}")
+        print(f"Completed system {system_key}")
+        print(f"{'='*80}\n")
+
+        # Ask if user wants to continue
+        if len(systems_to_run) > 1 and system_key != systems_to_run[-1]:
+            continue_prompt = input("Press Enter to continue to next system (or 'q' to quit): ").strip().lower()
+            if continue_prompt == 'q':
+                break
+
+    # Print summary
+    print(f"\n{'='*80}")
+    print("EXECUTION SUMMARY")
+    print(f"{'='*80}")
+
+    for system_key, result in results:
+        if result:
+            status = "✓ SUCCESS"
+            tokens = result.get("usage", {})
+            token_info = f"({tokens.get('input_tokens', 0)} in, {tokens.get('output_tokens', 0)} out)"
+        else:
+            status = "✗ FAILED"
+            token_info = ""
+
+        print(f"  System {system_key:4s}: {status:12s} {token_info}")
+
+    print(f"{'='*80}\n")
+
+
+# ============================================================================
 # MAIN EXECUTION
 # ============================================================================
 
 if __name__ == "__main__":
-    # SELECT WHICH SYSTEM TO RUN HERE
-    # Options: "1", "1x2", "2", "2x2", "3", "3x2", "4", "4x2", "5", "5x2",
-    #          "6", "7", "8", "10", "11", "15"
+    import sys
 
-    SYSTEM_TO_RUN = "1"  # <<< CHANGE THIS TO SELECT SYSTEM
-
-    # Run the selected system
-    run_model(SYSTEM_TO_RUN)
-
-    # To run multiple systems in sequence, uncomment:
-    # for system_key in ["1", "2", "3"]:
-    #     run_model(system_key)
+    if len(sys.argv) > 1:
+        # Command-line mode
+        system_key = sys.argv[1]
+        if system_key in SYSTEMS:
+            run_model(system_key)
+        else:
+            print(f"Error: System '{system_key}' not found")
+            print(f"Available systems: {', '.join(SYSTEMS.keys())}")
+    else:
+        # Interactive mode
+        run_interactive()
