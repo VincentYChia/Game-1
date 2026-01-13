@@ -54,7 +54,7 @@ SYSTEMS = {
                     "effectParams": {"baseDamage": 30},
                     "statMultipliers": {"damage": 1.0, "attackSpeed": 1.0, "durability": 1.0, "weight": 1.0},
                     "requirements": {"level": 1, "stats": {}},
-                    "flags": {"stackable": False, "equippable": True, "repairable": True},
+                    "flags": {"stackable": false, "equippable": true, "repairable": true},
                     "metadata": {
                         "narrative": "A simple iron blade with a wooden handle. Every warrior's first step.",
                         "tags": ["melee", "sword", "versatile", "starter"]
@@ -84,7 +84,7 @@ SYSTEMS = {
                     "effectParams": {"baseDamage": 10},
                     "stats": {"damage": [8, 12], "mining": 10, "durability": [500, 500], "weight": 4.0},
                     "requirements": {"level": 1},
-                    "flags": {"stackable": False, "equippable": True, "repairable": True},
+                    "flags": {"stackable": false, "equippable": true, "repairable": true},
                     "metadata": {
                         "narrative": "Basic copper pickaxe. Your first step into mining.",
                         "tags": ["tool", "pickaxe", "starter"]
@@ -117,7 +117,7 @@ SYSTEMS = {
                     "effectParams": {"baseDamage": 40},
                     "statMultipliers": {"damage": 1.1, "attackSpeed": 1.0, "durability": 1.1, "weight": 1.0},
                     "requirements": {"level": 8, "stats": {"STR": 10}},
-                    "flags": {"stackable": False, "equippable": True, "repairable": True},
+                    "flags": {"stackable": false, "equippable": true, "repairable": true},
                     "metadata": {
                         "narrative": "Balanced steel longsword that flows like water and strikes like thunder.",
                         "tags": ["melee", "sword", "versatile", "quality"]
@@ -233,159 +233,12 @@ Return ONLY the JSON item definition, no extra text."""
 
     "6": {
         "name": "Chunk->Hostile",
-        "system_prompt": "You are an enemy designer for a fantasy RPG. Given chunk types and spawn data, generate complete hostile enemy definitions with stats, AI behavior, and loot drops. Return ONLY valid JSON.",
+        "system_prompt": "You predict hostile spawns based on chunk characteristics.",
         "few_shot_examples": [
-            {
-                "input": json.dumps({
-                    "chunkType": "peaceful_forest",
-                    "chunkCategory": "peaceful",
-                    "chunkTheme": "forest",
-                    "enemySpawns": {
-                        "wolf_grey": {
-                            "density": "very_low",
-                            "tier": 1
-                        }
-                    }
-                }, indent=2),
-                "output": json.dumps({
-                    "enemyId": "wolf_grey",
-                    "name": "Grey Wolf",
-                    "tier": 1,
-                    "category": "beast",
-                    "behavior": "passive_patrol",
-                    "stats": {
-                        "health": 80,
-                        "damage": [8, 12],
-                        "defense": 5,
-                        "speed": 1.2,
-                        "aggroRange": 5,
-                        "attackSpeed": 1.0
-                    },
-                    "drops": [
-                        {"materialId": "wolf_pelt", "quantity": [2, 4], "chance": "guaranteed"},
-                        {"materialId": "dire_fang", "quantity": [1, 1], "chance": "low"}
-                    ],
-                    "aiPattern": {
-                        "defaultState": "wander",
-                        "aggroOnDamage": True,
-                        "aggroOnProximity": False,
-                        "fleeAtHealth": 0.2,
-                        "callForHelpRadius": 8
-                    },
-                    "metadata": {
-                        "narrative": "Common grey wolf that roams grasslands. More curious than aggressive.",
-                        "tags": ["wolf", "common", "passive", "starter"]
-                    }
-                }, indent=2)
-            },
-            {
-                "input": json.dumps({
-                    "chunkType": "dangerous_quarry",
-                    "chunkCategory": "dangerous",
-                    "chunkTheme": "quarry",
-                    "enemySpawns": {
-                        "slime_acid": {
-                            "density": "moderate",
-                            "tier": 2
-                        }
-                    }
-                }, indent=2),
-                "output": json.dumps({
-                    "enemyId": "slime_acid",
-                    "name": "Acid Slime",
-                    "tier": 2,
-                    "category": "ooze",
-                    "behavior": "aggressive_swarm",
-                    "stats": {
-                        "health": 120,
-                        "damage": [15, 22],
-                        "defense": 8,
-                        "speed": 0.9,
-                        "aggroRange": 6,
-                        "attackSpeed": 1.0
-                    },
-                    "drops": [
-                        {"materialId": "slime_gel", "quantity": [5, 10], "chance": "guaranteed"},
-                        {"materialId": "living_ichor", "quantity": [2, 3], "chance": "high"},
-                        {"materialId": "shadow_core", "quantity": [1, 1], "chance": "low"}
-                    ],
-                    "aiPattern": {
-                        "defaultState": "patrol",
-                        "aggroOnDamage": True,
-                        "aggroOnProximity": True,
-                        "fleeAtHealth": 0,
-                        "callForHelpRadius": 10,
-                        "specialAbilities": ["acid_damage_over_time"]
-                    },
-                    "metadata": {
-                        "narrative": "Corrosive slime that dissolves anything it touches. Highly aggressive.",
-                        "tags": ["slime", "uncommon", "aggressive", "mid-game"]
-                    }
-                }, indent=2)
-            },
-            {
-                "input": json.dumps({
-                    "chunkType": "rare_forest",
-                    "chunkCategory": "rare",
-                    "chunkTheme": "forest",
-                    "enemySpawns": {
-                        "wolf_elder": {
-                            "density": "low",
-                            "tier": 3
-                        }
-                    }
-                }, indent=2),
-                "output": json.dumps({
-                    "enemyId": "wolf_elder",
-                    "name": "Elder Wolf",
-                    "tier": 3,
-                    "category": "beast",
-                    "behavior": "boss_encounter",
-                    "stats": {
-                        "health": 600,
-                        "damage": [45, 70],
-                        "defense": 25,
-                        "speed": 1.6,
-                        "aggroRange": 12,
-                        "attackSpeed": 1.5
-                    },
-                    "drops": [
-                        {"materialId": "wolf_pelt", "quantity": [8, 12], "chance": "guaranteed"},
-                        {"materialId": "dire_fang", "quantity": [6, 10], "chance": "guaranteed"},
-                        {"materialId": "essence_blood", "quantity": [3, 5], "chance": "high"},
-                        {"materialId": "spectral_thread", "quantity": [2, 3], "chance": "moderate"}
-                    ],
-                    "aiPattern": {
-                        "defaultState": "patrol",
-                        "aggroOnDamage": True,
-                        "aggroOnProximity": True,
-                        "fleeAtHealth": 0,
-                        "callForHelpRadius": 20,
-                        "packCoordination": True,
-                        "specialAbilities": ["howl_buff", "leap_attack"]
-                    },
-                    "metadata": {
-                        "narrative": "Ancient wolf wreathed in shadow. Pack leader that has survived countless battles.",
-                        "tags": ["wolf", "rare", "boss", "end-game"]
-                    }
-                }, indent=2)
-            }
+            {"input": "Dark cave chunk, low light level", "output": "Zombies, Spiders"},
+            {"input": "Nether chunk, lava present", "output": "Zombie Pigmen, Ghasts"},
         ],
-        "test_prompt": """Create an enemy definition for this chunk spawn:
-
-{
-  "chunkType": "dangerous_cave",
-  "chunkCategory": "dangerous",
-  "chunkTheme": "cave",
-  "enemySpawns": {
-    "beetle_armored": {
-      "density": "moderate",
-      "tier": 2
-    }
-  }
-}
-
-Return ONLY the JSON enemy definition, no extra text."""
+        "test_prompt": ""
     },
 
     "7": {
@@ -525,9 +378,6 @@ def run_model(system_key):
         filename = f"{OUTPUT_DIR}/system_{system_key}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(filename, 'w') as f:
             json.dump(result, f, indent=2)
-
-        # Add output file path to result
-        result["output_file"] = filename
 
         print(f"\n{'=' * 60}")
         print("RESPONSE:")
