@@ -1,23 +1,23 @@
 {
-  "timestamp": "2026-01-13T22:12:29.841675",
+  "timestamp": "2026-01-13T22:43:06.768835",
   "model": "claude-sonnet-4-20250514",
   "parameters": {
     "max_tokens": 2000,
     "temperature": 1.0,
     "top_p": 0.999
   },
-  "systems_tested": 2,
-  "systems_succeeded": 2,
+  "systems_tested": 9,
+  "systems_succeeded": 9,
   "systems_failed": 0,
   "systems_skipped": 0,
   "validation": {
-    "total": 3,
-    "valid": 0,
-    "invalid": 3,
-    "success_rate": 0.0
+    "total": 12,
+    "valid": 8,
+    "invalid": 4,
+    "success_rate": 66.66666666666666
   },
   "token_usage": {
-    "total_input": 3148,
-    "total_output": 767
+    "total_input": 24432,
+    "total_output": 2282
   }
 }

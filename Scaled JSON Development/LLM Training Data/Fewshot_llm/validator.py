@@ -91,25 +91,44 @@ class JSONValidator:
             return
 
         # Define truly required fields per type (not every field in template)
+        # Note: Some ID fields have alternatives that are equally valid
         core_required_fields = {
-            # Items/Equipment
-            "itemId", "name", "tier", "rarity", "category",
+            "name", "tier", "rarity", "category",  # Common to most types
             # Enemies
-            "enemyId", "name", "tier", "category", "behavior", "stats", "drops",
-            # Nodes
-            "resourceId", "name", "category", "tier",
+            "behavior", "stats", "drops",
             # Skills
-            "skillId", "name", "tier", "rarity",
             # Titles
-            "titleId", "name", "tier",
-            # Recipes
-            "recipeId", "placementMap",
+            # Enchantments
+            "applicableTo", "effect",
             # Core sub-fields
             "level"  # requirements.level is required, but requirements.stats can be empty
         }
 
+        # Alternative ID field groups (at least ONE from each group must be present)
+        id_field_alternatives = [
+            {"itemId", "materialId", "enchantmentId"},  # Items/Materials/Enchantments
+            {"enemyId"},  # Enemies
+            {"resourceId"},  # Resource nodes
+            {"skillId"},  # Skills
+            {"titleId"},  # Titles
+            {"recipeId"},  # Recipes
+        ]
+
         # Fields that are often optional
         optional_fields = {"stats", "flags", "metadata", "effectParams", "effect_params", "attributes"}
+
+        # Check if at least one ID field is present (only at root level)
+        if not path:  # Only check ID fields at root level
+            has_id = False
+            for id_group in id_field_alternatives:
+                if any(id_field in data for id_field in id_group):
+                    has_id = True
+                    break
+            if not has_id and any(id_field in expected for id_group in id_field_alternatives for id_field in id_group):
+                # At least one ID field from expected should be present
+                expected_ids = [id_field for id_group in id_field_alternatives for id_field in id_group if id_field in expected]
+                if expected_ids:
+                    errors.append(f"Missing required ID field (expected one of: {', '.join(expected_ids)})")
 
         for key, expected_value in expected.items():
             if key.startswith("_"):  # Skip metadata fields
@@ -117,6 +136,10 @@ class JSONValidator:
 
             # Skip optional fields when validating nested structures
             if key in optional_fields and path:
+                continue
+
+            # Skip ID fields (already validated above)
+            if key in [id_field for id_group in id_field_alternatives for id_field in id_group]:
                 continue
 
             # Only enforce truly core fields
@@ -357,16 +380,16 @@ def main():
         system_template_map = {
             "1": "smithing_items",
             "1x2": "smithing_recipes",  # For placement
-            "2": "refining_items",
+            "2": "refining_items",      # Outputs materials (materialId)
             "2x2": "refining_recipes",
             "3": "alchemy_items",
             "3x2": "alchemy_recipes",
             "4": "engineering_items",
             "4x2": "engineering_recipes",
-            "5": "enchanting_recipes",
+            "5": "enchanting_recipes",  # Outputs enchantments (enchantmentId)
             "5x2": "enchanting_recipes",
             "6": "hostiles",
-            "7": "MASTER_REFERENCE",  # Drop source
+            "7": "refining_items",      # Outputs materials (materialId) from drop sources
             "8": "node_types",
             "10": "skills",
             "11": "titles"

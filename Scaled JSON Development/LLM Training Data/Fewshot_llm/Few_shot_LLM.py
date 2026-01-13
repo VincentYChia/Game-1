@@ -66,7 +66,19 @@ Return ONLY the JSON item definition, no extra text."""
         "2": {
             "name": "Refining Recipe→Material",
             "system_prompt": "You are a refining expert for an action fantasy sandbox RPG. Given refining recipes, generate material definitions for refined outputs like ingots, planks, and processed goods. Return ONLY valid JSON.",
-            "test_prompt": ""
+            "test_prompt": """Create a material definition for this refining recipe:
+
+{
+  "recipeId": "refining_steel_ore_to_ingot",
+  "stationTier": 1,
+  "stationType": "refining",
+  "inputs": [
+    {"materialId": "steel_ore", "quantity": 1}
+  ],
+  "narrative": "Forging steel from carbon-rich ore. Requires intense heat."
+}
+
+Return ONLY the JSON material definition, no extra text."""
         },
         "2x2": {
             "name": "Refining Placement",
@@ -76,7 +88,21 @@ Return ONLY the JSON item definition, no extra text."""
         "3": {
             "name": "Alchemy Recipe→Potion",
             "system_prompt": "You are an alchemy master for an action fantasy sandbox RPG. Given alchemy recipes with ingredients, generate complete potion and consumable definitions with effects and durations. Return ONLY valid JSON.",
-            "test_prompt": ""
+            "test_prompt": """Create a potion definition for this alchemy recipe:
+
+{
+  "recipeId": "alchemy_greater_mana_potion",
+  "stationTier": 2,
+  "stationType": "alchemy",
+  "inputs": [
+    {"materialId": "arcane_dust", "quantity": 3},
+    {"materialId": "moonflower", "quantity": 2},
+    {"materialId": "crystal_shard", "quantity": 1}
+  ],
+  "narrative": "A potent mixture of arcane ingredients. Restores magical energy and enhances spellcasting."
+}
+
+Return ONLY the JSON potion definition, no extra text."""
         },
         "3x2": {
             "name": "Alchemy Placement",
@@ -86,7 +112,22 @@ Return ONLY the JSON item definition, no extra text."""
         "5": {
             "name": "Enchanting Recipe→Enchantment",
             "system_prompt": "You are an enchantment crafter for an action fantasy sandbox RPG. Given enchanting recipes and base items, generate enchantment definitions with magical effects and stat bonuses. Return ONLY valid JSON.",
-            "test_prompt": ""
+            "test_prompt": """Create an enchantment definition for this enchanting recipe:
+
+{
+  "recipeId": "enchanting_protection_advanced",
+  "enchantmentId": "protection_2",
+  "stationTier": 2,
+  "stationType": "enchanting",
+  "inputs": [
+    {"materialId": "guardian_essence", "quantity": 5},
+    {"materialId": "steel_ingot", "quantity": 4},
+    {"materialId": "sapphire", "quantity": 2}
+  ],
+  "narrative": "Advanced protective enchantment using guardian essence. Creates a magical barrier that deflects harm."
+}
+
+Return ONLY the JSON enchantment definition, no extra text."""
         },
         "5x2": {
             "name": "Enchanting Placement",
@@ -115,7 +156,18 @@ Return ONLY the JSON enemy definition, no extra text."""
         "7": {
             "name": "Drop Source→Material",
             "system_prompt": "You are a loot designer for an action fantasy sandbox RPG. Given drop sources (enemies, nodes, chests), predict material drop tables with quantities and probabilities. Return ONLY valid JSON.",
-            "test_prompt": ""
+            "test_prompt": """Create a material definition for this drop source:
+
+{
+  "sourceType": "node",
+  "sourceName": "Ancient Mithril Vein",
+  "sourceTier": 3,
+  "materialTier": 3,
+  "materialCategory": "metal",
+  "allSources": ["mithril_vein_ancient"]
+}
+
+Return ONLY the JSON material definition, no extra text."""
         },
         "8": {
             "name": "Chunk→Resource Node",
@@ -153,7 +205,20 @@ Return ONLY the JSON skill definition, no extra text."""
         "11": {
             "name": "Prerequisites→Title",
             "system_prompt": "You are a progression designer for an action fantasy sandbox RPG. Given achievement prerequisites, generate title definitions with bonuses and unlock requirements. Return ONLY valid JSON.",
-            "test_prompt": ""
+            "test_prompt": """Create a title definition for these prerequisites:
+
+{
+  "category": "combat",
+  "tier": 2,
+  "requirements": {
+    "enemiesDefeated": 500,
+    "bossesSlain": 10,
+    "damageDealt": 50000
+  },
+  "tags": ["warrior", "combat", "elite"]
+}
+
+Return ONLY the JSON title definition, no extra text."""
         }
     }
 

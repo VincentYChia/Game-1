@@ -22,16 +22,16 @@ from validator import JSONValidator
 SYSTEM_TEMPLATE_MAP = {
     "1": "smithing_items",
     "1x2": "smithing_recipes",  # For placement
-    "2": "refining_items",
+    "2": "refining_items",      # Outputs materials (materialId)
     "2x2": "refining_recipes",
     "3": "alchemy_items",
     "3x2": "alchemy_recipes",
     "4": "engineering_items",
     "4x2": "engineering_recipes",
-    "5": "enchanting_recipes",
+    "5": "enchanting_recipes",  # Outputs enchantments (enchantmentId)
     "5x2": "enchanting_recipes",
     "6": "hostiles",
-    "7": "MASTER_REFERENCE",
+    "7": "refining_items",      # Outputs materials (materialId) from drop sources
     "8": "node_types",
     "10": "skills",
     "11": "titles"

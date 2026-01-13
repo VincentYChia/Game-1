@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-01-13T22:42:52.408082",
+  "system_key": "7",
+  "system_name": "Drop Source\u2192Material",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are a loot designer for an action fantasy sandbox RPG. Given drop sources (enemies, nodes, chests), predict material drop tables with quantities and probabilities. Return ONLY valid JSON.",
+  "few_shot_examples": [
+    {
+      "input": "{\n  \"sourceType\": \"node\",\n  \"sourceName\": \"Copper Vein\",\n  \"sourceTier\": 1,\n  \"materialTier\": 1,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\n    \"copper_vein\"\n  ]\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"A soft, reddish metal found in shallow veins near the surface. Easy to work with basic tools but lacks the durability needed for serious combat. The foundation of all smithing - every blacksmith's first lesson.\",\n    \"tags\": [\n      \"basic\",\n      \"metal\",\n      \"starter\"\n    ]\n  },\n  \"materialId\": \"copper_ore\",\n  \"name\": \"Copper Ore\",\n  \"tier\": 1,\n  \"rarity\": \"common\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"sourceType\": \"node\",\n  \"sourceName\": \"Iron Deposit\",\n  \"sourceTier\": 1,\n  \"materialTier\": 1,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\n    \"iron_deposit\"\n  ]\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Sturdy grey metal from common deposits throughout the land. The workhorse of civilization - reliable, abundant, and strong enough for most purposes.\",\n    \"tags\": [\n      \"basic\",\n      \"metal\",\n      \"standard\"\n    ]\n  },\n  \"materialId\": \"iron_ore\",\n  \"name\": \"Iron Ore\",\n  \"tier\": 1,\n  \"rarity\": \"common\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"sourceType\": \"node\",\n  \"sourceName\": \"Steel Node\",\n  \"sourceTier\": 2,\n  \"materialTier\": 2,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\n    \"steel_node\"\n  ]\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Harder and more durable than pure iron. The secret of its strength lies in its carbon-rich structure. A true warrior's metal.\",\n    \"tags\": [\n      \"basic\",\n      \"metal\",\n      \"advanced\"\n    ]\n  },\n  \"materialId\": \"steel_ore\",\n  \"name\": \"Steel Ore\",\n  \"tier\": 2,\n  \"rarity\": \"uncommon\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"sourceType\": \"node\",\n  \"sourceName\": \"Mithril Cache\",\n  \"sourceTier\": 2,\n  \"materialTier\": 2,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\n    \"mithril_cache\"\n  ]\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Legendary silver-white metal that seems to drink in moonlight and starshine. Impossibly light yet incredibly strong.\",\n    \"tags\": [\n      \"basic\",\n      \"metal\",\n      \"legendary\"\n    ]\n  },\n  \"materialId\": \"mithril_ore\",\n  \"name\": \"Mithril Ore\",\n  \"tier\": 2,\n  \"rarity\": \"rare\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"sourceType\": \"node\",\n  \"sourceName\": \"Adamantine Lode\",\n  \"sourceTier\": 3,\n  \"materialTier\": 3,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\n    \"adamantine_lode\"\n  ]\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Dark, impossibly hard metal that absorbs light. Found only in the deepest caverns where the world's bones are exposed.\",\n    \"tags\": [\n      \"basic\",\n      \"metal\",\n      \"rare\"\n    ]\n  },\n  \"materialId\": \"adamantine_ore\",\n  \"name\": \"Adamantine Ore\",\n  \"tier\": 3,\n  \"rarity\": \"rare\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"sourceType\": \"hostile\",\n  \"sourceName\": \"Titan Beetle\",\n  \"sourceTier\": 4,\n  \"materialTier\": 3,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\n    \"beetle_titan\"\n  ]\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"rare\"\n    ]\n  },\n  \"materialId\": \"adamantine_ingot\",\n  \"name\": \"Adamantine Ingot\",\n  \"tier\": 3,\n  \"rarity\": \"rare\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"sourceType\": \"node\",\n  \"sourceName\": \"Etherion Nexus\",\n  \"sourceTier\": 4,\n  \"materialTier\": 4,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\n    \"etherion_nexus\"\n  ]\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Metal that simultaneously exists in multiple states. Scholars argue whether it's matter or energy, present or future. It is all of these and none.\",\n    \"tags\": [\n      \"basic\",\n      \"metal\",\n      \"mythical\",\n      \"temporal\"\n    ]\n  },\n  \"materialId\": \"etherion_ore\",\n  \"name\": \"Etherion Ore\",\n  \"tier\": 4,\n  \"rarity\": \"legendary\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"sourceType\": \"hostile\",\n  \"sourceName\": \"Primordial Entity\",\n  \"sourceTier\": 4,\n  \"materialTier\": 4,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\n    \"entity_primordial\"\n  ]\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"mythical\",\n      \"temporal\"\n    ]\n  },\n  \"materialId\": \"etherion_ingot\",\n  \"name\": \"Etherion Ingot\",\n  \"tier\": 4,\n  \"rarity\": \"legendary\",\n  \"category\": \"metal\"\n}"
+    }
+  ],
+  "test_prompt": "Create a material definition for this drop source:\n\n{\n  \"sourceType\": \"node\",\n  \"sourceName\": \"Ancient Mithril Vein\",\n  \"sourceTier\": 3,\n  \"materialTier\": 3,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\"mithril_vein_ancient\"]\n}\n\nReturn ONLY the JSON material definition, no extra text.",
+  "response": "{\n  \"metadata\": {\n    \"narrative\": \"Ancient veins of mithril that have absorbed centuries of magical energy. The metal gleams with an inner light and hums with power, far superior to common mithril.\",\n    \"tags\": [\n      \"basic\",\n      \"metal\",\n      \"ancient\",\n      \"magical\"\n    ]\n  },\n  \"materialId\": \"ancient_mithril_ore\",\n  \"name\": \"Ancient Mithril Ore\",\n  \"tier\": 3,\n  \"rarity\": \"rare\",\n  \"category\": \"metal\"\n}",
+  "usage": {
+    "input_tokens": 1810,
+    "output_tokens": 141
+  }
+}

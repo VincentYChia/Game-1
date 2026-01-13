@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-01-13T22:43:06.739324",
+  "system_key": "11",
+  "system_name": "Prerequisites\u2192Title",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are a progression designer for an action fantasy sandbox RPG. Given achievement prerequisites, generate title definitions with bonuses and unlock requirements. Return ONLY valid JSON.",
+  "few_shot_examples": [
+    {
+      "input": "{\n  \"category\": \"\",\n  \"tier\": 1,\n  \"requirements\": {},\n  \"tags\": []\n}",
+      "output": "{\n  \"titleId\": \"novice_miner\",\n  \"name\": \"Novice Miner\",\n  \"titleType\": \"gathering\",\n  \"difficultyTier\": \"novice\",\n  \"description\": \"Your first steps into the depths. Every mine begins with a single swing.\",\n  \"bonuses\": {\n    \"miningDamage\": 0.1,\n    \"miningSpeed\": 0.0,\n    \"rareOreChance\": 0.0\n  },\n  \"prerequisites\": {\n    \"activities\": {\n      \"oresMined\": 100\n    },\n    \"requiredTitles\": [],\n    \"characterLevel\": 0\n  },\n  \"acquisitionMethod\": \"guaranteed_milestone\",\n  \"isHidden\": false,\n  \"narrative\": \"The stone remembers your first strike. Keep swinging.\"\n}"
+    },
+    {
+      "input": "{\n  \"category\": \"\",\n  \"tier\": 1,\n  \"requirements\": {},\n  \"tags\": []\n}",
+      "output": "{\n  \"titleId\": \"novice_lumberjack\",\n  \"name\": \"Novice Lumberjack\",\n  \"titleType\": \"gathering\",\n  \"difficultyTier\": \"novice\",\n  \"description\": \"The forest acknowledges your presence. Trees fall before you.\",\n  \"bonuses\": {\n    \"forestryDamage\": 0.1,\n    \"forestrySpeed\": 0.0,\n    \"rareWoodChance\": 0.0\n  },\n  \"prerequisites\": {\n    \"activities\": {\n      \"treesChopped\": 100\n    },\n    \"requiredTitles\": [],\n    \"characterLevel\": 0\n  },\n  \"acquisitionMethod\": \"guaranteed_milestone\",\n  \"isHidden\": false,\n  \"narrative\": \"Every great lumberjack started by felling their hundredth tree.\"\n}"
+    },
+    {
+      "input": "{\n  \"category\": \"\",\n  \"tier\": 1,\n  \"requirements\": {},\n  \"tags\": []\n}",
+      "output": "{\n  \"titleId\": \"novice_smith\",\n  \"name\": \"Novice Smith\",\n  \"titleType\": \"crafting\",\n  \"difficultyTier\": \"novice\",\n  \"description\": \"The forge accepts you. Your hammer rings with purpose.\",\n  \"bonuses\": {\n    \"smithingTime\": 0.1,\n    \"smithingQuality\": 0.0,\n    \"firstTryBonus\": 0.0\n  },\n  \"prerequisites\": {\n    \"activities\": {\n      \"itemsSmithed\": 50\n    },\n    \"requiredTitles\": [],\n    \"characterLevel\": 0\n  },\n  \"acquisitionMethod\": \"guaranteed_milestone\",\n  \"isHidden\": false,\n  \"narrative\": \"Heat, hammer, shape. The trinity of the smith begins with you.\"\n}"
+    },
+    {
+      "input": "{\n  \"category\": \"\",\n  \"tier\": 1,\n  \"requirements\": {},\n  \"tags\": []\n}",
+      "output": "{\n  \"titleId\": \"novice_warrior\",\n  \"name\": \"Novice Warrior\",\n  \"titleType\": \"combat\",\n  \"difficultyTier\": \"novice\",\n  \"description\": \"First blood has been drawn. You've tasted battle and survived.\",\n  \"bonuses\": {\n    \"meleeDamage\": 0.1,\n    \"criticalChance\": 0.0,\n    \"attackSpeed\": 0.0\n  },\n  \"prerequisites\": {\n    \"activities\": {\n      \"enemiesDefeated\": 50\n    },\n    \"requiredTitles\": [],\n    \"characterLevel\": 0\n  },\n  \"acquisitionMethod\": \"guaranteed_milestone\",\n  \"isHidden\": false,\n  \"narrative\": \"Fifty foes have fallen. You're no longer prey.\"\n}"
+    },
+    {
+      "input": "{\n  \"category\": \"\",\n  \"tier\": 1,\n  \"requirements\": {},\n  \"tags\": []\n}",
+      "output": "{\n  \"titleId\": \"apprentice_flame_miner\",\n  \"name\": \"Apprentice Flame Miner\",\n  \"titleType\": \"gathering\",\n  \"difficultyTier\": \"apprentice\",\n  \"description\": \"Fire-veined ores call to you. The heat of the deep welcomes your touch.\",\n  \"bonuses\": {\n    \"miningDamage\": 0.25,\n    \"fireOreChance\": 0.15,\n    \"elementalAfinity\": \"fire\"\n  },\n  \"prerequisites\": {\n    \"activities\": {\n      \"oresMined\": 1000,\n      \"fireOresMined\": 200\n    },\n    \"requiredTitles\": [\n      \"novice_miner\"\n    ],\n    \"characterLevel\": 5\n  },\n  \"acquisitionMethod\": \"event_based_rng\",\n  \"generationChance\": 0.2,\n  \"isHidden\": false,\n  \"narrative\": \"The forge burns hotter with ores touched by flame. You seek them instinctively.\"\n}"
+    },
+    {
+      "input": "{\n  \"category\": \"\",\n  \"tier\": 1,\n  \"requirements\": {},\n  \"tags\": []\n}",
+      "output": "{\n  \"titleId\": \"journeyman_refiner\",\n  \"name\": \"Journeyman Refiner\",\n  \"titleType\": \"crafting\",\n  \"difficultyTier\": \"journeyman\",\n  \"description\": \"Impurities flee before your knowledge. Material transformation is your domain.\",\n  \"bonuses\": {\n    \"refiningPrecision\": 0.5,\n    \"alloyQuality\": 0.25,\n    \"materialYield\": 0.1\n  },\n  \"prerequisites\": {\n    \"activities\": {\n      \"materialsRefined\": 500,\n      \"alloysCreated\": 50\n    },\n    \"requiredTitles\": [\n      \"novice_refiner\"\n    ],\n    \"characterLevel\": 10\n  },\n  \"acquisitionMethod\": \"event_based_rng\",\n  \"generationChance\": 0.1,\n  \"isHidden\": false,\n  \"narrative\": \"You see what others miss: the potential locked within raw matter.\"\n}"
+    },
+    {
+      "input": "{\n  \"category\": \"\",\n  \"tier\": 1,\n  \"requirements\": {},\n  \"tags\": []\n}",
+      "output": "{\n  \"titleId\": \"expert_battle_sage\",\n  \"name\": \"Expert Battle Sage\",\n  \"titleType\": \"combat\",\n  \"difficultyTier\": \"expert\",\n  \"description\": \"Combat flows through you like water. Blade and mind move as one.\",\n  \"bonuses\": {\n    \"meleeDamage\": 1.0,\n    \"criticalChance\": 0.2,\n    \"combatSkillExp\": 0.25,\n    \"counterChance\": 0.15\n  },\n  \"prerequisites\": {\n    \"activities\": {\n      \"enemiesDefeated\": 1000,\n      \"criticalHits\": 500,\n      \"perfectDodges\": 100\n    },\n    \"requiredTitles\": [\n      \"journeyman_warrior\"\n    ],\n    \"characterLevel\": 20\n  },\n  \"acquisitionMethod\": \"event_based_rng\",\n  \"generationChance\": 0.05,\n  \"isHidden\": false,\n  \"narrative\": \"You don't fight. You dance. And everything around you dies beautifully.\"\n}"
+    },
+    {
+      "input": "{\n  \"category\": \"\",\n  \"tier\": 1,\n  \"requirements\": {},\n  \"tags\": []\n}",
+      "output": "{\n  \"titleId\": \"master_eternal_smith\",\n  \"name\": \"Master Eternal Smith\",\n  \"titleType\": \"crafting\",\n  \"difficultyTier\": \"master\",\n  \"description\": \"Legends speak of smiths who forged the impossible. You are one of them.\",\n  \"bonuses\": {\n    \"smithingTime\": 2.0,\n    \"smithingQuality\": 0.5,\n    \"firstTryBonus\": 0.1,\n    \"durabilityBonus\": 0.25,\n    \"legendaryChance\": 0.05\n  },\n  \"prerequisites\": {\n    \"activities\": {\n      \"itemsSmithed\": 5000,\n      \"legendaryItemsCreated\": 10,\n      \"perfectCrafts\": 500\n    },\n    \"requiredTitles\": [\n      \"expert_master_smith\"\n    ],\n    \"characterLevel\": 40\n  },\n  \"acquisitionMethod\": \"special_achievement\",\n  \"generationChance\": 0.02,\n  \"isHidden\": false,\n  \"narrative\": \"When you strike the anvil, gods pause to listen. Your work transcends mortality.\"\n}"
+    }
+  ],
+  "test_prompt": "Create a title definition for these prerequisites:\n\n{\n  \"category\": \"combat\",\n  \"tier\": 2,\n  \"requirements\": {\n    \"enemiesDefeated\": 500,\n    \"bossesSlain\": 10,\n    \"damageDealt\": 50000\n  },\n  \"tags\": [\"warrior\", \"combat\", \"elite\"]\n}\n\nReturn ONLY the JSON title definition, no extra text.",
+  "response": "{\n  \"titleId\": \"journeyman_elite_warrior\",\n  \"name\": \"Journeyman Elite Warrior\",\n  \"titleType\": \"combat\",\n  \"difficultyTier\": \"journeyman\",\n  \"description\": \"Champions fall before your blade. You stand among the elite few who hunt giants.\",\n  \"bonuses\": {\n    \"meleeDamage\": 0.4,\n    \"criticalChance\": 0.1,\n    \"bossDamage\": 0.25,\n    \"combatExp\": 0.15\n  },\n  \"prerequisites\": {\n    \"activities\": {\n      \"enemiesDefeated\": 500,\n      \"bossesSlain\": 10,\n      \"damageDealt\": 50000\n    },\n    \"requiredTitles\": [\n      \"novice_warrior\"\n    ],\n    \"characterLevel\": 10\n  },\n  \"acquisitionMethod\": \"event_based_rng\",\n  \"generationChance\": 0.15,\n  \"isHidden\": false,\n  \"narrative\": \"Ten titans have fallen to your steel. Lesser foes scatter at your approach.\"\n}",
+  "usage": {
+    "input_tokens": 2372,
+    "output_tokens": 282
+  }
+}
