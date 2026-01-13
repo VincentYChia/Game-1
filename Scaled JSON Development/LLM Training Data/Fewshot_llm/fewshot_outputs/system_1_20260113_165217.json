@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-01-13T16:52:17.315175",
+  "system_key": "1",
+  "system_name": "Smith Recipe->Item",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are a crafting expert. Given smithing recipes, predict the resulting item.",
+  "few_shot_examples": [
+    {
+      "input": "Iron Ingot + Iron Ingot = ?",
+      "output": "Iron Plate"
+    },
+    {
+      "input": "Steel Bar + Wood Plank = ?",
+      "output": "Steel Hammer"
+    }
+  ],
+  "test_prompt": "",
+  "response": "I understand! You'd like me to predict crafting results based on smithing recipes. I can see the pattern from your examples:\n\n- Iron Ingot + Iron Ingot = Iron Plate (combining similar materials to make a flat/sheet form)\n- Steel Bar + Wood Plank = Steel Hammer (combining metal and wood to make a tool)\n\nPlease provide a smithing recipe and I'll predict the resulting item based on typical crafting logic!",
+  "usage": {
+    "input_tokens": 77,
+    "output_tokens": 101
+  }
+}
