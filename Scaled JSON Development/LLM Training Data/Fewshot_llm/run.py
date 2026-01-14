@@ -44,7 +44,7 @@ def load_config():
     system_prompts = {}
     prompts_dir = 'prompts/system_prompts'
     for system_key in system_metadata.keys():
-        prompt_file = f"{prompts_dir}/system_{system_key}.md"
+        prompt_file = f"{prompts_dir}/system_{system_key}.txt"
         if os.path.exists(prompt_file):
             with open(prompt_file, 'r') as f:
                 system_prompts[system_key] = {

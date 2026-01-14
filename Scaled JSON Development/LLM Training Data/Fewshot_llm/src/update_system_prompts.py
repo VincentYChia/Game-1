@@ -40,7 +40,7 @@ def update_system_prompts():
         template_name = metadata.get("template")
 
         # Load base prompt
-        base_file = components_base_dir / f"system_{system_key}_base.md"
+        base_file = components_base_dir / f"system_{system_key}_base.txt"
         if not base_file.exists():
             print(f"⚠️  Base prompt not found for system {system_key}, skipping...")
             continue
@@ -51,7 +51,7 @@ def update_system_prompts():
         # Load enhanced prompt if available
         enhanced_prompt = ""
         if template_name:
-            enhanced_file = enhanced_dir / f"{template_name}_prompt.md"
+            enhanced_file = enhanced_dir / f"{template_name}_prompt.txt"
             if enhanced_file.exists():
                 with open(enhanced_file, 'r') as f:
                     enhanced_prompt = f.read()
@@ -63,7 +63,7 @@ def update_system_prompts():
             combined = base_prompt
 
         # Save final prompt
-        output_file = output_dir / f"system_{system_key}.md"
+        output_file = output_dir / f"system_{system_key}.txt"
         with open(output_file, 'w') as f:
             f.write(combined)
 

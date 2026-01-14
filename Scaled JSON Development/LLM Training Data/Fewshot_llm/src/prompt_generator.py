@@ -188,7 +188,7 @@ class PromptGenerator:
 
         for template_name in self.libraries.keys():
             prompt = self.generate_prompt(template_name)
-            output_file = output_dir / f"{template_name}_prompt.md"
+            output_file = output_dir / f"{template_name}_prompt.txt"
 
             with open(output_file, 'w') as f:
                 f.write(prompt)

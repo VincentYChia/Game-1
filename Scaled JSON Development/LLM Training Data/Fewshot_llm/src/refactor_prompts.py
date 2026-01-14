@@ -59,7 +59,7 @@ def extract_and_save_base_prompts():
     print("="*80)
 
     for system_key, base_prompt in BASE_PROMPTS.items():
-        filename = f"system_{system_key}_base.md"
+        filename = f"system_{system_key}_base.txt"
         filepath = components_base_dir / filename
 
         with open(filepath, 'w') as f:
@@ -84,7 +84,7 @@ def combine_prompts():
 
     for system_key, template_name in SYSTEM_TO_TEMPLATE.items():
         # Load base prompt
-        base_file = components_base_dir / f"system_{system_key}_base.md"
+        base_file = components_base_dir / f"system_{system_key}_base.txt"
         if not base_file.exists():
             print(f"⚠️  Base prompt not found for system {system_key}, skipping...")
             continue
@@ -93,7 +93,7 @@ def combine_prompts():
             base_prompt = f.read()
 
         # Load enhanced prompt
-        enhanced_file = enhanced_dir / f"{template_name}_prompt.md"
+        enhanced_file = enhanced_dir / f"{template_name}_prompt.txt"
         enhanced_prompt = ""
         if enhanced_file.exists():
             with open(enhanced_file, 'r') as f:
@@ -108,26 +108,26 @@ def combine_prompts():
             combined = base_prompt
 
         # Save final prompt
-        output_file = output_dir / f"system_{system_key}.md"
+        output_file = output_dir / f"system_{system_key}.txt"
         with open(output_file, 'w') as f:
             f.write(combined)
 
-        print(f"✓ Created: system_{system_key}.md ({len(combined)} chars)")
+        print(f"✓ Created: system_{system_key}.txt ({len(combined)} chars)")
 
     # Also create placement system prompts (no enhanced guidance)
     for system_key in ["1x2", "2x2", "3x2", "4x2", "5x2"]:
-        base_file = components_base_dir / f"system_{system_key}_base.md"
+        base_file = components_base_dir / f"system_{system_key}_base.txt"
         if not base_file.exists():
             continue
 
         with open(base_file, 'r') as f:
             base_prompt = f.read()
 
-        output_file = output_dir / f"system_{system_key}.md"
+        output_file = output_dir / f"system_{system_key}.txt"
         with open(output_file, 'w') as f:
             f.write(base_prompt)
 
-        print(f"✓ Created: system_{system_key}.md ({len(base_prompt)} chars)")
+        print(f"✓ Created: system_{system_key}.txt ({len(base_prompt)} chars)")
 
     print(f"\n✓ Generated complete prompt files in {output_dir}")
 
