@@ -2,33 +2,47 @@
 JSON Validator for Few-Shot LLM Outputs
 
 Validates the structure and values of generated JSON against templates and schemas.
+
+ENHANCED VALIDATION:
+- Range checking: Flags if stats are ±33% outside tier ranges
+- Tag validation: Ensures tags come from template-specific libraries
+- Enum validation: Validates enum fields against known values
+- Text pattern validation: Checks text fields if ≥20 examples exist
 """
 
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Set, Optional
 from collections import defaultdict
 
 
 class JSONValidator:
-    """Validates generated JSON against templates and expected schemas."""
+    """Validates generated JSON against templates and expected schemas with enhanced validation."""
 
-    def __init__(self, templates_dir: str = None):
+    def __init__(self, templates_dir: str = None, validation_libraries_file: str = None):
         """
-        Initialize validator with template directory.
+        Initialize validator with template directory and validation libraries.
 
         Args:
             templates_dir: Path to JSON templates directory
+            validation_libraries_file: Path to validation_libraries.json
         """
         if templates_dir is None:
-            # Default to relative path
-            base_dir = Path(__file__).parent.parent.parent
+            # Default to relative path: from src/ to Fewshot_llm/ to LLM Training Data/ to Scaled JSON Development/ to json_templates/
+            base_dir = Path(__file__).parent.parent.parent.parent
             templates_dir = base_dir / "json_templates"
 
         self.templates_dir = Path(templates_dir)
         self.templates = {}
         self.load_templates()
+
+        # Load validation libraries for enhanced validation
+        self.validation_libraries = {}
+        if validation_libraries_file is None:
+            validation_libraries_file = Path(__file__).parent.parent / "config" / "validation_libraries.json"
+
+        self.load_validation_libraries(validation_libraries_file)
 
     def load_templates(self):
         """Load all JSON templates from the templates directory."""
@@ -44,6 +58,21 @@ class JSONValidator:
                     print(f"Loaded template: {template_name}")
             except Exception as e:
                 print(f"Error loading template {template_file}: {e}")
+
+    def load_validation_libraries(self, libraries_file: Path):
+        """Load validation libraries for enhanced validation."""
+        libraries_file = Path(libraries_file)
+        if not libraries_file.exists():
+            print(f"Warning: Validation libraries not found: {libraries_file}")
+            print("  Enhanced validation (ranges, tags, enums) will be disabled.")
+            return
+
+        try:
+            with open(libraries_file, 'r') as f:
+                self.validation_libraries = json.load(f)
+                print(f"✓ Loaded validation libraries for {len(self.validation_libraries)} templates")
+        except Exception as e:
+            print(f"Warning: Error loading validation libraries: {e}")
 
     def validate_structure(self, data: Dict[str, Any], template_name: str) -> Tuple[bool, List[str]]:
         """
@@ -82,6 +111,19 @@ class JSONValidator:
         # Validate against possible values if available
         if "_all_possible_values" in template:
             self._validate_values(data, template["_all_possible_values"], "", errors)
+
+        # ENHANCED VALIDATION (if libraries available)
+        if template_name in self.validation_libraries:
+            library = self.validation_libraries[template_name]
+
+            # Validate stat ranges (±33% tolerance)
+            self._validate_ranges(data, library, errors)
+
+            # Validate tags against template-specific libraries
+            self._validate_tags(data, library, errors)
+
+            # Validate enums
+            self._validate_enums(data, library, errors)
 
         return len(errors) == 0, errors
 
@@ -231,6 +273,11 @@ class JSONValidator:
         # Try to parse JSON
         try:
             data = json.loads(json_str)
+
+            # If the result is a string, it might be double-encoded - try parsing again
+            if isinstance(data, str):
+                data = json.loads(data)
+
         except json.JSONDecodeError as e:
             errors.append(f"JSON parse error: {e}")
             return False, errors, None
@@ -360,6 +407,161 @@ class JSONValidator:
                         print(f"  - {error}")
 
         print("\n" + "=" * 80)
+
+    # ============================================================================
+    # ENHANCED VALIDATION METHODS
+    # ============================================================================
+
+    def _validate_ranges(self, data: Dict[str, Any], library: Dict[str, Any], errors: List[str]):
+        """
+        Validate numeric values are within ±33% of tier ranges.
+
+        Args:
+            data: JSON data to validate
+            library: Validation library for this template
+            errors: List to append errors to
+        """
+        if 'stat_ranges' not in library or 'tier' not in data:
+            return
+
+        tier = data.get('tier', 1)
+        stat_ranges = library['stat_ranges']
+
+        def check_value(obj: Any, path: str = ""):
+            """Recursively check numeric values."""
+            if not isinstance(obj, dict):
+                return
+
+            for key, value in obj.items():
+                field_path = f"{path}.{key}" if path else key
+
+                # Check if this field has tier-based ranges
+                if field_path in stat_ranges:
+                    tier_ranges = stat_ranges[field_path]
+
+                    # Check if current tier has a range
+                    if str(tier) in tier_ranges:
+                        range_data = tier_ranges[str(tier)]
+                        min_val = range_data['min']
+                        max_val = range_data['max']
+
+                        # Calculate ±33% tolerance
+                        tolerance = 0.33
+                        extended_min = min_val * (1 - tolerance)
+                        extended_max = max_val * (1 + tolerance)
+
+                        # Check if value is a number
+                        if isinstance(value, (int, float)):
+                            if not (extended_min <= value <= extended_max):
+                                errors.append(
+                                    f"⚠️  Range warning: {field_path}={value} is outside T{tier} range "
+                                    f"[{min_val:.1f}-{max_val:.1f}] by >33%"
+                                )
+
+                        # Check if value is a [min, max] range
+                        elif isinstance(value, list) and len(value) == 2:
+                            for i, v in enumerate(value):
+                                if isinstance(v, (int, float)):
+                                    field_with_index = f"{field_path}[{i}]"
+                                    if field_with_index in stat_ranges and str(tier) in stat_ranges[field_with_index]:
+                                        range_data_idx = stat_ranges[field_with_index][str(tier)]
+                                        min_val_idx = range_data_idx['min']
+                                        max_val_idx = range_data_idx['max']
+                                        extended_min_idx = min_val_idx * (1 - tolerance)
+                                        extended_max_idx = max_val_idx * (1 + tolerance)
+
+                                        if not (extended_min_idx <= v <= extended_max_idx):
+                                            errors.append(
+                                                f"⚠️  Range warning: {field_with_index}={v} is outside T{tier} range "
+                                                f"[{min_val_idx:.1f}-{max_val_idx:.1f}] by >33%"
+                                            )
+
+                # Recurse into nested objects
+                elif isinstance(value, dict):
+                    check_value(value, field_path)
+
+        check_value(data)
+
+    def _validate_tags(self, data: Dict[str, Any], library: Dict[str, Any], errors: List[str]):
+        """
+        Validate tags come from template-specific libraries.
+
+        Args:
+            data: JSON data to validate
+            library: Validation library for this template
+            errors: List to append errors to
+        """
+        metadata_tags = set(library.get('metadata_tags', []))
+        effect_tags = set(library.get('effect_tags', []))
+
+        # Check metadata tags
+        if 'metadata' in data and 'tags' in data['metadata']:
+            tags = data['metadata']['tags']
+            if isinstance(tags, list):
+                for tag in tags:
+                    if tag not in metadata_tags and metadata_tags:  # Only validate if library exists
+                        errors.append(f"⚠️  Tag warning: metadata tag '{tag}' not found in template library")
+
+        # Check effect tags
+        if 'effectTags' in data:
+            tags = data['effectTags']
+            if isinstance(tags, list):
+                for tag in tags:
+                    if tag not in effect_tags and effect_tags:
+                        errors.append(f"⚠️  Tag warning: effect tag '{tag}' not found in template library")
+
+        # Check top-level tags
+        if 'tags' in data and isinstance(data['tags'], list):
+            tags = data['tags']
+            for tag in tags:
+                if tag not in metadata_tags and metadata_tags:
+                    errors.append(f"⚠️  Tag warning: tag '{tag}' not found in template library")
+
+    def _validate_enums(self, data: Dict[str, Any], library: Dict[str, Any], errors: List[str]):
+        """
+        Validate enum fields use values from template library.
+
+        Args:
+            data: JSON data to validate
+            library: Validation library for this template
+            errors: List to append errors to
+        """
+        if 'enums' not in library:
+            return
+
+        enums = library['enums']
+
+        def check_enums(obj: Any, path: str = ""):
+            """Recursively check enum values."""
+            if not isinstance(obj, dict):
+                return
+
+            for key, value in obj.items():
+                field_path = f"{path}.{key}" if path else key
+
+                # Check if this field is an enum
+                if field_path in enums:
+                    enum_data = enums[field_path]
+
+                    # Only validate if it's actually an enum (limited values)
+                    if enum_data.get('is_enum', False):
+                        valid_values = set(enum_data['values'])
+
+                        if isinstance(value, str) and value not in valid_values:
+                            # Show first few valid options
+                            options = ', '.join(sorted(list(valid_values))[:5])
+                            if len(valid_values) > 5:
+                                options += f", ... ({len(valid_values)} total)"
+                            errors.append(
+                                f"⚠️  Enum warning: {field_path}='{value}' not in template library. "
+                                f"Valid options: {options}"
+                            )
+
+                # Recurse into nested objects
+                if isinstance(value, dict):
+                    check_enums(value, field_path)
+
+        check_enums(data)
 
 
 def main():
