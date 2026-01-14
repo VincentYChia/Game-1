@@ -1,312 +1,286 @@
-# Few-Shot LLM System
+# Few-Shot LLM Training System
+**Production-Ready Content Generation System**
 
 Clean, modular system for generating game JSON content using few-shot learning with Claude.
 
-## 📁 Folder Structure
-
-```
-Fewshot_llm/
-├── config/                          # Configuration files
-│   ├── system_prompts.json          # System prompts for each LLM (13 systems)
-│   └── test_inputs.json             # Test inputs for validation (9 systems)
-├── examples/                        # Training data
-│   └── few_shot_examples.json       # 94 extracted examples across 15 systems
-├── src/                             # Source code
-│   ├── llm_runner.py                # LLM execution logic
-│   └── validator.py                 # JSON validation logic
-├── outputs/                         # Generated outputs (organized by date)
-│   └── [timestamp]/                 # Each run gets its own folder
-├── archive/                         # Old/backup files
-├── run.py                           # Main entry point
-└── README.md                        # This file
-```
+---
 
 ## 🚀 Quick Start
 
-### Run the LLM System
-
+### Run the System
 ```bash
 python run.py
 ```
 
-This will:
-1. Load all configuration files
-2. Show an interactive menu
-3. Let you select which systems to test
-4. Run the selected systems
-5. Save outputs to `outputs/` folder
-6. Validate the results
+Interactive menu lets you:
+1. Generate content for all systems
+2. Test a single system
+3. Run a range of systems
+4. Select specific systems
 
-### Interactive Menu Options
+### Manual Prompt Tuning
+**See**: [`MANUAL_TUNING_GUIDE.md`](MANUAL_TUNING_GUIDE.md) - Complete guide to editing prompts
 
-1. **Run ALL systems** - Tests all 9 systems with test inputs
-2. **Run a SINGLE system** - Pick one system (e.g., "1" for Smithing)
-3. **Run a RANGE** - Test consecutive systems (e.g., "1-6")
-4. **Run SPECIFIC systems** - Pick multiple (e.g., "1,3,5")
-5. **Exit** - Quit the program
+**Quick**: Edit any file in `prompts/system_prompts/` and run `python run.py`
 
-### Example Usage
+---
 
+## 📚 Documentation
+
+| Document | Purpose |
+|----------|---------|
+| **[MANUAL_TUNING_GUIDE.md](MANUAL_TUNING_GUIDE.md)** | ⭐ **START HERE** - How to edit prompts |
+| **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** | Complete system overview and file organization |
+| **[VALIDATION_ENHANCEMENT_SUMMARY.md](VALIDATION_ENHANCEMENT_SUMMARY.md)** | How validation works |
+| **[PROMPT_REFACTORING_SUMMARY.md](PROMPT_REFACTORING_SUMMARY.md)** | Prompt system architecture |
+| [`prompts/README.txt`](prompts/README.txt) | Detailed prompt documentation |
+
+---
+
+## 📁 System Overview
+
+### 15 Generation Systems
+
+**Content Generation (10)**:
+- System 1: Smithing Items (weapons, armor, tools)
+- System 2: Refining Materials (ingots, planks)
+- System 3: Alchemy Items (potions, consumables)
+- System 4: Engineering Devices (turrets, traps, bombs)
+- System 5: Enchantments
+- System 6: Enemies
+- System 7: Loot Drops
+- System 8: Resource Nodes
+- System 10: Skills
+- System 11: Titles
+
+**Placement Generation (5)**:
+- Systems 1x2, 2x2, 3x2, 4x2, 5x2 for each crafting discipline
+
+---
+
+## 🎯 Key Features
+
+✅ **One prompt per system** - Each system has its own `.txt` file
+✅ **Data-driven validation** - Checks ranges, tags, enums
+✅ **Auto-generated guidance** - Prompts include field-by-field help
+✅ **Manual tuning ready** - Edit prompts directly in text editor
+✅ **Comprehensive testing** - Built-in validation test suite
+✅ **Production ready** - Clean, organized, documented
+
+---
+
+## 🔧 Common Tasks
+
+### Edit Prompts
 ```bash
-$ python run.py
+# Open in text editor:
+prompts/system_prompts/system_1.txt
 
-Loading configuration...
-✓ Loaded 13 system prompts
-✓ Loaded 9 test inputs
-✓ Loaded 94 total examples
-
-================================================================================
-FEW-SHOT LLM RUNNER - SELECT SYSTEMS TO TEST
-================================================================================
-
-Options:
-  1. Run ALL systems with test inputs
-  2. Run a SINGLE system
-  3. Run a RANGE of systems (e.g., 1-6)
-  4. Run SPECIFIC systems (e.g., 1,3,5)
-  5. Exit
-
-Enter your choice (1-5): 2
-
-Enter system key (1, 2, 3, 5, 6, 7, 8, 10, 11): 1
-
-✓ Selected 1 system(s): 1
-
-================================================================================
-Running System 1: Smithing Recipe→Item
-================================================================================
-...
+# Test your changes:
+python run.py
 ```
 
-## 📋 Available Systems
+### Generate Content
+```bash
+python run.py
+# Select system(s) to run
+# Check outputs/ directory
+```
 
-### Systems with Test Inputs (Ready to Run)
+### Validate Outputs
+```bash
+python src/comprehensive_validation_test.py
+# Results: outputs/validation_test_results.json
+```
 
-| System | Name | Description | Examples |
-|--------|------|-------------|----------|
-| 1 | Smithing Recipe→Item | Generate weapons/armor from recipes | 8 |
-| 2 | Refining Recipe→Material | Generate materials (ingots, planks) | 8 |
-| 3 | Alchemy Recipe→Potion | Generate potions/consumables | 3 |
-| 5 | Enchanting Recipe→Enchantment | Generate enchantments | 8 |
-| 6 | Chunk→Hostile Enemy | Generate enemy definitions | 8 |
-| 7 | Drop Source→Material | Generate materials from drops | 8 |
-| 8 | Chunk→Resource Node | Generate resource nodes | 8 |
-| 10 | Requirements→Skill | Generate skill definitions | 8 |
-| 11 | Prerequisites→Title | Generate player titles | 8 |
+### Update Enhanced Prompts (after training data changes)
+```bash
+python src/library_analyzer.py
+python src/prompt_generator.py
+python src/update_system_prompts.py
+```
 
-### Placement Systems (No Test Inputs Yet)
+---
 
-| System | Name | Examples |
-|--------|------|----------|
-| 1x2 | Smithing Placement | 8 |
-| 2x2 | Refining Placement | 8 |
-| 3x2 | Alchemy Placement | 3 |
-| 5x2 | Enchanting Placement | 8 |
+## 📂 Directory Structure
 
-### Not Yet Implemented
+```
+Fewshot_llm/
+├── run.py                        # ⭐ Main entry point
+├── prompts/
+│   ├── system_prompts/           # ⭐ Edit these files
+│   │   ├── system_1.txt          # Complete prompt for System 1
+│   │   ├── system_2.txt
+│   │   └── ...
+│   ├── components/               # Prompt components
+│   │   ├── base/                 # Base prompts
+│   │   └── enhanced/             # Auto-generated guidance
+│   └── README.txt
+├── config/
+│   ├── system_metadata.json      # System names and templates
+│   ├── test_inputs.json          # Test inputs
+│   └── validation_libraries.json # Validation data
+├── examples/
+│   └── few_shot_examples.json    # 83 training examples
+├── src/
+│   ├── llm_runner.py             # LLM API integration
+│   ├── validator.py              # Multi-layer validation
+│   ├── library_analyzer.py       # Extract validation data
+│   ├── prompt_generator.py       # Generate enhanced prompts
+│   └── ...
+├── outputs/                      # Generated content
+└── archive/                      # Archived files
+```
 
-| System | Name | Examples |
-|--------|------|----------|
-| 4 | Engineering Recipe→Device | 0 |
-| 4x2 | Engineering Placement | 0 |
+**Full details**: See [`PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md)
 
-## 🔧 Configuration
+---
+
+## ⚙️ Configuration
 
 ### API Key
-
-Edit `run.py` to set your Anthropic API key:
-
+Edit `run.py`:
 ```python
 API_KEY = "your-api-key-here"
+MODEL = "claude-sonnet-4-20250514"
 ```
 
-### Model Parameters
-
-Adjust in `run.py`:
-
+### Parameters
 ```python
-MODEL = "claude-sonnet-4-20250514"
 MAX_TOKENS = 2000
 TEMPERATURE = 1.0
 TOP_P = 0.999
 ```
 
-### Adding New Systems
+---
 
-1. **Add system prompt** to `config/system_prompts.json`:
-```json
-{
-  "4": {
-    "name": "Engineering Recipe→Device",
-    "prompt": "You are an engineering expert for an action fantasy sandbox RPG..."
-  }
-}
+## ✅ Validation System
+
+### Three-Layer Validation
+
+1. **Structure**: JSON format, required fields, data types
+2. **Ranges**: Stats within ±33% of tier-based ranges
+3. **Content**: Tags and enums match libraries
+
+### Example Warnings
+```
+⚠️  Range warning: baseDamage=35 outside T1 range [10-30] by >33%
+⚠️  Tag warning: tag 'fire' not found in template library
+⚠️  Enum warning: rarity='epic' not valid. Options: common, uncommon, rare
 ```
 
-2. **Add test input** to `config/test_inputs.json`:
-```json
-{
-  "4": {
-    "name": "Engineering Recipe→Device",
-    "prompt": "Create a device definition for this recipe: {...}"
-  }
-}
-```
+---
 
-3. **Add examples** to `examples/few_shot_examples.json`:
-```json
-{
-  "4": [
-    {"input": {...}, "output": {...}},
-    {"input": {...}, "output": {...}}
-  ]
-}
-```
+## 📊 Statistics
 
-4. Run: `python run.py`
+- **15 systems** (10 content + 5 placement)
+- **83 training examples** across all systems
+- **118 stat ranges** extracted from training data
+- **269 metadata tags** identified
+- **38 enum fields** detected
+- **~2,500 lines** of source code
+- **81% size reduction** vs previous system
 
-## 📊 Output Format
+---
 
-Each run creates a JSON file in `outputs/` with:
+## 🔄 Workflows
 
-```json
-{
-  "timestamp": "2026-01-13T22:42:32.123456",
-  "system_key": "1",
-  "system_name": "Smithing Recipe→Item",
-  "model": "claude-sonnet-4-20250514",
-  "parameters": {
-    "max_tokens": 2000,
-    "temperature": 1.0,
-    "top_p": 0.999
-  },
-  "system_prompt": "You are a crafting expert...",
-  "few_shot_count": 8,
-  "test_prompt": "Create an item definition for...",
-  "response": "{...JSON output...}",
-  "usage": {
-    "input_tokens": 3874,
-    "output_tokens": 319
-  }
-}
-```
+### Daily Tuning
+1. Edit `prompts/system_prompts/system_X.txt`
+2. Run `python run.py` → select system
+3. Check `outputs/` directory
+4. Validate with `python src/comprehensive_validation_test.py`
+5. Iterate
 
-## ✅ Validation
+### After Training Data Changes
+1. `python src/library_analyzer.py`
+2. `python src/prompt_generator.py`
+3. `python src/update_system_prompts.py`
+4. Test a few systems
 
-The validator checks:
-- JSON structure validity
-- Required fields presence
-- Type correctness
-- Value ranges (when applicable)
+### Comprehensive Testing
+1. `python run.py` → option 1 (all systems)
+2. `python src/comprehensive_validation_test.py`
+3. Review results
+4. Fix issues
+5. Retest
 
-Validation uses templates from: `../../json_templates/`
+---
 
-## 📈 Recent Test Results
+## 🎓 Getting Started
 
-**Date**: 2026-01-13
-**Model**: claude-sonnet-4-20250514
-**Systems Tested**: 9
-**Validation Success**: 91.7%
-**Total Tokens**: 26,714
+1. ✅ **Read**: [`MANUAL_TUNING_GUIDE.md`](MANUAL_TUNING_GUIDE.md)
+2. ✅ **Open**: `prompts/system_prompts/system_1.txt`
+3. ✅ **Run**: `python run.py` → select system 1
+4. ✅ **Check**: `outputs/` directory
+5. ✅ **Experiment**: Edit prompts and iterate!
 
-See `TEST_RESULTS.md` for detailed analysis.
-
-## 🎯 Use Cases
-
-### Generate Training Data for Fine-Tuning
-
-```bash
-# Run all systems multiple times to build dataset
-python run.py
-# Select option 1 (Run ALL systems)
-```
-
-### Test Individual System Quality
-
-```bash
-# Test one system
-python run.py
-# Select option 2 (Run SINGLE system)
-```
-
-### Validate New Examples
-
-```bash
-# Add examples to examples/few_shot_examples.json
-# Run system to test quality
-python run.py
-```
-
-## 🧹 Maintenance
-
-### Clean Old Outputs
-
-```bash
-# Organize outputs by date
-mkdir outputs/YYYY-MM-DD_description/
-mv outputs/system_*.json outputs/YYYY-MM-DD_description/
-```
-
-### Backup Configuration
-
-```bash
-# Configuration is in JSON - easy to version control
-git add config/ examples/
-git commit -m "Update examples and prompts"
-```
+---
 
 ## 🛠️ Troubleshooting
 
-### No Test Inputs Found
+### Can't find prompts
+- They're in `prompts/system_prompts/system_X.txt`
+- Not in `config/` anymore (that's old)
 
-- Check that `config/test_inputs.json` exists
-- Verify system keys match between files
+### Validation fails
+- Check ±33% tolerance exists for ranges
+- Re-run `library_analyzer.py` if training data changed
+- Review `outputs/validation_test_results.json`
 
-### Validation Fails
+### LLM ignores instructions
+- Move important instructions to TOP of prompt
+- Use stronger language (CRITICAL, REQUIRED)
+- Add examples showing correct behavior
 
-- Check JSON structure in response
-- Verify template exists in `../../json_templates/`
-- Review required fields in validator
+**More troubleshooting**: See [`MANUAL_TUNING_GUIDE.md`](MANUAL_TUNING_GUIDE.md#troubleshooting)
 
-### API Errors
+---
 
-- Verify API key is correct
-- Check API rate limits
-- Ensure model name is valid
+## 📝 Recent Changes
 
-## 📝 Development
+### 2026-01-14: Major Refactoring
+- ✅ Eliminated 81% prompt duplication
+- ✅ One `.txt` file per system
+- ✅ Enhanced validation (ranges, tags, enums)
+- ✅ Auto-generated field guidance
+- ✅ Complete documentation suite
+- ✅ Production-ready organization
 
-### Project Structure Philosophy
+**Details**: See [`PROMPT_REFACTORING_SUMMARY.md`](PROMPT_REFACTORING_SUMMARY.md)
 
-- **config/** - Data files, no code
-- **examples/** - Training data, versioned
-- **src/** - Clean, modular Python code
-- **run.py** - Simple entry point, minimal logic
-- **outputs/** - Generated data, not versioned
+---
 
-### Code Organization
+## 🎯 Use Cases
 
-- **llm_runner.py** - Handles API calls, no business logic
-- **validator.py** - Standalone validation, no API dependencies
-- **run.py** - Orchestrates components, handles user interaction
+- **Generate game content** at scale
+- **Train fine-tuned models** with consistent data
+- **Test prompt variations** quickly
+- **Validate game definitions** automatically
+- **Iterate on content generation** strategies
 
-### Adding Features
-
-1. Create new module in `src/`
-2. Import in `run.py`
-3. Keep concerns separated
-4. Configuration in JSON, logic in Python
-
-## 📚 Related Files
-
-- `Few_shot_LLM.py` - Original monolithic script (archived)
-- `TEST_RESULTS.md` - Comprehensive test analysis
-- `../../json_templates/` - Validation templates
+---
 
 ## 🤝 Contributing
 
 When modifying:
-1. Keep config in JSON files
-2. Keep code modular in `src/`
-3. Document changes in README
-4. Test all systems before committing
+1. Edit prompts in `prompts/system_prompts/`
+2. Keep config in JSON files
+3. Keep code modular in `src/`
+4. Document changes
+5. Test before committing
+
+---
+
+## 📚 Additional Resources
+
+- **Training Data**: `examples/few_shot_examples.json`
+- **Templates**: `../../json_templates/`
+- **Game Integration**: `Game-1-modular/` (material database)
+- **Archived Files**: `archive/` (old versions)
+
+---
+
+**System is ready for production use! 🚀**
+
+For detailed guidance, see [`MANUAL_TUNING_GUIDE.md`](MANUAL_TUNING_GUIDE.md)
