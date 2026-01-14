@@ -36,8 +36,22 @@ def load_config():
     """Load all configuration files."""
     print("Loading configuration...")
 
-    with open('config/system_prompts.json', 'r') as f:
-        system_prompts = json.load(f)
+    # Load system metadata (names and templates)
+    with open('config/system_metadata.json', 'r') as f:
+        system_metadata = json.load(f)
+
+    # Load system prompts from individual files
+    system_prompts = {}
+    prompts_dir = 'prompts/system_prompts'
+    for system_key in system_metadata.keys():
+        prompt_file = f"{prompts_dir}/system_{system_key}.md"
+        if os.path.exists(prompt_file):
+            with open(prompt_file, 'r') as f:
+                system_prompts[system_key] = {
+                    "name": system_metadata[system_key]["name"],
+                    "prompt": f.read(),
+                    "template": system_metadata[system_key].get("template")
+                }
 
     with open('config/test_inputs.json', 'r') as f:
         test_inputs = json.load(f)
@@ -45,7 +59,7 @@ def load_config():
     with open('examples/few_shot_examples.json', 'r') as f:
         few_shot_examples = json.load(f)
 
-    print(f"✓ Loaded {len(system_prompts)} system prompts")
+    print(f"✓ Loaded {len(system_prompts)} system prompts from individual files")
     print(f"✓ Loaded {len(test_inputs)} test inputs")
     print(f"✓ Loaded {sum(len(ex) for ex in few_shot_examples.values())} total examples\n")
 
