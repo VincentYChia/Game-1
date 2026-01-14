@@ -154,15 +154,39 @@ def main():
         print("VALIDATING OUTPUTS")
         print("="*80 + "\n")
 
+        from validator import JSONValidator
         validator = JSONValidator("../../json_templates")
 
+        # System to template mapping
+        system_template_map = {
+            "1": "smithing_items",
+            "2": "refining_items",
+            "3": "alchemy_items",
+            "4": "engineering_items",
+            "5": "enchanting_recipes",
+            "6": "hostiles",
+            "7": "refining_items",
+            "8": "node_types",
+            "10": "skills",
+            "11": "titles"
+        }
+
+        valid_count = 0
         for system_key, filepath, result in results:
-            print(f"Validating system {system_key}...")
+            template_name = system_template_map.get(system_key, "unknown")
+            print(f"Validating system {system_key} ({template_name})...")
+
             # Extract JSON from response
             response = result["response"]
             try:
-                # Try to parse response as JSON
-                if response.strip().startswith('{'):
+                # Parse response (handle both direct JSON and string-wrapped JSON)
+                if response.strip().startswith('"'):
+                    parsed = json.loads(response)
+                    if isinstance(parsed, str):
+                        output_json = json.loads(parsed)
+                    else:
+                        output_json = parsed
+                elif response.strip().startswith('{'):
                     output_json = json.loads(response)
                 else:
                     # Find JSON in response
@@ -174,11 +198,34 @@ def main():
                         print(f"  ❌ No valid JSON found in response\n")
                         continue
 
-                # Validate (would need template mapping)
-                print(f"  ✓ Valid JSON structure\n")
+                # Validate against template
+                if template_name != "unknown":
+                    is_valid, errors = validator.validate(output_json, template_name)
+
+                    if is_valid:
+                        print(f"  ✅ Valid - All checks passed")
+                        valid_count += 1
+                    else:
+                        print(f"  ⚠️  Valid JSON but has warnings:")
+                        for error in errors[:3]:  # Show first 3 errors
+                            print(f"      - {error}")
+                        if len(errors) > 3:
+                            print(f"      ... and {len(errors) - 3} more")
+                        valid_count += 1  # Count as valid even with warnings
+                else:
+                    print(f"  ✓ Valid JSON structure (no template)")
+                    valid_count += 1
 
             except json.JSONDecodeError as e:
-                print(f"  ❌ JSON parse error: {e}\n")
+                print(f"  ❌ JSON parse error: {e}")
+            except Exception as e:
+                print(f"  ⚠️  Error: {e}")
+
+            print()
+
+        print(f"{'='*80}")
+        print(f"Validation Summary: {valid_count}/{len(results)} outputs valid")
+        print(f"{'='*80}")
 
     print("\n" + "="*80)
     print(f"COMPLETED - {len(results)} system(s) processed")

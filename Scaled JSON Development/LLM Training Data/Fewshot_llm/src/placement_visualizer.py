@@ -187,20 +187,85 @@ def visualize_json_file(json_file: str, materials_file: str = None):
 
 
 def main():
-    """Main function for testing."""
+    """Main function - interactive file selection."""
     import sys
+    import glob
 
-    if len(sys.argv) < 2:
-        print("Usage: python placement_visualizer.py <placement_json_file> [materials_file]")
-        print("\nExample:")
-        print("  python placement_visualizer.py ../outputs/system_1x2_*.json")
-        print("  python placement_visualizer.py ../outputs/system_1x2_*.json ../../../../Game-1-modular/items.JSON/items-materials-1.JSON")
-        return
+    print("\n" + "="*80)
+    print("PLACEMENT VISUALIZER - Interactive Mode")
+    print("="*80)
 
-    json_file = sys.argv[1]
-    materials_file = sys.argv[2] if len(sys.argv) > 2 else None
+    # Path to materials database
+    materials_file = "../../../../Game-1-modular/items.JSON/items-materials-1.JSON"
 
-    visualize_json_file(json_file, materials_file)
+    while True:
+        # Find all placement files
+        output_dir = "../outputs"
+        placement_files = []
+
+        # Look for placement system outputs (1x2, 2x2, 3x2, 4x2, 5x2)
+        for pattern in ['system_1x2_*.json', 'system_2x2_*.json', 'system_3x2_*.json',
+                       'system_4x2_*.json', 'system_5x2_*.json']:
+            files = glob.glob(f"{output_dir}/{pattern}")
+            placement_files.extend(files)
+
+        # Also check archive folder
+        archive_files = glob.glob(f"{output_dir}/2026-*/**/*x2*.json", recursive=True)
+        placement_files.extend(archive_files)
+
+        if not placement_files:
+            print("\n❌ No placement files found in outputs/")
+            print("\nPlacement files should match patterns:")
+            print("  - system_1x2_*.json (Smithing)")
+            print("  - system_2x2_*.json (Refining)")
+            print("  - system_3x2_*.json (Alchemy)")
+            print("  - system_4x2_*.json (Engineering)")
+            print("  - system_5x2_*.json (Enchanting)")
+            print("\nGenerate some placement outputs first by running systems 1x2, 2x2, etc.")
+            return
+
+        # Sort and display available files
+        placement_files.sort()
+
+        print(f"\n✅ Found {len(placement_files)} placement file(s):")
+        for i, filepath in enumerate(placement_files, 1):
+            # Get filename only for display
+            filename = filepath.split('/')[-1]
+            print(f"  {i}. {filename}")
+
+        print("\nOptions:")
+        print("  - Enter number to visualize a file")
+        print("  - Enter 'all' to visualize all files")
+        print("  - Enter 'q' to quit")
+
+        choice = input("\nYour choice: ").strip().lower()
+
+        if choice == 'q':
+            print("\n👋 Goodbye!\n")
+            break
+        elif choice == 'all':
+            print("\n" + "="*80)
+            print("VISUALIZING ALL PLACEMENT FILES")
+            print("="*80)
+            for filepath in placement_files:
+                visualize_json_file(filepath, materials_file)
+                print("\n" + "-"*80 + "\n")
+        else:
+            try:
+                file_index = int(choice) - 1
+                if 0 <= file_index < len(placement_files):
+                    visualize_json_file(placement_files[file_index], materials_file)
+                else:
+                    print(f"\n❌ Invalid choice. Please enter 1-{len(placement_files)}")
+            except ValueError:
+                print("\n❌ Invalid input. Please enter a number, 'all', or 'q'")
+
+        # Ask if they want to continue
+        if choice != 'all':
+            continue_choice = input("\nVisualize another? (y/n): ").strip().lower()
+            if continue_choice != 'y':
+                print("\n👋 Goodbye!\n")
+                break
 
 
 if __name__ == "__main__":
