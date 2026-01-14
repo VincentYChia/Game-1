@@ -61,11 +61,8 @@ Fewshot_llm/
 │   ├── library_analyzer.py          # Extracts validation data
 │   ├── prompt_generator.py          # Generates enhanced prompts
 │   ├── update_system_prompts.py     # Combines base + enhanced
-│   ├── material_enricher.py         # Enriches inputs with material data
 │   ├── comprehensive_validation_test.py  # Test suite
-│   ├── visualize_placement.py       # ASCII placement visualizer
-│   ├── ui_visualizer.py             # Game UI visualizer (needs pygame)
-│   └── refactor_prompts.py          # Prompt refactoring script
+│   └── visualize_placement.py       # ASCII placement visualizer
 │
 ├── 📁 outputs/                      # Generated outputs
 │   ├── validation_test_results.json # Latest validation results
@@ -74,6 +71,7 @@ Fewshot_llm/
 ├── 📁 archive/                      # Archived files
 │   ├── old_outputs/                 # Old test outputs
 │   ├── system_prompts.json.old      # Old monolithic prompts
+│   ├── refactor_prompts.py          # One-time migration script
 │   └── (other archived files)
 │
 ├── 📄 MANUAL_TUNING_GUIDE.md        # ⭐ HOW TO EDIT PROMPTS

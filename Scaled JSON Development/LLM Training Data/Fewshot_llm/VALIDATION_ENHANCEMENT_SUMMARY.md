@@ -188,9 +188,8 @@ Warning Breakdown:
 2. `src/prompt_generator.py` (260 lines) - Generates enhanced prompts
 3. `src/update_system_prompts.py` (77 lines) - Integrates prompts
 4. `src/comprehensive_validation_test.py` (170 lines) - Testing suite
-5. `src/ui_visualizer.py` (396 lines) - Game UI visualization
-6. `config/validation_libraries.json` (auto-generated) - Validation data
-7. `prompts/enhanced/*.md` (9 files) - Enhanced prompt templates
+5. `config/validation_libraries.json` (auto-generated) - Validation data
+6. `prompts/enhanced/*.md` (9 files) - Enhanced prompt templates
 
 ### Modified:
 1. `src/validator.py` - Added 3 validation methods (~150 new lines)
@@ -260,11 +259,7 @@ python src/comprehensive_validation_test.py
 
 ### Visualizing Placements:
 ```bash
-# ASCII mode (fast):
 python src/visualize_placement.py
-
-# UI mode (game renderer):
-python src/ui_visualizer.py
 ```
 
 ---
