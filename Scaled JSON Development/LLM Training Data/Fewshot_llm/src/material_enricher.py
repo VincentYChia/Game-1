@@ -129,8 +129,22 @@ class MaterialEnricher:
                 enriched_example = example.copy()
 
                 # Enrich input if it has recipe structure
-                if 'input' in enriched_example and isinstance(enriched_example['input'], dict):
-                    enriched_example['input'] = self.enrich_recipe(enriched_example['input'])
+                if 'input' in enriched_example:
+                    input_data = enriched_example['input']
+
+                    # Handle JSON string inputs
+                    if isinstance(input_data, str):
+                        try:
+                            parsed_input = json.loads(input_data)
+                            enriched_input = self.enrich_recipe(parsed_input)
+                            # Convert back to formatted JSON string
+                            enriched_example['input'] = json.dumps(enriched_input, indent=2)
+                        except json.JSONDecodeError:
+                            # Keep original if not valid JSON
+                            pass
+                    # Handle dict inputs
+                    elif isinstance(input_data, dict):
+                        enriched_example['input'] = self.enrich_recipe(input_data)
 
                 enriched_examples.append(enriched_example)
 

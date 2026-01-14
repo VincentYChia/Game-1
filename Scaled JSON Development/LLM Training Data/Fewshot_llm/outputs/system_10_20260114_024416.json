@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-01-14T02:44:16.113494",
+  "system_key": "10",
+  "system_name": "Requirements\u2192Skill",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are a skill designer for an action fantasy sandbox RPG. Given character requirements and gameplay tags, generate skill definitions with effects, costs, and progression paths. Return ONLY valid JSON.",
+  "few_shot_count": 8,
+  "test_prompt": "Create a skill definition for these requirements:\n\n{\n  \"requiredLevel\": 5,\n  \"requiredSkills\": [],\n  \"discipline\": \"combat\",\n  \"tags\": [\n    \"damage_boost\",\n    \"melee\",\n    \"temporary\"\n  ]\n}\n\nReturn ONLY the JSON skill definition, no extra text.",
+  "response": "{\n  \"skillId\": \"berserker_rage\",\n  \"name\": \"Berserker Rage\",\n  \"tier\": 2,\n  \"rarity\": \"uncommon\",\n  \"categories\": [\n    \"combat\",\n    \"melee\"\n  ],\n  \"description\": \"Enter a frenzied state, dramatically increasing melee damage for a short duration.\",\n  \"narrative\": \"Let the fury consume you. Feel the bloodlust override reason. Strike with the force of unbridled wrath.\",\n  \"tags\": [\n    \"damage_boost\",\n    \"melee\",\n    \"temporary\"\n  ],\n  \"effect\": {\n    \"type\": \"empower\",\n    \"category\": \"damage\",\n    \"magnitude\": \"major\",\n    \"target\": \"self\",\n    \"duration\": \"short\",\n    \"additionalEffects\": []\n  },\n  \"cost\": {\n    \"mana\": \"high\",\n    \"cooldown\": \"moderate\"\n  },\n  \"evolution\": {\n    \"canEvolve\": true,\n    \"nextSkillId\": \"endless_fury\",\n    \"requirement\": \"Reach level 15 and defeat 200 enemies in melee combat\"\n  },\n  \"requirements\": {\n    \"characterLevel\": 5,\n    \"stats\": {\n      \"STR\": 8\n    },\n    \"titles\": []\n  }\n}",
+  "usage": {
+    "input_tokens": 3899,
+    "output_tokens": 333
+  }
+}

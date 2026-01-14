@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-01-14T02:44:47.310882",
+  "system_key": "8",
+  "system_name": "Chunk\u2192Resource Node",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are a world designer for an action fantasy sandbox RPG. Given world chunk characteristics, generate resource node definitions with gathering requirements and yield tables. Return ONLY valid JSON.",
+  "few_shot_count": 8,
+  "test_prompt": "Create a resource node definition for this chunk:\n\n{\n  \"chunkType\": \"peaceful_forest\",\n  \"chunkCategory\": \"peaceful\",\n  \"chunkTheme\": \"forest\",\n  \"resourceDensity\": {\n    \"oak_tree\": {\n      \"density\": \"very_high\",\n      \"tierBias\": \"low\"\n    }\n  }\n}\n\nReturn ONLY the JSON node definition, no extra text.",
+  "response": "{\n  \"metadata\": {\n    \"narrative\": \"Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.\",\n    \"tags\": [\n      \"tree\",\n      \"wood\",\n      \"starter\"\n    ]\n  },\n  \"resourceId\": \"oak_tree\",\n  \"name\": \"Oak Tree\",\n  \"category\": \"tree\",\n  \"tier\": 1,\n  \"requiredTool\": \"axe\",\n  \"baseHealth\": 100,\n  \"drops\": [\n    {\n      \"materialId\": \"oak_log\",\n      \"quantity\": \"many\",\n      \"chance\": \"guaranteed\"\n    }\n  ],\n  \"respawnTime\": \"normal\"\n}",
+  "usage": {
+    "input_tokens": 2834,
+    "output_tokens": 182
+  }
+}
