@@ -3,6 +3,13 @@ Placement Visualizer - Uses game's existing architecture to visualize placement 
 
 This visualizer integrates directly with the game's crafting systems to ensure
 consistent loading and display of placement data across all 5 disciplines.
+
+MODES:
+- ASCII Mode (this file): Fast, works everywhere, clear text representation
+- UI Mode (ui_visualizer.py): Uses game's actual pygame renderer (requires display)
+
+For most use cases, ASCII mode is recommended. Use UI mode when you need to see
+exactly how placements will appear in the actual game.
 """
 
 import json
