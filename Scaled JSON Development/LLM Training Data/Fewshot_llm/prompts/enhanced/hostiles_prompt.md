@@ -10,8 +10,6 @@ Generate a JSON object following this structure with inline guidance:
   },
   "behavior": "Pick one: ["aggressive_pack", "aggressive_phase", "aggressive_swarm", "boss_encounter", "docile_wander", "passive_patrol", "stationary", "territorial"]",
   "category": "Pick one: ["aberration", "beast", "construct", "insect", "ooze", "undead"]",
-  "enemyId": "Pick one: ["beetle_armored", "beetle_brown", "beetle_titan", "entity_primordial", "golem_crystal", ... (13 total)]",
-  "name": "Pick one: ["Acid Slime", "Armored Beetle", "Brown Beetle", "Crystal Golem", "Crystal Slime", ... (13 total)]",
   "tier": 1,  // 1-4 (affects stat ranges below)
   "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
 

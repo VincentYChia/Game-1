@@ -213,7 +213,20 @@ class LibraryAnalyzer:
             # Consider it an enum if:
             # 1. Has at least 5 samples
             # 2. Has ≤20 unique values (suggesting it's not free text)
-            is_enum = count >= 5 and len(values) <= 20
+            # 3. Unique values < 80% of samples (if all unique, it's an ID or free text)
+            uniqueness_ratio = len(values) / count if count > 0 else 1
+            is_enum = count >= 5 and len(values) <= 20 and uniqueness_ratio < 0.8
+
+            # NEVER treat these as enums (always free text)
+            never_enum_fields = ['narrative', 'description', 'name', 'Id']
+            if any(never_enum in field_name for never_enum in never_enum_fields):
+                is_enum = False
+
+            # Exception: Always treat these as enums even if highly unique
+            enum_field_names = ['category', 'type', 'subtype', 'rarity', 'titleType',
+                                'difficultyTier', 'acquisitionMethod', 'behavior']
+            if any(enum_name in field_name for enum_name in enum_field_names):
+                is_enum = count >= 5 and len(values) <= 20
 
             enum_libraries[field_name] = FieldLibrary(
                 field_name=field_name,

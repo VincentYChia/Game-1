@@ -1,0 +1,133 @@
+{
+  "total_files": 27,
+  "valid": 8,
+  "invalid": 19,
+  "range_warnings": [
+    {
+      "file": "system_1_20260114_031841.json",
+      "template": "smithing_items",
+      "error": "\u26a0\ufe0f  Range warning: requirements.level=3 is outside T2 range [5.0-10.0] by >33%"
+    }
+  ],
+  "tag_warnings": [
+    {
+      "file": "2026-01-13_comprehensive_test/system_10_20260113_224301.json",
+      "template": "skills",
+      "error": "\u26a0\ufe0f  Tag warning: tag 'melee' not found in template library"
+    },
+    {
+      "file": "2026-01-13_comprehensive_test/system_10_20260113_224301.json",
+      "template": "skills",
+      "error": "\u26a0\ufe0f  Tag warning: tag 'temporary' not found in template library"
+    },
+    {
+      "file": "2026-01-13_comprehensive_test/system_1_20260113_221223.json",
+      "template": "smithing_items",
+      "error": "\u26a0\ufe0f  Tag warning: metadata tag 'forestry' not found in template library"
+    },
+    {
+      "file": "2026-01-13_comprehensive_test/system_1_20260113_221223.json",
+      "template": "smithing_items",
+      "error": "\u26a0\ufe0f  Tag warning: metadata tag 'reliable' not found in template library"
+    },
+    {
+      "file": "2026-01-13_comprehensive_test/system_3_20260113_224239.json",
+      "template": "alchemy_items",
+      "error": "\u26a0\ufe0f  Tag warning: metadata tag 'mana' not found in template library"
+    },
+    {
+      "file": "2026-01-13_comprehensive_test/system_5_20260113_224242.json",
+      "template": "enchanting_recipes",
+      "error": "\u26a0\ufe0f  Tag warning: metadata tag 'protection' not found in template library"
+    },
+    {
+      "file": "system_10_20260114_031846.json",
+      "template": "skills",
+      "error": "\u26a0\ufe0f  Tag warning: tag 'melee' not found in template library"
+    },
+    {
+      "file": "system_10_20260114_031846.json",
+      "template": "skills",
+      "error": "\u26a0\ufe0f  Tag warning: tag 'temporary' not found in template library"
+    },
+    {
+      "file": "system_3_20260114_031907.json",
+      "template": "alchemy_items",
+      "error": "\u26a0\ufe0f  Tag warning: metadata tag 'mana' not found in template library"
+    },
+    {
+      "file": "system_3_20260114_031907.json",
+      "template": "alchemy_items",
+      "error": "\u26a0\ufe0f  Tag warning: metadata tag 'arcane' not found in template library"
+    },
+    {
+      "file": "system_5_20260114_031917.json",
+      "template": "enchanting_recipes",
+      "error": "\u26a0\ufe0f  Tag warning: metadata tag 'protection' not found in template library"
+    }
+  ],
+  "enum_warnings": [
+    {
+      "file": "2026-01-13_comprehensive_test/system_10_20260113_224301.json",
+      "template": "skills",
+      "error": "\u26a0\ufe0f  Enum warning: effect.duration='short' not in template library. Valid options: brief, extended, instant, long, moderate"
+    },
+    {
+      "file": "2026-01-13_comprehensive_test/system_6_20260113_221229.json",
+      "template": "hostiles",
+      "error": "\u26a0\ufe0f  Enum warning: behavior='defensive_territorial' not in template library. Valid options: aggressive_pack, aggressive_phase, aggressive_swarm, boss_encounter, docile_wander, ... (8 total)"
+    },
+    {
+      "file": "system_10_20260114_031846.json",
+      "template": "skills",
+      "error": "\u26a0\ufe0f  Enum warning: effect.duration='short' not in template library. Valid options: brief, extended, instant, long, moderate"
+    },
+    {
+      "file": "system_11_20260114_031851.json",
+      "template": "titles",
+      "error": "\u26a0\ufe0f  Enum warning: difficultyTier='veteran' not in template library. Valid options: apprentice, expert, journeyman, master, novice, ... (6 total)"
+    },
+    {
+      "file": "system_6_20260114_031930.json",
+      "template": "hostiles",
+      "error": "\u26a0\ufe0f  Enum warning: behavior='aggressive_defensive' not in template library. Valid options: aggressive_pack, aggressive_phase, aggressive_swarm, boss_encounter, docile_wander, ... (8 total)"
+    }
+  ],
+  "other_errors": [
+    {
+      "file": "2026-01-13_comprehensive_test/system_1_20260113_165217.json",
+      "template": "smithing_items",
+      "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "file": "2026-01-13_comprehensive_test/system_6_20260113_224248.json",
+      "template": "hostiles",
+      "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "file": "system_1x2_20260114_031855.json",
+      "template": "",
+      "error": "Template '' not found"
+    },
+    {
+      "file": "system_2x2_20260114_031902.json",
+      "template": "",
+      "error": "Template '' not found"
+    },
+    {
+      "file": "system_3x2_20260114_031910.json",
+      "template": "",
+      "error": "Template '' not found"
+    },
+    {
+      "file": "system_4x2_20260114_031914.json",
+      "template": "",
+      "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)"
+    },
+    {
+      "file": "system_5x2_20260114_031924.json",
+      "template": "",
+      "error": "JSON parse error: Expecting value: line 1 column 1 (char 0)"
+    }
+  ]
+}

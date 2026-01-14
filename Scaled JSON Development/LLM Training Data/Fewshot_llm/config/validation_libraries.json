@@ -1786,7 +1786,7 @@
           "Spike trap with spring-loaded iron spikes. Triggers on contact. Simple, brutal, effective. The spikes punch through leather and flesh alike."
         ],
         "count": 11,
-        "is_enum": true
+        "is_enum": false
       },
       "itemId": {
         "field_name": "itemId",
@@ -1804,7 +1804,7 @@
           "spike_trap"
         ],
         "count": 11,
-        "is_enum": true
+        "is_enum": false
       },
       "name": {
         "field_name": "name",
@@ -1822,7 +1822,7 @@
           "Spike Trap"
         ],
         "count": 11,
-        "is_enum": true
+        "is_enum": false
       },
       "category": {
         "field_name": "category",
@@ -1881,7 +1881,7 @@
           "Triggers on proximity, 50 damage + slow"
         ],
         "count": 11,
-        "is_enum": true
+        "is_enum": false
       }
     },
     "text_patterns": {}
@@ -2017,7 +2017,7 @@
           ""
         ],
         "count": 25,
-        "is_enum": true
+        "is_enum": false
       },
       "effect.type": {
         "field_name": "effect.type",
@@ -2592,7 +2592,7 @@
           "Spectral entity that phases between dimensions. Attacks pass through it unpredictably."
         ],
         "count": 25,
-        "is_enum": true
+        "is_enum": false
       },
       "enemyId": {
         "field_name": "enemyId",
@@ -2612,7 +2612,7 @@
           "wolf_grey"
         ],
         "count": 25,
-        "is_enum": true
+        "is_enum": false
       },
       "name": {
         "field_name": "name",
@@ -2632,7 +2632,7 @@
           "Void Wraith"
         ],
         "count": 25,
-        "is_enum": true
+        "is_enum": false
       },
       "category": {
         "field_name": "category",
@@ -2673,7 +2673,7 @@
           "wolf_pelt"
         ],
         "count": 25,
-        "is_enum": true
+        "is_enum": false
       },
       "drops.chance": {
         "field_name": "drops.chance",
@@ -3540,7 +3540,7 @@
           "wind_runner"
         ],
         "count": 20,
-        "is_enum": true
+        "is_enum": false
       },
       "evolution.requirement": {
         "field_name": "evolution.requirement",
@@ -3971,7 +3971,7 @@
           "novice_warrior"
         ],
         "count": 10,
-        "is_enum": true
+        "is_enum": false
       },
       "name": {
         "field_name": "name",
@@ -3988,7 +3988,7 @@
           "Novice Warrior"
         ],
         "count": 10,
-        "is_enum": true
+        "is_enum": false
       },
       "titleType": {
         "field_name": "titleType",
@@ -4029,7 +4029,7 @@
           "Your first steps into the depths. Every mine begins with a single swing."
         ],
         "count": 10,
-        "is_enum": true
+        "is_enum": false
       },
       "acquisitionMethod": {
         "field_name": "acquisitionMethod",
@@ -4057,7 +4057,7 @@
           "You see what others miss: the potential locked within raw matter."
         ],
         "count": 10,
-        "is_enum": true
+        "is_enum": false
       },
       "bonuses.elementalAfinity": {
         "field_name": "bonuses.elementalAfinity",

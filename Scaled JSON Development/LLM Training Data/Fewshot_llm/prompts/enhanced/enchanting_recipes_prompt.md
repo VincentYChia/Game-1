@@ -8,7 +8,6 @@ Generate a JSON object following this structure with inline guidance:
     "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
     "tags": ["Pick 2-5 from: "advanced", "armor", "basic", "damage", "defense", "durability", "efficiency", "elemental", "fire", "fortune", "frost", "healing", "knockback", "legendary", "lifesteal", "lightning", "luck", "master", "mobility", "poison", ... (34 total)]
   },
-  "name": "Pick one: [""]",
   "tier": 1,  // 1-4 (affects stat ranges below)
   "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
 

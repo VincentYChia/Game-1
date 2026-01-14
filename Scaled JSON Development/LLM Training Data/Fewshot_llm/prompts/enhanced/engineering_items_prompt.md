@@ -9,9 +9,6 @@ Generate a JSON object following this structure with inline guidance:
     "tags": ["Pick 2-5 from: "advanced", "area", "basic", "bomb", "cluster", "device", "elemental", "explosive", "fire", "frost", "immobilize", "light", "lightning", "physical", "precision", "projectile", "trap", "turret"]
   },
   "category": "Pick one: ["device"]",
-  "effect": "Pick one: ["Explodes for 40 damage in 3 unit radius", "Explodes for 75 fire damage + lingering flames", "Fires arrows at enemies, 20 damage, 5 unit range", "Fires concentrated light beam, 80 damage, 12 unit range", "Fires flaming arrows, 35 damage + burn, 7 unit range", ... (11 total)]",
-  "itemId": "Pick one: ["basic_arrow_turret", "bear_trap", "cluster_bomb", "fire_arrow_turret", "fire_bomb", ... (11 total)]",
-  "name": "Pick one: ["Basic Arrow Turret", "Bear Trap", "Cluster Bomb", "Fire Arrow Turret", "Fire Bomb", ... (11 total)]",
   "rarity": "Pick one: ["common", "rare", "uncommon"]",
   "subtype": "Pick one: ["area", "elemental", "energy", "explosive", "physical", "projectile"]",
   "type": "Pick one: ["bomb", "trap", "turret"]",
