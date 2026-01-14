@@ -7,15 +7,42 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 4
+          "quantity": 4,
+          "materialName": "Iron Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "standard"
+          ]
         },
         {
           "materialId": "pine_plank",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Pine Plank",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Refined pine planks, perfect for bows and flexible constructions.",
+          "materialTags": [
+            "refined",
+            "wood",
+            "flexible"
+          ]
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Spectral Thread",
+          "materialTier": 3,
+          "materialRarity": "rare",
+          "materialNarrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
+          "materialTags": [
+            "monster",
+            "rare",
+            "spectral"
+          ]
         }
       ],
       "narrative": "Basic arrow turret using simple springs and levers. Point away from face."
@@ -70,15 +97,42 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 5
+          "quantity": 5,
+          "materialName": "Steel Ingot",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "advanced"
+          ]
         },
         {
           "materialId": "fire_crystal",
-          "quantity": 4
+          "quantity": 4,
+          "materialName": "Fire Crystal",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
+          "materialTags": [
+            "elemental",
+            "fire",
+            "common"
+          ]
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Spectral Thread",
+          "materialTier": 3,
+          "materialRarity": "rare",
+          "materialNarrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
+          "materialTags": [
+            "monster",
+            "rare",
+            "spectral"
+          ]
         }
       ],
       "narrative": "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense."
@@ -136,15 +190,42 @@
       "inputs": [
         {
           "materialId": "mithril_ingot",
-          "quantity": 6
+          "quantity": 6,
+          "materialName": "Mithril Ingot",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "legendary"
+          ]
         },
         {
           "materialId": "lightning_shard",
-          "quantity": 8
+          "quantity": 8,
+          "materialName": "Lightning Shard",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Crackling crystal surrounded by static discharge. Handle with insulated gloves.",
+          "materialTags": [
+            "elemental",
+            "lightning",
+            "rare"
+          ]
         },
         {
           "materialId": "storm_heart",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Storm Heart",
+          "materialTier": 3,
+          "materialRarity": "epic",
+          "materialNarrative": "Captured lightning from primordial storms. Contains raw creation energy.",
+          "materialTags": [
+            "elemental",
+            "lightning",
+            "legendary"
+          ]
         }
       ],
       "narrative": "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous."
@@ -203,15 +284,42 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 8
+          "quantity": 8,
+          "materialName": "Steel Ingot",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "advanced"
+          ]
         },
         {
           "materialId": "fire_crystal",
-          "quantity": 8
+          "quantity": 8,
+          "materialName": "Fire Crystal",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
+          "materialTags": [
+            "elemental",
+            "fire",
+            "common"
+          ]
         },
         {
           "materialId": "phoenix_ash",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Phoenix Ash",
+          "materialTier": 3,
+          "materialRarity": "epic",
+          "materialNarrative": "Ash-grey substance from legendary phoenix nests. Burns eternally without being consumed.",
+          "materialTags": [
+            "elemental",
+            "fire",
+            "legendary"
+          ]
         }
       ],
       "narrative": "Flamethrower turret that sweeps area with fire. Excellent for crowd control."
@@ -270,15 +378,42 @@
       "inputs": [
         {
           "materialId": "mithril_ingot",
-          "quantity": 6
+          "quantity": 6,
+          "materialName": "Mithril Ingot",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "legendary"
+          ]
         },
         {
           "materialId": "light_gem",
-          "quantity": 8
+          "quantity": 8,
+          "materialName": "Light Gem",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
+          "materialTags": [
+            "elemental",
+            "light",
+            "rare"
+          ]
         },
         {
           "materialId": "crystal_quartz",
-          "quantity": 6
+          "quantity": 6,
+          "materialName": "Crystal Quartz",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Translucent crystal that amplifies magical energies passing through it. Hums softly when near power sources.",
+          "materialTags": [
+            "basic",
+            "stone",
+            "magical"
+          ]
         }
       ],
       "narrative": "Laser turret using focused light crystals. Precise and devastating."
@@ -334,11 +469,25 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Iron Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "standard"
+          ]
         },
         {
           "materialId": "blast_powder",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "blast_powder",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "",
+          "materialTags": []
         }
       ],
       "narrative": "Simple explosive using blast powder in iron casing. Universal problem solver."
@@ -392,15 +541,38 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Steel Ingot",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "advanced"
+          ]
         },
         {
           "materialId": "blast_powder",
-          "quantity": 4
+          "quantity": 4,
+          "materialName": "blast_powder",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "",
+          "materialTags": []
         },
         {
           "materialId": "fire_crystal",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Fire Crystal",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
+          "materialTags": [
+            "elemental",
+            "fire",
+            "common"
+          ]
         }
       ],
       "narrative": "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone."
@@ -457,15 +629,38 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 5
+          "quantity": 5,
+          "materialName": "Steel Ingot",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "advanced"
+          ]
         },
         {
           "materialId": "blast_powder",
-          "quantity": 12
+          "quantity": 12,
+          "materialName": "blast_powder",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "",
+          "materialTags": []
         },
         {
           "materialId": "air_crystal",
-          "quantity": 4
+          "quantity": 4,
+          "materialName": "Air Crystal",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Pale crystal that drifts upward if not secured. Contains compressed winds.",
+          "materialTags": [
+            "elemental",
+            "air",
+            "common"
+          ]
         }
       ],
       "narrative": "Cluster bomb that splits into multiple explosives. Maximum coverage."
@@ -519,15 +714,42 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Iron Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "standard"
+          ]
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Steel Ingot",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "advanced"
+          ]
         },
         {
           "materialId": "beetle_carapace",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Beetle Carapace",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Iridescent shell segment. Lightweight yet remarkably impact-resistant.",
+          "materialTags": [
+            "monster",
+            "common",
+            "carapace"
+          ]
         }
       ],
       "narrative": "Spike trap with spring-loaded iron spikes. Simple, brutal, effective."
@@ -585,15 +807,38 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Iron Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "standard"
+          ]
         },
         {
           "materialId": "blast_powder",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "blast_powder",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "",
+          "materialTags": []
         },
         {
           "materialId": "frost_essence",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Frost Essence",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Frost-blue crystal cold enough to burn. Creates rime patterns on nearby surfaces.",
+          "materialTags": [
+            "elemental",
+            "ice",
+            "rare"
+          ]
         }
       ],
       "narrative": "Frost mine that erupts in a blast of ice shards. The cold bites deep."
@@ -651,11 +896,29 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 4
+          "quantity": 4,
+          "materialName": "Steel Ingot",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "advanced"
+          ]
         },
         {
           "materialId": "dire_fang",
-          "quantity": 6
+          "quantity": 6,
+          "materialName": "Dire Fang",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Razor-sharp fang from alpha predators. Still warm from the kill.",
+          "materialTags": [
+            "monster",
+            "uncommon",
+            "fang"
+          ]
         }
       ],
       "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it."

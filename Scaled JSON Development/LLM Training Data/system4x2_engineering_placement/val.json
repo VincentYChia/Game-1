@@ -7,15 +7,38 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Iron Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "standard"
+          ]
         },
         {
           "materialId": "blast_powder",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "blast_powder",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "",
+          "materialTags": []
         },
         {
           "materialId": "frost_essence",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Frost Essence",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Frost-blue crystal cold enough to burn. Creates rime patterns on nearby surfaces.",
+          "materialTags": [
+            "elemental",
+            "ice",
+            "rare"
+          ]
         }
       ],
       "itemMetadata": {
@@ -60,11 +83,29 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 4
+          "quantity": 4,
+          "materialName": "Steel Ingot",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "advanced"
+          ]
         },
         {
           "materialId": "dire_fang",
-          "quantity": 6
+          "quantity": 6,
+          "materialName": "Dire Fang",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Razor-sharp fang from alpha predators. Still warm from the kill.",
+          "materialTags": [
+            "monster",
+            "uncommon",
+            "fang"
+          ]
         }
       ],
       "itemMetadata": {
