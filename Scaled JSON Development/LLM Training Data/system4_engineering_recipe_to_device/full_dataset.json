@@ -1,1 +1,706 @@
-[]
+[
+  {
+    "input": {
+      "recipeId": "engineering_basic_arrow_turret",
+      "stationTier": 1,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "pine_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Basic arrow turret using simple springs and levers. Point away from face."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Basic arrow turret using simple springs and levers. Point away from face. Automated defense that never sleeps, never misses... well, rarely misses.",
+        "tags": [
+          "device",
+          "turret",
+          "basic",
+          "projectile"
+        ]
+      },
+      "itemId": "basic_arrow_turret",
+      "name": "Basic Arrow Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "projectile",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Fires arrows at enemies, 20 damage, 5 unit range",
+      "effectTags": [
+        "physical",
+        "piercing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 20,
+        "range": 5.0
+      },
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_fire_arrow_turret",
+      "stationTier": 2,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 4
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Fire arrow turret with crystal-powered ignition system. Adds a warm touch to home defense. Each arrow trails flames, lighting up enemies and the night.",
+        "tags": [
+          "device",
+          "turret",
+          "fire",
+          "elemental"
+        ]
+      },
+      "itemId": "fire_arrow_turret",
+      "name": "Fire Arrow Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "projectile",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Fires flaming arrows, 35 damage + burn, 7 unit range",
+      "effectTags": [
+        "fire",
+        "piercing",
+        "single",
+        "burn"
+      ],
+      "effectParams": {
+        "baseDamage": 35,
+        "range": 7.0,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 5.0
+      },
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 1.5
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_lightning_cannon",
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 8
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Lightning cannon that channels storm energy. Extremely effective, extremely dangerous. The bolts arc between enemies, chain lightning made manifest.",
+        "tags": [
+          "device",
+          "turret",
+          "lightning",
+          "advanced"
+        ]
+      },
+      "itemId": "lightning_cannon",
+      "name": "Lightning Cannon",
+      "category": "device",
+      "type": "turret",
+      "subtype": "energy",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Fires lightning bolts, 70 damage + chain, 10 unit range",
+      "effectTags": [
+        "lightning",
+        "chain",
+        "shock"
+      ],
+      "effectParams": {
+        "baseDamage": 70,
+        "range": 10.0,
+        "chain_count": 2,
+        "chain_range": 5.0,
+        "shock_duration": 2.0,
+        "shock_damage": 5.0
+      },
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 2.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_flamethrower_turret",
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 8
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 8
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Flamethrower turret that sweeps area with fire. Excellent for crowd control."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Flamethrower turret that sweeps area with fire. Excellent for crowd control. The roar is almost as terrifying as the flames themselves.",
+        "tags": [
+          "device",
+          "turret",
+          "fire",
+          "area"
+        ]
+      },
+      "itemId": "flamethrower_turret",
+      "name": "Flamethrower Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "area",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Sweeps cone of fire, 60 damage + lingering burn",
+      "effectTags": [
+        "fire",
+        "cone",
+        "burn"
+      ],
+      "effectParams": {
+        "baseDamage": 60,
+        "range": 8.0,
+        "cone_angle": 60.0,
+        "cone_range": 8.0,
+        "burn_duration": 5.0,
+        "burn_damage_per_second": 8.0
+      },
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 2.0
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_laser_turret",
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 8
+        },
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Laser turret using focused light crystals. Precise and devastating."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Laser turret using focused light crystals. Precise and devastating. The beam cuts through armor like it's not even there.",
+        "tags": [
+          "device",
+          "turret",
+          "light",
+          "precision"
+        ]
+      },
+      "itemId": "laser_turret",
+      "name": "Laser Turret",
+      "category": "device",
+      "type": "turret",
+      "subtype": "energy",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Fires concentrated light beam, 80 damage, 12 unit range",
+      "effectTags": [
+        "energy",
+        "beam"
+      ],
+      "effectParams": {
+        "baseDamage": 80,
+        "range": 12.0,
+        "beam_range": 12.0,
+        "beam_width": 1.0
+      },
+      "stackSize": 3,
+      "statMultipliers": {
+        "weight": 1.8
+      },
+      "requirements": {
+        "level": 16,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_simple_bomb",
+      "stationTier": 1,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "blast_powder",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Simple explosive using blast powder in iron casing. Universal problem solver."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Simple explosive using blast powder in iron casing. The universal problem solver. Pull pin, throw, run. In that order.",
+        "tags": [
+          "device",
+          "bomb",
+          "basic",
+          "explosive"
+        ]
+      },
+      "itemId": "simple_bomb",
+      "name": "Simple Bomb",
+      "category": "device",
+      "type": "bomb",
+      "subtype": "explosive",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Explodes for 40 damage in 3 unit radius",
+      "effectTags": [
+        "physical",
+        "circle"
+      ],
+      "effectParams": {
+        "baseDamage": 40,
+        "circle_radius": 3.0
+      },
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_fire_bomb",
+      "stationTier": 2,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "blast_powder",
+          "quantity": 4
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Fire bomb with crystal-enhanced payload. Burns hot enough to melt stone. The explosion is just the beginning - the flames linger, hungry.",
+        "tags": [
+          "device",
+          "bomb",
+          "fire",
+          "elemental"
+        ]
+      },
+      "itemId": "fire_bomb",
+      "name": "Fire Bomb",
+      "category": "device",
+      "type": "bomb",
+      "subtype": "elemental",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Explodes for 75 fire damage + lingering flames",
+      "effectTags": [
+        "fire",
+        "circle",
+        "burn"
+      ],
+      "effectParams": {
+        "baseDamage": 75,
+        "circle_radius": 4.0,
+        "burn_duration": 6.0,
+        "burn_damage_per_second": 8.0
+      },
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_cluster_bomb",
+      "stationTier": 3,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "blast_powder",
+          "quantity": 12
+        },
+        {
+          "materialId": "air_crystal",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Cluster bomb that splits into multiple explosives. Maximum coverage."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Cluster bomb that splits into multiple explosives. Maximum coverage. One becomes many, the sky rains destruction.",
+        "tags": [
+          "device",
+          "bomb",
+          "area",
+          "cluster"
+        ]
+      },
+      "itemId": "cluster_bomb",
+      "name": "Cluster Bomb",
+      "category": "device",
+      "type": "bomb",
+      "subtype": "explosive",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "Splits into 8 smaller explosions, total 120 damage over wide area",
+      "effectTags": [
+        "physical",
+        "circle"
+      ],
+      "effectParams": {
+        "baseDamage": 120,
+        "circle_radius": 5.0
+      },
+      "stackSize": 5,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_spike_trap",
+      "stationTier": 1,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Spike trap with spring-loaded iron spikes. Simple, brutal, effective."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Spike trap with spring-loaded iron spikes. Triggers on contact. Simple, brutal, effective. The spikes punch through leather and flesh alike.",
+        "tags": [
+          "device",
+          "trap",
+          "physical",
+          "basic"
+        ]
+      },
+      "itemId": "spike_trap",
+      "name": "Spike Trap",
+      "category": "device",
+      "type": "trap",
+      "subtype": "physical",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Triggers on contact, 30 damage + bleed",
+      "effectTags": [
+        "physical",
+        "piercing",
+        "circle",
+        "bleed"
+      ],
+      "effectParams": {
+        "baseDamage": 30,
+        "circle_radius": 2.0,
+        "bleed_duration": 8.0,
+        "bleed_damage_per_second": 3.0
+      },
+      "stackSize": 15,
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_frost_mine",
+      "stationTier": 2,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "blast_powder",
+          "quantity": 2
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Frost mine that erupts in a blast of ice shards. The cold bites deep."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Frost mine that erupts in a blast of ice shards. Triggers on proximity. The cold bites deep, slowing everything it touches.",
+        "tags": [
+          "device",
+          "trap",
+          "frost",
+          "elemental"
+        ]
+      },
+      "itemId": "frost_mine",
+      "name": "Frost Mine",
+      "category": "device",
+      "type": "trap",
+      "subtype": "elemental",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Triggers on proximity, 50 damage + slow",
+      "effectTags": [
+        "ice",
+        "circle",
+        "freeze",
+        "slow"
+      ],
+      "effectParams": {
+        "baseDamage": 50,
+        "circle_radius": 3.0,
+        "freeze_duration": 3.0,
+        "slow_factor": 0.5
+      },
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_bear_trap",
+      "stationTier": 1,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "dire_fang",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it. The teeth dig deep and don't let go.",
+        "tags": [
+          "device",
+          "trap",
+          "physical",
+          "immobilize"
+        ]
+      },
+      "itemId": "bear_trap",
+      "name": "Bear Trap",
+      "category": "device",
+      "type": "trap",
+      "subtype": "physical",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Triggers on contact, 25 damage + immobilize for 5 seconds",
+      "effectTags": [
+        "physical",
+        "crushing",
+        "single",
+        "root"
+      ],
+      "effectParams": {
+        "baseDamage": 25,
+        "root_duration": 5.0
+      },
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 1.2
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  }
+]

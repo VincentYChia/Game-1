@@ -1,1 +1,99 @@
-[]
+[
+  {
+    "input": {
+      "recipeId": "engineering_frost_mine",
+      "itemId": "frost_mine",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "blast_powder",
+          "quantity": 2
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 3
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Frost mine that erupts in a blast of ice shards. Triggers on proximity. The cold bites deep, slowing everything it touches.",
+        "tags": [
+          "device",
+          "trap",
+          "frost",
+          "elemental"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "engineering_frost_mine",
+      "outputId": "frost_mine",
+      "stationTier": 2,
+      "slots": [
+        {
+          "type": "FRAME",
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "type": "FUNCTION",
+          "materialId": "blast_powder",
+          "quantity": 2
+        },
+        {
+          "type": "POWER",
+          "materialId": "frost_essence",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Frost mine - iron casing protects mechanism, blast powder triggers, frost essence provides freezing blast. Bury and wait."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_bear_trap",
+      "itemId": "bear_trap",
+      "tier": 1,
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "dire_fang",
+          "quantity": 6
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it. The teeth dig deep and don't let go.",
+        "tags": [
+          "device",
+          "trap",
+          "physical",
+          "immobilize"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "engineering_bear_trap",
+      "outputId": "bear_trap",
+      "stationTier": 1,
+      "slots": [
+        {
+          "type": "FRAME",
+          "materialId": "steel_ingot",
+          "quantity": 4
+        },
+        {
+          "type": "FUNCTION",
+          "materialId": "dire_fang",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Bear trap - steel forms jaw mechanism, dire fangs form serrated edges. Once closed, nothing escapes. Perfect spring tension required."
+    }
+  }
+]

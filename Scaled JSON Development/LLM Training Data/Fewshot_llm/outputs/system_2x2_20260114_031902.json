@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-01-14T03:19:02.819657",
+  "system_key": "2x2",
+  "system_name": "Refining Placement",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are a refining designer for an action fantasy sandbox RPG. Given refining recipes, determine optimal material placement on refinery grids. Return ONLY valid JSON with placement coordinates.",
+  "few_shot_count": 2,
+  "test_prompt": "Create a core/surrounding placement pattern for this refining recipe:\n\n{\n  \"recipeId\": \"refining_steel_ore_to_ingot\",\n  \"materialId\": \"steel_ingot\",\n  \"tier\": 2,\n  \"coreInput\": {\n    \"materialId\": \"steel_ore\",\n    \"quantity\": 1,\n    \"materialName\": \"Steel Ore\",\n    \"materialTier\": 2,\n    \"materialRarity\": \"uncommon\",\n    \"materialNarrative\": \"Harder and more durable than pure iron. The secret of its strength lies in its carbon-rich structure. A true warrior's metal.\",\n    \"materialTags\": [\"basic\", \"metal\", \"advanced\"]\n  },\n  \"surroundingInputs\": [],\n  \"materialMetadata\": {\n    \"narrative\": \"Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.\",\n    \"tags\": [\"refined\", \"metal\", \"advanced\"]\n  }\n}\n\nReturn ONLY the JSON placement pattern with coreInputs and surroundingInputs, no extra text.",
+  "response": "{\n  \"recipeId\": \"refining_steel_ore_to_ingot\",\n  \"outputId\": \"steel_ingot\",\n  \"stationTier\": 2,\n  \"coreInputs\": [\n    {\n      \"materialId\": \"steel_ore\",\n      \"quantity\": 1,\n      \"position\": [0, 0]\n    }\n  ],\n  \"surroundingInputs\": [\n    {\n      \"materialId\": \"coal\",\n      \"quantity\": 2,\n      \"positions\": [[1, 0], [-1, 0]]\n    }\n  ],\n  \"narrative\": \"Forging steel requires intense heat. Coal feeds the flames that transform ore into the backbone of advanced metallurgy.\"\n}",
+  "usage": {
+    "input_tokens": 922,
+    "output_tokens": 180
+  }
+}

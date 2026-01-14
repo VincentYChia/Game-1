@@ -200,7 +200,7 @@ def main():
 
                 # Validate against template
                 if template_name != "unknown":
-                    is_valid, errors = validator.validate(output_json, template_name)
+                    is_valid, errors = validator.validate_structure(output_json, template_name)
 
                     if is_valid:
                         print(f"  ✅ Valid - All checks passed")

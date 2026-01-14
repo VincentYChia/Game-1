@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-01-14T03:19:30.561535",
+  "system_key": "6",
+  "system_name": "Chunk\u2192Hostile Enemy",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are an enemy designer for an action fantasy sandbox RPG. Given world chunk types and spawn data, generate complete hostile enemy definitions with stats, AI behaviors, and loot drops. Return ONLY valid JSON.",
+  "few_shot_count": 8,
+  "test_prompt": "Create an enemy definition for this chunk spawn:\n\n{\n  \"chunkType\": \"dangerous_cave\",\n  \"chunkCategory\": \"dangerous\",\n  \"chunkTheme\": \"cave\",\n  \"enemySpawns\": {\n    \"beetle_armored\": {\n      \"density\": \"moderate\",\n      \"tier\": 2\n    }\n  }\n}\n\nReturn ONLY the JSON enemy definition, no extra text.",
+  "response": "\"{\\n  \\\"metadata\\\": {\\n    \\\"narrative\\\": \\\"Heavily armored beetle that scuttles through dark caverns. Its thick carapace deflects most attacks.\\\",\\n    \\\"tags\\\": [\\n      \\\"beetle\\\",\\n      \\\"uncommon\\\",\\n      \\\"aggressive\\\",\\n      \\\"mid-game\\\"\\n    ]\\n  },\\n  \\\"enemyId\\\": \\\"beetle_armored\\\",\\n  \\\"name\\\": \\\"Armored Beetle\\\",\\n  \\\"tier\\\": 2,\\n  \\\"category\\\": \\\"insect\\\",\\n  \\\"behavior\\\": \\\"aggressive_defensive\\\",\\n  \\\"stats\\\": {\\n    \\\"health\\\": 160,\\n    \\\"damage\\\": [\\n      20,\\n      30\\n    ],\\n    \\\"defense\\\": 18,\\n    \\\"speed\\\": 0.8,\\n    \\\"aggroRange\\\": 7,\\n    \\\"attackSpeed\\\": 0.9\\n  },\\n  \\\"drops\\\": [\\n    {\\n      \\\"materialId\\\": \\\"chitin_plate\\\",\\n      \\\"quantity\\\": [\\n        3,\\n        6\\n      ],\\n      \\\"chance\\\": \\\"guaranteed\\\"\\n    },\\n    {\\n      \\\"materialId\\\": \\\"insect_leg\\\",\\n      \\\"quantity\\\": [\\n        4,\\n        8\\n      ],\\n      \\\"chance\\\": \\\"high\\\"\\n    },\\n    {\\n      \\\"materialId\\\": \\\"living_ichor\\\",\\n      \\\"quantity\\\": [\\n        1,\\n        2\\n      ],\\n      \\\"chance\\\": \\\"moderate\\\"\\n    }\\n  ],\\n  \\\"aiPattern\\\": {\\n    \\\"defaultState\\\": \\\"patrol\\\",\\n    \\\"aggroOnDamage\\\": true,\\n    \\\"aggroOnProximity\\\": true,\\n    \\\"fleeAtHealth\\\": 0,\\n    \\\"callForHelpRadius\\\": 8,\\n    \\\"specialAbilities\\\": [\\n      \\\"charge_attack\\\"\\n    ]\\n  }\\n}\"",
+  "usage": {
+    "input_tokens": 5211,
+    "output_tokens": 525
+  }
+}

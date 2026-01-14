@@ -1,1 +1,128 @@
-[]
+[
+  {
+    "input": {
+      "recipeId": "engineering_frost_mine",
+      "stationTier": 2,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 3
+        },
+        {
+          "materialId": "blast_powder",
+          "quantity": 2
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Frost mine that erupts in a blast of ice shards. The cold bites deep."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Frost mine that erupts in a blast of ice shards. Triggers on proximity. The cold bites deep, slowing everything it touches.",
+        "tags": [
+          "device",
+          "trap",
+          "frost",
+          "elemental"
+        ]
+      },
+      "itemId": "frost_mine",
+      "name": "Frost Mine",
+      "category": "device",
+      "type": "trap",
+      "subtype": "elemental",
+      "tier": 2,
+      "rarity": "uncommon",
+      "effect": "Triggers on proximity, 50 damage + slow",
+      "effectTags": [
+        "ice",
+        "circle",
+        "freeze",
+        "slow"
+      ],
+      "effectParams": {
+        "baseDamage": 50,
+        "circle_radius": 3.0,
+        "freeze_duration": 3.0,
+        "slow_factor": 0.5
+      },
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 0.8
+      },
+      "requirements": {
+        "level": 6,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "engineering_bear_trap",
+      "stationTier": 1,
+      "stationType": "engineering",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "dire_fang",
+          "quantity": 6
+        }
+      ],
+      "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it. The teeth dig deep and don't let go.",
+        "tags": [
+          "device",
+          "trap",
+          "physical",
+          "immobilize"
+        ]
+      },
+      "itemId": "bear_trap",
+      "name": "Bear Trap",
+      "category": "device",
+      "type": "trap",
+      "subtype": "physical",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Triggers on contact, 25 damage + immobilize for 5 seconds",
+      "effectTags": [
+        "physical",
+        "crushing",
+        "single",
+        "root"
+      ],
+      "effectParams": {
+        "baseDamage": 25,
+        "root_duration": 5.0
+      },
+      "stackSize": 10,
+      "statMultipliers": {
+        "weight": 1.2
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  }
+]

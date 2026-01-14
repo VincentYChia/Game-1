@@ -36,7 +36,7 @@ PATHS = {
     "alchemy_placements": GAME_ROOT / "placements.JSON/placements-alchemy-1.JSON",
 
     "engineering_recipes": GAME_ROOT / "recipes.JSON/recipes-engineering-1.JSON",
-    "engineering_items": GAME_ROOT / "items.JSON/items-alchemy-1.JSON",  # They share the same file
+    "engineering_items": GAME_ROOT / "items.JSON/items-engineering-1.JSON",
     "engineering_placements": GAME_ROOT / "placements.JSON/placements-engineering-1.JSON",
 
     "enchanting_recipes": GAME_ROOT / "recipes.JSON/recipes-adornments-1.json",
