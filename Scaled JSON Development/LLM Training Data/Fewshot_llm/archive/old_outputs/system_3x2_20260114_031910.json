@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-01-14T03:19:10.841612",
+  "system_key": "3x2",
+  "system_name": "Alchemy Placement",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are an alchemy designer for an action fantasy sandbox RPG. Given alchemy recipes, determine optimal ingredient placement on brewing grids. Return ONLY valid JSON with placement coordinates.",
+  "few_shot_count": 2,
+  "test_prompt": "Create a sequential ingredient placement for this alchemy recipe:\n\n{\n  \"recipeId\": \"alchemy_greater_mana_potion\",\n  \"itemId\": \"greater_mana_potion\",\n  \"tier\": 2,\n  \"inputs\": [\n    {\n      \"materialId\": \"arcane_dust\",\n      \"quantity\": 3,\n      \"materialName\": \"Arcane Dust\",\n      \"materialTier\": 2,\n      \"materialRarity\": \"uncommon\",\n      \"materialNarrative\": \"Crystallized essence of magical energy. Glows with a soft blue light.\",\n      \"materialTags\": [\"elemental\", \"arcane\", \"magical\"]\n    },\n    {\n      \"materialId\": \"moonflower\",\n      \"quantity\": 2,\n      \"materialName\": \"Moonflower\",\n      \"materialTier\": 2,\n      \"materialRarity\": \"uncommon\",\n      \"materialNarrative\": \"Rare flower that blooms only under moonlight. Contains potent magical properties.\",\n      \"materialTags\": [\"plant\", \"magical\", \"rare\"]\n    },\n    {\n      \"materialId\": \"crystal_shard\",\n      \"quantity\": 1,\n      \"materialName\": \"Crystal Shard\",\n      \"materialTier\": 2,\n      \"materialRarity\": \"uncommon\",\n      \"materialNarrative\": \"Fragment of pure crystal. Amplifies magical energies.\",\n      \"materialTags\": [\"crystal\", \"magical\", \"amplifier\"]\n    }\n  ],\n  \"itemMetadata\": {\n    \"narrative\": \"A potent mixture of arcane ingredients. Restores magical energy and enhances spellcasting.\",\n    \"tags\": [\"potion\", \"mana\", \"consumable\", \"magical\"]\n  }\n}\n\nReturn ONLY the JSON placement pattern with ingredients array (slot, materialId, quantity), no extra text.",
+  "response": "{\n  \"recipeId\": \"alchemy_greater_mana_potion\",\n  \"outputId\": \"greater_mana_potion\",\n  \"stationTier\": 2,\n  \"ingredients\": [\n    {\n      \"slot\": 1,\n      \"materialId\": \"arcane_dust\",\n      \"quantity\": 3\n    },\n    {\n      \"slot\": 2,\n      \"materialId\": \"moonflower\",\n      \"quantity\": 2\n    },\n    {\n      \"slot\": 3,\n      \"materialId\": \"crystal_shard\",\n      \"quantity\": 1\n    }\n  ],\n  \"narrative\": \"Arcane dust forms the magical foundation. Moonflower petals dissolve into the shimmering base. Crystal shard amplifies and stabilizes the essence.\"\n}",
+  "usage": {
+    "input_tokens": 1413,
+    "output_tokens": 199
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-01-13T22:42:34.841072",
+  "system_key": "2",
+  "system_name": "Refining Recipe\u2192Material",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are a refining expert for an action fantasy sandbox RPG. Given refining recipes, generate material definitions for refined outputs like ingots, planks, and processed goods. Return ONLY valid JSON.",
+  "few_shot_examples": [
+    {
+      "input": "{\n  \"recipeId\": \"refining_copper_ore_to_ingot\",\n  \"stationTier\": 1,\n  \"stationType\": \"refining\",\n  \"inputs\": [\n    {\n      \"materialId\": \"copper_ore\",\n      \"quantity\": 1\n    }\n  ],\n  \"narrative\": \"Smelting raw copper into usable ingots. The foundation of metallurgy.\"\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"starter\"\n    ]\n  },\n  \"materialId\": \"copper_ingot\",\n  \"name\": \"Copper Ingot\",\n  \"tier\": 1,\n  \"rarity\": \"common\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"recipeId\": \"refining_iron_ore_to_ingot\",\n  \"stationTier\": 1,\n  \"stationType\": \"refining\",\n  \"inputs\": [\n    {\n      \"materialId\": \"iron_ore\",\n      \"quantity\": 1\n    }\n  ],\n  \"narrative\": \"Smelting iron ore into reliable metal. Backbone of civilization. Crushing the ore first increases yield.\"\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"standard\"\n    ]\n  },\n  \"materialId\": \"iron_ingot\",\n  \"name\": \"Iron Ingot\",\n  \"tier\": 1,\n  \"rarity\": \"common\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"recipeId\": \"refining_tin_ore_to_ingot\",\n  \"stationTier\": 1,\n  \"stationType\": \"refining\",\n  \"inputs\": [\n    {\n      \"materialId\": \"tin_ore\",\n      \"quantity\": 1\n    }\n  ],\n  \"narrative\": \"Refining tin ore into silvery metal. Essential for alloys.\"\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Refined tin with excellent magical conductivity. Used in alloys and enchanted items.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"magical\"\n    ]\n  },\n  \"materialId\": \"tin_ingot\",\n  \"name\": \"Tin Ingot\",\n  \"tier\": 1,\n  \"rarity\": \"uncommon\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"recipeId\": \"refining_steel_ore_to_ingot\",\n  \"stationTier\": 1,\n  \"stationType\": \"refining\",\n  \"inputs\": [\n    {\n      \"materialId\": \"steel_ore\",\n      \"quantity\": 1\n    }\n  ],\n  \"narrative\": \"Forging steel from carbon-rich ore. Requires intense heat.\"\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"advanced\"\n    ]\n  },\n  \"materialId\": \"steel_ingot\",\n  \"name\": \"Steel Ingot\",\n  \"tier\": 2,\n  \"rarity\": \"uncommon\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"recipeId\": \"refining_mithril_ore_to_ingot\",\n  \"stationTier\": 1,\n  \"stationType\": \"refining\",\n  \"inputs\": [\n    {\n      \"materialId\": \"mithril_ore\",\n      \"quantity\": 1\n    }\n  ],\n  \"narrative\": \"Refining legendary mithril. The metal seems to purify itself, occasionally yielding higher quality ingots.\"\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"legendary\"\n    ]\n  },\n  \"materialId\": \"mithril_ingot\",\n  \"name\": \"Mithril Ingot\",\n  \"tier\": 2,\n  \"rarity\": \"rare\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"recipeId\": \"refining_adamantine_ore_to_ingot\",\n  \"stationTier\": 1,\n  \"stationType\": \"refining\",\n  \"inputs\": [\n    {\n      \"materialId\": \"adamantine_ore\",\n      \"quantity\": 1\n    }\n  ],\n  \"narrative\": \"Smelting adamantine requires extreme heat and purification techniques. Sometimes yields exceptionally pure ingots.\"\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"rare\"\n    ]\n  },\n  \"materialId\": \"adamantine_ingot\",\n  \"name\": \"Adamantine Ingot\",\n  \"tier\": 3,\n  \"rarity\": \"rare\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"recipeId\": \"refining_orichalcum_ore_to_ingot\",\n  \"stationTier\": 1,\n  \"stationType\": \"refining\",\n  \"inputs\": [\n    {\n      \"materialId\": \"orichalcum_ore\",\n      \"quantity\": 1\n    }\n  ],\n  \"narrative\": \"Refining the ancient metal. Channels both physical and magical forces.\"\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"ancient\"\n    ]\n  },\n  \"materialId\": \"orichalcum_ingot\",\n  \"name\": \"Orichalcum Ingot\",\n  \"tier\": 3,\n  \"rarity\": \"epic\",\n  \"category\": \"metal\"\n}"
+    },
+    {
+      "input": "{\n  \"recipeId\": \"refining_etherion_ore_to_ingot\",\n  \"stationTier\": 1,\n  \"stationType\": \"refining\",\n  \"inputs\": [\n    {\n      \"materialId\": \"etherion_ore\",\n      \"quantity\": 1\n    }\n  ],\n  \"narrative\": \"Refining metal that exists in multiple states. Reality bends during the process.\"\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"mythical\",\n      \"temporal\"\n    ]\n  },\n  \"materialId\": \"etherion_ingot\",\n  \"name\": \"Etherion Ingot\",\n  \"tier\": 4,\n  \"rarity\": \"legendary\",\n  \"category\": \"metal\"\n}"
+    }
+  ],
+  "test_prompt": "Create a material definition for this refining recipe:\n\n{\n  \"recipeId\": \"refining_steel_ore_to_ingot\",\n  \"stationTier\": 1,\n  \"stationType\": \"refining\",\n  \"inputs\": [\n    {\"materialId\": \"steel_ore\", \"quantity\": 1}\n  ],\n  \"narrative\": \"Forging steel from carbon-rich ore. Requires intense heat.\"\n}\n\nReturn ONLY the JSON material definition, no extra text.",
+  "response": "{\n  \"metadata\": {\n    \"narrative\": \"Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.\",\n    \"tags\": [\n      \"refined\",\n      \"metal\",\n      \"advanced\"\n    ]\n  },\n  \"materialId\": \"steel_ingot\",\n  \"name\": \"Steel Ingot\",\n  \"tier\": 2,\n  \"rarity\": \"uncommon\",\n  \"category\": \"metal\"\n}",
+  "usage": {
+    "input_tokens": 2046,
+    "output_tokens": 118
+  }
+}

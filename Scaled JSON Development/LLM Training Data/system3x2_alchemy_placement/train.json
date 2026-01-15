@@ -7,11 +7,29 @@
       "inputs": [
         {
           "materialId": "slime_gel",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Slime Gel",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
+          "materialTags": [
+            "monster",
+            "common",
+            "gel"
+          ]
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Wolf Pelt",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
+          "materialTags": [
+            "monster",
+            "common",
+            "leather"
+          ]
         }
       ],
       "itemMetadata": {
@@ -51,15 +69,42 @@
       "inputs": [
         {
           "materialId": "living_ichor",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Living Ichor",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
+          "materialTags": [
+            "monster",
+            "uncommon",
+            "essence"
+          ]
         },
         {
           "materialId": "water_crystal",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Water Crystal",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Blue crystal filled with flowing liquid. Cool and calming, perpetually damp.",
+          "materialTags": [
+            "elemental",
+            "water",
+            "common"
+          ]
         },
         {
           "materialId": "slime_gel",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Slime Gel",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
+          "materialTags": [
+            "monster",
+            "common",
+            "gel"
+          ]
         }
       ],
       "itemMetadata": {
@@ -104,15 +149,42 @@
       "inputs": [
         {
           "materialId": "essence_blood",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Essence Blood",
+          "materialTier": 3,
+          "materialRarity": "rare",
+          "materialNarrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
+          "materialTags": [
+            "monster",
+            "rare",
+            "blood"
+          ]
         },
         {
           "materialId": "light_gem",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Light Gem",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
+          "materialTags": [
+            "elemental",
+            "light",
+            "rare"
+          ]
         },
         {
           "materialId": "living_ichor",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Living Ichor",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
+          "materialTags": [
+            "monster",
+            "uncommon",
+            "essence"
+          ]
         }
       ],
       "itemMetadata": {

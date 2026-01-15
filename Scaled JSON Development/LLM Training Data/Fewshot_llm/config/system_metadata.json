@@ -1,0 +1,62 @@
+{
+  "1": {
+    "name": "Smithing Recipe\u2192Item",
+    "template": "smithing_items"
+  },
+  "2": {
+    "name": "Refining Recipe\u2192Material",
+    "template": "refining_items"
+  },
+  "3": {
+    "name": "Alchemy Recipe\u2192Potion",
+    "template": "alchemy_items"
+  },
+  "4": {
+    "name": "Engineering Recipe\u2192Device",
+    "template": "engineering_items"
+  },
+  "5": {
+    "name": "Enchanting Recipe\u2192Enchantment",
+    "template": "enchanting_recipes"
+  },
+  "6": {
+    "name": "Chunk\u2192Hostile Enemy",
+    "template": "hostiles"
+  },
+  "7": {
+    "name": "Drop Source\u2192Material",
+    "template": "refining_items"
+  },
+  "8": {
+    "name": "Chunk\u2192Resource Node",
+    "template": "node_types"
+  },
+  "10": {
+    "name": "Requirements\u2192Skill",
+    "template": "skills"
+  },
+  "11": {
+    "name": "Prerequisites\u2192Title",
+    "template": "titles"
+  },
+  "1x2": {
+    "name": "Smithing Placement",
+    "template": null
+  },
+  "2x2": {
+    "name": "Refining Placement",
+    "template": null
+  },
+  "3x2": {
+    "name": "Alchemy Placement",
+    "template": null
+  },
+  "4x2": {
+    "name": "Engineering Placement",
+    "template": null
+  },
+  "5x2": {
+    "name": "Enchanting Placement",
+    "template": null
+  }
+}

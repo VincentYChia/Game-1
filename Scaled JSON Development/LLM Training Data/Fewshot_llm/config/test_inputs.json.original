@@ -1,0 +1,38 @@
+{
+  "1": {
+    "name": "Smithing Recipe\u2192Item",
+    "prompt": "Create an item definition for this smithing recipe:\n\n{\n  \"recipeId\": \"smithing_iron_axe\",\n  \"stationTier\": 1,\n  \"stationType\": \"smithing\",\n  \"inputs\": [\n    {\"materialId\": \"iron_ingot\", \"quantity\": 3},\n    {\"materialId\": \"birch_plank\", \"quantity\": 2}\n  ],\n  \"narrative\": \"Solid iron axe for serious forestry work. Bites deep and true.\"\n}\n\nReturn ONLY the JSON item definition, no extra text."
+  },
+  "2": {
+    "name": "Refining Recipe\u2192Material",
+    "prompt": "Create a material definition for this refining recipe:\n\n{\n  \"recipeId\": \"refining_steel_ore_to_ingot\",\n  \"stationTier\": 1,\n  \"stationType\": \"refining\",\n  \"inputs\": [\n    {\"materialId\": \"steel_ore\", \"quantity\": 1}\n  ],\n  \"narrative\": \"Forging steel from carbon-rich ore. Requires intense heat.\"\n}\n\nReturn ONLY the JSON material definition, no extra text."
+  },
+  "3": {
+    "name": "Alchemy Recipe\u2192Potion",
+    "prompt": "Create a potion definition for this alchemy recipe:\n\n{\n  \"recipeId\": \"alchemy_greater_mana_potion\",\n  \"stationTier\": 2,\n  \"stationType\": \"alchemy\",\n  \"inputs\": [\n    {\"materialId\": \"arcane_dust\", \"quantity\": 3},\n    {\"materialId\": \"moonflower\", \"quantity\": 2},\n    {\"materialId\": \"crystal_shard\", \"quantity\": 1}\n  ],\n  \"narrative\": \"A potent mixture of arcane ingredients. Restores magical energy and enhances spellcasting.\"\n}\n\nReturn ONLY the JSON potion definition, no extra text."
+  },
+  "5": {
+    "name": "Enchanting Recipe\u2192Enchantment",
+    "prompt": "Create an enchantment definition for this enchanting recipe:\n\n{\n  \"recipeId\": \"enchanting_protection_advanced\",\n  \"enchantmentId\": \"protection_2\",\n  \"stationTier\": 2,\n  \"stationType\": \"enchanting\",\n  \"inputs\": [\n    {\"materialId\": \"guardian_essence\", \"quantity\": 5},\n    {\"materialId\": \"steel_ingot\", \"quantity\": 4},\n    {\"materialId\": \"sapphire\", \"quantity\": 2}\n  ],\n  \"narrative\": \"Advanced protective enchantment using guardian essence. Creates a magical barrier that deflects harm.\"\n}\n\nReturn ONLY the JSON enchantment definition, no extra text."
+  },
+  "6": {
+    "name": "Chunk\u2192Hostile Enemy",
+    "prompt": "Create an enemy definition for this chunk spawn:\n\n{\n  \"chunkType\": \"dangerous_cave\",\n  \"chunkCategory\": \"dangerous\",\n  \"chunkTheme\": \"cave\",\n  \"enemySpawns\": {\n    \"beetle_armored\": {\n      \"density\": \"moderate\",\n      \"tier\": 2\n    }\n  }\n}\n\nReturn ONLY the JSON enemy definition, no extra text."
+  },
+  "7": {
+    "name": "Drop Source\u2192Material",
+    "prompt": "Create a material definition for this drop source:\n\n{\n  \"sourceType\": \"node\",\n  \"sourceName\": \"Ancient Mithril Vein\",\n  \"sourceTier\": 3,\n  \"materialTier\": 3,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\"mithril_vein_ancient\"]\n}\n\nReturn ONLY the JSON material definition, no extra text."
+  },
+  "8": {
+    "name": "Chunk\u2192Resource Node",
+    "prompt": "Create a resource node definition for this chunk:\n\n{\n  \"chunkType\": \"peaceful_forest\",\n  \"chunkCategory\": \"peaceful\",\n  \"chunkTheme\": \"forest\",\n  \"resourceDensity\": {\n    \"oak_tree\": {\n      \"density\": \"very_high\",\n      \"tierBias\": \"low\"\n    }\n  }\n}\n\nReturn ONLY the JSON node definition, no extra text."
+  },
+  "10": {
+    "name": "Requirements\u2192Skill",
+    "prompt": "Create a skill definition for these requirements:\n\n{\n  \"requiredLevel\": 5,\n  \"requiredSkills\": [],\n  \"discipline\": \"combat\",\n  \"tags\": [\"damage_boost\", \"melee\", \"temporary\"]\n}\n\nReturn ONLY the JSON skill definition, no extra text."
+  },
+  "11": {
+    "name": "Prerequisites\u2192Title",
+    "prompt": "Create a title definition for these prerequisites:\n\n{\n  \"category\": \"combat\",\n  \"tier\": 2,\n  \"requirements\": {\n    \"enemiesDefeated\": 500,\n    \"bossesSlain\": 10,\n    \"damageDealt\": 50000\n  },\n  \"tags\": [\"warrior\", \"combat\", \"elite\"]\n}\n\nReturn ONLY the JSON title definition, no extra text."
+  }
+}

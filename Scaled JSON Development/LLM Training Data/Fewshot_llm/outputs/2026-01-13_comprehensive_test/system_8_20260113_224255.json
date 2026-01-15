@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-01-13T22:42:55.545188",
+  "system_key": "8",
+  "system_name": "Chunk\u2192Resource Node",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are a world designer for an action fantasy sandbox RPG. Given world chunk characteristics, generate resource node definitions with gathering requirements and yield tables. Return ONLY valid JSON.",
+  "few_shot_examples": [
+    {
+      "input": "{\n  \"chunkType\": \"peaceful_forest\",\n  \"chunkCategory\": \"peaceful\",\n  \"chunkTheme\": \"forest\",\n  \"resourceDensity\": {\n    \"oak_tree\": {\n      \"density\": \"very_high\",\n      \"tierBias\": \"low\"\n    }\n  }\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.\",\n    \"tags\": [\n      \"tree\",\n      \"wood\",\n      \"starter\"\n    ]\n  },\n  \"resourceId\": \"oak_tree\",\n  \"name\": \"Oak Tree\",\n  \"category\": \"tree\",\n  \"tier\": 1,\n  \"requiredTool\": \"axe\",\n  \"baseHealth\": 100,\n  \"drops\": [\n    {\n      \"materialId\": \"oak_log\",\n      \"quantity\": \"many\",\n      \"chance\": \"guaranteed\"\n    }\n  ],\n  \"respawnTime\": \"normal\"\n}"
+    },
+    {
+      "input": "{\n  \"chunkType\": \"peaceful_forest\",\n  \"chunkCategory\": \"peaceful\",\n  \"chunkTheme\": \"forest\",\n  \"resourceDensity\": {\n    \"pine_tree\": {\n      \"density\": \"very_high\",\n      \"tierBias\": \"low\"\n    }\n  }\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Tall conifer reaching toward the sky. Flexible wood perfect for bows and lightweight construction.\",\n    \"tags\": [\n      \"tree\",\n      \"wood\",\n      \"flexible\"\n    ]\n  },\n  \"resourceId\": \"pine_tree\",\n  \"name\": \"Pine Tree\",\n  \"category\": \"tree\",\n  \"tier\": 1,\n  \"requiredTool\": \"axe\",\n  \"baseHealth\": 100,\n  \"drops\": [\n    {\n      \"materialId\": \"pine_log\",\n      \"quantity\": \"many\",\n      \"chance\": \"guaranteed\"\n    }\n  ],\n  \"respawnTime\": \"normal\"\n}"
+    },
+    {
+      "input": "{\n  \"chunkType\": \"peaceful_forest\",\n  \"chunkCategory\": \"peaceful\",\n  \"chunkTheme\": \"forest\",\n  \"resourceDensity\": {\n    \"birch_tree\": {\n      \"density\": \"moderate\",\n      \"tierBias\": \"mid\"\n    }\n  }\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Elegant tree with papery white bark. Fine grain makes it ideal for detailed carving work.\",\n    \"tags\": [\n      \"tree\",\n      \"wood\",\n      \"fine\"\n    ]\n  },\n  \"resourceId\": \"birch_tree\",\n  \"name\": \"Birch Tree\",\n  \"category\": \"tree\",\n  \"tier\": 2,\n  \"requiredTool\": \"axe\",\n  \"baseHealth\": 200,\n  \"drops\": [\n    {\n      \"materialId\": \"birch_log\",\n      \"quantity\": \"several\",\n      \"chance\": \"guaranteed\"\n    }\n  ],\n  \"respawnTime\": \"slow\"\n}"
+    },
+    {
+      "input": "{\n  \"chunkType\": \"dangerous_forest\",\n  \"chunkCategory\": \"dangerous\",\n  \"chunkTheme\": \"forest\",\n  \"resourceDensity\": {\n    \"birch_tree\": {\n      \"density\": \"high\",\n      \"tierBias\": \"mid\"\n    }\n  }\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Elegant tree with papery white bark. Fine grain makes it ideal for detailed carving work.\",\n    \"tags\": [\n      \"tree\",\n      \"wood\",\n      \"fine\"\n    ]\n  },\n  \"resourceId\": \"birch_tree\",\n  \"name\": \"Birch Tree\",\n  \"category\": \"tree\",\n  \"tier\": 2,\n  \"requiredTool\": \"axe\",\n  \"baseHealth\": 200,\n  \"drops\": [\n    {\n      \"materialId\": \"birch_log\",\n      \"quantity\": \"several\",\n      \"chance\": \"guaranteed\"\n    }\n  ],\n  \"respawnTime\": \"slow\"\n}"
+    },
+    {
+      "input": "{\n  \"chunkType\": \"dangerous_forest\",\n  \"chunkCategory\": \"dangerous\",\n  \"chunkTheme\": \"forest\",\n  \"resourceDensity\": {\n    \"ironwood_tree\": {\n      \"density\": \"low\",\n      \"tierBias\": \"high\"\n    }\n  }\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Rare tree whose wood rivals soft metals in hardness. Almost metallic ring when struck.\",\n    \"tags\": [\n      \"tree\",\n      \"wood\",\n      \"rare\",\n      \"metallic\"\n    ]\n  },\n  \"resourceId\": \"ironwood_tree\",\n  \"name\": \"Ironwood Tree\",\n  \"category\": \"tree\",\n  \"tier\": 3,\n  \"requiredTool\": \"axe\",\n  \"baseHealth\": 400,\n  \"drops\": [\n    {\n      \"materialId\": \"ironwood_log\",\n      \"quantity\": \"few\",\n      \"chance\": \"high\"\n    }\n  ],\n  \"respawnTime\": \"very_slow\"\n}"
+    },
+    {
+      "input": "{\n  \"chunkType\": \"dangerous_cave\",\n  \"chunkCategory\": \"dangerous\",\n  \"chunkTheme\": \"cave\",\n  \"resourceDensity\": {\n    \"voidstone_shard\": {\n      \"density\": \"low\",\n      \"tierBias\": \"high\"\n    }\n  }\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Pitch-black stone that pulls light into itself. Radiates subtle wrongness.\",\n    \"tags\": [\n      \"stone\",\n      \"void\",\n      \"rare\"\n    ]\n  },\n  \"resourceId\": \"voidstone_shard\",\n  \"name\": \"Voidstone Shard\",\n  \"category\": \"stone\",\n  \"tier\": 3,\n  \"requiredTool\": \"pickaxe\",\n  \"baseHealth\": 400,\n  \"drops\": [\n    {\n      \"materialId\": \"voidstone\",\n      \"quantity\": \"few\",\n      \"chance\": \"moderate\"\n    },\n    {\n      \"materialId\": \"void_essence\",\n      \"quantity\": \"few\",\n      \"chance\": \"low\"\n    }\n  ],\n  \"respawnTime\": null\n}"
+    },
+    {
+      "input": "{\n  \"chunkType\": \"rare_forest\",\n  \"chunkCategory\": \"rare\",\n  \"chunkTheme\": \"forest\",\n  \"resourceDensity\": {\n    \"worldtree_sapling\": {\n      \"density\": \"very_low\",\n      \"tierBias\": \"legendary\"\n    }\n  }\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Legendary tree connected to the World Tree's root network. The wood hums with accumulated magical essence.\",\n    \"tags\": [\n      \"tree\",\n      \"wood\",\n      \"legendary\",\n      \"living\"\n    ]\n  },\n  \"resourceId\": \"worldtree_sapling\",\n  \"name\": \"Worldtree Sapling\",\n  \"category\": \"tree\",\n  \"tier\": 4,\n  \"requiredTool\": \"axe\",\n  \"baseHealth\": 800,\n  \"drops\": [\n    {\n      \"materialId\": \"worldtree_log\",\n      \"quantity\": \"few\",\n      \"chance\": \"low\"\n    }\n  ],\n  \"respawnTime\": null\n}"
+    },
+    {
+      "input": "{\n  \"chunkType\": \"rare_quarry\",\n  \"chunkCategory\": \"rare\",\n  \"chunkTheme\": \"quarry\",\n  \"resourceDensity\": {\n    \"primordial_formation\": {\n      \"density\": \"very_low\",\n      \"tierBias\": \"legendary\"\n    }\n  }\n}",
+      "output": "{\n  \"metadata\": {\n    \"narrative\": \"Crystal suspended in perpetual crystallization. Neither solid nor energy, exists in quantum superposition.\",\n    \"tags\": [\n      \"stone\",\n      \"mythical\",\n      \"quantum\"\n    ]\n  },\n  \"resourceId\": \"primordial_formation\",\n  \"name\": \"Primordial Formation\",\n  \"category\": \"stone\",\n  \"tier\": 4,\n  \"requiredTool\": \"pickaxe\",\n  \"baseHealth\": 800,\n  \"drops\": [\n    {\n      \"materialId\": \"primordial_crystal\",\n      \"quantity\": \"few\",\n      \"chance\": \"improbable\"\n    }\n  ],\n  \"respawnTime\": null\n}"
+    }
+  ],
+  "test_prompt": "Create a resource node definition for this chunk:\n\n{\n  \"chunkType\": \"peaceful_forest\",\n  \"chunkCategory\": \"peaceful\",\n  \"chunkTheme\": \"forest\",\n  \"resourceDensity\": {\n    \"oak_tree\": {\n      \"density\": \"very_high\",\n      \"tierBias\": \"low\"\n    }\n  }\n}\n\nReturn ONLY the JSON node definition, no extra text.",
+  "response": "{\n  \"metadata\": {\n    \"narrative\": \"Ancient oak standing patient as centuries pass. The trees here grow thick and safe, perfect for beginners learning the woodcutter's craft.\",\n    \"tags\": [\n      \"tree\",\n      \"wood\",\n      \"starter\"\n    ]\n  },\n  \"resourceId\": \"oak_tree\",\n  \"name\": \"Oak Tree\",\n  \"category\": \"tree\",\n  \"tier\": 1,\n  \"requiredTool\": \"axe\",\n  \"baseHealth\": 100,\n  \"drops\": [\n    {\n      \"materialId\": \"oak_log\",\n      \"quantity\": \"many\",\n      \"chance\": \"guaranteed\"\n    }\n  ],\n  \"respawnTime\": \"normal\"\n}",
+  "usage": {
+    "input_tokens": 2335,
+    "output_tokens": 182
+  }
+}

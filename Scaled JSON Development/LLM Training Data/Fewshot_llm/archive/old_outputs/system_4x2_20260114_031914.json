@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-01-14T03:19:14.299923",
+  "system_key": "4x2",
+  "system_name": "Engineering Placement",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are an engineering designer for an action fantasy sandbox RPG. Given engineering recipes, determine optimal component placement on engineering grids. Return ONLY valid JSON with placement coordinates.",
+  "few_shot_count": 2,
+  "test_prompt": "Create a slot-type placement for this engineering recipe:\n\n{\n  \"recipeId\": \"engineering_fire_arrow_turret\",\n  \"itemId\": \"fire_arrow_turret\",\n  \"tier\": 2,\n  \"inputs\": [\n    {\n      \"materialId\": \"fire_crystal\",\n      \"quantity\": 4,\n      \"materialName\": \"Fire Crystal\",\n      \"materialTier\": 2,\n      \"materialRarity\": \"uncommon\",\n      \"materialNarrative\": \"Crystallized essence of flame. Burns eternally without consuming itself.\",\n      \"materialTags\": [\"elemental\", \"fire\", \"magical\"]\n    },\n    {\n      \"materialId\": \"steel_ingot\",\n      \"quantity\": 8,\n      \"materialName\": \"Steel Ingot\",\n      \"materialTier\": 2,\n      \"materialRarity\": \"uncommon\",\n      \"materialNarrative\": \"Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.\",\n      \"materialTags\": [\"refined\", \"metal\", \"advanced\"]\n    },\n    {\n      \"materialId\": \"oak_plank\",\n      \"quantity\": 6,\n      \"materialName\": \"Oak Plank\",\n      \"materialTier\": 1,\n      \"materialRarity\": \"common\",\n      \"materialNarrative\": \"Strong, reliable wood that holds its shape. The foundation of all carpentry.\",\n      \"materialTags\": [\"refined\", \"wood\", \"versatile\"]\n    }\n  ],\n  \"itemMetadata\": {\n    \"narrative\": \"Fire arrow turret with crystal-powered ignition. Automated defense that burns bright.\",\n    \"tags\": [\"device\", \"turret\", \"fire\", \"elemental\"]\n  }\n}\n\nReturn ONLY the JSON placement pattern with slots array (type, materialId, quantity), no extra text.",
+  "response": "```json\n{\n  \"recipeId\": \"engineering_fire_arrow_turret\",\n  \"outputId\": \"fire_arrow_turret\",\n  \"stationTier\": 2,\n  \"slots\": [\n    {\n      \"type\": \"FRAME\",\n      \"materialId\": \"steel_ingot\",\n      \"quantity\": 8\n    },\n    {\n      \"type\": \"FUNCTION\",\n      \"materialId\": \"oak_plank\",\n      \"quantity\": 6\n    },\n    {\n      \"type\": \"POWER\",\n      \"materialId\": \"fire_crystal\",\n      \"quantity\": 4\n    }\n  ],\n  \"narrative\": \"Fire arrow turret - steel frame for durability, oak mechanism for projectile system, fire crystals provide elemental ignition power.\"\n}\n```",
+  "usage": {
+    "input_tokens": 1483,
+    "output_tokens": 197
+  }
+}

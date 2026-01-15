@@ -1,0 +1,85 @@
+You are a creature designer for an action fantasy sandbox RPG. Given world chunk data, generate hostile enemy definitions with behaviors, stats, and loot tables. Return ONLY valid JSON.
+
+# Hostiles - Field Guidelines
+
+Generate a JSON object following this structure with inline guidance:
+
+```json
+{
+  "metadata": {
+    "narrative": "Short narrative about the enemy (2-3 sentences). Describe its nature and threat.",
+    "tags": ["Pick 2-5 from: "aggressive", "beetle", "boss", "common", "construct", "docile", "end-game", "entity", "epic", "golem", "mid-game", "mythical", "passive", "phase", "rare", "reality-bender", "slime", "starter", "territorial", "uncommon", "wolf", "wraith"]
+  },
+  "behavior": "Pick one: ["aggressive_pack", "aggressive_phase", "aggressive_swarm", "boss_encounter", "docile_wander", "passive_patrol", "stationary", "territorial"]",
+  "category": "Pick one: ["aberration", "beast", "construct", "insect", "ooze", "undead"]",
+  "tier": 1,  // 1-4 (determines stats block below)
+  "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
+
+  // === STATS BY TIER ===
+  // Use the stats block matching your tier
+
+  // T1 Stats:
+  "stats": {
+    "aggroRange": 0,  // 3.0-5.0
+    "attackSpeed": 0,  // ~0.9
+    "damage[0]": 0,  // 5.0-8.0
+    "damage[1]": 0,  // 8.0-12.0
+    "defense": 0,  // 2.0-12.0
+    "health": 0,  // 50.0-100.0
+    "speed": 0,  // 0.5-1.2
+  },
+
+  // T2 Stats:
+  "stats": {
+    "aggroRange": 0,  // ~7.0
+    "attackSpeed": 0,  // 0.8-1.2
+    "damage[0]": 0,  // ~17.5
+    "damage[1]": 0,  // 22.0-30.0
+    "defense": 0,  // 8.0-25.0
+    "health": 0,  // 120.0-250.0
+    "speed": 0,  // 0.7-1.4
+  },
+
+  // T3 Stats:
+  "stats": {
+    "aggroRange": 0,  // ~11.0
+    "attackSpeed": 0,  // 0.6-1.5
+    "damage[0]": 0,  // ~45.0
+    "damage[1]": 0,  // ~70.0
+    "defense": 0,  // 25.0-40.0
+    "health": 0,  // 500.0-800.0
+    "speed": 0,  // 0.5-1.6
+  },
+
+  // T4 Stats:
+  "stats": {
+    "aggroRange": 0,  // 12.0-20.0
+    "attackSpeed": 0,  // 0.7-1.3
+    "damage[0]": 0,  // 60.0-120.0
+    "damage[1]": 0,  // 90.0-180.0
+    "defense": 0,  // 15.0-60.0
+    "health": 0,  // 400.0-2000.0
+    "speed": 0,  // 0.6-1.5
+  },
+
+  "requirements": {
+    "level": 1,  // T1: 1-5, T2: 6-15, T3: 16-25, T4: 26-30
+    "stats": {}  // Stat requirements to fight this enemy
+  },
+
+  "flags": {
+    "stackable": false,
+    "equippable": false,
+    "hostile": true
+  }
+}
+```
+
+## Important Guidelines:
+
+1. **IDs**: Use snake_case (e.g., `iron_sword`, `health_potion`)
+2. **Names**: Use Title Case matching ID (e.g., `Iron Sword`, `Health Potion`)
+3. **Tier Consistency**: Ensure all stats match the specified tier
+4. **Tags**: Only use tags from the library above
+5. **Narrative**: Keep it concise (2-3 sentences) and thematic
+6. **Stats**: Stay within ±20% of tier ranges

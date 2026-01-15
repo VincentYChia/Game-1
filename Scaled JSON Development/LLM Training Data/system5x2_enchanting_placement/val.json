@@ -7,15 +7,42 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 6
+          "quantity": 6,
+          "materialName": "Air Crystal",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Pale crystal that drifts upward if not secured. Contains compressed winds.",
+          "materialTags": [
+            "elemental",
+            "air",
+            "common"
+          ]
         },
         {
           "materialId": "maple_plank",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Maple Plank",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Refined maple planks, ideal for items requiring stability.",
+          "materialTags": [
+            "refined",
+            "wood",
+            "durable"
+          ]
         },
         {
           "materialId": "shale",
-          "quantity": 4
+          "quantity": 4,
+          "materialName": "Shale",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Common sedimentary rock with fine grain. Compressed clay particles form water-resistant layers.",
+          "materialTags": [
+            "basic",
+            "stone",
+            "layered"
+          ]
         }
       ],
       "applicableTo": [
@@ -173,15 +200,42 @@
       "inputs": [
         {
           "materialId": "dire_fang",
-          "quantity": 4
+          "quantity": 4,
+          "materialName": "Dire Fang",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Razor-sharp fang from alpha predators. Still warm from the kill.",
+          "materialTags": [
+            "monster",
+            "uncommon",
+            "fang"
+          ]
         },
         {
           "materialId": "shadow_core",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Shadow Core",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Crystallized darkness that absorbs light. Uncomfortable to look at directly.",
+          "materialTags": [
+            "elemental",
+            "dark",
+            "rare"
+          ]
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 6
+          "quantity": 6,
+          "materialName": "Wolf Pelt",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
+          "materialTags": [
+            "monster",
+            "common",
+            "leather"
+          ]
         }
       ],
       "applicableTo": [
@@ -321,19 +375,55 @@
       "inputs": [
         {
           "materialId": "essence_blood",
-          "quantity": 4
+          "quantity": 4,
+          "materialName": "Essence Blood",
+          "materialTier": 3,
+          "materialRarity": "rare",
+          "materialNarrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
+          "materialTags": [
+            "monster",
+            "rare",
+            "blood"
+          ]
         },
         {
           "materialId": "living_ichor",
-          "quantity": 4
+          "quantity": 4,
+          "materialName": "Living Ichor",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
+          "materialTags": [
+            "monster",
+            "uncommon",
+            "essence"
+          ]
         },
         {
           "materialId": "obsidian",
-          "quantity": 3
+          "quantity": 3,
+          "materialName": "Obsidian",
+          "materialTier": 3,
+          "materialRarity": "rare",
+          "materialNarrative": "Volcanic glass born in the heart of eruptions. Extremely sharp edges, incredibly brittle structure.",
+          "materialTags": [
+            "basic",
+            "stone",
+            "sharp"
+          ]
         },
         {
           "materialId": "shadow_core",
-          "quantity": 2
+          "quantity": 2,
+          "materialName": "Shadow Core",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Crystallized darkness that absorbs light. Uncomfortable to look at directly.",
+          "materialTags": [
+            "elemental",
+            "dark",
+            "rare"
+          ]
         }
       ],
       "applicableTo": [

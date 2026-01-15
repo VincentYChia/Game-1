@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-01-14T03:18:55.491637",
+  "system_key": "1x2",
+  "system_name": "Smithing Placement",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are a crafting designer for an action fantasy sandbox RPG. Given smithing recipes and grid constraints, determine optimal material placement patterns on the crafting grid. Return ONLY valid JSON with placement coordinates.",
+  "few_shot_count": 2,
+  "test_prompt": "Create a placement pattern for this smithing recipe on a 3x3 grid:\n\n{\n  \"recipeId\": \"smithing_iron_axe\",\n  \"itemId\": \"iron_axe\",\n  \"tier\": 1,\n  \"gridSize\": \"3x3\",\n  \"inputs\": [\n    {\n      \"materialId\": \"iron_ingot\",\n      \"quantity\": 3,\n      \"materialName\": \"Iron Ingot\",\n      \"materialTier\": 1,\n      \"materialRarity\": \"common\",\n      \"materialNarrative\": \"Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.\",\n      \"materialTags\": [\"refined\", \"metal\", \"standard\"]\n    },\n    {\n      \"materialId\": \"birch_plank\",\n      \"quantity\": 2,\n      \"materialName\": \"Birch Plank\",\n      \"materialTier\": 1,\n      \"materialRarity\": \"common\",\n      \"materialNarrative\": \"Smooth, pale wood from birch trees. Light and flexible, perfect for handles and shafts.\",\n      \"materialTags\": [\"refined\", \"wood\", \"flexible\"]\n    }\n  ],\n  \"itemMetadata\": {\n    \"narrative\": \"Solid iron axe for serious forestry work. Bites deep and true.\",\n    \"tags\": [\"tool\", \"axe\", \"quality\"]\n  }\n}\n\nReturn ONLY the JSON placement pattern with placementMap, no extra text.",
+  "response": "{\n  \"recipeId\": \"smithing_iron_axe\",\n  \"placementMap\": {\n    \"1,1\": \"iron_ingot\",\n    \"2,1\": \"iron_ingot\",\n    \"1,2\": \"iron_ingot\",\n    \"2,2\": \"birch_plank\",\n    \"2,3\": \"birch_plank\"\n  },\n  \"metadata\": {\n    \"gridSize\": \"3x3\",\n    \"narrative\": \"The classic axe pattern - broad head for splitting, sturdy handle for leverage. A woodsman's trusted companion.\"\n  }\n}",
+  "usage": {
+    "input_tokens": 1198,
+    "output_tokens": 150
+  }
+}

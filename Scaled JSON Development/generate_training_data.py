@@ -7,6 +7,7 @@ Usage:
 
 Output:
     Creates LLM Training Data/ folder with JSON files for each system
+    All training pairs are enriched with material metadata
 """
 
 import json
@@ -14,6 +15,15 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from collections import defaultdict
+
+# Import material enricher for metadata enrichment
+sys.path.insert(0, str(Path(__file__).parent / "LLM Training Data/Fewshot_llm/src"))
+try:
+    from material_enricher import MaterialEnricher
+    ENRICHER_AVAILABLE = True
+except ImportError:
+    print("⚠️  Warning: MaterialEnricher not available. Training data will not be enriched.")
+    ENRICHER_AVAILABLE = False
 
 # Configure paths (relative to where script is run from, expected: /home/user/Game-1/Scaled JSON Development/)
 GAME_ROOT = Path("../Game-1-modular")
@@ -36,7 +46,7 @@ PATHS = {
     "alchemy_placements": GAME_ROOT / "placements.JSON/placements-alchemy-1.JSON",
 
     "engineering_recipes": GAME_ROOT / "recipes.JSON/recipes-engineering-1.JSON",
-    "engineering_items": GAME_ROOT / "items.JSON/items-alchemy-1.JSON",  # They share the same file
+    "engineering_items": GAME_ROOT / "items.JSON/items-engineering-1.JSON",
     "engineering_placements": GAME_ROOT / "placements.JSON/placements-engineering-1.JSON",
 
     "enchanting_recipes": GAME_ROOT / "recipes.JSON/recipes-adornments-1.json",
@@ -873,6 +883,91 @@ def extract_title_pairs():
 
 
 # ============================================================================
+# MATERIAL METADATA ENRICHMENT
+# ============================================================================
+def enrich_all_training_data():
+    """Enrich all training data files with material metadata"""
+    if not ENRICHER_AVAILABLE:
+        print("\n⚠️  Skipping enrichment - MaterialEnricher not available")
+        return
+
+    print("\n" + "=" * 80)
+    print("ENRICHING TRAINING DATA WITH MATERIAL METADATA")
+    print("=" * 80)
+
+    # Load materials database
+    materials_path = GAME_ROOT / "items.JSON/items-materials-1.JSON"
+    if not materials_path.exists():
+        print(f"⚠️  Materials database not found: {materials_path}")
+        return
+
+    try:
+        enricher = MaterialEnricher(str(materials_path))
+        print(f"✓ Loaded {len(enricher.materials)} materials")
+    except Exception as e:
+        print(f"⚠️  Error loading materials: {e}")
+        return
+
+    # List of all systems to enrich (recipe-based systems with inputs)
+    systems_to_enrich = [
+        "system1_smithing_recipe_to_item",
+        "system1x2_smithing_placement",
+        "system2_refining_recipe_to_material",
+        "system2x2_refining_placement",
+        "system3_alchemy_recipe_to_item",
+        "system3x2_alchemy_placement",
+        "system4_engineering_recipe_to_device",
+        "system4x2_engineering_placement",
+        "system5_enchanting_recipe_to_enchantment",
+        "system5x2_enchanting_placement",
+    ]
+
+    enriched_count = 0
+    for system_name in systems_to_enrich:
+        system_dir = OUTPUT_DIR / system_name
+
+        # Enrich all three files: full_dataset.json, train.json, val.json
+        for filename in ["full_dataset.json", "train.json", "val.json"]:
+            filepath = system_dir / filename
+            if not filepath.exists():
+                continue
+
+            try:
+                # Load training pairs
+                with open(filepath, 'r') as f:
+                    pairs = json.load(f)
+
+                # Enrich each pair
+                enriched_pairs = []
+                for pair in pairs:
+                    input_data = pair.get('input', {})
+
+                    # Check if this input has an 'inputs' array to enrich
+                    if 'inputs' in input_data:
+                        enriched_input = enricher.enrich_recipe(input_data)
+                        enriched_pair = {
+                            'input': enriched_input,
+                            'output': pair.get('output', {})
+                        }
+                        enriched_pairs.append(enriched_pair)
+                    else:
+                        # No inputs to enrich, keep as is
+                        enriched_pairs.append(pair)
+
+                # Save enriched data (overwrite)
+                with open(filepath, 'w') as f:
+                    json.dump(enriched_pairs, f, indent=2)
+
+                enriched_count += 1
+                print(f"  ✓ Enriched {system_name}/{filename} ({len(enriched_pairs)} pairs)")
+
+            except Exception as e:
+                print(f"  ⚠️  Error enriching {system_name}/{filename}: {e}")
+
+    print(f"\n✓ Enriched {enriched_count} training data files")
+
+
+# ============================================================================
 # MAIN EXTRACTION
 # ============================================================================
 def main():
@@ -911,6 +1006,14 @@ def main():
     print(f"✓ EXTRACTION COMPLETE")
     print(f"  Total training pairs generated: {total_pairs}")
     print(f"  Output directory: {OUTPUT_DIR}")
+    print("=" * 80)
+
+    # Enrich all training data with material metadata
+    enrich_all_training_data()
+
+    print("\n" + "=" * 80)
+    print(f"✓ ALL DONE")
+    print(f"  Training data generated and enriched")
     print("=" * 80)
 
 

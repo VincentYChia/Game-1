@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-01-14T03:19:34.318711",
+  "system_key": "7",
+  "system_name": "Drop Source\u2192Material",
+  "model": "claude-sonnet-4-20250514",
+  "parameters": {
+    "max_tokens": 2000,
+    "temperature": 1.0,
+    "top_p": 0.999
+  },
+  "system_prompt": "You are a loot designer for an action fantasy sandbox RPG. Given drop sources (enemies, nodes, chests), predict material drop tables with quantities and probabilities. Return ONLY valid JSON.",
+  "few_shot_count": 8,
+  "test_prompt": "Create a material definition for this drop source:\n\n{\n  \"sourceType\": \"node\",\n  \"sourceName\": \"Ancient Mithril Vein\",\n  \"sourceTier\": 3,\n  \"materialTier\": 3,\n  \"materialCategory\": \"metal\",\n  \"allSources\": [\n    \"mithril_vein_ancient\"\n  ]\n}\n\nReturn ONLY the JSON material definition, no extra text.",
+  "response": "{\n  \"metadata\": {\n    \"narrative\": \"Ancient mithril that has absorbed millennia of magical energy deep within forgotten ruins. Its silver glow pulses with arcane power, far surpassing common mithril in both strength and mystical properties.\",\n    \"tags\": [\n      \"basic\",\n      \"metal\",\n      \"ancient\",\n      \"magical\"\n    ]\n  },\n  \"materialId\": \"ancient_mithril_ore\",\n  \"name\": \"Ancient Mithril Ore\",\n  \"tier\": 3,\n  \"rarity\": \"rare\",\n  \"category\": \"metal\"\n}",
+  "usage": {
+    "input_tokens": 2137,
+    "output_tokens": 148
+  }
+}

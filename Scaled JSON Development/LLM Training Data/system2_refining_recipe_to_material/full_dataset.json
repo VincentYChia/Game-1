@@ -7,7 +7,16 @@
       "inputs": [
         {
           "materialId": "copper_ore",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Copper Ore",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "A soft, reddish metal found in shallow veins near the surface. Easy to work with basic tools but lacks the durability needed for serious combat. The foundation of all smithing - every blacksmith's first lesson.",
+          "materialTags": [
+            "basic",
+            "metal",
+            "starter"
+          ]
         }
       ],
       "narrative": "Smelting raw copper into usable ingots. The foundation of metallurgy."
@@ -36,7 +45,16 @@
       "inputs": [
         {
           "materialId": "iron_ore",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Iron Ore",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Sturdy grey metal from common deposits throughout the land. The workhorse of civilization - reliable, abundant, and strong enough for most purposes.",
+          "materialTags": [
+            "basic",
+            "metal",
+            "standard"
+          ]
         }
       ],
       "narrative": "Smelting iron ore into reliable metal. Backbone of civilization. Crushing the ore first increases yield."
@@ -65,7 +83,16 @@
       "inputs": [
         {
           "materialId": "tin_ore",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Tin Ore",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Soft, silvery-white metal with a mysterious sheen that glows faintly in moonlight. Ancient texts speak of its lunar affinity.",
+          "materialTags": [
+            "basic",
+            "metal",
+            "magical"
+          ]
         }
       ],
       "narrative": "Refining tin ore into silvery metal. Essential for alloys."
@@ -94,7 +121,16 @@
       "inputs": [
         {
           "materialId": "steel_ore",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Steel Ore",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Harder and more durable than pure iron. The secret of its strength lies in its carbon-rich structure. A true warrior's metal.",
+          "materialTags": [
+            "basic",
+            "metal",
+            "advanced"
+          ]
         }
       ],
       "narrative": "Forging steel from carbon-rich ore. Requires intense heat."
@@ -123,7 +159,16 @@
       "inputs": [
         {
           "materialId": "mithril_ore",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Mithril Ore",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Legendary silver-white metal that seems to drink in moonlight and starshine. Impossibly light yet incredibly strong.",
+          "materialTags": [
+            "basic",
+            "metal",
+            "legendary"
+          ]
         }
       ],
       "narrative": "Refining legendary mithril. The metal seems to purify itself, occasionally yielding higher quality ingots."
@@ -152,7 +197,16 @@
       "inputs": [
         {
           "materialId": "adamantine_ore",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Adamantine Ore",
+          "materialTier": 3,
+          "materialRarity": "rare",
+          "materialNarrative": "Dark, impossibly hard metal that absorbs light. Found only in the deepest caverns where the world's bones are exposed.",
+          "materialTags": [
+            "basic",
+            "metal",
+            "rare"
+          ]
         }
       ],
       "narrative": "Smelting adamantine requires extreme heat and purification techniques. Sometimes yields exceptionally pure ingots."
@@ -181,7 +235,16 @@
       "inputs": [
         {
           "materialId": "orichalcum_ore",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Orichalcum Ore",
+          "materialTier": 3,
+          "materialRarity": "epic",
+          "materialNarrative": "Gleaming golden metal with an otherworldly green-blue sheen. Ancient civilizations built empires on its discovery.",
+          "materialTags": [
+            "basic",
+            "metal",
+            "ancient"
+          ]
         }
       ],
       "narrative": "Refining the ancient metal. Channels both physical and magical forces."
@@ -210,7 +273,17 @@
       "inputs": [
         {
           "materialId": "etherion_ore",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Etherion Ore",
+          "materialTier": 4,
+          "materialRarity": "legendary",
+          "materialNarrative": "Metal that simultaneously exists in multiple states. Scholars argue whether it's matter or energy, present or future. It is all of these and none.",
+          "materialTags": [
+            "basic",
+            "metal",
+            "mythical",
+            "temporal"
+          ]
         }
       ],
       "narrative": "Refining metal that exists in multiple states. Reality bends during the process."
@@ -240,7 +313,16 @@
       "inputs": [
         {
           "materialId": "oak_log",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Oak Log",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Reliable, sturdy timber from ancient oaks. Dense grain, strong fibers, and a warm golden-brown hue. The standard by which all other woods are measured.",
+          "materialTags": [
+            "basic",
+            "wood",
+            "versatile"
+          ]
         }
       ],
       "narrative": "Sawing oak logs into usable planks. Basic carpentry."
@@ -269,7 +351,16 @@
       "inputs": [
         {
           "materialId": "pine_log",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Pine Log",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Light, flexible wood harvested from tall conifers. Works easily under a blade, bends without breaking.",
+          "materialTags": [
+            "basic",
+            "wood",
+            "flexible"
+          ]
         }
       ],
       "narrative": "Processing pine into planks. Light, flexible wood."
@@ -298,7 +389,16 @@
       "inputs": [
         {
           "materialId": "ash_log",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Ash Log",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Pale wood with excellent shock absorption. Weapon handles made from ash feel alive in your grip.",
+          "materialTags": [
+            "basic",
+            "wood",
+            "quality"
+          ]
         }
       ],
       "narrative": "Milling ash into planks. Superior shock absorption."
@@ -327,7 +427,16 @@
       "inputs": [
         {
           "materialId": "birch_log",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Birch Log",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Creamy-white wood from elegant trees. Highly valued for its fine grain and excellent carving properties.",
+          "materialTags": [
+            "basic",
+            "wood",
+            "fine"
+          ]
         }
       ],
       "narrative": "Processing birch into fine planks. Excellent for detail work."
@@ -356,7 +465,16 @@
       "inputs": [
         {
           "materialId": "maple_log",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Maple Log",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Dense hardwood with beautiful figuring. Resists warping and holds its shape through temperature extremes.",
+          "materialTags": [
+            "basic",
+            "wood",
+            "durable"
+          ]
         }
       ],
       "narrative": "Milling maple wood. Resists warping beautifully."
@@ -385,7 +503,16 @@
       "inputs": [
         {
           "materialId": "ironwood_log",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Ironwood Log",
+          "materialTier": 3,
+          "materialRarity": "rare",
+          "materialNarrative": "Rare wood with metallic properties. As hard as soft metals, holds edges almost as well as iron.",
+          "materialTags": [
+            "basic",
+            "wood",
+            "metallic"
+          ]
         }
       ],
       "narrative": "Sawing ironwood requires special blades. Wood dulls them quickly."
@@ -414,7 +541,16 @@
       "inputs": [
         {
           "materialId": "ebony_log",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Ebony Log",
+          "materialTier": 3,
+          "materialRarity": "epic",
+          "materialNarrative": "Deep black wood from ancient forests. Absorbs and nullifies magical energies.",
+          "materialTags": [
+            "basic",
+            "wood",
+            "magical"
+          ]
         }
       ],
       "narrative": "Processing ebony. The wood absorbs light as you work."
@@ -443,7 +579,17 @@
       "inputs": [
         {
           "materialId": "worldtree_log",
-          "quantity": 1
+          "quantity": 1,
+          "materialName": "Worldtree Log",
+          "materialTier": 4,
+          "materialRarity": "legendary",
+          "materialNarrative": "Living wood from the World Tree's roots. Contains millennia of accumulated magical essence.",
+          "materialTags": [
+            "basic",
+            "wood",
+            "legendary",
+            "living"
+          ]
         }
       ],
       "narrative": "Working worldtree wood. It remembers being part of something greater."
@@ -474,7 +620,16 @@
         {
           "materialId": "copper_ingot",
           "quantity": 4,
-          "rarity": "common"
+          "rarity": "common",
+          "materialName": "Copper Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "starter"
+          ]
         }
       ],
       "narrative": "Refining common copper into uncommon quality. Careful heat and patience."
@@ -504,7 +659,16 @@
         {
           "materialId": "copper_ingot",
           "quantity": 4,
-          "rarity": "uncommon"
+          "rarity": "uncommon",
+          "materialName": "Copper Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "starter"
+          ]
         }
       ],
       "narrative": "Refining uncommon copper into rare quality. The grain becomes perfect."
@@ -534,7 +698,16 @@
         {
           "materialId": "copper_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "materialName": "Copper Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "starter"
+          ]
         }
       ],
       "narrative": "Refining rare copper into epic quality. Approaching theoretical perfection."
@@ -564,7 +737,16 @@
         {
           "materialId": "copper_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "materialName": "Copper Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "starter"
+          ]
         }
       ],
       "narrative": "Refining epic copper into legendary quality. Perfect molecular alignment achieved."
@@ -594,7 +776,16 @@
         {
           "materialId": "iron_ingot",
           "quantity": 4,
-          "rarity": "common"
+          "rarity": "common",
+          "materialName": "Iron Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "standard"
+          ]
         }
       ],
       "narrative": "Refining common iron into uncommon quality. Patient work and precise heat."
@@ -624,7 +815,16 @@
         {
           "materialId": "iron_ingot",
           "quantity": 4,
-          "rarity": "uncommon"
+          "rarity": "uncommon",
+          "materialName": "Iron Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "standard"
+          ]
         }
       ],
       "narrative": "Refining uncommon iron into rare quality. Crystalline structure perfecting."
@@ -654,7 +854,16 @@
         {
           "materialId": "iron_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "materialName": "Iron Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "standard"
+          ]
         }
       ],
       "narrative": "Refining rare iron into epic quality. Metal that defies conventional limits."
@@ -684,7 +893,16 @@
         {
           "materialId": "iron_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "materialName": "Iron Ingot",
+          "materialTier": 1,
+          "materialRarity": "common",
+          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "standard"
+          ]
         }
       ],
       "narrative": "Refining epic iron into legendary quality. Transcending conventional limits."
@@ -714,7 +932,16 @@
         {
           "materialId": "steel_ingot",
           "quantity": 4,
-          "rarity": "uncommon"
+          "rarity": "uncommon",
+          "materialName": "Steel Ingot",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "advanced"
+          ]
         }
       ],
       "narrative": "Refining uncommon steel into rare quality. Perfect crystalline structure."
@@ -744,7 +971,16 @@
         {
           "materialId": "steel_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "materialName": "Steel Ingot",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "advanced"
+          ]
         }
       ],
       "narrative": "Refining rare steel into epic quality. Months of dedication distilled into perfection."
@@ -774,7 +1010,16 @@
         {
           "materialId": "steel_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "materialName": "Steel Ingot",
+          "materialTier": 2,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "advanced"
+          ]
         }
       ],
       "narrative": "Refining epic steel into legendary quality. Perfection crystallized in metal."
@@ -804,7 +1049,16 @@
         {
           "materialId": "mithril_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "materialName": "Mithril Ingot",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "legendary"
+          ]
         }
       ],
       "narrative": "Refining rare mithril into epic quality. The metal sings as it transforms."
@@ -834,7 +1088,16 @@
         {
           "materialId": "mithril_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "materialName": "Mithril Ingot",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "legendary"
+          ]
         }
       ],
       "narrative": "Refining epic mithril into legendary quality. The impossible made real."
@@ -864,7 +1127,16 @@
         {
           "materialId": "mithril_ingot",
           "quantity": 4,
-          "rarity": "legendary"
+          "rarity": "legendary",
+          "materialName": "Mithril Ingot",
+          "materialTier": 2,
+          "materialRarity": "rare",
+          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "legendary"
+          ]
         }
       ],
       "narrative": "Refining legendary mithril into mythical quality. The metal sings in harmonic perfection."
@@ -894,7 +1166,16 @@
         {
           "materialId": "adamantine_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "materialName": "Adamantine Ingot",
+          "materialTier": 3,
+          "materialRarity": "rare",
+          "materialNarrative": "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "rare"
+          ]
         }
       ],
       "narrative": "Refining rare adamantine into epic quality. Nearly indestructible becomes truly eternal."
@@ -924,7 +1205,16 @@
         {
           "materialId": "adamantine_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "materialName": "Adamantine Ingot",
+          "materialTier": 3,
+          "materialRarity": "rare",
+          "materialNarrative": "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "rare"
+          ]
         }
       ],
       "narrative": "Refining epic adamantine into legendary quality. Hardness beyond measurement."
@@ -954,7 +1244,16 @@
         {
           "materialId": "orichalcum_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "materialName": "Orichalcum Ingot",
+          "materialTier": 3,
+          "materialRarity": "epic",
+          "materialNarrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "ancient"
+          ]
         }
       ],
       "narrative": "Refining epic orichalcum into legendary quality. Ancient metal awakens fully."
@@ -984,7 +1283,16 @@
         {
           "materialId": "orichalcum_ingot",
           "quantity": 4,
-          "rarity": "legendary"
+          "rarity": "legendary",
+          "materialName": "Orichalcum Ingot",
+          "materialTier": 3,
+          "materialRarity": "epic",
+          "materialNarrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "ancient"
+          ]
         }
       ],
       "narrative": "Refining legendary orichalcum into mythical quality. The ancient metal awakens completely."
@@ -1014,7 +1322,17 @@
         {
           "materialId": "etherion_ingot",
           "quantity": 4,
-          "rarity": "legendary"
+          "rarity": "legendary",
+          "materialName": "Etherion Ingot",
+          "materialTier": 4,
+          "materialRarity": "legendary",
+          "materialNarrative": "Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "mythical",
+            "temporal"
+          ]
         }
       ],
       "narrative": "Refining legendary etherion into mythical quality. Temporal boundaries dissolve entirely."
@@ -1045,7 +1363,16 @@
         {
           "materialId": "tin_ingot",
           "quantity": 4,
-          "rarity": "uncommon"
+          "rarity": "uncommon",
+          "materialName": "Tin Ingot",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "magical"
+          ]
         }
       ],
       "narrative": "Refining uncommon tin into rare quality. Silvery sheen becomes mirror-bright."
@@ -1075,7 +1402,16 @@
         {
           "materialId": "tin_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "materialName": "Tin Ingot",
+          "materialTier": 1,
+          "materialRarity": "uncommon",
+          "materialNarrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
+          "materialTags": [
+            "refined",
+            "metal",
+            "magical"
+          ]
         }
       ],
       "narrative": "Refining rare tin into epic quality. Perfect magical conductivity achieved."
