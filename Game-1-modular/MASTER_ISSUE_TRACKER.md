@@ -19,7 +19,7 @@
 | UI | Crafting Missing Items | LOW | Consistent | N/A |
 | Content | Crafting Stations JSON | WAITLIST | Placeholder | 2-3 hrs |
 | **Architecture** | Alchemy Hardcoded | MEDIUM | Technical Debt | 4-6 hrs |
-| **Architecture** | Skill Enums Hardcoded | LOW | Technical Debt | 2-3 hrs |
+| **Architecture** | Skill Mana/Cooldown Range | LOW | Enhancement | 2-4 hrs |
 | **Overhaul** | Crafting UI & Minigames | **HIGH** | Planning Complete | Multi-week |
 
 ---
@@ -620,21 +620,25 @@ Each discipline needs distinct aesthetic to match its theme:
 
 ---
 
-### 8.2 Enum-Based Systems (Limited Extensibility)
+### 8.2 Skill Cost/Cooldown Range Support
 
 | System | Constraint | Location | Priority |
 |--------|------------|----------|----------|
-| Skill Effect Types | Only 10 types supported | skill_manager.py:261-374 | LOW |
-| Skill Magnitudes | 4 fixed values (minor/moderate/major/extreme) | skill_manager.py:261-280 | LOW |
-| Skill Durations | 5 fixed values (instant/brief/moderate/long/extreme) | skill_db.py | LOW |
-| Skill Mana Costs | 4 fixed values (20/50/100/200) | skill_db.py | LOW |
-| Skill Cooldowns | 4 fixed values (120s/300s/600s/1200s) | skill_db.py | LOW |
+| Skill Mana Costs | 4 fixed values (20/50/100/200) | skill_db.py:106-108 | LOW |
+| Skill Cooldowns | 4 fixed values (120s/300s/600s/1200s) | skill_db.py:110-112 | LOW |
 
-**Problem**: String enums map to hardcoded values. Cannot create custom values.
+**Problem**: Cannot specify arbitrary mana costs or cooldowns (e.g., cannot specify 75 mana or 180s cooldown).
 
-**Fix**: Load enum mappings from JSON instead of hardcoding.
+**Current Behavior**: Text enums map to fixed values with fallbacks.
 
-**Effort**: 2-3 hours (relatively straightforward)
+**Fix**: Accept numeric values directly OR expand enum options.
+
+**Effort**: 2-4 hours (needs type handling updates)
+
+**Note**: Other skill enums (effect types, magnitudes, durations) are working as designed:
+- ✅ Effect types are scoped by `effect.category` field (empower for mining vs combat)
+- ✅ Magnitudes provide discrete balanced options (minor/moderate/major/extreme)
+- ✅ Durations provide discrete balanced options (instant/brief/moderate/long/extreme)
 
 ---
 
@@ -658,15 +662,15 @@ Each discipline needs distinct aesthetic to match its theme:
 ### 8.4 Refactoring Recommendations
 
 **High Priority** (Technical Debt):
-1. ✅ **Alchemy System Refactor** - Make tag-driven like smithing/engineering
+1. **Alchemy System Refactor** - Make tag-driven like smithing/engineering
    - Effort: 4-6 hours
    - Benefit: Can add potions via JSON
    - Risk: May break existing potion functionality
 
 **Medium Priority** (Flexibility):
-2. **Enum JSON Loading** - Load skill enum mappings from JSON
-   - Effort: 2-3 hours
-   - Benefit: Custom magnitude/duration/cost values
+2. **Skill Mana/Cooldown Range Support** - Accept numeric values or expand enum options
+   - Effort: 2-4 hours
+   - Benefit: Custom mana costs (e.g., 75 mana) and cooldowns (e.g., 180s)
    - Risk: Low
 
 **Low Priority** (Nice to Have):

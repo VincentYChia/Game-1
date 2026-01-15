@@ -49,43 +49,44 @@
 
 ---
 
-## ⚠️ Enum-Based Systems (Modifiable but Limited)
+## ⚠️ Enum-Based Systems (Acceptable with Limitations)
 
 ### 2. Skill Effect Types
 
-**Status**: Limited to 10 types
+**Status**: 10 predefined types, but SCOPED by category field
 
-**Problem**: Skill `effect.type` must match one of 10 hardcoded types.
+**Note**: This is NOT a problem because:
+- Effect types are scoped by the `effect.category` field (skill_manager.py:279, buffs.py:92)
+- "empower" with category="mining" is separate from "empower" with category="combat"
+- The category field makes effect types flexible and reusable
 
 **Supported Types** (skill_manager.py:261-374):
 ```
-1. empower      → Damage/power buff
-2. quicken      → Speed buff
+1. empower      → Damage/power buff (scoped by category)
+2. quicken      → Speed buff (scoped by category)
 3. fortify      → Flat defense buff
-4. regenerate   → HP/mana per second
-5. pierce       → Critical hit chance
-6. restore      → Instant HP/mana/durability
-7. enrich       → Extra drops
-8. elevate      → Rarity upgrade chance
+4. regenerate   → HP/mana per second (scoped by category)
+5. pierce       → Critical hit chance (scoped by category)
+6. restore      → Instant HP/mana/durability (scoped by category)
+7. enrich       → Extra drops (scoped by category)
+8. elevate      → Rarity upgrade chance (scoped by category)
 9. devastate    → AoE radius buff
 10. transcend   → Tier bypass
 ```
 
 **Code Location**: `entities/components/skill_manager.py:261-374`
 
-**Impact**: Cannot add new buff types without code changes.
-
-**Values ARE Modifiable**: magnitude, duration, category all work.
+**Verdict**: ✅ Working as designed - category scoping provides flexibility
 
 ---
 
 ### 3. Skill Magnitude Values
 
-**Status**: Hardcoded enum mapping
+**Status**: Text enum mapping (ACCEPTABLE)
 
-**Problem**: `effect.magnitude` strings map to fixed percentages.
+**Design**: `effect.magnitude` strings map to percentages.
 
-**Mapping** (skill_manager.py:261-280):
+**Mapping** (skill_manager.py:262-265):
 ```
 minor    → 0.10 (10%)
 moderate → 0.25 (25%)
@@ -93,21 +94,19 @@ major    → 0.50 (50%)
 extreme  → 1.00 (100%)
 ```
 
-**Code Location**: `entities/components/skill_manager.py:261-280`
+**Code Location**: `entities/components/skill_manager.py:262-265`
 
-**Impact**: Cannot create custom magnitude values (e.g., "tiny" = 5%).
-
-**Workaround**: Use existing magnitude strings.
+**Verdict**: ✅ Working as designed - these are the intended magnitude options
 
 ---
 
 ### 4. Skill Duration Values
 
-**Status**: Hardcoded enum mapping
+**Status**: Text enum mapping (ACCEPTABLE)
 
-**Problem**: `effect.duration` strings map to fixed seconds.
+**Design**: `effect.duration` strings map to fixed seconds.
 
-**Mapping** (SkillDatabase):
+**Mapping** (skill_db.py:114-116):
 ```
 instant  → 0s (consume_on_use buff)
 brief    → 30s
@@ -116,21 +115,19 @@ long     → 600s (10 minutes)
 extreme  → 3600s (1 hour)
 ```
 
-**Code Location**: `data/databases/skill_db.py`
+**Code Location**: `data/databases/skill_db.py:114-116`
 
-**Impact**: Cannot create custom durations (e.g., "short" = 60s).
-
-**Workaround**: Use existing duration strings.
+**Verdict**: ✅ Working as designed - these are the intended duration options
 
 ---
 
 ### 5. Skill Mana Costs
 
-**Status**: Hardcoded enum mapping
+**Status**: Limited to 4 text enums, NO range support
 
-**Problem**: `cost.mana` strings map to fixed values.
+**Problem**: `cost.mana` strings map to fixed values, cannot specify arbitrary values.
 
-**Mapping** (SkillDatabase):
+**Mapping** (skill_db.py:106-108):
 ```
 minor    → 20 mana
 moderate → 50 mana
@@ -138,21 +135,23 @@ major    → 100 mana
 extreme  → 200 mana
 ```
 
-**Code Location**: `data/databases/skill_db.py`
+**What's Missing**: Cannot specify custom values like 75 mana or 150 mana.
 
-**Impact**: Cannot create custom mana costs (e.g., "tiny" = 10 mana).
+**Code Location**: `data/databases/skill_db.py:106-108`
 
-**Workaround**: Use existing cost strings.
+**Impact**: ⚠️ Limited flexibility - need to use one of 4 predefined costs
+
+**Recommended Fix**: Support numeric values directly OR expand enum mapping
 
 ---
 
 ### 6. Skill Cooldowns
 
-**Status**: Hardcoded enum mapping
+**Status**: Limited to 4 text enums, NO range support
 
-**Problem**: `cost.cooldown` strings map to fixed seconds.
+**Problem**: `cost.cooldown` strings map to fixed seconds, cannot specify arbitrary values.
 
-**Mapping** (SkillDatabase):
+**Mapping** (skill_db.py:110-112):
 ```
 short    → 120s (2 minutes)
 moderate → 300s (5 minutes)
@@ -160,11 +159,13 @@ long     → 600s (10 minutes)
 extreme  → 1200s (20 minutes)
 ```
 
-**Code Location**: `data/databases/skill_db.py`
+**What's Missing**: Cannot specify custom values like 180s (3 minutes) or 420s (7 minutes).
 
-**Impact**: Cannot create custom cooldowns.
+**Code Location**: `data/databases/skill_db.py:110-112`
 
-**Workaround**: Use existing cooldown strings.
+**Impact**: ⚠️ Limited flexibility - need to use one of 4 predefined cooldowns
+
+**Recommended Fix**: Support numeric values directly OR expand enum mapping
 
 ---
 
@@ -204,15 +205,15 @@ extreme  → 1200s (20 minutes)
 
 ## 📊 Summary Table
 
-| System | Modifiable? | Behavior Extendable? | Code Location |
-|--------|-------------|---------------------|---------------|
-| **Alchemy Potions** | ❌ No | ❌ No | character.py:1662 |
-| **Skill Effect Types** | ✅ Values yes | ⚠️ 10 types only | skill_manager.py:261 |
-| **Skill Magnitudes** | ❌ No | ❌ No | skill_manager.py:261 |
-| **Skill Durations** | ❌ No | ❌ No | skill_db.py |
-| **Skill Mana Costs** | ❌ No | ❌ No | skill_db.py |
-| **Skill Cooldowns** | ❌ No | ❌ No | skill_db.py |
-| **Enchantment Triggers** | ✅ Values yes | ⚠️ 5 types work | combat_manager.py:925 |
+| System | Modifiable? | Behavior Extendable? | Verdict | Code Location |
+|--------|-------------|---------------------|---------|---------------|
+| **Alchemy Potions** | ❌ No | ❌ No | ❌ **Issue** | character.py:1662 |
+| **Skill Effect Types** | ✅ Values yes | ✅ Category scopes | ✅ **Good** | skill_manager.py:261 |
+| **Skill Magnitudes** | ✅ Text enums | ✅ 4 options | ✅ **Good** | skill_manager.py:262 |
+| **Skill Durations** | ✅ Text enums | ✅ 5 options | ✅ **Good** | skill_db.py:114 |
+| **Skill Mana Costs** | ⚠️ 4 options only | ❌ No range support | ⚠️ **Limited** | skill_db.py:106 |
+| **Skill Cooldowns** | ⚠️ 4 options only | ❌ No range support | ⚠️ **Limited** | skill_db.py:110 |
+| **Enchantment Triggers** | ✅ Values yes | ⚠️ 5 types work | ✅ **Good** | combat_manager.py:925 |
 
 ---
 
@@ -238,13 +239,15 @@ To clarify what's NOT on this list:
 
 ### Don't Generate:
 - ❌ New alchemy potions (won't work)
-- ❌ New skill effect types beyond the 10
-- ❌ Custom magnitude/duration/mana/cooldown values
+- ⚠️ Skills with mana costs outside [20, 50, 100, 200]
+- ⚠️ Skills with cooldowns outside [120s, 300s, 600s, 1200s]
 
 ### Can Generate:
 - ✅ Smithing weapons with any tag combo
 - ✅ Engineering devices with any tag combo
-- ✅ Skills using the 10 supported effect types
+- ✅ Skills using the 10 effect types with any category
+- ✅ Skills with any magnitude (minor/moderate/major/extreme)
+- ✅ Skills with any duration (instant/brief/moderate/long/extreme)
 - ✅ Enchantments using the 5 working types
 - ✅ Any effectParams values (all modifiable)
 
@@ -253,23 +256,31 @@ To clarify what's NOT on this list:
 ## 🔧 Refactoring Recommendations
 
 ### High Priority:
-1. **Make alchemy tag-driven** - Replace if/elif chain with effect system
-2. **Make skill enums JSON-based** - Load magnitude/duration/cost mappings from JSON
+1. **Make alchemy tag-driven** - Replace if/elif chain with effect system (character.py:1662-1965)
+   - **Effort**: 4-6 hours
+   - **Impact**: Enables JSON-only potion creation
 
 ### Medium Priority:
-3. **Add missing enchantment triggers** - Implement lifesteal, thorns integration
-4. **Document skill effect types** - Clear list in JSON or docs
+2. **Add mana cost range support** - Accept numeric values or expand enum options (skill_db.py:106-108)
+   - **Effort**: 1-2 hours
+   - **Impact**: Allow custom mana costs (e.g., 75 mana, 150 mana)
+
+3. **Add cooldown range support** - Accept numeric values or expand enum options (skill_db.py:110-112)
+   - **Effort**: 1-2 hours
+   - **Impact**: Allow custom cooldowns (e.g., 180s, 420s)
 
 ### Low Priority:
-5. **Custom magnitude system** - Allow arbitrary percentage values
-6. **Custom duration system** - Allow arbitrary second values
+4. **Add missing enchantment triggers** - Implement lifesteal, thorns, soulbound integration
+   - **Effort**: 2-3 hours
+   - **Impact**: More enchantment variety
 
 ---
 
 ## 📝 Notes
 
-- **Effects are forgiven**: Effect system itself is well-designed. The issue is the 10 hardcoded effect types, not the system.
-- **Enums could be JSON**: All enum mappings (magnitude, duration, mana, cooldown) could load from JSON instead of being hardcoded.
+- **Effect types are scoped by category**: The 10 effect types (empower, quicken, etc.) are NOT limiting because they're scoped by the `effect.category` field. "empower" for "mining" is completely separate from "empower" for "combat", making the system flexible and reusable.
+- **Text enum mappings are acceptable**: magnitude/duration text enums (minor/moderate/major) are working as designed - they provide discrete, balanced options rather than arbitrary values.
+- **Mana/cooldown need range support**: Unlike magnitude/duration, mana costs and cooldowns would benefit from numeric value support or expanded enum options (e.g., cannot specify 180s cooldown, must use 120s or 300s).
 - **Alchemy is the exception**: Everything else uses data-driven or tag-driven design. Alchemy is the only fully hardcoded content system.
 
 ---
