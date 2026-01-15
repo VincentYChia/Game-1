@@ -263,6 +263,47 @@
         "repairable": false
       }
     },
+    "alchemy_potions": {
+      "note": "NEW TAG-DRIVEN SYSTEM - Use effectTags and effectParams for modular potion effects",
+      "metadata": {
+        "narrative": "Basic healing potion from herbs. Wounds close and pain fades within moments.",
+        "tags": ["potion", "healing", "consumable", "starter"]
+      },
+      "itemId": "minor_health_potion",
+      "name": "Minor Health Potion",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "healing",
+      "tier": 1,
+      "rarity": "common",
+      "effect": "Restores 50 HP instantly",
+      "duration": 0,
+      "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 50
+      },
+      "statMultipliers": {
+        "weight": 0.2
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      },
+      "tag_guide": {
+        "effect_categories": ["healing", "mana_restore", "buff", "resistance", "utility"],
+        "tag_modifiers": ["instant", "over_time", "self"],
+        "healing_params": {"heal_amount": "instant heal", "heal_per_second": "regen rate", "duration": "seconds"},
+        "buff_params": {"buff_type": "strength/defense/speed/max_hp", "buff_value": "0.0-1.0 multiplier", "duration": "seconds"},
+        "resistance_params": {"resistance_type": "fire/ice/elemental", "damage_reduction": "0.0-1.0", "duration": "seconds"},
+        "utility_params": {"utility_type": "efficiency/armor/weapon", "utility_value": "multiplier", "duration": "seconds"}
+      }
+    },
     "processed_materials": {
       "metadata": {
         "narrative": "Refined copper ingot ready for crafting",
@@ -287,6 +328,72 @@
         "stackable": true,
         "consumable": false,
         "repairable": false
+      }
+    }
+  },
+
+  "SKILLS_TEMPLATE": {
+    "note": "NEW NUMERIC RANGES - Use numeric mana/cooldown values instead of string enums",
+    "skill_example": {
+      "skillId": "sprint",
+      "name": "Sprint",
+      "tier": 1,
+      "rarity": "common",
+      "categories": ["movement"],
+      "description": "Move significantly faster for a brief period.",
+      "narrative": "Sometimes the best strategy is running away. Fast.",
+      "tags": ["movement", "speed", "mobility"],
+      "effect": {
+        "type": "quicken",
+        "category": "movement",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "brief",
+        "additionalEffects": []
+      },
+      "cost": {
+        "mana": 20,
+        "cooldown": 20
+      },
+      "evolution": {
+        "canEvolve": true,
+        "nextSkillId": "wind_runner",
+        "requirement": "Reach skill level 10"
+      },
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+      },
+      "iconPath": null
+    },
+    "cost_ranges": {
+      "mana": {
+        "min": 20,
+        "max": 150,
+        "guidelines": {
+          "20-50": "Low-cost utility skills (sprint, quick repair)",
+          "50-80": "Standard combat/gathering skills",
+          "90-120": "Powerful tier 2 skills",
+          "120-150": "Ultimate tier 3+ skills"
+        }
+      },
+      "cooldown": {
+        "min": 20,
+        "max": 600,
+        "guidelines": {
+          "20-60": "Quick utility skills (sprint, instant buffs)",
+          "150-240": "Standard combat/gathering skills",
+          "360-480": "Powerful defensive/buff skills",
+          "500-600": "Ultimate abilities"
+        }
+      }
+    },
+    "backward_compatibility": {
+      "note": "String enums still supported for legacy compatibility",
+      "string_enums": {
+        "mana": {"low": 30, "moderate": 60, "high": 100, "extreme": 150},
+        "cooldown": {"short": 120, "moderate": 300, "long": 600, "extreme": 1200}
       }
     }
   },

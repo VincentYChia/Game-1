@@ -1,12 +1,18 @@
 {
   "_meta": {
     "category": "alchemy_items",
-    "llm_purpose": "Item LLM for alchemy - creates potions, elixirs, consumables with effects",
-    "generated_at": "2026-01-04T04:41:13.657283",
+    "llm_purpose": "Item LLM for alchemy - creates potions, elixirs, consumables with effects using TAG-DRIVEN SYSTEM",
+    "generated_at": "2026-01-15T00:00:00.000000",
     "total_items": 16,
     "source_files": [
       "items.JSON/items-alchemy-1.JSON"
-    ]
+    ],
+    "NEW_TAG_SYSTEM": {
+      "effectTags": "List of effect tags: ['healing', 'instant', 'self'], ['buff', 'self'], ['resistance', 'self'], ['utility', 'self']",
+      "effectParams": "Dict of numeric parameters specific to effect type",
+      "effect_categories": ["healing", "mana_restore", "buff", "resistance", "utility"],
+      "tag_modifiers": ["instant", "over_time", "self"]
+    }
   },
   "_all_possible_values": {
     "category": {
@@ -60,7 +66,38 @@
       "types": [
         "string"
       ],
-      "occurrences": 16
+      "occurrences": 16,
+      "note": "This field is for human readability - actual effects use effectTags + effectParams"
+    },
+    "effectTags": {
+      "values": [
+        ["healing", "instant", "self"],
+        ["healing", "over_time", "self"],
+        ["buff", "self"],
+        ["resistance", "self"],
+        ["utility", "self"]
+      ],
+      "total_unique": 5,
+      "types": [
+        "array"
+      ],
+      "occurrences": 13,
+      "note": "NEW TAG-DRIVEN SYSTEM - defines potion effect type and modifiers"
+    },
+    "effectParams": {
+      "examples": {
+        "healing_instant": {"heal_amount": 50},
+        "healing_over_time": {"heal_per_second": 5.0, "duration": 60.0},
+        "buff": {"buff_type": "strength", "buff_value": 0.20, "duration": 300.0},
+        "resistance": {"resistance_type": "fire", "damage_reduction": 0.5, "duration": 360.0},
+        "utility": {"utility_type": "efficiency", "utility_value": 0.15, "duration": 3600.0}
+      },
+      "total_unique": 13,
+      "types": [
+        "object"
+      ],
+      "occurrences": 13,
+      "note": "NEW TAG-DRIVEN SYSTEM - numeric parameters for effect execution"
     },
     "flags.consumable": {
       "values": [
@@ -309,36 +346,41 @@
     }
   },
   "_usable_template": {
-    "category": "consumable",
-    "duration": 0,
-    "effect": "+20% physical damage",
-    "flags": {
-      "consumable": true,
-      "repairable": true,
-      "stackable": true
-    },
-    "itemId": "regeneration_tonic",
     "metadata": {
-      "narrative": "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal, blows that should fell you merely bruise. Stand firm, unbreakable.",
+      "narrative": "Basic healing potion from natural herbs and slime gel. Wounds close and pain fades within moments.",
       "tags": [
-        "standard",
-        "armor",
-        "explosive"
+        "potion",
+        "healing",
+        "consumable",
+        "starter"
       ]
     },
-    "name": "Health Potion",
-    "rarity": "rare",
+    "itemId": "minor_health_potion",
+    "name": "Minor Health Potion",
+    "category": "consumable",
+    "type": "potion",
+    "subtype": "healing",
+    "tier": 1,
+    "rarity": "common",
+    "effect": "Restores 50 HP instantly",
+    "duration": 0,
+    "stackSize": 20,
+    "effectTags": ["healing", "instant", "self"],
+    "effectParams": {
+      "heal_amount": 50
+    },
+    "statMultipliers": {
+      "weight": 0.2
+    },
     "requirements": {
       "level": 1,
       "stats": {}
     },
-    "stackSize": 10,
-    "statMultipliers": {
-      "weight": 0.2
-    },
-    "subtype": "explosive",
-    "tier": 1,
-    "type": "oil"
+    "flags": {
+      "stackable": true,
+      "consumable": true,
+      "repairable": false
+    }
   },
   "_sample_items": [
     {
@@ -361,6 +403,10 @@
       "effect": "Restores 50 HP instantly",
       "duration": 0,
       "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 50
+      },
       "statMultipliers": {
         "weight": 0.2
       },
@@ -394,6 +440,10 @@
       "effect": "Restores 100 HP instantly",
       "duration": 0,
       "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 100
+      },
       "statMultipliers": {
         "weight": 0.2
       },
@@ -427,6 +477,10 @@
       "effect": "Restores 200 HP instantly",
       "duration": 0,
       "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 200
+      },
       "statMultipliers": {
         "weight": 0.2
       },
@@ -460,6 +514,11 @@
       "effect": "Restores 5 HP per second",
       "duration": 60,
       "stackSize": 10,
+      "effectTags": ["healing", "over_time", "self"],
+      "effectParams": {
+        "heal_per_second": 5.0,
+        "duration": 60.0
+      },
       "statMultipliers": {
         "weight": 0.3
       },
@@ -493,6 +552,12 @@
       "effect": "+20% physical damage",
       "duration": 300,
       "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": {
+        "buff_type": "strength",
+        "buff_value": 0.20,
+        "duration": 300.0
+      },
       "statMultipliers": {
         "weight": 0.3
       },

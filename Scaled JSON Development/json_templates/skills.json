@@ -1,7 +1,7 @@
 {
   "_meta": {
     "category": "skills",
-    "llm_purpose": "Skills LLM - creates player skills with effects, costs, and evolution paths",
+    "llm_purpose": "Skills LLM - creates player skills with effects, costs, and evolution paths using NUMERIC COST RANGES",
     "generated_at": "2026-01-04T04:41:13.676973",
     "total_items": 48,
     "source_files": [
@@ -9,7 +9,25 @@
       "Skills/skills-testing-integration.JSON",
       "Update-1/skills-testing-integration.JSON",
       "progression/classes-1.JSON"
-    ]
+    ],
+    "NEW_NUMERIC_COST_SYSTEM": {
+      "mana": "Numeric range 20-150 (previously string enums: low, moderate, high, extreme)",
+      "cooldown": "Numeric range 20-600 seconds (previously string enums: short, moderate, long, extreme)",
+      "guidelines": {
+        "mana_ranges": {
+          "20-50": "Low-cost utility skills (sprint, quick repair)",
+          "50-80": "Standard combat/gathering skills",
+          "90-120": "Powerful tier 2 skills",
+          "120-150": "Ultimate tier 3+ skills"
+        },
+        "cooldown_ranges": {
+          "20-60": "Quick utility skills (sprint, instant buffs)",
+          "150-240": "Standard combat/gathering skills",
+          "360-480": "Powerful defensive/buff skills",
+          "500-600": "Ultimate abilities"
+        }
+      }
+    }
   },
   "_all_possible_values": {
     "categories": {
@@ -333,29 +351,61 @@
     },
     "cost.cooldown": {
       "values": [
-        "extreme",
-        "long",
-        "moderate",
-        "short"
+        20,
+        30,
+        45,
+        60,
+        120,
+        150,
+        180,
+        240,
+        300,
+        360,
+        420,
+        480,
+        540,
+        600
       ],
-      "total_unique": 4,
+      "range": {
+        "min": 20,
+        "max": 600
+      },
+      "total_unique": 14,
       "types": [
-        "string"
+        "integer",
+        "number"
       ],
-      "occurrences": 42
+      "occurrences": 42,
+      "note": "NEW NUMERIC SYSTEM - Use numeric cooldown values in seconds (20-600 range)"
     },
     "cost.mana": {
       "values": [
-        "extreme",
-        "high",
-        "low",
-        "moderate"
+        20,
+        30,
+        40,
+        50,
+        60,
+        70,
+        80,
+        90,
+        100,
+        110,
+        120,
+        130,
+        140,
+        150
       ],
-      "total_unique": 4,
+      "range": {
+        "min": 20,
+        "max": 150
+      },
+      "total_unique": 14,
       "types": [
-        "string"
+        "integer",
+        "number"
       ],
-      "occurrences": 42
+      "occurrences": 42,
+      "note": "NEW NUMERIC SYSTEM - Use numeric mana cost values (20-150 range)"
     },
     "description": {
       "values": [
@@ -1477,8 +1527,8 @@
       "pierce"
     ],
     "cost": {
-      "cooldown": "moderate",
-      "mana": "moderate"
+      "cooldown": 180,
+      "mana": 70
     },
     "description": "Gain extra time for your alchemy mini-game and increase potion quality.",
     "effect": {
@@ -1624,8 +1674,8 @@
         "knockback_distance": 5.0
       },
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
+        "mana": 150,
+        "cooldown": 600
       },
       "requirements": {
         "characterLevel": 25,
@@ -1673,8 +1723,8 @@
         "shock_tick_rate": 1.5
       },
       "cost": {
-        "mana": "high",
-        "cooldown": "long"
+        "mana": 110,
+        "cooldown": 420
       },
       "requirements": {
         "characterLevel": 18,
@@ -1722,8 +1772,8 @@
         "slow_duration": 8.0
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
+        "mana": 70,
+        "cooldown": 180
       },
       "requirements": {
         "characterLevel": 12,
@@ -1771,8 +1821,8 @@
         "weaken_duration": 10.0
       },
       "cost": {
-        "mana": "high",
-        "cooldown": "long"
+        "mana": 110,
+        "cooldown": 420
       },
       "requirements": {
         "characterLevel": 16,
@@ -1817,8 +1867,8 @@
         "lifesteal_percent": 0.6
       },
       "cost": {
-        "mana": "extreme",
-        "cooldown": "long"
+        "mana": 140,
+        "cooldown": 420
       },
       "requirements": {
         "characterLevel": 20,
