@@ -23,6 +23,10 @@
       "effect": "Restores 50 HP instantly",
       "duration": 0,
       "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 50
+      },
       "statMultipliers": {
         "weight": 0.2
       },
@@ -51,6 +55,10 @@
       "effect": "Restores 100 HP instantly",
       "duration": 0,
       "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 100
+      },
       "statMultipliers": {
         "weight": 0.2
       },
@@ -79,6 +87,10 @@
       "effect": "Restores 200 HP instantly",
       "duration": 0,
       "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 200
+      },
       "statMultipliers": {
         "weight": 0.2
       },
@@ -107,6 +119,11 @@
       "effect": "Restores 5 HP per second",
       "duration": 60,
       "stackSize": 10,
+      "effectTags": ["healing", "over_time", "self"],
+      "effectParams": {
+        "heal_per_second": 5.0,
+        "duration": 60.0
+      },
       "statMultipliers": {
         "weight": 0.3
       },
@@ -138,6 +155,12 @@
       "effect": "+20% physical damage",
       "duration": 300,
       "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": {
+        "buff_type": "strength",
+        "buff_value": 0.20,
+        "duration": 300.0
+      },
       "statMultipliers": {
         "weight": 0.3
       },
@@ -166,6 +189,12 @@
       "effect": "+20% defense",
       "duration": 300,
       "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": {
+        "buff_type": "defense",
+        "buff_value": 10.0,
+        "duration": 300.0
+      },
       "statMultipliers": {
         "weight": 0.3
       },
@@ -194,6 +223,12 @@
       "effect": "+25% movement and attack speed",
       "duration": 240,
       "stackSize": 10,
+      "effectTags": ["buff", "self"],
+      "effectParams": {
+        "buff_type": "speed",
+        "buff_value": 0.25,
+        "duration": 240.0
+      },
       "statMultipliers": {
         "weight": 0.3
       },
@@ -222,6 +257,12 @@
       "effect": "+50% max HP and +40% physical damage",
       "duration": 480,
       "stackSize": 5,
+      "effectTags": ["buff", "self"],
+      "effectParams": {
+        "buff_type": "strength",
+        "buff_value": 0.40,
+        "duration": 480.0
+      },
       "statMultipliers": {
         "weight": 0.5
       },
@@ -253,6 +294,12 @@
       "effect": "50% fire damage reduction",
       "duration": 360,
       "stackSize": 10,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "fire",
+        "damage_reduction": 0.5,
+        "duration": 360.0
+      },
       "statMultipliers": {
         "weight": 0.3
       },
@@ -281,6 +328,12 @@
       "effect": "50% ice damage reduction",
       "duration": 360,
       "stackSize": 10,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "ice",
+        "damage_reduction": 0.5,
+        "duration": 360.0
+      },
       "statMultipliers": {
         "weight": 0.3
       },
@@ -309,6 +362,12 @@
       "effect": "Grants resistance to all elements for 10 minutes",
       "duration": 600,
       "stackSize": 5,
+      "effectTags": ["resistance", "self"],
+      "effectParams": {
+        "resistance_type": "elemental",
+        "damage_reduction": 0.3,
+        "duration": 600.0
+      },
       "statMultipliers": {
         "weight": 0.4
       },
@@ -340,6 +399,12 @@
       "effect": "Apply to tools for +15% gathering speed for 1 hour",
       "duration": 3600,
       "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "efficiency",
+        "utility_value": 0.15,
+        "duration": 3600.0
+      },
       "statMultipliers": {
         "weight": 0.2
       },
@@ -368,6 +433,12 @@
       "effect": "Apply to armor for +10% defense for 2 hours",
       "duration": 7200,
       "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "armor",
+        "utility_value": 5.0,
+        "duration": 7200.0
+      },
       "statMultipliers": {
         "weight": 0.2
       },
@@ -396,6 +467,12 @@
       "effect": "Apply to weapons for +10% damage for 2 hours",
       "duration": 7200,
       "stackSize": 10,
+      "effectTags": ["utility", "self"],
+      "effectParams": {
+        "utility_type": "weapon",
+        "utility_value": 0.10,
+        "duration": 7200.0
+      },
       "statMultipliers": {
         "weight": 0.2
       },
