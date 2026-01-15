@@ -18,6 +18,8 @@
 | UI | Class Selection Tags | LOW | Enhancement | 1-2 hrs |
 | UI | Crafting Missing Items | LOW | Consistent | N/A |
 | Content | Crafting Stations JSON | WAITLIST | Placeholder | 2-3 hrs |
+| **Architecture** | Alchemy Hardcoded | MEDIUM | Technical Debt | 4-6 hrs |
+| **Architecture** | Skill Enums Hardcoded | LOW | Technical Debt | 2-3 hrs |
 | **Overhaul** | Crafting UI & Minigames | **HIGH** | Planning Complete | Multi-week |
 
 ---
@@ -594,7 +596,104 @@ Each discipline needs distinct aesthetic to match its theme:
 | Crafting UI | `Crafting-subdisciplines/crafting_simulator.py:1064-1105` |
 | Save System | `systems/save_manager.py`, `entities/character.py:298-497` |
 | Crafting Stations | `Definitions.JSON/crafting-stations-1.JSON` |
+| Hardcoded Systems | `docs/HARDCODED_SYSTEMS.md` |
 
 ---
 
-**Last Updated**: 2026-01-04
+## SECTION 8: ARCHITECTURAL ISSUES - HARDCODED SYSTEMS
+
+**Reference**: See `docs/HARDCODED_SYSTEMS.md` for complete details
+
+**Priority**: MEDIUM-LOW (Technical debt, not breaking issues)
+
+### 8.1 Fully Hardcoded Content
+
+| System | Issue | Impact | Priority |
+|--------|-------|--------|----------|
+| **Alchemy Potions** | All 17 potions hardcoded in character.py:1662-1965 | Cannot add new potions via JSON | MEDIUM |
+
+**Problem**: Each potion requires explicit if/elif statement based on itemId. JSON `effect` and `duration` fields are ignored.
+
+**Fix**: Refactor to use tag-based effect system like smithing/engineering.
+
+**Effort**: 4-6 hours (significant refactor)
+
+---
+
+### 8.2 Enum-Based Systems (Limited Extensibility)
+
+| System | Constraint | Location | Priority |
+|--------|------------|----------|----------|
+| Skill Effect Types | Only 10 types supported | skill_manager.py:261-374 | LOW |
+| Skill Magnitudes | 4 fixed values (minor/moderate/major/extreme) | skill_manager.py:261-280 | LOW |
+| Skill Durations | 5 fixed values (instant/brief/moderate/long/extreme) | skill_db.py | LOW |
+| Skill Mana Costs | 4 fixed values (20/50/100/200) | skill_db.py | LOW |
+| Skill Cooldowns | 4 fixed values (120s/300s/600s/1200s) | skill_db.py | LOW |
+
+**Problem**: String enums map to hardcoded values. Cannot create custom values.
+
+**Fix**: Load enum mappings from JSON instead of hardcoding.
+
+**Effort**: 2-3 hours (relatively straightforward)
+
+---
+
+### 8.3 Partially Hardcoded Systems
+
+| System | Working | Needs Code | Priority |
+|--------|---------|------------|----------|
+| Enchantment Types | 5 types (damage_multiplier, defense_multiplier, DoT, knockback, slow) | 3 types (lifesteal, thorns, soulbound) | LOW |
+
+**Problem**: Enchantment VALUES are data-driven, but TRIGGERS need code integration.
+
+**Working Types**: Can add freely via JSON
+**Blocked Types**: Need code to check at damage/death trigger points
+
+**Fix**: Add trigger checks for lifesteal (damage calc), thorns (take damage), soulbound (death)
+
+**Effort**: 1-2 hours
+
+---
+
+### 8.4 Refactoring Recommendations
+
+**High Priority** (Technical Debt):
+1. ✅ **Alchemy System Refactor** - Make tag-driven like smithing/engineering
+   - Effort: 4-6 hours
+   - Benefit: Can add potions via JSON
+   - Risk: May break existing potion functionality
+
+**Medium Priority** (Flexibility):
+2. **Enum JSON Loading** - Load skill enum mappings from JSON
+   - Effort: 2-3 hours
+   - Benefit: Custom magnitude/duration/cost values
+   - Risk: Low
+
+**Low Priority** (Nice to Have):
+3. **Enchantment Trigger Integration** - Add lifesteal/thorns/soulbound triggers
+   - Effort: 1-2 hours
+   - Benefit: More enchantment types work
+   - Risk: Low
+
+---
+
+### 8.5 What IS Extensible (For Reference)
+
+✅ **Fully Tag-Driven Systems** (no code changes needed):
+- Smithing weapon effectTags/effectParams
+- Engineering device effectTags/effectParams
+- Skill combat_tags/combat_params (if using existing effect types)
+- All tag parameters (75+ tags, all values modifiable)
+
+✅ **Tag System Features**:
+- 75+ registered tags in tag-definitions.JSON
+- Default parameters per tag
+- JSON overrides all defaults
+- Synergy system (e.g., lightning + chain = +20% range)
+- Conflict resolution (e.g., fire vs freeze)
+
+**Reference**: See docs/tag-system/TAG-GUIDE.md for tag system details
+
+---
+
+**Last Updated**: 2026-01-15
