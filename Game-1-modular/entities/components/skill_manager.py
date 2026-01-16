@@ -157,8 +157,15 @@ class SkillManager:
             if skill.current_cooldown > 0:
                 skill.current_cooldown = max(0, skill.current_cooldown - dt)
 
-    def use_skill(self, slot: int, character, combat_manager=None) -> tuple[bool, str]:
-        """Use a skill from hotbar slot (0-4). Returns (success, message)"""
+    def use_skill(self, slot: int, character, combat_manager=None, mouse_world_pos=None) -> tuple[bool, str]:
+        """Use a skill from hotbar slot (0-4). Returns (success, message)
+
+        Args:
+            slot: Hotbar slot (0-4)
+            character: Character using the skill
+            combat_manager: Combat manager (optional, for combat skills)
+            mouse_world_pos: Mouse cursor world position (optional, for directional skills)
+        """
         if not (0 <= slot < 5):
             return False, "Invalid slot"
 
@@ -192,7 +199,7 @@ class SkillManager:
         player_skill.current_cooldown = cooldown_duration
 
         # Apply skill effect (with level scaling)
-        self._apply_skill_effect(skill_def, character, player_skill, combat_manager)
+        self._apply_skill_effect(skill_def, character, player_skill, combat_manager, mouse_world_pos)
 
         # Award skill EXP (100 EXP per activation)
         leveled_up, new_level = player_skill.add_exp(100)
@@ -201,8 +208,16 @@ class SkillManager:
 
         return True, f"Used {skill_def.name}!"
 
-    def _apply_skill_effect(self, skill_def, character, player_skill, combat_manager=None):
-        """Apply the skill's effect with level scaling"""
+    def _apply_skill_effect(self, skill_def, character, player_skill, combat_manager=None, mouse_world_pos=None):
+        """Apply the skill's effect with level scaling
+
+        Args:
+            skill_def: Skill definition
+            character: Character using skill
+            player_skill: Player's skill instance (for level)
+            combat_manager: Combat manager (optional)
+            mouse_world_pos: Mouse cursor world position (optional, for directional skills)
+        """
         from core.debug_display import debug_print
 
         # Check if skill uses tag-based combat system
@@ -222,7 +237,7 @@ class SkillManager:
 
                     return self._apply_combat_skill_with_context(
                         skill_def, character, player_skill,
-                        target_enemy, available_enemies
+                        target_enemy, available_enemies, mouse_world_pos
                     )
 
             # No enemies available - will warn if skill needs combat context
@@ -691,8 +706,17 @@ class SkillManager:
         return True, f"Used {skill_def.name}!"
 
     def _apply_combat_skill_with_context(self, skill_def, character, player_skill,
-                                          target_enemy, available_enemies):
-        """Apply a combat skill with full combat context (enemies available)"""
+                                          target_enemy, available_enemies, mouse_world_pos=None):
+        """Apply a combat skill with full combat context (enemies available)
+
+        Args:
+            skill_def: Skill definition
+            character: Character using skill
+            player_skill: Player's skill instance (for level)
+            target_enemy: Primary target enemy
+            available_enemies: List of all available enemies
+            mouse_world_pos: Mouse cursor world position (optional, for directional skills)
+        """
         # Apply level scaling to combat params
         level_bonus = player_skill.get_level_scaling_bonus()
         scaled_params = skill_def.combat_params.copy()
@@ -726,7 +750,16 @@ class SkillManager:
         primary_target = None
         available_entities = []
 
-        if effect.target == "enemy":
+        # Check if skill uses directional geometry (beam, cone, line)
+        directional_geometries = ['beam', 'cone', 'line']
+        is_directional = any(tag in directional_geometries for tag in skill_def.combat_tags)
+
+        # Use mouse position for directional skills if available
+        if is_directional and mouse_world_pos:
+            primary_target = mouse_world_pos  # Use mouse position as aiming point
+            available_entities = available_enemies
+            print(f"   🎯 Aiming toward mouse cursor")
+        elif effect.target == "enemy":
             # Use provided target enemy
             if not target_enemy:
                 print(f"   ⚠ No target enemy provided")
@@ -745,7 +778,11 @@ class SkillManager:
                 print(f"   ⚠ No enemies available for area skill")
                 return
             # For AOE, primary target is first enemy (or nearest)
-            primary_target = available_enemies[0] if available_enemies else character
+            # Use mouse position for directional AOE if available
+            if is_directional and mouse_world_pos:
+                primary_target = mouse_world_pos
+            else:
+                primary_target = available_enemies[0] if available_enemies else character
             available_entities = available_enemies
 
         else:

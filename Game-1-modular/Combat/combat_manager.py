@@ -804,12 +804,12 @@ class CombatManager:
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
-        # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt
+        # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt (capped at 15%)
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
             for ench in equipped_weapon.enchantments:
                 effect = ench.get('effect', {})
                 if effect.get('type') == 'lifesteal':
-                    lifesteal_percent = effect.get('value', 0.1)  # 10% default
+                    lifesteal_percent = min(effect.get('value', 0.1), 0.15)  # 10% default, 15% cap
                     heal_amount = final_damage * lifesteal_percent
                     self.character.health = min(self.character.max_health, self.character.health + heal_amount)
                     print(f"   💚 {ench.get('name', 'Lifesteal')}: Healed {heal_amount:.1f} HP")
@@ -1388,7 +1388,7 @@ class CombatManager:
         self.character.take_damage(final_damage)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
-        # REFLECT/THORNS: Check for reflect damage on armor
+        # REFLECT/THORNS: Check for reflect damage on armor (capped at 15%)
         if hasattr(self.character, 'equipment') and enemy.is_alive:
             reflect_percent = 0.0
             armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
@@ -1400,6 +1400,9 @@ class CombatManager:
                         effect = ench.get('effect', {})
                         if effect.get('type') == 'reflect' or effect.get('type') == 'thorns':
                             reflect_percent += effect.get('value', 0.0)
+
+            # Cap total reflect at 15%
+            reflect_percent = min(reflect_percent, 0.15)
 
             if reflect_percent > 0:
                 reflect_damage = final_damage * reflect_percent
