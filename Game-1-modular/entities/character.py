@@ -1362,10 +1362,10 @@ class Character:
             damage: Amount of damage to take
             damage_type: Type of damage (physical, fire, poison, etc.)
             **kwargs: Additional context (source, tags, context) for advanced damage systems
+                     from_attack: bool - True if from enemy attack, False for status effects
         """
-        import traceback
-        print(f"\n🔴 TAKE_DAMAGE CALLED: {damage:.1f} damage, type={damage_type}")
-        print(f"   Call stack depth: {len(traceback.extract_stack())}")
+        # Check if this is from an attack (not status effect)
+        from_attack = kwargs.get('from_attack', False)
 
         # Phase immunity - completely immune to damage
         if hasattr(self, 'is_phased') and self.is_phased:
@@ -1383,46 +1383,27 @@ class Character:
         # Apply remaining damage to health
         self.health -= damage
 
-        # Apply armor durability loss when taking damage
-        print(f"   → Starting armor durability loss check (damage={damage:.1f})")
-        if damage > 0:  # Only lose durability if damage was actually taken
+        # Apply armor durability loss ONLY for attacks (not status effects)
+        if from_attack and damage > 0:
             from core.config import Config
             if not Config.DEBUG_INFINITE_DURABILITY:
                 # DEF stat reduces durability loss
                 durability_loss = 1.0 * self.stats.get_durability_loss_multiplier()
-                print(f"   → Base durability_loss: {durability_loss:.2f}")
 
                 armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
-                for slot_index, slot in enumerate(armor_slots):
+                for slot in armor_slots:
                     armor_piece = self.equipment.slots.get(slot)
-                    print(f"   → Loop iteration {slot_index+1}/5: Checking slot '{slot}'")
-                    if armor_piece:
-                        print(f"      Found: {armor_piece.name}, has durability: {hasattr(armor_piece, 'durability_current')}")
-
                     if armor_piece and hasattr(armor_piece, 'durability_current'):
                         # Apply Unbreaking enchantment
                         piece_loss = durability_loss
-                        enchantment_info = []
                         if hasattr(armor_piece, 'enchantments') and armor_piece.enchantments:
                             for ench in armor_piece.enchantments:
                                 effect = ench.get('effect', {})
-                                ench_type = effect.get('type', 'unknown')
-                                ench_value = effect.get('value', 0.0)
-                                enchantment_info.append(f"{ench_type}({ench_value})")
-
-                                if ench_type == 'durability_multiplier':
-                                    reduction = ench_value
+                                if effect.get('type') == 'durability_multiplier':
+                                    reduction = effect.get('value', 0.0)
                                     piece_loss *= (1.0 - reduction)
 
-                        old_durability = armor_piece.durability_current
                         armor_piece.durability_current = max(0, armor_piece.durability_current - piece_loss)
-                        actual_loss = old_durability - armor_piece.durability_current
-
-                        print(f"      Modified durability: {old_durability:.1f} → {armor_piece.durability_current:.1f} (loss: {actual_loss:.1f})")
-
-                        # Debug: Show durability loss with enchantment info
-                        if enchantment_info and actual_loss > 0:
-                            print(f"   🛡️ {armor_piece.name} -{actual_loss:.1f} durability (enchants: {', '.join(enchantment_info)})")
 
                         # Warn if armor is breaking (use effective max with VIT bonus)
                         effective_max = self.get_effective_max_durability(armor_piece)
@@ -1430,8 +1411,6 @@ class Character:
                             print(f"   💥 {armor_piece.name} has broken!")
                         elif armor_piece.durability_current <= effective_max * 0.2:
                             print(f"   ⚠️ {armor_piece.name} durability low: {armor_piece.durability_current:.0f}/{effective_max}")
-
-        print(f"   → Armor durability loss check complete")
 
         if self.health <= 0:
             self.health = 0

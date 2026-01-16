@@ -1409,7 +1409,7 @@ class CombatManager:
         print(f"   ➜ Final damage to player: {final_damage:.1f}")
 
         # Apply to player
-        self.character.take_damage(final_damage)
+        self.character.take_damage(final_damage, from_attack=True)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
         # REFLECT/THORNS: Check for reflect damage on armor (capped at 80%)
