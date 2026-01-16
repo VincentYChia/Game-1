@@ -74,6 +74,14 @@ class EffectExecutor:
         self._current_tags = tags
         self._current_context = context
 
+        # Debug: Show what we're executing
+        print(f"\n   🎯 EFFECT EXECUTOR: Processing effect")
+        print(f"      Tags: {tags}")
+        print(f"      Damage tags: {config.damage_tags}")
+        print(f"      Special tags: {config.special_tags}")
+        print(f"      Base damage: {config.base_damage}")
+        print(f"      Targets found: {len(targets)}")
+
         # Apply effects to all targets
         for i, target in enumerate(targets):
             # Calculate damage falloff for geometry
@@ -81,6 +89,7 @@ class EffectExecutor:
 
             # Apply damage
             if config.base_damage > 0:
+                print(f"      → Applying {config.base_damage * magnitude_mult:.1f} damage to target {i+1}")
                 self._apply_damage(source, target, config, magnitude_mult)
 
             # Apply healing
@@ -91,6 +100,7 @@ class EffectExecutor:
             self._apply_status_effects(target, config)
 
             # Apply special mechanics
+            print(f"      → Checking special mechanics: {config.special_tags}")
             self._apply_special_mechanics(source, target, config, magnitude_mult)
 
         return context
@@ -204,8 +214,15 @@ class EffectExecutor:
 
     def _apply_special_mechanics(self, source: Any, target: Any, config: EffectConfig, magnitude_mult: float):
         """Apply special mechanics (lifesteal, knockback, etc.)"""
+        print(f"         → _apply_special_mechanics called")
+        print(f"            special_tags: {config.special_tags}")
+        print(f"            base_damage: {config.base_damage}")
+        print(f"            magnitude_mult: {magnitude_mult}")
+
         for special_tag in config.special_tags:
+            print(f"            Processing special tag: '{special_tag}'")
             if special_tag == 'lifesteal' or special_tag == 'vampiric':
+                print(f"               → LIFESTEAL DETECTED! Calling _apply_lifesteal")
                 self._apply_lifesteal(source, config.base_damage * magnitude_mult, config.params)
 
             elif special_tag == 'knockback':

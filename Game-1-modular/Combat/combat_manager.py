@@ -805,6 +805,16 @@ class CombatManager:
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
         # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt (capped at 50%)
+        print(f"\n   🔍 LIFESTEAL ENCHANT DEBUG: Checking weapon...")
+        print(f"      equipped_weapon: {equipped_weapon.name if equipped_weapon else 'None'}")
+        if equipped_weapon:
+            print(f"      has enchantments: {hasattr(equipped_weapon, 'enchantments')}")
+            if hasattr(equipped_weapon, 'enchantments'):
+                print(f"      enchantment count: {len(equipped_weapon.enchantments)}")
+                for i, ench in enumerate(equipped_weapon.enchantments):
+                    effect = ench.get('effect', {})
+                    print(f"         Enchant {i+1}: type='{effect.get('type', 'unknown')}', value={effect.get('value', 0.0)}")
+
         lifesteal_found = False
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
             for ench in equipped_weapon.enchantments:
@@ -813,8 +823,14 @@ class CombatManager:
                     lifesteal_found = True
                     lifesteal_percent = min(effect.get('value', 0.1), 0.50)  # 10% default, 50% cap
                     heal_amount = final_damage * lifesteal_percent
+                    old_health = self.character.health
                     self.character.health = min(self.character.max_health, self.character.health + heal_amount)
-                    print(f"   💚 LIFESTEAL ({lifesteal_percent*100:.0f}%, capped at 50%): Healed {heal_amount:.1f} HP from {final_damage:.1f} damage")
+                    new_health = self.character.health
+                    print(f"   💚 LIFESTEAL ENCHANT ({lifesteal_percent*100:.0f}%, capped at 50%): Healed {heal_amount:.1f} HP from {final_damage:.1f} damage")
+                    print(f"      HP: {old_health:.1f} → {new_health:.1f}")
+
+        if not lifesteal_found:
+            print(f"      No lifesteal enchantment found")
 
         # CHAIN DAMAGE ENCHANTMENT: Damage nearby enemies
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
@@ -1390,40 +1406,41 @@ class CombatManager:
         self.character.take_damage(final_damage)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
-        # REFLECT/THORNS: Check for reflect damage on armor (capped at 50%)
+        # Debug: Check conditions before thorns
+        print(f"\n   🔍 THORNS DEBUG: Checking conditions...")
+        print(f"      has equipment: {hasattr(self.character, 'equipment')}")
+        print(f"      enemy.is_alive: {enemy.is_alive}")
+        print(f"      enemy name: {enemy.definition.name if hasattr(enemy, 'definition') else 'unknown'}")
+
+        # REFLECT/THORNS: Check for reflect damage on armor (capped at 100% for testing)
         if hasattr(self.character, 'equipment') and enemy.is_alive:
             reflect_percent = 0.0
             armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
             thorns_pieces = []
 
-            print(f"\n   🔍 DEBUG: Checking for thorns enchantments on armor...")
             for slot in armor_slots:
                 armor_piece = self.character.equipment.slots.get(slot)
                 if armor_piece and hasattr(armor_piece, 'enchantments'):
-                    if len(armor_piece.enchantments) > 0:
-                        print(f"      {slot}: {armor_piece.name} has {len(armor_piece.enchantments)} enchantments")
                     for ench in armor_piece.enchantments:
                         effect = ench.get('effect', {})
                         ench_type = effect.get('type', 'unknown')
                         ench_value = effect.get('value', 0.0)
-                        print(f"         - Type: '{ench_type}', Value: {ench_value}")
 
                         # Check for all reflect/thorns variants (reflect_damage is the actual type in JSON)
                         if ench_type in ['reflect', 'thorns', 'reflect_damage']:
                             piece_value = ench_value
                             reflect_percent += piece_value
                             thorns_pieces.append(f"{slot}({piece_value*100:.0f}%)")
-                            print(f"         ✅ THORNS FOUND: Adding {piece_value*100:.0f}% reflect")
 
-            # Cap total reflect at 50%
+            # Cap total reflect at 100% (for testing)
             uncapped = reflect_percent
-            reflect_percent = min(reflect_percent, 0.50)
+            reflect_percent = min(reflect_percent, 1.00)
 
             if reflect_percent > 0:
                 reflect_damage = final_damage * reflect_percent
                 old_enemy_health = enemy.current_health
                 enemy.current_health -= reflect_damage
-                cap_indicator = f" [capped from {uncapped*100:.0f}%]" if uncapped > 0.50 else ""
+                cap_indicator = f" [capped from {uncapped*100:.0f}%]" if uncapped > 1.00 else ""
                 print(f"   ⚡ THORNS ({reflect_percent*100:.0f}%{cap_indicator}): Reflected {reflect_damage:.1f} damage to {enemy.definition.name}")
                 print(f"      Sources: {', '.join(thorns_pieces)}")
                 print(f"      Enemy HP: {old_enemy_health:.1f} → {enemy.current_health:.1f} (took {reflect_damage:.1f} thorns damage)")
@@ -1432,6 +1449,8 @@ class CombatManager:
                     enemy.is_alive = False
                     enemy.current_health = 0
                     print(f"   💀 {enemy.definition.name} killed by thorns damage!")
+            else:
+                print(f"      No thorns found on armor (reflect_percent = 0)")
 
         # Reset health regen timer (damage taken)
         self.character.time_since_last_damage_taken = 0.0
