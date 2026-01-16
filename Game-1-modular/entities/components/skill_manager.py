@@ -754,49 +754,11 @@ class SkillManager:
         directional_geometries = ['beam', 'cone', 'line']
         is_directional = any(tag in directional_geometries for tag in skill_def.combat_tags)
 
-        # Check if skill uses circle AOE
-        is_circle_aoe = 'circle' in skill_def.combat_tags
-
         # Use mouse position for directional skills if available
         if is_directional and mouse_world_pos:
             primary_target = mouse_world_pos  # Use mouse position as aiming point
             available_entities = available_enemies
             print(f"   🎯 Aiming toward mouse cursor")
-
-        # Handle circle AOE skills (like meteor strike) with mouse targeting
-        elif is_circle_aoe and mouse_world_pos and effect.target == "area":
-            from data.models.world import Position
-            from core.geometry.math_utils import distance
-
-            # Calculate distance from character to mouse
-            char_pos = character.position
-            dist_to_mouse = distance(char_pos, mouse_world_pos)
-
-            # Max range for targeted AOE (12 tiles)
-            max_aoe_range = 12.0
-
-            if dist_to_mouse <= max_aoe_range:
-                # Within range - use mouse position directly
-                primary_target = mouse_world_pos
-                print(f"   🎯 Meteor targeting mouse position ({dist_to_mouse:.1f} tiles)")
-            else:
-                # Beyond range - clamp to max range in direction of mouse
-                # Calculate direction vector
-                dx = mouse_world_pos.x - char_pos.x
-                dy = mouse_world_pos.y - char_pos.y
-                # Normalize and scale to max range
-                norm = (dx**2 + dy**2) ** 0.5
-                if norm > 0:
-                    clamped_x = char_pos.x + (dx / norm) * max_aoe_range
-                    clamped_y = char_pos.y + (dy / norm) * max_aoe_range
-                    primary_target = Position(clamped_x, clamped_y, char_pos.z)
-                    print(f"   🎯 Meteor clamped to max range ({max_aoe_range} tiles)")
-                else:
-                    primary_target = char_pos
-
-            available_entities = available_enemies
-            # Override origin to use position instead of target
-            scaled_params['origin'] = 'position'
 
         elif effect.target == "enemy":
             # Use provided target enemy
