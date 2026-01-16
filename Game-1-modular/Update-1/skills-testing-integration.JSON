@@ -65,7 +65,7 @@
 
       "combatTags": ["lightning", "chain", "shock"],
       "combatParams": {
-        "baseDamage": 60,
+        "baseDamage": 100,
         "chain_count": 5,
         "chain_range": 7.0,
         "shock_duration": 6.0,

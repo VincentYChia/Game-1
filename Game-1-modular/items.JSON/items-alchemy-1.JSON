@@ -225,8 +225,8 @@
       "stackSize": 10,
       "effectTags": ["buff", "self"],
       "effectParams": {
-        "buff_type": "speed",
-        "buff_value": 0.25,
+        "buff_type": ["speed", "attack_speed"],
+        "buff_value": [0.25, 0.25],
         "duration": 240.0
       },
       "statMultipliers": {
@@ -259,8 +259,8 @@
       "stackSize": 5,
       "effectTags": ["buff", "self"],
       "effectParams": {
-        "buff_type": "strength",
-        "buff_value": 0.40,
+        "buff_type": ["max_hp", "strength"],
+        "buff_value": [0.50, 0.40],
         "duration": 480.0
       },
       "statMultipliers": {

@@ -201,20 +201,43 @@ class PotionEffectExecutor:
         potency: float,
         duration_mult: float
     ) -> Tuple[bool, str]:
-        """Apply stat buff effects"""
-        buff_type = params.get('buff_type', 'strength')  # strength, defense, speed, max_hp, etc.
-        base_value = params.get('buff_value', 0.2)  # Multiplier or flat value
+        """Apply stat buff effects (supports single or multiple buffs)"""
         base_duration = params.get('duration', 300.0)
-
-        actual_value = base_value * potency
         actual_duration = base_duration * duration_mult
+
+        # Check if we have multiple buffs (arrays)
+        buff_type = params.get('buff_type', 'strength')
+        buff_value = params.get('buff_value', 0.2)
+
+        # Support arrays for multiple buffs
+        if isinstance(buff_type, list):
+            # Multiple buffs
+            buff_types = buff_type
+            buff_values = buff_value if isinstance(buff_value, list) else [buff_value] * len(buff_types)
+
+            messages = []
+            for btype, bvalue in zip(buff_types, buff_values):
+                msg = self._apply_single_buff(character, btype, bvalue, potency, actual_duration)
+                messages.append(msg)
+
+            return True, " + ".join(messages)
+        else:
+            # Single buff
+            msg = self._apply_single_buff(character, buff_type, buff_value, potency, actual_duration)
+            return True, msg
+
+    def _apply_single_buff(self, character: 'Character', buff_type: str, base_value: float,
+                          potency: float, actual_duration: float) -> str:
+        """Apply a single buff to character"""
+        actual_value = base_value * potency
 
         # Map buff type to category
         category_map = {
             'strength': 'combat',
             'defense': 'defense',
             'speed': 'movement',
-            'max_hp': 'health'
+            'max_hp': 'health',
+            'attack_speed': 'combat'
         }
         category = category_map.get(buff_type, 'combat')
 
@@ -223,7 +246,8 @@ class PotionEffectExecutor:
             'strength': 'Strength Boost',
             'defense': 'Defense Boost',
             'speed': 'Speed Boost',
-            'max_hp': 'Vitality Boost'
+            'max_hp': 'Vitality Boost',
+            'attack_speed': 'Attack Speed Boost'
         }
         buff_name = name_map.get(buff_type, f'{buff_type.capitalize()} Buff')
 
@@ -244,15 +268,17 @@ class PotionEffectExecutor:
 
         # Format message based on buff type
         if buff_type == 'strength':
-            return True, f"+{int(actual_value*100)}% physical damage for {actual_duration:.0f}s"
+            return f"+{int(actual_value*100)}% physical damage for {actual_duration:.0f}s"
         elif buff_type == 'defense':
-            return True, f"+{int(actual_value*100)}% defense for {actual_duration:.0f}s"
+            return f"+{int(actual_value*100)}% defense for {actual_duration:.0f}s"
         elif buff_type == 'speed':
-            return True, f"+{int(actual_value*100)}% speed for {actual_duration:.0f}s"
+            return f"+{int(actual_value*100)}% move speed for {actual_duration:.0f}s"
+        elif buff_type == 'attack_speed':
+            return f"+{int(actual_value*100)}% attack speed for {actual_duration:.0f}s"
         elif buff_type == 'max_hp':
-            return True, f"+{int(actual_value*100)}% max HP for {actual_duration:.0f}s"
+            return f"+{int(actual_value*100)}% max HP for {actual_duration:.0f}s"
         else:
-            return True, f"{buff_type} buff for {actual_duration:.0f}s"
+            return f"{buff_type} buff for {actual_duration:.0f}s"
 
     def _apply_resistance(
         self,
