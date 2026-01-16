@@ -224,11 +224,18 @@
       "duration": 240,
       "stackSize": 10,
       "effectTags": ["buff", "self"],
-      "effectParams": {
-        "buff_type": ["speed", "attack_speed"],
-        "buff_value": [0.25, 0.25],
-        "duration": 240.0
-      },
+      "effectParams": [
+        {
+          "buff_type": "speed",
+          "buff_value": 0.25,
+          "duration": 240.0
+        },
+        {
+          "buff_type": "attack_speed",
+          "buff_value": 0.25,
+          "duration": 240.0
+        }
+      ],
       "statMultipliers": {
         "weight": 0.3
       },
@@ -258,16 +265,105 @@
       "duration": 480,
       "stackSize": 5,
       "effectTags": ["buff", "self"],
-      "effectParams": {
-        "buff_type": ["max_hp", "strength"],
-        "buff_value": [0.50, 0.40],
-        "duration": 480.0
-      },
+      "effectParams": [
+        {
+          "buff_type": "max_hp",
+          "buff_value": 0.50,
+          "duration": 480.0
+        },
+        {
+          "buff_type": "strength",
+          "buff_value": 0.40,
+          "duration": 480.0
+        }
+      ],
       "statMultipliers": {
         "weight": 0.5
       },
       "requirements": {
         "level": 20,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "War elixir forged from ironbark and stone essence. Skin hardens like steel, muscles surge with raw power. Perfect balance of offense and defense for the battlefield.",
+        "tags": ["potion", "buff", "combat", "defense"]
+      },
+      "itemId": "battle_elixir",
+      "name": "Battle Elixir",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "+30% defense and +20% physical damage",
+      "duration": 360,
+      "stackSize": 8,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "defense",
+          "buff_value": 0.30,
+          "duration": 360.0
+        },
+        {
+          "buff_type": "strength",
+          "buff_value": 0.20,
+          "duration": 360.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 14,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": true,
+        "consumable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Crimson elixir infused with fury crystals and blood essence. Heart pounds like thunder, muscles move faster than thought. Unleash devastating strikes in rapid succession.",
+        "tags": ["potion", "buff", "berserker", "combat"]
+      },
+      "itemId": "berserkers_rage",
+      "name": "Berserker's Rage",
+      "category": "consumable",
+      "type": "potion",
+      "subtype": "buff",
+      "tier": 3,
+      "rarity": "rare",
+      "effect": "+35% attack speed and +25% physical damage",
+      "duration": 300,
+      "stackSize": 8,
+      "effectTags": ["buff", "self"],
+      "effectParams": [
+        {
+          "buff_type": "attack_speed",
+          "buff_value": 0.35,
+          "duration": 300.0
+        },
+        {
+          "buff_type": "strength",
+          "buff_value": 0.25,
+          "duration": 300.0
+        }
+      ],
+      "statMultipliers": {
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 16,
         "stats": {}
       },
       "flags": {

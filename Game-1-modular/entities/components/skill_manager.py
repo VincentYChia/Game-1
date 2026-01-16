@@ -766,7 +766,7 @@ class SkillManager:
         # Handle circle AOE skills (like meteor strike) with mouse targeting
         elif is_circle_aoe and mouse_world_pos and effect.target == "area":
             from data.models.world import Position
-            from core.geometry.utils import distance
+            from core.geometry.math_utils import distance
 
             # Calculate distance from character to mouse
             char_pos = character.position

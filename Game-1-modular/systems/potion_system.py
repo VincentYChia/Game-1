@@ -65,40 +65,25 @@ class PotionEffectExecutor:
         messages = []
         success = False
 
-        # Process healing effects
-        if 'healing' in tags:
-            heal_success, heal_msg = self._apply_healing(character, tags, params, potency, duration_mult)
-            if heal_success:
+        # Support modular effectParams (array of param objects)
+        # If effectParams is an array, process each effect separately
+        if isinstance(params, list):
+            for param_set in params:
+                # Each param_set is a complete effect definition
+                effect_success, effect_msg = self._apply_single_effect(
+                    character, tags, param_set, potency, duration_mult
+                )
+                if effect_success:
+                    success = True
+                    messages.append(effect_msg)
+        else:
+            # Legacy: effectParams is a dict (single effect)
+            effect_success, effect_msg = self._apply_single_effect(
+                character, tags, params, potency, duration_mult
+            )
+            if effect_success:
                 success = True
-                messages.append(heal_msg)
-
-        # Process mana restoration effects
-        if 'mana_restore' in tags:
-            mana_success, mana_msg = self._apply_mana_restore(character, tags, params, potency, duration_mult)
-            if mana_success:
-                success = True
-                messages.append(mana_msg)
-
-        # Process buff effects
-        if 'buff' in tags:
-            buff_success, buff_msg = self._apply_buff(character, tags, params, potency, duration_mult)
-            if buff_success:
-                success = True
-                messages.append(buff_msg)
-
-        # Process resistance effects
-        if 'resistance' in tags:
-            resist_success, resist_msg = self._apply_resistance(character, tags, params, potency, duration_mult)
-            if resist_success:
-                success = True
-                messages.append(resist_msg)
-
-        # Process utility effects (oils, polishes)
-        if 'utility' in tags:
-            utility_success, utility_msg = self._apply_utility(character, tags, params, potency, duration_mult)
-            if utility_success:
-                success = True
-                messages.append(utility_msg)
+                messages.append(effect_msg)
 
         # Combine all messages
         final_message = " | ".join(messages) if messages else "No effect"
@@ -108,6 +93,37 @@ class PotionEffectExecutor:
             final_message += f" (potency: {int(potency*100)}%)"
 
         return success, final_message
+
+    def _apply_single_effect(
+        self,
+        character: 'Character',
+        tags: list,
+        params: dict,
+        potency: float,
+        duration_mult: float
+    ) -> Tuple[bool, str]:
+        """Apply a single effect from params"""
+        # Process healing effects
+        if 'healing' in tags:
+            return self._apply_healing(character, tags, params, potency, duration_mult)
+
+        # Process mana restoration effects
+        if 'mana_restore' in tags:
+            return self._apply_mana_restore(character, tags, params, potency, duration_mult)
+
+        # Process buff effects
+        if 'buff' in tags:
+            return self._apply_buff(character, tags, params, potency, duration_mult)
+
+        # Process resistance effects
+        if 'resistance' in tags:
+            return self._apply_resistance(character, tags, params, potency, duration_mult)
+
+        # Process utility effects (oils, polishes)
+        if 'utility' in tags:
+            return self._apply_utility(character, tags, params, potency, duration_mult)
+
+        return False, "Unknown effect type"
 
     def _apply_healing(
         self,
@@ -201,35 +217,13 @@ class PotionEffectExecutor:
         potency: float,
         duration_mult: float
     ) -> Tuple[bool, str]:
-        """Apply stat buff effects (supports single or multiple buffs)"""
-        base_duration = params.get('duration', 300.0)
-        actual_duration = base_duration * duration_mult
-
-        # Check if we have multiple buffs (arrays)
+        """Apply a single stat buff effect"""
         buff_type = params.get('buff_type', 'strength')
-        buff_value = params.get('buff_value', 0.2)
+        base_value = params.get('buff_value', 0.2)
+        base_duration = params.get('duration', 300.0)
 
-        # Support arrays for multiple buffs
-        if isinstance(buff_type, list):
-            # Multiple buffs
-            buff_types = buff_type
-            buff_values = buff_value if isinstance(buff_value, list) else [buff_value] * len(buff_types)
-
-            messages = []
-            for btype, bvalue in zip(buff_types, buff_values):
-                msg = self._apply_single_buff(character, btype, bvalue, potency, actual_duration)
-                messages.append(msg)
-
-            return True, " + ".join(messages)
-        else:
-            # Single buff
-            msg = self._apply_single_buff(character, buff_type, buff_value, potency, actual_duration)
-            return True, msg
-
-    def _apply_single_buff(self, character: 'Character', buff_type: str, base_value: float,
-                          potency: float, actual_duration: float) -> str:
-        """Apply a single buff to character"""
         actual_value = base_value * potency
+        actual_duration = base_duration * duration_mult
 
         # Map buff type to category
         category_map = {
