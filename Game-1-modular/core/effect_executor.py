@@ -237,8 +237,21 @@ class EffectExecutor:
         """Apply lifesteal healing to source"""
         lifesteal_percent = params.get('lifesteal_percent', 0.15)
         heal_amount = damage_dealt * lifesteal_percent
+
+        # Debug: Show what we're about to heal
+        source_name = getattr(source, 'name', None) or type(source).__name__
+        old_health = getattr(source, 'health', None) or getattr(source, 'current_health', '?')
+        max_health = getattr(source, 'max_health', '?')
+        print(f"   💉 LIFESTEAL SKILL: Healing {source_name} for {heal_amount:.1f} HP ({lifesteal_percent*100:.0f}% of {damage_dealt:.1f} damage)")
+        print(f"      Before: {old_health}/{max_health} HP")
+
         self._heal_target(source, heal_amount)
-        self.debugger.debug(f"Lifesteal: {heal_amount:.1f} HP to {getattr(source, 'name', 'Unknown')}")
+
+        # Debug: Show health after heal
+        new_health = getattr(source, 'health', None) or getattr(source, 'current_health', '?')
+        print(f"      After: {new_health}/{max_health} HP")
+
+        self.debugger.debug(f"Lifesteal: {heal_amount:.1f} HP to {source_name}")
 
     def _apply_knockback(self, source: Any, target: Any, params: dict):
         """Apply knockback to target as smooth forced movement over time"""
@@ -581,14 +594,20 @@ class EffectExecutor:
     def _heal_target(self, target: Any, healing: float):
         """Apply healing to a target entity"""
         if hasattr(target, 'heal'):
+            print(f"         → Using heal() method")
             target.heal(healing)
         elif hasattr(target, 'health') and hasattr(target, 'max_health'):
             # Character/Player uses .health property
+            print(f"         → Using .health property (Character/Player)")
+            old_health = target.health
             target.health = min(target.health + healing, target.max_health)
+            print(f"         → Set health from {old_health:.1f} to {target.health:.1f}")
         elif hasattr(target, 'current_health') and hasattr(target, 'max_health'):
             # Enemies use .current_health property
+            print(f"         → Using .current_health property (Enemy)")
             target.current_health = min(target.current_health + healing, target.max_health)
         else:
+            print(f"         ❌ ERROR: Cannot heal {type(target).__name__} - no healing method!")
             self.debugger.warning(f"Cannot apply healing to {type(target).__name__} - no healing method")
 
 

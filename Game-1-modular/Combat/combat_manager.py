@@ -1396,15 +1396,24 @@ class CombatManager:
             armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
             thorns_pieces = []
 
+            print(f"\n   🔍 DEBUG: Checking for thorns enchantments on armor...")
             for slot in armor_slots:
                 armor_piece = self.character.equipment.slots.get(slot)
                 if armor_piece and hasattr(armor_piece, 'enchantments'):
+                    if len(armor_piece.enchantments) > 0:
+                        print(f"      {slot}: {armor_piece.name} has {len(armor_piece.enchantments)} enchantments")
                     for ench in armor_piece.enchantments:
                         effect = ench.get('effect', {})
-                        if effect.get('type') == 'reflect' or effect.get('type') == 'thorns':
-                            piece_value = effect.get('value', 0.0)
+                        ench_type = effect.get('type', 'unknown')
+                        ench_value = effect.get('value', 0.0)
+                        print(f"         - Type: '{ench_type}', Value: {ench_value}")
+
+                        # Check for all reflect/thorns variants (reflect_damage is the actual type in JSON)
+                        if ench_type in ['reflect', 'thorns', 'reflect_damage']:
+                            piece_value = ench_value
                             reflect_percent += piece_value
                             thorns_pieces.append(f"{slot}({piece_value*100:.0f}%)")
+                            print(f"         ✅ THORNS FOUND: Adding {piece_value*100:.0f}% reflect")
 
             # Cap total reflect at 50%
             uncapped = reflect_percent

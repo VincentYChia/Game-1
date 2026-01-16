@@ -262,17 +262,17 @@ class PotionEffectExecutor:
 
         # Format message based on buff type
         if buff_type == 'strength':
-            return f"+{int(actual_value*100)}% physical damage for {actual_duration:.0f}s"
+            return True, f"+{int(actual_value*100)}% physical damage for {actual_duration:.0f}s"
         elif buff_type == 'defense':
-            return f"+{int(actual_value*100)}% defense for {actual_duration:.0f}s"
+            return True, f"+{int(actual_value*100)}% defense for {actual_duration:.0f}s"
         elif buff_type == 'speed':
-            return f"+{int(actual_value*100)}% move speed for {actual_duration:.0f}s"
+            return True, f"+{int(actual_value*100)}% move speed for {actual_duration:.0f}s"
         elif buff_type == 'attack_speed':
-            return f"+{int(actual_value*100)}% attack speed for {actual_duration:.0f}s"
+            return True, f"+{int(actual_value*100)}% attack speed for {actual_duration:.0f}s"
         elif buff_type == 'max_hp':
-            return f"+{int(actual_value*100)}% max HP for {actual_duration:.0f}s"
+            return True, f"+{int(actual_value*100)}% max HP for {actual_duration:.0f}s"
         else:
-            return f"{buff_type} buff for {actual_duration:.0f}s"
+            return True, f"{buff_type} buff for {actual_duration:.0f}s"
 
     def _apply_resistance(
         self,
