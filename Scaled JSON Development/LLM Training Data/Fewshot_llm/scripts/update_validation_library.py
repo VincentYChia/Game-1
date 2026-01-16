@@ -146,7 +146,9 @@ def update_skills_validation(validation_data):
 
 def main():
     """Update validation libraries"""
-    filepath = Path('/home/user/Game-1/Scaled JSON Development/LLM Training Data/Fewshot_llm/config/validation_libraries.json')
+    # Get path relative to this script
+    script_dir = Path(__file__).parent
+    filepath = script_dir.parent / 'config' / 'validation_libraries.json'
 
     print("=" * 60)
     print("VALIDATION LIBRARY UPDATE")
