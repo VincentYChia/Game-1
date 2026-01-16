@@ -16,7 +16,7 @@
       "description": "Channel raw strength into your pickaxe, doubling mining damage for a sustained period.",
       "narrative": "The mountain yields to those who show it proper respect. Or, failing that, overwhelming force.",
       "tags": ["damage_boost", "gathering", "basic"],
-      
+
       "effect": {
         "type": "empower",
         "category": "mining",
@@ -27,8 +27,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
+        "mana": 60,
+        "cooldown": 180
       },
 
       "evolution": {
@@ -53,7 +53,7 @@
       "description": "Fall into a steady rhythm, chopping wood much faster than normal.",
       "narrative": "Listen to the forest. Find the heartbeat. Match your swing to the ancient pulse.",
       "tags": ["speed_boost", "gathering", "basic"],
-      
+
       "effect": {
         "type": "quicken",
         "category": "forestry",
@@ -64,8 +64,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
+        "mana": 60,
+        "cooldown": 180
       },
 
       "evolution": {
@@ -90,7 +90,7 @@
       "description": "Brace yourself against incoming attacks, reducing damage taken significantly.",
       "narrative": "Plant your feet. Lower your center. Become the immovable object.",
       "tags": ["defense", "damage_reduction", "combat"],
-      
+
       "effect": {
         "type": "fortify",
         "category": "defense",
@@ -101,8 +101,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "long"
+        "mana": 70,
+        "cooldown": 360
       },
 
       "evolution": {
@@ -127,7 +127,7 @@
       "description": "Your next attack hits with devastating force, dealing massive damage.",
       "narrative": "Sometimes subtlety fails. Sometimes you just need to hit something really, really hard.",
       "tags": ["damage", "single_hit", "combat"],
-      
+
       "effect": {
         "type": "empower",
         "category": "damage",
@@ -138,8 +138,8 @@
       },
 
       "cost": {
-        "mana": "high",
-        "cooldown": "short"
+        "mana": 50,
+        "cooldown": 30
       },
 
       "evolution": {
@@ -164,7 +164,7 @@
       "description": "Instantly restore durability to your equipped tools and weapons.",
       "narrative": "A warrior who maintains their tools never finds themselves defenseless.",
       "tags": ["durability", "repair", "instant"],
-      
+
       "effect": {
         "type": "restore",
         "category": "durability",
@@ -175,8 +175,8 @@
       },
 
       "cost": {
-        "mana": "low",
-        "cooldown": "long"
+        "mana": 25,
+        "cooldown": 300
       },
 
       "evolution": {
@@ -201,7 +201,7 @@
       "description": "Gather extra materials from each resource node you harvest.",
       "narrative": "The generous earth rewards those who know where to look. And how to ask nicely.",
       "tags": ["yield", "gathering", "bonus"],
-      
+
       "effect": {
         "type": "enrich",
         "category": "mining",
@@ -212,8 +212,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
+        "mana": 70,
+        "cooldown": 200
       },
 
       "evolution": {
@@ -238,7 +238,7 @@
       "description": "Move significantly faster for a brief period.",
       "narrative": "Sometimes the best strategy is running away. Fast.",
       "tags": ["movement", "speed", "mobility"],
-      
+
       "effect": {
         "type": "quicken",
         "category": "movement",
@@ -249,8 +249,8 @@
       },
 
       "cost": {
-        "mana": "low",
-        "cooldown": "short"
+        "mana": 20,
+        "cooldown": 20
       },
 
       "evolution": {
@@ -275,7 +275,7 @@
       "description": "Extend your smithing mini-game timer, giving more time for perfect strikes.",
       "narrative": "Master smiths don't rush. They breathe. They focus. They strike true.",
       "tags": ["crafting", "time", "smithing"],
-      
+
       "effect": {
         "type": "quicken",
         "category": "smithing",
@@ -286,8 +286,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
+        "mana": 60,
+        "cooldown": 180
       },
 
       "evolution": {
@@ -312,7 +312,7 @@
       "description": "Attack much faster for a short burst of time.",
       "narrative": "Precision is overrated when you can just hit them twelve times before they blink.",
       "tags": ["attack_speed", "combat", "burst"],
-      
+
       "effect": {
         "type": "quicken",
         "category": "combat",
@@ -323,8 +323,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
+        "mana": 60,
+        "cooldown": 150
       },
 
       "evolution": {
@@ -349,7 +349,7 @@
       "description": "Instantly restore a moderate amount of health.",
       "narrative": "Bandages are for people with time. This is for people who don't.",
       "tags": ["healing", "instant", "survival"],
-      
+
       "effect": {
         "type": "restore",
         "category": "defense",
@@ -360,8 +360,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "long"
+        "mana": 70,
+        "cooldown": 400
       },
 
       "evolution": {
@@ -386,7 +386,7 @@
       "description": "Significantly increase critical hit chance for all actions.",
       "narrative": "See the weaknesses others miss. Strike where it matters most.",
       "tags": ["critical", "precision", "multi_purpose"],
-      
+
       "effect": {
         "type": "pierce",
         "category": "damage",
@@ -397,8 +397,8 @@
       },
 
       "cost": {
-        "mana": "high",
-        "cooldown": "moderate"
+        "mana": 90,
+        "cooldown": 240
       },
 
       "evolution": {
@@ -423,7 +423,7 @@
       "description": "Gain extra time for your alchemy mini-game and increase potion quality.",
       "narrative": "The brew reveals its secrets to those patient enough to watch. And lucky enough to not explode.",
       "tags": ["crafting", "alchemy", "quality"],
-      
+
       "effect": {
         "type": "quicken",
         "category": "alchemy",
@@ -442,8 +442,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
+        "mana": 70,
+        "cooldown": 200
       },
 
       "evolution": {
@@ -468,7 +468,7 @@
       "description": "Dramatically increase the chance of finding rare materials while gathering.",
       "narrative": "Some call it luck. Some call it intuition. Mostly it's just knowing where to dig.",
       "tags": ["rarity", "luck", "gathering"],
-      
+
       "effect": {
         "type": "elevate",
         "category": "mining",
@@ -479,8 +479,8 @@
       },
 
       "cost": {
-        "mana": "high",
-        "cooldown": "long"
+        "mana": 100,
+        "cooldown": 450
       },
 
       "evolution": {
@@ -505,7 +505,7 @@
       "description": "Slowly restore health over time while active.",
       "narrative": "Wounds close. Bones knit. Given enough time, everything heals.",
       "tags": ["healing", "over_time", "sustain"],
-      
+
       "effect": {
         "type": "regenerate",
         "category": "defense",
@@ -516,8 +516,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "long"
+        "mana": 80,
+        "cooldown": 400
       },
 
       "evolution": {
@@ -542,7 +542,7 @@
       "description": "Extend engineering puzzle time and improve device quality significantly.",
       "narrative": "Complex mechanisms demand careful attention. Rush the gears, get your fingers caught.",
       "tags": ["crafting", "engineering", "quality"],
-      
+
       "effect": {
         "type": "quicken",
         "category": "engineering",
@@ -561,8 +561,8 @@
       },
 
       "cost": {
-        "mana": "high",
-        "cooldown": "moderate"
+        "mana": 100,
+        "cooldown": 220
       },
 
       "evolution": {
@@ -587,7 +587,7 @@
       "description": "Your tools consume durability much more slowly.",
       "narrative": "A well-maintained tool is an investment. A broken tool is an expensive lesson.",
       "tags": ["durability", "efficiency", "gathering"],
-      
+
       "effect": {
         "type": "fortify",
         "category": "durability",
@@ -598,8 +598,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
+        "mana": 70,
+        "cooldown": 200
       },
 
       "evolution": {
@@ -624,7 +624,7 @@
       "description": "Improve your refining mini-game time and material quality output.",
       "narrative": "Impurities burn away when you know exactly how hot, exactly how long.",
       "tags": ["crafting", "refining", "quality"],
-      
+
       "effect": {
         "type": "quicken",
         "category": "refining",
@@ -643,8 +643,8 @@
       },
 
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
+        "mana": 70,
+        "cooldown": 200
       },
 
       "evolution": {
@@ -669,7 +669,7 @@
       "description": "Dramatically increase attack damage and speed simultaneously.",
       "narrative": "Rage is a weapon. Control it, channel it, unleash it.",
       "tags": ["combat", "damage", "speed", "berserker"],
-      
+
       "effect": {
         "type": "empower",
         "category": "damage",
@@ -688,8 +688,8 @@
       },
 
       "cost": {
-        "mana": "high",
-        "cooldown": "long"
+        "mana": 110,
+        "cooldown": 480
       },
 
       "evolution": {
@@ -714,7 +714,7 @@
       "description": "Gain increased chance for perfect enchantment patterns and rarity upgrades.",
       "narrative": "Magic flows where intention directs it. Unless you sneeze. Then it flows everywhere.",
       "tags": ["crafting", "enchanting", "rarity", "critical"],
-      
+
       "effect": {
         "type": "pierce",
         "category": "enchanting",
@@ -733,8 +733,8 @@
       },
 
       "cost": {
-        "mana": "high",
-        "cooldown": "moderate"
+        "mana": 100,
+        "cooldown": 220
       },
 
       "evolution": {
@@ -759,7 +759,7 @@
       "description": "Restore health and mana simultaneously when you need it most.",
       "narrative": "You're not done yet. Get up.",
       "tags": ["healing", "mana", "recovery", "survival"],
-      
+
       "effect": {
         "type": "restore",
         "category": "defense",
@@ -770,8 +770,8 @@
       },
 
       "cost": {
-        "mana": "low",
-        "cooldown": "extreme"
+        "mana": 40,
+        "cooldown": 600
       },
 
       "evolution": {
@@ -796,7 +796,7 @@
       "description": "Gather from multiple resource nodes in a small area simultaneously.",
       "narrative": "Why harvest one at a time when you can harvest all of them?",
       "tags": ["aoe", "gathering", "efficiency"],
-      
+
       "effect": {
         "type": "devastate",
         "category": "mining",
@@ -807,8 +807,8 @@
       },
 
       "cost": {
-        "mana": "extreme",
-        "cooldown": "long"
+        "mana": 140,
+        "cooldown": 500
       },
 
       "evolution": {
@@ -833,7 +833,7 @@
       "description": "Attack all enemies in a wide radius around you.",
       "narrative": "Spin. Strike. Repeat. Simple tactics are often the deadliest.",
       "tags": ["aoe", "combat", "damage"],
-      
+
       "effect": {
         "type": "devastate",
         "category": "damage",
@@ -844,8 +844,8 @@
       },
 
       "cost": {
-        "mana": "extreme",
-        "cooldown": "long"
+        "mana": 140,
+        "cooldown": 500
       },
 
       "evolution": {
@@ -870,7 +870,7 @@
       "description": "Dramatically boost crafted item quality and gain massive rarity upgrade chance.",
       "narrative": "Mastery isn't a destination. It's a standard you refuse to compromise.",
       "tags": ["crafting", "quality", "rarity", "mastery"],
-      
+
       "effect": {
         "type": "empower",
         "category": "smithing",
@@ -889,8 +889,8 @@
       },
 
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
+        "mana": 150,
+        "cooldown": 600
       },
 
       "evolution": {
@@ -915,7 +915,7 @@
       "description": "Massively increase critical chance and rarity for all actions.",
       "narrative": "Luck is what happens when preparation meets opportunity. This is what happens when luck meets steroids.",
       "tags": ["luck", "critical", "rarity", "universal"],
-      
+
       "effect": {
         "type": "pierce",
         "category": "damage",
@@ -934,8 +934,8 @@
       },
 
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
+        "mana": 150,
+        "cooldown": 600
       },
 
       "evolution": {
@@ -960,7 +960,7 @@
       "description": "Continuously regenerate massive health and repair equipment durability.",
       "narrative": "From ashes, rise. From wounds, strength. Death is merely an inconvenience.",
       "tags": ["healing", "regeneration", "durability", "sustain"],
-      
+
       "effect": {
         "type": "regenerate",
         "category": "defense",
@@ -979,8 +979,8 @@
       },
 
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
+        "mana": 150,
+        "cooldown": 600
       },
 
       "evolution": {
@@ -1005,7 +1005,7 @@
       "description": "Unleash catastrophic damage in a massive area, obliterating everything.",
       "narrative": "Subtlety is for people who can't level mountains.",
       "tags": ["aoe", "damage", "destruction", "ultimate"],
-      
+
       "effect": {
         "type": "devastate",
         "category": "damage",
@@ -1024,8 +1024,8 @@
       },
 
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
+        "mana": 150,
+        "cooldown": 600
       },
 
       "evolution": {
@@ -1050,7 +1050,7 @@
       "description": "Gain massive bonus materials from every gather for an extended period.",
       "narrative": "The earth provides for those who know its secrets. And sometimes, it just really likes you.",
       "tags": ["yield", "gathering", "abundance"],
-      
+
       "effect": {
         "type": "enrich",
         "category": "mining",
@@ -1061,8 +1061,8 @@
       },
 
       "cost": {
-        "mana": "high",
-        "cooldown": "extreme"
+        "mana": 120,
+        "cooldown": 600
       },
 
       "evolution": {
@@ -1087,7 +1087,7 @@
       "description": "Massively extend all mini-game timers, giving you all the time you need.",
       "narrative": "Time is relative. Especially when you're cheating.",
       "tags": ["time", "crafting", "universal", "mastery"],
-      
+
       "effect": {
         "type": "quicken",
         "category": "smithing",
@@ -1098,8 +1098,8 @@
       },
 
       "cost": {
-        "mana": "extreme",
-        "cooldown": "long"
+        "mana": 140,
+        "cooldown": 500
       },
 
       "evolution": {
@@ -1124,7 +1124,7 @@
       "description": "Temporarily ignore all tier restrictions and requirements. Use any tool on any material, craft at any station.",
       "narrative": "Rules are for people who lack imagination. And sufficient mana reserves.",
       "tags": ["bypass", "tier", "ultimate", "transcendence"],
-      
+
       "effect": {
         "type": "transcend",
         "category": "mining",
@@ -1135,8 +1135,8 @@
       },
 
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
+        "mana": 150,
+        "cooldown": 600
       },
 
       "evolution": {
@@ -1161,7 +1161,7 @@
       "description": "A single attack of unimaginable power that ignores defenses and deals catastrophic damage.",
       "narrative": "One strike. One chance. One ending.",
       "tags": ["damage", "ultimate", "single_target", "finisher"],
-      
+
       "effect": {
         "type": "empower",
         "category": "damage",
@@ -1180,8 +1180,8 @@
       },
 
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
+        "mana": 150,
+        "cooldown": 600
       },
 
       "evolution": {

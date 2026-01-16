@@ -1,7 +1,7 @@
 """Skill-related data models"""
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 
 @dataclass
@@ -21,9 +21,9 @@ class SkillEffect:
 
 @dataclass
 class SkillCost:
-    """Represents skill costs"""
-    mana: str  # low, moderate, high, extreme
-    cooldown: str  # short, moderate, long, extreme
+    """Represents skill costs - supports both string enums and numeric values"""
+    mana: Union[str, int, float]  # String: low, moderate, high, extreme OR numeric: 20-150
+    cooldown: Union[str, int, float]  # String: short, moderate, long, extreme OR numeric: 10-600
 
 
 @dataclass

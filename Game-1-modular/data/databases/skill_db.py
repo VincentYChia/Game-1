@@ -1,7 +1,7 @@
 """Skill Database - manages skill definitions and translation tables"""
 
 import json
-from typing import Dict
+from typing import Dict, Union
 from data.models.skills import SkillDefinition, SkillEffect, SkillCost, SkillEvolution, SkillRequirements
 
 
@@ -103,13 +103,19 @@ class SkillDatabase:
         """Get a skill definition by ID"""
         return self.skills.get(skill_id)
 
-    def get_mana_cost(self, cost_text: str) -> int:
-        """Convert text mana cost to numeric value"""
-        return self.mana_costs.get(cost_text, 60)
+    def get_mana_cost(self, cost_value: Union[str, int, float]) -> int:
+        """Convert mana cost to numeric value - supports both string enums and direct numeric values"""
+        if isinstance(cost_value, (int, float)):
+            return int(cost_value)
+        # String enum - use translation table for backward compatibility
+        return self.mana_costs.get(cost_value, 60)
 
-    def get_cooldown_seconds(self, cooldown_text: str) -> float:
-        """Convert text cooldown to seconds"""
-        return self.cooldowns.get(cooldown_text, 300)
+    def get_cooldown_seconds(self, cooldown_value: Union[str, int, float]) -> float:
+        """Convert cooldown to seconds - supports both string enums and direct numeric values"""
+        if isinstance(cooldown_value, (int, float)):
+            return float(cooldown_value)
+        # String enum - use translation table for backward compatibility
+        return self.cooldowns.get(cooldown_value, 300)
 
     def get_duration_seconds(self, duration_text: str) -> float:
         """Convert text duration to seconds"""

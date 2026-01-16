@@ -54,6 +54,10 @@
       "effect": "Restores 50 HP instantly",
       "duration": 0,
       "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 50
+      },
       "statMultipliers": {
         "weight": 0.2
       },
@@ -136,6 +140,10 @@
       "effect": "Restores 100 HP instantly",
       "duration": 0,
       "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 100
+      },
       "statMultipliers": {
         "weight": 0.2
       },
@@ -218,6 +226,10 @@
       "effect": "Restores 200 HP instantly",
       "duration": 0,
       "stackSize": 20,
+      "effectTags": ["healing", "instant", "self"],
+      "effectParams": {
+        "heal_amount": 200
+      },
       "statMultipliers": {
         "weight": 0.2
       },

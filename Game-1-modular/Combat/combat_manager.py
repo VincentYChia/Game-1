@@ -804,15 +804,18 @@ class CombatManager:
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
-        # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt
+        # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt (capped at 50%)
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
             for ench in equipped_weapon.enchantments:
                 effect = ench.get('effect', {})
                 if effect.get('type') == 'lifesteal':
-                    lifesteal_percent = effect.get('value', 0.1)  # 10% default
+                    lifesteal_percent = min(effect.get('value', 0.1), 0.50)  # 10% default, 50% cap
                     heal_amount = final_damage * lifesteal_percent
+                    old_health = self.character.health
                     self.character.health = min(self.character.max_health, self.character.health + heal_amount)
-                    print(f"   💚 {ench.get('name', 'Lifesteal')}: Healed {heal_amount:.1f} HP")
+                    new_health = self.character.health
+                    print(f"   💚 LIFESTEAL ENCHANT ({lifesteal_percent*100:.0f}%, capped at 50%): Healed {heal_amount:.1f} HP")
+                    print(f"      HP: {old_health:.1f} → {new_health:.1f}")
 
         # CHAIN DAMAGE ENCHANTMENT: Damage nearby enemies
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
@@ -1228,6 +1231,27 @@ class CombatManager:
 
             print(f"   ✓ Affected {len(context.targets)} target(s)")
 
+            # Get equipped weapon for enchantments
+            equipped_weapon = None
+            if hasattr(self.character, '_selected_slot') and self.character._selected_slot:
+                equipped_weapon = self.character.equipment.slots.get(self.character._selected_slot)
+            else:
+                equipped_weapon = self.character.equipment.slots.get('mainHand')
+
+            # LIFESTEAL ENCHANTMENT: Heal based on damage dealt (before enemy dies check)
+            final_damage = effect_params.get("baseDamage", 0)
+            if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
+                for ench in equipped_weapon.enchantments:
+                    effect = ench.get('effect', {})
+                    if effect.get('type') == 'lifesteal':
+                        lifesteal_percent = min(effect.get('value', 0.1), 0.50)  # 10% default, 50% cap
+                        heal_amount = final_damage * lifesteal_percent
+                        old_health = self.character.health
+                        self.character.health = min(self.character.max_health, self.character.health + heal_amount)
+                        new_health = self.character.health
+                        print(f"   💚 LIFESTEAL ENCHANT ({lifesteal_percent*100:.0f}%, capped at 50%): Healed {heal_amount:.1f} HP")
+                        print(f"      HP: {old_health:.1f} → {new_health:.1f}")
+
             # Consume any consume-on-use buffs (Power Strike, etc.)
             if hasattr(self.character, 'buffs'):
                 self.character.buffs.consume_buffs_for_action("attack")
@@ -1243,7 +1267,7 @@ class CombatManager:
             # Check if primary enemy died
             if not enemy.is_alive:
                 enemy_died = True
-                total_damage += effect_params.get("baseDamage", 0)  # Rough estimate
+                total_damage += final_damage
 
             # Initialize loot
             loot = []
@@ -1385,26 +1409,41 @@ class CombatManager:
         print(f"   ➜ Final damage to player: {final_damage:.1f}")
 
         # Apply to player
-        self.character.take_damage(final_damage)
+        self.character.take_damage(final_damage, from_attack=True)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
-        # REFLECT/THORNS: Check for reflect damage on armor
+        # REFLECT/THORNS: Check for reflect damage on armor (capped at 80%)
         if hasattr(self.character, 'equipment') and enemy.is_alive:
             reflect_percent = 0.0
             armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
+            thorns_pieces = []
 
             for slot in armor_slots:
                 armor_piece = self.character.equipment.slots.get(slot)
                 if armor_piece and hasattr(armor_piece, 'enchantments'):
                     for ench in armor_piece.enchantments:
                         effect = ench.get('effect', {})
-                        if effect.get('type') == 'reflect' or effect.get('type') == 'thorns':
-                            reflect_percent += effect.get('value', 0.0)
+                        ench_type = effect.get('type', 'unknown')
+                        ench_value = effect.get('value', 0.0)
+
+                        # Check for all reflect/thorns variants (reflect_damage is the actual type in JSON)
+                        if ench_type in ['reflect', 'thorns', 'reflect_damage']:
+                            piece_value = ench_value
+                            reflect_percent += piece_value
+                            thorns_pieces.append(f"{slot}({piece_value*100:.0f}%)")
+
+            # Cap total reflect at 80%
+            uncapped = reflect_percent
+            reflect_percent = min(reflect_percent, 0.80)
 
             if reflect_percent > 0:
                 reflect_damage = final_damage * reflect_percent
+                old_enemy_health = enemy.current_health
                 enemy.current_health -= reflect_damage
-                print(f"   ⚡ THORNS! Reflected {reflect_damage:.1f} damage back to {enemy.definition.name}")
+                cap_indicator = f" [capped from {uncapped*100:.0f}%]" if uncapped > 0.80 else ""
+                print(f"   ⚡ THORNS ({reflect_percent*100:.0f}%{cap_indicator}): Reflected {reflect_damage:.1f} damage to {enemy.definition.name}")
+                print(f"      Sources: {', '.join(thorns_pieces)}")
+                print(f"      Enemy HP: {old_enemy_health:.1f} → {enemy.current_health:.1f}")
 
                 if enemy.current_health <= 0:
                     enemy.is_alive = False

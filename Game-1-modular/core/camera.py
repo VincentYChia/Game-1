@@ -22,3 +22,9 @@ class Camera:
         sx = (world_pos.x - self.position.x) * Config.TILE_SIZE + self.viewport_width // 2
         sy = (world_pos.y - self.position.y) * Config.TILE_SIZE + self.viewport_height // 2
         return int(sx), int(sy)
+
+    def screen_to_world(self, screen_x: int, screen_y: int) -> Position:
+        """Convert screen coordinates to world coordinates"""
+        world_x = (screen_x - self.viewport_width // 2) / Config.TILE_SIZE + self.position.x
+        world_y = (screen_y - self.viewport_height // 2) / Config.TILE_SIZE + self.position.y
+        return Position(world_x, world_y, self.position.z)

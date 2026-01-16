@@ -67,6 +67,11 @@
       "effect": "Restores 5 HP per second",
       "duration": 60,
       "stackSize": 10,
+      "effectTags": ["healing", "over_time", "self"],
+      "effectParams": {
+        "heal_per_second": 5.0,
+        "duration": 60.0
+      },
       "statMultipliers": {
         "weight": 0.3
       },

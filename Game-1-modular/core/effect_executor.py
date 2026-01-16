@@ -238,6 +238,7 @@ class EffectExecutor:
         lifesteal_percent = params.get('lifesteal_percent', 0.15)
         heal_amount = damage_dealt * lifesteal_percent
         self._heal_target(source, heal_amount)
+        print(f"   💉 LIFESTEAL SKILL: Healed {heal_amount:.1f} HP ({lifesteal_percent*100:.0f}% of {damage_dealt:.1f} damage)")
         self.debugger.debug(f"Lifesteal: {heal_amount:.1f} HP to {getattr(source, 'name', 'Unknown')}")
 
     def _apply_knockback(self, source: Any, target: Any, params: dict):
@@ -582,7 +583,11 @@ class EffectExecutor:
         """Apply healing to a target entity"""
         if hasattr(target, 'heal'):
             target.heal(healing)
+        elif hasattr(target, 'health') and hasattr(target, 'max_health'):
+            # Character/Player uses .health property
+            target.health = min(target.health + healing, target.max_health)
         elif hasattr(target, 'current_health') and hasattr(target, 'max_health'):
+            # Enemies use .current_health property
             target.current_health = min(target.current_health + healing, target.max_health)
         else:
             self.debugger.warning(f"Cannot apply healing to {type(target).__name__} - no healing method")
