@@ -5,6 +5,7 @@ Tag-driven potion effect application system
 
 from typing import Dict, Tuple, Any, TYPE_CHECKING
 from data.models.materials import MaterialDefinition
+from entities.components.buffs import ActiveBuff
 
 if TYPE_CHECKING:
     from entities.character import Character
@@ -133,10 +134,19 @@ class PotionEffectExecutor:
             actual_duration = base_duration * duration_mult
 
             # Add regeneration buff
-            character.active_buffs['regeneration'] = {
-                'hp_per_second': actual_regen,
-                'duration': actual_duration
-            }
+            buff = ActiveBuff(
+                buff_id="potion_health_regen",
+                name="Health Regeneration",
+                effect_type="regenerate",
+                category="health",
+                magnitude="moderate",
+                bonus_value=actual_regen,
+                duration=actual_duration,
+                duration_remaining=actual_duration,
+                source="potion",
+                consume_on_use=False
+            )
+            character.buffs.add_buff(buff)
             return True, f"Regenerating {actual_regen:.1f} HP/s for {actual_duration:.0f}s"
 
         return False, "Unknown healing type"
@@ -166,10 +176,19 @@ class PotionEffectExecutor:
             actual_duration = base_duration * duration_mult
 
             # Add mana regeneration buff
-            character.active_buffs['mana_regeneration'] = {
-                'mana_per_second': actual_regen,
-                'duration': actual_duration
-            }
+            buff = ActiveBuff(
+                buff_id="potion_mana_regen",
+                name="Mana Regeneration",
+                effect_type="regenerate",
+                category="mana",
+                magnitude="moderate",
+                bonus_value=actual_regen,
+                duration=actual_duration,
+                duration_remaining=actual_duration,
+                source="potion",
+                consume_on_use=False
+            )
+            character.buffs.add_buff(buff)
             return True, f"Regenerating {actual_regen:.1f} Mana/s for {actual_duration:.0f}s"
 
         return False, "Unknown mana restore type"
@@ -190,13 +209,38 @@ class PotionEffectExecutor:
         actual_value = base_value * potency
         actual_duration = base_duration * duration_mult
 
-        # Store buff in character's active_buffs
-        buff_key = f"potion_{buff_type}"
-        character.active_buffs[buff_key] = {
-            'type': buff_type,
-            'value': actual_value,
-            'duration': actual_duration
+        # Map buff type to category
+        category_map = {
+            'strength': 'combat',
+            'defense': 'defense',
+            'speed': 'movement',
+            'max_hp': 'health'
         }
+        category = category_map.get(buff_type, 'combat')
+
+        # Map buff type to display name
+        name_map = {
+            'strength': 'Strength Boost',
+            'defense': 'Defense Boost',
+            'speed': 'Speed Boost',
+            'max_hp': 'Vitality Boost'
+        }
+        buff_name = name_map.get(buff_type, f'{buff_type.capitalize()} Buff')
+
+        # Create and add buff
+        buff = ActiveBuff(
+            buff_id=f"potion_{buff_type}",
+            name=buff_name,
+            effect_type="empower",
+            category=category,
+            magnitude="moderate",
+            bonus_value=actual_value,
+            duration=actual_duration,
+            duration_remaining=actual_duration,
+            source="potion",
+            consume_on_use=False
+        )
+        character.buffs.add_buff(buff)
 
         # Format message based on buff type
         if buff_type == 'strength':
@@ -206,9 +250,6 @@ class PotionEffectExecutor:
         elif buff_type == 'speed':
             return True, f"+{int(actual_value*100)}% speed for {actual_duration:.0f}s"
         elif buff_type == 'max_hp':
-            # Max HP buff (like Titan's Brew)
-            hp_boost = int(character.max_health * actual_value)
-            character.active_buffs[buff_key]['hp_boost'] = hp_boost
             return True, f"+{int(actual_value*100)}% max HP for {actual_duration:.0f}s"
         else:
             return True, f"{buff_type} buff for {actual_duration:.0f}s"
@@ -229,14 +270,28 @@ class PotionEffectExecutor:
         actual_reduction = min(base_reduction * potency, 0.9)  # Cap at 90%
         actual_duration = base_duration * duration_mult
 
-        # Store resistance in character's active_buffs
-        buff_key = f"resistance_{resistance_type}"
-        character.active_buffs[buff_key] = {
-            'type': 'resistance',
-            'element': resistance_type,
-            'reduction': actual_reduction,
-            'duration': actual_duration
+        # Map resistance type to display name
+        name_map = {
+            'fire': 'Fire Resistance',
+            'ice': 'Ice Resistance',
+            'elemental': 'Elemental Resistance'
         }
+        buff_name = name_map.get(resistance_type, f'{resistance_type.capitalize()} Resistance')
+
+        # Create and add resistance buff
+        buff = ActiveBuff(
+            buff_id=f"resistance_{resistance_type}",
+            name=buff_name,
+            effect_type="fortify",
+            category="defense",
+            magnitude="moderate",
+            bonus_value=actual_reduction,
+            duration=actual_duration,
+            duration_remaining=actual_duration,
+            source="potion",
+            consume_on_use=False
+        )
+        character.buffs.add_buff(buff)
 
         if resistance_type == 'elemental':
             return True, f"All elemental resistance for {actual_duration:.0f}s"
@@ -259,14 +314,36 @@ class PotionEffectExecutor:
         actual_value = base_value * potency
         actual_duration = base_duration * duration_mult
 
-        # Store utility buff
-        buff_key = f"utility_{utility_type}"
-        character.active_buffs[buff_key] = {
-            'type': 'utility',
-            'utility_type': utility_type,
-            'value': actual_value,
-            'duration': actual_duration
+        # Map utility type to category
+        category_map = {
+            'efficiency': 'gathering',
+            'armor': 'defense',
+            'weapon': 'combat'
         }
+        category = category_map.get(utility_type, 'gathering')
+
+        # Map utility type to display name
+        name_map = {
+            'efficiency': 'Efficiency Oil',
+            'armor': 'Armor Polish',
+            'weapon': 'Weapon Oil'
+        }
+        buff_name = name_map.get(utility_type, f'{utility_type.capitalize()} Enhancement')
+
+        # Create and add utility buff
+        buff = ActiveBuff(
+            buff_id=f"utility_{utility_type}",
+            name=buff_name,
+            effect_type="empower",
+            category=category,
+            magnitude="moderate",
+            bonus_value=actual_value,
+            duration=actual_duration,
+            duration_remaining=actual_duration,
+            source="potion",
+            consume_on_use=False
+        )
+        character.buffs.add_buff(buff)
 
         if utility_type == 'efficiency':
             return True, f"+{int(actual_value*100)}% gathering speed for {actual_duration:.0f}s"
