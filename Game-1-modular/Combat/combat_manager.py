@@ -804,17 +804,17 @@ class CombatManager:
         # Apply damage to enemy
         enemy_died = enemy.take_damage(final_damage, from_player=True)
 
-        # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt (capped at 15%)
+        # LIFESTEAL ENCHANTMENT: Heal for % of damage dealt (capped at 50%)
         lifesteal_found = False
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
             for ench in equipped_weapon.enchantments:
                 effect = ench.get('effect', {})
                 if effect.get('type') == 'lifesteal':
                     lifesteal_found = True
-                    lifesteal_percent = min(effect.get('value', 0.1), 0.15)  # 10% default, 15% cap
+                    lifesteal_percent = min(effect.get('value', 0.1), 0.50)  # 10% default, 50% cap
                     heal_amount = final_damage * lifesteal_percent
                     self.character.health = min(self.character.max_health, self.character.health + heal_amount)
-                    print(f"   💚 LIFESTEAL ({lifesteal_percent*100:.0f}%, capped at 15%): Healed {heal_amount:.1f} HP from {final_damage:.1f} damage")
+                    print(f"   💚 LIFESTEAL ({lifesteal_percent*100:.0f}%, capped at 50%): Healed {heal_amount:.1f} HP from {final_damage:.1f} damage")
 
         # CHAIN DAMAGE ENCHANTMENT: Damage nearby enemies
         if equipped_weapon and hasattr(equipped_weapon, 'enchantments'):
@@ -1390,7 +1390,7 @@ class CombatManager:
         self.character.take_damage(final_damage)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
-        # REFLECT/THORNS: Check for reflect damage on armor (capped at 15%)
+        # REFLECT/THORNS: Check for reflect damage on armor (capped at 50%)
         if hasattr(self.character, 'equipment') and enemy.is_alive:
             reflect_percent = 0.0
             armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
@@ -1406,16 +1406,18 @@ class CombatManager:
                             reflect_percent += piece_value
                             thorns_pieces.append(f"{slot}({piece_value*100:.0f}%)")
 
-            # Cap total reflect at 15%
+            # Cap total reflect at 50%
             uncapped = reflect_percent
-            reflect_percent = min(reflect_percent, 0.15)
+            reflect_percent = min(reflect_percent, 0.50)
 
             if reflect_percent > 0:
                 reflect_damage = final_damage * reflect_percent
+                old_enemy_health = enemy.current_health
                 enemy.current_health -= reflect_damage
-                cap_indicator = f" [capped from {uncapped*100:.0f}%]" if uncapped > 0.15 else ""
-                print(f"   ⚡ THORNS ({reflect_percent*100:.0f}%{cap_indicator}): Reflected {reflect_damage:.1f} damage from {final_damage:.1f} taken")
+                cap_indicator = f" [capped from {uncapped*100:.0f}%]" if uncapped > 0.50 else ""
+                print(f"   ⚡ THORNS ({reflect_percent*100:.0f}%{cap_indicator}): Reflected {reflect_damage:.1f} damage to {enemy.definition.name}")
                 print(f"      Sources: {', '.join(thorns_pieces)}")
+                print(f"      Enemy HP: {old_enemy_health:.1f} → {enemy.current_health:.1f} (took {reflect_damage:.1f} thorns damage)")
 
                 if enemy.current_health <= 0:
                     enemy.is_alive = False

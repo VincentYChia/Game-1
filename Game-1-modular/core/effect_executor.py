@@ -582,7 +582,11 @@ class EffectExecutor:
         """Apply healing to a target entity"""
         if hasattr(target, 'heal'):
             target.heal(healing)
+        elif hasattr(target, 'health') and hasattr(target, 'max_health'):
+            # Character/Player uses .health property
+            target.health = min(target.health + healing, target.max_health)
         elif hasattr(target, 'current_health') and hasattr(target, 'max_health'):
+            # Enemies use .current_health property
             target.current_health = min(target.current_health + healing, target.max_health)
         else:
             self.debugger.warning(f"Cannot apply healing to {type(target).__name__} - no healing method")

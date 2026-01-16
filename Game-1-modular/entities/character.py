@@ -1392,14 +1392,25 @@ class Character:
                     if armor_piece and hasattr(armor_piece, 'durability_current'):
                         # Apply Unbreaking enchantment
                         piece_loss = durability_loss
+                        enchantment_info = []
                         if hasattr(armor_piece, 'enchantments') and armor_piece.enchantments:
                             for ench in armor_piece.enchantments:
                                 effect = ench.get('effect', {})
-                                if effect.get('type') == 'durability_multiplier':
-                                    reduction = effect.get('value', 0.0)
+                                ench_type = effect.get('type', 'unknown')
+                                ench_value = effect.get('value', 0.0)
+                                enchantment_info.append(f"{ench_type}({ench_value})")
+
+                                if ench_type == 'durability_multiplier':
+                                    reduction = ench_value
                                     piece_loss *= (1.0 - reduction)
 
+                        old_durability = armor_piece.durability_current
                         armor_piece.durability_current = max(0, armor_piece.durability_current - piece_loss)
+                        actual_loss = old_durability - armor_piece.durability_current
+
+                        # Debug: Show durability loss with enchantment info
+                        if enchantment_info and actual_loss > 0:
+                            print(f"   🛡️ {armor_piece.name} -{actual_loss:.1f} durability (enchants: {', '.join(enchantment_info)})")
 
                         # Warn if armor is breaking (use effective max with VIT bonus)
                         effective_max = self.get_effective_max_durability(armor_piece)
