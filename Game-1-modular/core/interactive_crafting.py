@@ -688,17 +688,12 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # CRITICAL: JSON format is "row,col" which is (Y,X), NOT "col,row" (X,Y)!
-        # UI uses 0-indexed (x,y) where x=column, y=row, (0,0) is top-left
+        # Convert UI coordinates to placement map
+        # UI uses 0-indexed (x,y) where x=column, y=row
+        # JSON uses 1-indexed "row,col" format (Y,X)
         current_placement_raw = {
             (x, y): mat.item_id for (x, y), mat in self.grid.items()
         }
-
-        # DEBUG: Show what user placed in 1-indexed (row,col) format to match JSON
-        print(f"\n🔍 [SMITHING DEBUG] User placement in T{self.station_tier} station ({self.grid_size}x{self.grid_size} grid):")
-        print(f"   Placement in 1-indexed (row,col) format:")
-        for (x, y), mat_id in sorted(current_placement_raw.items()):
-            print(f"   ({y+1}, {x+1}) → {mat_id}")  # row,col = Y,X
 
         # Define grid sizes for each tier
         tier_grid_sizes = {1: 3, 2: 5, 3: 7, 4: 9}
@@ -711,10 +706,7 @@ class InteractiveSmithingUI(InteractiveBaseUI):
             offset_x = (self.grid_size - check_grid_size) // 2
             offset_y = (self.grid_size - check_grid_size) // 2
 
-            print(f"\n   Trying T{check_tier} recipes (grid {check_grid_size}x{check_grid_size}, offset=({offset_x},{offset_y})):")
-
             # Transform current placement to this tier's coordinate space
-            # Subtract offset to get coordinates relative to centered grid
             tier_placement = {}
             valid_for_tier = True
 
@@ -728,23 +720,15 @@ class InteractiveSmithingUI(InteractiveBaseUI):
                     valid_for_tier = False
                     break
 
-                # CRITICAL: Convert to 1-indexed JSON format "row,col" = (Y,X)
+                # Convert to 1-indexed JSON format "row,col" = (Y,X)
                 # tier_y is row, tier_x is column
                 tier_placement[f"{tier_y+1},{tier_x+1}"] = mat_id
 
             if not valid_for_tier:
-                # Materials extend beyond this tier's grid - skip to next tier
-                print(f"      ❌ Pattern extends beyond T{check_tier} grid bounds")
                 continue
-
-            # DEBUG: Show transformed placement in 1-indexed JSON format
-            print(f"      Transformed to 1-indexed JSON coords (row,col): {sorted(tier_placement.keys())}")
-            for coord_str, mat_id in sorted(tier_placement.items()):
-                print(f"      \"{coord_str}\" → {mat_id}")
 
             # Check if placement is too wide/tall for this tier (optimization)
             if tier_placement:
-                # Parse coords to find bounds
                 coords = []
                 for coord_str in tier_placement.keys():
                     parts = coord_str.split(',')
@@ -762,12 +746,10 @@ class InteractiveSmithingUI(InteractiveBaseUI):
 
                     # If pattern is wider/taller than this tier's grid, skip to lower tiers
                     if width > check_grid_size or height > check_grid_size:
-                        print(f"      ❌ Pattern size {width}x{height} too large for T{check_tier} grid ({check_grid_size}x{check_grid_size})")
                         continue
 
             # Try matching recipes for this tier
             recipes = recipe_db.get_recipes_for_station(self.station_type, check_tier)
-            print(f"      Checking {len(recipes)} T{check_tier} recipes...")
 
             for recipe in recipes:
                 placement = placement_db.get_placement(recipe.recipe_id)
@@ -776,10 +758,9 @@ class InteractiveSmithingUI(InteractiveBaseUI):
 
                 # Exact match required
                 if tier_placement == placement.placement_map:
-                    print(f"\n🎯 MATCH FOUND: {recipe.recipe_id} using T{check_tier} pattern (station is T{self.station_tier})")
+                    print(f"✓ Matched {recipe.recipe_id}")
                     return recipe
 
-        print(f"\n❌ No recipe match found across all tiers T{self.station_tier} down to T1")
         return None
 
     def get_placement_data(self) -> Dict[str, Any]:
@@ -1014,34 +995,13 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # Build current placement
+        # Build current placement (vertices with materials only)
         current_vertices = {
             coord_key: mat.item_id for coord_key, mat in self.vertices.items()
         }
 
-        # DEBUG: Show current state
-        print(f"\n🔍 [ADORNMENTS DEBUG] T{self.station_tier} station:")
-        print(f"   Current shapes: {len(self.shapes)}")
-        for i, shape in enumerate(self.shapes):
-            print(f"      Shape {i}: type={shape['type']}, rotation={shape['rotation']}, vertices={shape['vertices']}")
-        print(f"   Current vertices with materials:")
-        for coord, mat_id in sorted(current_vertices.items()):
-            print(f"      {coord} → {mat_id}")
-
-        # Normalize shapes for comparison (sort by vertices to handle order differences)
-        def normalize_shape(shape):
-            return {
-                'type': shape['type'],
-                'rotation': shape['rotation'],
-                'vertices': tuple(sorted(shape['vertices']))
-            }
-
-        current_shapes_normalized = [normalize_shape(s) for s in self.shapes]
-        current_shapes_normalized.sort(key=lambda s: (s['type'], s['rotation'], s['vertices']))
-
         # Get all adornment recipes for this tier
         recipes = recipe_db.get_recipes_for_station(self.station_type, self.station_tier)
-        print(f"   Checking {len(recipes)} T{self.station_tier} adornment recipes...")
 
         for recipe in recipes:
             placement = placement_db.get_placement(recipe.recipe_id)
@@ -1051,53 +1011,21 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
             if not placement.placement_map:
                 continue
 
-            print(f"\n   Checking recipe: {recipe.recipe_id}")
-
-            # DESIGN DECISION: Shapes are just a mechanism to CREATE vertices.
-            # Validation should ONLY check vertices, not shapes.
-            # This allows users to create the same vertex pattern using different shape combinations.
-            required_shapes = placement.placement_map.get('shapes', [])
-            if required_shapes:
-                print(f"      Recipe has {len(required_shapes)} shapes (for reference only, not validated)")
-            print(f"      ⏭️  Skipping shape validation - only vertices matter")
-
-            # Check vertices match
+            # Shapes are just a mechanism to create vertices - validation only checks vertices
             required_vertices = placement.placement_map.get('vertices', {})
-            print(f"      Recipe expects {len(required_vertices)} vertices")
 
-            # Only check vertices that have materials assigned
-            # Required vertices should have materialId or itemId
+            # Get vertices that have materials assigned
             required_materials = {
                 coord: data.get('itemId') or data.get('materialId')
                 for coord, data in required_vertices.items()
                 if data.get('itemId') or data.get('materialId')
             }
 
-            print(f"      Required vertices with materials:")
-            for coord, mat_id in sorted(required_materials.items()):
-                print(f"         {coord} → {mat_id}")
-
+            # Check if vertices match exactly
             if current_vertices == required_materials:
-                print(f"\n🎯 MATCH FOUND: {recipe.recipe_id}")
+                print(f"✓ Matched {recipe.recipe_id}")
                 return recipe
-            else:
-                print(f"      ❌ Vertex mismatch")
-                # Show differences
-                missing = set(required_materials.keys()) - set(current_vertices.keys())
-                extra = set(current_vertices.keys()) - set(required_materials.keys())
-                wrong_material = []
-                for coord in set(required_materials.keys()) & set(current_vertices.keys()):
-                    if required_materials[coord] != current_vertices[coord]:
-                        wrong_material.append(coord)
 
-                if missing:
-                    print(f"         Missing coords: {sorted(missing)}")
-                if extra:
-                    print(f"         Extra coords: {sorted(extra)}")
-                if wrong_material:
-                    print(f"         Wrong material at: {sorted(wrong_material)}")
-
-        print(f"\n❌ No adornment recipe match found")
         return None
 
     def get_placement_data(self) -> Dict[str, Any]:

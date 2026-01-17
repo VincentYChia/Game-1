@@ -2267,8 +2267,32 @@ class GameEngine:
         print(f"🔨 INTERACTIVE CRAFT")
         print(f"Recipe: {recipe.recipe_id}")
         print(f"Output: {recipe.output_id} x{recipe.output_qty}")
+        print(f"Station: {recipe.station_type}")
+        print(f"Is Enchantment: {recipe.is_enchantment}")
         print(f"Use Minigame: {use_minigame}")
         print(f"{'='*80}")
+
+        # Check if this is an enchantment recipe (adornments)
+        if recipe.is_enchantment or recipe.station_type == 'adornments':
+            # For enchantments, we need to open item selection UI first
+            print("🔮 Enchantment recipe detected - opening item selection UI")
+
+            # Set the flag to control whether to use minigame after item selection
+            self.enchantment_use_minigame = use_minigame
+
+            # Close interactive UI but DON'T return borrowed materials yet
+            # They'll be consumed after enchantment is applied
+            borrowed_backup = self.interactive_ui.borrowed_materials.copy()
+            self._close_interactive_crafting()
+
+            # Manually restore borrowed materials to inventory for now
+            # They'll be consumed properly when enchantment is applied
+            for item_id, quantity in borrowed_backup.items():
+                self.character.inventory.add_item(item_id, quantity)
+
+            # Open enchantment selection UI
+            self._open_enchantment_selection(recipe)
+            return
 
         # Materials are already borrowed from inventory, so we can proceed directly
         # The borrowed_materials dict tracks what was temporarily removed
