@@ -2242,7 +2242,7 @@ class GameEngine:
                     success = self.interactive_ui.place_material(position, self.interactive_ui.selected_material)
                     if success:
                         # Format coordinates based on discipline
-                        if self.active_station_type == 'smithing':
+                        if self.interactive_ui.station_type == 'smithing':
                             # Smithing uses grid - show 1-indexed "row,col" format
                             x, y = position
                             coord_str = f'"{y+1},{x+1}"'  # row,col = Y,X
