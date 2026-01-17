@@ -411,8 +411,10 @@ class RefiningCrafter:
 
         # Check material quantities
         for inp in recipe.get('inputs', []):
-            if inventory.get(inp['materialId'], 0) < inp['quantity']:
-                return False, f"Insufficient {inp['materialId']}"
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            if inventory.get(item_id, 0) < inp['quantity']:
+                return False, f"Insufficient {item_id}"
 
         # Check rarity uniformity
         inputs = recipe.get('inputs', [])
@@ -443,16 +445,21 @@ class RefiningCrafter:
         # Detect input rarity
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+        # Fallback to 'common' if rarity is None (material not in database)
+        input_rarity = input_rarity or 'common'
 
         # Deduct materials
         for inp in recipe['inputs']:
-            inventory[inp['materialId']] -= inp['quantity']
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            inventory[item_id] -= inp['quantity']
 
         # Refining uses 'outputs' array instead of outputId/outputQty
         outputs = recipe.get('outputs', [])
         if outputs:
             output = outputs[0]  # Take first output
-            output_id = output.get('materialId', recipe.get('outputId', 'unknown'))
+            # Backward compatible: support both 'itemId' and 'materialId' in outputs
+            output_id = output.get('itemId') or output.get('materialId') or recipe.get('outputId', 'unknown')
             base_output_qty = output.get('quantity', recipe.get('outputQty', 1))
             base_output_rarity = output.get('rarity', input_rarity)
         else:
@@ -567,10 +574,12 @@ class RefiningCrafter:
 
             materials_lost_detail = {}
             for inp in recipe['inputs']:
+                # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+                item_id = inp.get('itemId') or inp.get('materialId')
                 loss = int(inp['quantity'] * loss_fraction)
                 if loss > 0:
-                    inventory[inp['materialId']] = max(0, inventory[inp['materialId']] - loss)
-                    materials_lost_detail[inp['materialId']] = loss
+                    inventory[item_id] = max(0, inventory[item_id] - loss)
+                    materials_lost_detail[item_id] = loss
 
             return {
                 "success": False,
@@ -582,18 +591,23 @@ class RefiningCrafter:
 
         # Success - deduct full materials and give output
         for inp in recipe['inputs']:
-            inventory[inp['materialId']] -= inp['quantity']
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            inventory[item_id] -= inp['quantity']
 
         # Detect input rarity (base rarity from input materials)
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+        # Fallback to 'common' if rarity is None (material not in database)
+        input_rarity = input_rarity or 'common'
 
         # Debug: Show what materials and their rarities
         print(f"\n[Refining Minigame] Recipe: {recipe_id}")
         for inp in inputs:
-            mat_id = inp.get('materialId')
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            mat_id = inp.get('itemId') or inp.get('materialId')
             mat_qty = inp.get('quantity')
-            mat_rarity = rarity_system.get_material_rarity(mat_id)
+            mat_rarity = rarity_system.get_material_rarity(mat_id) or 'common'
             print(f"  Input: {mat_qty}x {mat_id} (rarity: {mat_rarity})")
         print(f"  Detected uniform input rarity: {input_rarity}")
 
@@ -601,7 +615,8 @@ class RefiningCrafter:
         outputs = recipe.get('outputs', [])
         if outputs:
             output = outputs[0]
-            output_id = output.get('materialId', recipe.get('outputId', 'unknown'))
+            # Backward compatible: support both 'itemId' and 'materialId' in outputs
+            output_id = output.get('itemId') or output.get('materialId') or recipe.get('outputId', 'unknown')
             base_output_qty = output.get('quantity', recipe.get('outputQty', 1))
             base_output_rarity = output.get('rarity', input_rarity)
         else:
