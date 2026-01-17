@@ -2241,7 +2241,16 @@ class GameEngine:
                 elif self.interactive_ui.selected_material:
                     success = self.interactive_ui.place_material(position, self.interactive_ui.selected_material)
                     if success:
-                        print(f"✓ Placed {self.interactive_ui.selected_material.item_id} at {position}")
+                        # Format coordinates based on discipline
+                        if self.active_station_type == 'smithing':
+                            # Smithing uses grid - show 1-indexed "row,col" format
+                            x, y = position
+                            coord_str = f'"{y+1},{x+1}"'  # row,col = Y,X
+                        else:
+                            # Other disciplines - show as-is
+                            coord_str = str(position)
+
+                        print(f"✓ Placed {self.interactive_ui.selected_material.item_id} at {coord_str}")
 
                         # Check if recipe matched
                         if self.interactive_ui.matched_recipe:
