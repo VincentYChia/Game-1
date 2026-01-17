@@ -2692,6 +2692,12 @@ class GameEngine:
             offset_x = (station_grid_w - recipe_grid_w) // 2
             offset_y = (station_grid_h - recipe_grid_h) // 2
 
+            # DEBUG: Log backwards compatibility offset calculation
+            print(f"🔍 [PLACEMENT DEBUG] {discipline.upper()} Validation:")
+            print(f"   Recipe: {recipe.recipe_id} | Recipe Grid: {recipe_grid_w}x{recipe_grid_h}")
+            print(f"   Station Tier: T{self.active_station_tier} | Station Grid: {station_grid_w}x{station_grid_h}")
+            print(f"   Offset: ({offset_x}, {offset_y}) | Backwards Compat: {'YES' if recipe_grid_w < station_grid_w else 'NO'}")
+
             # Check if all required positions are filled (with offset)
             for pos, required_mat in required_map.items():
                 parts = pos.split(',')
@@ -2733,14 +2739,19 @@ class GameEngine:
             return (True, "Placement correct!")
 
         elif discipline == 'refining':
-            # Hub-and-spoke validation
+            # Hub-and-spoke validation with backwards compatibility
             required_core = placement_data.core_inputs
             required_surrounding = placement_data.surrounding_inputs
+
+            # DEBUG: Log refining backwards compatibility
+            print(f"🔍 [PLACEMENT DEBUG] REFINING Validation:")
+            print(f"   Recipe: {recipe.recipe_id} | Required: {len(required_core)} core + {len(required_surrounding)} surrounding")
+            print(f"   Station Tier: T{self.active_station_tier}")
 
             # Check core slots
             for i, core_input in enumerate(required_core):
                 slot_id = f"core_{i}"
-                required_mat = core_input.get('materialId', '')
+                required_mat = core_input.get('itemId') or core_input.get('materialId', '')
 
                 if slot_id not in user_placement:
                     return (False, f"Missing core material: {required_mat}")
@@ -2752,7 +2763,7 @@ class GameEngine:
             # Check surrounding slots
             for i, surrounding_input in enumerate(required_surrounding):
                 slot_id = f"surrounding_{i}"
-                required_mat = surrounding_input.get('materialId', '')
+                required_mat = surrounding_input.get('itemId') or surrounding_input.get('materialId', '')
 
                 if slot_id not in user_placement:
                     return (False, f"Missing surrounding material: {required_mat}")
@@ -2761,14 +2772,26 @@ class GameEngine:
                 if user_mat != required_mat:
                     return (False, f"Wrong surrounding material: expected {required_mat}, got {user_mat}")
 
-            # Check for extra materials in wrong slots
+            # BACKWARDS COMPATIBILITY: Only check for extra materials if using all required slots
+            # This allows T1 recipes (1 core + 2 surr) to work in T2+ stations (1 core + 4+ surr)
+            # Extra slots can be filled but will be ignored by the crafting logic
             expected_slots = set(f"core_{i}" for i in range(len(required_core)))
             expected_slots.update(f"surrounding_{i}" for i in range(len(required_surrounding)))
 
-            for slot_id in user_placement.keys():
-                if slot_id.startswith('core_') or slot_id.startswith('surrounding_'):
-                    if slot_id not in expected_slots:
-                        return (False, f"Extra material in {slot_id} (not required)")
+            # Only enforce "no extra materials" check if this is same-tier crafting
+            # For cross-tier (T1 recipe in T2+ station), allow extra materials in unused slots
+            recipe_tier = recipe.station_tier
+            station_tier = self.active_station_tier
+
+            if recipe_tier == station_tier:
+                # Same tier: strict validation (no extra materials)
+                for slot_id in user_placement.keys():
+                    if slot_id.startswith('core_') or slot_id.startswith('surrounding_'):
+                        if slot_id not in expected_slots:
+                            return (False, f"Extra material in {slot_id} (not required)")
+            else:
+                # Cross-tier: permissive validation (allow extra materials, they'll be ignored)
+                print(f"   ✅ Backwards Compat: T{recipe_tier} recipe in T{station_tier} station - allowing extra slots")
 
             return (True, "Refining placement correct!")
 
