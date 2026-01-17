@@ -362,7 +362,9 @@ class AlchemyMinigame:
         else:
             ing_type = "moderate"  # Default
 
-        self.current_reaction = AlchemyReaction(ingredient['materialId'], ing_type)
+        # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+        item_id = ingredient.get('itemId') or ingredient.get('materialId')
+        self.current_reaction = AlchemyReaction(item_id, ing_type)
 
     def update(self, dt):
         """
@@ -658,8 +660,10 @@ class AlchemyCrafter:
 
         # Check material quantities
         for inp in recipe.get('inputs', []):
-            if inventory.get(inp['materialId'], 0) < inp['quantity']:
-                return False, f"Insufficient {inp['materialId']}"
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            if inventory.get(item_id, 0) < inp['quantity']:
+                return False, f"Insufficient {item_id}"
 
         # Check rarity uniformity
         inputs = recipe.get('inputs', [])
@@ -691,10 +695,14 @@ class AlchemyCrafter:
         # Detect input rarity
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+        # Fallback to 'common' if rarity is None (material not in database)
+        input_rarity = input_rarity or 'common'
 
         # Deduct materials
         for inp in recipe['inputs']:
-            inventory[inp['materialId']] -= inp['quantity']
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            inventory[item_id] -= inp['quantity']
 
         # Determine output type and effect from tags
         from core.crafting_tag_processor import AlchemyTagProcessor
@@ -769,10 +777,12 @@ class AlchemyCrafter:
 
             materials_lost_detail = {}
             for inp in recipe['inputs']:
+                # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+                item_id = inp.get('itemId') or inp.get('materialId')
                 loss = int(inp['quantity'] * loss_fraction)
                 if loss > 0:
-                    inventory[inp['materialId']] = max(0, inventory[inp['materialId']] - loss)
-                    materials_lost_detail[inp['materialId']] = loss
+                    inventory[item_id] = max(0, inventory[item_id] - loss)
+                    materials_lost_detail[item_id] = loss
 
             return {
                 "success": False,
@@ -785,11 +795,15 @@ class AlchemyCrafter:
 
         # Success - deduct full materials
         for inp in recipe['inputs']:
-            inventory[inp['materialId']] -= inp['quantity']
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            inventory[item_id] -= inp['quantity']
 
         # Detect input rarity
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+        # Fallback to 'common' if rarity is None (material not in database)
+        input_rarity = input_rarity or 'common'
 
         # Convert multipliers to stats
         tier = recipe.get('stationTier', recipe.get('stationTierRequired', 1))

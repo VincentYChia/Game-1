@@ -493,8 +493,10 @@ class SmithingCrafter:
 
         # Check material quantities
         for inp in recipe.get('inputs', []):
-            if inventory.get(inp['materialId'], 0) < inp['quantity']:
-                return False, f"Insufficient {inp['materialId']}"
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            if inventory.get(item_id, 0) < inp['quantity']:
+                return False, f"Insufficient {item_id}"
 
         # Check rarity uniformity
         inputs = recipe.get('inputs', [])
@@ -526,10 +528,14 @@ class SmithingCrafter:
         # Detect input rarity
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+        # Fallback to 'common' if rarity is None (material not in database)
+        input_rarity = input_rarity or 'common'
 
         # Deduct materials
         for inp in recipe['inputs']:
-            inventory[inp['materialId']] -= inp['quantity']
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            inventory[item_id] -= inp['quantity']
 
         # Get inheritable tags from recipe
         from core.crafting_tag_processor import SmithingTagProcessor
@@ -645,6 +651,8 @@ class SmithingCrafter:
         # Detect input rarity
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+        # Fallback to 'common' if rarity is None (material not in database)
+        input_rarity = input_rarity or 'common'
 
         # Calculate base stats for the item
         tier = recipe.get('stationTier', 1)
