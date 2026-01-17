@@ -2796,14 +2796,19 @@ class GameEngine:
             return (True, "Refining placement correct!")
 
         elif discipline == 'alchemy':
-            # Sequential validation
+            # Sequential validation with backwards compatibility
             required_ingredients = placement_data.ingredients
+
+            # DEBUG: Log alchemy backwards compatibility
+            print(f"🔍 [PLACEMENT DEBUG] ALCHEMY Validation:")
+            print(f"   Recipe: {recipe.recipe_id} | Required: {len(required_ingredients)} ingredients")
+            print(f"   Station Tier: T{self.active_station_tier}")
 
             # Check each sequential slot
             for ingredient in required_ingredients:
                 slot_num = ingredient.get('slot')
                 slot_id = f"seq_{slot_num}"
-                required_mat = ingredient.get('materialId', '')
+                required_mat = ingredient.get('itemId') or ingredient.get('materialId', '')
 
                 if slot_id not in user_placement:
                     return (False, f"Missing ingredient in slot {slot_num}: {required_mat}")
@@ -2812,24 +2817,39 @@ class GameEngine:
                 if user_mat != required_mat:
                     return (False, f"Wrong ingredient in slot {slot_num}: expected {required_mat}, got {user_mat}")
 
-            # Check for extra materials in wrong slots
+            # BACKWARDS COMPATIBILITY: Allow extra slots for cross-tier crafting
+            # This allows T1 recipes (2-3 ingredients) to work in T2+ stations (4+ slots)
             expected_slots = set(f"seq_{ing.get('slot')}" for ing in required_ingredients)
 
-            for slot_id in user_placement.keys():
-                if slot_id.startswith('seq_'):
-                    if slot_id not in expected_slots:
-                        return (False, f"Extra ingredient in {slot_id} (not required)")
+            # Only enforce "no extra materials" check if this is same-tier crafting
+            recipe_tier = recipe.station_tier
+            station_tier = self.active_station_tier
+
+            if recipe_tier == station_tier:
+                # Same tier: strict validation (no extra materials)
+                for slot_id in user_placement.keys():
+                    if slot_id.startswith('seq_'):
+                        if slot_id not in expected_slots:
+                            return (False, f"Extra ingredient in {slot_id} (not required)")
+            else:
+                # Cross-tier: permissive validation (allow extra materials, they'll be ignored)
+                print(f"   ✅ Backwards Compat: T{recipe_tier} recipe in T{station_tier} station - allowing extra slots")
 
             return (True, "Alchemy sequence correct!")
 
         elif discipline == 'engineering':
-            # Slot-type validation
+            # Slot-type validation with backwards compatibility
             required_slots = placement_data.slots
+
+            # DEBUG: Log engineering backwards compatibility
+            print(f"🔍 [PLACEMENT DEBUG] ENGINEERING Validation:")
+            print(f"   Recipe: {recipe.recipe_id} | Required: {len(required_slots)} slots")
+            print(f"   Station Tier: T{self.active_station_tier}")
 
             # Check each slot
             for i, slot_data in enumerate(required_slots):
                 slot_id = f"eng_slot_{i}"
-                required_mat = slot_data.get('materialId', '')
+                required_mat = slot_data.get('itemId') or slot_data.get('materialId', '')
 
                 if slot_id not in user_placement:
                     slot_type = slot_data.get('type', '')
@@ -2840,13 +2860,23 @@ class GameEngine:
                     slot_type = slot_data.get('type', '')
                     return (False, f"Wrong material in {slot_type} slot: expected {required_mat}, got {user_mat}")
 
-            # Check for extra materials
+            # BACKWARDS COMPATIBILITY: Allow extra slots for cross-tier crafting
+            # This allows T1 recipes (2-3 slots) to work in T2+ stations (4+ slots)
             expected_slots = set(f"eng_slot_{i}" for i in range(len(required_slots)))
 
-            for slot_id in user_placement.keys():
-                if slot_id.startswith('eng_slot_'):
-                    if slot_id not in expected_slots:
-                        return (False, f"Extra material in {slot_id} (not required)")
+            # Only enforce "no extra materials" check if this is same-tier crafting
+            recipe_tier = recipe.station_tier
+            station_tier = self.active_station_tier
+
+            if recipe_tier == station_tier:
+                # Same tier: strict validation (no extra materials)
+                for slot_id in user_placement.keys():
+                    if slot_id.startswith('eng_slot_'):
+                        if slot_id not in expected_slots:
+                            return (False, f"Extra material in {slot_id} (not required)")
+            else:
+                # Cross-tier: permissive validation (allow extra materials, they'll be ignored)
+                print(f"   ✅ Backwards Compat: T{recipe_tier} recipe in T{station_tier} station - allowing extra slots")
 
             return (True, "Engineering placement correct!")
 
