@@ -816,6 +816,17 @@ class GameEngine:
                 if self.character is None:
                     continue
 
+                # Handle mouse wheel scrolling for enchantment selection UI
+                if hasattr(self, 'enchantment_selection_active') and self.enchantment_selection_active:
+                    if hasattr(self, 'enchantment_selection_rect') and self.enchantment_selection_rect:
+                        if self.enchantment_selection_rect.collidepoint(self.mouse_pos):
+                            # Scroll the enchantment item list
+                            self.enchantment_scroll_offset -= event.y  # event.y is positive for scroll up
+                            # Clamp to valid range
+                            max_scroll = max(0, len(self.enchantment_compatible_items) - 5)  # ~5 items visible
+                            self.enchantment_scroll_offset = max(0, min(self.enchantment_scroll_offset, max_scroll))
+                            continue  # Skip other scroll handlers
+
                 # Handle mouse wheel scrolling for interactive crafting material palette
                 if self.interactive_crafting_active and self.interactive_ui and self.crafting_window_rect:
                     if self.crafting_window_rect.collidepoint(self.mouse_pos):
@@ -3160,7 +3171,7 @@ class GameEngine:
         """Open the item selection UI for applying enchantment"""
         equip_db = EquipmentDatabase.get_instance()
 
-        # Get all equipment from inventory and equipped slots
+        # Get ONLY compatible equipment (filter by can_apply_enchantment)
         compatible_items = []
 
         # From inventory
@@ -3168,22 +3179,33 @@ class GameEngine:
             if stack and equip_db.is_equipment(stack.item_id):
                 equipment = stack.get_equipment()  # Use actual equipment instance from stack
                 if equipment:
-                    compatible_items.append(('inventory', slot_idx, stack, equipment))
+                    # FILTER: Only include items that can receive this enchantment
+                    can_apply, reason = equipment.can_apply_enchantment(
+                        recipe.output_id, recipe.applicable_to, recipe.effect
+                    )
+                    if can_apply:
+                        compatible_items.append(('inventory', slot_idx, stack, equipment))
 
         # From equipped slots
         for slot_name, equipped_item in self.character.equipment.slots.items():
             if equipped_item:
-                compatible_items.append(('equipped', slot_name, None, equipped_item))
+                # FILTER: Only include items that can receive this enchantment
+                can_apply, reason = equipped_item.can_apply_enchantment(
+                    recipe.output_id, recipe.applicable_to, recipe.effect
+                )
+                if can_apply:
+                    compatible_items.append(('equipped', slot_name, None, equipped_item))
 
         if not compatible_items:
-            self.add_notification("No equipment to enchant!", (255, 100, 100))
+            self.add_notification("No compatible items for this enchantment!", (255, 100, 100))
             print("❌ No compatible items found for enchantment")
             return
 
-        # Open the selection UI
+        # Open the selection UI with scroll offset
         self.enchantment_selection_active = True
         self.enchantment_recipe = recipe
         self.enchantment_compatible_items = compatible_items
+        self.enchantment_scroll_offset = 0  # Initialize scroll offset
         print(f"✨ Opened enchantment selection UI ({len(compatible_items)} compatible items)")
 
     def _close_enchantment_selection(self):
@@ -3192,6 +3214,7 @@ class GameEngine:
         self.enchantment_recipe = None
         self.enchantment_compatible_items = []
         self.enchantment_selection_rect = None
+        self.enchantment_scroll_offset = 0
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
         # Skip if no character exists yet (e.g., still in start menu)
@@ -3451,8 +3474,9 @@ class GameEngine:
 
             # Enchantment selection UI (rendered on top of everything)
             if self.enchantment_selection_active:
+                scroll_offset = getattr(self, 'enchantment_scroll_offset', 0)
                 result = self.renderer.render_enchantment_selection_ui(
-                    self.mouse_pos, self.enchantment_recipe, self.enchantment_compatible_items)
+                    self.mouse_pos, self.enchantment_recipe, self.enchantment_compatible_items, scroll_offset)
                 if result:
                     self.enchantment_selection_rect, self.enchantment_item_rects = result
             else:

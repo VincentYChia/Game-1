@@ -694,11 +694,11 @@ class InteractiveSmithingUI(InteractiveBaseUI):
             (x, y): mat.item_id for (x, y), mat in self.grid.items()
         }
 
-        # DEBUG: Show what user placed (0-indexed UI coordinates)
+        # DEBUG: Show what user placed in 1-indexed (row,col) format to match JSON
         print(f"\n🔍 [SMITHING DEBUG] User placement in T{self.station_tier} station ({self.grid_size}x{self.grid_size} grid):")
-        print(f"   0-indexed coords (x=col, y=row): {sorted(current_placement_raw.keys())}")
+        print(f"   Placement in 1-indexed (row,col) format:")
         for (x, y), mat_id in sorted(current_placement_raw.items()):
-            print(f"   ({x}, {y}) → {mat_id}")
+            print(f"   ({y+1}, {x+1}) → {mat_id}")  # row,col = Y,X
 
         # Define grid sizes for each tier
         tier_grid_sizes = {1: 3, 2: 5, 3: 7, 4: 9}
@@ -1053,25 +1053,13 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
 
             print(f"\n   Checking recipe: {recipe.recipe_id}")
 
-            # Check shapes match (ONLY if recipe defines shapes)
+            # DESIGN DECISION: Shapes are just a mechanism to CREATE vertices.
+            # Validation should ONLY check vertices, not shapes.
+            # This allows users to create the same vertex pattern using different shape combinations.
             required_shapes = placement.placement_map.get('shapes', [])
-            print(f"      Recipe has {len(required_shapes)} shapes defined")
-
             if required_shapes:
-                # Recipe defines shapes - validate them
-                print(f"      Recipe shapes: {required_shapes}")
-                required_shapes_normalized = [normalize_shape(s) for s in required_shapes]
-                required_shapes_normalized.sort(key=lambda s: (s['type'], s['rotation'], s['vertices']))
-
-                if current_shapes_normalized != required_shapes_normalized:
-                    print(f"      ❌ Shape mismatch")
-                    print(f"         Current: {current_shapes_normalized}")
-                    print(f"         Required: {required_shapes_normalized}")
-                    continue
-                print(f"      ✅ Shapes match!")
-            else:
-                # If recipe has no shapes defined, skip shape validation (vertices-only recipe)
-                print(f"      ⏭️  No shapes required - vertices-only recipe")
+                print(f"      Recipe has {len(required_shapes)} shapes (for reference only, not validated)")
+            print(f"      ⏭️  Skipping shape validation - only vertices matter")
 
             # Check vertices match
             required_vertices = placement.placement_map.get('vertices', {})
