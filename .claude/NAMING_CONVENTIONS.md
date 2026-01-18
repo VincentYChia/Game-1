@@ -449,6 +449,56 @@ When adding a new feature:
 
 ---
 
+## Coordinate Systems
+
+### Smithing & Adornments Grid Coordinates
+
+**JSON Format:** Placement JSONs use **"row,col" format** which is **(Y,X)** with **1-based indexing**.
+
+**UI Format:** Internal UI code uses **(x,y)** where **x=column, y=row** with **0-based indexing**.
+
+#### Conversion Formula
+
+```python
+# UI to JSON (0-indexed (x,y) → 1-indexed "row,col")
+json_key = f"{y+1},{x+1}"  # row,col = Y,X
+
+# Example:
+# UI position (3, 5) → JSON key "6,4"
+#   - y=5 → row=6 (5+1)
+#   - x=3 → col=4 (3+1)
+```
+
+#### Critical Rules
+
+1. **JSON keys are ALWAYS "row,col" (Y,X)**, NOT "col,row" (X,Y)
+2. **Use f"{y+1},{x+1}"** when converting UI coords to JSON format
+3. **JSON indices start at 1**, UI indices start at 0
+4. **row = y-coordinate** (vertical), **col = x-coordinate** (horizontal)
+
+#### Examples
+
+| UI Coords (0-indexed) | JSON Key (1-indexed) | Explanation |
+|-----------------------|----------------------|-------------|
+| (0, 0) | "1,1" | Top-left corner |
+| (2, 0) | "1,3" | Top row, 3rd column |
+| (0, 2) | "3,1" | 3rd row, 1st column |
+| (4, 3) | "4,5" | 4th row, 5th column |
+
+#### In Practice
+
+```python
+# ✓ CORRECT - Converting UI placement to JSON format
+for (x, y), material in ui_grid.items():
+    json_placement[f"{y+1},{x+1}"] = material  # row,col = Y,X
+
+# ✗ WRONG - This creates col,row (X,Y) which doesn't match JSON
+for (x, y), material in ui_grid.items():
+    json_placement[f"{x+1},{y+1}"] = material  # SWAPPED!
+```
+
+---
+
 ## Reference Quick Links
 
 - **Method Names:** See "Method Naming Patterns" section above

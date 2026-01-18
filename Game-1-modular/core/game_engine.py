@@ -816,6 +816,17 @@ class GameEngine:
                 if self.character is None:
                     continue
 
+                # Handle mouse wheel scrolling for enchantment selection UI
+                if hasattr(self, 'enchantment_selection_active') and self.enchantment_selection_active:
+                    if hasattr(self, 'enchantment_selection_rect') and self.enchantment_selection_rect:
+                        if self.enchantment_selection_rect.collidepoint(self.mouse_pos):
+                            # Scroll the enchantment item list
+                            self.enchantment_scroll_offset -= event.y  # event.y is positive for scroll up
+                            # Clamp to valid range
+                            max_scroll = max(0, len(self.enchantment_compatible_items) - 5)  # ~5 items visible
+                            self.enchantment_scroll_offset = max(0, min(self.enchantment_scroll_offset, max_scroll))
+                            continue  # Skip other scroll handlers
+
                 # Handle mouse wheel scrolling for interactive crafting material palette
                 if self.interactive_crafting_active and self.interactive_ui and self.crafting_window_rect:
                     if self.crafting_window_rect.collidepoint(self.mouse_pos):
@@ -2230,7 +2241,16 @@ class GameEngine:
                 elif self.interactive_ui.selected_material:
                     success = self.interactive_ui.place_material(position, self.interactive_ui.selected_material)
                     if success:
-                        print(f"✓ Placed {self.interactive_ui.selected_material.item_id} at {position}")
+                        # Format coordinates based on discipline
+                        if self.interactive_ui.station_type == 'smithing':
+                            # Smithing uses grid - show 1-indexed "row,col" format
+                            x, y = position
+                            coord_str = f'"{y+1},{x+1}"'  # row,col = Y,X
+                        else:
+                            # Other disciplines - show as-is
+                            coord_str = str(position)
+
+                        print(f"✓ Placed {self.interactive_ui.selected_material.item_id} at {coord_str}")
 
                         # Check if recipe matched
                         if self.interactive_ui.matched_recipe:
@@ -2256,8 +2276,32 @@ class GameEngine:
         print(f"🔨 INTERACTIVE CRAFT")
         print(f"Recipe: {recipe.recipe_id}")
         print(f"Output: {recipe.output_id} x{recipe.output_qty}")
+        print(f"Station: {recipe.station_type}")
+        print(f"Is Enchantment: {recipe.is_enchantment}")
         print(f"Use Minigame: {use_minigame}")
         print(f"{'='*80}")
+
+        # Check if this is an enchantment recipe (adornments)
+        if recipe.is_enchantment or recipe.station_type == 'adornments':
+            # For enchantments, we need to open item selection UI first
+            print("🔮 Enchantment recipe detected - opening item selection UI")
+
+            # Set the flag to control whether to use minigame after item selection
+            self.enchantment_use_minigame = use_minigame
+
+            # Close interactive UI but DON'T return borrowed materials yet
+            # They'll be consumed after enchantment is applied
+            borrowed_backup = self.interactive_ui.borrowed_materials.copy()
+            self._close_interactive_crafting()
+
+            # Manually restore borrowed materials to inventory for now
+            # They'll be consumed properly when enchantment is applied
+            for item_id, quantity in borrowed_backup.items():
+                self.character.inventory.add_item(item_id, quantity)
+
+            # Open enchantment selection UI
+            self._open_enchantment_selection(recipe)
+            return
 
         # Materials are already borrowed from inventory, so we can proceed directly
         # The borrowed_materials dict tracks what was temporarily removed
@@ -2692,6 +2736,12 @@ class GameEngine:
             offset_x = (station_grid_w - recipe_grid_w) // 2
             offset_y = (station_grid_h - recipe_grid_h) // 2
 
+            # DEBUG: Log backwards compatibility offset calculation
+            print(f"🔍 [PLACEMENT DEBUG] {discipline.upper()} Validation:")
+            print(f"   Recipe: {recipe.recipe_id} | Recipe Grid: {recipe_grid_w}x{recipe_grid_h}")
+            print(f"   Station Tier: T{self.active_station_tier} | Station Grid: {station_grid_w}x{station_grid_h}")
+            print(f"   Offset: ({offset_x}, {offset_y}) | Backwards Compat: {'YES' if recipe_grid_w < station_grid_w else 'NO'}")
+
             # Check if all required positions are filled (with offset)
             for pos, required_mat in required_map.items():
                 parts = pos.split(',')
@@ -2733,14 +2783,19 @@ class GameEngine:
             return (True, "Placement correct!")
 
         elif discipline == 'refining':
-            # Hub-and-spoke validation
+            # Hub-and-spoke validation with backwards compatibility
             required_core = placement_data.core_inputs
             required_surrounding = placement_data.surrounding_inputs
+
+            # DEBUG: Log refining backwards compatibility
+            print(f"🔍 [PLACEMENT DEBUG] REFINING Validation:")
+            print(f"   Recipe: {recipe.recipe_id} | Required: {len(required_core)} core + {len(required_surrounding)} surrounding")
+            print(f"   Station Tier: T{self.active_station_tier}")
 
             # Check core slots
             for i, core_input in enumerate(required_core):
                 slot_id = f"core_{i}"
-                required_mat = core_input.get('materialId', '')
+                required_mat = core_input.get('itemId') or core_input.get('materialId', '')
 
                 if slot_id not in user_placement:
                     return (False, f"Missing core material: {required_mat}")
@@ -2752,7 +2807,7 @@ class GameEngine:
             # Check surrounding slots
             for i, surrounding_input in enumerate(required_surrounding):
                 slot_id = f"surrounding_{i}"
-                required_mat = surrounding_input.get('materialId', '')
+                required_mat = surrounding_input.get('itemId') or surrounding_input.get('materialId', '')
 
                 if slot_id not in user_placement:
                     return (False, f"Missing surrounding material: {required_mat}")
@@ -2761,26 +2816,43 @@ class GameEngine:
                 if user_mat != required_mat:
                     return (False, f"Wrong surrounding material: expected {required_mat}, got {user_mat}")
 
-            # Check for extra materials in wrong slots
+            # BACKWARDS COMPATIBILITY: Only check for extra materials if using all required slots
+            # This allows T1 recipes (1 core + 2 surr) to work in T2+ stations (1 core + 4+ surr)
+            # Extra slots can be filled but will be ignored by the crafting logic
             expected_slots = set(f"core_{i}" for i in range(len(required_core)))
             expected_slots.update(f"surrounding_{i}" for i in range(len(required_surrounding)))
 
-            for slot_id in user_placement.keys():
-                if slot_id.startswith('core_') or slot_id.startswith('surrounding_'):
-                    if slot_id not in expected_slots:
-                        return (False, f"Extra material in {slot_id} (not required)")
+            # Only enforce "no extra materials" check if this is same-tier crafting
+            # For cross-tier (T1 recipe in T2+ station), allow extra materials in unused slots
+            recipe_tier = recipe.station_tier
+            station_tier = self.active_station_tier
+
+            if recipe_tier == station_tier:
+                # Same tier: strict validation (no extra materials)
+                for slot_id in user_placement.keys():
+                    if slot_id.startswith('core_') or slot_id.startswith('surrounding_'):
+                        if slot_id not in expected_slots:
+                            return (False, f"Extra material in {slot_id} (not required)")
+            else:
+                # Cross-tier: permissive validation (allow extra materials, they'll be ignored)
+                print(f"   ✅ Backwards Compat: T{recipe_tier} recipe in T{station_tier} station - allowing extra slots")
 
             return (True, "Refining placement correct!")
 
         elif discipline == 'alchemy':
-            # Sequential validation
+            # Sequential validation with backwards compatibility
             required_ingredients = placement_data.ingredients
+
+            # DEBUG: Log alchemy backwards compatibility
+            print(f"🔍 [PLACEMENT DEBUG] ALCHEMY Validation:")
+            print(f"   Recipe: {recipe.recipe_id} | Required: {len(required_ingredients)} ingredients")
+            print(f"   Station Tier: T{self.active_station_tier}")
 
             # Check each sequential slot
             for ingredient in required_ingredients:
                 slot_num = ingredient.get('slot')
                 slot_id = f"seq_{slot_num}"
-                required_mat = ingredient.get('materialId', '')
+                required_mat = ingredient.get('itemId') or ingredient.get('materialId', '')
 
                 if slot_id not in user_placement:
                     return (False, f"Missing ingredient in slot {slot_num}: {required_mat}")
@@ -2789,24 +2861,39 @@ class GameEngine:
                 if user_mat != required_mat:
                     return (False, f"Wrong ingredient in slot {slot_num}: expected {required_mat}, got {user_mat}")
 
-            # Check for extra materials in wrong slots
+            # BACKWARDS COMPATIBILITY: Allow extra slots for cross-tier crafting
+            # This allows T1 recipes (2-3 ingredients) to work in T2+ stations (4+ slots)
             expected_slots = set(f"seq_{ing.get('slot')}" for ing in required_ingredients)
 
-            for slot_id in user_placement.keys():
-                if slot_id.startswith('seq_'):
-                    if slot_id not in expected_slots:
-                        return (False, f"Extra ingredient in {slot_id} (not required)")
+            # Only enforce "no extra materials" check if this is same-tier crafting
+            recipe_tier = recipe.station_tier
+            station_tier = self.active_station_tier
+
+            if recipe_tier == station_tier:
+                # Same tier: strict validation (no extra materials)
+                for slot_id in user_placement.keys():
+                    if slot_id.startswith('seq_'):
+                        if slot_id not in expected_slots:
+                            return (False, f"Extra ingredient in {slot_id} (not required)")
+            else:
+                # Cross-tier: permissive validation (allow extra materials, they'll be ignored)
+                print(f"   ✅ Backwards Compat: T{recipe_tier} recipe in T{station_tier} station - allowing extra slots")
 
             return (True, "Alchemy sequence correct!")
 
         elif discipline == 'engineering':
-            # Slot-type validation
+            # Slot-type validation with backwards compatibility
             required_slots = placement_data.slots
+
+            # DEBUG: Log engineering backwards compatibility
+            print(f"🔍 [PLACEMENT DEBUG] ENGINEERING Validation:")
+            print(f"   Recipe: {recipe.recipe_id} | Required: {len(required_slots)} slots")
+            print(f"   Station Tier: T{self.active_station_tier}")
 
             # Check each slot
             for i, slot_data in enumerate(required_slots):
                 slot_id = f"eng_slot_{i}"
-                required_mat = slot_data.get('materialId', '')
+                required_mat = slot_data.get('itemId') or slot_data.get('materialId', '')
 
                 if slot_id not in user_placement:
                     slot_type = slot_data.get('type', '')
@@ -2817,13 +2904,23 @@ class GameEngine:
                     slot_type = slot_data.get('type', '')
                     return (False, f"Wrong material in {slot_type} slot: expected {required_mat}, got {user_mat}")
 
-            # Check for extra materials
+            # BACKWARDS COMPATIBILITY: Allow extra slots for cross-tier crafting
+            # This allows T1 recipes (2-3 slots) to work in T2+ stations (4+ slots)
             expected_slots = set(f"eng_slot_{i}" for i in range(len(required_slots)))
 
-            for slot_id in user_placement.keys():
-                if slot_id.startswith('eng_slot_'):
-                    if slot_id not in expected_slots:
-                        return (False, f"Extra material in {slot_id} (not required)")
+            # Only enforce "no extra materials" check if this is same-tier crafting
+            recipe_tier = recipe.station_tier
+            station_tier = self.active_station_tier
+
+            if recipe_tier == station_tier:
+                # Same tier: strict validation (no extra materials)
+                for slot_id in user_placement.keys():
+                    if slot_id.startswith('eng_slot_'):
+                        if slot_id not in expected_slots:
+                            return (False, f"Extra material in {slot_id} (not required)")
+            else:
+                # Cross-tier: permissive validation (allow extra materials, they'll be ignored)
+                print(f"   ✅ Backwards Compat: T{recipe_tier} recipe in T{station_tier} station - allowing extra slots")
 
             return (True, "Engineering placement correct!")
 
@@ -3107,7 +3204,7 @@ class GameEngine:
         """Open the item selection UI for applying enchantment"""
         equip_db = EquipmentDatabase.get_instance()
 
-        # Get all equipment from inventory and equipped slots
+        # Get ONLY compatible equipment (filter by can_apply_enchantment)
         compatible_items = []
 
         # From inventory
@@ -3115,22 +3212,33 @@ class GameEngine:
             if stack and equip_db.is_equipment(stack.item_id):
                 equipment = stack.get_equipment()  # Use actual equipment instance from stack
                 if equipment:
-                    compatible_items.append(('inventory', slot_idx, stack, equipment))
+                    # FILTER: Only include items that can receive this enchantment
+                    can_apply, reason = equipment.can_apply_enchantment(
+                        recipe.output_id, recipe.applicable_to, recipe.effect
+                    )
+                    if can_apply:
+                        compatible_items.append(('inventory', slot_idx, stack, equipment))
 
         # From equipped slots
         for slot_name, equipped_item in self.character.equipment.slots.items():
             if equipped_item:
-                compatible_items.append(('equipped', slot_name, None, equipped_item))
+                # FILTER: Only include items that can receive this enchantment
+                can_apply, reason = equipped_item.can_apply_enchantment(
+                    recipe.output_id, recipe.applicable_to, recipe.effect
+                )
+                if can_apply:
+                    compatible_items.append(('equipped', slot_name, None, equipped_item))
 
         if not compatible_items:
-            self.add_notification("No equipment to enchant!", (255, 100, 100))
+            self.add_notification("No compatible items for this enchantment!", (255, 100, 100))
             print("❌ No compatible items found for enchantment")
             return
 
-        # Open the selection UI
+        # Open the selection UI with scroll offset
         self.enchantment_selection_active = True
         self.enchantment_recipe = recipe
         self.enchantment_compatible_items = compatible_items
+        self.enchantment_scroll_offset = 0  # Initialize scroll offset
         print(f"✨ Opened enchantment selection UI ({len(compatible_items)} compatible items)")
 
     def _close_enchantment_selection(self):
@@ -3139,6 +3247,7 @@ class GameEngine:
         self.enchantment_recipe = None
         self.enchantment_compatible_items = []
         self.enchantment_selection_rect = None
+        self.enchantment_scroll_offset = 0
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
         # Skip if no character exists yet (e.g., still in start menu)
@@ -3398,8 +3507,9 @@ class GameEngine:
 
             # Enchantment selection UI (rendered on top of everything)
             if self.enchantment_selection_active:
+                scroll_offset = getattr(self, 'enchantment_scroll_offset', 0)
                 result = self.renderer.render_enchantment_selection_ui(
-                    self.mouse_pos, self.enchantment_recipe, self.enchantment_compatible_items)
+                    self.mouse_pos, self.enchantment_recipe, self.enchantment_compatible_items, scroll_offset)
                 if result:
                     self.enchantment_selection_rect, self.enchantment_item_rects = result
             else:

@@ -1103,8 +1103,10 @@ class EngineeringCrafter:
 
         # Check material quantities
         for inp in recipe.get('inputs', []):
-            if inventory.get(inp['materialId'], 0) < inp['quantity']:
-                return False, f"Insufficient {inp['materialId']}"
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            if inventory.get(item_id, 0) < inp['quantity']:
+                return False, f"Insufficient {item_id}"
 
         # Check rarity uniformity
         inputs = recipe.get('inputs', [])
@@ -1136,10 +1138,14 @@ class EngineeringCrafter:
         # Detect input rarity
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+        # Fallback to 'common' if rarity is None (material not in database)
+        input_rarity = input_rarity or 'common'
 
         # Deduct materials
         for inp in recipe['inputs']:
-            inventory[inp['materialId']] -= inp['quantity']
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            inventory[item_id] -= inp['quantity']
 
         return {
             "success": True,
@@ -1211,9 +1217,11 @@ class EngineeringCrafter:
             # Abandoned - return materials minus tier-scaled penalty
             materials_returned = 1.0 - penalty
             for inp in recipe['inputs']:
+                # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+                item_id = inp.get('itemId') or inp.get('materialId')
                 returned = int(inp['quantity'] * materials_returned)
                 if returned > 0:
-                    inventory[inp['materialId']] = inventory.get(inp['materialId'], 0) + returned
+                    inventory[item_id] = inventory.get(item_id, 0) + returned
 
             return {
                 "success": False,
@@ -1231,11 +1239,15 @@ class EngineeringCrafter:
 
         # Success - deduct full materials
         for inp in recipe['inputs']:
-            inventory[inp['materialId']] -= inp['quantity']
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            inventory[item_id] -= inp['quantity']
 
         # Detect input rarity
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+        # Fallback to 'common' if rarity is None (material not in database)
+        input_rarity = input_rarity or 'common'
 
         # Get device stats from minigame result
         base_stats = minigame_result.get('stats', {})

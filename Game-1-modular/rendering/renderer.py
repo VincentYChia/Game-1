@@ -4484,7 +4484,7 @@ class Renderer:
 
         self.screen.blit(surf, (x, y))
 
-    def render_enchantment_selection_ui(self, mouse_pos: Tuple[int, int], recipe: Recipe, compatible_items: List):
+    def render_enchantment_selection_ui(self, mouse_pos: Tuple[int, int], recipe: Recipe, compatible_items: List, scroll_offset: int = 0):
         """Render UI for selecting which item to apply enchantment to"""
         if not recipe or not compatible_items:
             return None
@@ -4499,21 +4499,25 @@ class Renderer:
         # Title
         title_text = f"Apply {recipe.enchantment_name}"
         surf.blit(self.font.render(title_text, True, (255, 215, 0)), (20, 20))
-        surf.blit(self.small_font.render("[ESC] Cancel | [CLICK] Select Item", True, (180, 180, 180)),
-                  (ww - 280, 20))
+        surf.blit(self.small_font.render("[ESC] Cancel | [SCROLL] Scroll | [CLICK] Select", True, (180, 180, 180)),
+                  (ww - 320, 20))
 
         # Description
         y_pos = 60
-        surf.blit(self.small_font.render("Select an item to enchant:", True, (200, 200, 200)), (20, y_pos))
+        surf.blit(self.small_font.render(f"Select an item ({len(compatible_items)} compatible):", True, (200, 200, 200)), (20, y_pos))
         y_pos += 30
 
-        # List compatible items
+        # List compatible items with scrolling
         slot_size = 60
         item_rects = []
+        visible_start = scroll_offset
+        visible_end = visible_start + 20  # Show up to 20 items (more than fits, renderer will cut off)
 
-        for idx, (source_type, source_id, item_stack, equipment) in enumerate(compatible_items):
+        for list_idx in range(visible_start, min(visible_end, len(compatible_items))):
+            source_type, source_id, item_stack, equipment = compatible_items[list_idx]
+
             if y_pos + slot_size + 10 > wh - 20:
-                break  # Don't overflow window
+                break  # Don't overflow window (now only breaks for visible items)
 
             item_rect = pygame.Rect(20, y_pos, ww - 40, slot_size + 10)
             rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy

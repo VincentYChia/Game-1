@@ -674,32 +674,92 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         self.matched_recipe = None
 
     def check_recipe_match(self) -> Optional[Recipe]:
-        """Match against smithing recipes - exact grid match required"""
+        """
+        Match against smithing recipes with multi-tier backwards compatibility.
+
+        Strategy:
+        1. Try matching at current station tier first
+        2. If no match, try centering in lower tiers (T3 → T2 → T1)
+        3. Stop early if recipe is too large for a tier
+        """
         if not self.grid:
             return None
 
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # Convert current grid to string-key format
-        # JSON format is "Y,X" where Y=row (1=top), X=col (1=left)
-        # UI uses 0-indexed screen coordinates where (0,0) is top-left
-        # Direct 1-indexed conversion (no mirroring needed)
-        current_placement = {
-            f"{y+1},{x+1}": mat.item_id for (x, y), mat in self.grid.items()
+        # Convert UI coordinates to placement map
+        # UI uses 0-indexed (x,y) where x=column, y=row
+        # JSON uses 1-indexed "row,col" format (Y,X)
+        current_placement_raw = {
+            (x, y): mat.item_id for (x, y), mat in self.grid.items()
         }
 
-        # Get all smithing recipes for this tier
-        recipes = recipe_db.get_recipes_for_station(self.station_type, self.station_tier)
+        # Define grid sizes for each tier
+        tier_grid_sizes = {1: 3, 2: 5, 3: 7, 4: 9}
 
-        for recipe in recipes:
-            placement = placement_db.get_placement(recipe.recipe_id)
-            if not placement or placement.discipline != 'smithing':
+        # Try matching with multi-tier checking (current tier down to T1)
+        for check_tier in range(self.station_tier, 0, -1):
+            check_grid_size = tier_grid_sizes[check_tier]
+
+            # Calculate offset to center this tier's grid in the station grid
+            offset_x = (self.grid_size - check_grid_size) // 2
+            offset_y = (self.grid_size - check_grid_size) // 2
+
+            # Transform current placement to this tier's coordinate space
+            tier_placement = {}
+            valid_for_tier = True
+
+            for (x, y), mat_id in current_placement_raw.items():
+                # Calculate position relative to centered grid
+                tier_x = x - offset_x
+                tier_y = y - offset_y
+
+                # Check if position is within this tier's grid bounds
+                if not (0 <= tier_x < check_grid_size and 0 <= tier_y < check_grid_size):
+                    valid_for_tier = False
+                    break
+
+                # Convert to 1-indexed JSON format "row,col" = (Y,X)
+                # tier_y is row, tier_x is column
+                tier_placement[f"{tier_y+1},{tier_x+1}"] = mat_id
+
+            if not valid_for_tier:
                 continue
 
-            # Exact match required
-            if current_placement == placement.placement_map:
-                return recipe
+            # Check if placement is too wide/tall for this tier (optimization)
+            if tier_placement:
+                coords = []
+                for coord_str in tier_placement.keys():
+                    parts = coord_str.split(',')
+                    if len(parts) == 2:
+                        coords.append((int(parts[0]), int(parts[1])))
+
+                if coords:
+                    min_x = min(c[0] for c in coords)
+                    max_x = max(c[0] for c in coords)
+                    min_y = min(c[1] for c in coords)
+                    max_y = max(c[1] for c in coords)
+
+                    width = max_x - min_x + 1
+                    height = max_y - min_y + 1
+
+                    # If pattern is wider/taller than this tier's grid, skip to lower tiers
+                    if width > check_grid_size or height > check_grid_size:
+                        continue
+
+            # Try matching recipes for this tier
+            recipes = recipe_db.get_recipes_for_station(self.station_type, check_tier)
+
+            for recipe in recipes:
+                placement = placement_db.get_placement(recipe.recipe_id)
+                if not placement or placement.discipline != 'smithing':
+                    continue
+
+                # Exact match required
+                if tier_placement == placement.placement_map:
+                    print(f"✓ Matched {recipe.recipe_id}")
+                    return recipe
 
         return None
 
@@ -924,29 +984,21 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
     def check_recipe_match(self) -> Optional[Recipe]:
         """
         Match against adornment recipes using shape-based pattern matching.
-        Validates both shapes AND vertex materials.
+        Validates both shapes AND vertex materials (if shapes are defined in recipe).
+
+        FIXED: If recipe doesn't define shapes, only validate vertices.
         """
-        if not self.shapes or not self.vertices:
+        # Need at least vertices to match
+        if not self.vertices:
             return None
 
         placement_db = PlacementDatabase.get_instance()
         recipe_db = RecipeDatabase.get_instance()
 
-        # Build current placement
+        # Build current placement (vertices with materials only)
         current_vertices = {
             coord_key: mat.item_id for coord_key, mat in self.vertices.items()
         }
-
-        # Normalize shapes for comparison (sort by vertices to handle order differences)
-        def normalize_shape(shape):
-            return {
-                'type': shape['type'],
-                'rotation': shape['rotation'],
-                'vertices': tuple(sorted(shape['vertices']))
-            }
-
-        current_shapes_normalized = [normalize_shape(s) for s in self.shapes]
-        current_shapes_normalized.sort(key=lambda s: (s['type'], s['rotation'], s['vertices']))
 
         # Get all adornment recipes for this tier
         recipes = recipe_db.get_recipes_for_station(self.station_type, self.station_tier)
@@ -959,26 +1011,19 @@ class InteractiveAdornmentsUI(InteractiveBaseUI):
             if not placement.placement_map:
                 continue
 
-            # Check shapes match
-            required_shapes = placement.placement_map.get('shapes', [])
-            required_shapes_normalized = [normalize_shape(s) for s in required_shapes]
-            required_shapes_normalized.sort(key=lambda s: (s['type'], s['rotation'], s['vertices']))
-
-            if current_shapes_normalized != required_shapes_normalized:
-                continue
-
-            # Check vertices match
+            # Shapes are just a mechanism to create vertices - validation only checks vertices
             required_vertices = placement.placement_map.get('vertices', {})
 
-            # Only check vertices that have materials assigned
-            # Required vertices should have materialId
+            # Get vertices that have materials assigned
             required_materials = {
-                coord: data['materialId']
+                coord: data.get('itemId') or data.get('materialId')
                 for coord, data in required_vertices.items()
-                if data.get('materialId')
+                if data.get('itemId') or data.get('materialId')
             }
 
+            # Check if vertices match exactly
             if current_vertices == required_materials:
+                print(f"✓ Matched {recipe.recipe_id}")
                 return recipe
 
         return None

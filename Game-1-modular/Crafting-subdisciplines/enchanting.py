@@ -485,7 +485,8 @@ class PatternMatchingMinigame:
         }
 
         # Get available materials from recipe
-        self.available_materials = [inp['materialId'] for inp in recipe.get('inputs', [])]
+        # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+        self.available_materials = [inp.get('itemId') or inp.get('materialId') for inp in recipe.get('inputs', [])]
 
     def start(self):
         """Start the minigame"""
@@ -1133,8 +1134,10 @@ class EnchantingCrafter:
 
         # Check material quantities
         for inp in recipe.get('inputs', []):
-            if inventory.get(inp['materialId'], 0) < inp['quantity']:
-                return False, f"Insufficient {inp['materialId']}"
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            if inventory.get(item_id, 0) < inp['quantity']:
+                return False, f"Insufficient {item_id}"
 
         # Check rarity uniformity
         inputs = recipe.get('inputs', [])
@@ -1168,10 +1171,14 @@ class EnchantingCrafter:
         # Detect input rarity
         inputs = recipe.get('inputs', [])
         _, input_rarity, _ = rarity_system.check_rarity_uniformity(inputs)
+        # Fallback to 'common' if rarity is None (material not in database)
+        input_rarity = input_rarity or 'common'
 
         # Deduct materials
         for inp in recipe['inputs']:
-            inventory[inp['materialId']] -= inp['quantity']
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            inventory[item_id] -= inp['quantity']
 
         # Create enchantment - enchanting uses enchantmentId not outputId
         enchantment_id = recipe.get('enchantmentId', recipe.get('outputId', 'unknown_enchantment'))
@@ -1262,7 +1269,9 @@ class EnchantingCrafter:
 
         # Always consume materials (even on failure)
         for inp in recipe['inputs']:
-            inventory[inp['materialId']] -= inp['quantity']
+            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
+            item_id = inp.get('itemId') or inp.get('materialId')
+            inventory[item_id] -= inp['quantity']
 
         if not minigame_result.get('success'):
             # Minigame failed (shouldn't happen with spinning wheel, but keep for safety)
