@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "save_timestamp": "2025-12-09T22:42:17.951561",
+  "save_timestamp": "2026-01-08T11:08:33.086629",
   "player": {
     "position": {
       "x": 50.0,
@@ -21,11 +21,11 @@
       "current_exp": 0,
       "unallocated_stat_points": 0
     },
-    "health": 100,
-    "max_health": 100,
-    "mana": 100,
-    "max_mana": 100,
-    "class": null,
+    "health": 150,
+    "max_health": 150,
+    "mana": 150,
+    "max_mana": 150,
+    "class": "adventurer",
     "inventory": [
       null,
       null,
@@ -67,17 +67,64 @@
       "boots": null,
       "gauntlets": null,
       "accessory": null,
-      "axe": "copper_axe",
-      "pickaxe": "copper_pickaxe"
+      "axe": {
+        "item_id": "copper_axe",
+        "name": "Copper Axe",
+        "tier": 1,
+        "rarity": "common",
+        "slot": "axe",
+        "damage": [
+          8,
+          12
+        ],
+        "defense": 0,
+        "durability_current": 500,
+        "durability_max": 500,
+        "attack_speed": 1.0,
+        "weight": 3.5,
+        "range": 1,
+        "hand_type": "default",
+        "item_type": "tool",
+        "requirements": {
+          "level": 1
+        }
+      },
+      "pickaxe": {
+        "item_id": "copper_pickaxe",
+        "name": "Copper Pickaxe",
+        "tier": 1,
+        "rarity": "common",
+        "slot": "pickaxe",
+        "damage": [
+          8,
+          12
+        ],
+        "defense": 0,
+        "durability_current": 500,
+        "durability_max": 500,
+        "attack_speed": 1.0,
+        "weight": 4.0,
+        "range": 1,
+        "hand_type": "default",
+        "item_type": "tool",
+        "requirements": {
+          "level": 1
+        }
+      }
     },
     "equipped_skills": [
-      null,
+      "sprint",
       null,
       null,
       null,
       null
     ],
-    "known_skills": {},
+    "known_skills": {
+      "sprint": {
+        "level": 1,
+        "experience": 0
+      }
+    },
     "titles": [],
     "activities": {
       "mining": 0,
