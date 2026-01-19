@@ -2,33 +2,134 @@ You are a world designer for an action fantasy sandbox RPG. Given chunk generati
 
 # Node Types - Field Guidelines
 
-Generate a JSON object following this structure with inline guidance:
+Generate a JSON object following this structure. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide:
 
 ```json
 {
   "metadata": {
-    "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
-    "tags": ["Pick 2-5 from: "advanced", "ancient", "common", "crystal", "durable", "fine", "flexible", "impossible", "layered", "legendary", "living", "magical", "memory", "metal", "metallic", "mythical", "ore", "precious", "quality", "quantum", "radiant", "rare", "sharp", "standard", "starter", "stone", "temporal", "tree", "void", "volcanic", "wood"]
-  },
-  "category": "Pick one: ["ore", "stone", "tree"]",
-  "requiredTool": "Pick one: ["axe", "pickaxe"]",
-  "respawnTime": "Pick one: ["normal", "slow", "very_slow"]",
-  "tier": 1,  // 1-4 (affects stat ranges below)
-  "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
+    "narrative": "Short narrative about the node (2-3 sentences). Describe its purpose and ambiance.",
+  "categories": Select one[
+    "tree",
+    "ore",
+    "stone"
+  ]
+},
+  "Tiers": 1-4, ||  Pick a tier 1-4 (tier 1 is early game, tier 2 is intermediate, tier 3 is advanced, tier 4 is endgame)
+  "tools":Select which tool can harvest the node best [
+    "axe",
+    "pickaxe"
+  ],
 
-  // === NUMERIC FIELDS (by tier) ===
-  "baseHealth": 0,  // T1: ~100.0, T2: ~200.0, T3: ~400.0, T4: ~800.0
+  "baseHealth": 100-800, || T1= 100, T2= 200, T3= 400, T4= 800
 
-  "requirements": {
-    "level": 1,  // T1: 1-5, T2: 6-15, T3: 16-25, T4: 26-30
-    "stats": {}  // Stat requirements (tier-appropriate)
-  },
+  "respawnTime":Select a respawn rate from this list [
+      "normal",
+      "slow",
+      "very_slow",
+      null
+    ],
 
-  "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
-  }
+  "drops": [
+    "materialId": {
+      "library": [
+        "oak_log",
+        "pine_log",
+        "ash_log",
+        "birch_log",
+        "maple_log",
+        "ironwood_log",
+        "ebony_log",
+        "worldtree_log",
+
+        "copper_ore",
+        "iron_ore",
+        "tin_ore",
+        "steel_ore",
+        "mithril_ore",
+        "adamantine_ore",
+        "orichalcum_ore",
+        "etherion_ore",
+
+        "limestone",
+        "granite",
+        "shale",
+        "basalt",
+        "marble",
+        "crystal_quartz",
+        "obsidian",
+        "voidstone",
+        "diamond",
+        "eternity_stone",
+        "primordial_crystal",
+        "genesis_lattice",
+        "chaos_matrix",
+
+        "fire_crystal",
+        "water_crystal",
+        "earth_crystal",
+        "light_gem",
+        "lightning_shard",
+        "phoenix_ash",
+        "void_essence",
+        "storm_heart"
+      ]
+    },
+
+    "quantity": {
+      "library": [
+        "abundant",
+        "many",
+        "several",
+        "few"
+      ]
+    },
+
+    "chance": {
+      "library": [
+        "guaranteed",
+        "high",
+        "moderate",
+        "low",
+        "rare",
+        "improbable"
+      ]
+    }
+##Add additional drops in the same format as above here
+  ],
+
+
+  "tags": [
+    "starter",
+    "standard",
+    "advanced",
+    "quality",
+    "durable",
+    "flexible",
+    "fine",
+    "metallic",
+    "magical",
+    "legendary",
+    "living",
+    "rare",
+    "ancient",
+    "mythical",
+    "temporal",
+    "quantum",
+    "memory",
+    "impossible",
+    "radiant",
+    "volcanic",
+    "layered",
+    "sharp",
+    "precious",
+    "void",
+    "crystal",
+    "metal",
+    "wood",
+    "stone",
+    "ore",
+    "tree"
+  ]
 }
 ```
 

@@ -2,39 +2,158 @@ You are a skill designer for an action fantasy sandbox RPG. Given character requ
 
 # Skills - Field Guidelines
 
-Generate a JSON object following this structure with inline guidance:
+Generate a JSON object following this structure. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide:
 
 ```json
 {
   "metadata": {
-    "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
-    "tags": ["Pick 2-5 from: "abundance", "alchemy", "aoe", "attack_speed", "basic", "berserker", "bonus", "burst", "bypass", "combat", "crafting", "critical", "damage", "damage_boost", "damage_reduction", "defense", "destruction", "durability", "efficiency", "enchanting", "engineering", "finisher", "gathering", "healing", "instant", "luck", "mana", "mastery", "mobility", "movement", "multi_purpose", "over_time", "precision", "quality", "rarity", "recovery", "refining", "regeneration", "repair", "single_hit", "single_target", "smithing", "speed", "speed_boost", "survival", "sustain", "tier", "time", "transcendence", "ultimate", "universal", "yield"]
-  },
-  "rarity": "Pick one: ["common", "epic", "legendary", "mythic", "rare", "uncommon"]",
-  "tier": 1,  // 1-4 (affects stat ranges below)
-  "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
-
-  // === NUMERIC FIELDS (by tier) ===
-
   "requirements": {
-    "level": 1,  // T1: 1-5, T2: 6-15, T3: 16-25, T4: 26-30
+    "level": 1,  // Tier 1: 1-5, Tier 2: 6-15, Tier 3: 16-25, Tier 4: 26-30
     "stats": {
-      "AGI": 0,  // T2: ~10.0, T3: ~15.0
-      "DEF": 0,  // 
-      "INT": 0,  // T2: 8.0-12.0, T3: 15.0-22.0
-      "LCK": 0,  // T2: 8.0-15.0, T3: ~22.5
-      "STR": 0,  // T3: ~22.5
-      "VIT": 0,  // T2: ~11.0
+      "AGI": Pick a value relative to the tier,  // 1-30.
+      "DEF": Pick a value relative to the tier,  // 1-30.
+      "INT":  Pick a value relative to the tier,  // 1-30.
+      "LCK": Pick a value relative to the tier,  // 1-30.
+      "STR": Pick a value relative to the tier,  // 1-30.
+      "VIT":  Pick a value relative to the tier,  // 1-30.
     }
   },
-
-  "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
-  }
 }
 ```
+ "skills": [
+    {
+   "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
+      "skillId": "skill_Id",
+      "name": "Skill Name",
+  "rarity": "Pick one: ["common", "epic", "legendary", "mythic", "rare", "uncommon"]",
+  "tier": 1,  // 1-4 (affects stat ranges below) (tier 1 is early game, tier 2 is intermediate, tier 3 is advanced, tier 4 is endgame)
+      "categories": Pick 1-3 [Insert Category library here],
+      "narrative": "Provide a short 1-2 sentence narrative behind the skill",
+    "tags": ["Pick 2-5 from: "abundance", "alchemy", "aoe", "attack_speed", "basic", "berserker", "bonus", "burst", "bypass", "combat", "crafting", "critical", "damage", "damage_boost", "damage_reduction", "defense", "destruction", "durability", "efficiency", "enchanting", "engineering", "finisher", "gathering", "healing", "instant", "luck", "mana", "mastery", "mobility", "movement", "multi_purpose", "over_time", "precision", "quality", "rarity", "recovery", "refining", "regeneration", "repair", "single_hit", "single_target", "smithing", "speed", "speed_boost", "survival", "sustain", "tier", "time", "transcendence", "ultimate", "universal", "yield"]
+      "description": "Write a brief 1-2 sentence description of the skill.",
+  },
+
+      "Effect": Template below {
+        "type": "Choose the type of effect here [empower, quicken, fortify, restore, enrich, elevate, pierce, regenerate, devastate, transcend]",
+        "category": "Choose the category of effect type",
+        "magnitude": "Choose the magnitude of the effect",
+        "target": "Choose the target of the effect",
+        "duration": "Choose the duration of the effect",
+        "additionalEffects": [Write any other effects here in the previous template as above starting from { “type”:]
+      },
+##Library of effects
+[
+    "empower": {
+      "type": "empower",
+      "category": ["damage", "smithing", "alchemy", "engineering", "refining", "enchanting", "mining", "forestry"],
+      "magnitude": ["minor", "moderate", "major", "extreme"],
+      "target": ["self", "enemy", "resource_node", "area"],
+      "duration": ["instant", "brief", "moderate", "long", "extended"],
+      "additionalEffects": "Array of any other effect objects using same structure as primary effect"
+    },
+
+    "quicken": {
+      "type": "quicken",
+      "category": ["combat", "movement", "smithing", "alchemy", "engineering", "refining", "mining", "forestry"],
+      "magnitude": ["minor", "moderate", "major", "extreme"],
+      "target": ["self", "enemy", "resource_node", "area"],
+      "duration": ["instant", "brief", "moderate", "long", "extended"],
+      "additionalEffects": "Array of additional effect objects using same structure as primary effect"
+    },
+
+    "fortify": {
+      "type": "fortify",
+      "category": ["defense", "durability"],
+      "magnitude": ["minor", "moderate", "major", "extreme"],
+      "target": ["self", "enemy", "resource_node", "area"],
+      "duration": ["instant", "brief", "moderate", "long", "extended"],
+      "additionalEffects": "Array of additional effect objects using same structure as primary effect"
+    },
+
+    "restore": {
+      "type": "restore",
+      "category": ["defense", "durability"],
+      "magnitude": ["minor", "moderate", "major", "extreme"],
+      "target": ["self", "enemy", "resource_node", "area"],
+      "duration": ["instant", "brief", "moderate", "long", "extended"],
+      "additionalEffects": "Array of additional effect objects using same structure as primary effect"
+    },
+
+    "enrich": {
+      "type": "enrich",
+      "category": ["mining", "forestry"],
+      "magnitude": ["minor", "moderate", "major", "extreme"],
+      "target": ["self", "enemy", "resource_node", "area"],
+      "duration": ["instant", "brief", "moderate", "long", "extended"],
+      "additionalEffects": "Array of additional effect objects using same structure as primary effect"
+    },
+
+    "elevate": {
+      "type": "elevate",
+      "category": ["mining", "refining", "enchanting", "smithing"],
+      "magnitude": ["minor", "moderate", "major", "extreme"],
+      "target": ["self", "enemy", "resource_node", "area"],
+      "duration": ["instant", "brief", "moderate", "long", "extended"],
+      "additionalEffects": "Array of additional effect objects using same structure as primary effect"
+    },
+
+    "pierce": {
+      "type": "pierce",
+      "category": ["damage", "enchanting", "combat"],
+      "magnitude": ["minor", "moderate", "major", "extreme"],
+      "target": ["self", "enemy", "resource_node", "area"],
+      "duration": ["instant", "brief", "moderate", "long", "extended"],
+      "additionalEffects": "Array of additional effect objects using same structure as primary effect"
+    },
+
+    "regenerate": {
+      "type": "regenerate",
+      "category": ["defense", "durability"],
+      "magnitude": ["minor", "moderate", "major", "extreme"],
+      "target": ["self", "enemy", "resource_node", "area"],
+      "duration": ["instant", "brief", "moderate", "long", "extended"],
+      "additionalEffects": "Array of additional effect objects using same structure as primary effect"
+    },
+
+    "devastate": {
+      "type": "devastate",
+      "category": ["damage", "mining", "combat"],
+      "magnitude": ["minor", "moderate", "major", "extreme"],
+      "target": ["self", "enemy", "resource_node", "area"],
+      "duration": ["instant", "brief", "moderate", "long", "extended"],
+      "additionalEffects": "Array of additional effect objects using same structure as primary effect"
+    },
+
+    "transcend": {
+      "type": "transcend",
+      "category": ["mining", "smithing", "alchemy", "engineering"],
+      "magnitude": ["minor", "moderate", "major", "extreme"],
+      "target": ["self", "enemy", "resource_node", "area"],
+      "duration": ["instant", "brief", "moderate", "long", "extended"],
+      "additionalEffects": "Array of additional effect objects using same structure as primary effect"
+    }
+  ]
+
+      "cost": {
+        "mana": 20-150,
+        "cooldown": 20-600,
+      },
+
+      "requirements": {
+        "characterLevel": Pick a level requirement,  // Tier 1: 1-5, Tier 2: 6-15, Tier 3: 16-25, Tier 4: 26-30,
+        "stats": [
+        "AGI": Pick a value relative to the tier if pertinent,  // 1-30.
+      "INT": Pick a value relative to the tier if pertinent,  // 1-30.
+      "STR": Pick a value relative to the tier if pertinent,  // 1-30.
+        "VIT": Pick a value relative to the tier if pertinent,  // 1-30.
+      "DEF": Pick a value relative to the tier if pertinent,  // 1-30.
+      "LCK": Pick a value relative to the tier if pertinent,  // 1-30.
+  ],
+        "titles": []
+      }
+    },
+
+
 
 ## Important Guidelines:
 

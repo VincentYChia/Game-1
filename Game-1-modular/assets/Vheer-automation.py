@@ -9,6 +9,7 @@ Usage:
 1. Run script
 2. Choose test mode (2 items) or full catalog
 3. Script will generate all icons automatically
+##Minimize the screen to 50% for best outcomes
 """
 
 from selenium import webdriver
@@ -31,7 +32,7 @@ import re
 import shutil
 
 ## ============================================================================
-# CONFIGURATION 5
+# CONFIGURATION
 # ============================================================================
 
 PERSISTENT_PROMPT = (
@@ -170,6 +171,48 @@ def is_connection_error(exception):
         return True
 
     return False
+
+def handle_popup_ad(driver):
+    """Try multiple strategies to handle popup ads"""
+    try:
+        # Strategy 1: Wait for popup to disappear (max 10 seconds)
+        print("  → Waiting for popup ad to clear...")
+        time.sleep(3)
+
+        # Strategy 2: Try to find and click close button
+        close_selectors = [
+            "button[aria-label='Close']",
+            "button.close",
+            ".popup-close",
+            ".ad-close",
+            "[class*='close']",
+            "button:has(svg)"  # Close buttons often have X icons
+        ]
+
+        for selector in close_selectors:
+            try:
+                close_btn = driver.find_element(By.CSS_SELECTOR, selector)
+                if close_btn.is_displayed():
+                    close_btn.click()
+                    print(f"  ✓ Closed popup using: {selector}")
+                    time.sleep(1)
+                    return True
+            except:
+                continue
+
+        # Strategy 3: Remove popup overlay with JavaScript
+        driver.execute_script("""
+            // Remove common popup/overlay elements
+            var overlays = document.querySelectorAll('[class*="popup"], [class*="overlay"], [class*="modal"]');
+            overlays.forEach(el => el.remove());
+        """)
+        print("  ✓ Removed popup overlays with JavaScript")
+        time.sleep(0.5)
+        return True
+
+    except Exception as e:
+        print(f"  ⚠ Could not handle popup: {e}")
+        return False
 
 def categorize_item(item):
     """Determine subfolder based on item properties"""
@@ -485,15 +528,34 @@ def select_cel_shaded_style(driver):
         return True
 
 def click_generate_button(driver):
-    """Find and click Generate button"""
-    buttons = driver.find_elements(By.TAG_NAME, 'button')
+    """Find and click Generate button with popup handling"""
+    try:
+        # First, try to handle any popups
+        handle_popup_ad(driver)
 
-    for btn in buttons:
-        if 'generate' in btn.text.lower():
-            btn.click()
-            return True
+        buttons = driver.find_elements(By.TAG_NAME, 'button')
 
-    return False
+        for btn in buttons:
+            if 'generate' in btn.text.lower():
+                try:
+                    # Try normal click first
+                    btn.click()
+                    print("  ✓ Generate button clicked (normal)")
+                    return True
+                except Exception as e:
+                    if 'intercepted' in str(e).lower():
+                        print("  ⚠ Click intercepted, trying JavaScript click...")
+                        # Use JavaScript click to bypass popup
+                        driver.execute_script("arguments[0].click();", btn)
+                        print("  ✓ Generate button clicked (JavaScript)")
+                        return True
+                    raise
+
+        return False
+
+    except Exception as e:
+        print(f"  ✗ Error clicking generate: {e}")
+        return False
 
 def wait_for_generation_complete(driver, timeout=180):
     """Wait for download button to appear - ROBUST VERSION

@@ -2,32 +2,135 @@ You are an alchemy master for an action fantasy sandbox RPG. Given alchemy recip
 
 # Alchemy Items - Field Guidelines
 
-Generate a JSON object following this structure with inline guidance:
+Generate a JSON object following this structure. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide:
 
 ```json
-{
-  "metadata": {
-    "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
-    "tags": ["Pick 2-5 from: "advanced", "consumable", "healing", "potion", "quality", "regeneration", "standard", "starter"]
+{ "metadata":
+{ "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
+"tags": ["Pick 2-5 from[
+    "advanced",
+    "consumable",
+    "healing",
+    "potion",
+    "quality",
+    "regeneration",
+    "standard",
+    "starter",
+    "buff",
+    "resistance",
+    "utility",
+    "explosive",
+    "dangerous",
+    "engineering",
+    "legendary",
+    "power",
+    "protection",
+    "combat",
+    "speed",
+    "agility",
+    "defense",
+    "elemental",
+    "harmony",
+    "tool",
+    "crafting",
+    "weapon",
+    "armor",
+    "void",
+    "solvent" ] },
+"itemId": "itemId_here",
+"name": "item name here",
+"tier": 1-4, // 4 is highest tier 1 is lowest; affects general balance and should be chosen based off of the input ingredients,
+"rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
+ "category": "consumable",
+  "types": Pick one[
+    "potion",
+    "oil",
+    "material",
+    "utility"
+  ],
+  "subtypes": Pick one[
+    "healing",
+    "buff",
+    "resistance",
+    "utility",
+    "explosive",
+    "solvent"
+  ],
+
+ "stackSize": 0-10,
+"effect": "Brief plain text effect description",
+
+   "effectTags": Pick 2-5 to create functionality (these call on the function that uses the effectParams below) [
+    "healing",
+    "instant",
+    "over_time",
+    "buff",
+    "resistance",
+    "utility",
+    "self"
+  ],
+
+  "effectParams": Define the effect efficacy{
+    "healing": {
+      "heal_amount": "50–200",
+      "heal_per_second": "10-20",
+      "duration": "30-90"
+    },
+
+    "buff": {
+      "buff_type": [
+        "strength",
+        "attack_speed",
+        "defense",
+        "speed",
+        "max_hp"
+      ],
+      "buff_value": "0.10–0.60",
+      "duration": "120–300"
+    },
+
+    "resistance": {
+      "resistance_type": [
+        "fire",
+        "ice",
+        "elemental"
+      ],
+      "damage_reduction": "0.30–0.50",
+      "duration": "360–600"
+    },
+
+    "utility": {
+      "utility_type": [
+        "efficiency",
+        "armor",
+        "weapon"
+      ],
+      "utility_value": "0.10–0.15 OR ~5–10 (flat)",
+      "duration": "3600–5400"
+    }
   },
-  "tier": 1,  // 1-4 (affects stat ranges below)
-  "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
 
-  // === NUMERIC FIELDS (by tier) ===
-  "duration": 0,  // T3: 0.0-60.0
-  "stackSize": 0,  // T3: 10.0-20.0
-
-  "requirements": {
-    "level": 1,  // T1: 1-5, T2: 6-15, T3: 16-25, T4: 26-30
-    "stats": {}  // Stat requirements (tier-appropriate)
+"statMultipliers": {
+    "weight":  0.2-0.5,
   },
 
-  "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
+ "duration":(This should match the duration of the longest effect parameter)0.0-7200.0,
+      Rough Guide:
+"0": "instant or crafting-only",
+      "60-600": "combat effects",
+      "3600-7200": "long-duration utility",
+
+"requirements": {
+    "level": Pick a level requirement,  // Tier 1: 1-5, Tier 2: 6-15, Tier 3: 16-25, Tier 4: 26-30,
+    "stats": {}
+  },
+
+ "flags": {
+    "stackable": true,
+    "consumable": true,
+    "repairable": false
   }
-}
+
 ```
 
 ## Important Guidelines:

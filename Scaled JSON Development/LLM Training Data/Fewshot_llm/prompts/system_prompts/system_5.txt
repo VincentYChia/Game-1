@@ -2,7 +2,7 @@ You are an enchantment crafter for an action fantasy sandbox RPG. Given enchanti
 
 # Enchanting Recipes - Field Guidelines
 
-Generate a JSON object following this structure with inline guidance:
+Generate a JSON object following this structure. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide:
 
 ```json
 {
@@ -13,20 +13,143 @@ Generate a JSON object following this structure with inline guidance:
   "tier": 1,  // 1-4 (affects stat ranges below)
   "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
 
-  // === NUMERIC FIELDS (by tier) ===
-
-  "requirements": {
-    "level": 1,  // T1: 1-5, T2: 6-15, T3: 16-25, T4: 26-30
-    "stats": {}  // Stat requirements (tier-appropriate)
+{
+"metadata": {
+ "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
+ "recipeId": "recipeId_here", "enchantmentId": "enchantmentId_here",
+"tags": ["Pick 2-5 from: "advanced", "armor", "basic", "damage", "defense", "durability", "efficiency", "elemental", "fire", "fortune", "frost", "healing", "knockback", "legendary", "lifesteal", "lightning", "luck", "master", "mobility", "poison", "reflect", "regeneration", "repair", "silk-touch", "soulbound", "special", "speed", "thorns", "tool", "universal", "utility", "vampiric", "weapon", "weight"] },
+"applicableTo": [
+  "weapon",
+  "tool",
+  "armor",
+  "accessory"
+]
+##All effects with approximate value here
+ "effectLibrary": {
+  "damage_multiplier": {
+    "value": [0.1, 0.35],
+    "stackable": [false]
   },
 
-  "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
+  "durability_multiplier": {
+    "value": [0.3, 0.6],
+    "stackable": [false]
+  },
+
+  "damage_over_time": {
+    "element": ["fire", "poison"],
+    "damagePerSecond": [8, 10],
+    "duration": [5, 8],
+    "stackable": [true]
+  },
+
+  "slow": {
+    "element": ["ice"],
+    "slowPercent": [0.3, 0.3],
+    "duration": [4, 4],
+    "stackable": [true]
+  },
+
+  "chain_damage": {
+    "element": ["lightning"],
+    "chainCount": [2, 2],
+    "chainRange": [3, 3],
+    "damagePercent": [0.5, 0.5],
+    "stackable": [false]
+  },
+
+  "damage_reduction": {
+    "value": [0.1, 0.35],
+    "stackable": [false]
+  },
+
+  "reflect_damage": {
+    "value": [0.15, 0.15],
+    "stackable": [false]
+  },
+
+  "gathering_speed_multiplier": {
+    "value": [0.2, 0.4],
+    "stackable": [false]
+  },
+
+  "bonus_yield_chance": {
+    "value": [0.3, 0.6],
+    "stackable": [false]
+  },
+
+  "harvest_original_form": {
+    "value": [1.0, 1.0],
+    "stackable": [false]
+  },
+
+  "movement_speed_multiplier": {
+    "value": [0.15, 0.15],
+    "stackable": [true],
+    "maxStacks": [3, 3]
+  },
+
+  "health_regeneration": {
+    "value": [1, 1],
+    "stackable": [true],
+    "maxStacks": [5, 5]
+  },
+
+  "weight_multiplier": {
+    "value": [-0.5, -0.5],
+    "stackable": [false]
+  },
+
+  "durability_regeneration": {
+    "value": [1, 1],
+    "perMinute": [true],
+    "stackable": [false]
+  },
+
+  "soulbound": {
+    "value": [1.0, 1.0],
+    "stackable": [false]
+  },
+
+  "knockback": {
+    "value": [3, 3],
+    "stackable": [false]
+  },
+
+  "lifesteal": {
+    "value": [0.12, 0.12],
+    "stackable": [false]
   }
 }
-```
+
+"conflictsWith": Pick enchantments that would prove a narrative conflict or are inferior versions of the enchantment being applied:
+[  "sharpness_1",
+  "sharpness_2",
+  "sharpness_3",
+  "unbreaking_1",
+  "unbreaking_2",
+  "fire_aspect",
+  "frost_touch",
+  "lightning_strike",
+  "protection_1",
+  "protection_2",
+  "protection_3",
+  "thorns",
+  "efficiency_1",
+  "efficiency_2",
+  "fortune_1",
+  "fortune_2",
+  "silk_touch",
+  "swiftness",
+  "regeneration",
+  "weightless",
+  "self_repair",
+  "soulbound",
+  "knockback",
+  "poison",
+  "Lifesteal" ]
+
+
 
 ## Important Guidelines:
 

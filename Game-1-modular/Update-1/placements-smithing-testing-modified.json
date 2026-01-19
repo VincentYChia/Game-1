@@ -1,0 +1,154 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "totalPlacements": 5
+  },
+  "placements": [
+    {
+      "recipeId": "recipe_blood_reaver",
+      "placementMap": {
+        "9,1": "worldtree_plank",
+        "8,2": "worldtree_plank",
+        "7,4": "etherion_ingot",
+        "6,5": "etherion_ingot",
+        "5,6": "etherion_ingot",
+        "4,7": "etherion_ingot",
+        "3,8": "etherion_ingot",
+        "2,9": "etherion_ingot",
+        "1,8": "etherion_ingot",
+        "2,7": "etherion_ingot",
+        "3,6": "etherion_ingot",
+        "4,5": "etherion_ingot",
+        "5,4": "etherion_ingot",
+        "6,3": "etherion_ingot",
+        "1,9": "essence_blood",
+        "6,4": "obsidian",
+        "5,5": "obsidian",
+        "4,6": "obsidian",
+        "3,7": "obsidian",
+        "2,8": "obsidian",
+        "7,3": "primordial_crystal",
+        "7,2": "worldtree_plank",
+        "8,3": "worldtree_plank",
+        "9,4": "worldtree_plank",
+        "6,1": "worldtree_plank"
+      },
+      "metadata": {
+        "gridSize": "9x9",
+        "narrative": ""
+      }
+    },
+    {
+      "recipeId": "recipe_frostbite_hammer",
+      "placementMap": {
+        "6,2": "ironwood_plank",
+        "5,3": "ironwood_plank",
+        "4,4": "ironwood_plank",
+        "2,6": "voidstone",
+        "3,5": "voidstone",
+        "3,6": "crystal_quartz",
+        "3,7": "crystal_quartz",
+        "4,6": "crystal_quartz",
+        "2,5": "crystal_quartz",
+        "1,5": "crystal_quartz",
+        "2,4": "crystal_quartz",
+        "7,1": "frost_essence"
+      },
+      "metadata": {
+        "gridSize": "7x7",
+        "narrative": ""
+      }
+    },
+    {
+      "recipeId": "recipe_inferno_blade",
+      "placementMap": {
+        "8,2": "worldtree_plank",
+        "7,3": "primordial_crystal",
+        "9,1": "worldtree_plank",
+        "6,4": "phoenix_ash",
+        "5,5": "phoenix_ash",
+        "4,6": "phoenix_ash",
+        "3,7": "phoenix_ash",
+        "2,8": "phoenix_ash",
+        "1,9": "voidstone",
+        "2,9": "etherion_ingot",
+        "3,8": "etherion_ingot",
+        "4,7": "etherion_ingot",
+        "5,6": "etherion_ingot",
+        "6,5": "etherion_ingot",
+        "7,4": "etherion_ingot",
+        "6,3": "etherion_ingot",
+        "5,4": "etherion_ingot",
+        "4,5": "etherion_ingot",
+        "3,6": "etherion_ingot",
+        "2,7": "etherion_ingot",
+        "1,8": "etherion_ingot",
+        "8,4": "worldtree_plank",
+        "6,2": "worldtree_plank",
+        "5,1": "worldtree_plank",
+        "9,5": "worldtree_plank"
+      },
+      "metadata": {
+        "gridSize": "9x9",
+        "narrative": ""
+      }
+    },
+    {
+      "recipeId": "recipe_lightning_chain_whip",
+      "placementMap": {
+        "5,3": "storm_heart",
+        "6,4": "spectral_thread",
+        "6,5": "spectral_thread",
+        "5,6": "spectral_thread",
+        "4,7": "spectral_thread",
+        "3,7": "spectral_thread",
+        "2,6": "spectral_thread",
+        "1,5": "spectral_thread",
+        "1,4": "spectral_thread",
+        "2,3": "spectral_thread",
+        "3,2": "spectral_thread",
+        "2,1": "diamond",
+        "6,2": "adamantine_ingot",
+        "7,1": "ironwood_plank"
+      },
+      "metadata": {
+        "gridSize": "7x7",
+        "narrative": ""
+      }
+    },
+    {
+      "recipeId": "recipe_void_piercer",
+      "placementMap": {
+        "7,3": "genesis_lattice",
+        "9,1": "worldtree_plank",
+        "6,4": "etherion_ingot",
+        "5,5": "etherion_ingot",
+        "4,6": "etherion_ingot",
+        "3,7": "etherion_ingot",
+        "2,8": "etherion_ingot",
+        "1,9": "etherion_ingot",
+        "6,5": "voidstone",
+        "5,6": "voidstone",
+        "4,7": "voidstone",
+        "3,8": "voidstone",
+        "2,9": "voidstone",
+        "1,8": "voidstone",
+        "2,7": "voidstone",
+        "3,6": "voidstone",
+        "4,5": "voidstone",
+        "5,4": "voidstone",
+        "6,2": "worldtree_plank",
+        "8,4": "worldtree_plank",
+        "9,5": "void_essence",
+        "5,1": "void_essence",
+        "6,3": "genesis_lattice",
+        "7,4": "genesis_lattice",
+        "8,2": "worldtree_plank"
+      },
+      "metadata": {
+        "gridSize": "9x9",
+        "narrative": ""
+      }
+    }
+  ]
+}

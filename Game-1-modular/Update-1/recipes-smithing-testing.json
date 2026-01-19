@@ -1,0 +1,145 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "modified": true,
+    "totalRecipes": 5
+  },
+  "recipes": [
+    {
+      "recipeId": "recipe_lightning_chain_whip",
+      "outputId": "lightning_chain_whip",
+      "outputQty": 1,
+      "stationTier": 3,
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 1
+        },
+        {
+          "materialId": "diamond",
+          "quantity": 1
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 1
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 10
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "recipeId": "recipe_inferno_blade",
+      "outputId": "inferno_blade",
+      "outputQty": 1,
+      "stationTier": 4,
+      "inputs": [
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 12
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 5
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": 1
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 1
+        },
+        {
+          "materialId": "worldtree_plank",
+          "quantity": 6
+        }
+      ]
+    },
+    {
+      "recipeId": "recipe_void_piercer",
+      "outputId": "void_piercer",
+      "outputQty": 1,
+      "stationTier": 4,
+      "inputs": [
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "genesis_lattice",
+          "quantity": 3
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 2
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 10
+        },
+        {
+          "materialId": "worldtree_plank",
+          "quantity": 4
+        }
+      ]
+    },
+    {
+      "recipeId": "recipe_frostbite_hammer",
+      "outputId": "frostbite_hammer",
+      "outputQty": 1,
+      "stationTier": 3,
+      "inputs": [
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 6
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 1
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 3
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 2
+        }
+      ]
+    },
+    {
+      "recipeId": "recipe_blood_reaver",
+      "outputId": "blood_reaver",
+      "outputQty": 1,
+      "stationTier": 4,
+      "inputs": [
+        {
+          "materialId": "essence_blood",
+          "quantity": 1
+        },
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 12
+        },
+        {
+          "materialId": "obsidian",
+          "quantity": 5
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": 1
+        },
+        {
+          "materialId": "worldtree_plank",
+          "quantity": 6
+        }
+      ]
+    }
+  ]
+}

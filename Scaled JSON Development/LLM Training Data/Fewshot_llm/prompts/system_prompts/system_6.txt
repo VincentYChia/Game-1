@@ -2,7 +2,7 @@ You are a creature designer for an action fantasy sandbox RPG. Given world chunk
 
 # Hostiles - Field Guidelines
 
-Generate a JSON object following this structure with inline guidance:
+Generate a JSON object following this structure. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide:
 
 ```json
 {
@@ -10,6 +10,8 @@ Generate a JSON object following this structure with inline guidance:
     "narrative": "Short narrative about the enemy (2-3 sentences). Describe its nature and threat.",
     "tags": ["Pick 2-5 from: "aggressive", "beetle", "boss", "common", "construct", "docile", "end-game", "entity", "epic", "golem", "mid-game", "mythical", "passive", "phase", "rare", "reality-bender", "slime", "starter", "territorial", "uncommon", "wolf", "wraith"]
   },
+"enemyId": "enemyId goes here",
+      "name": "enemy name goes here",
   "behavior": "Pick one: ["aggressive_pack", "aggressive_phase", "aggressive_swarm", "boss_encounter", "docile_wander", "passive_patrol", "stationary", "territorial"]",
   "category": "Pick one: ["aberration", "beast", "construct", "insect", "ooze", "undead"]",
   "tier": 1,  // 1-4 (determines stats block below)
@@ -18,7 +20,7 @@ Generate a JSON object following this structure with inline guidance:
   // === STATS BY TIER ===
   // Use the stats block matching your tier
 
-  // T1 Stats:
+  // Tier 1 Stats:
   "stats": {
     "aggroRange": 0,  // 3.0-5.0
     "attackSpeed": 0,  // ~0.9
@@ -29,7 +31,7 @@ Generate a JSON object following this structure with inline guidance:
     "speed": 0,  // 0.5-1.2
   },
 
-  // T2 Stats:
+  // Tier 2 Stats:
   "stats": {
     "aggroRange": 0,  // ~7.0
     "attackSpeed": 0,  // 0.8-1.2
@@ -40,7 +42,7 @@ Generate a JSON object following this structure with inline guidance:
     "speed": 0,  // 0.7-1.4
   },
 
-  // T3 Stats:
+  // Tier 3 Stats:
   "stats": {
     "aggroRange": 0,  // ~11.0
     "attackSpeed": 0,  // 0.6-1.5
@@ -51,7 +53,7 @@ Generate a JSON object following this structure with inline guidance:
     "speed": 0,  // 0.5-1.6
   },
 
-  // T4 Stats:
+  // Tier 4 Stats:
   "stats": {
     "aggroRange": 0,  // 12.0-20.0
     "attackSpeed": 0,  // 0.7-1.3
@@ -61,17 +63,172 @@ Generate a JSON object following this structure with inline guidance:
     "health": 0,  // 400.0-2000.0
     "speed": 0,  // 0.6-1.5
   },
-
-  "requirements": {
-    "level": 1,  // T1: 1-5, T2: 6-15, T3: 16-25, T4: 26-30
-    "stats": {}  // Stat requirements to fight this enemy
+##Drop Section
+[
+  {
+    "materialId": "wolf_pelt",
+    "quantity": "2-12",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
   },
-
-  "flags": {
-    "stackable": false,
-    "equippable": false,
-    "hostile": true
+  {
+    "materialId": "dire_fang",
+    "quantity": "1-10",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "living_ichor",
+    "quantity": "1-3",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "essence_blood",
+    "quantity": "3-6",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "spectral_thread",
+    "quantity": "2-10",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "slime_gel",
+    "quantity": "3-20",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "water_crystal",
+    "quantity": "1-1",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "shadow_core",
+    "quantity": "1-6",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "crystal_quartz",
+    "quantity": "5-15",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "light_gem",
+    "quantity": "2-3",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "beetle_carapace",
+    "quantity": "2-25",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "earth_crystal",
+    "quantity": "1-8",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "iron_scales",
+    "quantity": "3-15",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "golem_core",
+    "quantity": "2-5",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "adamantine_ingot",
+    "quantity": "2-3",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "granite",
+    "quantity": "10-15",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "diamond",
+    "quantity": "1-5",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "primordial_crystal",
+    "quantity": "1-4",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "void_essence",
+    "quantity": "3-12",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "chaos_matrix",
+    "quantity": "3-5",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "etherion_ingot",
+    "quantity": "5-8",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
+  },
+  {
+    "materialId": "genesis_lattice",
+    "quantity": "2-3",
+    "chance": Pick one [ "low", "moderate", "high", "guaranteed"]
   }
+],
+##Behavior
+{
+  "defaultState": [
+    "idle",
+    "wander",
+    "patrol",
+    "guard"
+  ],
+  "behaviorProfiles": [
+    "stationary",
+    "docile_wander",
+    "passive_patrol",
+    "territorial",
+    "aggressive_pack",
+    "aggressive_swarm",
+    "aggressive_phase",
+    "boss_encounter"
+  ],
+  "aggroOnDamage": [true, false],
+  "aggroOnProximity": [true, false],
+  "fleeAtHealth": {
+    "range": "0.0-0.3",
+    "values": [0, 0.2, 0.3]
+  },
+  "callForHelpRadius": {
+    "range": "0-20",
+    "values": [0, 8, 10, 12, 15, 20]
+  },
+  "packCoordination": [true],
+  "specialAbilities": [
+    "howl_buff",
+    "leap_attack",
+    "acid_damage_over_time",
+    "split_on_damage",
+    "elemental_burst",
+    "charge_attack",
+    "earthquake_stomp",
+    "shell_shield",
+    "rampage",
+    "ground_slam",
+    "stone_armor",
+    "crystal_beam",
+    "refraction_shield",
+    "summon_shards",
+    "phase_shift",
+    "life_drain",
+    "teleport",
+    "reality_warp",
+    "void_rift",
+    "temporal_distortion",
+    "chaos_burst"
+  ]
+}
 }
 ```
 
@@ -83,3 +240,4 @@ Generate a JSON object following this structure with inline guidance:
 4. **Tags**: Only use tags from the library above
 5. **Narrative**: Keep it concise (2-3 sentences) and thematic
 6. **Stats**: Stay within ±20% of tier ranges
+

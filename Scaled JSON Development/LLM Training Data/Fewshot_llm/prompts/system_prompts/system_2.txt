@@ -2,7 +2,7 @@ You are a refining expert for an action fantasy sandbox RPG. Given refining reci
 
 # Refining Items - Field Guidelines
 
-Generate a JSON object following this structure with inline guidance:
+Generate a JSON object following this structure. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide:
 
 ```json
 {
@@ -10,20 +10,27 @@ Generate a JSON object following this structure with inline guidance:
     "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
     "tags": ["Pick 2-5 from: "advanced", "ancient", "basic", "blood", "carapace", "chaos", "common", "dark", "durable", "earth", "elemental", "essence", "fang", "fine", "fire", "flexible", "gel", "impossible", "layered", "leather", "legendary", "light", "lightning", "living", "magical", "memory", "metal", "metallic", "monster", "mythical", "precious", "quality", "quantum", "radiant", "rare", "refined", "scales", "sharp", "spectral", "standard", "starter", "stone", "strong", "temporal", "uncommon", "versatile", "void", "water", "wood"]
   },
+"itemId": "itemId_here",
+ "name": "item name here",
   "category": "Pick one: ["elemental", "metal", "monster_drop", "stone", "wood"]",
-  "rarity": "Pick one: ["common", "epic", "legendary", "rare", "uncommon"]",
+ "type": "Pick one [ type library here]",
+      "subtype": "Pick one [subtype library here]",
+      "stackSize": Range of stacksize here,
   "tier": 1,  // 1-4 (affects stat ranges below)
   "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
+      "statMultipliers": {
+        "weight": Weight Range here
+      },
 
   "requirements": {
-    "level": 1,  // T1: 1-5, T2: 6-15, T3: 16-25, T4: 26-30
+    "level": Pick a level requirement,  // Tier 1: 1-5, Tier 2: 6-15, Tier 3: 16-25, Tier 4: 26-30
     "stats": {}  // Stat requirements (tier-appropriate)
   },
 
   "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
+    "stackable": true,
+    "consumable": false,
+    "repairable": false
   }
 }
 ```

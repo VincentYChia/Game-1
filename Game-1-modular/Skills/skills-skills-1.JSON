@@ -31,12 +31,6 @@
         "cooldown": 180
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "titans_excavation",
-        "requirement": "Reach level 10 and mine 1000 ore nodes"
-      },
-
       "requirements": {
         "characterLevel": 1,
         "stats": {},
@@ -66,12 +60,6 @@
       "cost": {
         "mana": 60,
         "cooldown": 180
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "natures_tempo",
-        "requirement": "Reach level 10 and harvest 500 trees"
       },
 
       "requirements": {
@@ -105,12 +93,6 @@
         "cooldown": 360
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "iron_fortress",
-        "requirement": "Reach level 10 and block 5000 damage"
-      },
-
       "requirements": {
         "characterLevel": 3,
         "stats": {"DEF": 5},
@@ -140,12 +122,6 @@
       "cost": {
         "mana": 50,
         "cooldown": 30
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "decimating_blow",
-        "requirement": "Reach level 10 and deal 10000 damage"
       },
 
       "requirements": {
@@ -179,12 +155,6 @@
         "cooldown": 300
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "master_maintenance",
-        "requirement": "Reach level 10 and repair 50000 durability"
-      },
-
       "requirements": {
         "characterLevel": 1,
         "stats": {},
@@ -214,12 +184,6 @@
       "cost": {
         "mana": 70,
         "cooldown": 200
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "natures_bounty",
-        "requirement": "Reach level 10 and gather 5000 materials"
       },
 
       "requirements": {
@@ -253,12 +217,6 @@
         "cooldown": 20
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "wind_runner",
-        "requirement": "Reach level 10 and travel 100000 tiles"
-      },
-
       "requirements": {
         "characterLevel": 1,
         "stats": {},
@@ -288,12 +246,6 @@
       "cost": {
         "mana": 60,
         "cooldown": 180
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "timeless_forge",
-        "requirement": "Reach level 10 and craft 100 smithed items"
       },
 
       "requirements": {
@@ -327,12 +279,6 @@
         "cooldown": 150
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "whirlwind_fury",
-        "requirement": "Reach level 10 and land 1000 attacks"
-      },
-
       "requirements": {
         "characterLevel": 1,
         "stats": {},
@@ -364,12 +310,6 @@
         "cooldown": 400
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "miracle_cure",
-        "requirement": "Reach level 10 and heal 50000 HP"
-      },
-
       "requirements": {
         "characterLevel": 2,
         "stats": {"VIT": 5},
@@ -399,12 +339,6 @@
       "cost": {
         "mana": 90,
         "cooldown": 240
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "eagle_vision",
-        "requirement": "Reach level 10 and land 500 critical hits"
       },
 
       "requirements": {
@@ -446,11 +380,6 @@
         "cooldown": 200
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "master_alchemist",
-        "requirement": "Reach level 10 and brew 150 potions"
-      },
 
       "requirements": {
         "characterLevel": 6,
@@ -481,12 +410,6 @@
       "cost": {
         "mana": 100,
         "cooldown": 450
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "legendary_prospector",
-        "requirement": "Reach level 10 and find 50 rare+ materials"
       },
 
       "requirements": {
@@ -520,11 +443,6 @@
         "cooldown": 400
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "phoenix_rebirth",
-        "requirement": "Reach level 10 and regenerate 100000 HP"
-      },
 
       "requirements": {
         "characterLevel": 7,
@@ -565,12 +483,6 @@
         "cooldown": 220
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "master_mechanic",
-        "requirement": "Reach level 10 and craft 100 devices"
-      },
-
       "requirements": {
         "characterLevel": 9,
         "stats": {"INT": 10, "AGI": 10},
@@ -600,12 +512,6 @@
       "cost": {
         "mana": 70,
         "cooldown": 200
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "eternal_edge",
-        "requirement": "Reach level 10 and save 50000 durability"
       },
 
       "requirements": {
@@ -647,12 +553,6 @@
         "cooldown": 200
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "master_refiner",
-        "requirement": "Reach level 10 and refine 200 materials"
-      },
-
       "requirements": {
         "characterLevel": 6,
         "stats": {"INT": 8},
@@ -690,12 +590,6 @@
       "cost": {
         "mana": 110,
         "cooldown": 480
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "berserker_rage",
-        "requirement": "Reach level 10 and defeat 500 enemies"
       },
 
       "requirements": {
@@ -737,12 +631,6 @@
         "cooldown": 220
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "archmage_mastery",
-        "requirement": "Reach level 10 and enchant 100 items"
-      },
-
       "requirements": {
         "characterLevel": 8,
         "stats": {"INT": 12, "LCK": 8},
@@ -772,12 +660,6 @@
       "cost": {
         "mana": 40,
         "cooldown": 600
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "undying_resolve",
-        "requirement": "Reach level 10 and survive at <10% HP 50 times"
       },
 
       "requirements": {
@@ -811,12 +693,6 @@
         "cooldown": 500
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
-      },
-
       "requirements": {
         "characterLevel": 15,
         "stats": {"STR": 20},
@@ -846,12 +722,6 @@
       "cost": {
         "mana": 140,
         "cooldown": 500
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
       },
 
       "requirements": {
@@ -893,12 +763,6 @@
         "cooldown": 600
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
-      },
-
       "requirements": {
         "characterLevel": 20,
         "stats": {"INT": 20, "AGI": 15},
@@ -936,12 +800,6 @@
       "cost": {
         "mana": 150,
         "cooldown": 600
-      },
-
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
       },
 
       "requirements": {
@@ -983,12 +841,6 @@
         "cooldown": 600
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
-      },
-
       "requirements": {
         "characterLevel": 22,
         "stats": {"VIT": 25},
@@ -1028,12 +880,6 @@
         "cooldown": 600
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
-      },
-
       "requirements": {
         "characterLevel": 20,
         "stats": {"STR": 25, "INT": 15},
@@ -1065,11 +911,6 @@
         "cooldown": 600
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
-      },
 
       "requirements": {
         "characterLevel": 17,
@@ -1102,12 +943,6 @@
         "cooldown": 500
       },
 
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
-      },
-
       "requirements": {
         "characterLevel": 19,
         "stats": {"INT": 22},
@@ -1137,12 +972,6 @@
       "cost": {
         "mana": 150,
         "cooldown": 600
-      },
-
-      "evolution": {
-        "canEvolve": false,
-        "nextSkillId": null,
-        "requirement": "Maximum evolution - cannot evolve further"
       },
 
       "requirements": {
@@ -1182,12 +1011,6 @@
       "cost": {
         "mana": 150,
         "cooldown": 600
-      },
-
-      "evolution": {
-        "canEvolve": false,
-        "nextSkillId": null,
-        "requirement": "Maximum evolution - cannot evolve further"
       },
 
       "requirements": {

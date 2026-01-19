@@ -1,24 +1,17 @@
 import json
 import numpy as np
 from colorsys import hsv_to_rgb
-from pathlib import Path
 import tensorflow as tf
+from pathlib import Path
 
 
 class RecipeValidator:
     """Uses trained CNN to validate smithing recipes"""
 
     def __init__(self, model_path, materials_path):
-        """
-        Initialize the validator
-
-        Args:
-            model_path: Path to trained .keras model
-            materials_path: Path to items-materials-1.JSON
-        """
         print(f"Loading model from: {model_path}")
         self.model = tf.keras.models.load_model(model_path)
-        print("✓ Model loaded successfully")
+        print("✓ Model loaded successfully\n")
 
         # Load materials data
         with open(materials_path, 'r') as f:
@@ -28,11 +21,15 @@ class RecipeValidator:
             mat['materialId']: mat
             for mat in materials_data['materials']
         }
-        print(f"✓ Loaded {len(self.materials_dict)} materials")
+        print(f"✓ Loaded {len(self.materials_dict)} materials\n")
 
     def material_to_color(self, material_id):
         """Convert material to RGB color (same as training)"""
         if material_id is None:
+            return np.array([0.0, 0.0, 0.0])
+
+        if material_id not in self.materials_dict:
+            print(f"⚠️  Warning: Unknown material '{material_id}', treating as empty")
             return np.array([0.0, 0.0, 0.0])
 
         material = self.materials_dict[material_id]
@@ -103,23 +100,18 @@ class RecipeValidator:
 
         return grid
 
-    def validate_grid(self, grid):
-        """
-        Validate a 9x9 grid
+    def validate_placement(self, placement_data):
+        """Validate from placement JSON format"""
+        grid = self.placement_to_grid(
+            placement_data['placementMap'],
+            placement_data['metadata']['gridSize']
+        )
 
-        Args:
-            grid: 9x9 list of lists with material IDs (None for empty)
-
-        Returns:
-            dict with 'valid' (bool), 'confidence' (float), 'prediction' (float)
-        """
         # Convert to image
         img = self.grid_to_image(grid)
 
-        # Add batch dimension
+        # Add batch dimension and predict
         img_batch = np.expand_dims(img, axis=0)
-
-        # Predict
         prediction = self.model.predict(img_batch, verbose=0)[0][0]
 
         # Interpret (threshold at 0.5)
@@ -132,120 +124,155 @@ class RecipeValidator:
             'prediction': float(prediction)
         }
 
-    def validate_placement(self, placement_data):
-        """
-        Validate from placement JSON format
 
-        Args:
-            placement_data: Dict with 'placementMap' and 'metadata.gridSize'
+def test_recipes_from_file():
+    """Interactive test script"""
 
-        Returns:
-            dict with validation results
-        """
-        grid = self.placement_to_grid(
-            placement_data['placementMap'],
-            placement_data['metadata']['gridSize']
-        )
-        return self.validate_grid(grid)
+    print("=" * 70)
+    print("RECIPE VALIDATOR - TEST MODE")
+    print("=" * 70)
+    print()
 
-    def validate_recipe_file(self, recipe_path):
-        """
-        Validate recipe from JSON file
+    # Get paths from user
+    print("Configuration:")
+    print("-" * 70)
 
-        Args:
-            recipe_path: Path to placement JSON file
+    model_path = input("Enter path to model file (.keras): ").strip()
+    if not model_path:
+        model_path = "excellent_minimal_lr_0_0012.keras"
+        print(f"  Using default: {model_path}")
 
-        Returns:
-            dict mapping recipeId to validation results
-        """
-        with open(recipe_path, 'r') as f:
-            data = json.load(f)
+    materials_path = input("Enter path to materials JSON: ").strip()
+    if not materials_path:
+        materials_path = "../../Game-1-modular/items.JSON/items-materials-1.JSON"
+        print(f"  Using default: {materials_path}")
 
-        results = {}
-        for placement in data['placements']:
-            recipe_id = placement['recipeId']
-            result = self.validate_placement(placement)
-            results[recipe_id] = result
+    # Verify files exist
+    if not Path(model_path).exists():
+        print(f"\n❌ Error: Model file not found: {model_path}")
+        return
 
-        return results
+    if not Path(materials_path).exists():
+        print(f"\n❌ Error: Materials file not found: {materials_path}")
+        return
 
-
-def print_validation_result(recipe_id, result):
-    """Pretty print validation result"""
-    status = "✓ VALID" if result['valid'] else "✗ INVALID"
-    confidence = result['confidence'] * 100
-
-    print(f"\n{'=' * 60}")
-    print(f"Recipe: {recipe_id}")
-    print(f"Status: {status}")
-    print(f"Confidence: {confidence:.1f}%")
-    print(f"Raw Prediction: {result['prediction']:.4f}")
-    print(f"{'=' * 60}")
-
-
-# Example usage
-if __name__ == "__main__":
-    # Paths - adjust these to your setup
-    MODEL_PATH = "excellent_minimal_lr_0_0012.keras"  # Your best model
-    MATERIALS_PATH = "../../Game-1-modular/items.JSON/items-materials-1.JSON"
-    PLACEMENTS_PATH = "../../Game-1-modular/placements.JSON/placements-smithing-1.JSON"
+    print("\n" + "=" * 70)
+    print()
 
     # Initialize validator
-    validator = RecipeValidator(MODEL_PATH, MATERIALS_PATH)
+    try:
+        validator = RecipeValidator(model_path, materials_path)
+    except Exception as e:
+        print(f"❌ Error loading validator: {e}")
+        return
 
-    print("\n" + "=" * 60)
-    print("RECIPE VALIDATION SYSTEM")
-    print("=" * 60)
+    # Get test file path
+    print("=" * 70)
+    test_file = input("Enter path to test recipes JSON file: ").strip()
 
-    # Option 1: Validate all recipes from file
-    print("\n--- Validating all recipes from file ---")
-    results = validator.validate_recipe_file(PLACEMENTS_PATH)
+    if not test_file:
+        print("❌ No file provided")
+        return
 
-    # Summary statistics
-    total = len(results)
-    valid_count = sum(1 for r in results.values() if r['valid'])
-    invalid_count = total - valid_count
-    avg_confidence = np.mean([r['confidence'] for r in results.values()])
+    if not Path(test_file).exists():
+        print(f"❌ Error: Test file not found: {test_file}")
+        return
 
-    print(f"\nTotal recipes tested: {total}")
-    print(f"Valid: {valid_count} ({valid_count / total * 100:.1f}%)")
-    print(f"Invalid: {invalid_count} ({invalid_count / total * 100:.1f}%)")
-    print(f"Average confidence: {avg_confidence * 100:.1f}%")
+    print("\n" + "=" * 70)
+    print(f"Testing recipes from: {test_file}")
+    print("=" * 70)
+    print()
 
-    # Show any recipes flagged as invalid (should be none for training data!)
-    invalid_recipes = [rid for rid, r in results.items() if not r['valid']]
-    if invalid_recipes:
-        print(f"\n⚠️  Recipes flagged as invalid:")
-        for rid in invalid_recipes:
-            print(f"  - {rid}: {results[rid]['confidence'] * 100:.1f}% confidence")
-    else:
-        print("\n✓ All recipes validated successfully!")
+    # Load and validate recipes
+    try:
+        with open(test_file, 'r') as f:
+            data = json.load(f)
 
-    # Option 2: Test a custom grid
-    print("\n\n--- Testing custom recipe ---")
+        placements = data.get('placements', [])
+        total = len(placements)
 
-    # Example: Simple 3x3 iron sword recipe
-    custom_grid = [[None] * 9 for _ in range(9)]
-    # Center a 3x3 pattern (iron ingots in shape of sword)
-    custom_grid[3][4] = "iron_ingot"  # Top
-    custom_grid[4][4] = "iron_ingot"  # Middle
-    custom_grid[5][4] = "iron_ingot"  # Bottom
-    custom_grid[6][4] = "oak_plank"  # Handle
+        if total == 0:
+            print("❌ No placements found in file")
+            return
 
-    result = validator.validate_grid(custom_grid)
-    print_validation_result("custom_sword", result)
+        print(f"Found {total} recipes to test\n")
+        print("=" * 70)
 
-    # Option 3: Test invalid recipe (random materials)
-    print("\n--- Testing invalid recipe ---")
-    invalid_grid = [[None] * 9 for _ in range(9)]
-    invalid_grid[0][0] = "iron_ingot"
-    invalid_grid[0][8] = "dragon_scale"
-    invalid_grid[8][0] = "oak_plank"
-    invalid_grid[8][8] = "phoenix_feather"
+        # Track results
+        valid_count = 0
+        invalid_count = 0
+        results = []
 
-    result = validator.validate_grid(invalid_grid)
-    print_validation_result("random_invalid", result)
+        # Test each recipe
+        for i, placement in enumerate(placements, 1):
+            recipe_id = placement.get('recipeId', f'recipe_{i}')
 
-    print("\n" + "=" * 60)
-    print("Validation complete!")
-    print("=" * 60)
+            try:
+                result = validator.validate_placement(placement)
+                results.append((recipe_id, result))
+
+                if result['valid']:
+                    valid_count += 1
+                    status = "✓ VALID  "
+                    symbol = "✓"
+                else:
+                    invalid_count += 1
+                    status = "✗ INVALID"
+                    symbol = "✗"
+
+                # Print result
+                conf_bar = "█" * int(result['confidence'] * 20)
+                print(f"{i:3d}. {symbol} {recipe_id:40s} "
+                      f"[{conf_bar:20s}] {result['confidence'] * 100:5.1f}%")
+
+            except Exception as e:
+                print(f"{i:3d}. ⚠️  {recipe_id:40s} ERROR: {str(e)[:30]}")
+                invalid_count += 1
+
+        # Summary
+        print("\n" + "=" * 70)
+        print("SUMMARY")
+        print("=" * 70)
+        print(f"Total recipes:       {total}")
+        print(f"Valid:              {valid_count:3d} ({valid_count / total * 100:5.1f}%)")
+        print(f"Invalid:            {invalid_count:3d} ({invalid_count / total * 100:5.1f}%)")
+
+        if results:
+            avg_confidence = np.mean([r[1]['confidence'] for r in results])
+            print(f"Average confidence: {avg_confidence * 100:5.1f}%")
+
+        # Show invalid recipes if any
+        invalid_recipes = [(rid, r) for rid, r in results if not r['valid']]
+        if invalid_recipes:
+            print("\n" + "-" * 70)
+            print("INVALID RECIPES:")
+            print("-" * 70)
+            for recipe_id, result in invalid_recipes:
+                print(f"  {recipe_id:40s} {result['confidence'] * 100:5.1f}% confidence")
+
+        # Show lowest confidence valid recipes
+        valid_recipes = [(rid, r) for rid, r in results if r['valid']]
+        if valid_recipes:
+            valid_recipes.sort(key=lambda x: x[1]['confidence'])
+            lowest_valid = valid_recipes[:5]
+
+            print("\n" + "-" * 70)
+            print("LOWEST CONFIDENCE VALID RECIPES (Review Recommended):")
+            print("-" * 70)
+            for recipe_id, result in lowest_valid:
+                print(f"  {recipe_id:40s} {result['confidence'] * 100:5.1f}% confidence")
+
+        print("\n" + "=" * 70)
+        print("Testing complete!")
+        print("=" * 70)
+
+    except json.JSONDecodeError as e:
+        print(f"❌ Error: Invalid JSON file: {e}")
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    test_recipes_from_file()

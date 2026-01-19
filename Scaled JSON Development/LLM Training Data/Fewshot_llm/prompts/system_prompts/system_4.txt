@@ -2,7 +2,7 @@ You are an engineering expert for an action fantasy sandbox RPG. Given engineeri
 
 # Engineering Items - Field Guidelines
 
-Generate a JSON object following this structure with inline guidance:
+Generate a JSON object following this structure. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide:
 
 ```json
 {
@@ -11,47 +11,46 @@ Generate a JSON object following this structure with inline guidance:
     "tags": ["Pick 2-5 from: "advanced", "area", "basic", "bomb", "cluster", "device", "elemental", "explosive", "fire", "frost", "immobilize", "light", "lightning", "physical", "precision", "projectile", "trap", "turret"]
   },
   "category": "Pick one: ["device"]",
-  "rarity": "Pick one: ["common", "rare", "uncommon"]",
   "subtype": "Pick one: ["area", "elemental", "energy", "explosive", "physical", "projectile"]",
   "type": "Pick one: ["bomb", "trap", "turret"]",
   "tier": 1,  // 1-4 (affects stat ranges below)
   "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
 
   // === NUMERIC FIELDS (by tier) ===
-  "stackSize": 0,  // T1: 5.0-15.0, T2: 5.0-10.0, T3: 3.0-5.0
+  "stackSize": 3.0-15.0,
 
   "effectTags": ["Pick 2-5 from: "beam", "bleed", "burn", "chain", "circle", "cone", "crushing", "energy", "fire", "freeze", "ice", "lightning", "physical", "piercing", "root", "shock", "single", "slow"],
 
   "effectParams": {
-    "baseDamage": 0,  // T1: 20.0-40.0, T2: 35.0-75.0, T3: 60.0-120.0
-    "beam_range": 0,  // 0
-    "beam_width": 0,  // 
-    "bleed_damage_per_second": 0,  // 
-    "bleed_duration": 0,  // 
-    "burn_damage_per_second": 0,  // T2: 5.0-8.0
-    "burn_duration": 0,  // T2: ~5.5
-    "chain_count": 0,  // 
-    "chain_range": 0,  // 0
-    "circle_radius": 0,  // T1: 2.0-3.0, T2: ~3.5
-    "cone_angle": 0,  // 
-    "cone_range": 0,  // 0
-    "freeze_duration": 0,  // 
-    "range": 0,  // 8.0-12.0
-    "root_duration": 0,  // 
-    "shock_damage": 0,  // 
-    "shock_duration": 0,  // 
-    "slow_factor": 0,  // 
+    "baseDamage": 0,  // Tier 1: 20.0-40.0, Tier 2: 35.0-75.0, Tier 3: 60.0-120.0
+    "beam_range": 5.0-20.0,
+    "beam_width": 1.0-5.0,
+    "bleed_damage_per_second": 5.0-30.0,
+    "bleed_duration": 5.0-30-.0,  /
+    "burn_damage_per_second": 4.0-15.0,
+    "burn_duration": 3.0-8.0,
+    "chain_count": 1.0-5.0,
+    "chain_range": 1.0-9.0,
+    "circle_radius": 2.0-8.0,
+    "cone_angle": 90.0-180.0,
+    "cone_range": 2.0-5.0,
+    "freeze_duration": 3.0-10.0,
+    "range": 5.0-17.0,
+    "root_duration": 1.0-5.0,
+    "shock_damage": 10.0-40.0,
+    "shock_duration": 1.0-3.0,
+    "slow_factor": 1.0-5.0,
   },
 
   "requirements": {
-    "level": 1,  // T1: 1-5, T2: 6-15, T3: 16-25, T4: 26-30
+    "level": Pick a level requirement,  // Tier 1: 1-5, Tier 2: 6-15, Tier 3: 16-25, Tier 4: 26-30
     "stats": {}  // Stat requirements (tier-appropriate)
   },
 
   "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
+    "stackable": true,
+    "placeable": true,
+    "repairable": false
   }
 }
 ```

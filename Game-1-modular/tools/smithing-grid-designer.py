@@ -5,7 +5,7 @@ from pathlib import Path
 from collections import Counter
 
 # HARDCODED MATERIALS PATH
-MATERIALS_JSON_PATH = r"C:\Users\Vincent\Downloads\game-1\materials.json"
+MATERIALS_JSON_PATH = r"..\items.JSON\items-materials-1.JSON"
 
 
 class SmithingDesigner:
@@ -19,10 +19,10 @@ class SmithingDesigner:
         self.placements = {}
         self.materials_db = {}
         self.current_recipe_id = None
-        self.current_recipe_original_inputs = []  # Store original inputs
+        self.current_recipe_original_inputs = []
         self.current_grid = {}
         self.selected_material = None
-        self.last_placed_material = None  # Track last placed material for spacebar reselect
+        self.last_placed_material = None
         self.recipes_file = None
         self.placements_file = None
 
@@ -72,10 +72,7 @@ class SmithingDesigner:
         try:
             with open(MATERIALS_JSON_PATH, 'r') as f:
                 data = json.load(f)
-                if 'materials' in data:
-                    materials_list = data['materials']
-                else:
-                    materials_list = data if isinstance(data, list) else []
+                materials_list = self.extract_materials_from_json(data)
 
                 # Convert to dict
                 for mat in materials_list:
@@ -87,7 +84,7 @@ class SmithingDesigner:
                             'category': mat.get('category', 'unknown')
                         }
 
-                print(f"Loaded {len(self.materials_db)} materials from {MATERIALS_JSON_PATH}")
+                print(f"✓ Loaded {len(self.materials_db)} materials from {MATERIALS_JSON_PATH}")
         except FileNotFoundError:
             messagebox.showwarning("Warning",
                                    f"Materials file not found at:\n{MATERIALS_JSON_PATH}\n\nUsing empty materials database.")
@@ -96,46 +93,213 @@ class SmithingDesigner:
             messagebox.showerror("Error", f"Failed to load materials:\n{e}")
             self.materials_db = {}
 
+    def extract_materials_from_json(self, data):
+        """Extract materials list from various JSON structures"""
+        if isinstance(data, list):
+            return data
+        elif isinstance(data, dict):
+            # Try common keys
+            if 'materials' in data:
+                return data['materials'] if isinstance(data['materials'], list) else []
+            elif 'items' in data:
+                return data['items'] if isinstance(data['items'], list) else []
+            # If it's a dict of materials, convert to list
+            elif all(isinstance(v, dict) for v in data.values()):
+                return list(data.values())
+        return []
+
+    def extract_recipes_from_json(self, data):
+        """Extract recipes from various JSON structures"""
+        recipes = {}
+
+        if isinstance(data, list):
+            # Direct list of recipes
+            for recipe in data:
+                if self.is_valid_recipe(recipe):
+                    recipe_id = recipe.get('recipeId')
+                    if recipe_id:
+                        recipes[recipe_id] = recipe
+        elif isinstance(data, dict):
+            # Try common keys first
+            if 'recipes' in data and isinstance(data['recipes'], list):
+                for recipe in data['recipes']:
+                    if self.is_valid_recipe(recipe):
+                        recipe_id = recipe.get('recipeId')
+                        if recipe_id:
+                            recipes[recipe_id] = recipe
+            else:
+                # Check if top-level keys are recipe IDs or categories
+                for key, value in data.items():
+                    if key in ['metadata', 'version', 'info']:
+                        continue  # Skip metadata keys
+
+                    if isinstance(value, dict):
+                        # Check if this is a single recipe
+                        if self.is_valid_recipe(value):
+                            recipe_id = value.get('recipeId', key)
+                            recipes[recipe_id] = value
+                        # Or a category containing recipes
+                        elif 'recipes' in value and isinstance(value['recipes'], list):
+                            for recipe in value['recipes']:
+                                if self.is_valid_recipe(recipe):
+                                    recipe_id = recipe.get('recipeId')
+                                    if recipe_id:
+                                        recipes[recipe_id] = recipe
+                    elif isinstance(value, list):
+                        # Category is a list of recipes
+                        for recipe in value:
+                            if isinstance(recipe, dict) and self.is_valid_recipe(recipe):
+                                recipe_id = recipe.get('recipeId')
+                                if recipe_id:
+                                    recipes[recipe_id] = recipe
+
+        return recipes
+
+    def is_valid_recipe(self, recipe):
+        """Check if an object is a valid recipe"""
+        if not isinstance(recipe, dict):
+            return False
+
+        # Must have at least recipeId and outputId
+        required_fields = ['recipeId', 'outputId']
+        has_required = all(field in recipe for field in required_fields)
+
+        # Should have inputs (or we can work with it anyway)
+        return has_required
+
+    def extract_placements_from_json(self, data):
+        """Extract placements from various JSON structures"""
+        placements = {}
+
+        if isinstance(data, list):
+            # Direct list of placement objects
+            for placement in data:
+                if isinstance(placement, dict) and 'recipeId' in placement:
+                    recipe_id = placement['recipeId']
+                    # Try to extract the actual placement map
+                    if 'placementMap' in placement:
+                        placements[recipe_id] = placement['placementMap']
+                    elif 'placements' in placement:
+                        placements[recipe_id] = placement['placements']
+                    else:
+                        # Maybe the whole object is the placement map
+                        map_data = {k: v for k, v in placement.items()
+                                    if k not in ['recipeId', 'metadata', 'gridSize']}
+                        if map_data:
+                            placements[recipe_id] = map_data
+        elif isinstance(data, dict):
+            # Try common structures
+            if 'placements' in data:
+                placements_data = data['placements']
+                if isinstance(placements_data, list):
+                    # List of placement objects
+                    for placement in placements_data:
+                        if isinstance(placement, dict) and 'recipeId' in placement:
+                            recipe_id = placement['recipeId']
+                            if 'placementMap' in placement:
+                                placements[recipe_id] = placement['placementMap']
+                            elif 'placements' in placement:
+                                placements[recipe_id] = placement['placements']
+                elif isinstance(placements_data, dict):
+                    # Dict of recipe_id -> placement_map
+                    placements = placements_data
+            else:
+                # Maybe top-level keys are recipe IDs
+                for key, value in data.items():
+                    if key in ['metadata', 'version', 'info']:
+                        continue
+
+                    if isinstance(value, dict):
+                        # Check if this looks like a placement map (keys are grid coords)
+                        if any(',' in str(k) for k in value.keys()):
+                            placements[key] = value
+
+        return placements
+
     def load_files(self):
-        """Load recipes and optional placements JSON files"""
+        """Load recipes and optional placements JSON files with better error handling"""
         # Load recipes (REQUIRED)
         self.recipes_file = filedialog.askopenfilename(
             title="Select Recipes JSON (REQUIRED)",
-            filetypes=[("JSON files", "*.json")]
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
         )
         if not self.recipes_file:
             return
 
-        with open(self.recipes_file, 'r') as f:
-            data = json.load(f)
-            if 'recipes' in data:
-                self.recipes = {r['recipeId']: r for r in data['recipes']}
-            else:
-                self.recipes = data
+        try:
+            with open(self.recipes_file, 'r') as f:
+                data = json.load(f)
+
+            # Extract recipes using robust extraction
+            self.recipes = self.extract_recipes_from_json(data)
+
+            if not self.recipes:
+                # Show what was found to help debug
+                keys_found = list(data.keys()) if isinstance(data, dict) else "list structure"
+                messagebox.showerror(
+                    "No Valid Recipes Found",
+                    f"Could not find valid recipes in the JSON file.\n\n"
+                    f"Top-level structure: {type(data).__name__}\n"
+                    f"Keys found: {keys_found}\n\n"
+                    f"Recipes must have 'recipeId' and 'outputId' fields."
+                )
+                return
+
+            print(f"✓ Loaded {len(self.recipes)} recipes from {Path(self.recipes_file).name}")
+            print(f"  Recipe IDs: {list(self.recipes.keys())[:5]}{'...' if len(self.recipes) > 5 else ''}")
+
+        except json.JSONDecodeError as e:
+            messagebox.showerror("Invalid JSON", f"Failed to parse recipes file:\n{e}")
+            return
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load recipes:\n{e}")
+            return
 
         # Load placements (OPTIONAL)
         response = messagebox.askyesno(
             "Load Placements?",
-            "Do you have an existing placements file to load?\n\n" +
+            f"Successfully loaded {len(self.recipes)} recipes.\n\n"
+            "Do you have an existing placements file to load?\n\n"
             "Click 'No' to start with empty placements."
         )
 
         if response:
             self.placements_file = filedialog.askopenfilename(
                 title="Select Placements JSON (Optional)",
-                filetypes=[("JSON files", "*.json")]
+                filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
             )
             if self.placements_file:
                 try:
                     with open(self.placements_file, 'r') as f:
                         data = json.load(f)
-                        if 'placements' in data:
-                            self.placements = {p['recipeId']: p.get('placementMap', {})
-                                               for p in data['placements']}
-                        else:
-                            self.placements = data
+
+                    # Extract placements using robust extraction
+                    self.placements = self.extract_placements_from_json(data)
+
+                    print(f"✓ Loaded {len(self.placements)} placements from {Path(self.placements_file).name}")
+                    if self.placements:
+                        print(
+                            f"  Placement IDs: {list(self.placements.keys())[:5]}{'...' if len(self.placements) > 5 else ''}")
+
+                    if not self.placements:
+                        messagebox.showinfo(
+                            "No Placements Found",
+                            "The file was loaded but no valid placements were found.\n"
+                            "Starting with empty placements."
+                        )
+                    else:
+                        messagebox.showinfo(
+                            "Placements Loaded",
+                            f"Successfully loaded {len(self.placements)} placement maps."
+                        )
+
+                except json.JSONDecodeError as e:
+                    messagebox.showwarning("Invalid JSON",
+                                           f"Failed to parse placements file:\n{e}\nStarting with empty placements.")
+                    self.placements = {}
                 except Exception as e:
-                    messagebox.showwarning("Warning", f"Failed to load placements:\n{e}")
+                    messagebox.showwarning("Warning",
+                                           f"Failed to load placements:\n{e}\nStarting with empty placements.")
                     self.placements = {}
         else:
             # Start fresh - ask where to save placements
@@ -145,6 +309,7 @@ class SmithingDesigner:
                 filetypes=[("JSON files", "*.json")]
             )
             self.placements = {}
+            print("✓ Starting with empty placements")
 
     def build_ui(self):
         """Build the main UI"""
@@ -162,7 +327,8 @@ class SmithingDesigner:
         recipe_dropdown.bind('<<ComboboxSelected>>', self.on_recipe_selected)
 
         # Status label
-        self.status_label = ttk.Label(top_frame, text="Select a recipe to begin | Press SPACEBAR to reselect last material",
+        self.status_label = ttk.Label(top_frame,
+                                      text=f"Loaded {len(self.recipes)} recipes, {len(self.placements)} placements | Press SPACEBAR to reselect last material",
                                       foreground="blue")
         self.status_label.pack(side=tk.LEFT, padx=20)
 
@@ -280,7 +446,8 @@ class SmithingDesigner:
         # Enable save button
         self.save_btn.config(state='normal')
 
-        self.status_label.config(text=f"Loaded: {recipe_id}", foreground="green")
+        placement_status = f"(has {len(self.current_grid)} placements)" if self.current_grid else "(no placements)"
+        self.status_label.config(text=f"Loaded: {recipe_id} {placement_status}", foreground="green")
 
     def update_recipe_info(self, recipe):
         """Update recipe info display"""
@@ -293,13 +460,16 @@ class SmithingDesigner:
         original_grid_size = recipe.get('gridSize', '3x3')
 
         info = f"Recipe ID: {recipe['recipeId']}\n"
-        info += f"Output: {recipe['outputId']} (x{recipe['outputQty']})\n"
+        info += f"Output: {recipe.get('outputId', 'N/A')} (x{recipe.get('outputQty', 1)})\n"
         info += f"Station Tier: T{station_tier}\n"
         if original_grid_size != actual_grid_size:
             info += f"Grid Size: {actual_grid_size} (overridden from {original_grid_size})\n\n"
         else:
             info += f"Grid Size: {actual_grid_size}\n\n"
-        info += f"Narrative:\n{recipe.get('metadata', {}).get('narrative', 'N/A')}"
+
+        narrative = recipe.get('metadata', {}).get('narrative', 'N/A') if isinstance(recipe.get('metadata'),
+                                                                                     dict) else 'N/A'
+        info += f"Narrative:\n{narrative}"
 
         self.info_text.insert('1.0', info)
         self.info_text.config(state='disabled')
@@ -370,7 +540,8 @@ class SmithingDesigner:
     def select_material(self, material_id):
         """Select a material for placement"""
         self.selected_material = material_id
-        self.status_label.config(text=f"Selected: {material_id} - Click grid to place",
+        mat_name = self.materials_db.get(material_id, {"name": material_id})['name']
+        self.status_label.config(text=f"Selected: {mat_name} - Click grid to place",
                                  foreground="orange")
 
     def add_material_to_palette(self):
@@ -518,10 +689,6 @@ class SmithingDesigner:
 
         self.status_label.config(text="✅ Recipe updated and saved!", foreground="green")
 
-    def recalculate_recipe_inputs(self):
-        """Legacy method - now just updates validation status"""
-        self.update_validation_status()
-
     def save_files(self):
         """Save both recipes and placements files immediately"""
         if not self.recipes_file or not self.placements_file:
@@ -553,7 +720,9 @@ class SmithingDesigner:
                     "placementMap": placement_map,
                     "metadata": {
                         "gridSize": self.recipes.get(recipe_id, {}).get('gridSize', '3x3'),
-                        "narrative": self.recipes.get(recipe_id, {}).get('metadata', {}).get('narrative', '')
+                        "narrative": self.recipes.get(recipe_id, {}).get('metadata', {}).get('narrative',
+                                                                                             '') if isinstance(
+                            self.recipes.get(recipe_id, {}).get('metadata'), dict) else ''
                     }
                 }
                 for recipe_id, placement_map in self.placements.items()
@@ -569,9 +738,12 @@ class SmithingDesigner:
                     "placements": placements_list
                 }, f, indent=2)
 
-            self.status_label.config(text="✓ Auto-saved both files", foreground="green")
+            print(f"✓ Saved: {recipes_output.name}")
+            print(f"✓ Saved: {placements_output.name}")
+
         except Exception as e:
             self.status_label.config(text=f"❌ Save failed: {e}", foreground="red")
+            messagebox.showerror("Save Error", f"Failed to save files:\n{e}")
 
 
 def main():
