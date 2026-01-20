@@ -139,7 +139,7 @@ def test_recipes_from_file():
 
     model_path = input("Enter path to model file (.keras): ").strip()
     if not model_path:
-        model_path = "excellent_minimal_lr_0_0012.keras"
+        model_path = "batch 4 (batch 3, no stations)/excellent_minimal_lr_0_0012.keras"
         print(f"  Using default: {model_path}")
 
     materials_path = input("Enter path to materials JSON: ").strip()

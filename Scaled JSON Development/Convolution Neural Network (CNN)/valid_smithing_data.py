@@ -23,6 +23,10 @@ class RecipeDataProcessor:
         print(f"Loaded {len(self.materials_dict)} materials")
         print(f"Loaded {len(self.placements_data['placements'])} recipes")
 
+    def is_station(self, recipe_id):
+        """Check if recipe is a station/bench (ends with _t1, _t2, _t3, _t4)"""
+        return any(recipe_id.endswith(f'_t{i}') for i in range(1, 5))
+
     def material_to_color(self, material_id):
         """Convert material to RGB color (0-1 range) based on category, tier, tags"""
         if material_id is None:
@@ -172,20 +176,13 @@ class RecipeDataProcessor:
 
         return substitutes
 
-    def augment_recipe(self, grid, recipe_id):
+    def augment_recipe(self, grid):
         """Generate all augmented variants of a recipe"""
         variants = [grid]
 
         # Add horizontal flip
         flipped = self.flip_grid_horizontal(grid)
         variants.append(flipped)
-
-        # Check if this is a bench/station (ends with _t1, _t2, _t3, _t4)
-        is_bench = any(recipe_id.endswith(f'_t{i}') for i in range(1, 5))
-
-        # Skip substitution augmentation for benches
-        if is_bench:
-            return variants
 
         # Find all unique materials in grid
         unique_materials = set()
@@ -229,24 +226,35 @@ class RecipeDataProcessor:
         return unique_variants
 
     def create_valid_dataset(self, cell_size=4):
-        """Create complete dataset of valid recipes with augmentation"""
+        """Create complete dataset of valid recipes with augmentation (excluding stations)"""
         all_grids = []
 
         print("\n=== Processing Recipes ===")
-        for placement in self.placements_data['placements']:
+
+        # Filter out stations
+        non_station_placements = [
+            p for p in self.placements_data['placements']
+            if not self.is_station(p['recipeId'])
+        ]
+
+        print(f"Total recipes: {len(self.placements_data['placements'])}")
+        print(f"Stations excluded: {len(self.placements_data['placements']) - len(non_station_placements)}")
+        print(f"Processing: {len(non_station_placements)} non-station recipes\n")
+
+        for placement in non_station_placements:
             recipe_id = placement['recipeId']
 
             # Convert to grid
             grid = self.placement_to_grid(placement)
 
-            # Augment (passes recipe_id to check for benches)
-            variants = self.augment_recipe(grid, recipe_id)
+            # Augment
+            variants = self.augment_recipe(grid)
 
             print(f"{recipe_id}: {len(variants)} variants")
             all_grids.extend(variants)
 
         print(f"\n=== Total Valid Recipes ===")
-        print(f"Base recipes: {len(self.placements_data['placements'])}")
+        print(f"Base recipes (non-station): {len(non_station_placements)}")
         print(f"Augmented recipes: {len(all_grids)}")
 
         # Convert to images
@@ -259,16 +267,17 @@ class RecipeDataProcessor:
         return np.array(images, dtype=np.float32), all_grids
 
     def analyze_augmentation_potential(self):
-        """Analyze how many substitutions are possible per material"""
-        print("\n=== Augmentation Analysis ===")
+        """Analyze how many substitutions are possible per material (excluding stations)"""
+        print("\n=== Augmentation Analysis (Excluding Stations) ===")
 
-        # Count materials used in recipes
+        # Count materials used in non-station recipes
         materials_in_recipes = set()
         for placement in self.placements_data['placements']:
-            for material_id in placement['placementMap'].values():
-                materials_in_recipes.add(material_id)
+            if not self.is_station(placement['recipeId']):
+                for material_id in placement['placementMap'].values():
+                    materials_in_recipes.add(material_id)
 
-        print(f"Unique materials in recipes: {len(materials_in_recipes)}")
+        print(f"Unique materials in non-station recipes: {len(materials_in_recipes)}")
 
         for mat_id in sorted(materials_in_recipes):
             subs = self.find_substitutable_materials(mat_id)
@@ -283,14 +292,15 @@ class InvalidRecipeGenerator:
         self.processor = processor
         self.materials_dict = processor.materials_dict
 
-        # Get list of materials actually used in recipes
+        # Get list of materials actually used in non-station recipes
         self.recipe_materials = set()
         for placement in processor.placements_data['placements']:
-            for material_id in placement['placementMap'].values():
-                self.recipe_materials.add(material_id)
+            if not processor.is_station(placement['recipeId']):
+                for material_id in placement['placementMap'].values():
+                    self.recipe_materials.add(material_id)
 
         self.all_materials = list(self.recipe_materials)
-        print(f"\nInvalid generator using {len(self.all_materials)} materials from recipes")
+        print(f"\nInvalid generator using {len(self.all_materials)} materials from non-station recipes")
 
     def generate_random(self):
         """Generate completely random recipe (2-40 materials)"""
