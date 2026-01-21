@@ -933,7 +933,7 @@ class Character:
                     result = self._execute_aoe_gathering(resource, int(buff.bonus_value), nearby_resources, equipped_tool)
                     # Still record activity/XP/titles for AoE gathering
                     self.activities.record_activity(activity, 1)
-                    new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
+                    new_title = self.titles.check_for_title(self)
                     if new_title:
                         print(f"🏆 TITLE EARNED: {new_title.name} - {new_title.bonus_description}")
                     leveled_up = self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
@@ -948,7 +948,7 @@ class Character:
 
         # Track activities, titles, XP (same as before)
         self.activities.record_activity(activity, 1)
-        new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
+        new_title = self.titles.check_for_title(self)
         if new_title:
             print(f"🏆 TITLE EARNED: {new_title.name} - {new_title.bonus_description}")
 

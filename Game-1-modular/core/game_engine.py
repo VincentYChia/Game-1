@@ -2390,9 +2390,7 @@ class GameEngine:
             if leveled_up:
                 self.character.check_and_notify_new_skills()
 
-            new_title = self.character.titles.check_for_title(
-                activity_type, self.character.activities.get_count(activity_type)
-            )
+            new_title = self.character.titles.check_for_title(self.character)
             if new_title:
                 self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
@@ -3191,9 +3189,7 @@ class GameEngine:
         if leveled_up:
             self.character.check_and_notify_new_skills()
 
-        new_title = self.character.titles.check_for_title(
-            'enchanting', self.character.activities.get_count('enchanting')
-        )
+        new_title = self.character.titles.check_for_title(self.character)
         if new_title:
             self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
@@ -3664,9 +3660,7 @@ class GameEngine:
             if leveled_up:
                 self.character.check_and_notify_new_skills()
 
-            new_title = self.character.titles.check_for_title(
-                activity_type, self.character.activities.get_count(activity_type)
-            )
+            new_title = self.character.titles.check_for_title(self.character)
             if new_title:
                 self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
