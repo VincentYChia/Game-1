@@ -108,7 +108,8 @@ class SaveManager:
             "activities": {
                 activity: count
                 for activity, count in character.activities.activity_counts.items()
-            }
+            },
+            "stat_tracker": character.stat_tracker.to_dict() if hasattr(character, 'stat_tracker') else {}
         }
 
         return char_data

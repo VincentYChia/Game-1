@@ -1326,6 +1326,48 @@ class CombatManager:
                     elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
                         print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
 
+            # NEW: Comprehensive stat tracking
+            if hasattr(self.character, 'stat_tracker'):
+                # Determine damage type from tags
+                damage_types = ['physical', 'fire', 'ice', 'lightning', 'poison', 'arcane', 'shadow', 'holy']
+                damage_type = next((tag for tag in tags if tag in damage_types), 'physical')
+
+                # Determine attack type (melee/ranged/magic)
+                attack_type = 'magic' if 'magic' in tags or damage_type in ['arcane', 'holy'] else 'melee'
+
+                # Get weapon element if equipped
+                weapon_element = None
+                if equipped_weapon and hasattr(equipped_weapon, 'tags'):
+                    for tag in damage_types:
+                        if tag in equipped_weapon.tags:
+                            weapon_element = tag
+                            break
+
+                # Track damage dealt
+                if final_damage > 0:
+                    self.character.stat_tracker.record_damage_dealt(
+                        amount=final_damage,
+                        damage_type=damage_type,
+                        attack_type=attack_type,
+                        was_crit=context.any_crit if hasattr(context, 'any_crit') else False,
+                        weapon_element=weapon_element
+                    )
+
+                # Track enemy kill
+                if enemy_died:
+                    self.character.stat_tracker.record_enemy_killed(
+                        tier=enemy.definition.tier,
+                        is_boss=enemy.definition.is_boss,
+                        is_dragon='dragon' in enemy.definition.enemy_id.lower(),
+                        weapon_element=weapon_element
+                    )
+
+                # Track status effects applied
+                status_effect_tags = ['burn', 'freeze', 'poison', 'stun', 'root', 'slow', 'bleed', 'shock', 'weaken', 'vulnerable']
+                for tag in tags:
+                    if tag in status_effect_tags:
+                        self.character.stat_tracker.record_status_effect(tag, applied_to_enemy=True)
+
             # Tag-based attacks don't use traditional crit system (handled by tags)
             return (total_damage, False, loot)
 
@@ -1411,6 +1453,18 @@ class CombatManager:
         # Apply to player
         self.character.take_damage(final_damage, from_attack=True)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
+
+        # NEW: Track damage taken
+        if hasattr(self.character, 'stat_tracker'):
+            # Determine damage type from enemy (default to physical)
+            enemy_damage_type = getattr(enemy.definition, 'damage_type', 'physical')
+            enemy_attack_type = 'melee'  # Most enemies are melee by default
+
+            self.character.stat_tracker.record_damage_taken(
+                amount=final_damage,
+                damage_type=enemy_damage_type,
+                attack_type=enemy_attack_type
+            )
 
         # REFLECT/THORNS: Check for reflect damage on armor (capped at 80%)
         if hasattr(self.character, 'equipment') and enemy.is_alive:

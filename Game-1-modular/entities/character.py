@@ -17,6 +17,7 @@ from entities.components import (
     EquipmentManager,
     Inventory
 )
+from entities.components.stat_tracker import StatTracker
 
 # Systems
 from systems import (
@@ -75,6 +76,8 @@ class Character:
         self.class_system = ClassSystem()
         self.class_system.register_on_class_set(self._on_class_selected)
         self.activities = ActivityTracker()
+        self.stat_tracker = StatTracker()  # Comprehensive stat tracking
+        self.stat_tracker.start_session()  # Start tracking session
         self.equipment = EquipmentManager()
         self.encyclopedia = Encyclopedia()
         self.quests = QuestManager()
@@ -517,6 +520,17 @@ class Character:
         for activity_type, count in activities_data.items():
             self.activities.activity_counts[activity_type] = count
 
+        # NEW: Restore comprehensive stat tracker
+        stat_tracker_data = player_data.get("stat_tracker", {})
+        if stat_tracker_data:
+            from entities.components.stat_tracker import StatTracker
+            self.stat_tracker = StatTracker.from_dict(stat_tracker_data)
+        else:
+            # Initialize fresh tracker for old saves
+            from entities.components.stat_tracker import StatTracker
+            self.stat_tracker = StatTracker()
+            self.stat_tracker.start_session()
+
         # Final recalculation after all equipment and stats are restored
         self.recalculate_stats()
 
@@ -941,6 +955,46 @@ class Character:
         leveled_up = self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
         if leveled_up:
             self.check_and_notify_new_skills()
+
+        # NEW: Comprehensive stat tracking
+        if result and hasattr(self, 'stat_tracker'):
+            loot, damage_dealt, was_crit = result
+            total_items = sum(qty for _, qty in loot) if loot else 0
+
+            # Determine resource category for tracking
+            resource_category = "ore" if "ore" in resource.resource_type.name.lower() else \
+                               "tree" if "tree" in resource.resource_type.name.lower() else \
+                               "stone" if "stone" in resource.resource_type.name.lower() else "plant"
+
+            # Track resource gathering
+            self.stat_tracker.record_resource_gathered(
+                resource_id=resource.resource_type.name,
+                quantity=total_items,
+                tier=resource.tier,
+                category=resource_category,
+                element=None,  # TODO: Extract from resource tags if available
+                is_crit=was_crit,
+                is_rare_drop=False  # TODO: Detect rare drops
+            )
+
+            # Track individual item collection
+            for item_id, qty in loot:
+                self.stat_tracker.record_item_collected(
+                    item_id=item_id,
+                    quantity=qty,
+                    category="material",
+                    rarity="common",  # TODO: Get from MaterialDatabase
+                    is_first_time=False  # TODO: Check encyclopedia
+                )
+
+            # Track gathering damage
+            self.stat_tracker.gathering_totals["total_gathering_damage_dealt"] += damage_dealt
+
+            # Track tool usage
+            tool_type = "axe" if resource.required_tool == "axe" else "pickaxe"
+            tool_swing_key = f"{tool_type}_swings"
+            if tool_swing_key in self.stat_tracker.gathering_totals:
+                self.stat_tracker.gathering_totals[tool_swing_key] += 1
 
         # Reset damage dealt timer (harvesting counts as dealing damage)
         self.time_since_last_damage_dealt = 0.0

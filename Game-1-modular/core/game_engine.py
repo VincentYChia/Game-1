@@ -3590,6 +3590,31 @@ class GameEngine:
 
             # Sync inventory back
             recipe_db.consume_materials(recipe, self.character.inventory)
+
+            # NEW: Track failed crafting attempts
+            if hasattr(self.character, 'stat_tracker'):
+                activity_map = {
+                    'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
+                    'engineering': 'engineering', 'adornments': 'enchanting'
+                }
+                activity_type = activity_map.get(self.minigame_type, 'smithing')
+
+                # Collect materials consumed
+                materials_consumed = {}
+                for inp in recipe.inputs:
+                    mat_id = inp.get('materialId') or inp.get('itemId')
+                    qty = inp.get('quantity', 1)
+                    if mat_id:
+                        materials_consumed[mat_id] = qty
+
+                # Record failed craft
+                self.character.stat_tracker.record_crafting(
+                    recipe_id=recipe.recipe_id,
+                    discipline=activity_type,
+                    success=False,
+                    tier=recipe.station_tier,
+                    materials=materials_consumed
+                )
         else:
             # Success - consume materials and add output
             recipe_db.consume_materials(recipe, self.character.inventory)
@@ -3601,6 +3626,37 @@ class GameEngine:
             }
             activity_type = activity_map.get(self.minigame_type, 'smithing')
             self.character.activities.record_activity(activity_type, 1)
+
+            # NEW: Comprehensive crafting stat tracking
+            if hasattr(self.character, 'stat_tracker'):
+                # Extract minigame result data
+                quality_score = getattr(result, 'bonus_percentage', 0.0) if result else 0.0
+                craft_time = getattr(self.active_minigame, 'elapsed_time', 0.0) if self.active_minigame else 0.0
+                output_rarity = craft_result.get('rarity', 'common')
+                is_perfect = craft_result.get('is_perfect', False)
+                is_first_try = craft_result.get('is_first_try', False)
+
+                # Collect materials consumed from recipe
+                materials_consumed = {}
+                for inp in recipe.inputs:
+                    mat_id = inp.get('materialId') or inp.get('itemId')
+                    qty = inp.get('quantity', 1)
+                    if mat_id:
+                        materials_consumed[mat_id] = qty
+
+                # Record comprehensive crafting stats
+                self.character.stat_tracker.record_crafting(
+                    recipe_id=recipe.recipe_id,
+                    discipline=activity_type,
+                    success=True,
+                    tier=recipe.station_tier,
+                    quality_score=quality_score,
+                    craft_time=craft_time,
+                    output_rarity=output_rarity,
+                    is_perfect=is_perfect,
+                    is_first_try=is_first_try,
+                    materials=materials_consumed
+                )
 
             # Extra XP for minigame (50% bonus)
             xp_reward = int(20 * recipe.station_tier * 1.5)
