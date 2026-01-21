@@ -28,6 +28,7 @@ from systems import (
     ClassSystem,
     NaturalResource
 )
+from systems.skill_unlock_system import SkillUnlockSystem
 
 # Models
 from data.models import (
@@ -71,6 +72,7 @@ class Character:
         self.stats = CharacterStats()
         self.leveling = LevelingSystem()
         self.skills = SkillManager()
+        self.skill_unlocks = SkillUnlockSystem()  # Skill unlock progression
         self.buffs = BuffManager()
         self.titles = TitleSystem()
         self.class_system = ClassSystem()
@@ -531,6 +533,16 @@ class Character:
             self.stat_tracker = StatTracker()
             self.stat_tracker.start_session()
 
+        # NEW: Restore skill unlock system
+        skill_unlocks_data = player_data.get("skill_unlocks", {})
+        if skill_unlocks_data:
+            self.skill_unlocks.unlocked_skills = set(skill_unlocks_data.get("unlocked_skills", []))
+            self.skill_unlocks.pending_unlocks = set(skill_unlocks_data.get("pending_unlocks", []))
+        else:
+            # Initialize fresh skill unlock system for old saves
+            from systems.skill_unlock_system import SkillUnlockSystem
+            self.skill_unlocks = SkillUnlockSystem()
+
         # Final recalculation after all equipment and stats are restored
         self.recalculate_stats()
 
@@ -962,9 +974,11 @@ class Character:
                     new_title = self.titles.check_for_title(self)
                     if new_title:
                         print(f"🏆 TITLE EARNED: {new_title.name} - {new_title.bonus_description}")
+                        self.check_skill_unlocks(trigger_type='title_earned', trigger_value=new_title.title_id)
                     leveled_up = self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
                     if leveled_up:
                         self.check_and_notify_new_skills()
+                        self.check_skill_unlocks(trigger_type='level_up', trigger_value=self.leveling.level)
                     self.time_since_last_damage_dealt = 0.0
                     return result
 
@@ -977,10 +991,12 @@ class Character:
         new_title = self.titles.check_for_title(self)
         if new_title:
             print(f"🏆 TITLE EARNED: {new_title.name} - {new_title.bonus_description}")
+            self.check_skill_unlocks(trigger_type='title_earned', trigger_value=new_title.title_id)
 
         leveled_up = self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
         if leveled_up:
             self.check_and_notify_new_skills()
+            self.check_skill_unlocks(trigger_type='level_up', trigger_value=self.leveling.level)
 
         # NEW: Comprehensive stat tracking
         if result and hasattr(self, 'stat_tracker'):
@@ -1248,6 +1264,34 @@ class Character:
             if len(available_skills) > 3:
                 print(f"   ... and {len(available_skills) - 3} more!")
         return available_skills
+
+    def check_skill_unlocks(self, trigger_type: str = None, trigger_value: any = None):
+        """
+        Check for newly unlockable skills based on trigger.
+
+        Args:
+            trigger_type: Type of trigger (level_up, title_earned, activity_threshold, quest_complete)
+            trigger_value: Value associated with trigger (level, title_id, etc.)
+        """
+        if not hasattr(self, 'skill_unlocks'):
+            return
+
+        newly_unlockable = self.skill_unlocks.check_for_unlocks(
+            self,
+            trigger_type=trigger_type,
+            trigger_value=trigger_value
+        )
+
+        if newly_unlockable:
+            from data.databases import SkillDatabase
+            skill_db = SkillDatabase.get_instance()
+
+            for unlock in newly_unlockable:
+                skill_def = skill_db.skills.get(unlock.skill_id)
+                if skill_def:
+                    print(f"✨ {unlock.trigger.message}")
+                    if unlock.cost.gold > 0 or len(unlock.cost.materials) > 0:
+                        print(f"   Pending payment - check Skills menu (K) to unlock")
 
     def _determine_best_slot(self, equipment) -> str:
         """Intelligently determine which slot to equip an item to
