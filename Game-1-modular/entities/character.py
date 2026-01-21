@@ -1757,6 +1757,31 @@ class Character:
         if success and consume_from_inventory:
             self.inventory.remove_item(item_id, 1)
             print(f"✓ Used {item_def.name}: {message}")
+
+            # Track item consumption in stat tracker
+            if hasattr(self, 'stat_tracker'):
+                # Determine item type from effect tags
+                item_type = "consumable"
+                if item_def.effect_tags:
+                    if any(tag in ["heal", "restore", "health", "mana"] for tag in item_def.effect_tags):
+                        item_type = "potion"
+                    elif any(tag in ["food", "saturation", "hunger"] for tag in item_def.effect_tags):
+                        item_type = "food"
+                    elif any(tag in ["buff", "empower", "fortify", "quicken"] for tag in item_def.effect_tags):
+                        item_type = "buff"
+
+                # Determine if in combat (check if combat_manager has active enemies)
+                in_combat = False
+                if hasattr(self, 'combat_manager') and self.combat_manager:
+                    if hasattr(self.combat_manager, 'player_in_combat'):
+                        in_combat = self.combat_manager.player_in_combat
+
+                self.stat_tracker.record_item_used(
+                    item_id=item_id,
+                    quantity=1,
+                    item_type=item_type,
+                    in_combat=in_combat
+                )
         elif success:
             print(f"✓ Used {item_def.name}: {message} (caller handles inventory)")
 
