@@ -130,6 +130,8 @@ class GameEngine:
         TitleDatabase.get_instance().load_from_file(str(get_resource_path("progression/titles-1.JSON")))
         ClassDatabase.get_instance().load_from_file(str(get_resource_path("progression/classes-1.JSON")))
         SkillDatabase.get_instance().load_from_file(str(get_resource_path("Skills/skills-skills-1.JSON")))
+        from data.databases import SkillUnlockDatabase
+        SkillUnlockDatabase.get_instance().load_from_file(str(get_resource_path("progression/skill-unlocks.JSON")))
         NPCDatabase.get_instance().load_from_files()  # Load NPCs and Quests
 
         # Load content from installed Update-N packages

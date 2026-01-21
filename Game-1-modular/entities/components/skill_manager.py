@@ -111,6 +111,21 @@ class SkillManager:
         self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
         return True
 
+    def unlock_skill(self, skill_id: str) -> bool:
+        """
+        Unlock a skill (called by SkillUnlockSystem after conditions/cost verified).
+
+        This is a wrapper around learn_skill with skip_checks=True since
+        the unlock system has already verified all conditions and paid costs.
+
+        Args:
+            skill_id: ID of skill to unlock
+
+        Returns:
+            True if successfully unlocked
+        """
+        return self.learn_skill(skill_id, character=None, skip_checks=True)
+
     def get_available_skills(self, character) -> List[str]:
         """
         Get list of skill IDs that the character can learn but hasn't yet.

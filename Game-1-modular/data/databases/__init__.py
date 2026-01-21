@@ -9,6 +9,7 @@ from .class_db import ClassDatabase
 from .recipe_db import RecipeDatabase
 from .placement_db import PlacementDatabase
 from .skill_db import SkillDatabase
+from .skill_unlock_db import SkillUnlockDatabase
 
 __all__ = [
     'TranslationDatabase',
@@ -20,4 +21,5 @@ __all__ = [
     'RecipeDatabase',
     'PlacementDatabase',
     'SkillDatabase',
+    'SkillUnlockDatabase',
 ]

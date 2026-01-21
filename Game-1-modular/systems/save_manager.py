@@ -109,7 +109,11 @@ class SaveManager:
                 activity: count
                 for activity, count in character.activities.activity_counts.items()
             },
-            "stat_tracker": character.stat_tracker.to_dict() if hasattr(character, 'stat_tracker') else {}
+            "stat_tracker": character.stat_tracker.to_dict() if hasattr(character, 'stat_tracker') else {},
+            "skill_unlocks": {
+                "unlocked_skills": list(character.skill_unlocks.unlocked_skills) if hasattr(character, 'skill_unlocks') else [],
+                "pending_unlocks": list(character.skill_unlocks.pending_unlocks) if hasattr(character, 'skill_unlocks') else []
+            }
         }
 
         return char_data

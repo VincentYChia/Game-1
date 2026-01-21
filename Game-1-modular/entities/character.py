@@ -28,6 +28,7 @@ from systems import (
     ClassSystem,
     NaturalResource
 )
+from systems.skill_unlock_system import SkillUnlockSystem
 
 # Models
 from data.models import (
@@ -71,6 +72,7 @@ class Character:
         self.stats = CharacterStats()
         self.leveling = LevelingSystem()
         self.skills = SkillManager()
+        self.skill_unlocks = SkillUnlockSystem()  # Skill unlock progression
         self.buffs = BuffManager()
         self.titles = TitleSystem()
         self.class_system = ClassSystem()
@@ -530,6 +532,16 @@ class Character:
             from entities.components.stat_tracker import StatTracker
             self.stat_tracker = StatTracker()
             self.stat_tracker.start_session()
+
+        # NEW: Restore skill unlock system
+        skill_unlocks_data = player_data.get("skill_unlocks", {})
+        if skill_unlocks_data:
+            self.skill_unlocks.unlocked_skills = set(skill_unlocks_data.get("unlocked_skills", []))
+            self.skill_unlocks.pending_unlocks = set(skill_unlocks_data.get("pending_unlocks", []))
+        else:
+            # Initialize fresh skill unlock system for old saves
+            from systems.skill_unlock_system import SkillUnlockSystem
+            self.skill_unlocks = SkillUnlockSystem()
 
         # Final recalculation after all equipment and stats are restored
         self.recalculate_stats()
