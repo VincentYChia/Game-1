@@ -3279,6 +3279,10 @@ class GameEngine:
         dt = (curr - self.last_tick) / 1000.0
         self.last_tick = curr
 
+        # Update playtime tracking
+        if hasattr(self.character, 'stat_tracker'):
+            self.character.stat_tracker.update_playtime(dt)
+
         if not self.character.class_selection_open:
             # Calculate effective movement speed with encumbrance penalty
             base_speed = self.character.movement_speed

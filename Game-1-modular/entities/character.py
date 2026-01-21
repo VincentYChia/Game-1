@@ -656,9 +656,35 @@ class Character:
         # Check walkability
         new_pos = Position(new_x, new_y, self.position.z)
         if world.is_walkable(new_pos):
+            # Calculate actual distance moved (after speed multiplier)
+            actual_dx = dx * speed_mult
+            actual_dy = dy * speed_mult
+            distance_moved = (actual_dx ** 2 + actual_dy ** 2) ** 0.5
+
             self.position.x = new_x
             self.position.y = new_y
             self.facing = ("right" if dx > 0 else "left") if abs(dx) > abs(dy) else ("down" if dy > 0 else "up")
+
+            # Track movement in stat tracker
+            if hasattr(self, 'stat_tracker') and distance_moved > 0:
+                # Get chunk coordinates
+                chunk_x = int(self.position.x // Config.CHUNK_SIZE)
+                chunk_y = int(self.position.y // Config.CHUNK_SIZE)
+                chunk_coords = (chunk_x, chunk_y)
+
+                # Check if encumbered
+                is_encumbered = self.get_encumbrance_speed_penalty() < 1.0
+
+                # Check if sprinting (would need sprint mechanic - for now always False)
+                is_sprinting = False
+
+                self.stat_tracker.record_movement(
+                    distance=distance_moved,
+                    chunk_coords=chunk_coords,
+                    is_sprinting=is_sprinting,
+                    is_encumbered=is_encumbered
+                )
+
             return True
         return False
 
