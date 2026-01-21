@@ -3669,6 +3669,10 @@ class GameEngine:
             new_title = self.character.titles.check_for_title(self.character)
             if new_title:
                 self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+                self.character.check_skill_unlocks(trigger_type='title_earned', trigger_value=new_title.title_id)
+
+            # Check for activity-based skill unlocks
+            self.character.check_skill_unlocks(trigger_type='activity_threshold')
 
             # Check if this was an enchantment applied to an item (not a new item created)
             if 'enchanted_item' in craft_result:
