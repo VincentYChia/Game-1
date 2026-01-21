@@ -11,13 +11,9 @@
       "skillId": "miners_fury",
       "unlockMethod": "automatic",
 
-      "conditions": {
-        "characterLevel": 1,
-        "stats": {},
-        "titles": [],
-        "completedQuests": [],
-        "activityMilestones": []
-      },
+      "conditions": [
+        {"type": "level", "min_level": 1}
+      ],
 
       "unlockTrigger": {
         "type": "level_up",
@@ -42,10 +38,10 @@
       "skillId": "sprint",
       "unlockMethod": "quest_reward",
 
-      "conditions": {
-        "characterLevel": 1,
-        "completedQuests": ["tutorial_quest"]
-      },
+      "conditions": [
+        {"type": "level", "min_level": 1},
+        {"type": "quest", "required_quest": "tutorial_quest"}
+      ],
 
       "unlockTrigger": {
         "type": "quest_complete",
@@ -60,7 +56,8 @@
 
       "metadata": {
         "narrative": "Granted by the Elder Sage as reward for completing your first task.",
-        "category": "quest_reward"
+        "category": "quest_reward",
+        "note": "Starting NPC - preserved as quest_reward"
       }
     },
 
@@ -69,10 +66,10 @@
       "skillId": "miners_endurance",
       "unlockMethod": "quest_reward",
 
-      "conditions": {
-        "characterLevel": 1,
-        "completedQuests": ["gathering_quest"]
-      },
+      "conditions": [
+        {"type": "level", "min_level": 1},
+        {"type": "quest", "required_quest": "gathering_quest"}
+      ],
 
       "unlockTrigger": {
         "type": "quest_complete",
@@ -87,7 +84,8 @@
 
       "metadata": {
         "narrative": "Granted by the Wandering Trader for helping gather rare ores.",
-        "category": "quest_reward"
+        "category": "quest_reward",
+        "note": "Starting NPC - preserved as quest_reward"
       }
     },
 
@@ -96,10 +94,10 @@
       "skillId": "combat_strike",
       "unlockMethod": "quest_reward",
 
-      "conditions": {
-        "characterLevel": 1,
-        "completedQuests": ["combat_quest"]
-      },
+      "conditions": [
+        {"type": "level", "min_level": 1},
+        {"type": "quest", "required_quest": "combat_quest"}
+      ],
 
       "unlockTrigger": {
         "type": "quest_complete",
@@ -114,7 +112,8 @@
 
       "metadata": {
         "narrative": "Granted by the Battle Master for proving your worth in combat.",
-        "category": "quest_reward"
+        "category": "quest_reward",
+        "note": "Starting NPC - preserved as quest_reward"
       }
     },
 
@@ -123,10 +122,10 @@
       "skillId": "fortify",
       "unlockMethod": "quest_reward",
 
-      "conditions": {
-        "characterLevel": 1,
-        "completedQuests": ["combat_quest"]
-      },
+      "conditions": [
+        {"type": "level", "min_level": 1},
+        {"type": "quest", "required_quest": "combat_quest"}
+      ],
 
       "unlockTrigger": {
         "type": "quest_complete",
@@ -141,7 +140,8 @@
 
       "metadata": {
         "narrative": "Granted by the Battle Master for proving your worth in combat.",
-        "category": "quest_reward"
+        "category": "quest_reward",
+        "note": "Starting NPC - preserved as quest_reward"
       }
     },
 
@@ -150,17 +150,10 @@
       "skillId": "smiths_focus",
       "unlockMethod": "milestone_unlock",
 
-      "conditions": {
-        "characterLevel": 3,
-        "stats": {},
-        "activityMilestones": [
-          {
-            "type": "craft_count",
-            "discipline": "smithing",
-            "count": 10
-          }
-        ]
-      },
+      "conditions": [
+        {"type": "level", "min_level": 3},
+        {"type": "stat_tracker", "stat_path": "crafting_by_discipline.smithing.total_crafts", "min_value": 10}
+      ],
 
       "unlockTrigger": {
         "type": "activity_threshold",
@@ -184,17 +177,11 @@
       "skillId": "alchemists_insight",
       "unlockMethod": "milestone_unlock",
 
-      "conditions": {
-        "characterLevel": 5,
-        "stats": {"intelligence": 8},
-        "activityMilestones": [
-          {
-            "type": "craft_count",
-            "discipline": "alchemy",
-            "count": 25
-          }
-        ]
-      },
+      "conditions": [
+        {"type": "level", "min_level": 5},
+        {"type": "stat", "stat_name": "INT", "min_value": 8},
+        {"type": "stat_tracker", "stat_path": "crafting_by_discipline.alchemy.total_crafts", "min_value": 25}
+      ],
 
       "unlockTrigger": {
         "type": "activity_threshold",
@@ -216,28 +203,29 @@
     {
       "unlockId": "unlock_treasure_sense",
       "skillId": "treasure_sense",
-      "unlockMethod": "npc_purchase",
+      "unlockMethod": "milestone_unlock",
 
-      "conditions": {
-        "characterLevel": 8,
-        "stats": {"luck": 10},
-        "completedQuests": []
-      },
+      "conditions": [
+        {"type": "level", "min_level": 8},
+        {"type": "stat", "stat_name": "LCK", "min_value": 10},
+        {"type": "stat_tracker", "stat_path": "item_collection.rare_drops_total", "min_value": 20}
+      ],
 
       "unlockTrigger": {
-        "type": "npc_interaction",
-        "triggerValue": "mysterious_trader",
-        "message": "The Wandering Trader offers to teach you Treasure Sense."
+        "type": "activity_threshold",
+        "triggerValue": 20,
+        "message": "Your luck in finding rare items has awakened Treasure Sense!"
       },
 
       "cost": {
-        "gold": 2500,
+        "gold": 0,
         "materials": []
       },
 
       "metadata": {
-        "narrative": "Rare skill taught by the Wanderer to worthy explorers.",
-        "category": "npc_taught"
+        "narrative": "Discovered through exceptional luck in finding rare treasures.",
+        "category": "milestone_unlock",
+        "note": "Changed from npc_purchase to milestone_unlock - now based on stat tracking"
       }
     },
 
@@ -246,16 +234,11 @@
       "skillId": "battle_fury",
       "unlockMethod": "milestone_unlock",
 
-      "conditions": {
-        "characterLevel": 10,
-        "stats": {"strength": 15},
-        "activityMilestones": [
-          {
-            "type": "kill_count",
-            "count": 50
-          }
-        ]
-      },
+      "conditions": [
+        {"type": "level", "min_level": 10},
+        {"type": "stat", "stat_name": "STR", "min_value": 15},
+        {"type": "stat_tracker", "stat_path": "combat_kills.total_kills", "min_value": 50}
+      ],
 
       "unlockTrigger": {
         "type": "activity_threshold",
@@ -279,16 +262,12 @@
       "skillId": "keen_eye",
       "unlockMethod": "milestone_unlock",
 
-      "conditions": {
-        "characterLevel": 8,
-        "stats": {"luck": 12},
-        "activityMilestones": [
-          {
-            "type": "gather_count",
-            "count": 200
-          }
-        ]
-      },
+      "conditions": [
+        {"type": "level", "min_level": 8},
+        {"type": "stat", "stat_name": "LCK", "min_value": 12},
+        {"type": "stat_tracker", "stat_path": "gathering_totals.total_trees_chopped", "min_value": 100, "comment": "Using trees as proxy for gather_count - could use total_ores_mined or sum both"},
+        {"type": "stat_tracker", "stat_path": "gathering_totals.total_ores_mined", "min_value": 100, "comment": "Alternative gathering metric - both must be met"}
+      ],
 
       "unlockTrigger": {
         "type": "activity_threshold",
@@ -312,12 +291,10 @@
       "skillId": "chain_harvest",
       "unlockMethod": "title_unlock",
 
-      "conditions": {
-        "characterLevel": 15,
-        "stats": {},
-        "titles": ["master_gatherer"],
-        "activityMilestones": []
-      },
+      "conditions": [
+        {"type": "level", "min_level": 15},
+        {"type": "title", "required_title": "master_gatherer"}
+      ],
 
       "unlockTrigger": {
         "type": "title_earned",
@@ -341,12 +318,10 @@
       "skillId": "whirlwind_strike",
       "unlockMethod": "title_unlock",
 
-      "conditions": {
-        "characterLevel": 15,
-        "stats": {},
-        "titles": ["master_warrior"],
-        "activityMilestones": []
-      },
+      "conditions": [
+        {"type": "level", "min_level": 15},
+        {"type": "title", "required_title": "master_warrior"}
+      ],
 
       "unlockTrigger": {
         "type": "title_earned",
@@ -370,12 +345,10 @@
       "skillId": "master_craftsman",
       "unlockMethod": "title_unlock",
 
-      "conditions": {
-        "characterLevel": 20,
-        "stats": {},
-        "titles": ["master_smith"],
-        "activityMilestones": []
-      },
+      "conditions": [
+        {"type": "level", "min_level": 20},
+        {"type": "title", "required_title": "master_smith"}
+      ],
 
       "unlockTrigger": {
         "type": "title_earned",

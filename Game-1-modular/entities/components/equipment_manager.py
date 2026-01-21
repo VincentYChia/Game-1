@@ -81,6 +81,14 @@ class EquipmentManager:
             weapon_dmg = self.get_weapon_damage()
             print(f"         🎯 Total weapon damage range: {weapon_dmg}")
 
+        # Track equipment equipping in stat tracker
+        if hasattr(character, 'stat_tracker'):
+            equipment_key = f"{slot}_{item.item_id}"
+            if equipment_key not in character.stat_tracker.item_management["equipment_equipped"]:
+                character.stat_tracker.item_management["equipment_equipped"][equipment_key] = 0
+            character.stat_tracker.item_management["equipment_equipped"][equipment_key] += 1
+            character.stat_tracker.item_management["total_equipment_swaps"] += 1
+
         return old_item, "OK"
 
     def unequip(self, slot: str, character) -> Optional[EquipmentItem]:
@@ -92,6 +100,14 @@ class EquipmentManager:
 
         # Recalculate character stats
         character.recalculate_stats()
+
+        # Track equipment unequipping in stat tracker
+        if item and hasattr(character, 'stat_tracker'):
+            equipment_key = f"{slot}_{item.item_id}"
+            if equipment_key not in character.stat_tracker.item_management["equipment_unequipped"]:
+                character.stat_tracker.item_management["equipment_unequipped"][equipment_key] = 0
+            character.stat_tracker.item_management["equipment_unequipped"][equipment_key] += 1
+            character.stat_tracker.item_management["total_equipment_swaps"] += 1
 
         return item
 

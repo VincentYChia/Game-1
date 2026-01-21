@@ -1180,6 +1180,45 @@ class StatTracker:
 
         self.item_management["items_picked_up"] += quantity
 
+    def record_item_used(self, item_id: str, quantity: int = 1,
+                         item_type: str = "consumable", in_combat: bool = False):
+        """
+        Record item usage/consumption.
+
+        Args:
+            item_id: Item identifier
+            quantity: Quantity used
+            item_type: Type of item (potion/food/buff/other)
+            in_combat: Whether item was used during combat
+        """
+        self.items_used[item_id] = self.items_used.get(item_id, 0) + quantity
+
+        # Update consumption stats by type
+        if "potion" in item_type.lower():
+            self.item_usage["total_potions_consumed"] += quantity
+            if in_combat:
+                self.item_usage["potions_used_in_combat"] += quantity
+            else:
+                self.item_usage["potions_used_out_combat"] += quantity
+        elif "food" in item_type.lower():
+            self.item_usage["total_food_consumed"] += quantity
+        elif "buff" in item_type.lower():
+            self.item_usage["total_buffs_consumed"] += quantity
+
+    def record_item_dropped(self, item_id: str, quantity: int = 1, destroyed: bool = False):
+        """
+        Record items dropped or destroyed.
+
+        Args:
+            item_id: Item identifier
+            quantity: Quantity dropped/destroyed
+            destroyed: True if destroyed, False if dropped
+        """
+        if destroyed:
+            self.item_management["items_destroyed"] += quantity
+        else:
+            self.item_management["items_dropped"] += quantity
+
     def record_skill_used(self, skill_id: str, value: float = 0.0,
                           mana_cost: float = 0.0, targets: int = 0,
                           category: str = "utility"):
