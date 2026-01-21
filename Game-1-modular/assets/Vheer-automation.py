@@ -31,92 +31,56 @@ import time
 import re
 import shutil
 
-## ============================================================================
-# CONFIGURATION
+# ============================================================================
+# CONFIGURATION  2
 # ============================================================================
 
-PERSISTENT_PROMPT = (
-    "Bright cel-shaded 3D stylized fantasy item icons. Clean render, smooth contours, "
-    "high readability at small size. Transparent background. Vibrant materials with strong "
-    "distinction. Clear highlights and details. Illustrative distinction and creativity."
-)
+PERSISTENT_PROMPT = "Simple cel-shaded 3d stylized fantasy exploration item icons. Clean render, distinct details, transparent background."
 
-# Version-specific prompts
+# Version-specific prompts (replaces entire persistent prompt for that version)
+# Empty dict means use default PERSISTENT_PROMPT for all versions
 VERSION_PROMPTS = {
-    1: "Bright 3D rendered item icon in illustrative fantasy style. CRITICAL: Items must be visually "
-       "distinct through form and material. Item fills 70–80% frame, dynamic angle. Light colored gradient backdrop, "
-       "bright three-point lighting with good fill—no deep shadows. Emphasize idealized shapes, vibrant "
-       "materials, clear silhouettes. Illustrative accuracy and distinction.",
-
-    2: "Bright 3D rendered item icon with STRONG TYPE VERIFICATION. Distinguish axes from pickaxes, ores from "
-       "ingots, nodes from processed materials. Form and function must be immediately recognizable. Materials "
-       "MUST show distinct visual properties (metallic sheen, texture, color temperature). Item 70–80% frame, "
-       "appealing angle. Soft gradient, bright even lighting, material-appropriate highlights. PUSH visual "
-       "distinction aggressively while keeping readability high.  Illustrative accuracy and distinction.",
-
-    3: "Bright 3D rendered item icon with MAXIMUM DISTINCTION. Read full description and verify: tool function "
-       "(mining/chopping/combat), item state (raw node/ore/ingot/crafted), material properties. Each category "
-       "needs unique silhouette. Materials must be EXAGGERATED for clarity: copper=warm orange-bronze, "
-       "steel=cool blue-grey with sheen, iron=neutral grey, wood types with signature effects. Reject realistic "
-       "ambiguity—embrace bright fantasy symbolism. 70–80% coverage, dynamic angle, light colored soft gradient background, "
-       "bright three-point lighting with subtle colored rim lights for depth.  Illustrative accuracy and distinction.",
+    1: "3D rendered item icon in illustrative fantasy style. Item large in frame (70-80% coverage), slight diagonal positioning. Neutral background with gradient, clean three-point lighting, soft shadow beneath. Focus on representing the idea of the item through an idealized fantasy illustration. Smooth, detailed, and brighter.",
+    2: "3D rendered item icon in illustrative fantasy style. Render EXACTLY the item described - verify item type, form, and state before generating. Item large in frame (70-80% coverage), slight diagonal positioning. Neutral background with gradient, clean three-point lighting, soft shadow beneath. Focus on representing the precise idea of the item through idealized fantasy illustration. Smooth, detailed, and brighter.",
+    3: "3D rendered item icon in illustrative fantasy style. Read full item description carefully - distinguish between similar items (axe vs pickaxe, ore vs ingot vs node, dagger vs sword). Render the specific form described. Item fills 70-80% of frame, diagonal angle. Neutral gradient background, clean three-point lighting, soft shadow. Represent the idealized archetypal form with smooth detail and enhanced brightness. Accuracy to description is critical.",
 }
 
+# Category-specific additions (appends to detail prompt for matching categories)
+# All available categories from catalog:
+CATEGORY_ADDITIONS = {
+    # 'equipment': 'Additional guidance for equipment',
+    # 'consumable': 'Additional guidance for consumables',
+    'enemy': 'Focus on stylized enemies. Avoid excessive realism or any elements that may disgust users',
+    'resource': 'This is a node for resources not the actual resource, your illustration should reflect that',
+    'title': 'This is an icon for a in-game title. So it should be a representative icon based on the idea not an illustration',
+    'skill': 'This is an icon for a in-game skill. So it should be a representative icon based on the idea not an illustration',
+    'station': 'Tier 1, Tier 2, Tier 3, and Tier 4 represent tiers 1 through 4. 4 is the most advanced and should have the most detail. 1 is the simplest and should be simplest in design',
+    'device': 'Adhere closely to the type as the largest distinction for design.',
+    'material': 'For less specific and documented materials adhering to the style is more important. Use the narrative as the most important description',
+}
+
+# Type-specific additions (appends to detail prompt for matching types)
+# All available types from catalog:
 TYPE_ADDITIONS = {
-    # Core material/elemental types:
-    'aberration': '',
-    'beast': 'A fierce predator, but also a tameable pet with the right tools and enough skill',
-    'construct': 'A construct of ancient time still functioning today. Sturdy, robust, and deadly',
-    'elemental': 'A materialization of an element. You can feel the power radiating from its outer crystalline shell, and see the element sealed inside the core of the shard',
-    'insect': 'A fantasy illustration, avoid grimy details. This should not trigger someone fear of bugs',
-    'monster_drop': 'A drop from a monster, appears usable and with a certain sheen to it. It should appear to obviously come from its namesake monster.',
-    'ooze': 'A simple blob of ooze. Neighboring on cuteness these slimes can appear harmless but are merciless omnivores.',
-    'undead': 'A being obviously not belonging to the world of the living.',
-
-    # Gathering / resource / environment types:
-    'ore': 'Nodes of their namesake material. They should appear grounded and harvestable. Like a larger boulder for stone, or a vein of iron. These are not items but places to harvest items from.',
-    'stone': 'A simple rock. Take more liberty in this illustration to capture and represent the properties of the rock better. A Clear distinction between other stones is key.',
-    'tree': 'A tree for harvesting wood from. It should embody its namesake tree with clear distinctions that separate it from similar trees. Details and embellishment are crucial here.',
-    'wood': 'Wood harvested from trees, processed into various forms. Requires an eye for detail and clear illustrative distinction to distinguish types of wood at a glance',
-    'metal': 'Ingots forged after refining ores. Hard corners, rectangular shapes, polished. They greatly resemble their namesakes colors, sheen, texture, and properties.',
-    'material': 'Raw unrefined versions of the materials, they allude to their refined counterparts properties through their own appearance.',
-
     # Equipment types:
-    'accessory': '',
-    'armor': '',
-    'axe': 'A destructive battleaxe designed for war. Heavy blows from its large head could split a shield in half',
-    'bow': 'An archers weapon of choice. Smooth curved wood connected at the ends by string',
-    'dagger': 'A light weapon. Distinguished from shortsword by its thing blade and size.',
-    'mace': 'A warhammer designed to sunder the battlefield. Distinguished from other weapons by its large blunt head that only the strongest can wield.',
-    'shield': '',
-    'staff': 'A magical staff that boosts elemental powers.',
-    'tool': 'Equipment used not for battle but for simple living. Simple, well worn, and practical. These tools are the backbone of society and are cherished by those who use them. Be sure they do not resemble weapons',
-    'weapon': '',
-
-    # Utility / deployable devices:
-    'bomb': 'Illustrate these with creative distinction so they become the embodiment of their names. They should appear prelit and ready for use',
-    'turret': 'Turrets require a base',
-    'utility': 'A wide range of items. Pay special attention to faithfully illustrate the item',
-
-    # Skill types:
-    'devastate': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
-    'empower': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
-    'enrich': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
-    'elevate': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
-    'fortify': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
-    'pierce': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
-    'quicken': 'Additional guidance for quicken skills',
-    'regenerate': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
-    'restore': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
-    'smithing': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
-    'transcend': 'Skills need to be illustrated like a sigil, tattoo, or crest. They are representative, and symbolic of the power housed in the skill. They should be visually distinct and illustrative.',
-
-    # Special / misc types:
-    'combat': 'A combat title, illustrate creatively and know that the title is only earned by those who live and die by the rules of war.',
-    'crafting': 'A crafting title, given to only those who pursue a crafting discipline. Illustrate with strong symbolism from the represented discipline and mastery level',
-    'gathering': 'A title given to those who gather materials for a living. Its design should be illustrative and be that of a crest.',
-    'mining': 'A title given to those who have mined tirelessly. A crest like sigil denotes the earth itself seems to favor them',
-    'movement': 'A swiftness sigil. The bearers of the crest seem to always have a tailwind. Be illustrative and symbolic.',
+    # 'weapon': 'Additional guidance for weapons',
+    # 'sword': 'Additional guidance for swords',
+    # 'axe': 'Additional guidance for axes',
+    # 'mace': 'Additional guidance for maces',
+    # 'dagger': 'Additional guidance for daggers',
+    # 'spear': 'Additional guidance for spears',
+    # 'bow': 'Additional guidance for bows',
+    # 'staff': 'Additional guidance for staves',
+    # 'shield': 'Additional guidance for shields',
+    # 'armor': 'Additional guidance for armor',
+    # 'tool': 'Additional guidance for tools',
+    # 'accessory': 'Additional guidance for accessories',
+    # Consumable types:
+    # 'potion': 'Additional guidance for potions',
+    # 'food': 'Additional guidance for food',
+    # 'scroll': 'Additional guidance for scrolls',
+    'turret': 'Turrets require a base'
+    # Other types as needed...
 }
 
 
