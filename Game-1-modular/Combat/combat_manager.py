@@ -734,10 +734,9 @@ class CombatManager:
         str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
         print(f"   STR multiplier: {str_multiplier:.2f} (STR: {self.character.stats.strength})")
 
-        # Title bonuses (from activity tracker)
-        title_multiplier = 1.0
-        if hasattr(self.character, 'activity_tracker'):
-            title_multiplier = 1.0 + self.character.activity_tracker.get_combat_bonus()
+        # Title bonuses (meleeDamage from earned titles)
+        title_melee_bonus = self.character.titles.get_total_bonus('meleeDamage')
+        title_multiplier = 1.0 + title_melee_bonus
         print(f"   Title multiplier: {title_multiplier:.2f}")
 
         # Equipment bonuses (already in weapon damage)
@@ -765,7 +764,9 @@ class CombatManager:
 
         # Check for critical hit
         is_crit = False
-        base_crit_chance = 0.02 * self.character.stats.luck  # 2% per luck point
+        # Use effective luck (includes title and skill bonuses)
+        effective_luck = self.character.get_effective_luck()
+        base_crit_chance = 0.02 * effective_luck  # 2% per luck point
 
         # SKILL BUFF BONUSES: Check for pierce buffs (critical chance)
         pierce_bonus = 0.0
@@ -774,8 +775,11 @@ class CombatManager:
             if pierce_bonus == 0:
                 pierce_bonus = self.character.buffs.get_total_bonus('pierce', 'combat')
 
-        # Add weapon tag crit bonus (precision)
-        crit_chance = base_crit_chance + pierce_bonus + weapon_tag_crit_bonus
+        # Title bonuses (criticalChance from earned titles)
+        title_crit_bonus = self.character.titles.get_total_bonus('criticalChance')
+
+        # Add weapon tag crit bonus (precision) and title bonuses
+        crit_chance = base_crit_chance + pierce_bonus + weapon_tag_crit_bonus + title_crit_bonus
 
         if pierce_bonus > 0:
             print(f"   ⚡ Pierce buff: +{pierce_bonus*100:.0f}% crit chance (total: {crit_chance*100:.1f}%)")
@@ -1076,10 +1080,9 @@ class CombatManager:
             str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
             base_damage *= str_multiplier
 
-            # Title bonuses
-            if hasattr(self.character, 'activity_tracker'):
-                title_multiplier = 1.0 + self.character.activity_tracker.get_combat_bonus()
-                base_damage *= title_multiplier
+            # Title bonuses (meleeDamage from earned titles)
+            title_melee_bonus = self.character.titles.get_total_bonus('meleeDamage')
+            base_damage *= (1.0 + title_melee_bonus)
 
             # Skill buff bonuses (empower) - but NOT devastate since we already consumed it
             if hasattr(self.character, 'buffs'):
@@ -1202,10 +1205,9 @@ class CombatManager:
             str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
             base_damage *= str_multiplier
 
-            # Title bonuses
-            if hasattr(self.character, 'activity_tracker'):
-                title_multiplier = 1.0 + self.character.activity_tracker.get_combat_bonus()
-                base_damage *= title_multiplier
+            # Title bonuses (meleeDamage from earned titles)
+            title_melee_bonus = self.character.titles.get_total_bonus('meleeDamage')
+            base_damage *= (1.0 + title_melee_bonus)
 
             # Skill buff bonuses (empower)
             if hasattr(self.character, 'buffs'):

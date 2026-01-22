@@ -63,3 +63,27 @@ class CharacterStats:
         """
         str_bonus = self.strength * 0.02  # +2% per STR point
         return 1.0 + str_bonus
+
+    def get_effective_luck(self, title_bonus: float = 0.0, skill_bonus: float = 0.0,
+                          rare_drop_bonus: float = 0.0) -> float:
+        """Get effective luck including all bonuses.
+
+        Luck affects:
+        - Critical hit chance (2% per point)
+        - Resource quality bonus (2% per point)
+        - Rare drops (2% per point)
+
+        Args:
+            title_bonus: Flat luck bonus from titles (luckStat)
+            skill_bonus: Flat luck bonus from active skills
+            rare_drop_bonus: Additional rare drop bonuses (rareDropRate, etc.)
+                            converted to equivalent luck
+
+        Returns:
+            float: Effective luck value (base + all bonuses)
+        """
+        # Rare drop bonuses are converted to equivalent luck points
+        # 2% per luck point, so 0.15 rare drop bonus = 7.5 luck equivalent
+        luck_from_rare_drops = rare_drop_bonus / 0.02 if rare_drop_bonus > 0 else 0
+
+        return self.luck + title_bonus + skill_bonus + luck_from_rare_drops

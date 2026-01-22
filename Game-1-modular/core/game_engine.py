@@ -2051,7 +2051,7 @@ class GameEngine:
                 self.add_notification("Minigame not available!", (255, 100, 100))
                 return
         else:
-            # Other crafting disciplines use buff bonuses
+            # Other crafting disciplines use buff bonuses + title bonuses
             # Calculate skill buff bonuses for this crafting discipline
             if hasattr(self.character, 'buffs'):
                 # Quicken buff: Extends minigame time
@@ -2064,18 +2064,48 @@ class GameEngine:
                 elevate_bonus = self.character.buffs.get_total_bonus('elevate', recipe.station_type)
                 buff_quality_bonus = max(empower_bonus, elevate_bonus)
 
-            # Create minigame instance with buff bonuses
-            minigame = crafter.create_minigame(recipe.recipe_id, buff_time_bonus, buff_quality_bonus)
+            # Calculate title bonuses for this crafting discipline
+            title_time_bonus = 0.0
+            title_quality_bonus = 0.0
+
+            if recipe.station_type == 'smithing':
+                title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
+                title_quality_bonus = self.character.titles.get_total_bonus('smithingQuality')
+            elif recipe.station_type == 'refining':
+                # Refining shares smithingTime and uses refiningPrecision for quality
+                title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
+                title_quality_bonus = self.character.titles.get_total_bonus('refiningPrecision')
+            elif recipe.station_type == 'alchemy':
+                title_time_bonus = self.character.titles.get_total_bonus('alchemyTime')
+                title_quality_bonus = self.character.titles.get_total_bonus('alchemyQuality')
+            elif recipe.station_type == 'engineering':
+                title_time_bonus = self.character.titles.get_total_bonus('engineeringTime')
+                title_quality_bonus = self.character.titles.get_total_bonus('engineeringQuality')
+
+            # Combine skill buffs and title bonuses
+            total_time_bonus = buff_time_bonus + title_time_bonus
+            total_quality_bonus = buff_quality_bonus + title_quality_bonus
+
+            # Create minigame instance with combined bonuses
+            minigame = crafter.create_minigame(recipe.recipe_id, total_time_bonus, total_quality_bonus)
             if not minigame:
                 self.add_notification("Minigame not available!", (255, 100, 100))
                 return
 
-        if buff_time_bonus > 0 or buff_quality_bonus > 0:
-            print(f"⚡ Skill buffs active:")
+        if total_time_bonus > 0 or total_quality_bonus > 0:
+            print(f"⚡ Active bonuses:")
             if buff_time_bonus > 0:
-                print(f"   +{buff_time_bonus*100:.0f}% minigame time")
+                print(f"   +{buff_time_bonus*100:.0f}% minigame time (skills)")
+            if title_time_bonus > 0:
+                print(f"   +{title_time_bonus*100:.0f}% minigame time (titles)")
+            if total_time_bonus > 0:
+                print(f"   Total: +{total_time_bonus*100:.0f}% minigame time")
             if buff_quality_bonus > 0:
-                print(f"   +{buff_quality_bonus*100:.0f}% quality bonus")
+                print(f"   +{buff_quality_bonus*100:.0f}% quality bonus (skills)")
+            if title_quality_bonus > 0:
+                print(f"   +{title_quality_bonus*100:.0f}% quality bonus (titles)")
+            if total_quality_bonus > 0:
+                print(f"   Total: +{total_quality_bonus*100:.0f}% quality bonus")
 
         # Start minigame
         minigame.start()

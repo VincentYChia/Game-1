@@ -868,18 +868,32 @@ class Character:
 
         # Check for Efficiency enchantment (gathering speed multiplier)
         # This should multiply the final damage, not add to the multiplier
-        efficiency_mult = 1.0
+        enchantment_speed_bonus = 0.0
         if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
             for ench in equipped_tool.enchantments:
                 effect = ench.get('effect', {})
                 if effect.get('type') == 'gathering_speed_multiplier':
-                    efficiency_bonus = effect.get('value', 0.0)
-                    efficiency_mult = 1.0 + efficiency_bonus
-                    # Visual feedback for efficiency
-                    if efficiency_bonus > 0:
-                        print(f"   ⚡ Efficiency: +{efficiency_bonus*100:.0f}% gathering speed")
+                    enchantment_speed_bonus = effect.get('value', 0.0)
+                    break
 
-        crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance')
+        # Title speed bonuses (miningSpeed / forestrySpeed)
+        title_speed_bonus = self.titles.get_total_bonus(f'{activity}Speed')
+
+        # Combine speed bonuses
+        total_speed_bonus = enchantment_speed_bonus + title_speed_bonus
+        efficiency_mult = 1.0 + total_speed_bonus
+
+        # Visual feedback for speed bonuses
+        if enchantment_speed_bonus > 0:
+            print(f"   ⚡ Efficiency (enchant): +{enchantment_speed_bonus*100:.0f}% gathering speed")
+        if title_speed_bonus > 0:
+            print(f"   🏆 Title bonus: +{title_speed_bonus*100:.0f}% gathering speed")
+        if total_speed_bonus > 0:
+            print(f"   Total: +{total_speed_bonus*100:.0f}% gathering speed")
+
+        # Use effective luck (includes title and skill luck bonuses)
+        effective_luck = self.get_effective_luck()
+        crit_chance = effective_luck * 0.02 + self.class_system.get_bonus('crit_chance')
         if hasattr(self, 'buffs'):
             crit_chance += self.buffs.get_total_bonus('pierce', activity)
 
@@ -920,8 +934,10 @@ class Character:
             loot = resource.get_loot()
             processed_loot = []
             for item_id, qty in loot:
-                # Luck-based bonus
-                if random.random() < (self.stats.luck * 0.02 + self.class_system.get_bonus('resource_quality')):
+                # Luck-based bonus (uses effective luck including title/skill bonuses)
+                effective_luck = self.get_effective_luck()
+                luck_chance = effective_luck * 0.02 + self.class_system.get_bonus('resource_quality')
+                if random.random() < luck_chance:
                     qty += 1
 
                 # Enrich buff bonuses
@@ -1715,6 +1731,37 @@ class Character:
         damage_range = self.equipment.get_weapon_damage()
         # Return average damage
         return (damage_range[0] + damage_range[1]) / 2.0
+
+    def get_effective_luck(self) -> float:
+        """
+        Get effective luck including all bonuses from titles, skills, and special drop rates.
+
+        This unified luck value is used for:
+        - Critical hit chance
+        - Resource quality bonuses
+        - Rare drop rates
+
+        Returns:
+            float: Effective luck value (base + all bonuses)
+        """
+        # Title luck bonuses
+        title_luck_flat = self.titles.get_total_bonus('luckStat')
+        title_rare_drops = self.titles.get_total_bonus('rareDropRate')
+        title_legendary_drops = self.titles.get_total_bonus('legendaryDropRate')
+
+        # Skill buff bonuses (if buffs system exists)
+        skill_luck_bonus = 0.0
+        if hasattr(self, 'buffs'):
+            skill_luck_bonus = self.buffs.get_total_bonus('luck', 'general')
+
+        # Combine rare drop bonuses (these get converted to equivalent luck in get_effective_luck)
+        total_rare_bonus = title_rare_drops + title_legendary_drops
+
+        return self.stats.get_effective_luck(
+            title_bonus=title_luck_flat,
+            skill_bonus=skill_luck_bonus,
+            rare_drop_bonus=total_rare_bonus
+        )
 
     def is_shield_active(self) -> bool:
         """Check if player has a shield equipped in offhand"""
