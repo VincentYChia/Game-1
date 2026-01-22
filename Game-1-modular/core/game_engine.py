@@ -2035,9 +2035,13 @@ class GameEngine:
             self.add_notification("Invalid crafting station!", (255, 100, 100))
             return
 
-        # Initialize buff bonuses
+        # Initialize all bonus variables (prevents UnboundLocalError)
         buff_time_bonus = 0.0
         buff_quality_bonus = 0.0
+        title_time_bonus = 0.0
+        title_quality_bonus = 0.0
+        total_time_bonus = 0.0
+        total_quality_bonus = 0.0
 
         # Enchanting has different minigame signature (requires target_item, no buff bonuses)
         if recipe.station_type == 'adornments':
@@ -2065,8 +2069,7 @@ class GameEngine:
                 buff_quality_bonus = max(empower_bonus, elevate_bonus)
 
             # Calculate title bonuses for this crafting discipline
-            title_time_bonus = 0.0
-            title_quality_bonus = 0.0
+            # (Already initialized at function start)
 
             if recipe.station_type == 'smithing':
                 title_time_bonus = self.character.titles.get_total_bonus('smithingTime')

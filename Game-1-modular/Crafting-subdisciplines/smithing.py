@@ -52,10 +52,12 @@ class SmithingMinigame:
         # Calculate difficulty from materials using new system
         self._setup_difficulty_from_materials()
 
-        # Apply skill buff bonuses to time limit
-        if self.buff_time_bonus > 0:
-            self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
-            print(f"⚡ Quicken buff applied: {self.time_limit}s minigame time")
+        # Store speed bonus for fire decrease rate calculation (NOT for time limit!)
+        # Speed bonus slows down fire decrease, giving more time to work
+        # Formula: effective_rate = base_rate / (1.0 + speed_bonus)
+        self.speed_bonus = self.buff_time_bonus
+        if self.speed_bonus > 0:
+            print(f"⚡ Speed bonus: +{self.speed_bonus*100:.0f}% (slows fire decrease rate)")
 
         # Game state
         self.active = False
@@ -176,10 +178,21 @@ class SmithingMinigame:
         if not self.active:
             return
 
-        # Temperature decay
+        # Temperature decay with speed bonus
+        # Fire decrease rate is calibrated to "5 clicks per second" equivalent
+        # Speed bonus slows down the decrease: effective_rate = base_rate / (1.0 + speed_bonus)
         now = pygame.time.get_ticks()
         if now - self.last_temp_update > 100:
-            self.temperature = max(0, self.temperature - self.TEMP_DECAY)
+            # Calculate base decay rate (5 clicks/sec worth, divided by 10 for 100ms ticks)
+            # This means player needs to maintain ~5 clicks/sec to keep temperature stable
+            clicks_per_second_equivalent = 5.0
+            base_decay_per_second = clicks_per_second_equivalent * self.TEMP_FAN_INCREMENT
+            base_decay_per_tick = base_decay_per_second / 10.0  # 100ms = 1/10 second
+
+            # Apply speed bonus (slows down fire decrease)
+            effective_decay = base_decay_per_tick / (1.0 + self.speed_bonus)
+
+            self.temperature = max(0, self.temperature - effective_decay)
             self.last_temp_update = now
 
         # Hammer movement
@@ -638,15 +651,8 @@ class SmithingCrafter:
 
         # Success - deduct full materials
         recipe = self.recipes[recipe_id]
-        for inp in recipe['inputs']:
-            mat_id = inp.get('materialId') or inp.get('itemId')
-            qty = inp['quantity']
-            if mat_id not in inventory:
-                print(f"⚠ ERROR: Material '{mat_id}' not in inventory dict!")
-                inventory[mat_id] = 0  # Add it with 0 so subtraction works
-            if inventory[mat_id] < qty:
-                print(f"⚠ WARNING: Insufficient '{mat_id}': have {inventory[mat_id]}, need {qty}")
-            inventory[mat_id] = max(0, inventory[mat_id] - qty)
+        # Material consumption is handled by RecipeDatabase.consume_materials() in game_engine.py
+        # This keeps the architecture clean with a single source of truth for inventory management
 
         # Detect input rarity
         inputs = recipe.get('inputs', [])

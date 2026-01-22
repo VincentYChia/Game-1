@@ -43,56 +43,111 @@ Test in-game to verify if materials are actually being consumed. Code analysis s
 
 ---
 
-## Issue 2: Speed Bonuses (CRITICAL BUG)
+## Issue 2: Minigame Difficulty & Speed System (MAJOR REDESIGN)
 
-### Current State
+### NEW REQUIREMENT: Per-Discipline Speed Mechanics
+
+Speed bonuses should work differently for each discipline based on their unique mechanics:
+
+#### Smithing: Speed Affects Fire Decrease Rate
+- **Current**: Time limit increases (backwards!)
+- **New**: Speed bonus reduces fire decrease tick rate
+  - Base fire decrease: 5 clicks per second worth
+  - With +200% speed: `5 / (1 + 2.00) = 5 / 3 = 1.67 clicks/sec worth`
+  - Fire goes down slower, giving more time to work
+
+**Additional Difficulty Tuning**:
+- Make fire decrease limit equivalent to 5 spacebar clicks per second
+- Narrow ideal temp range (min 3°C)
+- Narrow ideal click timing range
+- Difficulty increases click indicator speed
+
+#### Refining: Increase Difficulty (TOO EASY)
+- **Spinner speed**: Increase to 2-3x current average
+- **Ideal range**: Reduce to 0.5-0.33x current size
+- **Speed bonus**: Reduces spinner speed (makes timing easier)
+- **CRITICAL**: Ensure UI graphics match code changes (spinner visual speed)
+
+#### Alchemy: Secret Value System (TOO PREDICTABLE)
+- **Current**: Items simply up/down in potency
+- **New**: Each item has secret value (use vowel counting like volatility)
+  - 3 ranges: ~50%, ~33%, ~17% distribution
+  - Items go up/down 1, 2, or 3 times per cycle
+  - Max value always on last up/down
+- **Speed bonus**: Slows down reagent mixing animation/timer
+
+#### Engineering: Stats Integration
+- **Verify**: Stats are carried through place/pickup cycle
+- **Verify**: Stats are appropriate for devices
+- **Speed bonus**: Reduces assembly complexity timer
+
+#### Enchanting: Fix Critical Bug
+**ERROR FOUND**:
+```
+UnboundLocalError: cannot access local variable 'total_time_bonus'
+where it is not associated with a value
+```
+**Location**: `game_engine.py` line 2095 in `_start_minigame()`
+**Cause**: Variable not initialized before enchanting/adornment path
+**Fix**: Initialize total_time_bonus = 0.0 before conditionals
+
+### Speed Bonus Application Strategy
+
+**Old (Backwards)**:
 ```python
-# game_engine.py lines 2054-2090
-total_time_bonus = buff_time_bonus + title_time_bonus
-
-# smithing.py lines 56-58
-if self.buff_time_bonus > 0:
-    self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
+time_limit = base_time * (1.0 + speed_bonus)  # More time = slower!
 ```
 
-### Problem
-- **+50% speed bonus** → `time_limit * 1.5` = **50% MORE time** (slower!)
-- **+200% speed bonus** → `time_limit * 3.0` = **200% MORE time** (much slower!)
-
-**THIS IS BACKWARDS!**
-
-### Correct Behavior
-- **+50% speed** should mean **50% FASTER** = **less time**
-- Formula should be: `time_limit / (1.0 + speed_bonus)` OR `time_limit * (1.0 - speed_bonus)`
-
-### Solution Options
-
-**Option A (Multiplicative Inverse)**: Faster = divide time
+**New (Context-Dependent)**:
 ```python
-# +50% speed = 1.5x faster = time / 1.5 = 0.67x time
-self.time_limit = int(self.time_limit / (1.0 + self.buff_time_bonus))
-```
+# Smithing: Reduce fire decrease rate
+fire_decrease_rate = base_rate / (1.0 + speed_bonus)
 
-**Option B (Subtractive)**: Direct percentage reduction
-```python
-# +50% speed = -50% time = 0.5x time
-# But need to clamp: max 90% speed = 0.1x time minimum
-speed_mult = max(0.1, 1.0 - min(0.9, self.buff_time_bonus))
-self.time_limit = int(self.time_limit * speed_mult)
-```
+# Refining: Reduce spinner speed
+spinner_speed = base_speed / (1.0 + speed_bonus)
 
-**Recommendation**: Option A (multiplicative inverse)
-- More intuitive scaling
-- No artificial caps needed
-- +100% speed = 2x faster = 0.5x time
-- +200% speed = 3x faster = 0.33x time
+# Alchemy: Reduce reaction speed
+reaction_speed = base_speed / (1.0 + speed_bonus)
+
+# Engineering: Reduce complexity timer
+complexity_timer = base_timer / (1.0 + speed_bonus)
+
+# Enchanting: Reduce rune placement timer
+placement_timer = base_timer / (1.0 + speed_bonus)
+```
 
 ### Files to Modify
-- `Crafting-subdisciplines/smithing.py`: Lines 56-58
-- `Crafting-subdisciplines/alchemy.py`: Lines 239-241
-- `Crafting-subdisciplines/refining.py`: Lines 68-70
-- `Crafting-subdisciplines/engineering.py`: Lines ~68
-- `Crafting-subdisciplines/enchanting.py`: (check if applicable)
+
+**Critical Bug Fix**:
+- `core/game_engine.py`: Line ~2095 - Initialize total_time_bonus before use
+
+**Smithing Redesign**:
+- `Crafting-subdisciplines/smithing.py`:
+  - Fire decrease rate mechanics
+  - Speed bonus affects tick rate
+  - Difficulty affects click timing & temp ranges
+
+**Refining Redesign**:
+- `Crafting-subdisciplines/refining.py`:
+  - Increase spinner speed 2-3x
+  - Reduce ideal range to 0.5-0.33x
+  - Speed bonus reduces spinner speed
+  - **Update UI graphics** to match speed changes
+
+**Alchemy Redesign**:
+- `Crafting-subdisciplines/alchemy.py`:
+  - Implement secret value system (vowel counting)
+  - 3 ranges with different up/down patterns
+  - Speed bonus affects reaction timing
+
+**Engineering Verification**:
+- `Crafting-subdisciplines/engineering.py`:
+  - Verify stats persist through place/pickup
+  - Verify appropriate stat generation
+
+**Enchanting Fix**:
+- `Crafting-subdisciplines/enchanting.py`:
+  - May need speed bonus integration check
 
 ---
 
@@ -324,34 +379,101 @@ Items with different crafted_stats should not stack:
 
 ---
 
-## Implementation Order
+## Implementation Order (REVISED)
 
-### Phase 1: Investigation (1 task)
-1. Test material consumption in normal mode - verify if bug exists
+### Phase 0: Planning & Context Building (3 tasks)
+1. ✅ Update comprehensive plan with new requirements
+2. Create detailed implementation todos (dozens of subtasks)
+3. Read all 5 minigame files for deep context
 
-### Phase 2: Critical Fixes (2 tasks)
-2. Fix speed bonus calculation (multiplicative inverse)
-3. Create crafted stats system (new file, stat categories)
+### Phase 1: Critical Bug Fixes (3 tasks)
+4. Fix Enchanting UnboundLocalError in game_engine.py
+5. Test material consumption in normal mode - verify if bug exists
+6. Fix material consumption if broken
 
-### Phase 3: Stat Application (3 tasks)
-4. Modify minigames to return earned_points/max_points
-5. Update game_engine.py to use apply_crafted_stats_to_equipment()
-6. Update character.py recalculate_stats() to read from bonuses
+### Phase 2: Minigame Difficulty Adjustments (20+ tasks)
 
-### Phase 4: Material Consumption (1 task)
-7. Remove redundant material removal from minigames (if needed)
+**Smithing** (5 tasks):
+7. Redesign fire decrease mechanics (5 clicks/sec equivalent)
+8. Implement speed bonus as tick rate reducer
+9. Narrow ideal temperature range (min 3°C)
+10. Narrow ideal click timing range
+11. Tie click indicator speed to difficulty
 
-### Phase 5: Testing (3 tasks)
-8. Test each item type (weapon, armor, shield, tool)
-9. Verify stats persist through equip/unequip/save/load
-10. Audit for edge cases and additional issues
+**Refining** (4 tasks):
+12. Increase spinner speed to 2-3x average
+13. Reduce ideal range to 0.5-0.33x current
+14. Implement speed bonus as spinner speed reducer
+15. Update UI graphics to match new speeds (CRITICAL)
+
+**Alchemy** (5 tasks):
+16. Implement secret value system (vowel counting)
+17. Create 3 ranges (~50%, ~33%, ~17%)
+18. Implement variable up/down patterns (1, 2, 3 times)
+19. Ensure max value on last up/down
+20. Implement speed bonus for reaction timing
+
+**Engineering** (3 tasks):
+21. Verify stats persist through place/pickup
+22. Verify appropriate stat generation
+23. Implement speed bonus for assembly timer
+
+**Enchanting** (2 tasks):
+24. Verify no similar UnboundLocalError issues
+25. Implement speed bonus for rune placement
+
+### Phase 3: Crafted Stats System Redesign (10 tasks)
+
+**Create Stats System** (3 tasks):
+26. Create entities/components/crafted_stats.py
+27. Define VALID_STATS_BY_TYPE for all item types
+28. Implement generate_crafted_stats() with filtering
+
+**Update Minigames for Points Tracking** (5 tasks):
+29. Smithing: Track earned/max points (strikes, quality)
+30. Alchemy: Track successful placements vs possible
+31. Refining: Track temperature control accuracy
+32. Engineering: Track precision measurements
+33. Enchanting: Track rune placement accuracy
+
+**Apply Stats to Equipment** (2 tasks):
+34. Implement apply_crafted_stats_to_equipment() function
+35. Update game_engine.py to use new stat application
+
+### Phase 4: Stat Integration (5 tasks)
+36. Update equipment_manager.py stat bonus reading
+37. Update character.py recalculate_stats()
+38. Verify damage bonuses apply to combat
+39. Verify defense bonuses apply to damage reduction
+40. Verify tool efficiency bonuses apply to gathering
+
+### Phase 5: Material Consumption Cleanup (2 tasks)
+41. Remove redundant material removal from minigames
+42. Verify consume_materials() works correctly
+
+### Phase 6: Comprehensive Testing (8 tasks)
+43. Test smithing (weapons + armor with appropriate stats)
+44. Test refining (materials with quality stats)
+45. Test alchemy (potions with effect stats)
+46. Test engineering (devices with stats persist)
+47. Test enchanting (enchantments apply correctly)
+48. Test shields (defense, proper stat filtering)
+49. Test tools (efficiency bonuses)
+50. Test save/load persistence
+
+### Phase 7: Final Integration & Commit (3 tasks)
+51. Verify all 5 disciplines work consistently
+52. Run comprehensive regression tests
+53. Commit and push all changes
+
+**Total Tasks: 53**
 
 ---
 
 ## Success Criteria
 
+### Core Functionality
 - [ ] Materials consumed correctly in normal mode, not consumed in debug mode
-- [ ] Speed bonuses work correctly (+50% speed = faster crafting)
 - [ ] Crafted stats apply when equipment is equipped
 - [ ] Stats are appropriate for item type (no defense on weapons, etc.)
 - [ ] Quality calculated as earned/max ratio (0-100)
@@ -361,7 +483,42 @@ Items with different crafted_stats should not stack:
 - [ ] Shields work correctly with appropriate stats
 - [ ] Tooltips accurately reflect stats that will be applied
 - [ ] Stats persist through save/load
+
+### Minigame Difficulty & Speed
+**Smithing**:
+- [ ] Fire decrease rate = 5 clicks/sec equivalent
+- [ ] Speed bonus reduces fire tick rate (not time limit)
+- [ ] Ideal temp range minimum 3°C
+- [ ] Click timing range appropriately narrow
+- [ ] Click indicator speed scales with difficulty
+
+**Refining**:
+- [ ] Spinner speed increased to 2-3x average
+- [ ] Ideal range reduced to 0.5-0.33x current
+- [ ] Speed bonus reduces spinner speed
+- [ ] UI graphics match actual spinner speed
+
+**Alchemy**:
+- [ ] Secret value system implemented (vowel counting)
+- [ ] 3 ranges working (~50%, ~33%, ~17%)
+- [ ] Variable up/down patterns (1, 2, 3 times)
+- [ ] Max value always on last up/down
+- [ ] Speed bonus affects reaction timing
+
+**Engineering**:
+- [ ] Stats persist through device place/pickup
+- [ ] Stats are appropriate for devices
+- [ ] Speed bonus affects assembly timer
+
+**Enchanting**:
+- [ ] UnboundLocalError fixed
+- [ ] No similar errors in other disciplines
+- [ ] Speed bonus affects rune placement
+
+### Integration
 - [ ] All 5 disciplines working consistently
+- [ ] Speed bonuses work correctly (context-dependent per discipline)
+- [ ] No regression in existing features
 
 ---
 

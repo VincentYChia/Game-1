@@ -793,11 +793,8 @@ class AlchemyCrafter:
                 "explosions": minigame_result.get('explosions', 0)
             }
 
-        # Success - deduct full materials
-        for inp in recipe['inputs']:
-            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
-            item_id = inp.get('itemId') or inp.get('materialId')
-            inventory[item_id] -= inp['quantity']
+        # Material consumption is handled by RecipeDatabase.consume_materials() in game_engine.py
+        # This keeps the architecture clean with a single source of truth for inventory management
 
         # Detect input rarity
         inputs = recipe.get('inputs', [])

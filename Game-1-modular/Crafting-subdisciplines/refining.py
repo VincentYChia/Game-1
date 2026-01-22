@@ -64,10 +64,12 @@ class RefiningMinigame:
         # Calculate difficulty from materials using new system
         self._setup_difficulty_from_materials()
 
-        # Apply skill buff bonuses to time limit
-        if self.buff_time_bonus > 0:
-            self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
-            print(f"⚡ Quicken buff applied: {self.time_limit}s minigame time")
+        # Store speed bonus for spinner speed reduction (NOT for time limit!)
+        # Speed bonus slows down spinner rotation, making timing easier
+        # Formula: effective_speed = base_speed / (1.0 + speed_bonus)
+        self.speed_bonus = self.buff_time_bonus
+        if self.speed_bonus > 0:
+            print(f"⚡ Speed bonus: +{self.speed_bonus*100:.0f}% (slows spinner rotation)")
 
         # Game state
         self.active = False
@@ -173,11 +175,14 @@ class RefiningMinigame:
 
             # For high difficulty (multi_speed enabled), vary rotation speeds
             if self.multi_speed and i % 2 == 0:
-                speed = self.rotation_speed * 0.7
+                base_speed = self.rotation_speed * 0.7
             elif self.multi_speed and i % 3 == 0:
-                speed = self.rotation_speed * 1.3
+                base_speed = self.rotation_speed * 1.3
             else:
-                speed = self.rotation_speed
+                base_speed = self.rotation_speed
+
+            # Apply speed bonus (slows down rotation)
+            speed = base_speed / (1.0 + self.speed_bonus)
 
             # Randomize direction (some clockwise, some counter-clockwise)
             direction = random.choice([1, -1])
@@ -590,11 +595,8 @@ class RefiningCrafter:
                 "loss_percentage": int(loss_fraction * 100)
             }
 
-        # Success - deduct full materials and give output
-        for inp in recipe['inputs']:
-            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
-            item_id = inp.get('itemId') or inp.get('materialId')
-            inventory[item_id] -= inp['quantity']
+        # Material consumption is handled by RecipeDatabase.consume_materials() in game_engine.py
+        # This keeps the architecture clean with a single source of truth for inventory management
 
         # Detect input rarity (base rarity from input materials)
         inputs = recipe.get('inputs', [])

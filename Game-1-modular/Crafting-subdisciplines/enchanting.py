@@ -1267,11 +1267,8 @@ class EnchantingCrafter:
         # Get difficulty tier from minigame result
         difficulty_tier = minigame_result.get('difficulty_tier', 'common')
 
-        # Always consume materials (even on failure)
-        for inp in recipe['inputs']:
-            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
-            item_id = inp.get('itemId') or inp.get('materialId')
-            inventory[item_id] -= inp['quantity']
+        # Material consumption is handled by RecipeDatabase.consume_materials() in game_engine.py
+        # This keeps the architecture clean with a single source of truth for inventory management
 
         if not minigame_result.get('success'):
             # Minigame failed (shouldn't happen with spinning wheel, but keep for safety)
