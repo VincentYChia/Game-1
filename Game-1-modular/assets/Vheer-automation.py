@@ -31,79 +31,88 @@ import time
 import re
 import shutil
 
-# ============================================================================
-# CONFIGURATION  2
+## ============================================================================
+# CONFIGURATION 3
 # ============================================================================
 
 PERSISTENT_PROMPT = "Simple cel-shaded 3d stylized fantasy exploration item icons. Clean render, distinct details, transparent background."
 
-# Version-specific prompts (replaces entire persistent prompt for that version)
-# Empty dict means use default PERSISTENT_PROMPT for all versions
+# Version-specific prompts
 VERSION_PROMPTS = {
-    1: "3D rendered item icon in illustrative fantasy style. Item large in frame (70-80% coverage), slight diagonal positioning. Neutral background with gradient, clean three-point lighting, soft shadow beneath. Focus on representing the idea of the item through an idealized fantasy illustration. Smooth, detailed, and brighter.",
-    2: "3D rendered item icon in illustrative fantasy style. Render EXACTLY the item described - verify item type, form, and state before generating. Item large in frame (70-80% coverage), slight diagonal positioning. Neutral background with gradient, clean three-point lighting, soft shadow beneath. Focus on representing the precise idea of the item through idealized fantasy illustration. Smooth, detailed, and brighter.",
-    3: "3D rendered item icon in illustrative fantasy style. Read full item description carefully - distinguish between similar items (axe vs pickaxe, ore vs ingot vs node, dagger vs sword). Render the specific form described. Item fills 70-80% of frame, diagonal angle. Neutral gradient background, clean three-point lighting, soft shadow. Represent the idealized archetypal form with smooth detail and enhanced brightness. Accuracy to description is critical.",
+    1: "3D rendered item icon in bold illustrative fantasy style. CRITICAL: Items must be visually distinct from similar items through form, proportion, and design language. Item fills 70-80% of frame at dynamic angle. Materials must be clearly represented through texture, sheen, and visual effects. Gradient background, dramatic three-point lighting with colored rim lights, soft ground shadow. Emphasize archetypal fantasy design with enhanced brightness and saturation.",
+
+    2: "3D rendered item icon in bold illustrative fantasy style. VERIFY item type completely before generating - distinguish axes from pickaxes, ores from ingots, nodes from processed materials. Form and function must be immediately recognizable. Materials MUST show distinct visual properties (metallic sheen, texture, color temperature, magical effects). Item 70-80% frame coverage, compelling diagonal angle. Gradient background, dramatic lighting with material-appropriate highlights. Push visual distinction aggressively.",
+
+    3: "3D rendered item icon in bold illustrative fantasy style with MAXIMUM DISTINCTION. Read full description and verify: tool function (mining/chopping/combat), item state (raw node/ore/ingot/crafted), material properties. Each item category needs unique silhouette and design language. Materials must be exaggerated for clarity: copper=warm orange, steel=cool blue-grey, iron=neutral grey, wood types with signature effects. Reject realistic ambiguity - embrace fantasy symbolism. 70-80% coverage, dynamic angle, dramatic gradient background, bold three-point lighting with colored accents.",
 }
 
-# Category-specific additions (appends to detail prompt for matching categories)
-# All available categories from catalog:
+# Category-specific additions
 CATEGORY_ADDITIONS = {
-    # 'equipment': 'Additional guidance for equipment',
-    # 'consumable': 'Additional guidance for consumables',
-    'enemy': 'Focus on stylized enemies. Avoid excessive realism or any elements that may disgust users',
-    'resource': 'This is a node for resources not the actual resource, your illustration should reflect that',
-    'title': 'This is an icon for a in-game title. So it should be a representative icon based on the idea not an illustration',
-    'skill': 'This is an icon for a in-game skill. So it should be a representative icon based on the idea not an illustration',
-    'station': 'Tier 1, Tier 2, Tier 3, and Tier 4 represent tiers 1 through 4. 4 is the most advanced and should have the most detail. 1 is the simplest and should be simplest in design',
-    'device': 'Adhere closely to the type as the largest distinction for design.',
-    'material': 'For less specific and documented materials adhering to the style is more important. Use the narrative as the most important description',
+    'enemy': 'Stylized creature design with bold silhouette. Emphasize character and threat level through form, not gore. Clear visual storytelling.',
+
+    'resource': 'This is a RESOURCE NODE (in-ground deposit, tree, quarry vein) NOT the harvested material. Show the source in natural context - rock formations, tree bark, ore veins in stone matrix. Must be clearly a gatherable environmental object, not a processed item.',
+
+    'title': 'Symbolic emblem representing achievement concept. Use heraldic/medallion design language - shields, crests, symbolic icons, decorative frames. NOT literal illustrations. Think coat of arms meeting fantasy badge.',
+
+    'skill': 'Abstract symbolic icon representing the skill concept through visual metaphor. Use bold graphic design language - geometric shapes, energy effects, elemental symbols, mystical sigils. Prioritize instant recognition over literal representation. Reference ability scroll/tome aesthetic.',
+
+    'station': 'Crafting station with clear tier progression. Tier 1: Simple, rustic, basic materials. Tier 2: Refined, metal reinforcements, modest detail. Tier 3: Advanced, complex mechanisms, magical accents. Tier 4: Masterwork, intricate detail, glowing runes, premium materials. Each tier should be visually distinct at thumbnail size.',
+
+    'device': 'Functional fantasy device. Type determines form factor - distinguish turrets, traps, gadgets clearly. Show purpose through design. Adhere to type as primary design driver.',
+
+    'material': 'Processed material icon - ingots, refined components, drops. HIGHLY SYMBOLIC representation. Ingots = stylized bars with material signature (copper glow, steel sheen). Drops = crystallized essence with thematic effects. Prioritize instant material recognition over realism.',
+
+    'consumable': 'Container design tells the story. Bottle/vial shape, liquid color, AND container details indicate effect. Health = round flask, red liquid, warm glow. Mana = elegant vial, blue liquid, mystical sparkles. Buff = geometric bottle with effect-colored liquid and atmospheric effects. Make containers creative and distinct.',
+
+    'equipment': 'Equipment items must show material properties clearly. Metal type affects color temperature, sheen, and edge highlights. Copper = warm orange-gold. Iron = neutral grey. Steel = cool blue-grey. Bronze = rich amber. Ensure material is unmistakable.',
 }
 
-# Type-specific additions (appends to detail prompt for matching types)
-# All available types from catalog:
+# Type-specific additions
 TYPE_ADDITIONS = {
-    # Equipment types:
-    # 'weapon': 'Additional guidance for weapons',
-    # 'sword': 'Additional guidance for swords',
-    # 'axe': 'Additional guidance for axes',
-    # 'mace': 'Additional guidance for maces',
-    # 'dagger': 'Additional guidance for daggers',
-    # 'spear': 'Additional guidance for spears',
-    # 'bow': 'Additional guidance for bows',
-    # 'staff': 'Additional guidance for staves',
-    # 'shield': 'Additional guidance for shields',
-    # 'armor': 'Additional guidance for armor',
-    # 'tool': 'Additional guidance for tools',
-    # 'accessory': 'Additional guidance for accessories',
-    # Consumable types:
-    # 'potion': 'Additional guidance for potions',
-    # 'food': 'Additional guidance for food',
-    # 'scroll': 'Additional guidance for scrolls',
-    'turret': 'Turrets require a base'
-    # Other types as needed...
+    # TOOLS - Critical distinction from weapons
+    'tool': 'TOOL not weapon. Tools have utilitarian design - reinforced heads, practical grip wrapping, wear marks from use. Less elegant than weapons, more robust construction.',
+
+    'axe': 'WOODCUTTING AXE. Wide, straight-edged blade optimized for chopping wood. Thick spine, broad cutting surface. Utilitarian handle with practical grip. NOT a battle axe - no spikes, curves, or aggressive styling.',
+
+    'pickaxe': 'MINING PICKAXE. Distinctive pointed pick on one side, flat chisel on other (or dual picks). Narrow profile, long reach design. Reinforced shaft. Head angled for breaking rock. COMPLETELY different silhouette from axe - emphasize the pointed pick shape.',
+
+    'hatchet': 'Small one-handed forestry hatchet. Compact axe head, short handle. Clearly smaller and lighter than full axe.',
+
+    # WEAPONS - Aggressive elegant design
+    'weapon': 'Combat weapon with elegant, aggressive design. Sharp lines, balanced proportions, decorative elements. Designed to look deadly and prestigious.',
+
+    'battleaxe': 'COMBAT AXE. Curved aggressive blade, often asymmetric or double-headed. Sharp edges, intimidating design. Decorative elements, balanced for fighting. More elegant and deadly than tool axe.',
+
+    'sword': 'Sword with clear blade profile. Material affects color, sheen, and edge glow.',
+
+    'bow': 'Elegant bow with VISIBLE STRING. String must be rendered as fine line connecting limb tips, slightly curved under tension. If string is hard to see, add subtle glow or highlights. Emphasize recurve or longbow shape clearly.',
+
+    'staff': 'Magical or combat staff. Ornate head design with crystals, orbs, or elemental effects. Carved shaft with runes or wrappings.',
+
+    'dagger': 'Short blade, often curved or dual-edged. Distinct from sword by size and proportion. Emphasize compact lethality.',
+
+    'spear': 'Long shaft with pointed head. Clear spearhead design - leaf-shaped, barbed, or angular. Shaft details like wrapping or metal bands.',
+
+    'mace': 'Blunt weapon with distinctive head - spiked ball, flanged cylinder, or geometric shape. Heavy, intimidating appearance.',
+
+    # MATERIALS
+    'ingot': 'Stylized metal bar with beveled edges. Material signature is CRITICAL: Copper = warm orange-amber glow. Iron = neutral grey with subtle shine. Steel = cool blue-grey with high sheen. Gold = rich yellow with warm highlights. Bronze = deep amber-orange. Silver = bright white-grey with sharp highlights. Show material through color temperature and reflectivity.',
+
+    'ore': 'Unrefined ore chunk - rough crystalline rock. Material shows as veins, crystals, or deposits in host stone. Copper ore = green malachite crystals. Iron ore = reddish-brown hematite. Gold ore = bright yellow veins in quartz. Emphasize raw, unprocessed state with natural crystal formations.',
+
+    'wood': 'Processed lumber or wood resource. Different wood types need signature visual effects: Oak = rich brown, solid grain. Pine = lighter tan, visible knots. Ironwood = grey with metallic vein patterns. Ebony = deep black with subtle purple sheen. Crimson = red tinted with flame-like grain. Make wood types immediately distinguishable through color, effects, and character.',
+
+    'node': 'Resource node - environmental deposit. Add terms: QUARRY for stone deposits, VEIN for ore deposits, TREE for wood sources. Show in natural environmental context - mineral vein in rock face, quarry stone formation, standing tree bark. Must be clearly different from refined materials.',
+
+    # SPECIFIC ITEMS
+    'potion': 'Fantasy potion in distinctive container. Round flask, decorative bottle, or vial. Liquid color indicates type. Container itself should have character - cork stopper, wax seal, etched glass, glowing effects.',
+
+    'forge': 'Forge station with CLEAR tier progression: Tier 1 = simple stone hearth, basic bellows, primitive anvil. Tier 2 = brick forge, metal bellows, proper anvil, coal pile. Tier 3 = reinforced forge with chimney, mechanical bellows, tool racks, mystical accents. Tier 4 = masterwork forge with intricate metalwork, glowing runes, ethereal flames, magical anvil, premium materials throughout. Each tier must be dramatically more impressive.',
+
+    'turret': 'Defensive turret with clear base. Mounted weapon system on stable platform. Show firing mechanism, ammunition, and sturdy foundation.',
 }
 
 
-TEST_ITEMS = [
-    {
-        'name': 'Iron_Sword',
-        'base_folder': 'items',
-        'subfolder': 'weapons',
-        'category': 'equipment',
-        'type': 'weapon',
-        'subtype': 'shortsword',
-        'narrative': 'A basic but reliable blade forged from iron.'
-    },
-    {
-        'name': 'Health_Potion',
-        'base_folder': 'items',
-        'subfolder': 'consumables',
-        'category': 'consumable',
-        'type': 'potion',
-        'subtype': 'healing',
-        'narrative': 'A red vial filled with healing liquid.'
-    }
-]
 
 SCRIPT_DIR = Path(__file__).parent
 OUTPUT_DIR = SCRIPT_DIR / 'generated_icons'
@@ -211,6 +220,15 @@ def categorize_item(item):
     if category == 'consumable':
         return ('items', 'consumables')
 
+    if category == 'class':
+        return ('classes', None)
+
+    if category == 'quest':
+        return ('quests', None)
+
+    if category == 'npc':
+        return ('npcs', None)
+
     return ('items', 'materials')
 
 def parse_catalog(filepath):
@@ -240,16 +258,17 @@ def parse_catalog(filepath):
             elif line.startswith('- **Narrative**:'):
                 item_data['narrative'] = line.split(':', 1)[1].strip()
 
-        if 'narrative' in item_data:
-            item_data.setdefault('subtype', item_data.get('type', 'unknown'))
-            item_data.setdefault('category', 'material')
-            item_data.setdefault('type', 'unknown')
+        # Always include the item
+        item_data.setdefault('narrative', '')
+        item_data.setdefault('category', 'misc')
+        item_data.setdefault('type', 'unknown')
+        item_data.setdefault('subtype', item_data['type'])
 
-            base_folder, subfolder = categorize_item(item_data)
-            item_data['base_folder'] = base_folder
-            item_data['subfolder'] = subfolder
+        base_folder, subfolder = categorize_item(item_data)
+        item_data['base_folder'] = base_folder
+        item_data['subfolder'] = subfolder
 
-            items.append(item_data)
+        items.append(item_data)
 
     return items
 
