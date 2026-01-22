@@ -1564,10 +1564,11 @@ class Character:
         # Keep all items and equipment (no death penalty)
 
     def get_effective_max_durability(self, item) -> int:
-        """Get effective max durability for an item, including VIT bonus.
+        """Get effective max durability for an item, including VIT and title bonuses.
 
         VIT increases max durability by 1% per point.
-        Example: Item with 100 max durability, 10 VIT = 110 effective max
+        Title durabilityBonus provides additional % increase.
+        Example: Item with 100 max durability, 10 VIT, +25% title = 100 * 1.1 * 1.25 = 137 effective max
 
         Args:
             item: Equipment or Tool with durability_max attribute
@@ -1578,8 +1579,15 @@ class Character:
         if not hasattr(item, 'durability_max'):
             return 100
         base_max = item.durability_max
+
+        # VIT bonus
         vit_mult = self.stats.get_durability_bonus_multiplier()
-        return int(base_max * vit_mult)
+
+        # Title durability bonus
+        title_durability_bonus = self.titles.get_total_bonus('durabilityBonus')
+        title_mult = 1.0 + title_durability_bonus
+
+        return int(base_max * vit_mult * title_mult)
 
     def get_durability_percent(self, item) -> float:
         """Get durability percentage for an item, accounting for VIT bonus.
@@ -1763,6 +1771,99 @@ class Character:
             rare_drop_bonus=total_rare_bonus
         )
 
+    def get_effective_attack_speed(self) -> float:
+        """
+        Get effective attack speed multiplier including all bonuses.
+
+        Attack speed affects cooldown: cooldown = base_cooldown / attack_speed
+        Default attack speed is 1.0 (1 second cooldown)
+        Higher attack speed = faster attacks (lower cooldown)
+
+        Returns:
+            float: Attack speed multiplier (1.0 = normal, 2.0 = twice as fast)
+        """
+        # Base attack speed is 1.0
+        base_speed = 1.0
+
+        # AGI bonus (3% faster per point, already implemented elsewhere)
+        agi_bonus = self.stats.agility * 0.03
+
+        # Title attack speed bonus
+        title_speed_bonus = self.titles.get_total_bonus('attackSpeed')
+
+        # Skill buff bonuses (if buffs system exists)
+        skill_speed_bonus = 0.0
+        if hasattr(self, 'buffs'):
+            skill_speed_bonus = self.buffs.get_total_bonus('quicken', 'combat')
+
+        # Combine all bonuses multiplicatively
+        return base_speed * (1.0 + agi_bonus + title_speed_bonus + skill_speed_bonus)
+
+    def get_enemy_damage_multiplier(self, enemy) -> float:
+        """
+        Get damage multiplier against specific enemy based on category/tag bonuses.
+
+        Checks for title bonuses like:
+        - {category}Damage (e.g., beastDamage for category="beast")
+        - {tag}Damage (e.g., wolfDamage for tag="wolf")
+
+        Args:
+            enemy: Enemy instance with definition.category and definition.tags
+
+        Returns:
+            float: Damage multiplier (1.0 = normal, 1.5 = +50% damage)
+        """
+        if not hasattr(enemy, 'definition'):
+            return 1.0
+
+        total_bonus = 0.0
+
+        # Check category-based damage (e.g., beastDamage)
+        if hasattr(enemy.definition, 'category') and enemy.definition.category:
+            category_bonus_key = f"{enemy.definition.category}Damage"
+            category_bonus = self.titles.get_total_bonus(category_bonus_key)
+            if category_bonus > 0:
+                total_bonus += category_bonus
+                print(f"   🎯 {enemy.definition.category.capitalize()} bonus: +{category_bonus*100:.0f}% damage")
+
+        # Check tag-based damage (e.g., wolfDamage, dragonDamage)
+        if hasattr(enemy.definition, 'tags') and enemy.definition.tags:
+            for tag in enemy.definition.tags:
+                tag_bonus_key = f"{tag}Damage"
+                tag_bonus = self.titles.get_total_bonus(tag_bonus_key)
+                if tag_bonus > 0:
+                    total_bonus += tag_bonus
+                    print(f"   🎯 {tag.capitalize()} bonus: +{tag_bonus*100:.0f}% damage")
+
+        return 1.0 + total_bonus
+
+    def get_effect_resistance(self, effect_type: str) -> float:
+        """
+        Get resistance to specific status effect type.
+
+        Resistance reduces effect duration (not magnitude).
+        Checks for title bonuses like:
+        - burnResistance (for "burn" effect)
+        - poisonResistance (for "poison" effect)
+        - freezeResistance (for "freeze" effect)
+
+        Args:
+            effect_type: Effect type ID (e.g., "burn", "poison", "freeze")
+
+        Returns:
+            float: Duration multiplier (1.0 = full duration, 0.5 = half duration)
+        """
+        resistance_key = f"{effect_type}Resistance"
+        resistance_bonus = self.titles.get_total_bonus(resistance_key)
+
+        # Resistance reduces duration (50% resistance = 50% shorter duration)
+        duration_multiplier = max(0.0, 1.0 - resistance_bonus)
+
+        if resistance_bonus > 0:
+            print(f"   🛡️ {effect_type.capitalize()} resistance: -{resistance_bonus*100:.0f}% duration")
+
+        return duration_multiplier
+
     def is_shield_active(self) -> bool:
         """Check if player has a shield equipped in offhand"""
         offhand = self.equipment.slots.get('offHand')
@@ -1806,20 +1907,21 @@ class Character:
             # Get weapon-specific attack speed
             weapon_attack_speed = self.equipment.get_weapon_attack_speed(hand)
 
-            # Weapon attack cooldown based on attack speed stat and weapon speed
-            base_cooldown = 1.0
-            attack_speed_bonus = self.stats.agility * 0.03  # 3% faster per AGI
+            # Get effective attack speed (includes AGI, titles, skills, weapon tags)
+            effective_speed = self.get_effective_attack_speed()
 
-            # Add weapon tag attack speed bonus (fast)
+            # Add weapon tag attack speed bonus (fast) on top of effective speed
             weapon = self.equipment.slots.get(hand)
             if weapon:
                 weapon_tags = weapon.get_metadata_tags()
                 if weapon_tags:
                     from entities.components.weapon_tag_calculator import WeaponTagModifiers
                     tag_speed_bonus = WeaponTagModifiers.get_attack_speed_bonus(weapon_tags)
-                    attack_speed_bonus += tag_speed_bonus
+                    effective_speed += tag_speed_bonus
 
-            cooldown = (base_cooldown / weapon_attack_speed) / (1.0 + attack_speed_bonus)
+            # Calculate final cooldown: base / weapon_speed / total_speed
+            base_cooldown = 1.0
+            cooldown = (base_cooldown / weapon_attack_speed) / effective_speed
 
             if hand == 'mainHand':
                 self.mainhand_cooldown = cooldown

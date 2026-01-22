@@ -2390,8 +2390,13 @@ class GameEngine:
         else:
             rarity_system.debug_mode = False
 
+        # Get title bonuses for crafting
+        alloy_quality_bonus = 0.0
+        if recipe.station_type == 'refining' and hasattr(self.character, 'titles'):
+            alloy_quality_bonus = self.character.titles.get_total_bonus('alloyQuality')
+
         # Use crafter to process minigame result
-        craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
+        craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result, alloy_quality_bonus=alloy_quality_bonus)
 
         if not craft_result.get('success'):
             # Failure - materials may have been lost
@@ -2451,6 +2456,18 @@ class GameEngine:
                 output_qty = craft_result.get('quantity', recipe.output_qty)
                 rarity = craft_result.get('rarity', 'common')
                 stats = craft_result.get('stats')
+
+                # Apply firstTryBonus if eligible
+                first_try_eligible = craft_result.get('first_try_eligible', False)
+                if first_try_eligible and hasattr(self.character, 'titles'):
+                    first_try_bonus = self.character.titles.get_total_bonus('firstTryBonus')
+                    if first_try_bonus > 0 and stats:
+                        # Apply bonus to all numeric stats
+                        for stat_name, stat_value in stats.items():
+                            if isinstance(stat_value, (int, float)):
+                                boosted_value = stat_value * (1.0 + first_try_bonus)
+                                stats[stat_name] = int(boosted_value) if isinstance(stat_value, int) else boosted_value
+                        print(f"   🌟 First-try bonus applied! +{first_try_bonus*100:.0f}% to all stats")
 
                 self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
 

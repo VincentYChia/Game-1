@@ -549,7 +549,7 @@ class RefiningCrafter:
         # Pass full recipe for material-based difficulty calculation
         return RefiningMinigame(recipe, buff_time_bonus, buff_quality_bonus)
 
-    def craft_with_minigame(self, recipe_id, inventory, minigame_result):
+    def craft_with_minigame(self, recipe_id, inventory, minigame_result, alloy_quality_bonus=0.0):
         """
         Craft with minigame result - all-or-nothing with probabilistic tag bonuses
         Refining outputs materials with rarity but NO stat bonuses
@@ -562,6 +562,7 @@ class RefiningCrafter:
             recipe_id: Recipe ID to craft
             inventory: Dict of {material_id: quantity} (will be modified)
             minigame_result: Result dict from RefiningMinigame
+            alloy_quality_bonus: Title bonus for chance-based rarity upgrade (0.0-1.0)
 
         Returns:
             dict: Result with outputId, quantity, rarity, success
@@ -648,6 +649,15 @@ class RefiningCrafter:
 
         output_rarity_idx = min(current_tier_idx + rarity_upgrade, len(rarity_tiers) - 1)
         base_upgraded_rarity = rarity_tiers[output_rarity_idx]
+
+        # Apply alloyQuality bonus (chance-based rarity upgrade)
+        # Each title bonus point (e.g., 25% = 0.25) gives a 25% chance for +1 rarity tier
+        if alloy_quality_bonus > 0 and output_rarity_idx < len(rarity_tiers) - 1:
+            import random
+            if random.random() < alloy_quality_bonus:
+                output_rarity_idx += 1
+                base_upgraded_rarity = rarity_tiers[output_rarity_idx]
+                print(f"  🎲 ALLOY QUALITY PROC! +1 rarity tier (chance: {alloy_quality_bonus*100:.0f}%)")
 
         # Apply probabilistic tag bonuses (crushing, grinding, purifying, alloying)
         from core.crafting_tag_processor import RefiningTagProcessor

@@ -739,10 +739,13 @@ class CombatManager:
         title_multiplier = 1.0 + title_melee_bonus
         print(f"   Title multiplier: {title_multiplier:.2f}")
 
+        # Enemy-specific damage bonuses (beastDamage, wolfDamage, dragonDamage, etc.)
+        enemy_damage_multiplier = self.character.get_enemy_damage_multiplier(enemy)
+
         # Equipment bonuses (already in weapon damage)
 
         # Calculate base damage
-        base_damage = weapon_damage * str_multiplier * title_multiplier
+        base_damage = weapon_damage * str_multiplier * title_multiplier * enemy_damage_multiplier
 
         # Apply crushing bonus vs armored enemies
         if crushing_bonus > 0 and enemy.definition.defense > 10:
@@ -793,6 +796,16 @@ class CombatManager:
 
             # Execute on-crit triggers from equipment
             self._execute_triggers('on_crit', target=enemy, hand=hand)
+
+        # TODO: Counter/Block/Parry System (counterChance title bonus)
+        # When implemented, should check for counterChance title bonus here
+        # Counter: Chance to riposte and deal damage back to attacker
+        # Block: Chance to negate incoming damage (requires shield)
+        # Parry: Chance to deflect and counterattack
+        # counter_chance = self.character.titles.get_total_bonus('counterChance')
+        # if random.random() < counter_chance:
+        #     # Apply counter damage, stun effect, etc.
+        #     pass
 
         # Apply enemy defense (with armor penetration from weapon tags)
         effective_defense = enemy.definition.defense * (1.0 - armor_penetration)
