@@ -107,9 +107,18 @@ class EquipmentItem:
             return 'critical'
 
     def get_actual_damage(self) -> Tuple[int, int]:
-        """Get actual damage including durability and enchantment effects"""
+        """Get actual damage including bonuses, durability and enchantment effects"""
+        # Start with base damage
+        base_min, base_max = self.damage
+
+        # Add crafted damage bonus from bonuses dict
+        damage_bonus = self.bonuses.get('damage', 0)
+        base_min += damage_bonus
+        base_max += damage_bonus
+
+        # Apply durability effectiveness
         eff = self.get_effectiveness()
-        base_damage = (self.damage[0] * eff, self.damage[1] * eff)
+        effective_damage = (base_min * eff, base_max * eff)
 
         # Apply enchantment damage multipliers
         damage_mult = 1.0
@@ -118,11 +127,19 @@ class EquipmentItem:
             if effect.get('type') == 'damage_multiplier':
                 damage_mult += effect.get('value', 0.0)
 
-        return (int(base_damage[0] * damage_mult), int(base_damage[1] * damage_mult))
+        return (int(effective_damage[0] * damage_mult), int(effective_damage[1] * damage_mult))
 
     def get_defense_with_enchantments(self) -> int:
-        """Get defense value including enchantment effects"""
-        base_defense = self.defense * self.get_effectiveness()
+        """Get defense value including bonuses and enchantment effects"""
+        # Start with base defense
+        base_defense = self.defense
+
+        # Add crafted defense bonus from bonuses dict
+        defense_bonus = self.bonuses.get('defense', 0)
+        base_defense += defense_bonus
+
+        # Apply durability effectiveness
+        effective_defense = base_defense * self.get_effectiveness()
 
         # Apply enchantment defense multipliers
         defense_mult = 1.0
@@ -131,7 +148,7 @@ class EquipmentItem:
             if effect.get('type') == 'defense_multiplier':
                 defense_mult += effect.get('value', 0.0)
 
-        return int(base_defense * defense_mult)
+        return int(effective_defense * defense_mult)
 
     def can_equip(self, character) -> Tuple[bool, str]:
         """Check if character meets requirements, return (can_equip, reason)"""
