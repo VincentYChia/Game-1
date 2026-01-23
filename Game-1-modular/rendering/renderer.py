@@ -4380,9 +4380,20 @@ class Renderer:
             for stat_name, stat_value in crafted_stats.items():
                 # Format stat name nicely (capitalize and add spaces)
                 display_name = stat_name.replace('_', ' ').title()
-                # Format value with + if positive
+                # Format value based on stat type
                 if isinstance(stat_value, (int, float)):
-                    value_str = f"+{stat_value}" if stat_value >= 0 else str(stat_value)
+                    # Multipliers (damage_multiplier, defense_multiplier, durability_multiplier) show as %
+                    if 'multiplier' in stat_name:
+                        value_str = f"+{int(stat_value*100)}%" if stat_value >= 0 else f"{int(stat_value*100)}%"
+                    # Efficiency shows as multiplier (e.g., 1.2x)
+                    elif stat_name == 'efficiency':
+                        value_str = f"{stat_value:.2f}x"
+                    # Quality shows as X/100
+                    elif stat_name == 'quality':
+                        value_str = f"{int(stat_value)}/100"
+                    # Other numeric stats
+                    else:
+                        value_str = f"+{stat_value}" if stat_value >= 0 else str(stat_value)
                 else:
                     value_str = str(stat_value)
                 stat_text = f"  {display_name}: {value_str}"

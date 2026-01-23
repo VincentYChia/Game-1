@@ -123,7 +123,7 @@ class EquipmentItem:
 
         # Apply efficiency as damage multiplier for tools
         # efficiency directly multiplies (0.5 to 1.5, e.g., 1.2 = 20% more damage)
-        if self.item_type == 'tool' and hasattr(self, 'efficiency') and self.efficiency != 1.0:
+        if self.item_type == 'tool':
             damage_mult *= self.efficiency
 
         # Apply enchantment damage multipliers

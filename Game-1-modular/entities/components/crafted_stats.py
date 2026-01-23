@@ -196,6 +196,8 @@ def apply_crafted_stats_to_equipment(equipment, stats: Dict[str, Any]) -> None:
                 # Set both current and max (fresh craft)
                 equipment.durability_current = new_max
                 equipment.durability_max = new_max
+                # Also store in bonuses dict for tooltip display
+                equipment.bonuses['durability_multiplier'] = stat_value
                 sign = '+' if stat_value >= 0 else ''
                 print(f"   ✨ Max durability: {sign}{stat_value*100:.0f}% (new max: {new_max} from {old_max})")
 
@@ -208,6 +210,8 @@ def apply_crafted_stats_to_equipment(equipment, stats: Dict[str, Any]) -> None:
             # Efficiency: Set tool efficiency multiplier (0.5 to 1.5)
             if equipment.item_type == 'tool' and hasattr(equipment, 'efficiency'):
                 equipment.efficiency = stat_value
+                # Also store in bonuses dict for tooltip display
+                equipment.bonuses['efficiency'] = stat_value
                 print(f"   ✨ Efficiency: {stat_value:.2f}x")
 
         elif stat_name == 'range':

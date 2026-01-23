@@ -1867,7 +1867,10 @@ class Character:
     def is_shield_active(self) -> bool:
         """Check if player has a shield equipped in offhand"""
         offhand = self.equipment.slots.get('offHand')
-        return offhand is not None and offhand.item_type == 'shield'
+        result = offhand is not None and offhand.item_type == 'shield'
+        if offhand:
+            print(f"[DEBUG] Shield check: offhand={offhand.name}, item_type={offhand.item_type}, is_shield={result}")
+        return result
 
     def get_shield_damage_reduction(self) -> float:
         """Get damage reduction multiplier from active shield (0.0-1.0)"""

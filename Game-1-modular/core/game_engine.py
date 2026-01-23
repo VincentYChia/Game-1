@@ -3372,7 +3372,14 @@ class GameEngine:
             self.world.update(dt)
 
             # Check if player is blocking with shield (right mouse held OR X key held)
-            shield_blocking = (3 in self.mouse_buttons_pressed or pygame.K_x in self.keys_pressed) and self.character.is_shield_active()
+            mouse_held = 3 in self.mouse_buttons_pressed
+            x_key_held = pygame.K_x in self.keys_pressed
+            has_shield = self.character.is_shield_active()
+            shield_blocking = (mouse_held or x_key_held) and has_shield
+
+            # Debug output when trying to block
+            if mouse_held or x_key_held:
+                print(f"[DEBUG] Block attempt: mouse_held={mouse_held}, x_key={x_key_held}, has_shield={has_shield}, blocking={shield_blocking}")
 
             # Handle X key for offhand attacks (when not blocking)
             if pygame.K_x in self.keys_pressed and not shield_blocking:
