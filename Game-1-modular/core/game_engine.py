@@ -3075,6 +3075,12 @@ class GameEngine:
             result = crafter.craft_instant(recipe.recipe_id, inv_dict)
 
             if result.get('success'):
+                # CRITICAL: Consume materials from actual inventory
+                # craft_instant() modifies inv_dict, but we need to sync to real inventory
+                print(f"✅ Consuming materials after instant craft SUCCESS")
+                consumed = recipe_db.consume_materials(recipe, self.character.inventory)
+                print(f"   Consumed: {consumed}")
+
                 output_id = result.get('outputId')
                 quantity = result.get('quantity', 1)
                 rarity = result.get('rarity', 'common')
@@ -4510,9 +4516,9 @@ class GameEngine:
                 pygame.draw.rect(surf, qcolor, (qbar_x, qbar_y, qfill, qbar_h), border_radius=4)
             pygame.draw.rect(surf, (140, 150, 145), (qbar_x, qbar_y, qbar_w, qbar_h), 1, border_radius=4)
 
-        # Ingredient progress panel on right
+        # Ingredient progress panel on right (expanded for name)
         ingr_panel_x, ingr_panel_y = ww - 230, 130
-        ingr_panel_w, ingr_panel_h = 180, 100
+        ingr_panel_w, ingr_panel_h = 180, 130
 
         pygame.draw.rect(surf, (230, 235, 240), (ingr_panel_x, ingr_panel_y, ingr_panel_w, ingr_panel_h), border_radius=8)
         pygame.draw.rect(surf, (150, 160, 155), (ingr_panel_x, ingr_panel_y, ingr_panel_w, ingr_panel_h), 2, border_radius=8)
@@ -4523,7 +4529,21 @@ class GameEngine:
         current_ingr = state['current_ingredient_index'] + 1
         total_ingr = state['total_ingredients']
         ingr_text = self.renderer.font.render(f"{current_ingr} / {total_ingr}", True, (60, 120, 80))
-        surf.blit(ingr_text, (ingr_panel_x + ingr_panel_w//2 - ingr_text.get_width()//2, ingr_panel_y + 45))
+        surf.blit(ingr_text, (ingr_panel_x + ingr_panel_w//2 - ingr_text.get_width()//2, ingr_panel_y + 40))
+
+        # Display current ingredient name
+        current_ingredient_name = state.get('current_ingredient_name')
+        if current_ingredient_name:
+            # Format name (remove underscores, capitalize)
+            display_name = current_ingredient_name.replace('_', ' ').title()
+            # Truncate if too long
+            if len(display_name) > 18:
+                display_name = display_name[:15] + "..."
+            name_label_font = pygame.font.Font(None, 18)
+            name_label = name_label_font.render("Current:", True, (100, 100, 100))
+            surf.blit(name_label, (ingr_panel_x + ingr_panel_w//2 - name_label.get_width()//2, ingr_panel_y + 75))
+            name_text = self.renderer.small_font.render(display_name, True, (80, 140, 100))
+            surf.blit(name_text, (ingr_panel_x + ingr_panel_w//2 - name_text.get_width()//2, ingr_panel_y + 92))
 
         # Timer panel
         timer_panel_x, timer_panel_y = ww - 230, 250
@@ -4931,10 +4951,35 @@ class GameEngine:
             pygame.draw.line(surf, (180, 140, 80), (inner_x, inner_y), (outer_x, outer_y), 5)
             pygame.draw.line(surf, (220, 180, 120), (inner_x, inner_y), (outer_x, outer_y), 3)
 
-            # Pick head
-            pygame.draw.circle(surf, (200, 160, 90), (outer_x, outer_y), 12)
-            pygame.draw.circle(surf, (255, 215, 100), (outer_x, outer_y), 12, 3)
-            pygame.draw.circle(surf, (150, 120, 70), (outer_x, outer_y), 5)
+            # Pick head - narrowed tip (triangle instead of circle)
+            # Calculate perpendicular vector for triangle base
+            perp_angle = angle_rad + math.pi / 2
+            base_width = 8
+            tip_length = 18
+
+            # Triangle points: tip at outer, base closer to center
+            tip_x = outer_x
+            tip_y = outer_y
+            base1_x = outer_x + int(base_width * math.cos(perp_angle)) - int(tip_length * 0.3 * math.cos(angle_rad))
+            base1_y = outer_y + int(base_width * math.sin(perp_angle)) - int(tip_length * 0.3 * math.sin(angle_rad))
+            base2_x = outer_x - int(base_width * math.cos(perp_angle)) - int(tip_length * 0.3 * math.cos(angle_rad))
+            base2_y = outer_y - int(base_width * math.sin(perp_angle)) - int(tip_length * 0.3 * math.sin(angle_rad))
+
+            # Draw narrowed triangular tip
+            pygame.draw.polygon(surf, (200, 160, 90), [(tip_x, tip_y), (base1_x, base1_y), (base2_x, base2_y)])
+            pygame.draw.polygon(surf, (255, 215, 100), [(tip_x, tip_y), (base1_x, base1_y), (base2_x, base2_y)], 2)
+
+            # Red click mark - show where player last pressed space
+            if 'last_attempt_angle' in cyl and cyl['last_attempt_angle'] is not None:
+                attempt_angle_rad = math.radians(cyl['last_attempt_angle'] - 90)
+                mark_radius = inner_radius
+                mark_x = cx + int(mark_radius * math.cos(attempt_angle_rad))
+                mark_y = cy + int(mark_radius * math.sin(attempt_angle_rad))
+
+                # Red circle showing click position
+                pygame.draw.circle(surf, (255, 50, 50), (mark_x, mark_y), 10)
+                pygame.draw.circle(surf, (255, 100, 100), (mark_x, mark_y), 10, 2)
+                pygame.draw.circle(surf, (180, 30, 30), (mark_x, mark_y), 5)
 
         # Feedback flash
         feedback_timer = state.get('feedback_timer', 0)

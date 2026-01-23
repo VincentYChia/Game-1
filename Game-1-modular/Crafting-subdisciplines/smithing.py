@@ -702,6 +702,9 @@ class SmithingCrafter:
         debugger = get_tag_debugger()
         debugger.log_smithing_inheritance(recipe_id, recipe_tags, inheritable_tags)
 
+        # Extract bonus for logging
+        bonus_pct = minigame_result.get('bonus', 0)
+
         # Console output for tag verification
         print(f"\n⚒️  SMITHING CRAFT (MINIGAME): {output_id}")
         print(f"   Recipe: {recipe_id}")
@@ -726,6 +729,9 @@ class SmithingCrafter:
             "rarity": input_rarity,
             "stats": modified_stats,
             "tags": inheritable_tags,  # Tags to apply to crafted item
+            "first_try_eligible": minigame_result.get('first_try_eligible', False),
+            "earned_points": minigame_result.get('earned_points', 0),
+            "max_points": minigame_result.get('max_points', 100),
             "message": f"Crafted {input_rarity} item with +{minigame_result.get('bonus', 0)}% bonus!"
         }
 

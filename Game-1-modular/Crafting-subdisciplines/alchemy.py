@@ -741,9 +741,16 @@ class AlchemyMinigame:
 
     def get_state(self):
         """Get current minigame state for rendering"""
+        # Get current ingredient name for display
+        current_ingredient_name = None
+        if 0 <= self.current_ingredient_index < len(self.ingredients):
+            ingredient = self.ingredients[self.current_ingredient_index]
+            current_ingredient_name = ingredient.get('materialId') or ingredient.get('itemId', 'Unknown')
+
         return {
             "active": self.active,
             "current_ingredient_index": self.current_ingredient_index,
+            "current_ingredient_name": current_ingredient_name,
             "total_ingredients": len(self.ingredients),
             "current_reaction": self.current_reaction.get_state() if self.current_reaction else None,
             "locked_reactions": [r.get_state() for r in self.locked_reactions],

@@ -120,8 +120,14 @@ class EquipmentItem:
         eff = self.get_effectiveness()
         effective_damage = (base_min * eff, base_max * eff)
 
-        # Apply enchantment damage multipliers
+        # Apply efficiency as damage multiplier for tools
+        # efficiency > 1.0 means higher damage
         damage_mult = 1.0
+        if self.item_type == 'tool' and hasattr(self, 'efficiency') and self.efficiency != 1.0:
+            # Efficiency directly multiplies damage (1.2 efficiency = 20% more damage)
+            damage_mult *= self.efficiency
+
+        # Apply enchantment damage multipliers
         for ench in self.enchantments:
             effect = ench.get('effect', {})
             if effect.get('type') == 'damage_multiplier':
