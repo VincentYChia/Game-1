@@ -262,6 +262,10 @@ class SmithingMinigame:
 
         final_score = avg_hammer_score * temp_mult
 
+        # Calculate earned/max points for crafted stats system
+        earned_points = sum(self.hammer_scores)  # Total actual points earned
+        max_points = self.required_hits * 100  # Perfect score (100 per hit)
+
         # Use reward calculator for scaling bonuses
         try:
             from core.reward_calculator import calculate_smithing_rewards
@@ -301,6 +305,8 @@ class SmithingMinigame:
                 "avg_hammer": avg_hammer_score,
                 "difficulty_points": self.difficulty_points,
                 "first_try_eligible": first_try_eligible,
+                "earned_points": earned_points,
+                "max_points": max_points,
                 "message": f"Crafted {quality_tier} item with +{bonus}% bonus!"
             }
 
@@ -328,6 +334,8 @@ class SmithingMinigame:
                 "avg_hammer": avg_hammer_score,
                 "difficulty_points": self.difficulty_points,
                 "first_try_eligible": False,
+                "earned_points": earned_points,
+                "max_points": max_points,
                 "message": f"Crafted with {bonus}% bonus!"
             }
 
@@ -660,21 +668,24 @@ class SmithingCrafter:
         # Fallback to 'common' if rarity is None (material not in database)
         input_rarity = input_rarity or 'common'
 
-        # Calculate base stats for the item
-        tier = recipe.get('stationTier', 1)
-        bonus_pct = minigame_result.get('bonus', 0)
+        # Generate crafted stats using the new crafted_stats system
+        from entities.components.crafted_stats import generate_crafted_stats
+        from data.databases.equipment_db import EquipmentDatabase
 
-        # Base stats scale with tier and minigame performance
-        base_stats = {
-            "durability": 100 + (tier * 20) + bonus_pct,  # Tier 1: 100-120, Tier 2: 120-140, etc.
-            "quality": 100 + bonus_pct,  # Minigame performance
-            "power": 100 + (tier * 15),  # Tier-based power
-            "damage": 25 + (tier * 10),  # Base damage for weapons
-            "defense": 20 + (tier * 8)   # Base defense for armor
-        }
+        output_id = recipe['outputId']
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Determine item_type from the output equipment
+        item_type = 'weapon'  # Default fallback
+        if equip_db.is_equipment(output_id):
+            temp_equipment = equip_db.create_equipment_from_id(output_id)
+            if temp_equipment and hasattr(temp_equipment, 'item_type'):
+                item_type = temp_equipment.item_type
+
+        # Generate appropriate stats based on minigame performance and item type
+        base_stats = generate_crafted_stats(minigame_result, recipe, item_type)
 
         # Get item category and apply rarity modifiers
-        output_id = recipe['outputId']
         if item_metadata is None:
             item_metadata = {}
 

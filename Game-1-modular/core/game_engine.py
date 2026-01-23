@@ -2494,6 +2494,7 @@ class GameEngine:
     def add_crafted_item_to_inventory(self, item_id: str, quantity: int,
                                      rarity: str = 'common', stats: Dict = None):
         """Add a crafted item to inventory with rarity and stats"""
+        from entities.components.crafted_stats import apply_crafted_stats_to_equipment
         equip_db = EquipmentDatabase.get_instance()
 
         if equip_db.is_equipment(item_id):
@@ -2501,18 +2502,9 @@ class GameEngine:
             for i in range(quantity):
                 equipment = equip_db.create_equipment_from_id(item_id)
                 if equipment and stats:
-                    # Apply crafted stats to equipment
-                    for stat_name, stat_value in stats.items():
-                        if hasattr(equipment, stat_name):
-                            # Special handling for damage - must be tuple
-                            if stat_name == 'damage' and isinstance(stat_value, (int, float)):
-                                # Convert single damage value to (min, max) tuple
-                                # Use 80-100% of damage value for min-max range
-                                dmg_min = int(stat_value * 0.8)
-                                dmg_max = int(stat_value)
-                                setattr(equipment, stat_name, (dmg_min, dmg_max))
-                            else:
-                                setattr(equipment, stat_name, stat_value)
+                    # Apply crafted stats using the crafted_stats system
+                    # This properly filters stats by item type and applies to bonuses dict
+                    apply_crafted_stats_to_equipment(equipment, stats)
 
                 # Use add_item which handles equipment properly (doesn't stack)
                 success = self.character.inventory.add_item(item_id, 1, equipment_instance=equipment,
@@ -4483,37 +4475,30 @@ class GameEngine:
         # Spoon bowl
         pygame.draw.ellipse(surf, (120, 90, 55), (spoon_x - 20, spoon_y - 10, 35, 20))
 
-        # Current reaction visualization - stage indicator
+        # Current reaction visualization - quality indicator only (removed stage names)
         if state['current_reaction']:
             reaction = state['current_reaction']
-            stage_names = ["Initiation", "Building", "SWEET SPOT", "Degrading", "Critical", "EXPLOSION!"]
-            stage_idx = reaction['stage'] - 1
-            stage_name = stage_names[stage_idx] if 0 <= stage_idx < len(stage_names) else "Unknown"
-            stage_color = (200, 180, 80) if reaction['stage'] == 3 else ((200, 100, 80) if reaction['stage'] >= 5 else (100, 140, 120))
 
-            # Stage panel on left side
+            # Quality panel on left side (removed stage name indicators per user request)
             stage_panel_x, stage_panel_y = 50, 130
-            stage_panel_w, stage_panel_h = 180, 150
+            stage_panel_w, stage_panel_h = 150, 120
 
             pygame.draw.rect(surf, (230, 235, 240), (stage_panel_x, stage_panel_y, stage_panel_w, stage_panel_h), border_radius=8)
             pygame.draw.rect(surf, (150, 160, 155), (stage_panel_x, stage_panel_y, stage_panel_w, stage_panel_h), 2, border_radius=8)
 
-            stage_label = self.renderer.small_font.render("Reaction Stage", True, (80, 100, 90))
-            surf.blit(stage_label, (stage_panel_x + stage_panel_w//2 - stage_label.get_width()//2, stage_panel_y + 10))
-
-            stage_text = self.renderer.font.render(stage_name, True, stage_color)
-            surf.blit(stage_text, (stage_panel_x + stage_panel_w//2 - stage_text.get_width()//2, stage_panel_y + 40))
-
-            # Quality indicator
+            # Quality indicator (KEEP THIS - shows percentage)
             quality = reaction.get('quality', 0.5)
-            qual_label = self.renderer.small_font.render(f"Quality: {int(quality * 100)}%", True, (80, 100, 90))
-            surf.blit(qual_label, (stage_panel_x + stage_panel_w//2 - qual_label.get_width()//2, stage_panel_y + 85))
+            qual_label = self.renderer.font.render(f"{int(quality * 100)}%", True, (60, 120, 80))
+            surf.blit(qual_label, (stage_panel_x + stage_panel_w//2 - qual_label.get_width()//2, stage_panel_y + 20))
+
+            quality_subtext = self.renderer.small_font.render("Current Quality", True, (80, 100, 90))
+            surf.blit(quality_subtext, (stage_panel_x + stage_panel_w//2 - quality_subtext.get_width()//2, stage_panel_y + 55))
 
             # Quality bar
-            qbar_w = 140
-            qbar_h = 12
+            qbar_w = 120
+            qbar_h = 14
             qbar_x = stage_panel_x + stage_panel_w//2 - qbar_w//2
-            qbar_y = stage_panel_y + 110
+            qbar_y = stage_panel_y + 80
             pygame.draw.rect(surf, (200, 205, 210), (qbar_x, qbar_y, qbar_w, qbar_h), border_radius=4)
             qfill = int(quality * qbar_w)
             if qfill > 0:

@@ -996,6 +996,11 @@ class EngineeringMinigame:
         # Calculate overall quality (avg of all stats)
         quality = sum(stats.values()) / (len(stats) * 100)
 
+        # Calculate earned/max points for crafted stats system
+        # Use performance score (0.0-1.0) scaled to 0-100
+        earned_points = int(performance * 100)
+        max_points = 100
+
         self.result = {
             "success": True,
             "puzzles_solved": puzzles_solved,
@@ -1008,6 +1013,8 @@ class EngineeringMinigame:
             "difficulty_points": getattr(self, 'difficulty_points', 0),
             "difficulty_tier": getattr(self, 'difficulty_tier', 'common'),
             "rewards": rewards,
+            "earned_points": earned_points,
+            "max_points": max_points,
             "message": f"Device created! Solved {puzzles_solved}/{self.puzzle_count} puzzles. Efficiency: {avg_efficiency*100:.0f}%"
         }
 
@@ -1252,12 +1259,25 @@ class EngineeringCrafter:
         # Fallback to 'common' if rarity is None (material not in database)
         input_rarity = input_rarity or 'common'
 
-        # Get device stats from minigame result
-        base_stats = minigame_result.get('stats', {})
+        # Generate crafted stats using the new crafted_stats system
+        from entities.components.crafted_stats import generate_crafted_stats
+        from data.databases.equipment_db import EquipmentDatabase
+
+        output_id = recipe['outputId']
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Determine item_type from the output equipment (usually 'tool' for engineering)
+        item_type = 'tool'  # Default for engineering devices
+        if equip_db.is_equipment(output_id):
+            temp_equipment = equip_db.create_equipment_from_id(output_id)
+            if temp_equipment and hasattr(temp_equipment, 'item_type'):
+                item_type = temp_equipment.item_type
+
+        # Generate appropriate stats based on minigame performance and item type
+        base_stats = generate_crafted_stats(minigame_result, recipe, item_type)
         quality = minigame_result.get('quality', 1.0)
 
         # Get item category and apply rarity modifiers
-        output_id = recipe['outputId']
         if item_metadata is None:
             item_metadata = {}
 

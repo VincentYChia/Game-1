@@ -44,7 +44,7 @@ class AlchemyReaction:
     5. Critical failure risk (5-10% progress or explosion)
     """
 
-    def __init__(self, ingredient_id, ingredient_type="moderate", speed_bonus=0.0):
+    def __init__(self, ingredient_id, ingredient_type="moderate", speed_bonus=0.0, max_quality=0.30):
         """
         Initialize reaction
 
@@ -52,10 +52,12 @@ class AlchemyReaction:
             ingredient_id: Ingredient material ID
             ingredient_type: Reaction behavior type (stable, moderate, volatile, legendary)
             speed_bonus: Speed bonus multiplier (0.0-1.0+) - slows reaction timing
+            max_quality: Dynamic max quality for this ingredient (0.0-1.0, e.g., 0.35 = 35%)
         """
         self.ingredient_id = ingredient_id
         self.ingredient_type = ingredient_type
         self.speed_bonus = speed_bonus
+        self.max_quality = max_quality  # Dynamic based on vowel contribution
 
         # Reaction state
         self.stage = 1  # 1-5
@@ -107,10 +109,10 @@ class AlchemyReaction:
         """
         Assign oscillation count based on secret value.
 
-        Distribution:
-        - ~50% get 1 oscillation (simple up-down)
-        - ~33% get 2 oscillations (two up-down cycles)
-        - ~17% get 3 oscillations (three up-down cycles)
+        Distribution (NEW):
+        - 25% get 1 oscillation (simple up-down)
+        - 40% get 2 oscillations (two up-down cycles)
+        - 35% get 3 oscillations (three up-down cycles)
 
         Args:
             secret_value: 0.0-1.0
@@ -118,12 +120,12 @@ class AlchemyReaction:
         Returns:
             int: Number of oscillation cycles (1, 2, or 3)
         """
-        if secret_value < 0.50:
-            return 1  # ~50% of ingredients
-        elif secret_value < 0.83:
-            return 2  # ~33% of ingredients
+        if secret_value < 0.25:
+            return 1  # 25% of ingredients
+        elif secret_value < 0.65:  # 0.25 + 0.40
+            return 2  # 40% of ingredients
         else:
-            return 3  # ~17% of ingredients
+            return 3  # 35% of ingredients
 
     def _setup_timing(self):
         """
@@ -228,14 +230,17 @@ class AlchemyReaction:
         Get quality contribution if chained/stabilized now (NEW OSCILLATION SYSTEM)
 
         Quality now oscillates based on ingredient's secret value:
-        - 1 oscillation: Simple up-down pattern
-        - 2 oscillations: Two up-down cycles
-        - 3 oscillations: Three up-down cycles
+        - 1 oscillation: Simple up-down pattern (25% of ingredients)
+        - 2 oscillations: Two up-down cycles (40% of ingredients)
+        - 3 oscillations: Three up-down cycles (35% of ingredients)
 
         Max value always appears on the LAST oscillation peak.
 
+        Each ingredient has a DYNAMIC max quality based on vowel contribution,
+        so players can't just click at ~30% for all ingredients.
+
         Returns:
-            float: Progress contribution (0.0-0.35, with max on last peak)
+            float: Progress contribution (0.0 to max_quality, with max on last peak)
         """
         import math
 
@@ -267,14 +272,16 @@ class AlchemyReaction:
             cycle_index = min(current_cycle, oscillations - 1)
             amplitude = 0.6 + (0.4 * cycle_index / (oscillations - 1))
 
-        # Scale to quality range (0.0 to 0.35)
+        # Scale to this ingredient's dynamic max quality
         # Base quality increases slightly with overall progress
-        base_quality = 0.05 + total_progress * 0.10  # 0.05 to 0.15
-        oscillation_boost = cycle_value * amplitude * 0.20  # 0.0 to 0.20
+        base_fraction = 0.15 + total_progress * 0.30  # 15% to 45% of max
+        oscillation_fraction = cycle_value * amplitude * 0.55  # 0% to 55% of max
 
-        final_quality = base_quality + oscillation_boost
+        quality_fraction = base_fraction + oscillation_fraction  # Total: 0% to 100% of max
 
-        return min(0.35, max(0.0, final_quality))
+        final_quality = quality_fraction * self.max_quality
+
+        return min(self.max_quality, max(0.0, final_quality))
 
     def chain(self):
         """
@@ -340,6 +347,9 @@ class AlchemyMinigame:
         if self.speed_bonus > 0:
             print(f"⚡ Speed bonus: +{self.speed_bonus*100:.0f}% (slows reaction timing)")
 
+        # Calculate dynamic max quality percentages based on vowel contribution
+        self._calculate_ingredient_max_qualities()
+
         # Game state
         self.active = False
         self.current_ingredient_index = 0
@@ -349,6 +359,49 @@ class AlchemyMinigame:
         self.explosions = 0
         self.time_left = self.time_limit
         self.result = None
+
+    def _calculate_ingredient_max_qualities(self):
+        """
+        Calculate dynamic max quality for each ingredient based on vowel contribution.
+
+        Each ingredient's max quality = (its vowels / total vowels) * 100%
+        This ensures:
+        - Total max quality across all ingredients = 100%
+        - Each ingredient has a unique, unpredictable max
+        - Player can't just click at ~30% for all ingredients
+        """
+        vowels = set('aeiouAEIOU')
+
+        # Calculate vowel count for each ingredient
+        ingredient_vowel_counts = []
+        total_vowels = 0
+
+        for ingredient in self.ingredients:
+            item_id = ingredient.get('itemId') or ingredient.get('materialId', '')
+            vowel_count = 0
+
+            for char in item_id:
+                if char in vowels:
+                    vowel_count += 1
+
+            ingredient_vowel_counts.append(vowel_count)
+            total_vowels += vowel_count
+
+        # Assign max quality percentages based on contribution
+        self.ingredient_max_qualities = []
+
+        if total_vowels == 0:
+            # Fallback: equal distribution if no vowels
+            equal_share = 1.0 / max(1, len(self.ingredients))
+            self.ingredient_max_qualities = [equal_share] * len(self.ingredients)
+        else:
+            for vowel_count in ingredient_vowel_counts:
+                # Max quality = contribution to total (as fraction, e.g., 0.35 for 35%)
+                max_quality = vowel_count / total_vowels
+                self.ingredient_max_qualities.append(max_quality)
+
+        # Debug output
+        print(f"[Alchemy] Dynamic max qualities: {[f'{q*100:.1f}%' for q in self.ingredient_max_qualities]}")
 
     def _setup_difficulty_from_materials(self):
         """
@@ -462,9 +515,15 @@ class AlchemyMinigame:
         else:
             ing_type = "moderate"  # Default
 
+        # Get dynamic max quality for this ingredient
+        if self.current_ingredient_index < len(self.ingredient_max_qualities):
+            max_quality = self.ingredient_max_qualities[self.current_ingredient_index]
+        else:
+            max_quality = 0.30  # Fallback
+
         # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
         item_id = ingredient.get('itemId') or ingredient.get('materialId')
-        self.current_reaction = AlchemyReaction(item_id, ing_type, self.speed_bonus)
+        self.current_reaction = AlchemyReaction(item_id, ing_type, self.speed_bonus, max_quality)
 
     def update(self, dt):
         """
@@ -487,9 +546,20 @@ class AlchemyMinigame:
         if self.current_reaction:
             self.current_reaction.update(dt)
 
-            # Check for explosion
+            # Check for explosion (NEW BEHAVIOR: Add 10% and move to next ingredient)
             if self.current_reaction.stage >= 6:
-                self.end(explosion=True)
+                print(f"   💥 Ingredient {self.current_ingredient_index + 1} failed! +10% progress")
+                self.explosions += 1
+                self.total_progress += 0.10  # Add 10% for failed ingredient
+                self.locked_reactions.append(self.current_reaction)  # Keep for tracking
+
+                # Move to next ingredient (encourages experimentation)
+                self.current_ingredient_index += 1
+                if self.current_ingredient_index < len(self.ingredients):
+                    self._start_next_ingredient()
+                else:
+                    # No more ingredients - auto stabilize
+                    self.stabilize()
 
     def chain(self):
         """
@@ -569,7 +639,9 @@ class AlchemyMinigame:
                 "message": "The brew exploded!",
                 "materials_lost": materials_lost,
                 "difficulty_points": difficulty_points,
-                "explosions": self.explosions
+                "explosions": self.explosions,
+                "earned_points": 0,
+                "max_points": 100
             }
             return
 
@@ -647,6 +719,11 @@ class AlchemyMinigame:
             duration_mult *= (1.0 + self.buff_quality_bonus)
             effect_mult *= (1.0 + self.buff_quality_bonus)
 
+        # Calculate earned/max points for crafted stats system
+        # Progress is 0.0-1.0, scale to 0-100 for consistency with other minigames
+        earned_points = int(progress * 100)
+        max_points = 100  # Theoretical max (all ingredients at max quality)
+
         self.result = {
             "success": success,
             "progress": progress,
@@ -657,6 +734,8 @@ class AlchemyMinigame:
             "materials_lost": materials_lost,
             "difficulty_points": difficulty_points,
             "explosions": self.explosions,
+            "earned_points": earned_points,
+            "max_points": max_points,
             "message": f"{quality}! Duration: {int(duration_mult*100)}%, Effect: {int(effect_mult*100)}%"
         }
 

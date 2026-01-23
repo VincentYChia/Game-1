@@ -235,8 +235,18 @@ class RefiningMinigame:
 
         cylinder = self.cylinders[self.current_cylinder]
 
-        # Check if in target zone
+        # IMMEDIATELY capture the angle when button is pressed (before any further updates)
+        # This ensures the visual and logic use the same value
         angle = cylinder["angle"]
+
+        # Store the attempt angle for visual feedback
+        cylinder["last_attempt_angle"] = angle
+
+        # STOP rotation immediately to prevent visual drift
+        # The cylinder should freeze at the attempted position
+        original_aligned_state = cylinder["aligned"]
+        cylinder["aligned"] = True  # Temporarily stop rotation
+
         target = cylinder["target_zone"]
 
         # Calculate angular distance (accounting for wraparound)
@@ -248,7 +258,7 @@ class RefiningMinigame:
 
         if distance <= window_degrees / 2:
             # SUCCESS!
-            cylinder["aligned"] = True
+            # cylinder["aligned"] already set to True above
             self.aligned_cylinders.append(self.current_cylinder)
             self.current_cylinder += 1
             self.feedback_timer = 0.3  # Show success feedback for 0.3 seconds
@@ -259,7 +269,8 @@ class RefiningMinigame:
 
             return True
         else:
-            # FAILURE
+            # FAILURE - but keep the cylinder stopped at the attempted position
+            # Don't restore rotation - player can see exactly where they stopped
             self.failed_attempts += 1
             self.feedback_timer = 0.3  # Show failure feedback
 
@@ -281,13 +292,19 @@ class RefiningMinigame:
         if success:
             print(f"🎯 Refining successful! ({self.current_cylinder} alignments, {self.failed_attempts} failures)")
 
+            # Calculate earned/max points for crafted stats system
+            earned_points = len(self.aligned_cylinders)  # Successful alignments
+            max_points = self.cylinder_count  # Total cylinders
+
             self.result = {
                 "success": True,
                 "message": "Refinement successful!",
                 "attempts": self.current_cylinder + self.failed_attempts,
                 "quality_bonus": self.buff_quality_bonus,
                 "difficulty_points": self.difficulty_points,
-                "diversity_multiplier": self.diversity_multiplier
+                "diversity_multiplier": self.diversity_multiplier,
+                "earned_points": earned_points,
+                "max_points": max_points
             }
         else:
             # Calculate tier-scaled material loss
@@ -299,18 +316,33 @@ class RefiningMinigame:
 
             print(f"❌ Refining failed! {int(loss_fraction * 100)}% materials will be lost")
 
+            # Calculate earned/max points for crafted stats system (even on failure)
+            earned_points = len(self.aligned_cylinders)  # Partial credit
+            max_points = self.cylinder_count
+
             self.result = {
                 "success": False,
                 "message": reason or "Refinement failed",
                 "materials_lost": loss_fraction,
-                "difficulty_points": self.difficulty_points
+                "difficulty_points": self.difficulty_points,
+                "earned_points": earned_points,
+                "max_points": max_points
             }
 
     def get_state(self):
-        """Get current minigame state for rendering"""
+        """Get current minigame state for rendering
+
+        Each cylinder dict contains:
+        - angle: Current angle (0-360)
+        - speed: Rotation speed
+        - direction: Rotation direction (1 or -1)
+        - aligned: Whether successfully aligned
+        - target_zone: Target angle (0 for top)
+        - last_attempt_angle: Angle where player pressed button (for visual feedback)
+        """
         return {
             "active": self.active,
-            "cylinders": self.cylinders,
+            "cylinders": self.cylinders,  # Contains last_attempt_angle for each cylinder
             "current_cylinder": self.current_cylinder,
             "aligned_count": len(self.aligned_cylinders),
             "total_cylinders": self.cylinder_count,
@@ -319,7 +351,8 @@ class RefiningMinigame:
             "time_left": self.time_left,
             "result": self.result,
             "feedback_timer": self.feedback_timer,
-            "timing_window": self.timing_window
+            "timing_window": self.timing_window,
+            "window_degrees": self.timing_window * self.rotation_speed * 360  # Visual window size
         }
 
 
