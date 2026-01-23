@@ -35,13 +35,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "titans_excavation",
-        "requirement": "Reach level 10 and mine 1000 ore nodes"
+        "mana": 60,
+        "cooldown": 180
       },
       "requirements": {
         "characterLevel": 1,
@@ -86,13 +81,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "natures_tempo",
-        "requirement": "Reach level 10 and harvest 500 trees"
+        "mana": 60,
+        "cooldown": 180
       },
       "requirements": {
         "characterLevel": 1,
@@ -137,13 +127,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "long"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "iron_fortress",
-        "requirement": "Reach level 10 and block 5000 damage"
+        "mana": 70,
+        "cooldown": 360
       },
       "requirements": {
         "characterLevel": 3,
@@ -189,13 +174,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "high",
-        "cooldown": "short"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "decimating_blow",
-        "requirement": "Reach level 10 and deal 10000 damage"
+        "mana": 50,
+        "cooldown": 30
       },
       "requirements": {
         "characterLevel": 1,
@@ -240,13 +220,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "low",
-        "cooldown": "long"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "master_maintenance",
-        "requirement": "Reach level 10 and repair 50000 durability"
+        "mana": 25,
+        "cooldown": 300
       },
       "requirements": {
         "characterLevel": 1,
@@ -290,13 +265,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "natures_bounty",
-        "requirement": "Reach level 10 and gather 5000 materials"
+        "mana": 70,
+        "cooldown": 200
       },
       "requirements": {
         "characterLevel": 2,
@@ -342,13 +312,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "low",
-        "cooldown": "short"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "wind_runner",
-        "requirement": "Reach level 10 and travel 100000 tiles"
+        "mana": 20,
+        "cooldown": 20
       },
       "requirements": {
         "characterLevel": 1,
@@ -393,13 +358,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "timeless_forge",
-        "requirement": "Reach level 10 and craft 100 smithed items"
+        "mana": 60,
+        "cooldown": 180
       },
       "requirements": {
         "characterLevel": 2,
@@ -443,13 +403,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "whirlwind_fury",
-        "requirement": "Reach level 10 and land 1000 attacks"
+        "mana": 60,
+        "cooldown": 150
       },
       "requirements": {
         "characterLevel": 1,
@@ -494,13 +449,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "long"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "miracle_cure",
-        "requirement": "Reach level 10 and heal 50000 HP"
+        "mana": 70,
+        "cooldown": 400
       },
       "requirements": {
         "characterLevel": 2,
@@ -547,13 +497,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "high",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "eagle_vision",
-        "requirement": "Reach level 10 and land 500 critical hits"
+        "mana": 90,
+        "cooldown": 240
       },
       "requirements": {
         "characterLevel": 8,
@@ -609,13 +554,8 @@
         ]
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "master_alchemist",
-        "requirement": "Reach level 10 and brew 150 potions"
+        "mana": 70,
+        "cooldown": 200
       },
       "requirements": {
         "characterLevel": 6,
@@ -661,13 +601,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "high",
-        "cooldown": "long"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "legendary_prospector",
-        "requirement": "Reach level 10 and find 50 rare+ materials"
+        "mana": 100,
+        "cooldown": 450
       },
       "requirements": {
         "characterLevel": 10,
@@ -714,13 +649,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "long"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "phoenix_rebirth",
-        "requirement": "Reach level 10 and regenerate 100000 HP"
+        "mana": 80,
+        "cooldown": 400
       },
       "requirements": {
         "characterLevel": 7,
@@ -775,13 +705,8 @@
         ]
       },
       "cost": {
-        "mana": "high",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "master_mechanic",
-        "requirement": "Reach level 10 and craft 100 devices"
+        "mana": 100,
+        "cooldown": 220
       },
       "requirements": {
         "characterLevel": 9,
@@ -829,13 +754,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "eternal_edge",
-        "requirement": "Reach level 10 and save 50000 durability"
+        "mana": 70,
+        "cooldown": 200
       },
       "requirements": {
         "characterLevel": 5,
@@ -888,13 +808,8 @@
         ]
       },
       "cost": {
-        "mana": "moderate",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "master_refiner",
-        "requirement": "Reach level 10 and refine 200 materials"
+        "mana": 70,
+        "cooldown": 200
       },
       "requirements": {
         "characterLevel": 6,
@@ -950,13 +865,8 @@
         ]
       },
       "cost": {
-        "mana": "high",
-        "cooldown": "long"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "berserker_rage",
-        "requirement": "Reach level 10 and defeat 500 enemies"
+        "mana": 110,
+        "cooldown": 480
       },
       "requirements": {
         "characterLevel": 10,
@@ -1013,13 +923,8 @@
         ]
       },
       "cost": {
-        "mana": "high",
-        "cooldown": "moderate"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "archmage_mastery",
-        "requirement": "Reach level 10 and enchant 100 items"
+        "mana": 100,
+        "cooldown": 220
       },
       "requirements": {
         "characterLevel": 8,
@@ -1069,13 +974,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "low",
-        "cooldown": "extreme"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": "undying_resolve",
-        "requirement": "Reach level 10 and survive at <10% HP 50 times"
+        "mana": 40,
+        "cooldown": 600
       },
       "requirements": {
         "characterLevel": 8,
@@ -1121,13 +1021,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "extreme",
-        "cooldown": "long"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
+        "mana": 140,
+        "cooldown": 500
       },
       "requirements": {
         "characterLevel": 15,
@@ -1173,13 +1068,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "extreme",
-        "cooldown": "long"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
+        "mana": 140,
+        "cooldown": 500
       },
       "requirements": {
         "characterLevel": 16,
@@ -1238,13 +1128,8 @@
         ]
       },
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
+        "mana": 150,
+        "cooldown": 600
       },
       "requirements": {
         "characterLevel": 20,
@@ -1303,13 +1188,8 @@
         ]
       },
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
+        "mana": 150,
+        "cooldown": 600
       },
       "requirements": {
         "characterLevel": 18,
@@ -1366,13 +1246,8 @@
         ]
       },
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
+        "mana": 150,
+        "cooldown": 600
       },
       "requirements": {
         "characterLevel": 22,
@@ -1428,13 +1303,8 @@
         ]
       },
       "cost": {
-        "mana": "extreme",
-        "cooldown": "extreme"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
+        "mana": 150,
+        "cooldown": 600
       },
       "requirements": {
         "characterLevel": 20,
@@ -1481,13 +1351,8 @@
         "additionalEffects": []
       },
       "cost": {
-        "mana": "high",
-        "cooldown": "extreme"
-      },
-      "evolution": {
-        "canEvolve": true,
-        "nextSkillId": null,
-        "requirement": "Reach level 10 - LLM generates evolution"
+        "mana": 120,
+        "cooldown": 600
       },
       "requirements": {
         "characterLevel": 17,

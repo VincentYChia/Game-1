@@ -18,11 +18,13 @@
         "rareOreChance": 0.0
       },
       "prerequisites": {
-        "activities": {
-          "oresMined": 100
-        },
-        "requiredTitles": [],
-        "characterLevel": 0
+        "conditions": [
+          {
+            "type": "stat_tracker",
+            "stat_path": "gathering_totals.total_ores_mined",
+            "min_value": 100
+          }
+        ]
       },
       "acquisitionMethod": "guaranteed_milestone",
       "isHidden": false,
@@ -48,11 +50,13 @@
         "rareWoodChance": 0.0
       },
       "prerequisites": {
-        "activities": {
-          "treesChopped": 100
-        },
-        "requiredTitles": [],
-        "characterLevel": 0
+        "conditions": [
+          {
+            "type": "stat_tracker",
+            "stat_path": "gathering_totals.total_trees_chopped",
+            "min_value": 100
+          }
+        ]
       },
       "acquisitionMethod": "guaranteed_milestone",
       "isHidden": false,
@@ -78,11 +82,13 @@
         "firstTryBonus": 0.0
       },
       "prerequisites": {
-        "activities": {
-          "itemsSmithed": 50
-        },
-        "requiredTitles": [],
-        "characterLevel": 0
+        "conditions": [
+          {
+            "type": "stat_tracker",
+            "stat_path": "crafting_by_discipline.smithing.total_crafts",
+            "min_value": 50
+          }
+        ]
       },
       "acquisitionMethod": "guaranteed_milestone",
       "isHidden": false,
@@ -108,11 +114,13 @@
         "attackSpeed": 0.0
       },
       "prerequisites": {
-        "activities": {
-          "enemiesDefeated": 50
-        },
-        "requiredTitles": [],
-        "characterLevel": 0
+        "conditions": [
+          {
+            "type": "stat_tracker",
+            "stat_path": "combat_kills.total_kills",
+            "min_value": 50
+          }
+        ]
       },
       "acquisitionMethod": "guaranteed_milestone",
       "isHidden": false,
@@ -138,14 +146,26 @@
         "elementalAfinity": "fire"
       },
       "prerequisites": {
-        "activities": {
-          "oresMined": 1000,
-          "fireOresMined": 200
-        },
-        "requiredTitles": [
-          "novice_miner"
-        ],
-        "characterLevel": 5
+        "conditions": [
+          {
+            "type": "stat_tracker",
+            "stat_path": "gathering_totals.total_ores_mined",
+            "min_value": 1000
+          },
+          {
+            "type": "stat_tracker",
+            "stat_path": "gathering_totals.fire_resources_gathered",
+            "min_value": 200
+          },
+          {
+            "type": "title",
+            "required_title": "novice_miner"
+          },
+          {
+            "type": "level",
+            "min_level": 5
+          }
+        ]
       },
       "acquisitionMethod": "event_based_rng",
       "generationChance": 0.2,
@@ -172,14 +192,27 @@
         "materialYield": 0.1
       },
       "prerequisites": {
-        "activities": {
-          "materialsRefined": 500,
-          "alloysCreated": 50
-        },
-        "requiredTitles": [
-          "novice_refiner"
-        ],
-        "characterLevel": 10
+        "conditions": [
+          {
+            "type": "stat_tracker",
+            "stat_path": "crafting_by_discipline.refining.total_crafts",
+            "min_value": 500
+          },
+          {
+            "type": "stat_tracker",
+            "stat_path": "crafting_by_discipline.refining.total_crafts",
+            "min_value": 50,
+            "comment": "alloysCreated - using total_crafts as proxy"
+          },
+          {
+            "type": "title",
+            "required_title": "novice_refiner"
+          },
+          {
+            "type": "level",
+            "min_level": 10
+          }
+        ]
       },
       "acquisitionMethod": "event_based_rng",
       "generationChance": 0.1,
@@ -207,15 +240,31 @@
         "counterChance": 0.15
       },
       "prerequisites": {
-        "activities": {
-          "enemiesDefeated": 1000,
-          "criticalHits": 500,
-          "perfectDodges": 100
-        },
-        "requiredTitles": [
-          "journeyman_warrior"
-        ],
-        "characterLevel": 20
+        "conditions": [
+          {
+            "type": "stat_tracker",
+            "stat_path": "combat_kills.total_kills",
+            "min_value": 1000
+          },
+          {
+            "type": "stat_tracker",
+            "stat_path": "combat_actions.critical_hits",
+            "min_value": 500
+          },
+          {
+            "type": "stat_tracker",
+            "stat_path": "combat_survival.perfect_dodges",
+            "min_value": 100
+          },
+          {
+            "type": "title",
+            "required_title": "journeyman_warrior"
+          },
+          {
+            "type": "level",
+            "min_level": 20
+          }
+        ]
       },
       "acquisitionMethod": "event_based_rng",
       "generationChance": 0.05,
@@ -244,15 +293,31 @@
         "legendaryChance": 0.05
       },
       "prerequisites": {
-        "activities": {
-          "itemsSmithed": 5000,
-          "legendaryItemsCreated": 10,
-          "perfectCrafts": 500
-        },
-        "requiredTitles": [
-          "expert_master_smith"
-        ],
-        "characterLevel": 40
+        "conditions": [
+          {
+            "type": "stat_tracker",
+            "stat_path": "crafting_by_discipline.smithing.total_crafts",
+            "min_value": 5000
+          },
+          {
+            "type": "stat_tracker",
+            "stat_path": "crafting_by_discipline.smithing.legendary_crafts",
+            "min_value": 10
+          },
+          {
+            "type": "stat_tracker",
+            "stat_path": "crafting_by_discipline.smithing.perfect_crafts",
+            "min_value": 500
+          },
+          {
+            "type": "title",
+            "required_title": "expert_master_smith"
+          },
+          {
+            "type": "level",
+            "min_level": 40
+          }
+        ]
       },
       "acquisitionMethod": "special_achievement",
       "generationChance": 0.02,
@@ -279,12 +344,21 @@
         "legendaryDropRate": 0.1
       },
       "prerequisites": {
-        "activities": {
-          "dragonBossDefeated": 1,
-          "usedFireWeapon": true
-        },
-        "requiredTitles": [],
-        "characterLevel": 25
+        "conditions": [
+          {
+            "type": "stat_tracker",
+            "stat_path": "combat_kills.dragons_killed",
+            "min_value": 1
+          },
+          {
+            "type": "level",
+            "min_level": 25
+          },
+          {
+            "type": "comment",
+            "note": "usedFireWeapon boolean check - may need custom condition type in future"
+          }
+        ]
       },
       "acquisitionMethod": "hidden_discovery",
       "generationChance": 1.0,

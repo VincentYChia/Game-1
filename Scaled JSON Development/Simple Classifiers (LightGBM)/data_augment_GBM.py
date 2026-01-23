@@ -10,6 +10,7 @@ import json
 import itertools
 import random
 import uuid
+import os
 from typing import List, Dict, Any, Tuple, Set
 from collections import defaultdict, Counter
 import copy
@@ -24,7 +25,7 @@ def find_substitutable_materials(material_id: str, material: Dict, all_materials
 
     HARD REQUIREMENTS (must match exactly):
     - Same category
-    - Same refinement_level
+    - Same refinement status (refined vs basic, inferred from tags)
 
     SUBSTITUTION RULES (one must be true):
     - Rule 1: ALL tags identical → Can substitute at ANY tier
@@ -36,30 +37,42 @@ def find_substitutable_materials(material_id: str, material: Dict, all_materials
     base_material = all_materials[material_id]
     substitutes = []
 
+    # Get tags from metadata
+    base_tags = set(base_material.get('metadata', {}).get('tags', []))
+    base_category = base_material.get('category', 'unknown')
+    base_tier = base_material.get('tier', 1)
+
+    # Determine refinement status from tags
+    base_is_refined = 'refined' in base_tags
+    base_is_basic = 'basic' in base_tags or 'raw' in base_tags
+
     for candidate_id, candidate in all_materials.items():
         if candidate_id == material_id:
             continue
 
-        # Hard requirements
-        if candidate.get('category') != base_material.get('category'):
-            continue
-        if candidate.get('refinement_level') != base_material.get('refinement_level'):
+        # Hard requirement: same category
+        if candidate.get('category') != base_category:
             continue
 
-        # Substitution rules
-        base_tags = set(base_material.get('tags', []))
-        candidate_tags = set(candidate.get('tags', []))
+        # Get candidate info
+        candidate_tags = set(candidate.get('metadata', {}).get('tags', []))
+        candidate_tier = candidate.get('tier', 1)
+        candidate_is_refined = 'refined' in candidate_tags
+        candidate_is_basic = 'basic' in candidate_tags or 'raw' in candidate_tags
 
-        # Rule 1: All tags identical
+        # Hard requirement: same refinement status
+        if base_is_refined != candidate_is_refined:
+            continue
+        if base_is_basic != candidate_is_basic:
+            continue
+
+        # Substitution Rule 1: All tags identical
         if base_tags == candidate_tags:
             substitutes.append(candidate_id)
             continue
 
-        # Rule 2: Tier difference ≤1 AND ≥2 matching tags
-        base_tier = base_material.get('tier', 1)
-        candidate_tier = candidate.get('tier', 1)
+        # Substitution Rule 2: Tier difference ≤1 AND ≥2 matching tags
         tier_diff = abs(base_tier - candidate_tier)
-
         matching_tags = len(base_tags & candidate_tags)
 
         if tier_diff <= 1 and matching_tags >= 2:
@@ -75,24 +88,27 @@ def find_opposite_refinement(material_id: str, all_materials: Dict) -> str:
 
     base_material = all_materials[material_id]
     base_category = base_material.get('category')
-    base_refinement = base_material.get('refinement_level', 'basic')
+    base_tags = set(base_material.get('metadata', {}).get('tags', []))
 
-    # Define opposite refinement levels
-    opposite_map = {
-        'basic': 'refined',
-        'refined': 'basic',
-        'raw': 'processed',
-        'processed': 'raw'
-    }
-
-    target_refinement = opposite_map.get(base_refinement, 'basic')
+    # Determine current refinement status
+    base_is_refined = 'refined' in base_tags
+    base_is_basic = 'basic' in base_tags or 'raw' in base_tags
 
     # Find materials with same category but opposite refinement
-    candidates = [
-        mid for mid, mat in all_materials.items()
-        if mat.get('category') == base_category
-        and mat.get('refinement_level') == target_refinement
-    ]
+    candidates = []
+    for mid, mat in all_materials.items():
+        if mat.get('category') != base_category:
+            continue
+
+        mat_tags = set(mat.get('metadata', {}).get('tags', []))
+        mat_is_refined = 'refined' in mat_tags
+        mat_is_basic = 'basic' in mat_tags or 'raw' in mat_tags
+
+        # Opposite refinement
+        if base_is_refined and mat_is_basic:
+            candidates.append(mid)
+        elif base_is_basic and mat_is_refined:
+            candidates.append(mid)
 
     if candidates:
         return random.choice(candidates)
@@ -160,24 +176,177 @@ def remove_duplicates(recipes: List[Tuple[Dict, int]], normalize_fn) -> List[Tup
 # REFINING AUGMENTATION (Hub-and-Spoke)
 # ============================================================================
 
+def find_substitutable_materials_aggressive(material_id: str, all_materials: Dict) -> List[str]:
+    """
+    Aggressive substitution for refining - just needs ≥2 matching tags.
+
+    HARD REQUIREMENTS:
+    - Same category
+    - Same refinement status (refined vs basic)
+
+    SUBSTITUTION RULE:
+    - ≥2 matching tags (ignore tier difference!)
+    """
+    if material_id not in all_materials:
+        return []
+
+    base_material = all_materials[material_id]
+    substitutes = []
+
+    base_tags = set(base_material.get('metadata', {}).get('tags', []))
+    base_category = base_material.get('category', 'unknown')
+    base_is_refined = 'refined' in base_tags
+    base_is_basic = 'basic' in base_tags or 'raw' in base_tags
+
+    for candidate_id, candidate in all_materials.items():
+        if candidate_id == material_id:
+            continue
+
+        # Hard requirement: same category
+        if candidate.get('category') != base_category:
+            continue
+
+        candidate_tags = set(candidate.get('metadata', {}).get('tags', []))
+        candidate_is_refined = 'refined' in candidate_tags
+        candidate_is_basic = 'basic' in candidate_tags or 'raw' in candidate_tags
+
+        # Hard requirement: same refinement status
+        if base_is_refined != candidate_is_refined:
+            continue
+        if base_is_basic != candidate_is_basic:
+            continue
+
+        # Just need ≥2 matching tags - that's it!
+        matching_tags = len(base_tags & candidate_tags)
+        if matching_tags >= 2:
+            substitutes.append(candidate_id)
+
+    return substitutes
+
+
+def generate_synthetic_refining_recipes(all_materials: Dict) -> List[Dict]:
+    """
+    Generate new valid refining recipes for ALL three valid patterns:
+    Pattern 1: Basic smelting (0 spokes) - ore/log → ingot/plank
+    Pattern 2: Alloying (2+ hubs, 0 spokes) - metal + metal → alloy
+    Pattern 3: Elemental infusion (1 hub, 1-3 spokes) - refined + elemental
+
+    Keep them balanced!
+    """
+    synthetic = []
+
+    # Pattern 1: Basic smelting (ore/log → ingot/plank, 0 spokes)
+    # Find raw materials
+    raw_materials = [
+        mat_id for mat_id, mat in all_materials.items()
+        if 'basic' in mat.get('metadata', {}).get('tags', [])
+        or 'raw' in mat.get('metadata', {}).get('tags', [])
+    ]
+
+    # Generate ~30 basic smelting recipes
+    for _ in range(30):
+        if not raw_materials:
+            break
+        raw_mat = random.choice(raw_materials)
+        mat_tier = all_materials[raw_mat].get('tier', 1)
+
+        recipe = {
+            'recipeId': f"synthetic_smelt_{uuid.uuid4().hex[:8]}",
+            'outputId': f"{raw_mat}_processed",
+            'stationTier': min(mat_tier, 4),
+            'coreInputs': [{'materialId': raw_mat, 'quantity': 1}],
+            'surroundingInputs': []
+        }
+        synthetic.append(recipe)
+
+    # Pattern 2: Alloying (2 hubs, 0 spokes)
+    # Find refined metals
+    refined_metals = [
+        mat_id for mat_id, mat in all_materials.items()
+        if mat.get('category') == 'metal'
+        and 'refined' in mat.get('metadata', {}).get('tags', [])
+    ]
+
+    # Generate ~30 alloying recipes
+    for _ in range(30):
+        if len(refined_metals) < 2:
+            break
+        metals = random.sample(refined_metals, 2)
+        tier = max(all_materials[m].get('tier', 1) for m in metals)
+
+        recipe = {
+            'recipeId': f"synthetic_alloy_{uuid.uuid4().hex[:8]}",
+            'outputId': f"alloy_of_{metals[0][:6]}_{metals[1][:6]}",
+            'stationTier': min(tier, 4),
+            'coreInputs': [
+                {'materialId': metals[0], 'quantity': random.randint(1, 2)},
+                {'materialId': metals[1], 'quantity': random.randint(1, 2)}
+            ],
+            'surroundingInputs': []
+        }
+        synthetic.append(recipe)
+
+    # Pattern 3: Elemental infusion (1 hub, 1-3 elemental spokes)
+    # Find refined materials
+    refined_materials = [
+        mat_id for mat_id, mat in all_materials.items()
+        if 'refined' in mat.get('metadata', {}).get('tags', [])
+    ]
+
+    # Find elemental materials
+    elemental_materials = [
+        mat_id for mat_id, mat in all_materials.items()
+        if mat.get('category') == 'elemental'
+    ]
+
+    # Generate ~30 infusion recipes
+    for _ in range(30):
+        if not refined_materials or not elemental_materials:
+            break
+
+        refined_mat = random.choice(refined_materials)
+        mat_tier = all_materials[refined_mat].get('tier', 1)
+
+        # 1-3 elemental spokes
+        num_spokes = random.randint(1, 3)
+        if len(elemental_materials) < num_spokes:
+            num_spokes = len(elemental_materials)
+
+        spokes = random.sample(elemental_materials, num_spokes)
+
+        recipe = {
+            'recipeId': f"synthetic_infuse_{uuid.uuid4().hex[:8]}",
+            'outputId': f"{refined_mat}_enhanced",
+            'stationTier': min(mat_tier, 4),
+            'coreInputs': [{'materialId': refined_mat, 'quantity': 1}],
+            'surroundingInputs': [
+                {'materialId': spoke, 'quantity': random.randint(1, 3)}
+                for spoke in spokes
+            ]
+        }
+        synthetic.append(recipe)
+
+    return synthetic
+
+
 def augment_refining_material_substitution(recipe: Dict, all_materials: Dict) -> List[Dict]:
-    """Generate variants by substituting materials in cores and spokes."""
+    """Generate variants by substituting materials in cores and spokes - AGGRESSIVE."""
     variants = []
 
-    # Get substitution options for core inputs
+    # Get substitution options for core inputs (AGGRESSIVE)
     core_options = []
     for core in recipe['coreInputs']:
         mat_id = core['materialId']
-        subs = [mat_id] + find_substitutable_materials(mat_id, all_materials.get(mat_id, {}), all_materials)
-        # Limit per material to prevent explosion, but be generous
-        core_options.append([(s, core['quantity']) for s in subs[:5]])
+        subs = [mat_id] + find_substitutable_materials_aggressive(mat_id, all_materials)
+        # Take up to 8 substitutes per material
+        core_options.append([(s, core['quantity']) for s in subs[:8]])
 
-    # Get substitution options for surrounding inputs
+    # Get substitution options for surrounding inputs (AGGRESSIVE)
     spoke_options = []
     for spoke in recipe['surroundingInputs']:
         mat_id = spoke['materialId']
-        subs = [mat_id] + find_substitutable_materials(mat_id, all_materials.get(mat_id, {}), all_materials)
-        spoke_options.append([(s, spoke['quantity']) for s in subs[:5]])
+        subs = [mat_id] + find_substitutable_materials_aggressive(mat_id, all_materials)
+        spoke_options.append([(s, spoke['quantity']) for s in subs[:8]])
 
     # Generate cross-product
     if not spoke_options:
@@ -226,14 +395,14 @@ def augment_refining_permutations(recipe: Dict) -> List[Dict]:
 
 def augment_refining_complete(recipe: Dict, all_materials: Dict) -> List[Dict]:
     """Complete augmentation: material substitution + permutations."""
-    # Material substitution (generates 4-8x variants)
+    # Material substitution (generates many variants with aggressive mode)
     material_variants = augment_refining_material_substitution(recipe, all_materials)
 
-    # Limit material variants if explosion happens
-    if len(material_variants) > 30:
-        material_variants = random.sample(material_variants, 30)
+    # Limit material variants to prevent synthetic recipes from overwhelming
+    if len(material_variants) > 20:
+        material_variants = random.sample(material_variants, 20)
 
-    # Permutations on all material variants
+    # Permutations on material variants
     all_variants = []
     for variant in material_variants:
         perms = augment_refining_permutations(variant)
@@ -245,18 +414,18 @@ def augment_refining_complete(recipe: Dict, all_materials: Dict) -> List[Dict]:
         normalize_refining_recipe
     )
 
-    # Target 10-15x per base recipe, but be flexible
+    # Target 10-15 variants per base recipe (reduced from 30)
     final_variants = [v for v, _ in unique_variants]
 
-    # If we have way too many, sample down to reasonable size
-    if len(final_variants) > 20:
-        final_variants = random.sample(final_variants, 20)
+    # Sample if too many
+    if len(final_variants) > 15:
+        final_variants = random.sample(final_variants, 15)
 
     return final_variants
 
 
-def generate_refining_negatives(valid_recipes: List[Dict], all_materials: Dict, num_per_recipe: int = 7) -> List[Tuple[Dict, int]]:
-    """Generate invalid refining recipes."""
+def generate_refining_negatives(valid_recipes: List[Dict], all_materials: Dict, num_per_recipe: int = 5) -> List[Tuple[Dict, int]]:
+    """Generate invalid refining recipes - more aggressive for balance."""
     negatives = []
 
     # Collect statistics
@@ -266,9 +435,16 @@ def generate_refining_negatives(valid_recipes: List[Dict], all_materials: Dict, 
         for r in valid_recipes
     ]
 
+    # Calculate how many of each type to generate
+    negatives_per_type = max(1, num_per_recipe // 4)
+
     for recipe in valid_recipes:
-        # 25% - Violate substitution rules
-        for _ in range(2):
+        generated = 0
+
+        # Type 1: Violate substitution rules (refined → basic or vice versa)
+        for _ in range(negatives_per_type):
+            if generated >= num_per_recipe:
+                break
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
             if negative['coreInputs']:
@@ -277,9 +453,12 @@ def generate_refining_negatives(valid_recipes: List[Dict], all_materials: Dict, 
                 opposite = find_opposite_refinement(mat_id, all_materials)
                 negative['coreInputs'][idx]['materialId'] = opposite
             negatives.append((negative, 0))
+            generated += 1
 
-        # 25% - Wrong category substitution
-        for _ in range(2):
+        # Type 2: Wrong category substitution
+        for _ in range(negatives_per_type):
+            if generated >= num_per_recipe:
+                break
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
             if random.random() < 0.5 and negative['coreInputs']:
@@ -293,41 +472,54 @@ def generate_refining_negatives(valid_recipes: List[Dict], all_materials: Dict, 
                 wrong = find_different_category(mat_id, all_materials)
                 negative['surroundingInputs'][idx]['materialId'] = wrong
             negatives.append((negative, 0))
+            generated += 1
 
-        # 25% - Incomplete (remove spokes)
-        for _ in range(2):
+        # Type 3: Too many spokes (>3 spokes violates 1-3:1 ratio)
+        for _ in range(negatives_per_type):
+            if generated >= num_per_recipe:
+                break
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
-            if negative['surroundingInputs']:
-                num_to_remove = random.randint(1, min(2, len(negative['surroundingInputs'])))
-                for _ in range(num_to_remove):
-                    if negative['surroundingInputs']:
-                        negative['surroundingInputs'].pop()
+            # Add 4-6 random spokes to violate ratio
+            num_extra = random.randint(4, 6)
+            for _ in range(num_extra):
+                negative['surroundingInputs'].append({
+                    'materialId': random.choice(list(all_materials.keys())),
+                    'quantity': random.randint(1, 3)
+                })
             negatives.append((negative, 0))
+            generated += 1
 
-        # 25% - Random but match structure
-        negative = {
-            'recipeId': f"negative_{uuid.uuid4().hex[:8]}",
-            'outputId': "invalid",
-            'stationTier': recipe['stationTier'],
-            'coreInputs': [],
-            'surroundingInputs': []
-        }
-        num_hubs = random.choice(hub_counts)
-        for _ in range(num_hubs):
-            negative['coreInputs'].append({
-                'materialId': random.choice(list(all_materials.keys())),
-                'quantity': random.randint(1, 3)
-            })
+        # Type 4: Random but match structure
+        while generated < num_per_recipe:
+            negative = {
+                'recipeId': f"negative_{uuid.uuid4().hex[:8]}",
+                'outputId': "invalid",
+                'stationTier': recipe['stationTier'],
+                'coreInputs': [],
+                'surroundingInputs': []
+            }
+            num_hubs = random.choice(hub_counts) if hub_counts else 1
+            for _ in range(num_hubs):
+                negative['coreInputs'].append({
+                    'materialId': random.choice(list(all_materials.keys())),
+                    'quantity': random.randint(1, 3)
+                })
 
-        target_ratio = random.choice(spoke_hub_ratios)
-        num_spokes = int(num_hubs * target_ratio)
-        for _ in range(num_spokes):
-            negative['surroundingInputs'].append({
-                'materialId': random.choice(list(all_materials.keys())),
-                'quantity': random.randint(1, 3)
-            })
-        negatives.append((negative, 0))
+            # Sometimes violate the 1-3:1 ratio
+            if random.random() < 0.5:
+                num_spokes = random.randint(4, 8)  # Too many
+            else:
+                target_ratio = random.choice(spoke_hub_ratios) if spoke_hub_ratios else 1.5
+                num_spokes = int(num_hubs * target_ratio)
+
+            for _ in range(num_spokes):
+                negative['surroundingInputs'].append({
+                    'materialId': random.choice(list(all_materials.keys())),
+                    'quantity': random.randint(1, 3)
+                })
+            negatives.append((negative, 0))
+            generated += 1
 
     return negatives
 
@@ -457,16 +649,22 @@ def augment_alchemy_complete(recipe: Dict, all_materials: Dict) -> List[Dict]:
     return final_variants
 
 
-def generate_alchemy_negatives(valid_recipes: List[Dict], all_materials: Dict, num_per_recipe: int = 7) -> List[Tuple[Dict, int]]:
+def generate_alchemy_negatives(valid_recipes: List[Dict], all_materials: Dict, num_per_recipe: int = 3) -> List[Tuple[Dict, int]]:
     """Generate invalid alchemy recipes."""
     negatives = []
 
+    negatives_per_type = max(1, num_per_recipe // 4)
+
     for recipe in valid_recipes:
-        # 30% - Wrong material category
-        for _ in range(2):
+        generated = 0
+
+        # Type 1: Wrong material category
+        for _ in range(negatives_per_type):
+            if generated >= num_per_recipe:
+                break
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
-            num_swaps = random.randint(1, 2)
+            num_swaps = random.randint(1, min(2, len(negative['ingredients'])))
             for _ in range(num_swaps):
                 if negative['ingredients']:
                     idx = random.randint(0, len(negative['ingredients']) - 1)
@@ -474,9 +672,12 @@ def generate_alchemy_negatives(valid_recipes: List[Dict], all_materials: Dict, n
                     wrong = find_different_category(mat_id, all_materials)
                     negative['ingredients'][idx]['materialId'] = wrong
             negatives.append((negative, 0))
+            generated += 1
 
-        # 30% - Invalid quantity changes
-        for _ in range(2):
+        # Type 2: Invalid quantity changes
+        for _ in range(negatives_per_type):
+            if generated >= num_per_recipe:
+                break
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
             if negative['ingredients']:
@@ -485,22 +686,25 @@ def generate_alchemy_negatives(valid_recipes: List[Dict], all_materials: Dict, n
                 new_qty = max(1, negative['ingredients'][idx]['quantity'] + change)
                 negative['ingredients'][idx]['quantity'] = new_qty
             negatives.append((negative, 0))
+            generated += 1
 
-        # 20% - Insert extra ingredient
-        negative = copy.deepcopy(recipe)
-        negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
-        insert_pos = random.randint(0, len(negative['ingredients']))
-        negative['ingredients'].insert(insert_pos, {
-            'slot': len(negative['ingredients']) + 1,
-            'materialId': random.choice(list(all_materials.keys())),
-            'quantity': random.randint(1, 3)
-        })
-        for i, ing in enumerate(negative['ingredients'], start=1):
-            ing['slot'] = i
-        negatives.append((negative, 0))
+        # Type 3: Insert extra ingredient
+        if generated < num_per_recipe:
+            negative = copy.deepcopy(recipe)
+            negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
+            insert_pos = random.randint(0, len(negative['ingredients']))
+            negative['ingredients'].insert(insert_pos, {
+                'slot': len(negative['ingredients']) + 1,
+                'materialId': random.choice(list(all_materials.keys())),
+                'quantity': random.randint(1, 3)
+            })
+            for i, ing in enumerate(negative['ingredients'], start=1):
+                ing['slot'] = i
+            negatives.append((negative, 0))
+            generated += 1
 
-        # 20% - Random sequence
-        for _ in range(2):
+        # Type 4: Random sequence
+        while generated < num_per_recipe:
             negative = {
                 'recipeId': f"negative_{uuid.uuid4().hex[:8]}",
                 'outputId': "invalid",
@@ -515,6 +719,7 @@ def generate_alchemy_negatives(valid_recipes: List[Dict], all_materials: Dict, n
                     'quantity': random.randint(1, 4)
                 })
             negatives.append((negative, 0))
+            generated += 1
 
     return negatives
 
@@ -616,15 +821,20 @@ def augment_engineering_complete(recipe: Dict, all_materials: Dict) -> List[Dict
     return final_variants
 
 
-def generate_engineering_negatives(valid_recipes: List[Dict], all_materials: Dict, num_per_recipe: int = 7) -> List[Tuple[Dict, int]]:
+def generate_engineering_negatives(valid_recipes: List[Dict], all_materials: Dict, num_per_recipe: int = 3) -> List[Tuple[Dict, int]]:
     """Generate invalid engineering recipes."""
     negatives = []
 
     slot_counts = [len(r['slots']) for r in valid_recipes]
+    negatives_per_type = max(1, num_per_recipe // 4)
 
     for recipe in valid_recipes:
-        # 30% - Wrong material category
-        for _ in range(2):
+        generated = 0
+
+        # Type 1: Wrong material category
+        for _ in range(negatives_per_type):
+            if generated >= num_per_recipe:
+                break
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
             if negative['slots']:
@@ -633,9 +843,12 @@ def generate_engineering_negatives(valid_recipes: List[Dict], all_materials: Dic
                 wrong = find_different_category(mat_id, all_materials)
                 negative['slots'][idx]['materialId'] = wrong
             negatives.append((negative, 0))
+            generated += 1
 
-        # 25% - Only one slot type
-        for _ in range(2):
+        # Type 2: Only one slot type
+        for _ in range(negatives_per_type):
+            if generated >= num_per_recipe:
+                break
             negative = {
                 'recipeId': f"negative_{uuid.uuid4().hex[:8]}",
                 'outputId': "invalid",
@@ -643,7 +856,7 @@ def generate_engineering_negatives(valid_recipes: List[Dict], all_materials: Dic
                 'slots': []
             }
             single_type = random.choice(['FRAME', 'POWER', 'FUNCTION'])
-            num_slots = random.choice(slot_counts)
+            num_slots = random.choice(slot_counts) if slot_counts else 3
 
             for _ in range(num_slots):
                 negative['slots'].append({
@@ -652,16 +865,29 @@ def generate_engineering_negatives(valid_recipes: List[Dict], all_materials: Dic
                     'quantity': random.randint(1, 6)
                 })
             negatives.append((negative, 0))
+            generated += 1
 
-        # 25% - Nonsensical combinations
-        for _ in range(2):
+        # Type 3: Missing critical slots
+        if generated < num_per_recipe:
+            negative = copy.deepcopy(recipe)
+            negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
+            critical_slots = [i for i, s in enumerate(negative['slots'])
+                             if s['type'] in ['FRAME', 'FUNCTION']]
+            if critical_slots:
+                remove_idx = random.choice(critical_slots)
+                negative['slots'].pop(remove_idx)
+            negatives.append((negative, 0))
+            generated += 1
+
+        # Type 4: Nonsensical combinations
+        while generated < num_per_recipe:
             negative = {
                 'recipeId': f"negative_{uuid.uuid4().hex[:8]}",
                 'outputId': "invalid",
                 'stationTier': recipe['stationTier'],
                 'slots': []
             }
-            num_slots = random.choice(slot_counts)
+            num_slots = random.choice(slot_counts) if slot_counts else 3
 
             for _ in range(num_slots):
                 negative['slots'].append({
@@ -670,16 +896,7 @@ def generate_engineering_negatives(valid_recipes: List[Dict], all_materials: Dic
                     'quantity': random.randint(1, 6)
                 })
             negatives.append((negative, 0))
-
-        # 20% - Missing critical slots
-        negative = copy.deepcopy(recipe)
-        negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
-        critical_slots = [i for i, s in enumerate(negative['slots'])
-                         if s['type'] in ['FRAME', 'FUNCTION']]
-        if critical_slots:
-            remove_idx = random.choice(critical_slots)
-            negative['slots'].pop(remove_idx)
-        negatives.append((negative, 0))
+            generated += 1
 
     return negatives
 
@@ -688,14 +905,13 @@ def generate_engineering_negatives(valid_recipes: List[Dict], all_materials: Dic
 # MAIN ORCHESTRATION
 # ============================================================================
 
-def load_json(filepath: str) -> Dict:
-    """Load JSON file."""
-    with open(filepath, 'r') as f:
-        return json.load(f)
-
-
 def save_dataset(data: List[Tuple[Dict, int]], output_path: str, discipline: str):
     """Save augmented dataset to JSON."""
+    # Check if output_path is a directory
+    if os.path.isdir(output_path):
+        output_path = os.path.join(output_path, f'{discipline}_augmented_data.json')
+        print(f"   Output is directory, saving to: {output_path}")
+
     dataset = {
         'discipline': discipline,
         'total_samples': len(data),
@@ -714,6 +930,12 @@ def save_dataset(data: List[Tuple[Dict, int]], output_path: str, discipline: str
     print(f"   Total samples: {dataset['total_samples']}")
     print(f"   Positive: {dataset['positive_samples']}")
     print(f"   Negative: {dataset['negative_samples']}")
+
+
+def load_json(filepath: str) -> Dict:
+    """Load JSON file."""
+    with open(filepath, 'r') as f:
+        return json.load(f)
 
 
 def main():
@@ -761,13 +983,38 @@ def main():
     print(f"\n🔄 Augmenting {discipline} recipes...")
 
     if discipline == 'refining':
+        # Step 1: Generate balanced synthetic recipes for all patterns
+        print("   Generating synthetic recipes for all 3 patterns...")
+        synthetic_recipes = generate_synthetic_refining_recipes(all_materials)
+
+        # Count patterns in synthetics
+        pattern1 = sum(1 for r in synthetic_recipes if len(r['coreInputs']) == 1 and len(r['surroundingInputs']) == 0)
+        pattern2 = sum(1 for r in synthetic_recipes if len(r['coreInputs']) >= 2 and len(r['surroundingInputs']) == 0)
+        pattern3 = sum(1 for r in synthetic_recipes if len(r['coreInputs']) == 1 and len(r['surroundingInputs']) > 0)
+
+        print(f"   Created {len(synthetic_recipes)} synthetic recipes:")
+        print(f"     - Pattern 1 (basic smelting, 0 spokes): {pattern1}")
+        print(f"     - Pattern 2 (alloying, 2+ hubs): {pattern2}")
+        print(f"     - Pattern 3 (infusion, 1 hub + spokes): {pattern3}")
+
+        # Combine original + synthetic
+        all_base_recipes = recipes + synthetic_recipes
+        print(f"   Total base recipes to augment: {len(all_base_recipes)} ({len(recipes)} original + {len(synthetic_recipes)} synthetic)")
+
+        # Step 2: Augment all recipes (with reduced multiplier)
         positives = []
-        for recipe in recipes:
+        for recipe in all_base_recipes:
             variants = augment_refining_complete(recipe, all_materials)
             positives.extend([(v, 1) for v in variants])
 
-        # Generate negatives proportional to positives (target ~60-70% positive ratio)
-        num_negatives_per_recipe = max(1, len(positives) // (len(recipes) * 2))
+        print(f"   Generated {len(positives)} positive samples")
+
+        # Step 3: Generate balanced negatives
+        # Target 40% negative ratio (60% positive)
+        target_negatives = int(len(positives) * 0.4 / 0.6)
+        num_negatives_per_recipe = max(3, target_negatives // len(recipes))
+
+        print(f"   Generating ~{target_negatives} negative samples ({num_negatives_per_recipe} per original recipe)...")
         negatives = generate_refining_negatives(recipes, all_materials, num_negatives_per_recipe)
         all_data = positives + negatives
 
@@ -777,8 +1024,13 @@ def main():
             variants = augment_alchemy_complete(recipe, all_materials)
             positives.extend([(v, 1) for v in variants])
 
-        # Generate negatives proportional to positives
-        num_negatives_per_recipe = max(1, len(positives) // (len(recipes) * 2))
+        print(f"   Generated {len(positives)} positive samples")
+
+        # Target 40% negative ratio (60% positive)
+        target_negatives = int(len(positives) * 0.4 / 0.6)
+        num_negatives_per_recipe = max(2, target_negatives // len(recipes))
+
+        print(f"   Generating ~{target_negatives} negative samples ({num_negatives_per_recipe} per base recipe)...")
         negatives = generate_alchemy_negatives(recipes, all_materials, num_negatives_per_recipe)
         all_data = positives + negatives
 
@@ -788,8 +1040,13 @@ def main():
             variants = augment_engineering_complete(recipe, all_materials)
             positives.extend([(v, 1) for v in variants])
 
-        # Generate negatives proportional to positives
-        num_negatives_per_recipe = max(1, len(positives) // (len(recipes) * 2))
+        print(f"   Generated {len(positives)} positive samples")
+
+        # Target 40% negative ratio (60% positive)
+        target_negatives = int(len(positives) * 0.4 / 0.6)
+        num_negatives_per_recipe = max(2, target_negatives // len(recipes))
+
+        print(f"   Generating ~{target_negatives} negative samples ({num_negatives_per_recipe} per base recipe)...")
         negatives = generate_engineering_negatives(recipes, all_materials, num_negatives_per_recipe)
         all_data = positives + negatives
 

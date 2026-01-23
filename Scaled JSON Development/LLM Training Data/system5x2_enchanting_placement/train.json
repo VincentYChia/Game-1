@@ -7,55 +7,19 @@
       "inputs": [
         {
           "materialId": "fire_crystal",
-          "quantity": 4,
-          "materialName": "Fire Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "common"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "granite",
-          "quantity": 2,
-          "materialName": "Granite",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Speckled igneous rock with visible crystalline structure. Harder than limestone, more reliable for load-bearing structures.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "durable"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 3,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "tin_ore",
-          "quantity": 2,
-          "materialName": "Tin Ore",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Soft, silvery-white metal with a mysterious sheen that glows faintly in moonlight. Ancient texts speak of its lunar affinity.",
-          "materialTags": [
-            "basic",
-            "metal",
-            "magical"
-          ]
+          "quantity": 2
         }
       ],
       "applicableTo": [
@@ -181,55 +145,19 @@
       "inputs": [
         {
           "materialId": "dire_fang",
-          "quantity": 3,
-          "materialName": "Dire Fang",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Razor-sharp fang from alpha predators. Still warm from the kill.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "fang"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "frost_essence",
-          "quantity": 2,
-          "materialName": "Frost Essence",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Frost-blue crystal cold enough to burn. Creates rime patterns on nearby surfaces.",
-          "materialTags": [
-            "elemental",
-            "ice",
-            "rare"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "lightning_shard",
-          "quantity": 3,
-          "materialName": "Lightning Shard",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Crackling crystal surrounded by static discharge. Handle with insulated gloves.",
-          "materialTags": [
-            "elemental",
-            "lightning",
-            "rare"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "marble",
-          "quantity": 4,
-          "materialName": "Marble",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Brilliant white stone that glows faintly with captured sunlight. Used in temples and monuments.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "radiant"
-          ]
+          "quantity": 4
         }
       ],
       "applicableTo": [
@@ -369,68 +297,23 @@
       "inputs": [
         {
           "materialId": "adamantine_ingot",
-          "quantity": 3,
-          "materialName": "Adamantine Ingot",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "rare"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "diamond",
-          "quantity": 5,
-          "materialName": "Diamond",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "precious"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "essence_blood",
-          "quantity": 2,
-          "materialName": "Essence Blood",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "blood"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "marble",
-          "quantity": 1,
-          "materialName": "Marble",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Brilliant white stone that glows faintly with captured sunlight. Used in temples and monuments.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "radiant"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "phoenix_ash",
-          "quantity": 3,
-          "materialName": "Phoenix Ash",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Ash-grey substance from legendary phoenix nests. Burns eternally without being consumed.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "legendary"
-          ]
+          "quantity": 3
         }
       ],
       "applicableTo": [
@@ -587,29 +470,11 @@
       "inputs": [
         {
           "materialId": "beetle_carapace",
-          "quantity": 4,
-          "materialName": "Beetle Carapace",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Iridescent shell segment. Lightweight yet remarkably impact-resistant.",
-          "materialTags": [
-            "monster",
-            "common",
-            "carapace"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "earth_crystal",
-          "quantity": 4,
-          "materialName": "Earth Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Green-brown crystal with swirling sediment. Surprisingly heavy, grounds magical energies.",
-          "materialTags": [
-            "elemental",
-            "earth",
-            "common"
-          ]
+          "quantity": 4
         }
       ],
       "applicableTo": [
@@ -723,68 +588,23 @@
       "inputs": [
         {
           "materialId": "adamantine_ingot",
-          "quantity": 4,
-          "materialName": "Adamantine Ingot",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "rare"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "diamond",
-          "quantity": 4,
-          "materialName": "Diamond",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "precious"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "golem_core",
-          "quantity": 1,
-          "materialName": "Golem Core",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Petrified remains from ancient guardians. Contains geological memories.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "ancient"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 8,
-          "materialName": "Mithril Ingot",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "legendary"
-          ]
+          "quantity": 8
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 8,
-          "materialName": "Spectral Thread",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "spectral"
-          ]
+          "quantity": 8
         }
       ],
       "applicableTo": [
@@ -1032,55 +852,19 @@
       "inputs": [
         {
           "materialId": "fire_crystal",
-          "quantity": 6,
-          "materialName": "Fire Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "common"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "light_gem",
-          "quantity": 1,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "maple_plank",
-          "quantity": 6,
-          "materialName": "Maple Plank",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined maple planks, ideal for items requiring stability.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "durable"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 3,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 3
         }
       ],
       "applicableTo": [
@@ -1254,55 +1038,19 @@
       "inputs": [
         {
           "materialId": "frost_essence",
-          "quantity": 5,
-          "materialName": "Frost Essence",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Frost-blue crystal cold enough to burn. Creates rime patterns on nearby surfaces.",
-          "materialTags": [
-            "elemental",
-            "ice",
-            "rare"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "light_gem",
-          "quantity": 1,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "marble",
-          "quantity": 6,
-          "materialName": "Marble",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Brilliant white stone that glows faintly with captured sunlight. Used in temples and monuments.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "radiant"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "water_crystal",
-          "quantity": 4,
-          "materialName": "Water Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Blue crystal filled with flowing liquid. Cool and calming, perpetually damp.",
-          "materialTags": [
-            "elemental",
-            "water",
-            "common"
-          ]
+          "quantity": 4
         }
       ],
       "applicableTo": [
@@ -1467,55 +1215,19 @@
       "inputs": [
         {
           "materialId": "light_gem",
-          "quantity": 4,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "lightning_shard",
-          "quantity": 10,
-          "materialName": "Lightning Shard",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Crackling crystal surrounded by static discharge. Handle with insulated gloves.",
-          "materialTags": [
-            "elemental",
-            "lightning",
-            "rare"
-          ]
+          "quantity": 10
         },
         {
           "materialId": "marble",
-          "quantity": 4,
-          "materialName": "Marble",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Brilliant white stone that glows faintly with captured sunlight. Used in temples and monuments.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "radiant"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "storm_heart",
-          "quantity": 8,
-          "materialName": "Storm Heart",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Captured lightning from primordial storms. Contains raw creation energy.",
-          "materialTags": [
-            "elemental",
-            "lightning",
-            "legendary"
-          ]
+          "quantity": 8
         }
       ],
       "applicableTo": [
@@ -1757,42 +1469,15 @@
       "inputs": [
         {
           "materialId": "earth_crystal",
-          "quantity": 8,
-          "materialName": "Earth Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Green-brown crystal with swirling sediment. Surprisingly heavy, grounds magical energies.",
-          "materialTags": [
-            "elemental",
-            "earth",
-            "common"
-          ]
+          "quantity": 8
         },
         {
           "materialId": "granite",
-          "quantity": 4,
-          "materialName": "Granite",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Speckled igneous rock with visible crystalline structure. Harder than limestone, more reliable for load-bearing structures.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "durable"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "iron_ore",
-          "quantity": 8,
-          "materialName": "Iron Ore",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Sturdy grey metal from common deposits throughout the land. The workhorse of civilization - reliable, abundant, and strong enough for most purposes.",
-          "materialTags": [
-            "basic",
-            "metal",
-            "standard"
-          ]
+          "quantity": 8
         }
       ],
       "applicableTo": [
@@ -2015,42 +1700,15 @@
       "inputs": [
         {
           "materialId": "crystal_quartz",
-          "quantity": 8,
-          "materialName": "Crystal Quartz",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Translucent crystal that amplifies magical energies passing through it. Hums softly when near power sources.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "magical"
-          ]
+          "quantity": 8
         },
         {
           "materialId": "earth_crystal",
-          "quantity": 4,
-          "materialName": "Earth Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Green-brown crystal with swirling sediment. Surprisingly heavy, grounds magical energies.",
-          "materialTags": [
-            "elemental",
-            "earth",
-            "common"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "iron_scales",
-          "quantity": 8,
-          "materialName": "Iron Scales",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Metallic scales from armored creatures. Can deflect sword strikes.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "scales"
-          ]
+          "quantity": 8
         }
       ],
       "applicableTo": [
@@ -2273,68 +1931,23 @@
       "inputs": [
         {
           "materialId": "crystal_quartz",
-          "quantity": 6,
-          "materialName": "Crystal Quartz",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Translucent crystal that amplifies magical energies passing through it. Hums softly when near power sources.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "magical"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "diamond",
-          "quantity": 4,
-          "materialName": "Diamond",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "precious"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "golem_core",
-          "quantity": 4,
-          "materialName": "Golem Core",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Petrified remains from ancient guardians. Contains geological memories.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "ancient"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "orichalcum_ingot",
-          "quantity": 6,
-          "materialName": "Orichalcum Ingot",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "ancient"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "void_essence",
-          "quantity": 6,
-          "materialName": "Void Essence",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Liquid darkness given physical form. Absorbs heat, light, and hope.",
-          "materialTags": [
-            "elemental",
-            "void",
-            "legendary"
-          ]
+          "quantity": 6
         }
       ],
       "applicableTo": [
@@ -2619,42 +2232,15 @@
       "inputs": [
         {
           "materialId": "beetle_carapace",
-          "quantity": 4,
-          "materialName": "Beetle Carapace",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Iridescent shell segment. Lightweight yet remarkably impact-resistant.",
-          "materialTags": [
-            "monster",
-            "common",
-            "carapace"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "dire_fang",
-          "quantity": 4,
-          "materialName": "Dire Fang",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Razor-sharp fang from alpha predators. Still warm from the kill.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "fang"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "iron_scales",
-          "quantity": 4,
-          "materialName": "Iron Scales",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Metallic scales from armored creatures. Can deflect sword strikes.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "scales"
-          ]
+          "quantity": 4
         }
       ],
       "applicableTo": [
@@ -2816,42 +2402,15 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 5,
-          "materialName": "Air Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Pale crystal that drifts upward if not secured. Contains compressed winds.",
-          "materialTags": [
-            "elemental",
-            "air",
-            "common"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "ash_plank",
-          "quantity": 3,
-          "materialName": "Ash Plank",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Refined ash planks with superior shock absorption properties.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "quality"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "slime_gel",
-          "quantity": 3,
-          "materialName": "Slime Gel",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
-          "materialTags": [
-            "monster",
-            "common",
-            "gel"
-          ]
+          "quantity": 3
         }
       ],
       "applicableTo": [
@@ -2987,42 +2546,15 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 4,
-          "materialName": "Air Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Pale crystal that drifts upward if not secured. Contains compressed winds.",
-          "materialTags": [
-            "elemental",
-            "air",
-            "common"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "ironwood_plank",
-          "quantity": 2,
-          "materialName": "Ironwood Plank",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined ironwood planks, nearly as strong as actual metal.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "metallic"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "storm_heart",
-          "quantity": 7,
-          "materialName": "Storm Heart",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Captured lightning from primordial storms. Contains raw creation energy.",
-          "materialTags": [
-            "elemental",
-            "lightning",
-            "legendary"
-          ]
+          "quantity": 7
         }
       ],
       "applicableTo": [
@@ -3171,55 +2703,19 @@
       "inputs": [
         {
           "materialId": "crystal_quartz",
-          "quantity": 8,
-          "materialName": "Crystal Quartz",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Translucent crystal that amplifies magical energies passing through it. Hums softly when near power sources.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "magical"
-          ]
+          "quantity": 8
         },
         {
           "materialId": "light_gem",
-          "quantity": 4,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "living_ichor",
-          "quantity": 2,
-          "materialName": "Living Ichor",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "essence"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 4,
-          "materialName": "Mithril Ingot",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "legendary"
-          ]
+          "quantity": 4
         }
       ],
       "applicableTo": [
@@ -3426,82 +2922,27 @@
       "inputs": [
         {
           "materialId": "chaos_matrix",
-          "quantity": 3,
-          "materialName": "Chaos Matrix",
-          "materialTier": 4,
-          "materialRarity": "legendary",
-          "materialNarrative": "Solidified probability space. Can be shaped into predetermined or random outcomes.",
-          "materialTags": [
-            "elemental",
-            "chaos",
-            "mythical"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "diamond",
-          "quantity": 9,
-          "materialName": "Diamond",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Perfect crystalline structure that refracts reality itself. Entire fortunes built on single specimens.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "precious"
-          ]
+          "quantity": 9
         },
         {
           "materialId": "genesis_lattice",
-          "quantity": 4,
-          "materialName": "Genesis Lattice",
-          "materialTier": 4,
-          "materialRarity": "legendary",
-          "materialNarrative": "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "mythical",
-            "impossible"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "light_gem",
-          "quantity": 4,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "living_ichor",
-          "quantity": 6,
-          "materialName": "Living Ichor",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "essence"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "obsidian",
-          "quantity": 6,
-          "materialName": "Obsidian",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Volcanic glass born in the heart of eruptions. Extremely sharp edges, incredibly brittle structure.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "sharp"
-          ]
+          "quantity": 6
         }
       ],
       "applicableTo": [
@@ -3880,42 +3321,15 @@
       "inputs": [
         {
           "materialId": "light_gem",
-          "quantity": 2,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 5,
-          "materialName": "Spectral Thread",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "spectral"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "void_essence",
-          "quantity": 2,
-          "materialName": "Void Essence",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Liquid darkness given physical form. Absorbs heat, light, and hope.",
-          "materialTags": [
-            "elemental",
-            "void",
-            "legendary"
-          ]
+          "quantity": 2
         }
       ],
       "applicableTo": [
@@ -4022,55 +3436,19 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 6,
-          "materialName": "Air Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Pale crystal that drifts upward if not secured. Contains compressed winds.",
-          "materialTags": [
-            "elemental",
-            "air",
-            "common"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "light_gem",
-          "quantity": 3,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "lightning_shard",
-          "quantity": 3,
-          "materialName": "Lightning Shard",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Crackling crystal surrounded by static discharge. Handle with insulated gloves.",
-          "materialTags": [
-            "elemental",
-            "lightning",
-            "rare"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 2,
-          "materialName": "Mithril Ingot",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "legendary"
-          ]
+          "quantity": 2
         }
       ],
       "applicableTo": [
@@ -4208,68 +3586,23 @@
       "inputs": [
         {
           "materialId": "essence_blood",
-          "quantity": 4,
-          "materialName": "Essence Blood",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "blood"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "light_gem",
-          "quantity": 2,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "living_ichor",
-          "quantity": 12,
-          "materialName": "Living Ichor",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "essence"
-          ]
+          "quantity": 12
         },
         {
           "materialId": "marble",
-          "quantity": 6,
-          "materialName": "Marble",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Brilliant white stone that glows faintly with captured sunlight. Used in temples and monuments.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "radiant"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 1,
-          "materialName": "Spectral Thread",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "spectral"
-          ]
+          "quantity": 1
         }
       ],
       "applicableTo": [
@@ -4498,55 +3831,19 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 5,
-          "materialName": "Air Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Pale crystal that drifts upward if not secured. Contains compressed winds.",
-          "materialTags": [
-            "elemental",
-            "air",
-            "common"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "ash_plank",
-          "quantity": 5,
-          "materialName": "Ash Plank",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Refined ash planks with superior shock absorption properties.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "quality"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "light_gem",
-          "quantity": 2,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "slime_gel",
-          "quantity": 5,
-          "materialName": "Slime Gel",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
-          "materialTags": [
-            "monster",
-            "common",
-            "gel"
-          ]
+          "quantity": 5
         }
       ],
       "applicableTo": [
@@ -4722,68 +4019,23 @@
       "inputs": [
         {
           "materialId": "ebony_log",
-          "quantity": 1,
-          "materialName": "Ebony Log",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Deep black wood from ancient forests. Absorbs and nullifies magical energies.",
-          "materialTags": [
-            "basic",
-            "wood",
-            "magical"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "ebony_plank",
-          "quantity": 3,
-          "materialName": "Ebony Plank",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Refined ebony planks, perfect for anti-magic applications.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "magical"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "golem_core",
-          "quantity": 2,
-          "materialName": "Golem Core",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Petrified remains from ancient guardians. Contains geological memories.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "ancient"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "light_gem",
-          "quantity": 2,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "living_ichor",
-          "quantity": 6,
-          "materialName": "Living Ichor",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "essence"
-          ]
+          "quantity": 6
         }
       ],
       "applicableTo": [
@@ -4930,97 +4182,31 @@
       "inputs": [
         {
           "materialId": "adamantine_ingot",
-          "quantity": 4,
-          "materialName": "Adamantine Ingot",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Nearly indestructible metal that can withstand forces that would shatter lesser materials. Each ingot represents months of careful refinement.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "rare"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "chaos_matrix",
-          "quantity": 4,
-          "materialName": "Chaos Matrix",
-          "materialTier": 4,
-          "materialRarity": "legendary",
-          "materialNarrative": "Solidified probability space. Can be shaped into predetermined or random outcomes.",
-          "materialTags": [
-            "elemental",
-            "chaos",
-            "mythical"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "eternity_stone",
-          "quantity": 4,
-          "materialName": "Eternity Stone",
-          "materialTier": 4,
-          "materialRarity": "legendary",
-          "materialNarrative": "Stone that remembers everything it witnesses. Contains geological memory of eons.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "mythical",
-            "memory"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "obsidian",
-          "quantity": 4,
-          "materialName": "Obsidian",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Volcanic glass born in the heart of eruptions. Extremely sharp edges, incredibly brittle structure.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "sharp"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "primordial_crystal",
-          "quantity": 3,
-          "materialName": "Primordial Crystal",
-          "materialTier": 4,
-          "materialRarity": "legendary",
-          "materialNarrative": "Suspended in perpetual crystallization. Neither fully solid nor energy, exists in quantum superposition.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "mythical",
-            "quantum"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "voidstone",
-          "quantity": 5,
-          "materialName": "Voidstone",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Pitch-black stone that seems to pull light into itself. Radiates subtle wrongness.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "void"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "worldtree_plank",
-          "quantity": 5,
-          "materialName": "Worldtree Plank",
-          "materialTier": 4,
-          "materialRarity": "legendary",
-          "materialNarrative": "Refined worldtree planks that remember their connection to the source.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "legendary",
-            "living"
-          ]
+          "quantity": 5
         }
       ],
       "applicableTo": [

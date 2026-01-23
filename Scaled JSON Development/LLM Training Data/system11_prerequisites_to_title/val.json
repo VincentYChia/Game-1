@@ -19,12 +19,22 @@
         "criticalChance": 0.1
       },
       "prerequisites": {
-        "activities": {
-          "consecutiveFirstTryBonuses": 10,
-          "rareDropsFound": 50
-        },
-        "requiredTitles": [],
-        "characterLevel": 15
+        "conditions": [
+          {
+            "type": "stat_tracker",
+            "stat_path": "crafting_advanced.consecutive_first_try_bonuses",
+            "min_value": 10
+          },
+          {
+            "type": "stat_tracker",
+            "stat_path": "item_collection.rare_drops_total",
+            "min_value": 50
+          },
+          {
+            "type": "level",
+            "min_level": 15
+          }
+        ]
       },
       "acquisitionMethod": "hidden_discovery",
       "generationChance": 1.0,

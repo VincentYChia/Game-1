@@ -7,42 +7,15 @@
       "inputs": [
         {
           "materialId": "living_ichor",
-          "quantity": 4,
-          "materialName": "Living Ichor",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Concentrated essence that remembers being alive. Key ingredient in high-grade potions.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "essence"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "light_gem",
-          "quantity": 3,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "essence_blood",
-          "quantity": 2,
-          "materialName": "Essence Blood",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "blood"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {

@@ -8,16 +8,7 @@
         {
           "materialId": "orichalcum_ingot",
           "quantity": 4,
-          "rarity": "legendary",
-          "materialName": "Orichalcum Ingot",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "ancient"
-          ]
+          "rarity": "legendary"
         }
       ],
       "narrative": "Refining legendary orichalcum into mythical quality. The ancient metal awakens completely."
@@ -47,17 +38,7 @@
         {
           "materialId": "etherion_ingot",
           "quantity": 4,
-          "rarity": "legendary",
-          "materialName": "Etherion Ingot",
-          "materialTier": 4,
-          "materialRarity": "legendary",
-          "materialNarrative": "Reality-bending metal that has transcended conventional physics. Durability frozen in time, effects can occur before cause.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "mythical",
-            "temporal"
-          ]
+          "rarity": "legendary"
         }
       ],
       "narrative": "Refining legendary etherion into mythical quality. Temporal boundaries dissolve entirely."
@@ -88,16 +69,7 @@
         {
           "materialId": "tin_ingot",
           "quantity": 4,
-          "rarity": "uncommon",
-          "materialName": "Tin Ingot",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "magical"
-          ]
+          "rarity": "uncommon"
         }
       ],
       "narrative": "Refining uncommon tin into rare quality. Silvery sheen becomes mirror-bright."
@@ -127,16 +99,7 @@
         {
           "materialId": "tin_ingot",
           "quantity": 4,
-          "rarity": "rare",
-          "materialName": "Tin Ingot",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "magical"
-          ]
+          "rarity": "rare"
         }
       ],
       "narrative": "Refining rare tin into epic quality. Perfect magical conductivity achieved."

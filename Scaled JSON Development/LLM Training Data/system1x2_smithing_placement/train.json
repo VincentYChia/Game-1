@@ -8,29 +8,11 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "oak_plank",
-          "quantity": 1,
-          "materialName": "Oak Plank",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined oak planks with improved durability and quality.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "versatile"
-          ]
+          "quantity": 1
         }
       ],
       "itemMetadata": {
@@ -65,29 +47,11 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 3,
-          "materialName": "Copper Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "starter"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "oak_log",
-          "quantity": 2,
-          "materialName": "Oak Log",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Reliable, sturdy timber from ancient oaks. Dense grain, strong fibers, and a warm golden-brown hue. The standard by which all other woods are measured.",
-          "materialTags": [
-            "basic",
-            "wood",
-            "versatile"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {
@@ -123,29 +87,11 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 3,
-          "materialName": "Copper Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "starter"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "pine_log",
-          "quantity": 2,
-          "materialName": "Pine Log",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Light, flexible wood harvested from tall conifers. Works easily under a blade, bends without breaking.",
-          "materialTags": [
-            "basic",
-            "wood",
-            "flexible"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {
@@ -181,29 +127,11 @@
       "inputs": [
         {
           "materialId": "ash_log",
-          "quantity": 2,
-          "materialName": "Ash Log",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Pale wood with excellent shock absorption. Weapon handles made from ash feel alive in your grip.",
-          "materialTags": [
-            "basic",
-            "wood",
-            "quality"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "copper_ingot",
-          "quantity": 1,
-          "materialName": "Copper Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "starter"
-          ]
+          "quantity": 1
         }
       ],
       "itemMetadata": {
@@ -238,29 +166,11 @@
       "inputs": [
         {
           "materialId": "slime_gel",
-          "quantity": 2,
-          "materialName": "Slime Gel",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
-          "materialTags": [
-            "monster",
-            "common",
-            "gel"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 6,
-          "materialName": "Wolf Pelt",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
-          "materialTags": [
-            "monster",
-            "common",
-            "leather"
-          ]
+          "quantity": 6
         }
       ],
       "itemMetadata": {
@@ -300,29 +210,11 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 2,
-          "materialName": "Wolf Pelt",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
-          "materialTags": [
-            "monster",
-            "common",
-            "leather"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {
@@ -358,29 +250,11 @@
       "inputs": [
         {
           "materialId": "ash_plank",
-          "quantity": 2,
-          "materialName": "Ash Plank",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Refined ash planks with superior shock absorption properties.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "quality"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 3,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -416,29 +290,11 @@
       "inputs": [
         {
           "materialId": "birch_plank",
-          "quantity": 2,
-          "materialName": "Birch Plank",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Refined birch planks, perfect for detailed craftwork.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "fine"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 3,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -474,42 +330,15 @@
       "inputs": [
         {
           "materialId": "dire_fang",
-          "quantity": 2,
-          "materialName": "Dire Fang",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Razor-sharp fang from alpha predators. Still warm from the kill.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "fang"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "maple_plank",
-          "quantity": 1,
-          "materialName": "Maple Plank",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined maple planks, ideal for items requiring stability.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "durable"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 4,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 4
         }
       ],
       "itemMetadata": {
@@ -548,42 +377,15 @@
       "inputs": [
         {
           "materialId": "beetle_carapace",
-          "quantity": 6,
-          "materialName": "Beetle Carapace",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Iridescent shell segment. Lightweight yet remarkably impact-resistant.",
-          "materialTags": [
-            "monster",
-            "common",
-            "carapace"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 7,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 7
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 5,
-          "materialName": "Wolf Pelt",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
-          "materialTags": [
-            "monster",
-            "common",
-            "leather"
-          ]
+          "quantity": 5
         }
       ],
       "itemMetadata": {
@@ -633,29 +435,11 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 10,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 10
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 3,
-          "materialName": "Wolf Pelt",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
-          "materialTags": [
-            "monster",
-            "common",
-            "leather"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -700,16 +484,7 @@
       "inputs": [
         {
           "materialId": "ironwood_plank",
-          "quantity": 10,
-          "materialName": "Ironwood Plank",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined ironwood planks, nearly as strong as actual metal.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "metallic"
-          ]
+          "quantity": 10
         }
       ],
       "itemMetadata": {
@@ -750,29 +525,11 @@
       "inputs": [
         {
           "materialId": "ironwood_plank",
-          "quantity": 3,
-          "materialName": "Ironwood Plank",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined ironwood planks, nearly as strong as actual metal.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "metallic"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 6,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 6
         }
       ],
       "itemMetadata": {
@@ -812,42 +569,15 @@
       "inputs": [
         {
           "materialId": "ebony_plank",
-          "quantity": 4,
-          "materialName": "Ebony Plank",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Refined ebony planks, perfect for anti-magic applications.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "magical"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "essence_blood",
-          "quantity": 1,
-          "materialName": "Essence Blood",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "blood"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 3,
-          "materialName": "Mithril Ingot",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "legendary"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -889,29 +619,11 @@
       "inputs": [
         {
           "materialId": "ebony_plank",
-          "quantity": 5,
-          "materialName": "Ebony Plank",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Refined ebony planks, perfect for anti-magic applications.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "magical"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 9,
-          "materialName": "Mithril Ingot",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "legendary"
-          ]
+          "quantity": 9
         }
       ],
       "itemMetadata": {
@@ -956,42 +668,15 @@
       "inputs": [
         {
           "materialId": "ebony_plank",
-          "quantity": 4,
-          "materialName": "Ebony Plank",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Refined ebony planks, perfect for anti-magic applications.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "magical"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "golem_core",
-          "quantity": 1,
-          "materialName": "Golem Core",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Petrified remains from ancient guardians. Contains geological memories.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "ancient"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 11,
-          "materialName": "Mithril Ingot",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "legendary"
-          ]
+          "quantity": 11
         }
       ],
       "itemMetadata": {
@@ -1038,29 +723,11 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 2,
-          "materialName": "Copper Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "starter"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "fire_crystal",
-          "quantity": 1,
-          "materialName": "Fire Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "common"
-          ]
+          "quantity": 1
         }
       ],
       "itemMetadata": {
@@ -1095,29 +762,11 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 5,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "water_crystal",
-          "quantity": 3,
-          "materialName": "Water Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Blue crystal filled with flowing liquid. Cool and calming, perpetually damp.",
-          "materialTags": [
-            "elemental",
-            "water",
-            "common"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -1157,42 +806,15 @@
       "inputs": [
         {
           "materialId": "lightning_shard",
-          "quantity": 3,
-          "materialName": "Lightning Shard",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Crackling crystal surrounded by static discharge. Handle with insulated gloves.",
-          "materialTags": [
-            "elemental",
-            "lightning",
-            "rare"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 2,
-          "materialName": "Spectral Thread",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "spectral"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 4,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 4
         }
       ],
       "itemMetadata": {
@@ -1233,29 +855,11 @@
       "inputs": [
         {
           "materialId": "granite",
-          "quantity": 5,
-          "materialName": "Granite",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Speckled igneous rock with visible crystalline structure. Harder than limestone, more reliable for load-bearing structures.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "durable"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 4,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 4
         }
       ],
       "itemMetadata": {
@@ -1296,42 +900,15 @@
       "inputs": [
         {
           "materialId": "basalt",
-          "quantity": 5,
-          "materialName": "Basalt",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Dense metamorphic rock with distinctive banding. Exceptional compression strength.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "strong"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "fire_crystal",
-          "quantity": 1,
-          "materialName": "Fire Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "common"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 3,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -1372,55 +949,19 @@
       "inputs": [
         {
           "materialId": "mithril_ingot",
-          "quantity": 5,
-          "materialName": "Mithril Ingot",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "legendary"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "obsidian",
-          "quantity": 10,
-          "materialName": "Obsidian",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Volcanic glass born in the heart of eruptions. Extremely sharp edges, incredibly brittle structure.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "sharp"
-          ]
+          "quantity": 10
         },
         {
           "materialId": "phoenix_ash",
-          "quantity": 4,
-          "materialName": "Phoenix Ash",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Ash-grey substance from legendary phoenix nests. Burns eternally without being consumed.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "legendary"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "storm_heart",
-          "quantity": 1,
-          "materialName": "Storm Heart",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Captured lightning from primordial storms. Contains raw creation energy.",
-          "materialTags": [
-            "elemental",
-            "lightning",
-            "legendary"
-          ]
+          "quantity": 1
         }
       ],
       "itemMetadata": {
@@ -1472,29 +1013,11 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 4,
-          "materialName": "Copper Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "starter"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "limestone",
-          "quantity": 3,
-          "materialName": "Limestone",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Common sedimentary rock. Soft enough to carve with basic tools yet strong enough for simple construction.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "common"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -1533,29 +1056,11 @@
       "inputs": [
         {
           "materialId": "earth_crystal",
-          "quantity": 2,
-          "materialName": "Earth Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Green-brown crystal with swirling sediment. Surprisingly heavy, grounds magical energies.",
-          "materialTags": [
-            "elemental",
-            "earth",
-            "common"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "granite",
-          "quantity": 5,
-          "materialName": "Granite",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Speckled igneous rock with visible crystalline structure. Harder than limestone, more reliable for load-bearing structures.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "durable"
-          ]
+          "quantity": 5
         }
       ],
       "itemMetadata": {
@@ -1594,42 +1099,15 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 1,
-          "materialName": "Air Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Pale crystal that drifts upward if not secured. Contains compressed winds.",
-          "materialTags": [
-            "elemental",
-            "air",
-            "common"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "pine_plank",
-          "quantity": 3,
-          "materialName": "Pine Plank",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined pine planks, perfect for bows and flexible constructions.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "flexible"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "slime_gel",
-          "quantity": 2,
-          "materialName": "Slime Gel",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
-          "materialTags": [
-            "monster",
-            "common",
-            "gel"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {
@@ -1667,42 +1145,15 @@
       "inputs": [
         {
           "materialId": "granite",
-          "quantity": 5,
-          "materialName": "Granite",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Speckled igneous rock with visible crystalline structure. Harder than limestone, more reliable for load-bearing structures.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "durable"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "oak_plank",
-          "quantity": 2,
-          "materialName": "Oak Plank",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined oak planks with improved durability and quality.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "versatile"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "water_crystal",
-          "quantity": 2,
-          "materialName": "Water Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Blue crystal filled with flowing liquid. Cool and calming, perpetually damp.",
-          "materialTags": [
-            "elemental",
-            "water",
-            "common"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {
@@ -1743,42 +1194,15 @@
       "inputs": [
         {
           "materialId": "beetle_carapace",
-          "quantity": 3,
-          "materialName": "Beetle Carapace",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Iridescent shell segment. Lightweight yet remarkably impact-resistant.",
-          "materialTags": [
-            "monster",
-            "common",
-            "carapace"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "birch_plank",
-          "quantity": 4,
-          "materialName": "Birch Plank",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Refined birch planks, perfect for detailed craftwork.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "fine"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 2,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {
@@ -1819,42 +1243,15 @@
       "inputs": [
         {
           "materialId": "dire_fang",
-          "quantity": 2,
-          "materialName": "Dire Fang",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Razor-sharp fang from alpha predators. Still warm from the kill.",
-          "materialTags": [
-            "monster",
-            "uncommon",
-            "fang"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "ironwood_plank",
-          "quantity": 3,
-          "materialName": "Ironwood Plank",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined ironwood planks, nearly as strong as actual metal.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "metallic"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 6,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 6
         }
       ],
       "itemMetadata": {
@@ -1897,42 +1294,15 @@
       "inputs": [
         {
           "materialId": "granite",
-          "quantity": 2,
-          "materialName": "Granite",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Speckled igneous rock with visible crystalline structure. Harder than limestone, more reliable for load-bearing structures.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "durable"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 6,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "oak_plank",
-          "quantity": 2,
-          "materialName": "Oak Plank",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined oak planks with improved durability and quality.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "versatile"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {
@@ -1975,29 +1345,11 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 1,
-          "materialName": "Copper Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined copper shaped into usable ingots. Malleable, forgiving for beginner crafters, accepts enchantments readily.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "starter"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 1,
-          "materialName": "Wolf Pelt",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
-          "materialTags": [
-            "monster",
-            "common",
-            "leather"
-          ]
+          "quantity": 1
         }
       ],
       "itemMetadata": {
@@ -2032,42 +1384,15 @@
       "inputs": [
         {
           "materialId": "ash_plank",
-          "quantity": 3,
-          "materialName": "Ash Plank",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Refined ash planks with superior shock absorption properties.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "quality"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "slime_gel",
-          "quantity": 2,
-          "materialName": "Slime Gel",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Translucent gelatinous substance. Surprisingly elastic and adhesive when processed.",
-          "materialTags": [
-            "monster",
-            "common",
-            "gel"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 5,
-          "materialName": "Spectral Thread",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "spectral"
-          ]
+          "quantity": 5
         }
       ],
       "itemMetadata": {

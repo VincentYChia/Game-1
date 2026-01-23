@@ -7,42 +7,15 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 4,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "pine_plank",
-          "quantity": 3,
-          "materialName": "Pine Plank",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined pine planks, perfect for bows and flexible constructions.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "flexible"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 2,
-          "materialName": "Spectral Thread",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "spectral"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {
@@ -87,42 +60,15 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 5,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "fire_crystal",
-          "quantity": 4,
-          "materialName": "Fire Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "common"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 3,
-          "materialName": "Spectral Thread",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Ethereal substance from creatures between worlds. Exists partially out of phase.",
-          "materialTags": [
-            "monster",
-            "rare",
-            "spectral"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -167,42 +113,15 @@
       "inputs": [
         {
           "materialId": "mithril_ingot",
-          "quantity": 6,
-          "materialName": "Mithril Ingot",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "legendary"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "lightning_shard",
-          "quantity": 8,
-          "materialName": "Lightning Shard",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Crackling crystal surrounded by static discharge. Handle with insulated gloves.",
-          "materialTags": [
-            "elemental",
-            "lightning",
-            "rare"
-          ]
+          "quantity": 8
         },
         {
           "materialId": "storm_heart",
-          "quantity": 2,
-          "materialName": "Storm Heart",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Captured lightning from primordial storms. Contains raw creation energy.",
-          "materialTags": [
-            "elemental",
-            "lightning",
-            "legendary"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {
@@ -252,42 +171,15 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 8,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 8
         },
         {
           "materialId": "fire_crystal",
-          "quantity": 8,
-          "materialName": "Fire Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "common"
-          ]
+          "quantity": 8
         },
         {
           "materialId": "phoenix_ash",
-          "quantity": 3,
-          "materialName": "Phoenix Ash",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Ash-grey substance from legendary phoenix nests. Burns eternally without being consumed.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "legendary"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -332,42 +224,15 @@
       "inputs": [
         {
           "materialId": "mithril_ingot",
-          "quantity": 6,
-          "materialName": "Mithril Ingot",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "legendary"
-          ]
+          "quantity": 6
         },
         {
           "materialId": "light_gem",
-          "quantity": 8,
-          "materialName": "Light Gem",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Radiant crystal glowing with inner light. Pushes back shadows naturally.",
-          "materialTags": [
-            "elemental",
-            "light",
-            "rare"
-          ]
+          "quantity": 8
         },
         {
           "materialId": "crystal_quartz",
-          "quantity": 6,
-          "materialName": "Crystal Quartz",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Translucent crystal that amplifies magical energies passing through it. Hums softly when near power sources.",
-          "materialTags": [
-            "basic",
-            "stone",
-            "magical"
-          ]
+          "quantity": 6
         }
       ],
       "itemMetadata": {
@@ -412,25 +277,11 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "blast_powder",
-          "quantity": 3,
-          "materialName": "blast_powder",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "",
-          "materialTags": []
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -470,38 +321,15 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 3,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "blast_powder",
-          "quantity": 4,
-          "materialName": "blast_powder",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "",
-          "materialTags": []
+          "quantity": 4
         },
         {
           "materialId": "fire_crystal",
-          "quantity": 3,
-          "materialName": "Fire Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "common"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -546,38 +374,15 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 5,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 5
         },
         {
           "materialId": "blast_powder",
-          "quantity": 12,
-          "materialName": "blast_powder",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "",
-          "materialTags": []
+          "quantity": 12
         },
         {
           "materialId": "air_crystal",
-          "quantity": 4,
-          "materialName": "Air Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Pale crystal that drifts upward if not secured. Contains compressed winds.",
-          "materialTags": [
-            "elemental",
-            "air",
-            "common"
-          ]
+          "quantity": 4
         }
       ],
       "itemMetadata": {
@@ -622,42 +427,15 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 2,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "beetle_carapace",
-          "quantity": 2,
-          "materialName": "Beetle Carapace",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Iridescent shell segment. Lightweight yet remarkably impact-resistant.",
-          "materialTags": [
-            "monster",
-            "common",
-            "carapace"
-          ]
+          "quantity": 2
         }
       ],
       "itemMetadata": {

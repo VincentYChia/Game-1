@@ -8,55 +8,19 @@
       "inputs": [
         {
           "materialId": "fire_crystal",
-          "quantity": 8,
-          "materialName": "Fire Crystal",
-          "materialTier": 1,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "common"
-          ]
+          "quantity": 8
         },
         {
           "materialId": "ironwood_plank",
-          "quantity": 4,
-          "materialName": "Ironwood Plank",
-          "materialTier": 3,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined ironwood planks, nearly as strong as actual metal.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "metallic"
-          ]
+          "quantity": 4
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 2,
-          "materialName": "Mithril Ingot",
-          "materialTier": 2,
-          "materialRarity": "rare",
-          "materialNarrative": "Refined mithril that whispers of ancient secrets. Perfect for weapons that need both power and grace.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "legendary"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "phoenix_ash",
-          "quantity": 3,
-          "materialName": "Phoenix Ash",
-          "materialTier": 3,
-          "materialRarity": "epic",
-          "materialNarrative": "Ash-grey substance from legendary phoenix nests. Burns eternally without being consumed.",
-          "materialTags": [
-            "elemental",
-            "fire",
-            "legendary"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
@@ -106,42 +70,15 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 1,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 1
         },
         {
           "materialId": "oak_plank",
-          "quantity": 3,
-          "materialName": "Oak Plank",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Refined oak planks with improved durability and quality.",
-          "materialTags": [
-            "refined",
-            "wood",
-            "versatile"
-          ]
+          "quantity": 3
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 1,
-          "materialName": "Wolf Pelt",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
-          "materialTags": [
-            "monster",
-            "common",
-            "leather"
-          ]
+          "quantity": 1
         }
       ],
       "itemMetadata": {
@@ -179,29 +116,11 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 7,
-          "materialName": "Steel Ingot",
-          "materialTier": 2,
-          "materialRarity": "uncommon",
-          "materialNarrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "advanced"
-          ]
+          "quantity": 7
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 5,
-          "materialName": "Wolf Pelt",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
-          "materialTags": [
-            "monster",
-            "common",
-            "leather"
-          ]
+          "quantity": 5
         }
       ],
       "itemMetadata": {
@@ -245,29 +164,11 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2,
-          "materialName": "Iron Ingot",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Moderately conductive, somewhat malleable when heated. The workhorse of civilization - reliable, abundant, essential for weapons, tools, and armor.",
-          "materialTags": [
-            "refined",
-            "metal",
-            "standard"
-          ]
+          "quantity": 2
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 3,
-          "materialName": "Wolf Pelt",
-          "materialTier": 1,
-          "materialRarity": "common",
-          "materialNarrative": "Rough grey pelt from common wolves. Durable but coarse, requires treatment to soften.",
-          "materialTags": [
-            "monster",
-            "common",
-            "leather"
-          ]
+          "quantity": 3
         }
       ],
       "itemMetadata": {
