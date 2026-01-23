@@ -17,6 +17,7 @@ from entities.components import (
     EquipmentManager,
     Inventory
 )
+from entities.components.stat_tracker import StatTracker
 
 # Systems
 from systems import (
@@ -27,6 +28,7 @@ from systems import (
     ClassSystem,
     NaturalResource
 )
+from systems.skill_unlock_system import SkillUnlockSystem
 
 # Models
 from data.models import (
@@ -70,11 +72,14 @@ class Character:
         self.stats = CharacterStats()
         self.leveling = LevelingSystem()
         self.skills = SkillManager()
+        self.skill_unlocks = SkillUnlockSystem()  # Skill unlock progression
         self.buffs = BuffManager()
         self.titles = TitleSystem()
         self.class_system = ClassSystem()
         self.class_system.register_on_class_set(self._on_class_selected)
         self.activities = ActivityTracker()
+        self.stat_tracker = StatTracker()  # Comprehensive stat tracking
+        self.stat_tracker.start_session()  # Start tracking session
         self.equipment = EquipmentManager()
         self.encyclopedia = Encyclopedia()
         self.quests = QuestManager()
@@ -517,6 +522,27 @@ class Character:
         for activity_type, count in activities_data.items():
             self.activities.activity_counts[activity_type] = count
 
+        # NEW: Restore comprehensive stat tracker
+        stat_tracker_data = player_data.get("stat_tracker", {})
+        if stat_tracker_data:
+            from entities.components.stat_tracker import StatTracker
+            self.stat_tracker = StatTracker.from_dict(stat_tracker_data)
+        else:
+            # Initialize fresh tracker for old saves
+            from entities.components.stat_tracker import StatTracker
+            self.stat_tracker = StatTracker()
+            self.stat_tracker.start_session()
+
+        # NEW: Restore skill unlock system
+        skill_unlocks_data = player_data.get("skill_unlocks", {})
+        if skill_unlocks_data:
+            self.skill_unlocks.unlocked_skills = set(skill_unlocks_data.get("unlocked_skills", []))
+            self.skill_unlocks.pending_unlocks = set(skill_unlocks_data.get("pending_unlocks", []))
+        else:
+            # Initialize fresh skill unlock system for old saves
+            from systems.skill_unlock_system import SkillUnlockSystem
+            self.skill_unlocks = SkillUnlockSystem()
+
         # Final recalculation after all equipment and stats are restored
         self.recalculate_stats()
 
@@ -642,9 +668,35 @@ class Character:
         # Check walkability
         new_pos = Position(new_x, new_y, self.position.z)
         if world.is_walkable(new_pos):
+            # Calculate actual distance moved (after speed multiplier)
+            actual_dx = dx * speed_mult
+            actual_dy = dy * speed_mult
+            distance_moved = (actual_dx ** 2 + actual_dy ** 2) ** 0.5
+
             self.position.x = new_x
             self.position.y = new_y
             self.facing = ("right" if dx > 0 else "left") if abs(dx) > abs(dy) else ("down" if dy > 0 else "up")
+
+            # Track movement in stat tracker
+            if hasattr(self, 'stat_tracker') and distance_moved > 0:
+                # Get chunk coordinates
+                chunk_x = int(self.position.x // Config.CHUNK_SIZE)
+                chunk_y = int(self.position.y // Config.CHUNK_SIZE)
+                chunk_coords = (chunk_x, chunk_y)
+
+                # Check if encumbered
+                is_encumbered = self.get_encumbrance_speed_penalty() < 1.0
+
+                # Check if sprinting (would need sprint mechanic - for now always False)
+                is_sprinting = False
+
+                self.stat_tracker.record_movement(
+                    distance=distance_moved,
+                    chunk_coords=chunk_coords,
+                    is_sprinting=is_sprinting,
+                    is_encumbered=is_encumbered
+                )
+
             return True
         return False
 
@@ -816,18 +868,32 @@ class Character:
 
         # Check for Efficiency enchantment (gathering speed multiplier)
         # This should multiply the final damage, not add to the multiplier
-        efficiency_mult = 1.0
+        enchantment_speed_bonus = 0.0
         if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
             for ench in equipped_tool.enchantments:
                 effect = ench.get('effect', {})
                 if effect.get('type') == 'gathering_speed_multiplier':
-                    efficiency_bonus = effect.get('value', 0.0)
-                    efficiency_mult = 1.0 + efficiency_bonus
-                    # Visual feedback for efficiency
-                    if efficiency_bonus > 0:
-                        print(f"   ⚡ Efficiency: +{efficiency_bonus*100:.0f}% gathering speed")
+                    enchantment_speed_bonus = effect.get('value', 0.0)
+                    break
 
-        crit_chance = self.stats.luck * 0.02 + self.class_system.get_bonus('crit_chance')
+        # Title speed bonuses (miningSpeed / forestrySpeed)
+        title_speed_bonus = self.titles.get_total_bonus(f'{activity}Speed')
+
+        # Combine speed bonuses
+        total_speed_bonus = enchantment_speed_bonus + title_speed_bonus
+        efficiency_mult = 1.0 + total_speed_bonus
+
+        # Visual feedback for speed bonuses
+        if enchantment_speed_bonus > 0:
+            print(f"   ⚡ Efficiency (enchant): +{enchantment_speed_bonus*100:.0f}% gathering speed")
+        if title_speed_bonus > 0:
+            print(f"   🏆 Title bonus: +{title_speed_bonus*100:.0f}% gathering speed")
+        if total_speed_bonus > 0:
+            print(f"   Total: +{total_speed_bonus*100:.0f}% gathering speed")
+
+        # Use effective luck (includes title and skill luck bonuses)
+        effective_luck = self.get_effective_luck()
+        crit_chance = effective_luck * 0.02 + self.class_system.get_bonus('crit_chance')
         if hasattr(self, 'buffs'):
             crit_chance += self.buffs.get_total_bonus('pierce', activity)
 
@@ -868,8 +934,10 @@ class Character:
             loot = resource.get_loot()
             processed_loot = []
             for item_id, qty in loot:
-                # Luck-based bonus
-                if random.random() < (self.stats.luck * 0.02 + self.class_system.get_bonus('resource_quality')):
+                # Luck-based bonus (uses effective luck including title/skill bonuses)
+                effective_luck = self.get_effective_luck()
+                luck_chance = effective_luck * 0.02 + self.class_system.get_bonus('resource_quality')
+                if random.random() < luck_chance:
                     qty += 1
 
                 # Enrich buff bonuses
@@ -919,12 +987,14 @@ class Character:
                     result = self._execute_aoe_gathering(resource, int(buff.bonus_value), nearby_resources, equipped_tool)
                     # Still record activity/XP/titles for AoE gathering
                     self.activities.record_activity(activity, 1)
-                    new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
+                    new_title = self.titles.check_for_title(self)
                     if new_title:
                         print(f"🏆 TITLE EARNED: {new_title.name} - {new_title.bonus_description}")
+                        self.check_skill_unlocks(trigger_type='title_earned', trigger_value=new_title.title_id)
                     leveled_up = self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
                     if leveled_up:
                         self.check_and_notify_new_skills()
+                        self.check_skill_unlocks(trigger_type='level_up', trigger_value=self.leveling.level)
                     self.time_since_last_damage_dealt = 0.0
                     return result
 
@@ -934,13 +1004,55 @@ class Character:
 
         # Track activities, titles, XP (same as before)
         self.activities.record_activity(activity, 1)
-        new_title = self.titles.check_for_title(activity, self.activities.get_count(activity))
+        new_title = self.titles.check_for_title(self)
         if new_title:
             print(f"🏆 TITLE EARNED: {new_title.name} - {new_title.bonus_description}")
+            self.check_skill_unlocks(trigger_type='title_earned', trigger_value=new_title.title_id)
 
         leveled_up = self.leveling.add_exp({1: 10, 2: 40, 3: 160, 4: 640}.get(resource.tier, 10))
         if leveled_up:
             self.check_and_notify_new_skills()
+            self.check_skill_unlocks(trigger_type='level_up', trigger_value=self.leveling.level)
+
+        # NEW: Comprehensive stat tracking
+        if result and hasattr(self, 'stat_tracker'):
+            loot, damage_dealt, was_crit = result
+            total_items = sum(qty for _, qty in loot) if loot else 0
+
+            # Determine resource category for tracking
+            resource_category = "ore" if "ore" in resource.resource_type.name.lower() else \
+                               "tree" if "tree" in resource.resource_type.name.lower() else \
+                               "stone" if "stone" in resource.resource_type.name.lower() else "plant"
+
+            # Track resource gathering
+            self.stat_tracker.record_resource_gathered(
+                resource_id=resource.resource_type.name,
+                quantity=total_items,
+                tier=resource.tier,
+                category=resource_category,
+                element=None,  # TODO: Extract from resource tags if available
+                is_crit=was_crit,
+                is_rare_drop=False  # TODO: Detect rare drops
+            )
+
+            # Track individual item collection
+            for item_id, qty in loot:
+                self.stat_tracker.record_item_collected(
+                    item_id=item_id,
+                    quantity=qty,
+                    category="material",
+                    rarity="common",  # TODO: Get from MaterialDatabase
+                    is_first_time=False  # TODO: Check encyclopedia
+                )
+
+            # Track gathering damage
+            self.stat_tracker.gathering_totals["total_gathering_damage_dealt"] += damage_dealt
+
+            # Track tool usage
+            tool_type = "axe" if resource.required_tool == "axe" else "pickaxe"
+            tool_swing_key = f"{tool_type}_swings"
+            if tool_swing_key in self.stat_tracker.gathering_totals:
+                self.stat_tracker.gathering_totals[tool_swing_key] += 1
 
         # Reset damage dealt timer (harvesting counts as dealing damage)
         self.time_since_last_damage_dealt = 0.0
@@ -1168,6 +1280,34 @@ class Character:
             if len(available_skills) > 3:
                 print(f"   ... and {len(available_skills) - 3} more!")
         return available_skills
+
+    def check_skill_unlocks(self, trigger_type: str = None, trigger_value: any = None):
+        """
+        Check for newly unlockable skills based on trigger.
+
+        Args:
+            trigger_type: Type of trigger (level_up, title_earned, activity_threshold, quest_complete)
+            trigger_value: Value associated with trigger (level, title_id, etc.)
+        """
+        if not hasattr(self, 'skill_unlocks'):
+            return
+
+        newly_unlockable = self.skill_unlocks.check_for_unlocks(
+            self,
+            trigger_type=trigger_type,
+            trigger_value=trigger_value
+        )
+
+        if newly_unlockable:
+            from data.databases import SkillDatabase
+            skill_db = SkillDatabase.get_instance()
+
+            for unlock in newly_unlockable:
+                skill_def = skill_db.skills.get(unlock.skill_id)
+                if skill_def:
+                    print(f"✨ {unlock.trigger.message}")
+                    if unlock.cost.gold > 0 or len(unlock.cost.materials) > 0:
+                        print(f"   Pending payment - check Skills menu (K) to unlock")
 
     def _determine_best_slot(self, equipment) -> str:
         """Intelligently determine which slot to equip an item to
@@ -1424,10 +1564,11 @@ class Character:
         # Keep all items and equipment (no death penalty)
 
     def get_effective_max_durability(self, item) -> int:
-        """Get effective max durability for an item, including VIT bonus.
+        """Get effective max durability for an item, including VIT and title bonuses.
 
         VIT increases max durability by 1% per point.
-        Example: Item with 100 max durability, 10 VIT = 110 effective max
+        Title durabilityBonus provides additional % increase.
+        Example: Item with 100 max durability, 10 VIT, +25% title = 100 * 1.1 * 1.25 = 137 effective max
 
         Args:
             item: Equipment or Tool with durability_max attribute
@@ -1438,8 +1579,15 @@ class Character:
         if not hasattr(item, 'durability_max'):
             return 100
         base_max = item.durability_max
+
+        # VIT bonus
         vit_mult = self.stats.get_durability_bonus_multiplier()
-        return int(base_max * vit_mult)
+
+        # Title durability bonus
+        title_durability_bonus = self.titles.get_total_bonus('durabilityBonus')
+        title_mult = 1.0 + title_durability_bonus
+
+        return int(base_max * vit_mult * title_mult)
 
     def get_durability_percent(self, item) -> float:
         """Get durability percentage for an item, accounting for VIT bonus.
@@ -1592,10 +1740,137 @@ class Character:
         # Return average damage
         return (damage_range[0] + damage_range[1]) / 2.0
 
+    def get_effective_luck(self) -> float:
+        """
+        Get effective luck including all bonuses from titles, skills, and special drop rates.
+
+        This unified luck value is used for:
+        - Critical hit chance
+        - Resource quality bonuses
+        - Rare drop rates
+
+        Returns:
+            float: Effective luck value (base + all bonuses)
+        """
+        # Title luck bonuses
+        title_luck_flat = self.titles.get_total_bonus('luckStat')
+        title_rare_drops = self.titles.get_total_bonus('rareDropRate')
+        title_legendary_drops = self.titles.get_total_bonus('legendaryDropRate')
+
+        # Skill buff bonuses (if buffs system exists)
+        skill_luck_bonus = 0.0
+        if hasattr(self, 'buffs'):
+            skill_luck_bonus = self.buffs.get_total_bonus('luck', 'general')
+
+        # Combine rare drop bonuses (these get converted to equivalent luck in get_effective_luck)
+        total_rare_bonus = title_rare_drops + title_legendary_drops
+
+        return self.stats.get_effective_luck(
+            title_bonus=title_luck_flat,
+            skill_bonus=skill_luck_bonus,
+            rare_drop_bonus=total_rare_bonus
+        )
+
+    def get_effective_attack_speed(self) -> float:
+        """
+        Get effective attack speed multiplier including all bonuses.
+
+        Attack speed affects cooldown: cooldown = base_cooldown / attack_speed
+        Default attack speed is 1.0 (1 second cooldown)
+        Higher attack speed = faster attacks (lower cooldown)
+
+        Returns:
+            float: Attack speed multiplier (1.0 = normal, 2.0 = twice as fast)
+        """
+        # Base attack speed is 1.0
+        base_speed = 1.0
+
+        # AGI bonus (3% faster per point, already implemented elsewhere)
+        agi_bonus = self.stats.agility * 0.03
+
+        # Title attack speed bonus
+        title_speed_bonus = self.titles.get_total_bonus('attackSpeed')
+
+        # Skill buff bonuses (if buffs system exists)
+        skill_speed_bonus = 0.0
+        if hasattr(self, 'buffs'):
+            skill_speed_bonus = self.buffs.get_total_bonus('quicken', 'combat')
+
+        # Combine all bonuses multiplicatively
+        return base_speed * (1.0 + agi_bonus + title_speed_bonus + skill_speed_bonus)
+
+    def get_enemy_damage_multiplier(self, enemy) -> float:
+        """
+        Get damage multiplier against specific enemy based on category/tag bonuses.
+
+        Checks for title bonuses like:
+        - {category}Damage (e.g., beastDamage for category="beast")
+        - {tag}Damage (e.g., wolfDamage for tag="wolf")
+
+        Args:
+            enemy: Enemy instance with definition.category and definition.tags
+
+        Returns:
+            float: Damage multiplier (1.0 = normal, 1.5 = +50% damage)
+        """
+        if not hasattr(enemy, 'definition'):
+            return 1.0
+
+        total_bonus = 0.0
+
+        # Check category-based damage (e.g., beastDamage)
+        if hasattr(enemy.definition, 'category') and enemy.definition.category:
+            category_bonus_key = f"{enemy.definition.category}Damage"
+            category_bonus = self.titles.get_total_bonus(category_bonus_key)
+            if category_bonus > 0:
+                total_bonus += category_bonus
+                print(f"   🎯 {enemy.definition.category.capitalize()} bonus: +{category_bonus*100:.0f}% damage")
+
+        # Check tag-based damage (e.g., wolfDamage, dragonDamage)
+        if hasattr(enemy.definition, 'tags') and enemy.definition.tags:
+            for tag in enemy.definition.tags:
+                tag_bonus_key = f"{tag}Damage"
+                tag_bonus = self.titles.get_total_bonus(tag_bonus_key)
+                if tag_bonus > 0:
+                    total_bonus += tag_bonus
+                    print(f"   🎯 {tag.capitalize()} bonus: +{tag_bonus*100:.0f}% damage")
+
+        return 1.0 + total_bonus
+
+    def get_effect_resistance(self, effect_type: str) -> float:
+        """
+        Get resistance to specific status effect type.
+
+        Resistance reduces effect duration (not magnitude).
+        Checks for title bonuses like:
+        - burnResistance (for "burn" effect)
+        - poisonResistance (for "poison" effect)
+        - freezeResistance (for "freeze" effect)
+
+        Args:
+            effect_type: Effect type ID (e.g., "burn", "poison", "freeze")
+
+        Returns:
+            float: Duration multiplier (1.0 = full duration, 0.5 = half duration)
+        """
+        resistance_key = f"{effect_type}Resistance"
+        resistance_bonus = self.titles.get_total_bonus(resistance_key)
+
+        # Resistance reduces duration (50% resistance = 50% shorter duration)
+        duration_multiplier = max(0.0, 1.0 - resistance_bonus)
+
+        if resistance_bonus > 0:
+            print(f"   🛡️ {effect_type.capitalize()} resistance: -{resistance_bonus*100:.0f}% duration")
+
+        return duration_multiplier
+
     def is_shield_active(self) -> bool:
         """Check if player has a shield equipped in offhand"""
         offhand = self.equipment.slots.get('offHand')
-        return offhand is not None and offhand.item_type == 'shield'
+        result = offhand is not None and offhand.item_type == 'shield'
+        if offhand:
+            print(f"[DEBUG] Shield check: offhand={offhand.name}, item_type={offhand.item_type}, is_shield={result}")
+        return result
 
     def get_shield_damage_reduction(self) -> float:
         """Get damage reduction multiplier from active shield (0.0-1.0)"""
@@ -1603,14 +1878,22 @@ class Character:
             return 0.0
 
         offhand = self.equipment.slots.get('offHand')
-        # Shield uses its damage stat multiplier as damage reduction
+        # Shield uses its damage stat multiplier as base damage reduction
         # E.g., if shield has damage multiplier 0.6, it reduces incoming damage by 40%
         damage_multiplier = offhand.stat_multipliers.get('damage', 1.0)
 
-        # Convert to damage reduction (lower damage multiplier = higher reduction)
-        # damage_multiplier of 0.6 means 40% reduction
-        reduction = 1.0 - damage_multiplier
-        return max(0.0, min(0.75, reduction))  # Cap at 75% reduction
+        # Base reduction from stat multiplier
+        base_reduction = 1.0 - damage_multiplier
+
+        # Apply crafted defense_multiplier bonus from bonuses dict
+        # defense_multiplier: -0.5 to +0.5 (quality-based boost/penalty)
+        defense_mult = 1.0 + offhand.bonuses.get('defense_multiplier', 0.0)
+
+        # Apply defense multiplier to increase/decrease reduction
+        # E.g., base 40% reduction with +25% defense_mult = 40% * 1.25 = 50% reduction
+        enhanced_reduction = base_reduction * defense_mult
+
+        return max(0.0, min(0.75, enhanced_reduction))  # Cap at 75% reduction
 
     def update_attack_cooldown(self, dt: float):
         """Update attack cooldown timer"""
@@ -1635,20 +1918,21 @@ class Character:
             # Get weapon-specific attack speed
             weapon_attack_speed = self.equipment.get_weapon_attack_speed(hand)
 
-            # Weapon attack cooldown based on attack speed stat and weapon speed
-            base_cooldown = 1.0
-            attack_speed_bonus = self.stats.agility * 0.03  # 3% faster per AGI
+            # Get effective attack speed (includes AGI, titles, skills, weapon tags)
+            effective_speed = self.get_effective_attack_speed()
 
-            # Add weapon tag attack speed bonus (fast)
+            # Add weapon tag attack speed bonus (fast) on top of effective speed
             weapon = self.equipment.slots.get(hand)
             if weapon:
                 weapon_tags = weapon.get_metadata_tags()
                 if weapon_tags:
                     from entities.components.weapon_tag_calculator import WeaponTagModifiers
                     tag_speed_bonus = WeaponTagModifiers.get_attack_speed_bonus(weapon_tags)
-                    attack_speed_bonus += tag_speed_bonus
+                    effective_speed += tag_speed_bonus
 
-            cooldown = (base_cooldown / weapon_attack_speed) / (1.0 + attack_speed_bonus)
+            # Calculate final cooldown: base / weapon_speed / total_speed
+            base_cooldown = 1.0
+            cooldown = (base_cooldown / weapon_attack_speed) / effective_speed
 
             if hand == 'mainHand':
                 self.mainhand_cooldown = cooldown
@@ -1703,6 +1987,31 @@ class Character:
         if success and consume_from_inventory:
             self.inventory.remove_item(item_id, 1)
             print(f"✓ Used {item_def.name}: {message}")
+
+            # Track item consumption in stat tracker
+            if hasattr(self, 'stat_tracker'):
+                # Determine item type from effect tags
+                item_type = "consumable"
+                if item_def.effect_tags:
+                    if any(tag in ["heal", "restore", "health", "mana"] for tag in item_def.effect_tags):
+                        item_type = "potion"
+                    elif any(tag in ["food", "saturation", "hunger"] for tag in item_def.effect_tags):
+                        item_type = "food"
+                    elif any(tag in ["buff", "empower", "fortify", "quicken"] for tag in item_def.effect_tags):
+                        item_type = "buff"
+
+                # Determine if in combat (check if combat_manager has active enemies)
+                in_combat = False
+                if hasattr(self, 'combat_manager') and self.combat_manager:
+                    if hasattr(self.combat_manager, 'player_in_combat'):
+                        in_combat = self.combat_manager.player_in_combat
+
+                self.stat_tracker.record_item_used(
+                    item_id=item_id,
+                    quantity=1,
+                    item_type=item_type,
+                    in_combat=in_combat
+                )
         elif success:
             print(f"✓ Used {item_def.name}: {message} (caller handles inventory)")
 

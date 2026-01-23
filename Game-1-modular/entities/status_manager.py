@@ -129,8 +129,24 @@ class StatusEffectManager:
                         f"{getattr(self.entity, 'name', 'Unknown')}"
                     )
 
+        # Apply resistance to duration if target has get_effect_resistance method
+        modified_params = params.copy()
+        if hasattr(self.entity, 'get_effect_resistance'):
+            resistance_multiplier = self.entity.get_effect_resistance(status_tag)
+
+            # Apply resistance to duration (reduce duration based on resistance)
+            if 'duration' in modified_params:
+                original_duration = modified_params['duration']
+                modified_params['duration'] = original_duration * resistance_multiplier
+
+            # Also check for effect-specific duration key (e.g., burn_duration)
+            duration_key = f'{status_tag}_duration'
+            if duration_key in modified_params:
+                original_duration = modified_params[duration_key]
+                modified_params[duration_key] = original_duration * resistance_multiplier
+
         # Create new effect
-        effect = create_status_effect(status_tag, params, source)
+        effect = create_status_effect(status_tag, modified_params, source)
 
         if not effect:
             self.debugger.warning(f"Unknown status effect: {status_tag}")

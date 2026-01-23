@@ -111,6 +111,21 @@ class SkillManager:
         self.known_skills[skill_id] = PlayerSkill(skill_id=skill_id)
         return True
 
+    def unlock_skill(self, skill_id: str) -> bool:
+        """
+        Unlock a skill (called by SkillUnlockSystem after conditions/cost verified).
+
+        This is a wrapper around learn_skill with skip_checks=True since
+        the unlock system has already verified all conditions and paid costs.
+
+        Args:
+            skill_id: ID of skill to unlock
+
+        Returns:
+            True if successfully unlocked
+        """
+        return self.learn_skill(skill_id, character=None, skip_checks=True)
+
     def get_available_skills(self, character) -> List[str]:
         """
         Get list of skill IDs that the character can learn but hasn't yet.
@@ -200,6 +215,18 @@ class SkillManager:
 
         # Apply skill effect (with level scaling)
         self._apply_skill_effect(skill_def, character, player_skill, combat_manager, mouse_world_pos)
+
+        # Track skill usage in stat tracker
+        if hasattr(character, 'stat_tracker'):
+            category = self._get_skill_category(skill_def)
+            value, targets = self._extract_skill_value(skill_def, player_skill)
+            character.stat_tracker.record_skill_used(
+                skill_id=skill_id,
+                value=value,
+                mana_cost=mana_cost,
+                targets=targets,
+                category=category
+            )
 
         # Award skill EXP (100 EXP per activation)
         leveled_up, new_level = player_skill.add_exp(100)
@@ -538,6 +565,85 @@ class SkillManager:
             else:
                 print(f"   Bypass {bypass} tier restriction(s) for {effect.category} for {int(duration)}s")
 
+    def _get_skill_category(self, skill_def) -> str:
+        """Determine skill category for stat tracking.
+
+        Args:
+            skill_def: Skill definition
+
+        Returns:
+            Category string: combat, gathering, crafting, or utility
+        """
+        # Combat skills have combat_tags
+        if skill_def.combat_tags and len(skill_def.combat_tags) > 0:
+            return "combat"
+
+        # Check effect category for gathering/crafting
+        effect_category = skill_def.effect.category.lower()
+
+        # Gathering skills
+        gathering_keywords = ["mining", "forestry", "gathering", "harvest", "wood", "ore", "stone"]
+        if any(keyword in effect_category for keyword in gathering_keywords):
+            return "gathering"
+
+        # Crafting skills
+        crafting_keywords = ["smithing", "alchemy", "refining", "engineering", "enchanting", "crafting"]
+        if any(keyword in effect_category for keyword in crafting_keywords):
+            return "crafting"
+
+        # Default to utility (buffs, movement, etc.)
+        return "utility"
+
+    def _extract_skill_value(self, skill_def, player_skill, scaled_params=None) -> tuple[float, int]:
+        """Extract value delivered and targets affected for stat tracking.
+
+        This provides best-effort estimation of skill impact:
+        - Combat skills: Use base damage from params
+        - Restore skills: Use restoration amount
+        - Buff skills: Use magnitude level as proxy
+        - Other skills: Minimal value (effect is indirect)
+
+        Args:
+            skill_def: Skill definition
+            player_skill: Player skill instance (for level scaling)
+            scaled_params: Scaled combat parameters (if available)
+
+        Returns:
+            (value, targets): Estimated value delivered and number of targets
+        """
+        effect = skill_def.effect
+        value = 0.0
+        targets = 0
+
+        # Combat skills - use baseDamage if available
+        if scaled_params and "baseDamage" in scaled_params:
+            value = scaled_params["baseDamage"]
+            targets = 1  # Default single target (combat_manager may update this)
+
+        # Restore skills - calculate restoration amount
+        elif effect.effect_type == "restore":
+            restore_amounts = {'minor': 50, 'moderate': 100, 'major': 200, 'extreme': 400}
+            base_value = restore_amounts.get(effect.magnitude, 100)
+            # Apply level scaling
+            level_bonus = player_skill.get_level_scaling_bonus()
+            value = base_value * (1.0 + level_bonus)
+            targets = 1  # Self-targeting
+
+        # Buff skills - use magnitude as relative value
+        elif effect.effect_type in ["empower", "quicken", "fortify", "pierce",
+                                     "enrich", "elevate", "regenerate", "devastate", "transcend"]:
+            # Map magnitude to numeric value (proxy for buff strength)
+            magnitude_values = {
+                'minor': 1.0,
+                'moderate': 2.0,
+                'major': 3.0,
+                'extreme': 4.0
+            }
+            value = magnitude_values.get(effect.magnitude, 1.0)
+            targets = 1  # Buffs typically affect self
+
+        return value, targets
+
     def _restore_all_durability(self, character, percent: float) -> List[str]:
         """Restore durability to all equipped items and tools.
 
@@ -691,12 +797,44 @@ class SkillManager:
 
         # Apply skill effect with combat context
         if skill_def.combat_tags and len(skill_def.combat_tags) > 0:
+            # For combat skills, prepare scaled params for value extraction
+            level_bonus = player_skill.get_level_scaling_bonus()
+            scaled_params = skill_def.combat_params.copy()
+            if "baseDamage" in scaled_params:
+                scaled_params["baseDamage"] *= (1.0 + level_bonus)
+            if "baseHealing" in scaled_params:
+                scaled_params["baseHealing"] *= (1.0 + level_bonus)
+
             self._apply_combat_skill_with_context(
                 skill_def, character, player_skill,
                 target_enemy, available_enemies or []
             )
+
+            # Track combat skill usage with scaled damage
+            if hasattr(character, 'stat_tracker'):
+                category = self._get_skill_category(skill_def)
+                value, targets = self._extract_skill_value(skill_def, player_skill, scaled_params)
+                character.stat_tracker.record_skill_used(
+                    skill_id=skill_id,
+                    value=value,
+                    mana_cost=mana_cost,
+                    targets=targets,
+                    category=category
+                )
         else:
             self._apply_skill_effect(skill_def, character, player_skill)
+
+            # Track non-combat skill usage
+            if hasattr(character, 'stat_tracker'):
+                category = self._get_skill_category(skill_def)
+                value, targets = self._extract_skill_value(skill_def, player_skill)
+                character.stat_tracker.record_skill_used(
+                    skill_id=skill_id,
+                    value=value,
+                    mana_cost=mana_cost,
+                    targets=targets,
+                    category=category
+                )
 
         # Award skill EXP (100 EXP per activation)
         leveled_up, new_level = player_skill.add_exp(100)

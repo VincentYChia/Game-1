@@ -64,10 +64,12 @@ class RefiningMinigame:
         # Calculate difficulty from materials using new system
         self._setup_difficulty_from_materials()
 
-        # Apply skill buff bonuses to time limit
-        if self.buff_time_bonus > 0:
-            self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
-            print(f"⚡ Quicken buff applied: {self.time_limit}s minigame time")
+        # Store speed bonus for spinner speed reduction (NOT for time limit!)
+        # Speed bonus slows down spinner rotation, making timing easier
+        # Formula: effective_speed = base_speed / (1.0 + speed_bonus)
+        self.speed_bonus = self.buff_time_bonus
+        if self.speed_bonus > 0:
+            print(f"⚡ Speed bonus: +{self.speed_bonus*100:.0f}% (slows spinner rotation)")
 
         # Game state
         self.active = False
@@ -173,11 +175,14 @@ class RefiningMinigame:
 
             # For high difficulty (multi_speed enabled), vary rotation speeds
             if self.multi_speed and i % 2 == 0:
-                speed = self.rotation_speed * 0.7
+                base_speed = self.rotation_speed * 0.7
             elif self.multi_speed and i % 3 == 0:
-                speed = self.rotation_speed * 1.3
+                base_speed = self.rotation_speed * 1.3
             else:
-                speed = self.rotation_speed
+                base_speed = self.rotation_speed
+
+            # Apply speed bonus (slows down rotation)
+            speed = base_speed / (1.0 + self.speed_bonus)
 
             # Randomize direction (some clockwise, some counter-clockwise)
             direction = random.choice([1, -1])
@@ -230,23 +235,27 @@ class RefiningMinigame:
 
         cylinder = self.cylinders[self.current_cylinder]
 
-        # Check if in target zone
+        # Capture angle when button pressed for feedback (red mark)
         angle = cylinder["angle"]
+
+        # Store the attempt angle for visual feedback (red mark)
+        cylinder["last_attempt_angle"] = angle
+
         target = cylinder["target_zone"]
 
         # Calculate angular distance (accounting for wraparound)
         distance = min(abs(angle - target), 360 - abs(angle - target))
 
         # Convert timing window from seconds to degrees
-        # timing_window seconds * speed rotations/sec * 360 degrees/rotation
         window_degrees = self.timing_window * cylinder["speed"] * 360
 
-        if distance <= window_degrees / 2:
-            # SUCCESS!
+        # Make valid range 25% larger to fix sync issues (0.5 * 1.25 = 0.625)
+        if distance <= window_degrees * 0.625:
+            # SUCCESS! Stop rotation on this cylinder
             cylinder["aligned"] = True
             self.aligned_cylinders.append(self.current_cylinder)
             self.current_cylinder += 1
-            self.feedback_timer = 0.3  # Show success feedback for 0.3 seconds
+            self.feedback_timer = 0.3  # Show success feedback
 
             # Check if all cylinders aligned
             if self.current_cylinder >= self.cylinder_count:
@@ -254,7 +263,7 @@ class RefiningMinigame:
 
             return True
         else:
-            # FAILURE
+            # FAILURE - keep spinner rotating, just show red mark
             self.failed_attempts += 1
             self.feedback_timer = 0.3  # Show failure feedback
 
@@ -276,13 +285,19 @@ class RefiningMinigame:
         if success:
             print(f"🎯 Refining successful! ({self.current_cylinder} alignments, {self.failed_attempts} failures)")
 
+            # Calculate earned/max points for crafted stats system
+            earned_points = len(self.aligned_cylinders)  # Successful alignments
+            max_points = self.cylinder_count  # Total cylinders
+
             self.result = {
                 "success": True,
                 "message": "Refinement successful!",
                 "attempts": self.current_cylinder + self.failed_attempts,
                 "quality_bonus": self.buff_quality_bonus,
                 "difficulty_points": self.difficulty_points,
-                "diversity_multiplier": self.diversity_multiplier
+                "diversity_multiplier": self.diversity_multiplier,
+                "earned_points": earned_points,
+                "max_points": max_points
             }
         else:
             # Calculate tier-scaled material loss
@@ -294,18 +309,33 @@ class RefiningMinigame:
 
             print(f"❌ Refining failed! {int(loss_fraction * 100)}% materials will be lost")
 
+            # Calculate earned/max points for crafted stats system (even on failure)
+            earned_points = len(self.aligned_cylinders)  # Partial credit
+            max_points = self.cylinder_count
+
             self.result = {
                 "success": False,
                 "message": reason or "Refinement failed",
                 "materials_lost": loss_fraction,
-                "difficulty_points": self.difficulty_points
+                "difficulty_points": self.difficulty_points,
+                "earned_points": earned_points,
+                "max_points": max_points
             }
 
     def get_state(self):
-        """Get current minigame state for rendering"""
+        """Get current minigame state for rendering
+
+        Each cylinder dict contains:
+        - angle: Current angle (0-360)
+        - speed: Rotation speed
+        - direction: Rotation direction (1 or -1)
+        - aligned: Whether successfully aligned
+        - target_zone: Target angle (0 for top)
+        - last_attempt_angle: Angle where player pressed button (for visual feedback)
+        """
         return {
             "active": self.active,
-            "cylinders": self.cylinders,
+            "cylinders": self.cylinders,  # Contains last_attempt_angle for each cylinder
             "current_cylinder": self.current_cylinder,
             "aligned_count": len(self.aligned_cylinders),
             "total_cylinders": self.cylinder_count,
@@ -314,7 +344,8 @@ class RefiningMinigame:
             "time_left": self.time_left,
             "result": self.result,
             "feedback_timer": self.feedback_timer,
-            "timing_window": self.timing_window
+            "timing_window": self.timing_window,
+            "window_degrees": self.timing_window * self.rotation_speed * 360  # Visual window size
         }
 
 
@@ -549,7 +580,7 @@ class RefiningCrafter:
         # Pass full recipe for material-based difficulty calculation
         return RefiningMinigame(recipe, buff_time_bonus, buff_quality_bonus)
 
-    def craft_with_minigame(self, recipe_id, inventory, minigame_result):
+    def craft_with_minigame(self, recipe_id, inventory, minigame_result, alloy_quality_bonus=0.0):
         """
         Craft with minigame result - all-or-nothing with probabilistic tag bonuses
         Refining outputs materials with rarity but NO stat bonuses
@@ -562,6 +593,7 @@ class RefiningCrafter:
             recipe_id: Recipe ID to craft
             inventory: Dict of {material_id: quantity} (will be modified)
             minigame_result: Result dict from RefiningMinigame
+            alloy_quality_bonus: Title bonus for chance-based rarity upgrade (0.0-1.0)
 
         Returns:
             dict: Result with outputId, quantity, rarity, success
@@ -589,11 +621,8 @@ class RefiningCrafter:
                 "loss_percentage": int(loss_fraction * 100)
             }
 
-        # Success - deduct full materials and give output
-        for inp in recipe['inputs']:
-            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
-            item_id = inp.get('itemId') or inp.get('materialId')
-            inventory[item_id] -= inp['quantity']
+        # Material consumption is handled by RecipeDatabase.consume_materials() in game_engine.py
+        # This keeps the architecture clean with a single source of truth for inventory management
 
         # Detect input rarity (base rarity from input materials)
         inputs = recipe.get('inputs', [])
@@ -648,6 +677,29 @@ class RefiningCrafter:
 
         output_rarity_idx = min(current_tier_idx + rarity_upgrade, len(rarity_tiers) - 1)
         base_upgraded_rarity = rarity_tiers[output_rarity_idx]
+
+        # Apply minigame quality modifier to alloy quality bonus
+        # quality >= 50: boost alloy bonus (+0 to +100%)
+        # quality < 50: reduce alloy bonus (down to -50%)
+        earned_points = minigame_result.get('earned_points', 50)
+        max_points = minigame_result.get('max_points', 100)
+        quality = int((earned_points / max_points) * 100) if max_points > 0 else 50
+
+        # Calculate quality multiplier (-0.5 to +1.0)
+        # quality 100 = +100% bonus, quality 50 = +0%, quality 0 = -50% bonus
+        quality_mult = (quality - 50) / 50.0  # -1.0 to +1.0
+        adjusted_alloy_bonus = alloy_quality_bonus * (1.0 + quality_mult)
+        adjusted_alloy_bonus = max(0.0, min(1.0, adjusted_alloy_bonus))  # Clamp to 0-100%
+
+        # Apply alloyQuality bonus (chance-based rarity upgrade)
+        # Each title bonus point (e.g., 25% = 0.25) gives a 25% chance for +1 rarity tier
+        # Quality modifier can increase or decrease this chance
+        if adjusted_alloy_bonus > 0 and output_rarity_idx < len(rarity_tiers) - 1:
+            import random
+            if random.random() < adjusted_alloy_bonus:
+                output_rarity_idx += 1
+                base_upgraded_rarity = rarity_tiers[output_rarity_idx]
+                print(f"  🎲 ALLOY QUALITY PROC! +1 rarity tier (chance: {adjusted_alloy_bonus*100:.0f}% from {alloy_quality_bonus*100:.0f}% base, quality: {quality}/100)")
 
         # Apply probabilistic tag bonuses (crushing, grinding, purifying, alloying)
         from core.crafting_tag_processor import RefiningTagProcessor

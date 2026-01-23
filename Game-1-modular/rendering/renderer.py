@@ -1789,7 +1789,8 @@ class Renderer:
             ("guide", "GAME GUIDE"),
             ("quests", "QUESTS"),
             ("skills", "SKILLS"),
-            ("titles", "TITLES")
+            ("titles", "TITLES"),
+            ("stats", "STATS")
         ]
 
         tab_rects = []
@@ -1838,6 +1839,8 @@ class Renderer:
             self._render_skills_content(surf, content_rect, character)
         elif character.encyclopedia.current_tab == "titles":
             self._render_titles_content(surf, content_rect, character)
+        elif character.encyclopedia.current_tab == "stats":
+            self._render_stats_content(surf, content_rect, character)
 
         self.screen.blit(surf, (wx, wy))
         window_rect = pygame.Rect(wx, wy, ww, wh)
@@ -2353,6 +2356,126 @@ class Renderer:
 
             y += s(10)
 
+    def _render_stats_content(self, surf, content_rect, character):
+        """Render comprehensive stat tracking data"""
+        s = Config.scale
+
+        if not hasattr(character, 'stat_tracker'):
+            # No stat tracker available
+            x = content_rect.x + content_rect.width // 2
+            y = content_rect.y + content_rect.height // 2
+            surf.blit(self.small_font.render("Stat tracking not available", True, (150, 150, 150)),
+                     (x - s(100), y))
+            return
+
+        # Get all stats from stat tracker
+        stats_data = character.stat_tracker.to_dict()
+
+        # Flatten nested dictionaries into (category, stat_name, value) tuples
+        flat_stats = []
+
+        def flatten_dict(data, prefix="", category=""):
+            """Recursively flatten nested dictionaries"""
+            for key, value in data.items():
+                # Skip metadata fields
+                if key in ["version", "session_start_time"]:
+                    continue
+
+                full_key = f"{prefix}.{key}" if prefix else key
+
+                if isinstance(value, dict):
+                    # Recursive for nested dicts
+                    new_category = key if not category else category
+                    flatten_dict(value, full_key, new_category)
+                elif isinstance(value, (int, float)) and key not in ["session_start_time"]:
+                    # Format stat name nicely
+                    display_name = key.replace('_', ' ').title()
+                    if prefix:
+                        display_name = f"{prefix.split('.')[-1].replace('_', ' ').title()}: {display_name}"
+
+                    flat_stats.append((category or "General", display_name, value))
+
+        flatten_dict(stats_data)
+
+        # Sort by value (descending), then alphabetically by name
+        flat_stats.sort(key=lambda x: (-x[2] if isinstance(x[2], (int, float)) else 0, x[1]))
+
+        # Apply scroll offset
+        scroll_offset = character.encyclopedia.scroll_offset
+        y = content_rect.y + s(15) - scroll_offset
+        x = content_rect.x + s(15)
+
+        # Header
+        if y >= content_rect.y and y < content_rect.bottom:
+            header_text = f"Player Statistics ({len(flat_stats)} tracked)"
+            surf.blit(self.small_font.render(header_text, True, (255, 215, 0)), (x, y))
+        y += s(30)
+
+        # Session info
+        if "total_playtime_seconds" in stats_data:
+            playtime_hours = stats_data["total_playtime_seconds"] / 3600.0
+            if y >= content_rect.y and y < content_rect.bottom:
+                surf.blit(self.tiny_font.render(f"Total Playtime: {playtime_hours:.1f} hours", True, (180, 180, 200)), (x, y))
+            y += s(20)
+
+        # Render stats grouped by category
+        current_category = None
+        for category, stat_name, value in flat_stats:
+            # Skip if entirely above visible area (optimization)
+            if y + s(18) < content_rect.y:
+                y += s(18)
+                continue
+            # Stop if entirely below visible area
+            if y > content_rect.bottom:
+                break
+
+            # Category header
+            if category != current_category:
+                current_category = category
+                y += s(10)
+                if y >= content_rect.y and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(f"━━ {category.upper()} ━━", True, (120, 150, 200)), (x, y))
+                y += s(20)
+
+            # Stat entry
+            if y >= content_rect.y and y < content_rect.bottom:
+                # Format value nicely
+                if isinstance(value, float):
+                    if value >= 1000:
+                        value_str = f"{value:,.1f}"
+                    elif value >= 100:
+                        value_str = f"{value:.1f}"
+                    else:
+                        value_str = f"{value:.2f}"
+                elif isinstance(value, int):
+                    if value >= 1000:
+                        value_str = f"{value:,}"
+                    else:
+                        value_str = str(value)
+                else:
+                    value_str = str(value)
+
+                # Color based on value magnitude
+                if isinstance(value, (int, float)):
+                    if value == 0:
+                        color = (100, 100, 100)
+                    elif value < 10:
+                        color = (150, 150, 150)
+                    elif value < 100:
+                        color = (180, 180, 200)
+                    elif value < 1000:
+                        color = (200, 200, 220)
+                    else:
+                        color = (220, 220, 255)
+                else:
+                    color = (180, 180, 200)
+
+                # Render stat name and value
+                stat_text = f"{stat_name}: {value_str}"
+                surf.blit(self.tiny_font.render(stat_text, True, color), (x + s(10), y))
+
+            y += s(18)
+
     def render_notifications(self, notifications: List[Notification]):
         y = 50
         for notification in notifications:
@@ -2663,8 +2786,11 @@ class Renderer:
         if item_stack.is_equipment():
             equipment = item_stack.get_equipment()
             if equipment:
+                # Use crafted_stats from ItemStack if available, otherwise use equipment.bonuses
+                # This ensures unequipped items still show their crafted bonuses
+                display_stats = item_stack.crafted_stats if item_stack.crafted_stats else equipment.bonuses
                 self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=True,
-                                              crafted_stats=item_stack.crafted_stats)
+                                              crafted_stats=display_stats)
                 return
 
         # Regular material tooltip
@@ -2689,13 +2815,15 @@ class Renderer:
         surf.fill(Config.COLOR_TOOLTIP_BG)
 
         y_pos = pad
-        color = Config.RARITY_COLORS.get(mat.rarity, (200, 200, 200))
+        # Use actual item_stack rarity, not material definition rarity
+        actual_rarity = item_stack.rarity
+        color = Config.RARITY_COLORS.get(actual_rarity, (200, 200, 200))
         surf.blit(self.font.render(mat.name, True, color), (pad, y_pos))
         y_pos += 25
         surf.blit(self.small_font.render(f"Tier {mat.tier} | {mat.category.capitalize()}", True, (180, 180, 180)),
                   (pad, y_pos))
         y_pos += 20
-        surf.blit(self.small_font.render(f"Rarity: {mat.rarity.capitalize()}", True, color), (pad, y_pos))
+        surf.blit(self.small_font.render(f"Rarity: {actual_rarity.capitalize()}", True, color), (pad, y_pos))
         y_pos += 20
 
         # Display crafted stats if present
@@ -4252,9 +4380,20 @@ class Renderer:
             for stat_name, stat_value in crafted_stats.items():
                 # Format stat name nicely (capitalize and add spaces)
                 display_name = stat_name.replace('_', ' ').title()
-                # Format value with + if positive
+                # Format value based on stat type
                 if isinstance(stat_value, (int, float)):
-                    value_str = f"+{stat_value}" if stat_value >= 0 else str(stat_value)
+                    # Multipliers (damage_multiplier, defense_multiplier, durability_multiplier) show as %
+                    if 'multiplier' in stat_name:
+                        value_str = f"+{int(stat_value*100)}%" if stat_value >= 0 else f"{int(stat_value*100)}%"
+                    # Efficiency shows as multiplier (e.g., 1.2x)
+                    elif stat_name == 'efficiency':
+                        value_str = f"{stat_value:.2f}x"
+                    # Quality shows as X/100
+                    elif stat_name == 'quality':
+                        value_str = f"{int(stat_value)}/100"
+                    # Other numeric stats
+                    else:
+                        value_str = f"+{stat_value}" if stat_value >= 0 else str(stat_value)
                 else:
                     value_str = str(stat_value)
                 stat_text = f"  {display_name}: {value_str}"
@@ -4394,7 +4533,9 @@ class Renderer:
             # From equipment UI - render equipment tooltip
             equipment = item_stack.get_equipment() if item_stack else None
             if equipment:
-                self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=False)
+                # Pass equipment.bonuses as crafted_stats to display crafted bonuses
+                self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=False,
+                                             crafted_stats=equipment.bonuses)
         else:
             # From inventory - use render_item_tooltip
             self.render_item_tooltip(item_stack, mouse_pos, character)

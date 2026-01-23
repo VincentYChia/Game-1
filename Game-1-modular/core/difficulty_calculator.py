@@ -67,11 +67,12 @@ SMITHING_PARAMS = {
     # Time limit: generous at low difficulty, tight at high
     'time_limit': (60, 25),
 
-    # Temperature ideal range: wide at low difficulty, narrow at high
-    'temp_ideal_range': (25, 5),  # Degrees of acceptable range
+    # Temperature ideal range: wide at low difficulty, VERY narrow at high (min 3°C)
+    'temp_ideal_range': (25, 3),  # Degrees of acceptable range
 
-    # Temperature decay: slow at low, fast at high
-    'temp_decay_rate': (0.3, 1.2),
+    # Temperature decay: REMOVED - now calculated dynamically as "5 clicks/sec equivalent"
+    # See smithing.py update() method for new fire decrease system
+    'temp_decay_rate': (0.3, 1.2),  # Legacy, not used with new system
 
     # Fan increment: big boost at low, small at high
     'temp_fan_increment': (4, 1.5),
@@ -79,19 +80,19 @@ SMITHING_PARAMS = {
     # Required hammer hits
     'required_hits': (3, 12),
 
-    # Target zone width (pixels) - where hits count
-    'target_width': (100, 35),
+    # Target zone width (pixels) - where hits count (NARROWED)
+    'target_width': (100, 30),
 
-    # Perfect zone width (pixels) - for bonus score
-    'perfect_width': (50, 12),
+    # Perfect zone width (pixels) - for bonus score (NARROWED)
+    'perfect_width': (50, 10),
 
-    # Hammer oscillation speed
-    'hammer_speed': (2.0, 6.0),
+    # Hammer oscillation speed - TIED TO DIFFICULTY (higher difficulty = faster)
+    'hammer_speed': (2.0, 7.0),  # Increased max from 6.0 to 7.0
 }
 
 
 # =============================================================================
-# REFINING PARAMETERS - Lock/Tumbler minigame (MADE HARDER)
+# REFINING PARAMETERS - Lock/Tumbler minigame (BALANCED DIFFICULTY)
 # =============================================================================
 
 REFINING_PARAMS = {
@@ -101,12 +102,15 @@ REFINING_PARAMS = {
     # Cylinder count: few at low, MANY at high (can go past 3!)
     'cylinder_count': (3, 12),
 
-    # Timing window in SECONDS - this was too large before!
-    # Now: 0.4s at easy (still requires timing), 0.08s at hard (very precise)
-    'timing_window': (0.4, 0.08),
+    # Timing window in SECONDS - SHRUNK by 2/3 (much tighter passable range!)
+    # Now: 0.05s at easy (very precise), 0.01s at hard (extremely precise)
+    # This is 1/3 of previous values (2/3 shrink), making acceptable window much smaller
+    'timing_window': (0.05, 0.01),
 
-    # Rotation speed: slow at low, fast at high
-    'rotation_speed': (0.6, 2.5),
+    # Rotation speed: REDUCED to 2/3 of previous (ensures UI sync, no lag)
+    # Now: 1.0 at low (moderate), 4.0 at high (fast but smooth)
+    # This is 2/3 of the 1.5-6.0 range, ensuring graphics stay perfectly synced
+    'rotation_speed': (1.0, 4.0),
 
     # Allowed failures: forgiving at low, zero tolerance at high
     'allowed_failures': (2, 0),

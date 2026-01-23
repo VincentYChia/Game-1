@@ -52,10 +52,12 @@ class SmithingMinigame:
         # Calculate difficulty from materials using new system
         self._setup_difficulty_from_materials()
 
-        # Apply skill buff bonuses to time limit
-        if self.buff_time_bonus > 0:
-            self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
-            print(f"⚡ Quicken buff applied: {self.time_limit}s minigame time")
+        # Store speed bonus for fire decrease rate calculation (NOT for time limit!)
+        # Speed bonus slows down fire decrease, giving more time to work
+        # Formula: effective_rate = base_rate / (1.0 + speed_bonus)
+        self.speed_bonus = self.buff_time_bonus
+        if self.speed_bonus > 0:
+            print(f"⚡ Speed bonus: +{self.speed_bonus*100:.0f}% (slows fire decrease rate)")
 
         # Game state
         self.active = False
@@ -171,15 +173,26 @@ class SmithingMinigame:
         Update minigame state
 
         Args:
-            dt: Delta time in milliseconds
+            dt: Delta time in seconds
         """
         if not self.active:
             return
 
-        # Temperature decay
+        # Temperature decay with speed bonus
+        # Fire decrease rate is calibrated to "5 clicks per second" equivalent
+        # Speed bonus slows down the decrease: effective_rate = base_rate / (1.0 + speed_bonus)
         now = pygame.time.get_ticks()
         if now - self.last_temp_update > 100:
-            self.temperature = max(0, self.temperature - self.TEMP_DECAY)
+            # Calculate base decay rate (5 clicks/sec worth, divided by 10 for 100ms ticks)
+            # This means player needs to maintain ~5 clicks/sec to keep temperature stable
+            clicks_per_second_equivalent = 5.0
+            base_decay_per_second = clicks_per_second_equivalent * self.TEMP_FAN_INCREMENT
+            base_decay_per_tick = base_decay_per_second / 10.0  # 100ms = 1/10 second
+
+            # Apply speed bonus (slows down fire decrease)
+            effective_decay = base_decay_per_tick / (1.0 + self.speed_bonus)
+
+            self.temperature = max(0, self.temperature - effective_decay)
             self.last_temp_update = now
 
         # Hammer movement
@@ -189,9 +202,8 @@ class SmithingMinigame:
                 self.hammer_direction *= -1
                 self.hammer_position = max(0, min(self.HAMMER_BAR_WIDTH, self.hammer_position))
 
-        # Timer (rough implementation - improve for production)
-        # TODO: Use proper delta time for accurate timing
-        self.time_left = max(0, self.time_left - dt / 1000.0)
+        # Timer - dt is already in seconds, no need to divide
+        self.time_left = max(0, self.time_left - dt)
         if self.time_left <= 0:
             self.end(completed=False, reason="Time's up!")
 
@@ -249,6 +261,10 @@ class SmithingMinigame:
 
         final_score = avg_hammer_score * temp_mult
 
+        # Calculate earned/max points for crafted stats system
+        earned_points = sum(self.hammer_scores)  # Total actual points earned
+        max_points = self.REQUIRED_HITS * 100  # Perfect score (100 per hit)
+
         # Use reward calculator for scaling bonuses
         try:
             from core.reward_calculator import calculate_smithing_rewards
@@ -288,6 +304,8 @@ class SmithingMinigame:
                 "avg_hammer": avg_hammer_score,
                 "difficulty_points": self.difficulty_points,
                 "first_try_eligible": first_try_eligible,
+                "earned_points": earned_points,
+                "max_points": max_points,
                 "message": f"Crafted {quality_tier} item with +{bonus}% bonus!"
             }
 
@@ -315,6 +333,8 @@ class SmithingMinigame:
                 "avg_hammer": avg_hammer_score,
                 "difficulty_points": self.difficulty_points,
                 "first_try_eligible": False,
+                "earned_points": earned_points,
+                "max_points": max_points,
                 "message": f"Crafted with {bonus}% bonus!"
             }
 
@@ -638,15 +658,8 @@ class SmithingCrafter:
 
         # Success - deduct full materials
         recipe = self.recipes[recipe_id]
-        for inp in recipe['inputs']:
-            mat_id = inp.get('materialId') or inp.get('itemId')
-            qty = inp['quantity']
-            if mat_id not in inventory:
-                print(f"⚠ ERROR: Material '{mat_id}' not in inventory dict!")
-                inventory[mat_id] = 0  # Add it with 0 so subtraction works
-            if inventory[mat_id] < qty:
-                print(f"⚠ WARNING: Insufficient '{mat_id}': have {inventory[mat_id]}, need {qty}")
-            inventory[mat_id] = max(0, inventory[mat_id] - qty)
+        # Material consumption is handled by RecipeDatabase.consume_materials() in game_engine.py
+        # This keeps the architecture clean with a single source of truth for inventory management
 
         # Detect input rarity
         inputs = recipe.get('inputs', [])
@@ -654,21 +667,24 @@ class SmithingCrafter:
         # Fallback to 'common' if rarity is None (material not in database)
         input_rarity = input_rarity or 'common'
 
-        # Calculate base stats for the item
-        tier = recipe.get('stationTier', 1)
-        bonus_pct = minigame_result.get('bonus', 0)
+        # Generate crafted stats using the new crafted_stats system
+        from entities.components.crafted_stats import generate_crafted_stats
+        from data.databases.equipment_db import EquipmentDatabase
 
-        # Base stats scale with tier and minigame performance
-        base_stats = {
-            "durability": 100 + (tier * 20) + bonus_pct,  # Tier 1: 100-120, Tier 2: 120-140, etc.
-            "quality": 100 + bonus_pct,  # Minigame performance
-            "power": 100 + (tier * 15),  # Tier-based power
-            "damage": 25 + (tier * 10),  # Base damage for weapons
-            "defense": 20 + (tier * 8)   # Base defense for armor
-        }
+        output_id = recipe['outputId']
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Determine item_type from the output equipment
+        item_type = 'weapon'  # Default fallback
+        if equip_db.is_equipment(output_id):
+            temp_equipment = equip_db.create_equipment_from_id(output_id)
+            if temp_equipment and hasattr(temp_equipment, 'item_type'):
+                item_type = temp_equipment.item_type
+
+        # Generate appropriate stats based on minigame performance and item type
+        base_stats = generate_crafted_stats(minigame_result, recipe, item_type)
 
         # Get item category and apply rarity modifiers
-        output_id = recipe['outputId']
         if item_metadata is None:
             item_metadata = {}
 
@@ -685,6 +701,9 @@ class SmithingCrafter:
         # Debug output
         debugger = get_tag_debugger()
         debugger.log_smithing_inheritance(recipe_id, recipe_tags, inheritable_tags)
+
+        # Extract bonus for logging
+        bonus_pct = minigame_result.get('bonus', 0)
 
         # Console output for tag verification
         print(f"\n⚒️  SMITHING CRAFT (MINIGAME): {output_id}")
@@ -710,6 +729,9 @@ class SmithingCrafter:
             "rarity": input_rarity,
             "stats": modified_stats,
             "tags": inheritable_tags,  # Tags to apply to crafted item
+            "first_try_eligible": minigame_result.get('first_try_eligible', False),
+            "earned_points": minigame_result.get('earned_points', 0),
+            "max_points": minigame_result.get('max_points', 100),
             "message": f"Crafted {input_rarity} item with +{minigame_result.get('bonus', 0)}% bonus!"
         }
 

@@ -10,7 +10,7 @@ class Encyclopedia:
     """
     def __init__(self):
         self.is_open = False
-        self.current_tab = "guide"  # guide, quests, skills, titles
+        self.current_tab = "guide"  # guide, quests, skills, titles, stats
         self.scroll_offset = 0
 
     def toggle(self):

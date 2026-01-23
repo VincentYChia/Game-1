@@ -326,9 +326,15 @@ def calculate_alchemy_rewards(
     bonus_pct = calculate_bonus_pct(base_performance, max_multiplier)
     quality_tier = get_quality_tier(base_performance)
 
-    # Potency affects effect strength, duration affects how long
-    potency_mult = 1.0 + (base_performance * (max_multiplier - 1.0) * 0.5)
-    duration_mult = 1.0 + (base_performance * (max_multiplier - 1.0) * 0.3)
+    # Potency and duration scale with performance
+    # performance 1.0 = max bonus, 0.5 = neutral (100%), 0.0 = penalty
+    # Allows negative stats for poor performance
+    potency_mult = 1.0 + (base_performance - 0.5) * (max_multiplier - 1.0)
+    duration_mult = 1.0 + (base_performance - 0.5) * (max_multiplier - 1.0) * 0.6
+
+    # Clamp to reasonable bounds (25% to 200%)
+    potency_mult = max(0.25, min(2.0, potency_mult))
+    duration_mult = max(0.25, min(2.0, duration_mult))
 
     return {
         'potency_multiplier': potency_mult,

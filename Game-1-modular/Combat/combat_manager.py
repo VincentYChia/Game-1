@@ -734,16 +734,18 @@ class CombatManager:
         str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
         print(f"   STR multiplier: {str_multiplier:.2f} (STR: {self.character.stats.strength})")
 
-        # Title bonuses (from activity tracker)
-        title_multiplier = 1.0
-        if hasattr(self.character, 'activity_tracker'):
-            title_multiplier = 1.0 + self.character.activity_tracker.get_combat_bonus()
+        # Title bonuses (meleeDamage from earned titles)
+        title_melee_bonus = self.character.titles.get_total_bonus('meleeDamage')
+        title_multiplier = 1.0 + title_melee_bonus
         print(f"   Title multiplier: {title_multiplier:.2f}")
+
+        # Enemy-specific damage bonuses (beastDamage, wolfDamage, dragonDamage, etc.)
+        enemy_damage_multiplier = self.character.get_enemy_damage_multiplier(enemy)
 
         # Equipment bonuses (already in weapon damage)
 
         # Calculate base damage
-        base_damage = weapon_damage * str_multiplier * title_multiplier
+        base_damage = weapon_damage * str_multiplier * title_multiplier * enemy_damage_multiplier
 
         # Apply crushing bonus vs armored enemies
         if crushing_bonus > 0 and enemy.definition.defense > 10:
@@ -765,7 +767,9 @@ class CombatManager:
 
         # Check for critical hit
         is_crit = False
-        base_crit_chance = 0.02 * self.character.stats.luck  # 2% per luck point
+        # Use effective luck (includes title and skill bonuses)
+        effective_luck = self.character.get_effective_luck()
+        base_crit_chance = 0.02 * effective_luck  # 2% per luck point
 
         # SKILL BUFF BONUSES: Check for pierce buffs (critical chance)
         pierce_bonus = 0.0
@@ -774,8 +778,11 @@ class CombatManager:
             if pierce_bonus == 0:
                 pierce_bonus = self.character.buffs.get_total_bonus('pierce', 'combat')
 
-        # Add weapon tag crit bonus (precision)
-        crit_chance = base_crit_chance + pierce_bonus + weapon_tag_crit_bonus
+        # Title bonuses (criticalChance from earned titles)
+        title_crit_bonus = self.character.titles.get_total_bonus('criticalChance')
+
+        # Add weapon tag crit bonus (precision) and title bonuses
+        crit_chance = base_crit_chance + pierce_bonus + weapon_tag_crit_bonus + title_crit_bonus
 
         if pierce_bonus > 0:
             print(f"   ⚡ Pierce buff: +{pierce_bonus*100:.0f}% crit chance (total: {crit_chance*100:.1f}%)")
@@ -789,6 +796,16 @@ class CombatManager:
 
             # Execute on-crit triggers from equipment
             self._execute_triggers('on_crit', target=enemy, hand=hand)
+
+        # TODO: Counter/Block/Parry System (counterChance title bonus)
+        # When implemented, should check for counterChance title bonus here
+        # Counter: Chance to riposte and deal damage back to attacker
+        # Block: Chance to negate incoming damage (requires shield)
+        # Parry: Chance to deflect and counterattack
+        # counter_chance = self.character.titles.get_total_bonus('counterChance')
+        # if random.random() < counter_chance:
+        #     # Apply counter damage, stun effect, etc.
+        #     pass
 
         # Apply enemy defense (with armor penetration from weapon tags)
         effective_defense = enemy.definition.defense * (1.0 - armor_penetration)
@@ -1076,10 +1093,9 @@ class CombatManager:
             str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
             base_damage *= str_multiplier
 
-            # Title bonuses
-            if hasattr(self.character, 'activity_tracker'):
-                title_multiplier = 1.0 + self.character.activity_tracker.get_combat_bonus()
-                base_damage *= title_multiplier
+            # Title bonuses (meleeDamage from earned titles)
+            title_melee_bonus = self.character.titles.get_total_bonus('meleeDamage')
+            base_damage *= (1.0 + title_melee_bonus)
 
             # Skill buff bonuses (empower) - but NOT devastate since we already consumed it
             if hasattr(self.character, 'buffs'):
@@ -1202,10 +1218,9 @@ class CombatManager:
             str_multiplier = 1.0 + (self.character.stats.strength * 0.05)
             base_damage *= str_multiplier
 
-            # Title bonuses
-            if hasattr(self.character, 'activity_tracker'):
-                title_multiplier = 1.0 + self.character.activity_tracker.get_combat_bonus()
-                base_damage *= title_multiplier
+            # Title bonuses (meleeDamage from earned titles)
+            title_melee_bonus = self.character.titles.get_total_bonus('meleeDamage')
+            base_damage *= (1.0 + title_melee_bonus)
 
             # Skill buff bonuses (empower)
             if hasattr(self.character, 'buffs'):
@@ -1326,6 +1341,48 @@ class CombatManager:
                     elif equipped_weapon.durability_current <= equipped_weapon.durability_max * 0.2:
                         print(f"   ⚠️ {equipped_weapon.name} durability low: {equipped_weapon.durability_current}/{equipped_weapon.durability_max}")
 
+            # NEW: Comprehensive stat tracking
+            if hasattr(self.character, 'stat_tracker'):
+                # Determine damage type from tags
+                damage_types = ['physical', 'fire', 'ice', 'lightning', 'poison', 'arcane', 'shadow', 'holy']
+                damage_type = next((tag for tag in tags if tag in damage_types), 'physical')
+
+                # Determine attack type (melee/ranged/magic)
+                attack_type = 'magic' if 'magic' in tags or damage_type in ['arcane', 'holy'] else 'melee'
+
+                # Get weapon element if equipped
+                weapon_element = None
+                if equipped_weapon and hasattr(equipped_weapon, 'tags'):
+                    for tag in damage_types:
+                        if tag in equipped_weapon.tags:
+                            weapon_element = tag
+                            break
+
+                # Track damage dealt
+                if final_damage > 0:
+                    self.character.stat_tracker.record_damage_dealt(
+                        amount=final_damage,
+                        damage_type=damage_type,
+                        attack_type=attack_type,
+                        was_crit=context.any_crit if hasattr(context, 'any_crit') else False,
+                        weapon_element=weapon_element
+                    )
+
+                # Track enemy kill
+                if enemy_died:
+                    self.character.stat_tracker.record_enemy_killed(
+                        tier=enemy.definition.tier,
+                        is_boss=enemy.definition.is_boss,
+                        is_dragon='dragon' in enemy.definition.enemy_id.lower(),
+                        weapon_element=weapon_element
+                    )
+
+                # Track status effects applied
+                status_effect_tags = ['burn', 'freeze', 'poison', 'stun', 'root', 'slow', 'bleed', 'shock', 'weaken', 'vulnerable']
+                for tag in tags:
+                    if tag in status_effect_tags:
+                        self.character.stat_tracker.record_status_effect(tag, applied_to_enemy=True)
+
             # Tag-based attacks don't use traditional crit system (handled by tags)
             return (total_damage, False, loot)
 
@@ -1411,6 +1468,18 @@ class CombatManager:
         # Apply to player
         self.character.take_damage(final_damage, from_attack=True)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
+
+        # NEW: Track damage taken
+        if hasattr(self.character, 'stat_tracker'):
+            # Determine damage type from enemy (default to physical)
+            enemy_damage_type = getattr(enemy.definition, 'damage_type', 'physical')
+            enemy_attack_type = 'melee'  # Most enemies are melee by default
+
+            self.character.stat_tracker.record_damage_taken(
+                amount=final_damage,
+                damage_type=enemy_damage_type,
+                attack_type=enemy_attack_type
+            )
 
         # REFLECT/THORNS: Check for reflect damage on armor (capped at 80%)
         if hasattr(self.character, 'equipment') and enemy.is_alive:

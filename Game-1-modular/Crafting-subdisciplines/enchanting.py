@@ -980,6 +980,10 @@ class EnchantingMinigame:
         """Complete the enchanting and calculate results"""
         self.active = False
 
+        # Calculate earned/max points for crafted stats system
+        earned_points = int(self.pattern_quality * 100)
+        max_points = 100
+
         # Check if quality meets requirements
         if self.pattern_quality < self.required_precision:
             # Failure at high tier breaks item
@@ -989,6 +993,8 @@ class EnchantingMinigame:
                     "pattern": self.recognized_pattern,
                     "quality": self.pattern_quality,
                     "item_broken": True,
+                    "earned_points": earned_points,
+                    "max_points": max_points,
                     "message": f"Pattern quality {self.pattern_quality:.0%} insufficient - Item BROKEN!"
                 }
             else:
@@ -998,6 +1004,8 @@ class EnchantingMinigame:
                     "pattern": self.recognized_pattern,
                     "quality": self.pattern_quality,
                     "item_broken": False,
+                    "earned_points": earned_points,
+                    "max_points": max_points,
                     "message": f"Pattern quality {self.pattern_quality:.0%} insufficient"
                 }
         else:
@@ -1014,6 +1022,8 @@ class EnchantingMinigame:
                 "quality": self.pattern_quality,
                 "bonus_type": bonus_type,
                 "bonus_magnitude": bonus_magnitude,
+                "earned_points": earned_points,
+                "max_points": max_points,
                 "message": f"Enchantment successful! {bonus_type} +{bonus_magnitude}%"
             }
 
@@ -1267,11 +1277,8 @@ class EnchantingCrafter:
         # Get difficulty tier from minigame result
         difficulty_tier = minigame_result.get('difficulty_tier', 'common')
 
-        # Always consume materials (even on failure)
-        for inp in recipe['inputs']:
-            # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
-            item_id = inp.get('itemId') or inp.get('materialId')
-            inventory[item_id] -= inp['quantity']
+        # Material consumption is handled by RecipeDatabase.consume_materials() in game_engine.py
+        # This keeps the architecture clean with a single source of truth for inventory management
 
         if not minigame_result.get('success'):
             # Minigame failed (shouldn't happen with spinning wheel, but keep for safety)

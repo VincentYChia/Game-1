@@ -107,31 +107,54 @@ class EquipmentItem:
             return 'critical'
 
     def get_actual_damage(self) -> Tuple[int, int]:
-        """Get actual damage including durability and enchantment effects"""
+        """Get actual damage including bonuses, durability and enchantment effects"""
+        # Start with base damage
+        base_min, base_max = self.damage
+
+        # Apply durability effectiveness
         eff = self.get_effectiveness()
-        base_damage = (self.damage[0] * eff, self.damage[1] * eff)
+        effective_damage = (base_min * eff, base_max * eff)
+
+        # Apply crafted damage multiplier from bonuses dict
+        # damage_multiplier: -0.5 to +0.5 (e.g., 0.25 = 25% more damage, -0.25 = 25% less damage)
+        damage_mult = 1.0
+        crafted_mult = self.bonuses.get('damage_multiplier', 0)
+        damage_mult += crafted_mult
+
+        # Apply efficiency as damage multiplier for tools
+        # efficiency directly multiplies (0.5 to 1.5, e.g., 1.2 = 20% more damage)
+        if self.item_type == 'tool':
+            damage_mult *= self.efficiency
 
         # Apply enchantment damage multipliers
-        damage_mult = 1.0
         for ench in self.enchantments:
             effect = ench.get('effect', {})
             if effect.get('type') == 'damage_multiplier':
                 damage_mult += effect.get('value', 0.0)
 
-        return (int(base_damage[0] * damage_mult), int(base_damage[1] * damage_mult))
+        return (int(effective_damage[0] * damage_mult), int(effective_damage[1] * damage_mult))
 
     def get_defense_with_enchantments(self) -> int:
-        """Get defense value including enchantment effects"""
-        base_defense = self.defense * self.get_effectiveness()
+        """Get defense value including bonuses and enchantment effects"""
+        # Start with base defense
+        base_defense = self.defense
+
+        # Apply durability effectiveness
+        effective_defense = base_defense * self.get_effectiveness()
+
+        # Apply crafted defense multiplier from bonuses dict
+        # defense_multiplier: -0.5 to +0.5 (e.g., 0.25 = 25% more defense, -0.25 = 25% less defense)
+        defense_mult = 1.0
+        crafted_mult = self.bonuses.get('defense_multiplier', 0)
+        defense_mult += crafted_mult
 
         # Apply enchantment defense multipliers
-        defense_mult = 1.0
         for ench in self.enchantments:
             effect = ench.get('effect', {})
             if effect.get('type') == 'defense_multiplier':
                 defense_mult += effect.get('value', 0.0)
 
-        return int(base_defense * defense_mult)
+        return int(effective_defense * defense_mult)
 
     def can_equip(self, character) -> Tuple[bool, str]:
         """Check if character meets requirements, return (can_equip, reason)"""

@@ -130,6 +130,8 @@ class GameEngine:
         TitleDatabase.get_instance().load_from_file(str(get_resource_path("progression/titles-1.JSON")))
         ClassDatabase.get_instance().load_from_file(str(get_resource_path("progression/classes-1.JSON")))
         SkillDatabase.get_instance().load_from_file(str(get_resource_path("Skills/skills-skills-1.JSON")))
+        from data.databases import SkillUnlockDatabase
+        SkillUnlockDatabase.get_instance().load_from_file(str(get_resource_path("progression/skill-unlocks.JSON")))
         NPCDatabase.get_instance().load_from_files()  # Load NPCs and Quests
 
         # Load content from installed Update-N packages
@@ -2033,9 +2035,13 @@ class GameEngine:
             self.add_notification("Invalid crafting station!", (255, 100, 100))
             return
 
-        # Initialize buff bonuses
+        # Initialize all bonus variables (prevents UnboundLocalError)
         buff_time_bonus = 0.0
         buff_quality_bonus = 0.0
+        title_time_bonus = 0.0
+        title_quality_bonus = 0.0
+        total_time_bonus = 0.0
+        total_quality_bonus = 0.0
 
         # Enchanting has different minigame signature (requires target_item, no buff bonuses)
         if recipe.station_type == 'adornments':
@@ -2049,7 +2055,7 @@ class GameEngine:
                 self.add_notification("Minigame not available!", (255, 100, 100))
                 return
         else:
-            # Other crafting disciplines use buff bonuses
+            # Other crafting disciplines use buff bonuses + title bonuses
             # Calculate skill buff bonuses for this crafting discipline
             if hasattr(self.character, 'buffs'):
                 # Quicken buff: Extends minigame time
@@ -2062,18 +2068,47 @@ class GameEngine:
                 elevate_bonus = self.character.buffs.get_total_bonus('elevate', recipe.station_type)
                 buff_quality_bonus = max(empower_bonus, elevate_bonus)
 
-            # Create minigame instance with buff bonuses
-            minigame = crafter.create_minigame(recipe.recipe_id, buff_time_bonus, buff_quality_bonus)
+            # Calculate title bonuses for this crafting discipline
+            # (Already initialized at function start)
+
+            if recipe.station_type == 'smithing':
+                title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
+                title_quality_bonus = self.character.titles.get_total_bonus('smithingQuality')
+            elif recipe.station_type == 'refining':
+                # Refining shares smithingTime and uses refiningPrecision for quality
+                title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
+                title_quality_bonus = self.character.titles.get_total_bonus('refiningPrecision')
+            elif recipe.station_type == 'alchemy':
+                title_time_bonus = self.character.titles.get_total_bonus('alchemyTime')
+                title_quality_bonus = self.character.titles.get_total_bonus('alchemyQuality')
+            elif recipe.station_type == 'engineering':
+                title_time_bonus = self.character.titles.get_total_bonus('engineeringTime')
+                title_quality_bonus = self.character.titles.get_total_bonus('engineeringQuality')
+
+            # Combine skill buffs and title bonuses
+            total_time_bonus = buff_time_bonus + title_time_bonus
+            total_quality_bonus = buff_quality_bonus + title_quality_bonus
+
+            # Create minigame instance with combined bonuses
+            minigame = crafter.create_minigame(recipe.recipe_id, total_time_bonus, total_quality_bonus)
             if not minigame:
                 self.add_notification("Minigame not available!", (255, 100, 100))
                 return
 
-        if buff_time_bonus > 0 or buff_quality_bonus > 0:
-            print(f"⚡ Skill buffs active:")
+        if total_time_bonus > 0 or total_quality_bonus > 0:
+            print(f"⚡ Active bonuses:")
             if buff_time_bonus > 0:
-                print(f"   +{buff_time_bonus*100:.0f}% minigame time")
+                print(f"   +{buff_time_bonus*100:.0f}% minigame time (skills)")
+            if title_time_bonus > 0:
+                print(f"   +{title_time_bonus*100:.0f}% minigame time (titles)")
+            if total_time_bonus > 0:
+                print(f"   Total: +{total_time_bonus*100:.0f}% minigame time")
             if buff_quality_bonus > 0:
-                print(f"   +{buff_quality_bonus*100:.0f}% quality bonus")
+                print(f"   +{buff_quality_bonus*100:.0f}% quality bonus (skills)")
+            if title_quality_bonus > 0:
+                print(f"   +{title_quality_bonus*100:.0f}% quality bonus (titles)")
+            if total_quality_bonus > 0:
+                print(f"   Total: +{total_quality_bonus*100:.0f}% quality bonus")
 
         # Start minigame
         minigame.start()
@@ -2358,8 +2393,13 @@ class GameEngine:
         else:
             rarity_system.debug_mode = False
 
+        # Get title bonuses for crafting
+        alloy_quality_bonus = 0.0
+        if recipe.station_type == 'refining' and hasattr(self.character, 'titles'):
+            alloy_quality_bonus = self.character.titles.get_total_bonus('alloyQuality')
+
         # Use crafter to process minigame result
-        craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result)
+        craft_result = crafter.craft_with_minigame(recipe.recipe_id, inv_dict, result, alloy_quality_bonus=alloy_quality_bonus)
 
         if not craft_result.get('success'):
             # Failure - materials may have been lost
@@ -2390,9 +2430,7 @@ class GameEngine:
             if leveled_up:
                 self.character.check_and_notify_new_skills()
 
-            new_title = self.character.titles.check_for_title(
-                activity_type, self.character.activities.get_count(activity_type)
-            )
+            new_title = self.character.titles.check_for_title(self.character)
             if new_title:
                 self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
@@ -2422,6 +2460,18 @@ class GameEngine:
                 rarity = craft_result.get('rarity', 'common')
                 stats = craft_result.get('stats')
 
+                # Apply firstTryBonus if eligible
+                first_try_eligible = craft_result.get('first_try_eligible', False)
+                if first_try_eligible and hasattr(self.character, 'titles'):
+                    first_try_bonus = self.character.titles.get_total_bonus('firstTryBonus')
+                    if first_try_bonus > 0 and stats:
+                        # Apply bonus to all numeric stats
+                        for stat_name, stat_value in stats.items():
+                            if isinstance(stat_value, (int, float)):
+                                boosted_value = stat_value * (1.0 + first_try_bonus)
+                                stats[stat_name] = int(boosted_value) if isinstance(stat_value, int) else boosted_value
+                        print(f"   🌟 First-try bonus applied! +{first_try_bonus*100:.0f}% to all stats")
+
                 self.add_crafted_item_to_inventory(output_id, output_qty, rarity, stats)
 
             # Get proper name for notification
@@ -2444,6 +2494,7 @@ class GameEngine:
     def add_crafted_item_to_inventory(self, item_id: str, quantity: int,
                                      rarity: str = 'common', stats: Dict = None):
         """Add a crafted item to inventory with rarity and stats"""
+        from entities.components.crafted_stats import apply_crafted_stats_to_equipment
         equip_db = EquipmentDatabase.get_instance()
 
         if equip_db.is_equipment(item_id):
@@ -2451,18 +2502,9 @@ class GameEngine:
             for i in range(quantity):
                 equipment = equip_db.create_equipment_from_id(item_id)
                 if equipment and stats:
-                    # Apply crafted stats to equipment
-                    for stat_name, stat_value in stats.items():
-                        if hasattr(equipment, stat_name):
-                            # Special handling for damage - must be tuple
-                            if stat_name == 'damage' and isinstance(stat_value, (int, float)):
-                                # Convert single damage value to (min, max) tuple
-                                # Use 80-100% of damage value for min-max range
-                                dmg_min = int(stat_value * 0.8)
-                                dmg_max = int(stat_value)
-                                setattr(equipment, stat_name, (dmg_min, dmg_max))
-                            else:
-                                setattr(equipment, stat_name, stat_value)
+                    # Apply crafted stats using the crafted_stats system
+                    # This properly filters stats by item type and applies to bonuses dict
+                    apply_crafted_stats_to_equipment(equipment, stats)
 
                 # Use add_item which handles equipment properly (doesn't stack)
                 success = self.character.inventory.add_item(item_id, 1, equipment_instance=equipment,
@@ -3033,6 +3075,12 @@ class GameEngine:
             result = crafter.craft_instant(recipe.recipe_id, inv_dict)
 
             if result.get('success'):
+                # CRITICAL: Consume materials from actual inventory
+                # craft_instant() modifies inv_dict, but we need to sync to real inventory
+                print(f"✅ Consuming materials after instant craft SUCCESS")
+                consumed = recipe_db.consume_materials(recipe, self.character.inventory)
+                print(f"   Consumed: {consumed}")
+
                 output_id = result.get('outputId')
                 quantity = result.get('quantity', 1)
                 rarity = result.get('rarity', 'common')
@@ -3191,9 +3239,7 @@ class GameEngine:
         if leveled_up:
             self.character.check_and_notify_new_skills()
 
-        new_title = self.character.titles.check_for_title(
-            'enchanting', self.character.activities.get_count('enchanting')
-        )
+        new_title = self.character.titles.check_for_title(self.character)
         if new_title:
             self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
@@ -3283,6 +3329,10 @@ class GameEngine:
         dt = (curr - self.last_tick) / 1000.0
         self.last_tick = curr
 
+        # Update playtime tracking
+        if hasattr(self.character, 'stat_tracker'):
+            self.character.stat_tracker.update_playtime(dt)
+
         if not self.character.class_selection_open:
             # Calculate effective movement speed with encumbrance penalty
             base_speed = self.character.movement_speed
@@ -3322,7 +3372,14 @@ class GameEngine:
             self.world.update(dt)
 
             # Check if player is blocking with shield (right mouse held OR X key held)
-            shield_blocking = (3 in self.mouse_buttons_pressed or pygame.K_x in self.keys_pressed) and self.character.is_shield_active()
+            mouse_held = 3 in self.mouse_buttons_pressed
+            x_key_held = pygame.K_x in self.keys_pressed
+            has_shield = self.character.is_shield_active()
+            shield_blocking = (mouse_held or x_key_held) and has_shield
+
+            # Debug output when trying to block
+            if mouse_held or x_key_held:
+                print(f"[DEBUG] Block attempt: mouse_held={mouse_held}, x_key={x_key_held}, has_shield={has_shield}, blocking={shield_blocking}")
 
             # Handle X key for offhand attacks (when not blocking)
             if pygame.K_x in self.keys_pressed and not shield_blocking:
@@ -3589,10 +3646,39 @@ class GameEngine:
             self.add_notification(message, (255, 100, 100))
 
             # Sync inventory back
-            recipe_db.consume_materials(recipe, self.character.inventory)
+            print(f"⚠ Consuming materials after FAILURE")
+            consumed = recipe_db.consume_materials(recipe, self.character.inventory)
+            print(f"   Consumed: {consumed}")
+
+            # NEW: Track failed crafting attempts
+            if hasattr(self.character, 'stat_tracker'):
+                activity_map = {
+                    'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
+                    'engineering': 'engineering', 'adornments': 'enchanting'
+                }
+                activity_type = activity_map.get(self.minigame_type, 'smithing')
+
+                # Collect materials consumed
+                materials_consumed = {}
+                for inp in recipe.inputs:
+                    mat_id = inp.get('materialId') or inp.get('itemId')
+                    qty = inp.get('quantity', 1)
+                    if mat_id:
+                        materials_consumed[mat_id] = qty
+
+                # Record failed craft
+                self.character.stat_tracker.record_crafting(
+                    recipe_id=recipe.recipe_id,
+                    discipline=activity_type,
+                    success=False,
+                    tier=recipe.station_tier,
+                    materials=materials_consumed
+                )
         else:
             # Success - consume materials and add output
-            recipe_db.consume_materials(recipe, self.character.inventory)
+            print(f"✅ Consuming materials after SUCCESS")
+            consumed = recipe_db.consume_materials(recipe, self.character.inventory)
+            print(f"   Consumed: {consumed}")
 
             # Record activity and XP
             activity_map = {
@@ -3602,17 +3688,50 @@ class GameEngine:
             activity_type = activity_map.get(self.minigame_type, 'smithing')
             self.character.activities.record_activity(activity_type, 1)
 
+            # NEW: Comprehensive crafting stat tracking
+            if hasattr(self.character, 'stat_tracker'):
+                # Extract minigame result data
+                quality_score = getattr(result, 'bonus_percentage', 0.0) if result else 0.0
+                craft_time = getattr(self.active_minigame, 'elapsed_time', 0.0) if self.active_minigame else 0.0
+                output_rarity = craft_result.get('rarity', 'common')
+                is_perfect = craft_result.get('is_perfect', False)
+                is_first_try = craft_result.get('is_first_try', False)
+
+                # Collect materials consumed from recipe
+                materials_consumed = {}
+                for inp in recipe.inputs:
+                    mat_id = inp.get('materialId') or inp.get('itemId')
+                    qty = inp.get('quantity', 1)
+                    if mat_id:
+                        materials_consumed[mat_id] = qty
+
+                # Record comprehensive crafting stats
+                self.character.stat_tracker.record_crafting(
+                    recipe_id=recipe.recipe_id,
+                    discipline=activity_type,
+                    success=True,
+                    tier=recipe.station_tier,
+                    quality_score=quality_score,
+                    craft_time=craft_time,
+                    output_rarity=output_rarity,
+                    is_perfect=is_perfect,
+                    is_first_try=is_first_try,
+                    materials=materials_consumed
+                )
+
             # Extra XP for minigame (50% bonus)
             xp_reward = int(20 * recipe.station_tier * 1.5)
             leveled_up = self.character.leveling.add_exp(xp_reward)
             if leveled_up:
                 self.character.check_and_notify_new_skills()
 
-            new_title = self.character.titles.check_for_title(
-                activity_type, self.character.activities.get_count(activity_type)
-            )
+            new_title = self.character.titles.check_for_title(self.character)
             if new_title:
                 self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+                self.character.check_skill_unlocks(trigger_type='title_earned', trigger_value=new_title.title_id)
+
+            # Check for activity-based skill unlocks
+            self.character.check_skill_unlocks(trigger_type='activity_threshold')
 
             # Check if this was an enchantment applied to an item (not a new item created)
             if 'enchanted_item' in craft_result:
@@ -4373,37 +4492,30 @@ class GameEngine:
         # Spoon bowl
         pygame.draw.ellipse(surf, (120, 90, 55), (spoon_x - 20, spoon_y - 10, 35, 20))
 
-        # Current reaction visualization - stage indicator
+        # Current reaction visualization - quality indicator only (removed stage names)
         if state['current_reaction']:
             reaction = state['current_reaction']
-            stage_names = ["Initiation", "Building", "SWEET SPOT", "Degrading", "Critical", "EXPLOSION!"]
-            stage_idx = reaction['stage'] - 1
-            stage_name = stage_names[stage_idx] if 0 <= stage_idx < len(stage_names) else "Unknown"
-            stage_color = (200, 180, 80) if reaction['stage'] == 3 else ((200, 100, 80) if reaction['stage'] >= 5 else (100, 140, 120))
 
-            # Stage panel on left side
+            # Quality panel on left side (removed stage name indicators per user request)
             stage_panel_x, stage_panel_y = 50, 130
-            stage_panel_w, stage_panel_h = 180, 150
+            stage_panel_w, stage_panel_h = 150, 120
 
             pygame.draw.rect(surf, (230, 235, 240), (stage_panel_x, stage_panel_y, stage_panel_w, stage_panel_h), border_radius=8)
             pygame.draw.rect(surf, (150, 160, 155), (stage_panel_x, stage_panel_y, stage_panel_w, stage_panel_h), 2, border_radius=8)
 
-            stage_label = self.renderer.small_font.render("Reaction Stage", True, (80, 100, 90))
-            surf.blit(stage_label, (stage_panel_x + stage_panel_w//2 - stage_label.get_width()//2, stage_panel_y + 10))
-
-            stage_text = self.renderer.font.render(stage_name, True, stage_color)
-            surf.blit(stage_text, (stage_panel_x + stage_panel_w//2 - stage_text.get_width()//2, stage_panel_y + 40))
-
-            # Quality indicator
+            # Quality indicator (KEEP THIS - shows percentage)
             quality = reaction.get('quality', 0.5)
-            qual_label = self.renderer.small_font.render(f"Quality: {int(quality * 100)}%", True, (80, 100, 90))
-            surf.blit(qual_label, (stage_panel_x + stage_panel_w//2 - qual_label.get_width()//2, stage_panel_y + 85))
+            qual_label = self.renderer.font.render(f"{int(quality * 100)}%", True, (60, 120, 80))
+            surf.blit(qual_label, (stage_panel_x + stage_panel_w//2 - qual_label.get_width()//2, stage_panel_y + 20))
+
+            quality_subtext = self.renderer.small_font.render("Current Quality", True, (80, 100, 90))
+            surf.blit(quality_subtext, (stage_panel_x + stage_panel_w//2 - quality_subtext.get_width()//2, stage_panel_y + 55))
 
             # Quality bar
-            qbar_w = 140
-            qbar_h = 12
+            qbar_w = 120
+            qbar_h = 14
             qbar_x = stage_panel_x + stage_panel_w//2 - qbar_w//2
-            qbar_y = stage_panel_y + 110
+            qbar_y = stage_panel_y + 80
             pygame.draw.rect(surf, (200, 205, 210), (qbar_x, qbar_y, qbar_w, qbar_h), border_radius=4)
             qfill = int(quality * qbar_w)
             if qfill > 0:
@@ -4411,9 +4523,9 @@ class GameEngine:
                 pygame.draw.rect(surf, qcolor, (qbar_x, qbar_y, qfill, qbar_h), border_radius=4)
             pygame.draw.rect(surf, (140, 150, 145), (qbar_x, qbar_y, qbar_w, qbar_h), 1, border_radius=4)
 
-        # Ingredient progress panel on right
+        # Ingredient progress panel on right (expanded for name)
         ingr_panel_x, ingr_panel_y = ww - 230, 130
-        ingr_panel_w, ingr_panel_h = 180, 100
+        ingr_panel_w, ingr_panel_h = 180, 130
 
         pygame.draw.rect(surf, (230, 235, 240), (ingr_panel_x, ingr_panel_y, ingr_panel_w, ingr_panel_h), border_radius=8)
         pygame.draw.rect(surf, (150, 160, 155), (ingr_panel_x, ingr_panel_y, ingr_panel_w, ingr_panel_h), 2, border_radius=8)
@@ -4424,7 +4536,21 @@ class GameEngine:
         current_ingr = state['current_ingredient_index'] + 1
         total_ingr = state['total_ingredients']
         ingr_text = self.renderer.font.render(f"{current_ingr} / {total_ingr}", True, (60, 120, 80))
-        surf.blit(ingr_text, (ingr_panel_x + ingr_panel_w//2 - ingr_text.get_width()//2, ingr_panel_y + 45))
+        surf.blit(ingr_text, (ingr_panel_x + ingr_panel_w//2 - ingr_text.get_width()//2, ingr_panel_y + 40))
+
+        # Display current ingredient name
+        current_ingredient_name = state.get('current_ingredient_name')
+        if current_ingredient_name:
+            # Format name (remove underscores, capitalize)
+            display_name = current_ingredient_name.replace('_', ' ').title()
+            # Truncate if too long
+            if len(display_name) > 18:
+                display_name = display_name[:15] + "..."
+            name_label_font = pygame.font.Font(None, 18)
+            name_label = name_label_font.render("Current:", True, (100, 100, 100))
+            surf.blit(name_label, (ingr_panel_x + ingr_panel_w//2 - name_label.get_width()//2, ingr_panel_y + 75))
+            name_text = self.renderer.small_font.render(display_name, True, (80, 140, 100))
+            surf.blit(name_text, (ingr_panel_x + ingr_panel_w//2 - name_text.get_width()//2, ingr_panel_y + 92))
 
         # Timer panel
         timer_panel_x, timer_panel_y = ww - 230, 250
@@ -4832,10 +4958,35 @@ class GameEngine:
             pygame.draw.line(surf, (180, 140, 80), (inner_x, inner_y), (outer_x, outer_y), 5)
             pygame.draw.line(surf, (220, 180, 120), (inner_x, inner_y), (outer_x, outer_y), 3)
 
-            # Pick head
-            pygame.draw.circle(surf, (200, 160, 90), (outer_x, outer_y), 12)
-            pygame.draw.circle(surf, (255, 215, 100), (outer_x, outer_y), 12, 3)
-            pygame.draw.circle(surf, (150, 120, 70), (outer_x, outer_y), 5)
+            # Pick head - narrowed tip (triangle instead of circle)
+            # Calculate perpendicular vector for triangle base
+            perp_angle = angle_rad + math.pi / 2
+            base_width = 8
+            tip_length = 18
+
+            # Triangle points: tip at outer, base closer to center
+            tip_x = outer_x
+            tip_y = outer_y
+            base1_x = outer_x + int(base_width * math.cos(perp_angle)) - int(tip_length * 0.3 * math.cos(angle_rad))
+            base1_y = outer_y + int(base_width * math.sin(perp_angle)) - int(tip_length * 0.3 * math.sin(angle_rad))
+            base2_x = outer_x - int(base_width * math.cos(perp_angle)) - int(tip_length * 0.3 * math.cos(angle_rad))
+            base2_y = outer_y - int(base_width * math.sin(perp_angle)) - int(tip_length * 0.3 * math.sin(angle_rad))
+
+            # Draw narrowed triangular tip
+            pygame.draw.polygon(surf, (200, 160, 90), [(tip_x, tip_y), (base1_x, base1_y), (base2_x, base2_y)])
+            pygame.draw.polygon(surf, (255, 215, 100), [(tip_x, tip_y), (base1_x, base1_y), (base2_x, base2_y)], 2)
+
+            # Red click mark - show where player last pressed space
+            if 'last_attempt_angle' in cyl and cyl['last_attempt_angle'] is not None:
+                attempt_angle_rad = math.radians(cyl['last_attempt_angle'] - 90)
+                mark_radius = inner_radius
+                mark_x = cx + int(mark_radius * math.cos(attempt_angle_rad))
+                mark_y = cy + int(mark_radius * math.sin(attempt_angle_rad))
+
+                # Red circle showing click position
+                pygame.draw.circle(surf, (255, 50, 50), (mark_x, mark_y), 10)
+                pygame.draw.circle(surf, (255, 100, 100), (mark_x, mark_y), 10, 2)
+                pygame.draw.circle(surf, (180, 30, 30), (mark_x, mark_y), 5)
 
         # Feedback flash
         feedback_timer = state.get('feedback_timer', 0)
