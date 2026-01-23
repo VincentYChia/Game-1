@@ -92,7 +92,7 @@ SMITHING_PARAMS = {
 
 
 # =============================================================================
-# REFINING PARAMETERS - Lock/Tumbler minigame (MADE MUCH HARDER)
+# REFINING PARAMETERS - Lock/Tumbler minigame (BALANCED DIFFICULTY)
 # =============================================================================
 
 REFINING_PARAMS = {
@@ -102,13 +102,15 @@ REFINING_PARAMS = {
     # Cylinder count: few at low, MANY at high (can go past 3!)
     'cylinder_count': (3, 12),
 
-    # Timing window in SECONDS - REDUCED to 0.5-0.33x (much harder!)
-    # Now: 0.15s at easy (tight timing), 0.03s at hard (extremely precise)
-    'timing_window': (0.15, 0.03),
+    # Timing window in SECONDS - SHRUNK by 2/3 (much tighter passable range!)
+    # Now: 0.05s at easy (very precise), 0.01s at hard (extremely precise)
+    # This is 1/3 of previous values (2/3 shrink), making acceptable window much smaller
+    'timing_window': (0.05, 0.01),
 
-    # Rotation speed: INCREASED to 2-3x (much faster spinning!)
-    # Now: 1.5 at low (moderate), 6.0 at high (very fast)
-    'rotation_speed': (1.5, 6.0),
+    # Rotation speed: REDUCED to 2/3 of previous (ensures UI sync, no lag)
+    # Now: 1.0 at low (moderate), 4.0 at high (fast but smooth)
+    # This is 2/3 of the 1.5-6.0 range, ensuring graphics stay perfectly synced
+    'rotation_speed': (1.0, 4.0),
 
     # Allowed failures: forgiving at low, zero tolerance at high
     'allowed_failures': (2, 0),

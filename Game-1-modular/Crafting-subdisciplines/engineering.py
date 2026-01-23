@@ -654,6 +654,12 @@ class EngineeringMinigame:
         # Determine puzzle count based on material difficulty
         self._setup_difficulty_from_materials()
 
+        # Apply speed bonus to extend time limit
+        # Speed bonus gives more time for puzzle solving
+        if self.buff_time_bonus > 0:
+            self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
+            print(f"⚡ Speed bonus: +{self.buff_time_bonus*100:.0f}% (extended time limit to {self.time_limit}s)")
+
         # Game state
         self.active = False
         self.puzzles = []

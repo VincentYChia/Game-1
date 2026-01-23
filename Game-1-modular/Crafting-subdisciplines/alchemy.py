@@ -44,29 +44,86 @@ class AlchemyReaction:
     5. Critical failure risk (5-10% progress or explosion)
     """
 
-    def __init__(self, ingredient_id, ingredient_type="moderate"):
+    def __init__(self, ingredient_id, ingredient_type="moderate", speed_bonus=0.0):
         """
         Initialize reaction
 
         Args:
             ingredient_id: Ingredient material ID
             ingredient_type: Reaction behavior type (stable, moderate, volatile, legendary)
+            speed_bonus: Speed bonus multiplier (0.0-1.0+) - slows reaction timing
         """
         self.ingredient_id = ingredient_id
         self.ingredient_type = ingredient_type
+        self.speed_bonus = speed_bonus
 
         # Reaction state
         self.stage = 1  # 1-5
         self.progress = 0.0  # 0.0-1.0 through current stage
         self.locked_quality = None  # Quality when chained/stabilized
 
-        # Setup timing based on ingredient type
+        # Calculate secret value and oscillation pattern
+        self.secret_value = self._calculate_secret_value(ingredient_id)
+        self.oscillation_count = self._assign_oscillation_pattern(self.secret_value)
+
+        # Setup timing based on ingredient type (applies speed bonus)
         self._setup_timing()
 
         # Visual state (for rendering)
         self.size = 0.0  # Bubble size
         self.glow = 0.0  # Glow intensity
         self.color_shift = 0.0  # Color variation
+
+    def _calculate_secret_value(self, ingredient_id):
+        """
+        Calculate secret value for ingredient based on vowel count.
+
+        Uses same vowel-counting method as volatility calculation.
+        This creates unpredictable oscillation patterns.
+
+        Returns:
+            float: Secret value 0.0-1.0
+        """
+        vowels = set('aeiouAEIOU')
+        total_chars = 0
+        vowel_count = 0
+
+        for char in ingredient_id:
+            if char.isalpha():
+                total_chars += 1
+                if char in vowels:
+                    vowel_count += 1
+
+        if total_chars == 0:
+            return 0.5  # Default middle value
+
+        # Normalize vowel ratio to 0.0-1.0
+        # Normal vowel ratio is ~40%, normalize around that
+        vowel_ratio = vowel_count / total_chars
+        secret_value = max(0.0, min(1.0, (vowel_ratio - 0.2) * 2.0))
+        return secret_value
+
+    def _assign_oscillation_pattern(self, secret_value):
+        """
+        Assign oscillation count based on secret value.
+
+        Distribution:
+        - ~50% get 1 oscillation (simple up-down)
+        - ~33% get 2 oscillations (two up-down cycles)
+        - ~17% get 3 oscillations (three up-down cycles)
+
+        Args:
+            secret_value: 0.0-1.0
+
+        Returns:
+            int: Number of oscillation cycles (1, 2, or 3)
+        """
+        if secret_value < 0.50:
+            return 1  # ~50% of ingredients
+        elif secret_value < 0.83:
+            return 2  # ~33% of ingredients
+        else:
+            return 3  # ~17% of ingredients
 
     def _setup_timing(self):
         """
@@ -94,6 +151,13 @@ class AlchemyReaction:
             self.stage_durations = [0.4, 1.0, 0.5, 0.7, 0.5]
             self.sweet_spot_duration = 0.5  # Very narrow
             self.false_peaks = [0.2, 0.4, 0.5, 0.6, 0.8]  # Many false peaks
+
+        # Apply speed bonus to extend all stage durations
+        # Speed bonus slows reaction: duration = base * (1.0 + bonus)
+        if self.speed_bonus > 0:
+            multiplier = 1.0 + self.speed_bonus
+            self.stage_durations = [d * multiplier for d in self.stage_durations]
+            self.sweet_spot_duration *= multiplier
 
         self.current_stage_duration = self.stage_durations[0]
 
@@ -161,23 +225,56 @@ class AlchemyReaction:
 
     def get_quality(self):
         """
-        Get quality contribution if chained/stabilized now
+        Get quality contribution if chained/stabilized now (NEW OSCILLATION SYSTEM)
+
+        Quality now oscillates based on ingredient's secret value:
+        - 1 oscillation: Simple up-down pattern
+        - 2 oscillations: Two up-down cycles
+        - 3 oscillations: Three up-down cycles
+
+        Max value always appears on the LAST oscillation peak.
 
         Returns:
-            float: Progress contribution (0.0-0.35, with 0.30-0.35 being optimal)
+            float: Progress contribution (0.0-0.35, with max on last peak)
         """
-        if self.stage == 1:
-            return 0.05  # Too early
-        elif self.stage == 2:
-            return 0.15 + self.progress * 0.05  # Building, not optimal
-        elif self.stage == 3:
-            return 0.30 + self.progress * 0.05  # OPTIMAL (30-35%)
-        elif self.stage == 4:
-            return 0.25 - self.progress * 0.05  # Declining
-        elif self.stage == 5:
-            return 0.10 - self.progress * 0.05  # Very weak
-        else:
+        import math
+
+        if self.stage >= 6:
             return 0.0  # Explosion
+
+        # Calculate normalized progress through entire reaction (0.0 to 1.0)
+        # Stage 1 progress 0.0 = 0.0, Stage 5 progress 1.0 = 1.0
+        total_progress = (self.stage - 1 + self.progress) / 5.0
+
+        # Create oscillating value based on oscillation_count
+        # Use sine waves with increasing amplitude (last peak is highest)
+        oscillations = self.oscillation_count
+
+        # Calculate which oscillation cycle we're in
+        cycle_progress = total_progress * oscillations  # 0.0 to oscillation_count
+        current_cycle = int(cycle_progress)
+        cycle_fraction = cycle_progress - current_cycle  # 0.0 to 1.0 within cycle
+
+        # Each cycle is a sine wave (0 -> peak -> 0)
+        # Sine wave: 0 at 0, peak at 0.5, 0 at 1.0
+        cycle_value = math.sin(cycle_fraction * math.pi)
+
+        # Amplitude increases with each cycle (last peak is highest)
+        # Cycle 0: 60% amplitude, Cycle 1: 80% amplitude, Cycle 2+: 100% amplitude
+        if oscillations == 1:
+            amplitude = 1.0  # Single cycle always 100%
+        else:
+            cycle_index = min(current_cycle, oscillations - 1)
+            amplitude = 0.6 + (0.4 * cycle_index / (oscillations - 1))
+
+        # Scale to quality range (0.0 to 0.35)
+        # Base quality increases slightly with overall progress
+        base_quality = 0.05 + total_progress * 0.10  # 0.05 to 0.15
+        oscillation_boost = cycle_value * amplitude * 0.20  # 0.0 to 0.20
+
+        final_quality = base_quality + oscillation_boost
+
+        return min(0.35, max(0.0, final_quality))
 
     def chain(self):
         """
@@ -236,9 +333,12 @@ class AlchemyMinigame:
         # Difficulty scaling from materials
         self._setup_difficulty_from_materials()
 
-        # Apply skill buff bonuses to time limit
-        if self.buff_time_bonus > 0:
-            self.time_limit = int(self.time_limit * (1.0 + self.buff_time_bonus))
+        # Store speed bonus for reaction timing (NOT for time limit!)
+        # Speed bonus slows down reaction progression, giving more time to react
+        # Formula: effective_duration = base_duration * (1.0 + speed_bonus)
+        self.speed_bonus = self.buff_time_bonus
+        if self.speed_bonus > 0:
+            print(f"⚡ Speed bonus: +{self.speed_bonus*100:.0f}% (slows reaction timing)")
 
         # Game state
         self.active = False
@@ -364,7 +464,7 @@ class AlchemyMinigame:
 
         # Backward compatible: support both 'itemId' (new) and 'materialId' (legacy)
         item_id = ingredient.get('itemId') or ingredient.get('materialId')
-        self.current_reaction = AlchemyReaction(item_id, ing_type)
+        self.current_reaction = AlchemyReaction(item_id, ing_type, self.speed_bonus)
 
     def update(self, dt):
         """
