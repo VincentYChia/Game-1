@@ -1875,14 +1875,22 @@ class Character:
             return 0.0
 
         offhand = self.equipment.slots.get('offHand')
-        # Shield uses its damage stat multiplier as damage reduction
+        # Shield uses its damage stat multiplier as base damage reduction
         # E.g., if shield has damage multiplier 0.6, it reduces incoming damage by 40%
         damage_multiplier = offhand.stat_multipliers.get('damage', 1.0)
 
-        # Convert to damage reduction (lower damage multiplier = higher reduction)
-        # damage_multiplier of 0.6 means 40% reduction
-        reduction = 1.0 - damage_multiplier
-        return max(0.0, min(0.75, reduction))  # Cap at 75% reduction
+        # Base reduction from stat multiplier
+        base_reduction = 1.0 - damage_multiplier
+
+        # Apply crafted defense_multiplier bonus from bonuses dict
+        # defense_multiplier: -0.5 to +0.5 (quality-based boost/penalty)
+        defense_mult = 1.0 + offhand.bonuses.get('defense_multiplier', 0.0)
+
+        # Apply defense multiplier to increase/decrease reduction
+        # E.g., base 40% reduction with +25% defense_mult = 40% * 1.25 = 50% reduction
+        enhanced_reduction = base_reduction * defense_mult
+
+        return max(0.0, min(0.75, enhanced_reduction))  # Cap at 75% reduction
 
     def update_attack_cooldown(self, dt: float):
         """Update attack cooldown timer"""

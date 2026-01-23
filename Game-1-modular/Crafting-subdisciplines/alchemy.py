@@ -993,10 +993,13 @@ class AlchemyCrafter:
         duration_mult = minigame_result.get('duration_mult', 1.0)
         effect_mult = minigame_result.get('effect_mult', 1.0)
 
+        # Get earned points from minigame for quality stat
+        earned_points = minigame_result.get('earned_points', 50)  # Default to 50 if missing
+
         base_stats = {
             "potency": int(100 * effect_mult),  # Effect strength
             "duration": int(100 * duration_mult),  # How long it lasts
-            "quality": 100 + (tier * 10)  # Base quality from tier
+            "quality": earned_points  # Use actual earned points from minigame (0-100)
         }
 
         # Get item category and apply rarity modifiers

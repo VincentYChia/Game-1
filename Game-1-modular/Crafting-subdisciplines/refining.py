@@ -677,14 +677,28 @@ class RefiningCrafter:
         output_rarity_idx = min(current_tier_idx + rarity_upgrade, len(rarity_tiers) - 1)
         base_upgraded_rarity = rarity_tiers[output_rarity_idx]
 
+        # Apply minigame quality modifier to alloy quality bonus
+        # quality >= 50: boost alloy bonus (+0 to +100%)
+        # quality < 50: reduce alloy bonus (down to -50%)
+        earned_points = minigame_result.get('earned_points', 50)
+        max_points = minigame_result.get('max_points', 100)
+        quality = int((earned_points / max_points) * 100) if max_points > 0 else 50
+
+        # Calculate quality multiplier (-0.5 to +1.0)
+        # quality 100 = +100% bonus, quality 50 = +0%, quality 0 = -50% bonus
+        quality_mult = (quality - 50) / 50.0  # -1.0 to +1.0
+        adjusted_alloy_bonus = alloy_quality_bonus * (1.0 + quality_mult)
+        adjusted_alloy_bonus = max(0.0, min(1.0, adjusted_alloy_bonus))  # Clamp to 0-100%
+
         # Apply alloyQuality bonus (chance-based rarity upgrade)
         # Each title bonus point (e.g., 25% = 0.25) gives a 25% chance for +1 rarity tier
-        if alloy_quality_bonus > 0 and output_rarity_idx < len(rarity_tiers) - 1:
+        # Quality modifier can increase or decrease this chance
+        if adjusted_alloy_bonus > 0 and output_rarity_idx < len(rarity_tiers) - 1:
             import random
-            if random.random() < alloy_quality_bonus:
+            if random.random() < adjusted_alloy_bonus:
                 output_rarity_idx += 1
                 base_upgraded_rarity = rarity_tiers[output_rarity_idx]
-                print(f"  🎲 ALLOY QUALITY PROC! +1 rarity tier (chance: {alloy_quality_bonus*100:.0f}%)")
+                print(f"  🎲 ALLOY QUALITY PROC! +1 rarity tier (chance: {adjusted_alloy_bonus*100:.0f}% from {alloy_quality_bonus*100:.0f}% base, quality: {quality}/100)")
 
         # Apply probabilistic tag bonuses (crushing, grinding, purifying, alloying)
         from core.crafting_tag_processor import RefiningTagProcessor

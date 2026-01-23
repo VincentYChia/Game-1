@@ -111,20 +111,19 @@ class EquipmentItem:
         # Start with base damage
         base_min, base_max = self.damage
 
-        # Add crafted damage bonus from bonuses dict
-        damage_bonus = self.bonuses.get('damage', 0)
-        base_min += damage_bonus
-        base_max += damage_bonus
-
         # Apply durability effectiveness
         eff = self.get_effectiveness()
         effective_damage = (base_min * eff, base_max * eff)
 
-        # Apply efficiency as damage multiplier for tools
-        # efficiency > 1.0 means higher damage
+        # Apply crafted damage multiplier from bonuses dict
+        # damage_multiplier: -0.5 to +0.5 (e.g., 0.25 = 25% more damage, -0.25 = 25% less damage)
         damage_mult = 1.0
+        crafted_mult = self.bonuses.get('damage_multiplier', 0)
+        damage_mult += crafted_mult
+
+        # Apply efficiency as damage multiplier for tools
+        # efficiency directly multiplies (0.5 to 1.5, e.g., 1.2 = 20% more damage)
         if self.item_type == 'tool' and hasattr(self, 'efficiency') and self.efficiency != 1.0:
-            # Efficiency directly multiplies damage (1.2 efficiency = 20% more damage)
             damage_mult *= self.efficiency
 
         # Apply enchantment damage multipliers
@@ -140,15 +139,16 @@ class EquipmentItem:
         # Start with base defense
         base_defense = self.defense
 
-        # Add crafted defense bonus from bonuses dict
-        defense_bonus = self.bonuses.get('defense', 0)
-        base_defense += defense_bonus
-
         # Apply durability effectiveness
         effective_defense = base_defense * self.get_effectiveness()
 
-        # Apply enchantment defense multipliers
+        # Apply crafted defense multiplier from bonuses dict
+        # defense_multiplier: -0.5 to +0.5 (e.g., 0.25 = 25% more defense, -0.25 = 25% less defense)
         defense_mult = 1.0
+        crafted_mult = self.bonuses.get('defense_multiplier', 0)
+        defense_mult += crafted_mult
+
+        # Apply enchantment defense multipliers
         for ench in self.enchantments:
             effect = ench.get('effect', {})
             if effect.get('type') == 'defense_multiplier':

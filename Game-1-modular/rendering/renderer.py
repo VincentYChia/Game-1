@@ -4519,7 +4519,9 @@ class Renderer:
             # From equipment UI - render equipment tooltip
             equipment = item_stack.get_equipment() if item_stack else None
             if equipment:
-                self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=False)
+                # Pass equipment.bonuses as crafted_stats to display crafted bonuses
+                self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=False,
+                                             crafted_stats=equipment.bonuses)
         else:
             # From inventory - use render_item_tooltip
             self.render_item_tooltip(item_stack, mouse_pos, character)
