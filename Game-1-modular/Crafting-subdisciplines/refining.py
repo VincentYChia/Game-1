@@ -249,7 +249,8 @@ class RefiningMinigame:
         # Convert timing window from seconds to degrees
         window_degrees = self.timing_window * cylinder["speed"] * 360
 
-        if distance <= window_degrees / 2:
+        # Make valid range 25% larger to fix sync issues (0.5 * 1.25 = 0.625)
+        if distance <= window_degrees * 0.625:
             # SUCCESS! Stop rotation on this cylinder
             cylinder["aligned"] = True
             self.aligned_cylinders.append(self.current_cylinder)

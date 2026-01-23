@@ -2786,8 +2786,11 @@ class Renderer:
         if item_stack.is_equipment():
             equipment = item_stack.get_equipment()
             if equipment:
+                # Use crafted_stats from ItemStack if available, otherwise use equipment.bonuses
+                # This ensures unequipped items still show their crafted bonuses
+                display_stats = item_stack.crafted_stats if item_stack.crafted_stats else equipment.bonuses
                 self.render_equipment_tooltip(equipment, mouse_pos, character, from_inventory=True,
-                                              crafted_stats=item_stack.crafted_stats)
+                                              crafted_stats=display_stats)
                 return
 
         # Regular material tooltip

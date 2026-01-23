@@ -27,25 +27,25 @@ VALID_STATS_BY_TYPE = {
         'damage_multiplier',  # Damage multiplier (-0.5 to +0.5, e.g., 0.25 = 25% more damage)
         'attack_speed',     # Attack speed bonus (additive, e.g., +0.10 = 10% faster)
         'range',            # Range bonus (additive)
-        'durability',       # Max durability bonus (additive to base)
+        'durability_multiplier',  # Durability multiplier (-0.5 to +0.5, e.g., 0.25 = 25% more durability)
         'quality',          # Crafting quality score (metadata)
     ],
     'armor': [
         'defense',          # Legacy defense bonus (deprecated)
         'defense_multiplier',  # Defense multiplier (-0.5 to +0.5, e.g., 0.25 = 25% more defense)
-        'durability',       # Max durability bonus (additive to base)
+        'durability_multiplier',  # Durability multiplier (-0.5 to +0.5, e.g., 0.25 = 25% more durability)
         'quality',          # Crafting quality score (metadata)
     ],
     'shield': [
         'defense',          # Legacy defense bonus (deprecated)
         'defense_multiplier',  # Defense multiplier (-0.5 to +0.5, e.g., 0.25 = 25% more defense)
         'block_chance',     # Block chance bonus (0.0-1.0, e.g., 0.05 = 5%)
-        'durability',       # Max durability bonus (additive to base)
+        'durability_multiplier',  # Durability multiplier (-0.5 to +0.5, e.g., 0.25 = 25% more durability)
         'quality',          # Crafting quality score (metadata)
     ],
     'tool': [
         'efficiency',       # Tool efficiency multiplier (0.5 to 1.5, e.g., 1.2 = 20% faster)
-        'durability',       # Max durability bonus (additive to base)
+        'durability_multiplier',  # Durability multiplier (-0.5 to +0.5, e.g., 0.25 = 25% more durability)
         'quality',          # Crafting quality score (metadata)
     ],
 }
@@ -85,12 +85,13 @@ def generate_crafted_stats(
     # Get tier for scaling
     tier = recipe.get('stationTier', 1)
 
-    # Base durability bonus (additive)
-    durability_bonus = tier * 20  # T1: +20, T2: +40, T3: +60, T4: +80
+    # Durability multiplier (0.5x to 1.5x based on quality)
+    # quality 100 = +50%, quality 50 = 0%, quality 0 = -50%
+    durability_multiplier = ((quality - 50) / 100.0)  # -0.5 to +0.5
 
     # Base stats
     stats = {
-        'durability': durability_bonus,
+        'durability_multiplier': durability_multiplier,
         'quality': quality  # 0-100 based on performance
     }
 
@@ -186,15 +187,17 @@ def apply_crafted_stats_to_equipment(equipment, stats: Dict[str, Any]) -> None:
                 sign = '+' if stat_value >= 0 else ''
                 print(f"   ✨ Block chance: {sign}{stat_value*100:.1f}%")
 
-        elif stat_name == 'durability':
-            # Durability: Add bonus to base max durability
+        elif stat_name == 'durability_multiplier':
+            # Durability multiplier: -0.5 to +0.5 (50% less to 50% more durability)
             if hasattr(equipment, 'durability_max'):
-                new_max = equipment.durability_max + int(stat_value)
-                # Also increase current durability by same amount (fresh craft)
-                equipment.durability_current += int(stat_value)
+                old_max = equipment.durability_max
+                # Apply multiplier: durability_max *= (1.0 + multiplier)
+                new_max = int(old_max * (1.0 + stat_value))
+                # Set both current and max (fresh craft)
+                equipment.durability_current = new_max
                 equipment.durability_max = new_max
                 sign = '+' if stat_value >= 0 else ''
-                print(f"   ✨ Max durability: {sign}{int(stat_value)} (new max: {new_max})")
+                print(f"   ✨ Max durability: {sign}{stat_value*100:.0f}% (new max: {new_max} from {old_max})")
 
         elif stat_name == 'quality':
             # Quality: Store as metadata (doesn't affect combat stats)
