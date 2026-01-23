@@ -2812,13 +2812,15 @@ class Renderer:
         surf.fill(Config.COLOR_TOOLTIP_BG)
 
         y_pos = pad
-        color = Config.RARITY_COLORS.get(mat.rarity, (200, 200, 200))
+        # Use actual item_stack rarity, not material definition rarity
+        actual_rarity = item_stack.rarity
+        color = Config.RARITY_COLORS.get(actual_rarity, (200, 200, 200))
         surf.blit(self.font.render(mat.name, True, color), (pad, y_pos))
         y_pos += 25
         surf.blit(self.small_font.render(f"Tier {mat.tier} | {mat.category.capitalize()}", True, (180, 180, 180)),
                   (pad, y_pos))
         y_pos += 20
-        surf.blit(self.small_font.render(f"Rarity: {mat.rarity.capitalize()}", True, color), (pad, y_pos))
+        surf.blit(self.small_font.render(f"Rarity: {actual_rarity.capitalize()}", True, color), (pad, y_pos))
         y_pos += 20
 
         # Display crafted stats if present

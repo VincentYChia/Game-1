@@ -168,11 +168,15 @@ class RecipeDatabase:
         try:
             from core.config import Config
             if Config.DEBUG_INFINITE_RESOURCES:
+                print("   [consume_materials] DEBUG_INFINITE_RESOURCES is ON - skipping consumption")
                 return True
         except ImportError:
             pass
 
+        print(f"   [consume_materials] Attempting to consume materials for {recipe.recipe_id}")
+
         if not self.can_craft(recipe, inventory):
+            print(f"   [consume_materials] FAILED: can_craft returned False")
             return False
 
         to_consume = {}
@@ -180,6 +184,7 @@ class RecipeDatabase:
             mat_id = inp.get('materialId', '')
             qty = inp.get('quantity', 0)
             to_consume[mat_id] = qty
+            print(f"   [consume_materials] Need to consume: {mat_id} x{qty}")
 
         for mat_id, needed in to_consume.items():
             remaining = needed
@@ -187,16 +192,20 @@ class RecipeDatabase:
                 if inventory.slots[i] and inventory.slots[i].item_id == mat_id:
                     slot = inventory.slots[i]
                     if slot.quantity >= remaining:
+                        print(f"   [consume_materials] Consuming {remaining} x {mat_id} from slot {i} (had {slot.quantity})")
                         slot.quantity -= remaining
                         if slot.quantity == 0:
                             inventory.slots[i] = None
                         remaining = 0
                         break
                     else:
+                        print(f"   [consume_materials] Consuming ALL {slot.quantity} x {mat_id} from slot {i}")
                         remaining -= slot.quantity
                         inventory.slots[i] = None
 
             if remaining > 0:
+                print(f"   [consume_materials] FAILED: Still need {remaining} x {mat_id}")
                 return False
 
+        print(f"   [consume_materials] SUCCESS: All materials consumed")
         return True

@@ -3633,7 +3633,9 @@ class GameEngine:
             self.add_notification(message, (255, 100, 100))
 
             # Sync inventory back
-            recipe_db.consume_materials(recipe, self.character.inventory)
+            print(f"⚠ Consuming materials after FAILURE")
+            consumed = recipe_db.consume_materials(recipe, self.character.inventory)
+            print(f"   Consumed: {consumed}")
 
             # NEW: Track failed crafting attempts
             if hasattr(self.character, 'stat_tracker'):
@@ -3661,7 +3663,9 @@ class GameEngine:
                 )
         else:
             # Success - consume materials and add output
-            recipe_db.consume_materials(recipe, self.character.inventory)
+            print(f"✅ Consuming materials after SUCCESS")
+            consumed = recipe_db.consume_materials(recipe, self.character.inventory)
+            print(f"   Consumed: {consumed}")
 
             # Record activity and XP
             activity_map = {

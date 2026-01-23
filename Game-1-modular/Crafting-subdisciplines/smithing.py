@@ -173,7 +173,7 @@ class SmithingMinigame:
         Update minigame state
 
         Args:
-            dt: Delta time in milliseconds
+            dt: Delta time in seconds
         """
         if not self.active:
             return
@@ -202,9 +202,8 @@ class SmithingMinigame:
                 self.hammer_direction *= -1
                 self.hammer_position = max(0, min(self.HAMMER_BAR_WIDTH, self.hammer_position))
 
-        # Timer (rough implementation - improve for production)
-        # TODO: Use proper delta time for accurate timing
-        self.time_left = max(0, self.time_left - dt / 1000.0)
+        # Timer - dt is already in seconds, no need to divide
+        self.time_left = max(0, self.time_left - dt)
         if self.time_left <= 0:
             self.end(completed=False, reason="Time's up!")
 
@@ -264,7 +263,7 @@ class SmithingMinigame:
 
         # Calculate earned/max points for crafted stats system
         earned_points = sum(self.hammer_scores)  # Total actual points earned
-        max_points = self.required_hits * 100  # Perfect score (100 per hit)
+        max_points = self.REQUIRED_HITS * 100  # Perfect score (100 per hit)
 
         # Use reward calculator for scaling bonuses
         try:

@@ -235,17 +235,11 @@ class RefiningMinigame:
 
         cylinder = self.cylinders[self.current_cylinder]
 
-        # IMMEDIATELY capture the angle when button is pressed (before any further updates)
-        # This ensures the visual and logic use the same value
+        # Capture angle when button pressed for feedback (red mark)
         angle = cylinder["angle"]
 
-        # Store the attempt angle for visual feedback
+        # Store the attempt angle for visual feedback (red mark)
         cylinder["last_attempt_angle"] = angle
-
-        # STOP rotation immediately to prevent visual drift
-        # The cylinder should freeze at the attempted position
-        original_aligned_state = cylinder["aligned"]
-        cylinder["aligned"] = True  # Temporarily stop rotation
 
         target = cylinder["target_zone"]
 
@@ -253,15 +247,14 @@ class RefiningMinigame:
         distance = min(abs(angle - target), 360 - abs(angle - target))
 
         # Convert timing window from seconds to degrees
-        # timing_window seconds * speed rotations/sec * 360 degrees/rotation
         window_degrees = self.timing_window * cylinder["speed"] * 360
 
         if distance <= window_degrees / 2:
-            # SUCCESS!
-            # cylinder["aligned"] already set to True above
+            # SUCCESS! Stop rotation on this cylinder
+            cylinder["aligned"] = True
             self.aligned_cylinders.append(self.current_cylinder)
             self.current_cylinder += 1
-            self.feedback_timer = 0.3  # Show success feedback for 0.3 seconds
+            self.feedback_timer = 0.3  # Show success feedback
 
             # Check if all cylinders aligned
             if self.current_cylinder >= self.cylinder_count:
@@ -269,8 +262,7 @@ class RefiningMinigame:
 
             return True
         else:
-            # FAILURE - but keep the cylinder stopped at the attempted position
-            # Don't restore rotation - player can see exactly where they stopped
+            # FAILURE - keep spinner rotating, just show red mark
             self.failed_attempts += 1
             self.feedback_timer = 0.3  # Show failure feedback
 
