@@ -736,7 +736,7 @@ class AlchemyMinigame:
             "explosions": self.explosions,
             "earned_points": earned_points,
             "max_points": max_points,
-            "message": f"{quality}! Duration: {int(duration_mult*100)}%, Effect: {int(effect_mult*100)}%"
+            "message": f"Quality: {earned_points}/{max_points} points | Duration: {int(duration_mult*100)}%, Effect: {int(effect_mult*100)}%"
         }
 
     def get_state(self):
@@ -1007,6 +1007,12 @@ class AlchemyCrafter:
         recipe_tags = recipe.get('metadata', {}).get('tags', [])
         is_consumable = AlchemyTagProcessor.is_consumable(recipe_tags)
         effect_type = AlchemyTagProcessor.get_effect_type(recipe_tags)
+
+        # Instant-effect potions (healing, damage) shouldn't have duration stats
+        if effect_type in ['heal', 'damage']:
+            # Remove duration from stats for instant effects
+            modified_stats.pop('duration', None)
+            print(f"   [Alchemy] Removed duration stat for instant-effect potion ({effect_type})")
 
         # Debug output
         debugger = get_tag_debugger()
