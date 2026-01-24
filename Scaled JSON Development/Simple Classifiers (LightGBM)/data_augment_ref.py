@@ -1,516 +1,192 @@
 """
-LightGBM Recipe Classifier - Train and Test
-Trains classifiers for crafting recipe validation across three disciplines.
-FIXED: Feature extraction now matches validation script exactly.
+Refining Recipe Data Augmentation
+Generates training dataset with positive and negative samples
 """
 
 import json
-import numpy as np
-import lightgbm as lgb
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, \
-    confusion_matrix
-from collections import Counter, defaultdict
-import pickle
-from typing import Dict, List, Tuple, Any
-import os
+import random
+import uuid
+import copy
+from typing import List, Dict, Tuple
+from collections import Counter
 
-
-# ============================================================================
-# FEATURE ENGINEERING (FIXED TO MATCH VALIDATION SCRIPT)
-# ============================================================================
-
-class RecipeFeatureExtractor:
-    """Extract features from recipes for LightGBM."""
-
-    def __init__(self, all_materials: Dict[str, Dict]):
-        self.all_materials = all_materials
-        self.material_to_idx = {mat_id: idx for idx, mat_id in enumerate(all_materials.keys())}
-        self.category_to_idx = {}
-        self.refinement_to_idx = {}
-        self.tag_to_idx = {}
-
-        # Build vocabulary
-        self._build_vocabularies()
-
-    def _build_vocabularies(self):
-        """Build index mappings for categories, refinement levels, tags."""
-        categories = set()
-        refinements = set()
-        tags = set()
-
-        for mat in self.all_materials.values():
-            categories.add(mat.get('category', 'unknown'))
-
-            # Handle refinement_level - might be in metadata.tags
-            refinement = mat.get('refinement_level')
-            if refinement:
-                refinements.add(refinement)
-            else:
-                # Try to infer from tags
-                mat_tags = mat.get('metadata', {}).get('tags', [])
-                for tag in mat_tags:
-                    if tag in ['basic', 'refined', 'raw', 'processed']:
-                        refinements.add(tag)
-
-            # Get tags from metadata
-            for tag in mat.get('metadata', {}).get('tags', []):
-                tags.add(tag)
-
-        if not refinements:
-            refinements.add('basic')
-
-        self.category_to_idx = {cat: idx for idx, cat in enumerate(sorted(categories))}
-        self.refinement_to_idx = {ref: idx for idx, ref in enumerate(sorted(refinements))}
-        self.tag_to_idx = {tag: idx for idx, tag in enumerate(sorted(tags))}
-
-    def _get_refinement_level(self, material: Dict) -> str:
-        """Get refinement level from material (handle different formats)."""
-        # Direct field
-        if 'refinement_level' in material:
-            return material['refinement_level']
-
-        # From tags
-        tags = material.get('metadata', {}).get('tags', [])
-        for tag in tags:
-            if tag in ['basic', 'refined', 'raw', 'processed']:
-                return tag
-
-        return 'basic'
-
-    def extract_refining_features(self, recipe: Dict) -> np.ndarray:
-        """Extract features from refining recipe (hub-and-spoke)."""
-        features = []
-
-        # Basic counts
-        num_cores = len(recipe.get('coreInputs', []))
-        num_spokes = len(recipe.get('surroundingInputs', []))
-        features.extend([num_cores, num_spokes])
-
-        # Total quantities
-        core_qty = sum(c.get('quantity', 0) for c in recipe.get('coreInputs', []))
-        spoke_qty = sum(s.get('quantity', 0) for s in recipe.get('surroundingInputs', []))
-        features.extend([core_qty, spoke_qty])
-
-        # Ratio features
-        features.append(num_spokes / max(1, num_cores))
-        features.append(spoke_qty / max(1, core_qty))
-
-        # Material diversity features
-        all_materials_used = [c['materialId'] for c in recipe.get('coreInputs', [])]
-        all_materials_used.extend([s['materialId'] for s in recipe.get('surroundingInputs', [])])
-        features.append(len(set(all_materials_used)))  # Unique materials
-
-        # Category distribution (cores)
-        core_categories = [self.all_materials.get(c['materialId'], {}).get('category', 'unknown')
-                           for c in recipe.get('coreInputs', [])]
-        category_counts = Counter(core_categories)
-        for cat_idx in range(len(self.category_to_idx)):
-            cat_name = list(self.category_to_idx.keys())[cat_idx]
-            features.append(category_counts.get(cat_name, 0))
-
-        # Refinement level distribution (cores) - FIXED
-        core_refinements = [self._get_refinement_level(self.all_materials.get(c['materialId'], {}))
-                            for c in recipe.get('coreInputs', [])]
-        refinement_counts = Counter(core_refinements)
-        for ref_idx in range(len(self.refinement_to_idx)):
-            ref_name = list(self.refinement_to_idx.keys())[ref_idx]
-            features.append(refinement_counts.get(ref_name, 0))
-
-        # Tier statistics
-        core_tiers = [self.all_materials.get(c['materialId'], {}).get('tier', 1)
-                      for c in recipe.get('coreInputs', [])]
-        spoke_tiers = [self.all_materials.get(s['materialId'], {}).get('tier', 1)
-                       for s in recipe.get('surroundingInputs', [])]
-
-        features.append(np.mean(core_tiers) if core_tiers else 0)
-        features.append(np.max(core_tiers) if core_tiers else 0)
-        features.append(np.mean(spoke_tiers) if spoke_tiers else 0)
-        features.append(np.max(spoke_tiers) if spoke_tiers else 0)
-
-        # Tier mismatch (cores vs spokes)
-        if core_tiers and spoke_tiers:
-            features.append(abs(np.mean(core_tiers) - np.mean(spoke_tiers)))
-        else:
-            features.append(0)
-
-        # Station tier
-        features.append(recipe.get('stationTier', 1))
-
-        return np.array(features)
-
-    def extract_alchemy_features(self, recipe: Dict) -> np.ndarray:
-        """Extract features from alchemy recipe (sequential)."""
-        features = []
-
-        ingredients = recipe.get('ingredients', [])
-
-        # Basic counts
-        num_ingredients = len(ingredients)
-        features.append(num_ingredients)
-
-        # Total quantity
-        total_qty = sum(ing.get('quantity', 0) for ing in ingredients)
-        features.append(total_qty)
-
-        # Average quantity
-        features.append(total_qty / max(1, num_ingredients))
-
-        # Position-based features (first 3 positions matter most)
-        for pos in range(6):  # Fixed size for first 6 positions
-            if pos < len(ingredients):
-                ing = ingredients[pos]
-                mat_id = ing['materialId']
-                mat = self.all_materials.get(mat_id, {})
-
-                # Material tier at this position
-                features.append(mat.get('tier', 1))
-
-                # Quantity at this position
-                features.append(ing.get('quantity', 0))
-
-                # Category at this position (one-hot-ish)
-                cat = mat.get('category', 'unknown')
-                cat_idx = self.category_to_idx.get(cat, 0)
-                features.append(cat_idx)
-            else:
-                # Padding
-                features.extend([0, 0, 0])
-
-        # Material diversity
-        unique_materials = len(set(ing['materialId'] for ing in ingredients))
-        features.append(unique_materials)
-
-        # Category distribution
-        categories = [self.all_materials.get(ing['materialId'], {}).get('category', 'unknown')
-                      for ing in ingredients]
-        category_counts = Counter(categories)
-        for cat_idx in range(len(self.category_to_idx)):
-            cat_name = list(self.category_to_idx.keys())[cat_idx]
-            features.append(category_counts.get(cat_name, 0))
-
-        # Refinement distribution - FIXED
-        refinements = [self._get_refinement_level(self.all_materials.get(ing['materialId'], {}))
-                       for ing in ingredients]
-        refinement_counts = Counter(refinements)
-        for ref_idx in range(len(self.refinement_to_idx)):
-            ref_name = list(self.refinement_to_idx.keys())[ref_idx]
-            features.append(refinement_counts.get(ref_name, 0))
-
-        # Tier statistics
-        tiers = [self.all_materials.get(ing['materialId'], {}).get('tier', 1)
-                 for ing in ingredients]
-        features.append(np.mean(tiers) if tiers else 0)
-        features.append(np.max(tiers) if tiers else 0)
-        features.append(np.std(tiers) if len(tiers) > 1 else 0)
-
-        # Sequential patterns (tier progression)
-        if len(tiers) >= 2:
-            tier_increases = sum(1 for i in range(len(tiers) - 1) if tiers[i + 1] > tiers[i])
-            tier_decreases = sum(1 for i in range(len(tiers) - 1) if tiers[i + 1] < tiers[i])
-            features.extend([tier_increases, tier_decreases])
-        else:
-            features.extend([0, 0])
-
-        # Station tier
-        features.append(recipe.get('stationTier', 1))
-
-        return np.array(features)
-
-    def extract_engineering_features(self, recipe: Dict) -> np.ndarray:
-        """Extract features from engineering recipe (slot-based)."""
-        features = []
-
-        slots = recipe.get('slots', [])
-
-        # Basic counts
-        num_slots = len(slots)
-        features.append(num_slots)
-
-        # Total quantity
-        total_qty = sum(slot.get('quantity', 0) for slot in slots)
-        features.append(total_qty)
-
-        # Slot type distribution
-        slot_types = [slot.get('type', 'unknown') for slot in slots]
-        slot_type_counts = Counter(slot_types)
-
-        # Count each standard slot type
-        for slot_type in ['FRAME', 'FUNCTION', 'POWER', 'MODIFIER', 'UTILITY', 'ENHANCEMENT', 'CORE', 'CATALYST']:
-            features.append(slot_type_counts.get(slot_type, 0))
-
-        # Diversity: unique slot types
-        features.append(len(set(slot_types)))
-
-        # Critical slots present (binary)
-        features.append(1 if 'FRAME' in slot_types else 0)
-        features.append(1 if 'FUNCTION' in slot_types else 0)
-        features.append(1 if 'POWER' in slot_types else 0)
-
-        # Material diversity
-        unique_materials = len(set(slot['materialId'] for slot in slots))
-        features.append(unique_materials)
-
-        # Category distribution
-        categories = [self.all_materials.get(slot['materialId'], {}).get('category', 'unknown')
-                      for slot in slots]
-        category_counts = Counter(categories)
-        for cat_idx in range(len(self.category_to_idx)):
-            cat_name = list(self.category_to_idx.keys())[cat_idx]
-            features.append(category_counts.get(cat_name, 0))
-
-        # Refinement distribution - FIXED
-        refinements = [self._get_refinement_level(self.all_materials.get(slot['materialId'], {}))
-                       for slot in slots]
-        refinement_counts = Counter(refinements)
-        for ref_idx in range(len(self.refinement_to_idx)):
-            ref_name = list(self.refinement_to_idx.keys())[ref_idx]
-            features.append(refinement_counts.get(ref_name, 0))
-
-        # Tier statistics
-        tiers = [self.all_materials.get(slot['materialId'], {}).get('tier', 1)
-                 for slot in slots]
-        features.append(np.mean(tiers) if tiers else 0)
-        features.append(np.max(tiers) if tiers else 0)
-        features.append(np.std(tiers) if len(tiers) > 1 else 0)
-
-        # Quantity statistics per slot type
-        frame_qty = sum(s.get('quantity', 0) for s in slots if s.get('type') == 'FRAME')
-        power_qty = sum(s.get('quantity', 0) for s in slots if s.get('type') == 'POWER')
-        function_qty = sum(s.get('quantity', 0) for s in slots if s.get('type') == 'FUNCTION')
-        features.extend([frame_qty, power_qty, function_qty])
-
-        # Station tier
-        features.append(recipe.get('stationTier', 1))
-
-        return np.array(features)
-
-
-# ============================================================================
-# TRAINING AND TESTING
-# ============================================================================
-
-def load_dataset(filepath: str) -> Tuple[List[Dict], List[int], str]:
-    """Load augmented dataset."""
+def load_json(filepath: str) -> Dict:
+    """Load JSON file."""
     with open(filepath, 'r') as f:
-        data = json.load(f)
-
-    recipes = [item['recipe'] for item in data['data']]
-    labels = [item['label'] for item in data['data']]
-    discipline = data['discipline']
-
-    return recipes, labels, discipline
+        return json.load(f)
 
 
-def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
-    """Train LightGBM classifier."""
-    print("\n🎓 Training LightGBM classifier...")
-
-    # Create datasets
-    train_data = lgb.Dataset(X_train, label=y_train)
-    test_data = lgb.Dataset(X_test, label=y_test, reference=train_data)
-
-    # Parameters
-    params = {
-        'objective': 'binary',
-        'metric': 'binary_logloss',
-        'boosting_type': 'gbdt',
-        'num_leaves': 31,
-        'learning_rate': 0.05,
-        'feature_fraction': 0.9,
-        'bagging_fraction': 0.8,
-        'bagging_freq': 5,
-        'verbose': -1
+def save_dataset(recipes: List[Dict], labels: List[int], output_path: str):
+    """Save augmented dataset."""
+    dataset = {
+        'discipline': 'refining',
+        'total_samples': len(recipes),
+        'positive_samples': sum(labels),
+        'negative_samples': len(labels) - sum(labels),
+        'data': [
+            {'recipe': recipe, 'label': label}
+            for recipe, label in zip(recipes, labels)
+        ]
     }
 
-    # Train
-    model = lgb.train(
-        params,
-        train_data,
-        num_boost_round=200,
-        valid_sets=[test_data],
-        callbacks=[lgb.early_stopping(stopping_rounds=20), lgb.log_evaluation(period=0)]
-    )
+    with open(output_path, 'w') as f:
+        json.dump(dataset, f, indent=2)
 
-    return model
+    print(f"✅ Saved {len(recipes)} samples ({sum(labels)} positive, {len(labels) - sum(labels)} negative)")
 
 
-def evaluate_model(model, X_test, y_test):
-    """Evaluate model performance."""
-    print("\n📊 Evaluating model...")
+def find_same_category_materials(material_id: str, all_materials: Dict) -> List[str]:
+    """Find materials with same category."""
+    if material_id not in all_materials:
+        return []
 
-    # Predictions
-    y_pred_proba = model.predict(X_test, num_iteration=model.best_iteration)
-    y_pred = (y_pred_proba > 0.5).astype(int)
+    base_category = all_materials[material_id].get('category', 'unknown')
 
-    # Metrics
-    accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
+    candidates = [
+        mid for mid, mat in all_materials.items()
+        if mat.get('category') == base_category and mid != material_id
+    ]
 
-    print(f"\n{'=' * 50}")
-    print(f"PERFORMANCE METRICS")
-    print(f"{'=' * 50}")
-    print(f"Accuracy:  {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall:    {recall:.4f}")
-    print(f"F1 Score:  {f1:.4f}")
-    print(f"{'=' * 50}")
-
-    # Confusion matrix
-    cm = confusion_matrix(y_test, y_pred)
-    print(f"\nConfusion Matrix:")
-    print(f"                 Predicted")
-    print(f"                 0      1")
-    print(f"Actual  0     {cm[0][0]:5d}  {cm[0][1]:5d}")
-    print(f"        1     {cm[1][0]:5d}  {cm[1][1]:5d}")
-
-    # Classification report
-    print(f"\nDetailed Classification Report:")
-    print(classification_report(y_test, y_pred, target_names=['Invalid', 'Valid']))
-
-    return accuracy, precision, recall, f1
+    return candidates
 
 
-def save_model(model, feature_extractor, discipline, output_dir):
-    """Save trained model and feature extractor."""
-    os.makedirs(output_dir, exist_ok=True)
+def find_different_category_materials(material_id: str, all_materials: Dict) -> List[str]:
+    """Find materials with different category."""
+    if material_id not in all_materials:
+        return []
 
-    model_path = os.path.join(output_dir, f'{discipline}_model.txt')
-    extractor_path = os.path.join(output_dir, f'{discipline}_extractor.pkl')
+    base_category = all_materials[material_id].get('category', 'unknown')
 
-    # Save LightGBM model
-    model.save_model(model_path)
+    candidates = [
+        mid for mid, mat in all_materials.items()
+        if mat.get('category') != base_category
+    ]
 
-    # Save feature extractor
-    with open(extractor_path, 'wb') as f:
-        pickle.dump(feature_extractor, f)
-
-    print(f"\n✅ Model saved to: {model_path}")
-    print(f"✅ Feature extractor saved to: {extractor_path}")
+    return candidates
 
 
-def load_model(discipline, model_dir):
-    """Load trained model and feature extractor."""
-    model_path = os.path.join(model_dir, f'{discipline}_model.txt')
-    extractor_path = os.path.join(model_dir, f'{discipline}_extractor.pkl')
+def augment_recipe_simple(recipe: Dict, all_materials: Dict, num_variants: int = 5) -> List[Dict]:
+    """
+    Generate simple variants by substituting materials within same category.
+    ALWAYS includes the original recipe.
+    """
+    variants = [copy.deepcopy(recipe)]  # Always include original
 
-    model = lgb.Booster(model_file=model_path)
+    for _ in range(num_variants - 1):
+        variant = copy.deepcopy(recipe)
+        variant['recipeId'] = f"{recipe['recipeId']}_var_{uuid.uuid4().hex[:8]}"
 
-    with open(extractor_path, 'rb') as f:
-        feature_extractor = pickle.load(f)
+        # Randomly substitute one core material
+        if variant['coreInputs'] and random.random() < 0.7:
+            idx = random.randint(0, len(variant['coreInputs']) - 1)
+            mat_id = variant['coreInputs'][idx]['materialId']
+            substitutes = find_same_category_materials(mat_id, all_materials)
+            if substitutes:
+                variant['coreInputs'][idx]['materialId'] = random.choice(substitutes)
 
-    return model, feature_extractor
+        # Randomly substitute one spoke material
+        if variant['surroundingInputs'] and random.random() < 0.5:
+            idx = random.randint(0, len(variant['surroundingInputs']) - 1)
+            mat_id = variant['surroundingInputs'][idx]['materialId']
+            substitutes = find_same_category_materials(mat_id, all_materials)
+            if substitutes:
+                variant['surroundingInputs'][idx]['materialId'] = random.choice(substitutes)
 
+        variants.append(variant)
 
-def test_single_recipe(recipe: Dict, model, feature_extractor, discipline: str):
-    """Test a single recipe."""
-    # Extract features
-    if discipline == 'refining':
-        features = feature_extractor.extract_refining_features(recipe)
-    elif discipline == 'alchemy':
-        features = feature_extractor.extract_alchemy_features(recipe)
-    elif discipline == 'engineering':
-        features = feature_extractor.extract_engineering_features(recipe)
-    else:
-        raise ValueError(f"Unknown discipline: {discipline}")
-
-    # Predict
-    features = features.reshape(1, -1)
-    prob = model.predict(features, num_iteration=model.best_iteration)[0]
-    prediction = 1 if prob > 0.5 else 0
-
-    return prediction, prob
+    return variants
 
 
-# ============================================================================
-# MAIN
-# ============================================================================
+def generate_negative_samples(valid_recipes: List[Dict], all_materials: Dict, num_per_recipe: int = 3) -> List[Dict]:
+    """Generate invalid recipes."""
+    negatives = []
+
+    for recipe in valid_recipes:
+        for _ in range(num_per_recipe):
+            negative = copy.deepcopy(recipe)
+            negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
+
+            # Type 1: Wrong category substitution (most common error)
+            if negative['coreInputs'] and random.random() < 0.6:
+                idx = random.randint(0, len(negative['coreInputs']) - 1)
+                mat_id = negative['coreInputs'][idx]['materialId']
+                wrong_materials = find_different_category_materials(mat_id, all_materials)
+                if wrong_materials:
+                    negative['coreInputs'][idx]['materialId'] = random.choice(wrong_materials)
+
+            # Type 2: Too many spokes (violate ratio)
+            elif random.random() < 0.3:
+                num_extra = random.randint(4, 8)
+                for _ in range(num_extra):
+                    negative['surroundingInputs'].append({
+                        'materialId': random.choice(list(all_materials.keys())),
+                        'quantity': random.randint(1, 3)
+                    })
+
+            # Type 3: Random invalid combination
+            else:
+                negative['coreInputs'] = [
+                    {'materialId': random.choice(list(all_materials.keys())), 'quantity': random.randint(1, 3)}
+                    for _ in range(random.randint(1, 3))
+                ]
+                negative['surroundingInputs'] = [
+                    {'materialId': random.choice(list(all_materials.keys())), 'quantity': random.randint(1, 3)}
+                    for _ in range(random.randint(0, 5))
+                ]
+
+            negatives.append(negative)
+
+    return negatives
+
 
 def main():
-    print("=" * 70)
-    print("LIGHTGBM RECIPE CLASSIFIER - TRAIN & TEST")
-    print("FIXED: Feature extraction matches validation script")
-    print("=" * 70)
+    print("="*70)
+    print("REFINING RECIPE DATA AUGMENTATION")
+    print("="*70)
 
-    print("\nOptions:")
-    print("  1. Train new model")
-    print("  2. Test existing model")
+    # Get inputs
+    materials_path = input("Enter path to materials JSON: ").strip()
+    placements_path = input("Enter path to placements JSON: ").strip()
+    output_path = input("Enter output path for augmented dataset: ").strip()
 
-    choice = input("\nEnter choice (1 or 2): ").strip()
+    # Load data
+    print("\n📂 Loading data...")
+    materials_data = load_json(materials_path)
+    placements_data = load_json(placements_path)
 
-    if choice == '1':
-        # TRAINING MODE
-        dataset_path = input("Enter path to augmented dataset JSON: ").strip()
-        materials_path = input("Enter path to materials JSON: ").strip()
-        model_output_dir = input("Enter directory to save model: ").strip()
+    all_materials = {m['materialId']: m for m in materials_data['materials']}
+    original_recipes = placements_data['placements']
 
-        # Load data
-        print("\n📂 Loading data...")
-        recipes, labels, discipline = load_dataset(dataset_path)
+    print(f"   Loaded {len(original_recipes)} original recipes")
+    print(f"   Loaded {len(all_materials)} materials")
 
-        with open(materials_path, 'r') as f:
-            materials_data = json.load(f)
-        all_materials = {m['materialId']: m for m in materials_data['materials']}
+    # Generate positive samples (augment originals)
+    print("\n🔄 Generating positive samples...")
+    all_positives = []
+    for recipe in original_recipes:
+        variants = augment_recipe_simple(recipe, all_materials, num_variants=8)
+        all_positives.extend(variants)
 
-        print(f"   Discipline: {discipline}")
-        print(f"   Total recipes: {len(recipes)}")
-        print(f"   Valid recipes: {sum(labels)}")
-        print(f"   Invalid recipes: {len(labels) - sum(labels)}")
-        print(f"   Materials: {len(all_materials)}")
+    print(f"   Generated {len(all_positives)} positive samples (includes all originals)")
 
-        # Create feature extractor
-        print("\n🔧 Building feature extractor...")
-        feature_extractor = RecipeFeatureExtractor(all_materials)
+    # Generate negative samples
+    print("\n❌ Generating negative samples...")
+    negatives = generate_negative_samples(original_recipes, all_materials, num_per_recipe=5)
+    print(f"   Generated {len(negatives)} negative samples")
 
-        print(f"   Categories: {len(feature_extractor.category_to_idx)}")
-        print(f"   Refinement levels: {len(feature_extractor.refinement_to_idx)}")
-        print(f"   Tags: {len(feature_extractor.tag_to_idx)}")
+    # Combine and shuffle
+    all_recipes = all_positives + negatives
+    all_labels = [1] * len(all_positives) + [0] * len(negatives)
 
-        # Extract features
-        print(f"🔧 Extracting features for {discipline}...")
-        X = []
-        for recipe in recipes:
-            if discipline == 'refining':
-                features = feature_extractor.extract_refining_features(recipe)
-            elif discipline == 'alchemy':
-                features = feature_extractor.extract_alchemy_features(recipe)
-            elif discipline == 'engineering':
-                features = feature_extractor.extract_engineering_features(recipe)
-            X.append(features)
+    combined = list(zip(all_recipes, all_labels))
+    random.shuffle(combined)
+    all_recipes, all_labels = zip(*combined)
 
-        X = np.array(X)
-        y = np.array(labels)
+    # Save
+    print("\n💾 Saving dataset...")
+    save_dataset(list(all_recipes), list(all_labels), output_path)
 
-        print(f"   Feature dimension: {X.shape[1]}")
-
-        # Split data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42, stratify=y
-        )
-
-        print(f"   Training set: {len(X_train)} samples")
-        print(f"   Test set: {len(X_test)} samples")
-
-        # Train model
-        model = train_lightgbm_classifier(X_train, y_train, X_test, y_test)
-
-        # Evaluate
-        evaluate_model(model, X_test, y_test)
-
-        # Save model
-        save_model(model, feature_extractor, discipline, model_output_dir)
-
-        print("\n✨ Training complete!")
-
-    elif choice == '2':
-        # TESTING MODE
-        print("\nTesting mode coming soon! For now, please train a model first.")
-        print("You can test recipes by loading the model in your own code.")
-
-    else:
-        print("❌ Invalid choice. Please enter 1 or 2.")
+    print("\n✨ Augmentation complete!")
 
 
 if __name__ == "__main__":
