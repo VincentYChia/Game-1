@@ -47,6 +47,10 @@ class InteractiveBaseUI(ABC):
         # Track materials borrowed from inventory (to return on cancel)
         self.borrowed_materials: Dict[str, int] = {}  # {item_id: quantity}
 
+        # Player narrative input for LLM item generation
+        self.player_narrative: str = ""
+        self.narrative_input_active: bool = False  # For UI text input state
+
     def get_available_materials(self) -> List[ItemStack]:
         """
         Get materials from inventory that can be used at this station.

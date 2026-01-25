@@ -14,6 +14,7 @@ Design principles:
 
 import json
 import os
+import threading
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass, field
@@ -44,6 +45,66 @@ class LLMConfig:
     cache_enabled: bool = True
     cache_dir: str = "invented_items_cache"
 
+    # Few-shot settings
+    max_few_shot_examples: int = 3
+
+
+# ==============================================================================
+# LOADING STATE (Thread-safe for UI indicator)
+# ==============================================================================
+
+class LoadingState:
+    """Thread-safe loading state for UI indicators"""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._is_loading = False
+        self._message = ""
+        self._progress = 0.0  # 0.0 to 1.0
+
+    @property
+    def is_loading(self) -> bool:
+        with self._lock:
+            return self._is_loading
+
+    @property
+    def message(self) -> str:
+        with self._lock:
+            return self._message
+
+    @property
+    def progress(self) -> float:
+        with self._lock:
+            return self._progress
+
+    def start(self, message: str = "Loading..."):
+        with self._lock:
+            self._is_loading = True
+            self._message = message
+            self._progress = 0.0
+
+    def update(self, message: str = None, progress: float = None):
+        with self._lock:
+            if message is not None:
+                self._message = message
+            if progress is not None:
+                self._progress = min(1.0, max(0.0, progress))
+
+    def finish(self):
+        with self._lock:
+            self._is_loading = False
+            self._message = ""
+            self._progress = 1.0
+
+
+# Global loading state instance
+_loading_state = LoadingState()
+
+
+def get_loading_state() -> LoadingState:
+    """Get the global loading state instance"""
+    return _loading_state
+
 
 # ==============================================================================
 # RESULT TYPES
@@ -59,6 +120,11 @@ class GeneratedItem:
     discipline: str = ""
     error: Optional[str] = None
     from_cache: bool = False
+
+    # Recipe data for save system
+    recipe_inputs: Optional[List[Dict]] = None
+    station_tier: int = 1
+    narrative: str = ""
 
     @property
     def is_error(self) -> bool:

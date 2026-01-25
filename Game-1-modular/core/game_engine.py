@@ -472,6 +472,31 @@ class GameEngine:
                 if self.character is None:
                     continue
 
+                # Narrative text input handling (for INVENT feature)
+                if (self.interactive_crafting_active and self.interactive_ui and
+                    getattr(self.interactive_ui, 'narrative_input_active', False)):
+                    # Handle text input for narrative
+                    if event.key == pygame.K_ESCAPE:
+                        # Deactivate narrative input
+                        self.interactive_ui.narrative_input_active = False
+                        print("✓ Narrative input deactivated")
+                        continue
+                    elif event.key == pygame.K_RETURN:
+                        # Deactivate input (submit narrative)
+                        self.interactive_ui.narrative_input_active = False
+                        print(f"✓ Narrative submitted: {self.interactive_ui.player_narrative[:50]}...")
+                        continue
+                    elif event.key == pygame.K_BACKSPACE:
+                        # Delete last character
+                        if self.interactive_ui.player_narrative:
+                            self.interactive_ui.player_narrative = self.interactive_ui.player_narrative[:-1]
+                        continue
+                    elif event.unicode and event.unicode.isprintable():
+                        # Add character (limit to 200 chars)
+                        if len(self.interactive_ui.player_narrative) < 200:
+                            self.interactive_ui.player_narrative += event.unicode
+                        continue
+
                 if event.key == pygame.K_ESCAPE:
                     if self.enchantment_selection_active:
                         self._close_enchantment_selection()
@@ -2159,24 +2184,45 @@ class GameEngine:
 
     def _preload_classifier(self, discipline: str):
         """Preload the classifier for a discipline in the background"""
-        try:
-            from systems.crafting_classifier import get_classifier_manager, init_classifier_manager
-            from data.databases import MaterialDatabase
-            from pathlib import Path
+        import threading
 
-            classifier_mgr = get_classifier_manager()
+        def background_load():
+            try:
+                from systems.crafting_classifier import get_classifier_manager, init_classifier_manager
+                from systems.llm_item_generator import get_loading_state
+                from data.databases import MaterialDatabase
+                from pathlib import Path
 
-            # Initialize if not already done
-            if classifier_mgr is None:
-                project_root = Path(__file__).parent.parent.parent
-                materials_db = MaterialDatabase.get_instance()
-                classifier_mgr = init_classifier_manager(project_root, materials_db)
+                loading_state = get_loading_state()
+                loading_state.start(f"Loading {discipline} classifier...")
 
-            # Preload the specific discipline
-            classifier_mgr.preload(discipline)
+                classifier_mgr = get_classifier_manager()
 
-        except Exception as e:
-            print(f"⚠ Classifier preload failed: {e}")
+                # Initialize if not already done
+                if classifier_mgr is None:
+                    loading_state.update("Initializing classifier manager...", 0.2)
+                    project_root = Path(__file__).parent.parent.parent
+                    materials_db = MaterialDatabase.get_instance()
+                    classifier_mgr = init_classifier_manager(project_root, materials_db)
+
+                # Preload the specific discipline
+                loading_state.update(f"Loading {discipline} model...", 0.5)
+                classifier_mgr.preload(discipline)
+
+                loading_state.finish()
+                print(f"✓ Classifier for {discipline} preloaded in background")
+
+            except Exception as e:
+                print(f"⚠ Classifier preload failed: {e}")
+                try:
+                    from systems.llm_item_generator import get_loading_state
+                    get_loading_state().finish()
+                except:
+                    pass
+
+        # Run in background thread to avoid blocking UI
+        thread = threading.Thread(target=background_load, daemon=True)
+        thread.start()
 
     def _close_interactive_crafting(self):
         """Close interactive crafting UI and return all borrowed materials"""
@@ -2229,6 +2275,19 @@ class GameEngine:
                     # Try to invent a new recipe using classifier
                     self._handle_invent_recipe()
                     return
+
+                elif button_name == 'narrative':
+                    # Activate narrative input
+                    self.interactive_ui.narrative_input_active = True
+                    print("✓ Narrative input activated - start typing")
+                    return
+
+        # Check if click was outside narrative box but inside window (deactivate narrative)
+        if self.interactive_ui.narrative_input_active:
+            narrative_rect = self.interactive_button_rects.get('narrative')
+            if narrative_rect and not narrative_rect.collidepoint(mouse_pos):
+                self.interactive_ui.narrative_input_active = False
+                print("✓ Narrative input deactivated")
 
         # Check material palette clicks
         for mat_rect, item_stack in self.interactive_material_rects:
@@ -2533,9 +2592,15 @@ class GameEngine:
                 )
                 generator = init_item_generator(project_root, materials_db, config)
 
-            # Generate the item
+            # Get player narrative from the interactive UI (if available)
+            player_narrative = ""
+            if self.interactive_ui and hasattr(self.interactive_ui, 'player_narrative'):
+                player_narrative = self.interactive_ui.player_narrative or ""
+            print(f"  Player narrative: {player_narrative[:50]}..." if player_narrative else "  No player narrative")
+
+            # Generate the item with narrative
             self.add_notification("Generating item...", (200, 200, 255))
-            gen_result = generator.generate(discipline, self.interactive_ui)
+            gen_result = generator.generate(discipline, self.interactive_ui, narrative=player_narrative)
 
             if gen_result.success:
                 print(f"\n✓ Item generated successfully!")
@@ -2744,23 +2809,66 @@ class GameEngine:
         """
         Store invented recipe for save/load system (Phase 3).
 
-        This allows player-invented recipes to persist across game sessions.
+        This allows player-invented recipes to persist across game sessions
+        and function as craftable recipes in the crafting UI.
         """
-        # Store in character data for now - will be expanded in Phase 3
+        from data.databases import RecipeDatabase
+        from data.models import Recipe
+
+        # Store in character data
         if not hasattr(self.character, 'invented_recipes'):
             self.character.invented_recipes = []
 
+        # Create a complete recipe record with all data needed to recreate the recipe
         recipe_record = {
             'timestamp': __import__('datetime').datetime.now().isoformat(),
             'discipline': discipline,
             'item_id': gen_result.item_id,
             'item_name': gen_result.item_name,
             'item_data': gen_result.item_data,
-            'from_cache': gen_result.from_cache
+            'from_cache': gen_result.from_cache,
+            # Include recipe inputs for crafting
+            'recipe_inputs': gen_result.recipe_inputs or [],
+            'station_tier': gen_result.station_tier,
+            'narrative': gen_result.narrative
         }
 
         self.character.invented_recipes.append(recipe_record)
-        print(f"  Stored invented recipe: {gen_result.item_id}")
+
+        # Also register with RecipeDatabase for immediate use
+        recipe_id = f"invented_{gen_result.item_id}"
+        recipe = Recipe(
+            recipe_id=recipe_id,
+            output_id=gen_result.item_id,
+            output_qty=1,
+            station_type=discipline,
+            station_tier=gen_result.station_tier,
+            inputs=[
+                {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
+                for inp in (gen_result.recipe_inputs or [])
+            ],
+            grid_size="3x3",
+            mini_game_type=discipline,
+            metadata={
+                'invented': True,
+                'narrative': gen_result.narrative,
+                'timestamp': recipe_record['timestamp']
+            }
+        )
+
+        # Add to database (will be available immediately)
+        recipe_db = RecipeDatabase.get_instance()
+        recipe_db.recipes[recipe_id] = recipe
+
+        # Also add to recipes_by_station for get_recipes_for_station lookup
+        if discipline not in recipe_db.recipes_by_station:
+            recipe_db.recipes_by_station[discipline] = []
+        # Check if not already added (avoid duplicates)
+        if not any(r.recipe_id == recipe_id for r in recipe_db.recipes_by_station[discipline]):
+            recipe_db.recipes_by_station[discipline].append(recipe)
+
+        print(f"  ✓ Stored invented recipe: {gen_result.item_id}")
+        print(f"  ✓ Recipe registered for crafting: {recipe_id}")
 
     def _create_basic_invented_item(self, discipline: str):
         """
@@ -3903,6 +4011,7 @@ class GameEngine:
 
         self.renderer.render_notifications(self.notifications)
         self.renderer.render_debug_messages()
+        self.renderer.render_loading_indicator()  # LLM/Classifier loading indicator
 
         if self.character.class_selection_open:
             result = self.renderer.render_class_selection_ui(self.character, self.mouse_pos)

@@ -2860,8 +2860,11 @@ class Renderer:
         for recipe in recipes:
             output_type = 'Other'
 
+            # Check if this is an invented recipe (player-created via INVENT)
+            if hasattr(recipe, 'metadata') and recipe.metadata.get('invented', False):
+                output_type = 'Invented Recipes'
             # Handle enchanting recipes separately (they don't have materials)
-            if station_type == 'adornments' and hasattr(recipe, 'is_enchantment') and recipe.is_enchantment:
+            elif station_type == 'adornments' and hasattr(recipe, 'is_enchantment') and recipe.is_enchantment:
                 # Enchanting: Just use 'Enchantments' category - we'll sort alphabetically
                 output_type = 'Enchantments'
             elif equip_db.is_equipment(recipe.output_id):
@@ -2944,18 +2947,18 @@ class Renderer:
 
             grouped[output_type].append(recipe)
 
-        # Define order based on station type
+        # Define order based on station type (Invented Recipes always appear first)
         if station_type == 'engineering':
-            type_order = ['Turrets', 'Traps', 'Bombs', 'Utility Devices', 'Crafting Stations', 'Other Devices', 'Other']
+            type_order = ['Invented Recipes', 'Turrets', 'Traps', 'Bombs', 'Utility Devices', 'Crafting Stations', 'Other Devices', 'Other']
         elif station_type == 'alchemy':
-            type_order = ['Health Potions', 'Mana Potions', 'Combat Buffs', 'Movement Buffs', 'Other Potions', 'Other Materials', 'Other']
+            type_order = ['Invented Recipes', 'Health Potions', 'Mana Potions', 'Combat Buffs', 'Movement Buffs', 'Other Potions', 'Other Materials', 'Other']
         elif station_type == 'refining':
-            type_order = ['Metals & Ingots', 'Processed Ores', 'Elemental Materials', 'Refined Resources', 'Other Materials', 'Other']
+            type_order = ['Invented Recipes', 'Metals & Ingots', 'Processed Ores', 'Elemental Materials', 'Refined Resources', 'Other Materials', 'Other']
         elif station_type == 'adornments':
-            type_order = ['Enchantments', 'Other']
+            type_order = ['Invented Recipes', 'Enchantments', 'Other']
         else:
             # Smithing and default
-            type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4+', 'Stations', 'Other']
+            type_order = ['Invented Recipes', 'Weapons', 'Armor', 'Tools', 'Accessories', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4+', 'Stations', 'Other']
 
         # Return as ordered list of tuples
         result = []
@@ -4084,8 +4087,57 @@ class Renderer:
         status_surf = self.font.render(status_text, True, status_color)
         surf.blit(status_surf, (placement_x, bottom_y))
 
+        # Narrative input for INVENT feature (only shown when no recipe matched)
+        narrative_rect = None
+        if not interactive_ui.matched_recipe:
+            narrative_y = bottom_y + s(30)
+            narrative_x = placement_x
+            narrative_w = placement_w - s(20)
+            narrative_h = s(28)
+
+            narrative_rect_local = pygame.Rect(narrative_x, narrative_y, narrative_w, narrative_h)
+
+            # Input box background
+            is_narrative_active = getattr(interactive_ui, 'narrative_input_active', False)
+            bg_color = (50, 55, 70) if is_narrative_active else (35, 40, 50)
+            pygame.draw.rect(surf, bg_color, narrative_rect_local, border_radius=s(3))
+
+            # Border (highlight if active)
+            border_color = (120, 180, 255) if is_narrative_active else (80, 90, 110)
+            pygame.draw.rect(surf, border_color, narrative_rect_local, s(2), border_radius=s(3))
+
+            # Label (small, above the box)
+            label_text = "Describe your invention (optional):"
+            label_surf = self.tiny_font.render(label_text, True, (150, 160, 180))
+            surf.blit(label_surf, (narrative_x, narrative_y - s(14)))
+
+            # Narrative text or placeholder
+            narrative_text = getattr(interactive_ui, 'player_narrative', '') or ''
+            if is_narrative_active:
+                # Add blinking cursor
+                import time
+                if int(time.time() * 2) % 2 == 0:
+                    narrative_text += "|"
+
+            display_text = narrative_text or "Click to describe what you want to create..."
+            text_color = (200, 200, 200) if narrative_text and not narrative_text.endswith("|") else (100, 110, 130)
+            if is_narrative_active and not getattr(interactive_ui, 'player_narrative', ''):
+                display_text = "|"
+                text_color = (200, 200, 200)
+
+            # Truncate if too long
+            max_chars = narrative_w // 7  # Approximate character width
+            if len(display_text) > max_chars:
+                display_text = "..." + display_text[-(max_chars - 3):]
+
+            text_surf = self.small_font.render(display_text, True, text_color)
+            surf.blit(text_surf, (narrative_x + s(8), narrative_y + s(6)))
+
+            # Store rect for click detection
+            narrative_rect = narrative_rect_local.move(wx, wy)
+
         # Buttons (CLEAR, INSTANT CRAFT, MINIGAME)
-        button_y = bottom_y + s(35)
+        button_y = bottom_y + s(35) + (s(45) if not interactive_ui.matched_recipe else 0)
         button_w = s(150)
         button_h = s(40)
         button_spacing = s(20)
@@ -4199,6 +4251,10 @@ class Renderer:
             self.render_tooltip(tooltip_text, mouse_pos)
 
         # Return click regions
+        return {
+        # Add narrative rect to button_rects for click handling
+        button_rects['narrative'] = narrative_rect
+
         return {
             'window_rect': pygame.Rect(wx, wy, ww, wh),
             'material_rects': material_rects,
@@ -5072,3 +5128,77 @@ class Renderer:
         self.screen.blit(surf, (x, y))
         if bold:
             font.set_bold(False)
+
+    def render_loading_indicator(self):
+        """
+        Render a loading indicator in the bottom-right corner.
+        Used for LLM/classifier operations.
+        """
+        try:
+            from systems.llm_item_generator import get_loading_state
+            loading_state = get_loading_state()
+
+            if not loading_state.is_loading:
+                return
+
+            # Position in bottom-right corner
+            padding = 20
+            indicator_width = 250
+            indicator_height = 50
+            x = Config.VIEWPORT_WIDTH - indicator_width - padding
+            y = Config.VIEWPORT_HEIGHT - indicator_height - padding
+
+            # Background with rounded corners effect
+            bg_rect = pygame.Rect(x, y, indicator_width, indicator_height)
+            bg_surface = pygame.Surface((indicator_width, indicator_height), pygame.SRCALPHA)
+            bg_surface.fill((20, 20, 40, 220))
+            self.screen.blit(bg_surface, (x, y))
+
+            # Border
+            pygame.draw.rect(self.screen, (100, 150, 255), bg_rect, 2)
+
+            # Loading message
+            message = loading_state.message or "Loading..."
+            msg_surf = self.small_font.render(message, True, (200, 220, 255))
+            self.screen.blit(msg_surf, (x + 10, y + 8))
+
+            # Progress bar
+            progress = loading_state.progress
+            bar_x = x + 10
+            bar_y = y + 30
+            bar_width = indicator_width - 20
+            bar_height = 10
+
+            # Bar background
+            pygame.draw.rect(self.screen, (40, 40, 60), (bar_x, bar_y, bar_width, bar_height))
+
+            # Bar fill (animated gradient)
+            import time
+            anim_offset = (time.time() * 2) % 1.0  # Pulse animation
+
+            if progress > 0:
+                fill_width = int(bar_width * progress)
+                # Gradient color based on progress
+                r = int(100 + 100 * (1 - progress))
+                g = int(150 + 100 * progress)
+                b = 255
+                pygame.draw.rect(self.screen, (r, g, b), (bar_x, bar_y, fill_width, bar_height))
+            else:
+                # Indeterminate loading animation (scrolling bar)
+                pattern_width = 30
+                offset = int(anim_offset * pattern_width * 2)
+                for i in range(-1, bar_width // pattern_width + 2):
+                    px = bar_x + i * pattern_width + offset
+                    if bar_x <= px < bar_x + bar_width - pattern_width:
+                        color = (100, 150, 255)
+                        stripe_rect = pygame.Rect(px, bar_y, pattern_width // 2, bar_height)
+                        stripe_rect = stripe_rect.clip(pygame.Rect(bar_x, bar_y, bar_width, bar_height))
+                        if stripe_rect.width > 0:
+                            pygame.draw.rect(self.screen, color, stripe_rect)
+
+            # Bar border
+            pygame.draw.rect(self.screen, (100, 150, 255), (bar_x, bar_y, bar_width, bar_height), 1)
+
+        except ImportError:
+            # LLM module not available
+            pass

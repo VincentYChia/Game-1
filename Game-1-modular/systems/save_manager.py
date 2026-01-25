@@ -127,7 +127,7 @@ class SaveManager:
             character: Character instance
 
         Returns:
-            List of invented recipe records
+            List of invented recipe records with full recipe data
         """
         if not hasattr(character, 'invented_recipes'):
             return []
@@ -142,7 +142,11 @@ class SaveManager:
                     "item_id": recipe.get("item_id", ""),
                     "item_name": recipe.get("item_name", ""),
                     "item_data": recipe.get("item_data", {}),
-                    "from_cache": recipe.get("from_cache", False)
+                    "from_cache": recipe.get("from_cache", False),
+                    # Recipe crafting data (for re-registering on load)
+                    "recipe_inputs": recipe.get("recipe_inputs", []),
+                    "station_tier": recipe.get("station_tier", 1),
+                    "narrative": recipe.get("narrative", "")
                 }
                 serialized.append(recipe_record)
             except Exception as e:

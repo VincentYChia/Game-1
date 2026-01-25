@@ -556,23 +556,93 @@ class Character:
         # Restore invented recipes (Phase 3 crafting integration)
         invented_data = player_data.get("invented_recipes", [])
         self.invented_recipes = []
+        registered_count = 0
+
         for recipe_record in invented_data:
             try:
-                self.invented_recipes.append({
+                # Restore full recipe record
+                restored_recipe = {
                     "timestamp": recipe_record.get("timestamp", ""),
                     "discipline": recipe_record.get("discipline", "unknown"),
                     "item_id": recipe_record.get("item_id", ""),
                     "item_name": recipe_record.get("item_name", ""),
                     "item_data": recipe_record.get("item_data", {}),
-                    "from_cache": recipe_record.get("from_cache", False)
-                })
+                    "from_cache": recipe_record.get("from_cache", False),
+                    # Recipe crafting data
+                    "recipe_inputs": recipe_record.get("recipe_inputs", []),
+                    "station_tier": recipe_record.get("station_tier", 1),
+                    "narrative": recipe_record.get("narrative", "")
+                }
+                self.invented_recipes.append(restored_recipe)
+
+                # Register with RecipeDatabase for crafting
+                self._register_invented_recipe(restored_recipe)
+                registered_count += 1
+
             except Exception as e:
                 print(f"Warning: Could not restore invented recipe: {e}")
 
         if invented_data:
             print(f"  ✓ Restored {len(self.invented_recipes)} invented recipe(s)")
+            print(f"  ✓ Registered {registered_count} recipe(s) for crafting")
 
         print(f"✓ Character state restored: Level {self.leveling.level}, HP {self.health}/{self.max_health}")
+
+    def _register_invented_recipe(self, recipe_record: dict):
+        """
+        Register an invented recipe with RecipeDatabase for crafting.
+
+        Args:
+            recipe_record: Dictionary containing recipe data
+        """
+        try:
+            from data.databases import RecipeDatabase
+            from data.models import Recipe
+
+            item_id = recipe_record.get("item_id", "")
+            discipline = recipe_record.get("discipline", "unknown")
+            inputs = recipe_record.get("recipe_inputs", [])
+            station_tier = recipe_record.get("station_tier", 1)
+
+            if not item_id or not inputs:
+                return  # Skip incomplete recipes
+
+            recipe_id = f"invented_{item_id}"
+
+            # Create Recipe object
+            recipe = Recipe(
+                recipe_id=recipe_id,
+                output_id=item_id,
+                output_qty=1,
+                station_type=discipline,
+                station_tier=station_tier,
+                inputs=[
+                    {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
+                    for inp in inputs if inp.get('materialId')
+                ],
+                grid_size="3x3",
+                mini_game_type=discipline,
+                metadata={
+                    'invented': True,
+                    'narrative': recipe_record.get("narrative", ""),
+                    'timestamp': recipe_record.get("timestamp", ""),
+                    'item_name': recipe_record.get("item_name", "")
+                }
+            )
+
+            # Register with database
+            recipe_db = RecipeDatabase.get_instance()
+            recipe_db.recipes[recipe_id] = recipe
+
+            # Also add to recipes_by_station for get_recipes_for_station lookup
+            if discipline not in recipe_db.recipes_by_station:
+                recipe_db.recipes_by_station[discipline] = []
+            # Check if not already added (avoid duplicates)
+            if not any(r.recipe_id == recipe_id for r in recipe_db.recipes_by_station[discipline]):
+                recipe_db.recipes_by_station[discipline].append(recipe)
+
+        except Exception as e:
+            print(f"Warning: Could not register invented recipe {recipe_record.get('item_id', 'unknown')}: {e}")
 
     def recalculate_stats(self):
         """Recalculate character stats based on equipment, class, titles, etc."""
