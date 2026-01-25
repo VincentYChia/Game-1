@@ -29,10 +29,12 @@ import hashlib
 @dataclass
 class LLMConfig:
     """Configuration for LLM item generation"""
-    api_key: str = ""
+    api_key: str = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        raise ValueError("ANTHROPIC_API_KEY environment variable not set")
     model: str = "claude-sonnet-4-20250514"
     max_tokens: int = 2000
-    temperature: float = 0.8  # Slightly lower for more consistent output
+    temperature: float = 0.4  # Slightly lower for more consistent output
     top_p: float = 0.95
     timeout: float = 30.0
     enabled: bool = True
@@ -89,52 +91,71 @@ class PromptBuilder(ABC):
 class SmithingPromptBuilder(PromptBuilder):
     """Builds prompts for smithing item generation"""
 
-    SYSTEM_PROMPT = """You are a game item designer for a fantasy crafting RPG. Generate JSON item definitions for smithing recipes.
+    SYSTEM_PROMPT = """You are a crafting expert for an action fantasy sandbox RPG. Given smithing recipes with materials and metadata, generate complete item definitions with stats, tags, and properties. Return ONLY valid JSON matching the expected schema.
 
-Given a recipe with materials and placement, create a balanced item that:
-1. Matches the tier and rarity of input materials
-2. Has appropriate stats based on item type (weapon, armor, tool)
-3. Includes thematic narrative and tags
+# Smithing Items - Field Guidelines
 
-Output ONLY valid JSON with this structure:
+Generate a JSON object following this template, there is a library of tags to select from. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide.
+
+```json
 {
   "metadata": {
-    "narrative": "2-3 sentences describing the item",
-    "tags": ["tag1", "tag2", "tag3"]
+    "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
+    "tags": ["Pick 2-5 from: "1H", "2H", "accessory", "alchemy", "amulet", "armor", "armor_breaker", "axe", "bash", "bow", "bracelet", "brewing", "chest", "cleaving", "crushing", "dagger", "defensive", "elemental", "engineering", "fast", "feet", "fire", "flexible", "forge", "forging", "hands", "head", "heavy", "legendary", "legs", "light", "lightning", "mace", "master", "mechanical", "melee", "metal", "pickaxe", "precision", "quality", "ranged", "reach", "refinery", "ring", "shield", "smithing", "spear", "staff", "standard", "starter", "station", "sword", "tool", "versatile", "water"]
   },
-  "itemId": "snake_case_id",
-  "name": "Title Case Name",
-  "category": "equipment",
-  "type": "weapon|armor|tool",
-  "subtype": "specific_type",
-  "tier": 1-4,
-  "rarity": "common|uncommon|rare|epic|legendary",
-  "slot": "mainHand|chest|head|feet|hands|legs|accessory",
-  "effectTags": ["physical", "slashing|piercing|crushing", "single"],
+  "category": "Pick one: ["equipment", "station"]",
+  "slot": "Pick one: ["accessory", "chest", "feet", "hands", "head", "legs", "mainHand"]",
+  "type": "Pick one: ["accessory", "alchemy", "armor", "axe", "bow", "dagger", "engineering", "mace", "refining", "shield", "smithing", "staff", "tool", "weapon"]",
+  "tier": 1,  // 1-4 (affects stat ranges below)
+  "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
+
+  // === NUMERIC FIELDS (by tier) ===
+  "range": 0.5-15.0
+
+  "effectTags": ["Pick 2-5 from: "burn", "crushing", "fire", "physical", "piercing", "single", "slashing"],
+
   "effectParams": {
-    "baseDamage": number
+    "baseDamage": 0,  // Tier 1: 10.0-30.0, Tier 2: 18.0-50.0, Tier 3: ~41.0, Tier 4: ~75.0
+    "burn_damage_per_second": 0,  // 
+    "burn_duration": 0,  // 
   },
+
   "stats": {
-    "damage": [min, max],
-    "durability": [current, max],
-    "weight": number
+    "damage[0]": 0,  // Tier 1: ~8.0, Tier 2: ~15.0, Tier 3: ~30.0, Tier 4: ~60.0
+    "damage[1]": 0,  // Tier 1: ~12.0, Tier 2: ~22.0, Tier 3: ~45.0, Tier 4: ~90.0
+    "durability[0]": 0,  // Tier 1: ~500.0, Tier 2: ~1000.0, Tier 3: ~2000.0, Tier 4: ~4000.0
+    "durability[1]": 0,  // Tier 1: ~500.0, Tier 2: ~1000.0, Tier 3: ~2000.0, Tier 4: ~4000.0
+    "forestry": 0,  // 
+    "mining": 0,  // 
+    "weight": 0,  // 2.5-5.5
   },
+
   "requirements": {
-    "level": number,
-    "stats": {}
+    "level": Pick a level requirement,  // Tier 1: 1-5, Tier 2: 6-15, Tier 3: 16-25, Tier 4: 26-30
+    "stats": {
+      "AGI": Pick a value relative to the tier,  // 1-30.
+      "INT": Pick a value relative to the tier,  // 1-30.
+      "STR": Pick a value relative to the tier,  // 1-30.
+    }
   },
+
   "flags": {
     "stackable": false,
     "equippable": true,
     "repairable": true
   }
 }
+```
 
-Tier guidelines:
-- T1: level 1-5, damage 8-30, durability 500
-- T2: level 6-15, damage 15-50, durability 1000
-- T3: level 16-25, damage 30-75, durability 2000
-- T4: level 26-30, damage 60-120, durability 4000"""
+## Important Guidelines:
+
+1. **IDs**: Use snake_case (e.g., `iron_sword`, `health_potion`)
+2. **Names**: Use Title Case matching ID (e.g., `Iron Sword`, `Health Potion`)
+3. **Tier Consistency**: Ensure all stats match the specified tier
+4. **Tags**: Only use tags from the library above
+5. **Narrative**: Keep it concise (2-3 sentences) and thematic
+6. **Stats**: Stay within ±20% of tier ranges
+"""
 
     def build_system_prompt(self) -> str:
         return self.SYSTEM_PROMPT

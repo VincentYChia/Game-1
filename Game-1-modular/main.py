@@ -11,7 +11,7 @@ Architecture:
 - systems/      - Game systems (world, quests, NPCs, titles)
 - rendering/    - All rendering code
 - Combat/       - Combat system
-- Crafting-subdisciplxines/ - Crafting minigames
+- Crafting-subdisciplines/ - Crafting minigames
 """
 
 import sys

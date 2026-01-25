@@ -37,7 +37,7 @@ def load_config():
     print("Loading configuration...")
 
     # Load system metadata (names and templates)
-    with open('config/system_metadata.json', 'r') as f:
+    with open('config/system_metadata.json', 'r', encoding='utf-8') as f:
         system_metadata = json.load(f)
 
     # Load system prompts from individual files
@@ -46,17 +46,17 @@ def load_config():
     for system_key in system_metadata.keys():
         prompt_file = f"{prompts_dir}/system_{system_key}.txt"
         if os.path.exists(prompt_file):
-            with open(prompt_file, 'r') as f:
+            with open(prompt_file, 'r', encoding='utf-8') as f:  # ← FIX HERE
                 system_prompts[system_key] = {
                     "name": system_metadata[system_key]["name"],
                     "prompt": f.read(),
                     "template": system_metadata[system_key].get("template")
                 }
 
-    with open('config/test_inputs.json', 'r') as f:
+    with open('config/test_inputs.json', 'r', encoding='utf-8') as f:
         test_inputs = json.load(f)
 
-    with open('examples/few_shot_examples.json', 'r') as f:
+    with open('examples/few_shot_examples.json', 'r', encoding='utf-8') as f:
         few_shot_examples = json.load(f)
 
     print(f"✓ Loaded {len(system_prompts)} system prompts from individual files")
@@ -64,7 +64,6 @@ def load_config():
     print(f"✓ Loaded {sum(len(ex) for ex in few_shot_examples.values())} total examples\n")
 
     return system_prompts, test_inputs, few_shot_examples
-
 
 # ============================================================================
 # INTERACTIVE MENU
