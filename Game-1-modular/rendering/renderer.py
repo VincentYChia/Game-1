@@ -4250,11 +4250,10 @@ class Renderer:
             tooltip_text = self._pending_tooltips[0]
             self.render_tooltip(tooltip_text, mouse_pos)
 
-        # Return click regions
-        return {
         # Add narrative rect to button_rects for click handling
         button_rects['narrative'] = narrative_rect
 
+        # Return click regions
         return {
             'window_rect': pygame.Rect(wx, wy, ww, wh),
             'material_rects': material_rects,

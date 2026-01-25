@@ -24,15 +24,64 @@ import hashlib
 
 
 # ==============================================================================
+# DEBUG LOGGING
+# ==============================================================================
+
+class LLMDebugLogger:
+    """Logs LLM input/output for debugging"""
+
+    def __init__(self, log_dir: str = "llm_debug_logs"):
+        self.log_dir = Path(log_dir)
+        self.log_dir.mkdir(exist_ok=True)
+        self.enabled = True
+
+    def log_request(self, discipline: str, system_prompt: str, user_prompt: str,
+                    response: str, error: Optional[str] = None):
+        """Log a complete LLM request/response cycle"""
+        if not self.enabled:
+            return
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        filename = f"{timestamp}_{discipline}.json"
+        filepath = self.log_dir / filename
+
+        log_data = {
+            "timestamp": datetime.now().isoformat(),
+            "discipline": discipline,
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt,
+            "response": response,
+            "error": error
+        }
+
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(log_data, f, indent=2, ensure_ascii=False)
+            print(f"  LLM debug log saved: {filepath}")
+        except Exception as e:
+            print(f"  Warning: Failed to save LLM debug log: {e}")
+
+
+# Global debug logger instance
+_llm_debug_logger: Optional[LLMDebugLogger] = None
+
+
+def get_llm_debug_logger() -> LLMDebugLogger:
+    """Get or create the global debug logger"""
+    global _llm_debug_logger
+    if _llm_debug_logger is None:
+        _llm_debug_logger = LLMDebugLogger()
+    return _llm_debug_logger
+
+
+# ==============================================================================
 # CONFIGURATION
 # ==============================================================================
 
 @dataclass
 class LLMConfig:
     """Configuration for LLM item generation"""
-    api_key: str = os.environ.get('ANTHROPIC_API_KEY')
-    if not api_key:
-        raise ValueError("ANTHROPIC_API_KEY environment variable not set")
+    api_key: str = ""  # Set via environment or explicitly
     model: str = "claude-sonnet-4-20250514"
     max_tokens: int = 2000
     temperature: float = 0.4  # Slightly lower for more consistent output
@@ -795,13 +844,14 @@ class LLMItemGenerator:
                 self._prompt_builders[discipline] = builder_class()
         return self._prompt_builders.get(discipline)
 
-    def generate(self, discipline: str, interactive_ui) -> GeneratedItem:
+    def generate(self, discipline: str, interactive_ui, narrative: str = "") -> GeneratedItem:
         """
         Generate a new item from interactive UI state.
 
         Args:
             discipline: One of 'smithing', 'adornments', 'alchemy', 'refining', 'engineering'
             interactive_ui: The InteractiveXUI instance with current placement
+            narrative: Optional player-provided description of desired item
 
         Returns:
             GeneratedItem with item_data if successful
@@ -836,13 +886,18 @@ class LLMItemGenerator:
         cache_key = self._get_cache_key(discipline, recipe_context)
         if self.config.cache_enabled and cache_key in self._cache:
             cached = self._cache[cache_key]
+            recipe_inputs = self._extract_recipe_inputs(recipe_context)
+            station_tier = recipe_context.get('station_tier', 1)
             return GeneratedItem(
                 success=True,
                 item_data=cached,
                 item_id=cached.get('itemId', cached.get('materialId')),
                 item_name=cached.get('name'),
                 discipline=discipline,
-                from_cache=True
+                from_cache=True,
+                recipe_inputs=recipe_inputs,
+                station_tier=station_tier,
+                narrative=narrative
             )
 
         # Build prompts
@@ -862,9 +917,19 @@ class LLMItemGenerator:
             system_prompt, user_prompt, self.config
         )
 
+        # Log input/output for debugging
+        debug_logger = get_llm_debug_logger()
+        debug_logger.log_request(
+            discipline=discipline,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            response=response_text,
+            error=error
+        )
+
         if error:
             if self.config.use_fallback_on_error:
-                return self._generate_fallback(discipline, recipe_context)
+                return self._generate_fallback(discipline, recipe_context, narrative)
             return GeneratedItem(
                 success=False,
                 discipline=discipline,
@@ -884,17 +949,24 @@ class LLMItemGenerator:
             if self.config.cache_enabled:
                 self._cache[cache_key] = item_data
 
+            # Extract recipe inputs for persistence
+            recipe_inputs = self._extract_recipe_inputs(recipe_context)
+            station_tier = recipe_context.get('station_tier', 1)
+
             return GeneratedItem(
                 success=True,
                 item_data=item_data,
                 item_id=item_id,
                 item_name=item_data.get('name'),
-                discipline=discipline
+                discipline=discipline,
+                recipe_inputs=recipe_inputs,
+                station_tier=station_tier,
+                narrative=narrative
             )
 
         except Exception as e:
             if self.config.use_fallback_on_error:
-                return self._generate_fallback(discipline, recipe_context)
+                return self._generate_fallback(discipline, recipe_context, narrative)
             return GeneratedItem(
                 success=False,
                 discipline=discipline,
@@ -987,7 +1059,19 @@ class LLMItemGenerator:
         context_str = json.dumps(recipe_context, sort_keys=True)
         return f"{discipline}:{hashlib.md5(context_str.encode()).hexdigest()}"
 
-    def _generate_fallback(self, discipline: str, recipe_context: Dict) -> GeneratedItem:
+    def _extract_recipe_inputs(self, recipe_context: Dict) -> List[Dict]:
+        """Extract recipe inputs from context in a unified format"""
+        inputs = []
+        for key in ['inputs', 'ingredients', 'core_inputs', 'surrounding_inputs', 'slots']:
+            if key in recipe_context:
+                for item in recipe_context[key]:
+                    mat_id = item.get('materialId')
+                    qty = item.get('quantity', 1)
+                    if mat_id:
+                        inputs.append({'materialId': mat_id, 'quantity': qty})
+        return inputs
+
+    def _generate_fallback(self, discipline: str, recipe_context: Dict, narrative: str = "") -> GeneratedItem:
         """Generate a simple fallback item when LLM fails"""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
@@ -1069,13 +1153,20 @@ class LLMItemGenerator:
                 "slot": "accessory"
             }
 
+        # Extract recipe inputs for persistence
+        recipe_inputs = self._extract_recipe_inputs(recipe_context)
+        station_tier = recipe_context.get('station_tier', 1)
+
         return GeneratedItem(
             success=True,
             item_data=item_data,
             item_id=item_data.get('itemId', item_data.get('materialId')),
             item_name=item_data.get('name'),
             discipline=discipline,
-            error="Used fallback generation (LLM unavailable)"
+            error="Used fallback generation (LLM unavailable)",
+            recipe_inputs=recipe_inputs,
+            station_tier=station_tier,
+            narrative=narrative
         )
 
     def update_config(self, **kwargs):
