@@ -84,6 +84,9 @@ class Character:
         self.encyclopedia = Encyclopedia()
         self.quests = QuestManager()
 
+        # Player-invented recipes (persisted across sessions)
+        self.invented_recipes = []
+
         self.base_max_health = 100
         self.base_max_mana = 100
         self.max_health = self.base_max_health
@@ -549,6 +552,25 @@ class Character:
         # Initialize _selected_slot if not already set (for saves from before this feature)
         if not hasattr(self, '_selected_slot'):
             self._selected_slot = 'mainHand'
+
+        # Restore invented recipes (Phase 3 crafting integration)
+        invented_data = player_data.get("invented_recipes", [])
+        self.invented_recipes = []
+        for recipe_record in invented_data:
+            try:
+                self.invented_recipes.append({
+                    "timestamp": recipe_record.get("timestamp", ""),
+                    "discipline": recipe_record.get("discipline", "unknown"),
+                    "item_id": recipe_record.get("item_id", ""),
+                    "item_name": recipe_record.get("item_name", ""),
+                    "item_data": recipe_record.get("item_data", {}),
+                    "from_cache": recipe_record.get("from_cache", False)
+                })
+            except Exception as e:
+                print(f"Warning: Could not restore invented recipe: {e}")
+
+        if invented_data:
+            print(f"  ✓ Restored {len(self.invented_recipes)} invented recipe(s)")
 
         print(f"✓ Character state restored: Level {self.leveling.level}, HP {self.health}/{self.max_health}")
 

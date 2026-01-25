@@ -113,10 +113,42 @@ class SaveManager:
             "skill_unlocks": {
                 "unlocked_skills": list(character.skill_unlocks.unlocked_skills) if hasattr(character, 'skill_unlocks') else [],
                 "pending_unlocks": list(character.skill_unlocks.pending_unlocks) if hasattr(character, 'skill_unlocks') else []
-            }
+            },
+            "invented_recipes": self._serialize_invented_recipes(character)
         }
 
         return char_data
+
+    def _serialize_invented_recipes(self, character) -> List[Dict[str, Any]]:
+        """
+        Serialize player-invented recipes for persistence.
+
+        Args:
+            character: Character instance
+
+        Returns:
+            List of invented recipe records
+        """
+        if not hasattr(character, 'invented_recipes'):
+            return []
+
+        serialized = []
+        for recipe in character.invented_recipes:
+            try:
+                # Ensure all data is JSON-serializable
+                recipe_record = {
+                    "timestamp": recipe.get("timestamp", ""),
+                    "discipline": recipe.get("discipline", "unknown"),
+                    "item_id": recipe.get("item_id", ""),
+                    "item_name": recipe.get("item_name", ""),
+                    "item_data": recipe.get("item_data", {}),
+                    "from_cache": recipe.get("from_cache", False)
+                }
+                serialized.append(recipe_record)
+            except Exception as e:
+                print(f"Warning: Could not serialize invented recipe: {e}")
+
+        return serialized
 
     def _serialize_inventory(self, inventory) -> List[Optional[Dict[str, Any]]]:
         """Serialize inventory slots."""
