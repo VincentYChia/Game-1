@@ -395,8 +395,33 @@ class LightGBMFeatureExtractor:
     """
     Extracts features from recipes for LightGBM models.
 
-    This must match the training script EXACTLY.
+    CRITICAL: Feature extraction MUST match training script EXACTLY.
+    DO NOT modify vocabularies without retraining models.
+
+    Vocabularies are HARDCODED to match training data:
+    - Categories: {'elemental': 0, 'metal': 1, 'monster_drop': 2, 'stone': 3, 'wood': 4}
+    - Refining: NO refinement features
+    - Alchemy/Engineering: {'basic': 0}
     """
+
+    # EXACT category vocabulary from training (alphabetical order)
+    CATEGORY_TO_IDX = {
+        'elemental': 0,
+        'metal': 1,
+        'monster_drop': 2,
+        'stone': 3,
+        'wood': 4
+    }
+    NUM_CATEGORIES = 5
+
+    # Refinement vocabularies by discipline
+    # Refining has NO refinement features (was trained without them)
+    # Alchemy and Engineering have only 'basic'
+    REFINEMENT_VOCAB = {
+        'refining': {},  # No refinement features for refining
+        'alchemy': {'basic': 0},
+        'engineering': {'basic': 0}
+    }
 
     def __init__(self, materials_db):
         """
@@ -404,44 +429,6 @@ class LightGBMFeatureExtractor:
             materials_db: MaterialDatabase instance or dict
         """
         self.materials_db = materials_db
-        self._build_vocabularies()
-
-    def _build_vocabularies(self):
-        """Build index mappings for categories, refinements, tags"""
-        categories = set()
-        refinements = set()
-
-        # Get all materials
-        if hasattr(self.materials_db, 'materials'):
-            materials = self.materials_db.materials
-        elif isinstance(self.materials_db, dict):
-            materials = self.materials_db
-        else:
-            materials = {}
-
-        for mat_id, mat in materials.items():
-            # Get category
-            if hasattr(mat, 'category'):
-                categories.add(mat.category)
-            elif isinstance(mat, dict):
-                categories.add(mat.get('category', 'unknown'))
-
-            # Get refinement level from tags
-            tags = []
-            if hasattr(mat, 'properties'):
-                tags = mat.properties.get('tags', [])
-            elif isinstance(mat, dict):
-                tags = mat.get('metadata', {}).get('tags', [])
-
-            for tag in tags:
-                if tag in ['basic', 'refined', 'raw', 'processed']:
-                    refinements.add(tag)
-
-        if not refinements:
-            refinements.add('basic')
-
-        self.category_to_idx = {cat: idx for idx, cat in enumerate(sorted(categories))}
-        self.refinement_to_idx = {ref: idx for idx, ref in enumerate(sorted(refinements))}
 
     def _get_material(self, material_id: str) -> Dict:
         """Get material data as dict"""
@@ -463,6 +450,10 @@ class LightGBMFeatureExtractor:
                 }
         return {'category': 'unknown', 'tier': 1, 'metadata': {'tags': []}}
 
+    def _get_category_idx(self, category: str) -> int:
+        """Get category index, defaulting to 0 for unknown categories"""
+        return self.CATEGORY_TO_IDX.get(category, 0)
+
     def _get_refinement_level(self, material: Dict) -> str:
         """Get refinement level from material"""
         tags = material.get('metadata', {}).get('tags', [])
@@ -472,8 +463,20 @@ class LightGBMFeatureExtractor:
         return 'basic'
 
     def extract_refining_features(self, interactive_ui) -> np.ndarray:
-        """Extract features from InteractiveRefiningUI"""
+        """
+        Extract features from InteractiveRefiningUI.
+
+        Feature count: 18 features (NO refinement features for refining)
+        - 2: num_cores, num_spokes
+        - 2: core_qty, spoke_qty
+        - 2: spokes/cores ratio, spoke_qty/core_qty ratio
+        - 1: material diversity
+        - 5: category distribution (5 categories)
+        - 5: tier statistics (core_mean, core_max, spoke_mean, spoke_max, tier_mismatch)
+        - 1: station tier
+        """
         features = []
+        from collections import Counter
 
         # Build recipe dict from UI
         core_inputs = []
@@ -492,43 +495,36 @@ class LightGBMFeatureExtractor:
                     'quantity': placed_mat.quantity
                 })
 
-        # Basic counts
+        # Basic counts (2 features)
         num_cores = len(core_inputs)
         num_spokes = len(surrounding_inputs)
         features.extend([num_cores, num_spokes])
 
-        # Total quantities
+        # Total quantities (2 features)
         core_qty = sum(c.get('quantity', 0) for c in core_inputs)
         spoke_qty = sum(s.get('quantity', 0) for s in surrounding_inputs)
         features.extend([core_qty, spoke_qty])
 
-        # Ratio features
+        # Ratio features (2 features)
         features.append(num_spokes / max(1, num_cores))
         features.append(spoke_qty / max(1, core_qty))
 
-        # Material diversity
+        # Material diversity (1 feature)
         all_mats = [c['materialId'] for c in core_inputs]
         all_mats.extend([s['materialId'] for s in surrounding_inputs])
         features.append(len(set(all_mats)))
 
-        # Category distribution (cores)
-        from collections import Counter
+        # Category distribution - HARDCODED 5 categories (5 features)
         core_categories = [self._get_material(c['materialId']).get('category', 'unknown')
                           for c in core_inputs]
         cat_counts = Counter(core_categories)
-        for cat_idx in range(len(self.category_to_idx)):
-            cat_name = list(self.category_to_idx.keys())[cat_idx]
+        # Iterate in EXACT order: elemental, metal, monster_drop, stone, wood
+        for cat_name in ['elemental', 'metal', 'monster_drop', 'stone', 'wood']:
             features.append(cat_counts.get(cat_name, 0))
 
-        # Refinement distribution (cores)
-        core_refs = [self._get_refinement_level(self._get_material(c['materialId']))
-                    for c in core_inputs]
-        ref_counts = Counter(core_refs)
-        for ref_idx in range(len(self.refinement_to_idx)):
-            ref_name = list(self.refinement_to_idx.keys())[ref_idx]
-            features.append(ref_counts.get(ref_name, 0))
+        # NOTE: Refining has NO refinement features (model was trained without them)
 
-        # Tier statistics
+        # Tier statistics (5 features)
         core_tiers = [self._get_material(c['materialId']).get('tier', 1)
                      for c in core_inputs]
         spoke_tiers = [self._get_material(s['materialId']).get('tier', 1)
@@ -545,14 +541,27 @@ class LightGBMFeatureExtractor:
         else:
             features.append(0)
 
-        # Station tier
+        # Station tier (1 feature)
         features.append(interactive_ui.station_tier)
 
         return np.array(features, dtype=np.float32)
 
     def extract_alchemy_features(self, interactive_ui) -> np.ndarray:
-        """Extract features from InteractiveAlchemyUI"""
+        """
+        Extract features from InteractiveAlchemyUI.
+
+        Feature count: 34 features
+        - 3: num_ingredients, total_qty, avg_qty
+        - 18: position features (6 positions × 3 features: tier, qty, cat_idx)
+        - 1: material diversity
+        - 5: category distribution (5 categories)
+        - 1: refinement distribution (only 'basic')
+        - 3: tier statistics (mean, max, std)
+        - 2: sequential patterns (tier_increases, tier_decreases)
+        - 1: station tier
+        """
         features = []
+        from collections import Counter
 
         # Build ingredients list from UI
         ingredients = []
@@ -564,18 +573,16 @@ class LightGBMFeatureExtractor:
                     'quantity': placed_mat.quantity
                 })
 
-        # Basic counts
+        # Basic counts (3 features)
         num_ingredients = len(ingredients)
         features.append(num_ingredients)
 
-        # Total quantity
         total_qty = sum(ing.get('quantity', 0) for ing in ingredients)
         features.append(total_qty)
 
-        # Average quantity
         features.append(total_qty / max(1, num_ingredients))
 
-        # Position-based features (first 6 positions)
+        # Position-based features - 6 positions × 3 features = 18 features
         for pos in range(6):
             if pos < len(ingredients):
                 ing = ingredients[pos]
@@ -583,40 +590,37 @@ class LightGBMFeatureExtractor:
                 features.append(mat.get('tier', 1))
                 features.append(ing.get('quantity', 0))
                 cat = mat.get('category', 'unknown')
-                cat_idx = self.category_to_idx.get(cat, 0)
+                cat_idx = self._get_category_idx(cat)
                 features.append(cat_idx)
             else:
                 features.extend([0, 0, 0])
 
-        # Material diversity
-        from collections import Counter
+        # Material diversity (1 feature)
         unique_materials = len(set(ing['materialId'] for ing in ingredients))
         features.append(unique_materials)
 
-        # Category distribution
+        # Category distribution - HARDCODED 5 categories (5 features)
         categories = [self._get_material(ing['materialId']).get('category', 'unknown')
                      for ing in ingredients]
         cat_counts = Counter(categories)
-        for cat_idx in range(len(self.category_to_idx)):
-            cat_name = list(self.category_to_idx.keys())[cat_idx]
+        # Iterate in EXACT order: elemental, metal, monster_drop, stone, wood
+        for cat_name in ['elemental', 'metal', 'monster_drop', 'stone', 'wood']:
             features.append(cat_counts.get(cat_name, 0))
 
-        # Refinement distribution
+        # Refinement distribution - HARDCODED 1 refinement: 'basic' (1 feature)
         refinements = [self._get_refinement_level(self._get_material(ing['materialId']))
                       for ing in ingredients]
         ref_counts = Counter(refinements)
-        for ref_idx in range(len(self.refinement_to_idx)):
-            ref_name = list(self.refinement_to_idx.keys())[ref_idx]
-            features.append(ref_counts.get(ref_name, 0))
+        features.append(ref_counts.get('basic', 0))
 
-        # Tier statistics
+        # Tier statistics (3 features)
         tiers = [self._get_material(ing['materialId']).get('tier', 1)
                 for ing in ingredients]
         features.append(np.mean(tiers) if tiers else 0)
         features.append(np.max(tiers) if tiers else 0)
         features.append(np.std(tiers) if len(tiers) > 1 else 0)
 
-        # Sequential patterns
+        # Sequential patterns (2 features)
         if len(tiers) >= 2:
             tier_increases = sum(1 for i in range(len(tiers) - 1) if tiers[i + 1] > tiers[i])
             tier_decreases = sum(1 for i in range(len(tiers) - 1) if tiers[i + 1] < tiers[i])
@@ -624,14 +628,28 @@ class LightGBMFeatureExtractor:
         else:
             features.extend([0, 0])
 
-        # Station tier
+        # Station tier (1 feature)
         features.append(interactive_ui.station_tier)
 
         return np.array(features, dtype=np.float32)
 
     def extract_engineering_features(self, interactive_ui) -> np.ndarray:
-        """Extract features from InteractiveEngineeringUI"""
+        """
+        Extract features from InteractiveEngineeringUI.
+
+        Feature count: 28 features
+        - 2: num_slots, total_qty
+        - 8: slot type distribution (8 types)
+        - 4: unique_slot_types, frame_present, function_present, power_present
+        - 1: material diversity
+        - 5: category distribution (5 categories)
+        - 1: refinement distribution (only 'basic')
+        - 3: tier statistics (mean, max, std)
+        - 3: quantity by slot type (frame, power, function)
+        - 1: station tier
+        """
         features = []
+        from collections import Counter
 
         # Build slots list from UI
         slots = []
@@ -643,16 +661,14 @@ class LightGBMFeatureExtractor:
                     'quantity': placed_mat.quantity
                 })
 
-        # Basic counts
+        # Basic counts (2 features)
         num_slots = len(slots)
         features.append(num_slots)
 
-        # Total quantity
         total_qty = sum(slot.get('quantity', 0) for slot in slots)
         features.append(total_qty)
 
-        # Slot type distribution
-        from collections import Counter
+        # Slot type distribution - 8 features
         slot_types = [slot.get('type', 'unknown') for slot in slots]
         slot_type_counts = Counter(slot_types)
 
@@ -660,48 +676,46 @@ class LightGBMFeatureExtractor:
                           'ENHANCEMENT', 'CORE', 'CATALYST']:
             features.append(slot_type_counts.get(slot_type, 0))
 
-        # Unique slot types
+        # Unique slot types (1 feature)
         features.append(len(set(slot_types)))
 
-        # Critical slots present (binary)
+        # Critical slots present - binary (3 features)
         features.append(1 if 'FRAME' in slot_types else 0)
         features.append(1 if 'FUNCTION' in slot_types else 0)
         features.append(1 if 'POWER' in slot_types else 0)
 
-        # Material diversity
-        unique_materials = len(set(slot['materialId'] for slot in slots))
+        # Material diversity (1 feature)
+        unique_materials = len(set(slot['materialId'] for slot in slots)) if slots else 0
         features.append(unique_materials)
 
-        # Category distribution
+        # Category distribution - HARDCODED 5 categories (5 features)
         categories = [self._get_material(slot['materialId']).get('category', 'unknown')
                      for slot in slots]
         cat_counts = Counter(categories)
-        for cat_idx in range(len(self.category_to_idx)):
-            cat_name = list(self.category_to_idx.keys())[cat_idx]
+        # Iterate in EXACT order: elemental, metal, monster_drop, stone, wood
+        for cat_name in ['elemental', 'metal', 'monster_drop', 'stone', 'wood']:
             features.append(cat_counts.get(cat_name, 0))
 
-        # Refinement distribution
+        # Refinement distribution - HARDCODED 1 refinement: 'basic' (1 feature)
         refinements = [self._get_refinement_level(self._get_material(slot['materialId']))
                       for slot in slots]
         ref_counts = Counter(refinements)
-        for ref_idx in range(len(self.refinement_to_idx)):
-            ref_name = list(self.refinement_to_idx.keys())[ref_idx]
-            features.append(ref_counts.get(ref_name, 0))
+        features.append(ref_counts.get('basic', 0))
 
-        # Tier statistics
+        # Tier statistics (3 features)
         tiers = [self._get_material(slot['materialId']).get('tier', 1)
                 for slot in slots]
         features.append(np.mean(tiers) if tiers else 0)
         features.append(np.max(tiers) if tiers else 0)
         features.append(np.std(tiers) if len(tiers) > 1 else 0)
 
-        # Quantity by slot type
+        # Quantity by slot type (3 features)
         frame_qty = sum(s.get('quantity', 0) for s in slots if s.get('type') == 'FRAME')
         power_qty = sum(s.get('quantity', 0) for s in slots if s.get('type') == 'POWER')
         function_qty = sum(s.get('quantity', 0) for s in slots if s.get('type') == 'FUNCTION')
         features.extend([frame_qty, power_qty, function_qty])
 
-        # Station tier
+        # Station tier (1 feature)
         features.append(interactive_ui.station_tier)
 
         return np.array(features, dtype=np.float32)
