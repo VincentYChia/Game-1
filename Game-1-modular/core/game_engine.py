@@ -2196,6 +2196,11 @@ class GameEngine:
                     self._handle_interactive_craft(use_minigame=True)
                     return
 
+                elif button_name == 'invent':
+                    # Try to invent a new recipe using classifier
+                    self._handle_invent_recipe()
+                    return
+
         # Check material palette clicks
         for mat_rect, item_stack in self.interactive_material_rects:
             if mat_rect.collidepoint(mouse_pos):
@@ -2359,6 +2364,102 @@ class GameEngine:
             # We need to clear the borrowed materials dict to avoid double-return
             self.interactive_ui.borrowed_materials.clear()
             self._close_interactive_crafting()
+
+    def _handle_invent_recipe(self):
+        """
+        Handle attempt to invent a new recipe using the classifier.
+
+        This validates the current material placement against the trained
+        classifier model for the discipline, providing feedback on whether
+        the combination could be a valid recipe.
+        """
+        if not self.interactive_ui:
+            self.add_notification("No crafting UI active", (255, 100, 100))
+            return
+
+        discipline = self.interactive_ui.station_type
+        print(f"\n{'='*80}")
+        print(f"🔬 RECIPE INVENTION ATTEMPT")
+        print(f"Discipline: {discipline}")
+        print(f"Station Tier: {self.interactive_ui.station_tier}")
+        print(f"{'='*80}")
+
+        # Try to get the classifier manager
+        try:
+            from systems.crafting_classifier import get_classifier_manager, init_classifier_manager
+            from data.databases import MaterialDatabase
+            from pathlib import Path
+
+            classifier_mgr = get_classifier_manager()
+
+            # Initialize if not already done
+            if classifier_mgr is None:
+                # Find project root (parent of Game-1-modular)
+                project_root = Path(__file__).parent.parent.parent
+                materials_db = MaterialDatabase.get_instance()
+                classifier_mgr = init_classifier_manager(project_root, materials_db)
+                print(f"  Initialized classifier manager")
+
+            # Validate the recipe
+            result = classifier_mgr.validate(discipline, self.interactive_ui)
+
+            print(f"\n  Classifier Result:")
+            print(f"    Valid: {result.valid}")
+            print(f"    Confidence: {result.confidence:.1%}")
+            print(f"    Probability: {result.probability:.4f}")
+            if result.error:
+                print(f"    Error: {result.error}")
+            print(f"{'='*80}\n")
+
+            # Provide feedback to player
+            if result.is_error:
+                # Classifier error - show warning
+                self.add_notification(f"Classifier error: {result.error[:40]}...", (255, 200, 100))
+                print(f"⚠️ Classifier error: {result.error}")
+
+            elif result.valid:
+                # Recipe is valid! Show success message
+                # For now, just show a message - LLM integration will happen in Phase 2
+                confidence_pct = int(result.confidence * 100)
+                self.add_notification(
+                    f"✓ VALID RECIPE! ({confidence_pct}% confident)",
+                    (100, 255, 100)
+                )
+                print(f"✓ Valid recipe detected with {confidence_pct}% confidence")
+
+                # TODO: Phase 2 will add LLM item generation here
+                # For now, show a placeholder message
+                self.add_notification(
+                    "Item generation coming soon...",
+                    (200, 200, 255)
+                )
+
+            else:
+                # Recipe is invalid - show failure message
+                confidence_pct = int(result.confidence * 100)
+                self.add_notification(
+                    f"✗ Invalid combination ({confidence_pct}% confident)",
+                    (255, 100, 100)
+                )
+                self.add_notification(
+                    "Try a different arrangement",
+                    (200, 200, 200)
+                )
+                print(f"✗ Invalid recipe with {confidence_pct}% confidence")
+
+        except ImportError as e:
+            # Classifier module not available
+            error_msg = f"Classifier not available: {e}"
+            self.add_notification("Classifier system not loaded", (255, 200, 100))
+            print(f"⚠️ {error_msg}")
+
+        except Exception as e:
+            # Unexpected error
+            error_msg = f"Invention failed: {e}"
+            self.add_notification("Recipe check failed", (255, 100, 100))
+            print(f"⚠️ {error_msg}")
+            import traceback
+            traceback.print_exc()
 
     def _complete_minigame(self):
         """Complete the active minigame and process results"""

@@ -4149,6 +4149,46 @@ class Renderer:
         surf.blit(minigame_sub, (minigame_rect.centerx - minigame_sub.get_width() // 2, minigame_rect.centery + s(8)))
         button_rects['minigame'] = minigame_rect.move(wx, wy) if minigame_enabled else None
 
+        # INVENT RECIPE button (enabled if NO recipe matched AND at least 2 materials placed)
+        # This allows players to try inventing new recipes with novel combinations
+        invent_x = minigame_x + button_w + button_spacing
+        invent_rect = pygame.Rect(invent_x, button_y, button_w, button_h)
+
+        # Count placed materials based on discipline type
+        placed_count = 0
+        if hasattr(interactive_ui, 'grid'):  # Smithing
+            placed_count = len(interactive_ui.grid)
+        elif hasattr(interactive_ui, 'slots') and isinstance(interactive_ui.slots, list):  # Alchemy
+            placed_count = sum(1 for s in interactive_ui.slots if s is not None)
+        elif hasattr(interactive_ui, 'slots') and isinstance(interactive_ui.slots, dict):  # Engineering
+            placed_count = sum(len(mats) for mats in interactive_ui.slots.values())
+        elif hasattr(interactive_ui, 'core_slots'):  # Refining
+            placed_count = sum(1 for s in interactive_ui.core_slots if s is not None)
+            placed_count += sum(1 for s in interactive_ui.surrounding_slots if s is not None)
+        elif hasattr(interactive_ui, 'vertices'):  # Adornments
+            placed_count = len(interactive_ui.vertices)
+
+        # Enable if: no matched recipe AND at least 2 materials placed
+        invent_enabled = (interactive_ui.matched_recipe is None) and (placed_count >= 2)
+        is_invent_hovered = invent_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+
+        if invent_enabled:
+            invent_color = (100, 80, 140) if is_invent_hovered else (80, 60, 120)
+            invent_border = (160, 140, 200)
+            invent_text_color = (230, 220, 255)
+        else:
+            invent_color = (40, 40, 45)
+            invent_border = (80, 80, 90)
+            invent_text_color = (120, 120, 130)
+
+        pygame.draw.rect(surf, invent_color, invent_rect, border_radius=s(5))
+        pygame.draw.rect(surf, invent_border, invent_rect, s(2), border_radius=s(5))
+        invent_text = self.small_font.render("INVENT", True, invent_text_color)
+        surf.blit(invent_text, (invent_rect.centerx - invent_text.get_width() // 2, invent_rect.centery - invent_text.get_height() // 2 - s(5)))
+        invent_sub = self.tiny_font.render("New Recipe?", True, (200, 180, 255) if invent_enabled else invent_text_color)
+        surf.blit(invent_sub, (invent_rect.centerx - invent_sub.get_width() // 2, invent_rect.centery + s(8)))
+        button_rects['invent'] = invent_rect.move(wx, wy) if invent_enabled else None
+
         # Blit to screen
         self.screen.blit(surf, (wx, wy))
 

@@ -79,35 +79,72 @@ class MaterialColorEncoder:
     # Tier to Value (brightness) mapping
     TIER_VALUES = {1: 0.50, 2: 0.65, 3: 0.80, 4: 0.95}
 
-    def __init__(self, materials_db):
+    def __init__(self, materials_db, raw_materials_dict: Optional[Dict] = None):
         """
         Args:
             materials_db: MaterialDatabase instance or dict of {material_id: material_data}
+            raw_materials_dict: Optional pre-loaded dict from raw JSON for tag access
         """
         self.materials_db = materials_db
+        self.raw_materials = raw_materials_dict or {}
+
+    @classmethod
+    def from_json_file(cls, json_path: Path, materials_db=None):
+        """
+        Create encoder by loading raw materials JSON file directly.
+        This ensures tags are available for color encoding.
+        """
+        try:
+            with open(json_path, 'r') as f:
+                data = json.load(f)
+            raw_dict = {
+                mat['materialId']: mat
+                for mat in data.get('materials', [])
+            }
+            return cls(materials_db, raw_dict)
+        except Exception as e:
+            print(f"Warning: Could not load materials JSON: {e}")
+            return cls(materials_db, {})
 
     def get_material_data(self, material_id: str) -> Optional[Dict]:
-        """Get material data from database"""
+        """Get material data from database, preferring raw JSON for tag access"""
         if material_id is None:
             return None
 
-        # Handle both MaterialDatabase and raw dict
+        # First try raw materials dict (has full metadata.tags)
+        if material_id in self.raw_materials:
+            return self.raw_materials[material_id]
+
+        # Fallback to MaterialDatabase
         if hasattr(self.materials_db, 'get_material'):
             mat = self.materials_db.get_material(material_id)
             if mat:
+                # Try to get tags from various sources
+                tags = []
+                if hasattr(mat, 'properties') and isinstance(mat.properties, dict):
+                    tags = mat.properties.get('tags', [])
+                if hasattr(mat, 'effect_tags'):
+                    tags = tags or mat.effect_tags
                 return {
                     'category': mat.category,
                     'tier': mat.tier,
-                    'metadata': {'tags': getattr(mat, 'properties', {}).get('tags', [])}
+                    'rarity': getattr(mat, 'rarity', 'common'),
+                    'metadata': {'tags': tags}
                 }
             return None
         elif hasattr(self.materials_db, 'materials'):
             mat = self.materials_db.materials.get(material_id)
             if mat:
+                tags = []
+                if hasattr(mat, 'properties') and isinstance(mat.properties, dict):
+                    tags = mat.properties.get('tags', [])
+                if hasattr(mat, 'effect_tags'):
+                    tags = tags or mat.effect_tags
                 return {
                     'category': getattr(mat, 'category', 'unknown'),
                     'tier': getattr(mat, 'tier', 1),
-                    'metadata': {'tags': getattr(mat, 'properties', {}).get('tags', [])}
+                    'rarity': getattr(mat, 'rarity', 'common'),
+                    'metadata': {'tags': tags}
                 }
             return None
         elif isinstance(self.materials_db, dict):
@@ -836,7 +873,7 @@ class CraftingClassifierManager:
         'adornments': ClassifierConfig(
             discipline='adornments',
             classifier_type='cnn',
-            model_path='Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/smart_search_results/best_original_20260124_185830_model.keras',
+            model_path='Scaled JSON Development/Convolution Neural Network (CNN)/Adornment/smart_search_results/best_original_20260124_185830_f10.9520_model.keras',
             img_size=56,
             threshold=0.5
         ),
@@ -890,7 +927,16 @@ class CraftingClassifierManager:
     @property
     def color_encoder(self) -> MaterialColorEncoder:
         if self._color_encoder is None:
-            self._color_encoder = MaterialColorEncoder(self.materials_db)
+            # Try to load raw materials JSON for proper tag access
+            materials_json_path = self.project_root / "Game-1-modular/items.JSON/items-materials-1.JSON"
+            if materials_json_path.exists():
+                self._color_encoder = MaterialColorEncoder.from_json_file(
+                    materials_json_path, self.materials_db
+                )
+                print(f"  Loaded raw materials from: {materials_json_path}")
+            else:
+                self._color_encoder = MaterialColorEncoder(self.materials_db)
+                print(f"  Warning: Using MaterialDatabase fallback (no raw JSON)")
         return self._color_encoder
 
     @property
