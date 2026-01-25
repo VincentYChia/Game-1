@@ -1,0 +1,49 @@
+{
+  "variation_name": "filters_20_40",
+  "timestamp": "2026-01-24T19:03:29.489023",
+  "config": {
+    "architecture_type": "simple",
+    "filters": [
+      20,
+      40
+    ],
+    "kernel_sizes": [
+      5,
+      5
+    ],
+    "dropout_conv": 0.21,
+    "dropout_dense": 0.67,
+    "dense_units": [
+      64
+    ],
+    "l2_regularization": 0.01,
+    "batch_normalization": true,
+    "learning_rate": 0.005,
+    "optimizer": "adamw",
+    "batch_size": 16,
+    "activation": "relu",
+    "pooling": "max",
+    "use_global_pooling": false,
+    "epochs": 100,
+    "early_stopping_patience": 16
+  },
+  "train_metrics": {
+    "accuracy": 0.9964726567268372,
+    "f1": 0.9965217248275733,
+    "precision": 1.0,
+    "recall": 0.9930675625801086
+  },
+  "val_metrics": {
+    "accuracy": 0.9330986142158508,
+    "f1": 0.9314079523074118,
+    "precision": 0.8896551728248596,
+    "recall": 0.9772727489471436
+  },
+  "overfitting": {
+    "accuracy_gap": 0.06337404251098633,
+    "f1_gap": 0.06511377252016148
+  },
+  "train_time_seconds": 140.205847,
+  "total_epochs": 100,
+  "model_params": 574245
+}

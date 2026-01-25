@@ -1,0 +1,49 @@
+{
+  "variation_name": "dropout_dense_0.70",
+  "timestamp": "2026-01-24T19:28:04.606993",
+  "config": {
+    "architecture_type": "simple",
+    "filters": [
+      24,
+      48
+    ],
+    "kernel_sizes": [
+      5,
+      5
+    ],
+    "dropout_conv": 0.21,
+    "dropout_dense": 0.7,
+    "dense_units": [
+      64
+    ],
+    "l2_regularization": 0.01,
+    "batch_normalization": true,
+    "learning_rate": 0.005,
+    "optimizer": "adamw",
+    "batch_size": 16,
+    "activation": "relu",
+    "pooling": "max",
+    "use_global_pooling": false,
+    "epochs": 100,
+    "early_stopping_patience": 16
+  },
+  "train_metrics": {
+    "accuracy": 0.9991181492805481,
+    "f1": 0.9991326862907194,
+    "precision": 1.0,
+    "recall": 0.998266875743866
+  },
+  "val_metrics": {
+    "accuracy": 0.9577465057373047,
+    "f1": 0.9562043986987898,
+    "precision": 0.922535240650177,
+    "recall": 0.9924242496490479
+  },
+  "overfitting": {
+    "accuracy_gap": 0.04137164354324341,
+    "f1_gap": 0.04292828759192957
+  },
+  "train_time_seconds": 176.217834,
+  "total_epochs": 100,
+  "model_params": 705817
+}
