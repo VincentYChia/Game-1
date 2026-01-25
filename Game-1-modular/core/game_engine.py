@@ -2658,24 +2658,11 @@ class GameEngine:
         category = item_data.get('category', 'equipment')
 
         if category == 'equipment':
-            # Create equipment instance
+            # Create equipment instance using proper field mapping
             from data.models.equipment import EquipmentItem
 
-            # Build equipment from generated data
-            equipment = EquipmentItem(
-                item_id=item_id,
-                name=item_name or item_id.replace('_', ' ').title(),
-                item_type=item_data.get('type', 'weapon'),
-                tier=item_data.get('tier', 1),
-                base_stats=item_data.get('stats', {}),
-                stat_multipliers=item_data.get('statMultipliers', {}),
-                requirements=item_data.get('requirements', {}),
-                flags=item_data.get('flags', {}),
-                effect_tags=item_data.get('effectTags', []),
-                effect_params=item_data.get('effectParams', {}),
-                icon_path=None,  # Will need to be added later
-                metadata=item_data.get('metadata', {})
-            )
+            # Extract and convert LLM output to EquipmentItem parameters
+            equipment = self._convert_llm_to_equipment(item_data, item_id, item_name)
 
             # Add to inventory
             success = self.character.inventory.add_item(
@@ -2739,6 +2726,134 @@ class GameEngine:
 
         # Close the crafting UI
         self._close_interactive_crafting()
+
+    def _convert_llm_to_equipment(self, item_data: dict, item_id: str, item_name: str):
+        """
+        Convert LLM-generated item data to EquipmentItem instance.
+
+        Maps LLM output fields to the exact parameters expected by EquipmentItem.
+        """
+        from data.models.equipment import EquipmentItem
+
+        # Extract stats - LLM may use 'stats' object or 'statMultipliers'
+        stats = item_data.get('stats', {})
+        stat_multipliers = item_data.get('statMultipliers', {})
+        effect_params = item_data.get('effectParams', {})
+        metadata = item_data.get('metadata', {})
+
+        # Calculate damage tuple from various sources
+        damage = (0, 0)
+        if 'damage' in stats:
+            dmg = stats['damage']
+            if isinstance(dmg, list) and len(dmg) >= 2:
+                damage = (int(dmg[0]), int(dmg[1]))
+            elif isinstance(dmg, (int, float)):
+                damage = (int(dmg * 0.8), int(dmg * 1.2))
+        elif 'baseDamage' in effect_params:
+            base = int(effect_params['baseDamage'])
+            damage = (int(base * 0.8), int(base * 1.2))
+
+        # Calculate durability from stats or tier
+        durability = 500
+        if 'durability' in stats:
+            dur = stats['durability']
+            if isinstance(dur, list) and len(dur) >= 1:
+                durability = int(dur[0])
+            elif isinstance(dur, (int, float)):
+                durability = int(dur)
+        else:
+            # Default based on tier
+            tier = item_data.get('tier', 1)
+            durability = 500 * tier
+
+        # Extract weight
+        weight = 1.0
+        if 'weight' in stats:
+            weight = float(stats['weight'])
+        elif 'weight' in stat_multipliers:
+            weight = float(stat_multipliers['weight'])
+
+        # Extract range
+        item_range = float(item_data.get('range', 1.0))
+
+        # Extract attack speed
+        attack_speed = 1.0
+        if 'attackSpeed' in stat_multipliers:
+            attack_speed = float(stat_multipliers['attackSpeed'])
+
+        # Extract defense for armor
+        defense = 0
+        if 'defense' in stats:
+            defense = int(stats['defense'])
+
+        # Determine slot with fallback logic
+        slot = item_data.get('slot', 'mainHand')
+        item_type = item_data.get('type', 'weapon')
+        if slot == 'mainHand' and item_type == 'armor':
+            # Armor items should use appropriate slot
+            subtype = item_data.get('subtype', '')
+            slot_mapping = {
+                'helmet': 'helmet', 'helm': 'helmet', 'hat': 'helmet',
+                'chestplate': 'chestplate', 'chest': 'chestplate', 'body': 'chestplate',
+                'leggings': 'leggings', 'legs': 'leggings', 'pants': 'leggings',
+                'boots': 'boots', 'feet': 'boots', 'shoes': 'boots',
+                'gauntlets': 'gauntlets', 'gloves': 'gauntlets', 'hands': 'gauntlets',
+            }
+            slot = slot_mapping.get(subtype.lower(), 'chestplate')
+
+        # Extract tags from metadata
+        tags = metadata.get('tags', [])
+
+        # Determine hand type from tags or type
+        hand_type = 'default'
+        if '2H' in tags or 'two-handed' in [t.lower() for t in tags]:
+            hand_type = '2H'
+        elif '1H' in tags or 'one-handed' in [t.lower() for t in tags]:
+            hand_type = '1H'
+        elif 'versatile' in [t.lower() for t in tags]:
+            hand_type = 'versatile'
+
+        # Extract efficiency for tools
+        efficiency = 1.0
+        if 'mining' in stats:
+            efficiency = 1.0 + (stats['mining'] / 100.0)
+        elif 'forestry' in stats:
+            efficiency = 1.0 + (stats['forestry'] / 100.0)
+
+        # Build the equipment item
+        equipment = EquipmentItem(
+            item_id=item_id,
+            name=item_name or item_id.replace('_', ' ').title(),
+            tier=item_data.get('tier', 1),
+            rarity=item_data.get('rarity', 'uncommon'),
+            slot=slot,
+            damage=damage,
+            defense=defense,
+            durability_current=durability,
+            durability_max=durability,
+            attack_speed=attack_speed,
+            efficiency=efficiency,
+            weight=weight,
+            range=item_range,
+            requirements=item_data.get('requirements', {}),
+            bonuses={},
+            enchantments=item_data.get('enchantments', []),
+            icon_path=None,
+            hand_type=hand_type,
+            item_type=item_type,
+            stat_multipliers=stat_multipliers,
+            tags=tags,
+            effect_tags=item_data.get('effectTags', []),
+            effect_params=effect_params
+        )
+
+        print(f"  Converted LLM output to EquipmentItem:")
+        print(f"    ID: {item_id}, Name: {item_name}")
+        print(f"    Type: {item_type}, Slot: {slot}, Tier: {item_data.get('tier', 1)}")
+        print(f"    Damage: {damage}, Defense: {defense}, Durability: {durability}")
+        print(f"    Tags: {tags[:5]}...")
+
+        return equipment
 
     def _consume_invented_materials(self, discipline: str) -> bool:
         """

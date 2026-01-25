@@ -7,9 +7,9 @@ Uses Claude API to generate item definitions based on:
 - Material properties and narratives
 
 Design principles:
-- Modular: Easy to swap prompts, models, and backends
-- Robust: Graceful fallbacks if API unavailable
-- Scalable: Support for all 5 crafting disciplines
+- Uses actual prompts from Fewshot_llm directory
+- Follows the exact JSON schema expected by the game
+- Robust fallbacks if API unavailable
 """
 
 import json
@@ -18,7 +18,6 @@ import threading
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass, field
-from abc import ABC, abstractmethod
 from datetime import datetime
 import hashlib
 
@@ -181,544 +180,96 @@ class GeneratedItem:
 
 
 # ==============================================================================
-# PROMPT BUILDERS (One per discipline)
+# PROMPT LOADER - Uses actual Fewshot_llm files
 # ==============================================================================
 
-class PromptBuilder(ABC):
-    """Abstract base for discipline-specific prompt builders"""
+class FewshotPromptLoader:
+    """Loads prompts and examples from the Fewshot_llm directory"""
 
-    @abstractmethod
-    def build_system_prompt(self) -> str:
-        """Build the system prompt for this discipline"""
-        pass
-
-    @abstractmethod
-    def build_user_prompt(self, recipe_context: Dict, materials_db) -> str:
-        """Build the user prompt with recipe context"""
-        pass
-
-    @abstractmethod
-    def parse_response(self, response_text: str) -> Dict:
-        """Parse LLM response into item data"""
-        pass
-
-
-class SmithingPromptBuilder(PromptBuilder):
-    """Builds prompts for smithing item generation"""
-
-    SYSTEM_PROMPT = """You are a crafting expert for an action fantasy sandbox RPG. Given smithing recipes with materials and metadata, generate complete item definitions with stats, tags, and properties. Return ONLY valid JSON matching the expected schema.
-
-# Smithing Items - Field Guidelines
-
-Generate a JSON object following this template, there is a library of tags to select from. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide.
-
-```json
-{
-  "metadata": {
-    "narrative": "Short narrative about the item (2-3 sentences). Describe its purpose and feel.",
-    "tags": ["Pick 2-5 from: "1H", "2H", "accessory", "alchemy", "amulet", "armor", "armor_breaker", "axe", "bash", "bow", "bracelet", "brewing", "chest", "cleaving", "crushing", "dagger", "defensive", "elemental", "engineering", "fast", "feet", "fire", "flexible", "forge", "forging", "hands", "head", "heavy", "legendary", "legs", "light", "lightning", "mace", "master", "mechanical", "melee", "metal", "pickaxe", "precision", "quality", "ranged", "reach", "refinery", "ring", "shield", "smithing", "spear", "staff", "standard", "starter", "station", "sword", "tool", "versatile", "water"]
-  },
-  "category": "Pick one: ["equipment", "station"]",
-  "slot": "Pick one: ["accessory", "chest", "feet", "hands", "head", "legs", "mainHand"]",
-  "type": "Pick one: ["accessory", "alchemy", "armor", "axe", "bow", "dagger", "engineering", "mace", "refining", "shield", "smithing", "staff", "tool", "weapon"]",
-  "tier": 1,  // 1-4 (affects stat ranges below)
-  "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
-
-  // === NUMERIC FIELDS (by tier) ===
-  "range": 0.5-15.0
-
-  "effectTags": ["Pick 2-5 from: "burn", "crushing", "fire", "physical", "piercing", "single", "slashing"],
-
-  "effectParams": {
-    "baseDamage": 0,  // Tier 1: 10.0-30.0, Tier 2: 18.0-50.0, Tier 3: ~41.0, Tier 4: ~75.0
-    "burn_damage_per_second": 0,  // 
-    "burn_duration": 0,  // 
-  },
-
-  "stats": {
-    "damage[0]": 0,  // Tier 1: ~8.0, Tier 2: ~15.0, Tier 3: ~30.0, Tier 4: ~60.0
-    "damage[1]": 0,  // Tier 1: ~12.0, Tier 2: ~22.0, Tier 3: ~45.0, Tier 4: ~90.0
-    "durability[0]": 0,  // Tier 1: ~500.0, Tier 2: ~1000.0, Tier 3: ~2000.0, Tier 4: ~4000.0
-    "durability[1]": 0,  // Tier 1: ~500.0, Tier 2: ~1000.0, Tier 3: ~2000.0, Tier 4: ~4000.0
-    "forestry": 0,  // 
-    "mining": 0,  // 
-    "weight": 0,  // 2.5-5.5
-  },
-
-  "requirements": {
-    "level": Pick a level requirement,  // Tier 1: 1-5, Tier 2: 6-15, Tier 3: 16-25, Tier 4: 26-30
-    "stats": {
-      "AGI": Pick a value relative to the tier,  // 1-30.
-      "INT": Pick a value relative to the tier,  // 1-30.
-      "STR": Pick a value relative to the tier,  // 1-30.
+    # Discipline to system prompt number mapping
+    DISCIPLINE_TO_SYSTEM = {
+        'smithing': '1',
+        'refining': '2',
+        'alchemy': '3',
+        'engineering': '4',
+        'adornments': '5',
+        'enchanting': '5',  # Alias
     }
-  },
 
-  "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
-  }
-}
-```
+    def __init__(self, project_root: Path):
+        self.project_root = Path(project_root)
+        self.fewshot_dir = self.project_root / "Scaled JSON Development" / "LLM Training Data" / "Fewshot_llm"
 
-## Important Guidelines:
+        self._system_prompts = {}
+        self._few_shot_examples = {}
+        self._loaded = False
 
-1. **IDs**: Use snake_case (e.g., `iron_sword`, `health_potion`)
-2. **Names**: Use Title Case matching ID (e.g., `Iron Sword`, `Health Potion`)
-3. **Tier Consistency**: Ensure all stats match the specified tier
-4. **Tags**: Only use tags from the library above
-5. **Narrative**: Keep it concise (2-3 sentences) and thematic
-6. **Stats**: Stay within ±20% of tier ranges
+    def _ensure_loaded(self):
+        """Load prompts and examples if not already loaded"""
+        if self._loaded:
+            return
+
+        # Load system prompts
+        prompts_dir = self.fewshot_dir / "prompts" / "system_prompts"
+        if prompts_dir.exists():
+            for discipline, system_num in self.DISCIPLINE_TO_SYSTEM.items():
+                prompt_file = prompts_dir / f"system_{system_num}.txt"
+                if prompt_file.exists():
+                    try:
+                        with open(prompt_file, 'r', encoding='utf-8') as f:
+                            self._system_prompts[discipline] = f.read()
+                        print(f"  Loaded system prompt for {discipline}")
+                    except Exception as e:
+                        print(f"  Warning: Failed to load {prompt_file}: {e}")
+
+        # Load few-shot examples
+        examples_file = self.fewshot_dir / "examples" / "few_shot_examples.json"
+        if examples_file.exists():
+            try:
+                with open(examples_file, 'r', encoding='utf-8') as f:
+                    all_examples = json.load(f)
+
+                # Map examples to disciplines
+                for discipline, system_num in self.DISCIPLINE_TO_SYSTEM.items():
+                    if system_num in all_examples:
+                        self._few_shot_examples[discipline] = all_examples[system_num]
+                        print(f"  Loaded {len(all_examples[system_num])} examples for {discipline}")
+
+            except Exception as e:
+                print(f"  Warning: Failed to load few-shot examples: {e}")
+
+        self._loaded = True
+
+    def get_system_prompt(self, discipline: str) -> str:
+        """Get system prompt for a discipline"""
+        self._ensure_loaded()
+        return self._system_prompts.get(discipline, self._get_fallback_system_prompt(discipline))
+
+    def get_few_shot_examples(self, discipline: str, max_examples: int = 3) -> List[Dict]:
+        """Get few-shot examples for a discipline"""
+        self._ensure_loaded()
+        examples = self._few_shot_examples.get(discipline, [])
+        return examples[:max_examples]
+
+    def _get_fallback_system_prompt(self, discipline: str) -> str:
+        """Fallback system prompt if file not found"""
+        return f"""You are a crafting expert for an action fantasy sandbox RPG.
+Given {discipline} recipes with materials and metadata, generate complete item definitions.
+Return ONLY valid JSON matching the game's expected schema.
+
+Important:
+- Use snake_case for IDs (e.g., iron_sword)
+- Use Title Case for names (e.g., Iron Sword)
+- Include metadata.narrative and metadata.tags
+- Match tier ranges for stats
 """
 
-    def build_system_prompt(self) -> str:
-        return self.SYSTEM_PROMPT
-
-    def build_user_prompt(self, recipe_context: Dict, materials_db) -> str:
-        """Build user prompt from recipe context"""
-        inputs = recipe_context.get('inputs', [])
-        station_tier = recipe_context.get('station_tier', 1)
-
-        # Build materials description
-        materials_desc = []
-        for mat_input in inputs:
-            mat_id = mat_input.get('materialId')
-            qty = mat_input.get('quantity', 1)
-
-            # Get material data
-            mat_data = self._get_material_data(mat_id, materials_db)
-
-            materials_desc.append({
-                "materialId": mat_id,
-                "quantity": qty,
-                "materialName": mat_data.get('name', mat_id.replace('_', ' ').title()),
-                "materialTier": mat_data.get('tier', 1),
-                "materialRarity": mat_data.get('rarity', 'common'),
-                "materialNarrative": mat_data.get('narrative', ''),
-                "materialTags": mat_data.get('tags', [])
-            })
-
-        prompt_data = {
-            "recipeId": f"invented_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            "stationTier": station_tier,
-            "stationType": "smithing",
-            "inputs": materials_desc,
-            "narrative": "Player-invented smithing recipe. Create an appropriate item."
-        }
-
-        return json.dumps(prompt_data, indent=2)
-
-    def _get_material_data(self, mat_id: str, materials_db) -> Dict:
-        """Extract material data for prompt"""
-        if hasattr(materials_db, 'get_material'):
-            mat = materials_db.get_material(mat_id)
-            if mat:
-                tags = []
-                if hasattr(mat, 'properties') and mat.properties:
-                    tags = mat.properties.get('tags', [])
-                return {
-                    'name': mat.name if hasattr(mat, 'name') else mat_id,
-                    'tier': mat.tier,
-                    'rarity': getattr(mat, 'rarity', 'common'),
-                    'narrative': getattr(mat, 'description', ''),
-                    'tags': tags
-                }
-        return {'name': mat_id, 'tier': 1, 'rarity': 'common', 'narrative': '', 'tags': []}
-
-    def parse_response(self, response_text: str) -> Dict:
-        """Parse LLM response into item data"""
-        # Find JSON in response
-        text = response_text.strip()
-
-        # Try direct parse first
-        if text.startswith('{'):
-            return json.loads(text)
-
-        # Find JSON block
-        start = text.find('{')
-        end = text.rfind('}')
-        if start != -1 and end > start:
-            return json.loads(text[start:end+1])
-
-        raise ValueError("No valid JSON found in response")
-
-
-class RefiningPromptBuilder(PromptBuilder):
-    """Builds prompts for refining material generation"""
-
-    SYSTEM_PROMPT = """You are a game material designer for a fantasy crafting RPG. Generate JSON material definitions for refining recipes.
-
-Given core and surrounding materials, create a refined material that:
-1. Combines properties of input materials
-2. Has appropriate tier (usually +1 from inputs)
-3. Includes thematic narrative and tags
-
-Output ONLY valid JSON with this structure:
-{
-  "metadata": {
-    "narrative": "2-3 sentences describing the material",
-    "tags": ["refined", "category_tag", "property_tag"]
-  },
-  "materialId": "snake_case_id",
-  "name": "Title Case Name",
-  "tier": 1-4,
-  "rarity": "common|uncommon|rare|epic|legendary",
-  "category": "metal|wood|stone|gem|elemental|monster_drop"
-}"""
-
-    def build_system_prompt(self) -> str:
-        return self.SYSTEM_PROMPT
-
-    def build_user_prompt(self, recipe_context: Dict, materials_db) -> str:
-        core_inputs = recipe_context.get('core_inputs', [])
-        surrounding_inputs = recipe_context.get('surrounding_inputs', [])
-        station_tier = recipe_context.get('station_tier', 1)
-
-        # Build materials descriptions
-        core_desc = []
-        for mat_input in core_inputs:
-            mat_data = self._get_material_data(mat_input.get('materialId'), materials_db)
-            core_desc.append({
-                "materialId": mat_input.get('materialId'),
-                "quantity": mat_input.get('quantity', 1),
-                **mat_data
-            })
-
-        surrounding_desc = []
-        for mat_input in surrounding_inputs:
-            mat_data = self._get_material_data(mat_input.get('materialId'), materials_db)
-            surrounding_desc.append({
-                "materialId": mat_input.get('materialId'),
-                "quantity": mat_input.get('quantity', 1),
-                **mat_data
-            })
-
-        prompt_data = {
-            "recipeId": f"invented_refining_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            "stationTier": station_tier,
-            "stationType": "refining",
-            "coreInputs": core_desc,
-            "surroundingInputs": surrounding_desc,
-            "narrative": "Player-invented refining recipe. Create an appropriate refined material."
-        }
-
-        return json.dumps(prompt_data, indent=2)
-
-    def _get_material_data(self, mat_id: str, materials_db) -> Dict:
-        if hasattr(materials_db, 'get_material'):
-            mat = materials_db.get_material(mat_id)
-            if mat:
-                return {
-                    'materialName': mat.name if hasattr(mat, 'name') else mat_id,
-                    'materialTier': mat.tier,
-                    'materialRarity': getattr(mat, 'rarity', 'common'),
-                    'materialCategory': mat.category
-                }
-        return {'materialName': mat_id, 'materialTier': 1, 'materialRarity': 'common', 'materialCategory': 'unknown'}
-
-    def parse_response(self, response_text: str) -> Dict:
-        text = response_text.strip()
-        if text.startswith('{'):
-            return json.loads(text)
-        start = text.find('{')
-        end = text.rfind('}')
-        if start != -1 and end > start:
-            return json.loads(text[start:end+1])
-        raise ValueError("No valid JSON found in response")
-
-
-class AlchemyPromptBuilder(PromptBuilder):
-    """Builds prompts for alchemy item generation"""
-
-    SYSTEM_PROMPT = """You are a game item designer for a fantasy crafting RPG. Generate JSON consumable definitions for alchemy recipes.
-
-Given ingredients in order, create a potion/consumable that:
-1. Has effects based on ingredient properties
-2. Matches tier of highest-tier ingredient
-3. Includes thematic narrative and tags
-
-Output ONLY valid JSON with this structure:
-{
-  "metadata": {
-    "narrative": "2-3 sentences describing the item",
-    "tags": ["potion", "effect_type", "consumable"]
-  },
-  "itemId": "snake_case_id",
-  "name": "Title Case Name",
-  "category": "consumable",
-  "type": "potion",
-  "subtype": "healing|buff|utility|damage",
-  "tier": 1-4,
-  "rarity": "common|uncommon|rare|epic|legendary",
-  "effect": "Description of what it does",
-  "duration": number_in_seconds_or_0_for_instant,
-  "stackSize": 20,
-  "requirements": {
-    "level": number
-  },
-  "flags": {
-    "stackable": true,
-    "consumable": true,
-    "repairable": false
-  }
-}"""
-
-    def build_system_prompt(self) -> str:
-        return self.SYSTEM_PROMPT
-
-    def build_user_prompt(self, recipe_context: Dict, materials_db) -> str:
-        ingredients = recipe_context.get('ingredients', [])
-        station_tier = recipe_context.get('station_tier', 1)
-
-        ingredients_desc = []
-        for i, ing in enumerate(ingredients):
-            mat_data = self._get_material_data(ing.get('materialId'), materials_db)
-            ingredients_desc.append({
-                "slot": i + 1,
-                "materialId": ing.get('materialId'),
-                "quantity": ing.get('quantity', 1),
-                **mat_data
-            })
-
-        prompt_data = {
-            "recipeId": f"invented_alchemy_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            "stationTier": station_tier,
-            "stationType": "alchemy",
-            "ingredients": ingredients_desc,
-            "narrative": "Player-invented alchemy recipe. Create an appropriate potion or consumable."
-        }
-
-        return json.dumps(prompt_data, indent=2)
-
-    def _get_material_data(self, mat_id: str, materials_db) -> Dict:
-        if hasattr(materials_db, 'get_material'):
-            mat = materials_db.get_material(mat_id)
-            if mat:
-                tags = []
-                if hasattr(mat, 'properties') and mat.properties:
-                    tags = mat.properties.get('tags', [])
-                return {
-                    'materialName': mat.name if hasattr(mat, 'name') else mat_id,
-                    'materialTier': mat.tier,
-                    'materialRarity': getattr(mat, 'rarity', 'common'),
-                    'materialTags': tags
-                }
-        return {'materialName': mat_id, 'materialTier': 1, 'materialRarity': 'common', 'materialTags': []}
-
-    def parse_response(self, response_text: str) -> Dict:
-        text = response_text.strip()
-        if text.startswith('{'):
-            return json.loads(text)
-        start = text.find('{')
-        end = text.rfind('}')
-        if start != -1 and end > start:
-            return json.loads(text[start:end+1])
-        raise ValueError("No valid JSON found in response")
-
-
-class EngineeringPromptBuilder(PromptBuilder):
-    """Builds prompts for engineering device generation"""
-
-    SYSTEM_PROMPT = """You are a game item designer for a fantasy crafting RPG. Generate JSON device definitions for engineering recipes.
-
-Given slot assignments (FRAME, FUNCTION, POWER, etc.), create a device that:
-1. Has appropriate type (turret, bomb, trap, tool)
-2. Matches tier of materials
-3. Includes thematic narrative and tags
-
-Output ONLY valid JSON with this structure:
-{
-  "metadata": {
-    "narrative": "2-3 sentences describing the device",
-    "tags": ["device", "type_tag", "effect_tag"]
-  },
-  "itemId": "snake_case_id",
-  "name": "Title Case Name",
-  "category": "device",
-  "type": "turret|bomb|trap|tool",
-  "subtype": "specific_type",
-  "tier": 1-4,
-  "rarity": "common|uncommon|rare|epic|legendary",
-  "effect": "Description of what it does",
-  "effectTags": ["damage_type", "geometry_tag"],
-  "effectParams": {
-    "baseDamage": number,
-    "range": number
-  },
-  "stackSize": 5-10,
-  "requirements": {
-    "level": number
-  },
-  "flags": {
-    "stackable": true,
-    "placeable": true,
-    "repairable": false
-  }
-}"""
-
-    def build_system_prompt(self) -> str:
-        return self.SYSTEM_PROMPT
-
-    def build_user_prompt(self, recipe_context: Dict, materials_db) -> str:
-        slots = recipe_context.get('slots', [])
-        station_tier = recipe_context.get('station_tier', 1)
-
-        slots_desc = []
-        for slot in slots:
-            mat_data = self._get_material_data(slot.get('materialId'), materials_db)
-            slots_desc.append({
-                "type": slot.get('type', 'UNKNOWN'),
-                "materialId": slot.get('materialId'),
-                "quantity": slot.get('quantity', 1),
-                **mat_data
-            })
-
-        prompt_data = {
-            "recipeId": f"invented_engineering_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            "stationTier": station_tier,
-            "stationType": "engineering",
-            "slots": slots_desc,
-            "narrative": "Player-invented engineering recipe. Create an appropriate device."
-        }
-
-        return json.dumps(prompt_data, indent=2)
-
-    def _get_material_data(self, mat_id: str, materials_db) -> Dict:
-        if hasattr(materials_db, 'get_material'):
-            mat = materials_db.get_material(mat_id)
-            if mat:
-                return {
-                    'materialName': mat.name if hasattr(mat, 'name') else mat_id,
-                    'materialTier': mat.tier,
-                    'materialRarity': getattr(mat, 'rarity', 'common')
-                }
-        return {'materialName': mat_id, 'materialTier': 1, 'materialRarity': 'common'}
-
-    def parse_response(self, response_text: str) -> Dict:
-        text = response_text.strip()
-        if text.startswith('{'):
-            return json.loads(text)
-        start = text.find('{')
-        end = text.rfind('}')
-        if start != -1 and end > start:
-            return json.loads(text[start:end+1])
-        raise ValueError("No valid JSON found in response")
-
-
-class AdornmentPromptBuilder(PromptBuilder):
-    """Builds prompts for adornment/enchanting generation"""
-
-    SYSTEM_PROMPT = """You are a game item designer for a fantasy crafting RPG. Generate JSON accessory/enchantment definitions.
-
-Given vertex materials and shapes, create an accessory that:
-1. Has magical properties based on materials
-2. Matches tier of highest-tier material
-3. Includes thematic narrative and tags
-
-Output ONLY valid JSON with this structure:
-{
-  "metadata": {
-    "narrative": "2-3 sentences describing the accessory",
-    "tags": ["accessory", "type_tag", "enchant_type"]
-  },
-  "itemId": "snake_case_id",
-  "name": "Title Case Name",
-  "category": "equipment",
-  "type": "accessory",
-  "subtype": "ring|amulet|bracelet|charm",
-  "tier": 1-4,
-  "rarity": "common|uncommon|rare|epic|legendary",
-  "slot": "accessory",
-  "enchantments": [
-    {"type": "enchant_name", "level": 1-5}
-  ],
-  "stats": {
-    "stat_name": bonus_value
-  },
-  "requirements": {
-    "level": number
-  },
-  "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
-  }
-}"""
-
-    def build_system_prompt(self) -> str:
-        return self.SYSTEM_PROMPT
-
-    def build_user_prompt(self, recipe_context: Dict, materials_db) -> str:
-        vertices = recipe_context.get('vertices', {})
-        shapes = recipe_context.get('shapes', [])
-        station_tier = recipe_context.get('station_tier', 1)
-
-        vertices_desc = {}
-        for coord, mat_data in vertices.items():
-            mat_info = self._get_material_data(mat_data.get('materialId'), materials_db)
-            vertices_desc[coord] = {
-                "materialId": mat_data.get('materialId'),
-                **mat_info
-            }
-
-        prompt_data = {
-            "recipeId": f"invented_adornment_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            "stationTier": station_tier,
-            "stationType": "enchanting",
-            "vertices": vertices_desc,
-            "shapes": shapes,
-            "narrative": "Player-invented adornment recipe. Create an appropriate accessory."
-        }
-
-        return json.dumps(prompt_data, indent=2)
-
-    def _get_material_data(self, mat_id: str, materials_db) -> Dict:
-        if hasattr(materials_db, 'get_material'):
-            mat = materials_db.get_material(mat_id)
-            if mat:
-                tags = []
-                if hasattr(mat, 'properties') and mat.properties:
-                    tags = mat.properties.get('tags', [])
-                return {
-                    'materialName': mat.name if hasattr(mat, 'name') else mat_id,
-                    'materialTier': mat.tier,
-                    'materialRarity': getattr(mat, 'rarity', 'common'),
-                    'materialTags': tags
-                }
-        return {'materialName': mat_id, 'materialTier': 1, 'materialRarity': 'common', 'materialTags': []}
-
-    def parse_response(self, response_text: str) -> Dict:
-        text = response_text.strip()
-        if text.startswith('{'):
-            return json.loads(text)
-        start = text.find('{')
-        end = text.rfind('}')
-        if start != -1 and end > start:
-            return json.loads(text[start:end+1])
-        raise ValueError("No valid JSON found in response")
-
 
 # ==============================================================================
-# LLM BACKENDS
+# LLM BACKEND
 # ==============================================================================
 
-class LLMBackend(ABC):
-    """Abstract base for LLM API backends"""
-
-    @abstractmethod
-    def generate(self, system_prompt: str, user_prompt: str,
-                 config: LLMConfig) -> Tuple[str, Optional[str]]:
-        """
-        Generate text from LLM.
-
-        Returns:
-            Tuple of (response_text, error_message or None)
-        """
-        pass
-
-
-class AnthropicBackend(LLMBackend):
+class AnthropicBackend:
     """Anthropic Claude API backend"""
 
     def __init__(self, api_key: str):
@@ -756,7 +307,7 @@ class AnthropicBackend(LLMBackend):
             return "", f"API error: {str(e)}"
 
 
-class MockBackend(LLMBackend):
+class MockBackend:
     """Mock backend for testing without API"""
 
     def generate(self, system_prompt: str, user_prompt: str,
@@ -772,7 +323,13 @@ class MockBackend(LLMBackend):
             "category": "equipment",
             "type": "weapon",
             "tier": 1,
-            "rarity": "uncommon"
+            "rarity": "uncommon",
+            "slot": "mainHand",
+            "effectTags": ["physical", "slashing", "single"],
+            "effectParams": {"baseDamage": 15},
+            "statMultipliers": {"damage": 1.0, "attackSpeed": 1.0, "durability": 1.0, "weight": 1.0},
+            "requirements": {"level": 1, "stats": {}},
+            "flags": {"stackable": False, "equippable": True, "repairable": True}
         }
         return json.dumps(mock_item, indent=2), None
 
@@ -785,22 +342,8 @@ class LLMItemGenerator:
     """
     Main entry point for LLM-based item generation.
 
-    Usage:
-        generator = LLMItemGenerator(project_root, materials_db, config)
-        result = generator.generate('smithing', recipe_context)
-        if result.success:
-            item_data = result.item_data
+    Uses actual prompts from Fewshot_llm directory.
     """
-
-    # Prompt builder registry
-    PROMPT_BUILDERS = {
-        'smithing': SmithingPromptBuilder,
-        'refining': RefiningPromptBuilder,
-        'alchemy': AlchemyPromptBuilder,
-        'engineering': EngineeringPromptBuilder,
-        'adornments': AdornmentPromptBuilder,
-        'enchanting': AdornmentPromptBuilder,  # Alias
-    }
 
     def __init__(self, project_root: Path, materials_db,
                  config: Optional[LLMConfig] = None):
@@ -816,9 +359,11 @@ class LLMItemGenerator:
         self.materials_db = materials_db
         self.config = config or LLMConfig()
 
+        # Load prompts from Fewshot_llm
+        self.prompt_loader = FewshotPromptLoader(project_root)
+
         # Lazy initialized components
         self._backend = None
-        self._prompt_builders = {}
         self._cache = {}
 
         print(f"LLMItemGenerator initialized")
@@ -826,23 +371,16 @@ class LLMItemGenerator:
         print(f"  Enabled: {self.config.enabled}")
 
     @property
-    def backend(self) -> LLMBackend:
+    def backend(self):
         """Get or create LLM backend"""
         if self._backend is None:
-            if self.config.api_key:
-                self._backend = AnthropicBackend(self.config.api_key)
+            api_key = self.config.api_key or os.environ.get('ANTHROPIC_API_KEY', '')
+            if api_key:
+                self._backend = AnthropicBackend(api_key)
             else:
                 print("  Warning: No API key - using mock backend")
                 self._backend = MockBackend()
         return self._backend
-
-    def get_prompt_builder(self, discipline: str) -> Optional[PromptBuilder]:
-        """Get or create prompt builder for discipline"""
-        if discipline not in self._prompt_builders:
-            builder_class = self.PROMPT_BUILDERS.get(discipline)
-            if builder_class:
-                self._prompt_builders[discipline] = builder_class()
-        return self._prompt_builders.get(discipline)
 
     def generate(self, discipline: str, interactive_ui, narrative: str = "") -> GeneratedItem:
         """
@@ -861,15 +399,6 @@ class LLMItemGenerator:
                 success=False,
                 discipline=discipline,
                 error="LLM generation disabled"
-            )
-
-        # Get prompt builder
-        builder = self.get_prompt_builder(discipline)
-        if not builder:
-            return GeneratedItem(
-                success=False,
-                discipline=discipline,
-                error=f"No prompt builder for discipline: {discipline}"
             )
 
         # Extract recipe context from UI
@@ -901,15 +430,8 @@ class LLMItemGenerator:
             )
 
         # Build prompts
-        try:
-            system_prompt = builder.build_system_prompt()
-            user_prompt = builder.build_user_prompt(recipe_context, self.materials_db)
-        except Exception as e:
-            return GeneratedItem(
-                success=False,
-                discipline=discipline,
-                error=f"Failed to build prompt: {e}"
-            )
+        system_prompt = self.prompt_loader.get_system_prompt(discipline)
+        user_prompt = self._build_user_prompt(discipline, recipe_context, narrative)
 
         # Call LLM
         print(f"Generating item for {discipline}...")
@@ -938,7 +460,7 @@ class LLMItemGenerator:
 
         # Parse response
         try:
-            item_data = builder.parse_response(response_text)
+            item_data = self._parse_response(response_text)
 
             # Validate required fields
             item_id = item_data.get('itemId', item_data.get('materialId'))
@@ -965,6 +487,7 @@ class LLMItemGenerator:
             )
 
         except Exception as e:
+            print(f"  Parse error: {e}")
             if self.config.use_fallback_on_error:
                 return self._generate_fallback(discipline, recipe_context, narrative)
             return GeneratedItem(
@@ -973,35 +496,73 @@ class LLMItemGenerator:
                 error=f"Failed to parse response: {e}"
             )
 
+    def _build_user_prompt(self, discipline: str, recipe_context: Dict, narrative: str = "") -> str:
+        """Build user prompt with recipe context and few-shot examples"""
+        # Get few-shot examples
+        examples = self.prompt_loader.get_few_shot_examples(discipline, self.config.max_few_shot_examples)
+
+        # Build examples section
+        examples_text = ""
+        if examples:
+            examples_text = "\n\nExamples:\n"
+            for i, ex in enumerate(examples, 1):
+                examples_text += f"\nExample {i} Input:\n{ex.get('input', '')}\n"
+                examples_text += f"\nExample {i} Output:\n{ex.get('output', '')}\n"
+
+        # Build recipe context JSON
+        recipe_json = json.dumps(recipe_context, indent=2)
+
+        # Build the user prompt
+        prompt = f"""Create an item definition for this {discipline} recipe:
+
+{recipe_json}
+
+Return ONLY the JSON item definition, no extra text.{examples_text}"""
+
+        return prompt
+
     def _extract_recipe_context(self, discipline: str, ui) -> Dict:
         """Extract recipe context from interactive UI state"""
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         context = {
-            'station_tier': getattr(ui, 'station_tier', 1)
+            'recipeId': f"invented_{timestamp}",
+            'stationTier': getattr(ui, 'station_tier', 1),
+            'stationType': discipline
         }
 
         if discipline == 'smithing':
             # Extract grid placements
             inputs = []
+            material_counts = {}
             for (x, y), placed_mat in ui.grid.items():
-                # Check if this material already in inputs
-                found = False
-                for inp in inputs:
-                    if inp['materialId'] == placed_mat.item_id:
-                        inp['quantity'] += 1
-                        found = True
-                        break
-                if not found:
-                    inputs.append({
-                        'materialId': placed_mat.item_id,
-                        'quantity': 1
-                    })
+                mat_id = placed_mat.item_id
+                material_counts[mat_id] = material_counts.get(mat_id, 0) + 1
+
+            for mat_id, qty in material_counts.items():
+                mat_data = self._get_material_data(mat_id)
+                inputs.append({
+                    'materialId': mat_id,
+                    'quantity': qty,
+                    'materialName': mat_data.get('name', mat_id.replace('_', ' ').title()),
+                    'materialTier': mat_data.get('tier', 1),
+                    'materialRarity': mat_data.get('rarity', 'common'),
+                    'materialNarrative': mat_data.get('narrative', ''),
+                    'materialTags': mat_data.get('tags', [])
+                })
             context['inputs'] = inputs
 
-        elif discipline == 'adornments':
+        elif discipline == 'adornments' or discipline == 'enchanting':
             # Extract vertices
             vertices = {}
             for coord_key, placed_mat in ui.vertices.items():
-                vertices[coord_key] = {'materialId': placed_mat.item_id}
+                mat_data = self._get_material_data(placed_mat.item_id)
+                vertices[coord_key] = {
+                    'materialId': placed_mat.item_id,
+                    'materialName': mat_data.get('name', placed_mat.item_id),
+                    'materialTier': mat_data.get('tier', 1),
+                    'materialRarity': mat_data.get('rarity', 'common'),
+                    'materialTags': mat_data.get('tags', [])
+                }
             context['vertices'] = vertices
             context['shapes'] = [
                 {'type': s['type'], 'vertices': s['vertices']}
@@ -1013,9 +574,15 @@ class LLMItemGenerator:
             ingredients = []
             for slot_idx, placed_mat in enumerate(ui.slots):
                 if placed_mat:
+                    mat_data = self._get_material_data(placed_mat.item_id)
                     ingredients.append({
+                        'slot': slot_idx + 1,
                         'materialId': placed_mat.item_id,
-                        'quantity': placed_mat.quantity
+                        'quantity': placed_mat.quantity,
+                        'materialName': mat_data.get('name', placed_mat.item_id),
+                        'materialTier': mat_data.get('tier', 1),
+                        'materialRarity': mat_data.get('rarity', 'common'),
+                        'materialTags': mat_data.get('tags', [])
                     })
             context['ingredients'] = ingredients
 
@@ -1024,45 +591,101 @@ class LLMItemGenerator:
             core_inputs = []
             for placed_mat in ui.core_slots:
                 if placed_mat:
+                    mat_data = self._get_material_data(placed_mat.item_id)
                     core_inputs.append({
                         'materialId': placed_mat.item_id,
-                        'quantity': placed_mat.quantity
+                        'quantity': placed_mat.quantity,
+                        'materialName': mat_data.get('name', placed_mat.item_id),
+                        'materialTier': mat_data.get('tier', 1),
+                        'materialRarity': mat_data.get('rarity', 'common'),
+                        'materialCategory': mat_data.get('category', 'unknown')
                     })
-            context['core_inputs'] = core_inputs
+            context['coreInputs'] = core_inputs
 
             surrounding_inputs = []
             for placed_mat in ui.surrounding_slots:
                 if placed_mat:
+                    mat_data = self._get_material_data(placed_mat.item_id)
                     surrounding_inputs.append({
                         'materialId': placed_mat.item_id,
-                        'quantity': placed_mat.quantity
+                        'quantity': placed_mat.quantity,
+                        'materialName': mat_data.get('name', placed_mat.item_id),
+                        'materialTier': mat_data.get('tier', 1),
+                        'materialRarity': mat_data.get('rarity', 'common'),
+                        'materialCategory': mat_data.get('category', 'unknown')
                     })
-            context['surrounding_inputs'] = surrounding_inputs
+            context['surroundingInputs'] = surrounding_inputs
 
         elif discipline == 'engineering':
             # Extract slot assignments
             slots = []
             for slot_type, materials in ui.slots.items():
                 for placed_mat in materials:
+                    mat_data = self._get_material_data(placed_mat.item_id)
                     slots.append({
-                        'type': slot_type,
+                        'slotType': slot_type,
                         'materialId': placed_mat.item_id,
-                        'quantity': placed_mat.quantity
+                        'quantity': placed_mat.quantity,
+                        'materialName': mat_data.get('name', placed_mat.item_id),
+                        'materialTier': mat_data.get('tier', 1),
+                        'materialRarity': mat_data.get('rarity', 'common')
                     })
             context['slots'] = slots
 
+        # Add narrative
+        context['narrative'] = "Player-invented recipe. Create an appropriate item."
+
         return context
+
+    def _get_material_data(self, mat_id: str) -> Dict:
+        """Get material data for prompt enrichment"""
+        if hasattr(self.materials_db, 'get_material'):
+            mat = self.materials_db.get_material(mat_id)
+            if mat:
+                tags = []
+                if hasattr(mat, 'properties') and mat.properties:
+                    tags = mat.properties.get('tags', [])
+                return {
+                    'name': mat.name if hasattr(mat, 'name') else mat_id,
+                    'tier': mat.tier,
+                    'rarity': getattr(mat, 'rarity', 'common'),
+                    'narrative': getattr(mat, 'description', ''),
+                    'category': mat.category if hasattr(mat, 'category') else 'unknown',
+                    'tags': tags
+                }
+        return {'name': mat_id, 'tier': 1, 'rarity': 'common', 'narrative': '', 'category': 'unknown', 'tags': []}
+
+    def _parse_response(self, response_text: str) -> Dict:
+        """Parse LLM response into item data"""
+        text = response_text.strip()
+
+        # Try direct parse first
+        if text.startswith('{'):
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError:
+                pass
+
+        # Find JSON block
+        start = text.find('{')
+        end = text.rfind('}')
+        if start != -1 and end > start:
+            try:
+                return json.loads(text[start:end+1])
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON: {e}")
+
+        raise ValueError("No valid JSON found in response")
 
     def _get_cache_key(self, discipline: str, recipe_context: Dict) -> str:
         """Generate cache key from recipe context"""
-        # Create deterministic string from context
         context_str = json.dumps(recipe_context, sort_keys=True)
         return f"{discipline}:{hashlib.md5(context_str.encode()).hexdigest()}"
 
     def _extract_recipe_inputs(self, recipe_context: Dict) -> List[Dict]:
         """Extract recipe inputs from context in a unified format"""
         inputs = []
-        for key in ['inputs', 'ingredients', 'core_inputs', 'surrounding_inputs', 'slots']:
+        for key in ['inputs', 'ingredients', 'coreInputs', 'surroundingInputs', 'slots']:
             if key in recipe_context:
                 for item in recipe_context[key]:
                     mat_id = item.get('materialId')
@@ -1079,7 +702,7 @@ class LLMItemGenerator:
         max_tier = 1
         all_materials = []
 
-        for key in ['inputs', 'ingredients', 'core_inputs', 'surrounding_inputs', 'slots']:
+        for key in ['inputs', 'ingredients', 'coreInputs', 'surroundingInputs', 'slots']:
             if key in recipe_context:
                 for item in recipe_context[key]:
                     mat_id = item.get('materialId')
@@ -1089,73 +712,110 @@ class LLMItemGenerator:
                         if mat:
                             max_tier = max(max_tier, mat.tier)
 
-        if discipline in ['smithing', 'engineering']:
+        if discipline == 'smithing':
             item_data = {
                 "metadata": {
                     "narrative": "A unique invention crafted with unusual techniques.",
-                    "tags": ["invented", "unique"]
+                    "tags": ["invented", "melee", "weapon"]
                 },
-                "itemId": f"invented_{discipline}_{timestamp}",
-                "name": f"Invented {discipline.title()} Item",
+                "itemId": f"invented_weapon_{timestamp}",
+                "name": "Invented Weapon",
                 "category": "equipment",
-                "type": "weapon" if discipline == 'smithing' else "device",
+                "type": "weapon",
+                "subtype": "sword",
                 "tier": max_tier,
                 "rarity": "uncommon",
-                "flags": {
-                    "stackable": False,
-                    "equippable": discipline == 'smithing',
-                    "placeable": discipline == 'engineering'
-                }
+                "range": 1,
+                "slot": "mainHand",
+                "effectTags": ["physical", "slashing", "single"],
+                "effectParams": {"baseDamage": 15 * max_tier},
+                "statMultipliers": {"damage": 1.0, "attackSpeed": 1.0, "durability": 1.0, "weight": 1.0},
+                "requirements": {"level": max(1, (max_tier - 1) * 5), "stats": {}},
+                "flags": {"stackable": False, "equippable": True, "repairable": True}
+            }
+        elif discipline == 'engineering':
+            item_data = {
+                "metadata": {
+                    "narrative": "A mechanical device of unusual design.",
+                    "tags": ["device", "invented", "mechanical"]
+                },
+                "itemId": f"invented_device_{timestamp}",
+                "name": "Invented Device",
+                "category": "device",
+                "type": "turret",
+                "subtype": "projectile",
+                "tier": max_tier,
+                "rarity": "uncommon",
+                "stackSize": 5,
+                "effectTags": ["physical", "piercing", "single"],
+                "effectParams": {"baseDamage": 20 * max_tier, "range": 8},
+                "requirements": {"level": max(1, (max_tier - 1) * 5), "stats": {}},
+                "flags": {"stackable": True, "placeable": True, "repairable": False}
             }
         elif discipline == 'alchemy':
             item_data = {
                 "metadata": {
                     "narrative": "A mysterious potion with unknown properties.",
-                    "tags": ["potion", "invented"]
+                    "tags": ["potion", "consumable", "invented"]
                 },
                 "itemId": f"invented_potion_{timestamp}",
                 "name": "Mysterious Potion",
                 "category": "consumable",
                 "type": "potion",
+                "subtype": "utility",
                 "tier": max_tier,
                 "rarity": "uncommon",
+                "stackSize": 10,
                 "effect": "Unknown effect",
-                "stackSize": 20,
-                "flags": {
-                    "stackable": True,
-                    "consumable": True
-                }
+                "effectTags": ["healing", "instant", "self"],
+                "effectParams": {"healing": {"heal_amount": 50 * max_tier}},
+                "duration": 0,
+                "statMultipliers": {"weight": 0.3},
+                "requirements": {"level": max(1, (max_tier - 1) * 5), "stats": {}},
+                "flags": {"stackable": True, "consumable": True, "repairable": False}
             }
         elif discipline == 'refining':
             item_data = {
                 "metadata": {
                     "narrative": "A refined material with unique properties.",
-                    "tags": ["refined", "invented"]
+                    "tags": ["refined", "material", "invented"]
                 },
                 "materialId": f"invented_material_{timestamp}",
+                "itemId": f"invented_material_{timestamp}",
                 "name": "Refined Material",
+                "category": "metal",
+                "type": "material",
+                "subtype": "ingot",
                 "tier": max_tier,
                 "rarity": "uncommon",
-                "category": "metal"
+                "stackSize": 99,
+                "statMultipliers": {"weight": 1.0},
+                "requirements": {"level": 1, "stats": {}},
+                "flags": {"stackable": True, "consumable": False, "repairable": False}
             }
-        else:  # adornments
+        else:  # adornments/enchanting
             item_data = {
                 "metadata": {
                     "narrative": "A magical accessory with mysterious enchantments.",
-                    "tags": ["accessory", "invented"]
+                    "tags": ["accessory", "enchanted", "invented"]
                 },
                 "itemId": f"invented_accessory_{timestamp}",
                 "name": "Mysterious Accessory",
                 "category": "equipment",
                 "type": "accessory",
+                "subtype": "ring",
                 "tier": max_tier,
                 "rarity": "uncommon",
-                "slot": "accessory"
+                "slot": "accessory",
+                "enchantments": [],
+                "stats": {},
+                "requirements": {"level": max(1, (max_tier - 1) * 5), "stats": {}},
+                "flags": {"stackable": False, "equippable": True, "repairable": True}
             }
 
         # Extract recipe inputs for persistence
         recipe_inputs = self._extract_recipe_inputs(recipe_context)
-        station_tier = recipe_context.get('station_tier', 1)
+        station_tier = recipe_context.get('stationTier', 1)
 
         return GeneratedItem(
             success=True,
