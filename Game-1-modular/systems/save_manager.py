@@ -146,7 +146,11 @@ class SaveManager:
                     # Recipe crafting data (for re-registering on load)
                     "recipe_inputs": recipe.get("recipe_inputs", []),
                     "station_tier": recipe.get("station_tier", 1),
-                    "narrative": recipe.get("narrative", "")
+                    "narrative": recipe.get("narrative", ""),
+                    # Placement data for recipe recreation (new)
+                    "placement_data": recipe.get("placement_data", {}),
+                    # Icon path for invented item (new)
+                    "icon_path": recipe.get("icon_path", "")
                 }
                 serialized.append(recipe_record)
             except Exception as e:

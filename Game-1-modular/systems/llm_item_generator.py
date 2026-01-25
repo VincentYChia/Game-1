@@ -694,6 +694,192 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
                         inputs.append({'materialId': mat_id, 'quantity': qty})
         return inputs
 
+    def extract_placement_data(self, discipline: str, ui) -> Dict:
+        """
+        Extract full placement data from interactive UI for saving/reloading.
+
+        Returns a dict that can be used to recreate the recipe placement.
+        """
+        placement = {
+            'discipline': discipline,
+            'stationTier': getattr(ui, 'station_tier', 1)
+        }
+
+        if discipline == 'smithing':
+            # Extract grid placement map {"x,y": "material_id"}
+            placement_map = {}
+            for (x, y), placed_mat in ui.grid.items():
+                placement_map[f"{x},{y}"] = placed_mat.item_id
+            placement['placementMap'] = placement_map
+            placement['gridSize'] = f"{getattr(ui, 'grid_size', 3)}x{getattr(ui, 'grid_size', 3)}"
+
+        elif discipline in ['adornments', 'enchanting']:
+            # Extract vertices and shapes
+            vertices = {}
+            for coord_key, placed_mat in getattr(ui, 'vertices', {}).items():
+                vertices[coord_key] = placed_mat.item_id
+            placement['vertices'] = vertices
+            placement['shapes'] = [
+                {'type': s.get('type'), 'vertices': s.get('vertices', [])}
+                for s in getattr(ui, 'shapes', [])
+            ]
+            placement['gridSize'] = f"{getattr(ui, 'grid_size', 8)}x{getattr(ui, 'grid_size', 8)}"
+
+        elif discipline == 'alchemy':
+            # Extract slot ingredients with positions
+            ingredients = []
+            for slot_idx, placed_mat in enumerate(getattr(ui, 'slots', [])):
+                if placed_mat:
+                    ingredients.append({
+                        'slot': slot_idx,
+                        'materialId': placed_mat.item_id,
+                        'quantity': placed_mat.quantity
+                    })
+            placement['ingredients'] = ingredients
+            placement['numSlots'] = len(getattr(ui, 'slots', []))
+
+        elif discipline == 'refining':
+            # Extract core and surrounding slots
+            core_inputs = []
+            for idx, placed_mat in enumerate(getattr(ui, 'core_slots', [])):
+                if placed_mat:
+                    core_inputs.append({
+                        'slot': idx,
+                        'materialId': placed_mat.item_id,
+                        'quantity': placed_mat.quantity
+                    })
+            placement['coreInputs'] = core_inputs
+
+            surrounding_inputs = []
+            for idx, placed_mat in enumerate(getattr(ui, 'surrounding_slots', [])):
+                if placed_mat:
+                    surrounding_inputs.append({
+                        'slot': idx,
+                        'materialId': placed_mat.item_id,
+                        'quantity': placed_mat.quantity
+                    })
+            placement['surroundingInputs'] = surrounding_inputs
+            placement['numCoreSlots'] = len(getattr(ui, 'core_slots', []))
+            placement['numSurroundingSlots'] = len(getattr(ui, 'surrounding_slots', []))
+
+        elif discipline == 'engineering':
+            # Extract slot type assignments
+            slots = []
+            for slot_type, materials in getattr(ui, 'slots', {}).items():
+                for idx, placed_mat in enumerate(materials):
+                    slots.append({
+                        'slotType': slot_type,
+                        'index': idx,
+                        'materialId': placed_mat.item_id,
+                        'quantity': placed_mat.quantity
+                    })
+            placement['slots'] = slots
+            placement['slotTypes'] = list(getattr(ui, 'slots', {}).keys())
+
+        return placement
+
+    def calculate_minimum_tier(self, discipline: str, ui) -> int:
+        """
+        Calculate the minimum station tier required for this recipe based on
+        the discipline-specific rules.
+
+        Returns the minimum tier (1-4) that can craft this recipe.
+        """
+        # Tier rules by discipline
+        if discipline == 'smithing':
+            # Smithing: based on grid size needed
+            # T1: 3x3, T2: 5x5, T3: 7x7, T4: 9x9
+            if not ui.grid:
+                return 1
+            max_x = max(x for (x, y) in ui.grid.keys()) if ui.grid else 0
+            max_y = max(y for (x, y) in ui.grid.keys()) if ui.grid else 0
+            min_x = min(x for (x, y) in ui.grid.keys()) if ui.grid else 0
+            min_y = min(y for (x, y) in ui.grid.keys()) if ui.grid else 0
+            width = max_x - min_x + 1
+            height = max_y - min_y + 1
+            grid_needed = max(width, height)
+
+            if grid_needed <= 3:
+                return 1
+            elif grid_needed <= 5:
+                return 2
+            elif grid_needed <= 7:
+                return 3
+            else:
+                return 4
+
+        elif discipline in ['adornments', 'enchanting']:
+            # Adornments: based on grid size - T1: 8x8, T2: 10x10, T3: 12x12, T4: 14x14
+            vertices = getattr(ui, 'vertices', {})
+            if not vertices:
+                return 1
+            # Grid uses coordinates like "0,1", "-2,3", etc. around center
+            coords = []
+            for key in vertices.keys():
+                if isinstance(key, str) and ',' in key:
+                    parts = key.split(',')
+                    coords.append((int(parts[0]), int(parts[1])))
+                elif isinstance(key, tuple):
+                    coords.append(key)
+            if not coords:
+                return 1
+            max_coord = max(max(abs(x), abs(y)) for x, y in coords)
+            grid_needed = max_coord * 2 + 1
+
+            if grid_needed <= 8:
+                return 1
+            elif grid_needed <= 10:
+                return 2
+            elif grid_needed <= 12:
+                return 3
+            else:
+                return 4
+
+        elif discipline == 'refining':
+            # Refining: T1: 1+2=3, T2: 1+4=5, T3: 2+5=7, T4: 3+6=9
+            core_count = sum(1 for s in getattr(ui, 'core_slots', []) if s is not None)
+            surrounding_count = sum(1 for s in getattr(ui, 'surrounding_slots', []) if s is not None)
+
+            # Check which tier can support these counts
+            tier_limits = {
+                1: (1, 2),  # max 1 core, 2 surrounding
+                2: (1, 4),  # max 1 core, 4 surrounding
+                3: (2, 5),  # max 2 core, 5 surrounding
+                4: (3, 6),  # max 3 core, 6 surrounding
+            }
+            for tier in [1, 2, 3, 4]:
+                max_core, max_surr = tier_limits[tier]
+                if core_count <= max_core and surrounding_count <= max_surr:
+                    return tier
+            return 4
+
+        elif discipline == 'alchemy':
+            # Alchemy: T1: 2 slots, T2: 3 slots, T3: 4 slots, T4: 6 slots
+            slot_count = sum(1 for s in getattr(ui, 'slots', []) if s is not None)
+
+            if slot_count <= 2:
+                return 1
+            elif slot_count <= 3:
+                return 2
+            elif slot_count <= 4:
+                return 3
+            else:
+                return 4
+
+        elif discipline == 'engineering':
+            # Engineering: T1-2: 3 types, T3-4: 5 types
+            slot_types_used = set()
+            for slot_type, materials in getattr(ui, 'slots', {}).items():
+                if materials:  # Has at least one material
+                    slot_types_used.add(slot_type)
+
+            if len(slot_types_used) <= 3:
+                return 1
+            else:
+                return 3
+
+        return 1  # Default
+
     def _generate_fallback(self, discipline: str, recipe_context: Dict, narrative: str = "") -> GeneratedItem:
         """Generate a simple fallback item when LLM fails"""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')

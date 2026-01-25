@@ -47,16 +47,20 @@ class ItemStack:
 
     def is_equipment(self) -> bool:
         """Check if this item stack is equipment"""
+        # If equipment_data is set, it's equipment (handles invented items)
+        if self.equipment_data is not None:
+            return True
         return EquipmentDatabase.get_instance().is_equipment(self.item_id)
 
     def get_equipment(self) -> Optional[EquipmentItem]:
         """Get equipment data if this is equipment"""
-        if not self.is_equipment():
-            return None
-        # Return the stored equipment instance if available
+        # Return the stored equipment instance if available (handles invented items)
         if self.equipment_data:
             return self.equipment_data
-        # Otherwise create a new one (shouldn't happen for equipment items)
+        # Check if this is a known equipment type from database
+        if not EquipmentDatabase.get_instance().is_equipment(self.item_id):
+            return None
+        # Create a new one from database (shouldn't happen for equipment items with proper data)
         return EquipmentDatabase.get_instance().create_equipment_from_id(self.item_id)
 
     def can_stack_with(self, other: 'ItemStack') -> bool:

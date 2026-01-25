@@ -592,6 +592,8 @@ class Character:
         """
         Register an invented recipe with RecipeDatabase for crafting.
 
+        Note: Crafter registration is handled separately by GameEngine after character load.
+
         Args:
             recipe_record: Dictionary containing recipe data
         """
@@ -603,11 +605,15 @@ class Character:
             discipline = recipe_record.get("discipline", "unknown")
             inputs = recipe_record.get("recipe_inputs", [])
             station_tier = recipe_record.get("station_tier", 1)
+            placement_data = recipe_record.get("placement_data", {})
 
             if not item_id or not inputs:
                 return  # Skip incomplete recipes
 
             recipe_id = f"invented_{item_id}"
+
+            # Get grid size from placement data or default
+            grid_size = placement_data.get('gridSize', '3x3')
 
             # Create Recipe object
             recipe = Recipe(
@@ -620,13 +626,14 @@ class Character:
                     {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
                     for inp in inputs if inp.get('materialId')
                 ],
-                grid_size="3x3",
+                grid_size=grid_size,
                 mini_game_type=discipline,
                 metadata={
                     'invented': True,
                     'narrative': recipe_record.get("narrative", ""),
                     'timestamp': recipe_record.get("timestamp", ""),
-                    'item_name': recipe_record.get("item_name", "")
+                    'item_name': recipe_record.get("item_name", ""),
+                    'placement_data': placement_data
                 }
             )
 

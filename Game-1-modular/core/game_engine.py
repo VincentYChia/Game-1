@@ -788,6 +788,9 @@ class GameEngine:
                         # Restore character state
                         self.character.restore_from_save(save_data["player"])
 
+                        # Register saved invented recipes with Crafters
+                        self.register_saved_invented_recipes()
+
                         # Restore world state
                         self.world.restore_from_save(save_data["world_state"])
 
@@ -1177,6 +1180,9 @@ class GameEngine:
                 # Restore character state from save
                 self.character.restore_from_save(save_data["player"])
 
+                # Register saved invented recipes with Crafters
+                self.register_saved_invented_recipes()
+
                 # Restore world state (placed entities, modified resources)
                 self.world.restore_from_save(save_data["world_state"])
 
@@ -1216,6 +1222,9 @@ class GameEngine:
 
                 # Restore character state from save
                 self.character.restore_from_save(save_data["player"])
+
+                # Register saved invented recipes with Crafters
+                self.register_saved_invented_recipes()
 
                 # Restore world state (placed entities, modified resources)
                 self.world.restore_from_save(save_data["world_state"])
@@ -2820,6 +2829,17 @@ class GameEngine:
         elif 'forestry' in stats:
             efficiency = 1.0 + (stats['forestry'] / 100.0)
 
+        # Determine icon path based on item type
+        if item_type == 'armor':
+            icon_subdir = 'armor'
+        elif item_type == 'tool':
+            icon_subdir = 'tools'
+        elif item_type == 'accessory':
+            icon_subdir = 'accessories'
+        else:
+            icon_subdir = 'weapons'
+        icon_path = f"{icon_subdir}/invented_default.png"
+
         # Build the equipment item
         equipment = EquipmentItem(
             item_id=item_id,
@@ -2838,7 +2858,7 @@ class GameEngine:
             requirements=item_data.get('requirements', {}),
             bonuses={},
             enchantments=item_data.get('enchantments', []),
-            icon_path=None,
+            icon_path=icon_path,
             hand_type=hand_type,
             item_type=item_type,
             stat_multipliers=stat_multipliers,
@@ -2929,6 +2949,18 @@ class GameEngine:
         """
         from data.databases import RecipeDatabase
         from data.models import Recipe
+        from systems.llm_item_generator import get_item_generator
+
+        # Get the LLM generator for placement extraction
+        generator = get_item_generator()
+
+        # Calculate minimum tier from placement complexity
+        calculated_tier = 1
+        placement_data = {}
+        if generator and self.interactive_ui:
+            calculated_tier = generator.calculate_minimum_tier(discipline, self.interactive_ui)
+            placement_data = generator.extract_placement_data(discipline, self.interactive_ui)
+            print(f"  Calculated minimum tier: {calculated_tier} (from placement)")
 
         # Store in character data
         if not hasattr(self.character, 'invented_recipes'):
@@ -2944,25 +2976,31 @@ class GameEngine:
             'from_cache': gen_result.from_cache,
             # Include recipe inputs for crafting
             'recipe_inputs': gen_result.recipe_inputs or [],
-            'station_tier': gen_result.station_tier,
-            'narrative': gen_result.narrative
+            'station_tier': calculated_tier,  # Use calculated tier
+            'narrative': gen_result.narrative,
+            # Include full placement data for recreation
+            'placement_data': placement_data,
+            # Include icon path for the item
+            'icon_path': self._get_invented_icon_path(gen_result.item_id, discipline, gen_result.item_data)
         }
 
         self.character.invented_recipes.append(recipe_record)
 
-        # Also register with RecipeDatabase for immediate use
+        # Register with RecipeDatabase
         recipe_id = f"invented_{gen_result.item_id}"
+        grid_size = placement_data.get('gridSize', '3x3')
+
         recipe = Recipe(
             recipe_id=recipe_id,
             output_id=gen_result.item_id,
             output_qty=1,
             station_type=discipline,
-            station_tier=gen_result.station_tier,
+            station_tier=calculated_tier,
             inputs=[
                 {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
                 for inp in (gen_result.recipe_inputs or [])
             ],
-            grid_size="3x3",
+            grid_size=grid_size,
             mini_game_type=discipline,
             metadata={
                 'invented': True,
@@ -2971,19 +3009,194 @@ class GameEngine:
             }
         )
 
-        # Add to database (will be available immediately)
+        # Add to RecipeDatabase
         recipe_db = RecipeDatabase.get_instance()
         recipe_db.recipes[recipe_id] = recipe
 
-        # Also add to recipes_by_station for get_recipes_for_station lookup
         if discipline not in recipe_db.recipes_by_station:
             recipe_db.recipes_by_station[discipline] = []
-        # Check if not already added (avoid duplicates)
         if not any(r.recipe_id == recipe_id for r in recipe_db.recipes_by_station[discipline]):
             recipe_db.recipes_by_station[discipline].append(recipe)
 
+        # CRITICAL: Also register with the appropriate Crafter for instant craft
+        self._register_with_crafter(recipe_id, discipline, gen_result, placement_data, calculated_tier)
+
         print(f"  ✓ Stored invented recipe: {gen_result.item_id}")
         print(f"  ✓ Recipe registered for crafting: {recipe_id}")
+        print(f"  ✓ Tier: {calculated_tier}, Grid: {grid_size}")
+
+    def _register_with_crafter(self, recipe_id: str, discipline: str, gen_result, placement_data: dict, tier: int):
+        """
+        Register invented recipe with the appropriate Crafter for instant craft support.
+
+        This is necessary because Crafters have their own recipes dict separate from RecipeDatabase.
+        """
+        # Get the appropriate crafter
+        crafter = None
+        if discipline == 'smithing' and hasattr(self, 'smithing_crafter'):
+            crafter = self.smithing_crafter
+        elif discipline == 'refining' and hasattr(self, 'refining_crafter'):
+            crafter = self.refining_crafter
+        elif discipline == 'alchemy' and hasattr(self, 'alchemy_crafter'):
+            crafter = self.alchemy_crafter
+        elif discipline == 'engineering' and hasattr(self, 'engineering_crafter'):
+            crafter = self.engineering_crafter
+        elif discipline in ['adornments', 'enchanting'] and hasattr(self, 'enchanting_crafter'):
+            crafter = self.enchanting_crafter
+
+        if not crafter:
+            print(f"  Warning: No crafter found for discipline: {discipline}")
+            return
+
+        # Build recipe dict in the format Crafter expects
+        recipe_dict = {
+            'recipeId': recipe_id,
+            'outputId': gen_result.item_id,
+            'outputQty': 1,
+            'stationType': discipline,
+            'stationTier': tier,
+            'inputs': [
+                {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
+                for inp in (gen_result.recipe_inputs or [])
+            ],
+            'metadata': {
+                'invented': True,
+                'narrative': gen_result.narrative
+            }
+        }
+
+        # Register recipe with Crafter
+        crafter.recipes[recipe_id] = recipe_dict
+
+        # Register placement with Crafter
+        if discipline == 'smithing':
+            # Smithing uses placementMap format
+            crafter.placements[recipe_id] = placement_data.get('placementMap', {})
+        elif discipline in ['adornments', 'enchanting']:
+            # Enchanting uses vertices/shapes
+            crafter.placements[recipe_id] = placement_data.get('vertices', {})
+        elif discipline == 'alchemy':
+            # Alchemy uses ingredients list
+            crafter.placements[recipe_id] = placement_data
+        elif discipline == 'refining':
+            # Refining uses core/surrounding inputs
+            crafter.placements[recipe_id] = placement_data
+        elif discipline == 'engineering':
+            # Engineering uses slots list
+            crafter.placements[recipe_id] = placement_data
+
+        print(f"  ✓ Registered with {discipline} crafter")
+        print(f"  ✓ Placement data saved: {len(str(placement_data))} chars")
+
+    def _get_invented_icon_path(self, item_id: str, discipline: str, item_data: dict) -> str:
+        """
+        Get or create icon path for invented item.
+
+        Uses a default invented item icon since we don't generate custom PNGs yet.
+        """
+        # Determine subdirectory based on item type
+        category = item_data.get('category', 'equipment')
+        item_type = item_data.get('type', 'weapon')
+
+        if category == 'consumable':
+            subdir = 'consumables'
+        elif category == 'device':
+            subdir = 'devices'
+        elif item_type == 'armor':
+            subdir = 'armor'
+        elif item_type == 'tool':
+            subdir = 'tools'
+        elif item_type == 'accessory':
+            subdir = 'accessories'
+        else:
+            subdir = 'weapons'
+
+        # Use default invented icon - this will be a single PNG that represents invented items
+        # The actual icon path would be: {subdir}/invented_default.png
+        # For now, just return a path that the system can use
+        default_icon = f"{subdir}/invented_default.png"
+
+        # If the file doesn't exist, the image_cache will fall back to text rendering
+        # This is the expected behavior until we integrate PNG generation
+        return default_icon
+
+    def register_saved_invented_recipes(self):
+        """
+        Register all saved invented recipes with their Crafters for instant craft support.
+
+        Call this after character.restore_from_save() to enable instant crafting
+        of saved invented recipes.
+        """
+        if not hasattr(self.character, 'invented_recipes') or not self.character.invented_recipes:
+            return
+
+        print(f"Registering {len(self.character.invented_recipes)} invented recipes with Crafters...")
+
+        for recipe_record in self.character.invented_recipes:
+            try:
+                item_id = recipe_record.get('item_id', '')
+                discipline = recipe_record.get('discipline', '')
+                inputs = recipe_record.get('recipe_inputs', [])
+                station_tier = recipe_record.get('station_tier', 1)
+                placement_data = recipe_record.get('placement_data', {})
+                item_data = recipe_record.get('item_data', {})
+
+                if not item_id or not discipline:
+                    continue
+
+                recipe_id = f"invented_{item_id}"
+
+                # Get the appropriate crafter
+                crafter = None
+                if discipline == 'smithing' and hasattr(self, 'smithing_crafter'):
+                    crafter = self.smithing_crafter
+                elif discipline == 'refining' and hasattr(self, 'refining_crafter'):
+                    crafter = self.refining_crafter
+                elif discipline == 'alchemy' and hasattr(self, 'alchemy_crafter'):
+                    crafter = self.alchemy_crafter
+                elif discipline == 'engineering' and hasattr(self, 'engineering_crafter'):
+                    crafter = self.engineering_crafter
+                elif discipline in ['adornments', 'enchanting'] and hasattr(self, 'enchanting_crafter'):
+                    crafter = self.enchanting_crafter
+
+                if not crafter:
+                    print(f"  Warning: No crafter for {discipline}")
+                    continue
+
+                # Build recipe dict
+                recipe_dict = {
+                    'recipeId': recipe_id,
+                    'outputId': item_id,
+                    'outputQty': 1,
+                    'stationType': discipline,
+                    'stationTier': station_tier,
+                    'inputs': [
+                        {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
+                        for inp in inputs if inp.get('materialId')
+                    ],
+                    'metadata': {
+                        'invented': True,
+                        'narrative': recipe_record.get('narrative', '')
+                    }
+                }
+
+                # Register with Crafter
+                crafter.recipes[recipe_id] = recipe_dict
+
+                # Register placement
+                if discipline == 'smithing':
+                    crafter.placements[recipe_id] = placement_data.get('placementMap', {})
+                elif discipline in ['adornments', 'enchanting']:
+                    crafter.placements[recipe_id] = placement_data.get('vertices', {})
+                else:
+                    crafter.placements[recipe_id] = placement_data
+
+                print(f"  ✓ Registered {recipe_id} with {discipline} crafter")
+
+            except Exception as e:
+                print(f"  Warning: Could not register saved recipe: {e}")
+
+        print("✓ Finished registering saved invented recipes")
 
     def _create_basic_invented_item(self, discipline: str):
         """
