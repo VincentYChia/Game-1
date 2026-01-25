@@ -2150,13 +2150,39 @@ class GameEngine:
             self.interactive_crafting_active = True
             print(f"✓ Opened interactive crafting UI for {station_type} (T{station_tier})")
             self.add_notification("Interactive Mode Activated", (100, 255, 100))
+
+            # Preload classifier for this discipline (avoids delay on INVENT click)
+            self._preload_classifier(station_type)
         else:
             print(f"✗ Failed to create interactive UI for {station_type}")
             self.add_notification("Failed to open interactive mode", (255, 100, 100))
 
+    def _preload_classifier(self, discipline: str):
+        """Preload the classifier for a discipline in the background"""
+        try:
+            from systems.crafting_classifier import get_classifier_manager, init_classifier_manager
+            from data.databases import MaterialDatabase
+            from pathlib import Path
+
+            classifier_mgr = get_classifier_manager()
+
+            # Initialize if not already done
+            if classifier_mgr is None:
+                project_root = Path(__file__).parent.parent.parent
+                materials_db = MaterialDatabase.get_instance()
+                classifier_mgr = init_classifier_manager(project_root, materials_db)
+
+            # Preload the specific discipline
+            classifier_mgr.preload(discipline)
+
+        except Exception as e:
+            print(f"⚠ Classifier preload failed: {e}")
+
     def _close_interactive_crafting(self):
         """Close interactive crafting UI and return all borrowed materials"""
+        discipline = None
         if self.interactive_ui:
+            discipline = self.interactive_ui.station_type
             # Return all borrowed materials to inventory
             self.interactive_ui.return_all_materials()
             print(f"✓ Returned {len(self.interactive_ui.borrowed_materials)} material types to inventory")
@@ -2167,6 +2193,9 @@ class GameEngine:
         self.interactive_material_rects = []
         self.interactive_placement_rects = []
         self.interactive_button_rects = {}
+
+        # Unload classifier to free memory (optional - can comment out to keep cached)
+        # self._unload_classifier(discipline)
 
         print("✓ Closed interactive crafting UI")
 

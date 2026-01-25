@@ -789,19 +789,23 @@ class CNNBackend(ClassifierBackend):
 
 
 class LightGBMBackend(ClassifierBackend):
-    """LightGBM backend"""
+    """LightGBM backend - uses only the model file, not pickled extractors"""
 
-    def __init__(self, model_path: Path, extractor_path: Optional[Path] = None):
+    def __init__(self, model_path: Path):
         self.model_path = model_path
-        self.extractor_path = extractor_path
         self.model = None
-        self.extractor = None
         self._load_error = None
+        self._loading = False
 
     def _lazy_load(self):
         """Lazy load LightGBM and model on first use"""
         if self.model is not None or self._load_error is not None:
             return
+
+        # Prevent re-entrant loading
+        if self._loading:
+            return
+        self._loading = True
 
         try:
             import lightgbm as lgb
@@ -810,12 +814,10 @@ class LightGBMBackend(ClassifierBackend):
             self.model = lgb.Booster(model_file=str(self.model_path))
             print(f"  Model loaded successfully")
 
-            # Load extractor if provided
-            if self.extractor_path and self.extractor_path.exists():
-                import pickle
-                with open(self.extractor_path, 'rb') as f:
-                    self.extractor = pickle.load(f)
-                print(f"  Feature extractor loaded from: {self.extractor_path}")
+            # NOTE: We do NOT load the pickled extractor files because they
+            # contain a RecipeFeatureExtractor class that was defined in the
+            # training script and doesn't exist in the game's namespace.
+            # Instead, we use our own LightGBMFeatureExtractor class.
 
         except ImportError as e:
             self._load_error = f"LightGBM not installed: {e}"
@@ -823,6 +825,8 @@ class LightGBMBackend(ClassifierBackend):
         except Exception as e:
             self._load_error = f"Failed to load LightGBM model: {e}"
             print(f"  WARNING: {self._load_error}")
+        finally:
+            self._loading = False
 
     def predict(self, input_data: np.ndarray) -> Tuple[float, Optional[str]]:
         self._lazy_load()
@@ -966,10 +970,10 @@ class CraftingClassifierManager:
             if config.classifier_type == 'cnn':
                 self._backends[discipline] = CNNBackend(model_path)
             elif config.classifier_type == 'lightgbm':
-                extractor_path = None
-                if config.extractor_path:
-                    extractor_path = self.project_root / config.extractor_path
-                self._backends[discipline] = LightGBMBackend(model_path, extractor_path)
+                # NOTE: We don't use the pickled extractor files - they contain
+                # a class from the training script that doesn't exist here.
+                # Instead, we use our own LightGBMFeatureExtractor.
+                self._backends[discipline] = LightGBMBackend(model_path)
 
         return self._backends.get(discipline)
 
@@ -1105,6 +1109,65 @@ class CraftingClassifierManager:
                 'threshold': config.threshold
             }
         return status
+
+    def preload(self, discipline: Optional[str] = None):
+        """
+        Preload classifier models to avoid delay when validating recipes.
+
+        Call this when the interactive crafting UI opens to load models
+        in advance, rather than on first validation attempt.
+
+        Args:
+            discipline: Specific discipline to preload, or None for all
+        """
+        disciplines = [discipline] if discipline else list(self.configs.keys())
+
+        print(f"Preloading classifiers for: {disciplines}")
+
+        for disc in disciplines:
+            config = self.configs.get(disc)
+            if not config or not config.enabled:
+                continue
+
+            try:
+                # Initialize the backend (triggers lazy load)
+                backend = self.get_backend(disc)
+                if backend:
+                    # Force load by checking if loaded
+                    _ = backend.is_loaded()
+
+                # For CNN, also preload the image renderer (loads color encoder)
+                if config.classifier_type == 'cnn':
+                    _ = self.get_image_renderer(disc)
+
+                # For LightGBM, preload the feature extractor
+                if config.classifier_type == 'lightgbm':
+                    _ = self.feature_extractor
+
+            except Exception as e:
+                print(f"  Warning: Failed to preload {disc}: {e}")
+
+        print(f"  Preload complete")
+
+    def unload(self, discipline: Optional[str] = None):
+        """
+        Unload classifier models to free memory.
+
+        Call this when the interactive crafting UI closes.
+
+        Args:
+            discipline: Specific discipline to unload, or None for all
+        """
+        disciplines = [discipline] if discipline else list(self._backends.keys())
+
+        for disc in list(disciplines):
+            if disc in self._backends:
+                del self._backends[disc]
+                print(f"  Unloaded {disc} classifier")
+
+        # Also clear image renderers if unloading all
+        if discipline is None:
+            self._image_renderers.clear()
 
 
 # ==============================================================================
