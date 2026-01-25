@@ -2448,7 +2448,6 @@ class GameEngine:
 
             elif result.valid:
                 # Recipe is valid! Show success message
-                # For now, just show a message - LLM integration will happen in Phase 2
                 confidence_pct = int(result.confidence * 100)
                 self.add_notification(
                     f"✓ VALID RECIPE! ({confidence_pct}% confident)",
@@ -2456,12 +2455,8 @@ class GameEngine:
                 )
                 print(f"✓ Valid recipe detected with {confidence_pct}% confidence")
 
-                # TODO: Phase 2 will add LLM item generation here
-                # For now, show a placeholder message
-                self.add_notification(
-                    "Item generation coming soon...",
-                    (200, 200, 255)
-                )
+                # Phase 2: Generate item using LLM
+                self._generate_invented_item(discipline, result.probability)
 
             else:
                 # Recipe is invalid - show failure message
@@ -2489,6 +2484,310 @@ class GameEngine:
             print(f"⚠️ {error_msg}")
             import traceback
             traceback.print_exc()
+
+    def _generate_invented_item(self, discipline: str, classifier_confidence: float):
+        """
+        Generate a new item using LLM from validated recipe placement.
+
+        Args:
+            discipline: The crafting discipline (smithing, alchemy, etc.)
+            classifier_confidence: Confidence score from classifier (0-1)
+        """
+        print(f"\n{'='*80}")
+        print(f"🧪 GENERATING INVENTED ITEM")
+        print(f"Discipline: {discipline}")
+        print(f"Classifier Confidence: {classifier_confidence:.2%}")
+        print(f"{'='*80}")
+
+        try:
+            from systems.llm_item_generator import (
+                get_item_generator, init_item_generator, LLMConfig
+            )
+            from data.databases import MaterialDatabase
+            from pathlib import Path
+            import os
+
+            # Get or initialize the item generator
+            generator = get_item_generator()
+            if generator is None:
+                project_root = Path(__file__).parent.parent.parent
+                materials_db = MaterialDatabase.get_instance()
+
+                # Configure LLM - check for API key in environment
+                api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+                if not api_key:
+                    # Try to read from config file
+                    config_path = project_root / "Game-1-modular" / ".env"
+                    if config_path.exists():
+                        with open(config_path, 'r') as f:
+                            for line in f:
+                                if line.startswith('ANTHROPIC_API_KEY='):
+                                    api_key = line.strip().split('=', 1)[1].strip('"\'')
+                                    break
+
+                config = LLMConfig(
+                    api_key=api_key,
+                    enabled=True,
+                    use_fallback_on_error=True,  # Generate basic item if LLM fails
+                    temperature=0.7,  # Moderate creativity
+                )
+                generator = init_item_generator(project_root, materials_db, config)
+
+            # Generate the item
+            self.add_notification("Generating item...", (200, 200, 255))
+            gen_result = generator.generate(discipline, self.interactive_ui)
+
+            if gen_result.success:
+                print(f"\n✓ Item generated successfully!")
+                print(f"  ID: {gen_result.item_id}")
+                print(f"  Name: {gen_result.item_name}")
+                print(f"  From cache: {gen_result.from_cache}")
+                if gen_result.error:  # Fallback was used
+                    print(f"  Note: {gen_result.error}")
+
+                # Add the generated item to the game
+                self._add_invented_item_to_game(gen_result, discipline)
+
+            else:
+                # Generation failed
+                error_msg = gen_result.error or "Unknown error"
+                print(f"\n✗ Item generation failed: {error_msg}")
+                self.add_notification(f"Generation failed: {error_msg[:30]}...", (255, 100, 100))
+
+        except ImportError as e:
+            print(f"⚠️ LLM generator not available: {e}")
+            self.add_notification("LLM system not loaded", (255, 200, 100))
+            # Try to generate a basic fallback item
+            self._create_basic_invented_item(discipline)
+
+        except Exception as e:
+            print(f"⚠️ Item generation error: {e}")
+            import traceback
+            traceback.print_exc()
+            self.add_notification("Item generation failed", (255, 100, 100))
+
+        print(f"{'='*80}\n")
+
+    def _add_invented_item_to_game(self, gen_result, discipline: str):
+        """
+        Add a generated item to the game world and consume materials.
+
+        Args:
+            gen_result: GeneratedItem from LLM generator
+            discipline: The crafting discipline
+        """
+        from data.databases import EquipmentDatabase, MaterialDatabase
+        from entities.components.inventory import ItemStack
+
+        item_data = gen_result.item_data
+        item_id = gen_result.item_id
+        item_name = gen_result.item_name
+
+        # First consume the materials from inventory
+        materials_consumed = self._consume_invented_materials(discipline)
+        if not materials_consumed:
+            self.add_notification("Failed to consume materials", (255, 100, 100))
+            return
+
+        # Determine item category and handle appropriately
+        category = item_data.get('category', 'equipment')
+
+        if category == 'equipment':
+            # Create equipment instance
+            from data.models.equipment import EquipmentItem
+
+            # Build equipment from generated data
+            equipment = EquipmentItem(
+                item_id=item_id,
+                name=item_name or item_id.replace('_', ' ').title(),
+                item_type=item_data.get('type', 'weapon'),
+                tier=item_data.get('tier', 1),
+                base_stats=item_data.get('stats', {}),
+                stat_multipliers=item_data.get('statMultipliers', {}),
+                requirements=item_data.get('requirements', {}),
+                flags=item_data.get('flags', {}),
+                effect_tags=item_data.get('effectTags', []),
+                effect_params=item_data.get('effectParams', {}),
+                icon_path=None,  # Will need to be added later
+                metadata=item_data.get('metadata', {})
+            )
+
+            # Add to inventory
+            success = self.character.inventory.add_item(
+                item_id, 1,
+                equipment_instance=equipment,
+                rarity=item_data.get('rarity', 'uncommon'),
+                crafted_stats=item_data.get('stats', {})
+            )
+
+            if success:
+                self.add_notification(f"Created: {item_name}", (100, 255, 100))
+                self.add_notification("Item added to inventory!", (200, 255, 200))
+                print(f"  ✓ Added {item_name} to inventory")
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
+                print(f"  ✗ Inventory full - could not add {item_name}")
+
+        elif category == 'consumable':
+            # Add consumable to inventory
+            success = self.character.inventory.add_item(
+                item_id, 1,
+                rarity=item_data.get('rarity', 'uncommon'),
+                crafted_stats={'effect': item_data.get('effect', 'Unknown')}
+            )
+
+            if success:
+                self.add_notification(f"Created: {item_name}", (100, 255, 100))
+                print(f"  ✓ Added consumable {item_name} to inventory")
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
+
+        elif category == 'device':
+            # Engineering device - add as placeable
+            success = self.character.inventory.add_item(
+                item_id, 1,
+                rarity=item_data.get('rarity', 'uncommon'),
+                crafted_stats=item_data.get('effectParams', {})
+            )
+
+            if success:
+                self.add_notification(f"Created: {item_name}", (100, 255, 100))
+                print(f"  ✓ Added device {item_name} to inventory")
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
+
+        else:
+            # Material or other - add generically
+            success = self.character.inventory.add_item(
+                item_id, 1,
+                rarity=item_data.get('rarity', 'uncommon')
+            )
+
+            if success:
+                self.add_notification(f"Created: {item_name}", (100, 255, 100))
+                print(f"  ✓ Added {item_name} to inventory")
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
+
+        # Store the invented recipe for Phase 3 save system
+        self._store_invented_recipe(gen_result, discipline)
+
+        # Close the crafting UI
+        self._close_interactive_crafting()
+
+    def _consume_invented_materials(self, discipline: str) -> bool:
+        """
+        Consume materials used in the invented recipe.
+
+        Returns True if materials were successfully consumed.
+        """
+        ui = self.interactive_ui
+        if not ui:
+            return False
+
+        # Return borrowed materials to inventory first (they'll be consumed properly)
+        for item_id, qty in ui.borrowed_materials.items():
+            self.character.inventory.add_item(item_id, qty)
+
+        # Now consume based on what's placed
+        materials_to_consume = {}
+
+        if discipline == 'smithing':
+            for (x, y), placed_mat in ui.grid.items():
+                mat_id = placed_mat.item_id
+                materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + 1
+
+        elif discipline == 'adornments':
+            for coord, placed_mat in ui.vertices.items():
+                mat_id = placed_mat.item_id
+                materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + 1
+
+        elif discipline == 'alchemy':
+            for placed_mat in ui.slots:
+                if placed_mat:
+                    mat_id = placed_mat.item_id
+                    qty = placed_mat.quantity
+                    materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + qty
+
+        elif discipline == 'refining':
+            for placed_mat in ui.core_slots:
+                if placed_mat:
+                    mat_id = placed_mat.item_id
+                    qty = placed_mat.quantity
+                    materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + qty
+            for placed_mat in ui.surrounding_slots:
+                if placed_mat:
+                    mat_id = placed_mat.item_id
+                    qty = placed_mat.quantity
+                    materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + qty
+
+        elif discipline == 'engineering':
+            for slot_type, materials in ui.slots.items():
+                for placed_mat in materials:
+                    mat_id = placed_mat.item_id
+                    qty = placed_mat.quantity
+                    materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + qty
+
+        # Consume the materials
+        for mat_id, qty in materials_to_consume.items():
+            success = self.character.inventory.remove_item(mat_id, qty)
+            if not success:
+                print(f"  Warning: Could not consume {qty}x {mat_id}")
+
+        # Clear borrowed materials tracking
+        ui.borrowed_materials.clear()
+
+        print(f"  Consumed materials: {materials_to_consume}")
+        return True
+
+    def _store_invented_recipe(self, gen_result, discipline: str):
+        """
+        Store invented recipe for save/load system (Phase 3).
+
+        This allows player-invented recipes to persist across game sessions.
+        """
+        # Store in character data for now - will be expanded in Phase 3
+        if not hasattr(self.character, 'invented_recipes'):
+            self.character.invented_recipes = []
+
+        recipe_record = {
+            'timestamp': __import__('datetime').datetime.now().isoformat(),
+            'discipline': discipline,
+            'item_id': gen_result.item_id,
+            'item_name': gen_result.item_name,
+            'item_data': gen_result.item_data,
+            'from_cache': gen_result.from_cache
+        }
+
+        self.character.invented_recipes.append(recipe_record)
+        print(f"  Stored invented recipe: {gen_result.item_id}")
+
+    def _create_basic_invented_item(self, discipline: str):
+        """
+        Create a basic invented item when LLM is unavailable.
+
+        This is a fallback to ensure players still get something.
+        """
+        from datetime import datetime
+
+        timestamp = datetime.now().strftime('%H%M%S')
+        item_id = f"invented_{discipline}_{timestamp}"
+        item_name = f"Mysterious {discipline.title()} Creation"
+
+        # Create a basic item
+        success = self.character.inventory.add_item(
+            item_id, 1,
+            rarity='uncommon',
+            crafted_stats={'invented': True}
+        )
+
+        if success:
+            self.add_notification(f"Created: {item_name}", (100, 255, 100))
+            # Consume materials
+            self._consume_invented_materials(discipline)
+            self._close_interactive_crafting()
+        else:
+            self.add_notification("Inventory full!", (255, 100, 100))
 
     def _complete_minigame(self):
         """Complete the active minigame and process results"""
