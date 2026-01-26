@@ -120,15 +120,16 @@ class Inventory:
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
-        # Equipment doesn't stack
-        is_equip = equip_db.is_equipment(item_id)
+        # Check if this is equipment - PRIORITIZE equipment_instance parameter over database
+        # This handles invented equipment that isn't in the database
+        is_equip = equipment_instance is not None or equip_db.is_equipment(item_id)
 
         if is_equip:
             for i in range(quantity):
                 empty = self.get_empty_slot()
                 if empty is None:
                     return False
-                # Use provided equipment instance or create new one
+                # Use provided equipment instance or create new one from database
                 equip_data = equipment_instance if equipment_instance else equip_db.create_equipment_from_id(item_id)
                 if not equip_data:
                     print(f"WARNING: Could not create equipment data for {item_id}")

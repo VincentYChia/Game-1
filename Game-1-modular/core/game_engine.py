@@ -2462,6 +2462,72 @@ class GameEngine:
             self.interactive_ui.borrowed_materials.clear()
             self._close_interactive_crafting()
 
+    def _get_placement_hash(self, placement_data: dict) -> str:
+        """
+        Generate a deterministic hash from placement pattern.
+
+        This is used to detect duplicate recipes - same placement = same recipe.
+        Ignores timestamps and other non-placement data.
+        """
+        import hashlib
+        import json
+
+        # Extract only placement-relevant data (ignore timestamps, narrative, etc.)
+        hashable_data = {
+            'discipline': placement_data.get('discipline'),
+            'gridSize': placement_data.get('gridSize'),
+            'placementMap': placement_data.get('placementMap'),
+            'vertices': placement_data.get('vertices'),
+            'shapes': placement_data.get('shapes'),
+            'ingredients': placement_data.get('ingredients'),
+            'coreInputs': placement_data.get('coreInputs'),
+            'surroundingInputs': placement_data.get('surroundingInputs'),
+            'slots': placement_data.get('slots'),
+        }
+
+        # Remove None values for consistent hashing
+        hashable_data = {k: v for k, v in hashable_data.items() if v is not None}
+
+        # Create deterministic hash
+        context_str = json.dumps(hashable_data, sort_keys=True)
+        return hashlib.md5(context_str.encode()).hexdigest()
+
+    def _check_duplicate_recipe(self, placement_data: dict) -> tuple:
+        """
+        Check if this placement pattern already exists as an invented recipe.
+
+        Returns (is_duplicate, existing_recipe_name)
+        """
+        from data.databases.placement_db import PlacementDatabase
+
+        placement_hash = self._get_placement_hash(placement_data)
+
+        # Check against character's invented recipes
+        if hasattr(self.character, 'invented_recipes'):
+            for existing in self.character.invented_recipes:
+                existing_placement = existing.get('placement_data', {})
+                if self._get_placement_hash(existing_placement) == placement_hash:
+                    return True, existing.get('item_name', existing.get('item_id', 'Unknown'))
+
+        # Also check PlacementDatabase for any recipe with this placement
+        placement_db = PlacementDatabase.get_instance()
+        for recipe_id, existing_placement in placement_db.placements.items():
+            # Convert PlacementData to dict for hashing
+            existing_dict = {
+                'discipline': existing_placement.discipline,
+                'gridSize': existing_placement.grid_size,
+                'placementMap': existing_placement.placement_map,
+                'ingredients': existing_placement.ingredients,
+                'coreInputs': existing_placement.core_inputs,
+                'surroundingInputs': existing_placement.surrounding_inputs,
+                'slots': existing_placement.slots,
+                'vertices': existing_placement.pattern,  # pattern field stores vertices for adornments
+            }
+            if self._get_placement_hash(existing_dict) == placement_hash:
+                return True, existing_placement.output_id or recipe_id
+
+        return False, None
+
     def _handle_invent_recipe(self):
         """
         Handle attempt to invent a new recipe using the classifier.
@@ -2480,6 +2546,22 @@ class GameEngine:
         print(f"Discipline: {discipline}")
         print(f"Station Tier: {self.interactive_ui.station_tier}")
         print(f"{'='*80}")
+
+        # DUPLICATE CHECK: Prevent re-inventing the same placement pattern
+        try:
+            from systems.llm_item_generator import get_item_generator
+            generator = get_item_generator()
+            if generator:
+                placement_data = generator.extract_placement_data(discipline, self.interactive_ui)
+                is_duplicate, existing_name = self._check_duplicate_recipe(placement_data)
+                if is_duplicate:
+                    self.add_notification(f"Recipe already exists: {existing_name}", (255, 200, 100))
+                    self.add_notification("Try a different placement pattern", (200, 200, 200))
+                    print(f"⚠️ Duplicate recipe detected: {existing_name}")
+                    return
+        except Exception as e:
+            print(f"Warning: Could not check for duplicates: {e}")
+            # Continue anyway - don't block invention if check fails
 
         # Try to get the classifier manager
         try:
@@ -3027,10 +3109,14 @@ class GameEngine:
 
     def _register_with_crafter(self, recipe_id: str, discipline: str, gen_result, placement_data: dict, tier: int):
         """
-        Register invented recipe with the appropriate Crafter for instant craft support.
+        Register invented recipe with both Crafter AND PlacementDatabase.
 
-        This is necessary because Crafters have their own recipes dict separate from RecipeDatabase.
+        Crafter.recipes is needed for instant craft.
+        PlacementDatabase is needed for placement display in the non-interactive crafting UI.
         """
+        from data.databases.placement_db import PlacementDatabase
+        from data.models.recipes import PlacementData
+
         # Get the appropriate crafter
         crafter = None
         if discipline == 'smithing' and hasattr(self, 'smithing_crafter'):
@@ -3065,27 +3151,73 @@ class GameEngine:
             }
         }
 
-        # Register recipe with Crafter
+        # Register recipe with Crafter for instant craft
         crafter.recipes[recipe_id] = recipe_dict
 
         # Register placement with Crafter
         if discipline == 'smithing':
-            # Smithing uses placementMap format
             crafter.placements[recipe_id] = placement_data.get('placementMap', {})
         elif discipline in ['adornments', 'enchanting']:
-            # Enchanting uses vertices/shapes
             crafter.placements[recipe_id] = placement_data.get('vertices', {})
-        elif discipline == 'alchemy':
-            # Alchemy uses ingredients list
-            crafter.placements[recipe_id] = placement_data
-        elif discipline == 'refining':
-            # Refining uses core/surrounding inputs
-            crafter.placements[recipe_id] = placement_data
-        elif discipline == 'engineering':
-            # Engineering uses slots list
+        else:
             crafter.placements[recipe_id] = placement_data
 
+        # CRITICAL: Register with PlacementDatabase for display in non-interactive UI
+        placement_db = PlacementDatabase.get_instance()
+        grid_size = placement_data.get('gridSize', '3x3')
+
+        if discipline == 'smithing':
+            placement_db.placements[recipe_id] = PlacementData(
+                recipe_id=recipe_id,
+                discipline='smithing',
+                grid_size=grid_size,
+                placement_map=placement_data.get('placementMap', {}),
+                narrative=gen_result.narrative,
+                output_id=gen_result.item_id,
+                station_tier=tier
+            )
+        elif discipline == 'refining':
+            placement_db.placements[recipe_id] = PlacementData(
+                recipe_id=recipe_id,
+                discipline='refining',
+                core_inputs=placement_data.get('coreInputs', []),
+                surrounding_inputs=placement_data.get('surroundingInputs', []),
+                narrative=gen_result.narrative,
+                output_id=gen_result.item_id,
+                station_tier=tier
+            )
+        elif discipline == 'alchemy':
+            placement_db.placements[recipe_id] = PlacementData(
+                recipe_id=recipe_id,
+                discipline='alchemy',
+                ingredients=placement_data.get('ingredients', []),
+                narrative=gen_result.narrative,
+                output_id=gen_result.item_id,
+                station_tier=tier
+            )
+        elif discipline == 'engineering':
+            placement_db.placements[recipe_id] = PlacementData(
+                recipe_id=recipe_id,
+                discipline='engineering',
+                slots=placement_data.get('slots', []),
+                narrative=gen_result.narrative,
+                output_id=gen_result.item_id,
+                station_tier=tier
+            )
+        elif discipline in ['adornments', 'enchanting']:
+            placement_db.placements[recipe_id] = PlacementData(
+                recipe_id=recipe_id,
+                discipline='adornments',
+                grid_size=grid_size,
+                placement_map=placement_data.get('placementMap', {}),
+                pattern=placement_data.get('vertices', []),
+                narrative=gen_result.narrative,
+                output_id=gen_result.item_id,
+                station_tier=tier
+            )
+
         print(f"  ✓ Registered with {discipline} crafter")
+        print(f"  ✓ Registered with PlacementDatabase")
         print(f"  ✓ Placement data saved: {len(str(placement_data))} chars")
 
     def _get_invented_icon_path(self, item_id: str, discipline: str, item_data: dict) -> str:
@@ -3122,15 +3254,25 @@ class GameEngine:
 
     def register_saved_invented_recipes(self):
         """
-        Register all saved invented recipes with their Crafters for instant craft support.
+        Register all saved invented recipes with Crafters, RecipeDatabase, and PlacementDatabase.
 
-        Call this after character.restore_from_save() to enable instant crafting
-        of saved invented recipes.
+        Call this after character.restore_from_save() to enable:
+        - Instant crafting (Crafter.recipes)
+        - Recipe list display (RecipeDatabase)
+        - Placement display (PlacementDatabase)
         """
+        from data.databases import RecipeDatabase
+        from data.databases.placement_db import PlacementDatabase
+        from data.models import Recipe
+        from data.models.recipes import PlacementData
+
         if not hasattr(self.character, 'invented_recipes') or not self.character.invented_recipes:
             return
 
-        print(f"Registering {len(self.character.invented_recipes)} invented recipes with Crafters...")
+        print(f"Registering {len(self.character.invented_recipes)} invented recipes...")
+
+        recipe_db = RecipeDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
 
         for recipe_record in self.character.invented_recipes:
             try:
@@ -3139,7 +3281,8 @@ class GameEngine:
                 inputs = recipe_record.get('recipe_inputs', [])
                 station_tier = recipe_record.get('station_tier', 1)
                 placement_data = recipe_record.get('placement_data', {})
-                item_data = recipe_record.get('item_data', {})
+                narrative = recipe_record.get('narrative', '')
+                grid_size = placement_data.get('gridSize', '3x3')
 
                 if not item_id or not discipline:
                     continue
@@ -3163,27 +3306,30 @@ class GameEngine:
                     print(f"  Warning: No crafter for {discipline}")
                     continue
 
-                # Build recipe dict
+                # Build recipe inputs list
+                recipe_inputs = [
+                    {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
+                    for inp in inputs if inp.get('materialId')
+                ]
+
+                # Build recipe dict for Crafter
                 recipe_dict = {
                     'recipeId': recipe_id,
                     'outputId': item_id,
                     'outputQty': 1,
                     'stationType': discipline,
                     'stationTier': station_tier,
-                    'inputs': [
-                        {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
-                        for inp in inputs if inp.get('materialId')
-                    ],
+                    'inputs': recipe_inputs,
                     'metadata': {
                         'invented': True,
-                        'narrative': recipe_record.get('narrative', '')
+                        'narrative': narrative
                     }
                 }
 
-                # Register with Crafter
+                # 1. Register with Crafter for instant craft
                 crafter.recipes[recipe_id] = recipe_dict
 
-                # Register placement
+                # Register Crafter placement
                 if discipline == 'smithing':
                     crafter.placements[recipe_id] = placement_data.get('placementMap', {})
                 elif discipline in ['adornments', 'enchanting']:
@@ -3191,10 +3337,85 @@ class GameEngine:
                 else:
                     crafter.placements[recipe_id] = placement_data
 
-                print(f"  ✓ Registered {recipe_id} with {discipline} crafter")
+                # 2. Register with RecipeDatabase for recipe list
+                recipe = Recipe(
+                    recipe_id=recipe_id,
+                    output_id=item_id,
+                    output_qty=1,
+                    station_type=discipline,
+                    station_tier=station_tier,
+                    inputs=recipe_inputs,
+                    grid_size=grid_size,
+                    mini_game_type=discipline,
+                    metadata={
+                        'invented': True,
+                        'narrative': narrative
+                    }
+                )
+                recipe_db.recipes[recipe_id] = recipe
+
+                if discipline not in recipe_db.recipes_by_station:
+                    recipe_db.recipes_by_station[discipline] = []
+                if not any(r.recipe_id == recipe_id for r in recipe_db.recipes_by_station[discipline]):
+                    recipe_db.recipes_by_station[discipline].append(recipe)
+
+                # 3. Register with PlacementDatabase for placement display
+                if discipline == 'smithing':
+                    placement_db.placements[recipe_id] = PlacementData(
+                        recipe_id=recipe_id,
+                        discipline='smithing',
+                        grid_size=grid_size,
+                        placement_map=placement_data.get('placementMap', {}),
+                        narrative=narrative,
+                        output_id=item_id,
+                        station_tier=station_tier
+                    )
+                elif discipline == 'refining':
+                    placement_db.placements[recipe_id] = PlacementData(
+                        recipe_id=recipe_id,
+                        discipline='refining',
+                        core_inputs=placement_data.get('coreInputs', []),
+                        surrounding_inputs=placement_data.get('surroundingInputs', []),
+                        narrative=narrative,
+                        output_id=item_id,
+                        station_tier=station_tier
+                    )
+                elif discipline == 'alchemy':
+                    placement_db.placements[recipe_id] = PlacementData(
+                        recipe_id=recipe_id,
+                        discipline='alchemy',
+                        ingredients=placement_data.get('ingredients', []),
+                        narrative=narrative,
+                        output_id=item_id,
+                        station_tier=station_tier
+                    )
+                elif discipline == 'engineering':
+                    placement_db.placements[recipe_id] = PlacementData(
+                        recipe_id=recipe_id,
+                        discipline='engineering',
+                        slots=placement_data.get('slots', []),
+                        narrative=narrative,
+                        output_id=item_id,
+                        station_tier=station_tier
+                    )
+                elif discipline in ['adornments', 'enchanting']:
+                    placement_db.placements[recipe_id] = PlacementData(
+                        recipe_id=recipe_id,
+                        discipline='adornments',
+                        grid_size=grid_size,
+                        placement_map=placement_data.get('placementMap', {}),
+                        pattern=placement_data.get('vertices', []),
+                        narrative=narrative,
+                        output_id=item_id,
+                        station_tier=station_tier
+                    )
+
+                print(f"  ✓ Registered {recipe_id}")
 
             except Exception as e:
+                import traceback
                 print(f"  Warning: Could not register saved recipe: {e}")
+                traceback.print_exc()
 
         print("✓ Finished registering saved invented recipes")
 
