@@ -2498,7 +2498,7 @@ class Renderer:
             y += s(18)
 
     def _render_recipes_content(self, surf, content_rect, character):
-        """Render invented recipes content"""
+        """Render invented recipes content with rich metadata display"""
         s = Config.scale
 
         # Get invented recipes from character
@@ -2510,59 +2510,122 @@ class Renderer:
         y = content_rect.y + s(20) - scroll_offset
         x = content_rect.x + s(20)
 
+        # Colors for different line types
+        COLORS = {
+            'header': (255, 215, 0),      # Golden for main headers
+            'discipline': (100, 180, 255), # Blue for discipline headers
+            'count': (150, 255, 150),     # Light green for counts
+            'tier1': (180, 180, 180),     # Gray - Common
+            'tier2': (100, 255, 100),     # Green - Uncommon
+            'tier3': (100, 150, 255),     # Blue - Rare
+            'tier4': (200, 100, 255),     # Purple - Epic
+            'type': (180, 180, 200),      # Light gray for type info
+            'stat': (255, 220, 150),      # Warm yellow for stats
+            'tags': (150, 200, 255),      # Light blue for tags
+            'applies': (100, 220, 200),   # Cyan for enchantment targets
+            'effect': (255, 180, 100),    # Orange for effects
+            'recipe': (200, 180, 150),    # Tan for recipe materials
+            'lore': (150, 150, 170),      # Gray for narrative
+            'default': (180, 180, 200),   # Default text color
+        }
+
         for line in lines:
             # Stop if entirely below visible area
             if y > content_rect.bottom:
                 break
 
-            # Style based on line content
+            # Determine style based on line content
             if line.startswith("==="):
                 # Main header - golden
                 if y >= content_rect.y - s(30) and y < content_rect.bottom:
-                    surf.blit(self.font.render(line, True, (255, 215, 0)), (x, y))
+                    surf.blit(self.font.render(line, True, COLORS['header']), (x, y))
                 y += s(30)
+
             elif line.startswith("---"):
                 # Discipline header - blue
                 if y >= content_rect.y - s(25) and y < content_rect.bottom:
-                    surf.blit(self.small_font.render(line, True, (100, 180, 255)), (x, y))
+                    surf.blit(self.small_font.render(line, True, COLORS['discipline']), (x, y))
                 y += s(25)
+
             elif line.startswith("Total Inventions:"):
                 # Count line - light green
                 if y >= content_rect.y - s(20) and y < content_rect.bottom:
-                    surf.blit(self.small_font.render(line, True, (150, 255, 150)), (x, y))
+                    surf.blit(self.small_font.render(line, True, COLORS['count']), (x, y))
                 y += s(20)
+
             elif line.startswith("  [T"):
-                # Recipe entry - tier + name
-                if y >= content_rect.y - s(20) and y < content_rect.bottom:
+                # Recipe entry - tier + name (main item header)
+                if y >= content_rect.y - s(22) and y < content_rect.bottom:
                     # Color by tier
                     if "[T1]" in line:
-                        color = (180, 180, 180)  # Common
+                        color = COLORS['tier1']
                     elif "[T2]" in line:
-                        color = (100, 255, 100)  # Uncommon
+                        color = COLORS['tier2']
                     elif "[T3]" in line:
-                        color = (100, 150, 255)  # Rare
+                        color = COLORS['tier3']
                     elif "[T4]" in line:
-                        color = (200, 100, 255)  # Epic
+                        color = COLORS['tier4']
                     else:
-                        color = (200, 200, 220)
+                        color = COLORS['default']
                     surf.blit(self.small_font.render(line, True, color), (x, y))
-                y += s(20)
-            elif line.startswith("       Applies to:"):
-                # Enchantment applicability - cyan
+                y += s(22)
+
+            elif line.startswith("@type"):
+                # Type info - light gray, indented
                 if y >= content_rect.y - s(16) and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(line, True, (100, 200, 200)), (x, y))
+                    display_text = "    " + line[12:]  # Remove @type prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['type']), (x, y))
                 y += s(16)
-            elif line.startswith("       \""):
-                # Narrative/quote - italic-style gray
+
+            elif line.startswith("@stat"):
+                # Stat info - warm yellow, indented
                 if y >= content_rect.y - s(16) and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(line, True, (150, 150, 170)), (x, y))
+                    display_text = "    " + line[12:]  # Remove @stat prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['stat']), (x, y))
                 y += s(16)
+
+            elif line.startswith("@tags"):
+                # Tags - light blue, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    Tags: " + line[12:]  # Remove @tags prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['tags']), (x, y))
+                y += s(16)
+
+            elif line.startswith("@applies"):
+                # Enchantment applicability - cyan, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    Applies to: " + line[12:]  # Remove @applies prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['applies']), (x, y))
+                y += s(16)
+
+            elif line.startswith("@effect"):
+                # Enchantment effect - orange, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    Effect: " + line[12:]  # Remove @effect prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['effect']), (x, y))
+                y += s(16)
+
+            elif line.startswith("@recipe"):
+                # Recipe materials - tan, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    Materials: " + line[12:]  # Remove @recipe prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['recipe']), (x, y))
+                y += s(16)
+
+            elif line.startswith("@lore"):
+                # Narrative/lore - italic-style gray, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    " + line[12:]  # Remove @lore prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['lore']), (x, y))
+                y += s(16)
+
             elif line == "":
                 y += s(8)
+
             else:
                 # Default text
                 if y >= content_rect.y - s(18) and y < content_rect.bottom:
-                    surf.blit(self.tiny_font.render(line, True, (180, 180, 200)), (x, y))
+                    surf.blit(self.tiny_font.render(line, True, COLORS['default']), (x, y))
                 y += s(18)
 
     def render_notifications(self, notifications: List[Notification]):
@@ -5221,8 +5284,9 @@ class Renderer:
 
     def render_loading_indicator(self):
         """
-        Render a loading indicator in the bottom-right corner.
-        Used for LLM/classifier operations.
+        Render a loading indicator. Shows either:
+        - Full-screen overlay for LLM generation (overlay_mode=True)
+        - Small corner indicator for classifier operations (overlay_mode=False)
         """
         try:
             from systems.llm_item_generator import get_loading_state
@@ -5231,64 +5295,177 @@ class Renderer:
             if not loading_state.is_loading:
                 return
 
-            # Position in bottom-right corner
-            padding = 20
-            indicator_width = 250
-            indicator_height = 50
-            x = Config.VIEWPORT_WIDTH - indicator_width - padding
-            y = Config.VIEWPORT_HEIGHT - indicator_height - padding
-
-            # Background with rounded corners effect
-            bg_rect = pygame.Rect(x, y, indicator_width, indicator_height)
-            bg_surface = pygame.Surface((indicator_width, indicator_height), pygame.SRCALPHA)
-            bg_surface.fill((20, 20, 40, 220))
-            self.screen.blit(bg_surface, (x, y))
-
-            # Border
-            pygame.draw.rect(self.screen, (100, 150, 255), bg_rect, 2)
-
-            # Loading message
-            message = loading_state.message or "Loading..."
-            msg_surf = self.small_font.render(message, True, (200, 220, 255))
-            self.screen.blit(msg_surf, (x + 10, y + 8))
-
-            # Progress bar
-            progress = loading_state.progress
-            bar_x = x + 10
-            bar_y = y + 30
-            bar_width = indicator_width - 20
-            bar_height = 10
-
-            # Bar background
-            pygame.draw.rect(self.screen, (40, 40, 60), (bar_x, bar_y, bar_width, bar_height))
-
-            # Bar fill (animated gradient)
             import time
-            anim_offset = (time.time() * 2) % 1.0  # Pulse animation
 
-            if progress > 0:
-                fill_width = int(bar_width * progress)
-                # Gradient color based on progress
-                r = int(100 + 100 * (1 - progress))
-                g = int(150 + 100 * progress)
-                b = 255
-                pygame.draw.rect(self.screen, (r, g, b), (bar_x, bar_y, fill_width, bar_height))
+            if loading_state.overlay_mode:
+                # Full-screen loading overlay for LLM generation
+                self._render_loading_overlay(loading_state, time.time())
             else:
-                # Indeterminate loading animation (scrolling bar)
-                pattern_width = 30
-                offset = int(anim_offset * pattern_width * 2)
-                for i in range(-1, bar_width // pattern_width + 2):
-                    px = bar_x + i * pattern_width + offset
-                    if bar_x <= px < bar_x + bar_width - pattern_width:
-                        color = (100, 150, 255)
-                        stripe_rect = pygame.Rect(px, bar_y, pattern_width // 2, bar_height)
-                        stripe_rect = stripe_rect.clip(pygame.Rect(bar_x, bar_y, bar_width, bar_height))
-                        if stripe_rect.width > 0:
-                            pygame.draw.rect(self.screen, color, stripe_rect)
-
-            # Bar border
-            pygame.draw.rect(self.screen, (100, 150, 255), (bar_x, bar_y, bar_width, bar_height), 1)
+                # Small corner indicator for classifier operations
+                self._render_loading_corner(loading_state, time.time())
 
         except ImportError:
             # LLM module not available
             pass
+
+    def _render_loading_overlay(self, loading_state, current_time: float):
+        """Render a full-screen semi-transparent loading overlay with animation."""
+        s = Config.scale
+
+        # Semi-transparent dark overlay
+        overlay = pygame.Surface((Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((10, 10, 25, 180))
+        self.screen.blit(overlay, (0, 0))
+
+        # Center panel
+        panel_width = s(400)
+        panel_height = s(200)
+        panel_x = (Config.VIEWPORT_WIDTH - panel_width) // 2
+        panel_y = (Config.VIEWPORT_HEIGHT - panel_height) // 2
+
+        # Panel background with gradient effect
+        panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+        panel.fill((20, 25, 45, 240))
+        self.screen.blit(panel, (panel_x, panel_y))
+
+        # Panel border with glow effect
+        border_color = (80, 120, 200)
+        pygame.draw.rect(self.screen, border_color,
+                        (panel_x, panel_y, panel_width, panel_height), 2)
+
+        # Animated spinner/orbs
+        center_x = panel_x + panel_width // 2
+        center_y = panel_y + s(60)
+        orb_radius = s(6)
+        orbit_radius = s(30)
+        num_orbs = 8
+
+        elapsed = current_time - loading_state.start_time
+        for i in range(num_orbs):
+            angle = (elapsed * 2 + i * (6.28 / num_orbs))
+            orb_x = center_x + int(orbit_radius * __import__('math').cos(angle))
+            orb_y = center_y + int(orbit_radius * __import__('math').sin(angle))
+
+            # Fade orbs based on position (trailing effect)
+            alpha = int(255 * (0.3 + 0.7 * ((i + elapsed * num_orbs) % num_orbs) / num_orbs))
+            orb_color = (100 + int(50 * __import__('math').sin(elapsed + i)), 150, 255, min(255, alpha))
+
+            # Draw orb with glow
+            orb_surf = pygame.Surface((orb_radius * 3, orb_radius * 3), pygame.SRCALPHA)
+            pygame.draw.circle(orb_surf, orb_color, (orb_radius * 3 // 2, orb_radius * 3 // 2), orb_radius)
+            self.screen.blit(orb_surf, (orb_x - orb_radius * 3 // 2, orb_y - orb_radius * 3 // 2))
+
+        # Main message
+        message = loading_state.message or "Generating..."
+        msg_surf = self.font.render(message, True, (220, 230, 255))
+        msg_x = center_x - msg_surf.get_width() // 2
+        msg_y = panel_y + s(110)
+        self.screen.blit(msg_surf, (msg_x, msg_y))
+
+        # Subtitle
+        subtitle = loading_state.subtitle
+        if subtitle:
+            sub_surf = self.small_font.render(subtitle, True, (150, 160, 190))
+            sub_x = center_x - sub_surf.get_width() // 2
+            sub_y = msg_y + s(30)
+            self.screen.blit(sub_surf, (sub_x, sub_y))
+
+        # Animated dots
+        num_dots = int((elapsed * 2) % 4)
+        dots = "." * num_dots
+        dots_surf = self.small_font.render(dots, True, (150, 160, 190))
+        self.screen.blit(dots_surf, (center_x + msg_surf.get_width() // 2 + s(5), msg_y))
+
+        # Progress bar (if progress > 0)
+        progress = loading_state.progress
+        bar_width = panel_width - s(60)
+        bar_height = s(8)
+        bar_x = panel_x + s(30)
+        bar_y = panel_y + panel_height - s(35)
+
+        # Bar background
+        pygame.draw.rect(self.screen, (30, 35, 55), (bar_x, bar_y, bar_width, bar_height))
+
+        if progress > 0:
+            # Determinate progress
+            fill_width = int(bar_width * progress)
+            # Gradient from blue to cyan
+            fill_color = (
+                int(80 + 40 * progress),
+                int(150 + 50 * progress),
+                255
+            )
+            pygame.draw.rect(self.screen, fill_color, (bar_x, bar_y, fill_width, bar_height))
+        else:
+            # Indeterminate animation (sliding highlight)
+            pattern_width = s(60)
+            offset = int((elapsed * 150) % (bar_width + pattern_width)) - pattern_width
+
+            # Create gradient highlight
+            for i in range(pattern_width):
+                alpha = int(180 * __import__('math').sin(__import__('math').pi * i / pattern_width))
+                px = bar_x + offset + i
+                if bar_x <= px < bar_x + bar_width:
+                    line_color = (100, 180, 255, alpha)
+                    line_surf = pygame.Surface((1, bar_height), pygame.SRCALPHA)
+                    line_surf.fill(line_color)
+                    self.screen.blit(line_surf, (px, bar_y))
+
+        # Bar border
+        pygame.draw.rect(self.screen, (60, 80, 120), (bar_x, bar_y, bar_width, bar_height), 1)
+
+    def _render_loading_corner(self, loading_state, current_time: float):
+        """Render a small loading indicator in the bottom-right corner."""
+        # Position in bottom-right corner
+        padding = 20
+        indicator_width = 250
+        indicator_height = 50
+        x = Config.VIEWPORT_WIDTH - indicator_width - padding
+        y = Config.VIEWPORT_HEIGHT - indicator_height - padding
+
+        # Background with rounded corners effect
+        bg_rect = pygame.Rect(x, y, indicator_width, indicator_height)
+        bg_surface = pygame.Surface((indicator_width, indicator_height), pygame.SRCALPHA)
+        bg_surface.fill((20, 20, 40, 220))
+        self.screen.blit(bg_surface, (x, y))
+
+        # Border
+        pygame.draw.rect(self.screen, (100, 150, 255), bg_rect, 2)
+
+        # Loading message
+        message = loading_state.message or "Loading..."
+        msg_surf = self.small_font.render(message, True, (200, 220, 255))
+        self.screen.blit(msg_surf, (x + 10, y + 8))
+
+        # Progress bar
+        progress = loading_state.progress
+        bar_x = x + 10
+        bar_y = y + 30
+        bar_width = indicator_width - 20
+        bar_height = 10
+
+        # Bar background
+        pygame.draw.rect(self.screen, (40, 40, 60), (bar_x, bar_y, bar_width, bar_height))
+
+        # Bar fill (animated gradient)
+        anim_offset = (current_time * 2) % 1.0  # Pulse animation
+
+        if progress > 0:
+            fill_width = int(bar_width * progress)
+            # Gradient color based on progress
+            r = int(100 + 100 * (1 - progress))
+            g = int(150 + 100 * progress)
+            b = 255
+            pygame.draw.rect(self.screen, (r, g, b), (bar_x, bar_y, fill_width, bar_height))
+        else:
+            # Indeterminate loading animation (scrolling bar)
+            pattern_width = 30
+            offset = int(anim_offset * pattern_width * 2)
+            for i in range(-1, bar_width // pattern_width + 2):
+                px = bar_x + i * pattern_width + offset
+                if bar_x <= px < bar_x + bar_width - pattern_width:
+                    color = (100, 150, 255)
+                    stripe_rect = pygame.Rect(px, bar_y, pattern_width // 2, bar_height)
+                    stripe_rect = stripe_rect.clip(pygame.Rect(bar_x, bar_y, bar_width, bar_height))
+                    if stripe_rect.width > 0:
+                        pygame.draw.rect(self.screen, color, stripe_rect)

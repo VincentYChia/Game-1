@@ -102,13 +102,16 @@ class LLMConfig:
 # ==============================================================================
 
 class LoadingState:
-    """Thread-safe loading state for UI indicators"""
+    """Thread-safe loading state for UI indicators and full-screen overlays"""
 
     def __init__(self):
         self._lock = threading.Lock()
         self._is_loading = False
         self._message = ""
         self._progress = 0.0  # 0.0 to 1.0
+        self._overlay_mode = False  # Full-screen overlay vs small indicator
+        self._subtitle = ""  # Secondary message for overlay
+        self._start_time = 0.0  # For animation timing
 
     @property
     def is_loading(self) -> bool:
@@ -121,28 +124,51 @@ class LoadingState:
             return self._message
 
     @property
+    def subtitle(self) -> str:
+        with self._lock:
+            return self._subtitle
+
+    @property
     def progress(self) -> float:
         with self._lock:
             return self._progress
 
-    def start(self, message: str = "Loading..."):
+    @property
+    def overlay_mode(self) -> bool:
+        with self._lock:
+            return self._overlay_mode
+
+    @property
+    def start_time(self) -> float:
+        with self._lock:
+            return self._start_time
+
+    def start(self, message: str = "Loading...", overlay: bool = False, subtitle: str = ""):
+        import time
         with self._lock:
             self._is_loading = True
             self._message = message
             self._progress = 0.0
+            self._overlay_mode = overlay
+            self._subtitle = subtitle
+            self._start_time = time.time()
 
-    def update(self, message: str = None, progress: float = None):
+    def update(self, message: str = None, progress: float = None, subtitle: str = None):
         with self._lock:
             if message is not None:
                 self._message = message
             if progress is not None:
                 self._progress = min(1.0, max(0.0, progress))
+            if subtitle is not None:
+                self._subtitle = subtitle
 
     def finish(self):
         with self._lock:
             self._is_loading = False
             self._message = ""
+            self._subtitle = ""
             self._progress = 1.0
+            self._overlay_mode = False
 
 
 # Global loading state instance
@@ -152,6 +178,69 @@ _loading_state = LoadingState()
 def get_loading_state() -> LoadingState:
     """Get the global loading state instance"""
     return _loading_state
+
+
+# ==============================================================================
+# BACKGROUND GENERATION (Non-blocking LLM calls)
+# ==============================================================================
+
+class BackgroundGenerationResult:
+    """Holds the result of a background generation task"""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._completed = False
+        self._result = None
+        self._error = None
+
+    @property
+    def completed(self) -> bool:
+        with self._lock:
+            return self._completed
+
+    @property
+    def result(self):
+        with self._lock:
+            return self._result
+
+    @property
+    def error(self):
+        with self._lock:
+            return self._error
+
+    def set_result(self, result):
+        with self._lock:
+            self._result = result
+            self._completed = True
+
+    def set_error(self, error: str):
+        with self._lock:
+            self._error = error
+            self._completed = True
+
+
+# Global background generation state
+_background_result: Optional[BackgroundGenerationResult] = None
+_background_thread: Optional[threading.Thread] = None
+
+
+def is_background_generation_running() -> bool:
+    """Check if a background generation is in progress"""
+    global _background_thread
+    return _background_thread is not None and _background_thread.is_alive()
+
+
+def get_background_result() -> Optional[BackgroundGenerationResult]:
+    """Get the result of a completed background generation"""
+    global _background_result
+    return _background_result
+
+
+def clear_background_result():
+    """Clear the background result after processing"""
+    global _background_result, _background_thread
+    _background_result = None
+    _background_thread = None
 
 
 # ==============================================================================
@@ -1134,6 +1223,44 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
         self._cache.clear()
         print("LLM item cache cleared")
 
+    def generate_async(self, discipline: str, interactive_ui, narrative: str = "") -> bool:
+        """
+        Start item generation in a background thread.
+
+        Returns True if generation started, False if already running.
+        Use is_background_generation_running() to check status.
+        Use get_background_result() to get the result when complete.
+        """
+        global _background_result, _background_thread
+
+        if is_background_generation_running():
+            return False
+
+        # Start loading overlay
+        loading_state = get_loading_state()
+        loading_state.start(
+            message="Generating Item...",
+            overlay=True,
+            subtitle=f"Creating {discipline} invention"
+        )
+
+        # Create result holder
+        _background_result = BackgroundGenerationResult()
+
+        def background_task():
+            try:
+                loading_state.update(subtitle="Calling AI model...")
+                result = self.generate(discipline, interactive_ui, narrative)
+                _background_result.set_result(result)
+            except Exception as e:
+                _background_result.set_error(str(e))
+            finally:
+                loading_state.finish()
+
+        _background_thread = threading.Thread(target=background_task, daemon=True)
+        _background_thread.start()
+        return True
+
 
 # ==============================================================================
 # SINGLETON INSTANCE
@@ -1153,3 +1280,15 @@ def init_item_generator(project_root: Path, materials_db,
     global _item_generator
     _item_generator = LLMItemGenerator(project_root, materials_db, config)
     return _item_generator
+
+
+def start_background_generation(discipline: str, interactive_ui, narrative: str = "") -> bool:
+    """
+    Convenience function to start background generation using the global generator.
+
+    Returns True if generation started, False if already running or no generator.
+    """
+    generator = get_item_generator()
+    if generator is None:
+        return False
+    return generator.generate_async(discipline, interactive_ui, narrative)

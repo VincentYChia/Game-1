@@ -747,6 +747,15 @@ class ClassifierBackend(ABC):
         pass
 
 
+def _get_classifier_loading_state():
+    """Get the loading state from llm_item_generator (shared system)"""
+    try:
+        from systems.llm_item_generator import get_loading_state
+        return get_loading_state()
+    except ImportError:
+        return None
+
+
 class CNNBackend(ClassifierBackend):
     """TensorFlow/Keras CNN backend"""
 
@@ -761,6 +770,8 @@ class CNNBackend(ClassifierBackend):
         if self.model is not None or self._load_error is not None:
             return
 
+        loading_state = _get_classifier_loading_state()
+
         try:
             import tensorflow as tf
             self._tf = tf
@@ -769,16 +780,23 @@ class CNNBackend(ClassifierBackend):
             import os
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-            print(f"Loading CNN model from: {self.model_path}")
+            model_name = self.model_path.name[:30] if len(self.model_path.name) > 30 else self.model_path.name
+            if loading_state:
+                loading_state.start(f"Loading CNN Model", subtitle=model_name)
+
             self.model = tf.keras.models.load_model(str(self.model_path))
-            print(f"  Model loaded successfully")
+
+            if loading_state:
+                loading_state.finish()
 
         except ImportError as e:
             self._load_error = f"TensorFlow not installed: {e}"
-            print(f"  WARNING: {self._load_error}")
+            if loading_state:
+                loading_state.finish()
         except Exception as e:
             self._load_error = f"Failed to load CNN model: {e}"
-            print(f"  WARNING: {self._load_error}")
+            if loading_state:
+                loading_state.finish()
 
     def predict(self, input_data: np.ndarray) -> Tuple[float, Optional[str]]:
         self._lazy_load()
@@ -821,12 +839,19 @@ class LightGBMBackend(ClassifierBackend):
             return
         self._loading = True
 
+        loading_state = _get_classifier_loading_state()
+
         try:
             import lightgbm as lgb
 
-            print(f"Loading LightGBM model from: {self.model_path}")
+            model_name = self.model_path.name[:30] if len(self.model_path.name) > 30 else self.model_path.name
+            if loading_state:
+                loading_state.start(f"Loading LightGBM Model", subtitle=model_name)
+
             self.model = lgb.Booster(model_file=str(self.model_path))
-            print(f"  Model loaded successfully")
+
+            if loading_state:
+                loading_state.finish()
 
             # NOTE: We do NOT load the pickled extractor files because they
             # contain a RecipeFeatureExtractor class that was defined in the
@@ -835,10 +860,12 @@ class LightGBMBackend(ClassifierBackend):
 
         except ImportError as e:
             self._load_error = f"LightGBM not installed: {e}"
-            print(f"  WARNING: {self._load_error}")
+            if loading_state:
+                loading_state.finish()
         except Exception as e:
             self._load_error = f"Failed to load LightGBM model: {e}"
-            print(f"  WARNING: {self._load_error}")
+            if loading_state:
+                loading_state.finish()
         finally:
             self._loading = False
 
@@ -1136,14 +1163,28 @@ class CraftingClassifierManager:
         """
         disciplines = [discipline] if discipline else list(self.configs.keys())
 
-        print(f"Preloading classifiers for: {disciplines}")
+        # Get loading state for UI feedback
+        loading_state = _get_classifier_loading_state()
 
-        for disc in disciplines:
+        enabled_disciplines = [d for d in disciplines
+                              if self.configs.get(d) and self.configs[d].enabled]
+
+        if not enabled_disciplines:
+            return
+
+        for i, disc in enumerate(enabled_disciplines):
             config = self.configs.get(disc)
-            if not config or not config.enabled:
-                continue
 
             try:
+                # Update loading state with progress
+                progress = i / len(enabled_disciplines)
+                if loading_state:
+                    loading_state.start(
+                        f"Loading {disc.title()} Classifier",
+                        subtitle=f"{config.classifier_type.upper()} model",
+                    )
+                    loading_state.update(progress=progress)
+
                 # Initialize the backend (triggers lazy load)
                 backend = self.get_backend(disc)
                 if backend:
@@ -1152,16 +1193,23 @@ class CraftingClassifierManager:
 
                 # For CNN, also preload the image renderer (loads color encoder)
                 if config.classifier_type == 'cnn':
+                    if loading_state:
+                        loading_state.update(subtitle="Loading color encoder...")
                     _ = self.get_image_renderer(disc)
 
                 # For LightGBM, preload the feature extractor
                 if config.classifier_type == 'lightgbm':
+                    if loading_state:
+                        loading_state.update(subtitle="Loading feature extractor...")
                     _ = self.feature_extractor
 
             except Exception as e:
-                print(f"  Warning: Failed to preload {disc}: {e}")
+                # Log error but continue with other disciplines
+                pass
 
-        print(f"  Preload complete")
+        # Finish loading state
+        if loading_state:
+            loading_state.finish()
 
     def unload(self, discipline: Optional[str] = None):
         """
@@ -1177,7 +1225,6 @@ class CraftingClassifierManager:
         for disc in list(disciplines):
             if disc in self._backends:
                 del self._backends[disc]
-                print(f"  Unloaded {disc} classifier")
 
         # Also clear image renderers if unloading all
         if discipline is None:

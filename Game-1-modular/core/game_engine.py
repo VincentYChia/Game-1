@@ -2637,25 +2637,32 @@ class GameEngine:
 
     def _generate_invented_item(self, discipline: str, classifier_confidence: float):
         """
-        Generate a new item using LLM from validated recipe placement.
+        Start item generation using LLM from validated recipe placement.
+        Uses background thread to avoid freezing the game.
 
         Args:
             discipline: The crafting discipline (smithing, alchemy, etc.)
             classifier_confidence: Confidence score from classifier (0-1)
         """
         print(f"\n{'='*80}")
-        print(f"🧪 GENERATING INVENTED ITEM")
+        print(f"🧪 STARTING ITEM GENERATION (Background)")
         print(f"Discipline: {discipline}")
         print(f"Classifier Confidence: {classifier_confidence:.2%}")
         print(f"{'='*80}")
 
         try:
             from systems.llm_item_generator import (
-                get_item_generator, init_item_generator, LLMConfig
+                get_item_generator, init_item_generator, LLMConfig,
+                is_background_generation_running
             )
             from data.databases import MaterialDatabase
             from pathlib import Path
             import os
+
+            # Check if already generating
+            if is_background_generation_running():
+                self.add_notification("Already generating...", (255, 200, 100))
+                return
 
             # Get or initialize the item generator
             generator = get_item_generator()
@@ -2689,26 +2696,14 @@ class GameEngine:
                 player_narrative = self.interactive_ui.player_narrative or ""
             print(f"  Player narrative: {player_narrative[:50]}..." if player_narrative else "  No player narrative")
 
-            # Generate the item with narrative
-            self.add_notification("Generating item...", (200, 200, 255))
-            gen_result = generator.generate(discipline, self.interactive_ui, narrative=player_narrative)
+            # Store state for when generation completes
+            self._pending_generation_discipline = discipline
 
-            if gen_result.success:
-                print(f"\n✓ Item generated successfully!")
-                print(f"  ID: {gen_result.item_id}")
-                print(f"  Name: {gen_result.item_name}")
-                print(f"  From cache: {gen_result.from_cache}")
-                if gen_result.error:  # Fallback was used
-                    print(f"  Note: {gen_result.error}")
-
-                # Add the generated item to the game
-                self._add_invented_item_to_game(gen_result, discipline)
-
+            # Start async generation (shows loading overlay automatically)
+            if generator.generate_async(discipline, self.interactive_ui, narrative=player_narrative):
+                print("  Background generation started...")
             else:
-                # Generation failed
-                error_msg = gen_result.error or "Unknown error"
-                print(f"\n✗ Item generation failed: {error_msg}")
-                self.add_notification(f"Generation failed: {error_msg[:30]}...", (255, 100, 100))
+                self.add_notification("Failed to start generation", (255, 100, 100))
 
         except ImportError as e:
             print(f"⚠️ LLM generator not available: {e}")
@@ -2722,7 +2717,59 @@ class GameEngine:
             traceback.print_exc()
             self.add_notification("Item generation failed", (255, 100, 100))
 
-        print(f"{'='*80}\n")
+    def _check_background_generation(self):
+        """Check if background LLM generation has completed and process the result."""
+        try:
+            from systems.llm_item_generator import (
+                is_background_generation_running, get_background_result, clear_background_result
+            )
+
+            # Check if generation is running or there's a result to process
+            if is_background_generation_running():
+                return  # Still running
+
+            result_holder = get_background_result()
+            if result_holder is None:
+                return  # No pending result
+
+            if not result_holder.completed:
+                return  # Not yet completed
+
+            # Get the result
+            discipline = getattr(self, '_pending_generation_discipline', 'unknown')
+
+            if result_holder.error:
+                print(f"\n✗ Background generation failed: {result_holder.error}")
+                self.add_notification(f"Generation failed: {result_holder.error[:30]}...", (255, 100, 100))
+            else:
+                gen_result = result_holder.result
+                if gen_result and gen_result.success:
+                    print(f"\n{'='*80}")
+                    print(f"✓ Item generated successfully!")
+                    print(f"  ID: {gen_result.item_id}")
+                    print(f"  Name: {gen_result.item_name}")
+                    print(f"  From cache: {gen_result.from_cache}")
+                    if gen_result.error:  # Fallback was used
+                        print(f"  Note: {gen_result.error}")
+                    print(f"{'='*80}\n")
+
+                    # Add the generated item to the game
+                    self._add_invented_item_to_game(gen_result, discipline)
+                else:
+                    error_msg = gen_result.error if gen_result else "Unknown error"
+                    print(f"\n✗ Item generation failed: {error_msg}")
+                    self.add_notification(f"Generation failed: {error_msg[:30]}...", (255, 100, 100))
+
+            # Clear the result
+            clear_background_result()
+            self._pending_generation_discipline = None
+
+        except ImportError:
+            pass  # LLM module not available
+        except Exception as e:
+            print(f"Error checking background generation: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _add_invented_item_to_game(self, gen_result, discipline: str):
         """
@@ -4727,6 +4774,9 @@ class GameEngine:
         # Skip updates if in start menu or no character
         if self.start_menu_open or self.character is None:
             return
+
+        # Check for completed background LLM generation
+        self._check_background_generation()
 
         curr = pygame.time.get_ticks()
         dt = (curr - self.last_tick) / 1000.0
