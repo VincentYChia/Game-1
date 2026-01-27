@@ -3260,8 +3260,12 @@ class GameEngine:
             )
 
         print(f"  ✓ Registered with {discipline} crafter")
-        print(f"  ✓ Registered with PlacementDatabase")
-        print(f"  ✓ Placement data saved: {len(str(placement_data))} chars")
+        print(f"  ✓ Registered with PlacementDatabase: recipe_id='{recipe_id}'")
+        print(f"  ✓ PlacementDB now has {len(placement_db.placements)} entries")
+        # Debug: verify the placement was actually stored
+        stored = placement_db.placements.get(recipe_id)
+        if stored:
+            print(f"  ✓ Verified: placement_map has {len(stored.placement_map)} entries" if discipline == 'smithing' else f"  ✓ Verified: core_inputs={len(stored.core_inputs)}, surrounding={len(stored.surrounding_inputs)}")
 
     def _get_invented_icon_path(self, item_id: str, discipline: str, item_data: dict) -> str:
         """
