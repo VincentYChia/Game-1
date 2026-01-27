@@ -572,7 +572,7 @@ class Character:
 
         for recipe_record in invented_data:
             try:
-                # Restore full recipe record
+                # Restore full recipe record - MUST include all fields saved
                 restored_recipe = {
                     "timestamp": recipe_record.get("timestamp", ""),
                     "discipline": recipe_record.get("discipline", "unknown"),
@@ -583,7 +583,11 @@ class Character:
                     # Recipe crafting data
                     "recipe_inputs": recipe_record.get("recipe_inputs", []),
                     "station_tier": recipe_record.get("station_tier", 1),
-                    "narrative": recipe_record.get("narrative", "")
+                    "narrative": recipe_record.get("narrative", ""),
+                    # CRITICAL: placement_data is required for placement display!
+                    "placement_data": recipe_record.get("placement_data", {}),
+                    # Icon path for invented items
+                    "icon_path": recipe_record.get("icon_path", "")
                 }
                 self.invented_recipes.append(restored_recipe)
 
