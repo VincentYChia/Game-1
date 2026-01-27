@@ -3103,8 +3103,23 @@ class GameEngine:
         # CRITICAL: Also register with the appropriate Crafter for instant craft
         self._register_with_crafter(recipe_id, discipline, gen_result, placement_data, calculated_tier)
 
+        # CRITICAL: Register with EquipmentDatabase for instant craft to recognize as equipment
+        # Without this, equip_db.is_equipment(item_id) returns False and instant craft fails
+        from data.databases import EquipmentDatabase
+        equip_db = EquipmentDatabase.get_instance()
+
+        # Build item_data in the format EquipmentDatabase expects
+        item_data_for_db = gen_result.item_data.copy() if gen_result.item_data else {}
+        item_data_for_db['itemId'] = gen_result.item_id
+        item_data_for_db['category'] = 'equipment'  # Required for is_equipment() to work
+        if 'name' not in item_data_for_db:
+            item_data_for_db['name'] = gen_result.item_name
+
+        equip_db.items[gen_result.item_id] = item_data_for_db
+
         print(f"  ✓ Stored invented recipe: {gen_result.item_id}")
         print(f"  ✓ Recipe registered for crafting: {recipe_id}")
+        print(f"  ✓ Item registered with EquipmentDatabase")
         print(f"  ✓ Tier: {calculated_tier}, Grid: {grid_size}")
 
     def _register_with_crafter(self, recipe_id: str, discipline: str, gen_result, placement_data: dict, tier: int):
@@ -3416,7 +3431,25 @@ class GameEngine:
                         station_tier=station_tier
                     )
 
-                print(f"  ✓ Registered {recipe_id}")
+                # 4. CRITICAL: Register with EquipmentDatabase for instant craft equipment recognition
+                # Without this, equip_db.is_equipment(item_id) returns False and instant craft fails
+                from data.databases import EquipmentDatabase
+                equip_db = EquipmentDatabase.get_instance()
+
+                item_data = recipe_record.get('item_data', {})
+                if item_data:
+                    item_data_for_db = item_data.copy()
+                else:
+                    item_data_for_db = {}
+
+                item_data_for_db['itemId'] = item_id
+                item_data_for_db['category'] = 'equipment'  # Required for is_equipment() to work
+                if 'name' not in item_data_for_db:
+                    item_data_for_db['name'] = recipe_record.get('item_name', item_id)
+
+                equip_db.items[item_id] = item_data_for_db
+
+                print(f"  ✓ Registered {recipe_id} (including EquipmentDatabase)")
 
             except Exception as e:
                 import traceback
