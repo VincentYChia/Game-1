@@ -113,10 +113,50 @@ class SaveManager:
             "skill_unlocks": {
                 "unlocked_skills": list(character.skill_unlocks.unlocked_skills) if hasattr(character, 'skill_unlocks') else [],
                 "pending_unlocks": list(character.skill_unlocks.pending_unlocks) if hasattr(character, 'skill_unlocks') else []
-            }
+            },
+            "invented_recipes": self._serialize_invented_recipes(character)
         }
 
         return char_data
+
+    def _serialize_invented_recipes(self, character) -> List[Dict[str, Any]]:
+        """
+        Serialize player-invented recipes for persistence.
+
+        Args:
+            character: Character instance
+
+        Returns:
+            List of invented recipe records with full recipe data
+        """
+        if not hasattr(character, 'invented_recipes'):
+            return []
+
+        serialized = []
+        for recipe in character.invented_recipes:
+            try:
+                # Ensure all data is JSON-serializable
+                recipe_record = {
+                    "timestamp": recipe.get("timestamp", ""),
+                    "discipline": recipe.get("discipline", "unknown"),
+                    "item_id": recipe.get("item_id", ""),
+                    "item_name": recipe.get("item_name", ""),
+                    "item_data": recipe.get("item_data", {}),
+                    "from_cache": recipe.get("from_cache", False),
+                    # Recipe crafting data (for re-registering on load)
+                    "recipe_inputs": recipe.get("recipe_inputs", []),
+                    "station_tier": recipe.get("station_tier", 1),
+                    "narrative": recipe.get("narrative", ""),
+                    # Placement data for recipe recreation (new)
+                    "placement_data": recipe.get("placement_data", {}),
+                    # Icon path for invented item (new)
+                    "icon_path": recipe.get("icon_path", "")
+                }
+                serialized.append(recipe_record)
+            except Exception as e:
+                print(f"Warning: Could not serialize invented recipe: {e}")
+
+        return serialized
 
     def _serialize_inventory(self, inventory) -> List[Optional[Dict[str, Any]]]:
         """Serialize inventory slots."""
@@ -146,11 +186,30 @@ class SaveManager:
                         "durability_current": slot.equipment_data.durability_current,
                         "durability_max": slot.equipment_data.durability_max,
                         "attack_speed": slot.equipment_data.attack_speed,
+                        "efficiency": slot.equipment_data.efficiency,
                         "weight": slot.equipment_data.weight,
                         "range": slot.equipment_data.range,
                         "hand_type": slot.equipment_data.hand_type,
-                        "item_type": slot.equipment_data.item_type
+                        "item_type": slot.equipment_data.item_type,
+                        "icon_path": slot.equipment_data.icon_path,
+                        "soulbound": slot.equipment_data.soulbound,
                     }
+
+                    # Save stat_multipliers if present
+                    if slot.equipment_data.stat_multipliers:
+                        slot_data["equipment_data"]["stat_multipliers"] = slot.equipment_data.stat_multipliers
+
+                    # Save tags if present
+                    if slot.equipment_data.tags:
+                        slot_data["equipment_data"]["tags"] = slot.equipment_data.tags
+
+                    # Save effect_tags if present
+                    if slot.equipment_data.effect_tags:
+                        slot_data["equipment_data"]["effect_tags"] = slot.equipment_data.effect_tags
+
+                    # Save effect_params if present
+                    if slot.equipment_data.effect_params:
+                        slot_data["equipment_data"]["effect_params"] = slot.equipment_data.effect_params
 
                     # Save bonuses if present
                     if slot.equipment_data.bonuses:
@@ -192,11 +251,30 @@ class SaveManager:
                     "durability_current": item.durability_current,
                     "durability_max": item.durability_max,
                     "attack_speed": item.attack_speed,
+                    "efficiency": item.efficiency,
                     "weight": item.weight,
                     "range": item.range,
                     "hand_type": item.hand_type,
-                    "item_type": item.item_type
+                    "item_type": item.item_type,
+                    "icon_path": item.icon_path,
+                    "soulbound": item.soulbound,
                 }
+
+                # Save stat_multipliers if present
+                if item.stat_multipliers:
+                    equipment_data["stat_multipliers"] = item.stat_multipliers
+
+                # Save tags if present
+                if item.tags:
+                    equipment_data["tags"] = item.tags
+
+                # Save effect_tags if present
+                if item.effect_tags:
+                    equipment_data["effect_tags"] = item.effect_tags
+
+                # Save effect_params if present
+                if item.effect_params:
+                    equipment_data["effect_params"] = item.effect_params
 
                 # Save bonuses if present
                 if item.bonuses:

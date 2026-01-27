@@ -68,6 +68,38 @@ class Renderer:
         }
         return tier_to_grid.get(tier, (3, 3))
 
+    def _draw_material_icon(self, surf: pygame.Surface, mat, mat_id: str,
+                           center_x: int, center_y: int, icon_size: int,
+                           text_color: Tuple[int, int, int], dimmed: bool = False):
+        """
+        Helper to draw material icon or fallback to text.
+
+        Args:
+            surf: Surface to draw on
+            mat: MaterialDefinition or None
+            mat_id: Material ID for fallback text
+            center_x, center_y: Center position for the icon
+            icon_size: Size of the icon
+            text_color: Color for fallback text
+            dimmed: If True, apply 50% alpha for recipe hints
+        """
+        if mat and mat.icon_path:
+            image_cache = ImageCache.get_instance()
+            icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+            if icon:
+                if dimmed:
+                    icon = icon.copy()
+                    icon.set_alpha(128)
+                icon_rect = icon.get_rect(center=(center_x, center_y))
+                surf.blit(icon, icon_rect)
+                return
+
+        # Fallback to text
+        mat_name = (mat.name[:8] if mat else mat_id[:8])
+        text_surf = self.tiny_font.render(mat_name, True, text_color)
+        text_rect = text_surf.get_rect(center=(center_x, center_y))
+        surf.blit(text_surf, text_rect)
+
     def render_smithing_grid(self, surf: pygame.Surface, placement_rect: pygame.Rect,
                            station_tier: int, selected_recipe: Optional[Recipe],
                            user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
@@ -374,8 +406,8 @@ class Renderer:
                           user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
         """
         Render refining hub-and-spoke with:
-        - Station tier determines number of slots (T1=3 slots, T2=5, T3=7, T4=9)
-        - Core slots in center (hub)
+        - Station tier determines number of slots
+        - Core slots in center (hub) - T1/T2=1, T3=2, T4=3
         - Surrounding slots in circle around core (spokes)
         - User can place materials in slots
 
@@ -384,13 +416,16 @@ class Renderer:
         mat_db = MaterialDatabase.get_instance()
         placement_db = PlacementDatabase.get_instance()
 
-        # Determine slot counts based on station tier
-        # T1: 1 core + 2 surrounding = 3 total
-        # T2: 1 core + 4 surrounding = 5 total
-        # T3: 1 core + 6 surrounding = 7 total
-        # T4: 1 core + 8 surrounding = 9 total
-        core_slots = 1
-        surrounding_slots = 2 + (station_tier - 1) * 2
+        # Determine slot counts based on station tier - MUST MATCH interactive_crafting.py
+        slot_config = {
+            1: {'core': 1, 'surrounding': 2},
+            2: {'core': 1, 'surrounding': 4},
+            3: {'core': 2, 'surrounding': 5},
+            4: {'core': 3, 'surrounding': 6}
+        }
+        config = slot_config.get(station_tier, {'core': 1, 'surrounding': 2})
+        num_core_slots = config['core']
+        num_surrounding_slots = config['surrounding']
 
         # Get recipe placement data if available
         required_core = []
@@ -404,85 +439,68 @@ class Renderer:
         # Calculate slot size
         center_x = placement_rect.centerx
         center_y = placement_rect.centery
-        core_radius = 40  # Radius of core slot
+        core_radius = 35  # Radius of core slot (slightly smaller for multiple)
         surrounding_radius = 30  # Radius of each surrounding slot
-        orbit_radius = 120  # Distance from center to surrounding slots
+        orbit_radius = 100  # Distance from center to surrounding slots
 
         slot_rects = []  # Will store list of (pygame.Rect, slot_id) for click detection
 
-        # Draw core slot
-        core_x = center_x - core_radius
-        core_y = center_y - core_radius
-        core_rect = pygame.Rect(core_x, core_y, core_radius * 2, core_radius * 2)
+        # Calculate core slot positions based on number of cores
+        # 1 core: center, 2 cores: horizontal, 3 cores: triangle
+        core_positions = []
+        if num_core_slots == 1:
+            core_positions = [(center_x, center_y)]
+        elif num_core_slots == 2:
+            spacing = core_radius * 2 + 10
+            core_positions = [
+                (center_x - spacing // 2, center_y),
+                (center_x + spacing // 2, center_y)
+            ]
+        elif num_core_slots == 3:
+            spacing = core_radius * 2 + 5
+            core_positions = [
+                (center_x, center_y - spacing // 2),  # Top
+                (center_x - spacing // 2, center_y + spacing // 3),  # Bottom left
+                (center_x + spacing // 2, center_y + spacing // 3)   # Bottom right
+            ]
 
-        # Determine core slot state
-        has_user_core = "core_0" in user_placement
-        has_required_core = len(required_core) > 0
+        # Draw all core slots
+        for core_idx, (core_cx, core_cy) in enumerate(core_positions):
+            core_rect = pygame.Rect(
+                core_cx - core_radius,
+                core_cy - core_radius,
+                core_radius * 2,
+                core_radius * 2
+            )
 
-        core_color = (50, 70, 50) if has_user_core else ((70, 60, 40) if has_required_core else (30, 30, 40))
-        is_hovered = core_rect.collidepoint(mouse_pos)
-        if is_hovered:
-            core_color = tuple(min(255, c + 20) for c in core_color)
+            slot_id = f"core_{core_idx}"
+            has_user_core = slot_id in user_placement
+            has_required_core = core_idx < len(required_core)
 
-        pygame.draw.circle(surf, core_color, (center_x, center_y), core_radius)
-        pygame.draw.circle(surf, (150, 130, 80), (center_x, center_y), core_radius, 2 if is_hovered else 1)
+            core_color = (50, 70, 50) if has_user_core else ((70, 60, 40) if has_required_core else (30, 30, 40))
+            is_hovered = core_rect.collidepoint(mouse_pos)
+            if is_hovered:
+                core_color = tuple(min(255, c + 20) for c in core_color)
 
-        # Draw core material
-        if has_user_core:
-            mat_id = user_placement["core_0"]
-            mat = mat_db.get_material(mat_id)
-            # Try to show icon first
-            if mat and mat.icon_path:
-                image_cache = ImageCache.get_instance()
-                icon_size = core_radius * 2 - 16  # Leave some padding
-                icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
-                if icon:
-                    icon_rect = icon.get_rect(center=(center_x, center_y))
-                    surf.blit(icon, icon_rect)
-                else:
-                    # Fallback to text
-                    mat_name = mat.name[:8]
-                    text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
-                    text_rect = text_surf.get_rect(center=(center_x, center_y))
-                    surf.blit(text_surf, text_rect)
-            else:
-                # Fallback to text
-                mat_name = (mat.name[:8] if mat else mat_id[:8])
-                text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
-                text_rect = text_surf.get_rect(center=(center_x, center_y))
-                surf.blit(text_surf, text_rect)
-        elif has_required_core:
-            req_mat_id = required_core[0].get('materialId', '')
-            mat = mat_db.get_material(req_mat_id)
-            # Try to show icon first (dimmed for hint)
-            if mat and mat.icon_path:
-                image_cache = ImageCache.get_instance()
-                icon_size = core_radius * 2 - 16
-                icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
-                if icon:
-                    dimmed_icon = icon.copy()
-                    dimmed_icon.set_alpha(128)
-                    icon_rect = dimmed_icon.get_rect(center=(center_x, center_y))
-                    surf.blit(dimmed_icon, icon_rect)
-                else:
-                    # Fallback to text
-                    mat_name = mat.name[:8]
-                    text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
-                    text_rect = text_surf.get_rect(center=(center_x, center_y))
-                    surf.blit(text_surf, text_rect)
-            else:
-                # Fallback to text
-                mat_name = (mat.name[:8] if mat else req_mat_id[:8])
-                text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
-                text_rect = text_surf.get_rect(center=(center_x, center_y))
-                surf.blit(text_surf, text_rect)
+            pygame.draw.circle(surf, core_color, (core_cx, core_cy), core_radius)
+            pygame.draw.circle(surf, (150, 130, 80), (core_cx, core_cy), core_radius, 2 if is_hovered else 1)
 
-        slot_rects.append((core_rect, "core_0"))
+            # Draw core material
+            if has_user_core:
+                mat_id = user_placement[slot_id]
+                mat = mat_db.get_material(mat_id)
+                self._draw_material_icon(surf, mat, mat_id, core_cx, core_cy, core_radius * 2 - 16, (200, 255, 200))
+            elif has_required_core:
+                req_mat_id = required_core[core_idx].get('materialId', '')
+                mat = mat_db.get_material(req_mat_id)
+                self._draw_material_icon(surf, mat, req_mat_id, core_cx, core_cy, core_radius * 2 - 16, (180, 160, 120), dimmed=True)
+
+            slot_rects.append((core_rect, slot_id))
 
         # Draw surrounding slots in circle
         import math
-        for i in range(surrounding_slots):
-            angle = (2 * math.pi * i) / surrounding_slots - math.pi / 2  # Start at top
+        for i in range(num_surrounding_slots):
+            angle = (2 * math.pi * i) / num_surrounding_slots - math.pi / 2  # Start at top
             slot_x = center_x + int(orbit_radius * math.cos(angle))
             slot_y = center_y + int(orbit_radius * math.sin(angle))
 
@@ -558,7 +576,7 @@ class Renderer:
             slot_rects.append((slot_rect, slot_id))
 
         # Draw label
-        label = f"Refining Hub: {core_slots} core + {surrounding_slots} surrounding (T{station_tier})"
+        label = f"Refining Hub: {num_core_slots} core + {num_surrounding_slots} surrounding (T{station_tier})"
         label_surf = self.small_font.render(label, True, (150, 150, 150))
         surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
 
@@ -1780,17 +1798,18 @@ class Renderer:
         surf.blit(self.small_font.render("[L or ESC] Close | [Mouse Wheel] Scroll", True, (180, 180, 180)),
                   (ww // 2 - s(160), s(50)))
 
-        # Tabs
+        # Tabs - adjusted for 6 tabs
         tab_y = s(80)
-        tab_width = s(140)
+        tab_width = s(115)  # Reduced from 140 to fit 6 tabs
         tab_height = s(40)
-        tab_spacing = s(10)
+        tab_spacing = s(8)  # Reduced spacing
         tabs = [
             ("guide", "GAME GUIDE"),
             ("quests", "QUESTS"),
             ("skills", "SKILLS"),
             ("titles", "TITLES"),
-            ("stats", "STATS")
+            ("stats", "STATS"),
+            ("recipes", "INVENTIONS")
         ]
 
         tab_rects = []
@@ -1841,6 +1860,8 @@ class Renderer:
             self._render_titles_content(surf, content_rect, character)
         elif character.encyclopedia.current_tab == "stats":
             self._render_stats_content(surf, content_rect, character)
+        elif character.encyclopedia.current_tab == "recipes":
+            self._render_recipes_content(surf, content_rect, character)
 
         self.screen.blit(surf, (wx, wy))
         window_rect = pygame.Rect(wx, wy, ww, wh)
@@ -2476,6 +2497,137 @@ class Renderer:
 
             y += s(18)
 
+    def _render_recipes_content(self, surf, content_rect, character):
+        """Render invented recipes content with rich metadata display"""
+        s = Config.scale
+
+        # Get invented recipes from character
+        invented_recipes = getattr(character, 'invented_recipes', None)
+        lines = character.encyclopedia.get_invented_recipes_text(invented_recipes)
+
+        # Apply scroll offset
+        scroll_offset = character.encyclopedia.scroll_offset
+        y = content_rect.y + s(20) - scroll_offset
+        x = content_rect.x + s(20)
+
+        # Colors for different line types
+        COLORS = {
+            'header': (255, 215, 0),      # Golden for main headers
+            'discipline': (100, 180, 255), # Blue for discipline headers
+            'count': (150, 255, 150),     # Light green for counts
+            'tier1': (180, 180, 180),     # Gray - Common
+            'tier2': (100, 255, 100),     # Green - Uncommon
+            'tier3': (100, 150, 255),     # Blue - Rare
+            'tier4': (200, 100, 255),     # Purple - Epic
+            'type': (180, 180, 200),      # Light gray for type info
+            'stat': (255, 220, 150),      # Warm yellow for stats
+            'tags': (150, 200, 255),      # Light blue for tags
+            'applies': (100, 220, 200),   # Cyan for enchantment targets
+            'effect': (255, 180, 100),    # Orange for effects
+            'recipe': (200, 180, 150),    # Tan for recipe materials
+            'lore': (150, 150, 170),      # Gray for narrative
+            'default': (180, 180, 200),   # Default text color
+        }
+
+        for line in lines:
+            # Stop if entirely below visible area
+            if y > content_rect.bottom:
+                break
+
+            # Determine style based on line content
+            if line.startswith("==="):
+                # Main header - golden
+                if y >= content_rect.y - s(30) and y < content_rect.bottom:
+                    surf.blit(self.font.render(line, True, COLORS['header']), (x, y))
+                y += s(30)
+
+            elif line.startswith("---"):
+                # Discipline header - blue
+                if y >= content_rect.y - s(25) and y < content_rect.bottom:
+                    surf.blit(self.small_font.render(line, True, COLORS['discipline']), (x, y))
+                y += s(25)
+
+            elif line.startswith("Total Inventions:"):
+                # Count line - light green
+                if y >= content_rect.y - s(20) and y < content_rect.bottom:
+                    surf.blit(self.small_font.render(line, True, COLORS['count']), (x, y))
+                y += s(20)
+
+            elif line.startswith("  [T"):
+                # Recipe entry - tier + name (main item header)
+                if y >= content_rect.y - s(22) and y < content_rect.bottom:
+                    # Color by tier
+                    if "[T1]" in line:
+                        color = COLORS['tier1']
+                    elif "[T2]" in line:
+                        color = COLORS['tier2']
+                    elif "[T3]" in line:
+                        color = COLORS['tier3']
+                    elif "[T4]" in line:
+                        color = COLORS['tier4']
+                    else:
+                        color = COLORS['default']
+                    surf.blit(self.small_font.render(line, True, color), (x, y))
+                y += s(22)
+
+            elif line.startswith("@type"):
+                # Type info - light gray, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    " + line[12:]  # Remove @type prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['type']), (x, y))
+                y += s(16)
+
+            elif line.startswith("@stat"):
+                # Stat info - warm yellow, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    " + line[12:]  # Remove @stat prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['stat']), (x, y))
+                y += s(16)
+
+            elif line.startswith("@tags"):
+                # Tags - light blue, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    Tags: " + line[12:]  # Remove @tags prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['tags']), (x, y))
+                y += s(16)
+
+            elif line.startswith("@applies"):
+                # Enchantment applicability - cyan, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    Applies to: " + line[12:]  # Remove @applies prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['applies']), (x, y))
+                y += s(16)
+
+            elif line.startswith("@effect"):
+                # Enchantment effect - orange, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    Effect: " + line[12:]  # Remove @effect prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['effect']), (x, y))
+                y += s(16)
+
+            elif line.startswith("@recipe"):
+                # Recipe materials - tan, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    Materials: " + line[12:]  # Remove @recipe prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['recipe']), (x, y))
+                y += s(16)
+
+            elif line.startswith("@lore"):
+                # Narrative/lore - italic-style gray, indented
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    display_text = "    " + line[12:]  # Remove @lore prefix
+                    surf.blit(self.tiny_font.render(display_text, True, COLORS['lore']), (x, y))
+                y += s(16)
+
+            elif line == "":
+                y += s(8)
+
+            else:
+                # Default text
+                if y >= content_rect.y - s(18) and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(line, True, COLORS['default']), (x, y))
+                y += s(18)
+
     def render_notifications(self, notifications: List[Notification]):
         y = 50
         for notification in notifications:
@@ -2860,8 +3012,11 @@ class Renderer:
         for recipe in recipes:
             output_type = 'Other'
 
+            # Check if this is an invented recipe (player-created via INVENT)
+            if hasattr(recipe, 'metadata') and recipe.metadata.get('invented', False):
+                output_type = 'Invented Recipes'
             # Handle enchanting recipes separately (they don't have materials)
-            if station_type == 'adornments' and hasattr(recipe, 'is_enchantment') and recipe.is_enchantment:
+            elif station_type == 'adornments' and hasattr(recipe, 'is_enchantment') and recipe.is_enchantment:
                 # Enchanting: Just use 'Enchantments' category - we'll sort alphabetically
                 output_type = 'Enchantments'
             elif equip_db.is_equipment(recipe.output_id):
@@ -2944,18 +3099,18 @@ class Renderer:
 
             grouped[output_type].append(recipe)
 
-        # Define order based on station type
+        # Define order based on station type (Invented Recipes always appear first)
         if station_type == 'engineering':
-            type_order = ['Turrets', 'Traps', 'Bombs', 'Utility Devices', 'Crafting Stations', 'Other Devices', 'Other']
+            type_order = ['Invented Recipes', 'Turrets', 'Traps', 'Bombs', 'Utility Devices', 'Crafting Stations', 'Other Devices', 'Other']
         elif station_type == 'alchemy':
-            type_order = ['Health Potions', 'Mana Potions', 'Combat Buffs', 'Movement Buffs', 'Other Potions', 'Other Materials', 'Other']
+            type_order = ['Invented Recipes', 'Health Potions', 'Mana Potions', 'Combat Buffs', 'Movement Buffs', 'Other Potions', 'Other Materials', 'Other']
         elif station_type == 'refining':
-            type_order = ['Metals & Ingots', 'Processed Ores', 'Elemental Materials', 'Refined Resources', 'Other Materials', 'Other']
+            type_order = ['Invented Recipes', 'Metals & Ingots', 'Processed Ores', 'Elemental Materials', 'Refined Resources', 'Other Materials', 'Other']
         elif station_type == 'adornments':
-            type_order = ['Enchantments', 'Other']
+            type_order = ['Invented Recipes', 'Enchantments', 'Other']
         else:
             # Smithing and default
-            type_order = ['Weapons', 'Armor', 'Tools', 'Accessories', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4+', 'Stations', 'Other']
+            type_order = ['Invented Recipes', 'Weapons', 'Armor', 'Tools', 'Accessories', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4+', 'Stations', 'Other']
 
         # Return as ordered list of tuples
         result = []
@@ -3269,6 +3424,8 @@ class Renderer:
 
             # Render discipline-specific placement UI
             station_type = character.active_station.station_type.value
+            # IMPORTANT: Grid size is determined by STATION tier (physical constraint)
+            # Recipe tier is only for display purposes (like tier badge)
             station_tier = character.active_station.tier
             placement_grid_rects = {}  # Will store grid cell rects for click detection
 
@@ -4084,8 +4241,57 @@ class Renderer:
         status_surf = self.font.render(status_text, True, status_color)
         surf.blit(status_surf, (placement_x, bottom_y))
 
+        # Narrative input for INVENT feature (only shown when no recipe matched)
+        narrative_rect = None
+        if not interactive_ui.matched_recipe:
+            narrative_y = bottom_y + s(30)
+            narrative_x = placement_x
+            narrative_w = placement_w - s(20)
+            narrative_h = s(28)
+
+            narrative_rect_local = pygame.Rect(narrative_x, narrative_y, narrative_w, narrative_h)
+
+            # Input box background
+            is_narrative_active = getattr(interactive_ui, 'narrative_input_active', False)
+            bg_color = (50, 55, 70) if is_narrative_active else (35, 40, 50)
+            pygame.draw.rect(surf, bg_color, narrative_rect_local, border_radius=s(3))
+
+            # Border (highlight if active)
+            border_color = (120, 180, 255) if is_narrative_active else (80, 90, 110)
+            pygame.draw.rect(surf, border_color, narrative_rect_local, s(2), border_radius=s(3))
+
+            # Label (small, above the box)
+            label_text = "Describe your invention (optional):"
+            label_surf = self.tiny_font.render(label_text, True, (150, 160, 180))
+            surf.blit(label_surf, (narrative_x, narrative_y - s(14)))
+
+            # Narrative text or placeholder
+            narrative_text = getattr(interactive_ui, 'player_narrative', '') or ''
+            if is_narrative_active:
+                # Add blinking cursor
+                import time
+                if int(time.time() * 2) % 2 == 0:
+                    narrative_text += "|"
+
+            display_text = narrative_text or "Click to describe what you want to create..."
+            text_color = (200, 200, 200) if narrative_text and not narrative_text.endswith("|") else (100, 110, 130)
+            if is_narrative_active and not getattr(interactive_ui, 'player_narrative', ''):
+                display_text = "|"
+                text_color = (200, 200, 200)
+
+            # Truncate if too long
+            max_chars = narrative_w // 7  # Approximate character width
+            if len(display_text) > max_chars:
+                display_text = "..." + display_text[-(max_chars - 3):]
+
+            text_surf = self.small_font.render(display_text, True, text_color)
+            surf.blit(text_surf, (narrative_x + s(8), narrative_y + s(6)))
+
+            # Store rect for click detection
+            narrative_rect = narrative_rect_local.move(wx, wy)
+
         # Buttons (CLEAR, INSTANT CRAFT, MINIGAME)
-        button_y = bottom_y + s(35)
+        button_y = bottom_y + s(35) + (s(45) if not interactive_ui.matched_recipe else 0)
         button_w = s(150)
         button_h = s(40)
         button_spacing = s(20)
@@ -4149,6 +4355,46 @@ class Renderer:
         surf.blit(minigame_sub, (minigame_rect.centerx - minigame_sub.get_width() // 2, minigame_rect.centery + s(8)))
         button_rects['minigame'] = minigame_rect.move(wx, wy) if minigame_enabled else None
 
+        # INVENT RECIPE button (enabled if NO recipe matched AND at least 2 materials placed)
+        # This allows players to try inventing new recipes with novel combinations
+        invent_x = minigame_x + button_w + button_spacing
+        invent_rect = pygame.Rect(invent_x, button_y, button_w, button_h)
+
+        # Count placed materials based on discipline type
+        placed_count = 0
+        if hasattr(interactive_ui, 'grid'):  # Smithing
+            placed_count = len(interactive_ui.grid)
+        elif hasattr(interactive_ui, 'slots') and isinstance(interactive_ui.slots, list):  # Alchemy
+            placed_count = sum(1 for s in interactive_ui.slots if s is not None)
+        elif hasattr(interactive_ui, 'slots') and isinstance(interactive_ui.slots, dict):  # Engineering
+            placed_count = sum(len(mats) for mats in interactive_ui.slots.values())
+        elif hasattr(interactive_ui, 'core_slots'):  # Refining
+            placed_count = sum(1 for s in interactive_ui.core_slots if s is not None)
+            placed_count += sum(1 for s in interactive_ui.surrounding_slots if s is not None)
+        elif hasattr(interactive_ui, 'vertices'):  # Adornments
+            placed_count = len(interactive_ui.vertices)
+
+        # Enable if: no matched recipe AND at least 2 materials placed
+        invent_enabled = (interactive_ui.matched_recipe is None) and (placed_count >= 2)
+        is_invent_hovered = invent_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
+
+        if invent_enabled:
+            invent_color = (100, 80, 140) if is_invent_hovered else (80, 60, 120)
+            invent_border = (160, 140, 200)
+            invent_text_color = (230, 220, 255)
+        else:
+            invent_color = (40, 40, 45)
+            invent_border = (80, 80, 90)
+            invent_text_color = (120, 120, 130)
+
+        pygame.draw.rect(surf, invent_color, invent_rect, border_radius=s(5))
+        pygame.draw.rect(surf, invent_border, invent_rect, s(2), border_radius=s(5))
+        invent_text = self.small_font.render("INVENT", True, invent_text_color)
+        surf.blit(invent_text, (invent_rect.centerx - invent_text.get_width() // 2, invent_rect.centery - invent_text.get_height() // 2 - s(5)))
+        invent_sub = self.tiny_font.render("New Recipe?", True, (200, 180, 255) if invent_enabled else invent_text_color)
+        surf.blit(invent_sub, (invent_rect.centerx - invent_sub.get_width() // 2, invent_rect.centery + s(8)))
+        button_rects['invent'] = invent_rect.move(wx, wy) if invent_enabled else None
+
         # Blit to screen
         self.screen.blit(surf, (wx, wy))
 
@@ -4157,6 +4403,9 @@ class Renderer:
             # Show first tooltip only (avoid clutter)
             tooltip_text = self._pending_tooltips[0]
             self.render_tooltip(tooltip_text, mouse_pos)
+
+        # Add narrative rect to button_rects for click handling
+        button_rects['narrative'] = narrative_rect
 
         # Return click regions
         return {
@@ -5032,3 +5281,284 @@ class Renderer:
         self.screen.blit(surf, (x, y))
         if bold:
             font.set_bold(False)
+
+    def render_loading_indicator(self):
+        """
+        Render a loading indicator. Shows either:
+        - Full-screen overlay for LLM generation (overlay_mode=True)
+        - Small corner indicator for classifier operations (overlay_mode=False)
+        """
+        try:
+            from systems.llm_item_generator import get_loading_state
+            loading_state = get_loading_state()
+
+            if not loading_state.is_loading:
+                return
+
+            import time
+
+            if loading_state.overlay_mode:
+                # Full-screen loading overlay for LLM generation
+                self._render_loading_overlay(loading_state, time.time())
+            else:
+                # Small corner indicator for classifier operations
+                self._render_loading_corner(loading_state, time.time())
+
+        except ImportError:
+            # LLM module not available
+            pass
+
+    def _render_loading_overlay(self, loading_state, current_time: float):
+        """Render a full-screen semi-transparent loading overlay with animation."""
+        import math
+        s = Config.scale
+
+        # Check if in completion state
+        is_complete = getattr(loading_state, 'is_complete', False)
+
+        # Semi-transparent dark overlay
+        overlay = pygame.Surface((Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((10, 10, 25, 180))
+        self.screen.blit(overlay, (0, 0))
+
+        # Center panel
+        panel_width = s(400)
+        panel_height = s(200)
+        panel_x = (Config.VIEWPORT_WIDTH - panel_width) // 2
+        panel_y = (Config.VIEWPORT_HEIGHT - panel_height) // 2
+
+        # Panel background with gradient effect
+        panel = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+        panel.fill((20, 25, 45, 240))
+        self.screen.blit(panel, (panel_x, panel_y))
+
+        # Panel border with glow effect (green for complete, blue for loading)
+        border_color = (80, 200, 120) if is_complete else (80, 120, 200)
+        pygame.draw.rect(self.screen, border_color,
+                        (panel_x, panel_y, panel_width, panel_height), 2)
+
+        center_x = panel_x + panel_width // 2
+        center_y = panel_y + s(60)
+        elapsed = current_time - loading_state.start_time
+
+        if is_complete:
+            # COMPLETION STATE: Show checkmark
+            checkmark_radius = s(35)
+
+            # Animated scale for pop-in effect
+            import time
+            complete_time = getattr(loading_state, '_complete_time', current_time)
+            anim_elapsed = current_time - complete_time
+            scale_factor = min(1.0, anim_elapsed * 4)  # Pop in over 0.25 seconds
+            scale_factor = 1 - (1 - scale_factor) ** 3  # Ease out
+
+            # Draw checkmark circle (green)
+            circle_color = (60, 180, 100)
+            scaled_radius = int(checkmark_radius * scale_factor)
+            pygame.draw.circle(self.screen, circle_color, (center_x, center_y), scaled_radius)
+
+            # Draw checkmark (white)
+            if scale_factor > 0.3:
+                check_scale = min(1.0, (scale_factor - 0.3) / 0.7)
+                # Checkmark points relative to center
+                check_points = [
+                    (center_x - s(15), center_y),
+                    (center_x - s(5), center_y + s(12)),
+                    (center_x + s(18), center_y - s(10))
+                ]
+                # Animate the checkmark drawing
+                if check_scale > 0:
+                    # Draw first part of checkmark
+                    if check_scale > 0:
+                        end_idx = min(check_scale, 0.5) * 2
+                        p1 = check_points[0]
+                        p2 = (
+                            int(check_points[0][0] + (check_points[1][0] - check_points[0][0]) * min(1, end_idx)),
+                            int(check_points[0][1] + (check_points[1][1] - check_points[0][1]) * min(1, end_idx))
+                        )
+                        pygame.draw.line(self.screen, (255, 255, 255), p1, p2, s(4))
+
+                    # Draw second part of checkmark
+                    if check_scale > 0.5:
+                        end_idx = (check_scale - 0.5) * 2
+                        p1 = check_points[1]
+                        p2 = (
+                            int(check_points[1][0] + (check_points[2][0] - check_points[1][0]) * min(1, end_idx)),
+                            int(check_points[1][1] + (check_points[2][1] - check_points[1][1]) * min(1, end_idx))
+                        )
+                        pygame.draw.line(self.screen, (255, 255, 255), p1, p2, s(4))
+
+        else:
+            # LOADING STATE: Show animated spinner/orbs
+            orb_radius = s(6)
+            orbit_radius = s(30)
+            num_orbs = 8
+
+            for i in range(num_orbs):
+                angle = (elapsed * 2 + i * (6.28 / num_orbs))
+                orb_x = center_x + int(orbit_radius * math.cos(angle))
+                orb_y = center_y + int(orbit_radius * math.sin(angle))
+
+                # Fade orbs based on position (trailing effect)
+                alpha = int(255 * (0.3 + 0.7 * ((i + elapsed * num_orbs) % num_orbs) / num_orbs))
+                orb_color = (100 + int(50 * math.sin(elapsed + i)), 150, 255, min(255, alpha))
+
+                # Draw orb with glow
+                orb_surf = pygame.Surface((orb_radius * 3, orb_radius * 3), pygame.SRCALPHA)
+                pygame.draw.circle(orb_surf, orb_color, (orb_radius * 3 // 2, orb_radius * 3 // 2), orb_radius)
+                self.screen.blit(orb_surf, (orb_x - orb_radius * 3 // 2, orb_y - orb_radius * 3 // 2))
+
+        # Main message
+        message = loading_state.message or "Generating..."
+        msg_color = (180, 255, 200) if is_complete else (220, 230, 255)
+        msg_surf = self.font.render(message, True, msg_color)
+        msg_x = center_x - msg_surf.get_width() // 2
+        msg_y = panel_y + s(110)
+        self.screen.blit(msg_surf, (msg_x, msg_y))
+
+        # Subtitle (only when not complete)
+        if not is_complete:
+            subtitle = loading_state.subtitle
+            if subtitle:
+                sub_surf = self.small_font.render(subtitle, True, (150, 160, 190))
+                sub_x = center_x - sub_surf.get_width() // 2
+                sub_y = msg_y + s(30)
+                self.screen.blit(sub_surf, (sub_x, sub_y))
+
+            # Animated dots
+            num_dots = int((elapsed * 2) % 4)
+            dots = "." * num_dots
+            dots_surf = self.small_font.render(dots, True, (150, 160, 190))
+            self.screen.blit(dots_surf, (center_x + msg_surf.get_width() // 2 + s(5), msg_y))
+
+        # Progress bar
+        bar_width = panel_width - s(60)
+        bar_height = s(8)
+        bar_x = panel_x + s(30)
+        bar_y = panel_y + panel_height - s(35)
+
+        # Bar background
+        pygame.draw.rect(self.screen, (30, 35, 55), (bar_x, bar_y, bar_width, bar_height))
+
+        # Get animated progress (smooth animation from 0% to 90% over time)
+        if hasattr(loading_state, 'get_animated_progress'):
+            progress = loading_state.get_animated_progress()
+        else:
+            progress = loading_state.progress
+
+        if progress > 0 or is_complete:
+            # Determinate progress bar
+            fill_width = int(bar_width * progress)
+            # Green for complete, blue-to-cyan gradient for loading
+            if is_complete:
+                fill_color = (80, 200, 120)
+            else:
+                fill_color = (
+                    int(80 + 40 * progress),
+                    int(150 + 50 * progress),
+                    255
+                )
+            pygame.draw.rect(self.screen, fill_color, (bar_x, bar_y, fill_width, bar_height))
+
+            # Add shimmer effect for visual interest
+            if not is_complete and progress < 1.0:
+                shimmer_pos = int((elapsed * 100) % fill_width) if fill_width > 0 else 0
+                if shimmer_pos > 0 and shimmer_pos < fill_width:
+                    shimmer_width = min(s(20), fill_width - shimmer_pos)
+                    for i in range(shimmer_width):
+                        alpha = int(80 * math.sin(math.pi * i / shimmer_width))
+                        shimmer_surf = pygame.Surface((1, bar_height), pygame.SRCALPHA)
+                        shimmer_surf.fill((255, 255, 255, alpha))
+                        self.screen.blit(shimmer_surf, (bar_x + shimmer_pos + i, bar_y))
+        else:
+            # Indeterminate animation (sliding highlight) - fallback
+            pattern_width = s(60)
+            offset = int((elapsed * 150) % (bar_width + pattern_width)) - pattern_width
+
+            # Create gradient highlight
+            for i in range(pattern_width):
+                alpha = int(180 * math.sin(math.pi * i / pattern_width))
+                px = bar_x + offset + i
+                if bar_x <= px < bar_x + bar_width:
+                    line_color = (100, 180, 255, alpha)
+                    line_surf = pygame.Surface((1, bar_height), pygame.SRCALPHA)
+                    line_surf.fill(line_color)
+                    self.screen.blit(line_surf, (px, bar_y))
+
+        # Bar border (green for complete, blue for loading)
+        bar_border_color = (80, 180, 120) if is_complete else (60, 80, 120)
+        pygame.draw.rect(self.screen, bar_border_color, (bar_x, bar_y, bar_width, bar_height), 1)
+
+    def _render_loading_corner(self, loading_state, current_time: float):
+        """Render a small loading indicator in the bottom-right corner."""
+        # Position in bottom-right corner
+        padding = 20
+        indicator_width = 280
+        # Adjust height based on whether we have a subtitle
+        has_subtitle = loading_state.subtitle and len(loading_state.subtitle) > 0
+        indicator_height = 70 if has_subtitle else 50
+        x = Config.VIEWPORT_WIDTH - indicator_width - padding
+        y = Config.VIEWPORT_HEIGHT - indicator_height - padding
+
+        # Background with rounded corners effect
+        bg_rect = pygame.Rect(x, y, indicator_width, indicator_height)
+        bg_surface = pygame.Surface((indicator_width, indicator_height), pygame.SRCALPHA)
+        bg_surface.fill((20, 20, 40, 220))
+        self.screen.blit(bg_surface, (x, y))
+
+        # Border
+        pygame.draw.rect(self.screen, (100, 150, 255), bg_rect, 2)
+
+        # Loading message (truncate if too long)
+        message = loading_state.message or "Loading..."
+        if len(message) > 30:
+            message = message[:27] + "..."
+        msg_surf = self.small_font.render(message, True, (200, 220, 255))
+        self.screen.blit(msg_surf, (x + 10, y + 8))
+
+        # Subtitle (if present)
+        text_y_offset = 26  # Start after message
+        if has_subtitle:
+            subtitle = loading_state.subtitle
+            if len(subtitle) > 35:
+                subtitle = subtitle[:32] + "..."
+            sub_surf = self.tiny_font.render(subtitle, True, (150, 160, 190))
+            self.screen.blit(sub_surf, (x + 10, y + text_y_offset))
+            text_y_offset += 18  # Move bar down for subtitle
+
+        # Progress bar
+        progress = loading_state.progress
+        bar_x = x + 10
+        bar_y = y + text_y_offset + 4
+        bar_width = indicator_width - 20
+        bar_height = 10
+
+        # Bar background
+        pygame.draw.rect(self.screen, (40, 40, 60), (bar_x, bar_y, bar_width, bar_height))
+
+        # Bar fill (animated gradient)
+        anim_offset = (current_time * 2) % 1.0  # Pulse animation
+
+        if progress > 0:
+            fill_width = int(bar_width * progress)
+            # Gradient color based on progress
+            r = int(100 + 100 * (1 - progress))
+            g = int(150 + 100 * progress)
+            b = 255
+            pygame.draw.rect(self.screen, (r, g, b), (bar_x, bar_y, fill_width, bar_height))
+        else:
+            # Indeterminate loading animation (scrolling bar)
+            pattern_width = 30
+            offset = int(anim_offset * pattern_width * 2)
+            # Create a clipping surface to ensure animation stays within bar bounds
+            bar_clip_rect = pygame.Rect(bar_x, bar_y, bar_width, bar_height)
+            for i in range(-1, bar_width // pattern_width + 2):
+                px = bar_x + i * pattern_width + offset
+                color = (100, 150, 255)
+                stripe_rect = pygame.Rect(px, bar_y, pattern_width // 2, bar_height)
+                stripe_rect = stripe_rect.clip(bar_clip_rect)
+                if stripe_rect.width > 0:
+                    pygame.draw.rect(self.screen, color, stripe_rect)
+
+        # Bar border (keeps everything contained)
+        pygame.draw.rect(self.screen, (60, 80, 120), (bar_x, bar_y, bar_width, bar_height), 1)

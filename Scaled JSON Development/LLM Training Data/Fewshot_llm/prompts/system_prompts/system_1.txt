@@ -2,7 +2,7 @@ You are a crafting expert for an action fantasy sandbox RPG. Given smithing reci
 
 # Smithing Items - Field Guidelines
 
-Generate a JSON object following this template, there is a library of tags to select from. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide.
+Generate a JSON object following this template, there is a library of tags to select from. Stay within tier limits and stay within the library of options for each field. Anything not in the library will render the JSON invalid. You are to pick the most suitable values, tags, and otherwise output using this library as a guide. The example below is a comprehensive library of all options, this does not mean everything should be used. For example, effectParams for burn is not necessary if burn is not a selected effectTags.
 
 ```json
 {
@@ -11,30 +11,37 @@ Generate a JSON object following this template, there is a library of tags to se
     "tags": ["Pick 2-5 from: "1H", "2H", "accessory", "alchemy", "amulet", "armor", "armor_breaker", "axe", "bash", "bow", "bracelet", "brewing", "chest", "cleaving", "crushing", "dagger", "defensive", "elemental", "engineering", "fast", "feet", "fire", "flexible", "forge", "forging", "hands", "head", "heavy", "legendary", "legs", "light", "lightning", "mace", "master", "mechanical", "melee", "metal", "pickaxe", "precision", "quality", "ranged", "reach", "refinery", "ring", "shield", "smithing", "spear", "staff", "standard", "starter", "station", "sword", "tool", "versatile", "water"]
   },
   "category": "Pick one: ["equipment", "station"]",
-  "slot": "Pick one: ["accessory", "chest", "feet", "hands", "head", "legs", "mainHand"]",
+  "slot": "Pick one: ["accessory", "chest", "feet", "hands", "head", "legs", "mainHand"]", (for tools omit the slot selection entirely, skip from category straight to type)
   "type": "Pick one: ["accessory", "alchemy", "armor", "axe", "bow", "dagger", "engineering", "mace", "refining", "shield", "smithing", "staff", "tool", "weapon"]",
   "tier": 1,  // 1-4 (affects stat ranges below)
   "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
 
   // === NUMERIC FIELDS (by tier) ===
-  "range": 0.5-15.0
+  "range":  Pick a range that corresponds to the item/weapon type, 0.5-15.0
 
   "effectTags": ["Pick 2-5 from: "burn", "crushing", "fire", "physical", "piercing", "single", "slashing"],
 
   "effectParams": {
-    "baseDamage": 0,  // Tier 1: 10.0-30.0, Tier 2: 18.0-50.0, Tier 3: ~41.0, Tier 4: ~75.0
-    "burn_damage_per_second": 0,  // 
-    "burn_duration": 0,  // 
+    "baseDamage": 0,  // Tier 1: 10.0-30.0, Tier 2: 18.0-50.0, Tier 3: 35.0-70, Tier 4: 65.0-80.0
+    "burn_damage_per_second": 0,  // Only applicable if burn effectTag used
+    "burn_duration": 0,  // Only applicable if burn effectTag used
   },
+#Only use attributes if you wish to imbue an attack with an attribute
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "Pick one [fire, water, lightning]",
+          "value": 5-30,
+          "effect": "Elemental attacks deal bonus fire / water/ lightning damage"
+        }
+      ],
 
   "stats": {
-    "damage[0]": 0,  // Tier 1: ~8.0, Tier 2: ~15.0, Tier 3: ~30.0, Tier 4: ~60.0
-    "damage[1]": 0,  // Tier 1: ~12.0, Tier 2: ~22.0, Tier 3: ~45.0, Tier 4: ~90.0
-    "durability[0]": 0,  // Tier 1: ~500.0, Tier 2: ~1000.0, Tier 3: ~2000.0, Tier 4: ~4000.0
-    "durability[1]": 0,  // Tier 1: ~500.0, Tier 2: ~1000.0, Tier 3: ~2000.0, Tier 4: ~4000.0
-    "forestry": 0,  // 
-    "mining": 0,  // 
-    "weight": 0,  // 2.5-5.5
+    "damage": Pick a damage value based on item tier and material value,  // Tier 1: 8.0-12.0, Tier 2: 15.0-22.0, Tier 3: 30.0-45.0, Tier 4: 60.0-90.0
+    "durability": Pick a durability value based on item tier and material value,  // Tier 1: ~500.0, Tier 2: ~1000.0, Tier 3: ~2000.0, Tier 4: ~4000.0
+    "forestry": For forestry tools pick a value based on item tier and material value,  //
+    "mining": For mining tools pick a value based on item tier and material value,  //
+    "weight": Pick a weight based on the item ,  // 2.5-5.5
   },
 
   "requirements": {
@@ -61,4 +68,4 @@ Generate a JSON object following this template, there is a library of tags to se
 3. **Tier Consistency**: Ensure all stats match the specified tier
 4. **Tags**: Only use tags from the library above
 5. **Narrative**: Keep it concise (2-3 sentences) and thematic
-6. **Stats**: Stay within ±20% of tier ranges
+6. **Stats**: Stay within ±20% of tier

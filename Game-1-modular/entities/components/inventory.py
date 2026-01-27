@@ -47,16 +47,20 @@ class ItemStack:
 
     def is_equipment(self) -> bool:
         """Check if this item stack is equipment"""
+        # If equipment_data is set, it's equipment (handles invented items)
+        if self.equipment_data is not None:
+            return True
         return EquipmentDatabase.get_instance().is_equipment(self.item_id)
 
     def get_equipment(self) -> Optional[EquipmentItem]:
         """Get equipment data if this is equipment"""
-        if not self.is_equipment():
-            return None
-        # Return the stored equipment instance if available
+        # Return the stored equipment instance if available (handles invented items)
         if self.equipment_data:
             return self.equipment_data
-        # Otherwise create a new one (shouldn't happen for equipment items)
+        # Check if this is a known equipment type from database
+        if not EquipmentDatabase.get_instance().is_equipment(self.item_id):
+            return None
+        # Create a new one from database (shouldn't happen for equipment items with proper data)
         return EquipmentDatabase.get_instance().create_equipment_from_id(self.item_id)
 
     def can_stack_with(self, other: 'ItemStack') -> bool:
@@ -116,15 +120,16 @@ class Inventory:
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
-        # Equipment doesn't stack
-        is_equip = equip_db.is_equipment(item_id)
+        # Check if this is equipment - PRIORITIZE equipment_instance parameter over database
+        # This handles invented equipment that isn't in the database
+        is_equip = equipment_instance is not None or equip_db.is_equipment(item_id)
 
         if is_equip:
             for i in range(quantity):
                 empty = self.get_empty_slot()
                 if empty is None:
                     return False
-                # Use provided equipment instance or create new one
+                # Use provided equipment instance or create new one from database
                 equip_data = equipment_instance if equipment_instance else equip_db.create_equipment_from_id(item_id)
                 if not equip_data:
                     print(f"WARNING: Could not create equipment data for {item_id}")

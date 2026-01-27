@@ -11,11 +11,17 @@ Architecture:
 - systems/      - Game systems (world, quests, NPCs, titles)
 - rendering/    - All rendering code
 - Combat/       - Combat system
-- Crafting-subdisciplxines/ - Crafting minigames
+- Crafting-subdisciplines/ - Crafting minigames
 """
 
 import sys
 import os
+
+print("=" * 50)
+print("DEBUG: Checking environment variable")
+print(f"ANTHROPIC_API_KEY: {os.environ.get('ANTHROPIC_API_KEY', '(NOT SET)')}")
+print("=" * 50)
+
 
 # Ensure the current directory is in the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

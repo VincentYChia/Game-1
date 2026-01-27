@@ -322,6 +322,9 @@ class GameEngine:
         if self.character and not self.character.class_system.current_class:
             self.character.class_selection_open = True
 
+        # Proactively warm up CNN classifiers at startup (avoids delay on first INVENT)
+        self._startup_warmup_cnn_classifiers()
+
         print("\n" + "=" * 60)
         print("✓ Game ready!")
         if Config.DEBUG_INFINITE_RESOURCES:
@@ -407,7 +410,19 @@ class GameEngine:
 
         return (fallback_tags, fallback_params)
 
+    def _is_llm_overlay_blocking(self) -> bool:
+        """Check if the LLM loading overlay is active and should block input."""
+        try:
+            from systems.llm_item_generator import get_loading_state
+            loading_state = get_loading_state()
+            return loading_state.is_loading and loading_state.overlay_mode
+        except ImportError:
+            return False
+
     def handle_events(self):
+        # Check if LLM overlay is blocking input
+        llm_blocking = self._is_llm_overlay_blocking()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 # Autosave on quit (unless temporary world)
@@ -421,6 +436,12 @@ class GameEngine:
                     ):
                         print("💾 Autosaved on quit")
                 self.running = False
+
+            # Block all input except quit when LLM overlay is active
+            elif llm_blocking:
+                # Consume all events but don't process them
+                continue
+
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
 
@@ -471,6 +492,31 @@ class GameEngine:
                 # Skip character-dependent input if no character exists yet
                 if self.character is None:
                     continue
+
+                # Narrative text input handling (for INVENT feature)
+                if (self.interactive_crafting_active and self.interactive_ui and
+                    getattr(self.interactive_ui, 'narrative_input_active', False)):
+                    # Handle text input for narrative
+                    if event.key == pygame.K_ESCAPE:
+                        # Deactivate narrative input
+                        self.interactive_ui.narrative_input_active = False
+                        print("✓ Narrative input deactivated")
+                        continue
+                    elif event.key == pygame.K_RETURN:
+                        # Deactivate input (submit narrative)
+                        self.interactive_ui.narrative_input_active = False
+                        print(f"✓ Narrative submitted: {self.interactive_ui.player_narrative[:50]}...")
+                        continue
+                    elif event.key == pygame.K_BACKSPACE:
+                        # Delete last character
+                        if self.interactive_ui.player_narrative:
+                            self.interactive_ui.player_narrative = self.interactive_ui.player_narrative[:-1]
+                        continue
+                    elif event.unicode and event.unicode.isprintable():
+                        # Add character (limit to 200 chars)
+                        if len(self.interactive_ui.player_narrative) < 200:
+                            self.interactive_ui.player_narrative += event.unicode
+                        continue
 
                 if event.key == pygame.K_ESCAPE:
                     if self.enchantment_selection_active:
@@ -762,6 +808,9 @@ class GameEngine:
                     if save_data:
                         # Restore character state
                         self.character.restore_from_save(save_data["player"])
+
+                        # Register saved invented recipes with Crafters
+                        self.register_saved_invented_recipes()
 
                         # Restore world state
                         self.world.restore_from_save(save_data["world_state"])
@@ -1152,6 +1201,9 @@ class GameEngine:
                 # Restore character state from save
                 self.character.restore_from_save(save_data["player"])
 
+                # Register saved invented recipes with Crafters
+                self.register_saved_invented_recipes()
+
                 # Restore world state (placed entities, modified resources)
                 self.world.restore_from_save(save_data["world_state"])
 
@@ -1191,6 +1243,9 @@ class GameEngine:
 
                 # Restore character state from save
                 self.character.restore_from_save(save_data["player"])
+
+                # Register saved invented recipes with Crafters
+                self.register_saved_invented_recipes()
 
                 # Restore world state (placed entities, modified resources)
                 self.world.restore_from_save(save_data["world_state"])
@@ -2150,13 +2205,129 @@ class GameEngine:
             self.interactive_crafting_active = True
             print(f"✓ Opened interactive crafting UI for {station_type} (T{station_tier})")
             self.add_notification("Interactive Mode Activated", (100, 255, 100))
+
+            # Preload classifier for this discipline (avoids delay on INVENT click)
+            self._preload_classifier(station_type)
         else:
             print(f"✗ Failed to create interactive UI for {station_type}")
             self.add_notification("Failed to open interactive mode", (255, 100, 100))
 
+    def _preload_classifier(self, discipline: str):
+        """Preload the classifier for a discipline in the background.
+
+        Note: Loading state is managed by classifier_mgr.preload(), not here,
+        to avoid double-starting/finishing the loading indicator.
+        """
+        import threading
+
+        def background_load():
+            try:
+                from systems.crafting_classifier import get_classifier_manager, init_classifier_manager
+                from data.databases import MaterialDatabase
+                from pathlib import Path
+
+                classifier_mgr = get_classifier_manager()
+
+                # Initialize if not already done
+                if classifier_mgr is None:
+                    project_root = Path(__file__).parent.parent.parent
+                    materials_db = MaterialDatabase.get_instance()
+                    classifier_mgr = init_classifier_manager(project_root, materials_db)
+
+                # Preload the specific discipline (manages its own loading state)
+                classifier_mgr.preload(discipline)
+
+                print(f"✓ Classifier for {discipline} preloaded in background")
+
+            except Exception as e:
+                print(f"⚠ Classifier preload failed: {e}")
+                # Ensure loading state is cleared on error
+                try:
+                    from systems.llm_item_generator import get_loading_state
+                    get_loading_state().finish()
+                except:
+                    pass
+
+        # Run in background thread to avoid blocking UI
+        thread = threading.Thread(target=background_load, daemon=True)
+        thread.start()
+
+    def _startup_warmup_cnn_classifiers(self):
+        """
+        Proactively warm up CNN classifiers at game startup.
+
+        This runs TensorFlow warmup predictions for smithing and adornments CNNs
+        to avoid the delay that would otherwise occur on the user's first INVENT.
+        Runs in a background thread to avoid blocking game startup.
+        """
+        import threading
+
+        def warmup_task():
+            try:
+                from systems.crafting_classifier import get_classifier_manager, init_classifier_manager
+                from data.databases import MaterialDatabase
+                from pathlib import Path
+                import numpy as np
+
+                print("Starting CNN classifier warmup...")
+
+                # Initialize classifier manager if needed
+                classifier_mgr = get_classifier_manager()
+                if classifier_mgr is None:
+                    project_root = Path(__file__).parent.parent.parent
+                    materials_db = MaterialDatabase.get_instance()
+                    classifier_mgr = init_classifier_manager(project_root, materials_db)
+
+                # Warmup CNN classifiers (smithing and adornments)
+                cnn_disciplines = ['smithing', 'adornments']
+                for discipline in cnn_disciplines:
+                    config = classifier_mgr.configs.get(discipline)
+                    if not config or not config.enabled or config.classifier_type != 'cnn':
+                        continue
+
+                    print(f"  Warming up {discipline} CNN...")
+
+                    # Get or create the backend (triggers model loading)
+                    backend = classifier_mgr.get_backend(discipline)
+                    if not backend or not backend.is_loaded():
+                        print(f"  Warning: {discipline} CNN failed to load")
+                        continue
+
+                    # Create dummy input for warmup prediction
+                    if discipline == 'smithing':
+                        dummy_input = np.zeros((36, 36, 3), dtype=np.float32)
+                    elif discipline == 'adornments':
+                        dummy_input = np.zeros((56, 56, 3), dtype=np.float32)
+                    else:
+                        dummy_input = np.zeros((36, 36, 3), dtype=np.float32)
+
+                    # Run warmup prediction (compiles TensorFlow graph)
+                    try:
+                        _ = backend.predict(dummy_input)
+                        print(f"  ✓ {discipline} CNN warmup complete")
+                    except Exception as e:
+                        print(f"  Warning: {discipline} CNN warmup prediction failed: {e}")
+
+                    # Also initialize the image renderer (loads color encoder)
+                    try:
+                        _ = classifier_mgr.get_image_renderer(discipline)
+                    except Exception as e:
+                        print(f"  Warning: {discipline} image renderer init failed: {e}")
+
+                print("CNN classifier warmup finished")
+
+            except Exception as e:
+                print(f"Warning: CNN startup warmup failed: {e}")
+
+        # Run in background thread to avoid blocking game startup
+        thread = threading.Thread(target=warmup_task, daemon=True, name="CNN-Warmup")
+        thread.start()
+
     def _close_interactive_crafting(self):
         """Close interactive crafting UI and return all borrowed materials"""
+        discipline = None
         if self.interactive_ui:
+            discipline = self.interactive_ui.station_type
             # Return all borrowed materials to inventory
             self.interactive_ui.return_all_materials()
             print(f"✓ Returned {len(self.interactive_ui.borrowed_materials)} material types to inventory")
@@ -2167,6 +2338,9 @@ class GameEngine:
         self.interactive_material_rects = []
         self.interactive_placement_rects = []
         self.interactive_button_rects = {}
+
+        # Unload classifier to free memory (optional - can comment out to keep cached)
+        # self._unload_classifier(discipline)
 
         print("✓ Closed interactive crafting UI")
 
@@ -2195,6 +2369,24 @@ class GameEngine:
                     # Start minigame
                     self._handle_interactive_craft(use_minigame=True)
                     return
+
+                elif button_name == 'invent':
+                    # Try to invent a new recipe using classifier
+                    self._handle_invent_recipe()
+                    return
+
+                elif button_name == 'narrative':
+                    # Activate narrative input
+                    self.interactive_ui.narrative_input_active = True
+                    print("✓ Narrative input activated - start typing")
+                    return
+
+        # Check if click was outside narrative box but inside window (deactivate narrative)
+        if self.interactive_ui.narrative_input_active:
+            narrative_rect = self.interactive_button_rects.get('narrative')
+            if narrative_rect and not narrative_rect.collidepoint(mouse_pos):
+                self.interactive_ui.narrative_input_active = False
+                print("✓ Narrative input deactivated")
 
         # Check material palette clicks
         for mat_rect, item_stack in self.interactive_material_rects:
@@ -2359,6 +2551,1366 @@ class GameEngine:
             # We need to clear the borrowed materials dict to avoid double-return
             self.interactive_ui.borrowed_materials.clear()
             self._close_interactive_crafting()
+
+    def _get_placement_hash(self, placement_data: dict) -> str:
+        """
+        Generate a deterministic hash from placement pattern.
+
+        This is used to detect duplicate recipes - same placement = same recipe.
+        Ignores timestamps and other non-placement data.
+        """
+        import hashlib
+        import json
+
+        # Extract only placement-relevant data (ignore timestamps, narrative, etc.)
+        hashable_data = {
+            'discipline': placement_data.get('discipline'),
+            'gridSize': placement_data.get('gridSize'),
+            'placementMap': placement_data.get('placementMap'),
+            'vertices': placement_data.get('vertices'),
+            'shapes': placement_data.get('shapes'),
+            'ingredients': placement_data.get('ingredients'),
+            'coreInputs': placement_data.get('coreInputs'),
+            'surroundingInputs': placement_data.get('surroundingInputs'),
+            'slots': placement_data.get('slots'),
+        }
+
+        # Remove None values for consistent hashing
+        hashable_data = {k: v for k, v in hashable_data.items() if v is not None}
+
+        # Create deterministic hash
+        context_str = json.dumps(hashable_data, sort_keys=True)
+        return hashlib.md5(context_str.encode()).hexdigest()
+
+    def _check_duplicate_recipe(self, placement_data: dict) -> tuple:
+        """
+        Check if this placement pattern already exists as an invented recipe.
+
+        Returns (is_duplicate, existing_recipe_name)
+        """
+        from data.databases.placement_db import PlacementDatabase
+
+        placement_hash = self._get_placement_hash(placement_data)
+
+        # Check against character's invented recipes
+        if hasattr(self.character, 'invented_recipes'):
+            for existing in self.character.invented_recipes:
+                existing_placement = existing.get('placement_data', {})
+                if self._get_placement_hash(existing_placement) == placement_hash:
+                    return True, existing.get('item_name', existing.get('item_id', 'Unknown'))
+
+        # Also check PlacementDatabase for any recipe with this placement
+        placement_db = PlacementDatabase.get_instance()
+        for recipe_id, existing_placement in placement_db.placements.items():
+            # Convert PlacementData to dict for hashing
+            existing_dict = {
+                'discipline': existing_placement.discipline,
+                'gridSize': existing_placement.grid_size,
+                'placementMap': existing_placement.placement_map,
+                'ingredients': existing_placement.ingredients,
+                'coreInputs': existing_placement.core_inputs,
+                'surroundingInputs': existing_placement.surrounding_inputs,
+                'slots': existing_placement.slots,
+                'vertices': existing_placement.pattern,  # pattern field stores vertices for adornments
+            }
+            if self._get_placement_hash(existing_dict) == placement_hash:
+                return True, existing_placement.output_id or recipe_id
+
+        return False, None
+
+    def _handle_invent_recipe(self):
+        """
+        Handle attempt to invent a new recipe using the classifier.
+
+        This validates the current material placement against the trained
+        classifier model for the discipline, providing feedback on whether
+        the combination could be a valid recipe.
+        """
+        if not self.interactive_ui:
+            self.add_notification("No crafting UI active", (255, 100, 100))
+            return
+
+        discipline = self.interactive_ui.station_type
+        print(f"\n{'='*80}")
+        print(f"🔬 RECIPE INVENTION ATTEMPT")
+        print(f"Discipline: {discipline}")
+        print(f"Station Tier: {self.interactive_ui.station_tier}")
+        print(f"{'='*80}")
+
+        # DUPLICATE CHECK: Prevent re-inventing the same placement pattern
+        try:
+            from systems.llm_item_generator import get_item_generator
+            generator = get_item_generator()
+            if generator:
+                placement_data = generator.extract_placement_data(discipline, self.interactive_ui)
+                is_duplicate, existing_name = self._check_duplicate_recipe(placement_data)
+                if is_duplicate:
+                    self.add_notification(f"Recipe already exists: {existing_name}", (255, 200, 100))
+                    self.add_notification("Try a different placement pattern", (200, 200, 200))
+                    print(f"⚠️ Duplicate recipe detected: {existing_name}")
+                    return
+        except Exception as e:
+            print(f"Warning: Could not check for duplicates: {e}")
+            # Continue anyway - don't block invention if check fails
+
+        # Try to get the classifier manager
+        try:
+            from systems.crafting_classifier import get_classifier_manager, init_classifier_manager
+            from data.databases import MaterialDatabase
+            from pathlib import Path
+
+            classifier_mgr = get_classifier_manager()
+
+            # Initialize if not already done
+            if classifier_mgr is None:
+                # Find project root (parent of Game-1-modular)
+                project_root = Path(__file__).parent.parent.parent
+                materials_db = MaterialDatabase.get_instance()
+                classifier_mgr = init_classifier_manager(project_root, materials_db)
+                print(f"  Initialized classifier manager")
+
+            # Validate the recipe
+            result = classifier_mgr.validate(discipline, self.interactive_ui)
+
+            print(f"\n  Classifier Result:")
+            print(f"    Valid: {result.valid}")
+            print(f"    Confidence: {result.confidence:.1%}")
+            print(f"    Probability: {result.probability:.4f}")
+            if result.error:
+                print(f"    Error: {result.error}")
+            print(f"{'='*80}\n")
+
+            # Provide feedback to player
+            if result.is_error:
+                # Classifier error - show warning
+                self.add_notification(f"Classifier error: {result.error[:40]}...", (255, 200, 100))
+                print(f"⚠️ Classifier error: {result.error}")
+
+            elif result.valid:
+                # Recipe is valid! Show success message
+                confidence_pct = int(result.confidence * 100)
+                self.add_notification(
+                    f"✓ VALID RECIPE! ({confidence_pct}% confident)",
+                    (100, 255, 100)
+                )
+                print(f"✓ Valid recipe detected with {confidence_pct}% confidence")
+
+                # Phase 2: Generate item using LLM
+                self._generate_invented_item(discipline, result.probability)
+
+            else:
+                # Recipe is invalid - show failure message
+                confidence_pct = int(result.confidence * 100)
+                self.add_notification(
+                    f"✗ Invalid combination ({confidence_pct}% confident)",
+                    (255, 100, 100)
+                )
+                self.add_notification(
+                    "Try a different arrangement",
+                    (200, 200, 200)
+                )
+                print(f"✗ Invalid recipe with {confidence_pct}% confidence")
+
+        except ImportError as e:
+            # Classifier module not available
+            error_msg = f"Classifier not available: {e}"
+            self.add_notification("Classifier system not loaded", (255, 200, 100))
+            print(f"⚠️ {error_msg}")
+
+        except Exception as e:
+            # Unexpected error
+            error_msg = f"Invention failed: {e}"
+            self.add_notification("Recipe check failed", (255, 100, 100))
+            print(f"⚠️ {error_msg}")
+            import traceback
+            traceback.print_exc()
+
+    def _generate_invented_item(self, discipline: str, classifier_confidence: float):
+        """
+        Start item generation using LLM from validated recipe placement.
+        Uses background thread to avoid freezing the game.
+
+        Args:
+            discipline: The crafting discipline (smithing, alchemy, etc.)
+            classifier_confidence: Confidence score from classifier (0-1)
+        """
+        print(f"\n{'='*80}")
+        print(f"🧪 STARTING ITEM GENERATION (Background)")
+        print(f"Discipline: {discipline}")
+        print(f"Classifier Confidence: {classifier_confidence:.2%}")
+        print(f"{'='*80}")
+
+        try:
+            from systems.llm_item_generator import (
+                get_item_generator, init_item_generator, LLMConfig,
+                is_background_generation_running
+            )
+            from data.databases import MaterialDatabase
+            from pathlib import Path
+            import os
+
+            # Check if already generating
+            if is_background_generation_running():
+                self.add_notification("Already generating...", (255, 200, 100))
+                return
+
+            # Get or initialize the item generator
+            generator = get_item_generator()
+            if generator is None:
+                project_root = Path(__file__).parent.parent.parent
+                materials_db = MaterialDatabase.get_instance()
+
+                # Configure LLM - check for API key in environment
+                api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+                api_key_source = "ANTHROPIC_API_KEY env var"
+
+                if not api_key:
+                    # Try to read from config file
+                    config_path = project_root / "Game-1-modular" / ".env"
+                    if config_path.exists():
+                        print(f"  Checking .env file: {config_path}")
+                        with open(config_path, 'r') as f:
+                            for line in f:
+                                if line.startswith('ANTHROPIC_API_KEY='):
+                                    api_key = line.strip().split('=', 1)[1].strip('"\'')
+                                    api_key_source = ".env file"
+                                    break
+
+                # Log API key status (without revealing the full key)
+                if api_key:
+                    masked = api_key[:8] + "..." + api_key[-4:] if len(api_key) > 16 else "***"
+                    print(f"  LLM API key loaded from {api_key_source}: {masked}")
+                else:
+                    print(f"  Warning: No LLM API key found in environment or .env file")
+                    print(f"    Set ANTHROPIC_API_KEY environment variable to enable LLM generation")
+
+                config = LLMConfig(
+                    api_key=api_key,
+                    enabled=True,
+                    use_fallback_on_error=True,  # Generate basic item if LLM fails
+                    temperature=0.7,  # Moderate creativity
+                )
+                generator = init_item_generator(project_root, materials_db, config)
+
+            # Get player narrative from the interactive UI (if available)
+            player_narrative = ""
+            if self.interactive_ui and hasattr(self.interactive_ui, 'player_narrative'):
+                player_narrative = self.interactive_ui.player_narrative or ""
+            print(f"  Player narrative: {player_narrative[:50]}..." if player_narrative else "  No player narrative")
+
+            # Store state for when generation completes
+            self._pending_generation_discipline = discipline
+
+            # Start async generation (shows loading overlay automatically)
+            if generator.generate_async(discipline, self.interactive_ui, narrative=player_narrative):
+                print("  Background generation started...")
+            else:
+                self.add_notification("Failed to start generation", (255, 100, 100))
+
+        except ImportError as e:
+            print(f"⚠️ LLM generator not available: {e}")
+            self.add_notification("LLM system not loaded", (255, 200, 100))
+            # Try to generate a basic fallback item
+            self._create_basic_invented_item(discipline)
+
+        except Exception as e:
+            print(f"⚠️ Item generation error: {e}")
+            import traceback
+            traceback.print_exc()
+            self.add_notification("Item generation failed", (255, 100, 100))
+
+    def _check_background_generation(self):
+        """Check if background LLM generation has completed and process the result."""
+        try:
+            from systems.llm_item_generator import (
+                is_background_generation_running, get_background_result, clear_background_result
+            )
+
+            # Check if generation is running or there's a result to process
+            if is_background_generation_running():
+                return  # Still running
+
+            result_holder = get_background_result()
+            if result_holder is None:
+                return  # No pending result
+
+            if not result_holder.completed:
+                return  # Not yet completed
+
+            # Get the result
+            discipline = getattr(self, '_pending_generation_discipline', 'unknown')
+
+            if result_holder.error:
+                print(f"\n✗ Background generation failed: {result_holder.error}")
+                self.add_notification(f"Generation failed: {result_holder.error[:30]}...", (255, 100, 100))
+            else:
+                gen_result = result_holder.result
+                if gen_result and gen_result.success:
+                    print(f"\n{'='*80}")
+                    print(f"✓ Item generated successfully!")
+                    print(f"  ID: {gen_result.item_id}")
+                    print(f"  Name: {gen_result.item_name}")
+                    print(f"  From cache: {gen_result.from_cache}")
+                    if gen_result.error:  # Fallback was used
+                        print(f"  Note: {gen_result.error}")
+                    print(f"{'='*80}\n")
+
+                    # Add the generated item to the game
+                    self._add_invented_item_to_game(gen_result, discipline)
+                else:
+                    error_msg = gen_result.error if gen_result else "Unknown error"
+                    print(f"\n✗ Item generation failed: {error_msg}")
+                    self.add_notification(f"Generation failed: {error_msg[:30]}...", (255, 100, 100))
+
+            # Clear the result
+            clear_background_result()
+            self._pending_generation_discipline = None
+
+        except ImportError:
+            pass  # LLM module not available
+        except Exception as e:
+            print(f"Error checking background generation: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _add_invented_item_to_game(self, gen_result, discipline: str):
+        """
+        Add a generated item to the game world and consume materials.
+
+        Args:
+            gen_result: GeneratedItem from LLM generator
+            discipline: The crafting discipline
+        """
+        from data.databases import EquipmentDatabase, MaterialDatabase
+        from entities.components.inventory import ItemStack
+
+        item_data = gen_result.item_data
+        item_id = gen_result.item_id
+        item_name = gen_result.item_name
+
+        # First consume the materials from inventory
+        materials_consumed = self._consume_invented_materials(discipline)
+        if not materials_consumed:
+            self.add_notification("Failed to consume materials", (255, 100, 100))
+            return
+
+        # SPECIAL CASE: Adornments create enchantment recipes, not items
+        # The enchantment recipe is stored in _store_invented_recipe() called later
+        # Player can then use the recipe to enchant existing equipment
+        if discipline in ['adornments', 'enchanting']:
+            enchantment_name = item_data.get('enchantmentName', item_name)
+            self.add_notification(f"Discovered: {enchantment_name}", (200, 150, 255))
+            self.add_notification("New enchantment recipe available!", (180, 130, 220))
+            print(f"  ✓ Discovered enchantment: {enchantment_name}")
+
+            # Store the invented recipe (happens in _process_invention_result)
+            # which then calls _store_invented_recipe
+            self._store_invented_recipe(gen_result, discipline)
+            self._close_interactive_crafting()
+            return
+
+        # Determine item category and handle appropriately
+        category = item_data.get('category', 'equipment')
+
+        if category == 'equipment':
+            # Create equipment instance using proper field mapping
+            from data.models.equipment import EquipmentItem
+
+            # Extract and convert LLM output to EquipmentItem parameters
+            equipment = self._convert_llm_to_equipment(item_data, item_id, item_name)
+
+            # Add to inventory
+            success = self.character.inventory.add_item(
+                item_id, 1,
+                equipment_instance=equipment,
+                rarity=item_data.get('rarity', 'uncommon'),
+                crafted_stats=item_data.get('stats', {})
+            )
+
+            if success:
+                self.add_notification(f"Created: {item_name}", (100, 255, 100))
+                self.add_notification("Item added to inventory!", (200, 255, 200))
+                print(f"  ✓ Added {item_name} to inventory")
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
+                print(f"  ✗ Inventory full - could not add {item_name}")
+
+        elif category == 'consumable':
+            # Add consumable to inventory
+            success = self.character.inventory.add_item(
+                item_id, 1,
+                rarity=item_data.get('rarity', 'uncommon'),
+                crafted_stats={'effect': item_data.get('effect', 'Unknown')}
+            )
+
+            if success:
+                self.add_notification(f"Created: {item_name}", (100, 255, 100))
+                print(f"  ✓ Added consumable {item_name} to inventory")
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
+
+        elif category == 'device':
+            # Engineering device - add as placeable
+            success = self.character.inventory.add_item(
+                item_id, 1,
+                rarity=item_data.get('rarity', 'uncommon'),
+                crafted_stats=item_data.get('effectParams', {})
+            )
+
+            if success:
+                self.add_notification(f"Created: {item_name}", (100, 255, 100))
+                print(f"  ✓ Added device {item_name} to inventory")
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
+
+        else:
+            # Material or other - add generically
+            success = self.character.inventory.add_item(
+                item_id, 1,
+                rarity=item_data.get('rarity', 'uncommon')
+            )
+
+            if success:
+                self.add_notification(f"Created: {item_name}", (100, 255, 100))
+                print(f"  ✓ Added {item_name} to inventory")
+            else:
+                self.add_notification("Inventory full!", (255, 100, 100))
+
+        # Store the invented recipe for Phase 3 save system
+        self._store_invented_recipe(gen_result, discipline)
+
+        # Close the crafting UI
+        self._close_interactive_crafting()
+
+    def _convert_llm_to_equipment(self, item_data: dict, item_id: str, item_name: str):
+        """
+        Convert LLM-generated item data to EquipmentItem instance.
+
+        Maps LLM output fields to the exact parameters expected by EquipmentItem.
+        """
+        from data.models.equipment import EquipmentItem
+
+        # Extract stats - LLM may use 'stats' object or 'statMultipliers'
+        stats = item_data.get('stats', {})
+        stat_multipliers = item_data.get('statMultipliers', {})
+        effect_params = item_data.get('effectParams', {})
+        metadata = item_data.get('metadata', {})
+
+        # Calculate damage tuple from various sources
+        damage = (0, 0)
+        if 'damage' in stats:
+            dmg = stats['damage']
+            if isinstance(dmg, list) and len(dmg) >= 2:
+                damage = (int(dmg[0]), int(dmg[1]))
+            elif isinstance(dmg, (int, float)):
+                damage = (int(dmg * 0.8), int(dmg * 1.2))
+        elif 'baseDamage' in effect_params:
+            base = int(effect_params['baseDamage'])
+            damage = (int(base * 0.8), int(base * 1.2))
+
+        # Calculate durability from stats or tier
+        durability = 500
+        if 'durability' in stats:
+            dur = stats['durability']
+            if isinstance(dur, list) and len(dur) >= 1:
+                durability = int(dur[0])
+            elif isinstance(dur, (int, float)):
+                durability = int(dur)
+        else:
+            # Default based on tier
+            tier = item_data.get('tier', 1)
+            durability = 500 * tier
+
+        # Extract weight
+        weight = 1.0
+        if 'weight' in stats:
+            weight = float(stats['weight'])
+        elif 'weight' in stat_multipliers:
+            weight = float(stat_multipliers['weight'])
+
+        # Extract range
+        item_range = float(item_data.get('range', 1.0))
+
+        # Extract attack speed
+        attack_speed = 1.0
+        if 'attackSpeed' in stat_multipliers:
+            attack_speed = float(stat_multipliers['attackSpeed'])
+
+        # Extract defense for armor
+        defense = 0
+        if 'defense' in stats:
+            defense = int(stats['defense'])
+
+        # Determine slot with fallback logic
+        slot = item_data.get('slot', 'mainHand')
+        item_type = item_data.get('type', 'weapon')
+        if slot == 'mainHand' and item_type == 'armor':
+            # Armor items should use appropriate slot
+            subtype = item_data.get('subtype', '')
+            slot_mapping = {
+                'helmet': 'helmet', 'helm': 'helmet', 'hat': 'helmet',
+                'chestplate': 'chestplate', 'chest': 'chestplate', 'body': 'chestplate',
+                'leggings': 'leggings', 'legs': 'leggings', 'pants': 'leggings',
+                'boots': 'boots', 'feet': 'boots', 'shoes': 'boots',
+                'gauntlets': 'gauntlets', 'gloves': 'gauntlets', 'hands': 'gauntlets',
+            }
+            slot = slot_mapping.get(subtype.lower(), 'chestplate')
+
+        # Extract tags from metadata
+        tags = metadata.get('tags', [])
+
+        # Determine hand type from tags or type
+        hand_type = 'default'
+        if '2H' in tags or 'two-handed' in [t.lower() for t in tags]:
+            hand_type = '2H'
+        elif '1H' in tags or 'one-handed' in [t.lower() for t in tags]:
+            hand_type = '1H'
+        elif 'versatile' in [t.lower() for t in tags]:
+            hand_type = 'versatile'
+
+        # Extract efficiency for tools
+        efficiency = 1.0
+        if 'mining' in stats:
+            efficiency = 1.0 + (stats['mining'] / 100.0)
+        elif 'forestry' in stats:
+            efficiency = 1.0 + (stats['forestry'] / 100.0)
+
+        # Determine icon path based on item type
+        if item_type == 'armor':
+            icon_subdir = 'armor'
+        elif item_type == 'tool':
+            icon_subdir = 'tools'
+        elif item_type == 'accessory':
+            icon_subdir = 'accessories'
+        else:
+            icon_subdir = 'weapons'
+        icon_path = f"{icon_subdir}/invented_default.png"
+
+        # Build the equipment item
+        equipment = EquipmentItem(
+            item_id=item_id,
+            name=item_name or item_id.replace('_', ' ').title(),
+            tier=item_data.get('tier', 1),
+            rarity=item_data.get('rarity', 'uncommon'),
+            slot=slot,
+            damage=damage,
+            defense=defense,
+            durability_current=durability,
+            durability_max=durability,
+            attack_speed=attack_speed,
+            efficiency=efficiency,
+            weight=weight,
+            range=item_range,
+            requirements=item_data.get('requirements', {}),
+            bonuses={},
+            enchantments=item_data.get('enchantments', []),
+            icon_path=icon_path,
+            hand_type=hand_type,
+            item_type=item_type,
+            stat_multipliers=stat_multipliers,
+            tags=tags,
+            effect_tags=item_data.get('effectTags', []),
+            effect_params=effect_params
+        )
+
+        print(f"  Converted LLM output to EquipmentItem:")
+        print(f"    ID: {item_id}, Name: {item_name}")
+        print(f"    Type: {item_type}, Slot: {slot}, Tier: {item_data.get('tier', 1)}")
+        print(f"    Damage: {damage}, Defense: {defense}, Durability: {durability}")
+        print(f"    Tags: {tags[:5]}...")
+
+        return equipment
+
+    def _consume_invented_materials(self, discipline: str) -> bool:
+        """
+        Consume materials used in the invented recipe.
+
+        Returns True if materials were successfully consumed.
+        """
+        ui = self.interactive_ui
+        if not ui:
+            return False
+
+        # Return borrowed materials to inventory first (they'll be consumed properly)
+        for item_id, qty in ui.borrowed_materials.items():
+            self.character.inventory.add_item(item_id, qty)
+
+        # Now consume based on what's placed
+        materials_to_consume = {}
+
+        if discipline == 'smithing':
+            for (x, y), placed_mat in ui.grid.items():
+                mat_id = placed_mat.item_id
+                materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + 1
+
+        elif discipline == 'adornments':
+            for coord, placed_mat in ui.vertices.items():
+                mat_id = placed_mat.item_id
+                materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + 1
+
+        elif discipline == 'alchemy':
+            for placed_mat in ui.slots:
+                if placed_mat:
+                    mat_id = placed_mat.item_id
+                    qty = placed_mat.quantity
+                    materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + qty
+
+        elif discipline == 'refining':
+            for placed_mat in ui.core_slots:
+                if placed_mat:
+                    mat_id = placed_mat.item_id
+                    qty = placed_mat.quantity
+                    materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + qty
+            for placed_mat in ui.surrounding_slots:
+                if placed_mat:
+                    mat_id = placed_mat.item_id
+                    qty = placed_mat.quantity
+                    materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + qty
+
+        elif discipline == 'engineering':
+            for slot_type, materials in ui.slots.items():
+                for placed_mat in materials:
+                    mat_id = placed_mat.item_id
+                    qty = placed_mat.quantity
+                    materials_to_consume[mat_id] = materials_to_consume.get(mat_id, 0) + qty
+
+        # Consume the materials
+        for mat_id, qty in materials_to_consume.items():
+            success = self.character.inventory.remove_item(mat_id, qty)
+            if not success:
+                print(f"  Warning: Could not consume {qty}x {mat_id}")
+
+        # Clear borrowed materials tracking
+        ui.borrowed_materials.clear()
+
+        print(f"  Consumed materials: {materials_to_consume}")
+        return True
+
+    def _infer_enchantment_applicable_to(self, item_name: str, item_data: dict) -> list:
+        """
+        Infer what equipment types an enchantment can apply to.
+
+        Consolidates the duplicated logic for determining applicable_to from
+        item name or item_data.
+
+        Args:
+            item_name: The name of the enchantment
+            item_data: The item data dict (may contain applicableTo field)
+
+        Returns:
+            List of applicable equipment types: ['weapon'], ['armor'], ['tool'],
+            or ['weapon', 'armor', 'tool'] for universal enchantments
+        """
+        # Try to get from item_data first
+        applicable_to = item_data.get('applicableTo', item_data.get('applicable_to', []))
+        if applicable_to:
+            return applicable_to
+
+        # Infer from name
+        name_lower = item_name.lower()
+
+        # Offensive enchantments -> weapon
+        if any(w in name_lower for w in ['sharp', 'damage', 'attack', 'strike', 'fire aspect',
+                                         'lifesteal', 'venom', 'frost', 'thunder', 'smite']):
+            return ['weapon']
+
+        # Defensive enchantments -> armor
+        if any(w in name_lower for w in ['protect', 'defense', 'armor', 'thorns', 'resistance',
+                                         'fortify', 'ward', 'shield', 'guard']):
+            return ['armor']
+
+        # Utility enchantments -> tool
+        if any(w in name_lower for w in ['efficiency', 'fortune', 'luck', 'silk touch',
+                                         'unbreaking', 'mending']):
+            return ['tool']
+
+        # Default: universal enchantment
+        return ['weapon', 'armor', 'tool']
+
+    def _store_invented_recipe(self, gen_result, discipline: str):
+        """
+        Store invented recipe for save/load system (Phase 3).
+
+        This allows player-invented recipes to persist across game sessions
+        and function as craftable recipes in the crafting UI.
+        """
+        from data.databases import RecipeDatabase
+        from data.models import Recipe
+        from systems.llm_item_generator import get_item_generator
+
+        # Get the LLM generator for placement extraction
+        generator = get_item_generator()
+
+        # Calculate minimum tier from placement complexity
+        calculated_tier = 1
+        placement_data = {}
+        if generator and self.interactive_ui:
+            calculated_tier = generator.calculate_minimum_tier(discipline, self.interactive_ui)
+            placement_data = generator.extract_placement_data(discipline, self.interactive_ui)
+            print(f"  ✓ Extracted placement_data (tier {calculated_tier})")
+
+        # Store in character data
+        if not hasattr(self.character, 'invented_recipes'):
+            self.character.invented_recipes = []
+
+        # Determine if this is an enchantment (for save/load)
+        is_enchantment_recipe = discipline in ['adornments', 'enchanting']
+
+        # Create a complete recipe record with all data needed to recreate the recipe
+        recipe_record = {
+            'timestamp': __import__('datetime').datetime.now().isoformat(),
+            'discipline': discipline,
+            'item_id': gen_result.item_id,
+            'item_name': gen_result.item_name,
+            'item_data': gen_result.item_data,
+            'from_cache': gen_result.from_cache,
+            # Include recipe inputs for crafting
+            'recipe_inputs': gen_result.recipe_inputs or [],
+            'station_tier': calculated_tier,  # Use calculated tier
+            'narrative': gen_result.narrative,
+            # Include full placement data for recreation
+            'placement_data': placement_data,
+            # Include icon path for the item
+            'icon_path': self._get_invented_icon_path(gen_result.item_id, discipline, gen_result.item_data),
+            # Enchantment-specific fields (for adornments)
+            'is_enchantment': is_enchantment_recipe
+        }
+
+        self.character.invented_recipes.append(recipe_record)
+
+        # Register with RecipeDatabase
+        recipe_id = f"invented_{gen_result.item_id}"
+        grid_size = placement_data.get('gridSize', '3x3')
+
+        # For adornments, set enchantment-specific fields
+        is_enchantment = discipline in ['adornments', 'enchanting']
+        enchantment_name = ''
+        applicable_to = []
+        effect = {}
+
+        if is_enchantment:
+            enchantment_name = gen_result.item_name
+            item_data = gen_result.item_data or {}
+            # Use consolidated helper for applicable_to inference
+            applicable_to = self._infer_enchantment_applicable_to(gen_result.item_name, item_data)
+            # Extract or create effect
+            effect = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
+
+        recipe = Recipe(
+            recipe_id=recipe_id,
+            output_id=gen_result.item_id,
+            output_qty=1,
+            station_type=discipline,
+            station_tier=calculated_tier,
+            inputs=[
+                {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
+                for inp in (gen_result.recipe_inputs or [])
+            ],
+            grid_size=grid_size,
+            mini_game_type=discipline,
+            metadata={
+                'invented': True,
+                'narrative': gen_result.narrative,
+                'timestamp': recipe_record['timestamp']
+            },
+            # Enchantment-specific fields (only meaningful for adornments)
+            is_enchantment=is_enchantment,
+            enchantment_name=enchantment_name,
+            applicable_to=applicable_to,
+            effect=effect
+        )
+
+        # Add to RecipeDatabase
+        recipe_db = RecipeDatabase.get_instance()
+        recipe_db.recipes[recipe_id] = recipe
+
+        if discipline not in recipe_db.recipes_by_station:
+            recipe_db.recipes_by_station[discipline] = []
+        if not any(r.recipe_id == recipe_id for r in recipe_db.recipes_by_station[discipline]):
+            recipe_db.recipes_by_station[discipline].append(recipe)
+
+        # CRITICAL: Also register with the appropriate Crafter for instant craft
+        self._register_with_crafter(recipe_id, discipline, gen_result, placement_data, calculated_tier)
+
+        # CRITICAL: Register with the CORRECT database based on discipline
+        # Each discipline produces different item types that go to different databases
+        db_name = self._register_invented_item_with_database(
+            item_id=gen_result.item_id,
+            item_name=gen_result.item_name,
+            item_data=gen_result.item_data,
+            discipline=discipline
+        )
+
+        print(f"  ✓ Stored invented recipe: {gen_result.item_id}")
+        print(f"  ✓ Recipe registered for crafting: {recipe_id}")
+        print(f"  ✓ Item registered with {db_name}")
+        print(f"  ✓ Tier: {calculated_tier}, Grid: {grid_size}")
+
+    def _register_with_crafter(self, recipe_id: str, discipline: str, gen_result, placement_data: dict, tier: int):
+        """
+        Register invented recipe with both Crafter AND PlacementDatabase.
+
+        Crafter.recipes is needed for instant craft.
+        PlacementDatabase is needed for placement display in the non-interactive crafting UI.
+        """
+        from data.databases.placement_db import PlacementDatabase
+        from data.models.recipes import PlacementData
+
+        # Get the appropriate crafter
+        crafter = None
+        if discipline == 'smithing' and hasattr(self, 'smithing_crafter'):
+            crafter = self.smithing_crafter
+        elif discipline == 'refining' and hasattr(self, 'refining_crafter'):
+            crafter = self.refining_crafter
+        elif discipline == 'alchemy' and hasattr(self, 'alchemy_crafter'):
+            crafter = self.alchemy_crafter
+        elif discipline == 'engineering' and hasattr(self, 'engineering_crafter'):
+            crafter = self.engineering_crafter
+        elif discipline in ['adornments', 'enchanting'] and hasattr(self, 'enchanting_crafter'):
+            crafter = self.enchanting_crafter
+
+        if not crafter:
+            print(f"  Warning: No crafter found for discipline: {discipline}")
+            return
+
+        # Build recipe dict in the format Crafter expects
+        recipe_dict = {
+            'recipeId': recipe_id,
+            'outputId': gen_result.item_id,
+            'outputQty': 1,
+            'stationType': discipline,
+            'stationTier': tier,
+            'inputs': [
+                {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
+                for inp in (gen_result.recipe_inputs or [])
+            ],
+            'metadata': {
+                'invented': True,
+                'narrative': gen_result.narrative
+            }
+        }
+
+        # For adornments, add enchantment-specific fields
+        if discipline in ['adornments', 'enchanting']:
+            item_data = gen_result.item_data or {}
+            recipe_dict['enchantmentId'] = gen_result.item_id
+            recipe_dict['enchantmentName'] = gen_result.item_name
+            # Use consolidated helper for applicable_to inference
+            recipe_dict['applicableTo'] = self._infer_enchantment_applicable_to(gen_result.item_name, item_data)
+            recipe_dict['effect'] = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
+
+        # Register recipe with Crafter for instant craft
+        crafter.recipes[recipe_id] = recipe_dict
+
+        # Register placement with Crafter
+        if discipline == 'smithing':
+            crafter.placements[recipe_id] = placement_data.get('placementMap', {})
+        elif discipline in ['adornments', 'enchanting']:
+            crafter.placements[recipe_id] = placement_data.get('vertices', {})
+        else:
+            crafter.placements[recipe_id] = placement_data
+
+        # CRITICAL: Register with PlacementDatabase for display in non-interactive UI
+        placement_db = PlacementDatabase.get_instance()
+        grid_size = placement_data.get('gridSize', '3x3')
+
+        if discipline == 'smithing':
+            placement_db.placements[recipe_id] = PlacementData(
+                recipe_id=recipe_id,
+                discipline='smithing',
+                grid_size=grid_size,
+                placement_map=placement_data.get('placementMap', {}),
+                narrative=gen_result.narrative,
+                output_id=gen_result.item_id,
+                station_tier=tier
+            )
+        elif discipline == 'refining':
+            placement_db.placements[recipe_id] = PlacementData(
+                recipe_id=recipe_id,
+                discipline='refining',
+                core_inputs=placement_data.get('coreInputs', []),
+                surrounding_inputs=placement_data.get('surroundingInputs', []),
+                narrative=gen_result.narrative,
+                output_id=gen_result.item_id,
+                station_tier=tier
+            )
+        elif discipline == 'alchemy':
+            placement_db.placements[recipe_id] = PlacementData(
+                recipe_id=recipe_id,
+                discipline='alchemy',
+                ingredients=placement_data.get('ingredients', []),
+                narrative=gen_result.narrative,
+                output_id=gen_result.item_id,
+                station_tier=tier
+            )
+        elif discipline == 'engineering':
+            placement_db.placements[recipe_id] = PlacementData(
+                recipe_id=recipe_id,
+                discipline='engineering',
+                slots=placement_data.get('slots', []),
+                narrative=gen_result.narrative,
+                output_id=gen_result.item_id,
+                station_tier=tier
+            )
+        elif discipline in ['adornments', 'enchanting']:
+            # Adornments uses nested placementMap structure with gridType, vertices, and shapes
+            # The renderer expects placement_map to contain all three
+            adornment_placement_map = placement_data.get('placementMap', {})
+            # Include shapes from top-level placement_data into the placement_map
+            adornment_placement_map['shapes'] = placement_data.get('shapes', [])
+            placement_db.placements[recipe_id] = PlacementData(
+                recipe_id=recipe_id,
+                discipline='adornments',
+                grid_size=grid_size,
+                placement_map=adornment_placement_map,  # Contains {gridType, vertices, shapes}
+                pattern=adornment_placement_map.get('vertices', {}),  # Extract vertices for pattern field
+                narrative=gen_result.narrative,
+                output_id=gen_result.item_id,
+                station_tier=tier
+            )
+
+        print(f"  ✓ Registered with {discipline} crafter")
+        print(f"  ✓ Registered with PlacementDatabase: recipe_id='{recipe_id}'")
+        print(f"  ✓ PlacementDB now has {len(placement_db.placements)} entries")
+        # Debug: verify the placement was actually stored
+        stored = placement_db.placements.get(recipe_id)
+        if stored:
+            print(f"  ✓ Verified: placement_map has {len(stored.placement_map)} entries" if discipline == 'smithing' else f"  ✓ Verified: core_inputs={len(stored.core_inputs)}, surrounding={len(stored.surrounding_inputs)}")
+
+    def _get_invented_icon_path(self, item_id: str, discipline: str, item_data: dict) -> str:
+        """
+        Get or create icon path for invented item.
+
+        Uses a default invented item icon since we don't generate custom PNGs yet.
+        """
+        # Determine subdirectory based on item type
+        category = item_data.get('category', 'equipment')
+        item_type = item_data.get('type', 'weapon')
+
+        if category == 'consumable':
+            subdir = 'consumables'
+        elif category == 'device':
+            subdir = 'devices'
+        elif item_type == 'armor':
+            subdir = 'armor'
+        elif item_type == 'tool':
+            subdir = 'tools'
+        elif item_type == 'accessory':
+            subdir = 'accessories'
+        else:
+            subdir = 'weapons'
+
+        # Use default invented icon - this will be a single PNG that represents invented items
+        # The actual icon path would be: {subdir}/invented_default.png
+        # For now, just return a path that the system can use
+        default_icon = f"{subdir}/invented_default.png"
+
+        # If the file doesn't exist, the image_cache will fall back to text rendering
+        # This is the expected behavior until we integrate PNG generation
+        return default_icon
+
+    def _register_invented_item_with_database(self, item_id: str, item_name: str,
+                                               item_data: dict, discipline: str) -> str:
+        """
+        Register an invented item with the CORRECT database based on discipline.
+
+        Each discipline produces different item types:
+        - Smithing: equipment (weapons, armor, tools, accessories) → EquipmentDatabase
+        - Refining: materials (ingots, planks, alloys) → MaterialDatabase (stackable)
+        - Alchemy: consumables (potions, elixirs, oils) → MaterialDatabase (stackable)
+        - Engineering: devices (turrets, bombs, traps) → MaterialDatabase (stackable)
+        - Adornments: enchanted accessories → EquipmentDatabase
+
+        Returns the name of the database used for logging.
+        """
+        from data.databases import EquipmentDatabase, MaterialDatabase
+        from data.models.materials import MaterialDefinition
+
+        item_data = item_data or {}
+        tier = item_data.get('tier', 1)
+        rarity = item_data.get('rarity', 'common')
+
+        if discipline == 'smithing':
+            # Smithing produces equipment (weapons, armor, tools, accessories)
+            # These are non-stackable items that go in EquipmentDatabase
+            equip_db = EquipmentDatabase.get_instance()
+
+            item_data_for_db = item_data.copy()
+            item_data_for_db['itemId'] = item_id
+            item_data_for_db['category'] = 'equipment'
+            if 'name' not in item_data_for_db:
+                item_data_for_db['name'] = item_name
+
+            equip_db.items[item_id] = item_data_for_db
+            return "EquipmentDatabase"
+
+        elif discipline == 'refining':
+            # Refining produces stackable materials (ingots, planks, alloys)
+            # These go in MaterialDatabase with category='material'
+            mat_db = MaterialDatabase.get_instance()
+
+            # Determine material type from item_data
+            item_type = item_data.get('type', 'ingot')
+            if 'plank' in item_id.lower() or 'plank' in item_name.lower():
+                item_type = 'plank'
+            elif 'alloy' in item_id.lower() or 'alloy' in item_name.lower():
+                item_type = 'alloy'
+            else:
+                item_type = 'ingot'
+
+            mat = MaterialDefinition(
+                material_id=item_id,
+                name=item_name,
+                tier=tier,
+                category='material',  # Refined materials
+                rarity=rarity,
+                description=item_data.get('metadata', {}).get('narrative', ''),
+                max_stack=256,  # Standard stack size for refined materials
+                properties=item_data.get('properties', {}),
+                icon_path=f"materials/{item_id}.png",
+                placeable=False,
+                item_type=item_type
+            )
+            mat_db.materials[item_id] = mat
+            return "MaterialDatabase (material)"
+
+        elif discipline == 'alchemy':
+            # Alchemy produces stackable consumables (potions, elixirs, oils)
+            # These go in MaterialDatabase with category='consumable'
+            mat_db = MaterialDatabase.get_instance()
+
+            # Determine stack size based on item type
+            item_type = item_data.get('type', 'potion')
+            if 'oil' in item_id.lower() or 'oil' in item_name.lower():
+                max_stack = 20
+                item_type = 'oil'
+            elif 'powder' in item_id.lower() or 'powder' in item_name.lower():
+                max_stack = 50
+                item_type = 'powder'
+            else:
+                max_stack = 10  # Potions stack to 10
+                item_type = 'potion'
+
+            mat = MaterialDefinition(
+                material_id=item_id,
+                name=item_name,
+                tier=tier,
+                category='consumable',
+                rarity=rarity,
+                description=item_data.get('metadata', {}).get('narrative', ''),
+                max_stack=max_stack,
+                properties=item_data.get('properties', {}),
+                icon_path=f"consumables/{item_id}.png",
+                placeable=False,
+                item_type=item_type,
+                effect=item_data.get('effect', ''),
+                effect_tags=item_data.get('effectTags', item_data.get('effect_tags', [])),
+                effect_params=item_data.get('effectParams', item_data.get('effect_params', {}))
+            )
+            mat_db.materials[item_id] = mat
+            return "MaterialDatabase (consumable)"
+
+        elif discipline == 'engineering':
+            # Engineering produces stackable devices (turrets, bombs, traps)
+            # These go in MaterialDatabase with category='device'
+            mat_db = MaterialDatabase.get_instance()
+
+            # Determine stack size and type based on item
+            item_type = item_data.get('type', 'device')
+            if 'turret' in item_id.lower() or 'turret' in item_name.lower():
+                max_stack = 5
+                item_type = 'turret'
+            elif 'bomb' in item_id.lower() or 'bomb' in item_name.lower():
+                max_stack = 10
+                item_type = 'bomb'
+            elif 'trap' in item_id.lower() or 'trap' in item_name.lower():
+                max_stack = 15
+                item_type = 'trap'
+            else:
+                max_stack = 5
+                item_type = 'utility'
+
+            mat = MaterialDefinition(
+                material_id=item_id,
+                name=item_name,
+                tier=tier,
+                category='device',
+                rarity=rarity,
+                description=item_data.get('metadata', {}).get('narrative', ''),
+                max_stack=max_stack,
+                properties=item_data.get('properties', {}),
+                icon_path=f"devices/{item_id}.png",
+                placeable=True,  # Devices are placeable
+                item_type=item_type,
+                effect=item_data.get('effect', ''),
+                effect_tags=item_data.get('effectTags', item_data.get('effect_tags', [])),
+                effect_params=item_data.get('effectParams', item_data.get('effect_params', {}))
+            )
+            mat_db.materials[item_id] = mat
+            return "MaterialDatabase (device)"
+
+        elif discipline in ['adornments', 'enchanting']:
+            # Adornments create ENCHANTMENT RECIPES, not items
+            # The enchantment can then be applied to existing equipment
+            # We don't register with any item database - just recipe/placement databases
+            # (which is handled separately in _store_invented_recipe)
+            print(f"  Note: Adornment '{item_name}' is an enchantment recipe, not an item")
+            return "None (enchantment recipe)"
+
+        else:
+            # Unknown discipline - default to MaterialDatabase
+            mat_db = MaterialDatabase.get_instance()
+            mat = MaterialDefinition(
+                material_id=item_id,
+                name=item_name,
+                tier=tier,
+                category='material',
+                rarity=rarity,
+                description='',
+                max_stack=99
+            )
+            mat_db.materials[item_id] = mat
+            return "MaterialDatabase (default)"
+
+    def register_saved_invented_recipes(self):
+        """
+        Register all saved invented recipes with Crafters, RecipeDatabase, and PlacementDatabase.
+
+        Call this after character.restore_from_save() to enable:
+        - Instant crafting (Crafter.recipes)
+        - Recipe list display (RecipeDatabase)
+        - Placement display (PlacementDatabase)
+        """
+        from data.databases import RecipeDatabase
+        from data.databases.placement_db import PlacementDatabase
+        from data.models import Recipe
+        from data.models.recipes import PlacementData
+
+        if not hasattr(self.character, 'invented_recipes') or not self.character.invented_recipes:
+            return
+
+        print(f"Registering {len(self.character.invented_recipes)} invented recipes...")
+
+        recipe_db = RecipeDatabase.get_instance()
+        placement_db = PlacementDatabase.get_instance()
+
+        for recipe_record in self.character.invented_recipes:
+            try:
+                item_id = recipe_record.get('item_id', '')
+                discipline = recipe_record.get('discipline', '')
+                inputs = recipe_record.get('recipe_inputs', [])
+                station_tier = recipe_record.get('station_tier', 1)
+                placement_data = recipe_record.get('placement_data', {})
+                narrative = recipe_record.get('narrative', '')
+                grid_size = placement_data.get('gridSize', '3x3')
+
+                if not item_id or not discipline:
+                    continue
+
+                recipe_id = f"invented_{item_id}"
+
+                # Get the appropriate crafter
+                crafter = None
+                if discipline == 'smithing' and hasattr(self, 'smithing_crafter'):
+                    crafter = self.smithing_crafter
+                elif discipline == 'refining' and hasattr(self, 'refining_crafter'):
+                    crafter = self.refining_crafter
+                elif discipline == 'alchemy' and hasattr(self, 'alchemy_crafter'):
+                    crafter = self.alchemy_crafter
+                elif discipline == 'engineering' and hasattr(self, 'engineering_crafter'):
+                    crafter = self.engineering_crafter
+                elif discipline in ['adornments', 'enchanting'] and hasattr(self, 'enchanting_crafter'):
+                    crafter = self.enchanting_crafter
+
+                if not crafter:
+                    print(f"  Warning: No crafter for {discipline}")
+                    continue
+
+                # Build recipe inputs list
+                recipe_inputs = [
+                    {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
+                    for inp in inputs if inp.get('materialId')
+                ]
+
+                # Build recipe dict for Crafter
+                recipe_dict = {
+                    'recipeId': recipe_id,
+                    'outputId': item_id,
+                    'outputQty': 1,
+                    'stationType': discipline,
+                    'stationTier': station_tier,
+                    'inputs': recipe_inputs,
+                    'metadata': {
+                        'invented': True,
+                        'narrative': narrative
+                    }
+                }
+
+                # For adornments, add enchantment-specific fields to crafter recipe
+                if discipline in ['adornments', 'enchanting']:
+                    item_data = recipe_record.get('item_data', {})
+                    item_name = recipe_record.get('item_name', item_id)
+                    recipe_dict['enchantmentId'] = item_id
+                    recipe_dict['enchantmentName'] = item_name
+                    # Use consolidated helper for applicable_to inference
+                    recipe_dict['applicableTo'] = self._infer_enchantment_applicable_to(item_name, item_data)
+                    recipe_dict['effect'] = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
+
+                # 1. Register with Crafter for instant craft
+                crafter.recipes[recipe_id] = recipe_dict
+
+                # Register Crafter placement
+                if discipline == 'smithing':
+                    crafter.placements[recipe_id] = placement_data.get('placementMap', {})
+                elif discipline in ['adornments', 'enchanting']:
+                    # Adornments uses nested structure - extract vertices from placementMap
+                    adornment_map = placement_data.get('placementMap', {})
+                    crafter.placements[recipe_id] = adornment_map.get('vertices', adornment_map)
+                else:
+                    crafter.placements[recipe_id] = placement_data
+
+                # 2. Register with RecipeDatabase for recipe list
+                is_enchantment = discipline in ['adornments', 'enchanting']
+                enchantment_name = ''
+                applicable_to = []
+                effect = {}
+
+                if is_enchantment:
+                    item_data = recipe_record.get('item_data', {})
+                    item_name = recipe_record.get('item_name', item_id)
+                    enchantment_name = item_name
+                    # Use consolidated helper for applicable_to inference
+                    applicable_to = self._infer_enchantment_applicable_to(item_name, item_data)
+                    effect = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
+
+                recipe = Recipe(
+                    recipe_id=recipe_id,
+                    output_id=item_id,
+                    output_qty=1,
+                    station_type=discipline,
+                    station_tier=station_tier,
+                    inputs=recipe_inputs,
+                    grid_size=grid_size,
+                    mini_game_type=discipline,
+                    metadata={
+                        'invented': True,
+                        'narrative': narrative
+                    },
+                    # Enchantment-specific fields
+                    is_enchantment=is_enchantment,
+                    enchantment_name=enchantment_name,
+                    applicable_to=applicable_to,
+                    effect=effect
+                )
+                recipe_db.recipes[recipe_id] = recipe
+
+                if discipline not in recipe_db.recipes_by_station:
+                    recipe_db.recipes_by_station[discipline] = []
+                if not any(r.recipe_id == recipe_id for r in recipe_db.recipes_by_station[discipline]):
+                    recipe_db.recipes_by_station[discipline].append(recipe)
+
+                # 3. Register with PlacementDatabase for placement display
+                if discipline == 'smithing':
+                    placement_db.placements[recipe_id] = PlacementData(
+                        recipe_id=recipe_id,
+                        discipline='smithing',
+                        grid_size=grid_size,
+                        placement_map=placement_data.get('placementMap', {}),
+                        narrative=narrative,
+                        output_id=item_id,
+                        station_tier=station_tier
+                    )
+                elif discipline == 'refining':
+                    placement_db.placements[recipe_id] = PlacementData(
+                        recipe_id=recipe_id,
+                        discipline='refining',
+                        core_inputs=placement_data.get('coreInputs', []),
+                        surrounding_inputs=placement_data.get('surroundingInputs', []),
+                        narrative=narrative,
+                        output_id=item_id,
+                        station_tier=station_tier
+                    )
+                elif discipline == 'alchemy':
+                    placement_db.placements[recipe_id] = PlacementData(
+                        recipe_id=recipe_id,
+                        discipline='alchemy',
+                        ingredients=placement_data.get('ingredients', []),
+                        narrative=narrative,
+                        output_id=item_id,
+                        station_tier=station_tier
+                    )
+                elif discipline == 'engineering':
+                    placement_db.placements[recipe_id] = PlacementData(
+                        recipe_id=recipe_id,
+                        discipline='engineering',
+                        slots=placement_data.get('slots', []),
+                        narrative=narrative,
+                        output_id=item_id,
+                        station_tier=station_tier
+                    )
+                elif discipline in ['adornments', 'enchanting']:
+                    # Adornments uses nested placementMap structure with gridType, vertices, and shapes
+                    adornment_placement_map = placement_data.get('placementMap', {})
+                    # Include shapes from top-level placement_data into the placement_map
+                    adornment_placement_map['shapes'] = placement_data.get('shapes', [])
+                    placement_db.placements[recipe_id] = PlacementData(
+                        recipe_id=recipe_id,
+                        discipline='adornments',
+                        grid_size=grid_size,
+                        placement_map=adornment_placement_map,  # Contains {gridType, vertices, shapes}
+                        pattern=adornment_placement_map.get('vertices', {}),
+                        narrative=narrative,
+                        output_id=item_id,
+                        station_tier=station_tier
+                    )
+
+                # 4. CRITICAL: Register with CORRECT database based on discipline
+                # Each discipline produces different item types (equipment, materials, consumables, devices)
+                item_data = recipe_record.get('item_data', {})
+                item_name = recipe_record.get('item_name', item_id)
+
+                db_name = self._register_invented_item_with_database(
+                    item_id=item_id,
+                    item_name=item_name,
+                    item_data=item_data,
+                    discipline=discipline
+                )
+
+                print(f"  ✓ Registered {recipe_id} (with {db_name})")
+
+            except Exception as e:
+                import traceback
+                print(f"  Warning: Could not register saved recipe: {e}")
+                traceback.print_exc()
+
+        print("✓ Finished registering saved invented recipes")
+
+    def _create_basic_invented_item(self, discipline: str):
+        """
+        Create a basic invented item when LLM is unavailable.
+
+        This is a fallback to ensure players still get something.
+        """
+        from datetime import datetime
+
+        timestamp = datetime.now().strftime('%H%M%S')
+        item_id = f"invented_{discipline}_{timestamp}"
+        item_name = f"Mysterious {discipline.title()} Creation"
+
+        # Create a basic item
+        success = self.character.inventory.add_item(
+            item_id, 1,
+            rarity='uncommon',
+            crafted_stats={'invented': True}
+        )
+
+        if success:
+            self.add_notification(f"Created: {item_name}", (100, 255, 100))
+            # Consume materials
+            self._consume_invented_materials(discipline)
+            self._close_interactive_crafting()
+        else:
+            self.add_notification("Inventory full!", (255, 100, 100))
 
     def _complete_minigame(self):
         """Complete the active minigame and process results"""
@@ -3325,6 +4877,15 @@ class GameEngine:
         if self.start_menu_open or self.character is None:
             return
 
+        # Check for completed background LLM generation
+        self._check_background_generation()
+
+        # Block movement and game updates when LLM overlay is active
+        if self._is_llm_overlay_blocking():
+            # Only update camera and UI, not player movement or game world
+            self.camera.follow(self.character.position)
+            return
+
         curr = pygame.time.get_ticks()
         dt = (curr - self.last_tick) / 1000.0
         self.last_tick = curr
@@ -3576,6 +5137,9 @@ class GameEngine:
         # Minigame rendering (rendered on top of EVERYTHING)
         if self.active_minigame:
             self._render_minigame()
+
+        # Loading indicator (LLM/Classifier) - rendered on top of all UI
+        self.renderer.render_loading_indicator()
 
         # Render deferred tooltips LAST (on top of all UI including modals)
         self.renderer.render_pending_tooltip()

@@ -84,6 +84,9 @@ class Character:
         self.encyclopedia = Encyclopedia()
         self.quests = QuestManager()
 
+        # Player-invented recipes (persisted across sessions)
+        self.invented_recipes = []
+
         self.base_max_health = 100
         self.base_max_mana = 100
         self.max_health = self.base_max_health
@@ -410,11 +413,17 @@ class Character:
                         durability_current=eq_data.get("durability_current", 100),
                         durability_max=eq_data.get("durability_max", 100),
                         attack_speed=eq_data.get("attack_speed", 1.0),
+                        efficiency=eq_data.get("efficiency", 1.0),
                         weight=eq_data.get("weight", 1.0),
                         range=eq_data.get("range", 1.0),
                         hand_type=eq_data.get("hand_type", "default"),
                         item_type=eq_data.get("item_type", "weapon"),
-                        icon_path=eq_data.get("icon_path")  # Restore icon path for proper PNG rendering
+                        icon_path=eq_data.get("icon_path"),
+                        stat_multipliers=eq_data.get("stat_multipliers", {}),
+                        tags=eq_data.get("tags", []),
+                        effect_tags=eq_data.get("effect_tags", []),
+                        effect_params=eq_data.get("effect_params", {}),
+                        soulbound=eq_data.get("soulbound", False)
                     )
 
                     # Restore bonuses if present
@@ -463,11 +472,17 @@ class Character:
                     durability_current=eq_data.get("durability_current", 100),
                     durability_max=eq_data.get("durability_max", 100),
                     attack_speed=eq_data.get("attack_speed", 1.0),
+                    efficiency=eq_data.get("efficiency", 1.0),
                     weight=eq_data.get("weight", 1.0),
                     range=eq_data.get("range", 1.0),
                     hand_type=eq_data.get("hand_type", "default"),
                     item_type=eq_data.get("item_type", "weapon"),
-                    icon_path=eq_data.get("icon_path")  # Restore icon path for proper PNG rendering
+                    icon_path=eq_data.get("icon_path"),
+                    stat_multipliers=eq_data.get("stat_multipliers", {}),
+                    tags=eq_data.get("tags", []),
+                    effect_tags=eq_data.get("effect_tags", []),
+                    effect_params=eq_data.get("effect_params", {}),
+                    soulbound=eq_data.get("soulbound", False)
                 )
 
                 # Restore bonuses if present
@@ -550,7 +565,107 @@ class Character:
         if not hasattr(self, '_selected_slot'):
             self._selected_slot = 'mainHand'
 
+        # Restore invented recipes (Phase 3 crafting integration)
+        invented_data = player_data.get("invented_recipes", [])
+        self.invented_recipes = []
+        registered_count = 0
+
+        for recipe_record in invented_data:
+            try:
+                # Restore full recipe record - MUST include all fields saved
+                restored_recipe = {
+                    "timestamp": recipe_record.get("timestamp", ""),
+                    "discipline": recipe_record.get("discipline", "unknown"),
+                    "item_id": recipe_record.get("item_id", ""),
+                    "item_name": recipe_record.get("item_name", ""),
+                    "item_data": recipe_record.get("item_data", {}),
+                    "from_cache": recipe_record.get("from_cache", False),
+                    # Recipe crafting data
+                    "recipe_inputs": recipe_record.get("recipe_inputs", []),
+                    "station_tier": recipe_record.get("station_tier", 1),
+                    "narrative": recipe_record.get("narrative", ""),
+                    # CRITICAL: placement_data is required for placement display!
+                    "placement_data": recipe_record.get("placement_data", {}),
+                    # Icon path for invented items
+                    "icon_path": recipe_record.get("icon_path", "")
+                }
+                self.invented_recipes.append(restored_recipe)
+
+                # Register with RecipeDatabase for crafting
+                self._register_invented_recipe(restored_recipe)
+                registered_count += 1
+
+            except Exception as e:
+                print(f"Warning: Could not restore invented recipe: {e}")
+
+        if invented_data:
+            print(f"  ✓ Restored {len(self.invented_recipes)} invented recipe(s)")
+            print(f"  ✓ Registered {registered_count} recipe(s) for crafting")
+
         print(f"✓ Character state restored: Level {self.leveling.level}, HP {self.health}/{self.max_health}")
+
+    def _register_invented_recipe(self, recipe_record: dict):
+        """
+        Register an invented recipe with RecipeDatabase for crafting.
+
+        Note: Crafter registration is handled separately by GameEngine after character load.
+
+        Args:
+            recipe_record: Dictionary containing recipe data
+        """
+        try:
+            from data.databases import RecipeDatabase
+            from data.models import Recipe
+
+            item_id = recipe_record.get("item_id", "")
+            discipline = recipe_record.get("discipline", "unknown")
+            inputs = recipe_record.get("recipe_inputs", [])
+            station_tier = recipe_record.get("station_tier", 1)
+            placement_data = recipe_record.get("placement_data", {})
+
+            if not item_id or not inputs:
+                return  # Skip incomplete recipes
+
+            recipe_id = f"invented_{item_id}"
+
+            # Get grid size from placement data or default
+            grid_size = placement_data.get('gridSize', '3x3')
+
+            # Create Recipe object
+            recipe = Recipe(
+                recipe_id=recipe_id,
+                output_id=item_id,
+                output_qty=1,
+                station_type=discipline,
+                station_tier=station_tier,
+                inputs=[
+                    {'materialId': inp.get('materialId'), 'quantity': inp.get('quantity', 1)}
+                    for inp in inputs if inp.get('materialId')
+                ],
+                grid_size=grid_size,
+                mini_game_type=discipline,
+                metadata={
+                    'invented': True,
+                    'narrative': recipe_record.get("narrative", ""),
+                    'timestamp': recipe_record.get("timestamp", ""),
+                    'item_name': recipe_record.get("item_name", ""),
+                    'placement_data': placement_data
+                }
+            )
+
+            # Register with database
+            recipe_db = RecipeDatabase.get_instance()
+            recipe_db.recipes[recipe_id] = recipe
+
+            # Also add to recipes_by_station for get_recipes_for_station lookup
+            if discipline not in recipe_db.recipes_by_station:
+                recipe_db.recipes_by_station[discipline] = []
+            # Check if not already added (avoid duplicates)
+            if not any(r.recipe_id == recipe_id for r in recipe_db.recipes_by_station[discipline]):
+                recipe_db.recipes_by_station[discipline].append(recipe)
+
+        except Exception as e:
+            print(f"Warning: Could not register invented recipe {recipe_record.get('item_id', 'unknown')}: {e}")
 
     def recalculate_stats(self):
         """Recalculate character stats based on equipment, class, titles, etc."""
