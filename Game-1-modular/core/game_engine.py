@@ -322,6 +322,9 @@ class GameEngine:
         if self.character and not self.character.class_system.current_class:
             self.character.class_selection_open = True
 
+        # Proactively warm up CNN classifiers at startup (avoids delay on first INVENT)
+        self._startup_warmup_cnn_classifiers()
+
         print("\n" + "=" * 60)
         print("✓ Game ready!")
         if Config.DEBUG_INFINITE_RESOURCES:
@@ -2247,6 +2250,77 @@ class GameEngine:
 
         # Run in background thread to avoid blocking UI
         thread = threading.Thread(target=background_load, daemon=True)
+        thread.start()
+
+    def _startup_warmup_cnn_classifiers(self):
+        """
+        Proactively warm up CNN classifiers at game startup.
+
+        This runs TensorFlow warmup predictions for smithing and adornments CNNs
+        to avoid the delay that would otherwise occur on the user's first INVENT.
+        Runs in a background thread to avoid blocking game startup.
+        """
+        import threading
+
+        def warmup_task():
+            try:
+                from systems.crafting_classifier import get_classifier_manager, init_classifier_manager
+                from data.databases import MaterialDatabase
+                from pathlib import Path
+                import numpy as np
+
+                print("Starting CNN classifier warmup...")
+
+                # Initialize classifier manager if needed
+                classifier_mgr = get_classifier_manager()
+                if classifier_mgr is None:
+                    project_root = Path(__file__).parent.parent.parent
+                    materials_db = MaterialDatabase.get_instance()
+                    classifier_mgr = init_classifier_manager(project_root, materials_db)
+
+                # Warmup CNN classifiers (smithing and adornments)
+                cnn_disciplines = ['smithing', 'adornments']
+                for discipline in cnn_disciplines:
+                    config = classifier_mgr.configs.get(discipline)
+                    if not config or not config.enabled or config.classifier_type != 'cnn':
+                        continue
+
+                    print(f"  Warming up {discipline} CNN...")
+
+                    # Get or create the backend (triggers model loading)
+                    backend = classifier_mgr.get_backend(discipline)
+                    if not backend or not backend.is_loaded():
+                        print(f"  Warning: {discipline} CNN failed to load")
+                        continue
+
+                    # Create dummy input for warmup prediction
+                    if discipline == 'smithing':
+                        dummy_input = np.zeros((36, 36, 3), dtype=np.float32)
+                    elif discipline == 'adornments':
+                        dummy_input = np.zeros((56, 56, 3), dtype=np.float32)
+                    else:
+                        dummy_input = np.zeros((36, 36, 3), dtype=np.float32)
+
+                    # Run warmup prediction (compiles TensorFlow graph)
+                    try:
+                        _ = backend.predict(dummy_input)
+                        print(f"  ✓ {discipline} CNN warmup complete")
+                    except Exception as e:
+                        print(f"  Warning: {discipline} CNN warmup prediction failed: {e}")
+
+                    # Also initialize the image renderer (loads color encoder)
+                    try:
+                        _ = classifier_mgr.get_image_renderer(discipline)
+                    except Exception as e:
+                        print(f"  Warning: {discipline} image renderer init failed: {e}")
+
+                print("CNN classifier warmup finished")
+
+            except Exception as e:
+                print(f"Warning: CNN startup warmup failed: {e}")
+
+        # Run in background thread to avoid blocking game startup
+        thread = threading.Thread(target=warmup_task, daemon=True, name="CNN-Warmup")
         thread.start()
 
     def _close_interactive_crafting(self):

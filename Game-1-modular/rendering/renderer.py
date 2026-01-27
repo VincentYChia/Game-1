@@ -5310,7 +5310,11 @@ class Renderer:
 
     def _render_loading_overlay(self, loading_state, current_time: float):
         """Render a full-screen semi-transparent loading overlay with animation."""
+        import math
         s = Config.scale
+
+        # Check if in completion state
+        is_complete = getattr(loading_state, 'is_complete', False)
 
         # Semi-transparent dark overlay
         overlay = pygame.Surface((Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
@@ -5328,56 +5332,106 @@ class Renderer:
         panel.fill((20, 25, 45, 240))
         self.screen.blit(panel, (panel_x, panel_y))
 
-        # Panel border with glow effect
-        border_color = (80, 120, 200)
+        # Panel border with glow effect (green for complete, blue for loading)
+        border_color = (80, 200, 120) if is_complete else (80, 120, 200)
         pygame.draw.rect(self.screen, border_color,
                         (panel_x, panel_y, panel_width, panel_height), 2)
 
-        # Animated spinner/orbs
         center_x = panel_x + panel_width // 2
         center_y = panel_y + s(60)
-        orb_radius = s(6)
-        orbit_radius = s(30)
-        num_orbs = 8
-
         elapsed = current_time - loading_state.start_time
-        for i in range(num_orbs):
-            angle = (elapsed * 2 + i * (6.28 / num_orbs))
-            orb_x = center_x + int(orbit_radius * __import__('math').cos(angle))
-            orb_y = center_y + int(orbit_radius * __import__('math').sin(angle))
 
-            # Fade orbs based on position (trailing effect)
-            alpha = int(255 * (0.3 + 0.7 * ((i + elapsed * num_orbs) % num_orbs) / num_orbs))
-            orb_color = (100 + int(50 * __import__('math').sin(elapsed + i)), 150, 255, min(255, alpha))
+        if is_complete:
+            # COMPLETION STATE: Show checkmark
+            checkmark_radius = s(35)
 
-            # Draw orb with glow
-            orb_surf = pygame.Surface((orb_radius * 3, orb_radius * 3), pygame.SRCALPHA)
-            pygame.draw.circle(orb_surf, orb_color, (orb_radius * 3 // 2, orb_radius * 3 // 2), orb_radius)
-            self.screen.blit(orb_surf, (orb_x - orb_radius * 3 // 2, orb_y - orb_radius * 3 // 2))
+            # Animated scale for pop-in effect
+            import time
+            complete_time = getattr(loading_state, '_complete_time', current_time)
+            anim_elapsed = current_time - complete_time
+            scale_factor = min(1.0, anim_elapsed * 4)  # Pop in over 0.25 seconds
+            scale_factor = 1 - (1 - scale_factor) ** 3  # Ease out
+
+            # Draw checkmark circle (green)
+            circle_color = (60, 180, 100)
+            scaled_radius = int(checkmark_radius * scale_factor)
+            pygame.draw.circle(self.screen, circle_color, (center_x, center_y), scaled_radius)
+
+            # Draw checkmark (white)
+            if scale_factor > 0.3:
+                check_scale = min(1.0, (scale_factor - 0.3) / 0.7)
+                # Checkmark points relative to center
+                check_points = [
+                    (center_x - s(15), center_y),
+                    (center_x - s(5), center_y + s(12)),
+                    (center_x + s(18), center_y - s(10))
+                ]
+                # Animate the checkmark drawing
+                if check_scale > 0:
+                    # Draw first part of checkmark
+                    if check_scale > 0:
+                        end_idx = min(check_scale, 0.5) * 2
+                        p1 = check_points[0]
+                        p2 = (
+                            int(check_points[0][0] + (check_points[1][0] - check_points[0][0]) * min(1, end_idx)),
+                            int(check_points[0][1] + (check_points[1][1] - check_points[0][1]) * min(1, end_idx))
+                        )
+                        pygame.draw.line(self.screen, (255, 255, 255), p1, p2, s(4))
+
+                    # Draw second part of checkmark
+                    if check_scale > 0.5:
+                        end_idx = (check_scale - 0.5) * 2
+                        p1 = check_points[1]
+                        p2 = (
+                            int(check_points[1][0] + (check_points[2][0] - check_points[1][0]) * min(1, end_idx)),
+                            int(check_points[1][1] + (check_points[2][1] - check_points[1][1]) * min(1, end_idx))
+                        )
+                        pygame.draw.line(self.screen, (255, 255, 255), p1, p2, s(4))
+
+        else:
+            # LOADING STATE: Show animated spinner/orbs
+            orb_radius = s(6)
+            orbit_radius = s(30)
+            num_orbs = 8
+
+            for i in range(num_orbs):
+                angle = (elapsed * 2 + i * (6.28 / num_orbs))
+                orb_x = center_x + int(orbit_radius * math.cos(angle))
+                orb_y = center_y + int(orbit_radius * math.sin(angle))
+
+                # Fade orbs based on position (trailing effect)
+                alpha = int(255 * (0.3 + 0.7 * ((i + elapsed * num_orbs) % num_orbs) / num_orbs))
+                orb_color = (100 + int(50 * math.sin(elapsed + i)), 150, 255, min(255, alpha))
+
+                # Draw orb with glow
+                orb_surf = pygame.Surface((orb_radius * 3, orb_radius * 3), pygame.SRCALPHA)
+                pygame.draw.circle(orb_surf, orb_color, (orb_radius * 3 // 2, orb_radius * 3 // 2), orb_radius)
+                self.screen.blit(orb_surf, (orb_x - orb_radius * 3 // 2, orb_y - orb_radius * 3 // 2))
 
         # Main message
         message = loading_state.message or "Generating..."
-        msg_surf = self.font.render(message, True, (220, 230, 255))
+        msg_color = (180, 255, 200) if is_complete else (220, 230, 255)
+        msg_surf = self.font.render(message, True, msg_color)
         msg_x = center_x - msg_surf.get_width() // 2
         msg_y = panel_y + s(110)
         self.screen.blit(msg_surf, (msg_x, msg_y))
 
-        # Subtitle
-        subtitle = loading_state.subtitle
-        if subtitle:
-            sub_surf = self.small_font.render(subtitle, True, (150, 160, 190))
-            sub_x = center_x - sub_surf.get_width() // 2
-            sub_y = msg_y + s(30)
-            self.screen.blit(sub_surf, (sub_x, sub_y))
+        # Subtitle (only when not complete)
+        if not is_complete:
+            subtitle = loading_state.subtitle
+            if subtitle:
+                sub_surf = self.small_font.render(subtitle, True, (150, 160, 190))
+                sub_x = center_x - sub_surf.get_width() // 2
+                sub_y = msg_y + s(30)
+                self.screen.blit(sub_surf, (sub_x, sub_y))
 
-        # Animated dots
-        num_dots = int((elapsed * 2) % 4)
-        dots = "." * num_dots
-        dots_surf = self.small_font.render(dots, True, (150, 160, 190))
-        self.screen.blit(dots_surf, (center_x + msg_surf.get_width() // 2 + s(5), msg_y))
+            # Animated dots
+            num_dots = int((elapsed * 2) % 4)
+            dots = "." * num_dots
+            dots_surf = self.small_font.render(dots, True, (150, 160, 190))
+            self.screen.blit(dots_surf, (center_x + msg_surf.get_width() // 2 + s(5), msg_y))
 
-        # Progress bar (if progress > 0)
-        progress = loading_state.progress
+        # Progress bar
         bar_width = panel_width - s(60)
         bar_height = s(8)
         bar_x = panel_x + s(30)
@@ -5386,24 +5440,44 @@ class Renderer:
         # Bar background
         pygame.draw.rect(self.screen, (30, 35, 55), (bar_x, bar_y, bar_width, bar_height))
 
-        if progress > 0:
-            # Determinate progress
-            fill_width = int(bar_width * progress)
-            # Gradient from blue to cyan
-            fill_color = (
-                int(80 + 40 * progress),
-                int(150 + 50 * progress),
-                255
-            )
-            pygame.draw.rect(self.screen, fill_color, (bar_x, bar_y, fill_width, bar_height))
+        # Get animated progress (smooth animation from 0% to 90% over time)
+        if hasattr(loading_state, 'get_animated_progress'):
+            progress = loading_state.get_animated_progress()
         else:
-            # Indeterminate animation (sliding highlight)
+            progress = loading_state.progress
+
+        if progress > 0 or is_complete:
+            # Determinate progress bar
+            fill_width = int(bar_width * progress)
+            # Green for complete, blue-to-cyan gradient for loading
+            if is_complete:
+                fill_color = (80, 200, 120)
+            else:
+                fill_color = (
+                    int(80 + 40 * progress),
+                    int(150 + 50 * progress),
+                    255
+                )
+            pygame.draw.rect(self.screen, fill_color, (bar_x, bar_y, fill_width, bar_height))
+
+            # Add shimmer effect for visual interest
+            if not is_complete and progress < 1.0:
+                shimmer_pos = int((elapsed * 100) % fill_width) if fill_width > 0 else 0
+                if shimmer_pos > 0 and shimmer_pos < fill_width:
+                    shimmer_width = min(s(20), fill_width - shimmer_pos)
+                    for i in range(shimmer_width):
+                        alpha = int(80 * math.sin(math.pi * i / shimmer_width))
+                        shimmer_surf = pygame.Surface((1, bar_height), pygame.SRCALPHA)
+                        shimmer_surf.fill((255, 255, 255, alpha))
+                        self.screen.blit(shimmer_surf, (bar_x + shimmer_pos + i, bar_y))
+        else:
+            # Indeterminate animation (sliding highlight) - fallback
             pattern_width = s(60)
             offset = int((elapsed * 150) % (bar_width + pattern_width)) - pattern_width
 
             # Create gradient highlight
             for i in range(pattern_width):
-                alpha = int(180 * __import__('math').sin(__import__('math').pi * i / pattern_width))
+                alpha = int(180 * math.sin(math.pi * i / pattern_width))
                 px = bar_x + offset + i
                 if bar_x <= px < bar_x + bar_width:
                     line_color = (100, 180, 255, alpha)
@@ -5411,8 +5485,9 @@ class Renderer:
                     line_surf.fill(line_color)
                     self.screen.blit(line_surf, (px, bar_y))
 
-        # Bar border
-        pygame.draw.rect(self.screen, (60, 80, 120), (bar_x, bar_y, bar_width, bar_height), 1)
+        # Bar border (green for complete, blue for loading)
+        bar_border_color = (80, 180, 120) if is_complete else (60, 80, 120)
+        pygame.draw.rect(self.screen, bar_border_color, (bar_x, bar_y, bar_width, bar_height), 1)
 
     def _render_loading_corner(self, loading_state, current_time: float):
         """Render a small loading indicator in the bottom-right corner."""

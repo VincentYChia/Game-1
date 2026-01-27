@@ -104,34 +104,85 @@ class LLMConfig:
 class LoadingState:
     """Thread-safe loading state for UI indicators and full-screen overlays"""
 
+    # Animation constants
+    SMOOTH_PROGRESS_DURATION = 15.0  # Seconds to animate from 0% to 90%
+    SMOOTH_PROGRESS_MAX = 0.90  # Maximum animated progress (90%)
+    COMPLETION_DELAY = 0.5  # Seconds to show completion state before closing
+
     def __init__(self):
         self._lock = threading.Lock()
         self._is_loading = False
         self._message = ""
-        self._progress = 0.0  # 0.0 to 1.0
+        self._progress = 0.0  # 0.0 to 1.0 (real progress from caller)
         self._overlay_mode = False  # Full-screen overlay vs small indicator
         self._subtitle = ""  # Secondary message for overlay
         self._start_time = 0.0  # For animation timing
+        self._complete_state = False  # True when showing completion animation
+        self._complete_time = 0.0  # When completion state started
+        self._use_smooth_animation = True  # Animate progress even when not set
 
     @property
     def is_loading(self) -> bool:
         with self._lock:
+            # If in complete state, check if delay has passed
+            if self._complete_state:
+                import time
+                if time.time() - self._complete_time >= self.COMPLETION_DELAY:
+                    # Delay passed - actually finish
+                    self._complete_state = False
+                    self._is_loading = False
+                    return False
+                return True  # Still showing completion
             return self._is_loading
 
     @property
     def message(self) -> str:
         with self._lock:
+            if self._complete_state:
+                return "Item Generation Complete"
             return self._message
 
     @property
     def subtitle(self) -> str:
         with self._lock:
+            if self._complete_state:
+                return ""  # No subtitle in complete state
             return self._subtitle
 
     @property
     def progress(self) -> float:
+        """Get the display progress (may be animated)"""
         with self._lock:
+            if self._complete_state:
+                return 1.0  # Full progress when complete
             return self._progress
+
+    def get_animated_progress(self) -> float:
+        """
+        Get progress for display, with smooth animation if enabled.
+
+        If use_smooth_animation is True and no real progress is set,
+        animates from 0% to 90% over SMOOTH_PROGRESS_DURATION seconds.
+        """
+        import time
+        with self._lock:
+            if self._complete_state:
+                return 1.0
+
+            # If real progress is set (> 0), use it
+            if self._progress > 0:
+                return self._progress
+
+            # Otherwise, animate smoothly
+            if self._use_smooth_animation and self._overlay_mode:
+                elapsed = time.time() - self._start_time
+                # Ease-out animation from 0 to 90% over duration
+                t = min(elapsed / self.SMOOTH_PROGRESS_DURATION, 1.0)
+                # Ease-out cubic for natural deceleration
+                eased = 1 - (1 - t) ** 3
+                return eased * self.SMOOTH_PROGRESS_MAX
+
+            return 0.0
 
     @property
     def overlay_mode(self) -> bool:
@@ -143,6 +194,12 @@ class LoadingState:
         with self._lock:
             return self._start_time
 
+    @property
+    def is_complete(self) -> bool:
+        """Check if in completion state (showing checkmark)"""
+        with self._lock:
+            return self._complete_state
+
     def start(self, message: str = "Loading...", overlay: bool = False, subtitle: str = ""):
         import time
         with self._lock:
@@ -152,6 +209,8 @@ class LoadingState:
             self._overlay_mode = overlay
             self._subtitle = subtitle
             self._start_time = time.time()
+            self._complete_state = False
+            self._complete_time = 0.0
 
     def update(self, message: str = None, progress: float = None, subtitle: str = None):
         with self._lock:
@@ -163,12 +222,25 @@ class LoadingState:
                 self._subtitle = subtitle
 
     def finish(self):
+        """
+        Transition to completion state (shows checkmark) before actually finishing.
+        For overlay mode, shows completion animation for COMPLETION_DELAY seconds.
+        """
+        import time
         with self._lock:
-            self._is_loading = False
-            self._message = ""
-            self._subtitle = ""
-            self._progress = 1.0
-            self._overlay_mode = False
+            if self._overlay_mode and not self._complete_state:
+                # Start completion state with delay
+                self._complete_state = True
+                self._complete_time = time.time()
+                self._progress = 1.0
+            else:
+                # Non-overlay or already in complete state - finish immediately
+                self._is_loading = False
+                self._message = ""
+                self._subtitle = ""
+                self._progress = 1.0
+                self._overlay_mode = False
+                self._complete_state = False
 
 
 # Global loading state instance
