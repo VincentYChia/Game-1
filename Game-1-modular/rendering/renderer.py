@@ -68,6 +68,38 @@ class Renderer:
         }
         return tier_to_grid.get(tier, (3, 3))
 
+    def _draw_material_icon(self, surf: pygame.Surface, mat, mat_id: str,
+                           center_x: int, center_y: int, icon_size: int,
+                           text_color: Tuple[int, int, int], dimmed: bool = False):
+        """
+        Helper to draw material icon or fallback to text.
+
+        Args:
+            surf: Surface to draw on
+            mat: MaterialDefinition or None
+            mat_id: Material ID for fallback text
+            center_x, center_y: Center position for the icon
+            icon_size: Size of the icon
+            text_color: Color for fallback text
+            dimmed: If True, apply 50% alpha for recipe hints
+        """
+        if mat and mat.icon_path:
+            image_cache = ImageCache.get_instance()
+            icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+            if icon:
+                if dimmed:
+                    icon = icon.copy()
+                    icon.set_alpha(128)
+                icon_rect = icon.get_rect(center=(center_x, center_y))
+                surf.blit(icon, icon_rect)
+                return
+
+        # Fallback to text
+        mat_name = (mat.name[:8] if mat else mat_id[:8])
+        text_surf = self.tiny_font.render(mat_name, True, text_color)
+        text_rect = text_surf.get_rect(center=(center_x, center_y))
+        surf.blit(text_surf, text_rect)
+
     def render_smithing_grid(self, surf: pygame.Surface, placement_rect: pygame.Rect,
                            station_tier: int, selected_recipe: Optional[Recipe],
                            user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
@@ -374,8 +406,8 @@ class Renderer:
                           user_placement: Dict[str, str], mouse_pos: Tuple[int, int]):
         """
         Render refining hub-and-spoke with:
-        - Station tier determines number of slots (T1=3 slots, T2=5, T3=7, T4=9)
-        - Core slots in center (hub)
+        - Station tier determines number of slots
+        - Core slots in center (hub) - T1/T2=1, T3=2, T4=3
         - Surrounding slots in circle around core (spokes)
         - User can place materials in slots
 
@@ -384,13 +416,16 @@ class Renderer:
         mat_db = MaterialDatabase.get_instance()
         placement_db = PlacementDatabase.get_instance()
 
-        # Determine slot counts based on station tier
-        # T1: 1 core + 2 surrounding = 3 total
-        # T2: 1 core + 4 surrounding = 5 total
-        # T3: 1 core + 6 surrounding = 7 total
-        # T4: 1 core + 8 surrounding = 9 total
-        core_slots = 1
-        surrounding_slots = 2 + (station_tier - 1) * 2
+        # Determine slot counts based on station tier - MUST MATCH interactive_crafting.py
+        slot_config = {
+            1: {'core': 1, 'surrounding': 2},
+            2: {'core': 1, 'surrounding': 4},
+            3: {'core': 2, 'surrounding': 5},
+            4: {'core': 3, 'surrounding': 6}
+        }
+        config = slot_config.get(station_tier, {'core': 1, 'surrounding': 2})
+        num_core_slots = config['core']
+        num_surrounding_slots = config['surrounding']
 
         # Get recipe placement data if available
         required_core = []
@@ -404,85 +439,68 @@ class Renderer:
         # Calculate slot size
         center_x = placement_rect.centerx
         center_y = placement_rect.centery
-        core_radius = 40  # Radius of core slot
+        core_radius = 35  # Radius of core slot (slightly smaller for multiple)
         surrounding_radius = 30  # Radius of each surrounding slot
-        orbit_radius = 120  # Distance from center to surrounding slots
+        orbit_radius = 100  # Distance from center to surrounding slots
 
         slot_rects = []  # Will store list of (pygame.Rect, slot_id) for click detection
 
-        # Draw core slot
-        core_x = center_x - core_radius
-        core_y = center_y - core_radius
-        core_rect = pygame.Rect(core_x, core_y, core_radius * 2, core_radius * 2)
+        # Calculate core slot positions based on number of cores
+        # 1 core: center, 2 cores: horizontal, 3 cores: triangle
+        core_positions = []
+        if num_core_slots == 1:
+            core_positions = [(center_x, center_y)]
+        elif num_core_slots == 2:
+            spacing = core_radius * 2 + 10
+            core_positions = [
+                (center_x - spacing // 2, center_y),
+                (center_x + spacing // 2, center_y)
+            ]
+        elif num_core_slots == 3:
+            spacing = core_radius * 2 + 5
+            core_positions = [
+                (center_x, center_y - spacing // 2),  # Top
+                (center_x - spacing // 2, center_y + spacing // 3),  # Bottom left
+                (center_x + spacing // 2, center_y + spacing // 3)   # Bottom right
+            ]
 
-        # Determine core slot state
-        has_user_core = "core_0" in user_placement
-        has_required_core = len(required_core) > 0
+        # Draw all core slots
+        for core_idx, (core_cx, core_cy) in enumerate(core_positions):
+            core_rect = pygame.Rect(
+                core_cx - core_radius,
+                core_cy - core_radius,
+                core_radius * 2,
+                core_radius * 2
+            )
 
-        core_color = (50, 70, 50) if has_user_core else ((70, 60, 40) if has_required_core else (30, 30, 40))
-        is_hovered = core_rect.collidepoint(mouse_pos)
-        if is_hovered:
-            core_color = tuple(min(255, c + 20) for c in core_color)
+            slot_id = f"core_{core_idx}"
+            has_user_core = slot_id in user_placement
+            has_required_core = core_idx < len(required_core)
 
-        pygame.draw.circle(surf, core_color, (center_x, center_y), core_radius)
-        pygame.draw.circle(surf, (150, 130, 80), (center_x, center_y), core_radius, 2 if is_hovered else 1)
+            core_color = (50, 70, 50) if has_user_core else ((70, 60, 40) if has_required_core else (30, 30, 40))
+            is_hovered = core_rect.collidepoint(mouse_pos)
+            if is_hovered:
+                core_color = tuple(min(255, c + 20) for c in core_color)
 
-        # Draw core material
-        if has_user_core:
-            mat_id = user_placement["core_0"]
-            mat = mat_db.get_material(mat_id)
-            # Try to show icon first
-            if mat and mat.icon_path:
-                image_cache = ImageCache.get_instance()
-                icon_size = core_radius * 2 - 16  # Leave some padding
-                icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
-                if icon:
-                    icon_rect = icon.get_rect(center=(center_x, center_y))
-                    surf.blit(icon, icon_rect)
-                else:
-                    # Fallback to text
-                    mat_name = mat.name[:8]
-                    text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
-                    text_rect = text_surf.get_rect(center=(center_x, center_y))
-                    surf.blit(text_surf, text_rect)
-            else:
-                # Fallback to text
-                mat_name = (mat.name[:8] if mat else mat_id[:8])
-                text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
-                text_rect = text_surf.get_rect(center=(center_x, center_y))
-                surf.blit(text_surf, text_rect)
-        elif has_required_core:
-            req_mat_id = required_core[0].get('materialId', '')
-            mat = mat_db.get_material(req_mat_id)
-            # Try to show icon first (dimmed for hint)
-            if mat and mat.icon_path:
-                image_cache = ImageCache.get_instance()
-                icon_size = core_radius * 2 - 16
-                icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
-                if icon:
-                    dimmed_icon = icon.copy()
-                    dimmed_icon.set_alpha(128)
-                    icon_rect = dimmed_icon.get_rect(center=(center_x, center_y))
-                    surf.blit(dimmed_icon, icon_rect)
-                else:
-                    # Fallback to text
-                    mat_name = mat.name[:8]
-                    text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
-                    text_rect = text_surf.get_rect(center=(center_x, center_y))
-                    surf.blit(text_surf, text_rect)
-            else:
-                # Fallback to text
-                mat_name = (mat.name[:8] if mat else req_mat_id[:8])
-                text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
-                text_rect = text_surf.get_rect(center=(center_x, center_y))
-                surf.blit(text_surf, text_rect)
+            pygame.draw.circle(surf, core_color, (core_cx, core_cy), core_radius)
+            pygame.draw.circle(surf, (150, 130, 80), (core_cx, core_cy), core_radius, 2 if is_hovered else 1)
 
-        slot_rects.append((core_rect, "core_0"))
+            # Draw core material
+            if has_user_core:
+                mat_id = user_placement[slot_id]
+                mat = mat_db.get_material(mat_id)
+                self._draw_material_icon(surf, mat, mat_id, core_cx, core_cy, core_radius * 2 - 16, (200, 255, 200))
+            elif has_required_core:
+                req_mat_id = required_core[core_idx].get('materialId', '')
+                mat = mat_db.get_material(req_mat_id)
+                self._draw_material_icon(surf, mat, req_mat_id, core_cx, core_cy, core_radius * 2 - 16, (180, 160, 120), dimmed=True)
+
+            slot_rects.append((core_rect, slot_id))
 
         # Draw surrounding slots in circle
         import math
-        for i in range(surrounding_slots):
-            angle = (2 * math.pi * i) / surrounding_slots - math.pi / 2  # Start at top
+        for i in range(num_surrounding_slots):
+            angle = (2 * math.pi * i) / num_surrounding_slots - math.pi / 2  # Start at top
             slot_x = center_x + int(orbit_radius * math.cos(angle))
             slot_y = center_y + int(orbit_radius * math.sin(angle))
 
@@ -558,7 +576,7 @@ class Renderer:
             slot_rects.append((slot_rect, slot_id))
 
         # Draw label
-        label = f"Refining Hub: {core_slots} core + {surrounding_slots} surrounding (T{station_tier})"
+        label = f"Refining Hub: {num_core_slots} core + {num_surrounding_slots} surrounding (T{station_tier})"
         label_surf = self.small_font.render(label, True, (150, 150, 150))
         surf.blit(label_surf, (placement_rect.x + 10, placement_rect.y + 5))
 
