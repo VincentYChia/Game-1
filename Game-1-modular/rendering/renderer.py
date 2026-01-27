@@ -135,6 +135,17 @@ class Renderer:
         recipe_grid_w, recipe_grid_h = grid_w, grid_h  # Default to station grid size
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            # Debug: Log placement lookup for invented recipes
+            if selected_recipe.recipe_id.startswith('invented_'):
+                print(f"[PLACEMENT DEBUG] Looking up: {selected_recipe.recipe_id}")
+                print(f"[PLACEMENT DEBUG] Found: {placement_data is not None}")
+                if placement_data:
+                    print(f"[PLACEMENT DEBUG] grid_size: '{placement_data.grid_size}'")
+                    print(f"[PLACEMENT DEBUG] placement_map keys: {list(placement_data.placement_map.keys())[:5]}...")
+                else:
+                    print(f"[PLACEMENT DEBUG] PlacementDB has {len(placement_db.placements)} total entries")
+                    invented_keys = [k for k in placement_db.placements.keys() if 'invented' in k]
+                    print(f"[PLACEMENT DEBUG] Invented entries: {invented_keys}")
             if placement_data and placement_data.grid_size:
                 # Parse recipe's actual grid size (e.g., "3x3")
                 parts = placement_data.grid_size.lower().split('x')
@@ -432,6 +443,13 @@ class Renderer:
         required_surrounding = []
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
+            # Debug: Log placement lookup for invented recipes
+            if selected_recipe.recipe_id.startswith('invented_'):
+                print(f"[REFINING DEBUG] Looking up: {selected_recipe.recipe_id}")
+                print(f"[REFINING DEBUG] Found: {placement_data is not None}")
+                if placement_data:
+                    print(f"[REFINING DEBUG] core_inputs: {placement_data.core_inputs}")
+                    print(f"[REFINING DEBUG] surrounding_inputs: {placement_data.surrounding_inputs}")
             if placement_data:
                 required_core = placement_data.core_inputs
                 required_surrounding = placement_data.surrounding_inputs
