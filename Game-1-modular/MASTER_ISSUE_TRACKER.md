@@ -1,6 +1,7 @@
 # Master Issue Tracker
 
 **Created**: 2025-12-30
+**Last Updated**: 2026-01-27
 **Purpose**: Comprehensive tracking of all known issues, improvements, and testing requirements
 
 ---
@@ -9,18 +10,18 @@
 
 | Category | Issue | Priority | Status | Effort |
 |----------|-------|----------|--------|--------|
-| Testing | Enchantments (5 missing) | HIGH | Needs Integration | 2-3 hrs |
+| ~~Testing~~ | ~~Enchantments (5 missing)~~ | ~~HIGH~~ | ✅ **RESOLVED** | ~~2-3 hrs~~ |
+| ~~Bug~~ | ~~Inventory Click Misalignment~~ | ~~**CRITICAL**~~ | ✅ **RESOLVED** | ~~30 min~~ |
+| ~~Bug~~ | ~~Default Save Loading~~ | ~~HIGH~~ | ✅ **RESOLVED** | ~~1 hr~~ |
 | Testing | Hostile/Engineering Tags | MEDIUM | Needs Testing | 1-2 hrs |
 | Testing | Turret Status Effects | LOW | Implemented | 30 min |
-| Bug | Inventory Click Misalignment | **CRITICAL** | Needs Fix | 30 min |
-| Bug | Default Save Loading | HIGH | Needs Fix | 1 hr |
 | UI | Tooltip Z-Order | MEDIUM | Needs Fix | 30 min |
 | UI | Class Selection Tags | LOW | Enhancement | 1-2 hrs |
-| UI | Crafting Missing Items | LOW | Consistent | N/A |
 | Content | Crafting Stations JSON | WAITLIST | Placeholder | 2-3 hrs |
 | **Architecture** | Alchemy Hardcoded | MEDIUM | Technical Debt | 4-6 hrs |
 | **Architecture** | Skill Mana/Cooldown Range | LOW | Enhancement | 2-4 hrs |
-| **Overhaul** | Crafting UI & Minigames | **HIGH** | Planning Complete | Multi-week |
+| **Overhaul** | Crafting UI & Minigames | **HIGH** | ✅ Phase 1-2 Complete | Phase 3 pending |
+| **NEW** | LLM Integration | N/A | ✅ Fully Implemented | January 2026 |
 
 ---
 
@@ -28,31 +29,27 @@
 
 ### 1.1 Enchantment System Testing
 
-**Status**: 9/17 enchantments working, 5 need integration, 2 deferred
+**Status**: ✅ 14/17 enchantments fully working, 3 deferred (by design)
 
-#### Working Enchantments (Test to Verify)
-| # | Enchantment | Type | Location | Test Method |
-|---|-------------|------|----------|-------------|
-| 1 | Sharpness I-III | `damage_multiplier` | equipment.py:65, game_engine.py:349 | Attack enemy, check damage increase |
-| 2 | Protection I-III | `defense_multiplier` | combat_manager.py:1188 | Take damage, check reduction |
-| 3 | Efficiency I-II | `gathering_speed_multiplier` | character.py:793 | Harvest resource, check speed |
-| 4 | Fortune I-II | `bonus_yield_chance` | character.py:847 | Harvest many resources, check bonus drops |
-| 5 | Unbreaking I-II | `durability_multiplier` | character.py:818 | Use tool repeatedly, check durability loss |
-| 6 | Fire Aspect | `damage_over_time` | combat_manager.py:780-800 | Attack enemy, check burn applied |
-| 7 | Poison | `damage_over_time` | combat_manager.py:780-800 | Attack enemy, check poison applied |
-| 8 | Swiftness | `movement_speed_multiplier` | character.py:601 | Equip boots, check speed increase |
-| 9 | Thorns | `reflect_damage` | combat_manager.py:1221-1242 | Get hit, check enemy takes damage |
+#### ✅ All Implemented Enchantments (January 2026)
+| # | Enchantment | Type | Location | Status |
+|---|-------------|------|----------|--------|
+| 1 | Sharpness I-III | `damage_multiplier` | equipment.py:65, game_engine.py:349 | ✅ Working |
+| 2 | Protection I-III | `defense_multiplier` | combat_manager.py:1188 | ✅ Working |
+| 3 | Efficiency I-II | `gathering_speed_multiplier` | character.py:793 | ✅ Working |
+| 4 | Fortune I-II | `bonus_yield_chance` | character.py:847 | ✅ Working |
+| 5 | Unbreaking I-II | `durability_multiplier` | character.py:818 | ✅ Working |
+| 6 | Fire Aspect | `damage_over_time` | combat_manager.py:780-800 | ✅ Working |
+| 7 | Poison | `damage_over_time` | combat_manager.py:780-800 | ✅ Working |
+| 8 | Swiftness | `movement_speed_multiplier` | character.py:601 | ✅ Working |
+| 9 | Thorns | `reflect_damage` | combat_manager.py:1221-1242 | ✅ Working |
+| 10 | **Knockback** | `knockback` | combat_manager.py:802-810 | ✅ **FIXED Jan 2026** |
+| 11 | **Lifesteal** | `lifesteal` | combat_manager.py:670-679 | ✅ **FIXED Jan 2026** |
+| 12 | **Health Regen** | `health_regeneration` | character.py update loop | ✅ **FIXED Jan 2026** |
+| 13 | **Frost Touch** | `slow` | combat_manager.py:812-821 | ✅ **FIXED Jan 2026** |
+| 14 | **Chain Damage** | `chain_damage` | combat_manager.py:683-703 | ✅ **FIXED Jan 2026** |
 
-#### Enchantments Needing Integration
-| # | Enchantment | Type | JSON Location | Integration Point |
-|---|-------------|------|---------------|-------------------|
-| 10 | **Knockback** | `knockback` | recipes-enchanting-1.JSON:627-652 | combat_manager.py:802-810 (partial) |
-| 11 | **Lifesteal** | `lifesteal` | recipes-enchanting-1.JSON:686-710 | combat_manager.py:670-679 (partial) |
-| 12 | **Health Regen** | `health_regeneration` | recipes-enchanting-1.JSON:514-540 | Needs periodic update loop |
-| 13 | **Frost Touch** | `slow` | recipes-enchanting-1.JSON:183-205 | combat_manager.py:812-821 (partial) |
-| 14 | **Chain Damage** | `chain_damage` | recipes-enchanting-1.JSON:207-235 | combat_manager.py:683-703 (implemented!) |
-
-#### Deferred Enchantments
+#### Deferred Enchantments (By Design)
 | # | Enchantment | Type | Reason |
 |---|-------------|------|--------|
 | 15 | Self-Repair | `durability_regeneration` | Needs game loop periodic update |
@@ -118,61 +115,29 @@ Turrets can receive status effects from enemy abilities:
 
 ## SECTION 2: BUGS TO FIX
 
-### 2.1 Inventory Click Misalignment [CRITICAL]
+### ~~2.1 Inventory Click Misalignment~~ [RESOLVED]
 
-**Root Cause**: Spacing mismatch between rendering and click detection
+**Status**: ✅ **FIXED January 2026**
 
-| Component | File | Line | Spacing Value |
-|-----------|------|------|---------------|
-| Renderer | renderer.py | 2472 | `spacing = 10` |
-| Right-click handler | game_engine.py | 872 | `spacing = 5` |
-| Left-click handler | game_engine.py | 1366 | `spacing = 5` |
-| Drag end handler | game_engine.py | 2820 | `spacing = 5` |
+~~**Root Cause**: Spacing mismatch between rendering and click detection~~
 
-**Additional Issues**:
-- Right-click: `start_y = INVENTORY_PANEL_Y` should be `+125`
-- Drag end: Same start_y issue
-
-**Impact**: After loading saves (or any time), inventory clicks register on wrong slots
-
-**Fix Required**:
-```python
-# In game_engine.py, change ALL instances of:
-slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 5
-# To:
-slot_size, spacing = Config.INVENTORY_SLOT_SIZE, 10
-
-# Also fix start_y in handle_right_click() and handle_mouse_release():
-start_y = Config.INVENTORY_PANEL_Y + 125  # Not just INVENTORY_PANEL_Y
-```
+All spacing values have been synchronized to `spacing = 10` across:
+- renderer.py
+- game_engine.py (right-click, left-click, drag handlers)
 
 ---
 
-### 2.2 Default Save Loading Issues
+### ~~2.2 Default Save Loading Issues~~ [RESOLVED]
 
-**Issues Found**:
+**Status**: ✅ **FIXED January 2026**
 
-1. **Missing icon_path on equipment** (HIGH)
-   - Location: `entities/character.py:369-384`
-   - Problem: EquipmentItem creation doesn't restore `icon_path`
-   - Fix: Add `icon_path=eq_data.get("icon_path", "")` to constructor
-
-2. **Default save missing icon_path data** (HIGH)
-   - Location: `saves/default_save.json`
-   - Problem: Equipment items don't include icon_path field
-   - Fix: Regenerate default save with icon_path data
-
-3. **Spacing mismatch** (CRITICAL - see 2.1)
-   - This is the PRIMARY cause of clicks not working after load
-
-**Files to Modify**:
-- `entities/character.py:369-384` - Add icon_path restoration
-- `saves/default_save.json` - Regenerate with icon_path
-- `game_engine.py:872, 1366, 2820` - Fix spacing values
+All icon_path restoration issues have been resolved:
+- EquipmentItem creation now restores `icon_path`
+- Spacing mismatches fixed (see 2.1)
 
 ---
 
-### 2.3 Inventory Tooltip Z-Order
+### 2.3 Inventory Tooltip Z-Order [OPEN]
 
 **Issue**: Tooltips can be covered by equipment menu
 
@@ -435,24 +400,25 @@ These mechanics are documented but have NO code implementation:
 
 ## SECTION 6: PRIORITY ORDER
 
-### Immediate (Critical Bugs)
-1. **Fix inventory click misalignment** - Breaks core gameplay
-2. **Fix save loading icon_path** - Visual regression
+### ✅ Completed (January 2026)
+1. ~~**Fix inventory click misalignment**~~ - ✅ RESOLVED
+2. ~~**Fix save loading icon_path**~~ - ✅ RESOLVED
+3. ~~**Integrate 5 missing enchantments**~~ - ✅ All 14 enchantments working
+4. ~~**LLM Integration**~~ - ✅ Fully implemented
 
 ### Short-term (Testing & Verification)
-3. Test all 9 working enchantments
-4. Test turret status effects
-5. Test traps/bombs/utility devices
+5. Test all 14 working enchantments
+6. Test turret status effects
+7. Test traps/bombs/utility devices
 
 ### Medium-term (Enhancements)
-6. Integrate 5 missing enchantments
-7. Fix tooltip z-order
-8. Enhance class selection display
+8. Fix tooltip z-order
+9. Enhance class selection display
 
 ### Long-term (Waitlist)
-9. Add missing crafting station JSONs
-10. Create missing station icons
-11. Add class tag-based bonuses
+10. Add missing crafting station JSONs (Tier 3/4)
+11. Create missing station icons
+12. Add class tag-based bonuses
 
 ---
 
@@ -700,4 +666,40 @@ Each discipline needs distinct aesthetic to match its theme:
 
 ---
 
-**Last Updated**: 2026-01-15
+## SECTION 9: LLM INTEGRATION (NEW - January 2026)
+
+### Overview
+
+The LLM-powered "Invented Items" system is **fully implemented**:
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| LLM Item Generator | ✅ Working | `systems/llm_item_generator.py` (1,393 lines) |
+| Crafting Classifiers | ✅ Working | `systems/crafting_classifier.py` (1,256 lines) |
+| CNN Models (Smithing) | ✅ Trained | `Scaled JSON Development/Convolution Neural Network/` |
+| LightGBM Models | ✅ Trained | `Scaled JSON Development/Simple Classifiers/` |
+| Invented Recipe Persistence | ✅ Working | `character.invented_recipes` |
+| Debug Logging | ✅ Working | `llm_debug_logs/` |
+
+### Classifier Mapping
+| Discipline | Model | Input |
+|------------|-------|-------|
+| Smithing | CNN | 36×36×3 RGB image |
+| Adornments | CNN | 56×56×3 RGB image |
+| Alchemy | LightGBM | 34 features |
+| Refining | LightGBM | 18 features |
+| Engineering | LightGBM | 28 features |
+
+### Configuration
+- Model: `claude-sonnet-4-20250514`
+- Temperature: 0.4
+- Max tokens: 2000
+- Timeout: 30.0 seconds
+
+### Documentation
+- System overview: `Scaled JSON Development/LLM Training Data/Fewshot_llm/README.md`
+- Prompt tuning: `Scaled JSON Development/LLM Training Data/Fewshot_llm/MANUAL_TUNING_GUIDE.md`
+
+---
+
+**Last Updated**: 2026-01-27

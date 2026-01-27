@@ -1,6 +1,6 @@
 # Known Limitations and Missing Features
 
-**Last Updated**: 2025-12-25
+**Last Updated**: 2026-01-27
 **Status**: Documenting current system boundaries and unimplemented features
 
 ---
@@ -17,6 +17,8 @@
 | **Consumables** | ✅ FULL | ⚠️ PARTIAL | ⚠️ PARTIAL | Potions work, some effects missing |
 | **Recipes** | ⚠️ CORE ONLY | ✅ FULL | N/A | NOT integrated with Update-N |
 | **Crafting Stations** | ✅ FULL | ✅ FULL | ⚠️ PARTIAL | Work but limited recipe support |
+| **LLM Integration** | ✅ FULL | ✅ FULL | N/A | **NEW Jan 2026** - Invented items system |
+| **ML Classifiers** | ✅ FULL | ✅ FULL | N/A | **NEW Jan 2026** - CNN + LightGBM validation |
 
 ---
 
@@ -332,9 +334,52 @@ Update-N → Data Loads ✅
 | **Core Devices** | ✅ | ⚠️ | ❌ | ✅ | 🔴 50% |
 | **Core Consumables** | ✅ | ⚠️ | ⚠️ | ✅ | 🟡 75% |
 
-**Overall System Health**: 🟡 **75-80% Complete**
+**Overall System Health**: 🟡 **85% Complete** (up from 75-80% with LLM integration)
 
 **To Reach 100%**: Fix recipes, icons, and device effects
+
+---
+
+## 🤖 LLM Integration Limitations (NEW - January 2026)
+
+### What Works
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| **Claude API Integration** | ✅ FULL | Via `anthropic` library |
+| **CNN Classifiers** | ✅ FULL | Smithing (36×36) and Adornments (56×56) |
+| **LightGBM Classifiers** | ✅ FULL | Alchemy, Refining, Engineering |
+| **Invented Recipe Persistence** | ✅ FULL | Saved with character data |
+| **Background Generation** | ✅ FULL | Non-blocking async generation |
+| **MockBackend Fallback** | ✅ FULL | Works without API key |
+| **Debug Logging** | ✅ FULL | All API calls logged |
+
+### Known Limitations
+
+| Limitation | Impact | Workaround |
+|------------|--------|------------|
+| **API Key Required** | ❌ Full LLM generation needs Anthropic API key | Use MockBackend (placeholder items) |
+| **30s Timeout** | ⚠️ Complex items may timeout | Retry or simplify material combinations |
+| **Rate Limiting** | ⚠️ Heavy use may hit API limits | Built-in retry logic helps |
+| **Model Accuracy** | ⚠️ CNN/LightGBM not 100% accurate | May reject valid patterns or accept invalid ones |
+| **CNN Warmup** | ⚠️ First prediction slower | Warmup at startup reduces this |
+
+### API Requirements
+
+```bash
+# Required environment variable
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# Or .env file
+echo "ANTHROPIC_API_KEY=sk-ant-..." > Game-1-modular/.env
+```
+
+### Debug Logging Location
+
+All LLM API calls are logged to:
+```
+Game-1-modular/llm_debug_logs/TIMESTAMP_discipline.json
+```
 
 ---
 

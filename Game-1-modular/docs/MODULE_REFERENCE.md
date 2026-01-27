@@ -1,8 +1,12 @@
 # Module Reference Guide
 
+**Last Updated**: 2026-01-27
+
 Complete documentation of every Python module in Game-1-Modular.
 
 **Purpose**: Quick reference for understanding what each file does and how to use it.
+
+**Statistics**: 136 Python files, ~62,380 lines of code
 
 ---
 
@@ -15,10 +19,11 @@ Complete documentation of every Python module in Game-1-Modular.
 5. [Entities](#entities)
 6. [Entity Components](#entity-components)
 7. [Game Systems](#game-systems)
-8. [Rendering](#rendering)
-9. [Crafting Subdisciplines](#crafting-subdisciplines)
-10. [Combat (Legacy)](#combat-legacy)
-11. [Tools & Utilities](#tools--utilities)
+8. [LLM Integration](#llm-integration) *(NEW)*
+9. [Rendering](#rendering)
+10. [Crafting Subdisciplines](#crafting-subdisciplines)
+11. [Combat System](#combat-system)
+12. [Tools & Utilities](#tools--utilities)
 
 ---
 
@@ -90,7 +95,7 @@ slot_size = Config.INVENTORY_SLOT_SIZE
 ---
 
 ### core/game_engine.py
-**Lines**: ~2,100
+**Lines**: ~7,817
 **Dependencies**: Everything (orchestrator)
 
 **Purpose**: Main game engine that coordinates all systems.
@@ -103,6 +108,8 @@ slot_size = Config.INVENTORY_SLOT_SIZE
 5. Manage game state (menus, minigames, dialogs)
 6. Coordinate rendering
 7. Save/load game state
+8. Render all 5 crafting minigames
+9. Handle LLM item generation callbacks
 
 **Key Methods**:
 ```python
@@ -984,10 +991,10 @@ class EquipmentManager:
 ---
 
 ### entities/components/skill_manager.py
-**Lines**: ~180
+**Lines**: ~709
 **Dependencies**: `data.databases.skill_db`, `data.models.skills`
 
-**Purpose**: Manage learned skills and hotbar.
+**Purpose**: Manage learned skills, hotbar, and class affinity bonuses.
 
 ```python
 class SkillManager:
@@ -1006,6 +1013,9 @@ class SkillManager:
 
     def update_cooldowns(delta_time: float):
         """Reduce cooldowns"""
+
+    def get_affinity_bonus(skill_id: str, character) -> float:
+        """Calculate class affinity bonus for skill"""
 ```
 
 ---
@@ -1124,11 +1134,13 @@ class NaturalResource:
 
 ---
 
-### systems/combat_manager.py (in systems/)
-**Lines**: ~200
-**Dependencies**: `systems.enemy`
+## Combat System
 
-**Purpose**: Manage enemy spawning and combat.
+### Combat/combat_manager.py
+**Lines**: ~1,655
+**Dependencies**: `entities.character`, `entities.status_effect`, `core.effect_executor`
+
+**Purpose**: Full combat system with damage pipeline, enchantments, and status effects.
 
 ```python
 class CombatManager:
@@ -1136,20 +1148,54 @@ class CombatManager:
     active_enemies: List[Enemy]
     spawn_cooldown: float
 
+    def calculate_damage(base_damage: int, attacker, defender) -> int:
+        """Full damage pipeline with multipliers, enchantments, defense."""
+
+    def apply_enchantment_effects(weapon, target, damage: int):
+        """Apply weapon enchantments (Fire Aspect, Lifesteal, etc.)."""
+
     def spawn_initial_enemies(center: Tuple, count: int):
         """Spawn enemies around position"""
 
-    def spawn_enemy(position: Tuple):
-        """Create single enemy"""
-
     def update(delta_time: float, character_pos: Tuple):
-        """Update AI, attacks, respawns"""
-
-    def remove_dead_enemies():
-        """Clean up defeated enemies"""
+        """Update AI, attacks, respawns, status effects"""
 ```
 
-**Enemy Class**:
+**Damage Pipeline**:
+```
+Base Damage (weapon)
+  × Hand Type Bonus (+10-20%)
+  × Strength Multiplier (1.0 + STR × 0.05)
+  × Skill Buff Bonus (+50% to +400%)
+  × Class Affinity Bonus (up to +20%)
+  × Title Bonus
+  × Weapon Tag Bonuses
+  × Critical Hit (2x if triggered)
+  - Enemy Defense (max 75% reduction)
+  = Final Damage
+```
+
+**Implemented Enchantments** (9 fully working):
+| Enchantment | Type | Trigger |
+|-------------|------|---------|
+| Sharpness | damage_multiplier | Passive |
+| Protection | defense_multiplier | Passive |
+| Fire Aspect | damage_over_time | On hit |
+| Lifesteal | lifesteal | On hit |
+| Knockback | knockback | On hit |
+| Chain Damage | chain_damage | On hit |
+| Thorns | reflect_damage | On hit received |
+| Unbreaking | durability_multiplier | Passive |
+| Slow (Frost) | slow | On hit |
+
+---
+
+### Combat/enemy.py
+**Lines**: ~867
+**Dependencies**: `data.databases`, `data.models.world`
+
+**Purpose**: Enemy entities, AI behavior, and loot drops.
+
 ```python
 class Enemy:
     position: Tuple[float, float]
@@ -1159,17 +1205,19 @@ class Enemy:
     speed: float
     attack_range: float
     attack_cooldown: float
-    death_time: Optional[float]
-    respawn_delay: float
+    loot_table: List[LootDrop]
 
     def update(delta_time: float, target_pos: Tuple):
         """Move toward and attack player"""
 
     def take_damage(amount: int):
-        """Receive damage"""
+        """Receive damage, check for death"""
 
-    def is_dead() -> bool:
-        """Check death state"""
+    def drop_loot(character):
+        """Add loot to player inventory on death"""
+
+class EnemyDatabase:
+    """Load enemy definitions from JSON."""
 ```
 
 ---
@@ -1287,6 +1335,92 @@ class ClassSystem:
 
 ---
 
+## LLM Integration
+
+### systems/llm_item_generator.py *(NEW - January 2026)*
+**Lines**: ~1,393
+**Dependencies**: `anthropic`, `json`, `threading`
+
+**Purpose**: Generate procedural items via Claude API when players invent new recipes.
+
+**Key Classes**:
+```python
+class LLMItemGenerator:
+    """Main interface for LLM item generation."""
+
+    def __init__(self):
+        self.api_key = os.getenv("ANTHROPIC_API_KEY")
+        self.model = "claude-sonnet-4-20250514"
+        self.temperature = 0.4
+        self.max_tokens = 2000
+        self.timeout = 30.0
+
+    def generate_item(self, materials: List[Dict], discipline: str,
+                      callback: Callable) -> None:
+        """Generate item asynchronously (runs in background thread)."""
+
+    def _build_prompt(self, materials: List[Dict], discipline: str) -> str:
+        """Build few-shot prompt from training data."""
+
+    def _parse_response(self, response: str) -> Dict:
+        """Parse LLM response into item definition."""
+
+class MockBackend:
+    """Fallback when API unavailable - generates placeholder items."""
+```
+
+**Configuration**:
+- API Key: Set `ANTHROPIC_API_KEY` environment variable
+- Fallback: MockBackend generates placeholder items without API
+
+**Debug Logs**: All API calls logged to `llm_debug_logs/TIMESTAMP_discipline.json`
+
+---
+
+### systems/crafting_classifier.py *(NEW - January 2026)*
+**Lines**: ~1,256
+**Dependencies**: `numpy`, `PIL`, `onnxruntime` (CNN), `lightgbm` (LightGBM)
+
+**Purpose**: Validate invented recipe placements using ML classifiers.
+
+**Key Classes**:
+```python
+class CraftingClassifierManager:
+    """Manages all discipline classifiers."""
+
+    def __init__(self):
+        self.smithing_cnn = SmithingCNN()      # 36×36×3 RGB
+        self.adornments_cnn = AdornmentsCNN()   # 56×56×3 RGB
+        self.alchemy_lgb = AlchemyLightGBM()    # 34 features
+        self.refining_lgb = RefiningLightGBM()  # 18 features
+        self.engineering_lgb = EngineeringLightGBM()  # 28 features
+
+    def validate_placement(self, placement: Dict, discipline: str) -> Tuple[bool, float]:
+        """Validate placement, return (is_valid, confidence)."""
+
+class SmithingCNN:
+    """CNN classifier for smithing grid patterns."""
+
+    def preprocess(self, grid: List[List[str]]) -> np.ndarray:
+        """Convert grid to 36×36×3 RGB image using material colors."""
+
+    def predict(self, image: np.ndarray) -> Tuple[bool, float]:
+        """Run inference, return (is_valid, confidence)."""
+```
+
+**Classifier Mapping**:
+| Discipline | Model | Input Size | Features |
+|------------|-------|------------|----------|
+| Smithing | CNN (ONNX) | 36×36×3 | RGB image from grid |
+| Adornments | CNN (ONNX) | 56×56×3 | RGB image from grid |
+| Alchemy | LightGBM | 34 | Tier counts, material types, ratios |
+| Refining | LightGBM | 18 | Tier balance, category counts |
+| Engineering | LightGBM | 28 | Slot usage, component types |
+
+**CNN Warmup**: Models warm up at startup to avoid first-call latency.
+
+---
+
 ### systems/npc_system.py
 **Lines**: ~60
 **Dependencies**: `data.models.npcs`
@@ -1379,123 +1513,140 @@ def render_start_menu():
 
 ## Crafting Subdisciplines
 
-Optional minigame modules. Can be missing without breaking game.
+All 5 discipline minigames with difficulty/reward integration.
 
 ### Crafting-subdisciplines/smithing.py
-**Lines**: ~250
-**Dependencies**: None (standalone)
+**Lines**: ~749
+**Dependencies**: `core.difficulty_calculator`, `core.reward_calculator`
 
-**Purpose**: Smithing minigame - hammer timing.
+**Purpose**: Smithing minigame - hammer timing on forge aesthetic.
 
 ```python
 class SmithingMinigame:
-    def __init__(self, recipe: Recipe):
+    def __init__(self, recipe: Recipe, materials: List[Dict]):
         self.recipe = recipe
-        self.hammer_position = 0
-        self.hammer_velocity = 1.0
-        self.target_zone = (center - width/2, center + width/2)
+        self.difficulty = calculate_smithing_difficulty(materials)
+        self.target_zone_width = scale_by_difficulty(self.difficulty)
         self.hits = 0
         self.required_hits = 5
 
     def handle_hammer(self):
-        """Player hits hammer - check timing"""
+        """Player hits hammer - check timing within target zone"""
 
     def update(self, delta_time: float):
-        """Move hammer back and forth"""
-
-    def get_state(self) -> Dict:
-        """Return state for rendering"""
-
-    def is_complete(self) -> bool:
-        """Check if minigame done"""
+        """Move hammer indicator back and forth"""
 
     def get_result(self) -> Dict:
-        """Get success/failure and score"""
+        """Get performance score and quality tier"""
 ```
 
 ---
 
 ### Crafting-subdisciplines/alchemy.py
-**Lines**: ~300
-**Dependencies**: None
+**Lines**: ~1,052
+**Dependencies**: `core.difficulty_calculator`, `core.reward_calculator`
 
-**Purpose**: Alchemy minigame - chain reactions.
+**Purpose**: Alchemy minigame - chain/stabilize reaction balance.
 
 ```python
 class AlchemyMinigame:
-    # Click CHAIN to combine reagents
-    # Click STABILIZE to prevent explosion
-    # Balance speed vs safety
+    # Vowel-based volatility + tier modifier
+    # Click CHAIN to combine reagents (risky but fast)
+    # Click STABILIZE to prevent explosion (safe but slow)
 
     def chain(self):
-        """Combine reagents (risky but fast)"""
+        """Combine reagents - risk increases with volatility"""
 
     def stabilize(self):
-        """Stabilize reaction (safe but slow)"""
+        """Stabilize reaction - reduces risk, costs time"""
 
-    def update(self, delta_time: float):
-        """Update reaction state"""
+    def get_volatility(self, materials: List) -> float:
+        """Calculate volatility from material names (vowels)"""
 ```
 
 ---
 
 ### Crafting-subdisciplines/refining.py
-**Lines**: ~200
-**Dependencies**: None
+**Lines**: ~820
+**Dependencies**: `core.difficulty_calculator`, `core.reward_calculator`
 
-**Purpose**: Refining minigame - temperature control.
+**Purpose**: Refining minigame - lock mechanism temperature control.
 
 ```python
 class RefiningMinigame:
     # Keep temperature in target zone
-    # Too hot = burn materials
-    # Too cold = slow progress
+    # Diversity multiplier + station tier affects difficulty
+    # Too hot = burn, Too cold = slow
 
     def adjust_temperature(self, delta: float):
-        """Increase/decrease temperature"""
+        """Increase/decrease furnace temperature"""
 
     def update(self, delta_time: float):
-        """Update temperature, progress"""
+        """Update temperature decay, check progress"""
 ```
 
 ---
 
 ### Crafting-subdisciplines/engineering.py
-**Lines**: ~280
-**Dependencies**: None
+**Lines**: ~1,315
+**Dependencies**: `core.difficulty_calculator`, `core.reward_calculator`
 
-**Purpose**: Engineering minigame - wire puzzles.
+**Purpose**: Engineering minigame - wire puzzles with blueprint aesthetic.
 
 ```python
 class EngineeringMinigame:
+    # Slot count × diversity formula for difficulty
+    # Rarity-based puzzle selection
     # Connect wires to match pattern
-    # Limited moves
 
     def connect(self, from_node: int, to_node: int):
-        """Connect two nodes"""
+        """Connect two circuit nodes"""
 
     def check_solution(self) -> bool:
-        """Validate wire configuration"""
+        """Validate wire configuration matches target"""
+
+    def get_hint(self) -> Tuple[int, int]:
+        """Provide hint for stuck players"""
 ```
 
 ---
 
 ### Crafting-subdisciplines/enchanting.py
-**Lines**: ~220
-**Dependencies**: None
+**Lines**: ~1,410
+**Dependencies**: `core.difficulty_calculator`, `core.reward_calculator`
 
-**Purpose**: Enchanting minigame - rune matching.
+**Purpose**: Enchanting minigame - spinning wheel with material-based slices.
 
 ```python
 class EnchantingMinigame:
-    # Match rune patterns
-    # Memory game
+    # Spin wheel to land on green (success) vs red (failure) slices
+    # Material-based wheel distribution
+    # Spin-progressive difficulty (later spins harder)
 
-    def reveal_rune(self, index: int):
-        """Show rune at index"""
+    def spin(self):
+        """Spin the wheel with physics"""
 
-    def check_match(self) -> bool:
-        """Check if revealed runes match"""
+    def update(self, delta_time: float):
+        """Update wheel rotation, check result"""
+
+    def get_wheel_distribution(self, materials: List) -> List[Slice]:
+        """Calculate green/red slice distribution from materials"""
+```
+
+---
+
+### Crafting-subdisciplines/rarity_utils.py
+**Lines**: ~100
+**Dependencies**: None
+
+**Purpose**: Shared rarity system and color utilities.
+
+```python
+def get_rarity_color(rarity: str) -> Tuple[int, int, int]:
+    """Get color for rarity tier (common through legendary)"""
+
+def calculate_quality_tier(performance: float) -> str:
+    """Map performance (0.0-1.0) to quality tier"""
 ```
 
 ---
@@ -1529,12 +1680,30 @@ python verify_imports.py
 
 ## Summary
 
-**Total Modules**: 76 Python files
-**Total Lines**: ~22,012
+**Total Modules**: 136 Python files
+**Total Lines**: ~62,380
 **Organization**: Layered by concern
-**Pattern**: Component-based + Singleton databases
-**Testing**: Manual testing required for full validation
+**Pattern**: Component-based + Singleton databases + Tag-driven effects
+**Testing**: 13 test files + manual testing
+
+### Key Systems by Lines of Code
+| System | Lines | Purpose |
+|--------|-------|---------|
+| game_engine.py | 7,817 | Main loop, UI, event handling |
+| renderer.py | 2,782 | All visual rendering |
+| combat_manager.py | 1,655 | Damage pipeline, enchantments |
+| llm_item_generator.py | 1,393 | Claude API integration |
+| enchanting.py | 1,410 | Enchanting minigame |
+| engineering.py | 1,315 | Engineering minigame |
+| crafting_classifier.py | 1,256 | CNN + LightGBM validation |
+| alchemy.py | 1,052 | Alchemy minigame |
+| character.py | 1,008 | Player entity |
+| skill_manager.py | 709 | Skill system |
 
 For architecture overview, see [ARCHITECTURE.md](ARCHITECTURE.md).
-For feature checklist, see [FEATURES_CHECKLIST.md](FEATURES_CHECKLIST.md).
 For development guide, see [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md).
+For LLM system, see [Fewshot_llm/README.md](../../Scaled%20JSON%20Development/LLM%20Training%20Data/Fewshot_llm/README.md).
+
+---
+
+**Last Updated**: 2026-01-27
