@@ -15,7 +15,6 @@ Minigame: Temperature management + hammering/forging
 
 import pygame
 import json
-from pathlib import Path
 from rarity_utils import rarity_system
 
 

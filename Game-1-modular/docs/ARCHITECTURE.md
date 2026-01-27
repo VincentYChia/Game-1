@@ -1,10 +1,10 @@
 # Game-1-Modular Architecture Documentation
 
-**Version**: 2.0 (Modular)
+**Version**: 3.0 (Modular + LLM Integration)
 **Original Version**: 1.0 (10,327 lines, single file)
-**Modular Version**: 22,012 lines, 76 Python files
+**Modular Version**: ~62,380 lines, 136 Python files
 **Architecture Pattern**: Component-Based, Layered, Singleton Databases
-**Last Updated**: 2025-11-19
+**Last Updated**: 2026-01-27
 
 ---
 
@@ -29,14 +29,25 @@ Game-1-Modular is a refactored version of a single-file Python/Pygame game (Game
 
 ### Key Statistics
 
-| Metric | Singular | Modular |
+| Metric | Singular | Modular (Jan 2026) |
 |--------|----------|---------|
-| **Total Lines** | 10,327 | 22,012 |
-| **Files** | 1 | 76 |
-| **Classes** | 62 | 62+ |
-| **Avg Lines/File** | 10,327 | ~290 |
+| **Total Lines** | 10,327 | ~62,380 |
+| **Files** | 1 | 136 |
+| **Classes** | 62 | 150+ |
+| **Avg Lines/File** | 10,327 | ~459 |
 | **Import Depth** | N/A | Max 3 levels |
 | **Circular Imports** | N/A | 0 |
+
+### Major Systems (Line Counts)
+| System | Lines | Key Files |
+|--------|-------|-----------|
+| Game Engine | 7,817 | `core/game_engine.py` |
+| Crafting Minigames | 5,341 | `Crafting-subdisciplines/*.py` |
+| Rendering | 5,679 | `rendering/renderer.py` |
+| Combat | 2,527 | `Combat/combat_manager.py`, `enemy.py` |
+| LLM Integration | 2,649 | `systems/llm_item_generator.py`, `crafting_classifier.py` |
+| Entities | 6,909 | `entities/` |
+| Core Systems | 15,589 | `core/` |
 
 ### Refactoring Benefits
 
@@ -135,13 +146,26 @@ core/game_engine.py (import everything)
 
 ```
 Game-1-modular/
-├── main.py                      # Entry point (25 lines)
+├── main.py                      # Entry point (~30 lines)
 │
-├── core/                        # Core game systems
+├── core/                        # Core game systems (23 files, 15,589 LOC)
 │   ├── __init__.py
 │   ├── config.py               # Global constants
-│   ├── game_engine.py          # Main game loop (2,100 lines)
+│   ├── game_engine.py          # Main game loop (7,817 lines)
+│   ├── interactive_crafting.py # 5 discipline crafting UIs (1,078 lines)
+│   ├── effect_executor.py      # Tag-based combat effects (624 lines)
+│   ├── difficulty_calculator.py # Material-based difficulty (802 lines)
+│   ├── reward_calculator.py    # Performance rewards (607 lines)
+│   ├── tag_system.py           # Tag registry
+│   ├── tag_parser.py           # Tag parsing
 │   └── testing.py              # Test framework
+│
+├── systems/                     # Game system managers (16 files, 5,856 LOC)
+│   ├── world_system.py         # WorldSystem (generation, chunks)
+│   ├── title_system.py         # TitleSystem
+│   ├── class_system.py         # ClassSystem with tag bonuses
+│   ├── llm_item_generator.py   # LLM integration (1,393 lines) - NEW
+│   └── crafting_classifier.py  # ML classifiers (1,256 lines) - NEW
 │
 ├── data/                        # All data structures
 │   ├── __init__.py
