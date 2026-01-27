@@ -1172,44 +1172,46 @@ class CraftingClassifierManager:
         if not enabled_disciplines:
             return
 
-        for i, disc in enumerate(enabled_disciplines):
-            config = self.configs.get(disc)
+        # Use try/finally to ensure loading state is ALWAYS finished
+        try:
+            for i, disc in enumerate(enabled_disciplines):
+                config = self.configs.get(disc)
 
-            try:
-                # Update loading state with progress
-                progress = i / len(enabled_disciplines)
-                if loading_state:
-                    loading_state.start(
-                        f"Loading {disc.title()} Classifier",
-                        subtitle=f"{config.classifier_type.upper()} model",
-                    )
-                    loading_state.update(progress=progress)
-
-                # Initialize the backend (triggers lazy load)
-                backend = self.get_backend(disc)
-                if backend:
-                    # Force load by checking if loaded
-                    _ = backend.is_loaded()
-
-                # For CNN, also preload the image renderer (loads color encoder)
-                if config.classifier_type == 'cnn':
+                try:
+                    # Update loading state with progress
+                    progress = i / len(enabled_disciplines)
                     if loading_state:
-                        loading_state.update(subtitle="Loading color encoder...")
-                    _ = self.get_image_renderer(disc)
+                        loading_state.start(
+                            f"Loading {disc.title()} Classifier",
+                            subtitle=f"{config.classifier_type.upper()} model",
+                        )
+                        loading_state.update(progress=progress)
 
-                # For LightGBM, preload the feature extractor
-                if config.classifier_type == 'lightgbm':
-                    if loading_state:
-                        loading_state.update(subtitle="Loading feature extractor...")
-                    _ = self.feature_extractor
+                    # Initialize the backend (triggers lazy load)
+                    backend = self.get_backend(disc)
+                    if backend:
+                        # Force load by checking if loaded
+                        _ = backend.is_loaded()
 
-            except Exception as e:
-                # Log error but continue with other disciplines
-                pass
+                    # For CNN, also preload the image renderer (loads color encoder)
+                    if config.classifier_type == 'cnn':
+                        if loading_state:
+                            loading_state.update(subtitle="Loading color encoder...")
+                        _ = self.get_image_renderer(disc)
 
-        # Finish loading state
-        if loading_state:
-            loading_state.finish()
+                    # For LightGBM, preload the feature extractor
+                    if config.classifier_type == 'lightgbm':
+                        if loading_state:
+                            loading_state.update(subtitle="Loading feature extractor...")
+                        _ = self.feature_extractor
+
+                except Exception as e:
+                    # Log error but continue with other disciplines
+                    pass
+        finally:
+            # Finish loading state (guaranteed to run)
+            if loading_state:
+                loading_state.finish()
 
     def unload(self, discipline: Optional[str] = None):
         """

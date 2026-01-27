@@ -5461,11 +5461,15 @@ class Renderer:
             # Indeterminate loading animation (scrolling bar)
             pattern_width = 30
             offset = int(anim_offset * pattern_width * 2)
+            # Create a clipping surface to ensure animation stays within bar bounds
+            bar_clip_rect = pygame.Rect(bar_x, bar_y, bar_width, bar_height)
             for i in range(-1, bar_width // pattern_width + 2):
                 px = bar_x + i * pattern_width + offset
-                if bar_x <= px < bar_x + bar_width - pattern_width:
-                    color = (100, 150, 255)
-                    stripe_rect = pygame.Rect(px, bar_y, pattern_width // 2, bar_height)
-                    stripe_rect = stripe_rect.clip(pygame.Rect(bar_x, bar_y, bar_width, bar_height))
-                    if stripe_rect.width > 0:
-                        pygame.draw.rect(self.screen, color, stripe_rect)
+                color = (100, 150, 255)
+                stripe_rect = pygame.Rect(px, bar_y, pattern_width // 2, bar_height)
+                stripe_rect = stripe_rect.clip(bar_clip_rect)
+                if stripe_rect.width > 0:
+                    pygame.draw.rect(self.screen, color, stripe_rect)
+
+        # Bar border (keeps everything contained)
+        pygame.draw.rect(self.screen, (60, 80, 120), (bar_x, bar_y, bar_width, bar_height), 1)

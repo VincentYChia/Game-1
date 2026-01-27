@@ -407,7 +407,19 @@ class GameEngine:
 
         return (fallback_tags, fallback_params)
 
+    def _is_llm_overlay_blocking(self) -> bool:
+        """Check if the LLM loading overlay is active and should block input."""
+        try:
+            from systems.llm_item_generator import get_loading_state
+            loading_state = get_loading_state()
+            return loading_state.is_loading and loading_state.overlay_mode
+        except ImportError:
+            return False
+
     def handle_events(self):
+        # Check if LLM overlay is blocking input
+        llm_blocking = self._is_llm_overlay_blocking()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 # Autosave on quit (unless temporary world)
@@ -421,6 +433,12 @@ class GameEngine:
                     ):
                         print("💾 Autosaved on quit")
                 self.running = False
+
+            # Block all input except quit when LLM overlay is active
+            elif llm_blocking:
+                # Consume all events but don't process them
+                continue
+
             elif event.type == pygame.KEYDOWN:
                 self.keys_pressed.add(event.key)
 
@@ -2192,37 +2210,35 @@ class GameEngine:
             self.add_notification("Failed to open interactive mode", (255, 100, 100))
 
     def _preload_classifier(self, discipline: str):
-        """Preload the classifier for a discipline in the background"""
+        """Preload the classifier for a discipline in the background.
+
+        Note: Loading state is managed by classifier_mgr.preload(), not here,
+        to avoid double-starting/finishing the loading indicator.
+        """
         import threading
 
         def background_load():
             try:
                 from systems.crafting_classifier import get_classifier_manager, init_classifier_manager
-                from systems.llm_item_generator import get_loading_state
                 from data.databases import MaterialDatabase
                 from pathlib import Path
-
-                loading_state = get_loading_state()
-                loading_state.start(f"Loading {discipline} classifier...")
 
                 classifier_mgr = get_classifier_manager()
 
                 # Initialize if not already done
                 if classifier_mgr is None:
-                    loading_state.update("Initializing classifier manager...", 0.2)
                     project_root = Path(__file__).parent.parent.parent
                     materials_db = MaterialDatabase.get_instance()
                     classifier_mgr = init_classifier_manager(project_root, materials_db)
 
-                # Preload the specific discipline
-                loading_state.update(f"Loading {discipline} model...", 0.5)
+                # Preload the specific discipline (manages its own loading state)
                 classifier_mgr.preload(discipline)
 
-                loading_state.finish()
                 print(f"✓ Classifier for {discipline} preloaded in background")
 
             except Exception as e:
                 print(f"⚠ Classifier preload failed: {e}")
+                # Ensure loading state is cleared on error
                 try:
                     from systems.llm_item_generator import get_loading_state
                     get_loading_state().finish()
@@ -4777,6 +4793,12 @@ class GameEngine:
 
         # Check for completed background LLM generation
         self._check_background_generation()
+
+        # Block movement and game updates when LLM overlay is active
+        if self._is_llm_overlay_blocking():
+            # Only update camera and UI, not player movement or game world
+            self.camera.follow(self.character.position)
+            return
 
         curr = pygame.time.get_ticks()
         dt = (curr - self.last_tick) / 1000.0
