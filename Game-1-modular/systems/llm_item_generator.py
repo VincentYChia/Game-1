@@ -80,7 +80,7 @@ def get_llm_debug_logger() -> LLMDebugLogger:
 @dataclass
 class LLMConfig:
     """Configuration for LLM item generation"""
-    api_key: str = ""  # Set via environment or explicitly
+    api_key: str = os.getenv("ANTHROPIC_API_KEY")  # Set via environment or explicitly
     model: str = "claude-sonnet-4-20250514"
     max_tokens: int = 2000
     temperature: float = 0.4  # Slightly lower for more consistent output
