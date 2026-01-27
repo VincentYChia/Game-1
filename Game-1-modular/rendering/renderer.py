@@ -3272,7 +3272,9 @@ class Renderer:
 
             # Render discipline-specific placement UI
             station_type = character.active_station.station_type.value
-            station_tier = character.active_station.tier
+            # Use recipe's station_tier if available, otherwise fall back to station tier
+            # This ensures invented recipes display with their correct tier
+            station_tier = selected.station_tier if selected else character.active_station.tier
             placement_grid_rects = {}  # Will store grid cell rects for click detection
 
             if station_type == 'smithing':

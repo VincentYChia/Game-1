@@ -2745,6 +2745,21 @@ class GameEngine:
             self.add_notification("Failed to consume materials", (255, 100, 100))
             return
 
+        # SPECIAL CASE: Adornments create enchantment recipes, not items
+        # The enchantment recipe is stored in _store_invented_recipe() called later
+        # Player can then use the recipe to enchant existing equipment
+        if discipline in ['adornments', 'enchanting']:
+            enchantment_name = item_data.get('enchantmentName', item_name)
+            self.add_notification(f"Discovered: {enchantment_name}", (200, 150, 255))
+            self.add_notification("New enchantment recipe available!", (180, 130, 220))
+            print(f"  ✓ Discovered enchantment: {enchantment_name}")
+
+            # Store the invented recipe (happens in _process_invention_result)
+            # which then calls _store_invented_recipe
+            self._store_invented_recipe(gen_result, discipline)
+            self._close_interactive_crafting()
+            return
+
         # Determine item category and handle appropriately
         category = item_data.get('category', 'equipment')
 
@@ -3405,19 +3420,12 @@ class GameEngine:
             return "MaterialDatabase (device)"
 
         elif discipline in ['adornments', 'enchanting']:
-            # Adornments produces enchanted accessories (rings, amulets, bracelets)
-            # These are equipment items that go in EquipmentDatabase
-            equip_db = EquipmentDatabase.get_instance()
-
-            item_data_for_db = item_data.copy()
-            item_data_for_db['itemId'] = item_id
-            item_data_for_db['category'] = 'equipment'
-            item_data_for_db['type'] = item_data.get('type', 'accessory')
-            if 'name' not in item_data_for_db:
-                item_data_for_db['name'] = item_name
-
-            equip_db.items[item_id] = item_data_for_db
-            return "EquipmentDatabase (accessory)"
+            # Adornments create ENCHANTMENT RECIPES, not items
+            # The enchantment can then be applied to existing equipment
+            # We don't register with any item database - just recipe/placement databases
+            # (which is handled separately in _store_invented_recipe)
+            print(f"  Note: Adornment '{item_name}' is an enchantment recipe, not an item")
+            return "None (enchantment recipe)"
 
         else:
             # Unknown discipline - default to MaterialDatabase
