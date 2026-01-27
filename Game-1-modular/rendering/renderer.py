@@ -135,16 +135,6 @@ class Renderer:
         recipe_grid_w, recipe_grid_h = grid_w, grid_h  # Default to station grid size
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
-            # Debug for invented recipes
-            if selected_recipe.recipe_id.startswith('invented_'):
-                print(f"[SMITHING DEBUG] Looking up: {selected_recipe.recipe_id}")
-                print(f"[SMITHING DEBUG] Found: {placement_data is not None}")
-                if placement_data:
-                    print(f"[SMITHING DEBUG] grid_size: {placement_data.grid_size}")
-                    print(f"[SMITHING DEBUG] placement_map: {placement_data.placement_map}")
-                else:
-                    print(f"[SMITHING DEBUG] PlacementDB has {len(placement_db.placements)} total")
-                    print(f"[SMITHING DEBUG] Invented keys: {[k for k in placement_db.placements.keys() if 'invented' in k]}")
             if placement_data and placement_data.grid_size:
                 # Parse recipe's actual grid size (e.g., "3x3")
                 parts = placement_data.grid_size.lower().split('x')
@@ -290,13 +280,6 @@ class Renderer:
 
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
-            # Debug for invented recipes
-            if selected_recipe.recipe_id.startswith('invented_'):
-                print(f"[ADORNMENTS DEBUG] Looking up: {selected_recipe.recipe_id}")
-                print(f"[ADORNMENTS DEBUG] Found: {placement_data is not None}")
-                if placement_data:
-                    print(f"[ADORNMENTS DEBUG] placement_map: {placement_data.placement_map}")
-                    print(f"[ADORNMENTS DEBUG] pattern: {placement_data.pattern}")
             if placement_data and placement_data.placement_map:
                 pmap = placement_data.placement_map
                 vertices = pmap.get('vertices', {})
@@ -449,13 +432,6 @@ class Renderer:
         required_surrounding = []
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
-            # Debug: Log placement lookup for invented recipes
-            if selected_recipe.recipe_id.startswith('invented_'):
-                print(f"[REFINING DEBUG] Looking up: {selected_recipe.recipe_id}")
-                print(f"[REFINING DEBUG] Found: {placement_data is not None}")
-                if placement_data:
-                    print(f"[REFINING DEBUG] core_inputs: {placement_data.core_inputs}")
-                    print(f"[REFINING DEBUG] surrounding_inputs: {placement_data.surrounding_inputs}")
             if placement_data:
                 required_core = placement_data.core_inputs
                 required_surrounding = placement_data.surrounding_inputs
@@ -627,12 +603,6 @@ class Renderer:
         required_ingredients = []
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
-            # Debug for invented recipes
-            if selected_recipe.recipe_id.startswith('invented_'):
-                print(f"[ALCHEMY DEBUG] Looking up: {selected_recipe.recipe_id}")
-                print(f"[ALCHEMY DEBUG] Found: {placement_data is not None}")
-                if placement_data:
-                    print(f"[ALCHEMY DEBUG] ingredients: {placement_data.ingredients}")
             if placement_data:
                 required_ingredients = placement_data.ingredients
 
@@ -807,12 +777,6 @@ class Renderer:
         required_slots = []
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
-            # Debug for invented recipes
-            if selected_recipe.recipe_id.startswith('invented_'):
-                print(f"[ENGINEERING DEBUG] Looking up: {selected_recipe.recipe_id}")
-                print(f"[ENGINEERING DEBUG] Found: {placement_data is not None}")
-                if placement_data:
-                    print(f"[ENGINEERING DEBUG] slots: {placement_data.slots}")
             if placement_data:
                 required_slots = placement_data.slots
 
@@ -3326,9 +3290,9 @@ class Renderer:
 
             # Render discipline-specific placement UI
             station_type = character.active_station.station_type.value
-            # Use recipe's station_tier if available, otherwise fall back to station tier
-            # This ensures invented recipes display with their correct tier
-            station_tier = selected.station_tier if selected else character.active_station.tier
+            # IMPORTANT: Grid size is determined by STATION tier (physical constraint)
+            # Recipe tier is only for display purposes (like tier badge)
+            station_tier = character.active_station.tier
             placement_grid_rects = {}  # Will store grid cell rects for click detection
 
             if station_type == 'smithing':

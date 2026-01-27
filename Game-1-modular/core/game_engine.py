@@ -3057,20 +3057,7 @@ class GameEngine:
         if generator and self.interactive_ui:
             calculated_tier = generator.calculate_minimum_tier(discipline, self.interactive_ui)
             placement_data = generator.extract_placement_data(discipline, self.interactive_ui)
-            print(f"  Calculated minimum tier: {calculated_tier} (from placement)")
-            print(f"  Extracted placement_data keys: {list(placement_data.keys())}")
-            # Debug: Show placement data content for each discipline
-            if discipline == 'smithing':
-                print(f"  Smithing placementMap: {placement_data.get('placementMap', {})}")
-            elif discipline == 'refining':
-                print(f"  Refining coreInputs: {placement_data.get('coreInputs', [])}")
-                print(f"  Refining surroundingInputs: {placement_data.get('surroundingInputs', [])}")
-            elif discipline == 'alchemy':
-                print(f"  Alchemy ingredients: {placement_data.get('ingredients', [])}")
-            elif discipline == 'engineering':
-                print(f"  Engineering slots: {placement_data.get('slots', [])}")
-            elif discipline in ['adornments', 'enchanting']:
-                print(f"  Adornments placementMap: {placement_data.get('placementMap', {})}")
+            print(f"  ✓ Extracted placement_data (tier {calculated_tier})")
 
         # Store in character data
         if not hasattr(self.character, 'invented_recipes'):
@@ -4683,12 +4670,6 @@ class GameEngine:
     def _open_enchantment_selection(self, recipe: Recipe):
         """Open the item selection UI for applying enchantment"""
         equip_db = EquipmentDatabase.get_instance()
-
-        # Debug: Show enchantment filtering info
-        print(f"[ENCHANT DEBUG] Opening selection for: {recipe.recipe_id}")
-        print(f"[ENCHANT DEBUG] is_enchantment: {recipe.is_enchantment}")
-        print(f"[ENCHANT DEBUG] applicable_to: {recipe.applicable_to}")
-        print(f"[ENCHANT DEBUG] effect: {recipe.effect}")
 
         # Get ONLY compatible equipment (filter by can_apply_enchantment)
         compatible_items = []
