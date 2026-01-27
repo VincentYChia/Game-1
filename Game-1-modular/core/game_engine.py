@@ -2688,15 +2688,27 @@ class GameEngine:
 
                 # Configure LLM - check for API key in environment
                 api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+                api_key_source = "ANTHROPIC_API_KEY env var"
+
                 if not api_key:
                     # Try to read from config file
                     config_path = project_root / "Game-1-modular" / ".env"
                     if config_path.exists():
+                        print(f"  Checking .env file: {config_path}")
                         with open(config_path, 'r') as f:
                             for line in f:
                                 if line.startswith('ANTHROPIC_API_KEY='):
                                     api_key = line.strip().split('=', 1)[1].strip('"\'')
+                                    api_key_source = ".env file"
                                     break
+
+                # Log API key status (without revealing the full key)
+                if api_key:
+                    masked = api_key[:8] + "..." + api_key[-4:] if len(api_key) > 16 else "***"
+                    print(f"  LLM API key loaded from {api_key_source}: {masked}")
+                else:
+                    print(f"  Warning: No LLM API key found in environment or .env file")
+                    print(f"    Set ANTHROPIC_API_KEY environment variable to enable LLM generation")
 
                 config = LLMConfig(
                     api_key=api_key,

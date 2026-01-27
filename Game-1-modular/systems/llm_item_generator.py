@@ -463,15 +463,32 @@ class LLMItemGenerator:
     def backend(self):
         """Get or create LLM backend"""
         if self._backend is None:
-            api_key = self.config.api_key or os.environ.get('ANTHROPIC_API_KEY', '')
+            # Check API key sources in order: config, then environment variable
+            api_key = self.config.api_key
+            api_key_source = "config"
+
+            if not api_key:
+                api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+                api_key_source = "ANTHROPIC_API_KEY env var"
+
             if api_key:
+                # Mask API key for logging (show first 8 and last 4 chars)
+                if len(api_key) > 16:
+                    masked_key = api_key[:8] + "..." + api_key[-4:]
+                else:
+                    masked_key = api_key[:4] + "..." if len(api_key) > 4 else "***"
+                print(f"  LLM Backend: Using API key from {api_key_source}: {masked_key}")
                 self._backend = AnthropicBackend(api_key)
             else:
-                print("  Warning: No API key - using mock backend")
+                print("  Warning: No API key found!")
+                print(f"    - config.api_key: {'(empty)' if not self.config.api_key else '(set)'}")
+                print(f"    - ANTHROPIC_API_KEY env: {'(not set)' if not os.environ.get('ANTHROPIC_API_KEY') else '(set but empty)' if os.environ.get('ANTHROPIC_API_KEY') == '' else '(set)'}")
+                print("  Using mock backend (will generate placeholder items)")
                 self._backend = MockBackend()
         return self._backend
 
-    def generate(self, discipline: str, interactive_ui, narrative: str = "") -> GeneratedItem:
+    def generate(self, discipline: str, interactive_ui, narrative: str = "",
+                 _from_async: bool = False) -> GeneratedItem:
         """
         Generate a new item from interactive UI state.
 
@@ -479,6 +496,7 @@ class LLMItemGenerator:
             discipline: One of 'smithing', 'adornments', 'alchemy', 'refining', 'engineering'
             interactive_ui: The InteractiveXUI instance with current placement
             narrative: Optional player-provided description of desired item
+            _from_async: Internal flag - True if called from generate_async (don't touch loading state)
 
         Returns:
             GeneratedItem with item_data if successful
@@ -522,20 +540,24 @@ class LLMItemGenerator:
         system_prompt = self.prompt_loader.get_system_prompt(discipline)
         user_prompt = self._build_user_prompt(discipline, recipe_context, narrative)
 
-        # Start loading indicator for LLM call
+        # Manage loading state - only start if NOT called from async (async already started it)
         loading_state = get_loading_state()
-        loading_state.start(f"Generating {discipline} item...")
+        manage_loading = not _from_async
+
+        if manage_loading:
+            loading_state.start(f"Generating {discipline} item...")
 
         # Call LLM
         print(f"Generating item for {discipline}...")
         try:
-            loading_state.update(f"Calling AI model...", 0.3)
+            loading_state.update(subtitle="Calling AI model...", progress=0.3)
             response_text, error = self.backend.generate(
                 system_prompt, user_prompt, self.config
             )
-            loading_state.update(f"Processing response...", 0.8)
+            loading_state.update(subtitle="Processing response...", progress=0.8)
         finally:
-            loading_state.finish()
+            if manage_loading:
+                loading_state.finish()
 
         # Log input/output for debugging
         debug_logger = get_llm_debug_logger()
@@ -1250,7 +1272,8 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
         def background_task():
             try:
                 loading_state.update(subtitle="Calling AI model...")
-                result = self.generate(discipline, interactive_ui, narrative)
+                # Pass _from_async=True so generate() doesn't overwrite our overlay settings
+                result = self.generate(discipline, interactive_ui, narrative, _from_async=True)
                 _background_result.set_result(result)
             except Exception as e:
                 _background_result.set_error(str(e))

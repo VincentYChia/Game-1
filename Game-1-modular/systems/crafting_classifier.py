@@ -1136,6 +1136,10 @@ class CraftingClassifierManager:
         Call this when the interactive crafting UI opens to load models
         in advance, rather than on first validation attempt.
 
+        IMPORTANT: For CNN models (TensorFlow/Keras), this runs a warmup prediction
+        to fully compile the computational graph. Without this, the first real
+        prediction will still be slow even though the model file is loaded.
+
         Args:
             discipline: Specific discipline to preload, or None for all
         """
@@ -1175,7 +1179,27 @@ class CraftingClassifierManager:
                     if config.classifier_type == 'cnn':
                         if loading_state:
                             loading_state.update(subtitle="Loading color encoder...")
-                        _ = self.get_image_renderer(disc)
+                        renderer = self.get_image_renderer(disc)
+
+                        # CRITICAL: Run warmup prediction to compile TensorFlow graph
+                        # Without this, the first real prediction will still be slow
+                        if loading_state:
+                            loading_state.update(subtitle="Warming up model...")
+                        if backend and backend.is_loaded() and renderer:
+                            # Create dummy input matching the expected size
+                            if disc == 'smithing':
+                                dummy_input = np.zeros((36, 36, 3), dtype=np.float32)
+                            elif disc == 'adornments':
+                                dummy_input = np.zeros((56, 56, 3), dtype=np.float32)
+                            else:
+                                dummy_input = np.zeros((36, 36, 3), dtype=np.float32)
+
+                            # Run warmup prediction (result is discarded)
+                            try:
+                                _ = backend.predict(dummy_input)
+                                print(f"  Warmup prediction complete for {disc}")
+                            except Exception as warmup_error:
+                                print(f"  Warmup prediction failed for {disc}: {warmup_error}")
 
                     # For LightGBM, preload the feature extractor
                     if config.classifier_type == 'lightgbm':
@@ -1185,6 +1209,7 @@ class CraftingClassifierManager:
 
                 except Exception as e:
                     # Log error but continue with other disciplines
+                    print(f"  Warning: Preload failed for {disc}: {e}")
                     pass
         finally:
             # Finish loading state (guaranteed to run)
