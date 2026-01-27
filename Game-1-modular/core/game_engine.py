@@ -3103,23 +3103,18 @@ class GameEngine:
         # CRITICAL: Also register with the appropriate Crafter for instant craft
         self._register_with_crafter(recipe_id, discipline, gen_result, placement_data, calculated_tier)
 
-        # CRITICAL: Register with EquipmentDatabase for instant craft to recognize as equipment
-        # Without this, equip_db.is_equipment(item_id) returns False and instant craft fails
-        from data.databases import EquipmentDatabase
-        equip_db = EquipmentDatabase.get_instance()
-
-        # Build item_data in the format EquipmentDatabase expects
-        item_data_for_db = gen_result.item_data.copy() if gen_result.item_data else {}
-        item_data_for_db['itemId'] = gen_result.item_id
-        item_data_for_db['category'] = 'equipment'  # Required for is_equipment() to work
-        if 'name' not in item_data_for_db:
-            item_data_for_db['name'] = gen_result.item_name
-
-        equip_db.items[gen_result.item_id] = item_data_for_db
+        # CRITICAL: Register with the CORRECT database based on discipline
+        # Each discipline produces different item types that go to different databases
+        db_name = self._register_invented_item_with_database(
+            item_id=gen_result.item_id,
+            item_name=gen_result.item_name,
+            item_data=gen_result.item_data,
+            discipline=discipline
+        )
 
         print(f"  ✓ Stored invented recipe: {gen_result.item_id}")
         print(f"  ✓ Recipe registered for crafting: {recipe_id}")
-        print(f"  ✓ Item registered with EquipmentDatabase")
+        print(f"  ✓ Item registered with {db_name}")
         print(f"  ✓ Tier: {calculated_tier}, Grid: {grid_size}")
 
     def _register_with_crafter(self, recipe_id: str, discipline: str, gen_result, placement_data: dict, tier: int):
@@ -3268,6 +3263,176 @@ class GameEngine:
         # If the file doesn't exist, the image_cache will fall back to text rendering
         # This is the expected behavior until we integrate PNG generation
         return default_icon
+
+    def _register_invented_item_with_database(self, item_id: str, item_name: str,
+                                               item_data: dict, discipline: str) -> str:
+        """
+        Register an invented item with the CORRECT database based on discipline.
+
+        Each discipline produces different item types:
+        - Smithing: equipment (weapons, armor, tools, accessories) → EquipmentDatabase
+        - Refining: materials (ingots, planks, alloys) → MaterialDatabase (stackable)
+        - Alchemy: consumables (potions, elixirs, oils) → MaterialDatabase (stackable)
+        - Engineering: devices (turrets, bombs, traps) → MaterialDatabase (stackable)
+        - Adornments: enchanted accessories → EquipmentDatabase
+
+        Returns the name of the database used for logging.
+        """
+        from data.databases import EquipmentDatabase, MaterialDatabase
+        from data.models.materials import MaterialDefinition
+
+        item_data = item_data or {}
+        tier = item_data.get('tier', 1)
+        rarity = item_data.get('rarity', 'common')
+
+        if discipline == 'smithing':
+            # Smithing produces equipment (weapons, armor, tools, accessories)
+            # These are non-stackable items that go in EquipmentDatabase
+            equip_db = EquipmentDatabase.get_instance()
+
+            item_data_for_db = item_data.copy()
+            item_data_for_db['itemId'] = item_id
+            item_data_for_db['category'] = 'equipment'
+            if 'name' not in item_data_for_db:
+                item_data_for_db['name'] = item_name
+
+            equip_db.items[item_id] = item_data_for_db
+            return "EquipmentDatabase"
+
+        elif discipline == 'refining':
+            # Refining produces stackable materials (ingots, planks, alloys)
+            # These go in MaterialDatabase with category='material'
+            mat_db = MaterialDatabase.get_instance()
+
+            # Determine material type from item_data
+            item_type = item_data.get('type', 'ingot')
+            if 'plank' in item_id.lower() or 'plank' in item_name.lower():
+                item_type = 'plank'
+            elif 'alloy' in item_id.lower() or 'alloy' in item_name.lower():
+                item_type = 'alloy'
+            else:
+                item_type = 'ingot'
+
+            mat = MaterialDefinition(
+                material_id=item_id,
+                name=item_name,
+                tier=tier,
+                category='material',  # Refined materials
+                rarity=rarity,
+                description=item_data.get('metadata', {}).get('narrative', ''),
+                max_stack=256,  # Standard stack size for refined materials
+                properties=item_data.get('properties', {}),
+                icon_path=f"materials/{item_id}.png",
+                placeable=False,
+                item_type=item_type
+            )
+            mat_db.materials[item_id] = mat
+            return "MaterialDatabase (material)"
+
+        elif discipline == 'alchemy':
+            # Alchemy produces stackable consumables (potions, elixirs, oils)
+            # These go in MaterialDatabase with category='consumable'
+            mat_db = MaterialDatabase.get_instance()
+
+            # Determine stack size based on item type
+            item_type = item_data.get('type', 'potion')
+            if 'oil' in item_id.lower() or 'oil' in item_name.lower():
+                max_stack = 20
+                item_type = 'oil'
+            elif 'powder' in item_id.lower() or 'powder' in item_name.lower():
+                max_stack = 50
+                item_type = 'powder'
+            else:
+                max_stack = 10  # Potions stack to 10
+                item_type = 'potion'
+
+            mat = MaterialDefinition(
+                material_id=item_id,
+                name=item_name,
+                tier=tier,
+                category='consumable',
+                rarity=rarity,
+                description=item_data.get('metadata', {}).get('narrative', ''),
+                max_stack=max_stack,
+                properties=item_data.get('properties', {}),
+                icon_path=f"consumables/{item_id}.png",
+                placeable=False,
+                item_type=item_type,
+                effect=item_data.get('effect', ''),
+                effect_tags=item_data.get('effectTags', item_data.get('effect_tags', [])),
+                effect_params=item_data.get('effectParams', item_data.get('effect_params', {}))
+            )
+            mat_db.materials[item_id] = mat
+            return "MaterialDatabase (consumable)"
+
+        elif discipline == 'engineering':
+            # Engineering produces stackable devices (turrets, bombs, traps)
+            # These go in MaterialDatabase with category='device'
+            mat_db = MaterialDatabase.get_instance()
+
+            # Determine stack size and type based on item
+            item_type = item_data.get('type', 'device')
+            if 'turret' in item_id.lower() or 'turret' in item_name.lower():
+                max_stack = 5
+                item_type = 'turret'
+            elif 'bomb' in item_id.lower() or 'bomb' in item_name.lower():
+                max_stack = 10
+                item_type = 'bomb'
+            elif 'trap' in item_id.lower() or 'trap' in item_name.lower():
+                max_stack = 15
+                item_type = 'trap'
+            else:
+                max_stack = 5
+                item_type = 'utility'
+
+            mat = MaterialDefinition(
+                material_id=item_id,
+                name=item_name,
+                tier=tier,
+                category='device',
+                rarity=rarity,
+                description=item_data.get('metadata', {}).get('narrative', ''),
+                max_stack=max_stack,
+                properties=item_data.get('properties', {}),
+                icon_path=f"devices/{item_id}.png",
+                placeable=True,  # Devices are placeable
+                item_type=item_type,
+                effect=item_data.get('effect', ''),
+                effect_tags=item_data.get('effectTags', item_data.get('effect_tags', [])),
+                effect_params=item_data.get('effectParams', item_data.get('effect_params', {}))
+            )
+            mat_db.materials[item_id] = mat
+            return "MaterialDatabase (device)"
+
+        elif discipline in ['adornments', 'enchanting']:
+            # Adornments produces enchanted accessories (rings, amulets, bracelets)
+            # These are equipment items that go in EquipmentDatabase
+            equip_db = EquipmentDatabase.get_instance()
+
+            item_data_for_db = item_data.copy()
+            item_data_for_db['itemId'] = item_id
+            item_data_for_db['category'] = 'equipment'
+            item_data_for_db['type'] = item_data.get('type', 'accessory')
+            if 'name' not in item_data_for_db:
+                item_data_for_db['name'] = item_name
+
+            equip_db.items[item_id] = item_data_for_db
+            return "EquipmentDatabase (accessory)"
+
+        else:
+            # Unknown discipline - default to MaterialDatabase
+            mat_db = MaterialDatabase.get_instance()
+            mat = MaterialDefinition(
+                material_id=item_id,
+                name=item_name,
+                tier=tier,
+                category='material',
+                rarity=rarity,
+                description='',
+                max_stack=99
+            )
+            mat_db.materials[item_id] = mat
+            return "MaterialDatabase (default)"
 
     def register_saved_invented_recipes(self):
         """
@@ -3431,25 +3596,19 @@ class GameEngine:
                         station_tier=station_tier
                     )
 
-                # 4. CRITICAL: Register with EquipmentDatabase for instant craft equipment recognition
-                # Without this, equip_db.is_equipment(item_id) returns False and instant craft fails
-                from data.databases import EquipmentDatabase
-                equip_db = EquipmentDatabase.get_instance()
-
+                # 4. CRITICAL: Register with CORRECT database based on discipline
+                # Each discipline produces different item types (equipment, materials, consumables, devices)
                 item_data = recipe_record.get('item_data', {})
-                if item_data:
-                    item_data_for_db = item_data.copy()
-                else:
-                    item_data_for_db = {}
+                item_name = recipe_record.get('item_name', item_id)
 
-                item_data_for_db['itemId'] = item_id
-                item_data_for_db['category'] = 'equipment'  # Required for is_equipment() to work
-                if 'name' not in item_data_for_db:
-                    item_data_for_db['name'] = recipe_record.get('item_name', item_id)
+                db_name = self._register_invented_item_with_database(
+                    item_id=item_id,
+                    item_name=item_name,
+                    item_data=item_data,
+                    discipline=discipline
+                )
 
-                equip_db.items[item_id] = item_data_for_db
-
-                print(f"  ✓ Registered {recipe_id} (including EquipmentDatabase)")
+                print(f"  ✓ Registered {recipe_id} (with {db_name})")
 
             except Exception as e:
                 import traceback
