@@ -3076,6 +3076,9 @@ class GameEngine:
         if not hasattr(self.character, 'invented_recipes'):
             self.character.invented_recipes = []
 
+        # Determine if this is an enchantment (for save/load)
+        is_enchantment_recipe = discipline in ['adornments', 'enchanting']
+
         # Create a complete recipe record with all data needed to recreate the recipe
         recipe_record = {
             'timestamp': __import__('datetime').datetime.now().isoformat(),
@@ -3091,7 +3094,9 @@ class GameEngine:
             # Include full placement data for recreation
             'placement_data': placement_data,
             # Include icon path for the item
-            'icon_path': self._get_invented_icon_path(gen_result.item_id, discipline, gen_result.item_data)
+            'icon_path': self._get_invented_icon_path(gen_result.item_id, discipline, gen_result.item_data),
+            # Enchantment-specific fields (for adornments)
+            'is_enchantment': is_enchantment_recipe
         }
 
         self.character.invented_recipes.append(recipe_record)
@@ -3099,6 +3104,40 @@ class GameEngine:
         # Register with RecipeDatabase
         recipe_id = f"invented_{gen_result.item_id}"
         grid_size = placement_data.get('gridSize', '3x3')
+
+        # For adornments, set enchantment-specific fields
+        is_enchantment = discipline in ['adornments', 'enchanting']
+        enchantment_name = ''
+        applicable_to = []
+        effect = {}
+
+        if is_enchantment:
+            enchantment_name = gen_result.item_name
+            # Extract applicable_to from item_data or infer from name
+            item_data = gen_result.item_data or {}
+            applicable_to = item_data.get('applicableTo', item_data.get('applicable_to', []))
+            if not applicable_to:
+                # Infer from item name/type
+                name_lower = gen_result.item_name.lower()
+                if any(w in name_lower for w in ['sharp', 'damage', 'attack', 'strike', 'fire aspect', 'lifesteal']):
+                    applicable_to = ['weapon']
+                elif any(w in name_lower for w in ['protect', 'defense', 'armor', 'thorns', 'resistance']):
+                    applicable_to = ['armor']
+                elif any(w in name_lower for w in ['efficiency', 'fortune', 'luck']):
+                    applicable_to = ['tool']
+                else:
+                    # Default: can apply to weapon, armor, or tool
+                    applicable_to = ['weapon', 'armor', 'tool']
+
+            # Extract effect from item_data
+            effect = item_data.get('effect', {})
+            if not effect:
+                # Create a basic effect structure
+                effect = {
+                    'type': 'custom',
+                    'value': 0.1,
+                    'stackable': False
+                }
 
         recipe = Recipe(
             recipe_id=recipe_id,
@@ -3116,7 +3155,12 @@ class GameEngine:
                 'invented': True,
                 'narrative': gen_result.narrative,
                 'timestamp': recipe_record['timestamp']
-            }
+            },
+            # Enchantment-specific fields (only meaningful for adornments)
+            is_enchantment=is_enchantment,
+            enchantment_name=enchantment_name,
+            applicable_to=applicable_to,
+            effect=effect
         )
 
         # Add to RecipeDatabase
@@ -3188,6 +3232,29 @@ class GameEngine:
                 'narrative': gen_result.narrative
             }
         }
+
+        # For adornments, add enchantment-specific fields
+        if discipline in ['adornments', 'enchanting']:
+            item_data = gen_result.item_data or {}
+            recipe_dict['enchantmentId'] = gen_result.item_id
+            recipe_dict['enchantmentName'] = gen_result.item_name
+
+            # Extract or infer applicableTo
+            applicable_to = item_data.get('applicableTo', item_data.get('applicable_to', []))
+            if not applicable_to:
+                name_lower = gen_result.item_name.lower()
+                if any(w in name_lower for w in ['sharp', 'damage', 'attack', 'strike', 'fire aspect', 'lifesteal']):
+                    applicable_to = ['weapon']
+                elif any(w in name_lower for w in ['protect', 'defense', 'armor', 'thorns', 'resistance']):
+                    applicable_to = ['armor']
+                elif any(w in name_lower for w in ['efficiency', 'fortune', 'luck']):
+                    applicable_to = ['tool']
+                else:
+                    applicable_to = ['weapon', 'armor', 'tool']
+            recipe_dict['applicableTo'] = applicable_to
+
+            # Extract effect
+            recipe_dict['effect'] = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
 
         # Register recipe with Crafter for instant craft
         crafter.recipes[recipe_id] = recipe_dict
@@ -3536,6 +3603,28 @@ class GameEngine:
                     }
                 }
 
+                # For adornments, add enchantment-specific fields to crafter recipe
+                if discipline in ['adornments', 'enchanting']:
+                    item_data = recipe_record.get('item_data', {})
+                    item_name = recipe_record.get('item_name', item_id)
+                    recipe_dict['enchantmentId'] = item_id
+                    recipe_dict['enchantmentName'] = item_name
+
+                    # Extract or infer applicableTo
+                    applicable_to = item_data.get('applicableTo', item_data.get('applicable_to', []))
+                    if not applicable_to:
+                        name_lower = item_name.lower()
+                        if any(w in name_lower for w in ['sharp', 'damage', 'attack', 'strike', 'fire aspect', 'lifesteal']):
+                            applicable_to = ['weapon']
+                        elif any(w in name_lower for w in ['protect', 'defense', 'armor', 'thorns', 'resistance']):
+                            applicable_to = ['armor']
+                        elif any(w in name_lower for w in ['efficiency', 'fortune', 'luck']):
+                            applicable_to = ['tool']
+                        else:
+                            applicable_to = ['weapon', 'armor', 'tool']
+                    recipe_dict['applicableTo'] = applicable_to
+                    recipe_dict['effect'] = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
+
                 # 1. Register with Crafter for instant craft
                 crafter.recipes[recipe_id] = recipe_dict
 
@@ -3550,6 +3639,32 @@ class GameEngine:
                     crafter.placements[recipe_id] = placement_data
 
                 # 2. Register with RecipeDatabase for recipe list
+                # For adornments, set enchantment-specific fields
+                is_enchantment = discipline in ['adornments', 'enchanting']
+                enchantment_name = ''
+                applicable_to = []
+                effect = {}
+
+                if is_enchantment:
+                    item_data = recipe_record.get('item_data', {})
+                    item_name = recipe_record.get('item_name', item_id)
+                    enchantment_name = item_name
+
+                    # Extract applicable_to from item_data or infer
+                    applicable_to = item_data.get('applicableTo', item_data.get('applicable_to', []))
+                    if not applicable_to:
+                        name_lower = item_name.lower()
+                        if any(w in name_lower for w in ['sharp', 'damage', 'attack', 'strike', 'fire aspect', 'lifesteal']):
+                            applicable_to = ['weapon']
+                        elif any(w in name_lower for w in ['protect', 'defense', 'armor', 'thorns', 'resistance']):
+                            applicable_to = ['armor']
+                        elif any(w in name_lower for w in ['efficiency', 'fortune', 'luck']):
+                            applicable_to = ['tool']
+                        else:
+                            applicable_to = ['weapon', 'armor', 'tool']
+
+                    effect = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
+
                 recipe = Recipe(
                     recipe_id=recipe_id,
                     output_id=item_id,
@@ -3562,7 +3677,12 @@ class GameEngine:
                     metadata={
                         'invented': True,
                         'narrative': narrative
-                    }
+                    },
+                    # Enchantment-specific fields
+                    is_enchantment=is_enchantment,
+                    enchantment_name=enchantment_name,
+                    applicable_to=applicable_to,
+                    effect=effect
                 )
                 recipe_db.recipes[recipe_id] = recipe
 
