@@ -992,23 +992,33 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
                 "flags": {"stackable": True, "consumable": False, "repairable": False}
             }
         else:  # adornments/enchanting
+            # Adornments create ENCHANTMENTS that can be applied to existing equipment
+            # NOT accessories - enchantments are applied to weapons/armor/tools
+            # Determine applicableTo based on materials used
+            applicable_to = self._infer_enchantment_target(recipe_context)
+            effect_type = self._infer_enchantment_effect(recipe_context)
+
             item_data = {
                 "metadata": {
-                    "narrative": "A magical accessory with mysterious enchantments.",
-                    "tags": ["accessory", "enchanted", "invented"]
+                    "narrative": "A mystical enchantment of unknown power.",
+                    "tags": ["enchantment", "magic", "invented"]
                 },
-                "itemId": f"invented_accessory_{timestamp}",
-                "name": "Mysterious Accessory",
-                "category": "equipment",
-                "type": "accessory",
-                "subtype": "ring",
+                "itemId": f"invented_enchantment_{timestamp}",
+                "enchantmentId": f"invented_enchantment_{timestamp}",
+                "name": "Mysterious Enchantment",
+                "enchantmentName": "Mysterious Enchantment",
+                "category": "enchantment",
+                "type": "enchantment",
                 "tier": max_tier,
                 "rarity": "uncommon",
-                "slot": "accessory",
-                "enchantments": [],
-                "stats": {},
-                "requirements": {"level": max(1, (max_tier - 1) * 5), "stats": {}},
-                "flags": {"stackable": False, "equippable": True, "repairable": True}
+                "applicableTo": applicable_to,
+                "effect": {
+                    "type": effect_type,
+                    "value": 0.1 * max_tier,
+                    "stackable": False
+                },
+                "requirements": {"level": max(1, (max_tier - 1) * 5)},
+                "flags": {"is_enchantment": True}
             }
 
         # Extract recipe inputs for persistence
@@ -1018,14 +1028,86 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
         return GeneratedItem(
             success=True,
             item_data=item_data,
-            item_id=item_data.get('itemId', item_data.get('materialId')),
-            item_name=item_data.get('name'),
+            item_id=item_data.get('itemId', item_data.get('materialId', item_data.get('enchantmentId'))),
+            item_name=item_data.get('name', item_data.get('enchantmentName')),
             discipline=discipline,
             error="Used fallback generation (LLM unavailable)",
             recipe_inputs=recipe_inputs,
             station_tier=station_tier,
             narrative=narrative
         )
+
+    def _infer_enchantment_target(self, recipe_context: Dict) -> List[str]:
+        """Infer what equipment types this enchantment should apply to based on materials used."""
+        # Collect all material tags
+        all_tags = []
+        for key in ['vertices', 'inputs']:
+            if key in recipe_context:
+                items = recipe_context[key]
+                if isinstance(items, dict):
+                    items = items.values()
+                for item in items:
+                    if isinstance(item, dict):
+                        tags = item.get('materialTags', [])
+                        all_tags.extend(tags)
+
+        # Analyze tags to determine target
+        tag_set = set(t.lower() for t in all_tags)
+
+        # Offensive materials -> weapon enchantment
+        offensive_tags = {'offensive', 'damage', 'attack', 'sharp', 'fire', 'lightning', 'ice', 'poison'}
+        # Defensive materials -> armor enchantment
+        defensive_tags = {'defensive', 'protection', 'shield', 'resist', 'health', 'armor'}
+        # Utility materials -> tool enchantment
+        utility_tags = {'utility', 'efficiency', 'speed', 'luck', 'fortune', 'gathering'}
+
+        if tag_set & offensive_tags:
+            return ['weapon']
+        elif tag_set & defensive_tags:
+            return ['armor']
+        elif tag_set & utility_tags:
+            return ['tool']
+        else:
+            # Default to weapon if we can't determine
+            return ['weapon']
+
+    def _infer_enchantment_effect(self, recipe_context: Dict) -> str:
+        """Infer the effect type based on materials used."""
+        # Collect all material tags
+        all_tags = []
+        for key in ['vertices', 'inputs']:
+            if key in recipe_context:
+                items = recipe_context[key]
+                if isinstance(items, dict):
+                    items = items.values()
+                for item in items:
+                    if isinstance(item, dict):
+                        tags = item.get('materialTags', [])
+                        all_tags.extend(tags)
+
+        tag_set = set(t.lower() for t in all_tags)
+
+        # Map tags to effect types
+        if 'fire' in tag_set:
+            return 'fire_damage'
+        elif 'ice' in tag_set or 'frost' in tag_set:
+            return 'frost_damage'
+        elif 'lightning' in tag_set or 'electric' in tag_set:
+            return 'lightning_damage'
+        elif 'poison' in tag_set or 'toxic' in tag_set:
+            return 'poison_damage'
+        elif 'protection' in tag_set or 'shield' in tag_set:
+            return 'damage_reduction'
+        elif 'health' in tag_set or 'life' in tag_set:
+            return 'health_bonus'
+        elif 'speed' in tag_set or 'agility' in tag_set:
+            return 'speed_bonus'
+        elif 'luck' in tag_set or 'fortune' in tag_set:
+            return 'luck_bonus'
+        elif 'efficiency' in tag_set:
+            return 'efficiency_bonus'
+        else:
+            return 'damage_multiplier'  # Default
 
     def update_config(self, **kwargs):
         """Update configuration"""

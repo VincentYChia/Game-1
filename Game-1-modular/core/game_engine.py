@@ -4684,6 +4684,12 @@ class GameEngine:
         """Open the item selection UI for applying enchantment"""
         equip_db = EquipmentDatabase.get_instance()
 
+        # Debug: Show enchantment filtering info
+        print(f"[ENCHANT DEBUG] Opening selection for: {recipe.recipe_id}")
+        print(f"[ENCHANT DEBUG] is_enchantment: {recipe.is_enchantment}")
+        print(f"[ENCHANT DEBUG] applicable_to: {recipe.applicable_to}")
+        print(f"[ENCHANT DEBUG] effect: {recipe.effect}")
+
         # Get ONLY compatible equipment (filter by can_apply_enchantment)
         compatible_items = []
 
