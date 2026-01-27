@@ -17,6 +17,12 @@ Architecture:
 import sys
 import os
 
+print("=" * 50)
+print("DEBUG: Checking environment variable")
+print(f"ANTHROPIC_API_KEY: {os.environ.get('ANTHROPIC_API_KEY', '(NOT SET)')}")
+print("=" * 50)
+
+
 # Ensure the current directory is in the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
