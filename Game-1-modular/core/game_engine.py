@@ -4949,7 +4949,6 @@ class GameEngine:
 
         self.renderer.render_notifications(self.notifications)
         self.renderer.render_debug_messages()
-        self.renderer.render_loading_indicator()  # LLM/Classifier loading indicator
 
         if self.character.class_selection_open:
             result = self.renderer.render_class_selection_ui(self.character, self.mouse_pos)
@@ -5052,6 +5051,9 @@ class GameEngine:
         # Minigame rendering (rendered on top of EVERYTHING)
         if self.active_minigame:
             self._render_minigame()
+
+        # Loading indicator (LLM/Classifier) - rendered on top of all UI
+        self.renderer.render_loading_indicator()
 
         # Render deferred tooltips LAST (on top of all UI including modals)
         self.renderer.render_pending_tooltip()

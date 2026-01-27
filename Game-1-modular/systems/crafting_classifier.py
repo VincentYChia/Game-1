@@ -770,8 +770,8 @@ class CNNBackend(ClassifierBackend):
         if self.model is not None or self._load_error is not None:
             return
 
-        loading_state = _get_classifier_loading_state()
-
+        # Note: Loading state is managed by CraftingClassifierManager.preload(),
+        # NOT here, to avoid nested start/finish calls that break the indicator.
         try:
             import tensorflow as tf
             self._tf = tf
@@ -780,23 +780,12 @@ class CNNBackend(ClassifierBackend):
             import os
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-            model_name = self.model_path.name[:30] if len(self.model_path.name) > 30 else self.model_path.name
-            if loading_state:
-                loading_state.start(f"Loading CNN Model", subtitle=model_name)
-
             self.model = tf.keras.models.load_model(str(self.model_path))
-
-            if loading_state:
-                loading_state.finish()
 
         except ImportError as e:
             self._load_error = f"TensorFlow not installed: {e}"
-            if loading_state:
-                loading_state.finish()
         except Exception as e:
             self._load_error = f"Failed to load CNN model: {e}"
-            if loading_state:
-                loading_state.finish()
 
     def predict(self, input_data: np.ndarray) -> Tuple[float, Optional[str]]:
         self._lazy_load()
@@ -839,19 +828,12 @@ class LightGBMBackend(ClassifierBackend):
             return
         self._loading = True
 
-        loading_state = _get_classifier_loading_state()
-
+        # Note: Loading state is managed by CraftingClassifierManager.preload(),
+        # NOT here, to avoid nested start/finish calls that break the indicator.
         try:
             import lightgbm as lgb
 
-            model_name = self.model_path.name[:30] if len(self.model_path.name) > 30 else self.model_path.name
-            if loading_state:
-                loading_state.start(f"Loading LightGBM Model", subtitle=model_name)
-
             self.model = lgb.Booster(model_file=str(self.model_path))
-
-            if loading_state:
-                loading_state.finish()
 
             # NOTE: We do NOT load the pickled extractor files because they
             # contain a RecipeFeatureExtractor class that was defined in the
@@ -860,12 +842,8 @@ class LightGBMBackend(ClassifierBackend):
 
         except ImportError as e:
             self._load_error = f"LightGBM not installed: {e}"
-            if loading_state:
-                loading_state.finish()
         except Exception as e:
             self._load_error = f"Failed to load LightGBM model: {e}"
-            if loading_state:
-                loading_state.finish()
         finally:
             self._loading = False
 

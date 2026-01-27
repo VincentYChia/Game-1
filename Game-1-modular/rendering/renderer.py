@@ -5418,8 +5418,10 @@ class Renderer:
         """Render a small loading indicator in the bottom-right corner."""
         # Position in bottom-right corner
         padding = 20
-        indicator_width = 250
-        indicator_height = 50
+        indicator_width = 280
+        # Adjust height based on whether we have a subtitle
+        has_subtitle = loading_state.subtitle and len(loading_state.subtitle) > 0
+        indicator_height = 70 if has_subtitle else 50
         x = Config.VIEWPORT_WIDTH - indicator_width - padding
         y = Config.VIEWPORT_HEIGHT - indicator_height - padding
 
@@ -5432,15 +5434,27 @@ class Renderer:
         # Border
         pygame.draw.rect(self.screen, (100, 150, 255), bg_rect, 2)
 
-        # Loading message
+        # Loading message (truncate if too long)
         message = loading_state.message or "Loading..."
+        if len(message) > 30:
+            message = message[:27] + "..."
         msg_surf = self.small_font.render(message, True, (200, 220, 255))
         self.screen.blit(msg_surf, (x + 10, y + 8))
+
+        # Subtitle (if present)
+        text_y_offset = 26  # Start after message
+        if has_subtitle:
+            subtitle = loading_state.subtitle
+            if len(subtitle) > 35:
+                subtitle = subtitle[:32] + "..."
+            sub_surf = self.tiny_font.render(subtitle, True, (150, 160, 190))
+            self.screen.blit(sub_surf, (x + 10, y + text_y_offset))
+            text_y_offset += 18  # Move bar down for subtitle
 
         # Progress bar
         progress = loading_state.progress
         bar_x = x + 10
-        bar_y = y + 30
+        bar_y = y + text_y_offset + 4
         bar_width = indicator_width - 20
         bar_height = 10
 
