@@ -413,11 +413,17 @@ class Character:
                         durability_current=eq_data.get("durability_current", 100),
                         durability_max=eq_data.get("durability_max", 100),
                         attack_speed=eq_data.get("attack_speed", 1.0),
+                        efficiency=eq_data.get("efficiency", 1.0),
                         weight=eq_data.get("weight", 1.0),
                         range=eq_data.get("range", 1.0),
                         hand_type=eq_data.get("hand_type", "default"),
                         item_type=eq_data.get("item_type", "weapon"),
-                        icon_path=eq_data.get("icon_path")  # Restore icon path for proper PNG rendering
+                        icon_path=eq_data.get("icon_path"),
+                        stat_multipliers=eq_data.get("stat_multipliers", {}),
+                        tags=eq_data.get("tags", []),
+                        effect_tags=eq_data.get("effect_tags", []),
+                        effect_params=eq_data.get("effect_params", {}),
+                        soulbound=eq_data.get("soulbound", False)
                     )
 
                     # Restore bonuses if present
@@ -466,11 +472,17 @@ class Character:
                     durability_current=eq_data.get("durability_current", 100),
                     durability_max=eq_data.get("durability_max", 100),
                     attack_speed=eq_data.get("attack_speed", 1.0),
+                    efficiency=eq_data.get("efficiency", 1.0),
                     weight=eq_data.get("weight", 1.0),
                     range=eq_data.get("range", 1.0),
                     hand_type=eq_data.get("hand_type", "default"),
                     item_type=eq_data.get("item_type", "weapon"),
-                    icon_path=eq_data.get("icon_path")  # Restore icon path for proper PNG rendering
+                    icon_path=eq_data.get("icon_path"),
+                    stat_multipliers=eq_data.get("stat_multipliers", {}),
+                    tags=eq_data.get("tags", []),
+                    effect_tags=eq_data.get("effect_tags", []),
+                    effect_params=eq_data.get("effect_params", {}),
+                    soulbound=eq_data.get("soulbound", False)
                 )
 
                 # Restore bonuses if present

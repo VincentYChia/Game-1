@@ -3205,12 +3205,14 @@ class GameEngine:
                 station_tier=tier
             )
         elif discipline in ['adornments', 'enchanting']:
+            # Adornments uses nested placementMap structure with gridType and vertices
+            adornment_placement_map = placement_data.get('placementMap', {})
             placement_db.placements[recipe_id] = PlacementData(
                 recipe_id=recipe_id,
                 discipline='adornments',
                 grid_size=grid_size,
-                placement_map=placement_data.get('placementMap', {}),
-                pattern=placement_data.get('vertices', []),
+                placement_map=adornment_placement_map,  # Contains {gridType, vertices}
+                pattern=adornment_placement_map.get('vertices', {}),  # Extract vertices for pattern field
                 narrative=gen_result.narrative,
                 output_id=gen_result.item_id,
                 station_tier=tier
@@ -3333,7 +3335,9 @@ class GameEngine:
                 if discipline == 'smithing':
                     crafter.placements[recipe_id] = placement_data.get('placementMap', {})
                 elif discipline in ['adornments', 'enchanting']:
-                    crafter.placements[recipe_id] = placement_data.get('vertices', {})
+                    # Adornments uses nested structure - extract vertices from placementMap
+                    adornment_map = placement_data.get('placementMap', {})
+                    crafter.placements[recipe_id] = adornment_map.get('vertices', adornment_map)
                 else:
                     crafter.placements[recipe_id] = placement_data
 
@@ -3399,12 +3403,14 @@ class GameEngine:
                         station_tier=station_tier
                     )
                 elif discipline in ['adornments', 'enchanting']:
+                    # Adornments uses nested placementMap structure with gridType and vertices
+                    adornment_placement_map = placement_data.get('placementMap', {})
                     placement_db.placements[recipe_id] = PlacementData(
                         recipe_id=recipe_id,
                         discipline='adornments',
                         grid_size=grid_size,
-                        placement_map=placement_data.get('placementMap', {}),
-                        pattern=placement_data.get('vertices', []),
+                        placement_map=adornment_placement_map,
+                        pattern=adornment_placement_map.get('vertices', {}),
                         narrative=narrative,
                         output_id=item_id,
                         station_tier=station_tier

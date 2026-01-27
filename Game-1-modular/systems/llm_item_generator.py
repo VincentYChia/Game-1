@@ -706,57 +706,68 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
         }
 
         if discipline == 'smithing':
-            # Extract grid placement map {"x,y": "material_id"}
+            # Extract grid placement map {"row,col": "material_id"}
+            # UI uses 0-indexed (x=column, y=row)
+            # JSON uses 1-indexed "row,col" format
             placement_map = {}
             for (x, y), placed_mat in ui.grid.items():
-                placement_map[f"{x},{y}"] = placed_mat.item_id
+                # Convert: x=column, y=row -> "row+1,col+1"
+                placement_map[f"{y+1},{x+1}"] = placed_mat.item_id
             placement['placementMap'] = placement_map
             placement['gridSize'] = f"{getattr(ui, 'grid_size', 3)}x{getattr(ui, 'grid_size', 3)}"
 
         elif discipline in ['adornments', 'enchanting']:
             # Extract vertices and shapes
+            # JSON format: "vertices": {"x,y": {"materialId": "...", "isKey": false}}
+            grid_size = getattr(ui, 'grid_size', 8)
             vertices = {}
             for coord_key, placed_mat in getattr(ui, 'vertices', {}).items():
-                vertices[coord_key] = placed_mat.item_id
-            placement['vertices'] = vertices
+                vertices[coord_key] = {
+                    'materialId': placed_mat.item_id,
+                    'isKey': getattr(placed_mat, 'is_key', False)
+                }
+            placement['placementMap'] = {
+                'gridType': f"square_{grid_size}x{grid_size}",
+                'vertices': vertices
+            }
             placement['shapes'] = [
                 {'type': s.get('type'), 'vertices': s.get('vertices', [])}
                 for s in getattr(ui, 'shapes', [])
             ]
-            placement['gridSize'] = f"{getattr(ui, 'grid_size', 8)}x{getattr(ui, 'grid_size', 8)}"
+            placement['gridSize'] = f"{grid_size}x{grid_size}"
 
         elif discipline == 'alchemy':
             # Extract slot ingredients with positions
+            # JSON uses 1-indexed slot numbers
             ingredients = []
             for slot_idx, placed_mat in enumerate(getattr(ui, 'slots', [])):
                 if placed_mat:
                     ingredients.append({
-                        'slot': slot_idx,
+                        'slot': slot_idx + 1,  # Convert to 1-indexed
                         'materialId': placed_mat.item_id,
-                        'quantity': placed_mat.quantity
+                        'quantity': getattr(placed_mat, 'quantity', 1)
                     })
             placement['ingredients'] = ingredients
             placement['numSlots'] = len(getattr(ui, 'slots', []))
 
         elif discipline == 'refining':
             # Extract core and surrounding slots
+            # JSON format: [{materialId, quantity}] - no slot index, order is implicit
             core_inputs = []
-            for idx, placed_mat in enumerate(getattr(ui, 'core_slots', [])):
+            for placed_mat in getattr(ui, 'core_slots', []):
                 if placed_mat:
                     core_inputs.append({
-                        'slot': idx,
                         'materialId': placed_mat.item_id,
-                        'quantity': placed_mat.quantity
+                        'quantity': getattr(placed_mat, 'quantity', 1)
                     })
             placement['coreInputs'] = core_inputs
 
             surrounding_inputs = []
-            for idx, placed_mat in enumerate(getattr(ui, 'surrounding_slots', [])):
+            for placed_mat in getattr(ui, 'surrounding_slots', []):
                 if placed_mat:
                     surrounding_inputs.append({
-                        'slot': idx,
                         'materialId': placed_mat.item_id,
-                        'quantity': placed_mat.quantity
+                        'quantity': getattr(placed_mat, 'quantity', 1)
                     })
             placement['surroundingInputs'] = surrounding_inputs
             placement['numCoreSlots'] = len(getattr(ui, 'core_slots', []))
@@ -764,15 +775,16 @@ Return ONLY the JSON item definition, no extra text.{examples_text}"""
 
         elif discipline == 'engineering':
             # Extract slot type assignments
+            # JSON format: [{type, materialId, quantity}]
             slots = []
             for slot_type, materials in getattr(ui, 'slots', {}).items():
-                for idx, placed_mat in enumerate(materials):
-                    slots.append({
-                        'slotType': slot_type,
-                        'index': idx,
-                        'materialId': placed_mat.item_id,
-                        'quantity': placed_mat.quantity
-                    })
+                for placed_mat in materials:
+                    if placed_mat:
+                        slots.append({
+                            'type': slot_type,
+                            'materialId': placed_mat.item_id,
+                            'quantity': getattr(placed_mat, 'quantity', 1)
+                        })
             placement['slots'] = slots
             placement['slotTypes'] = list(getattr(ui, 'slots', {}).keys())
 

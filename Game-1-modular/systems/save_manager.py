@@ -186,11 +186,30 @@ class SaveManager:
                         "durability_current": slot.equipment_data.durability_current,
                         "durability_max": slot.equipment_data.durability_max,
                         "attack_speed": slot.equipment_data.attack_speed,
+                        "efficiency": slot.equipment_data.efficiency,
                         "weight": slot.equipment_data.weight,
                         "range": slot.equipment_data.range,
                         "hand_type": slot.equipment_data.hand_type,
-                        "item_type": slot.equipment_data.item_type
+                        "item_type": slot.equipment_data.item_type,
+                        "icon_path": slot.equipment_data.icon_path,
+                        "soulbound": slot.equipment_data.soulbound,
                     }
+
+                    # Save stat_multipliers if present
+                    if slot.equipment_data.stat_multipliers:
+                        slot_data["equipment_data"]["stat_multipliers"] = slot.equipment_data.stat_multipliers
+
+                    # Save tags if present
+                    if slot.equipment_data.tags:
+                        slot_data["equipment_data"]["tags"] = slot.equipment_data.tags
+
+                    # Save effect_tags if present
+                    if slot.equipment_data.effect_tags:
+                        slot_data["equipment_data"]["effect_tags"] = slot.equipment_data.effect_tags
+
+                    # Save effect_params if present
+                    if slot.equipment_data.effect_params:
+                        slot_data["equipment_data"]["effect_params"] = slot.equipment_data.effect_params
 
                     # Save bonuses if present
                     if slot.equipment_data.bonuses:
@@ -232,11 +251,30 @@ class SaveManager:
                     "durability_current": item.durability_current,
                     "durability_max": item.durability_max,
                     "attack_speed": item.attack_speed,
+                    "efficiency": item.efficiency,
                     "weight": item.weight,
                     "range": item.range,
                     "hand_type": item.hand_type,
-                    "item_type": item.item_type
+                    "item_type": item.item_type,
+                    "icon_path": item.icon_path,
+                    "soulbound": item.soulbound,
                 }
+
+                # Save stat_multipliers if present
+                if item.stat_multipliers:
+                    equipment_data["stat_multipliers"] = item.stat_multipliers
+
+                # Save tags if present
+                if item.tags:
+                    equipment_data["tags"] = item.tags
+
+                # Save effect_tags if present
+                if item.effect_tags:
+                    equipment_data["effect_tags"] = item.effect_tags
+
+                # Save effect_params if present
+                if item.effect_params:
+                    equipment_data["effect_params"] = item.effect_params
 
                 # Save bonuses if present
                 if item.bonuses:
