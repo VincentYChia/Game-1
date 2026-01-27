@@ -3058,6 +3058,19 @@ class GameEngine:
             calculated_tier = generator.calculate_minimum_tier(discipline, self.interactive_ui)
             placement_data = generator.extract_placement_data(discipline, self.interactive_ui)
             print(f"  Calculated minimum tier: {calculated_tier} (from placement)")
+            print(f"  Extracted placement_data keys: {list(placement_data.keys())}")
+            # Debug: Show placement data content for each discipline
+            if discipline == 'smithing':
+                print(f"  Smithing placementMap: {placement_data.get('placementMap', {})}")
+            elif discipline == 'refining':
+                print(f"  Refining coreInputs: {placement_data.get('coreInputs', [])}")
+                print(f"  Refining surroundingInputs: {placement_data.get('surroundingInputs', [])}")
+            elif discipline == 'alchemy':
+                print(f"  Alchemy ingredients: {placement_data.get('ingredients', [])}")
+            elif discipline == 'engineering':
+                print(f"  Engineering slots: {placement_data.get('slots', [])}")
+            elif discipline in ['adornments', 'enchanting']:
+                print(f"  Adornments placementMap: {placement_data.get('placementMap', {})}")
 
         # Store in character data
         if not hasattr(self.character, 'invented_recipes'):
@@ -3230,13 +3243,16 @@ class GameEngine:
                 station_tier=tier
             )
         elif discipline in ['adornments', 'enchanting']:
-            # Adornments uses nested placementMap structure with gridType and vertices
+            # Adornments uses nested placementMap structure with gridType, vertices, and shapes
+            # The renderer expects placement_map to contain all three
             adornment_placement_map = placement_data.get('placementMap', {})
+            # Include shapes from top-level placement_data into the placement_map
+            adornment_placement_map['shapes'] = placement_data.get('shapes', [])
             placement_db.placements[recipe_id] = PlacementData(
                 recipe_id=recipe_id,
                 discipline='adornments',
                 grid_size=grid_size,
-                placement_map=adornment_placement_map,  # Contains {gridType, vertices}
+                placement_map=adornment_placement_map,  # Contains {gridType, vertices, shapes}
                 pattern=adornment_placement_map.get('vertices', {}),  # Extract vertices for pattern field
                 narrative=gen_result.narrative,
                 output_id=gen_result.item_id,
@@ -3591,13 +3607,15 @@ class GameEngine:
                         station_tier=station_tier
                     )
                 elif discipline in ['adornments', 'enchanting']:
-                    # Adornments uses nested placementMap structure with gridType and vertices
+                    # Adornments uses nested placementMap structure with gridType, vertices, and shapes
                     adornment_placement_map = placement_data.get('placementMap', {})
+                    # Include shapes from top-level placement_data into the placement_map
+                    adornment_placement_map['shapes'] = placement_data.get('shapes', [])
                     placement_db.placements[recipe_id] = PlacementData(
                         recipe_id=recipe_id,
                         discipline='adornments',
                         grid_size=grid_size,
-                        placement_map=adornment_placement_map,
+                        placement_map=adornment_placement_map,  # Contains {gridType, vertices, shapes}
                         pattern=adornment_placement_map.get('vertices', {}),
                         narrative=narrative,
                         output_id=item_id,
