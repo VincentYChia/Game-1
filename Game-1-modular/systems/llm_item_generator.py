@@ -580,10 +580,13 @@ class LLMItemGenerator:
 
         # Parse response
         try:
+            print(f"  DEBUG: Attempting to parse response ({len(response_text)} chars)")
             item_data = self._parse_response(response_text)
+            print(f"  DEBUG: Parsed successfully, keys: {list(item_data.keys())}")
 
             # Validate required fields
             item_id = item_data.get('itemId', item_data.get('materialId'))
+            print(f"  DEBUG: item_id = {item_id}")
             if not item_id:
                 raise ValueError("Missing itemId/materialId in response")
 
