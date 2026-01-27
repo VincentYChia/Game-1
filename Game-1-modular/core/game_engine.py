@@ -3037,6 +3037,47 @@ class GameEngine:
         print(f"  Consumed materials: {materials_to_consume}")
         return True
 
+    def _infer_enchantment_applicable_to(self, item_name: str, item_data: dict) -> list:
+        """
+        Infer what equipment types an enchantment can apply to.
+
+        Consolidates the duplicated logic for determining applicable_to from
+        item name or item_data.
+
+        Args:
+            item_name: The name of the enchantment
+            item_data: The item data dict (may contain applicableTo field)
+
+        Returns:
+            List of applicable equipment types: ['weapon'], ['armor'], ['tool'],
+            or ['weapon', 'armor', 'tool'] for universal enchantments
+        """
+        # Try to get from item_data first
+        applicable_to = item_data.get('applicableTo', item_data.get('applicable_to', []))
+        if applicable_to:
+            return applicable_to
+
+        # Infer from name
+        name_lower = item_name.lower()
+
+        # Offensive enchantments -> weapon
+        if any(w in name_lower for w in ['sharp', 'damage', 'attack', 'strike', 'fire aspect',
+                                         'lifesteal', 'venom', 'frost', 'thunder', 'smite']):
+            return ['weapon']
+
+        # Defensive enchantments -> armor
+        if any(w in name_lower for w in ['protect', 'defense', 'armor', 'thorns', 'resistance',
+                                         'fortify', 'ward', 'shield', 'guard']):
+            return ['armor']
+
+        # Utility enchantments -> tool
+        if any(w in name_lower for w in ['efficiency', 'fortune', 'luck', 'silk touch',
+                                         'unbreaking', 'mending']):
+            return ['tool']
+
+        # Default: universal enchantment
+        return ['weapon', 'armor', 'tool']
+
     def _store_invented_recipe(self, gen_result, discipline: str):
         """
         Store invented recipe for save/load system (Phase 3).
@@ -3100,31 +3141,11 @@ class GameEngine:
 
         if is_enchantment:
             enchantment_name = gen_result.item_name
-            # Extract applicable_to from item_data or infer from name
             item_data = gen_result.item_data or {}
-            applicable_to = item_data.get('applicableTo', item_data.get('applicable_to', []))
-            if not applicable_to:
-                # Infer from item name/type
-                name_lower = gen_result.item_name.lower()
-                if any(w in name_lower for w in ['sharp', 'damage', 'attack', 'strike', 'fire aspect', 'lifesteal']):
-                    applicable_to = ['weapon']
-                elif any(w in name_lower for w in ['protect', 'defense', 'armor', 'thorns', 'resistance']):
-                    applicable_to = ['armor']
-                elif any(w in name_lower for w in ['efficiency', 'fortune', 'luck']):
-                    applicable_to = ['tool']
-                else:
-                    # Default: can apply to weapon, armor, or tool
-                    applicable_to = ['weapon', 'armor', 'tool']
-
-            # Extract effect from item_data
-            effect = item_data.get('effect', {})
-            if not effect:
-                # Create a basic effect structure
-                effect = {
-                    'type': 'custom',
-                    'value': 0.1,
-                    'stackable': False
-                }
+            # Use consolidated helper for applicable_to inference
+            applicable_to = self._infer_enchantment_applicable_to(gen_result.item_name, item_data)
+            # Extract or create effect
+            effect = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
 
         recipe = Recipe(
             recipe_id=recipe_id,
@@ -3225,22 +3246,8 @@ class GameEngine:
             item_data = gen_result.item_data or {}
             recipe_dict['enchantmentId'] = gen_result.item_id
             recipe_dict['enchantmentName'] = gen_result.item_name
-
-            # Extract or infer applicableTo
-            applicable_to = item_data.get('applicableTo', item_data.get('applicable_to', []))
-            if not applicable_to:
-                name_lower = gen_result.item_name.lower()
-                if any(w in name_lower for w in ['sharp', 'damage', 'attack', 'strike', 'fire aspect', 'lifesteal']):
-                    applicable_to = ['weapon']
-                elif any(w in name_lower for w in ['protect', 'defense', 'armor', 'thorns', 'resistance']):
-                    applicable_to = ['armor']
-                elif any(w in name_lower for w in ['efficiency', 'fortune', 'luck']):
-                    applicable_to = ['tool']
-                else:
-                    applicable_to = ['weapon', 'armor', 'tool']
-            recipe_dict['applicableTo'] = applicable_to
-
-            # Extract effect
+            # Use consolidated helper for applicable_to inference
+            recipe_dict['applicableTo'] = self._infer_enchantment_applicable_to(gen_result.item_name, item_data)
             recipe_dict['effect'] = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
 
         # Register recipe with Crafter for instant craft
@@ -3596,20 +3603,8 @@ class GameEngine:
                     item_name = recipe_record.get('item_name', item_id)
                     recipe_dict['enchantmentId'] = item_id
                     recipe_dict['enchantmentName'] = item_name
-
-                    # Extract or infer applicableTo
-                    applicable_to = item_data.get('applicableTo', item_data.get('applicable_to', []))
-                    if not applicable_to:
-                        name_lower = item_name.lower()
-                        if any(w in name_lower for w in ['sharp', 'damage', 'attack', 'strike', 'fire aspect', 'lifesteal']):
-                            applicable_to = ['weapon']
-                        elif any(w in name_lower for w in ['protect', 'defense', 'armor', 'thorns', 'resistance']):
-                            applicable_to = ['armor']
-                        elif any(w in name_lower for w in ['efficiency', 'fortune', 'luck']):
-                            applicable_to = ['tool']
-                        else:
-                            applicable_to = ['weapon', 'armor', 'tool']
-                    recipe_dict['applicableTo'] = applicable_to
+                    # Use consolidated helper for applicable_to inference
+                    recipe_dict['applicableTo'] = self._infer_enchantment_applicable_to(item_name, item_data)
                     recipe_dict['effect'] = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
 
                 # 1. Register with Crafter for instant craft
@@ -3626,7 +3621,6 @@ class GameEngine:
                     crafter.placements[recipe_id] = placement_data
 
                 # 2. Register with RecipeDatabase for recipe list
-                # For adornments, set enchantment-specific fields
                 is_enchantment = discipline in ['adornments', 'enchanting']
                 enchantment_name = ''
                 applicable_to = []
@@ -3636,20 +3630,8 @@ class GameEngine:
                     item_data = recipe_record.get('item_data', {})
                     item_name = recipe_record.get('item_name', item_id)
                     enchantment_name = item_name
-
-                    # Extract applicable_to from item_data or infer
-                    applicable_to = item_data.get('applicableTo', item_data.get('applicable_to', []))
-                    if not applicable_to:
-                        name_lower = item_name.lower()
-                        if any(w in name_lower for w in ['sharp', 'damage', 'attack', 'strike', 'fire aspect', 'lifesteal']):
-                            applicable_to = ['weapon']
-                        elif any(w in name_lower for w in ['protect', 'defense', 'armor', 'thorns', 'resistance']):
-                            applicable_to = ['armor']
-                        elif any(w in name_lower for w in ['efficiency', 'fortune', 'luck']):
-                            applicable_to = ['tool']
-                        else:
-                            applicable_to = ['weapon', 'armor', 'tool']
-
+                    # Use consolidated helper for applicable_to inference
+                    applicable_to = self._infer_enchantment_applicable_to(item_name, item_data)
                     effect = item_data.get('effect', {'type': 'custom', 'value': 0.1, 'stackable': False})
 
                 recipe = Recipe(

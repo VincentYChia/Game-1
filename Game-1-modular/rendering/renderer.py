@@ -1798,17 +1798,18 @@ class Renderer:
         surf.blit(self.small_font.render("[L or ESC] Close | [Mouse Wheel] Scroll", True, (180, 180, 180)),
                   (ww // 2 - s(160), s(50)))
 
-        # Tabs
+        # Tabs - adjusted for 6 tabs
         tab_y = s(80)
-        tab_width = s(140)
+        tab_width = s(115)  # Reduced from 140 to fit 6 tabs
         tab_height = s(40)
-        tab_spacing = s(10)
+        tab_spacing = s(8)  # Reduced spacing
         tabs = [
             ("guide", "GAME GUIDE"),
             ("quests", "QUESTS"),
             ("skills", "SKILLS"),
             ("titles", "TITLES"),
-            ("stats", "STATS")
+            ("stats", "STATS"),
+            ("recipes", "INVENTIONS")
         ]
 
         tab_rects = []
@@ -1859,6 +1860,8 @@ class Renderer:
             self._render_titles_content(surf, content_rect, character)
         elif character.encyclopedia.current_tab == "stats":
             self._render_stats_content(surf, content_rect, character)
+        elif character.encyclopedia.current_tab == "recipes":
+            self._render_recipes_content(surf, content_rect, character)
 
         self.screen.blit(surf, (wx, wy))
         window_rect = pygame.Rect(wx, wy, ww, wh)
@@ -2493,6 +2496,74 @@ class Renderer:
                 surf.blit(self.tiny_font.render(stat_text, True, color), (x + s(10), y))
 
             y += s(18)
+
+    def _render_recipes_content(self, surf, content_rect, character):
+        """Render invented recipes content"""
+        s = Config.scale
+
+        # Get invented recipes from character
+        invented_recipes = getattr(character, 'invented_recipes', None)
+        lines = character.encyclopedia.get_invented_recipes_text(invented_recipes)
+
+        # Apply scroll offset
+        scroll_offset = character.encyclopedia.scroll_offset
+        y = content_rect.y + s(20) - scroll_offset
+        x = content_rect.x + s(20)
+
+        for line in lines:
+            # Stop if entirely below visible area
+            if y > content_rect.bottom:
+                break
+
+            # Style based on line content
+            if line.startswith("==="):
+                # Main header - golden
+                if y >= content_rect.y - s(30) and y < content_rect.bottom:
+                    surf.blit(self.font.render(line, True, (255, 215, 0)), (x, y))
+                y += s(30)
+            elif line.startswith("---"):
+                # Discipline header - blue
+                if y >= content_rect.y - s(25) and y < content_rect.bottom:
+                    surf.blit(self.small_font.render(line, True, (100, 180, 255)), (x, y))
+                y += s(25)
+            elif line.startswith("Total Inventions:"):
+                # Count line - light green
+                if y >= content_rect.y - s(20) and y < content_rect.bottom:
+                    surf.blit(self.small_font.render(line, True, (150, 255, 150)), (x, y))
+                y += s(20)
+            elif line.startswith("  [T"):
+                # Recipe entry - tier + name
+                if y >= content_rect.y - s(20) and y < content_rect.bottom:
+                    # Color by tier
+                    if "[T1]" in line:
+                        color = (180, 180, 180)  # Common
+                    elif "[T2]" in line:
+                        color = (100, 255, 100)  # Uncommon
+                    elif "[T3]" in line:
+                        color = (100, 150, 255)  # Rare
+                    elif "[T4]" in line:
+                        color = (200, 100, 255)  # Epic
+                    else:
+                        color = (200, 200, 220)
+                    surf.blit(self.small_font.render(line, True, color), (x, y))
+                y += s(20)
+            elif line.startswith("       Applies to:"):
+                # Enchantment applicability - cyan
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(line, True, (100, 200, 200)), (x, y))
+                y += s(16)
+            elif line.startswith("       \""):
+                # Narrative/quote - italic-style gray
+                if y >= content_rect.y - s(16) and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(line, True, (150, 150, 170)), (x, y))
+                y += s(16)
+            elif line == "":
+                y += s(8)
+            else:
+                # Default text
+                if y >= content_rect.y - s(18) and y < content_rect.bottom:
+                    surf.blit(self.tiny_font.render(line, True, (180, 180, 200)), (x, y))
+                y += s(18)
 
     def render_notifications(self, notifications: List[Notification]):
         y = 50

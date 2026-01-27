@@ -433,11 +433,20 @@ class LLMItemGenerator:
         system_prompt = self.prompt_loader.get_system_prompt(discipline)
         user_prompt = self._build_user_prompt(discipline, recipe_context, narrative)
 
+        # Start loading indicator for LLM call
+        loading_state = get_loading_state()
+        loading_state.start(f"Generating {discipline} item...")
+
         # Call LLM
         print(f"Generating item for {discipline}...")
-        response_text, error = self.backend.generate(
-            system_prompt, user_prompt, self.config
-        )
+        try:
+            loading_state.update(f"Calling AI model...", 0.3)
+            response_text, error = self.backend.generate(
+                system_prompt, user_prompt, self.config
+            )
+            loading_state.update(f"Processing response...", 0.8)
+        finally:
+            loading_state.finish()
 
         # Log input/output for debugging
         debug_logger = get_llm_debug_logger()

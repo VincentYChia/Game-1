@@ -1,6 +1,6 @@
 """Encyclopedia/Compendium system for displaying game information"""
 
-from typing import List
+from typing import List, Dict, Any, Optional
 
 
 class Encyclopedia:
@@ -10,13 +10,114 @@ class Encyclopedia:
     """
     def __init__(self):
         self.is_open = False
-        self.current_tab = "guide"  # guide, quests, skills, titles, stats
+        self.current_tab = "guide"  # guide, quests, skills, titles, stats, recipes
         self.scroll_offset = 0
 
     def toggle(self):
         self.is_open = not self.is_open
         if self.is_open:
             self.scroll_offset = 0
+
+    def get_invented_recipes_text(self, invented_recipes: Optional[List[Dict[str, Any]]] = None) -> List[str]:
+        """
+        Returns formatted text for invented recipes tab.
+
+        Recipes are sorted by:
+        1. Discipline (alphabetically)
+        2. Tier (ascending)
+        3. Name (alphabetically)
+
+        Args:
+            invented_recipes: List of recipe records from character.invented_recipes
+
+        Returns:
+            List of formatted strings for display
+        """
+        if not invented_recipes:
+            return [
+                "=== INVENTED RECIPES ===",
+                "",
+                "No recipes invented yet!",
+                "",
+                "To invent a new recipe:",
+                "1. Open interactive crafting at a station",
+                "2. Place materials in a new pattern",
+                "3. Click INVENT to validate your creation",
+                "",
+                "Valid placements will generate unique items!",
+            ]
+
+        lines = [
+            "=== INVENTED RECIPES ===",
+            "",
+            f"Total Inventions: {len(invented_recipes)}",
+            "",
+        ]
+
+        # Group by discipline, then sort within groups
+        by_discipline: Dict[str, List[Dict]] = {}
+        for recipe in invented_recipes:
+            disc = recipe.get('discipline', 'unknown')
+            if disc not in by_discipline:
+                by_discipline[disc] = []
+            by_discipline[disc].append(recipe)
+
+        # Display order for disciplines
+        discipline_order = ['smithing', 'refining', 'alchemy', 'engineering', 'adornments']
+
+        for disc in discipline_order:
+            if disc not in by_discipline:
+                continue
+
+            recipes = by_discipline[disc]
+            # Sort by tier, then by name
+            recipes.sort(key=lambda r: (r.get('station_tier', 1), r.get('item_name', '')))
+
+            # Discipline header
+            disc_display = disc.upper()
+            if disc == 'adornments':
+                disc_display = 'ENCHANTING'
+
+            lines.append(f"--- {disc_display} ({len(recipes)}) ---")
+            lines.append("")
+
+            for recipe in recipes:
+                item_name = recipe.get('item_name', 'Unknown')
+                tier = recipe.get('station_tier', 1)
+                narrative = recipe.get('narrative', '')
+
+                # Format entry
+                tier_str = f"T{tier}"
+                lines.append(f"  [{tier_str}] {item_name}")
+
+                # Add item type for enchantments
+                if disc in ['adornments', 'enchanting']:
+                    item_data = recipe.get('item_data', {})
+                    applicable = item_data.get('applicableTo', item_data.get('applicable_to', []))
+                    if applicable:
+                        lines.append(f"       Applies to: {', '.join(applicable)}")
+
+                # Add brief narrative if available
+                if narrative:
+                    # Truncate long narratives
+                    if len(narrative) > 60:
+                        narrative = narrative[:57] + "..."
+                    lines.append(f"       \"{narrative}\"")
+
+                lines.append("")
+
+        # Add unknown disciplines at the end
+        for disc, recipes in by_discipline.items():
+            if disc not in discipline_order:
+                lines.append(f"--- {disc.upper()} ({len(recipes)}) ---")
+                lines.append("")
+                for recipe in recipes:
+                    item_name = recipe.get('item_name', 'Unknown')
+                    tier = recipe.get('station_tier', 1)
+                    lines.append(f"  [T{tier}] {item_name}")
+                    lines.append("")
+
+        return lines
 
     def get_game_guide_text(self) -> List[str]:
         """Returns the game guide/tutorial text as a list of paragraphs"""
