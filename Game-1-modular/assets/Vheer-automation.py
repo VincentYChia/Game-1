@@ -30,8 +30,194 @@ from pathlib import Path
 import time
 import re
 import shutil
+import ast
 
 
+# ============================================================================
+# CONFIGURATION LOADING FROM FILE
+# ============================================================================
+
+def parse_configurations_file(filepath):
+    """Parse configurations.txt to extract all configuration sets.
+
+    Returns:
+        Dict mapping config number -> {
+            'PERSISTENT_PROMPT': str,
+            'VERSION_PROMPTS': dict,
+            'TYPE_ADDITIONS': dict,
+            'CATEGORY_ADDITIONS': dict (optional)
+        }
+    """
+    configs = {}
+
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except FileNotFoundError:
+        print(f"  ⚠ Configuration file not found: {filepath}")
+        return configs
+
+    # Split by configuration headers
+    # Match both commented and uncommented configuration blocks
+    # Handle various comment styles: no comment, single #, or double # #
+    config_pattern = r'(?:#\s*#?\s*)?=+\s*\n(?:#\s*#?\s*)?CONFIGURATION\s+(\d+)\s*\n(?:#\s*#?\s*)?=+'
+
+    # Find all configuration markers
+    markers = list(re.finditer(config_pattern, content))
+
+    for i, marker in enumerate(markers):
+        config_num = int(marker.group(1))
+        start = marker.end()
+
+        # End is either next marker or end of file
+        end = markers[i + 1].start() if i + 1 < len(markers) else len(content)
+
+        config_block = content[start:end]
+
+        # Check if this block is commented out (majority of lines start with #)
+        lines = config_block.strip().split('\n')
+        commented_lines = sum(1 for line in lines if line.strip().startswith('#'))
+        is_commented = commented_lines > len(lines) * 0.5
+
+        # If commented, uncomment the block for parsing
+        if is_commented:
+            config_block = '\n'.join(
+                line[1:].lstrip() if line.strip().startswith('#') else line
+                for line in lines
+            )
+
+        # Extract PERSISTENT_PROMPT
+        persistent_match = re.search(
+            r'PERSISTENT_PROMPT\s*=\s*\(?\s*(["\'].*?["\'])\s*\)?(?:\n|$)',
+            config_block,
+            re.DOTALL
+        )
+        if not persistent_match:
+            # Try multiline format
+            persistent_match = re.search(
+                r'PERSISTENT_PROMPT\s*=\s*\(\s*\n?((?:["\'].*?["\'][\s\n]*)+)\)',
+                config_block,
+                re.DOTALL
+            )
+
+        persistent_prompt = ""
+        if persistent_match:
+            try:
+                # Clean up and evaluate the string
+                prompt_str = persistent_match.group(1).strip()
+                # Handle multi-line string concatenation
+                persistent_prompt = eval(prompt_str)
+            except:
+                persistent_prompt = persistent_match.group(1).strip().strip('"\'')
+
+        # Extract VERSION_PROMPTS dict
+        version_prompts = {}
+        vp_match = re.search(
+            r'VERSION_PROMPTS\s*=\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}',
+            config_block,
+            re.DOTALL
+        )
+        if vp_match:
+            try:
+                vp_content = '{' + vp_match.group(1) + '}'
+                version_prompts = ast.literal_eval(vp_content)
+            except:
+                # Parse manually
+                vp_block = vp_match.group(1)
+                for vm in re.finditer(r'(\d+)\s*:\s*(["\'].*?["\'])\s*,?', vp_block, re.DOTALL):
+                    try:
+                        version_prompts[int(vm.group(1))] = eval(vm.group(2))
+                    except:
+                        pass
+
+        # Extract TYPE_ADDITIONS dict
+        type_additions = {}
+        ta_match = re.search(
+            r'TYPE_ADDITIONS\s*=\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}',
+            config_block,
+            re.DOTALL
+        )
+        if ta_match:
+            try:
+                ta_content = '{' + ta_match.group(1) + '}'
+                type_additions = ast.literal_eval(ta_content)
+            except:
+                # Parse manually - key: 'value' pairs
+                ta_block = ta_match.group(1)
+                for tm in re.finditer(r"['\"](\w+)['\"]\s*:\s*(['\"].*?['\"])\s*[,}]", ta_block, re.DOTALL):
+                    try:
+                        type_additions[tm.group(1)] = eval(tm.group(2))
+                    except:
+                        pass
+
+        # Extract CATEGORY_ADDITIONS dict (if present)
+        category_additions = {}
+        ca_match = re.search(
+            r'CATEGORY_ADDITIONS\s*=\s*\{([^}]+(?:\{[^}]*\}[^}]*)*)\}',
+            config_block,
+            re.DOTALL
+        )
+        if ca_match:
+            try:
+                ca_content = '{' + ca_match.group(1) + '}'
+                category_additions = ast.literal_eval(ca_content)
+            except:
+                pass
+
+        configs[config_num] = {
+            'PERSISTENT_PROMPT': persistent_prompt,
+            'VERSION_PROMPTS': version_prompts,
+            'TYPE_ADDITIONS': type_additions,
+            'CATEGORY_ADDITIONS': category_additions,
+            'is_commented': is_commented
+        }
+
+        print(f"  ✓ Loaded Configuration {config_num}: "
+              f"{len(version_prompts)} version prompts, "
+              f"{len(type_additions)} type additions"
+              f"{' (was commented)' if is_commented else ''}")
+
+    return configs
+
+
+def load_configuration(config_num, configs_dict):
+    """Load a specific configuration into the global variables.
+
+    Args:
+        config_num: Configuration number to load
+        configs_dict: Dict from parse_configurations_file()
+
+    Returns:
+        True if loaded successfully, False otherwise
+    """
+    global PERSISTENT_PROMPT, VERSION_PROMPTS, TYPE_ADDITIONS, CATEGORY_ADDITIONS
+
+    if config_num not in configs_dict:
+        print(f"  ⚠ Configuration {config_num} not found, using defaults")
+        return False
+
+    config = configs_dict[config_num]
+
+    if config['PERSISTENT_PROMPT']:
+        PERSISTENT_PROMPT = config['PERSISTENT_PROMPT']
+
+    if config['VERSION_PROMPTS']:
+        VERSION_PROMPTS.update(config['VERSION_PROMPTS'])
+
+    if config['TYPE_ADDITIONS']:
+        TYPE_ADDITIONS.update(config['TYPE_ADDITIONS'])
+
+    if config.get('CATEGORY_ADDITIONS'):
+        CATEGORY_ADDITIONS.update(config['CATEGORY_ADDITIONS'])
+
+    print(f"  ✓ Applied Configuration {config_num}")
+    return True
+
+
+# Path to configurations file
+CONFIGURATIONS_FILE = Path(__file__).parent / 'configurations.txt'
+
+# Default configurations (used if file not found)
 PERSISTENT_PROMPT = ""
 
 # Version-specific prompts
@@ -970,6 +1156,139 @@ def get_output_base_for_version(version, cycle=None):
             return OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{version}"
 
 
+def run_generation_for_cycle(items, version_start, version_end, output_cycle, configs_dict=None):
+    """Run icon generation for a specific cycle with its configuration.
+
+    Args:
+        items: List of items to generate
+        version_start: Starting version number
+        version_end: Ending version number
+        output_cycle: Cycle number for output directory
+        configs_dict: Parsed configurations dict (if using file-based configs)
+
+    Returns:
+        Tuple of (success_count, failed_count, skipped_count, failed_items_list)
+    """
+    global PERSISTENT_PROMPT, VERSION_PROMPTS, TYPE_ADDITIONS
+
+    # Load configuration for this cycle if available
+    if configs_dict and output_cycle in configs_dict:
+        print(f"\n📋 Loading Configuration {output_cycle} for Cycle {output_cycle}...")
+        load_configuration(output_cycle, configs_dict)
+    elif configs_dict:
+        # Default to config 2 if no specific config for this cycle
+        print(f"\n📋 No Configuration {output_cycle} found, using Configuration 2 as default...")
+        if 2 in configs_dict:
+            load_configuration(2, configs_dict)
+
+    driver = setup_driver()
+    total_success = 0
+    total_failed = 0
+    total_skipped = 0
+    all_failed_items = []
+
+    try:
+        print("\n🌐 Opening Vheer...")
+        if not safe_driver_get(driver, "https://vheer.com/app/game-assets-generator"):
+            print("✗ Failed to open Vheer after multiple retries")
+            driver.quit()
+            return (0, len(items) * (version_end - version_start + 1), 0, [])
+
+        time.sleep(16)
+        driver.get("https://vheer.com/app/game-assets-generator")
+        time.sleep(8)
+        print("✓ Page loaded")
+
+        select_cel_shaded_style(driver)
+        print("✓ Ready\n")
+
+        for version in range(version_start, version_end + 1):
+            version_num = version - version_start + 1
+            total_versions = version_end - version_start + 1
+
+            print("\n" + "="*70)
+            print(f"CYCLE {output_cycle} - GENERATING VERSION {version} ({version_num}/{total_versions})")
+            print("="*70)
+
+            output_folder = get_output_base_for_version(version, output_cycle)
+            print(f"📁 Output: {output_folder}")
+
+            success = 0
+            failed = 0
+            skipped = 0
+            failed_list = []
+
+            for i, item in enumerate(items, 1):
+                print(f"\n[{i}/{len(items)}] Cycle {output_cycle} Version {version}")
+
+                try:
+                    ok, skip = generate_item(driver, item, version=version, cycle=output_cycle)
+
+                    if skip:
+                        skipped += 1
+                    elif ok:
+                        success += 1
+                    else:
+                        failed += 1
+                        failed_list.append(item['name'])
+
+                except Exception as e:
+                    if is_connection_error(e):
+                        print(f"  ⚠ Driver connection error: {type(e).__name__}")
+
+                        try:
+                            driver = restart_driver(driver)
+
+                            print(f"  → Retrying item after restart...")
+                            ok, skip = generate_item(driver, item, version=version, cycle=output_cycle)
+
+                            if skip:
+                                skipped += 1
+                            elif ok:
+                                success += 1
+                            else:
+                                failed += 1
+                                failed_list.append(item['name'])
+
+                        except Exception as restart_error:
+                            print(f"  ✗ Failed to restart driver: {restart_error}")
+                            failed += 1
+                            failed_list.append(item['name'])
+                    else:
+                        raise
+
+                print(f"\nCycle {output_cycle} Version {version} Totals: ✓{success}  ✗{failed}  ⊘{skipped}")
+
+                if i < len(items) and not skip:
+                    print(f"⏱ Waiting {WAIT_BETWEEN_ITEMS}s...")
+                    time.sleep(WAIT_BETWEEN_ITEMS)
+
+            total_success += success
+            total_failed += failed
+            total_skipped += skipped
+            if failed_list:
+                all_failed_items.extend([(version, name) for name in failed_list])
+
+            print(f"\n✓ Version {version} complete: {success} generated, {skipped} skipped, {failed} failed")
+
+            if version < version_end:
+                print(f"\n⏱ Waiting 30s before starting version {version + 1}...")
+                time.sleep(30)
+
+    except KeyboardInterrupt:
+        print("\n\n⏸ Interrupted")
+    except Exception as e:
+        print(f"\n\n❌ ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        print("\n🔒 Closing browser for this cycle...")
+        driver.quit()
+        time.sleep(3)
+
+    return (total_success, total_failed, total_skipped, all_failed_items)
+
+
 def main():
     global CUSTOM_VERSION_START, CUSTOM_VERSION_END, CUSTOM_OUTPUT_CYCLE
 
@@ -980,12 +1299,146 @@ def main():
     print(f"\n📁 Script: {SCRIPT_DIR}")
     print(f"💾 Output: {OUTPUT_DIR}")
 
+    # Check for configurations file
+    configs_dict = None
+    if CONFIGURATIONS_FILE.exists():
+        print(f"\n📋 Loading configurations from: {CONFIGURATIONS_FILE.name}")
+        configs_dict = parse_configurations_file(CONFIGURATIONS_FILE)
+        if configs_dict:
+            print(f"   Found {len(configs_dict)} configurations: {sorted(configs_dict.keys())}")
+    else:
+        print(f"\n⚠ No configurations.txt found, using built-in defaults")
+
     print("\nMode:")
     print("  [1] Test (2 items)")
     print("  [2] Full catalog")
     print("  [3] Custom configuration range (specify versions & cycle)")
+    print("  [4] Auto-cycle (fill vacancies in all cycles with matching configs)")
 
     choice = input("\nChoice: ").strip()
+
+    # Mode 4: Auto-cycle through all cycles with their configurations
+    if choice == '4':
+        print("\n" + "="*70)
+        print("AUTO-CYCLE MODE")
+        print("="*70)
+
+        # Load catalog
+        if not CATALOG_PATH.exists():
+            print(f"\n⚠ Catalog not found: {CATALOG_PATH}")
+            items = TEST_ITEMS
+        else:
+            print("\nLoading catalog...")
+            items = parse_catalog(CATALOG_PATH)
+            print(f"✓ Loaded {len(items)} items")
+
+        # Scan all cycles to find vacancies
+        print("\n" + "-"*50)
+        print("SCANNING CYCLES FOR VACANCIES")
+        print("-"*50)
+
+        vacancies = {}  # cycle -> list of missing versions
+        for cycle in range(1, 6):
+            cycle_dir = SCRIPT_DIR / f'icons-generated-cycle-{cycle}'
+            if cycle_dir.exists():
+                missing_versions = []
+                for ver in range(2, 6):  # Check versions 2-5
+                    ver_dir = cycle_dir / f'generated_icons-{ver}'
+                    if not ver_dir.exists():
+                        missing_versions.append(ver)
+                    else:
+                        # Check if it has enough files (more than 10)
+                        png_count = len(list(ver_dir.glob('**/*.png')))
+                        if png_count < 10:
+                            missing_versions.append(ver)
+                            print(f"  Cycle {cycle} v{ver}: only {png_count} files (treating as vacancy)")
+
+                if missing_versions:
+                    vacancies[cycle] = missing_versions
+                    print(f"  Cycle {cycle}: MISSING versions {missing_versions}")
+                else:
+                    print(f"  Cycle {cycle}: Complete (all versions present)")
+            else:
+                print(f"  Cycle {cycle}: Directory doesn't exist")
+
+        if not vacancies:
+            print("\n✓ All cycles complete! No vacancies found.")
+            return
+
+        # Show what will be generated
+        print("\n" + "-"*50)
+        print("GENERATION PLAN")
+        print("-"*50)
+
+        total_generations = 0
+        for cycle, versions in sorted(vacancies.items()):
+            config_num = cycle if cycle in (configs_dict or {}) else 2
+            print(f"  Cycle {cycle}: Generate versions {versions} using Config {config_num}")
+            total_generations += len(versions) * len(items)
+
+        print(f"\nTotal: ~{total_generations} icon generations")
+        print(f"Items per version: {len(items)}")
+
+        # Confirm
+        confirm = input("\nProceed with auto-cycle generation? [y/N]: ").strip().lower()
+        if confirm != 'y':
+            print("Cancelled.")
+            return
+
+        # Run generation for each cycle
+        grand_success = 0
+        grand_failed = 0
+        grand_skipped = 0
+        all_failures = []
+
+        for cycle, versions in sorted(vacancies.items()):
+            version_start = min(versions)
+            version_end = max(versions)
+
+            print("\n" + "="*70)
+            print(f"STARTING CYCLE {cycle}")
+            print(f"Versions to generate: {versions}")
+            print("="*70)
+
+            success, failed, skipped, failures = run_generation_for_cycle(
+                items,
+                version_start=version_start,
+                version_end=version_end,
+                output_cycle=cycle,
+                configs_dict=configs_dict
+            )
+
+            grand_success += success
+            grand_failed += failed
+            grand_skipped += skipped
+            all_failures.extend([(cycle, v, n) for v, n in failures])
+
+            print(f"\n✓ Cycle {cycle} complete: {success} success, {failed} failed, {skipped} skipped")
+
+            # Wait between cycles
+            remaining_cycles = [c for c in sorted(vacancies.keys()) if c > cycle]
+            if remaining_cycles:
+                print(f"\n⏱ Waiting 60s before starting Cycle {remaining_cycles[0]}...")
+                print("  (This allows browser state to fully reset)")
+                time.sleep(60)
+
+        # Final summary
+        print("\n" + "="*70)
+        print("AUTO-CYCLE COMPLETE!")
+        print("="*70)
+        print(f"✓ Total Success: {grand_success}")
+        print(f"✗ Total Failed: {grand_failed}")
+        print(f"⊘ Total Skipped: {grand_skipped}")
+
+        if all_failures:
+            print(f"\n⚠ Failed items:")
+            for cycle, version, name in all_failures[:20]:
+                print(f"  - Cycle {cycle} v{version}: {name}")
+            if len(all_failures) > 20:
+                print(f"  ... and {len(all_failures) - 20} more")
+
+        print("="*70)
+        return
 
     # Determine version range based on mode
     version_start = 1
@@ -1049,6 +1502,12 @@ def main():
         for v in range(version_start, version_end + 1):
             out_path = get_output_base_for_version(v, output_cycle)
             print(f"  Version {v}: {out_path.relative_to(SCRIPT_DIR)}")
+
+        # Load configuration for the cycle if available
+        if output_cycle and configs_dict:
+            config_to_use = output_cycle if output_cycle in configs_dict else 2
+            print(f"\n📋 Loading Configuration {config_to_use} for Cycle {output_cycle}...")
+            load_configuration(config_to_use, configs_dict)
 
     if choice == '2' or choice == '3':
         if not CATALOG_PATH.exists():
