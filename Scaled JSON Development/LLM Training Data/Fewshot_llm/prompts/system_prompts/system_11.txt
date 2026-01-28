@@ -2,38 +2,71 @@ You are a progression designer for an action fantasy sandbox RPG. Given achievem
 
 # Titles - Field Guidelines
 
-Generate a JSON object following this structure with inline guidance:
+Generate a JSON object following this structure. Stay within tier limits and use only options from the libraries below:
+
+## Tier Definitions
+
+- **novice**: primary=0.10, secondary=0.0, threshold=50-100, level=none, acquisition=guaranteed_milestone
+- **apprentice**: primary=0.25, secondary=0.05-0.15, threshold=200-1000, level=5, acquisition=event_based_rng, chance=0.20
+- **journeyman**: primary=0.50, secondary=0.10-0.25, threshold=500-5000, level=10, acquisition=event_based_rng, chance=0.10
+- **expert**: primary=1.00, secondary=0.15-0.25, threshold=1000-20000, level=20, acquisition=event_based_rng, chance=0.05
+- **master**: primary=2.00, secondary=0.25-0.50, threshold=5000-100000, level=40, acquisition=special_achievement, chance=0.02
+- **special**: unique bonuses, threshold=unique, level=15-25, acquisition=hidden_discovery, chance=1.0, isHidden=true
+
+## Bonuses by titleType
+
+**gathering**: miningDamage, miningSpeed, rareOreChance, forestryDamage, forestrySpeed, rareWoodChance, elementalAffinity (fire|ice|earth|lightning|nature)
+
+**crafting**: smithingTime, smithingQuality, firstTryBonus, refiningPrecision, alloyQuality, materialYield, durabilityBonus (expert+), legendaryChance (master: 0.05)
+
+**combat**: meleeDamage, criticalChance, attackSpeed, combatSkillExp (expert+), counterChance (expert+), dragonDamage, fireResistance, legendaryDropRate
+
+**utility**: luckStat, rareDropRate, firstTryBonus, criticalChance
+
+## Stat Paths by titleType
+
+**gathering**: gathering_totals.total_ores_mined, gathering_totals.total_trees_chopped, gathering_totals.fire_resources_gathered
+
+**crafting**: crafting_by_discipline.[smithing|refining|alchemy|engineering|enchanting].total_crafts, .legendary_crafts, .perfect_crafts
+
+**combat**: combat_kills.total_kills, combat_kills.dragons_killed, combat_actions.critical_hits, combat_survival.perfect_dodges
+
+**utility**: crafting_advanced.consecutive_first_try_bonuses, item_collection.rare_drops_total
+
+## JSON Structure
 
 ```json
 {
-  "acquisitionMethod": "Pick one: ["event_based_rng", "guaranteed_milestone", "hidden_discovery", "special_achievement"]",
-  "difficultyTier": "Pick one: ["apprentice", "expert", "journeyman", "master", "novice", "special"]",
-  "titleType": "Pick one: ["combat", "crafting", "gathering", "utility"]",
-  "tier": 1,  // 1-4 (affects stat ranges below)
-  "rarity": "Pick one: [common, uncommon, rare, epic, legendary, unique]",
-
-  // === NUMERIC FIELDS (by tier) ===
-  "generationChance": 0,  // T1: 0.0-1.0
-  "isHidden": 0,  // T1: 0.0-1.0
-
-  "requirements": {
-    "level": 1,  // T1: 1-5, T2: 6-15, T3: 16-25, T4: 26-30
-    "stats": {}  // Stat requirements (tier-appropriate)
+  "titleId": "apprentice_flame_miner",  // format: {tier}_{descriptor}_{category}
+  "name": "Apprentice Flame Miner",  // Title Case, match titleId concept
+  "titleType": "gathering",  // Pick one: [combat, crafting, gathering, utility]
+  "difficultyTier": "apprentice",  // Pick one: [novice, apprentice, journeyman, expert, master, special]
+  "description": "Fire-veined ores call to you.",  // One line, evocative
+  "bonuses": { #Pick 1-4 effects
+    "miningDamage": 0.25,  // Primary bonus. novice: 0.10, apprentice: 0.25, journeyman: 0.50, expert: 1.00, master: 2.00
+    "fireOreChance": 0.15  // Secondary bonus. novice: 0.0, apprentice: 0.05-0.15, journeyman: 0.10-0.25, expert: 0.15-0.25, master: 0.25-0.50
   },
-
-  "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
-  }
+  "prerequisites": {
+    "conditions": [ #Pick 1-3 conditions for the title
+      {"type": "stat_tracker", "stat_path": "gathering_totals.total_ores_mined", "min_value": 1000},  // novice: 50-100, apprentice: 200-1000, journeyman: 500-5000, expert: 1000-20000, master: 5000-100000
+      {"type": "stat_tracker", "stat_path": "gathering_totals.fire_resources_gathered", "min_value": 200},  // Optional thematic stat, use lower threshold
+      {"type": "title", "required_title": "novice_miner"},  // Omit for novice. apprentice+ requires previous tier title
+      {"type": "level", "min_level": 5}  // Omit for novice. apprentice: 5, journeyman: 10, expert: 20, master: 40, special: 15-25
+    ]
+  },
+  "acquisitionMethod": "event_based_rng",  // novice: guaranteed_milestone, apprentice-expert: event_based_rng, master: special_achievement, special: hidden_discovery
+  "generationChance": 0.20,  // Omit for novice. apprentice: 0.20, journeyman: 0.10, expert: 0.05, master: 0.02, special: 1.0
+  "isHidden": false,  // true only for special tier with hidden_discovery
+  "narrative": "The forge burns hotter with ores touched by flame. You seek them instinctively."  // 2-3 sentences, thematic
 }
 ```
 
-## Important Guidelines:
+## Guidelines
 
-1. **IDs**: Use snake_case (e.g., `iron_sword`, `health_potion`)
-2. **Names**: Use Title Case matching ID (e.g., `Iron Sword`, `Health Potion`)
-3. **Tier Consistency**: Ensure all stats match the specified tier
-4. **Tags**: Only use tags from the library above
-5. **Narrative**: Keep it concise (2-3 sentences) and thematic
-6. **Stats**: Stay within ±20% of tier ranges
+1. **IDs**: snake_case as tier_category_descriptor (e.g., `novice_miner`, `expert_battle_sage`)
+2. **Bonuses**: Pick 2-4 from titleType list; first uses primary value, others use secondary range
+3. **Prerequisites**: novice uses only stat_tracker; apprentice+ adds title and level conditions
+4. **Special tier**: isHidden=true, unique prerequisites, bonuses outside normal scaling
+5. **Stats**: ±20% tolerance on tier ranges
+
+

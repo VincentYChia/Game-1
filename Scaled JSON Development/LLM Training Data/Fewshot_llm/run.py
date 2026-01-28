@@ -13,12 +13,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 from llm_runner import LLMRunner
 from validator import JSONValidator
 
+print("=" * 50)
+print("DEBUG: Checking environment variable")
+print(f"ANTHROPIC_API_KEY: {os.environ.get('ANTHROPIC_API_KEY', '(NOT SET)')}")
+print("=" * 50)
+
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 
-API_KEY = "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"
+API_KEY = os.environ.get('ANTHROPIC_API_KEY')
 MODEL = "claude-sonnet-4-20250514"
 
 MAX_TOKENS = 2000
