@@ -1156,6 +1156,35 @@ def get_output_base_for_version(version, cycle=None):
             return OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{version}"
 
 
+# Resource name mapping: catalog name -> existing file name (without version suffix)
+# These resources were generated with old names but catalog uses new names
+RESOURCE_NAME_MAP = {
+    'copper_vein': 'copper_ore_node',
+    'iron_deposit': 'iron_ore_node',
+    'limestone_outcrop': 'limestone_node',
+    'granite_formation': 'granite_node',
+    'mithril_cache': 'mithril_ore_node',
+    'obsidian_flow': 'obsidian_node',
+    'steel_node': 'steel_ore_node',
+    # Trees that match directly don't need mapping
+}
+
+
+def get_possible_filenames(item_name, version):
+    """Get all possible filename variations for an item.
+
+    Returns list of lowercase filenames to check (without path).
+    """
+    filenames = [f"{item_name}-{version}.png".lower()]
+
+    # Add mapped name if exists
+    if item_name in RESOURCE_NAME_MAP:
+        mapped_name = RESOURCE_NAME_MAP[item_name]
+        filenames.append(f"{mapped_name}-{version}.png".lower())
+
+    return filenames
+
+
 def run_generation_for_cycle(items, version_start, version_end, output_cycle, configs_dict=None):
     """Run icon generation for a specific cycle with its configuration.
 
@@ -1369,15 +1398,19 @@ def main():
 
                 for item in items:
                     name = item['name']
-                    expected_filename = f"{name}-{ver}.png".lower()
 
-                    # Case-insensitive check
-                    if expected_filename in file_map:
-                        actual_path = file_map[expected_filename]
-                        if actual_path.stat().st_size < MIN_FILE_SIZE:
-                            missing_files.append((cycle, ver, item))
-                            ver_missing.append(name)
-                    else:
+                    # Check all possible filename variations (including mapped names)
+                    possible_filenames = get_possible_filenames(name, ver)
+                    found = False
+
+                    for filename in possible_filenames:
+                        if filename in file_map:
+                            actual_path = file_map[filename]
+                            if actual_path.stat().st_size >= MIN_FILE_SIZE:
+                                found = True
+                                break
+
+                    if not found:
                         missing_files.append((cycle, ver, item))
                         ver_missing.append(name)
 
