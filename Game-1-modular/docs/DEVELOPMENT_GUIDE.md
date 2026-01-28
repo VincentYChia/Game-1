@@ -3,7 +3,7 @@
 Guide for developers working on or extending Game-1-Modular.
 
 **Audience**: Contributors, maintainers, future developers
-**Last Updated**: 2025-11-19
+**Last Updated**: 2026-01-27
 
 ---
 
@@ -31,10 +31,31 @@ Guide for developers working on or extending Game-1-Modular.
 Python 3.8+
 pygame 2.0+
 
+# For LLM features (NEW - January 2026)
+anthropic   # Claude API client
+numpy       # ML preprocessing
+pillow      # Image processing for CNN
+
+# For ML classifiers
+onnxruntime # CNN model inference
+lightgbm    # LightGBM classifiers
+
 # Optional (for development tools)
-pytest  # For future testing framework
-pylint  # For code quality checks
+pytest      # Testing framework (13 test files exist)
+pylint      # Code quality checks
 ```
+
+### Environment Variables
+
+```bash
+# Required for LLM item generation
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# Or create .env file in Game-1-modular/
+echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
+```
+
+**Note**: Without API key, LLM features gracefully degrade to MockBackend.
 
 ### Setup
 
@@ -67,16 +88,26 @@ python main.py
 
 ```
 Game-1-modular/
-├── core/          # Core game engine and config
-├── data/          # Data models and databases
-├── entities/      # Game entities (character, etc.)
-├── systems/       # Game systems (world, combat, etc.)
-├── rendering/     # All rendering code
-├── docs/          # Documentation (you are here)
-├── items.JSON/    # Item definitions
-├── recipes.JSON/  # Crafting recipes
-├── progression/   # NPCs, quests, titles, classes
-└── Skills/        # Skill definitions
+├── core/                  # Core game engine (23 files, ~15,589 LOC)
+├── data/                  # Data models and databases (25 files)
+├── entities/              # Game entities and components (17 files)
+├── systems/               # Game systems including LLM (16 files)
+│   ├── llm_item_generator.py    # Claude API integration (1,393 lines)
+│   └── crafting_classifier.py   # ML classifiers (1,256 lines)
+├── rendering/             # All rendering code (3 files)
+├── Combat/                # Combat system (3 files, ~2,527 LOC)
+├── Crafting-subdisciplines/  # Minigames (8 files, ~5,346 LOC)
+├── tests/                 # Test files (13 files)
+├── assets/                # Game assets (icons, sprites)
+├── docs/                  # Documentation (you are here)
+├── items.JSON/            # Item definitions (57+ materials)
+├── recipes.JSON/          # Crafting recipes (100+ recipes)
+├── placements.JSON/       # Minigame grid layouts
+├── Definitions.JSON/      # Game config, tags
+├── progression/           # Classes, titles, NPCs
+├── Skills/                # 100+ skill definitions
+├── save_system/           # Save/load system
+└── llm_debug_logs/        # LLM API debug logs (auto-created)
 ```
 
 ### Import Hierarchy
@@ -393,6 +424,66 @@ def render_fishing_spots(self, fishing_system: FishingSystem, camera):
             text = self.small_font.render("FISHING...", True, (255, 255, 255))
             self.screen.blit(text, (screen_x - 30, screen_y - 30))
 ```
+
+---
+
+## LLM Integration (NEW - January 2026)
+
+### Overview
+
+Players can **invent new items** by placing materials in unique arrangements:
+1. ML classifiers validate the placement
+2. Claude API generates item definitions
+3. Items are added to inventory
+4. Invented recipes are persisted
+
+### Key Files
+
+```
+systems/
+├── llm_item_generator.py      # Claude API integration (1,393 lines)
+└── crafting_classifier.py     # CNN + LightGBM validation (1,256 lines)
+
+Scaled JSON Development/
+├── LLM Training Data/Fewshot_llm/    # System prompts & examples
+├── Convolution Neural Network (CNN)/ # Trained CNN models
+└── Simple Classifiers (LightGBM)/    # Trained LightGBM models
+```
+
+### Debugging LLM Issues
+
+1. Check API key is set: `echo $ANTHROPIC_API_KEY`
+2. Review debug logs in `llm_debug_logs/`
+3. Test with MockBackend (works without API)
+
+### Adding New Classifier
+
+```python
+# systems/crafting_classifier.py
+class NewDisciplineLightGBM:
+    def __init__(self):
+        self.model = lightgbm.Booster(model_file="path/to/model.txt")
+
+    def extract_features(self, placement: Dict) -> np.ndarray:
+        """Extract features from placement grid."""
+        # Define your feature extraction logic
+        pass
+
+    def predict(self, features: np.ndarray) -> Tuple[bool, float]:
+        """Run inference, return (is_valid, confidence)."""
+        prediction = self.model.predict(features)
+        is_valid = prediction[0] > 0.5
+        confidence = prediction[0]
+        return is_valid, confidence
+```
+
+### Modifying LLM Prompts
+
+Edit files in `Scaled JSON Development/LLM Training Data/Fewshot_llm/`:
+- `system_prompts/` - System instructions per discipline
+- `examples/` - Few-shot examples for each discipline
+
+See `MANUAL_TUNING_GUIDE.md` for detailed editing instructions.
 
 ---
 
@@ -733,8 +824,23 @@ Check:
 - [ ] Verify max level/stats
 ```
 
-### Automated Testing (Future)
+### Automated Testing
 
+The project has 13 test files in `tests/`:
+
+```bash
+# Run all tests
+cd Game-1-modular
+python -m pytest tests/ -v
+
+# Run specific test file
+python -m pytest tests/test_inventory.py -v
+
+# Run with coverage
+python -m pytest tests/ --cov=. --cov-report=html
+```
+
+**Example Test File**:
 ```python
 # tests/test_inventory.py
 import pytest
@@ -751,6 +857,13 @@ def test_inventory_stack_limit():
     inv.add_item("copper_ore", 99)  # Max stack
     inv.add_item("copper_ore", 50)  # Should create second stack
     assert len([s for s in inv.slots if s and s.item_id == "copper_ore"]) == 2
+```
+
+### Crafting System Tests
+
+```bash
+# Run crafting system tester
+python -c "from core.testing import CraftingSystemTester; t = CraftingSystemTester(); t.run_all_tests()"
 ```
 
 ---
@@ -918,8 +1031,19 @@ class GameEngine:
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture overview
 - [MODULE_REFERENCE.md](MODULE_REFERENCE.md) - Per-file documentation
-- [FEATURES_CHECKLIST.md](FEATURES_CHECKLIST.md) - Feature parity verification
+- [GAME_MECHANICS_V6.md](GAME_MECHANICS_V6.md) - Master reference (5,089 lines)
+- [REPOSITORY_STATUS_REPORT_2026-01-27.md](REPOSITORY_STATUS_REPORT_2026-01-27.md) - Current status
 - [HOW_TO_RUN.md](../HOW_TO_RUN.md) - Quick start guide
+
+### LLM Integration
+
+- [Fewshot_llm/README.md](../../Scaled%20JSON%20Development/LLM%20Training%20Data/Fewshot_llm/README.md) - LLM system overview
+- [MANUAL_TUNING_GUIDE.md](../../Scaled%20JSON%20Development/LLM%20Training%20Data/Fewshot_llm/MANUAL_TUNING_GUIDE.md) - Prompt editing guide
+
+### Tag System
+
+- [docs/tag-system/TAG-GUIDE.md](tag-system/TAG-GUIDE.md) - Comprehensive tag guide
+- [docs/tag-system/TAG-REFERENCE.md](tag-system/TAG-REFERENCE.md) - Tag catalog
 
 ### External Resources
 
@@ -927,6 +1051,7 @@ class GameEngine:
 - [Python Type Hints](https://docs.python.org/3/library/typing.html)
 - [PEP 8 Style Guide](https://pep8.org/)
 - [Python Dataclasses](https://docs.python.org/3/library/dataclasses.html)
+- [Anthropic API Documentation](https://docs.anthropic.com/)
 
 ---
 

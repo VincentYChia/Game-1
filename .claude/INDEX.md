@@ -2,7 +2,7 @@
 
 **LIVING DOCUMENT**: This index should be modified to reflect changes as the project evolves. Update entries when files are added, removed, or significantly modified.
 
-**Last Updated**: December 31, 2025
+**Last Updated**: January 27, 2026
 
 ---
 
@@ -15,20 +15,23 @@ This directory contains curated developer context for AI assistants and human de
 ## File Directory
 
 ### 1. **CLAUDE.md**
-**Path**: `Game-1-modular/CLAUDE.md`
+**Path**: `.claude/CLAUDE.md`
 **Purpose**: Primary developer guide for AI assistants and new developers
 **Contains**:
 - Project summary and current state assessment
 - What's implemented vs what's designed
 - Architecture overview with module paths
+- **LLM integration system** (NEW - January 2026)
 - Tag system overview
 - Key classes and design patterns
 - Critical warnings about assuming features exist
 
 **When to Use**: First file to read when starting work on Game-1. Reference before implementing any feature to check if it's already built.
 
-**Status**: Current (December 31, 2025)
-- Reflects modular architecture (70 files)
+**Status**: Current (January 27, 2026)
+- Reflects modular architecture (136 files, ~62,380 lines)
+- LLM integration documented (llm_item_generator.py, crafting_classifier.py)
+- 14 enchantments fully working
 - Tag system documented
 - Combat, skills, save/load all marked as implemented
 - Class affinity system documented
@@ -36,11 +39,12 @@ This directory contains curated developer context for AI assistants and human de
 ---
 
 ### 2. **NAMING_CONVENTIONS.md**
-**Path**: `Game-1-modular/NAMING_CONVENTIONS.md`
+**Path**: `.claude/NAMING_CONVENTIONS.md`
 **Purpose**: Authoritative API naming reference to prevent method mismatch errors
 **Contains**:
 - Core naming principles
 - Module paths for modular architecture
+- **LLM system method names** (NEW - January 2026)
 - Character progression method names (`add_exp`, `check_level_up`, `allocate_stat_point`)
 - Equipment system conventions (`equipment.slots`, `get_stat_bonuses()`)
 - Combat system methods (`calculate_damage`, `apply_status_effect`)
@@ -50,9 +54,9 @@ This directory contains curated developer context for AI assistants and human de
 - Save/load system methods
 - Common mistakes and corrections
 
-**When to Use**: Before calling ANY method on Character, CombatManager, SkillManager, or crafting modules. Reference when you get AttributeError or KeyError.
+**When to Use**: Before calling ANY method on Character, CombatManager, SkillManager, LLMItemGenerator, or crafting modules. Reference when you get AttributeError or KeyError.
 
-**Status**: Current (December 31, 2025)
+**Status**: Current (January 27, 2026)
 
 **Key Learnings**:
 - `add_exp()` NOT `gain_exp()`
@@ -71,13 +75,14 @@ This directory contains curated developer context for AI assistants and human de
 - Skill system with 100+ skills
 - Combat system with full damage pipeline
 - All 5 crafting disciplines
+- **LLM Invented Items System** (NEW - January 2026)
 - Status effects system
 - Title and class systems
 - JSON schema specifications
 
 **When to Use**: Source of truth for what's actually implemented. Check before implementing any game mechanic.
 
-**Status**: Current (December 31, 2025) - 5,089 lines
+**Status**: Current (January 27, 2026) - v6.1 - 5,089+ lines
 
 ---
 
@@ -104,14 +109,17 @@ This directory contains curated developer context for AI assistants and human de
 **Purpose**: Comprehensive tracking of all known issues, bugs, and testing requirements
 **Contains**:
 - Quick status overview
-- Enchantment system testing status
+- Enchantment system testing status (14/17 working)
 - Bug fixes required (with line numbers)
 - UI enhancements needed
 - Content improvements
+- **LLM Integration section** (NEW - January 2026)
 
 **When to Use**: Before starting any bug fix or feature work. Check if issue is already known and tracked.
 
-**Status**: Current (December 30, 2025)
+**Status**: Current (January 27, 2026)
+
+**Recent Resolutions**: Inventory click misalignment, 5 enchantments (Lifesteal, Knockback, etc.), icon_path restoration
 
 ---
 
@@ -119,7 +127,7 @@ This directory contains curated developer context for AI assistants and human de
 **Path**: `Game-1-modular/docs/ARCHITECTURE.md`
 **Purpose**: System architecture overview
 **Contains**:
-- Modular architecture statistics (70 files, 22,012 lines)
+- Modular architecture statistics (136 files, ~62,380 lines)
 - Design principles (composition, singleton, layered)
 - Directory structure breakdown
 - Layer architecture diagram
@@ -127,10 +135,11 @@ This directory contains curated developer context for AI assistants and human de
 - Database pattern explanation
 - Event and data flow diagrams
 - Rendering pipeline
+- **LLM Integration line counts** (NEW)
 
 **When to Use**: When understanding how systems connect, adding new modules, or debugging cross-system issues.
 
-**Status**: Current (November 19, 2025) - Architecture stable
+**Status**: Current (January 27, 2026) - v3.0
 
 ---
 
@@ -197,33 +206,32 @@ Previous version of Claude context from November 17, 2025. Historical reference 
 
 ## Key Architectural Principles
 
-### Current System Status (December 31, 2025):
+### Current System Status (January 27, 2026):
 
 **Fully Functional:**
 - World generation & rendering (100x100, chunk-based)
 - Resource gathering with tool requirements
 - Inventory system (30 slots, drag-and-drop)
 - Equipment system (8 slots, durability, weight, repair)
-- All 5 crafting disciplines with minigames (9,159 lines)
+- All 5 crafting disciplines with minigames (5,346 lines)
 - Character progression (30 levels, 6 stats)
 - Class system (6 classes with tag-driven bonuses)
 - Title system (all tiers: Novice through Master)
 - **Skill system** (100+ skills, mana, cooldowns, affinity bonuses)
 - **Combat system** (full damage pipeline, enchantments, dual wielding)
 - **Status effects** (DoT, CC, buffs, debuffs)
-- **Enchantments** (12+ types active in combat)
+- **Enchantments** (14 types active in combat)
 - **Full save/load system** (complete state preservation)
 - **Tag-driven effect system** (combat, skills, equipment)
+- **LLM Integration** (Claude API for invented items) - NEW
+- **ML Classifiers** (CNN + LightGBM for recipe validation) - NEW
 
 **Partially Implemented:**
-- Minigames (all working, need polish)
-- Skill effects (system exists, some not fully tuned)
 - World generation (basic chunks, detailed templates pending)
 - NPC/Quest system (basic functionality)
 
 **Designed But Not Implemented:**
 - Advanced skill evolution chains
-- LLM integration for procedural content
 - Block/Parry combat mechanics
 - Summon mechanics
 - Advanced spell casting / combos
@@ -235,8 +243,11 @@ Previous version of Claude context from November 17, 2025. Historical reference 
 ### Development Tools (`tools/`)
 - `smithing-grid-designer.py` - Tkinter GUI for designing smithing patterns
 - `enchanting-pattern-designer.py` - GUI for enchanting patterns
-- `json_generators/` - Bulk JSON generation tools
-- `validators/` - JSON validation tools
+
+### LLM/ML Tools (`Scaled JSON Development/`)
+- `LLM Training Data/Fewshot_llm/` - System prompts and few-shot examples
+- `Convolution Neural Network (CNN)/` - Trained CNN models for smithing/adornments
+- `Simple Classifiers (LightGBM)/` - Trained LightGBM models for alchemy/refining/engineering
 
 ---
 
@@ -291,5 +302,5 @@ When encountering issues:
 
 ---
 
-**Last Updated**: December 31, 2025
+**Last Updated**: January 27, 2026
 **Maintained By**: Development Team

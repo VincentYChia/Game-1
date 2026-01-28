@@ -1,7 +1,7 @@
 # GAME MECHANICS V6 - MASTER DEVELOPER DOCUMENT
 
-**Version:** 6.0
-**Last Updated:** December 31, 2025
+**Version:** 6.1
+**Last Updated:** January 27, 2026
 **Status:** Living Document - Implementation Reality + Design Aspirations
 
 **IMPORTANT:** See `NAMING_CONVENTIONS.md` for API standards and naming patterns to prevent bugs.
@@ -22,7 +22,13 @@ Throughout this document, the following markers indicate implementation status:
 
 ## Latest Updates (v5 → v6)
 
-### New Implemented Features (v6)
+### New Implemented Features (v6.1 - January 2026)
+- ✅ **LLM Invented Items System** - Players invent new items via Claude API (NEW)
+- ✅ **Crafting Classifiers** - CNN (smithing/adornments) + LightGBM (alchemy/refining/engineering) (NEW)
+- ✅ **Invented Recipe Persistence** - Player-created recipes save/load correctly (NEW)
+- ✅ **CNN Warmup at Startup** - TensorFlow models preload for instant response (NEW)
+
+### Implemented Features (v6)
 - ✅ **Tag-Driven Class System** - Classes now have tags that drive gameplay bonuses
 - ✅ **Skill Affinity System** - Matching class/skill tags grant up to +20% effectiveness
 - ✅ **Class Selection Tooltips** - UI shows tag effects and class bonuses
@@ -65,14 +71,16 @@ Throughout this document, the following markers indicate implementation status:
 - ✅ `templates-crafting-1.JSON` - Item template definitions for procedural generation
 
 ### System Implementation Status
-- ✅ **Combat System:** Full damage pipeline, enchantments, dual wielding (1,377 lines)
-- ✅ **Skill System:** Buff skills, combat skills, affinity bonuses (709 lines)
-- ✅ **Crafting System:** All 5 disciplines with minigames (9,159 lines total)
+- ✅ **Combat System:** Full damage pipeline, enchantments, dual wielding (1,654 lines)
+- ✅ **Skill System:** Buff skills, combat skills, affinity bonuses (949 lines)
+- ✅ **Crafting System:** All 5 disciplines with minigames (5,341 lines in minigames + 3,004 lines in core)
 - ✅ **Status Effects:** DoT, CC, buffs, debuffs (827 lines)
 - ✅ **Save/Load:** Full state preservation
+- ✅ **LLM Invented Items:** Player can invent items via Claude API (2,649 lines) - NEW Jan 2026
+- ✅ **Crafting Classifiers:** CNN + LightGBM recipe validation - NEW Jan 2026
 - ⏳ **World Generation:** Basic chunks, detailed templates pending
 - ⏳ **NPC/Quest System:** Basic functionality, needs expansion
-- 🔮 **LLM Integration:** Designed but not implemented
+- 🔮 **LLM Adaptive Content:** Full LLM-driven titles, skills, progression (designed, not implemented)
 - 🔮 **Block/Parry:** Designed but not implemented
 - 🔮 **Summon Mechanics:** Designed but not implemented
 
@@ -96,7 +104,7 @@ Throughout this document, the following markers indicate implementation status:
 **Code References:**
 - `entities/character.py` - Character stats, leveling, EXP (1,100+ lines)
 - `systems/title_system.py` - Title acquisition and bonuses
-- `entities/components/skill_manager.py` - Skill system (709 lines)
+- `entities/components/skill_manager.py` - Skill system (949 lines)
 - `systems/class_system.py` - Class bonuses and tag system
 
 **Current Implementation:**
@@ -311,7 +319,7 @@ Side Quests: 50% of main quest value
 **Source Files:**
 - `Definitions.JSON/skills-translation-table.JSON` (235 lines) - Translation tables
 - `skills.JSON/skills-skills-1.JSON` - 100+ skill definitions
-- `entities/components/skill_manager.py` (709 lines) - Skill logic
+- `entities/components/skill_manager.py` (949 lines) - Skill logic
 
 ### Core Design
 
@@ -958,7 +966,7 @@ Player initiates class switch:
 
 ## Combat System ✅ IMPLEMENTED
 
-**Code Reference:** `Combat/combat_manager.py` (1,377 lines)
+**Code Reference:** `Combat/combat_manager.py` (1,654 lines)
 
 ### Basic Combat Loop
 
@@ -3674,12 +3682,54 @@ T2 Iron Pickaxe repair from 0% to 100%:
 **Implementation Status:** All 5 disciplines working with minigames
 
 **Code References:**
-- `Crafting-subdisciplines/smithing.py` (622 lines)
-- `Crafting-subdisciplines/refining.py` (669 lines)
-- `Crafting-subdisciplines/alchemy.py` (695 lines)
-- `Crafting-subdisciplines/engineering.py` (890 lines)
-- `Crafting-subdisciplines/enchanting.py` (1,265 lines)
-- **Total:** 9,159 lines of crafting code
+- `Crafting-subdisciplines/smithing.py` (748 lines)
+- `Crafting-subdisciplines/refining.py` (819 lines)
+- `Crafting-subdisciplines/alchemy.py` (1,051 lines)
+- `Crafting-subdisciplines/engineering.py` (1,314 lines)
+- `Crafting-subdisciplines/enchanting.py` (1,409 lines)
+- `core/interactive_crafting.py` (1,078 lines)
+- `core/difficulty_calculator.py` (802 lines)
+- `core/reward_calculator.py` (607 lines)
+- **Total:** 7,828 lines of crafting code (minigames + core systems)
+
+### LLM Invented Items System ✅ IMPLEMENTED (January 2026)
+
+**Implementation Status:** Production-ready
+
+**Code References:**
+- `systems/llm_item_generator.py` (1,393 lines) - Claude API integration
+- `systems/crafting_classifier.py` (1,256 lines) - CNN + LightGBM validation
+
+**Overview:**
+Players can **invent new items** by placing materials in unique arrangements not matching existing recipes. The system:
+1. Validates placements using ML classifiers (CNN or LightGBM)
+2. Generates item definitions via Claude API
+3. Adds items to inventory
+4. Persists invented recipes for re-crafting
+
+**Classifier Mapping:**
+| Discipline | Model Type | Input Format | Model Location |
+|------------|------------|--------------|----------------|
+| Smithing | CNN | 36×36×3 RGB | `Scaled JSON Development/CNN/Smithing/` |
+| Adornments | CNN | 56×56×3 RGB | `Scaled JSON Development/CNN/Adornment/` |
+| Alchemy | LightGBM | 34 features | `Scaled JSON Development/LightGBM/alchemy_lightGBM/` |
+| Refining | LightGBM | 18 features | `Scaled JSON Development/LightGBM/refining_lightGBM/` |
+| Engineering | LightGBM | 28 features | `Scaled JSON Development/LightGBM/engineering_lightGBM/` |
+
+**LLM Configuration:**
+```python
+model = "claude-sonnet-4-20250514"
+temperature = 0.4
+max_tokens = 2000
+timeout = 30.0
+```
+
+**API Key Setup:**
+1. Environment variable: `ANTHROPIC_API_KEY`
+2. Or `.env` file in Game-1-modular/
+3. Fallback: MockBackend for testing without API
+
+**Debug Logs:** All API calls logged to `llm_debug_logs/TIMESTAMP_discipline.json`
 
 ### General Overview
 
@@ -3839,7 +3889,7 @@ SPECIALTY MATERIALS (Unique to 1 discipline - Outer edges):
 
 **Implementation Status:** ✅ Complete with mini-game
 **Source Files:**
-- `Crafting-subdisciplines/smithing.py` (622 lines)
+- `Crafting-subdisciplines/smithing.py` (748 lines)
 - `recipes.JSON/recipes-smithing-3.JSON` (30KB)
 - `placements.JSON/placements-smithing-1.JSON`
 
@@ -3903,7 +3953,7 @@ Based on workbench tier + recipe size + material tier + rarity. Target: Max comp
 
 **Implementation Status:** ✅ Complete with hub-spoke system
 **Source Files:**
-- `Crafting-subdisciplines/refining.py` (669 lines)
+- `Crafting-subdisciplines/refining.py` (819 lines)
 - `recipes.JSON/recipes-refining-1.JSON` (24KB)
 - `placements.JSON/placements-refining-1.JSON`
 
@@ -4049,7 +4099,7 @@ Lockpicking-style timing game - "unlocking" the potential of materials through c
 
 **Implementation Status:** ✅ Complete with gradient success system
 **Source Files:**
-- `Crafting-subdisciplines/alchemy.py` (695 lines)
+- `Crafting-subdisciplines/alchemy.py` (1,051 lines)
 - `recipes.JSON/recipes-alchemy-1.JSON` (12KB)
 - `placements.JSON/placements-alchemy-1.JSON`
 
@@ -4287,7 +4337,7 @@ Reaction chain management - reading visual cues to identify optimal timing for i
 
 **Implementation Status:** ✅ Complete with slot-type puzzle system
 **Source Files:**
-- `Crafting-subdisciplines/engineering.py` (890 lines)
+- `Crafting-subdisciplines/engineering.py` (1,314 lines)
 - `recipes.JSON/recipes-engineering-1.JSON` (11KB)
 - `placements.JSON/placements-engineering-1.JSON`
 
@@ -4620,7 +4670,7 @@ Higher tier + higher rarity = more puzzles
 
 **Implementation Status:** ✅ Complete with freeform pattern system
 **Source Files:**
-- `Crafting-subdisciplines/enchanting.py` (1,265 lines)
+- `Crafting-subdisciplines/enchanting.py` (1,409 lines)
 - `recipes.JSON/recipes-adornments-1.JSON` (22KB)
 - `placements.JSON/placements-adornments-1.JSON`
 
@@ -5045,20 +5095,35 @@ When hovering over equipped tools:
 | System | Status | Code Lines | Key File |
 |--------|--------|------------|----------|
 | Character Stats | ✅ IMPLEMENTED | 1,100+ | character.py |
-| Combat | ✅ IMPLEMENTED | 1,377 | combat_manager.py |
-| Skills | ✅ IMPLEMENTED | 709 | skill_manager.py |
+| Combat | ✅ IMPLEMENTED | 1,654 | combat_manager.py |
+| Skills | ✅ IMPLEMENTED | 949 | skill_manager.py |
 | Status Effects | ✅ IMPLEMENTED | 827 | status_effect.py |
-| Crafting (5 disciplines) | ✅ IMPLEMENTED | 9,159 | Crafting-subdisciplines/ |
+| Crafting (5 disciplines) | ✅ IMPLEMENTED | 7,828 | Crafting-subdisciplines/ + core/ |
 | Classes | ✅ IMPLEMENTED | 200+ | class_system.py |
 | Titles | ✅ IMPLEMENTED | 300+ | title_system.py |
 | Save/Load | ✅ IMPLEMENTED | 400+ | save_manager.py |
+| LLM Invented Items | ✅ IMPLEMENTED | 1,393 | llm_item_generator.py |
+| Crafting Classifiers | ✅ IMPLEMENTED | 1,256 | crafting_classifier.py |
 | World Generation | ⏳ PARTIAL | 500+ | world_system.py |
 | NPC/Quests | ⏳ PARTIAL | 300+ | npc_system.py |
-| LLM Integration | 🔮 PLANNED | - | - |
+| LLM Adaptive Content | 🔮 PLANNED | - | Titles, skills, progression |
 | Block/Parry | 🔮 PLANNED | - | - |
 | Summon Mechanics | 🔮 PLANNED | - | - |
 
-## New V6 Features Summary
+## New V6.1 Features Summary (January 2026)
+
+1. **LLM Invented Items System**
+   - Players invent new items via Claude API
+   - CNN classifiers for smithing/adornments (visual validation)
+   - LightGBM classifiers for alchemy/refining/engineering (feature validation)
+   - Invented recipes persist across save/load
+
+2. **Crafting Classifier Integration**
+   - TensorFlow/Keras CNN models for visual pattern recognition
+   - LightGBM models for feature-based validation
+   - Background loading with warmup at game startup
+
+## V6 Features Summary
 
 1. **Tag-Driven Class System**
    - Classes have semantic tags (warrior, melee, physical, etc.)
