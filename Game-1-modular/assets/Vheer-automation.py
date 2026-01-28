@@ -44,6 +44,10 @@ VERSION_PROMPTS = {
     2: "3D rendered item icon in bold illustrative fantasy style. VERIFY item type completely before generating - distinguish axes from pickaxes, ores from ingots, nodes from processed materials. Form and function must be immediately recognizable. Materials MUST show distinct visual properties (metallic sheen, texture, color temperature, magical effects). Item 70-80% frame coverage, compelling diagonal angle. Gradient background, dramatic lighting with material-appropriate highlights. Push visual distinction aggressively.",
 
     3: "3D rendered item icon in bold illustrative fantasy style with MAXIMUM DISTINCTION. Read full description and verify: tool function (mining/chopping/combat), item state (raw node/ore/ingot/crafted), material properties. Each item category needs unique silhouette and design language. Materials must be exaggerated for clarity: copper=warm orange, steel=cool blue-grey, iron=neutral grey, wood types with signature effects. Reject realistic ambiguity - embrace fantasy symbolism. 70-80% coverage, dynamic angle, dramatic gradient background, bold three-point lighting with colored accents.",
+
+    4: "HYPER-STYLIZED 3D fantasy icon with EXTREME visual clarity. Priority: INSTANT RECOGNITION at thumbnail size. Exaggerate defining features 150%. Tools vs weapons must have completely different design languages. Raw materials vs processed must be unmistakable. Color-code aggressively: copper=orange glow, iron=grey steel, mithril=silver-blue shimmer, gold=warm radiance. Bold outlines, saturated colors, clean silhouettes. 75% frame coverage, hero angle, vibrant gradient background.",
+
+    5: "ULTIMATE CLARITY 3D fantasy icon. Design philosophy: If you can't identify it at 32x32 pixels, it fails. Maximum silhouette distinction. Iconic symbolic design over realistic detail. Each material type gets signature visual effect (glow, shimmer, texture pattern). Tool heads dramatically different from weapon heads. Environmental nodes clearly show 'harvestable in ground' vs 'inventory item'. Push stylization to the limit while maintaining fantasy aesthetic. Bold colors, clean edges, dramatic lighting.",
 }
 
 # Category-specific additions
@@ -121,6 +125,33 @@ CATALOG_PATH = SCRIPT_DIR / 'icons' / 'ITEM_CATALOG_FOR_ICONS.md'
 GENERATION_TIMEOUT = 180
 WAIT_BETWEEN_ITEMS = 25
 VERSIONS_TO_GENERATE = 3
+
+# Custom configuration range settings (used by mode 3)
+CUSTOM_VERSION_START = 2  # Start from version 2
+CUSTOM_VERSION_END = 5    # End at version 5
+CUSTOM_OUTPUT_CYCLE = None  # Set to cycle number (e.g., 2) to output to icons-generated-cycle-2/
+
+# Test items for quick validation (mode 1)
+TEST_ITEMS = [
+    {
+        'name': 'iron_sword',
+        'category': 'equipment',
+        'type': 'sword',
+        'subtype': 'sword',
+        'narrative': 'A basic iron sword with a straight double-edged blade.',
+        'base_folder': 'items',
+        'subfolder': 'weapons'
+    },
+    {
+        'name': 'copper_pickaxe',
+        'category': 'equipment',
+        'type': 'pickaxe',
+        'subtype': 'tool',
+        'narrative': 'A copper mining pickaxe with dual pointed heads for breaking rock.',
+        'base_folder': 'items',
+        'subfolder': 'tools'
+    },
+]
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -376,6 +407,84 @@ def pre_scan_directories(items, versions_to_generate):
 
     print("="*70)
     return all_version_stats
+
+
+def pre_scan_directories_custom(items, version_start, version_end, cycle=None):
+    """Scan output directories with custom version range and cycle support"""
+    print("\n" + "="*70)
+    print("PRE-SCAN: Checking existing files")
+    print("="*70)
+
+    MIN_FILE_SIZE = 5000
+
+    all_version_stats = []
+
+    for version in range(version_start, version_end + 1):
+        output_base = get_output_base_for_version(version, cycle)
+
+        existing_files = []
+        missing_items = []
+
+        for item in items:
+            name = item['name']
+            base_folder = item.get('base_folder', 'items')
+            subfolder = item.get('subfolder')
+
+            # Always use versioned filename for custom mode (or version 1 without cycle)
+            if version == 1 and cycle is None:
+                filename = f"{name}.png"
+            else:
+                filename = f"{name}-{version}.png"
+
+            if subfolder:
+                save_dir = output_base / base_folder / subfolder
+            else:
+                save_dir = output_base / base_folder
+
+            save_path = save_dir / filename
+
+            if save_path.exists() and save_path.stat().st_size > MIN_FILE_SIZE:
+                existing_files.append({
+                    'name': name,
+                    'path': save_path,
+                    'size': save_path.stat().st_size
+                })
+            else:
+                missing_items.append(name)
+
+        existing_count = len(existing_files)
+        missing_count = len(missing_items)
+        total_count = len(items)
+
+        all_version_stats.append({
+            'version': version,
+            'existing': existing_count,
+            'missing': missing_count,
+            'total': total_count,
+            'existing_files': existing_files,
+            'missing_items': missing_items,
+            'output_base': output_base
+        })
+
+        print(f"\nVersion {version}: {existing_count}/{total_count} existing, {missing_count} missing")
+        print(f"  Output: {output_base.relative_to(SCRIPT_DIR)}")
+
+    if sum(stats['existing'] for stats in all_version_stats) > 0:
+        print("\n" + "-"*70)
+        show_details = input("Show detailed file list? [y/N]: ").strip().lower()
+
+        if show_details == 'y':
+            for stats in all_version_stats:
+                if stats['existing'] > 0:
+                    print(f"\n--- Version {stats['version']} - First 5 existing files ---")
+                    for file_info in stats['existing_files'][:5]:
+                        size_kb = file_info['size'] / 1024
+                        rel_path = file_info['path'].relative_to(SCRIPT_DIR)
+                        print(f"  ✓ {file_info['name']}: {rel_path} ({size_kb:.1f} KB)")
+
+    print("="*70)
+    return all_version_stats
+
 
 # ============================================================================
 # SELENIUM FUNCTIONS
@@ -701,18 +810,26 @@ def screenshot_with_crop(driver, save_path):
 # MAIN GENERATION
 # ============================================================================
 
-def generate_item(driver, item, version=1):
-    """Generate one item icon"""
+def generate_item(driver, item, version=1, cycle=None):
+    """Generate one item icon
+
+    Args:
+        driver: Selenium webdriver
+        item: Item dict with name, category, type, etc.
+        version: Version number (1-5) for prompt selection
+        cycle: Optional cycle number for output to icons-generated-cycle-N/
+    """
     name = item['name']
     base_folder = item.get('base_folder', 'items')
     subfolder = item.get('subfolder')
 
-    if version == 1:
-        output_base = OUTPUT_DIR
+    # Use the shared output path logic
+    output_base = get_output_base_for_version(version, cycle)
+
+    if version == 1 and cycle is None:
         filename = f"{name}.png"
         version_label = ""
     else:
-        output_base = OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{version}"
         filename = f"{name}-{version}.png"
         version_label = f" [v{version}]"
 
@@ -831,7 +948,34 @@ def generate_item(driver, item, version=1):
 # MAIN
 # ============================================================================
 
+def get_output_base_for_version(version, cycle=None):
+    """Get the output directory for a specific version and cycle.
+
+    Args:
+        version: The version number (1, 2, 3, etc.)
+        cycle: Optional cycle number for icons-generated-cycle-N folders
+
+    Returns:
+        Path to output directory
+    """
+    if cycle is not None:
+        # Output to icons-generated-cycle-N/generated_icons-V
+        cycle_dir = SCRIPT_DIR / f'icons-generated-cycle-{cycle}'
+        if version == 1:
+            return cycle_dir / 'generated_icons'
+        else:
+            return cycle_dir / f'generated_icons-{version}'
+    else:
+        # Default behavior - output to generated_icons or generated_icons-V
+        if version == 1:
+            return OUTPUT_DIR
+        else:
+            return OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{version}"
+
+
 def main():
+    global CUSTOM_VERSION_START, CUSTOM_VERSION_END, CUSTOM_OUTPUT_CYCLE
+
     print("="*70)
     print("VHEER AUTOMATION")
     print("="*70)
@@ -842,10 +986,74 @@ def main():
     print("\nMode:")
     print("  [1] Test (2 items)")
     print("  [2] Full catalog")
+    print("  [3] Custom configuration range (specify versions & cycle)")
 
     choice = input("\nChoice: ").strip()
 
-    if choice == '2':
+    # Determine version range based on mode
+    version_start = 1
+    version_end = VERSIONS_TO_GENERATE
+    output_cycle = None
+
+    if choice == '3':
+        # Custom configuration mode
+        print("\n" + "-"*50)
+        print("CUSTOM CONFIGURATION")
+        print("-"*50)
+
+        # Get version range
+        print(f"\nAvailable version prompts: 1-{len(VERSION_PROMPTS)}")
+        version_input = input(f"Enter version range (e.g., '2-5' or '3'): ").strip()
+
+        if '-' in version_input:
+            try:
+                start, end = version_input.split('-')
+                version_start = int(start.strip())
+                version_end = int(end.strip())
+            except:
+                print("  ⚠ Invalid range, using defaults")
+                version_start = CUSTOM_VERSION_START
+                version_end = CUSTOM_VERSION_END
+        else:
+            try:
+                version_start = int(version_input)
+                version_end = version_start
+            except:
+                print("  ⚠ Invalid input, using defaults")
+                version_start = CUSTOM_VERSION_START
+                version_end = CUSTOM_VERSION_END
+
+        # Validate range
+        version_start = max(1, min(version_start, len(VERSION_PROMPTS)))
+        version_end = max(version_start, min(version_end, len(VERSION_PROMPTS)))
+
+        print(f"  → Versions: {version_start} to {version_end}")
+
+        # Get output cycle
+        print("\nExisting cycle folders:")
+        for i in range(1, 10):
+            cycle_dir = SCRIPT_DIR / f'icons-generated-cycle-{i}'
+            if cycle_dir.exists():
+                print(f"  [{i}] icons-generated-cycle-{i}/")
+
+        cycle_input = input("Output to cycle folder? (number or blank for default): ").strip()
+        if cycle_input:
+            try:
+                output_cycle = int(cycle_input)
+                print(f"  → Output to: icons-generated-cycle-{output_cycle}/")
+            except:
+                print("  → Using default output location")
+                output_cycle = None
+        else:
+            output_cycle = None
+
+        # Show output paths
+        print("\nOutput paths:")
+        for v in range(version_start, version_end + 1):
+            out_path = get_output_base_for_version(v, output_cycle)
+            print(f"  Version {v}: {out_path.relative_to(SCRIPT_DIR)}")
+
+    if choice == '2' or choice == '3':
         if not CATALOG_PATH.exists():
             print(f"\n⚠ Catalog not found: {CATALOG_PATH}")
             items = TEST_ITEMS
@@ -856,12 +1064,18 @@ def main():
     else:
         items = TEST_ITEMS
 
+    # Calculate total versions to generate
+    versions_to_gen = version_end - version_start + 1
+
     print(f"\nItems: {len(items)}")
     print(f"Timeout: {GENERATION_TIMEOUT}s")
     print(f"Wait between: {WAIT_BETWEEN_ITEMS}s")
-    print(f"Versions: {VERSIONS_TO_GENERATE}")
+    print(f"Versions: {versions_to_gen} (v{version_start} to v{version_end})")
+    if output_cycle:
+        print(f"Output cycle: icons-generated-cycle-{output_cycle}/")
 
-    pre_scan_directories(items, VERSIONS_TO_GENERATE)
+    # Pre-scan with custom range if specified
+    pre_scan_directories_custom(items, version_start, version_end, output_cycle)
 
     input("\nPress Enter to start browser and begin generation...")
 
@@ -886,16 +1100,16 @@ def main():
         total_skipped = 0
         all_failed_items = []
 
-        for version in range(1, VERSIONS_TO_GENERATE + 1):
+        for version in range(version_start, version_end + 1):
+            version_num = version - version_start + 1
+            total_versions = version_end - version_start + 1
+
             print("\n" + "="*70)
-            print(f"GENERATING VERSION {version} of {VERSIONS_TO_GENERATE}")
+            print(f"GENERATING VERSION {version} ({version_num}/{total_versions})")
             print("="*70)
 
-            if version > 1:
-                output_folder = OUTPUT_DIR.parent / f"{OUTPUT_DIR.name}-{version}"
-                print(f"📁 Output: {output_folder}")
-            else:
-                print(f"📁 Output: {OUTPUT_DIR}")
+            output_folder = get_output_base_for_version(version, output_cycle)
+            print(f"📁 Output: {output_folder}")
 
             success = 0
             failed = 0
@@ -906,7 +1120,7 @@ def main():
                 print(f"\n[{i}/{len(items)}] Version {version}")
 
                 try:
-                    ok, skip = generate_item(driver, item, version=version)
+                    ok, skip = generate_item(driver, item, version=version, cycle=output_cycle)
 
                     if skip:
                         skipped += 1
@@ -924,7 +1138,7 @@ def main():
                             driver = restart_driver(driver)
 
                             print(f"  → Retrying item after restart...")
-                            ok, skip = generate_item(driver, item, version=version)
+                            ok, skip = generate_item(driver, item, version=version, cycle=output_cycle)
 
                             if skip:
                                 skipped += 1
@@ -955,7 +1169,7 @@ def main():
 
             print(f"\n✓ Version {version} complete: {success} generated, {skipped} skipped, {failed} failed")
 
-            if version < VERSIONS_TO_GENERATE:
+            if version < version_end:
                 print(f"\n⏱ Waiting 30s before starting version {version + 1}...")
                 time.sleep(30)
 
