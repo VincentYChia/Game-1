@@ -206,6 +206,7 @@ class DungeonInstance:
     total_waves: int = 3
     wave_enemies_remaining: int = 0
     total_enemies_killed: int = 0
+    awaiting_next_wave: bool = False  # True when wave complete but next not yet spawned
 
     # Dungeon state
     is_cleared: bool = False
@@ -334,6 +335,7 @@ class DungeonInstance:
 
         mob_count = self.get_current_wave_mob_count()
         self.wave_enemies_remaining = mob_count
+        self.awaiting_next_wave = False  # Wave has been spawned
         return mob_count
 
     def enemy_killed(self):
@@ -346,11 +348,18 @@ class DungeonInstance:
             if self.current_wave >= self.total_waves:
                 self.is_cleared = True
             else:
-                self.current_wave += 1
+                # Mark that we need to spawn next wave (don't auto-increment)
+                self.awaiting_next_wave = True
+
+    def advance_to_next_wave(self):
+        """Called when the next wave should be spawned."""
+        if self.awaiting_next_wave and self.current_wave < self.total_waves:
+            self.current_wave += 1
+            self.awaiting_next_wave = False
 
     def is_wave_complete(self) -> bool:
-        """Check if the current wave is complete."""
-        return self.wave_enemies_remaining <= 0
+        """Check if the current wave is complete and awaiting next wave."""
+        return self.wave_enemies_remaining <= 0 and self.awaiting_next_wave and not self.is_cleared
 
     def get_progress(self) -> Tuple[int, int, int]:
         """Get dungeon progress: (current_wave, enemies_killed, total_enemies)."""
@@ -365,6 +374,7 @@ class DungeonInstance:
             "total_waves": self.total_waves,
             "wave_enemies_remaining": self.wave_enemies_remaining,
             "total_enemies_killed": self.total_enemies_killed,
+            "awaiting_next_wave": self.awaiting_next_wave,
             "is_cleared": self.is_cleared,
             "is_active": self.is_active,
             "entrance_time": self.entrance_time,
@@ -391,6 +401,7 @@ class DungeonInstance:
         instance.total_waves = data.get("total_waves", 3)
         instance.wave_enemies_remaining = data.get("wave_enemies_remaining", 0)
         instance.total_enemies_killed = data.get("total_enemies_killed", 0)
+        instance.awaiting_next_wave = data.get("awaiting_next_wave", False)
         instance.is_cleared = data.get("is_cleared", False)
         instance.is_active = data.get("is_active", True)
         instance.entrance_time = data.get("entrance_time", time.time())

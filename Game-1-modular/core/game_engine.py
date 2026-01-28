@@ -5181,19 +5181,24 @@ class GameEngine:
         self.combat_manager.update_dungeon_enemies(dt, player_pos, aggro_mult, speed_mult, shield_blocking)
 
         # Check wave completion
-        if self.dungeon_manager.is_wave_complete() and not dungeon.is_cleared:
-            if dungeon.current_wave <= dungeon.total_waves:
-                # Track wave completion
-                if hasattr(self.character, 'stat_tracker'):
-                    self.character.stat_tracker.record_dungeon_wave_completed()
+        if self.dungeon_manager.is_wave_complete():
+            # Track wave completion
+            if hasattr(self.character, 'stat_tracker'):
+                self.character.stat_tracker.record_dungeon_wave_completed()
 
-                if dungeon.current_wave < dungeon.total_waves:
-                    # Spawn next wave
-                    self.add_notification(f"Wave {dungeon.current_wave} complete! Next wave incoming...", (255, 215, 0))
-                    self.combat_manager.spawn_dungeon_wave()
-                else:
-                    # Dungeon cleared!
-                    self.add_notification("DUNGEON CLEARED! Open the chest! (Press F8 to exit)", (100, 255, 100))
+            # Advance to next wave and spawn enemies
+            completed_wave = dungeon.current_wave
+            dungeon.advance_to_next_wave()
+            self.add_notification(f"Wave {completed_wave} complete! Next wave incoming...", (255, 215, 0))
+            self.combat_manager.spawn_dungeon_wave()
+
+        # Check if dungeon is cleared (separate from wave completion)
+        if dungeon.is_cleared and dungeon.wave_enemies_remaining <= 0:
+            # Only show notification once by checking if enemies are truly gone
+            living_dungeon_enemies = [e for e in self.combat_manager.dungeon_enemies if e.is_alive]
+            if len(living_dungeon_enemies) == 0 and not hasattr(dungeon, '_cleared_notified'):
+                dungeon._cleared_notified = True
+                self.add_notification("DUNGEON CLEARED! Open the chest! (Press F8 to exit)", (100, 255, 100))
 
     def _open_dungeon_chest(self) -> bool:
         """Attempt to open the dungeon chest. Returns True if successful."""

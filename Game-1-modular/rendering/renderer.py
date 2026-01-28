@@ -1340,7 +1340,8 @@ class Renderer:
                     open_surf = self.tiny_font.render("LOOT", True, (255, 215, 0))
                     self.screen.blit(open_surf, (cx - open_surf.get_width() // 2, cy - 5))
 
-        # Render enemies
+        # Render enemies (same as world enemies but for dungeon)
+        image_cache = ImageCache.get_instance()
         tier_colors = {
             1: (100, 200, 100),  # Green
             2: (100, 150, 255),  # Blue
@@ -1354,13 +1355,25 @@ class Renderer:
             if -50 <= ex <= Config.VIEWPORT_WIDTH + 50 and -50 <= ey <= Config.VIEWPORT_HEIGHT + 50:
                 if enemy.is_alive:
                     size = Config.TILE_SIZE // 2
-                    enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
-                    if enemy.is_boss:
-                        enemy_color = (255, 215, 0)
-                        size = Config.TILE_SIZE // 2 + 4
 
-                    pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
-                    pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
+                    # Try to load enemy PNG icon (same as world enemies)
+                    icon = None
+                    if enemy.definition.icon_path:
+                        icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2))
+
+                    if icon:
+                        # Render icon centered on enemy position
+                        icon_rect = icon.get_rect(center=(ex, ey))
+                        self.screen.blit(icon, icon_rect)
+                    else:
+                        # Fallback: Color based on tier
+                        enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                        if enemy.is_boss:
+                            enemy_color = (255, 215, 0)
+                            size = Config.TILE_SIZE // 2 + 4
+
+                        pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
+                        pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
 
                     # Health bar
                     health_percent = enemy.current_health / enemy.max_health
@@ -1370,15 +1383,15 @@ class Renderer:
                     hp_w = int(bar_w * health_percent)
                     pygame.draw.rect(self.screen, (255, 50, 50), (ex - bar_w // 2, bar_y, hp_w, bar_h))
 
-                    # Tier indicator
+                    # Tier indicator and name
                     tier_text = f"T{enemy.definition.tier}"
                     if enemy.is_boss:
                         tier_text = "BOSS"
                     tier_surf = self.tiny_font.render(tier_text, True, (255, 255, 255))
                     self.screen.blit(tier_surf, (ex - tier_surf.get_width() // 2, ey - 5))
                 else:
-                    # Corpse
-                    pygame.draw.circle(self.screen, (100, 100, 100), (ex, ey), Config.TILE_SIZE // 4)
+                    # Corpse (no loot in dungeons - just a grey dot)
+                    pygame.draw.circle(self.screen, (80, 80, 80), (ex, ey), Config.TILE_SIZE // 4)
 
         # Render player
         center_x, center_y = camera.world_to_screen(character.position)
@@ -1403,18 +1416,7 @@ class Renderer:
         if not dungeon:
             return
 
-        # Background panel
-        panel_width = 200
-        panel_height = 80
-        panel_x = (Config.VIEWPORT_WIDTH - panel_width) // 2
-        panel_y = 10
-
-        panel_surf = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
-        panel_surf.fill((0, 0, 0, 180))
-        self.screen.blit(panel_surf, (panel_x, panel_y))
-        pygame.draw.rect(self.screen, (100, 100, 100), (panel_x, panel_y, panel_width, panel_height), 2)
-
-        # Dungeon rarity
+        # Dungeon rarity text - measure first to calculate panel width
         rarity_colors = {
             "common": (200, 200, 200),
             "uncommon": (100, 255, 100),
@@ -1426,6 +1428,22 @@ class Renderer:
         rarity_name = dungeon.rarity.value.capitalize()
         rarity_color = rarity_colors.get(dungeon.rarity.value, (255, 255, 255))
         rarity_surf = self.font.render(f"{rarity_name} Dungeon", True, rarity_color)
+
+        # Calculate panel width based on text (with padding)
+        min_panel_width = 200
+        text_padding = 40  # 20px on each side
+        panel_width = max(min_panel_width, rarity_surf.get_width() + text_padding)
+        panel_height = 80
+        panel_x = (Config.VIEWPORT_WIDTH - panel_width) // 2
+        panel_y = 10
+
+        # Background panel
+        panel_surf = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+        panel_surf.fill((0, 0, 0, 180))
+        self.screen.blit(panel_surf, (panel_x, panel_y))
+        pygame.draw.rect(self.screen, (100, 100, 100), (panel_x, panel_y, panel_width, panel_height), 2)
+
+        # Render rarity title (already computed)
         self.screen.blit(rarity_surf, (panel_x + (panel_width - rarity_surf.get_width()) // 2, panel_y + 5))
 
         # Wave indicator
