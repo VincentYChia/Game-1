@@ -10,6 +10,42 @@ class ResourceNodeDatabase:
     """Singleton database for resource node definitions loaded from JSON"""
     _instance = None
 
+    # Icon name mapping: JSON resource_id -> actual PNG filename (without extension)
+    # This preserves compatibility with existing PNG files
+    ICON_NAME_MAP = {
+        # Trees - use resource_id directly (no suffix)
+        'oak_tree': 'oak_tree',
+        'pine_tree': 'pine_tree',
+        'ash_tree': 'ash_tree',
+        'birch_tree': 'birch_tree',
+        'maple_tree': 'maple_tree',
+        'ironwood_tree': 'ironwood_tree',
+        'ebony_tree': 'ebony_tree',
+        'worldtree_sapling': 'worldtree_sapling',
+        # Ores - map new JSON IDs to existing PNG names (with _node suffix in file)
+        'copper_vein': 'copper_ore_node',
+        'iron_deposit': 'iron_ore_node',
+        'tin_seam': 'tin_seam',  # New resource, uses JSON ID
+        'steel_node': 'steel_ore_node',
+        'mithril_cache': 'mithril_ore_node',
+        'adamantine_lode': 'adamantine_lode',  # New resource
+        'orichalcum_trove': 'orichalcum_trove',  # New resource
+        'etherion_nexus': 'etherion_nexus',  # New resource
+        # Stones - map new JSON IDs to existing PNG names
+        'limestone_outcrop': 'limestone_node',
+        'granite_formation': 'granite_node',
+        'shale_bed': 'shale_bed',  # New resource
+        'basalt_column': 'basalt_column',  # New resource
+        'marble_quarry': 'marble_quarry',  # New resource
+        'quartz_cluster': 'quartz_cluster',  # New resource
+        'obsidian_flow': 'obsidian_node',
+        'voidstone_shard': 'voidstone_shard',  # New resource
+        'diamond_geode': 'diamond_geode',  # New resource (replaces star_crystal)
+        'eternity_monolith': 'eternity_monolith',  # New resource
+        'primordial_formation': 'primordial_formation',  # New resource
+        'genesis_structure': 'genesis_structure',  # New resource
+    }
+
     def __init__(self):
         self.nodes: Dict[str, ResourceNodeDefinition] = {}
         self.loaded = False
@@ -193,3 +229,29 @@ class ResourceNodeDatabase:
         This can be used to populate RESOURCE_TIERS dynamically
         """
         return dict(self._tier_map)
+
+    def get_icon_name(self, resource_id: str) -> str:
+        """Get the icon filename (without extension) for a resource
+
+        Maps JSON resource_id to the actual PNG filename to preserve
+        compatibility with existing icon files.
+
+        Args:
+            resource_id: The resource ID from JSON (e.g., 'copper_vein')
+
+        Returns:
+            Icon filename without extension (e.g., 'copper_ore_node')
+        """
+        return self.ICON_NAME_MAP.get(resource_id, resource_id)
+
+    def get_icon_path(self, resource_id: str) -> str:
+        """Get the full icon path for a resource
+
+        Args:
+            resource_id: The resource ID from JSON
+
+        Returns:
+            Path like 'resources/copper_ore_node.png'
+        """
+        icon_name = self.get_icon_name(resource_id)
+        return f"resources/{icon_name}.png"
