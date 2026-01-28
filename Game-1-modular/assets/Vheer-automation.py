@@ -1342,7 +1342,7 @@ def main():
             cycle_dir = SCRIPT_DIR / f'icons-generated-cycle-{cycle}'
             if cycle_dir.exists():
                 missing_versions = []
-                for ver in range(2, 6):  # Check versions 2-5
+                for ver in range(2, 5):  # Check versions 2, 3, 4 only (3 versions per cycle)
                     ver_dir = cycle_dir / f'generated_icons-{ver}'
                     if not ver_dir.exists():
                         missing_versions.append(ver)
