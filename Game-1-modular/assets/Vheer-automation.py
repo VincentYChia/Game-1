@@ -1313,129 +1313,207 @@ def main():
     print("  [1] Test (2 items)")
     print("  [2] Full catalog")
     print("  [3] Custom configuration range (specify versions & cycle)")
-    print("  [4] Auto-cycle (fill vacancies in all cycles with matching configs)")
+    print("  [4] Auto-cycle (fill missing files across all cycles)")
 
     choice = input("\nChoice: ").strip()
 
-    # Mode 4: Auto-cycle through all cycles with their configurations
+    # Mode 4: Auto-cycle - find and fill missing individual files
     if choice == '4':
         print("\n" + "="*70)
-        print("AUTO-CYCLE MODE")
+        print("AUTO-CYCLE MODE - MISSING FILE DETECTION")
         print("="*70)
 
-        # Load catalog
+        # Load catalog first
         if not CATALOG_PATH.exists():
             print(f"\n⚠ Catalog not found: {CATALOG_PATH}")
-            items = TEST_ITEMS
-        else:
-            print("\nLoading catalog...")
-            items = parse_catalog(CATALOG_PATH)
-            print(f"✓ Loaded {len(items)} items")
-
-        # Scan all cycles to find vacancies
-        print("\n" + "-"*50)
-        print("SCANNING CYCLES FOR VACANCIES")
-        print("-"*50)
-
-        vacancies = {}  # cycle -> list of missing versions
-        for cycle in range(1, 6):
-            cycle_dir = SCRIPT_DIR / f'icons-generated-cycle-{cycle}'
-            if cycle_dir.exists():
-                missing_versions = []
-                for ver in range(2, 5):  # Check versions 2, 3, 4 only (3 versions per cycle)
-                    ver_dir = cycle_dir / f'generated_icons-{ver}'
-                    if not ver_dir.exists():
-                        missing_versions.append(ver)
-                    else:
-                        # Check if it has enough files (more than 10)
-                        png_count = len(list(ver_dir.glob('**/*.png')))
-                        if png_count < 10:
-                            missing_versions.append(ver)
-                            print(f"  Cycle {cycle} v{ver}: only {png_count} files (treating as vacancy)")
-
-                if missing_versions:
-                    vacancies[cycle] = missing_versions
-                    print(f"  Cycle {cycle}: MISSING versions {missing_versions}")
-                else:
-                    print(f"  Cycle {cycle}: Complete (all versions present)")
-            else:
-                print(f"  Cycle {cycle}: Directory doesn't exist")
-
-        if not vacancies:
-            print("\n✓ All cycles complete! No vacancies found.")
             return
 
-        # Show what will be generated
+        print("\nLoading catalog...")
+        items = parse_catalog(CATALOG_PATH)
+        print(f"✓ Loaded {len(items)} items")
+
+        # Scan all cycles/versions for missing individual files
+        print("\n" + "-"*50)
+        print("SCANNING FOR MISSING FILES")
+        print("-"*50)
+
+        MIN_FILE_SIZE = 5000  # Files under 5KB are considered placeholders
+        missing_files = []  # List of (cycle, version, item) tuples
+
+        def get_existing_files_map(ver_dir):
+            """Build a map of lowercase filename -> actual path for case-insensitive matching"""
+            file_map = {}
+            if ver_dir.exists():
+                for png in ver_dir.rglob('*.png'):
+                    file_map[png.name.lower()] = png
+            return file_map
+
+        for cycle in range(1, 6):
+            cycle_dir = SCRIPT_DIR / f'icons-generated-cycle-{cycle}'
+            if not cycle_dir.exists():
+                print(f"  Cycle {cycle}: Directory doesn't exist, skipping")
+                continue
+
+            cycle_missing = 0
+            for ver in range(2, 5):  # Versions 2, 3, 4
+                ver_dir = cycle_dir / f'generated_icons-{ver}'
+
+                # Only scan versions that have existing folders
+                if not ver_dir.exists():
+                    continue
+
+                ver_missing = []
+
+                # Build case-insensitive file lookup
+                file_map = get_existing_files_map(ver_dir)
+
+                for item in items:
+                    name = item['name']
+                    expected_filename = f"{name}-{ver}.png".lower()
+
+                    # Case-insensitive check
+                    if expected_filename in file_map:
+                        actual_path = file_map[expected_filename]
+                        if actual_path.stat().st_size < MIN_FILE_SIZE:
+                            missing_files.append((cycle, ver, item))
+                            ver_missing.append(name)
+                    else:
+                        missing_files.append((cycle, ver, item))
+                        ver_missing.append(name)
+
+                if ver_missing:
+                    cycle_missing += len(ver_missing)
+                    print(f"  Cycle {cycle} v{ver}: {len(ver_missing)} missing")
+
+            if cycle_missing == 0:
+                print(f"  Cycle {cycle}: Complete (no missing files)")
+
+        if not missing_files:
+            print("\n✓ All files present! Nothing to generate.")
+            return
+
+        # Group by cycle for summary
         print("\n" + "-"*50)
         print("GENERATION PLAN")
         print("-"*50)
 
-        total_generations = 0
-        for cycle, versions in sorted(vacancies.items()):
-            config_num = cycle if cycle in (configs_dict or {}) else 2
-            print(f"  Cycle {cycle}: Generate versions {versions} using Config {config_num}")
-            total_generations += len(versions) * len(items)
+        cycles_summary = {}
+        for cycle, ver, item in missing_files:
+            if cycle not in cycles_summary:
+                cycles_summary[cycle] = {}
+            if ver not in cycles_summary[cycle]:
+                cycles_summary[cycle][ver] = []
+            cycles_summary[cycle][ver].append(item['name'])
 
-        print(f"\nTotal: ~{total_generations} icon generations")
-        print(f"Items per version: {len(items)}")
+        for cycle in sorted(cycles_summary.keys()):
+            config_num = cycle if cycle in (configs_dict or {}) else 2
+            versions = cycles_summary[cycle]
+            total_in_cycle = sum(len(v) for v in versions.values())
+            version_breakdown = ", ".join(f"v{v}:{len(items)}" for v, items in sorted(versions.items()))
+            print(f"  Cycle {cycle}: {total_in_cycle} missing ({version_breakdown}) using Config {config_num}")
+
+        print(f"\nTotal: {len(missing_files)} icon generations needed")
 
         # Confirm
-        confirm = input("\nProceed with auto-cycle generation? [y/N]: ").strip().lower()
+        confirm = input("\nProceed with generation? [y/N]: ").strip().lower()
         if confirm != 'y':
             print("Cancelled.")
             return
 
-        # Run generation for each cycle
+        # Run generation grouped by cycle
         grand_success = 0
         grand_failed = 0
-        grand_skipped = 0
         all_failures = []
 
-        for cycle, versions in sorted(vacancies.items()):
-            version_start = min(versions)
-            version_end = max(versions)
-
+        for cycle in sorted(cycles_summary.keys()):
             print("\n" + "="*70)
             print(f"STARTING CYCLE {cycle}")
-            print(f"Versions to generate: {versions}")
             print("="*70)
 
-            success, failed, skipped, failures = run_generation_for_cycle(
-                items,
-                version_start=version_start,
-                version_end=version_end,
-                output_cycle=cycle,
-                configs_dict=configs_dict
-            )
+            # Load configuration for this cycle
+            if configs_dict:
+                config_to_use = cycle if cycle in configs_dict else 2
+                print(f"📋 Loading Configuration {config_to_use}...")
+                load_configuration(config_to_use, configs_dict)
 
-            grand_success += success
-            grand_failed += failed
-            grand_skipped += skipped
-            all_failures.extend([(cycle, v, n) for v, n in failures])
+            # Setup driver for this cycle
+            driver = setup_driver()
 
-            print(f"\n✓ Cycle {cycle} complete: {success} success, {failed} failed, {skipped} skipped")
+            try:
+                print("\n🌐 Opening Vheer...")
+                if not safe_driver_get(driver, "https://vheer.com/app/game-assets-generator"):
+                    print("✗ Failed to open Vheer")
+                    driver.quit()
+                    continue
+
+                time.sleep(16)
+                driver.get("https://vheer.com/app/game-assets-generator")
+                time.sleep(8)
+                select_cel_shaded_style(driver)
+                print("✓ Ready\n")
+
+                # Generate missing files for this cycle
+                cycle_items = [(ver, item) for c, ver, item in missing_files if c == cycle]
+
+                for i, (ver, item) in enumerate(cycle_items, 1):
+                    print(f"\n[{i}/{len(cycle_items)}] Cycle {cycle} v{ver}: {item['name']}")
+
+                    try:
+                        ok, skip = generate_item(driver, item, version=ver, cycle=cycle)
+                        if ok:
+                            grand_success += 1
+                        else:
+                            grand_failed += 1
+                            all_failures.append((cycle, ver, item['name']))
+                    except Exception as e:
+                        if is_connection_error(e):
+                            try:
+                                driver = restart_driver(driver)
+                                ok, skip = generate_item(driver, item, version=ver, cycle=cycle)
+                                if ok:
+                                    grand_success += 1
+                                else:
+                                    grand_failed += 1
+                                    all_failures.append((cycle, ver, item['name']))
+                            except:
+                                grand_failed += 1
+                                all_failures.append((cycle, ver, item['name']))
+                        else:
+                            grand_failed += 1
+                            all_failures.append((cycle, ver, item['name']))
+
+                    if i < len(cycle_items):
+                        print(f"⏱ Waiting {WAIT_BETWEEN_ITEMS}s...")
+                        time.sleep(WAIT_BETWEEN_ITEMS)
+
+            except KeyboardInterrupt:
+                print("\n⏸ Interrupted")
+                break
+            finally:
+                print("\n🔒 Closing browser...")
+                driver.quit()
+                time.sleep(3)
 
             # Wait between cycles
-            remaining_cycles = [c for c in sorted(vacancies.keys()) if c > cycle]
-            if remaining_cycles:
-                print(f"\n⏱ Waiting 60s before starting Cycle {remaining_cycles[0]}...")
-                print("  (This allows browser state to fully reset)")
+            remaining = [c for c in sorted(cycles_summary.keys()) if c > cycle]
+            if remaining:
+                print(f"\n⏱ Waiting 60s before Cycle {remaining[0]}...")
                 time.sleep(60)
 
         # Final summary
         print("\n" + "="*70)
         print("AUTO-CYCLE COMPLETE!")
         print("="*70)
-        print(f"✓ Total Success: {grand_success}")
-        print(f"✗ Total Failed: {grand_failed}")
-        print(f"⊘ Total Skipped: {grand_skipped}")
+        print(f"✓ Success: {grand_success}")
+        print(f"✗ Failed: {grand_failed}")
 
         if all_failures:
             print(f"\n⚠ Failed items:")
-            for cycle, version, name in all_failures[:20]:
-                print(f"  - Cycle {cycle} v{version}: {name}")
-            if len(all_failures) > 20:
-                print(f"  ... and {len(all_failures) - 20} more")
+            for cycle, ver, name in all_failures[:20]:
+                print(f"  - Cycle {cycle} v{ver}: {name}")
+
+        print("="*70)
+        return
 
         print("="*70)
         return
