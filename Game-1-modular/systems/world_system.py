@@ -94,7 +94,7 @@ class WorldSystem:
                     # Ensure position is on walkable terrain
                     pos = Position(tile_x, tile_y, 0)
                     tile = self.get_tile(pos)
-                    if tile and tile.tile_type not in (TileType.WATER, TileType.DEEP_WATER):
+                    if tile and tile.tile_type != TileType.WATER:
                         # Roll rarity based on spawn weights
                         rarity = self._roll_dungeon_rarity()
                         entrance = DungeonEntrance(position=pos, rarity=rarity)

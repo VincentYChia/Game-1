@@ -494,6 +494,54 @@
         "minDistanceBetween": 3,
         "comment": "River chunks have land bridges to ensure passability"
       }
+    },
+    {
+      "metadata": {
+        "narrative": "A cursed swamp where foul waters churn with unnatural life. Toxic vapors rise from stagnant pools, and strange creatures lurk beneath the murky surface. Rare fish mutated by dark magic swim here, prized by alchemists. The bravest anglers venture here seeking legendary catches, but many never return.",
+        "tags": ["water", "fishing", "dangerous", "rare", "combat"]
+      },
+      "chunkType": "water_cursed_swamp",
+      "name": "Cursed Swamp",
+      "category": "rare_water",
+      "theme": "water",
+      "tilePattern": {
+        "waterCoverage": 0.50,
+        "hasIslands": true,
+        "shoreWidth": 1,
+        "isToxic": true
+      },
+      "resourceDensity": {
+        "fishing_spot": {
+          "density": "high",
+          "tierBias": "high"
+        },
+        "voidstone_shard": {
+          "density": "very_low",
+          "tierBias": "high"
+        }
+      },
+      "enemySpawns": {
+        "slime_acid": {
+          "density": "high",
+          "tier": 2
+        },
+        "slime_crystal": {
+          "density": "moderate",
+          "tier": 3
+        },
+        "void_wraith": {
+          "density": "low",
+          "tier": 4
+        }
+      },
+      "generationRules": {
+        "rollWeight": 1,
+        "spawnAreaAllowed": false,
+        "adjacencyPreference": ["dangerous_cave", "rare_cave", "dangerous_forest"],
+        "edgeOnly": false,
+        "minDistanceBetween": 5,
+        "comment": "Rare dangerous water chunk that can spawn anywhere (not edge-only). High-tier fishing but lethal enemies."
+      }
     }
   ]
 }

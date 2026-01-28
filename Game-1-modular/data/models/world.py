@@ -114,9 +114,11 @@ class ChunkType(Enum):
     RARE_HIDDEN_FOREST = "rare_hidden_forest"
     RARE_ANCIENT_QUARRY = "rare_ancient_quarry"
     RARE_DEEP_CAVE = "rare_deep_cave"
-    # Water chunks - only spawn on world edges
+    # Water chunks - edge-only by default
     WATER_LAKE = "water_lake"
     WATER_RIVER = "water_river"
+    # Rare water chunk - can spawn anywhere (not edge-only)
+    WATER_CURSED_SWAMP = "water_cursed_swamp"
 
 
 class StationType(Enum):

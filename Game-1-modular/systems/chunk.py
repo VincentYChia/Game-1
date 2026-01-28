@@ -115,11 +115,15 @@ class Chunk:
             return random.choice([ChunkType.PEACEFUL_FOREST, ChunkType.PEACEFUL_QUARRY, ChunkType.PEACEFUL_CAVE])
         elif roll <= 8:
             return random.choice([ChunkType.DANGEROUS_FOREST, ChunkType.DANGEROUS_QUARRY, ChunkType.DANGEROUS_CAVE])
-        return random.choice([ChunkType.RARE_HIDDEN_FOREST, ChunkType.RARE_ANCIENT_QUARRY, ChunkType.RARE_DEEP_CAVE])
+        else:
+            # Rare chunks (20% chance): 75% land rare, 25% cursed swamp
+            if random.random() < 0.25:
+                return ChunkType.WATER_CURSED_SWAMP
+            return random.choice([ChunkType.RARE_HIDDEN_FOREST, ChunkType.RARE_ANCIENT_QUARRY, ChunkType.RARE_DEEP_CAVE])
 
     def _is_water_chunk(self) -> bool:
         """Check if this chunk is a water type."""
-        return self.chunk_type in (ChunkType.WATER_LAKE, ChunkType.WATER_RIVER)
+        return self.chunk_type in (ChunkType.WATER_LAKE, ChunkType.WATER_RIVER, ChunkType.WATER_CURSED_SWAMP)
 
     def generate_tiles(self):
         """Generate tiles for this chunk using centered coordinates."""
@@ -145,20 +149,36 @@ class Chunk:
         """Generate water tiles with guaranteed land border for passability.
 
         Water chunks have:
-        - A 2-tile grass border on the side facing the map center
-        - Water tiles in the interior (65% for lake, 35% for river)
-        - Optional islands (grass patches) in lakes
+        - A 2-tile grass border on the side facing the map center (edge chunks)
+        - Cursed swamps have land borders on ALL sides (can spawn anywhere)
+        - Water tiles in the interior (65% for lake, 35% for river, 50% for swamp)
+        - Optional islands (grass patches) in lakes and swamps
         """
         is_lake = self.chunk_type == ChunkType.WATER_LAKE
-        water_coverage = 0.65 if is_lake else 0.35
+        is_swamp = self.chunk_type == ChunkType.WATER_CURSED_SWAMP
+
+        if is_swamp:
+            water_coverage = 0.50
+        elif is_lake:
+            water_coverage = 0.65
+        else:
+            water_coverage = 0.35
+
         chunk_size = Config.CHUNK_SIZE
 
-        # Determine which edges need land bridges (facing toward center)
-        half = Config.NUM_CHUNKS // 2
-        needs_land_north = self.chunk_y > 0  # South edge of world
-        needs_land_south = self.chunk_y < 0  # North edge of world
-        needs_land_east = self.chunk_x < 0   # West edge of world
-        needs_land_west = self.chunk_x > 0   # East edge of world
+        # Cursed swamps need land borders on ALL sides (not edge-only)
+        # Edge water chunks only need borders facing the map center
+        if is_swamp:
+            needs_land_north = True
+            needs_land_south = True
+            needs_land_east = True
+            needs_land_west = True
+        else:
+            # Edge water chunks - only border toward center
+            needs_land_north = self.chunk_y > 0  # South edge of world
+            needs_land_south = self.chunk_y < 0  # North edge of world
+            needs_land_east = self.chunk_x < 0   # West edge of world
+            needs_land_west = self.chunk_x > 0   # East edge of world
 
         for x in range(start_x, start_x + chunk_size):
             for y in range(start_y, start_y + chunk_size):
@@ -166,7 +186,7 @@ class Chunk:
                 local_y = y - start_y
                 pos = Position(x, y, 0)
 
-                # Land border on edges facing map center (2 tiles wide)
+                # Land border on edges (2 tiles wide for passability)
                 is_land_border = False
                 if needs_land_south and local_y < 2:
                     is_land_border = True
@@ -178,13 +198,14 @@ class Chunk:
                     is_land_border = True
 
                 if is_land_border:
-                    tile_type = TileType.GRASS
-                elif is_lake:
-                    # Lake: mostly water with occasional islands
+                    # Cursed swamp has dirt borders instead of grass
+                    tile_type = TileType.DIRT if is_swamp else TileType.GRASS
+                elif is_lake or is_swamp:
+                    # Lake/Swamp: water with occasional islands
                     if random.random() < water_coverage:
                         tile_type = TileType.WATER
                     else:
-                        tile_type = TileType.GRASS  # Island
+                        tile_type = TileType.DIRT if is_swamp else TileType.GRASS  # Island
                 else:
                     # River: create a flowing pattern
                     # River runs roughly through the middle
@@ -269,9 +290,18 @@ class Chunk:
             if tile.tile_type == TileType.WATER:
                 water_tiles.append(tile.position)
 
-        # Spawn 3-6 fishing spots on water tiles
-        num_spots = min(random.randint(3, 6), len(water_tiles))
+        # Determine tier based on water type
+        # Cursed swamp has higher tier fishing (3-4), lake/river are tier 1-2
+        is_swamp = self.chunk_type == ChunkType.WATER_CURSED_SWAMP
+        if is_swamp:
+            tier_range = (3, 4)  # High tier fishing in cursed swamp
+            num_spots = min(random.randint(5, 8), len(water_tiles))  # More spots
+        else:
+            tier_range = (1, 2)
+            num_spots = min(random.randint(3, 6), len(water_tiles))
+
         if water_tiles and num_spots > 0:
             spots = random.sample(water_tiles, num_spots)
             for pos in spots:
-                self.resources.append(NaturalResource(pos, ResourceType.FISHING_SPOT, tier=1))
+                tier = random.randint(tier_range[0], tier_range[1])
+                self.resources.append(NaturalResource(pos, ResourceType.FISHING_SPOT, tier=tier))
