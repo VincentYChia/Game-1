@@ -5232,7 +5232,7 @@ class GameEngine:
             items_added = 0
             for item_id, quantity in loot:
                 # Try to add to inventory
-                added = self.character.inventory.add_material(item_id, quantity)
+                added = self.character.inventory.add_item(item_id, quantity)
                 if added:
                     items_added += quantity
 
