@@ -223,6 +223,9 @@ class DungeonInstance:
     # Enemies spawned (managed by combat_manager, tracked here for save/load)
     spawned_enemy_ids: List[str] = field(default_factory=list)
 
+    # Exit portal (spawns when dungeon is cleared)
+    exit_portal_position: Optional[Position] = None
+
     def __post_init__(self):
         if not self.dungeon_id:
             self.dungeon_id = f"dungeon_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
@@ -347,9 +350,16 @@ class DungeonInstance:
         if self.wave_enemies_remaining <= 0:
             if self.current_wave >= self.total_waves:
                 self.is_cleared = True
+                self._spawn_exit_portal()
             else:
                 # Mark that we need to spawn next wave (don't auto-increment)
                 self.awaiting_next_wave = True
+
+    def _spawn_exit_portal(self):
+        """Spawn the exit portal when dungeon is cleared."""
+        # Place exit portal near the center, offset from chest
+        center = DUNGEON_TILE_SIZE // 2
+        self.exit_portal_position = Position(center, center - 3, 0)  # North of center
 
     def advance_to_next_wave(self):
         """Called when the next wave should be spawned."""

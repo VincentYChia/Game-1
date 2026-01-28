@@ -1340,6 +1340,35 @@ class Renderer:
                     open_surf = self.tiny_font.render("LOOT", True, (255, 215, 0))
                     self.screen.blit(open_surf, (cx - open_surf.get_width() // 2, cy - 5))
 
+        # Render exit portal if dungeon is cleared
+        if dungeon and dungeon.is_cleared and dungeon.exit_portal_position:
+            px, py = camera.world_to_screen(dungeon.exit_portal_position)
+            portal_size = Config.TILE_SIZE
+
+            # Animated portal effect (pulsing glow)
+            import time
+            pulse = 0.5 + 0.5 * abs((time.time() * 2) % 2 - 1)  # 0.5 to 1.0
+
+            # Outer glow
+            glow_color = (int(100 * pulse), int(200 * pulse), int(255 * pulse))
+            glow_rect = pygame.Rect(px - portal_size // 2 - 4, py - portal_size // 2 - 4,
+                                    portal_size + 8, portal_size + 8)
+            pygame.draw.ellipse(self.screen, glow_color, glow_rect, 3)
+
+            # Portal circle (blue swirl)
+            portal_rect = pygame.Rect(px - portal_size // 2, py - portal_size // 2,
+                                      portal_size, portal_size)
+            pygame.draw.ellipse(self.screen, (50, 100, 200), portal_rect)
+            pygame.draw.ellipse(self.screen, (100, 150, 255), portal_rect, 2)
+
+            # Inner swirl effect
+            inner_rect = portal_rect.inflate(-8, -8)
+            pygame.draw.ellipse(self.screen, (80, 130, 220), inner_rect)
+
+            # "EXIT" label
+            exit_surf = self.tiny_font.render("EXIT", True, (200, 230, 255))
+            self.screen.blit(exit_surf, (px - exit_surf.get_width() // 2, py - 5))
+
         # Render enemies (same as world enemies but for dungeon)
         image_cache = ImageCache.get_instance()
         tier_colors = {

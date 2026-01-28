@@ -1834,6 +1834,16 @@ class GameEngine:
                     self._open_dungeon_chest()
                     return
 
+            # Check for dungeon exit portal click
+            if dungeon and dungeon.is_cleared and dungeon.exit_portal_position:
+                portal_dist = math.sqrt(
+                    (wx - dungeon.exit_portal_position.x) ** 2 +
+                    (wy - dungeon.exit_portal_position.y) ** 2
+                )
+                if portal_dist <= 1.5:  # Within click range of portal
+                    self._exit_dungeon_via_portal()
+                    return
+
             # Check for dungeon enemy click
             enemy = self.combat_manager.get_dungeon_enemy_at_position((wx, wy))
             if enemy and enemy.is_alive:
@@ -1866,11 +1876,11 @@ class GameEngine:
                 self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
 
                 if not enemy.is_alive:
-                    # Track dungeon enemy kill
+                    # Track dungeon enemy kill (kill tracking already done in combat_manager)
                     exp_reward = self.combat_manager._calculate_exp_reward(enemy)
                     if hasattr(self.character, 'stat_tracker'):
                         self.character.stat_tracker.record_dungeon_enemy_killed(exp_reward)
-                    self.combat_manager.on_dungeon_enemy_killed(enemy)
+                    # Note: on_dungeon_enemy_killed already called by player_attack_enemy_with_tags
                     self.add_notification(f"Defeated {enemy.definition.name}! (+{exp_reward} EXP)", (255, 215, 0))
                 return  # Don't process world clicks when in dungeon
 
@@ -5194,11 +5204,18 @@ class GameEngine:
 
         # Check if dungeon is cleared (separate from wave completion)
         if dungeon.is_cleared and dungeon.wave_enemies_remaining <= 0:
-            # Only show notification once by checking if enemies are truly gone
-            living_dungeon_enemies = [e for e in self.combat_manager.dungeon_enemies if e.is_alive]
-            if len(living_dungeon_enemies) == 0 and not hasattr(dungeon, '_cleared_notified'):
+            # Only trigger once when dungeon is first cleared
+            if not hasattr(dungeon, '_cleared_notified'):
                 dungeon._cleared_notified = True
-                self.add_notification("DUNGEON CLEARED! Open the chest! (Press F8 to exit)", (100, 255, 100))
+
+                # Clear any remaining enemies (make it a safe zone)
+                for enemy in self.combat_manager.dungeon_enemies:
+                    if enemy.is_alive:
+                        enemy.current_health = 0
+                        enemy._is_alive = False
+                self.combat_manager.dungeon_enemies.clear()
+
+                self.add_notification("DUNGEON CLEARED! Click the chest for loot, portal to exit!", (100, 255, 100))
 
     def _open_dungeon_chest(self) -> bool:
         """Attempt to open the dungeon chest. Returns True if successful."""
@@ -5244,6 +5261,40 @@ class GameEngine:
             return True
 
         return False
+
+    def _exit_dungeon_via_portal(self):
+        """Exit the dungeon through the exit portal."""
+        if not self.dungeon_manager.in_dungeon:
+            return
+
+        dungeon = self.dungeon_manager.current_dungeon
+        if not dungeon or not dungeon.is_cleared:
+            self.add_notification("Clear all enemies first!", (255, 100, 100))
+            return
+
+        # Check if player is near portal
+        if dungeon.exit_portal_position:
+            player_pos = self.character.position
+            portal_pos = dungeon.exit_portal_position
+            distance = math.sqrt(
+                (player_pos.x - portal_pos.x) ** 2 +
+                (player_pos.y - portal_pos.y) ** 2
+            )
+            if distance > 2.0:
+                self.add_notification("Get closer to the portal!", (255, 255, 100))
+                return
+
+        # Return player to world
+        if dungeon.return_position:
+            self.character.position = dungeon.return_position
+        else:
+            from core.config import Config
+            self.character.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
+
+        # Clear dungeon enemies and exit
+        self.combat_manager.clear_dungeon_enemies()
+        self.dungeon_manager.exit_dungeon()
+        self.add_notification("Exited dungeon!", (100, 255, 100))
 
     def update(self):
         # Skip updates if in start menu or no character
