@@ -154,6 +154,58 @@ class PlacedEntityType(Enum):
     UTILITY_DEVICE = "utility_device"
     CRAFTING_STATION = "crafting_station"
     TRAINING_DUMMY = "training_dummy"
+    LOOT_CHEST = "loot_chest"
+
+
+class DungeonRarity(Enum):
+    """Dungeon rarity tiers with spawn weights and mob counts"""
+    COMMON = "common"           # 25%, 20 mobs
+    UNCOMMON = "uncommon"       # 30%, 30 mobs
+    RARE = "rare"               # 20%, 40 mobs
+    EPIC = "epic"               # 15%, 50 mobs
+    LEGENDARY = "legendary"     # 8%, 50 mobs
+    UNIQUE = "unique"           # 2%, 50 mobs
+
+
+# Dungeon configuration constants
+DUNGEON_CONFIG = {
+    DungeonRarity.COMMON: {
+        "spawn_weight": 25,
+        "total_mobs": 20,
+        "tier_weights": {1: 80, 2: 20, 3: 0, 4: 0},  # Mostly T1
+        "chest_tier": 1,
+    },
+    DungeonRarity.UNCOMMON: {
+        "spawn_weight": 30,
+        "total_mobs": 30,
+        "tier_weights": {1: 50, 2: 40, 3: 10, 4: 0},  # Mix T1-T2
+        "chest_tier": 1,
+    },
+    DungeonRarity.RARE: {
+        "spawn_weight": 20,
+        "total_mobs": 40,
+        "tier_weights": {1: 20, 2: 40, 3: 35, 4: 5},  # Mix T2-T3
+        "chest_tier": 2,
+    },
+    DungeonRarity.EPIC: {
+        "spawn_weight": 15,
+        "total_mobs": 50,
+        "tier_weights": {1: 5, 2: 25, 3: 50, 4: 20},  # Mostly T3
+        "chest_tier": 2,
+    },
+    DungeonRarity.LEGENDARY: {
+        "spawn_weight": 8,
+        "total_mobs": 50,
+        "tier_weights": {1: 0, 2: 10, 3: 40, 4: 50},  # Heavy T3-T4
+        "chest_tier": 3,
+    },
+    DungeonRarity.UNIQUE: {
+        "spawn_weight": 2,
+        "total_mobs": 50,
+        "tier_weights": {1: 0, 2: 0, 3: 30, 4: 70},  # Almost all T4
+        "chest_tier": 3,
+    },
+}
 
 
 @dataclass

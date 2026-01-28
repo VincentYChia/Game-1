@@ -152,6 +152,10 @@ class CombatManager:
         self.player_last_combat_time = 0.0
         self.player_in_combat = False
 
+        # Dungeon integration
+        self.dungeon_manager = None  # Set by game_engine when dungeon system is active
+        self.dungeon_enemies: List[Enemy] = []  # Enemies spawned in current dungeon
+
     def load_config(self, config_path: str, enemies_path: str, chunk_templates_path: Optional[str] = None):
         """Load combat configuration, enemy definitions, and chunk templates"""
         self.config.load_from_file(config_path)
@@ -1544,6 +1548,10 @@ class CombatManager:
         if enemy.is_boss:
             base_exp *= self.config.boss_multiplier
 
+        # Dungeon multiplier: 2x EXP in dungeons
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            base_exp *= 2
+
         return int(base_exp)
 
     def _update_player_combat_state(self, dt: float):
@@ -1593,6 +1601,15 @@ class CombatManager:
 
     def loot_corpse(self, corpse: Enemy, player_inventory) -> List[Tuple[str, int]]:
         """Loot a corpse and add items to player inventory"""
+        # No drops in dungeons - only EXP
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            # Remove corpse without generating loot
+            if corpse in self.corpses:
+                self.corpses.remove(corpse)
+            if corpse in self.dungeon_enemies:
+                self.dungeon_enemies.remove(corpse)
+            return []
+
         loot = corpse.generate_loot()
 
         # Add to inventory
@@ -1660,3 +1677,113 @@ class CombatManager:
         for enemy_list in self.enemies.values():
             all_enemies.extend(enemy_list)
         return all_enemies
+
+    # ========================================================================
+    # DUNGEON COMBAT METHODS
+    # ========================================================================
+
+    def spawn_dungeon_wave(self) -> int:
+        """
+        Spawn a wave of enemies for the current dungeon.
+
+        Returns:
+            Number of enemies spawned
+        """
+        if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
+            return 0
+
+        dungeon = self.dungeon_manager.current_dungeon
+        if not dungeon:
+            return 0
+
+        # Get number of enemies to spawn for this wave
+        enemy_count = dungeon.start_wave()
+        if enemy_count == 0:
+            return 0
+
+        # Clear any remaining dungeon enemies from previous wave
+        self.dungeon_enemies = [e for e in self.dungeon_enemies if e.is_alive]
+
+        # Get all available enemy definitions by tier
+        enemies_by_tier: Dict[int, List[EnemyDefinition]] = {1: [], 2: [], 3: [], 4: []}
+        for enemy_id, definition in self.enemy_db.enemies.items():
+            tier = definition.tier
+            if tier in enemies_by_tier:
+                enemies_by_tier[tier].append(definition)
+
+        # Spawn enemies based on dungeon tier weights
+        spawned = 0
+        for _ in range(enemy_count):
+            # Get tier for this spawn
+            tier = dungeon.get_enemy_tier_for_spawn()
+
+            # Get available enemies for this tier (fallback to lower tier if empty)
+            available = enemies_by_tier.get(tier, [])
+            while not available and tier > 1:
+                tier -= 1
+                available = enemies_by_tier.get(tier, [])
+
+            if not available:
+                continue
+
+            # Select random enemy from tier
+            definition = random.choice(available)
+
+            # Get spawn position in dungeon
+            spawn_pos = dungeon.get_spawn_position()
+
+            # Create enemy instance
+            enemy = Enemy(
+                definition=definition,
+                position=(spawn_pos.x, spawn_pos.y),
+                chunk_coords=(0, 0)  # Dungeon uses special chunk
+            )
+
+            # Mark as dungeon enemy (for special handling)
+            enemy.is_dungeon_enemy = True
+
+            self.dungeon_enemies.append(enemy)
+            dungeon.spawned_enemy_ids.append(enemy.enemy_id if hasattr(enemy, 'enemy_id') else str(id(enemy)))
+            spawned += 1
+
+        print(f"🏰 Dungeon Wave {dungeon.current_wave}: Spawned {spawned} enemies")
+        return spawned
+
+    def clear_dungeon_enemies(self):
+        """Clear all dungeon enemies (when exiting dungeon)."""
+        self.dungeon_enemies.clear()
+
+        # Also remove any dungeon enemy corpses
+        self.corpses = [c for c in self.corpses if not getattr(c, 'is_dungeon_enemy', False)]
+
+    def on_dungeon_enemy_killed(self, enemy: Enemy):
+        """Handle dungeon enemy death - notify dungeon manager."""
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            self.dungeon_manager.on_enemy_killed()
+
+        # Remove from dungeon enemies list
+        if enemy in self.dungeon_enemies:
+            self.dungeon_enemies.remove(enemy)
+
+    def get_dungeon_enemies(self) -> List[Enemy]:
+        """Get all dungeon enemies (for rendering and combat)."""
+        return [e for e in self.dungeon_enemies if e.is_alive]
+
+    def get_dungeon_enemy_at_position(self, position: Tuple[float, float], tolerance: float = 0.7) -> Optional[Enemy]:
+        """Get dungeon enemy at or near a position (for clicking)."""
+        for enemy in self.dungeon_enemies:
+            if enemy.is_alive:
+                dist = math.sqrt(
+                    (enemy.position[0] - position[0]) ** 2 +
+                    (enemy.position[1] - position[1]) ** 2
+                )
+                if dist <= tolerance:
+                    return enemy
+        return None
+
+    def update_dungeon_enemies(self, dt: float, player_position: Tuple[float, float],
+                                aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0):
+        """Update all dungeon enemies."""
+        for enemy in self.dungeon_enemies:
+            if enemy.is_alive:
+                enemy.update_ai(dt, player_position, aggro_multiplier, speed_multiplier)

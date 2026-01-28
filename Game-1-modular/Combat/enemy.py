@@ -425,6 +425,9 @@ class Enemy:
         self.time_since_death = 0.0
         self.corpse_lifetime = 60.0  # Will be overridden by config
 
+        # Dungeon enemy flag (for special handling - 2x EXP, no drops)
+        self.is_dungeon_enemy = False
+
         # Add status effect manager
         add_status_manager_to_entity(self)
 

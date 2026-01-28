@@ -321,6 +321,9 @@ class StatTracker:
         # CATEGORY 13: MISCELLANEOUS
         self._init_misc_stats()
 
+        # CATEGORY 14: DUNGEON STATISTICS
+        self._init_dungeon_stats()
+
     def _init_gathering_stats(self):
         """Initialize gathering statistics tracking."""
         # Per-resource tracking (will be populated dynamically)
@@ -826,6 +829,40 @@ class StatTracker:
             "screenshots_taken": 0
         }
 
+    def _init_dungeon_stats(self):
+        """Initialize dungeon statistics tracking."""
+        self.dungeon_stats = {
+            # Overall counts
+            "dungeons_entered": 0,
+            "dungeons_completed": 0,
+            "dungeons_abandoned": 0,
+
+            # By rarity
+            "common_dungeons_completed": 0,
+            "uncommon_dungeons_completed": 0,
+            "rare_dungeons_completed": 0,
+            "epic_dungeons_completed": 0,
+            "legendary_dungeons_completed": 0,
+            "unique_dungeons_completed": 0,
+
+            # Combat in dungeons
+            "dungeon_enemies_killed": 0,
+            "dungeon_deaths": 0,
+            "waves_completed": 0,
+
+            # Loot
+            "dungeon_chests_opened": 0,
+            "dungeon_items_received": 0,
+
+            # Records
+            "fastest_dungeon_clear": float('inf'),
+            "highest_rarity_cleared": "",
+            "most_enemies_killed_single_dungeon": 0,
+
+            # EXP from dungeons
+            "total_dungeon_exp_earned": 0
+        }
+
     # =========================================================================
     # RECORDING METHODS
     # =========================================================================
@@ -1243,6 +1280,80 @@ class StatTracker:
         if category_key in self.skill_usage:
             self.skill_usage[category_key] += 1
 
+    def record_dungeon_entered(self, rarity: str):
+        """
+        Record entering a dungeon.
+
+        Args:
+            rarity: Dungeon rarity (common, uncommon, rare, epic, legendary, unique)
+        """
+        self.dungeon_stats["dungeons_entered"] += 1
+
+    def record_dungeon_completed(self, rarity: str, enemies_killed: int,
+                                  time_taken: float, exp_earned: int):
+        """
+        Record completing a dungeon.
+
+        Args:
+            rarity: Dungeon rarity
+            enemies_killed: Total enemies killed in dungeon
+            time_taken: Time taken to clear in seconds
+            exp_earned: Total EXP earned in dungeon
+        """
+        self.dungeon_stats["dungeons_completed"] += 1
+
+        # Track by rarity
+        rarity_key = f"{rarity.lower()}_dungeons_completed"
+        if rarity_key in self.dungeon_stats:
+            self.dungeon_stats[rarity_key] += 1
+
+        # Update records
+        if time_taken < self.dungeon_stats["fastest_dungeon_clear"]:
+            self.dungeon_stats["fastest_dungeon_clear"] = time_taken
+
+        if enemies_killed > self.dungeon_stats["most_enemies_killed_single_dungeon"]:
+            self.dungeon_stats["most_enemies_killed_single_dungeon"] = enemies_killed
+
+        # Track highest rarity cleared
+        rarity_order = ["common", "uncommon", "rare", "epic", "legendary", "unique"]
+        current_highest = self.dungeon_stats["highest_rarity_cleared"]
+        if not current_highest or rarity_order.index(rarity.lower()) > rarity_order.index(current_highest.lower()):
+            self.dungeon_stats["highest_rarity_cleared"] = rarity.lower()
+
+        self.dungeon_stats["total_dungeon_exp_earned"] += exp_earned
+
+    def record_dungeon_abandoned(self):
+        """Record abandoning a dungeon (exiting without clearing)."""
+        self.dungeon_stats["dungeons_abandoned"] += 1
+
+    def record_dungeon_enemy_killed(self, exp_earned: int = 0):
+        """
+        Record killing an enemy in a dungeon.
+
+        Args:
+            exp_earned: EXP earned from this kill
+        """
+        self.dungeon_stats["dungeon_enemies_killed"] += 1
+        self.dungeon_stats["total_dungeon_exp_earned"] += exp_earned
+
+    def record_dungeon_wave_completed(self):
+        """Record completing a wave in a dungeon."""
+        self.dungeon_stats["waves_completed"] += 1
+
+    def record_dungeon_death(self):
+        """Record dying in a dungeon."""
+        self.dungeon_stats["dungeon_deaths"] += 1
+
+    def record_dungeon_chest_opened(self, items_received: int):
+        """
+        Record opening a dungeon chest.
+
+        Args:
+            items_received: Number of items received from the chest
+        """
+        self.dungeon_stats["dungeon_chests_opened"] += 1
+        self.dungeon_stats["dungeon_items_received"] += items_received
+
     def record_movement(self, distance: float, chunk_coords: Tuple[int, int],
                         is_sprinting: bool = False, is_encumbered: bool = False):
         """
@@ -1330,7 +1441,8 @@ class StatTracker:
             "records": self._serialize_dict_with_inf(self.records),
             "social_stats": dict(self.social_stats),
             "encyclopedia_stats": dict(self.encyclopedia_stats),
-            "misc_stats": dict(self.misc_stats)
+            "misc_stats": dict(self.misc_stats),
+            "dungeon_stats": self._serialize_dict_with_inf(self.dungeon_stats)
         }
 
     def _serialize_dict_with_inf(self, data: Dict) -> Dict:
@@ -1410,6 +1522,10 @@ class StatTracker:
         tracker.social_stats.update(data.get("social_stats", {}))
         tracker.encyclopedia_stats.update(data.get("encyclopedia_stats", {}))
         tracker.misc_stats.update(data.get("misc_stats", {}))
+
+        # Restore dungeon stats (backwards compatible - won't exist in older saves)
+        if "dungeon_stats" in data:
+            tracker.dungeon_stats.update(tracker._deserialize_dict_with_inf(data.get("dungeon_stats", {})))
 
         return tracker
 
