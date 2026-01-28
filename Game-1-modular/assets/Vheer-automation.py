@@ -31,11 +31,8 @@ import time
 import re
 import shutil
 
-## ============================================================================
-# CONFIGURATION 3
-# ============================================================================
 
-PERSISTENT_PROMPT = "Simple cel-shaded 3d stylized fantasy exploration item icons. Clean render, distinct details, transparent background."
+PERSISTENT_PROMPT = ""
 
 # Version-specific prompts
 VERSION_PROMPTS = {
