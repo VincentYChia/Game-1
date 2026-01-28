@@ -1,14 +1,19 @@
 {
   "metadata": {
-    "version": "2.0",
+    "version": "3.0",
     "description": "Dungeon system configuration - each dungeon type is fully self-contained",
-    "note": "Add new dungeons by creating new entries in the 'dungeons' object"
+    "notes": [
+      "Add new dungeons by creating new entries in the 'dungeons' object",
+      "spawnWeight is dilutive: probability = weight / sum(all_weights)",
+      "dropChances are dilutive: normalized to sum to 1.0 automatically",
+      "tierTables allows multiple tier loot tables per dungeon"
+    ]
   },
 
   "entranceGeneration": {
     "spawnChance": 0.08,
     "minDistanceFromSpawn": 10,
-    "comment": "spawnChance is per chunk, ~1 dungeon per 12 chunks"
+    "comment": "spawnChance is global per-chunk chance, ~1 dungeon per 12 chunks"
   },
 
   "dungeons": {
@@ -27,14 +32,28 @@
         "expMultiplier": 2.0
       },
       "chestLoot": {
-        "tier": 1,
-        "itemCounts": {"min": 3, "max": 6},
-        "dropChances": {
-          "materials": 0.60,
-          "equipment": 0.30,
-          "consumables": 0.10
-        },
-        "tierRange": 1
+        "tierTables": [
+          {
+            "tier": 1,
+            "weight": 80,
+            "itemCounts": {"min": 3, "max": 6},
+            "dropChances": {
+              "materials": 60,
+              "equipment": 30,
+              "consumables": 10
+            }
+          },
+          {
+            "tier": 2,
+            "weight": 20,
+            "itemCounts": {"min": 1, "max": 2},
+            "dropChances": {
+              "materials": 70,
+              "equipment": 20,
+              "consumables": 10
+            }
+          }
+        ]
       }
     },
 
@@ -52,14 +71,28 @@
         "expMultiplier": 2.0
       },
       "chestLoot": {
-        "tier": 1,
-        "itemCounts": {"min": 4, "max": 8},
-        "dropChances": {
-          "materials": 0.55,
-          "equipment": 0.35,
-          "consumables": 0.10
-        },
-        "tierRange": 1
+        "tierTables": [
+          {
+            "tier": 1,
+            "weight": 50,
+            "itemCounts": {"min": 3, "max": 5},
+            "dropChances": {
+              "materials": 55,
+              "equipment": 35,
+              "consumables": 10
+            }
+          },
+          {
+            "tier": 2,
+            "weight": 50,
+            "itemCounts": {"min": 2, "max": 4},
+            "dropChances": {
+              "materials": 50,
+              "equipment": 40,
+              "consumables": 10
+            }
+          }
+        ]
       }
     },
 
@@ -77,14 +110,28 @@
         "expMultiplier": 2.0
       },
       "chestLoot": {
-        "tier": 2,
-        "itemCounts": {"min": 5, "max": 10},
-        "dropChances": {
-          "materials": 0.50,
-          "equipment": 0.40,
-          "consumables": 0.10
-        },
-        "tierRange": 1
+        "tierTables": [
+          {
+            "tier": 2,
+            "weight": 70,
+            "itemCounts": {"min": 4, "max": 8},
+            "dropChances": {
+              "materials": 50,
+              "equipment": 40,
+              "consumables": 10
+            }
+          },
+          {
+            "tier": 3,
+            "weight": 30,
+            "itemCounts": {"min": 2, "max": 4},
+            "dropChances": {
+              "materials": 40,
+              "equipment": 50,
+              "consumables": 10
+            }
+          }
+        ]
       }
     },
 
@@ -102,14 +149,38 @@
         "expMultiplier": 2.0
       },
       "chestLoot": {
-        "tier": 2,
-        "itemCounts": {"min": 6, "max": 12},
-        "dropChances": {
-          "materials": 0.45,
-          "equipment": 0.45,
-          "consumables": 0.10
-        },
-        "tierRange": 1
+        "tierTables": [
+          {
+            "tier": 2,
+            "weight": 40,
+            "itemCounts": {"min": 3, "max": 6},
+            "dropChances": {
+              "materials": 45,
+              "equipment": 45,
+              "consumables": 10
+            }
+          },
+          {
+            "tier": 3,
+            "weight": 50,
+            "itemCounts": {"min": 3, "max": 6},
+            "dropChances": {
+              "materials": 40,
+              "equipment": 50,
+              "consumables": 10
+            }
+          },
+          {
+            "tier": 4,
+            "weight": 10,
+            "itemCounts": {"min": 1, "max": 2},
+            "dropChances": {
+              "materials": 30,
+              "equipment": 60,
+              "consumables": 10
+            }
+          }
+        ]
       }
     },
 
@@ -127,14 +198,28 @@
         "expMultiplier": 2.5
       },
       "chestLoot": {
-        "tier": 3,
-        "itemCounts": {"min": 8, "max": 14},
-        "dropChances": {
-          "materials": 0.40,
-          "equipment": 0.50,
-          "consumables": 0.10
-        },
-        "tierRange": 1
+        "tierTables": [
+          {
+            "tier": 3,
+            "weight": 60,
+            "itemCounts": {"min": 5, "max": 10},
+            "dropChances": {
+              "materials": 40,
+              "equipment": 50,
+              "consumables": 10
+            }
+          },
+          {
+            "tier": 4,
+            "weight": 40,
+            "itemCounts": {"min": 3, "max": 6},
+            "dropChances": {
+              "materials": 30,
+              "equipment": 60,
+              "consumables": 10
+            }
+          }
+        ]
       }
     },
 
@@ -153,15 +238,28 @@
         "expMultiplier": 3.0
       },
       "chestLoot": {
-        "tier": 3,
-        "itemCounts": {"min": 10, "max": 18},
-        "dropChances": {
-          "materials": 0.30,
-          "equipment": 0.60,
-          "consumables": 0.10
-        },
-        "tierRange": 2,
-        "comment": "Can drop items +/- 2 tiers from chest tier"
+        "tierTables": [
+          {
+            "tier": 3,
+            "weight": 30,
+            "itemCounts": {"min": 4, "max": 8},
+            "dropChances": {
+              "materials": 35,
+              "equipment": 55,
+              "consumables": 10
+            }
+          },
+          {
+            "tier": 4,
+            "weight": 70,
+            "itemCounts": {"min": 6, "max": 12},
+            "dropChances": {
+              "materials": 25,
+              "equipment": 65,
+              "consumables": 10
+            }
+          }
+        ]
       }
     }
   }

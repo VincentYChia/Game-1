@@ -2,7 +2,7 @@
 
 Uses centered coordinate system where (0,0) is world center.
 Chunk indices range from -half to +half (e.g., -5 to +5 for 11 chunks).
-Water chunks spawn only on edges and never cut off map areas.
+Water chunks can spawn anywhere except the spawn area, with spacing constraints.
 """
 
 import random
@@ -27,12 +27,15 @@ class Chunk:
 
     @classmethod
     def _plan_water_chunks(cls) -> None:
-        """Plan water chunk positions on world edges only.
+        """Plan water chunk positions across the world.
 
         Water chunks are placed:
-        - Only on the outermost ring of chunks (edges)
+        - Anywhere except the spawn area (center 3x3 chunks)
         - Never adjacent to each other (minimum 2 chunks apart)
         - Approximately 8-12 water chunks total
+
+        This allows water bodies to form naturally across the map
+        rather than being restricted to edges only.
         """
         if cls._initialized:
             return
@@ -40,19 +43,20 @@ class Chunk:
         cls._water_chunks = set()
         half = Config.NUM_CHUNKS // 2  # 5 for 11 chunks
 
-        # Collect all edge chunk positions
-        edge_chunks = []
+        # Collect all valid chunk positions (excluding spawn area)
+        valid_chunks = []
         for x in range(-half, half + 1):
             for y in range(-half, half + 1):
-                # Edge chunks are those on the boundary
-                if abs(x) == half or abs(y) == half:
-                    edge_chunks.append((x, y))
+                # Skip spawn area (center 3x3 chunks)
+                if abs(x) <= 1 and abs(y) <= 1:
+                    continue
+                valid_chunks.append((x, y))
 
         # Shuffle and select water chunks with spacing
-        random.shuffle(edge_chunks)
+        random.shuffle(valid_chunks)
         target_water_count = random.randint(8, 12)
 
-        for cx, cy in edge_chunks:
+        for cx, cy in valid_chunks:
             if len(cls._water_chunks) >= target_water_count:
                 break
 
@@ -67,7 +71,7 @@ class Chunk:
                 cls._water_chunks.add((cx, cy))
 
         cls._initialized = True
-        print(f"🌊 Planned {len(cls._water_chunks)} water chunks on world edges")
+        print(f"🌊 Planned {len(cls._water_chunks)} water chunks across the world")
 
     @classmethod
     def is_water_chunk(cls, chunk_x: int, chunk_y: int) -> bool:

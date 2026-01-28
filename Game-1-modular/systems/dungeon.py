@@ -206,7 +206,11 @@ class LootChest:
 
         IMPORTANT: Only generates loot from items that exist in JSON databases.
         This ensures all drops are valid, functional items.
-        Drop chances are loaded from per-dungeon JSON config (dungeon-config-1.JSON).
+
+        v3.0 Format: Uses tierTables for explicit tier-based loot with:
+        - Dilutive tier weights (probability = weight / sum(all_weights))
+        - Dilutive dropChances (normalized to sum to 1.0)
+        - Multiple tier tables per dungeon for varied loot
         """
         # Import here to avoid circular dependency
         from data.databases.material_db import MaterialDatabase
@@ -215,85 +219,113 @@ class LootChest:
         self.contents = []
 
         # Load loot config from JSON (or use defaults)
-        # Uses per-dungeon config if dungeon_rarity is set (v2.0 format)
         loot_config = get_chest_loot_config(self.dungeon_rarity)
-        drop_chances = loot_config.get("dropChances", {})
-        materials_chance = drop_chances.get("materials", 0.60)
-        equipment_chance = drop_chances.get("equipment", 0.30)
-        tier_range = loot_config.get("tierRange", 1)
 
-        # Number of items - use per-dungeon itemCounts if available
-        item_counts = loot_config.get("itemCounts", {})
-        if item_counts:
-            min_items = item_counts.get("min", 2 + self.tier)
-            max_items = item_counts.get("max", 4 + self.tier * 2)
-            num_items = random.randint(min_items, max_items)
-        else:
-            # Fallback to tier-based calculation
-            num_items = random.randint(2 + self.tier, 4 + self.tier * 2)
+        # Get tier tables (v3.0 format) or build single table from v2.0 format
+        tier_tables = loot_config.get("tierTables", [])
+
+        if not tier_tables:
+            # Backwards compatibility with v2.0 format - build single tier table
+            tier_tables = [{
+                "tier": loot_config.get("tier", self.tier),
+                "weight": 100,
+                "itemCounts": loot_config.get("itemCounts", {"min": 2 + self.tier, "max": 4 + self.tier * 2}),
+                "dropChances": loot_config.get("dropChances", {"materials": 60, "equipment": 30, "consumables": 10})
+            }]
 
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
-
-        # Build valid item pools from databases only
-        # Materials - filter by tier (chest tier +/- tier_range)
         all_materials = list(mat_db.materials.values()) if hasattr(mat_db, 'materials') else []
-        valid_materials = [
-            m for m in all_materials
-            if hasattr(m, 'tier') and abs(m.tier - self.tier) <= tier_range
-        ]
 
-        # Equipment - filter by tier (chest tier +/- tier_range)
-        valid_equipment = []
-        if hasattr(equip_db, 'equipment'):
-            for eq in equip_db.equipment.values():
-                eq_tier = eq.tier if hasattr(eq, 'tier') else eq.get('tier', 1)
-                if abs(eq_tier - self.tier) <= tier_range:
-                    valid_equipment.append(eq)
+        # Process each tier table based on dilutive weights
+        total_weight = sum(table.get("weight", 1) for table in tier_tables)
 
-        # Consumables - only include items that actually exist in equipment database
-        # Check for potions/consumables that exist
-        valid_consumables = []
-        if hasattr(equip_db, 'equipment'):
-            for eq in equip_db.equipment.values():
-                # Check if item is a consumable by category or type
-                category = eq.category if hasattr(eq, 'category') else eq.get('category', '')
-                item_type = eq.item_type if hasattr(eq, 'item_type') else eq.get('itemType', '')
-                if category in ['consumable', 'potion'] or item_type in ['consumable', 'potion']:
-                    valid_consumables.append(eq)
+        for table in tier_tables:
+            table_weight = table.get("weight", 1)
+            table_tier = table.get("tier", self.tier)
+            item_counts = table.get("itemCounts", {"min": 2, "max": 4})
+            drop_chances = table.get("dropChances", {"materials": 60, "equipment": 30, "consumables": 10})
 
-        # Calculate cumulative thresholds for drop types
-        materials_threshold = materials_chance
-        equipment_threshold = materials_chance + equipment_chance
+            # Calculate number of items for this tier table (proportional to weight)
+            # Each tier table contributes items based on its weight proportion
+            min_items = item_counts.get("min", 2)
+            max_items = item_counts.get("max", 4)
+            base_items = random.randint(min_items, max_items)
 
-        for _ in range(num_items):
-            roll = random.random()
+            # Normalize dropChances (dilutive - ensures they sum to 1.0)
+            mat_weight = drop_chances.get("materials", 60)
+            equip_weight = drop_chances.get("equipment", 30)
+            cons_weight = drop_chances.get("consumables", 10)
+            total_drop_weight = mat_weight + equip_weight + cons_weight
 
-            if roll < materials_threshold:  # Materials (default 60%)
-                if valid_materials:
-                    mat = random.choice(valid_materials)
-                    mat_id = mat.material_id if hasattr(mat, 'material_id') else mat.get('materialId', 'oak_log')
-                    qty = random.randint(1, 3 + self.tier)
-                    self.contents.append((mat_id, qty))
+            if total_drop_weight > 0:
+                materials_chance = mat_weight / total_drop_weight
+                equipment_chance = equip_weight / total_drop_weight
+                # consumables_chance = cons_weight / total_drop_weight (remainder)
+            else:
+                materials_chance = 0.6
+                equipment_chance = 0.3
 
-            elif roll < equipment_threshold:  # Equipment (default 30%)
-                if valid_equipment:
-                    eq = random.choice(valid_equipment)
-                    eq_id = eq.item_id if hasattr(eq, 'item_id') else eq.get('itemId', 'iron_sword')
-                    self.contents.append((eq_id, 1))
+            # Build valid item pools for this tier
+            valid_materials = [
+                m for m in all_materials
+                if hasattr(m, 'tier') and m.tier == table_tier
+            ]
 
-            else:  # Consumables (remaining %, only if they exist)
-                if valid_consumables:
-                    cons = random.choice(valid_consumables)
-                    cons_id = cons.item_id if hasattr(cons, 'item_id') else cons.get('itemId')
-                    if cons_id:
-                        self.contents.append((cons_id, random.randint(1, 2)))
-                elif valid_materials:
-                    # Fallback to materials if no consumables exist
-                    mat = random.choice(valid_materials)
-                    mat_id = mat.material_id if hasattr(mat, 'material_id') else mat.get('materialId', 'oak_log')
-                    qty = random.randint(1, 3 + self.tier)
-                    self.contents.append((mat_id, qty))
+            valid_equipment = []
+            if hasattr(equip_db, 'equipment'):
+                for eq in equip_db.equipment.values():
+                    eq_tier = eq.tier if hasattr(eq, 'tier') else eq.get('tier', 1)
+                    if eq_tier == table_tier:
+                        valid_equipment.append(eq)
+
+            valid_consumables = []
+            if hasattr(equip_db, 'equipment'):
+                for eq in equip_db.equipment.values():
+                    category = eq.category if hasattr(eq, 'category') else eq.get('category', '')
+                    item_type = eq.item_type if hasattr(eq, 'item_type') else eq.get('itemType', '')
+                    if category in ['consumable', 'potion'] or item_type in ['consumable', 'potion']:
+                        valid_consumables.append(eq)
+
+            # Calculate cumulative thresholds for drop types (normalized)
+            materials_threshold = materials_chance
+            equipment_threshold = materials_chance + equipment_chance
+
+            # Generate items for this tier table
+            for _ in range(base_items):
+                roll = random.random()
+
+                if roll < materials_threshold:  # Materials
+                    if valid_materials:
+                        mat = random.choice(valid_materials)
+                        mat_id = mat.material_id if hasattr(mat, 'material_id') else mat.get('materialId', 'oak_log')
+                        qty = random.randint(1, 3 + table_tier)
+                        self.contents.append((mat_id, qty))
+                    elif all_materials:
+                        # Fallback to any material if none at exact tier
+                        mat = random.choice(all_materials)
+                        mat_id = mat.material_id if hasattr(mat, 'material_id') else mat.get('materialId', 'oak_log')
+                        qty = random.randint(1, 3)
+                        self.contents.append((mat_id, qty))
+
+                elif roll < equipment_threshold:  # Equipment
+                    if valid_equipment:
+                        eq = random.choice(valid_equipment)
+                        eq_id = eq.item_id if hasattr(eq, 'item_id') else eq.get('itemId', 'iron_sword')
+                        self.contents.append((eq_id, 1))
+
+                else:  # Consumables
+                    if valid_consumables:
+                        cons = random.choice(valid_consumables)
+                        cons_id = cons.item_id if hasattr(cons, 'item_id') else cons.get('itemId')
+                        if cons_id:
+                            self.contents.append((cons_id, random.randint(1, 2)))
+                    elif valid_materials:
+                        # Fallback to materials if no consumables exist
+                        mat = random.choice(valid_materials)
+                        mat_id = mat.material_id if hasattr(mat, 'material_id') else mat.get('materialId', 'oak_log')
+                        qty = random.randint(1, 3)
+                        self.contents.append((mat_id, qty))
 
     def open(self) -> List[Tuple[str, int]]:
         """Open the chest and return its contents."""
