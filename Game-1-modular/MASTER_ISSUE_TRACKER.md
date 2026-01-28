@@ -1,7 +1,7 @@
 # Master Issue Tracker
 
 **Created**: 2025-12-30
-**Last Updated**: 2026-01-27
+**Last Updated**: 2026-01-28
 **Purpose**: Comprehensive tracking of all known issues, improvements, and testing requirements
 
 ---
@@ -10,6 +10,7 @@
 
 | Category | Issue | Priority | Status | Effort |
 |----------|-------|----------|--------|--------|
+| **Bug** | **Resource Gap (16 of 28 missing)** | **CRITICAL** | **OPEN** | 2-4 hrs |
 | ~~Testing~~ | ~~Enchantments (5 missing)~~ | ~~HIGH~~ | ✅ **RESOLVED** | ~~2-3 hrs~~ |
 | ~~Bug~~ | ~~Inventory Click Misalignment~~ | ~~**CRITICAL**~~ | ✅ **RESOLVED** | ~~30 min~~ |
 | ~~Bug~~ | ~~Default Save Loading~~ | ~~HIGH~~ | ✅ **RESOLVED** | ~~1 hr~~ |
@@ -22,6 +23,45 @@
 | **Architecture** | Skill Mana/Cooldown Range | LOW | Enhancement | 2-4 hrs |
 | **Overhaul** | Crafting UI & Minigames | **HIGH** | ✅ Phase 1-2 Complete | Phase 3 pending |
 | **NEW** | LLM Integration | N/A | ✅ Fully Implemented | January 2026 |
+
+---
+
+## SECTION 0: CRITICAL BUGS
+
+### 0.1 Resource Gap - 16 of 28 Resources Not Spawning
+
+**Status**: OPEN - CRITICAL
+**Discovered**: 2026-01-28
+**Report**: `docs/RESOURCE_GAP_AUDIT_REPORT.md`
+
+**Problem**: The game has 28 resources defined in JSON (`Definitions.JSON/resource-node-1.JSON`) but only 12 are hardcoded in the game code. **57% of resources cannot spawn**, blocking recipes that require them.
+
+**Missing Resources (16 total)**:
+- **Trees (4)**: pine_tree, ash_tree, ebony_tree, worldtree_sapling
+- **Ores (4)**: tin_seam, adamantine_lode, orichalcum_trove, etherion_nexus
+- **Stones (8)**: shale_bed, basalt_column, marble_quarry, quartz_cluster, voidstone_shard, diamond_geode, eternity_monolith, primordial_formation, genesis_structure
+
+**Hardcoded Locations (must be updated)**:
+| File | Line | What |
+|------|------|------|
+| `data/models/world.py` | 58-90 | `ResourceType` enum + `RESOURCE_TIERS` |
+| `systems/chunk.py` | 49-62 | Spawn lists by chunk type |
+| `systems/natural_resource.py` | 32-39 | `loot_map` dictionary |
+| `assets/icons/unified_icon_generator.py` | 58-84 | `RESOURCES` list |
+
+**Blocked Recipes (partial list)**:
+- `smithing_copper_spear` (needs ash_log)
+- `smithing_pine_shortbow` (needs pine_plank)
+- `refining_tin_ore_to_ingot` (needs tin_ore)
+- `enchanting_unbreaking_ii` (needs adamantine_ingot)
+- Multiple adornments recipes (need marble, crystal_quartz, diamond)
+
+**Fix Required**:
+1. Add 16 missing resources to `ResourceType` enum
+2. Add tier mappings to `RESOURCE_TIERS`
+3. Update chunk spawn lists by category/tier
+4. Add loot entries to `loot_map`
+5. Regenerate resource icons
 
 ---
 
