@@ -1562,30 +1562,51 @@ class CombatManager:
                 self.player_in_combat = False
 
     def get_enemies_in_range(self, position: Tuple[float, float], radius: float) -> List[Enemy]:
-        """Get all living enemies within radius of position"""
+        """Get all living enemies within radius of position.
+
+        Includes dungeon enemies when in dungeon.
+        """
         result = []
-        for enemy_list in self.enemies.values():
-            for enemy in enemy_list:
-                if enemy.is_alive:
-                    dist = math.sqrt(
-                        (enemy.position[0] - position[0]) ** 2 +
-                        (enemy.position[1] - position[1]) ** 2
-                    )
-                    if dist <= radius:
-                        result.append(enemy)
+
+        # Get the appropriate enemy list
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            enemies_to_check = self.dungeon_enemies
+        else:
+            enemies_to_check = []
+            for enemy_list in self.enemies.values():
+                enemies_to_check.extend(enemy_list)
+
+        for enemy in enemies_to_check:
+            if enemy.is_alive:
+                dist = math.sqrt(
+                    (enemy.position[0] - position[0]) ** 2 +
+                    (enemy.position[1] - position[1]) ** 2
+                )
+                if dist <= radius:
+                    result.append(enemy)
         return result
 
     def get_enemy_at_position(self, position: Tuple[float, float], tolerance: float = 0.7) -> Optional[Enemy]:
-        """Get enemy at or near a position (for clicking)"""
-        for enemy_list in self.enemies.values():
-            for enemy in enemy_list:
-                if enemy.is_alive:
-                    dist = math.sqrt(
-                        (enemy.position[0] - position[0]) ** 2 +
-                        (enemy.position[1] - position[1]) ** 2
-                    )
-                    if dist <= tolerance:
-                        return enemy
+        """Get enemy at or near a position (for clicking).
+
+        Includes dungeon enemies when in dungeon.
+        """
+        # Get the appropriate enemy list
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            enemies_to_check = self.dungeon_enemies
+        else:
+            enemies_to_check = []
+            for enemy_list in self.enemies.values():
+                enemies_to_check.extend(enemy_list)
+
+        for enemy in enemies_to_check:
+            if enemy.is_alive:
+                dist = math.sqrt(
+                    (enemy.position[0] - position[0]) ** 2 +
+                    (enemy.position[1] - position[1]) ** 2
+                )
+                if dist <= tolerance:
+                    return enemy
         return None
 
     def get_corpse_at_position(self, position: Tuple[float, float], tolerance: float = 0.7) -> Optional[Enemy]:
@@ -1672,7 +1693,15 @@ class CombatManager:
                     # Add more trigger effect types as needed
 
     def get_all_active_enemies(self) -> List[Enemy]:
-        """Get all enemies (for rendering)"""
+        """Get all enemies (for rendering and combat).
+
+        Returns dungeon enemies if in dungeon, otherwise world enemies.
+        """
+        # If in dungeon, return dungeon enemies
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            return list(self.dungeon_enemies)
+
+        # Otherwise return world enemies
         all_enemies = []
         for enemy_list in self.enemies.values():
             all_enemies.extend(enemy_list)
@@ -1782,8 +1811,49 @@ class CombatManager:
         return None
 
     def update_dungeon_enemies(self, dt: float, player_position: Tuple[float, float],
-                                aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0):
-        """Update all dungeon enemies."""
+                                aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0,
+                                shield_blocking: bool = False):
+        """Update all dungeon enemies with full combat logic.
+
+        Args:
+            dt: Delta time in seconds
+            player_position: Current player position
+            aggro_multiplier: Aggro range multiplier (e.g., 1.3 at night)
+            speed_multiplier: Movement speed multiplier (e.g., 1.15 at night)
+            shield_blocking: True if player is blocking with shield
+        """
+        dead_enemies = []
+
         for enemy in self.dungeon_enemies:
             if enemy.is_alive:
+                # Update AI with night modifiers
                 enemy.update_ai(dt, player_position, aggro_multiplier, speed_multiplier)
+
+                # Check if enemy can use special ability
+                dist = enemy.distance_to(player_position)
+                special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_position)
+                if special_ability:
+                    # Build available targets list (just player in dungeons)
+                    available_targets = [self.character]
+                    enemy.use_special_ability(special_ability, self.character, available_targets)
+
+                # Check if enemy can attack player normally
+                elif enemy.can_attack():
+                    if dist <= 1.5:  # Melee range
+                        self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
+
+            else:
+                # Enemy is dead - handle corpse
+                if enemy.ai_state == AIState.CORPSE:
+                    enemy.time_since_death += dt
+                    if enemy.time_since_death >= enemy.corpse_lifetime:
+                        dead_enemies.append(enemy)
+                    elif enemy not in self.corpses:
+                        self.corpses.append(enemy)
+
+        # Remove expired corpses
+        for enemy in dead_enemies:
+            if enemy in self.dungeon_enemies:
+                self.dungeon_enemies.remove(enemy)
+            if enemy in self.corpses:
+                self.corpses.remove(enemy)

@@ -776,9 +776,12 @@ class Character:
         new_x = self.position.x + dx * speed_mult
         new_y = self.position.y + dy * speed_mult
 
-        # Check bounds (centered coordinate system: -half to +half)
-        half_size = Config.WORLD_SIZE // 2
-        if new_x < -half_size or new_x >= half_size or new_y < -half_size or new_y >= half_size:
+        # Check bounds (centered coordinate system based on chunk generation)
+        # Chunks range from -half to +half, each chunk is CHUNK_SIZE tiles
+        half_chunks = Config.NUM_CHUNKS // 2  # 5 for 11 chunks
+        min_bound = -half_chunks * Config.CHUNK_SIZE  # -80
+        max_bound = (half_chunks + 1) * Config.CHUNK_SIZE  # +96
+        if new_x < min_bound or new_x >= max_bound or new_y < min_bound or new_y >= max_bound:
             return False
 
         # Check walkability
@@ -839,10 +842,16 @@ class Character:
                 return selected_item
 
         # Otherwise, default to the correct tool type (backward compatibility)
-        if tool_type in ['axe', 'pickaxe']:
+        if tool_type in ['axe', 'pickaxe', 'fishing_rod']:
             equipped_tool = self.equipment.slots.get(tool_type)
             if equipped_tool:
                 return equipped_tool
+
+            # For fishing_rod, also check mainHand for equipped fishing rod
+            if tool_type == 'fishing_rod':
+                main_weapon = self.equipment.slots.get('mainHand')
+                if main_weapon and hasattr(main_weapon, 'subtype') and main_weapon.subtype == 'fishing_rod':
+                    return main_weapon
 
         # Fallback to mainHand weapon if no tool equipped
         main_weapon = self.equipment.slots.get('mainHand')
@@ -884,6 +893,13 @@ class Character:
             else:
                 return 0.25  # Poor for forestry/combat
 
+        # Fishing rods are optimal for fishing
+        elif tool_slot == 'fishing_rod' or (hasattr(equipment_item, 'subtype') and equipment_item.subtype == 'fishing_rod'):
+            if action_type == 'fishing':
+                return 1.0  # Perfect for fishing
+            else:
+                return 0.25  # Poor for other activities
+
         # Weapons (swords, daggers, etc.) are optimal for combat
         elif tool_slot in ['mainHand', 'offHand']:
             if action_type == 'combat':
@@ -899,7 +915,8 @@ class Character:
         equipped_tool = self.get_equipped_tool(resource.required_tool)
 
         if not equipped_tool:
-            tool_name = "axe" if resource.required_tool == "axe" else "pickaxe"
+            tool_names = {"axe": "axe", "pickaxe": "pickaxe", "fishing_rod": "fishing rod"}
+            tool_name = tool_names.get(resource.required_tool, resource.required_tool)
             return False, f"No {tool_name} equipped"
         if not self.is_in_range(resource.position):
             return False, "Too far away"
@@ -920,7 +937,8 @@ class Character:
         from core.debug_display import debug_print
 
         # Determine activity type from tool
-        activity = 'mining' if primary_resource.required_tool == "pickaxe" else 'forestry'
+        activity_map = {"pickaxe": "mining", "axe": "forestry", "fishing_rod": "fishing"}
+        activity = activity_map.get(primary_resource.required_tool, 'forestry')
 
         # Find all harvestable resources in radius (matching tool type)
         targets = []
@@ -1094,7 +1112,8 @@ class Character:
         # Check for active devastate buffs (AoE gathering like Chain Harvest)
         if hasattr(self, 'buffs') and nearby_resources:
             # Determine activity type from resource
-            activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
+            activity_map = {"pickaxe": "mining", "axe": "forestry", "fishing_rod": "fishing"}
+            activity = activity_map.get(resource.required_tool, 'forestry')
 
             for buff in self.buffs.active_buffs:
                 # Must be devastate type AND match the activity category (or be generic 'gathering')
@@ -1115,7 +1134,8 @@ class Character:
                     return result
 
         # Normal single-node harvest - use extracted helper method
-        activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
+        activity_map = {"pickaxe": "mining", "axe": "forestry", "fishing_rod": "fishing"}
+        activity = activity_map.get(resource.required_tool, 'forestry')
         result = self._single_node_harvest(resource, equipped_tool, activity)
 
         # Track activities, titles, XP (same as before)
@@ -1165,8 +1185,9 @@ class Character:
             self.stat_tracker.gathering_totals["total_gathering_damage_dealt"] += damage_dealt
 
             # Track tool usage
-            tool_type = "axe" if resource.required_tool == "axe" else "pickaxe"
-            tool_swing_key = f"{tool_type}_swings"
+            tool_type_map = {"axe": "axe", "pickaxe": "pickaxe", "fishing_rod": "fishing_rod"}
+            tool_type = tool_type_map.get(resource.required_tool, "pickaxe")
+            tool_swing_key = f"{tool_type}_swings" if tool_type != "fishing_rod" else "fishing_rod_casts"
             if tool_swing_key in self.stat_tracker.gathering_totals:
                 self.stat_tracker.gathering_totals[tool_swing_key] += 1
 

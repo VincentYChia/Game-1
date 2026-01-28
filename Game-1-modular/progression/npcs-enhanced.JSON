@@ -12,8 +12,8 @@
       "title": "Ancient Mentor",
 
       "position": {
-        "x": 48.0,
-        "y": 48.0,
+        "x": 3.0,
+        "y": -5.0,
         "z": 0.0
       },
 
@@ -68,8 +68,8 @@
       "title": "Collector of Rarities",
 
       "position": {
-        "x": 65.0,
-        "y": 52.0,
+        "x": -5.0,
+        "y": -3.0,
         "z": 0.0
       },
 
@@ -124,8 +124,8 @@
       "title": "Weapons Instructor",
 
       "position": {
-        "x": 52.0,
-        "y": 58.0,
+        "x": 5.0,
+        "y": 3.0,
         "z": 0.0
       },
 

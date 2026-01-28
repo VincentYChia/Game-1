@@ -5112,11 +5112,18 @@ class GameEngine:
         if not dungeon:
             return
 
-        # Update dungeon enemies
+        # Update dungeon enemies with full combat
         player_pos = (self.character.position.x, self.character.position.y)
         aggro_mult = 1.3 if self.is_night() else 1.0
         speed_mult = 1.15 if self.is_night() else 1.0
-        self.combat_manager.update_dungeon_enemies(dt, player_pos, aggro_mult, speed_mult)
+
+        # Check if player is blocking with shield
+        mouse_held = 3 in self.mouse_buttons_pressed
+        x_key_held = pygame.K_x in self.keys_pressed
+        has_shield = self.character.is_shield_active()
+        shield_blocking = (mouse_held or x_key_held) and has_shield
+
+        self.combat_manager.update_dungeon_enemies(dt, player_pos, aggro_mult, speed_mult, shield_blocking)
 
         # Check wave completion
         if self.dungeon_manager.is_wave_complete() and not dungeon.is_cleared:

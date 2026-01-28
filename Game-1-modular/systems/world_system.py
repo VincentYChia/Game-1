@@ -61,8 +61,21 @@ class WorldSystem:
         return self.tiles.get(position.snap_to_grid().to_key())
 
     def is_walkable(self, position: Position) -> bool:
+        """Check if a position is walkable (no water, no solid resources)."""
         tile = self.get_tile(position)
-        return tile and tile.tile_type != TileType.WATER and tile.walkable
+        if not tile or tile.tile_type == TileType.WATER or not tile.walkable:
+            return False
+
+        # Check for non-depleted resources blocking movement
+        for resource in self.resources:
+            if not resource.depleted:
+                # Check if player center would overlap with resource
+                dx = abs(resource.position.x - position.x)
+                dy = abs(resource.position.y - position.y)
+                if dx < 0.5 and dy < 0.5:  # Resource occupies ~1 tile
+                    return False
+
+        return True
 
     def get_visible_tiles(self, camera_pos: Position, vw: int, vh: int) -> List[WorldTile]:
         tw, th = vw // Config.TILE_SIZE + 2, vh // Config.TILE_SIZE + 2
