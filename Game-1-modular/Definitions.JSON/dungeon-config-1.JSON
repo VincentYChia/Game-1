@@ -1,0 +1,92 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Dungeon system configuration - controls dungeon spawning, waves, and loot",
+    "note": "All values are for balance testing"
+  },
+
+  "dungeonSize": {
+    "chunkSize": 2,
+    "comment": "Dungeon is chunkSize x chunkSize chunks (2x2 = 32x32 tiles)"
+  },
+
+  "entranceGeneration": {
+    "spawnChance": 0.08,
+    "minDistanceFromSpawn": 10,
+    "rarityWeights": {
+      "common": 50,
+      "uncommon": 25,
+      "rare": 15,
+      "epic": 7,
+      "legendary": 2,
+      "unique": 1
+    },
+    "comment": "spawnChance is per chunk, ~1 dungeon per 12 chunks"
+  },
+
+  "rarities": {
+    "common": {
+      "spawnWeight": 25,
+      "totalMobs": 20,
+      "totalWaves": 3,
+      "tierWeights": {"1": 80, "2": 20, "3": 0, "4": 0},
+      "chestTier": 1,
+      "expMultiplier": 2.0
+    },
+    "uncommon": {
+      "spawnWeight": 20,
+      "totalMobs": 25,
+      "totalWaves": 3,
+      "tierWeights": {"1": 50, "2": 40, "3": 10, "4": 0},
+      "chestTier": 1,
+      "expMultiplier": 2.0
+    },
+    "rare": {
+      "spawnWeight": 15,
+      "totalMobs": 30,
+      "totalWaves": 3,
+      "tierWeights": {"1": 20, "2": 50, "3": 25, "4": 5},
+      "chestTier": 2,
+      "expMultiplier": 2.0
+    },
+    "epic": {
+      "spawnWeight": 10,
+      "totalMobs": 40,
+      "totalWaves": 3,
+      "tierWeights": {"1": 5, "2": 30, "3": 45, "4": 20},
+      "chestTier": 2,
+      "expMultiplier": 2.0
+    },
+    "legendary": {
+      "spawnWeight": 5,
+      "totalMobs": 50,
+      "totalWaves": 3,
+      "tierWeights": {"1": 0, "2": 10, "3": 50, "4": 40},
+      "chestTier": 3,
+      "expMultiplier": 2.0
+    },
+    "unique": {
+      "spawnWeight": 2,
+      "totalMobs": 60,
+      "totalWaves": 3,
+      "tierWeights": {"1": 0, "2": 0, "3": 30, "4": 70},
+      "chestTier": 3,
+      "expMultiplier": 2.0
+    }
+  },
+
+  "chestLoot": {
+    "itemCounts": {
+      "tier1": {"min": 3, "max": 6},
+      "tier2": {"min": 4, "max": 10},
+      "tier3": {"min": 6, "max": 14}
+    },
+    "dropChances": {
+      "materials": 0.60,
+      "equipment": 0.30,
+      "consumables": 0.10
+    },
+    "tierRange": 1,
+    "comment": "tierRange determines how many tiers above/below chest tier items can drop"
+  }
+}

@@ -25,6 +25,8 @@ from typing import List, Dict, Any, Optional, Tuple, Set
 from enum import Enum
 import random
 import time
+import json
+import os
 
 from data.models.world import (
     Position, TileType, WorldTile, PlacedEntityType,
@@ -33,9 +35,78 @@ from data.models.world import (
 from core.config import Config
 
 
-# Dungeon size constants
+# Dungeon size constants (can be overridden by JSON config)
 DUNGEON_CHUNK_SIZE = 2  # 2x2 chunks
 DUNGEON_TILE_SIZE = DUNGEON_CHUNK_SIZE * Config.CHUNK_SIZE  # 32x32 tiles
+
+
+def _load_dungeon_config() -> Dict[str, Any]:
+    """
+    Load dungeon configuration from JSON file, falling back to hardcoded DUNGEON_CONFIG.
+
+    Returns a dictionary with the configuration. Uses JSON if available for
+    JSON-driven design, but maintains backwards compatibility with hardcoded values.
+    """
+    json_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "Definitions.JSON", "dungeon-config-1.JSON"
+    )
+
+    try:
+        if os.path.exists(json_path):
+            with open(json_path, 'r') as f:
+                config = json.load(f)
+                print(f"📜 Loaded dungeon config from JSON: {json_path}")
+                return config
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"⚠️ Failed to load dungeon config JSON: {e}")
+
+    # Fallback to hardcoded config
+    return None
+
+
+def get_dungeon_config_for_rarity(rarity: DungeonRarity) -> Dict[str, Any]:
+    """
+    Get dungeon configuration for a specific rarity.
+
+    Checks JSON config first, falls back to hardcoded DUNGEON_CONFIG.
+    """
+    json_config = _load_dungeon_config()
+
+    if json_config and "rarities" in json_config:
+        rarity_key = rarity.value  # e.g., "common", "rare"
+        if rarity_key in json_config["rarities"]:
+            json_rarity = json_config["rarities"][rarity_key]
+            # Convert JSON format to expected format
+            return {
+                "spawn_weight": json_rarity.get("spawnWeight", 10),
+                "total_mobs": json_rarity.get("totalMobs", 20),
+                "tier_weights": {int(k): v for k, v in json_rarity.get("tierWeights", {"1": 100}).items()},
+                "chest_tier": json_rarity.get("chestTier", 1),
+                "total_waves": json_rarity.get("totalWaves", 3),
+                "exp_multiplier": json_rarity.get("expMultiplier", 2.0),
+            }
+
+    # Fallback to hardcoded config
+    return DUNGEON_CONFIG.get(rarity, DUNGEON_CONFIG[DungeonRarity.COMMON])
+
+
+def get_chest_loot_config() -> Dict[str, Any]:
+    """Get chest loot configuration from JSON or use defaults."""
+    json_config = _load_dungeon_config()
+
+    if json_config and "chestLoot" in json_config:
+        return json_config["chestLoot"]
+
+    # Default values matching the original hardcoded logic
+    return {
+        "dropChances": {
+            "materials": 0.60,
+            "equipment": 0.30,
+            "consumables": 0.10
+        },
+        "tierRange": 1
+    }
 
 
 @dataclass
@@ -61,74 +132,90 @@ class LootChest:
             self._generate_loot()
 
     def _generate_loot(self):
-        """Generate random loot based on chest tier."""
+        """Generate random loot based on chest tier.
+
+        IMPORTANT: Only generates loot from items that exist in JSON databases.
+        This ensures all drops are valid, functional items.
+        Drop chances are loaded from JSON config (dungeon-config-1.JSON).
+        """
         # Import here to avoid circular dependency
         from data.databases.material_db import MaterialDatabase
         from data.databases.equipment_db import EquipmentDatabase
 
         self.contents = []
 
+        # Load loot config from JSON (or use defaults)
+        loot_config = get_chest_loot_config()
+        drop_chances = loot_config.get("dropChances", {})
+        materials_chance = drop_chances.get("materials", 0.60)
+        equipment_chance = drop_chances.get("equipment", 0.30)
+        tier_range = loot_config.get("tierRange", 1)
+
         # Number of items based on tier
         num_items = random.randint(2 + self.tier, 4 + self.tier * 2)
-
-        # Loot pools by tier
-        # T1: Common materials, basic consumables
-        # T2: Uncommon materials, equipment, potions
-        # T3: Rare materials, rare equipment, powerful consumables
 
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
 
-        # Get materials by tier
+        # Build valid item pools from databases only
+        # Materials - filter by tier (chest tier +/- tier_range)
         all_materials = list(mat_db.materials.values()) if hasattr(mat_db, 'materials') else []
+        valid_materials = [
+            m for m in all_materials
+            if hasattr(m, 'tier') and abs(m.tier - self.tier) <= tier_range
+        ]
+
+        # Equipment - filter by tier (chest tier +/- tier_range)
+        valid_equipment = []
+        if hasattr(equip_db, 'equipment'):
+            for eq in equip_db.equipment.values():
+                eq_tier = eq.tier if hasattr(eq, 'tier') else eq.get('tier', 1)
+                if abs(eq_tier - self.tier) <= tier_range:
+                    valid_equipment.append(eq)
+
+        # Consumables - only include items that actually exist in equipment database
+        # Check for potions/consumables that exist
+        valid_consumables = []
+        if hasattr(equip_db, 'equipment'):
+            for eq in equip_db.equipment.values():
+                # Check if item is a consumable by category or type
+                category = eq.category if hasattr(eq, 'category') else eq.get('category', '')
+                item_type = eq.item_type if hasattr(eq, 'item_type') else eq.get('itemType', '')
+                if category in ['consumable', 'potion'] or item_type in ['consumable', 'potion']:
+                    valid_consumables.append(eq)
+
+        # Calculate cumulative thresholds for drop types
+        materials_threshold = materials_chance
+        equipment_threshold = materials_chance + equipment_chance
 
         for _ in range(num_items):
             roll = random.random()
 
-            if roll < 0.50:  # 50% chance for materials
-                # Filter materials by tier (chest tier +/- 1)
-                valid_materials = [
-                    m for m in all_materials
-                    if hasattr(m, 'tier') and abs(m.tier - self.tier) <= 1
-                ]
+            if roll < materials_threshold:  # Materials (default 60%)
                 if valid_materials:
                     mat = random.choice(valid_materials)
                     mat_id = mat.material_id if hasattr(mat, 'material_id') else mat.get('materialId', 'oak_log')
                     qty = random.randint(1, 3 + self.tier)
                     self.contents.append((mat_id, qty))
 
-            elif roll < 0.75:  # 25% chance for equipment
-                # Get equipment items matching tier
-                valid_equipment = []
-                if hasattr(equip_db, 'equipment'):
-                    for eq in equip_db.equipment.values():
-                        eq_tier = eq.tier if hasattr(eq, 'tier') else eq.get('tier', 1)
-                        if abs(eq_tier - self.tier) <= 1:
-                            valid_equipment.append(eq)
-
+            elif roll < equipment_threshold:  # Equipment (default 30%)
                 if valid_equipment:
                     eq = random.choice(valid_equipment)
                     eq_id = eq.item_id if hasattr(eq, 'item_id') else eq.get('itemId', 'iron_sword')
                     self.contents.append((eq_id, 1))
 
-            elif roll < 0.90:  # 15% chance for consumables
-                # Common consumables by tier
-                consumables = {
-                    1: ["health_potion_minor", "mana_potion_minor"],
-                    2: ["health_potion", "mana_potion", "stamina_potion"],
-                    3: ["health_potion_major", "mana_potion_major", "elixir_of_power"]
-                }
-                tier_consumables = consumables.get(self.tier, consumables[1])
-                self.contents.append((random.choice(tier_consumables), random.randint(1, 2)))
-
-            else:  # 10% chance for engineering items (turrets, traps)
-                engineering_items = {
-                    1: ["basic_turret", "spike_trap"],
-                    2: ["flame_turret", "frost_trap", "lightning_turret"],
-                    3: ["void_turret", "chaos_trap", "plasma_turret"]
-                }
-                tier_items = engineering_items.get(self.tier, engineering_items[1])
-                self.contents.append((random.choice(tier_items), 1))
+            else:  # Consumables (remaining %, only if they exist)
+                if valid_consumables:
+                    cons = random.choice(valid_consumables)
+                    cons_id = cons.item_id if hasattr(cons, 'item_id') else cons.get('itemId')
+                    if cons_id:
+                        self.contents.append((cons_id, random.randint(1, 2)))
+                elif valid_materials:
+                    # Fallback to materials if no consumables exist
+                    mat = random.choice(valid_materials)
+                    mat_id = mat.material_id if hasattr(mat, 'material_id') else mat.get('materialId', 'oak_log')
+                    qty = random.randint(1, 3 + self.tier)
+                    self.contents.append((mat_id, qty))
 
     def open(self) -> List[Tuple[str, int]]:
         """Open the chest and return its contents."""
@@ -262,7 +349,7 @@ class DungeonInstance:
 
     def _create_chest(self):
         """Create the reward chest at the center of the dungeon."""
-        config = DUNGEON_CONFIG[self.rarity]
+        config = get_dungeon_config_for_rarity(self.rarity)
         center = DUNGEON_TILE_SIZE // 2
         self.chest = LootChest(
             position=Position(center, center, 0),
@@ -271,8 +358,8 @@ class DungeonInstance:
 
     @property
     def config(self) -> Dict[str, Any]:
-        """Get configuration for this dungeon's rarity."""
-        return DUNGEON_CONFIG[self.rarity]
+        """Get configuration for this dungeon's rarity from JSON or fallback."""
+        return get_dungeon_config_for_rarity(self.rarity)
 
     @property
     def total_mobs(self) -> int:
@@ -448,13 +535,19 @@ class DungeonManager:
 
     @staticmethod
     def roll_dungeon_rarity() -> DungeonRarity:
-        """Roll for dungeon rarity based on spawn weights."""
-        total_weight = sum(DUNGEON_CONFIG[r]["spawn_weight"] for r in DungeonRarity)
+        """Roll for dungeon rarity based on spawn weights from JSON config."""
+        # Get spawn weights from config (JSON or fallback)
+        weights = {}
+        for rarity in DungeonRarity:
+            config = get_dungeon_config_for_rarity(rarity)
+            weights[rarity] = config.get("spawn_weight", 10)
+
+        total_weight = sum(weights.values())
         roll = random.randint(1, total_weight)
 
         cumulative = 0
         for rarity in DungeonRarity:
-            cumulative += DUNGEON_CONFIG[rarity]["spawn_weight"]
+            cumulative += weights[rarity]
             if roll <= cumulative:
                 return rarity
 

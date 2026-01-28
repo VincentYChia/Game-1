@@ -549,6 +549,9 @@ class GameEngine:
                     elif self.interactive_crafting_active:
                         # Close interactive crafting UI (priority over regular crafting UI)
                         self._close_interactive_crafting()
+                    elif self.dungeon_chest_open:
+                        # Close dungeon chest UI
+                        self._close_dungeon_chest()
                     elif self.character.crafting_ui_open:
                         self.character.close_crafting_ui()
                     elif self.character.stats_ui_open:
@@ -5246,7 +5249,7 @@ class GameEngine:
 
     def _open_dungeon_chest(self) -> bool:
         """Toggle the dungeon chest UI open/closed. Returns True if successful."""
-        if not self.dungeon_manager.in_dungeon:
+        if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
             return False
 
         if not self.dungeon_manager.is_dungeon_cleared():
@@ -5287,7 +5290,7 @@ class GameEngine:
 
     def _transfer_item_to_chest(self, inventory_slot: int):
         """Transfer an item from inventory to dungeon chest."""
-        if not self.dungeon_manager.in_dungeon:
+        if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
             return False
 
         chest = self.dungeon_manager.get_chest()
@@ -5321,7 +5324,7 @@ class GameEngine:
 
     def _transfer_item_from_chest(self, chest_item_idx: int):
         """Transfer an item from dungeon chest to inventory."""
-        if not self.dungeon_manager.in_dungeon:
+        if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
             return False
 
         chest = self.dungeon_manager.get_chest()
