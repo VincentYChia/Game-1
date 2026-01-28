@@ -3,7 +3,7 @@
 **Purpose:** Establish consistent naming patterns across all modules to prevent API mismatches and improve code maintainability.
 
 **Reference:** This document is referenced in Game Mechanics v6 (see top of document)
-**Last Updated:** December 31, 2025
+**Last Updated:** January 27, 2026
 
 ---
 
@@ -56,6 +56,8 @@
 | TitleSystem | `systems/title_system.py` | Title acquisition |
 | ClassSystem | `systems/class_system.py` | Class bonuses |
 | CombatManager | `Combat/combat_manager.py` | Combat system |
+| LLMItemGenerator | `systems/llm_item_generator.py` | LLM-powered item generation (NEW) |
+| CraftingClassifierManager | `systems/crafting_classifier.py` | CNN/LightGBM validation (NEW) |
 
 ---
 
@@ -109,6 +111,28 @@
 | Process tags | `process_tags(tags, params)` | `handle_tags()` | EffectExecutor |
 | Apply geometry | `apply_geometry(tags, source, target)` | `get_targets()` | EffectExecutor |
 | Get tag debugger | `get_tag_debugger()` | `debug_tags()` | core/tag_debug |
+
+### LLM Integration System (NEW - January 2026)
+
+| Concept | Correct Name | Avoid | Location |
+|---------|--------------|-------|----------|
+| Generate item | `generate_item(materials, discipline, callback)` | `create_item()` | LLMItemGenerator |
+| Build prompt | `_build_prompt(materials, discipline)` | `create_prompt()` | LLMItemGenerator |
+| Parse response | `_parse_response(response)` | `extract_item()` | LLMItemGenerator |
+| Validate placement | `validate_placement(placement, discipline)` | `check_placement()` | CraftingClassifierManager |
+| Preprocess image | `preprocess(grid)` | `convert_grid()` | SmithingCNN/AdornmentsCNN |
+| Extract features | `extract_features(placement)` | `get_features()` | LightGBM classifiers |
+| Run prediction | `predict(input)` | `classify()` | All classifiers |
+
+### Classifier Class Naming
+
+| Discipline | CNN Class | LightGBM Class |
+|------------|-----------|----------------|
+| Smithing | `SmithingCNN` | N/A |
+| Adornments | `AdornmentsCNN` | N/A |
+| Alchemy | N/A | `AlchemyLightGBM` |
+| Refining | N/A | `RefiningLightGBM` |
+| Engineering | N/A | `EngineeringLightGBM` |
 
 ### Minigame Actions
 
@@ -509,6 +533,6 @@ for (x, y), material in ui_grid.items():
 
 ---
 
-**Last Updated:** December 31, 2025
+**Last Updated:** January 27, 2026
 **Maintained By:** Development Team
 **Status:** Living Document - Update as patterns evolve

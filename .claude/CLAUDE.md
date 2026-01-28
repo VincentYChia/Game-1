@@ -41,14 +41,13 @@
 - **Full combat system** (damage pipeline, enchantments, dual wielding)
 - **100+ skills** with mana, cooldowns, effects
 - **Status effects** (DoT, CC, buffs, debuffs - 827 lines)
-- **9 Enchantments fully integrated** (see Combat section)
+- **14 Enchantments fully integrated** (see Combat section)
 - **Full save/load system** (complete state preservation)
 - **Durability, weight, and repair systems**
 - **Tag-driven effect system** (combat, skills, items)
 - **Difficulty/Reward calculators** (material-based scaling)
 
 ### Partially Implemented
-- Some enchantment effects (3 types need additional integration)
 - World generation (basic chunks, detailed templates pending)
 - NPC/Quest system (basic functionality, needs expansion)
 
@@ -308,18 +307,26 @@ Base Damage (weapon)
   = Final Damage
 ```
 
-### Enchantment Effects (Implemented)
+### Enchantment Effects (14 Implemented - January 2026)
 | Enchantment | Type | Trigger | Status |
 |-------------|------|---------|--------|
-| Sharpness | damage_multiplier | Passive | ✅ Working |
-| Protection | defense_multiplier | Passive | ✅ Working |
+| Sharpness I-III | damage_multiplier | Passive | ✅ Working |
+| Protection I-III | defense_multiplier | Passive | ✅ Working |
+| Efficiency I-II | gathering_speed_multiplier | Passive | ✅ Working |
+| Fortune I-II | bonus_yield_chance | Passive | ✅ Working |
+| Unbreaking I-II | durability_multiplier | Passive | ✅ Working |
 | Fire Aspect | damage_over_time | On hit | ✅ Working |
-| Lifesteal | lifesteal | On hit | ✅ Working |
-| Knockback | knockback | On hit | ✅ Working |
-| Chain Damage | chain_damage | On hit | ✅ Working |
+| Poison | damage_over_time | On hit | ✅ Working |
+| Swiftness | movement_speed_multiplier | Equip | ✅ Working |
 | Thorns | reflect_damage | On hit received | ✅ Working |
-| Unbreaking | durability_multiplier | Passive | ✅ Working |
-| Slow (Frost) | slow | On hit | ✅ Working |
+| Knockback | knockback | On hit | ✅ Working |
+| Lifesteal | lifesteal | On hit | ✅ Working |
+| Health Regen | health_regeneration | Periodic | ✅ Working |
+| Frost Touch | slow | On hit | ✅ Working |
+| Chain Damage | chain_damage | On hit | ✅ Working |
+
+**Deferred** (3 types - by design):
+- Self-Repair, Weightless, Silk Touch
 
 ### Status Effects (All Implemented)
 - **DoT**: Burn, Bleed, Poison, Shock (damage per second)
@@ -404,18 +411,25 @@ Tier multipliers: T1=1.0x, T2=2.0x, T3=4.0x, T4=8.0x
 **See**: `MASTER_ISSUE_TRACKER.md` for comprehensive bug list
 **See**: `docs/REPOSITORY_STATUS_REPORT_2026-01-27.md` for full status
 
-### Critical Bug
-- **Missing `import random`** in `Crafting-subdisciplines/enchanting.py` - Will crash spinning wheel minigame
+### Recently Resolved (January 2026)
+- ✅ Inventory click misalignment - spacing synchronized
+- ✅ All 14 enchantments now working (Lifesteal, Knockback, Chain Damage, Health Regen, Frost Touch)
+- ✅ Unused imports (`Path`, `copy`) removed from crafting files
+- ✅ `import random` in enchanting.py - uses inline imports (functional)
 
-### Code Quality Issues
-- Duplicate singleton pattern across 10 database files
-- Duplicate methods across 5 crafting minigame files
-- Unused imports (`Path`, `copy`) in crafting files
+### Code Quality Notes
+- Duplicate singleton pattern across 10 database files (acceptable technical debt)
+- Duplicate methods across 5 crafting minigame files (could be refactored)
 
 ### Not Yet Implemented (Despite Documentation)
 - Block/Parry combat mechanics
 - Summon mechanics
 - Advanced skill evolution chains
+
+### Open Issues
+- Tooltip z-order (can be covered by equipment menu)
+- Missing crafting station definitions (Tier 3/4)
+- Missing station icons (forge_t4.png, enchanting_table_t2.png)
 
 ---
 
