@@ -40,6 +40,10 @@ DUNGEON_CHUNK_SIZE = 2  # 2x2 chunks
 DUNGEON_TILE_SIZE = DUNGEON_CHUNK_SIZE * Config.CHUNK_SIZE  # 32x32 tiles
 
 
+# Track if we've already warned about using hardcoded config (avoid spam)
+_hardcoded_config_warned = False
+
+
 def _load_dungeon_config() -> Dict[str, Any]:
     """
     Load dungeon configuration from JSON file, falling back to hardcoded DUNGEON_CONFIG.
@@ -47,6 +51,8 @@ def _load_dungeon_config() -> Dict[str, Any]:
     Returns a dictionary with the configuration. Uses JSON if available for
     JSON-driven design, but maintains backwards compatibility with hardcoded values.
     """
+    global _hardcoded_config_warned
+
     json_path = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
         "Definitions.JSON", "dungeon-config-1.JSON"
@@ -56,12 +62,19 @@ def _load_dungeon_config() -> Dict[str, Any]:
         if os.path.exists(json_path):
             with open(json_path, 'r') as f:
                 config = json.load(f)
-                print(f"📜 Loaded dungeon config from JSON: {json_path}")
+                # Only print success message once per session
+                if not hasattr(_load_dungeon_config, '_loaded_logged'):
+                    _load_dungeon_config._loaded_logged = True
+                    print(f"📜 Loaded dungeon config from JSON: {json_path}")
                 return config
     except (json.JSONDecodeError, IOError) as e:
         print(f"⚠️ Failed to load dungeon config JSON: {e}")
 
-    # Fallback to hardcoded config
+    # Fallback warning (only once)
+    if not _hardcoded_config_warned:
+        _hardcoded_config_warned = True
+        print(f"⚠️ DEBUG: Using HARDCODED dungeon config - JSON not found at: {json_path}")
+
     return None
 
 
@@ -69,15 +82,39 @@ def get_dungeon_config_for_rarity(rarity: DungeonRarity) -> Dict[str, Any]:
     """
     Get dungeon configuration for a specific rarity.
 
-    Checks JSON config first, falls back to hardcoded DUNGEON_CONFIG.
+    Checks JSON config first (v2.0 modular format), falls back to hardcoded DUNGEON_CONFIG.
+    Each dungeon is self-contained with size, combat, and chestLoot settings.
     """
     json_config = _load_dungeon_config()
+    rarity_key = rarity.value  # e.g., "common", "rare"
 
+    # Try v2.0 modular format first (each dungeon is self-contained)
+    if json_config and "dungeons" in json_config:
+        if rarity_key in json_config["dungeons"]:
+            dungeon_data = json_config["dungeons"][rarity_key]
+            combat = dungeon_data.get("combat", {})
+            size = dungeon_data.get("size", {})
+            chest_loot = dungeon_data.get("chestLoot", {})
+
+            return {
+                "display_name": dungeon_data.get("displayName", rarity_key.capitalize()),
+                "description": dungeon_data.get("description", ""),
+                "spawn_weight": dungeon_data.get("spawnWeight", 10),
+                "chunk_size": size.get("chunkSize", 2),
+                "total_mobs": combat.get("totalMobs", 20),
+                "total_waves": combat.get("totalWaves", 3),
+                "tier_weights": {int(k): v for k, v in combat.get("tierWeights", {"1": 100}).items()},
+                "exp_multiplier": combat.get("expMultiplier", 2.0),
+                "chest_tier": chest_loot.get("tier", 1),
+                "chest_loot": chest_loot,  # Include full chest loot config
+            }
+        else:
+            print(f"⚠️ DEBUG: Dungeon '{rarity_key}' not found in JSON config, using HARDCODED values")
+
+    # Try v1.0 format (separate rarities section) for backwards compatibility
     if json_config and "rarities" in json_config:
-        rarity_key = rarity.value  # e.g., "common", "rare"
         if rarity_key in json_config["rarities"]:
             json_rarity = json_config["rarities"][rarity_key]
-            # Convert JSON format to expected format
             return {
                 "spawn_weight": json_rarity.get("spawnWeight", 10),
                 "total_mobs": json_rarity.get("totalMobs", 20),
@@ -91,12 +128,34 @@ def get_dungeon_config_for_rarity(rarity: DungeonRarity) -> Dict[str, Any]:
     return DUNGEON_CONFIG.get(rarity, DUNGEON_CONFIG[DungeonRarity.COMMON])
 
 
-def get_chest_loot_config() -> Dict[str, Any]:
-    """Get chest loot configuration from JSON or use defaults."""
+def get_chest_loot_config(rarity: DungeonRarity = None) -> Dict[str, Any]:
+    """
+    Get chest loot configuration from JSON or use defaults.
+
+    Args:
+        rarity: Optional dungeon rarity for per-dungeon chest config (v2.0 format)
+
+    Returns:
+        Chest loot configuration dictionary
+    """
     json_config = _load_dungeon_config()
 
+    # Try v2.0 per-dungeon chest loot config
+    if rarity and json_config and "dungeons" in json_config:
+        rarity_key = rarity.value
+        if rarity_key in json_config["dungeons"]:
+            dungeon_data = json_config["dungeons"][rarity_key]
+            if "chestLoot" in dungeon_data:
+                return dungeon_data["chestLoot"]
+
+    # Try v1.0/shared chestLoot config
     if json_config and "chestLoot" in json_config:
         return json_config["chestLoot"]
+
+    # Debug output for hardcoded fallback
+    if not hasattr(get_chest_loot_config, '_warned'):
+        get_chest_loot_config._warned = True
+        print("⚠️ DEBUG: Using HARDCODED chest loot config - not found in JSON")
 
     # Default values matching the original hardcoded logic
     return {
@@ -109,13 +168,23 @@ def get_chest_loot_config() -> Dict[str, Any]:
     }
 
 
+def get_dungeon_size(rarity: DungeonRarity) -> int:
+    """
+    Get dungeon chunk size for a specific rarity.
+
+    Returns the number of chunks (e.g., 2 = 2x2 = 32x32 tiles).
+    """
+    config = get_dungeon_config_for_rarity(rarity)
+    return config.get("chunk_size", DUNGEON_CHUNK_SIZE)
+
+
 @dataclass
 class LootChest:
     """
     A loot chest entity that can contain items, materials, weapons, and consumables.
 
     Designed to be reusable for:
-    - Dungeon reward chests (generated loot based on tier)
+    - Dungeon reward chests (generated loot based on tier and rarity)
     - Future: Player-placed storage chests
     """
     position: Position
@@ -124,6 +193,7 @@ class LootChest:
     contents: List[Tuple[str, int]] = field(default_factory=list)  # [(item_id, quantity), ...]
     is_player_storage: bool = False  # If True, player can store items
     chest_id: str = ""  # Unique identifier for save/load
+    dungeon_rarity: Optional[DungeonRarity] = None  # For per-dungeon chest loot config
 
     def __post_init__(self):
         if not self.chest_id:
@@ -132,11 +202,11 @@ class LootChest:
             self._generate_loot()
 
     def _generate_loot(self):
-        """Generate random loot based on chest tier.
+        """Generate random loot based on chest tier and dungeon rarity.
 
         IMPORTANT: Only generates loot from items that exist in JSON databases.
         This ensures all drops are valid, functional items.
-        Drop chances are loaded from JSON config (dungeon-config-1.JSON).
+        Drop chances are loaded from per-dungeon JSON config (dungeon-config-1.JSON).
         """
         # Import here to avoid circular dependency
         from data.databases.material_db import MaterialDatabase
@@ -145,14 +215,22 @@ class LootChest:
         self.contents = []
 
         # Load loot config from JSON (or use defaults)
-        loot_config = get_chest_loot_config()
+        # Uses per-dungeon config if dungeon_rarity is set (v2.0 format)
+        loot_config = get_chest_loot_config(self.dungeon_rarity)
         drop_chances = loot_config.get("dropChances", {})
         materials_chance = drop_chances.get("materials", 0.60)
         equipment_chance = drop_chances.get("equipment", 0.30)
         tier_range = loot_config.get("tierRange", 1)
 
-        # Number of items based on tier
-        num_items = random.randint(2 + self.tier, 4 + self.tier * 2)
+        # Number of items - use per-dungeon itemCounts if available
+        item_counts = loot_config.get("itemCounts", {})
+        if item_counts:
+            min_items = item_counts.get("min", 2 + self.tier)
+            max_items = item_counts.get("max", 4 + self.tier * 2)
+            num_items = random.randint(min_items, max_items)
+        else:
+            # Fallback to tier-based calculation
+            num_items = random.randint(2 + self.tier, 4 + self.tier * 2)
 
         mat_db = MaterialDatabase.get_instance()
         equip_db = EquipmentDatabase.get_instance()
@@ -353,7 +431,8 @@ class DungeonInstance:
         center = DUNGEON_TILE_SIZE // 2
         self.chest = LootChest(
             position=Position(center, center, 0),
-            tier=config["chest_tier"]
+            tier=config["chest_tier"],
+            dungeon_rarity=self.rarity  # Pass rarity for per-dungeon loot config
         )
 
     @property

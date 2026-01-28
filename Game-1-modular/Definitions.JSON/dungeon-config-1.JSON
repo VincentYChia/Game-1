@@ -1,92 +1,168 @@
 {
   "metadata": {
-    "version": "1.0",
-    "description": "Dungeon system configuration - controls dungeon spawning, waves, and loot",
-    "note": "All values are for balance testing"
-  },
-
-  "dungeonSize": {
-    "chunkSize": 2,
-    "comment": "Dungeon is chunkSize x chunkSize chunks (2x2 = 32x32 tiles)"
+    "version": "2.0",
+    "description": "Dungeon system configuration - each dungeon type is fully self-contained",
+    "note": "Add new dungeons by creating new entries in the 'dungeons' object"
   },
 
   "entranceGeneration": {
     "spawnChance": 0.08,
     "minDistanceFromSpawn": 10,
-    "rarityWeights": {
-      "common": 50,
-      "uncommon": 25,
-      "rare": 15,
-      "epic": 7,
-      "legendary": 2,
-      "unique": 1
-    },
     "comment": "spawnChance is per chunk, ~1 dungeon per 12 chunks"
   },
 
-  "rarities": {
+  "dungeons": {
     "common": {
-      "spawnWeight": 25,
-      "totalMobs": 20,
-      "totalWaves": 3,
-      "tierWeights": {"1": 80, "2": 20, "3": 0, "4": 0},
-      "chestTier": 1,
-      "expMultiplier": 2.0
+      "displayName": "Common Dungeon",
+      "description": "A basic dungeon with weak enemies",
+      "spawnWeight": 50,
+      "size": {
+        "chunkSize": 2,
+        "comment": "2x2 chunks = 32x32 tiles"
+      },
+      "combat": {
+        "totalMobs": 20,
+        "totalWaves": 3,
+        "tierWeights": {"1": 80, "2": 20, "3": 0, "4": 0},
+        "expMultiplier": 2.0
+      },
+      "chestLoot": {
+        "tier": 1,
+        "itemCounts": {"min": 3, "max": 6},
+        "dropChances": {
+          "materials": 0.60,
+          "equipment": 0.30,
+          "consumables": 0.10
+        },
+        "tierRange": 1
+      }
     },
-    "uncommon": {
-      "spawnWeight": 20,
-      "totalMobs": 25,
-      "totalWaves": 3,
-      "tierWeights": {"1": 50, "2": 40, "3": 10, "4": 0},
-      "chestTier": 1,
-      "expMultiplier": 2.0
-    },
-    "rare": {
-      "spawnWeight": 15,
-      "totalMobs": 30,
-      "totalWaves": 3,
-      "tierWeights": {"1": 20, "2": 50, "3": 25, "4": 5},
-      "chestTier": 2,
-      "expMultiplier": 2.0
-    },
-    "epic": {
-      "spawnWeight": 10,
-      "totalMobs": 40,
-      "totalWaves": 3,
-      "tierWeights": {"1": 5, "2": 30, "3": 45, "4": 20},
-      "chestTier": 2,
-      "expMultiplier": 2.0
-    },
-    "legendary": {
-      "spawnWeight": 5,
-      "totalMobs": 50,
-      "totalWaves": 3,
-      "tierWeights": {"1": 0, "2": 10, "3": 50, "4": 40},
-      "chestTier": 3,
-      "expMultiplier": 2.0
-    },
-    "unique": {
-      "spawnWeight": 2,
-      "totalMobs": 60,
-      "totalWaves": 3,
-      "tierWeights": {"1": 0, "2": 0, "3": 30, "4": 70},
-      "chestTier": 3,
-      "expMultiplier": 2.0
-    }
-  },
 
-  "chestLoot": {
-    "itemCounts": {
-      "tier1": {"min": 3, "max": 6},
-      "tier2": {"min": 4, "max": 10},
-      "tier3": {"min": 6, "max": 14}
+    "uncommon": {
+      "displayName": "Uncommon Dungeon",
+      "description": "A moderately challenging dungeon",
+      "spawnWeight": 25,
+      "size": {
+        "chunkSize": 2
+      },
+      "combat": {
+        "totalMobs": 25,
+        "totalWaves": 3,
+        "tierWeights": {"1": 50, "2": 40, "3": 10, "4": 0},
+        "expMultiplier": 2.0
+      },
+      "chestLoot": {
+        "tier": 1,
+        "itemCounts": {"min": 4, "max": 8},
+        "dropChances": {
+          "materials": 0.55,
+          "equipment": 0.35,
+          "consumables": 0.10
+        },
+        "tierRange": 1
+      }
     },
-    "dropChances": {
-      "materials": 0.60,
-      "equipment": 0.30,
-      "consumables": 0.10
+
+    "rare": {
+      "displayName": "Rare Dungeon",
+      "description": "A dangerous dungeon with valuable rewards",
+      "spawnWeight": 15,
+      "size": {
+        "chunkSize": 2
+      },
+      "combat": {
+        "totalMobs": 30,
+        "totalWaves": 3,
+        "tierWeights": {"1": 20, "2": 50, "3": 25, "4": 5},
+        "expMultiplier": 2.0
+      },
+      "chestLoot": {
+        "tier": 2,
+        "itemCounts": {"min": 5, "max": 10},
+        "dropChances": {
+          "materials": 0.50,
+          "equipment": 0.40,
+          "consumables": 0.10
+        },
+        "tierRange": 1
+      }
     },
-    "tierRange": 1,
-    "comment": "tierRange determines how many tiers above/below chest tier items can drop"
+
+    "epic": {
+      "displayName": "Epic Dungeon",
+      "description": "A formidable challenge with excellent loot",
+      "spawnWeight": 7,
+      "size": {
+        "chunkSize": 2
+      },
+      "combat": {
+        "totalMobs": 40,
+        "totalWaves": 3,
+        "tierWeights": {"1": 5, "2": 30, "3": 45, "4": 20},
+        "expMultiplier": 2.0
+      },
+      "chestLoot": {
+        "tier": 2,
+        "itemCounts": {"min": 6, "max": 12},
+        "dropChances": {
+          "materials": 0.45,
+          "equipment": 0.45,
+          "consumables": 0.10
+        },
+        "tierRange": 1
+      }
+    },
+
+    "legendary": {
+      "displayName": "Legendary Dungeon",
+      "description": "An extremely difficult dungeon with legendary rewards",
+      "spawnWeight": 2,
+      "size": {
+        "chunkSize": 2
+      },
+      "combat": {
+        "totalMobs": 50,
+        "totalWaves": 3,
+        "tierWeights": {"1": 0, "2": 10, "3": 50, "4": 40},
+        "expMultiplier": 2.5
+      },
+      "chestLoot": {
+        "tier": 3,
+        "itemCounts": {"min": 8, "max": 14},
+        "dropChances": {
+          "materials": 0.40,
+          "equipment": 0.50,
+          "consumables": 0.10
+        },
+        "tierRange": 1
+      }
+    },
+
+    "unique": {
+      "displayName": "Unique Dungeon",
+      "description": "The ultimate challenge - only the strongest survive",
+      "spawnWeight": 1,
+      "size": {
+        "chunkSize": 3,
+        "comment": "Larger dungeon for unique difficulty"
+      },
+      "combat": {
+        "totalMobs": 60,
+        "totalWaves": 4,
+        "tierWeights": {"1": 0, "2": 0, "3": 30, "4": 70},
+        "expMultiplier": 3.0
+      },
+      "chestLoot": {
+        "tier": 3,
+        "itemCounts": {"min": 10, "max": 18},
+        "dropChances": {
+          "materials": 0.30,
+          "equipment": 0.60,
+          "consumables": 0.10
+        },
+        "tierRange": 2,
+        "comment": "Can drop items +/- 2 tiers from chest tier"
+      }
+    }
   }
 }
