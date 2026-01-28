@@ -300,6 +300,11 @@ class GameEngine:
         self.enchantment_selection_rect = None
         self.enchantment_item_rects = None  # Item rects for click detection
 
+        # Dungeon chest UI state
+        self.dungeon_chest_open = False  # True when dungeon chest UI is open
+        self.dungeon_chest_rect = None  # Bounding rect for chest UI
+        self.dungeon_chest_item_rects = []  # [(rect, item_idx), ...] for click detection
+
         # Minigame state
         self.active_minigame = None  # Current minigame instance (SmithingMinigame, etc.)
         self.minigame_type = None  # Station type: 'smithing', 'alchemy', 'refining', 'engineering', 'adornments'
@@ -1644,6 +1649,19 @@ class GameEngine:
                 self.character.close_crafting_ui()
                 return
 
+        # Dungeon Chest UI - takes priority when open
+        if self.dungeon_chest_open:
+            # Check if clicking on chest UI area
+            if self.dungeon_chest_rect and self.dungeon_chest_rect.collidepoint(mouse_pos):
+                # Check chest item clicks
+                for rect, item_idx in self.dungeon_chest_item_rects:
+                    if rect.collidepoint(mouse_pos):
+                        self._transfer_item_from_chest(item_idx)
+                        return
+                return  # Clicked in chest area but not on item
+            # Clicking outside chest UI closes it
+            # But check if clicking on inventory first (for transfers)
+
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             # CRITICAL: These values MUST match the renderer exactly!
@@ -1664,6 +1682,12 @@ class GameEngine:
                 if in_x and in_y:
                     idx = row * Config.INVENTORY_SLOTS_PER_ROW + col
                     if 0 <= idx < self.character.inventory.max_slots:
+                        # If dungeon chest is open, transfer to chest instead of equipping
+                        if self.dungeon_chest_open:
+                            if self.character.inventory.slots[idx]:
+                                self._transfer_item_to_chest(idx)
+                            return
+
                         # Double-click to equip equipment or tools
                         if is_double_click and self.last_clicked_slot == idx:
                             # Check if item is being dragged (first click started drag)
@@ -5134,6 +5158,9 @@ class GameEngine:
         if not self.dungeon_manager.in_dungeon:
             return
 
+        # Close chest UI if open
+        self._close_dungeon_chest()
+
         dungeon = self.dungeon_manager.current_dungeon
         was_cleared = dungeon.is_cleared if dungeon else False
 
@@ -5218,7 +5245,7 @@ class GameEngine:
                 self.add_notification("DUNGEON CLEARED! Click the chest for loot, portal to exit!", (100, 255, 100))
 
     def _open_dungeon_chest(self) -> bool:
-        """Attempt to open the dungeon chest. Returns True if successful."""
+        """Toggle the dungeon chest UI open/closed. Returns True if successful."""
         if not self.dungeon_manager.in_dungeon:
             return False
 
@@ -5227,7 +5254,7 @@ class GameEngine:
             return False
 
         chest = self.dungeon_manager.get_chest()
-        if not chest or chest.is_opened:
+        if not chest:
             return False
 
         # Check if player is near chest
@@ -5243,29 +5270,90 @@ class GameEngine:
                 self.add_notification("Get closer to the chest!", (255, 255, 100))
                 return False
 
-        # Open chest and get loot
-        loot = self.dungeon_manager.open_chest()
-        if loot:
-            items_added = 0
-            for item_id, quantity in loot:
-                # Try to add to inventory
-                added = self.character.inventory.add_item(item_id, quantity)
-                if added:
-                    items_added += quantity
+        # Toggle chest UI open/closed
+        self.dungeon_chest_open = not self.dungeon_chest_open
 
-            # Track chest opening
-            if hasattr(self.character, 'stat_tracker'):
-                self.character.stat_tracker.record_dungeon_chest_opened(items_added)
+        if self.dungeon_chest_open:
+            self.add_notification("Chest opened! Click items to transfer.", (255, 215, 0))
+        else:
+            self.add_notification("Chest closed.", (200, 200, 200))
 
-            self.add_notification(f"Chest opened! Received {items_added} items!", (255, 215, 0))
+        return True
+
+    def _close_dungeon_chest(self):
+        """Close the dungeon chest UI."""
+        self.dungeon_chest_open = False
+        self.dungeon_chest_item_rects = []
+
+    def _transfer_item_to_chest(self, inventory_slot: int):
+        """Transfer an item from inventory to dungeon chest."""
+        if not self.dungeon_manager.in_dungeon:
+            return False
+
+        chest = self.dungeon_manager.get_chest()
+        if not chest:
+            return False
+
+        # Get item from inventory slot
+        slot = self.character.inventory.slots[inventory_slot]
+        if not slot:
+            return False
+
+        item_id = slot.item_id
+        quantity = slot.quantity
+
+        # Add to chest contents
+        # Find existing stack or add new
+        found = False
+        for i, (existing_id, existing_qty) in enumerate(chest.contents):
+            if existing_id == item_id:
+                chest.contents[i] = (item_id, existing_qty + quantity)
+                found = True
+                break
+        if not found:
+            chest.contents.append((item_id, quantity))
+
+        # Remove from inventory
+        self.character.inventory.slots[inventory_slot] = None
+
+        self.add_notification(f"Moved {quantity}x {item_id} to chest", (200, 255, 200))
+        return True
+
+    def _transfer_item_from_chest(self, chest_item_idx: int):
+        """Transfer an item from dungeon chest to inventory."""
+        if not self.dungeon_manager.in_dungeon:
+            return False
+
+        chest = self.dungeon_manager.get_chest()
+        if not chest or chest_item_idx >= len(chest.contents):
+            return False
+
+        item_id, quantity = chest.contents[chest_item_idx]
+
+        # Try to add to inventory
+        success = self.character.inventory.add_item(item_id, quantity)
+        if success:
+            # Remove from chest
+            chest.contents.pop(chest_item_idx)
+            self.add_notification(f"Took {quantity}x {item_id} from chest", (200, 255, 200))
+
+            # Track chest opening (first time taking items)
+            if hasattr(self.character, 'stat_tracker') and not hasattr(chest, '_tracked'):
+                chest._tracked = True
+                self.character.stat_tracker.record_dungeon_chest_opened(quantity)
+
             return True
-
-        return False
+        else:
+            self.add_notification("Inventory full!", (255, 100, 100))
+            return False
 
     def _exit_dungeon_via_portal(self):
         """Exit the dungeon through the exit portal."""
         if not self.dungeon_manager.in_dungeon:
             return
+
+        # Close chest UI if open
+        self._close_dungeon_chest()
 
         dungeon = self.dungeon_manager.current_dungeon
         if not dungeon or not dungeon.is_cleared:
@@ -5484,6 +5572,13 @@ class GameEngine:
 
         self.renderer.render_notifications(self.notifications)
         self.renderer.render_debug_messages()
+
+        # Render dungeon chest UI if open
+        if self.dungeon_chest_open and self.dungeon_manager.in_dungeon:
+            chest = self.dungeon_manager.get_chest()
+            if chest:
+                self.dungeon_chest_rect, self.dungeon_chest_item_rects = \
+                    self.renderer.render_dungeon_chest_ui(chest, self.dungeon_manager)
 
         if self.character.class_selection_open:
             result = self.renderer.render_class_selection_ui(self.character, self.mouse_pos)

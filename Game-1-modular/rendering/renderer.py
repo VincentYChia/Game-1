@@ -1505,6 +1505,117 @@ class Renderer:
             self.screen.blit(status_surf,
                            (panel_x + (panel_width - status_surf.get_width()) // 2, panel_y + panel_height + 5))
 
+    def render_dungeon_chest_ui(self, chest, dungeon_manager) -> Tuple[pygame.Rect, List[Tuple[pygame.Rect, int]]]:
+        """Render the dungeon chest UI for item transfer.
+
+        Returns:
+            (chest_rect, item_rects) - bounding rect and list of (rect, item_idx) for click detection
+        """
+        if not chest or not dungeon_manager or not dungeon_manager.in_dungeon:
+            return None, []
+
+        # Chest UI position (right side of screen, above inventory)
+        ui_width = 250
+        ui_height = 300
+        ui_x = Config.VIEWPORT_WIDTH - ui_width - 20
+        ui_y = Config.VIEWPORT_HEIGHT - Config.INVENTORY_PANEL_HEIGHT - ui_height - 20
+
+        # Background panel
+        chest_rect = pygame.Rect(ui_x, ui_y, ui_width, ui_height)
+        panel_surf = pygame.Surface((ui_width, ui_height), pygame.SRCALPHA)
+        panel_surf.fill((40, 30, 20, 230))
+        self.screen.blit(panel_surf, (ui_x, ui_y))
+
+        # Border
+        pygame.draw.rect(self.screen, (150, 100, 50), chest_rect, 3)
+
+        # Title
+        title_surf = self.font.render("Dungeon Chest", True, (255, 215, 0))
+        self.screen.blit(title_surf, (ui_x + (ui_width - title_surf.get_width()) // 2, ui_y + 10))
+
+        # Subtitle
+        subtitle_surf = self.tiny_font.render("Click to take items", True, (200, 200, 200))
+        self.screen.blit(subtitle_surf, (ui_x + (ui_width - subtitle_surf.get_width()) // 2, ui_y + 35))
+
+        # Item grid
+        item_rects = []
+        slot_size = 40
+        spacing = 5
+        slots_per_row = 5
+        start_x = ui_x + 15
+        start_y = ui_y + 60
+
+        # Get material database for names
+        from data.databases.material_db import MaterialDatabase
+        from data.databases.equipment_db import EquipmentDatabase
+        mat_db = MaterialDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+
+        for idx, (item_id, quantity) in enumerate(chest.contents):
+            row = idx // slots_per_row
+            col = idx % slots_per_row
+
+            slot_x = start_x + col * (slot_size + spacing)
+            slot_y = start_y + row * (slot_size + spacing)
+
+            # Only render if in visible area
+            if slot_y + slot_size > ui_y + ui_height - 20:
+                break
+
+            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
+
+            # Slot background
+            pygame.draw.rect(self.screen, (60, 50, 40), slot_rect)
+            pygame.draw.rect(self.screen, (100, 80, 60), slot_rect, 2)
+
+            # Item icon (try to get from material/equipment)
+            icon = None
+            item_name = item_id
+
+            mat = mat_db.get_material(item_id)
+            if mat:
+                item_name = mat.name if hasattr(mat, 'name') else item_id
+                if hasattr(mat, 'icon_path') and mat.icon_path:
+                    from rendering.image_cache import ImageCache
+                    image_cache = ImageCache.get_instance()
+                    icon = image_cache.get_image(mat.icon_path, (slot_size - 8, slot_size - 8))
+
+            if not icon and equip_db.is_equipment(item_id):
+                eq = equip_db.get_equipment(item_id)
+                if eq:
+                    item_name = eq.name if hasattr(eq, 'name') else item_id
+                    if hasattr(eq, 'icon_path') and eq.icon_path:
+                        from rendering.image_cache import ImageCache
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_image(eq.icon_path, (slot_size - 8, slot_size - 8))
+
+            if icon:
+                self.screen.blit(icon, (slot_x + 4, slot_y + 4))
+            else:
+                # Fallback: colored square
+                pygame.draw.rect(self.screen, (100, 150, 100), (slot_x + 4, slot_y + 4, slot_size - 8, slot_size - 8))
+
+            # Quantity badge
+            if quantity > 1:
+                qty_surf = self.tiny_font.render(str(quantity), True, (255, 255, 255))
+                qty_bg = pygame.Surface((qty_surf.get_width() + 4, qty_surf.get_height()), pygame.SRCALPHA)
+                qty_bg.fill((0, 0, 0, 180))
+                self.screen.blit(qty_bg, (slot_x + slot_size - qty_surf.get_width() - 4, slot_y + slot_size - qty_surf.get_height()))
+                self.screen.blit(qty_surf, (slot_x + slot_size - qty_surf.get_width() - 2, slot_y + slot_size - qty_surf.get_height()))
+
+            item_rects.append((slot_rect, idx))
+
+        # Instructions at bottom
+        hint_surf = self.tiny_font.render("Click inventory to deposit", True, (180, 180, 180))
+        self.screen.blit(hint_surf, (ui_x + (ui_width - hint_surf.get_width()) // 2, ui_y + ui_height - 25))
+
+        # Empty chest message
+        if not chest.contents:
+            empty_surf = self.small_font.render("Chest is empty", True, (150, 150, 150))
+            self.screen.blit(empty_surf, (ui_x + (ui_width - empty_surf.get_width()) // 2, ui_y + ui_height // 2))
+
+        return chest_rect, item_rects
+
     def render_placement_preview(self, camera: Camera, preview_pos):
         """Render placement preview for world item placement mode"""
         if preview_pos:
