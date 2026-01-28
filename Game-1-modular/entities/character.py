@@ -776,8 +776,9 @@ class Character:
         new_x = self.position.x + dx * speed_mult
         new_y = self.position.y + dy * speed_mult
 
-        # Check bounds
-        if new_x < 0 or new_x >= Config.WORLD_SIZE or new_y < 0 or new_y >= Config.WORLD_SIZE:
+        # Check bounds (centered coordinate system: -half to +half)
+        half_size = Config.WORLD_SIZE // 2
+        if new_x < -half_size or new_x >= half_size or new_y < -half_size or new_y >= half_size:
             return False
 
         # Check walkability

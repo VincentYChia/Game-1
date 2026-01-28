@@ -322,7 +322,9 @@ class GameEngine:
         self.last_clicked_slot = None
 
         # Day/Night Cycle (16 min day + 8 min night = 24 min total)
-        self.game_time = 0.0  # Seconds since game start
+        # Time breakdown: 0-480s Night, 480-600s Dawn, 600-1320s Day, 1320-1440s Dusk
+        # New worlds start at noon (960s = middle of day phase)
+        self.game_time = 960.0  # Start at noon for new worlds
         self.DAY_LENGTH = 960.0      # 16 minutes in seconds
         self.NIGHT_LENGTH = 480.0    # 8 minutes in seconds
         self.CYCLE_LENGTH = 1440.0   # Total cycle (24 minutes)
