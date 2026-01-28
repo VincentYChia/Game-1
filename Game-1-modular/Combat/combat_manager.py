@@ -1771,6 +1771,10 @@ class CombatManager:
             # Mark as dungeon enemy (for special handling)
             enemy.is_dungeon_enemy = True
 
+            # Make dungeon enemies immediately aggressive - start in CHASE state
+            enemy.ai_state = AIState.CHASE
+            enemy.in_combat = True
+
             self.dungeon_enemies.append(enemy)
             dungeon.spawned_enemy_ids.append(enemy.enemy_id if hasattr(enemy, 'enemy_id') else str(id(enemy)))
             spawned += 1
