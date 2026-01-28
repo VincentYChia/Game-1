@@ -10,7 +10,7 @@
 
 | Category | Issue | Priority | Status | Effort |
 |----------|-------|----------|--------|--------|
-| **Bug** | **Resource Gap (16 of 28 missing)** | **CRITICAL** | **OPEN** | 2-4 hrs |
+| ~~Bug~~ | ~~Resource Gap (16 of 28 missing)~~ | ~~**CRITICAL**~~ | ✅ **RESOLVED** | ~~2-4 hrs~~ |
 | ~~Testing~~ | ~~Enchantments (5 missing)~~ | ~~HIGH~~ | ✅ **RESOLVED** | ~~2-3 hrs~~ |
 | ~~Bug~~ | ~~Inventory Click Misalignment~~ | ~~**CRITICAL**~~ | ✅ **RESOLVED** | ~~30 min~~ |
 | ~~Bug~~ | ~~Default Save Loading~~ | ~~HIGH~~ | ✅ **RESOLVED** | ~~1 hr~~ |
@@ -28,40 +28,29 @@
 
 ## SECTION 0: CRITICAL BUGS
 
-### 0.1 Resource Gap - 16 of 28 Resources Not Spawning
+### ~~0.1 Resource Gap - 16 of 28 Resources Not Spawning~~ [RESOLVED]
 
-**Status**: OPEN - CRITICAL
+**Status**: ✅ **FIXED January 2026**
 **Discovered**: 2026-01-28
 **Report**: `docs/RESOURCE_GAP_AUDIT_REPORT.md`
 
-**Problem**: The game has 28 resources defined in JSON (`Definitions.JSON/resource-node-1.JSON`) but only 12 are hardcoded in the game code. **57% of resources cannot spawn**, blocking recipes that require them.
+**Solution Implemented**:
+Created JSON-driven resource system with `ResourceNodeDatabase`:
 
-**Missing Resources (16 total)**:
-- **Trees (4)**: pine_tree, ash_tree, ebony_tree, worldtree_sapling
-- **Ores (4)**: tin_seam, adamantine_lode, orichalcum_trove, etherion_nexus
-- **Stones (8)**: shale_bed, basalt_column, marble_quarry, quartz_cluster, voidstone_shard, diamond_geode, eternity_monolith, primordial_formation, genesis_structure
+1. ✅ **New `data/models/resources.py`**: `ResourceNodeDefinition` and `ResourceDrop` dataclasses
+2. ✅ **New `data/databases/resource_node_db.py`**: `ResourceNodeDatabase` singleton that loads from JSON
+3. ✅ **Updated `data/models/world.py`**: `ResourceType` enum expanded from 12 to 28 resources + legacy aliases
+4. ✅ **Updated `systems/chunk.py`**: Uses `ResourceNodeDatabase` for spawn logic
+5. ✅ **Updated `systems/natural_resource.py`**: Uses database for loot tables, HP, respawn times
+6. ✅ **Updated `assets/icons/unified_icon_generator.py`**: Reads resources from JSON
+7. ✅ **Updated `core/game_engine.py`**: Loads `ResourceNodeDatabase` at startup
 
-**Hardcoded Locations (must be updated)**:
-| File | Line | What |
-|------|------|------|
-| `data/models/world.py` | 58-90 | `ResourceType` enum + `RESOURCE_TIERS` |
-| `systems/chunk.py` | 49-62 | Spawn lists by chunk type |
-| `systems/natural_resource.py` | 32-39 | `loot_map` dictionary |
-| `assets/icons/unified_icon_generator.py` | 58-84 | `RESOURCES` list |
+**All 28 resources now spawn correctly** (8 trees, 8 ores, 12 stones):
+- Trees: oak, pine, ash, birch, maple, ironwood, ebony, worldtree_sapling
+- Ores: copper, iron, tin, steel, mithril, adamantine, orichalcum, etherion
+- Stones: limestone, granite, shale, basalt, marble, quartz, obsidian, voidstone, diamond, eternity, primordial, genesis
 
-**Blocked Recipes (partial list)**:
-- `smithing_copper_spear` (needs ash_log)
-- `smithing_pine_shortbow` (needs pine_plank)
-- `refining_tin_ore_to_ingot` (needs tin_ore)
-- `enchanting_unbreaking_ii` (needs adamantine_ingot)
-- Multiple adornments recipes (need marble, crystal_quartz, diamond)
-
-**Fix Required**:
-1. Add 16 missing resources to `ResourceType` enum
-2. Add tier mappings to `RESOURCE_TIERS`
-3. Update chunk spawn lists by category/tier
-4. Add loot entries to `loot_map`
-5. Regenerate resource icons
+**Previously blocked recipes are now craftable.**
 
 ---
 

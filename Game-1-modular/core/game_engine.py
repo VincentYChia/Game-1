@@ -44,6 +44,7 @@ from data import (
     ClassDatabase,
     NPCDatabase,
 )
+from data.databases import ResourceNodeDatabase
 
 from data.models import Position, Recipe, PlacedEntityType, StationType
 from entities.components import ItemStack
@@ -94,6 +95,10 @@ class GameEngine:
         print("=" * 60)
         print("Loading databases...")
         print("=" * 60)
+
+        # Load resource nodes from JSON FIRST (needed for world generation)
+        ResourceNodeDatabase.get_instance().load_from_file(
+            str(get_resource_path("Definitions.JSON/resource-node-1.JSON")))
 
         MaterialDatabase.get_instance().load_from_file(str(get_resource_path("items.JSON/items-materials-1.JSON")))
         MaterialDatabase.get_instance().load_refining_items(
