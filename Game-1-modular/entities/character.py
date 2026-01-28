@@ -776,25 +776,57 @@ class Character:
         new_x = self.position.x + dx * speed_mult
         new_y = self.position.y + dy * speed_mult
 
-        # Check bounds (centered coordinate system based on chunk generation)
-        # Chunks range from -half to +half, each chunk is CHUNK_SIZE tiles
-        half_chunks = Config.NUM_CHUNKS // 2  # 5 for 11 chunks
-        min_bound = -half_chunks * Config.CHUNK_SIZE  # -80
-        max_bound = (half_chunks + 1) * Config.CHUNK_SIZE  # +96
-        if new_x < min_bound or new_x >= max_bound or new_y < min_bound or new_y >= max_bound:
-            return False
+        # Check bounds - skip world bounds when in a dungeon (dungeon has its own 32x32 tile bounds)
+        in_dungeon = (hasattr(world, 'dungeon_manager') and
+                      world.dungeon_manager and
+                      world.dungeon_manager.in_dungeon)
 
-        # Check walkability
+        if not in_dungeon:
+            # World bounds (centered coordinate system based on chunk generation)
+            # Chunks range from -half to +half, each chunk is CHUNK_SIZE tiles
+            half_chunks = Config.NUM_CHUNKS // 2  # 5 for 11 chunks
+            min_bound = -half_chunks * Config.CHUNK_SIZE  # -80
+            max_bound = (half_chunks + 1) * Config.CHUNK_SIZE  # +96
+            if new_x < min_bound or new_x >= max_bound or new_y < min_bound or new_y >= max_bound:
+                return False
+
+        # Check walkability with collision sliding
         new_pos = Position(new_x, new_y, self.position.z)
+        final_x, final_y = new_x, new_y
+        moved = False
+
         if world.is_walkable(new_pos):
-            # Calculate actual distance moved (after speed multiplier)
-            actual_dx = dx * speed_mult
-            actual_dy = dy * speed_mult
+            # Full diagonal movement is possible
+            final_x, final_y = new_x, new_y
+            moved = True
+        elif dx != 0 and dy != 0:
+            # Diagonal movement blocked - try sliding along one axis
+            # Try X-only movement first
+            x_only_pos = Position(new_x, self.position.y, self.position.z)
+            if world.is_walkable(x_only_pos):
+                final_x = new_x
+                final_y = self.position.y
+                moved = True
+            else:
+                # Try Y-only movement
+                y_only_pos = Position(self.position.x, new_y, self.position.z)
+                if world.is_walkable(y_only_pos):
+                    final_x = self.position.x
+                    final_y = new_y
+                    moved = True
+
+        if moved:
+            # Calculate actual distance moved
+            actual_dx = final_x - self.position.x
+            actual_dy = final_y - self.position.y
             distance_moved = (actual_dx ** 2 + actual_dy ** 2) ** 0.5
 
-            self.position.x = new_x
-            self.position.y = new_y
-            self.facing = ("right" if dx > 0 else "left") if abs(dx) > abs(dy) else ("down" if dy > 0 else "up")
+            self.position.x = final_x
+            self.position.y = final_y
+
+            # Update facing based on primary movement direction
+            if abs(dx) > 0 or abs(dy) > 0:
+                self.facing = ("right" if dx > 0 else "left") if abs(dx) > abs(dy) else ("down" if dy > 0 else "up")
 
             # Track movement in stat tracker
             if hasattr(self, 'stat_tracker') and distance_moved > 0:

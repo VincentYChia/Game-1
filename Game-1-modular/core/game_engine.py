@@ -198,6 +198,7 @@ class GameEngine:
         print("Loading dungeon system...")
         self.dungeon_manager = DungeonManager()
         self.combat_manager.dungeon_manager = self.dungeon_manager  # Link for 2x EXP, no drops
+        self.world.dungeon_manager = self.dungeon_manager  # Link for dungeon tile walkability checks
 
         # Only spawn initial enemies if we have a real character
         if self.character:
@@ -1961,6 +1962,20 @@ class GameEngine:
                     else:
                         self.add_notification("Too far to pick up", (255, 100, 100))
                         return
+
+        # Check for dungeon entrance click (before stations and resources)
+        dungeon_entrance = self.world.get_dungeon_entrance_at(world_pos)
+        if dungeon_entrance:
+            if self.character.is_in_range(dungeon_entrance.position):
+                if self.dungeon_manager.in_dungeon:
+                    self.add_notification("Already in a dungeon!", (255, 100, 100))
+                else:
+                    # Enter dungeon with the entrance's pre-rolled rarity
+                    self._enter_dungeon_with_rarity(dungeon_entrance.rarity)
+                return
+            else:
+                self.add_notification("Move closer to the dungeon entrance", (255, 200, 100))
+                return
 
         station = self.world.get_station_at(world_pos)
 
@@ -5062,6 +5077,46 @@ class GameEngine:
         self.combat_manager.spawn_dungeon_wave()
 
         self.add_notification(f"Entered {rarity_name} Dungeon!", (255, 215, 0))
+        print(f"🏰 Entered {rarity_name} dungeon: {dungeon.total_mobs} total mobs, {dungeon.total_waves} waves")
+
+    def _enter_dungeon_with_rarity(self, rarity):
+        """Enter a dungeon with a specific rarity (from entrance click)."""
+        if self.dungeon_manager.in_dungeon:
+            self.add_notification("Already in dungeon!", (255, 100, 100))
+            return
+
+        if self.character is None:
+            return
+
+        # Enter dungeon with specific rarity
+        dungeon = self.dungeon_manager.enter_dungeon(self.character.position, rarity=rarity)
+        rarity_name = dungeon.rarity.value.capitalize()
+
+        # Track stat
+        if hasattr(self.character, 'stat_tracker'):
+            self.character.stat_tracker.record_dungeon_entered(dungeon.rarity.value)
+
+        # Move player to dungeon spawn
+        spawn_pos = self.dungeon_manager.get_player_dungeon_position()
+        if spawn_pos:
+            self.character.position = spawn_pos
+
+        # Clear world enemies and spawn dungeon wave
+        self.combat_manager.clear_dungeon_enemies()
+        self.combat_manager.spawn_dungeon_wave()
+
+        # Get rarity color for notification
+        rarity_colors = {
+            "common": (150, 150, 150),
+            "uncommon": (50, 200, 50),
+            "rare": (50, 100, 255),
+            "epic": (180, 50, 255),
+            "legendary": (255, 180, 0),
+            "unique": (255, 50, 50),
+        }
+        color = rarity_colors.get(dungeon.rarity.value, (255, 215, 0))
+
+        self.add_notification(f"Entered {rarity_name} Dungeon!", color)
         print(f"🏰 Entered {rarity_name} dungeon: {dungeon.total_mobs} total mobs, {dungeon.total_waves} waves")
 
     def _exit_dungeon(self):

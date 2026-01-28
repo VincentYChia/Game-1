@@ -465,8 +465,19 @@ class Enemy:
         dy = self.position[1] - position[1]
         return (dx * dx + dy * dy) ** 0.5
 
-    def take_damage(self, damage: float, from_player: bool = True) -> bool:
-        """Apply damage to enemy. Returns True if enemy died"""
+    def take_damage(self, damage: float, damage_type: str = "physical",
+                    from_player: bool = True, tags: list = None,
+                    source=None, **kwargs) -> bool:
+        """Apply damage to enemy. Returns True if enemy died.
+
+        Args:
+            damage: Amount of damage to apply
+            damage_type: Type of damage (physical, fire, ice, etc.)
+            from_player: Whether damage came from player
+            tags: Optional tags from the damage source
+            source: Source of the damage (for status effects)
+            **kwargs: Additional parameters (ignored for compatibility)
+        """
         self.current_health -= damage
         self.in_combat = True
 

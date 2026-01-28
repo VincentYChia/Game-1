@@ -1085,6 +1085,50 @@ class Renderer:
                 tx, ty = camera.world_to_screen(Position(entity.target_enemy.position[0], entity.target_enemy.position[1], 0))
                 pygame.draw.line(self.screen, (255, 0, 0), (sx, sy), (tx, ty), 2)
 
+        # Render dungeon entrances
+        for entrance in world.get_visible_dungeon_entrances(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
+            sx, sy = camera.world_to_screen(entrance.position)
+            in_range = character.is_in_range(entrance.position)
+            size = Config.TILE_SIZE
+
+            # Get rarity color for the entrance
+            rarity_color = entrance.get_rarity_color()
+
+            # Draw entrance as a portal/doorway shape
+            # Outer ring with rarity color
+            pygame.draw.circle(self.screen, rarity_color, (sx, sy), size // 2, 4)
+            # Inner dark circle (portal)
+            pygame.draw.circle(self.screen, (30, 30, 40), (sx, sy), size // 2 - 4)
+            # Glow effect based on rarity
+            glow_color = tuple(min(255, c + 50) for c in rarity_color)
+            pygame.draw.circle(self.screen, glow_color, (sx, sy), size // 2 + 2, 2)
+
+            # Highlight when in range
+            if in_range:
+                pygame.draw.circle(self.screen, (255, 255, 255), (sx, sy), size // 2 + 4, 2)
+
+            # Rarity indicator text
+            rarity_short = {
+                "common": "C", "uncommon": "U", "rare": "R",
+                "epic": "E", "legendary": "L", "unique": "!"
+            }
+            rarity_text = rarity_short.get(entrance.rarity.value, "?")
+            rarity_surf = self.small_font.render(rarity_text, True, (255, 255, 255))
+            # Black outline for visibility
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                self.screen.blit(self.small_font.render(rarity_text, True, (0, 0, 0)),
+                                 (sx - rarity_surf.get_width() // 2 + dx, sy - rarity_surf.get_height() // 2 + dy))
+            self.screen.blit(rarity_surf, (sx - rarity_surf.get_width() // 2, sy - rarity_surf.get_height() // 2))
+
+            # Show "Dungeon" label when in range
+            if in_range:
+                label = f"{entrance.rarity.value.capitalize()} Dungeon"
+                label_surf = self.tiny_font.render(label, True, rarity_color)
+                label_bg = pygame.Rect(sx - label_surf.get_width() // 2 - 2, sy - size // 2 - 18,
+                                       label_surf.get_width() + 4, label_surf.get_height() + 2)
+                pygame.draw.rect(self.screen, (0, 0, 0, 200), label_bg)
+                self.screen.blit(label_surf, (sx - label_surf.get_width() // 2, sy - size // 2 - 16))
+
         for resource in world.get_visible_resources(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             if resource.depleted and not resource.respawns:
                 continue

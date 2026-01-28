@@ -209,6 +209,56 @@ DUNGEON_CONFIG = {
 
 
 @dataclass
+class DungeonEntrance:
+    """A dungeon entrance in the world that players can interact with to enter dungeons."""
+    position: Position
+    rarity: DungeonRarity
+    entrance_id: str = ""
+    is_cleared: bool = False  # True if the dungeon was cleared (can respawn after time)
+    cooldown_remaining: float = 0.0  # Time until dungeon can be re-entered after clearing
+
+    def __post_init__(self):
+        if not self.entrance_id:
+            import time
+            import random
+            self.entrance_id = f"entrance_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
+
+    def get_rarity_color(self) -> Tuple[int, int, int]:
+        """Get the color associated with this dungeon's rarity."""
+        rarity_colors = {
+            DungeonRarity.COMMON: (150, 150, 150),      # Gray
+            DungeonRarity.UNCOMMON: (50, 200, 50),      # Green
+            DungeonRarity.RARE: (50, 100, 255),         # Blue
+            DungeonRarity.EPIC: (180, 50, 255),         # Purple
+            DungeonRarity.LEGENDARY: (255, 180, 0),     # Orange/Gold
+            DungeonRarity.UNIQUE: (255, 50, 50),        # Red
+        }
+        return rarity_colors.get(self.rarity, (150, 150, 150))
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize for saving."""
+        return {
+            "entrance_id": self.entrance_id,
+            "position": {"x": self.position.x, "y": self.position.y, "z": self.position.z},
+            "rarity": self.rarity.value,
+            "is_cleared": self.is_cleared,
+            "cooldown_remaining": self.cooldown_remaining
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'DungeonEntrance':
+        """Deserialize from save data."""
+        pos_data = data.get("position", {"x": 0, "y": 0, "z": 0})
+        return cls(
+            position=Position(pos_data["x"], pos_data["y"], pos_data.get("z", 0)),
+            rarity=DungeonRarity(data.get("rarity", "common")),
+            entrance_id=data.get("entrance_id", ""),
+            is_cleared=data.get("is_cleared", False),
+            cooldown_remaining=data.get("cooldown_remaining", 0.0)
+        )
+
+
+@dataclass
 class PlacedEntity:
     """A player-placed entity in the world (turret, trap, station, etc.)"""
     position: Position

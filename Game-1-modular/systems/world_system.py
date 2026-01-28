@@ -1,8 +1,10 @@
 """World system for managing the game world, tiles, resources, and stations"""
 
+import random
 from typing import Dict, List, Optional, Tuple
 
-from data.models import Position, WorldTile, TileType, StationType, CraftingStation, PlacedEntity, PlacedEntityType
+from data.models import Position, WorldTile, TileType, StationType, CraftingStation, PlacedEntity, PlacedEntityType, DungeonRarity, DungeonEntrance
+from data.models.world import DUNGEON_CONFIG
 from systems.natural_resource import NaturalResource
 from systems.chunk import Chunk
 from core.config import Config
@@ -15,8 +17,11 @@ class WorldSystem:
         self.resources: List[NaturalResource] = []
         self.crafting_stations: List[CraftingStation] = []
         self.placed_entities: List[PlacedEntity] = []  # Player-placed turrets, traps, stations, etc.
+        self.dungeon_entrances: List[DungeonEntrance] = []  # Dungeon entrance locations
+        self.dungeon_manager = None  # Set by game_engine for dungeon tile lookups
         self.generate_world()
         self.spawn_starting_stations()
+        self.spawn_dungeon_entrances()
 
     def generate_world(self):
         """Generate world with centered coordinate system.
@@ -57,11 +62,97 @@ class WorldSystem:
                 y = -10 - (tier - 1) * 2  # -10, -12, -14, -16 (north of spawn)
                 self.crafting_stations.append(CraftingStation(Position(base_x, y, 0), stype, tier))
 
+    def spawn_dungeon_entrances(self):
+        """Spawn dungeon entrances across the world.
+
+        Target: ~1 entrance per 12 chunks on average.
+        Avoids spawn area (within 20 tiles of origin).
+        Each entrance has a pre-rolled rarity based on spawn weights.
+        """
+        half_chunks = Config.NUM_CHUNKS // 2  # 5 for 11 chunks
+        total_chunks = Config.NUM_CHUNKS * Config.NUM_CHUNKS  # 121 chunks for 11x11
+
+        # Target ~1 dungeon per 12 chunks = about 10 dungeons total for 121 chunks
+        target_dungeons = max(1, total_chunks // 12)
+
+        # Use a probability per chunk approach for more even distribution
+        spawn_chance_per_chunk = target_dungeons / total_chunks  # ~0.083
+
+        dungeon_count = 0
+        for chunk_x in range(-half_chunks, half_chunks + 1):
+            for chunk_y in range(-half_chunks, half_chunks + 1):
+                # Skip spawn area chunks (chunks near 0,0)
+                if abs(chunk_x) <= 1 and abs(chunk_y) <= 1:
+                    continue
+
+                # Roll for dungeon spawn
+                if random.random() < spawn_chance_per_chunk:
+                    # Generate position within chunk (avoid edges)
+                    tile_x = chunk_x * Config.CHUNK_SIZE + random.randint(2, Config.CHUNK_SIZE - 3)
+                    tile_y = chunk_y * Config.CHUNK_SIZE + random.randint(2, Config.CHUNK_SIZE - 3)
+
+                    # Ensure position is on walkable terrain
+                    pos = Position(tile_x, tile_y, 0)
+                    tile = self.get_tile(pos)
+                    if tile and tile.tile_type not in (TileType.WATER, TileType.DEEP_WATER):
+                        # Roll rarity based on spawn weights
+                        rarity = self._roll_dungeon_rarity()
+                        entrance = DungeonEntrance(position=pos, rarity=rarity)
+                        self.dungeon_entrances.append(entrance)
+                        dungeon_count += 1
+
+        print(f"Generated {dungeon_count} dungeon entrances across the world")
+
+    def _roll_dungeon_rarity(self) -> DungeonRarity:
+        """Roll for dungeon rarity based on spawn weights."""
+        total_weight = sum(DUNGEON_CONFIG[r]["spawn_weight"] for r in DungeonRarity)
+        roll = random.randint(1, total_weight)
+
+        cumulative = 0
+        for rarity in DungeonRarity:
+            cumulative += DUNGEON_CONFIG[rarity]["spawn_weight"]
+            if roll <= cumulative:
+                return rarity
+
+        return DungeonRarity.COMMON  # Fallback
+
+    def get_visible_dungeon_entrances(self, camera_pos: Position, vw: int, vh: int) -> List[DungeonEntrance]:
+        """Get all dungeon entrances visible in the camera viewport."""
+        tw, th = vw // Config.TILE_SIZE + 2, vh // Config.TILE_SIZE + 2
+        sx, sy = camera_pos.x - tw // 2, camera_pos.y - th // 2
+        ex, ey = camera_pos.x + tw // 2, camera_pos.y + th // 2
+        return [e for e in self.dungeon_entrances if sx <= e.position.x <= ex and sy <= e.position.y <= ey]
+
+    def get_dungeon_entrance_at(self, position: Position, tolerance: float = 1.0) -> Optional[DungeonEntrance]:
+        """Get dungeon entrance at position with tolerance for easier clicking."""
+        for entrance in self.dungeon_entrances:
+            dx = abs(entrance.position.x - position.x)
+            dy = abs(entrance.position.y - position.y)
+            if dx <= tolerance and dy <= tolerance:
+                return entrance
+        return None
+
     def get_tile(self, position: Position) -> Optional[WorldTile]:
         return self.tiles.get(position.snap_to_grid().to_key())
 
     def is_walkable(self, position: Position) -> bool:
-        """Check if a position is walkable (no water, no solid resources)."""
+        """Check if a position is walkable (no water, no solid resources).
+
+        When in a dungeon, checks dungeon tiles instead of world tiles.
+        """
+        # Check if we're in a dungeon - use dungeon tiles instead
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            dungeon = self.dungeon_manager.current_dungeon
+            if dungeon:
+                # Use dungeon tiles
+                tile_key = position.snap_to_grid().to_key()
+                tile = dungeon.tiles.get(tile_key)
+                if not tile:
+                    return False
+                return tile.walkable
+            return False
+
+        # Normal world tile check
         tile = self.get_tile(position)
         if not tile or tile.tile_type == TileType.WATER or not tile.walkable:
             return False
