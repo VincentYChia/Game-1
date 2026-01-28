@@ -655,10 +655,17 @@ class CombatManager:
             print(f"      ☠️ Killed!")
             exp_reward = self._calculate_exp_reward(enemy)
             self.character.leveling.add_exp(exp_reward)
-            loot = enemy.generate_loot()
-            if loot:
-                for material_id, quantity in loot:
-                    self.character.inventory.add_item(material_id, quantity)
+
+            # No loot drops in dungeons - only EXP (2x already applied in _calculate_exp_reward)
+            if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
+                loot = enemy.generate_loot()
+                if loot:
+                    for material_id, quantity in loot:
+                        self.character.inventory.add_item(material_id, quantity)
+
+            # Notify dungeon manager of kill for wave tracking
+            if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+                self.on_dungeon_enemy_killed(enemy)
 
         return (final_damage, is_crit, loot)
 
@@ -912,19 +919,27 @@ class CombatManager:
             self.character.leveling.add_exp(exp_reward)
             print(f"   +{exp_reward} EXP")
 
-            # Auto-loot: Generate and add loot to inventory automatically
-            loot = enemy.generate_loot()
-            if loot:
-                print(f"   💰 Auto-looting {len(loot)} item type(s):")
-                for material_id, quantity in loot:
-                    # Add to character's inventory
-                    success = self.character.inventory.add_item(material_id, quantity)
-                    if success:
-                        print(f"      +{quantity}x {material_id}")
-                    else:
-                        print(f"      ⚠️ Inventory full! Could not add {quantity}x {material_id}")
+            # No loot drops in dungeons - only EXP (2x already applied)
+            if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
+                # Auto-loot: Generate and add loot to inventory automatically
+                loot = enemy.generate_loot()
+                if loot:
+                    print(f"   💰 Auto-looting {len(loot)} item type(s):")
+                    for material_id, quantity in loot:
+                        # Add to character's inventory
+                        success = self.character.inventory.add_item(material_id, quantity)
+                        if success:
+                            print(f"      +{quantity}x {material_id}")
+                        else:
+                            print(f"      ⚠️ Inventory full! Could not add {quantity}x {material_id}")
+                else:
+                    print(f"   No loot dropped")
             else:
-                print(f"   No loot dropped")
+                print(f"   🏰 Dungeon kill - no loot, 2x EXP!")
+
+            # Notify dungeon manager of kill for wave tracking
+            if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+                self.on_dungeon_enemy_killed(enemy)
 
             # Track combat activity
             if hasattr(self.character, 'activity_tracker'):
@@ -1147,16 +1162,21 @@ class CombatManager:
                     total_damage += effect_params.get("baseDamage", 0)
                     print(f"   💀 {target.definition.name} killed!")
 
-                    # EXP reward
+                    # EXP reward (2x in dungeons via _calculate_exp_reward)
                     exp_reward = self._calculate_exp_reward(target)
                     self.character.leveling.add_exp(exp_reward)
 
-                    # Auto-loot
-                    target_loot = target.generate_loot()
-                    if target_loot:
-                        for material_id, quantity in target_loot:
-                            self.character.inventory.add_item(material_id, quantity)
-                            loot.extend(target_loot)
+                    # No loot drops in dungeons
+                    if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
+                        target_loot = target.generate_loot()
+                        if target_loot:
+                            for material_id, quantity in target_loot:
+                                self.character.inventory.add_item(material_id, quantity)
+                                loot.extend(target_loot)
+
+                    # Notify dungeon manager of kill for wave tracking
+                    if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+                        self.on_dungeon_enemy_killed(target)
 
             return (total_damage, False, loot)
 
@@ -1306,16 +1326,24 @@ class CombatManager:
                 self.character.leveling.add_exp(exp_reward)
                 print(f"   +{exp_reward} EXP")
 
-                # Auto-loot
-                loot = enemy.generate_loot()
-                if loot:
-                    print(f"   💰 Auto-looting {len(loot)} item type(s):")
-                    for material_id, quantity in loot:
-                        success = self.character.inventory.add_item(material_id, quantity)
-                        if success:
-                            print(f"      +{quantity}x {material_id}")
-                        else:
-                            print(f"      ⚠️ Inventory full! Could not add {quantity}x {material_id}")
+                # No loot drops in dungeons - only EXP (2x already applied)
+                if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
+                    # Auto-loot
+                    loot = enemy.generate_loot()
+                    if loot:
+                        print(f"   💰 Auto-looting {len(loot)} item type(s):")
+                        for material_id, quantity in loot:
+                            success = self.character.inventory.add_item(material_id, quantity)
+                            if success:
+                                print(f"      +{quantity}x {material_id}")
+                            else:
+                                print(f"      ⚠️ Inventory full! Could not add {quantity}x {material_id}")
+                else:
+                    print(f"   🏰 Dungeon kill - no loot, 2x EXP!")
+
+                # Notify dungeon manager of kill for wave tracking
+                if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+                    self.on_dungeon_enemy_killed(enemy)
 
                 # Track combat activity
                 if hasattr(self.character, 'activity_tracker'):
@@ -1477,8 +1505,8 @@ class CombatManager:
         final_damage = max(1, final_damage)  # Minimum 1 damage
         print(f"   ➜ Final damage to player: {final_damage:.1f}")
 
-        # Apply to player
-        self.character.take_damage(final_damage, from_attack=True)
+        # Apply to player (pass dungeon_manager for death handling in dungeons)
+        self.character.take_damage(final_damage, from_attack=True, dungeon_manager=self.dungeon_manager)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
         # NEW: Track damage taken

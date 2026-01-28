@@ -1723,14 +1723,37 @@ class Character:
 
         if self.health <= 0:
             self.health = 0
-            self._handle_death()
+            # Pass dungeon_manager if provided for proper death handling in dungeons
+            dungeon_manager = kwargs.get('dungeon_manager')
+            self._handle_death(dungeon_manager=dungeon_manager)
 
-    def _handle_death(self):
-        """Handle player death - respawn at spawn point (origin)"""
+    def _handle_death(self, dungeon_manager=None):
+        """Handle player death - respawn at spawn point (origin)
+
+        If in a dungeon, exit the dungeon and return to world spawn.
+
+        Args:
+            dungeon_manager: Optional dungeon manager to check/exit dungeon
+        """
         from core.config import Config
         print("💀 You died! Respawning...")
+
+        # Reset health
         self.health = self.max_health
-        self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
+
+        # If in a dungeon, exit it (dungeon failed)
+        if dungeon_manager and dungeon_manager.in_dungeon:
+            print("💀 You died in the dungeon! Exiting...")
+            # Get return position from dungeon
+            dungeon = dungeon_manager.current_dungeon
+            if dungeon and dungeon.return_position:
+                self.position = dungeon.return_position
+            else:
+                self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
+            dungeon_manager.exit_dungeon()
+        else:
+            self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
+
         # Keep all items and equipment (no death penalty)
 
     def get_effective_max_durability(self, item) -> int:
