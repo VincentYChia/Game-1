@@ -19,38 +19,42 @@ class WorldSystem:
         self.spawn_starting_stations()
 
     def generate_world(self):
-        num_chunks = Config.WORLD_SIZE // Config.CHUNK_SIZE
-        for chunk_x in range(num_chunks):
-            for chunk_y in range(num_chunks):
+        """Generate world with centered coordinate system.
+
+        Chunks are indexed from -half to +half (e.g., -5 to +5 for 11 chunks).
+        Tile coordinates range from -WORLD_SIZE/2 to +WORLD_SIZE/2.
+        Origin (0,0,0) is at the center of the world.
+        """
+        half_chunks = Config.NUM_CHUNKS // 2  # 5 for 11 chunks
+        for chunk_x in range(-half_chunks, half_chunks + 1):
+            for chunk_y in range(-half_chunks, half_chunks + 1):
                 chunk = Chunk(chunk_x, chunk_y)
                 self.chunks[(chunk_x, chunk_y)] = chunk
                 self.tiles.update(chunk.tiles)
                 self.resources.extend(chunk.resources)
-        print(f"Generated {Config.WORLD_SIZE}x{Config.WORLD_SIZE} world, {len(self.resources)} resources")
+        print(f"Generated {Config.NUM_CHUNKS}x{Config.NUM_CHUNKS} chunk world ({Config.WORLD_SIZE}x{Config.WORLD_SIZE} tiles), {len(self.resources)} resources")
 
     def spawn_starting_stations(self):
-        """Spawn all tiers of crafting stations near player start (50, 50)"""
-        # Place all 4 tiers of each station type in a grid layout
-        # Format: (base_x, base_y, station_type)
-        # Each station type gets T1-T4 arranged vertically
+        """Spawn all tiers of crafting stations near player spawn at origin (0, 0).
 
+        Stations are placed NORTH of spawn (negative Y) in a grid layout
+        to avoid collision with player spawn position.
+        """
+        # Station layout: spread horizontally around X=0, placed north (Y < 0)
+        # Format: (base_x, station_type)
         station_positions = [
-            # SMITHING - Far left column
-            (44, StationType.SMITHING),
-            # REFINING - Left column
-            (46, StationType.REFINING),
-            # ALCHEMY - Right column
-            (54, StationType.ALCHEMY),
-            # ENGINEERING - Far right column
-            (56, StationType.ENGINEERING),
-            # ADORNMENTS/ENCHANTING - Center column
-            (50, StationType.ADORNMENTS),
+            (-8, StationType.SMITHING),      # Far left
+            (-4, StationType.REFINING),      # Left
+            (0, StationType.ADORNMENTS),     # Center
+            (4, StationType.ALCHEMY),        # Right
+            (8, StationType.ENGINEERING),    # Far right
         ]
 
-        # Spawn T1-T4 of each station type
+        # Spawn T1-T4 of each station type, arranged vertically going north
+        # T1 closest to spawn (-10), T4 furthest (-16)
         for base_x, stype in station_positions:
             for tier in range(1, 5):  # T1, T2, T3, T4
-                y = 46 + (tier - 1) * 2  # Vertical spacing: 46, 48, 50, 52
+                y = -10 - (tier - 1) * 2  # -10, -12, -14, -16 (north of spawn)
                 self.crafting_stations.append(CraftingStation(Position(base_x, y, 0), stype, tier))
 
     def get_tile(self, position: Position) -> Optional[WorldTile]:

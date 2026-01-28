@@ -174,7 +174,7 @@ class GameEngine:
         # If temporary world flag is set, create character immediately
         if self.temporary_world:
             print("🌍 Starting in temporary world mode (no saves)")
-            self.character = Character(Position(50.0, 50.0, 0.0))
+            self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             self.start_menu_open = False
 
             # Open class selection for new character
@@ -187,7 +187,7 @@ class GameEngine:
 
         # Initialize combat system (with temporary character if needed for loading)
         print("Loading combat system...")
-        temp_char = self.character if self.character else Character(Position(50.0, 50.0, 0.0))
+        temp_char = self.character if self.character else Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
         self.combat_manager = CombatManager(self.world, temp_char)
         self.combat_manager.load_config(
             "Definitions.JSON/combat-config.JSON",
@@ -199,7 +199,7 @@ class GameEngine:
 
             # Spawn training dummy for tag testing
             from systems.training_dummy import spawn_training_dummy
-            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+            spawn_training_dummy(self.combat_manager, (10.0, 0.0))
 
         # Initialize NPC system
         print("Loading NPCs...")
@@ -314,6 +314,12 @@ class GameEngine:
         self.last_tick = pygame.time.get_ticks()
         self.last_click_time = 0
         self.last_clicked_slot = None
+
+        # Day/Night Cycle (16 min day + 8 min night = 24 min total)
+        self.game_time = 0.0  # Seconds since game start
+        self.DAY_LENGTH = 960.0      # 16 minutes in seconds
+        self.NIGHT_LENGTH = 480.0    # 8 minutes in seconds
+        self.CYCLE_LENGTH = 1440.0   # Total cycle (24 minutes)
 
         # Start menu UI rects
         self.start_menu_buttons = []
@@ -1172,14 +1178,14 @@ class GameEngine:
             print("🌍 Starting new world...")
             self.start_menu_open = False
             self.temporary_world = False
-            self.character = Character(Position(50.0, 50.0, 0.0))
+            self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             # Update combat manager with new character
             self.combat_manager.character = self.character
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
             # Spawn training dummy for tag testing
             from systems.training_dummy import spawn_training_dummy
-            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+            spawn_training_dummy(self.combat_manager, (10.0, 0.0))
             self.add_notification("Welcome to your new world!", (100, 255, 100))
 
             # Open class selection for new character
@@ -1196,7 +1202,7 @@ class GameEngine:
                 self.temporary_world = False
 
                 # Create character at starting position first
-                self.character = Character(Position(50.0, 50.0, 0.0))
+                self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
 
                 # Restore character state from save
                 self.character.restore_from_save(save_data["player"])
@@ -1221,7 +1227,7 @@ class GameEngine:
 
                 # Spawn training dummy for tag testing
                 from systems.training_dummy import spawn_training_dummy
-                spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+                spawn_training_dummy(self.combat_manager, (10.0, 0.0))
 
                 print(f"✓ Loaded character: Level {self.character.leveling.level}")
                 self.add_notification("World loaded successfully!", (100, 255, 100))
@@ -1239,7 +1245,7 @@ class GameEngine:
                 self.temporary_world = False
 
                 # Create character at starting position first
-                self.character = Character(Position(50.0, 50.0, 0.0))
+                self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
 
                 # Restore character state from save
                 self.character.restore_from_save(save_data["player"])
@@ -1264,7 +1270,7 @@ class GameEngine:
 
                 # Spawn training dummy for tag testing
                 from systems.training_dummy import spawn_training_dummy
-                spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+                spawn_training_dummy(self.combat_manager, (10.0, 0.0))
 
                 print(f"✓ Loaded default save: Level {self.character.leveling.level}")
                 self.add_notification("Default save loaded successfully!", (100, 255, 100))
@@ -1279,14 +1285,14 @@ class GameEngine:
             print("🌍 Starting temporary world (no saves)...")
             self.start_menu_open = False
             self.temporary_world = True
-            self.character = Character(Position(50.0, 50.0, 0.0))
+            self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             # Update combat manager with new character
             self.combat_manager.character = self.character
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
             # Spawn training dummy for tag testing
             from systems.training_dummy import spawn_training_dummy
-            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+            spawn_training_dummy(self.combat_manager, (10.0, 0.0))
             self.add_notification("Temporary world started (no saves)", (255, 215, 0))
 
             # Open class selection for new character
@@ -4872,6 +4878,35 @@ class GameEngine:
                             return
             self.character.inventory.cancel_drag()
 
+    def get_time_of_day(self) -> tuple:
+        """Get current time phase and progress within that phase.
+
+        Returns:
+            (phase, progress) where:
+            - phase: "night", "dawn", "day", "dusk"
+            - progress: 0.0-1.0 within that phase
+        """
+        cycle_time = self.game_time % self.CYCLE_LENGTH
+
+        # Time breakdown (24 min = 1440s):
+        # 0-480s (0-8 min): Night
+        # 480-600s (8-10 min): Dawn transition
+        # 600-1320s (10-22 min): Day
+        # 1320-1440s (22-24 min): Dusk transition
+        if cycle_time < 480:
+            return ("night", cycle_time / 480)
+        elif cycle_time < 600:
+            return ("dawn", (cycle_time - 480) / 120)
+        elif cycle_time < 1320:
+            return ("day", (cycle_time - 600) / 720)
+        else:
+            return ("dusk", (cycle_time - 1320) / 120)
+
+    def is_night(self) -> bool:
+        """Check if it's currently night time."""
+        phase, _ = self.get_time_of_day()
+        return phase == "night"
+
     def update(self):
         # Skip updates if in start menu or no character
         if self.start_menu_open or self.character is None:
@@ -4889,6 +4924,9 @@ class GameEngine:
         curr = pygame.time.get_ticks()
         dt = (curr - self.last_tick) / 1000.0
         self.last_tick = curr
+
+        # Update day/night cycle
+        self.game_time += dt
 
         # Update playtime tracking
         if hasattr(self.character, 'stat_tracker'):
@@ -4983,7 +5021,7 @@ class GameEngine:
                                                 item_name = mat.name if mat else material_id
                                                 self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
 
-            self.combat_manager.update(dt, shield_blocking=shield_blocking)
+            self.combat_manager.update(dt, shield_blocking=shield_blocking, is_night=self.is_night())
             self.character.update_attack_cooldown(dt)
             self.character.update_health_regen(dt)
             self.character.update_buffs(dt)
@@ -5027,6 +5065,11 @@ class GameEngine:
         # Pass NPCs to renderer via temporary attribute
         self.renderer._temp_npcs = self.npcs
         self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
+
+        # Render day/night cycle overlay
+        time_phase, phase_progress = self.get_time_of_day()
+        self.renderer.render_day_night_overlay(time_phase, phase_progress)
+
         self.renderer.render_ui(self.character, self.mouse_pos)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
 

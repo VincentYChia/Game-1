@@ -17,7 +17,7 @@ def create_default_save():
         "version": "2.0",
         "save_timestamp": "2025-11-29T00:00:00",
         "player": {
-            "position": {"x": 50.0, "y": 50.0, "z": 0.0},
+            "position": {"x": 0.0, "y": 0.0, "z": 0.0},  # Origin spawn
             "facing": "down",
             "stats": {
                 "strength": 15,
@@ -179,26 +179,32 @@ def create_default_save():
                 }
             ],
             "crafting_stations": [
-                {"position": {"x": 44.0, "y": 46.0, "z": 0.0}, "station_type": "SMITHING", "tier": 1},
-                {"position": {"x": 44.0, "y": 48.0, "z": 0.0}, "station_type": "SMITHING", "tier": 2},
-                {"position": {"x": 44.0, "y": 50.0, "z": 0.0}, "station_type": "SMITHING", "tier": 3},
-                {"position": {"x": 44.0, "y": 52.0, "z": 0.0}, "station_type": "SMITHING", "tier": 4},
-                {"position": {"x": 46.0, "y": 46.0, "z": 0.0}, "station_type": "REFINING", "tier": 1},
-                {"position": {"x": 46.0, "y": 48.0, "z": 0.0}, "station_type": "REFINING", "tier": 2},
-                {"position": {"x": 46.0, "y": 50.0, "z": 0.0}, "station_type": "REFINING", "tier": 3},
-                {"position": {"x": 46.0, "y": 52.0, "z": 0.0}, "station_type": "REFINING", "tier": 4},
-                {"position": {"x": 54.0, "y": 46.0, "z": 0.0}, "station_type": "ALCHEMY", "tier": 1},
-                {"position": {"x": 54.0, "y": 48.0, "z": 0.0}, "station_type": "ALCHEMY", "tier": 2},
-                {"position": {"x": 54.0, "y": 50.0, "z": 0.0}, "station_type": "ALCHEMY", "tier": 3},
-                {"position": {"x": 54.0, "y": 52.0, "z": 0.0}, "station_type": "ALCHEMY", "tier": 4},
-                {"position": {"x": 56.0, "y": 46.0, "z": 0.0}, "station_type": "ENGINEERING", "tier": 1},
-                {"position": {"x": 56.0, "y": 48.0, "z": 0.0}, "station_type": "ENGINEERING", "tier": 2},
-                {"position": {"x": 56.0, "y": 50.0, "z": 0.0}, "station_type": "ENGINEERING", "tier": 3},
-                {"position": {"x": 56.0, "y": 52.0, "z": 0.0}, "station_type": "ENGINEERING", "tier": 4},
-                {"position": {"x": 50.0, "y": 46.0, "z": 0.0}, "station_type": "ADORNMENTS", "tier": 1},
-                {"position": {"x": 50.0, "y": 48.0, "z": 0.0}, "station_type": "ADORNMENTS", "tier": 2},
-                {"position": {"x": 50.0, "y": 50.0, "z": 0.0}, "station_type": "ADORNMENTS", "tier": 3},
-                {"position": {"x": 50.0, "y": 52.0, "z": 0.0}, "station_type": "ADORNMENTS", "tier": 4}
+                # Stations placed north of origin spawn (negative Y)
+                # SMITHING - Far left (X=-8)
+                {"position": {"x": -8.0, "y": -10.0, "z": 0.0}, "station_type": "SMITHING", "tier": 1},
+                {"position": {"x": -8.0, "y": -12.0, "z": 0.0}, "station_type": "SMITHING", "tier": 2},
+                {"position": {"x": -8.0, "y": -14.0, "z": 0.0}, "station_type": "SMITHING", "tier": 3},
+                {"position": {"x": -8.0, "y": -16.0, "z": 0.0}, "station_type": "SMITHING", "tier": 4},
+                # REFINING - Left (X=-4)
+                {"position": {"x": -4.0, "y": -10.0, "z": 0.0}, "station_type": "REFINING", "tier": 1},
+                {"position": {"x": -4.0, "y": -12.0, "z": 0.0}, "station_type": "REFINING", "tier": 2},
+                {"position": {"x": -4.0, "y": -14.0, "z": 0.0}, "station_type": "REFINING", "tier": 3},
+                {"position": {"x": -4.0, "y": -16.0, "z": 0.0}, "station_type": "REFINING", "tier": 4},
+                # ADORNMENTS - Center (X=0)
+                {"position": {"x": 0.0, "y": -10.0, "z": 0.0}, "station_type": "ADORNMENTS", "tier": 1},
+                {"position": {"x": 0.0, "y": -12.0, "z": 0.0}, "station_type": "ADORNMENTS", "tier": 2},
+                {"position": {"x": 0.0, "y": -14.0, "z": 0.0}, "station_type": "ADORNMENTS", "tier": 3},
+                {"position": {"x": 0.0, "y": -16.0, "z": 0.0}, "station_type": "ADORNMENTS", "tier": 4},
+                # ALCHEMY - Right (X=4)
+                {"position": {"x": 4.0, "y": -10.0, "z": 0.0}, "station_type": "ALCHEMY", "tier": 1},
+                {"position": {"x": 4.0, "y": -12.0, "z": 0.0}, "station_type": "ALCHEMY", "tier": 2},
+                {"position": {"x": 4.0, "y": -14.0, "z": 0.0}, "station_type": "ALCHEMY", "tier": 3},
+                {"position": {"x": 4.0, "y": -16.0, "z": 0.0}, "station_type": "ALCHEMY", "tier": 4},
+                # ENGINEERING - Far right (X=8)
+                {"position": {"x": 8.0, "y": -10.0, "z": 0.0}, "station_type": "ENGINEERING", "tier": 1},
+                {"position": {"x": 8.0, "y": -12.0, "z": 0.0}, "station_type": "ENGINEERING", "tier": 2},
+                {"position": {"x": 8.0, "y": -14.0, "z": 0.0}, "station_type": "ENGINEERING", "tier": 3},
+                {"position": {"x": 8.0, "y": -16.0, "z": 0.0}, "station_type": "ENGINEERING", "tier": 4}
             ]
         },
         "quest_state": {

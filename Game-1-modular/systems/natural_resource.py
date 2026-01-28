@@ -19,6 +19,12 @@ class NaturalResource:
             self.required_tool = "axe"
             self.respawns = True
             self.respawn_timer = 60.0 if not Config.DEBUG_INFINITE_RESOURCES else 1.0
+        elif resource_type == ResourceType.FISHING_SPOT:
+            self.required_tool = "fishing_rod"
+            self.respawns = True
+            self.respawn_timer = 30.0 if not Config.DEBUG_INFINITE_RESOURCES else 1.0
+            self.max_hp = 50  # Fishing spots are quick to "deplete"
+            self.current_hp = self.max_hp
         else:
             self.required_tool = "pickaxe"
             self.respawns = False
@@ -36,6 +42,8 @@ class NaturalResource:
             ResourceType.STEEL_ORE: ("steel_ore", 2, 4), ResourceType.MITHRIL_ORE: ("mithril_ore", 2, 5),
             ResourceType.LIMESTONE: ("limestone", 1, 2), ResourceType.GRANITE: ("granite", 1, 2),
             ResourceType.OBSIDIAN: ("obsidian", 2, 3), ResourceType.STAR_CRYSTAL: ("star_crystal", 1, 2),
+            # Fishing - placeholder items (debug mode)
+            ResourceType.FISHING_SPOT: ("raw_fish", 1, 3),
         }
         if self.resource_type in loot_map:
             item_id, min_q, max_q = loot_map[self.resource_type]
@@ -80,4 +88,6 @@ class NaturalResource:
             return (50, 50, 50)
         if "tree" in self.resource_type.value:
             return Config.COLOR_TREE
+        if self.resource_type == ResourceType.FISHING_SPOT:
+            return (0, 191, 255)  # Deep sky blue for fishing spots
         return Config.COLOR_ORE if "ore" in self.resource_type.value else Config.COLOR_STONE_NODE

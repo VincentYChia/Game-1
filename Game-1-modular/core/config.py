@@ -19,10 +19,17 @@ class Config:
     # UI Scale factor (calculated based on actual screen size)
     UI_SCALE = 1.0
 
-    # World
-    WORLD_SIZE = 100
+    # World - Centered coordinate system with (0,0,0) at center
+    WORLD_SIZE = 176  # 11 chunks × 16 tiles per chunk
     CHUNK_SIZE = 16
     TILE_SIZE = 32
+    NUM_CHUNKS = 11  # 11×11 chunk grid (-5 to +5)
+
+    # Player spawn and safe zone
+    PLAYER_SPAWN_X = 0.0
+    PLAYER_SPAWN_Y = 0.0
+    PLAYER_SPAWN_Z = 0.0
+    SAFE_ZONE_RADIUS = 8  # No resources spawn within this radius of origin
 
     # Viewport (scales with screen width, 75% of screen width)
     VIEWPORT_WIDTH = 1200

@@ -69,6 +69,8 @@ class ResourceType(Enum):
     GRANITE = "granite"
     OBSIDIAN = "obsidian"
     STAR_CRYSTAL = "star_crystal"
+    # Water resources
+    FISHING_SPOT = "fishing_spot"
 
 
 RESOURCE_TIERS = {
@@ -86,7 +88,9 @@ RESOURCE_TIERS = {
     ResourceType.LIMESTONE: 1,
     ResourceType.GRANITE: 1,
     ResourceType.OBSIDIAN: 3,
-    ResourceType.STAR_CRYSTAL: 4
+    ResourceType.STAR_CRYSTAL: 4,
+    # Water
+    ResourceType.FISHING_SPOT: 1,
 }
 
 
@@ -110,6 +114,9 @@ class ChunkType(Enum):
     RARE_HIDDEN_FOREST = "rare_hidden_forest"
     RARE_ANCIENT_QUARRY = "rare_ancient_quarry"
     RARE_DEEP_CAVE = "rare_deep_cave"
+    # Water chunks - only spawn on world edges
+    WATER_LAKE = "water_lake"
+    WATER_RIVER = "water_river"
 
 
 class StationType(Enum):

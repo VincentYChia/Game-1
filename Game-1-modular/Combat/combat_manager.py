@@ -28,8 +28,8 @@ class CombatConfig:
         self.exp_rewards = {"tier1": 100, "tier2": 400, "tier3": 1600, "tier4": 6400}
         self.boss_multiplier = 10.0
 
-        self.safe_zone_x = 50
-        self.safe_zone_y = 50
+        self.safe_zone_x = 0  # Center of world (origin)
+        self.safe_zone_y = 0
         self.safe_zone_radius = 15
 
         self.spawn_rates = {}
@@ -66,10 +66,10 @@ class CombatConfig:
             }
             self.boss_multiplier = exp_data.get('bossMultiplier', 10.0)
 
-            # Load safe zone
+            # Load safe zone (defaults to origin)
             safe_data = data.get('safeZone', {})
-            self.safe_zone_x = safe_data.get('centerX', 50)
-            self.safe_zone_y = safe_data.get('centerY', 50)
+            self.safe_zone_x = safe_data.get('centerX', 0)
+            self.safe_zone_y = safe_data.get('centerY', 0)
             self.safe_zone_radius = safe_data.get('radius', 15)
 
             # Load spawn rates
@@ -445,11 +445,19 @@ class CombatManager:
 
         return random.choices(tiers, weights=weights)[0]
 
-    def update(self, dt: float, shield_blocking: bool = False):
+    def update(self, dt: float, shield_blocking: bool = False, is_night: bool = False):
         """Update all enemies and combat logic
-        shield_blocking: True if player is actively blocking with shield
+
+        Args:
+            dt: Delta time in seconds
+            shield_blocking: True if player is actively blocking with shield
+            is_night: True if it's currently night time (enemies are more aggressive)
         """
         player_pos = (self.character.position.x, self.character.position.y)
+
+        # Night aggression modifiers (30% more aggro range, 15% faster)
+        aggro_mult = 1.3 if is_night else 1.0
+        speed_mult = 1.15 if is_night else 1.0
 
         # Update spawn timers
         for chunk_coords in self.spawn_timers:
@@ -460,8 +468,8 @@ class CombatManager:
         for chunk_coords, enemy_list in self.enemies.items():
             for enemy in enemy_list:
                 if enemy.is_alive:
-                    # Update AI
-                    enemy.update_ai(dt, player_pos)
+                    # Update AI with night modifiers
+                    enemy.update_ai(dt, player_pos, aggro_multiplier=aggro_mult, speed_multiplier=speed_mult)
 
                     # Check if enemy can use special ability
                     dist = enemy.distance_to(player_pos)

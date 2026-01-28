@@ -1233,6 +1233,66 @@ class Renderer:
             # Draw border
             pygame.draw.rect(self.screen, (0, 255, 0), rect, 2)
 
+    def render_day_night_overlay(self, time_phase: str, phase_progress: float):
+        """Render day/night cycle visual overlay over the viewport.
+
+        Args:
+            time_phase: Current phase ("night", "dawn", "day", "dusk")
+            phase_progress: Progress through current phase (0.0 to 1.0)
+        """
+        # Create overlay surface with alpha
+        overlay = pygame.Surface((Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+
+        # Define overlay colors and alpha for each phase
+        # Colors are subtle to be "noticeable but not overly dark"
+        if time_phase == "night":
+            # Deep blue tint, consistent darkness
+            base_color = (20, 30, 60)
+            alpha = 80  # Moderate darkness
+        elif time_phase == "dawn":
+            # Transition from night to day: blue-purple to warm orange
+            # Interpolate from night to clear
+            night_color = (20, 30, 60)
+            dawn_color = (80, 50, 30)  # Warm sunrise tint
+            r = int(night_color[0] + (dawn_color[0] - night_color[0]) * phase_progress)
+            g = int(night_color[1] + (dawn_color[1] - night_color[1]) * phase_progress)
+            b = int(night_color[2] + (dawn_color[2] - night_color[2]) * phase_progress)
+            base_color = (r, g, b)
+            alpha = int(80 - 60 * phase_progress)  # Fade from 80 to 20
+        elif time_phase == "day":
+            # Very subtle warm tint during day (almost clear)
+            base_color = (255, 250, 220)  # Slight warm tint
+            alpha = 10  # Almost invisible
+        else:  # dusk
+            # Transition from day to night: warm orange to deep blue
+            dusk_color = (80, 40, 20)  # Warm sunset
+            night_color = (20, 30, 60)
+            r = int(dusk_color[0] + (night_color[0] - dusk_color[0]) * phase_progress)
+            g = int(dusk_color[1] + (night_color[1] - dusk_color[1]) * phase_progress)
+            b = int(dusk_color[2] + (night_color[2] - dusk_color[2]) * phase_progress)
+            base_color = (r, g, b)
+            alpha = int(20 + 60 * phase_progress)  # Fade from 20 to 80
+
+        # Apply overlay
+        overlay.fill((*base_color, alpha))
+        self.screen.blit(overlay, (0, 0))
+
+        # Draw time indicator in top-left of viewport
+        time_names = {"night": "Night", "dawn": "Dawn", "day": "Day", "dusk": "Dusk"}
+        time_icons = {"night": "🌙", "dawn": "🌅", "day": "☀️", "dusk": "🌆"}
+
+        # Simple text indicator (without emoji for compatibility)
+        time_text = f"{time_names.get(time_phase, 'Day')}"
+        text_color = (255, 255, 255) if time_phase in ("night", "dusk") else (40, 40, 40)
+
+        # Background for readability
+        text_surf = self.small_font.render(time_text, True, text_color)
+        bg_rect = pygame.Rect(8, 8, text_surf.get_width() + 12, text_surf.get_height() + 6)
+        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
+        bg_surface.fill((0, 0, 0, 100) if time_phase in ("night", "dusk") else (255, 255, 255, 100))
+        self.screen.blit(bg_surface, bg_rect.topleft)
+        self.screen.blit(text_surf, (14, 11))
+
     def render_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         ui_rect = pygame.Rect(Config.VIEWPORT_WIDTH, 0, Config.UI_PANEL_WIDTH, Config.VIEWPORT_HEIGHT)
         pygame.draw.rect(self.screen, Config.COLOR_UI_BG, ui_rect)

@@ -14,11 +14,11 @@
   },
 
   "safeZone": {
-    "centerX": 50,
-    "centerY": 50,
+    "centerX": 0,
+    "centerY": 0,
     "radius": 15,
     "noSpawning": true,
-    "comment": "No enemies spawn within this radius of spawn point"
+    "comment": "No enemies spawn within this radius of spawn point (origin)"
   },
 
   "spawnRates": {

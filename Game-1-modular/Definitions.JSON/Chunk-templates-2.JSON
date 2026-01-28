@@ -433,6 +433,67 @@
         "spawnAreaAllowed": false,
         "adjacencyPreference": ["rare_cave", "dangerous_cave"]
       }
+    },
+    {
+      "metadata": {
+        "narrative": "A serene lake with calm waters teeming with fish. The shoreline is dotted with reeds and the occasional dock. Perfect for fishing, but watch your step - the waters are deep.",
+        "tags": ["water", "fishing", "peaceful", "edge-only"]
+      },
+      "chunkType": "water_lake",
+      "name": "Tranquil Lake",
+      "category": "water",
+      "theme": "water",
+      "tilePattern": {
+        "waterCoverage": 0.65,
+        "hasIslands": true,
+        "shoreWidth": 2
+      },
+      "resourceDensity": {
+        "fishing_spot": {
+          "density": "high",
+          "tierBias": "mid"
+        }
+      },
+      "enemySpawns": {},
+      "generationRules": {
+        "rollWeight": 0,
+        "spawnAreaAllowed": false,
+        "adjacencyPreference": ["peaceful_forest", "peaceful_quarry"],
+        "edgeOnly": true,
+        "minDistanceBetween": 3,
+        "comment": "Water chunks use special placement logic, not roll-based"
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "A flowing stream cutting through the landscape. The water is swift but shallow in places, allowing careful crossing. Fish gather in the pools between rapids.",
+        "tags": ["water", "fishing", "peaceful", "edge-only"]
+      },
+      "chunkType": "water_river",
+      "name": "Flowing Stream",
+      "category": "water",
+      "theme": "water",
+      "tilePattern": {
+        "waterCoverage": 0.35,
+        "hasIslands": false,
+        "hasBridge": true,
+        "riverWidth": 3
+      },
+      "resourceDensity": {
+        "fishing_spot": {
+          "density": "moderate",
+          "tierBias": "low"
+        }
+      },
+      "enemySpawns": {},
+      "generationRules": {
+        "rollWeight": 0,
+        "spawnAreaAllowed": false,
+        "adjacencyPreference": ["peaceful_forest"],
+        "edgeOnly": true,
+        "minDistanceBetween": 3,
+        "comment": "River chunks have land bridges to ensure passability"
+      }
     }
   ]
 }

@@ -1672,10 +1672,11 @@ class Character:
             self._handle_death()
 
     def _handle_death(self):
-        """Handle player death - respawn at spawn point"""
+        """Handle player death - respawn at spawn point (origin)"""
+        from core.config import Config
         print("💀 You died! Respawning...")
         self.health = self.max_health
-        self.position = Position(50, 50, 0)  # Respawn at spawn
+        self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
         # Keep all items and equipment (no death penalty)
 
     def get_effective_max_durability(self, item) -> int:
