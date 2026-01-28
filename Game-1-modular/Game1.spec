@@ -29,6 +29,17 @@ added_files = [
     ('progression', 'progression'),
     ('Skills', 'Skills'),
 
+    # ML Models and LLM Prompts (from parent directory)
+    # CNN models for Smithing and Adornments validation
+    ('../Scaled JSON Development/Convolution Neural Network (CNN)',
+     'Scaled JSON Development/Convolution Neural Network (CNN)'),
+    # LightGBM models for Alchemy, Refining, Engineering validation
+    ('../Scaled JSON Development/Simple Classifiers (LightGBM)',
+     'Scaled JSON Development/Simple Classifiers (LightGBM)'),
+    # LLM prompts for invented item generation
+    ('../Scaled JSON Development/LLM Training Data/Fewshot_llm',
+     'Scaled JSON Development/LLM Training Data/Fewshot_llm'),
+
     # Note: saves/ directory will be created in user's home directory
     # to ensure write permissions (handled in code)
 ]
@@ -54,6 +65,8 @@ a = Analysis(
         'entities.character',
         'entities.components',
         'systems',
+        'systems.llm_item_generator',
+        'systems.crafting_classifier',
         'rendering',
         'rendering.renderer',
         'rendering.image_cache',
@@ -67,6 +80,10 @@ a = Analysis(
         'pygame.font',
         'pygame.image',
         'pygame.display',
+        # NumPy (required for classifiers)
+        'numpy',
+        # Optional ML modules (loaded dynamically if available)
+        'anthropic',
     ],
     hookspath=[],
     hooksconfig={},

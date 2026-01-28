@@ -4,6 +4,23 @@
 # Core game engine
 pygame>=2.6.0
 
+# Required for crafting classifiers (recipe validation)
+numpy>=1.24.0
+
+# Optional: LLM-powered item generation (Claude API)
+# Uncomment to enable invented items via API
+anthropic>=0.18.0
+
+# Optional: ML classifiers for recipe validation
+# TensorFlow for CNN models (Smithing, Adornments)
+# tensorflow>=2.15.0
+# LightGBM for tabular models (Alchemy, Refining, Engineering)
+# lightgbm>=4.0.0
+
+# Note: TensorFlow and LightGBM are optional. The game will run without them
+# but ML-based recipe validation will be disabled (fallback to basic validation).
+# To enable full ML functionality, uncomment the lines above.
+
 # Note: All other dependencies are Python standard library
 # - json (data loading/saving)
 # - dataclasses (data models)
