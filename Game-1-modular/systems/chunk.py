@@ -75,6 +75,18 @@ class Chunk:
         cls._plan_water_chunks()
         return (chunk_x, chunk_y) in cls._water_chunks
 
+    @classmethod
+    def restore_water_chunks(cls, water_chunk_positions: List[Tuple[int, int]]) -> None:
+        """Restore water chunk positions from save data.
+
+        Args:
+            water_chunk_positions: List of (chunk_x, chunk_y) tuples for water chunks
+        """
+        if water_chunk_positions:
+            cls._water_chunks = set(tuple(pos) for pos in water_chunk_positions)
+            cls._initialized = True
+            print(f"🌊 Restored {len(cls._water_chunks)} water chunks from save")
+
     def __init__(self, chunk_x: int, chunk_y: int):
         self.chunk_x = chunk_x
         self.chunk_y = chunk_y

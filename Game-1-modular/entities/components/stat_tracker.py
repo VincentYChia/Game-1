@@ -336,6 +336,7 @@ class StatTracker:
             "total_ores_mined": 0,
             "total_stones_mined": 0,
             "total_plants_gathered": 0,
+            "total_fish_caught": 0,
 
             # By tier
             "tier_1_resources_gathered": 0,
@@ -359,8 +360,10 @@ class StatTracker:
             # Tool usage
             "axe_swings": 0,
             "pickaxe_swings": 0,
+            "fishing_rod_casts": 0,
             "axe_durability_lost": 0.0,
             "pickaxe_durability_lost": 0.0,
+            "fishing_rod_durability_lost": 0.0,
             "tools_repaired": 0,
             "tools_broken": 0
         }
@@ -374,7 +377,13 @@ class StatTracker:
             "longest_gather_streak": 0,
             "aoe_gathers_performed": 0,
             "nodes_broken_via_aoe": 0,
-            "distance_traveled_to_resources": 0.0
+            "distance_traveled_to_resources": 0.0,
+            # Fishing-specific
+            "largest_fish_caught": 0,
+            "fish_catch_streak": 0,
+            "longest_fish_catch_streak": 0,
+            "rare_fish_caught": 0,
+            "legendary_fish_caught": 0
         }
 
     def _init_crafting_stats(self):
@@ -929,6 +938,9 @@ class StatTracker:
             self.gathering_totals["total_stones_mined"] += 1
         elif "plant" in category_lower or "herb" in category_lower:
             self.gathering_totals["total_plants_gathered"] += 1
+        elif "fish" in category_lower or "fishing" in category_lower:
+            self.gathering_totals["total_fish_caught"] += quantity
+            self.gathering_totals["fishing_rod_casts"] += 1
 
         # Tier tracking
         tier_key = f"tier_{tier}_resources_gathered"
@@ -1353,6 +1365,58 @@ class StatTracker:
         """
         self.dungeon_stats["dungeon_chests_opened"] += 1
         self.dungeon_stats["dungeon_items_received"] += items_received
+
+    # =========================================================================
+    # FISHING RECORDING METHODS
+    # =========================================================================
+
+    def record_fish_caught(self, fish_id: str, quantity: int = 1, tier: int = 1,
+                           rarity: str = "common", size: int = 0):
+        """
+        Record catching a fish.
+
+        Args:
+            fish_id: Fish type identifier
+            quantity: Number of fish caught
+            tier: Fish tier (1-4)
+            rarity: Fish rarity (common/uncommon/rare/epic/legendary)
+            size: Fish size (for tracking largest catch)
+        """
+        # Update gathering totals
+        self.gathering_totals["total_fish_caught"] += quantity
+        self.gathering_totals["fishing_rod_casts"] += 1
+
+        # Track in resources_gathered
+        if fish_id not in self.resources_gathered:
+            self.resources_gathered[fish_id] = StatEntry()
+        self.resources_gathered[fish_id].record(quantity)
+
+        # Tier tracking
+        tier_key = f"tier_{tier}_resources_gathered"
+        if tier_key in self.gathering_totals:
+            self.gathering_totals[tier_key] += quantity
+
+        # Track largest fish
+        if size > self.gathering_advanced["largest_fish_caught"]:
+            self.gathering_advanced["largest_fish_caught"] = size
+
+        # Track catch streak
+        self.gathering_advanced["fish_catch_streak"] += 1
+        if self.gathering_advanced["fish_catch_streak"] > self.gathering_advanced["longest_fish_catch_streak"]:
+            self.gathering_advanced["longest_fish_catch_streak"] = self.gathering_advanced["fish_catch_streak"]
+
+        # Track rare/legendary catches
+        rarity_lower = rarity.lower()
+        if rarity_lower == "rare":
+            self.gathering_advanced["rare_fish_caught"] += 1
+        elif rarity_lower in ("legendary", "epic"):
+            self.gathering_advanced["legendary_fish_caught"] += 1
+
+    def record_fishing_failed(self):
+        """Record a failed fishing attempt (fish got away)."""
+        self.gathering_totals["fishing_rod_casts"] += 1
+        # Reset catch streak on failure
+        self.gathering_advanced["fish_catch_streak"] = 0
 
     def record_movement(self, distance: float, chunk_coords: Tuple[int, int],
                         is_sprinting: bool = False, is_encumbered: bool = False):

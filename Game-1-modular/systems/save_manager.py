@@ -34,7 +34,8 @@ class SaveManager:
         world_system,
         quest_manager,
         npcs,
-        dungeon_manager=None
+        dungeon_manager=None,
+        game_time: float = 0.0
     ) -> Dict[str, Any]:
         """
         Create a comprehensive save data structure.
@@ -45,6 +46,7 @@ class SaveManager:
             quest_manager: QuestManager instance
             npcs: List[NPC] instances
             dungeon_manager: DungeonManager instance (optional)
+            game_time: Current game time for day/night cycle (optional)
 
         Returns:
             Dictionary containing all save data
@@ -53,7 +55,7 @@ class SaveManager:
             "version": self.SAVE_VERSION,
             "save_timestamp": datetime.now().isoformat(),
             "player": self._serialize_character(character),
-            "world_state": self._serialize_world_state(world_system),
+            "world_state": self._serialize_world_state(world_system, game_time),
             "quest_state": self._serialize_quest_state(quest_manager),
             "npc_state": self._serialize_npc_state(npcs)
         }
@@ -298,20 +300,27 @@ class SaveManager:
 
         return serialized_equipment
 
-    def _serialize_world_state(self, world_system) -> Dict[str, Any]:
+    def _serialize_world_state(self, world_system, game_time: float = 0.0) -> Dict[str, Any]:
         """
-        Serialize world state (placed entities, modified resources).
+        Serialize world state (placed entities, modified resources, time, water chunks).
 
         Args:
             world_system: WorldSystem instance
+            game_time: Current game time for day/night cycle
 
         Returns:
             Dictionary containing world state data
         """
+        # Get water chunk positions for persistence
+        from systems.chunk import Chunk
+        water_chunk_positions = list(Chunk._water_chunks) if Chunk._initialized else []
+
         world_data = {
             "placed_entities": [],
             "modified_resources": [],
-            "crafting_stations": []
+            "crafting_stations": [],
+            "game_time": game_time,
+            "water_chunks": water_chunk_positions
         }
 
         # Serialize placed entities (turrets, traps, devices)
@@ -449,7 +458,8 @@ class SaveManager:
         quest_manager,
         npcs,
         filename: str = "autosave.json",
-        dungeon_manager=None
+        dungeon_manager=None,
+        game_time: float = 0.0
     ) -> bool:
         """
         Save the current game state to a file.
@@ -461,6 +471,7 @@ class SaveManager:
             npcs: List[NPC] instances
             filename: Name of the save file
             dungeon_manager: DungeonManager instance (optional)
+            game_time: Current game time for day/night cycle (optional)
 
         Returns:
             True if save was successful, False otherwise
@@ -471,7 +482,8 @@ class SaveManager:
                 world_system,
                 quest_manager,
                 npcs,
-                dungeon_manager
+                dungeon_manager,
+                game_time
             )
 
             filepath = get_save_path(filename)

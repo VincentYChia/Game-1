@@ -445,7 +445,8 @@ class GameEngine:
                         self.character.quests,
                         self.npcs,
                         "autosave.json",
-                        self.dungeon_manager
+                        self.dungeon_manager,
+                        self.game_time
                     ):
                         print("💾 Autosaved on quit")
                 self.running = False
@@ -475,7 +476,8 @@ class GameEngine:
                                 self.character.quests,
                                 self.npcs,
                                 "autosave.json",
-                                self.dungeon_manager
+                                self.dungeon_manager,
+                                self.game_time
                             ):
                                 print("💾 Autosaved on start menu quit")
                         self.running = False
@@ -560,7 +562,8 @@ class GameEngine:
                                 self.character.quests,
                                 self.npcs,
                                 "autosave.json",
-                                self.dungeon_manager
+                                self.dungeon_manager,
+                                self.game_time
                             ):
                                 print("💾 Autosaved on ESC quit")
                         self.running = False
@@ -779,7 +782,8 @@ class GameEngine:
                             self.character.quests,
                             self.npcs,
                             "autosave.json",
-                            self.dungeon_manager
+                            self.dungeon_manager,
+                            self.game_time
                         ):
                             self.add_notification("Game saved!", (100, 255, 100))
 
@@ -794,7 +798,8 @@ class GameEngine:
                             self.character.quests,
                             self.npcs,
                             f"save_{timestamp}.json",
-                            self.dungeon_manager
+                            self.dungeon_manager,
+                            self.game_time
                         ):
                             self.add_notification(f"Saved!", (100, 255, 100))
 
@@ -1226,6 +1231,13 @@ class GameEngine:
                 self.start_menu_open = False
                 self.temporary_world = False
 
+                # Restore water chunk positions BEFORE world generation
+                world_state = save_data.get("world_state", {})
+                water_chunks = world_state.get("water_chunks", [])
+                if water_chunks:
+                    from systems.chunk import Chunk
+                    Chunk.restore_water_chunks(water_chunks)
+
                 # Create character at starting position first
                 self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
 
@@ -1244,11 +1256,23 @@ class GameEngine:
                 # Restore NPC state
                 SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
 
+                # Restore game time for day/night cycle
+                self.game_time = world_state.get("game_time", 0.0)
+                print(f"⏰ Restored game time: {self.game_time:.1f}s")
+
+                # Restore dungeon state (if present)
+                self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
+
+                # If in dungeon, respawn enemies
+                if self.dungeon_manager.in_dungeon:
+                    self.combat_manager.spawn_dungeon_wave()
+
                 # Update combat manager with loaded character
                 self.combat_manager.character = self.character
 
-                # Spawn enemies near loaded position
-                self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+                # Spawn enemies near loaded position (only if not in dungeon)
+                if not self.dungeon_manager.in_dungeon:
+                    self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
                 # Spawn training dummy for tag testing
                 from systems.training_dummy import spawn_training_dummy
@@ -1269,6 +1293,13 @@ class GameEngine:
                 self.start_menu_open = False
                 self.temporary_world = False
 
+                # Restore water chunk positions BEFORE world generation
+                world_state = save_data.get("world_state", {})
+                water_chunks = world_state.get("water_chunks", [])
+                if water_chunks:
+                    from systems.chunk import Chunk
+                    Chunk.restore_water_chunks(water_chunks)
+
                 # Create character at starting position first
                 self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
 
@@ -1287,11 +1318,23 @@ class GameEngine:
                 # Restore NPC state
                 SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
 
+                # Restore game time for day/night cycle
+                self.game_time = world_state.get("game_time", 0.0)
+                print(f"⏰ Restored game time: {self.game_time:.1f}s")
+
+                # Restore dungeon state (if present)
+                self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
+
+                # If in dungeon, respawn enemies
+                if self.dungeon_manager.in_dungeon:
+                    self.combat_manager.spawn_dungeon_wave()
+
                 # Update combat manager with loaded character
                 self.combat_manager.character = self.character
 
-                # Spawn enemies near loaded position
-                self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+                # Spawn enemies near loaded position (only if not in dungeon)
+                if not self.dungeon_manager.in_dungeon:
+                    self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
                 # Spawn training dummy for tag testing
                 from systems.training_dummy import spawn_training_dummy
