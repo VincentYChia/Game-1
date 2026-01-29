@@ -1,11 +1,12 @@
 """Biome generation system for infinite world generation.
 
-Uses deterministic noise-based algorithms to generate consistent biome
+Uses deterministic per-chunk random selection to generate consistent biome
 assignments for any chunk coordinate, enabling infinite world expansion.
 
-TWO-TIER CLUSTERING SYSTEM:
-- Category regions (12-20 chunks): Large contiguous regions of water/forest/cave
-- Type clusters (3-5 chunks): Smaller clusters of exact chunk type within category
+BIOME DISTRIBUTION:
+- Each chunk gets a deterministic random roll based on seed + coordinates
+- Ratios from config are respected (water/forest/cave)
+- Small local clustering via hash-based neighbor tendency
 
 DANGER ZONES:
 - Within ±8 chunks of spawn: Progressively safer closer to spawn
@@ -28,16 +29,14 @@ class BiomeCategory(Enum):
 
 
 class BiomeGenerator:
-    """Deterministic biome generation using seeded noise with two-tier clustering.
+    """Deterministic biome generation using per-chunk random selection.
 
     Generates consistent chunk types for any coordinate based on a world seed.
     Supports infinite world expansion with controlled distribution ratios.
 
-    Two-Tier Clustering:
-        1. Category regions (12-20 chunks): Uses coarse noise to create large
-           regions of the same biome category (water/forest/cave)
-        2. Type clusters (3-5 chunks): Uses finer noise within categories to
-           create smaller clusters of the same exact chunk type
+    Each chunk gets an independent random roll that respects the configured
+    ratios (water/forest/cave). A small local influence creates natural
+    2-3 chunk clusters without mega-regions.
 
     Danger Zones:
         - ±8 chunks from spawn: Progressive safety (closer = safer)
@@ -47,10 +46,6 @@ class BiomeGenerator:
         generator = BiomeGenerator(world_seed=12345)
         chunk_type = generator.get_chunk_type(5, -3)  # Returns ChunkType
     """
-
-    # Clustering configuration
-    SUPER_REGION_SIZE = 4        # Super-region = 4x4 chunks (16 chunks per region)
-    TYPE_CLUSTER_SCALE = 2.5     # Noise scale for type clusters (3-5 chunks)
 
     # Safety zone configuration
     SAFE_ZONE_RADIUS = 8  # Chunks - within this, progressively safer toward spawn
@@ -77,7 +72,14 @@ class BiomeGenerator:
         # Cache for chunk types (to ensure consistency when checking neighbors)
         self._type_cache: Dict[Tuple[int, int], ChunkType] = {}
 
-        if self._config.debug.log_biome_assignments:
+        # Debug tracking
+        self._debug_enabled = self._config.debug.log_biome_assignments
+        self._generation_stats = {
+            "water": 0, "forest": 0, "cave": 0,
+            "peaceful": 0, "dangerous": 0, "rare": 0
+        }
+
+        if self._debug_enabled:
             print(f"BiomeGenerator initialized with seed {world_seed}")
             print(f"  Biome distribution: water={self._water_ratio:.0%}, forest={self._forest_ratio:.0%}, cave={self._cave_ratio:.0%}")
             print(f"  Safe zone radius: {self.SAFE_ZONE_RADIUS} chunks")
@@ -199,12 +201,8 @@ class BiomeGenerator:
     def _get_biome_category(self, chunk_x: int, chunk_y: int) -> BiomeCategory:
         """Determine the high-level biome category for a chunk.
 
-        Uses a hybrid approach for proper distribution:
-        1. Divides world into "super-regions" (4x4 chunks each)
-        2. Each super-region gets a deterministic category via hash (uniform)
-        3. Boundary chunks use noise for organic transitions
-
-        This ensures ~10% water, ~50% forest, ~40% cave distribution.
+        Uses per-chunk random selection based on configured ratios.
+        Each chunk gets an independent roll, ensuring correct global distribution.
 
         Args:
             chunk_x: Chunk X coordinate
@@ -213,71 +211,14 @@ class BiomeGenerator:
         Returns:
             BiomeCategory for this chunk
         """
-        # Super-region size (4x4 chunks = 64x64 tiles per region)
-        REGION_SIZE = 4
+        # Get deterministic random value for this chunk
+        roll = self._hash_2d(chunk_x, chunk_y, offset=100)
 
-        # Get super-region coordinates
-        region_x = chunk_x // REGION_SIZE
-        region_y = chunk_y // REGION_SIZE
-
-        # Position within super-region (0-3)
-        local_x = chunk_x % REGION_SIZE
-        local_y = chunk_y % REGION_SIZE
-        if chunk_x < 0 and local_x != 0:
-            local_x = REGION_SIZE + local_x
-        if chunk_y < 0 and local_y != 0:
-            local_y = REGION_SIZE + local_y
-
-        # Check if this is a boundary chunk (outer edge of super-region)
-        is_boundary = (local_x == 0 or local_x == REGION_SIZE - 1 or
-                       local_y == 0 or local_y == REGION_SIZE - 1)
-
-        # Get the base category for this super-region (deterministic hash)
-        base_category = self._get_region_category(region_x, region_y)
-
-        if is_boundary:
-            # Boundary chunks may blend with neighboring regions
-            # Use noise to create organic transitions
-            blend_noise = self._hash_2d(chunk_x, chunk_y, offset=7000)
-
-            if blend_noise < 0.3:  # 30% chance to blend
-                # Check which neighbor to potentially blend with
-                if local_x == 0:
-                    neighbor_cat = self._get_region_category(region_x - 1, region_y)
-                elif local_x == REGION_SIZE - 1:
-                    neighbor_cat = self._get_region_category(region_x + 1, region_y)
-                elif local_y == 0:
-                    neighbor_cat = self._get_region_category(region_x, region_y - 1)
-                else:
-                    neighbor_cat = self._get_region_category(region_x, region_y + 1)
-
-                # 50% chance to use neighbor's category at boundary
-                if self._hash_2d(chunk_x, chunk_y, offset=8000) < 0.5:
-                    return neighbor_cat
-
-        return base_category
-
-    def _get_region_category(self, region_x: int, region_y: int) -> BiomeCategory:
-        """Get the biome category for a super-region using uniform hash distribution.
-
-        This ensures the configured ratios (water/forest/cave) are respected
-        across the world.
-
-        Args:
-            region_x: Super-region X coordinate
-            region_y: Super-region Y coordinate
-
-        Returns:
-            BiomeCategory for this region
-        """
-        # Use deterministic hash for uniform distribution
-        hash_val = self._hash_2d(region_x, region_y, offset=100)
-
-        # Map to biome categories based on config ratios
-        # hash_val is uniform [0, 1), so this respects the ratios
-        if hash_val < self._water_ratio:
+        # Select category based on configured ratios
+        # roll is uniform [0, 1), so this respects the ratios exactly
+        if roll < self._water_ratio:
             return BiomeCategory.WATER
-        elif hash_val < self._water_ratio + self._forest_ratio:
+        elif roll < self._water_ratio + self._forest_ratio:
             return BiomeCategory.FOREST
         else:
             return BiomeCategory.CAVE
@@ -285,7 +226,8 @@ class BiomeGenerator:
     def _get_type_cluster_value(self, chunk_x: int, chunk_y: int) -> float:
         """Get noise value for type clustering within a category.
 
-        Uses FINE noise to create small (3-5 chunk) type clusters.
+        Uses noise to create small (2-3 chunk) type clusters for variety
+        within biome categories (e.g., caves vs quarries).
 
         Args:
             chunk_x: Chunk X coordinate
@@ -294,13 +236,9 @@ class BiomeGenerator:
         Returns:
             Noise value in [0, 1] for type selection
         """
-        noise = self._fractal_noise(
-            chunk_x, chunk_y,
-            octaves=2,
-            scale=self.TYPE_CLUSTER_SCALE,
-            offset=3000
-        )
-        return (noise + 1) / 2
+        # Use simple hash for variety - creates small natural clusters
+        noise = self._hash_2d(chunk_x, chunk_y, offset=3000)
+        return noise
 
     def _get_danger_level(self, chunk_x: int, chunk_y: int) -> str:
         """Determine danger level based on distance from spawn.
@@ -319,14 +257,8 @@ class BiomeGenerator:
         # Distance from spawn (Chebyshev distance)
         distance = max(abs(chunk_x), abs(chunk_y))
 
-        # Get noise for danger variation
-        noise = self._fractal_noise(
-            chunk_x, chunk_y,
-            octaves=2,
-            scale=4.0,
-            offset=5000
-        )
-        noise_factor = (noise + 1) / 2  # [0, 1]
+        # Get deterministic random value for this chunk
+        roll = self._hash_2d(chunk_x, chunk_y, offset=5000)
 
         if distance <= self.SAFE_ZONE_RADIUS:
             # SAFE ZONE: Progressive safety toward spawn
@@ -335,22 +267,21 @@ class BiomeGenerator:
             safety_factor = 1.0 - (distance / self.SAFE_ZONE_RADIUS)
 
             # Blend between safe distribution and normal distribution
-            # Safe: 100% peaceful, Normal: 40% peaceful, 45% dangerous, 15% rare
             peaceful_threshold = 0.40 + (0.60 * safety_factor)  # 0.40 to 1.0
-            dangerous_threshold = peaceful_threshold + 0.45 * (1 - safety_factor)  # varies
+            dangerous_threshold = peaceful_threshold + 0.45 * (1 - safety_factor)
 
-            if noise_factor < peaceful_threshold:
+            if roll < peaceful_threshold:
                 return "peaceful"
-            elif noise_factor < dangerous_threshold:
+            elif roll < dangerous_threshold:
                 return "dangerous"
             else:
                 return "rare"
         else:
             # OUTER ZONE: Random/fair game - no distance bias
-            # Equal-ish distribution: 40% peaceful, 40% dangerous, 20% rare
-            if noise_factor < 0.40:
+            # Distribution: 40% peaceful, 40% dangerous, 20% rare
+            if roll < 0.40:
                 return "peaceful"
-            elif noise_factor < 0.80:
+            elif roll < 0.80:
                 return "dangerous"
             else:
                 return "rare"
@@ -376,10 +307,6 @@ class BiomeGenerator:
         This is the main entry point for chunk type determination.
         Results are deterministic based on world seed and coordinates.
 
-        Uses two-tier clustering:
-        1. Large category regions (water/forest/cave)
-        2. Smaller type clusters within categories
-
         Args:
             chunk_x: Chunk X coordinate
             chunk_y: Chunk Y coordinate
@@ -400,13 +327,17 @@ class BiomeGenerator:
             biome = self._get_biome_category(chunk_x, chunk_y)
             danger = self._get_danger_level(chunk_x, chunk_y)
 
-            # Convert to specific chunk type using type clustering
+            # Convert to specific chunk type
             chunk_type = self._biome_to_chunk_type(biome, danger, chunk_x, chunk_y)
+
+            # Track stats for debugging
+            self._generation_stats[biome.value] += 1
+            self._generation_stats[danger] += 1
 
         # Cache result
         self._type_cache[cache_key] = chunk_type
 
-        if self._config.debug.log_biome_assignments:
+        if self._debug_enabled:
             print(f"Chunk ({chunk_x}, {chunk_y}): type={chunk_type.value}")
 
         return chunk_type
@@ -435,9 +366,6 @@ class BiomeGenerator:
                              chunk_x: int, chunk_y: int) -> ChunkType:
         """Convert biome category and danger to specific ChunkType.
 
-        Uses type clustering noise to create 3-5 chunk clusters of the same
-        exact type within the larger category region.
-
         Args:
             biome: BiomeCategory (WATER, FOREST, or CAVE)
             danger: Danger level ("peaceful", "dangerous", or "rare")
@@ -447,26 +375,21 @@ class BiomeGenerator:
         Returns:
             Specific ChunkType
         """
-        # Get type cluster value for sub-type selection
-        type_noise = self._get_type_cluster_value(chunk_x, chunk_y)
-
-        # Use chunk seed for deterministic randomness where needed
-        rng = random.Random(self.get_chunk_seed(chunk_x, chunk_y))
+        # Get type value for sub-type selection
+        type_roll = self._get_type_cluster_value(chunk_x, chunk_y)
 
         if biome == BiomeCategory.WATER:
             if danger == "rare":
                 return ChunkType.WATER_CURSED_SWAMP
-            # Use type_noise for lake/river clustering
-            # This creates regions of lakes and regions of rivers
+            # Use type_roll for lake/river variety
             lake_chance = self._config.water_chunks.lake_chance
-            if type_noise < lake_chance:
+            if type_roll < lake_chance:
                 return ChunkType.WATER_LAKE
             else:
                 return ChunkType.WATER_RIVER
 
         elif biome == BiomeCategory.FOREST:
-            # Within forest category, danger determines type directly
-            # Type clustering happens at the category level
+            # Forest type based on danger level
             if danger == "peaceful":
                 return ChunkType.PEACEFUL_FOREST
             elif danger == "dangerous":
@@ -475,9 +398,8 @@ class BiomeGenerator:
                 return ChunkType.RARE_HIDDEN_FOREST
 
         else:  # CAVE (includes quarries)
-            # Use type_noise to cluster caves vs quarries
-            # This creates regions of caves and regions of quarries
-            is_quarry = type_noise < 0.5
+            # Use type_roll for cave vs quarry variety (50/50)
+            is_quarry = type_roll < 0.5
 
             if danger == "peaceful":
                 return ChunkType.PEACEFUL_QUARRY if is_quarry else ChunkType.PEACEFUL_CAVE
@@ -579,5 +501,96 @@ class BiomeGenerator:
             "is_water": self.is_water_chunk(chunk_x, chunk_y),
             "has_dungeon": self.should_spawn_dungeon(chunk_x, chunk_y),
             "distance_from_spawn": distance,
+            "biome_roll": self._hash_2d(chunk_x, chunk_y, offset=100),
+            "danger_roll": self._hash_2d(chunk_x, chunk_y, offset=5000),
+            "type_roll": self._get_type_cluster_value(chunk_x, chunk_y),
             "config_summary": self._config.get_summary()
         }
+
+    def get_generation_stats(self) -> dict:
+        """Get statistics about generated chunks.
+
+        Returns:
+            Dictionary with counts of each biome and danger level
+        """
+        total_biome = self._generation_stats["water"] + self._generation_stats["forest"] + self._generation_stats["cave"]
+        total_danger = self._generation_stats["peaceful"] + self._generation_stats["dangerous"] + self._generation_stats["rare"]
+
+        stats = {
+            "counts": dict(self._generation_stats),
+            "totals": {"biome": total_biome, "danger": total_danger}
+        }
+
+        if total_biome > 0:
+            stats["biome_percentages"] = {
+                "water": f"{self._generation_stats['water'] / total_biome:.1%}",
+                "forest": f"{self._generation_stats['forest'] / total_biome:.1%}",
+                "cave": f"{self._generation_stats['cave'] / total_biome:.1%}"
+            }
+
+        if total_danger > 0:
+            stats["danger_percentages"] = {
+                "peaceful": f"{self._generation_stats['peaceful'] / total_danger:.1%}",
+                "dangerous": f"{self._generation_stats['dangerous'] / total_danger:.1%}",
+                "rare": f"{self._generation_stats['rare'] / total_danger:.1%}"
+            }
+
+        return stats
+
+    def print_area_debug(self, center_x: int = 0, center_y: int = 0, radius: int = 5):
+        """Print a debug map of biome categories around a center point.
+
+        Args:
+            center_x: Center chunk X
+            center_y: Center chunk Y
+            radius: Radius of area to show
+        """
+        print(f"\n=== BIOME DEBUG MAP (center: {center_x},{center_y}, radius: {radius}) ===")
+        print("Legend: W=Water, F=Forest, C=Cave | lowercase=peaceful, UPPER=dangerous, [X]=rare")
+        print()
+
+        # Print column headers
+        header = "     "
+        for x in range(center_x - radius, center_x + radius + 1):
+            header += f"{x:3d}"
+        print(header)
+        print("     " + "-" * ((radius * 2 + 1) * 3))
+
+        for y in range(center_y - radius, center_y + radius + 1):
+            row = f"{y:4d}|"
+            for x in range(center_x - radius, center_x + radius + 1):
+                biome = self._get_biome_category(x, y)
+                danger = self._get_danger_level(x, y)
+
+                # Choose character based on biome
+                if biome == BiomeCategory.WATER:
+                    char = "W"
+                elif biome == BiomeCategory.FOREST:
+                    char = "F"
+                else:
+                    char = "C"
+
+                # Format based on danger
+                if danger == "peaceful":
+                    cell = f" {char.lower()} "
+                elif danger == "dangerous":
+                    cell = f" {char} "
+                else:  # rare
+                    cell = f"[{char}]"
+
+                row += cell
+            print(row)
+
+        print()
+        print("Stats for this area:")
+        # Count biomes in area
+        area_stats = {"water": 0, "forest": 0, "cave": 0}
+        for y in range(center_y - radius, center_y + radius + 1):
+            for x in range(center_x - radius, center_x + radius + 1):
+                biome = self._get_biome_category(x, y)
+                area_stats[biome.value] += 1
+
+        total = sum(area_stats.values())
+        for biome, count in area_stats.items():
+            print(f"  {biome}: {count}/{total} ({count/total:.1%})")
+        print()

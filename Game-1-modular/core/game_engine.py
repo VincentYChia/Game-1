@@ -832,11 +832,16 @@ class GameEngine:
                         self.add_notification("Infinite Durability: OFF", (255, 100, 100))
 
                 elif event.key == pygame.K_F8:
-                    # Enter/Exit Dungeon
-                    if self.dungeon_manager.in_dungeon:
-                        self._exit_dungeon()
+                    shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
+                    if shift_held:
+                        # Biome debug - print map and stats
+                        self._print_biome_debug()
                     else:
-                        self._enter_dungeon()
+                        # Enter/Exit Dungeon
+                        if self.dungeon_manager.in_dungeon:
+                            self._exit_dungeon()
+                        else:
+                            self._enter_dungeon()
 
                 elif event.key == pygame.K_F9:
                     # Load game (Shift+F9 for default save, F9 for autosave)
@@ -5170,6 +5175,46 @@ class GameEngine:
             'name': chunk_display_names.get(chunk_type_value, chunk_type_value.replace('_', ' ').title()),
             'danger_level': danger_level
         }
+
+    # =========================================================================
+    # BIOME DEBUG METHODS
+    # =========================================================================
+
+    def _print_biome_debug(self):
+        """Print biome debug information to console (Shift+F8)."""
+        import math
+
+        if not hasattr(self, 'world') or self.world is None:
+            print("No world loaded")
+            return
+
+        # Get current chunk coordinates
+        chunk_x = math.floor(self.character.position.x) // Config.CHUNK_SIZE
+        chunk_y = math.floor(self.character.position.y) // Config.CHUNK_SIZE
+
+        print("\n" + "=" * 60)
+        print("BIOME DEBUG (Shift+F8)")
+        print("=" * 60)
+        print(f"Player position: ({self.character.position.x:.1f}, {self.character.position.y:.1f})")
+        print(f"Current chunk: ({chunk_x}, {chunk_y})")
+
+        # Print debug map centered on player
+        if hasattr(self.world, 'biome_generator') and self.world.biome_generator:
+            self.world.biome_generator.print_area_debug(chunk_x, chunk_y, radius=8)
+
+            # Print generation stats
+            stats = self.world.biome_generator.get_generation_stats()
+            print("Generation Stats (all chunks generated so far):")
+            print(f"  Counts: {stats['counts']}")
+            if 'biome_percentages' in stats:
+                print(f"  Biome %: {stats['biome_percentages']}")
+            if 'danger_percentages' in stats:
+                print(f"  Danger %: {stats['danger_percentages']}")
+        else:
+            print("No biome generator available")
+
+        print("=" * 60 + "\n")
+        self.add_notification("Biome debug printed to console", (100, 255, 100))
 
     # =========================================================================
     # DUNGEON SYSTEM METHODS
