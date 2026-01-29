@@ -9,6 +9,7 @@ from .npcs import NPCDefinition
 from .skills import SkillEffect, SkillCost, SkillEvolution, SkillRequirements, SkillDefinition, PlayerSkill
 from .world import Position, TileType, WorldTile, ResourceType, LootDrop, ChunkType, StationType, CraftingStation, RESOURCE_TIERS, PlacedEntity, PlacedEntityType, DungeonRarity, DungeonEntrance
 from .recipes import Recipe, PlacementData
+from .resources import ResourceNodeDefinition, ResourceDrop
 
 __all__ = [
     'MaterialDefinition',
@@ -20,4 +21,5 @@ __all__ = [
     'SkillEffect', 'SkillCost', 'SkillEvolution', 'SkillRequirements', 'SkillDefinition', 'PlayerSkill',
     'Position', 'TileType', 'WorldTile', 'ResourceType', 'LootDrop', 'ChunkType', 'StationType', 'CraftingStation', 'RESOURCE_TIERS', 'PlacedEntity', 'PlacedEntityType', 'DungeonRarity', 'DungeonEntrance',
     'Recipe', 'PlacementData',
+    'ResourceNodeDefinition', 'ResourceDrop',
 ]

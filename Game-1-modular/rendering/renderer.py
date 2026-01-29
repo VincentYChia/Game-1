@@ -1140,15 +1140,19 @@ class Renderer:
             size = Config.TILE_SIZE - 4
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
-            # Auto-generate icon path from resource type
-            # Trees use their resource_type directly (e.g., oak_tree.png)
-            # Ores and stones need "_node" suffix (e.g., copper_ore_node.png, limestone_node.png)
-            resource_value = resource.resource_type.value
-            if "tree" not in resource_value:
-                # Add _node suffix for ores and stones
-                resource_icon_path = f"resources/{resource_value}_node.png"
-            else:
-                resource_icon_path = f"resources/{resource_value}.png"
+            # Get icon path from ResourceNodeDatabase (handles name mapping)
+            # This maps JSON IDs like 'copper_vein' to existing PNG names like 'copper_ore_node'
+            try:
+                from data.databases.resource_node_db import ResourceNodeDatabase
+                resource_db = ResourceNodeDatabase.get_instance()
+                resource_icon_path = resource_db.get_icon_path(resource.resource_type.value)
+            except Exception:
+                # Fallback to legacy logic if database not available
+                resource_value = resource.resource_type.value
+                if "tree" not in resource_value and "sapling" not in resource_value:
+                    resource_icon_path = f"resources/{resource_value}_node.png"
+                else:
+                    resource_icon_path = f"resources/{resource_value}.png"
 
             # Try to load resource icon (only if image cache exists)
             if 'image_cache' not in locals():

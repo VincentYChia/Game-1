@@ -10,6 +10,7 @@ from .recipe_db import RecipeDatabase
 from .placement_db import PlacementDatabase
 from .skill_db import SkillDatabase
 from .skill_unlock_db import SkillUnlockDatabase
+from .resource_node_db import ResourceNodeDatabase
 
 __all__ = [
     'TranslationDatabase',
@@ -22,4 +23,5 @@ __all__ = [
     'PlacementDatabase',
     'SkillDatabase',
     'SkillUnlockDatabase',
+    'ResourceNodeDatabase',
 ]

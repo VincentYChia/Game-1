@@ -55,33 +55,64 @@ CATEGORY_COLORS = {
     'classes': (75, 0, 130),         # Indigo
 }
 
-# Hardcoded resources (from ResourceType enum in code)
-RESOURCES = [
-    {'id': 'oak_tree', 'name': 'Oak Tree', 'tier': 1, 'category': 'tree',
-     'narrative': 'Oak tree (T1, requires axe). Reliable, sturdy timber from ancient oaks.'},
-    {'id': 'birch_tree', 'name': 'Birch Tree', 'tier': 2, 'category': 'tree',
-     'narrative': 'Birch tree (T2, requires axe). Elegant trees with creamy-white wood.'},
-    {'id': 'maple_tree', 'name': 'Maple Tree', 'tier': 2, 'category': 'tree',
-     'narrative': 'Maple tree (T2, requires axe). Dense hardwood with beautiful figuring.'},
-    {'id': 'ironwood_tree', 'name': 'Ironwood Tree', 'tier': 3, 'category': 'tree',
-     'narrative': 'Ironwood tree (T3, requires axe). Rare wood with metallic properties.'},
-    {'id': 'copper_ore_node', 'name': 'Copper Ore Node', 'tier': 1, 'category': 'ore',
-     'narrative': 'Copper ore deposit (T1, requires pickaxe). Soft, reddish metal from shallow veins.'},
-    {'id': 'iron_ore_node', 'name': 'Iron Ore Node', 'tier': 1, 'category': 'ore',
-     'narrative': 'Iron ore deposit (T1, requires pickaxe). Common deposits of sturdy grey metal.'},
-    {'id': 'steel_ore_node', 'name': 'Steel Ore Node', 'tier': 2, 'category': 'ore',
-     'narrative': 'Steel ore deposit (T2, requires pickaxe). Carbon-rich deposits for quality metal.'},
-    {'id': 'mithril_ore_node', 'name': 'Mithril Ore Node', 'tier': 2, 'category': 'ore',
-     'narrative': 'Mithril ore deposit (T2, requires pickaxe). Legendary silver-white metal veins.'},
-    {'id': 'limestone_node', 'name': 'Limestone Node', 'tier': 1, 'category': 'stone',
-     'narrative': 'Limestone deposit (T1, requires pickaxe). Common sedimentary rock for construction.'},
-    {'id': 'granite_node', 'name': 'Granite Node', 'tier': 1, 'category': 'stone',
-     'narrative': 'Granite deposit (T1, requires pickaxe). Speckled igneous rock with crystalline structure.'},
-    {'id': 'obsidian_node', 'name': 'Obsidian Node', 'tier': 3, 'category': 'stone',
-     'narrative': 'Obsidian deposit (T3, requires pickaxe). Volcanic glass born in eruptions.'},
-    {'id': 'star_crystal_node', 'name': 'Star Crystal Node', 'tier': 4, 'category': 'stone',
-     'narrative': 'Star crystal deposit (T4, requires pickaxe, rare). Crystallized starlight from the heavens.'},
-]
+# Resources are now loaded from JSON (resource-node-1.JSON)
+# This list is populated by load_resources_from_json() at runtime
+RESOURCES = []
+
+
+def load_resources_from_json(base_path: Path) -> List[Dict]:
+    """Load all resources from resource-node-1.JSON
+
+    Now uses the full 28 resources defined in JSON instead of hardcoded 12.
+    """
+    resources = []
+    json_file = base_path / 'Definitions.JSON' / 'resource-node-1.JSON'
+
+    if json_file.exists():
+        try:
+            with open(json_file, 'r') as f:
+                data = json.load(f)
+
+            for node in data.get('nodes', []):
+                resource_id = node.get('resourceId', '')
+                name = node.get('name', '')
+                category = node.get('category', '')
+                tier = node.get('tier', 1)
+                metadata = node.get('metadata', {})
+                narrative = metadata.get('narrative', f'{name} (T{tier})')
+                required_tool = node.get('requiredTool', 'pickaxe')
+
+                resources.append({
+                    'id': resource_id,
+                    'name': name,
+                    'tier': tier,
+                    'category': category,
+                    'narrative': f"{name} (T{tier}, requires {required_tool}). {narrative}",
+                    'required_tool': required_tool
+                })
+
+            print(f"[IconGenerator] Loaded {len(resources)} resources from JSON")
+        except Exception as e:
+            print(f"[IconGenerator] Error loading resources from JSON: {e}")
+            # Fallback to minimal hardcoded list
+            resources = _get_fallback_resources()
+    else:
+        print(f"[IconGenerator] resource-node-1.JSON not found, using fallback")
+        resources = _get_fallback_resources()
+
+    return resources
+
+
+def _get_fallback_resources() -> List[Dict]:
+    """Fallback resources if JSON cannot be loaded"""
+    return [
+        {'id': 'oak_tree', 'name': 'Oak Tree', 'tier': 1, 'category': 'tree',
+         'narrative': 'Oak tree (T1, requires axe). Reliable, sturdy timber.'},
+        {'id': 'copper_vein', 'name': 'Copper Vein', 'tier': 1, 'category': 'ore',
+         'narrative': 'Copper ore deposit (T1, requires pickaxe).'},
+        {'id': 'limestone_outcrop', 'name': 'Limestone Outcrop', 'tier': 1, 'category': 'stone',
+         'narrative': 'Limestone deposit (T1, requires pickaxe).'},
+    ]
 
 
 # ============================================================================
@@ -394,18 +425,18 @@ def extract_skills(base_path: Path) -> List[EntityEntry]:
 
 
 def extract_resources(base_path: Path) -> List[EntityEntry]:
-    """Extract resources from hardcoded RESOURCES list (matches game's ResourceType enum)
+    """Extract resources from resource-node-1.JSON
 
-    The game uses the ResourceType enum in data/models/world.py, and the renderer
-    constructs icon paths by appending '_node' to non-tree resources.
-    This function uses the hardcoded RESOURCES list which matches these expectations.
-
-    Note: resource-node-1.JSON contains 28 resources for future expansion, but the game
-    only currently uses the 12 resources defined in the ResourceType enum.
+    Now loads all 28 resources from JSON instead of using hardcoded list.
+    The ResourceType enum in data/models/world.py has been expanded to match.
     """
-    entities = []
+    global RESOURCES
 
-    # Use hardcoded list that matches ResourceType enum and renderer expectations
+    # Load resources from JSON if not already loaded
+    if not RESOURCES:
+        RESOURCES = load_resources_from_json(base_path)
+
+    entities = []
     for res in RESOURCES:
         entities.append(EntityEntry(
             entity_id=res['id'],

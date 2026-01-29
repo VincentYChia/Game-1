@@ -56,42 +56,127 @@ class WorldTile:
 
 
 class ResourceType(Enum):
-    """Types of harvestable resources"""
+    """Types of harvestable resources - matches resource-node-1.JSON
+
+    Note: Values match resourceId in JSON for easy lookup.
+    Use ResourceNodeDatabase for full resource definitions.
+    """
+    # Trees (8 total)
     OAK_TREE = "oak_tree"
+    PINE_TREE = "pine_tree"
+    ASH_TREE = "ash_tree"
     BIRCH_TREE = "birch_tree"
     MAPLE_TREE = "maple_tree"
     IRONWOOD_TREE = "ironwood_tree"
-    COPPER_ORE = "copper_ore"
-    IRON_ORE = "iron_ore"
-    STEEL_ORE = "steel_ore"
-    MITHRIL_ORE = "mithril_ore"
-    LIMESTONE = "limestone"
-    GRANITE = "granite"
-    OBSIDIAN = "obsidian"
-    STAR_CRYSTAL = "star_crystal"
+    EBONY_TREE = "ebony_tree"
+    WORLDTREE_SAPLING = "worldtree_sapling"
+
+    # Ores (8 total)
+    COPPER_VEIN = "copper_vein"
+    IRON_DEPOSIT = "iron_deposit"
+    TIN_SEAM = "tin_seam"
+    STEEL_NODE = "steel_node"
+    MITHRIL_CACHE = "mithril_cache"
+    ADAMANTINE_LODE = "adamantine_lode"
+    ORICHALCUM_TROVE = "orichalcum_trove"
+    ETHERION_NEXUS = "etherion_nexus"
+
+    # Stones (12 total)
+    LIMESTONE_OUTCROP = "limestone_outcrop"
+    GRANITE_FORMATION = "granite_formation"
+    SHALE_BED = "shale_bed"
+    BASALT_COLUMN = "basalt_column"
+    MARBLE_QUARRY = "marble_quarry"
+    QUARTZ_CLUSTER = "quartz_cluster"
+    OBSIDIAN_FLOW = "obsidian_flow"
+    VOIDSTONE_SHARD = "voidstone_shard"
+    DIAMOND_GEODE = "diamond_geode"
+    ETERNITY_MONOLITH = "eternity_monolith"
+    PRIMORDIAL_FORMATION = "primordial_formation"
+    GENESIS_STRUCTURE = "genesis_structure"
+
+    # Legacy aliases (for backwards compatibility with existing code)
+    # These map old names to new JSON-based names
+    COPPER_ORE = "copper_vein"  # Alias
+    IRON_ORE = "iron_deposit"  # Alias
+    STEEL_ORE = "steel_node"  # Alias
+    MITHRIL_ORE = "mithril_cache"  # Alias
+    LIMESTONE = "limestone_outcrop"  # Alias
+    GRANITE = "granite_formation"  # Alias
+    OBSIDIAN = "obsidian_flow"  # Alias
+    STAR_CRYSTAL = "diamond_geode"  # Alias (repurposed to diamond)
+
     # Water resources
     FISHING_SPOT = "fishing_spot"
 
 
-RESOURCE_TIERS = {
-    # Wood
-    ResourceType.OAK_TREE: 1,
-    ResourceType.BIRCH_TREE: 2,
-    ResourceType.MAPLE_TREE: 2,
-    ResourceType.IRONWOOD_TREE: 3,
-    # Ore
-    ResourceType.COPPER_ORE: 1,
-    ResourceType.IRON_ORE: 1,
-    ResourceType.STEEL_ORE: 2,
-    ResourceType.MITHRIL_ORE: 2,
-    # Stone
-    ResourceType.LIMESTONE: 1,
-    ResourceType.GRANITE: 1,
-    ResourceType.OBSIDIAN: 3,
-    ResourceType.STAR_CRYSTAL: 4,
-    # Water
-    ResourceType.FISHING_SPOT: 1,
-}
+def _build_resource_tiers() -> dict:
+    """Build RESOURCE_TIERS from ResourceNodeDatabase if loaded, else use defaults"""
+    # Try to get tiers from database
+    try:
+        from data.databases.resource_node_db import ResourceNodeDatabase
+        db = ResourceNodeDatabase.get_instance()
+        if db.loaded:
+            # Build tier map using ResourceType enum values
+            tier_map = {}
+            for res_type in ResourceType:
+                node = db.get_node(res_type.value)
+                if node:
+                    tier_map[res_type] = node.tier
+            if tier_map:
+                return tier_map
+    except Exception:
+        pass
+
+    # Default/fallback tiers (matches JSON definitions)
+    return {
+        # Trees
+        ResourceType.OAK_TREE: 1,
+        ResourceType.PINE_TREE: 1,
+        ResourceType.ASH_TREE: 1,
+        ResourceType.BIRCH_TREE: 2,
+        ResourceType.MAPLE_TREE: 2,
+        ResourceType.IRONWOOD_TREE: 3,
+        ResourceType.EBONY_TREE: 3,
+        ResourceType.WORLDTREE_SAPLING: 4,
+        # Ores
+        ResourceType.COPPER_VEIN: 1,
+        ResourceType.IRON_DEPOSIT: 1,
+        ResourceType.TIN_SEAM: 1,
+        ResourceType.STEEL_NODE: 2,
+        ResourceType.MITHRIL_CACHE: 2,
+        ResourceType.ADAMANTINE_LODE: 3,
+        ResourceType.ORICHALCUM_TROVE: 3,
+        ResourceType.ETHERION_NEXUS: 4,
+        # Stones
+        ResourceType.LIMESTONE_OUTCROP: 1,
+        ResourceType.GRANITE_FORMATION: 1,
+        ResourceType.SHALE_BED: 1,
+        ResourceType.BASALT_COLUMN: 2,
+        ResourceType.MARBLE_QUARRY: 2,
+        ResourceType.QUARTZ_CLUSTER: 2,
+        ResourceType.OBSIDIAN_FLOW: 3,
+        ResourceType.VOIDSTONE_SHARD: 3,
+        ResourceType.DIAMOND_GEODE: 3,
+        ResourceType.ETERNITY_MONOLITH: 4,
+        ResourceType.PRIMORDIAL_FORMATION: 4,
+        ResourceType.GENESIS_STRUCTURE: 4,
+        # Legacy aliases
+        ResourceType.COPPER_ORE: 1,
+        ResourceType.IRON_ORE: 1,
+        ResourceType.STEEL_ORE: 2,
+        ResourceType.MITHRIL_ORE: 2,
+        ResourceType.LIMESTONE: 1,
+        ResourceType.GRANITE: 1,
+        ResourceType.OBSIDIAN: 3,
+        ResourceType.STAR_CRYSTAL: 3,
+        # Water resources
+        ResourceType.FISHING_SPOT: 1,
+    }
+
+
+# Initialize RESOURCE_TIERS (will be rebuilt after database loads)
+RESOURCE_TIERS = _build_resource_tiers()
 
 
 @dataclass
@@ -114,10 +199,9 @@ class ChunkType(Enum):
     RARE_HIDDEN_FOREST = "rare_hidden_forest"
     RARE_ANCIENT_QUARRY = "rare_ancient_quarry"
     RARE_DEEP_CAVE = "rare_deep_cave"
-    # Water chunks - edge-only by default
+    # Water chunks
     WATER_LAKE = "water_lake"
     WATER_RIVER = "water_river"
-    # Rare water chunk - can spawn anywhere (not edge-only)
     WATER_CURSED_SWAMP = "water_cursed_swamp"
 
 
@@ -156,108 +240,6 @@ class PlacedEntityType(Enum):
     UTILITY_DEVICE = "utility_device"
     CRAFTING_STATION = "crafting_station"
     TRAINING_DUMMY = "training_dummy"
-    LOOT_CHEST = "loot_chest"
-
-
-class DungeonRarity(Enum):
-    """Dungeon rarity tiers with spawn weights and mob counts"""
-    COMMON = "common"           # 25%, 20 mobs
-    UNCOMMON = "uncommon"       # 30%, 30 mobs
-    RARE = "rare"               # 20%, 40 mobs
-    EPIC = "epic"               # 15%, 50 mobs
-    LEGENDARY = "legendary"     # 8%, 50 mobs
-    UNIQUE = "unique"           # 2%, 50 mobs
-
-
-# Dungeon configuration constants
-DUNGEON_CONFIG = {
-    DungeonRarity.COMMON: {
-        "spawn_weight": 25,
-        "total_mobs": 20,
-        "tier_weights": {1: 80, 2: 20, 3: 0, 4: 0},  # Mostly T1
-        "chest_tier": 1,
-    },
-    DungeonRarity.UNCOMMON: {
-        "spawn_weight": 30,
-        "total_mobs": 30,
-        "tier_weights": {1: 50, 2: 40, 3: 10, 4: 0},  # Mix T1-T2
-        "chest_tier": 1,
-    },
-    DungeonRarity.RARE: {
-        "spawn_weight": 20,
-        "total_mobs": 40,
-        "tier_weights": {1: 20, 2: 40, 3: 35, 4: 5},  # Mix T2-T3
-        "chest_tier": 2,
-    },
-    DungeonRarity.EPIC: {
-        "spawn_weight": 15,
-        "total_mobs": 50,
-        "tier_weights": {1: 5, 2: 25, 3: 50, 4: 20},  # Mostly T3
-        "chest_tier": 2,
-    },
-    DungeonRarity.LEGENDARY: {
-        "spawn_weight": 8,
-        "total_mobs": 50,
-        "tier_weights": {1: 0, 2: 10, 3: 40, 4: 50},  # Heavy T3-T4
-        "chest_tier": 3,
-    },
-    DungeonRarity.UNIQUE: {
-        "spawn_weight": 2,
-        "total_mobs": 50,
-        "tier_weights": {1: 0, 2: 0, 3: 30, 4: 70},  # Almost all T4
-        "chest_tier": 3,
-    },
-}
-
-
-@dataclass
-class DungeonEntrance:
-    """A dungeon entrance in the world that players can interact with to enter dungeons."""
-    position: Position
-    rarity: DungeonRarity
-    entrance_id: str = ""
-    is_cleared: bool = False  # True if the dungeon was cleared (can respawn after time)
-    cooldown_remaining: float = 0.0  # Time until dungeon can be re-entered after clearing
-
-    def __post_init__(self):
-        if not self.entrance_id:
-            import time
-            import random
-            self.entrance_id = f"entrance_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
-
-    def get_rarity_color(self) -> Tuple[int, int, int]:
-        """Get the color associated with this dungeon's rarity."""
-        rarity_colors = {
-            DungeonRarity.COMMON: (150, 150, 150),      # Gray
-            DungeonRarity.UNCOMMON: (50, 200, 50),      # Green
-            DungeonRarity.RARE: (50, 100, 255),         # Blue
-            DungeonRarity.EPIC: (180, 50, 255),         # Purple
-            DungeonRarity.LEGENDARY: (255, 180, 0),     # Orange/Gold
-            DungeonRarity.UNIQUE: (255, 50, 50),        # Red
-        }
-        return rarity_colors.get(self.rarity, (150, 150, 150))
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Serialize for saving."""
-        return {
-            "entrance_id": self.entrance_id,
-            "position": {"x": self.position.x, "y": self.position.y, "z": self.position.z},
-            "rarity": self.rarity.value,
-            "is_cleared": self.is_cleared,
-            "cooldown_remaining": self.cooldown_remaining
-        }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'DungeonEntrance':
-        """Deserialize from save data."""
-        pos_data = data.get("position", {"x": 0, "y": 0, "z": 0})
-        return cls(
-            position=Position(pos_data["x"], pos_data["y"], pos_data.get("z", 0)),
-            rarity=DungeonRarity(data.get("rarity", "common")),
-            entrance_id=data.get("entrance_id", ""),
-            is_cleared=data.get("is_cleared", False),
-            cooldown_remaining=data.get("cooldown_remaining", 0.0)
-        )
 
 
 @dataclass
