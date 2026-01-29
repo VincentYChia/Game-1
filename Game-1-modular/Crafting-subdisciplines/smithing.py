@@ -451,8 +451,10 @@ class SmithingCrafter:
                 if not update_path.exists():
                     continue
 
-                # Look for recipe files with smithing in the name
-                for recipe_file in update_path.glob("*recipes*smithing*.JSON"):
+                # Look for recipe files with smithing in the name (both .JSON and .json)
+                recipe_files = list(update_path.glob("*recipes*smithing*.JSON"))
+                recipe_files.extend(update_path.glob("*recipes*smithing*.json"))
+                for recipe_file in recipe_files:
                     try:
                         with open(recipe_file, 'r') as f:
                             data = json.load(f)
