@@ -461,3 +461,14 @@ class DungeonEntrance:
     position: Position
     rarity: DungeonRarity
     discovered: bool = False  # Whether player has found this entrance
+
+    def get_rarity_color(self) -> Tuple[int, int, int]:
+        """Get display color based on dungeon rarity"""
+        return {
+            DungeonRarity.COMMON: (150, 150, 150),      # Gray
+            DungeonRarity.UNCOMMON: (30, 200, 30),      # Green
+            DungeonRarity.RARE: (30, 100, 255),         # Blue
+            DungeonRarity.EPIC: (180, 60, 255),         # Purple
+            DungeonRarity.LEGENDARY: (255, 165, 0),     # Orange
+            DungeonRarity.UNIQUE: (255, 50, 50),        # Red
+        }.get(self.rarity, (150, 150, 150))

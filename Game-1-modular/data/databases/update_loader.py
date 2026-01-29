@@ -38,28 +38,31 @@ def get_installed_updates(project_root: Path) -> List[str]:
 
 
 def scan_update_directory(update_dir: Path, database_type: str) -> List[Path]:
-    """Scan an update directory for relevant JSON files"""
+    """Scan an update directory for relevant JSON files (both .JSON and .json)"""
     files = []
 
     if database_type == 'equipment':
         # Look for items/weapons/armor JSONs
-        patterns = ['*items*.JSON', '*weapons*.JSON', '*armor*.JSON', '*tools*.JSON']
+        patterns = ['*items*.JSON', '*weapons*.JSON', '*armor*.JSON', '*tools*.JSON',
+                    '*items*.json', '*weapons*.json', '*armor*.json', '*tools*.json']
     elif database_type == 'skills':
         # Look for skills JSONs
-        patterns = ['*skills*.JSON']
+        patterns = ['*skills*.JSON', '*skills*.json']
     elif database_type == 'enemies':
         # Look for hostiles/enemies JSONs
-        patterns = ['*hostiles*.JSON', '*enemies*.JSON']
+        patterns = ['*hostiles*.JSON', '*enemies*.JSON', '*hostiles*.json', '*enemies*.json']
     elif database_type == 'materials':
         # Look for materials/consumables/devices JSONs
-        patterns = ['*materials*.JSON', '*consumables*.JSON', '*devices*.JSON']
+        patterns = ['*materials*.JSON', '*consumables*.JSON', '*devices*.JSON',
+                    '*materials*.json', '*consumables*.json', '*devices*.json']
     else:
-        patterns = ['*.JSON']
+        patterns = ['*.JSON', '*.json']
 
     for pattern in patterns:
         files.extend(update_dir.glob(pattern))
 
-    return files
+    # Remove duplicates (in case both patterns match on case-insensitive systems)
+    return list(set(files))
 
 
 def load_equipment_updates(project_root: Path):
@@ -192,11 +195,12 @@ def load_recipe_updates(project_root: Path):
             print(f"   ⚠️  Update directory not found: {update_name}")
             continue
 
-        # Scan for recipe files
-        patterns = ['*recipes*.JSON', '*crafting*.JSON']
+        # Scan for recipe files (both .JSON and .json)
+        patterns = ['*recipes*.JSON', '*crafting*.JSON', '*recipes*.json', '*crafting*.json']
         files = []
         for pattern in patterns:
             files.extend(update_dir.glob(pattern))
+        files = list(set(files))  # Remove duplicates
 
         for file in files:
             try:
@@ -270,7 +274,8 @@ def list_update_content(update_name: str, project_root: Path = None):
 
     print(f"\n📦 Content in {update_name}:\n")
 
-    for json_file in sorted(update_dir.glob("*.JSON")):
+    all_json = list(update_dir.glob("*.JSON")) + list(update_dir.glob("*.json"))
+    for json_file in sorted(set(all_json)):
         try:
             with open(json_file, 'r') as f:
                 data = json.load(f)
