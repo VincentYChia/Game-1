@@ -20,10 +20,17 @@ class Config:
     UI_SCALE = 1.0
 
     # World - Centered coordinate system with (0,0,0) at center
-    WORLD_SIZE = 176  # 11 chunks × 16 tiles per chunk
+    # Infinite world - no fixed size, chunks generated on demand
     CHUNK_SIZE = 16
     TILE_SIZE = 32
-    NUM_CHUNKS = 11  # 11×11 chunk grid (-5 to +5)
+
+    # Chunk loading configuration
+    CHUNK_LOAD_RADIUS = 4      # ±4 chunks around player (9x9 = 81 chunks)
+    SPAWN_ALWAYS_LOADED = 1    # ±1 chunks around spawn always loaded (3x3 = 9 chunks)
+
+    # Legacy constants (kept for compatibility during transition)
+    WORLD_SIZE = 176  # Deprecated - world is now infinite
+    NUM_CHUNKS = 11   # Deprecated - chunks generated on demand
 
     # Player spawn and safe zone
     PLAYER_SPAWN_X = 0.0

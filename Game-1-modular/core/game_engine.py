@@ -658,6 +658,8 @@ class GameEngine:
                         print(f"   • Infinite resources (no materials consumed)")
                         print(f"   • Level set to {self.character.leveling.level}")
                         print(f"   • 100 stat points available")
+                        print(f"   🎲 World seed: {self.world.seed}")
+                        print(f"   📍 Loaded chunks: {len(self.world.loaded_chunks)}")
                         self.add_notification("Debug F1: ENABLED", (100, 255, 100))
                     else:
                         # DISABLE: Restore original state
@@ -1247,12 +1249,24 @@ class GameEngine:
                 self.start_menu_open = False
                 self.temporary_world = False
 
-                # Restore water chunk positions BEFORE world generation
+                # Get world state and seed
                 world_state = save_data.get("world_state", {})
-                water_chunks = world_state.get("water_chunks", [])
-                if water_chunks:
-                    from systems.chunk import Chunk
-                    Chunk.restore_water_chunks(water_chunks)
+                saved_seed = world_state.get("seed")
+
+                # Recreate WorldSystem with saved seed (for deterministic generation)
+                if saved_seed is not None:
+                    print(f"🎲 Loading world with seed: {saved_seed}")
+                    self.world = WorldSystem(seed=saved_seed)
+                    self.world.set_chunk_save_directory("autosave.json")
+                    self.world.dungeon_manager = self.dungeon_manager
+                    # Update combat manager's world reference
+                    self.combat_manager.world = self.world
+                else:
+                    # Legacy save - restore water chunks for backwards compatibility
+                    water_chunks = world_state.get("water_chunks", [])
+                    if water_chunks:
+                        from systems.chunk import Chunk
+                        Chunk.restore_water_chunks(water_chunks)
 
                 # Create character at starting position first
                 self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
@@ -1263,7 +1277,7 @@ class GameEngine:
                 # Register saved invented recipes with Crafters
                 self.register_saved_invented_recipes()
 
-                # Restore world state (placed entities, modified resources)
+                # Restore world state (placed entities, discovered dungeons, etc.)
                 self.world.restore_from_save(save_data["world_state"])
 
                 # Restore quest state
@@ -1309,12 +1323,24 @@ class GameEngine:
                 self.start_menu_open = False
                 self.temporary_world = False
 
-                # Restore water chunk positions BEFORE world generation
+                # Get world state and seed
                 world_state = save_data.get("world_state", {})
-                water_chunks = world_state.get("water_chunks", [])
-                if water_chunks:
-                    from systems.chunk import Chunk
-                    Chunk.restore_water_chunks(water_chunks)
+                saved_seed = world_state.get("seed")
+
+                # Recreate WorldSystem with saved seed (for deterministic generation)
+                if saved_seed is not None:
+                    print(f"🎲 Loading world with seed: {saved_seed}")
+                    self.world = WorldSystem(seed=saved_seed)
+                    self.world.set_chunk_save_directory("default_save.json")
+                    self.world.dungeon_manager = self.dungeon_manager
+                    # Update combat manager's world reference
+                    self.combat_manager.world = self.world
+                else:
+                    # Legacy save - restore water chunks for backwards compatibility
+                    water_chunks = world_state.get("water_chunks", [])
+                    if water_chunks:
+                        from systems.chunk import Chunk
+                        Chunk.restore_water_chunks(water_chunks)
 
                 # Create character at starting position first
                 self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
@@ -1325,7 +1351,7 @@ class GameEngine:
                 # Register saved invented recipes with Crafters
                 self.register_saved_invented_recipes()
 
-                # Restore world state (placed entities, modified resources)
+                # Restore world state (placed entities, discovered dungeons, etc.)
                 self.world.restore_from_save(save_data["world_state"])
 
                 # Restore quest state
@@ -5454,6 +5480,10 @@ class GameEngine:
         # Only update world/combat if minigame isn't active
         if not self.active_minigame:
             self.world.update(dt)
+
+            # Update loaded chunks based on player position (for infinite world)
+            if self.character:
+                self.world.update_loaded_chunks(self.character.position)
 
             # Check if player is blocking with shield (right mouse held OR X key held)
             mouse_held = 3 in self.mouse_buttons_pressed
