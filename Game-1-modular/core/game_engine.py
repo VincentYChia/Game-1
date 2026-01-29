@@ -5124,14 +5124,11 @@ class GameEngine:
             return None
 
         # Calculate chunk coordinates from player position
-        chunk_x = int(self.character.position.x) // Config.CHUNK_SIZE
-        chunk_y = int(self.character.position.y) // Config.CHUNK_SIZE
-
-        # Handle negative coordinates correctly
-        if self.character.position.x < 0 and self.character.position.x % Config.CHUNK_SIZE != 0:
-            chunk_x -= 1
-        if self.character.position.y < 0 and self.character.position.y % Config.CHUNK_SIZE != 0:
-            chunk_y -= 1
+        # Python floor division handles negative coordinates correctly
+        pos_x = int(self.character.position.x) if self.character.position.x >= 0 else int(self.character.position.x - 0.999999)
+        pos_y = int(self.character.position.y) if self.character.position.y >= 0 else int(self.character.position.y - 0.999999)
+        chunk_x = pos_x // Config.CHUNK_SIZE
+        chunk_y = pos_y // Config.CHUNK_SIZE
 
         # Get chunk from world system
         chunk = self.world.loaded_chunks.get((chunk_x, chunk_y))

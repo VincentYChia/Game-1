@@ -48,33 +48,37 @@
   },
 
   "danger_zones": {
-    "_comment": "Controls how danger increases with distance from spawn. Uses chunk distance (not tile distance).",
-    "safe_zone_radius": 2,
-    "_safe_zone_radius_effects": "HIGHER = larger safe starting area. LOWER = danger closer to spawn.",
-    "transition_zone_radius": 10,
-    "_transition_zone_radius_effects": "HIGHER = gradual danger increase over longer distance. LOWER = danger ramps up quickly.",
+    "_comment": "SIMPLIFIED: ±8 chunks from spawn = progressively safer. Beyond = random/fair game.",
+    "_note": "The danger zone logic is hardcoded in biome_generator.py for simplicity. These values are legacy.",
+    "_behavior": [
+      "At spawn (0,0): 100% peaceful",
+      "At distance 8: ~40% peaceful, ~45% dangerous, ~15% rare",
+      "Beyond distance 8: ~40% peaceful, ~40% dangerous, ~20% rare (no distance bias)"
+    ],
+    "safe_zone_radius": 8,
+    "_safe_zone_radius_effects": "NOTE: Hardcoded to 8 in biome_generator.py. This value is for reference only.",
+    "transition_zone_radius": 8,
+    "_transition_zone_radius_effects": "DEPRECATED: No longer used. Danger transitions linearly within safe zone.",
     "max_danger_enabled": true,
-    "_max_danger_enabled_effects": "TRUE = danger caps at transition zone. FALSE = danger continues scaling forever.",
+    "_max_danger_enabled_effects": "DEPRECATED: Beyond safe zone is simply random/fair game.",
 
     "safe_zone_distribution": {
-      "_comment": "Danger distribution within safe zone. Values are DILUTIVE - normalized automatically.",
+      "_comment": "DEPRECATED: Now uses progressive formula based on distance.",
       "peaceful": 1.0,
       "dangerous": 0.0,
       "rare": 0.0
     },
     "transition_zone_distribution": {
-      "_comment": "Danger distribution in transition zone (between safe and outer).",
-      "_peaceful_effects": "HIGHER = more safe chunks in transition. LOWER = more dangerous/rare chunks.",
+      "_comment": "DEPRECATED: Merged into safe zone progressive formula.",
       "peaceful": 0.40,
       "dangerous": 0.50,
       "rare": 0.10
     },
     "outer_zone_distribution": {
-      "_comment": "Danger distribution beyond transition zone (full difficulty area).",
-      "_rare_effects": "HIGHER = more legendary resource areas. LOWER = mostly dangerous chunks.",
-      "peaceful": 0.20,
-      "dangerous": 0.50,
-      "rare": 0.30
+      "_comment": "Beyond ±8 chunks: random distribution with no distance bias.",
+      "peaceful": 0.40,
+      "dangerous": 0.40,
+      "rare": 0.20
     }
   },
 
