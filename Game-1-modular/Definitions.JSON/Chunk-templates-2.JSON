@@ -433,6 +433,115 @@
         "spawnAreaAllowed": false,
         "adjacencyPreference": ["rare_cave", "dangerous_cave"]
       }
+    },
+    {
+      "metadata": {
+        "narrative": "A serene lake with calm waters teeming with fish. The shoreline is dotted with reeds and the occasional dock. Perfect for fishing, but watch your step - the waters are deep.",
+        "tags": ["water", "fishing", "peaceful", "edge-only"]
+      },
+      "chunkType": "water_lake",
+      "name": "Tranquil Lake",
+      "category": "water",
+      "theme": "water",
+      "tilePattern": {
+        "waterCoverage": 0.65,
+        "hasIslands": true,
+        "shoreWidth": 2
+      },
+      "resourceDensity": {
+        "fishing_spot": {
+          "density": "high",
+          "tierBias": "mid"
+        }
+      },
+      "enemySpawns": {},
+      "generationRules": {
+        "rollWeight": 0,
+        "spawnAreaAllowed": false,
+        "adjacencyPreference": ["peaceful_forest", "peaceful_quarry"],
+        "edgeOnly": true,
+        "minDistanceBetween": 3,
+        "comment": "Water chunks use special placement logic, not roll-based"
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "A flowing stream cutting through the landscape. The water is swift but shallow in places, allowing careful crossing. Fish gather in the pools between rapids.",
+        "tags": ["water", "fishing", "peaceful", "edge-only"]
+      },
+      "chunkType": "water_river",
+      "name": "Flowing Stream",
+      "category": "water",
+      "theme": "water",
+      "tilePattern": {
+        "waterCoverage": 0.35,
+        "hasIslands": false,
+        "hasBridge": true,
+        "riverWidth": 3
+      },
+      "resourceDensity": {
+        "fishing_spot": {
+          "density": "moderate",
+          "tierBias": "low"
+        }
+      },
+      "enemySpawns": {},
+      "generationRules": {
+        "rollWeight": 0,
+        "spawnAreaAllowed": false,
+        "adjacencyPreference": ["peaceful_forest"],
+        "edgeOnly": true,
+        "minDistanceBetween": 3,
+        "comment": "River chunks have land bridges to ensure passability"
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "A cursed swamp where foul waters churn with unnatural life. Toxic vapors rise from stagnant pools, and strange creatures lurk beneath the murky surface. Rare fish mutated by dark magic swim here, prized by alchemists. The bravest anglers venture here seeking legendary catches, but many never return.",
+        "tags": ["water", "fishing", "dangerous", "rare", "combat"]
+      },
+      "chunkType": "water_cursed_swamp",
+      "name": "Cursed Swamp",
+      "category": "rare_water",
+      "theme": "water",
+      "tilePattern": {
+        "waterCoverage": 0.50,
+        "hasIslands": true,
+        "shoreWidth": 1,
+        "isToxic": true
+      },
+      "resourceDensity": {
+        "fishing_spot": {
+          "density": "high",
+          "tierBias": "high"
+        },
+        "voidstone_shard": {
+          "density": "very_low",
+          "tierBias": "high"
+        }
+      },
+      "enemySpawns": {
+        "slime_acid": {
+          "density": "high",
+          "tier": 2
+        },
+        "slime_crystal": {
+          "density": "moderate",
+          "tier": 3
+        },
+        "void_wraith": {
+          "density": "low",
+          "tier": 4
+        }
+      },
+      "generationRules": {
+        "rollWeight": 1,
+        "spawnAreaAllowed": false,
+        "adjacencyPreference": ["dangerous_cave", "rare_cave", "dangerous_forest"],
+        "edgeOnly": false,
+        "minDistanceBetween": 5,
+        "comment": "Rare dangerous water chunk that can spawn anywhere (not edge-only). High-tier fishing but lethal enemies."
+      }
     }
   ]
 }

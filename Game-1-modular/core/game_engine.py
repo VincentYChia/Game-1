@@ -44,6 +44,7 @@ from data import (
     ClassDatabase,
     NPCDatabase,
 )
+from data.databases import ResourceNodeDatabase
 
 from data.models import Position, Recipe, PlacedEntityType, StationType
 from entities.components import ItemStack
@@ -52,6 +53,7 @@ from entities.components import ItemStack
 from systems import WorldSystem, NPC
 from systems.turret_system import TurretSystem
 from systems.save_manager import SaveManager
+from systems.dungeon import DungeonManager
 
 # Rendering
 from rendering import Renderer
@@ -94,6 +96,10 @@ class GameEngine:
         print("=" * 60)
         print("Loading databases...")
         print("=" * 60)
+
+        # Load resource nodes from JSON FIRST (needed for world generation)
+        ResourceNodeDatabase.get_instance().load_from_file(
+            str(get_resource_path("Definitions.JSON/resource-node-1.JSON")))
 
         MaterialDatabase.get_instance().load_from_file(str(get_resource_path("items.JSON/items-materials-1.JSON")))
         MaterialDatabase.get_instance().load_refining_items(
@@ -174,7 +180,7 @@ class GameEngine:
         # If temporary world flag is set, create character immediately
         if self.temporary_world:
             print("🌍 Starting in temporary world mode (no saves)")
-            self.character = Character(Position(50.0, 50.0, 0.0))
+            self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             self.start_menu_open = False
 
             # Open class selection for new character
@@ -187,19 +193,25 @@ class GameEngine:
 
         # Initialize combat system (with temporary character if needed for loading)
         print("Loading combat system...")
-        temp_char = self.character if self.character else Character(Position(50.0, 50.0, 0.0))
+        temp_char = self.character if self.character else Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
         self.combat_manager = CombatManager(self.world, temp_char)
         self.combat_manager.load_config(
             "Definitions.JSON/combat-config.JSON",
             "Definitions.JSON/hostiles-1.JSON"
         )
+        # Initialize dungeon system
+        print("Loading dungeon system...")
+        self.dungeon_manager = DungeonManager()
+        self.combat_manager.dungeon_manager = self.dungeon_manager  # Link for 2x EXP, no drops
+        self.world.dungeon_manager = self.dungeon_manager  # Link for dungeon tile walkability checks
+
         # Only spawn initial enemies if we have a real character
         if self.character:
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
             # Spawn training dummy for tag testing
             from systems.training_dummy import spawn_training_dummy
-            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+            spawn_training_dummy(self.combat_manager, (10.0, 0.0))
 
         # Initialize NPC system
         print("Loading NPCs...")
@@ -293,6 +305,11 @@ class GameEngine:
         self.enchantment_selection_rect = None
         self.enchantment_item_rects = None  # Item rects for click detection
 
+        # Dungeon chest UI state
+        self.dungeon_chest_open = False  # True when dungeon chest UI is open
+        self.dungeon_chest_rect = None  # Bounding rect for chest UI
+        self.dungeon_chest_item_rects = []  # [(rect, item_idx), ...] for click detection
+
         # Minigame state
         self.active_minigame = None  # Current minigame instance (SmithingMinigame, etc.)
         self.minigame_type = None  # Station type: 'smithing', 'alchemy', 'refining', 'engineering', 'adornments'
@@ -314,6 +331,14 @@ class GameEngine:
         self.last_tick = pygame.time.get_ticks()
         self.last_click_time = 0
         self.last_clicked_slot = None
+
+        # Day/Night Cycle (16 min day + 8 min night = 24 min total)
+        # Time breakdown: 0-480s Night, 480-600s Dawn, 600-1320s Day, 1320-1440s Dusk
+        # New worlds start at noon (960s = middle of day phase)
+        self.game_time = 960.0  # Start at noon for new worlds
+        self.DAY_LENGTH = 960.0      # 16 minutes in seconds
+        self.NIGHT_LENGTH = 480.0    # 8 minutes in seconds
+        self.CYCLE_LENGTH = 1440.0   # Total cycle (24 minutes)
 
         # Start menu UI rects
         self.start_menu_buttons = []
@@ -432,7 +457,9 @@ class GameEngine:
                         self.world,
                         self.character.quests,
                         self.npcs,
-                        "autosave.json"
+                        "autosave.json",
+                        self.dungeon_manager,
+                        self.game_time
                     ):
                         print("💾 Autosaved on quit")
                 self.running = False
@@ -461,7 +488,9 @@ class GameEngine:
                                 self.world,
                                 self.character.quests,
                                 self.npcs,
-                                "autosave.json"
+                                "autosave.json",
+                                self.dungeon_manager,
+                                self.game_time
                             ):
                                 print("💾 Autosaved on start menu quit")
                         self.running = False
@@ -525,6 +554,9 @@ class GameEngine:
                     elif self.interactive_crafting_active:
                         # Close interactive crafting UI (priority over regular crafting UI)
                         self._close_interactive_crafting()
+                    elif self.dungeon_chest_open:
+                        # Close dungeon chest UI
+                        self._close_dungeon_chest()
                     elif self.character.crafting_ui_open:
                         self.character.close_crafting_ui()
                     elif self.character.stats_ui_open:
@@ -545,7 +577,9 @@ class GameEngine:
                                 self.world,
                                 self.character.quests,
                                 self.npcs,
-                                "autosave.json"
+                                "autosave.json",
+                                self.dungeon_manager,
+                                self.game_time
                             ):
                                 print("💾 Autosaved on ESC quit")
                         self.running = False
@@ -763,7 +797,9 @@ class GameEngine:
                             self.world,
                             self.character.quests,
                             self.npcs,
-                            "autosave.json"
+                            "autosave.json",
+                            self.dungeon_manager,
+                            self.game_time
                         ):
                             self.add_notification("Game saved!", (100, 255, 100))
 
@@ -777,7 +813,9 @@ class GameEngine:
                             self.world,
                             self.character.quests,
                             self.npcs,
-                            f"save_{timestamp}.json"
+                            f"save_{timestamp}.json",
+                            self.dungeon_manager,
+                            self.game_time
                         ):
                             self.add_notification(f"Saved!", (100, 255, 100))
 
@@ -790,6 +828,13 @@ class GameEngine:
                     else:
                         print("🔧 DEBUG F7: Infinite Durability DISABLED")
                         self.add_notification("Infinite Durability: OFF", (255, 100, 100))
+
+                elif event.key == pygame.K_F8:
+                    # Enter/Exit Dungeon
+                    if self.dungeon_manager.in_dungeon:
+                        self._exit_dungeon()
+                    else:
+                        self._enter_dungeon()
 
                 elif event.key == pygame.K_F9:
                     # Load game (Shift+F9 for default save, F9 for autosave)
@@ -820,6 +865,13 @@ class GameEngine:
 
                         # Restore NPC state
                         SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
+
+                        # Restore dungeon state (if present)
+                        self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
+
+                        # If in dungeon, respawn enemies
+                        if self.dungeon_manager.in_dungeon:
+                            self.combat_manager.spawn_dungeon_wave()
 
                         # Reset camera
                         self.camera = Camera(Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT)
@@ -1172,14 +1224,14 @@ class GameEngine:
             print("🌍 Starting new world...")
             self.start_menu_open = False
             self.temporary_world = False
-            self.character = Character(Position(50.0, 50.0, 0.0))
+            self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             # Update combat manager with new character
             self.combat_manager.character = self.character
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
             # Spawn training dummy for tag testing
             from systems.training_dummy import spawn_training_dummy
-            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+            spawn_training_dummy(self.combat_manager, (10.0, 0.0))
             self.add_notification("Welcome to your new world!", (100, 255, 100))
 
             # Open class selection for new character
@@ -1195,8 +1247,15 @@ class GameEngine:
                 self.start_menu_open = False
                 self.temporary_world = False
 
+                # Restore water chunk positions BEFORE world generation
+                world_state = save_data.get("world_state", {})
+                water_chunks = world_state.get("water_chunks", [])
+                if water_chunks:
+                    from systems.chunk import Chunk
+                    Chunk.restore_water_chunks(water_chunks)
+
                 # Create character at starting position first
-                self.character = Character(Position(50.0, 50.0, 0.0))
+                self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
 
                 # Restore character state from save
                 self.character.restore_from_save(save_data["player"])
@@ -1213,15 +1272,27 @@ class GameEngine:
                 # Restore NPC state
                 SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
 
+                # Restore game time for day/night cycle
+                self.game_time = world_state.get("game_time", 0.0)
+                print(f"⏰ Restored game time: {self.game_time:.1f}s")
+
+                # Restore dungeon state (if present)
+                self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
+
+                # If in dungeon, respawn enemies
+                if self.dungeon_manager.in_dungeon:
+                    self.combat_manager.spawn_dungeon_wave()
+
                 # Update combat manager with loaded character
                 self.combat_manager.character = self.character
 
-                # Spawn enemies near loaded position
-                self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+                # Spawn enemies near loaded position (only if not in dungeon)
+                if not self.dungeon_manager.in_dungeon:
+                    self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
                 # Spawn training dummy for tag testing
                 from systems.training_dummy import spawn_training_dummy
-                spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+                spawn_training_dummy(self.combat_manager, (10.0, 0.0))
 
                 print(f"✓ Loaded character: Level {self.character.leveling.level}")
                 self.add_notification("World loaded successfully!", (100, 255, 100))
@@ -1238,8 +1309,15 @@ class GameEngine:
                 self.start_menu_open = False
                 self.temporary_world = False
 
+                # Restore water chunk positions BEFORE world generation
+                world_state = save_data.get("world_state", {})
+                water_chunks = world_state.get("water_chunks", [])
+                if water_chunks:
+                    from systems.chunk import Chunk
+                    Chunk.restore_water_chunks(water_chunks)
+
                 # Create character at starting position first
-                self.character = Character(Position(50.0, 50.0, 0.0))
+                self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
 
                 # Restore character state from save
                 self.character.restore_from_save(save_data["player"])
@@ -1256,15 +1334,27 @@ class GameEngine:
                 # Restore NPC state
                 SaveManager.restore_npc_state(self.npcs, save_data["npc_state"])
 
+                # Restore game time for day/night cycle
+                self.game_time = world_state.get("game_time", 0.0)
+                print(f"⏰ Restored game time: {self.game_time:.1f}s")
+
+                # Restore dungeon state (if present)
+                self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
+
+                # If in dungeon, respawn enemies
+                if self.dungeon_manager.in_dungeon:
+                    self.combat_manager.spawn_dungeon_wave()
+
                 # Update combat manager with loaded character
                 self.combat_manager.character = self.character
 
-                # Spawn enemies near loaded position
-                self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
+                # Spawn enemies near loaded position (only if not in dungeon)
+                if not self.dungeon_manager.in_dungeon:
+                    self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
 
                 # Spawn training dummy for tag testing
                 from systems.training_dummy import spawn_training_dummy
-                spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+                spawn_training_dummy(self.combat_manager, (10.0, 0.0))
 
                 print(f"✓ Loaded default save: Level {self.character.leveling.level}")
                 self.add_notification("Default save loaded successfully!", (100, 255, 100))
@@ -1279,14 +1369,14 @@ class GameEngine:
             print("🌍 Starting temporary world (no saves)...")
             self.start_menu_open = False
             self.temporary_world = True
-            self.character = Character(Position(50.0, 50.0, 0.0))
+            self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
             # Update combat manager with new character
             self.combat_manager.character = self.character
             # Spawn initial enemies
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
             # Spawn training dummy for tag testing
             from systems.training_dummy import spawn_training_dummy
-            spawn_training_dummy(self.combat_manager, (60.0, 50.0))
+            spawn_training_dummy(self.combat_manager, (10.0, 0.0))
             self.add_notification("Temporary world started (no saves)", (255, 215, 0))
 
             # Open class selection for new character
@@ -1567,6 +1657,19 @@ class GameEngine:
                 self.character.close_crafting_ui()
                 return
 
+        # Dungeon Chest UI - takes priority when open
+        if self.dungeon_chest_open:
+            # Check if clicking on chest UI area
+            if self.dungeon_chest_rect and self.dungeon_chest_rect.collidepoint(mouse_pos):
+                # Check chest item clicks
+                for rect, item_idx in self.dungeon_chest_item_rects:
+                    if rect.collidepoint(mouse_pos):
+                        self._transfer_item_from_chest(item_idx)
+                        return
+                return  # Clicked in chest area but not on item
+            # Clicking outside chest UI closes it
+            # But check if clicking on inventory first (for transfers)
+
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             # CRITICAL: These values MUST match the renderer exactly!
@@ -1587,6 +1690,12 @@ class GameEngine:
                 if in_x and in_y:
                     idx = row * Config.INVENTORY_SLOTS_PER_ROW + col
                     if 0 <= idx < self.character.inventory.max_slots:
+                        # If dungeon chest is open, transfer to chest instead of equipping
+                        if self.dungeon_chest_open:
+                            if self.character.inventory.slots[idx]:
+                                self._transfer_item_to_chest(idx)
+                            return
+
                         # Double-click to equip equipment or tools
                         if is_double_click and self.last_clicked_slot == idx:
                             # Check if item is being dragged (first click started drag)
@@ -1743,6 +1852,70 @@ class GameEngine:
         wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
         world_pos = Position(wx, wy, 0)
 
+        # Handle dungeon-specific clicks
+        if self.dungeon_manager.in_dungeon:
+            # Check for dungeon chest click
+            dungeon = self.dungeon_manager.current_dungeon
+            if dungeon and dungeon.chest and dungeon.is_cleared:
+                chest = dungeon.chest
+                chest_dist = math.sqrt(
+                    (wx - chest.position.x) ** 2 +
+                    (wy - chest.position.y) ** 2
+                )
+                if chest_dist <= 1.5:  # Within click range of chest
+                    self._open_dungeon_chest()
+                    return
+
+            # Check for dungeon exit portal click
+            if dungeon and dungeon.is_cleared and dungeon.exit_portal_position:
+                portal_dist = math.sqrt(
+                    (wx - dungeon.exit_portal_position.x) ** 2 +
+                    (wy - dungeon.exit_portal_position.y) ** 2
+                )
+                if portal_dist <= 1.5:  # Within click range of portal
+                    self._exit_dungeon_via_portal()
+                    return
+
+            # Check for dungeon enemy click
+            enemy = self.combat_manager.get_dungeon_enemy_at_position((wx, wy))
+            if enemy and enemy.is_alive:
+                # Check if player can attack with mainhand
+                if not self.character.can_attack('mainHand'):
+                    return  # Still on cooldown
+
+                # Check if stunned or frozen
+                if hasattr(self.character, 'status_manager'):
+                    if self.character.status_manager.has_status('stun'):
+                        self.add_notification("Cannot attack while stunned!", (255, 100, 100))
+                        return
+                    if self.character.status_manager.has_status('freeze'):
+                        self.add_notification("Cannot attack while frozen!", (255, 100, 100))
+                        return
+
+                # Check if in range
+                weapon_range = self.character.equipment.get_weapon_range('mainHand')
+                dist = enemy.distance_to((self.character.position.x, self.character.position.y))
+                if dist > weapon_range:
+                    self.add_notification("Enemy too far away", (255, 100, 100))
+                    return
+
+                # Attack dungeon enemy
+                effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
+                damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                    enemy, effect_tags, effect_params
+                )
+                self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
+                self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
+
+                if not enemy.is_alive:
+                    # Track dungeon enemy kill (kill tracking already done in combat_manager)
+                    exp_reward = self.combat_manager._calculate_exp_reward(enemy)
+                    if hasattr(self.character, 'stat_tracker'):
+                        self.character.stat_tracker.record_dungeon_enemy_killed(exp_reward)
+                    # Note: on_dungeon_enemy_killed already called by player_attack_enemy_with_tags
+                    self.add_notification(f"Defeated {enemy.definition.name}! (+{exp_reward} EXP)", (255, 215, 0))
+                return  # Don't process world clicks when in dungeon
+
         # Check for enemy click (living enemies)
         enemy = self.combat_manager.get_enemy_at_position((wx, wy))
         if enemy and enemy.is_alive:
@@ -1831,6 +2004,20 @@ class GameEngine:
                     else:
                         self.add_notification("Too far to pick up", (255, 100, 100))
                         return
+
+        # Check for dungeon entrance click (before stations and resources)
+        dungeon_entrance = self.world.get_dungeon_entrance_at(world_pos)
+        if dungeon_entrance:
+            if self.character.is_in_range(dungeon_entrance.position):
+                if self.dungeon_manager.in_dungeon:
+                    self.add_notification("Already in a dungeon!", (255, 100, 100))
+                else:
+                    # Enter dungeon with the entrance's pre-rolled rarity
+                    self._enter_dungeon_with_rarity(dungeon_entrance.rarity)
+                return
+            else:
+                self.add_notification("Move closer to the dungeon entrance", (255, 200, 100))
+                return
 
         station = self.world.get_station_at(world_pos)
 
@@ -4872,6 +5059,339 @@ class GameEngine:
                             return
             self.character.inventory.cancel_drag()
 
+    def get_time_of_day(self) -> tuple:
+        """Get current time phase and progress within that phase.
+
+        Returns:
+            (phase, progress) where:
+            - phase: "night", "dawn", "day", "dusk"
+            - progress: 0.0-1.0 within that phase
+        """
+        cycle_time = self.game_time % self.CYCLE_LENGTH
+
+        # Time breakdown (24 min = 1440s):
+        # 0-480s (0-8 min): Night
+        # 480-600s (8-10 min): Dawn transition
+        # 600-1320s (10-22 min): Day
+        # 1320-1440s (22-24 min): Dusk transition
+        if cycle_time < 480:
+            return ("night", cycle_time / 480)
+        elif cycle_time < 600:
+            return ("dawn", (cycle_time - 480) / 120)
+        elif cycle_time < 1320:
+            return ("day", (cycle_time - 600) / 720)
+        else:
+            return ("dusk", (cycle_time - 1320) / 120)
+
+    def is_night(self) -> bool:
+        """Check if it's currently night time."""
+        phase, _ = self.get_time_of_day()
+        return phase == "night"
+
+    # =========================================================================
+    # DUNGEON SYSTEM METHODS
+    # =========================================================================
+
+    def _enter_dungeon(self):
+        """Enter a new dungeon instance."""
+        if self.dungeon_manager.in_dungeon:
+            self.add_notification("Already in dungeon!", (255, 100, 100))
+            return
+
+        if self.character is None:
+            return
+
+        # Enter dungeon (rarity rolled automatically)
+        dungeon = self.dungeon_manager.enter_dungeon(self.character.position)
+        rarity_name = dungeon.rarity.value.capitalize()
+
+        # Track stat
+        if hasattr(self.character, 'stat_tracker'):
+            self.character.stat_tracker.record_dungeon_entered(dungeon.rarity.value)
+
+        # Move player to dungeon spawn
+        spawn_pos = self.dungeon_manager.get_player_dungeon_position()
+        if spawn_pos:
+            self.character.position = spawn_pos
+
+        # Clear world enemies and spawn dungeon wave
+        self.combat_manager.clear_dungeon_enemies()
+        self.combat_manager.spawn_dungeon_wave()
+
+        self.add_notification(f"Entered {rarity_name} Dungeon!", (255, 215, 0))
+        print(f"🏰 Entered {rarity_name} dungeon: {dungeon.total_mobs} total mobs, {dungeon.total_waves} waves")
+
+    def _enter_dungeon_with_rarity(self, rarity):
+        """Enter a dungeon with a specific rarity (from entrance click)."""
+        if self.dungeon_manager.in_dungeon:
+            self.add_notification("Already in dungeon!", (255, 100, 100))
+            return
+
+        if self.character is None:
+            return
+
+        # Enter dungeon with specific rarity
+        dungeon = self.dungeon_manager.enter_dungeon(self.character.position, rarity=rarity)
+        rarity_name = dungeon.rarity.value.capitalize()
+
+        # Track stat
+        if hasattr(self.character, 'stat_tracker'):
+            self.character.stat_tracker.record_dungeon_entered(dungeon.rarity.value)
+
+        # Move player to dungeon spawn
+        spawn_pos = self.dungeon_manager.get_player_dungeon_position()
+        if spawn_pos:
+            self.character.position = spawn_pos
+
+        # Clear world enemies and spawn dungeon wave
+        self.combat_manager.clear_dungeon_enemies()
+        self.combat_manager.spawn_dungeon_wave()
+
+        # Get rarity color for notification
+        rarity_colors = {
+            "common": (150, 150, 150),
+            "uncommon": (50, 200, 50),
+            "rare": (50, 100, 255),
+            "epic": (180, 50, 255),
+            "legendary": (255, 180, 0),
+            "unique": (255, 50, 50),
+        }
+        color = rarity_colors.get(dungeon.rarity.value, (255, 215, 0))
+
+        self.add_notification(f"Entered {rarity_name} Dungeon!", color)
+        print(f"🏰 Entered {rarity_name} dungeon: {dungeon.total_mobs} total mobs, {dungeon.total_waves} waves")
+
+    def _exit_dungeon(self):
+        """Exit the current dungeon."""
+        if not self.dungeon_manager.in_dungeon:
+            return
+
+        # Close chest UI if open
+        self._close_dungeon_chest()
+
+        dungeon = self.dungeon_manager.current_dungeon
+        was_cleared = dungeon.is_cleared if dungeon else False
+
+        # Track stats
+        if hasattr(self.character, 'stat_tracker') and dungeon:
+            if was_cleared:
+                import time
+                time_taken = time.time() - dungeon.entrance_time
+                self.character.stat_tracker.record_dungeon_completed(
+                    dungeon.rarity.value,
+                    dungeon.total_enemies_killed,
+                    time_taken,
+                    0  # EXP already tracked per kill
+                )
+            else:
+                self.character.stat_tracker.record_dungeon_abandoned()
+
+        # Get return position
+        return_pos = self.dungeon_manager.exit_dungeon()
+
+        # Clear dungeon enemies
+        self.combat_manager.clear_dungeon_enemies()
+
+        # Move player back to world
+        if return_pos:
+            self.character.position = return_pos
+
+        if was_cleared:
+            self.add_notification("Dungeon cleared! Returned to world.", (100, 255, 100))
+        else:
+            self.add_notification("Left dungeon.", (255, 255, 100))
+
+        print(f"🏰 Exited dungeon (cleared={was_cleared})")
+
+    def _update_dungeon(self, dt: float):
+        """Update dungeon state including enemy AI and wave progression."""
+        if not self.dungeon_manager.in_dungeon:
+            return
+
+        dungeon = self.dungeon_manager.current_dungeon
+        if not dungeon:
+            return
+
+        # Update dungeon enemies with full combat
+        player_pos = (self.character.position.x, self.character.position.y)
+        aggro_mult = 1.3 if self.is_night() else 1.0
+        speed_mult = 1.15 if self.is_night() else 1.0
+
+        # Check if player is blocking with shield
+        mouse_held = 3 in self.mouse_buttons_pressed
+        x_key_held = pygame.K_x in self.keys_pressed
+        has_shield = self.character.is_shield_active()
+        shield_blocking = (mouse_held or x_key_held) and has_shield
+
+        self.combat_manager.update_dungeon_enemies(dt, player_pos, aggro_mult, speed_mult, shield_blocking)
+
+        # Check wave completion
+        if self.dungeon_manager.is_wave_complete():
+            # Track wave completion
+            if hasattr(self.character, 'stat_tracker'):
+                self.character.stat_tracker.record_dungeon_wave_completed()
+
+            # Advance to next wave and spawn enemies
+            completed_wave = dungeon.current_wave
+            dungeon.advance_to_next_wave()
+            self.add_notification(f"Wave {completed_wave} complete! Next wave incoming...", (255, 215, 0))
+            self.combat_manager.spawn_dungeon_wave()
+
+        # Check if dungeon is cleared (separate from wave completion)
+        if dungeon.is_cleared and dungeon.wave_enemies_remaining <= 0:
+            # Only trigger once when dungeon is first cleared
+            if not hasattr(dungeon, '_cleared_notified'):
+                dungeon._cleared_notified = True
+
+                # Clear any remaining enemies (make it a safe zone)
+                for enemy in self.combat_manager.dungeon_enemies:
+                    if enemy.is_alive:
+                        enemy.current_health = 0
+                        enemy._is_alive = False
+                self.combat_manager.dungeon_enemies.clear()
+
+                self.add_notification("DUNGEON CLEARED! Click the chest for loot, portal to exit!", (100, 255, 100))
+
+    def _open_dungeon_chest(self) -> bool:
+        """Toggle the dungeon chest UI open/closed. Returns True if successful."""
+        if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
+            return False
+
+        if not self.dungeon_manager.is_dungeon_cleared():
+            self.add_notification("Clear all enemies first!", (255, 100, 100))
+            return False
+
+        chest = self.dungeon_manager.get_chest()
+        if not chest:
+            return False
+
+        # Check if player is near chest
+        dungeon = self.dungeon_manager.current_dungeon
+        if dungeon:
+            chest_pos = chest.position
+            player_pos = self.character.position
+            distance = math.sqrt(
+                (player_pos.x - chest_pos.x) ** 2 +
+                (player_pos.y - chest_pos.y) ** 2
+            )
+            if distance > 2.0:
+                self.add_notification("Get closer to the chest!", (255, 255, 100))
+                return False
+
+        # Toggle chest UI open/closed
+        self.dungeon_chest_open = not self.dungeon_chest_open
+
+        if self.dungeon_chest_open:
+            self.add_notification("Chest opened! Click items to transfer.", (255, 215, 0))
+        else:
+            self.add_notification("Chest closed.", (200, 200, 200))
+
+        return True
+
+    def _close_dungeon_chest(self):
+        """Close the dungeon chest UI."""
+        self.dungeon_chest_open = False
+        self.dungeon_chest_item_rects = []
+
+    def _transfer_item_to_chest(self, inventory_slot: int):
+        """Transfer an item from inventory to dungeon chest."""
+        if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
+            return False
+
+        chest = self.dungeon_manager.get_chest()
+        if not chest:
+            return False
+
+        # Get item from inventory slot
+        slot = self.character.inventory.slots[inventory_slot]
+        if not slot:
+            return False
+
+        item_id = slot.item_id
+        quantity = slot.quantity
+
+        # Add to chest contents
+        # Find existing stack or add new
+        found = False
+        for i, (existing_id, existing_qty) in enumerate(chest.contents):
+            if existing_id == item_id:
+                chest.contents[i] = (item_id, existing_qty + quantity)
+                found = True
+                break
+        if not found:
+            chest.contents.append((item_id, quantity))
+
+        # Remove from inventory
+        self.character.inventory.slots[inventory_slot] = None
+
+        self.add_notification(f"Moved {quantity}x {item_id} to chest", (200, 255, 200))
+        return True
+
+    def _transfer_item_from_chest(self, chest_item_idx: int):
+        """Transfer an item from dungeon chest to inventory."""
+        if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
+            return False
+
+        chest = self.dungeon_manager.get_chest()
+        if not chest or chest_item_idx >= len(chest.contents):
+            return False
+
+        item_id, quantity = chest.contents[chest_item_idx]
+
+        # Try to add to inventory
+        success = self.character.inventory.add_item(item_id, quantity)
+        if success:
+            # Remove from chest
+            chest.contents.pop(chest_item_idx)
+            self.add_notification(f"Took {quantity}x {item_id} from chest", (200, 255, 200))
+
+            # Track chest opening (first time taking items)
+            if hasattr(self.character, 'stat_tracker') and not hasattr(chest, '_tracked'):
+                chest._tracked = True
+                self.character.stat_tracker.record_dungeon_chest_opened(quantity)
+
+            return True
+        else:
+            self.add_notification("Inventory full!", (255, 100, 100))
+            return False
+
+    def _exit_dungeon_via_portal(self):
+        """Exit the dungeon through the exit portal."""
+        if not self.dungeon_manager.in_dungeon:
+            return
+
+        # Close chest UI if open
+        self._close_dungeon_chest()
+
+        dungeon = self.dungeon_manager.current_dungeon
+        if not dungeon or not dungeon.is_cleared:
+            self.add_notification("Clear all enemies first!", (255, 100, 100))
+            return
+
+        # Check if player is near portal
+        if dungeon.exit_portal_position:
+            player_pos = self.character.position
+            portal_pos = dungeon.exit_portal_position
+            distance = math.sqrt(
+                (player_pos.x - portal_pos.x) ** 2 +
+                (player_pos.y - portal_pos.y) ** 2
+            )
+            if distance > 2.0:
+                self.add_notification("Get closer to the portal!", (255, 255, 100))
+                return
+
+        # Return player to world
+        if dungeon.return_position:
+            self.character.position = dungeon.return_position
+        else:
+            from core.config import Config
+            self.character.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
+
+        # Clear dungeon enemies and exit
+        self.combat_manager.clear_dungeon_enemies()
+        self.dungeon_manager.exit_dungeon()
+        self.add_notification("Exited dungeon!", (100, 255, 100))
+
     def update(self):
         # Skip updates if in start menu or no character
         if self.start_menu_open or self.character is None:
@@ -4889,6 +5409,9 @@ class GameEngine:
         curr = pygame.time.get_ticks()
         dt = (curr - self.last_tick) / 1000.0
         self.last_tick = curr
+
+        # Update day/night cycle
+        self.game_time += dt
 
         # Update playtime tracking
         if hasattr(self.character, 'stat_tracker'):
@@ -4983,14 +5506,20 @@ class GameEngine:
                                                 item_name = mat.name if mat else material_id
                                                 self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
 
-            self.combat_manager.update(dt, shield_blocking=shield_blocking)
+            # Update combat based on whether in dungeon or world
+            if self.dungeon_manager.in_dungeon:
+                self._update_dungeon(dt)
+            else:
+                self.combat_manager.update(dt, shield_blocking=shield_blocking, is_night=self.is_night())
+
             self.character.update_attack_cooldown(dt)
             self.character.update_health_regen(dt)
             self.character.update_buffs(dt)
             self.character.update_knockback(dt, self.world)
 
-            # Update turret system
-            self.turret_system.update(self.world.placed_entities, self.combat_manager, dt)
+            # Update turret system (only in world, not dungeon)
+            if not self.dungeon_manager.in_dungeon:
+                self.turret_system.update(self.world.placed_entities, self.combat_manager, dt)
         else:
             # Update active minigame
             # Skip update while metadata overlay is blocking
@@ -5024,9 +5553,25 @@ class GameEngine:
             pygame.display.flip()
             return
 
-        # Pass NPCs to renderer via temporary attribute
-        self.renderer._temp_npcs = self.npcs
-        self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
+        # Render world or dungeon depending on state
+        if self.dungeon_manager.in_dungeon:
+            # Render dungeon
+            self.renderer.render_dungeon(
+                self.dungeon_manager,
+                self.camera,
+                self.character,
+                self.damage_numbers,
+                self.combat_manager.dungeon_enemies
+            )
+        else:
+            # Pass NPCs to renderer via temporary attribute
+            self.renderer._temp_npcs = self.npcs
+            self.renderer.render_world(self.world, self.camera, self.character, self.damage_numbers, self.combat_manager)
+
+        # Render day/night cycle overlay
+        time_phase, phase_progress = self.get_time_of_day()
+        self.renderer.render_day_night_overlay(time_phase, phase_progress)
+
         self.renderer.render_ui(self.character, self.mouse_pos)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
 
@@ -5035,6 +5580,13 @@ class GameEngine:
 
         self.renderer.render_notifications(self.notifications)
         self.renderer.render_debug_messages()
+
+        # Render dungeon chest UI if open
+        if self.dungeon_chest_open and self.dungeon_manager.in_dungeon:
+            chest = self.dungeon_manager.get_chest()
+            if chest:
+                self.dungeon_chest_rect, self.dungeon_chest_item_rects = \
+                    self.renderer.render_dungeon_chest_ui(chest, self.dungeon_manager)
 
         if self.character.class_selection_open:
             result = self.renderer.render_class_selection_ui(self.character, self.mouse_pos)

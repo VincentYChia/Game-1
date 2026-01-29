@@ -1,7 +1,7 @@
 # Master Issue Tracker
 
 **Created**: 2025-12-30
-**Last Updated**: 2026-01-27
+**Last Updated**: 2026-01-28
 **Purpose**: Comprehensive tracking of all known issues, improvements, and testing requirements
 
 ---
@@ -10,6 +10,7 @@
 
 | Category | Issue | Priority | Status | Effort |
 |----------|-------|----------|--------|--------|
+| ~~Bug~~ | ~~Resource Gap (16 of 28 missing)~~ | ~~**CRITICAL**~~ | ✅ **RESOLVED** | ~~2-4 hrs~~ |
 | ~~Testing~~ | ~~Enchantments (5 missing)~~ | ~~HIGH~~ | ✅ **RESOLVED** | ~~2-3 hrs~~ |
 | ~~Bug~~ | ~~Inventory Click Misalignment~~ | ~~**CRITICAL**~~ | ✅ **RESOLVED** | ~~30 min~~ |
 | ~~Bug~~ | ~~Default Save Loading~~ | ~~HIGH~~ | ✅ **RESOLVED** | ~~1 hr~~ |
@@ -22,6 +23,34 @@
 | **Architecture** | Skill Mana/Cooldown Range | LOW | Enhancement | 2-4 hrs |
 | **Overhaul** | Crafting UI & Minigames | **HIGH** | ✅ Phase 1-2 Complete | Phase 3 pending |
 | **NEW** | LLM Integration | N/A | ✅ Fully Implemented | January 2026 |
+
+---
+
+## SECTION 0: CRITICAL BUGS
+
+### ~~0.1 Resource Gap - 16 of 28 Resources Not Spawning~~ [RESOLVED]
+
+**Status**: ✅ **FIXED January 2026**
+**Discovered**: 2026-01-28
+**Report**: `docs/RESOURCE_GAP_AUDIT_REPORT.md`
+
+**Solution Implemented**:
+Created JSON-driven resource system with `ResourceNodeDatabase`:
+
+1. ✅ **New `data/models/resources.py`**: `ResourceNodeDefinition` and `ResourceDrop` dataclasses
+2. ✅ **New `data/databases/resource_node_db.py`**: `ResourceNodeDatabase` singleton that loads from JSON
+3. ✅ **Updated `data/models/world.py`**: `ResourceType` enum expanded from 12 to 28 resources + legacy aliases
+4. ✅ **Updated `systems/chunk.py`**: Uses `ResourceNodeDatabase` for spawn logic
+5. ✅ **Updated `systems/natural_resource.py`**: Uses database for loot tables, HP, respawn times
+6. ✅ **Updated `assets/icons/unified_icon_generator.py`**: Reads resources from JSON
+7. ✅ **Updated `core/game_engine.py`**: Loads `ResourceNodeDatabase` at startup
+
+**All 28 resources now spawn correctly** (8 trees, 8 ores, 12 stones):
+- Trees: oak, pine, ash, birch, maple, ironwood, ebony, worldtree_sapling
+- Ores: copper, iron, tin, steel, mithril, adamantine, orichalcum, etherion
+- Stones: limestone, granite, shale, basalt, marble, quartz, obsidian, voidstone, diamond, eternity, primordial, genesis
+
+**Previously blocked recipes are now craftable.**
 
 ---
 

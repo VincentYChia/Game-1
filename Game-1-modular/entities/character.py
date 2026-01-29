@@ -776,21 +776,57 @@ class Character:
         new_x = self.position.x + dx * speed_mult
         new_y = self.position.y + dy * speed_mult
 
-        # Check bounds
-        if new_x < 0 or new_x >= Config.WORLD_SIZE or new_y < 0 or new_y >= Config.WORLD_SIZE:
-            return False
+        # Check bounds - skip world bounds when in a dungeon (dungeon has its own 32x32 tile bounds)
+        in_dungeon = (hasattr(world, 'dungeon_manager') and
+                      world.dungeon_manager and
+                      world.dungeon_manager.in_dungeon)
 
-        # Check walkability
+        if not in_dungeon:
+            # World bounds (centered coordinate system based on chunk generation)
+            # Chunks range from -half to +half, each chunk is CHUNK_SIZE tiles
+            half_chunks = Config.NUM_CHUNKS // 2  # 5 for 11 chunks
+            min_bound = -half_chunks * Config.CHUNK_SIZE  # -80
+            max_bound = (half_chunks + 1) * Config.CHUNK_SIZE  # +96
+            if new_x < min_bound or new_x >= max_bound or new_y < min_bound or new_y >= max_bound:
+                return False
+
+        # Check walkability with collision sliding
         new_pos = Position(new_x, new_y, self.position.z)
+        final_x, final_y = new_x, new_y
+        moved = False
+
         if world.is_walkable(new_pos):
-            # Calculate actual distance moved (after speed multiplier)
-            actual_dx = dx * speed_mult
-            actual_dy = dy * speed_mult
+            # Full diagonal movement is possible
+            final_x, final_y = new_x, new_y
+            moved = True
+        elif dx != 0 and dy != 0:
+            # Diagonal movement blocked - try sliding along one axis
+            # Try X-only movement first
+            x_only_pos = Position(new_x, self.position.y, self.position.z)
+            if world.is_walkable(x_only_pos):
+                final_x = new_x
+                final_y = self.position.y
+                moved = True
+            else:
+                # Try Y-only movement
+                y_only_pos = Position(self.position.x, new_y, self.position.z)
+                if world.is_walkable(y_only_pos):
+                    final_x = self.position.x
+                    final_y = new_y
+                    moved = True
+
+        if moved:
+            # Calculate actual distance moved
+            actual_dx = final_x - self.position.x
+            actual_dy = final_y - self.position.y
             distance_moved = (actual_dx ** 2 + actual_dy ** 2) ** 0.5
 
-            self.position.x = new_x
-            self.position.y = new_y
-            self.facing = ("right" if dx > 0 else "left") if abs(dx) > abs(dy) else ("down" if dy > 0 else "up")
+            self.position.x = final_x
+            self.position.y = final_y
+
+            # Update facing based on primary movement direction
+            if abs(dx) > 0 or abs(dy) > 0:
+                self.facing = ("right" if dx > 0 else "left") if abs(dx) > abs(dy) else ("down" if dy > 0 else "up")
 
             # Track movement in stat tracker
             if hasattr(self, 'stat_tracker') and distance_moved > 0:
@@ -838,10 +874,16 @@ class Character:
                 return selected_item
 
         # Otherwise, default to the correct tool type (backward compatibility)
-        if tool_type in ['axe', 'pickaxe']:
+        if tool_type in ['axe', 'pickaxe', 'fishing_rod']:
             equipped_tool = self.equipment.slots.get(tool_type)
             if equipped_tool:
                 return equipped_tool
+
+            # For fishing_rod, also check mainHand for equipped fishing rod
+            if tool_type == 'fishing_rod':
+                main_weapon = self.equipment.slots.get('mainHand')
+                if main_weapon and hasattr(main_weapon, 'subtype') and main_weapon.subtype == 'fishing_rod':
+                    return main_weapon
 
         # Fallback to mainHand weapon if no tool equipped
         main_weapon = self.equipment.slots.get('mainHand')
@@ -883,6 +925,13 @@ class Character:
             else:
                 return 0.25  # Poor for forestry/combat
 
+        # Fishing rods are optimal for fishing
+        elif tool_slot == 'fishing_rod' or (hasattr(equipment_item, 'subtype') and equipment_item.subtype == 'fishing_rod'):
+            if action_type == 'fishing':
+                return 1.0  # Perfect for fishing
+            else:
+                return 0.25  # Poor for other activities
+
         # Weapons (swords, daggers, etc.) are optimal for combat
         elif tool_slot in ['mainHand', 'offHand']:
             if action_type == 'combat':
@@ -898,7 +947,8 @@ class Character:
         equipped_tool = self.get_equipped_tool(resource.required_tool)
 
         if not equipped_tool:
-            tool_name = "axe" if resource.required_tool == "axe" else "pickaxe"
+            tool_names = {"axe": "axe", "pickaxe": "pickaxe", "fishing_rod": "fishing rod"}
+            tool_name = tool_names.get(resource.required_tool, resource.required_tool)
             return False, f"No {tool_name} equipped"
         if not self.is_in_range(resource.position):
             return False, "Too far away"
@@ -919,7 +969,8 @@ class Character:
         from core.debug_display import debug_print
 
         # Determine activity type from tool
-        activity = 'mining' if primary_resource.required_tool == "pickaxe" else 'forestry'
+        activity_map = {"pickaxe": "mining", "axe": "forestry", "fishing_rod": "fishing"}
+        activity = activity_map.get(primary_resource.required_tool, 'forestry')
 
         # Find all harvestable resources in radius (matching tool type)
         targets = []
@@ -1093,7 +1144,8 @@ class Character:
         # Check for active devastate buffs (AoE gathering like Chain Harvest)
         if hasattr(self, 'buffs') and nearby_resources:
             # Determine activity type from resource
-            activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
+            activity_map = {"pickaxe": "mining", "axe": "forestry", "fishing_rod": "fishing"}
+            activity = activity_map.get(resource.required_tool, 'forestry')
 
             for buff in self.buffs.active_buffs:
                 # Must be devastate type AND match the activity category (or be generic 'gathering')
@@ -1114,7 +1166,8 @@ class Character:
                     return result
 
         # Normal single-node harvest - use extracted helper method
-        activity = 'mining' if resource.required_tool == "pickaxe" else 'forestry'
+        activity_map = {"pickaxe": "mining", "axe": "forestry", "fishing_rod": "fishing"}
+        activity = activity_map.get(resource.required_tool, 'forestry')
         result = self._single_node_harvest(resource, equipped_tool, activity)
 
         # Track activities, titles, XP (same as before)
@@ -1164,8 +1217,9 @@ class Character:
             self.stat_tracker.gathering_totals["total_gathering_damage_dealt"] += damage_dealt
 
             # Track tool usage
-            tool_type = "axe" if resource.required_tool == "axe" else "pickaxe"
-            tool_swing_key = f"{tool_type}_swings"
+            tool_type_map = {"axe": "axe", "pickaxe": "pickaxe", "fishing_rod": "fishing_rod"}
+            tool_type = tool_type_map.get(resource.required_tool, "pickaxe")
+            tool_swing_key = f"{tool_type}_swings" if tool_type != "fishing_rod" else "fishing_rod_casts"
             if tool_swing_key in self.stat_tracker.gathering_totals:
                 self.stat_tracker.gathering_totals[tool_swing_key] += 1
 
@@ -1669,13 +1723,37 @@ class Character:
 
         if self.health <= 0:
             self.health = 0
-            self._handle_death()
+            # Pass dungeon_manager if provided for proper death handling in dungeons
+            dungeon_manager = kwargs.get('dungeon_manager')
+            self._handle_death(dungeon_manager=dungeon_manager)
 
-    def _handle_death(self):
-        """Handle player death - respawn at spawn point"""
+    def _handle_death(self, dungeon_manager=None):
+        """Handle player death - respawn at spawn point (origin)
+
+        If in a dungeon, exit the dungeon and return to world spawn.
+
+        Args:
+            dungeon_manager: Optional dungeon manager to check/exit dungeon
+        """
+        from core.config import Config
         print("💀 You died! Respawning...")
+
+        # Reset health
         self.health = self.max_health
-        self.position = Position(50, 50, 0)  # Respawn at spawn
+
+        # If in a dungeon, exit it (dungeon failed)
+        if dungeon_manager and dungeon_manager.in_dungeon:
+            print("💀 You died in the dungeon! Exiting...")
+            # Get return position from dungeon
+            dungeon = dungeon_manager.current_dungeon
+            if dungeon and dungeon.return_position:
+                self.position = dungeon.return_position
+            else:
+                self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
+            dungeon_manager.exit_dungeon()
+        else:
+            self.position = Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z)
+
         # Keep all items and equipment (no death penalty)
 
     def get_effective_max_durability(self, item) -> int:

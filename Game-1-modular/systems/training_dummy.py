@@ -230,8 +230,16 @@ class TrainingDummy(Enemy):
         # Training dummies never die
         return False  # Never returns True (never dies)
 
-    def update_ai(self, dt: float, player_position: Tuple[float, float]):
-        """Override AI - training dummy doesn't move or attack"""
+    def update_ai(self, dt: float, player_position: Tuple[float, float],
+                  aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0):
+        """Override AI - training dummy doesn't move or attack
+
+        Args:
+            dt: Delta time in seconds
+            player_position: Current player position
+            aggro_multiplier: Ignored (training dummy doesn't aggro)
+            speed_multiplier: Ignored (training dummy doesn't move)
+        """
         # Update status effects (burn, poison, etc. still tick)
         if hasattr(self, 'status_manager'):
             self.status_manager.update(dt)

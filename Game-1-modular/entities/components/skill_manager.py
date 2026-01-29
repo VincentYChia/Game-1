@@ -264,7 +264,8 @@ class SkillManager:
 
                     return self._apply_combat_skill_with_context(
                         skill_def, character, player_skill,
-                        target_enemy, available_enemies, mouse_world_pos
+                        target_enemy, available_enemies, mouse_world_pos,
+                        combat_manager
                     )
 
             # No enemies available - will warn if skill needs combat context
@@ -844,7 +845,8 @@ class SkillManager:
         return True, f"Used {skill_def.name}!"
 
     def _apply_combat_skill_with_context(self, skill_def, character, player_skill,
-                                          target_enemy, available_enemies, mouse_world_pos=None):
+                                          target_enemy, available_enemies, mouse_world_pos=None,
+                                          combat_manager=None):
         """Apply a combat skill with full combat context (enemies available)
 
         Args:
@@ -854,6 +856,7 @@ class SkillManager:
             target_enemy: Primary target enemy
             available_enemies: List of all available enemies
             mouse_world_pos: Mouse cursor world position (optional, for directional skills)
+            combat_manager: CombatManager for kill tracking (optional)
         """
         # Apply level scaling to combat params
         level_bonus = player_skill.get_level_scaling_bonus()
@@ -943,6 +946,34 @@ class SkillManager:
                 f"Skill {skill_def.skill_id} executed: {len(context.targets)} targets affected"
             )
             print(f"   ✓ Affected {len(context.targets)} target(s)")
+
+            # Check for killed enemies and handle rewards/dungeon tracking
+            if combat_manager:
+                for target in context.targets:
+                    # Check if target is an enemy that died
+                    if hasattr(target, 'is_alive') and not target.is_alive:
+                        print(f"   💀 {target.definition.name} killed by skill!")
+
+                        # Grant EXP (2x in dungeons via _calculate_exp_reward)
+                        exp_reward = combat_manager._calculate_exp_reward(target)
+                        character.leveling.add_exp(exp_reward)
+                        print(f"   +{exp_reward} EXP")
+
+                        # No loot drops in dungeons - only EXP
+                        if not (combat_manager.dungeon_manager and combat_manager.dungeon_manager.in_dungeon):
+                            loot = target.generate_loot()
+                            if loot:
+                                print(f"   💰 Auto-looting {len(loot)} item type(s):")
+                                for material_id, quantity in loot:
+                                    success = character.inventory.add_item(material_id, quantity)
+                                    if success:
+                                        print(f"      +{quantity}x {material_id}")
+                        else:
+                            print(f"   🏰 Dungeon skill kill - no loot, 2x EXP!")
+
+                        # Notify dungeon manager of kill for wave tracking
+                        if combat_manager.dungeon_manager and combat_manager.dungeon_manager.in_dungeon:
+                            combat_manager.on_dungeon_enemy_killed(target)
 
         except Exception as e:
             self.debugger.error(f"Combat skill execution failed: {e}")

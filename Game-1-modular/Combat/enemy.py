@@ -425,6 +425,9 @@ class Enemy:
         self.time_since_death = 0.0
         self.corpse_lifetime = 60.0  # Will be overridden by config
 
+        # Dungeon enemy flag (for special handling - 2x EXP, no drops)
+        self.is_dungeon_enemy = False
+
         # Add status effect manager
         add_status_manager_to_entity(self)
 
@@ -462,8 +465,19 @@ class Enemy:
         dy = self.position[1] - position[1]
         return (dx * dx + dy * dy) ** 0.5
 
-    def take_damage(self, damage: float, from_player: bool = True) -> bool:
-        """Apply damage to enemy. Returns True if enemy died"""
+    def take_damage(self, damage: float, damage_type: str = "physical",
+                    from_player: bool = True, tags: list = None,
+                    source=None, **kwargs) -> bool:
+        """Apply damage to enemy. Returns True if enemy died.
+
+        Args:
+            damage: Amount of damage to apply
+            damage_type: Type of damage (physical, fire, ice, etc.)
+            from_player: Whether damage came from player
+            tags: Optional tags from the damage source
+            source: Source of the damage (for status effects)
+            **kwargs: Additional parameters (ignored for compatibility)
+        """
         self.current_health -= damage
         self.in_combat = True
 
@@ -520,14 +534,26 @@ class Enemy:
                 self.knockback_velocity_y = 0.0
                 self.knockback_duration_remaining = 0.0
 
-    def update_ai(self, dt: float, player_position: Tuple[float, float]):
-        """Update enemy AI behavior"""
+    def update_ai(self, dt: float, player_position: Tuple[float, float],
+                  aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0):
+        """Update enemy AI behavior
+
+        Args:
+            dt: Delta time in seconds
+            player_position: Current player position
+            aggro_multiplier: Multiplier for aggro range (1.3 at night)
+            speed_multiplier: Multiplier for movement speed (1.15 at night)
+        """
         if not self.is_alive:
             # Handle corpse decay
             if self.ai_state == AIState.DEAD:
                 self.ai_state = AIState.CORPSE
             self.time_since_death += dt
             return
+
+        # Store night modifiers for use in AI states
+        self._aggro_multiplier = aggro_multiplier
+        self._speed_multiplier = speed_multiplier
 
         # Update knockback (smooth forced movement)
         self.update_knockback(dt)
@@ -566,7 +592,8 @@ class Enemy:
 
     def _ai_idle(self, dt: float, dist_to_player: float):
         """Idle state - stand still, check for aggro"""
-        if self.definition.ai_pattern.aggro_on_proximity and dist_to_player <= self.definition.aggro_range:
+        effective_aggro = self.definition.aggro_range * getattr(self, '_aggro_multiplier', 1.0)
+        if self.definition.ai_pattern.aggro_on_proximity and dist_to_player <= effective_aggro:
             self.ai_state = AIState.CHASE
 
     def _ai_wander(self, dt: float, dist_to_player: float):
@@ -588,8 +615,9 @@ class Enemy:
         if self.target_position:
             self._move_towards(self.target_position, dt)
 
-        # Check aggro
-        if self.definition.ai_pattern.aggro_on_proximity and dist_to_player <= self.definition.aggro_range:
+        # Check aggro with night multiplier
+        effective_aggro = self.definition.aggro_range * getattr(self, '_aggro_multiplier', 1.0)
+        if self.definition.ai_pattern.aggro_on_proximity and dist_to_player <= effective_aggro:
             self.ai_state = AIState.CHASE
 
     def _ai_patrol(self, dt: float, dist_to_player: float):
@@ -611,8 +639,9 @@ class Enemy:
                 self.spawn_position[1] + random.uniform(-5, 5)
             ]
 
-        # Check aggro
-        if self.definition.ai_pattern.aggro_on_proximity and dist_to_player <= self.definition.aggro_range:
+        # Check aggro with night multiplier
+        effective_aggro = self.definition.aggro_range * getattr(self, '_aggro_multiplier', 1.0)
+        if self.definition.ai_pattern.aggro_on_proximity and dist_to_player <= effective_aggro:
             self.ai_state = AIState.CHASE
 
     def _ai_guard(self, dt: float, dist_to_player: float):
@@ -622,8 +651,9 @@ class Enemy:
         if dist_from_spawn > 1.0:
             self._move_towards(self.spawn_position, dt)
 
-        # Check aggro
-        if self.definition.ai_pattern.aggro_on_proximity and dist_to_player <= self.definition.aggro_range:
+        # Check aggro with night multiplier
+        effective_aggro = self.definition.aggro_range * getattr(self, '_aggro_multiplier', 1.0)
+        if self.definition.ai_pattern.aggro_on_proximity and dist_to_player <= effective_aggro:
             self.ai_state = AIState.CHASE
 
     def _ai_chase(self, dt: float, dist_to_player: float, player_position: Tuple[float, float]):
@@ -691,11 +721,27 @@ class Enemy:
         return chunk_min_x <= x <= chunk_max_x and chunk_min_y <= y <= chunk_max_y
 
     def _clamp_to_chunk_bounds(self, x: float, y: float) -> Tuple[float, float]:
-        """Clamp position to chunk boundaries"""
-        chunk_min_x = self.chunk_coords[0] * 16
-        chunk_max_x = (self.chunk_coords[0] + 1) * 16
-        chunk_min_y = self.chunk_coords[1] * 16
-        chunk_max_y = (self.chunk_coords[1] + 1) * 16
+        """Clamp position to 3x3 chunk area centered on spawn chunk.
+
+        Allows enemies to chase across adjacent chunks while still
+        being bounded to a reasonable area around their spawn.
+        """
+        from core.config import Config
+        chunk_size = Config.CHUNK_SIZE  # 16 tiles per chunk
+
+        # 3x3 chunk bounds centered on spawn chunk
+        chunk_min_x = (self.chunk_coords[0] - 1) * chunk_size
+        chunk_max_x = (self.chunk_coords[0] + 2) * chunk_size
+        chunk_min_y = (self.chunk_coords[1] - 1) * chunk_size
+        chunk_max_y = (self.chunk_coords[1] + 2) * chunk_size
+
+        # Also clamp to world boundaries (handles edge chunks and negative coords)
+        # World uses centered coordinates: -half to +half
+        half_world = Config.WORLD_SIZE // 2
+        chunk_min_x = max(-half_world, chunk_min_x)
+        chunk_max_x = min(half_world, chunk_max_x)
+        chunk_min_y = max(-half_world, chunk_min_y)
+        chunk_max_y = min(half_world, chunk_max_y)
 
         x = max(chunk_min_x, min(x, chunk_max_x))
         y = max(chunk_min_y, min(y, chunk_max_y))
@@ -712,8 +758,9 @@ class Enemy:
         dist = (dx * dx + dy * dy) ** 0.5
 
         if dist > 0.1:
-            # Normalize and move
-            move_speed = self.definition.speed * dt * 2  # Reduced from 10 to 2 for slower movement
+            # Normalize and move (apply night speed multiplier)
+            speed_mult = getattr(self, '_speed_multiplier', 1.0)
+            move_speed = self.definition.speed * dt * 2 * speed_mult
             new_x = self.position[0] + (dx / dist) * move_speed
             new_y = self.position[1] + (dy / dist) * move_speed
 

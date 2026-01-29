@@ -56,38 +56,127 @@ class WorldTile:
 
 
 class ResourceType(Enum):
-    """Types of harvestable resources"""
+    """Types of harvestable resources - matches resource-node-1.JSON
+
+    Note: Values match resourceId in JSON for easy lookup.
+    Use ResourceNodeDatabase for full resource definitions.
+    """
+    # Trees (8 total)
     OAK_TREE = "oak_tree"
+    PINE_TREE = "pine_tree"
+    ASH_TREE = "ash_tree"
     BIRCH_TREE = "birch_tree"
     MAPLE_TREE = "maple_tree"
     IRONWOOD_TREE = "ironwood_tree"
-    COPPER_ORE = "copper_ore"
-    IRON_ORE = "iron_ore"
-    STEEL_ORE = "steel_ore"
-    MITHRIL_ORE = "mithril_ore"
-    LIMESTONE = "limestone"
-    GRANITE = "granite"
-    OBSIDIAN = "obsidian"
-    STAR_CRYSTAL = "star_crystal"
+    EBONY_TREE = "ebony_tree"
+    WORLDTREE_SAPLING = "worldtree_sapling"
+
+    # Ores (8 total)
+    COPPER_VEIN = "copper_vein"
+    IRON_DEPOSIT = "iron_deposit"
+    TIN_SEAM = "tin_seam"
+    STEEL_NODE = "steel_node"
+    MITHRIL_CACHE = "mithril_cache"
+    ADAMANTINE_LODE = "adamantine_lode"
+    ORICHALCUM_TROVE = "orichalcum_trove"
+    ETHERION_NEXUS = "etherion_nexus"
+
+    # Stones (12 total)
+    LIMESTONE_OUTCROP = "limestone_outcrop"
+    GRANITE_FORMATION = "granite_formation"
+    SHALE_BED = "shale_bed"
+    BASALT_COLUMN = "basalt_column"
+    MARBLE_QUARRY = "marble_quarry"
+    QUARTZ_CLUSTER = "quartz_cluster"
+    OBSIDIAN_FLOW = "obsidian_flow"
+    VOIDSTONE_SHARD = "voidstone_shard"
+    DIAMOND_GEODE = "diamond_geode"
+    ETERNITY_MONOLITH = "eternity_monolith"
+    PRIMORDIAL_FORMATION = "primordial_formation"
+    GENESIS_STRUCTURE = "genesis_structure"
+
+    # Legacy aliases (for backwards compatibility with existing code)
+    # These map old names to new JSON-based names
+    COPPER_ORE = "copper_vein"  # Alias
+    IRON_ORE = "iron_deposit"  # Alias
+    STEEL_ORE = "steel_node"  # Alias
+    MITHRIL_ORE = "mithril_cache"  # Alias
+    LIMESTONE = "limestone_outcrop"  # Alias
+    GRANITE = "granite_formation"  # Alias
+    OBSIDIAN = "obsidian_flow"  # Alias
+    STAR_CRYSTAL = "diamond_geode"  # Alias (repurposed to diamond)
+
+    # Water resources
+    FISHING_SPOT = "fishing_spot"
 
 
-RESOURCE_TIERS = {
-    # Wood
-    ResourceType.OAK_TREE: 1,
-    ResourceType.BIRCH_TREE: 2,
-    ResourceType.MAPLE_TREE: 2,
-    ResourceType.IRONWOOD_TREE: 3,
-    # Ore
-    ResourceType.COPPER_ORE: 1,
-    ResourceType.IRON_ORE: 1,
-    ResourceType.STEEL_ORE: 2,
-    ResourceType.MITHRIL_ORE: 2,
-    # Stone
-    ResourceType.LIMESTONE: 1,
-    ResourceType.GRANITE: 1,
-    ResourceType.OBSIDIAN: 3,
-    ResourceType.STAR_CRYSTAL: 4
-}
+def _build_resource_tiers() -> dict:
+    """Build RESOURCE_TIERS from ResourceNodeDatabase if loaded, else use defaults"""
+    # Try to get tiers from database
+    try:
+        from data.databases.resource_node_db import ResourceNodeDatabase
+        db = ResourceNodeDatabase.get_instance()
+        if db.loaded:
+            # Build tier map using ResourceType enum values
+            tier_map = {}
+            for res_type in ResourceType:
+                node = db.get_node(res_type.value)
+                if node:
+                    tier_map[res_type] = node.tier
+            if tier_map:
+                return tier_map
+    except Exception:
+        pass
+
+    # Default/fallback tiers (matches JSON definitions)
+    return {
+        # Trees
+        ResourceType.OAK_TREE: 1,
+        ResourceType.PINE_TREE: 1,
+        ResourceType.ASH_TREE: 1,
+        ResourceType.BIRCH_TREE: 2,
+        ResourceType.MAPLE_TREE: 2,
+        ResourceType.IRONWOOD_TREE: 3,
+        ResourceType.EBONY_TREE: 3,
+        ResourceType.WORLDTREE_SAPLING: 4,
+        # Ores
+        ResourceType.COPPER_VEIN: 1,
+        ResourceType.IRON_DEPOSIT: 1,
+        ResourceType.TIN_SEAM: 1,
+        ResourceType.STEEL_NODE: 2,
+        ResourceType.MITHRIL_CACHE: 2,
+        ResourceType.ADAMANTINE_LODE: 3,
+        ResourceType.ORICHALCUM_TROVE: 3,
+        ResourceType.ETHERION_NEXUS: 4,
+        # Stones
+        ResourceType.LIMESTONE_OUTCROP: 1,
+        ResourceType.GRANITE_FORMATION: 1,
+        ResourceType.SHALE_BED: 1,
+        ResourceType.BASALT_COLUMN: 2,
+        ResourceType.MARBLE_QUARRY: 2,
+        ResourceType.QUARTZ_CLUSTER: 2,
+        ResourceType.OBSIDIAN_FLOW: 3,
+        ResourceType.VOIDSTONE_SHARD: 3,
+        ResourceType.DIAMOND_GEODE: 3,
+        ResourceType.ETERNITY_MONOLITH: 4,
+        ResourceType.PRIMORDIAL_FORMATION: 4,
+        ResourceType.GENESIS_STRUCTURE: 4,
+        # Legacy aliases
+        ResourceType.COPPER_ORE: 1,
+        ResourceType.IRON_ORE: 1,
+        ResourceType.STEEL_ORE: 2,
+        ResourceType.MITHRIL_ORE: 2,
+        ResourceType.LIMESTONE: 1,
+        ResourceType.GRANITE: 1,
+        ResourceType.OBSIDIAN: 3,
+        ResourceType.STAR_CRYSTAL: 3,
+        # Water resources
+        ResourceType.FISHING_SPOT: 1,
+    }
+
+
+# Initialize RESOURCE_TIERS (will be rebuilt after database loads)
+RESOURCE_TIERS = _build_resource_tiers()
 
 
 @dataclass
@@ -110,6 +199,10 @@ class ChunkType(Enum):
     RARE_HIDDEN_FOREST = "rare_hidden_forest"
     RARE_ANCIENT_QUARRY = "rare_ancient_quarry"
     RARE_DEEP_CAVE = "rare_deep_cave"
+    # Water chunks
+    WATER_LAKE = "water_lake"
+    WATER_RIVER = "water_river"
+    WATER_CURSED_SWAMP = "water_cursed_swamp"
 
 
 class StationType(Enum):

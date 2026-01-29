@@ -33,7 +33,9 @@ class SaveManager:
         character,
         world_system,
         quest_manager,
-        npcs
+        npcs,
+        dungeon_manager=None,
+        game_time: float = 0.0
     ) -> Dict[str, Any]:
         """
         Create a comprehensive save data structure.
@@ -43,6 +45,8 @@ class SaveManager:
             world_system: WorldSystem instance
             quest_manager: QuestManager instance
             npcs: List[NPC] instances
+            dungeon_manager: DungeonManager instance (optional)
+            game_time: Current game time for day/night cycle (optional)
 
         Returns:
             Dictionary containing all save data
@@ -51,10 +55,14 @@ class SaveManager:
             "version": self.SAVE_VERSION,
             "save_timestamp": datetime.now().isoformat(),
             "player": self._serialize_character(character),
-            "world_state": self._serialize_world_state(world_system),
+            "world_state": self._serialize_world_state(world_system, game_time),
             "quest_state": self._serialize_quest_state(quest_manager),
             "npc_state": self._serialize_npc_state(npcs)
         }
+
+        # Add dungeon state if dungeon system is active
+        if dungeon_manager:
+            save_data["dungeon_state"] = dungeon_manager.to_dict()
 
         return save_data
 
@@ -292,20 +300,27 @@ class SaveManager:
 
         return serialized_equipment
 
-    def _serialize_world_state(self, world_system) -> Dict[str, Any]:
+    def _serialize_world_state(self, world_system, game_time: float = 0.0) -> Dict[str, Any]:
         """
-        Serialize world state (placed entities, modified resources).
+        Serialize world state (placed entities, modified resources, time, water chunks).
 
         Args:
             world_system: WorldSystem instance
+            game_time: Current game time for day/night cycle
 
         Returns:
             Dictionary containing world state data
         """
+        # Get water chunk positions for persistence
+        from systems.chunk import Chunk
+        water_chunk_positions = list(Chunk._water_chunks) if Chunk._initialized else []
+
         world_data = {
             "placed_entities": [],
             "modified_resources": [],
-            "crafting_stations": []
+            "crafting_stations": [],
+            "game_time": game_time,
+            "water_chunks": water_chunk_positions
         }
 
         # Serialize placed entities (turrets, traps, devices)
@@ -442,7 +457,9 @@ class SaveManager:
         world_system,
         quest_manager,
         npcs,
-        filename: str = "autosave.json"
+        filename: str = "autosave.json",
+        dungeon_manager=None,
+        game_time: float = 0.0
     ) -> bool:
         """
         Save the current game state to a file.
@@ -453,6 +470,8 @@ class SaveManager:
             quest_manager: QuestManager instance
             npcs: List[NPC] instances
             filename: Name of the save file
+            dungeon_manager: DungeonManager instance (optional)
+            game_time: Current game time for day/night cycle (optional)
 
         Returns:
             True if save was successful, False otherwise
@@ -462,7 +481,9 @@ class SaveManager:
                 character,
                 world_system,
                 quest_manager,
-                npcs
+                npcs,
+                dungeon_manager,
+                game_time
             )
 
             filepath = get_save_path(filename)
@@ -511,6 +532,45 @@ class SaveManager:
         except Exception as e:
             print(f"Error loading game: {e}")
             return None
+
+    def restore_dungeon_state(self, save_data: Dict[str, Any], dungeon_manager) -> bool:
+        """
+        Restore dungeon state from save data.
+
+        Args:
+            save_data: The loaded save data dictionary
+            dungeon_manager: DungeonManager instance to restore into
+
+        Returns:
+            True if dungeon state was restored, False otherwise
+        """
+        dungeon_state = save_data.get("dungeon_state")
+        if not dungeon_state:
+            # No dungeon state in save - that's fine for older saves
+            return False
+
+        try:
+            # Import here to avoid circular dependency
+            from systems.dungeon import DungeonManager
+
+            # Restore dungeon manager state
+            dungeon_manager.in_dungeon = dungeon_state.get("in_dungeon", False)
+            dungeon_manager.dungeons_completed = dungeon_state.get("dungeons_completed", 0)
+            dungeon_manager.dungeons_by_rarity = dungeon_state.get("dungeons_by_rarity", {})
+
+            # Restore current dungeon if in dungeon
+            if dungeon_state.get("current_dungeon"):
+                from systems.dungeon import DungeonInstance
+                dungeon_manager.current_dungeon = DungeonInstance.from_dict(
+                    dungeon_state["current_dungeon"]
+                )
+
+            print(f"Restored dungeon state (in_dungeon={dungeon_manager.in_dungeon})")
+            return True
+
+        except Exception as e:
+            print(f"Error restoring dungeon state: {e}")
+            return False
 
     def get_save_files(self) -> List[Dict[str, Any]]:
         """

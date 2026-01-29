@@ -365,7 +365,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.2,
         "callForHelpRadius": 8
       }
@@ -497,7 +497,7 @@
       "aiPattern": {
         "defaultState": "idle",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0,
         "callForHelpRadius": 0
       }
@@ -628,7 +628,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.3,
         "callForHelpRadius": 0
       }

@@ -1085,6 +1085,50 @@ class Renderer:
                 tx, ty = camera.world_to_screen(Position(entity.target_enemy.position[0], entity.target_enemy.position[1], 0))
                 pygame.draw.line(self.screen, (255, 0, 0), (sx, sy), (tx, ty), 2)
 
+        # Render dungeon entrances
+        for entrance in world.get_visible_dungeon_entrances(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
+            sx, sy = camera.world_to_screen(entrance.position)
+            in_range = character.is_in_range(entrance.position)
+            size = Config.TILE_SIZE
+
+            # Get rarity color for the entrance
+            rarity_color = entrance.get_rarity_color()
+
+            # Draw entrance as a portal/doorway shape
+            # Outer ring with rarity color
+            pygame.draw.circle(self.screen, rarity_color, (sx, sy), size // 2, 4)
+            # Inner dark circle (portal)
+            pygame.draw.circle(self.screen, (30, 30, 40), (sx, sy), size // 2 - 4)
+            # Glow effect based on rarity
+            glow_color = tuple(min(255, c + 50) for c in rarity_color)
+            pygame.draw.circle(self.screen, glow_color, (sx, sy), size // 2 + 2, 2)
+
+            # Highlight when in range
+            if in_range:
+                pygame.draw.circle(self.screen, (255, 255, 255), (sx, sy), size // 2 + 4, 2)
+
+            # Rarity indicator text
+            rarity_short = {
+                "common": "C", "uncommon": "U", "rare": "R",
+                "epic": "E", "legendary": "L", "unique": "!"
+            }
+            rarity_text = rarity_short.get(entrance.rarity.value, "?")
+            rarity_surf = self.small_font.render(rarity_text, True, (255, 255, 255))
+            # Black outline for visibility
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                self.screen.blit(self.small_font.render(rarity_text, True, (0, 0, 0)),
+                                 (sx - rarity_surf.get_width() // 2 + dx, sy - rarity_surf.get_height() // 2 + dy))
+            self.screen.blit(rarity_surf, (sx - rarity_surf.get_width() // 2, sy - rarity_surf.get_height() // 2))
+
+            # Show "Dungeon" label when in range
+            if in_range:
+                label = f"{entrance.rarity.value.capitalize()} Dungeon"
+                label_surf = self.tiny_font.render(label, True, rarity_color)
+                label_bg = pygame.Rect(sx - label_surf.get_width() // 2 - 2, sy - size // 2 - 18,
+                                       label_surf.get_width() + 4, label_surf.get_height() + 2)
+                pygame.draw.rect(self.screen, (0, 0, 0, 200), label_bg)
+                self.screen.blit(label_surf, (sx - label_surf.get_width() // 2, sy - size // 2 - 16))
+
         for resource in world.get_visible_resources(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             if resource.depleted and not resource.respawns:
                 continue
@@ -1096,15 +1140,19 @@ class Renderer:
             size = Config.TILE_SIZE - 4
             rect = pygame.Rect(sx - size // 2, sy - size // 2, size, size)
 
-            # Auto-generate icon path from resource type
-            # Trees use their resource_type directly (e.g., oak_tree.png)
-            # Ores and stones need "_node" suffix (e.g., copper_ore_node.png, limestone_node.png)
-            resource_value = resource.resource_type.value
-            if "tree" not in resource_value:
-                # Add _node suffix for ores and stones
-                resource_icon_path = f"resources/{resource_value}_node.png"
-            else:
-                resource_icon_path = f"resources/{resource_value}.png"
+            # Get icon path from ResourceNodeDatabase (handles name mapping)
+            # This maps JSON IDs like 'copper_vein' to existing PNG names like 'copper_ore_node'
+            try:
+                from data.databases.resource_node_db import ResourceNodeDatabase
+                resource_db = ResourceNodeDatabase.get_instance()
+                resource_icon_path = resource_db.get_icon_path(resource.resource_type.value)
+            except Exception:
+                # Fallback to legacy logic if database not available
+                resource_value = resource.resource_type.value
+                if "tree" not in resource_value and "sapling" not in resource_value:
+                    resource_icon_path = f"resources/{resource_value}_node.png"
+                else:
+                    resource_icon_path = f"resources/{resource_value}.png"
 
             # Try to load resource icon (only if image cache exists)
             if 'image_cache' not in locals():
@@ -1218,6 +1266,360 @@ class Renderer:
             surf.set_alpha(alpha)
             self.screen.blit(surf, surf.get_rect(center=(sx, sy)))
 
+    def render_dungeon(self, dungeon_manager, camera: Camera, character,
+                       damage_numbers, dungeon_enemies):
+        """Render a dungeon instance.
+
+        Args:
+            dungeon_manager: DungeonManager instance
+            camera: Camera instance
+            character: Player character
+            damage_numbers: List of damage numbers to display
+            dungeon_enemies: List of Enemy instances in the dungeon
+        """
+        from data.models.world import TileType
+
+        # Fill background
+        pygame.draw.rect(self.screen, (30, 30, 40),
+                        (0, 0, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT))
+
+        # Get visible tiles
+        tiles = dungeon_manager.get_visible_tiles(
+            camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT
+        )
+
+        # Render tiles
+        for tile in tiles:
+            sx, sy = camera.world_to_screen(tile.position)
+            if -Config.TILE_SIZE <= sx <= Config.VIEWPORT_WIDTH and -Config.TILE_SIZE <= sy <= Config.VIEWPORT_HEIGHT:
+                rect = pygame.Rect(sx, sy, Config.TILE_SIZE, Config.TILE_SIZE)
+
+                # Dungeon-specific tile colors
+                if tile.tile_type == TileType.STONE:
+                    if not tile.walkable:
+                        color = (50, 50, 60)  # Dark wall
+                    else:
+                        color = (80, 80, 90)  # Stone floor
+                elif tile.tile_type == TileType.DIRT:
+                    color = (100, 80, 60)  # Dirt patches
+                else:
+                    color = (70, 70, 80)
+
+                pygame.draw.rect(self.screen, color, rect)
+                pygame.draw.rect(self.screen, (40, 40, 50), rect, 1)
+
+        # Render chest if dungeon is cleared
+        dungeon = dungeon_manager.current_dungeon
+        if dungeon and dungeon.chest:
+            chest = dungeon.chest
+            cx, cy = camera.world_to_screen(chest.position)
+
+            # Chest visual
+            chest_size = Config.TILE_SIZE - 4
+            chest_rect = pygame.Rect(cx - chest_size // 2, cy - chest_size // 2,
+                                    chest_size, chest_size)
+
+            if chest.is_opened:
+                # Open chest (darker, empty look)
+                pygame.draw.rect(self.screen, (100, 70, 40), chest_rect)
+                pygame.draw.rect(self.screen, (60, 40, 20), chest_rect, 2)
+                # "EMPTY" text
+                empty_surf = self.tiny_font.render("EMPTY", True, (150, 150, 150))
+                self.screen.blit(empty_surf, (cx - empty_surf.get_width() // 2, cy - 5))
+            else:
+                # Closed chest (golden, inviting)
+                if dungeon.is_cleared:
+                    # Glowing effect for available chest
+                    glow_rect = chest_rect.inflate(4, 4)
+                    pygame.draw.rect(self.screen, (255, 215, 0), glow_rect, 2)
+
+                pygame.draw.rect(self.screen, (180, 130, 50), chest_rect)
+                pygame.draw.rect(self.screen, (120, 80, 30), chest_rect, 2)
+
+                # Lock icon if not cleared
+                if not dungeon.is_cleared:
+                    lock_surf = self.tiny_font.render("🔒", True, (255, 100, 100))
+                    self.screen.blit(lock_surf, (cx - lock_surf.get_width() // 2, cy - 5))
+                else:
+                    open_surf = self.tiny_font.render("LOOT", True, (255, 215, 0))
+                    self.screen.blit(open_surf, (cx - open_surf.get_width() // 2, cy - 5))
+
+        # Render exit portal if dungeon is cleared
+        if dungeon and dungeon.is_cleared and dungeon.exit_portal_position:
+            px, py = camera.world_to_screen(dungeon.exit_portal_position)
+            portal_size = Config.TILE_SIZE
+
+            # Animated portal effect (pulsing glow)
+            import time
+            pulse = 0.5 + 0.5 * abs((time.time() * 2) % 2 - 1)  # 0.5 to 1.0
+
+            # Outer glow
+            glow_color = (int(100 * pulse), int(200 * pulse), int(255 * pulse))
+            glow_rect = pygame.Rect(px - portal_size // 2 - 4, py - portal_size // 2 - 4,
+                                    portal_size + 8, portal_size + 8)
+            pygame.draw.ellipse(self.screen, glow_color, glow_rect, 3)
+
+            # Portal circle (blue swirl)
+            portal_rect = pygame.Rect(px - portal_size // 2, py - portal_size // 2,
+                                      portal_size, portal_size)
+            pygame.draw.ellipse(self.screen, (50, 100, 200), portal_rect)
+            pygame.draw.ellipse(self.screen, (100, 150, 255), portal_rect, 2)
+
+            # Inner swirl effect
+            inner_rect = portal_rect.inflate(-8, -8)
+            pygame.draw.ellipse(self.screen, (80, 130, 220), inner_rect)
+
+            # "EXIT" label
+            exit_surf = self.tiny_font.render("EXIT", True, (200, 230, 255))
+            self.screen.blit(exit_surf, (px - exit_surf.get_width() // 2, py - 5))
+
+        # Render enemies (same as world enemies but for dungeon)
+        image_cache = ImageCache.get_instance()
+        tier_colors = {
+            1: (100, 200, 100),  # Green
+            2: (100, 150, 255),  # Blue
+            3: (200, 100, 200),  # Purple
+            4: (255, 100, 100),  # Red
+        }
+
+        for enemy in dungeon_enemies:
+            ex, ey = camera.world_to_screen(Position(enemy.position[0], enemy.position[1], 0))
+
+            if -50 <= ex <= Config.VIEWPORT_WIDTH + 50 and -50 <= ey <= Config.VIEWPORT_HEIGHT + 50:
+                if enemy.is_alive:
+                    size = Config.TILE_SIZE // 2
+
+                    # Try to load enemy PNG icon (same as world enemies)
+                    icon = None
+                    if enemy.definition.icon_path:
+                        icon = image_cache.get_image(enemy.definition.icon_path, (size * 2, size * 2))
+
+                    if icon:
+                        # Render icon centered on enemy position
+                        icon_rect = icon.get_rect(center=(ex, ey))
+                        self.screen.blit(icon, icon_rect)
+                    else:
+                        # Fallback: Color based on tier
+                        enemy_color = tier_colors.get(enemy.definition.tier, (200, 100, 100))
+                        if enemy.is_boss:
+                            enemy_color = (255, 215, 0)
+                            size = Config.TILE_SIZE // 2 + 4
+
+                        pygame.draw.circle(self.screen, enemy_color, (ex, ey), size)
+                        pygame.draw.circle(self.screen, (0, 0, 0), (ex, ey), size, 2)
+
+                    # Health bar
+                    health_percent = enemy.current_health / enemy.max_health
+                    bar_w, bar_h = Config.TILE_SIZE, 4
+                    bar_y = ey - size - 8
+                    pygame.draw.rect(self.screen, (60, 60, 60), (ex - bar_w // 2, bar_y, bar_w, bar_h))
+                    hp_w = int(bar_w * health_percent)
+                    pygame.draw.rect(self.screen, (255, 50, 50), (ex - bar_w // 2, bar_y, hp_w, bar_h))
+
+                    # Tier indicator and name
+                    tier_text = f"T{enemy.definition.tier}"
+                    if enemy.is_boss:
+                        tier_text = "BOSS"
+                    tier_surf = self.tiny_font.render(tier_text, True, (255, 255, 255))
+                    self.screen.blit(tier_surf, (ex - tier_surf.get_width() // 2, ey - 5))
+                else:
+                    # Corpse (no loot in dungeons - just a grey dot)
+                    pygame.draw.circle(self.screen, (80, 80, 80), (ex, ey), Config.TILE_SIZE // 4)
+
+        # Render player
+        center_x, center_y = camera.world_to_screen(character.position)
+        pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
+        pygame.draw.circle(self.screen, (0, 0, 0), (center_x, center_y), Config.TILE_SIZE // 3, 2)
+
+        # Render damage numbers
+        for dmg in damage_numbers:
+            sx, sy = camera.world_to_screen(dmg.position)
+            alpha = int(255 * (dmg.lifetime / 1.0))
+            color = Config.COLOR_DAMAGE_CRIT if dmg.is_crit else Config.COLOR_DAMAGE_NORMAL
+            text = f"{dmg.damage}!" if dmg.is_crit else str(dmg.damage)
+            surf = (self.font if dmg.is_crit else self.small_font).render(text, True, color)
+            surf.set_alpha(alpha)
+            self.screen.blit(surf, surf.get_rect(center=(sx, sy)))
+
+        # Render dungeon UI overlay
+        self._render_dungeon_ui(dungeon)
+
+    def _render_dungeon_ui(self, dungeon):
+        """Render dungeon-specific UI elements (wave indicator, progress)."""
+        if not dungeon:
+            return
+
+        # Dungeon rarity text - measure first to calculate panel width
+        rarity_colors = {
+            "common": (200, 200, 200),
+            "uncommon": (100, 255, 100),
+            "rare": (100, 150, 255),
+            "epic": (200, 100, 255),
+            "legendary": (255, 165, 0),
+            "unique": (255, 50, 50),
+        }
+        rarity_name = dungeon.rarity.value.capitalize()
+        rarity_color = rarity_colors.get(dungeon.rarity.value, (255, 255, 255))
+        rarity_surf = self.font.render(f"{rarity_name} Dungeon", True, rarity_color)
+
+        # Calculate panel width based on text (with padding)
+        min_panel_width = 200
+        text_padding = 40  # 20px on each side
+        panel_width = max(min_panel_width, rarity_surf.get_width() + text_padding)
+        panel_height = 80
+        panel_x = (Config.VIEWPORT_WIDTH - panel_width) // 2
+        panel_y = 10
+
+        # Background panel
+        panel_surf = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+        panel_surf.fill((0, 0, 0, 180))
+        self.screen.blit(panel_surf, (panel_x, panel_y))
+        pygame.draw.rect(self.screen, (100, 100, 100), (panel_x, panel_y, panel_width, panel_height), 2)
+
+        # Render rarity title (already computed)
+        self.screen.blit(rarity_surf, (panel_x + (panel_width - rarity_surf.get_width()) // 2, panel_y + 5))
+
+        # Wave indicator
+        wave_text = f"Wave {dungeon.current_wave}/{dungeon.total_waves}"
+        wave_surf = self.small_font.render(wave_text, True, (255, 255, 255))
+        self.screen.blit(wave_surf, (panel_x + (panel_width - wave_surf.get_width()) // 2, panel_y + 30))
+
+        # Progress bar
+        progress = dungeon.total_enemies_killed / dungeon.total_mobs if dungeon.total_mobs > 0 else 0
+        bar_width = panel_width - 20
+        bar_height = 12
+        bar_x = panel_x + 10
+        bar_y = panel_y + 55
+
+        pygame.draw.rect(self.screen, (60, 60, 60), (bar_x, bar_y, bar_width, bar_height))
+        fill_width = int(bar_width * progress)
+        pygame.draw.rect(self.screen, (100, 200, 100), (bar_x, bar_y, fill_width, bar_height))
+        pygame.draw.rect(self.screen, (100, 100, 100), (bar_x, bar_y, bar_width, bar_height), 1)
+
+        # Progress text
+        progress_text = f"{dungeon.total_enemies_killed}/{dungeon.total_mobs}"
+        progress_surf = self.tiny_font.render(progress_text, True, (255, 255, 255))
+        self.screen.blit(progress_surf, (bar_x + (bar_width - progress_surf.get_width()) // 2, bar_y + 1))
+
+        # Status text
+        if dungeon.is_cleared:
+            status_text = "CLEARED! Open the chest!"
+            status_color = (100, 255, 100)
+            status_surf = self.small_font.render(status_text, True, status_color)
+            self.screen.blit(status_surf,
+                           (panel_x + (panel_width - status_surf.get_width()) // 2, panel_y + panel_height + 5))
+
+    def render_dungeon_chest_ui(self, chest, dungeon_manager) -> Tuple[pygame.Rect, List[Tuple[pygame.Rect, int]]]:
+        """Render the dungeon chest UI for item transfer.
+
+        Returns:
+            (chest_rect, item_rects) - bounding rect and list of (rect, item_idx) for click detection
+        """
+        if not chest or not dungeon_manager or not dungeon_manager.in_dungeon:
+            return None, []
+
+        # Chest UI position (right side of screen, above inventory)
+        ui_width = 250
+        ui_height = 300
+        ui_x = Config.VIEWPORT_WIDTH - ui_width - 20
+        ui_y = Config.VIEWPORT_HEIGHT - Config.INVENTORY_PANEL_HEIGHT - ui_height - 20
+
+        # Background panel
+        chest_rect = pygame.Rect(ui_x, ui_y, ui_width, ui_height)
+        panel_surf = pygame.Surface((ui_width, ui_height), pygame.SRCALPHA)
+        panel_surf.fill((40, 30, 20, 230))
+        self.screen.blit(panel_surf, (ui_x, ui_y))
+
+        # Border
+        pygame.draw.rect(self.screen, (150, 100, 50), chest_rect, 3)
+
+        # Title
+        title_surf = self.font.render("Dungeon Chest", True, (255, 215, 0))
+        self.screen.blit(title_surf, (ui_x + (ui_width - title_surf.get_width()) // 2, ui_y + 10))
+
+        # Subtitle
+        subtitle_surf = self.tiny_font.render("Click to take items", True, (200, 200, 200))
+        self.screen.blit(subtitle_surf, (ui_x + (ui_width - subtitle_surf.get_width()) // 2, ui_y + 35))
+
+        # Item grid
+        item_rects = []
+        slot_size = 40
+        spacing = 5
+        slots_per_row = 5
+        start_x = ui_x + 15
+        start_y = ui_y + 60
+
+        # Get material database for names
+        from data.databases.material_db import MaterialDatabase
+        from data.databases.equipment_db import EquipmentDatabase
+        mat_db = MaterialDatabase.get_instance()
+        equip_db = EquipmentDatabase.get_instance()
+
+        for idx, (item_id, quantity) in enumerate(chest.contents):
+            row = idx // slots_per_row
+            col = idx % slots_per_row
+
+            slot_x = start_x + col * (slot_size + spacing)
+            slot_y = start_y + row * (slot_size + spacing)
+
+            # Only render if in visible area
+            if slot_y + slot_size > ui_y + ui_height - 20:
+                break
+
+            slot_rect = pygame.Rect(slot_x, slot_y, slot_size, slot_size)
+
+            # Slot background
+            pygame.draw.rect(self.screen, (60, 50, 40), slot_rect)
+            pygame.draw.rect(self.screen, (100, 80, 60), slot_rect, 2)
+
+            # Item icon (try to get from material/equipment)
+            icon = None
+            item_name = item_id
+
+            mat = mat_db.get_material(item_id)
+            if mat:
+                item_name = mat.name if hasattr(mat, 'name') else item_id
+                if hasattr(mat, 'icon_path') and mat.icon_path:
+                    from rendering.image_cache import ImageCache
+                    image_cache = ImageCache.get_instance()
+                    icon = image_cache.get_image(mat.icon_path, (slot_size - 8, slot_size - 8))
+
+            if not icon and equip_db.is_equipment(item_id):
+                eq = equip_db.get_equipment(item_id)
+                if eq:
+                    item_name = eq.name if hasattr(eq, 'name') else item_id
+                    if hasattr(eq, 'icon_path') and eq.icon_path:
+                        from rendering.image_cache import ImageCache
+                        image_cache = ImageCache.get_instance()
+                        icon = image_cache.get_image(eq.icon_path, (slot_size - 8, slot_size - 8))
+
+            if icon:
+                self.screen.blit(icon, (slot_x + 4, slot_y + 4))
+            else:
+                # Fallback: colored square
+                pygame.draw.rect(self.screen, (100, 150, 100), (slot_x + 4, slot_y + 4, slot_size - 8, slot_size - 8))
+
+            # Quantity badge
+            if quantity > 1:
+                qty_surf = self.tiny_font.render(str(quantity), True, (255, 255, 255))
+                qty_bg = pygame.Surface((qty_surf.get_width() + 4, qty_surf.get_height()), pygame.SRCALPHA)
+                qty_bg.fill((0, 0, 0, 180))
+                self.screen.blit(qty_bg, (slot_x + slot_size - qty_surf.get_width() - 4, slot_y + slot_size - qty_surf.get_height()))
+                self.screen.blit(qty_surf, (slot_x + slot_size - qty_surf.get_width() - 2, slot_y + slot_size - qty_surf.get_height()))
+
+            item_rects.append((slot_rect, idx))
+
+        # Instructions at bottom
+        hint_surf = self.tiny_font.render("Click inventory to deposit", True, (180, 180, 180))
+        self.screen.blit(hint_surf, (ui_x + (ui_width - hint_surf.get_width()) // 2, ui_y + ui_height - 25))
+
+        # Empty chest message
+        if not chest.contents:
+            empty_surf = self.small_font.render("Chest is empty", True, (150, 150, 150))
+            self.screen.blit(empty_surf, (ui_x + (ui_width - empty_surf.get_width()) // 2, ui_y + ui_height // 2))
+
+        return chest_rect, item_rects
+
     def render_placement_preview(self, camera: Camera, preview_pos):
         """Render placement preview for world item placement mode"""
         if preview_pos:
@@ -1232,6 +1634,66 @@ class Renderer:
 
             # Draw border
             pygame.draw.rect(self.screen, (0, 255, 0), rect, 2)
+
+    def render_day_night_overlay(self, time_phase: str, phase_progress: float):
+        """Render day/night cycle visual overlay over the viewport.
+
+        Args:
+            time_phase: Current phase ("night", "dawn", "day", "dusk")
+            phase_progress: Progress through current phase (0.0 to 1.0)
+        """
+        # Create overlay surface with alpha
+        overlay = pygame.Surface((Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT), pygame.SRCALPHA)
+
+        # Define overlay colors and alpha for each phase
+        # Colors are subtle to be "noticeable but not overly dark"
+        if time_phase == "night":
+            # Deep blue tint, consistent darkness
+            base_color = (20, 30, 60)
+            alpha = 80  # Moderate darkness
+        elif time_phase == "dawn":
+            # Transition from night to day: blue-purple to warm orange
+            # Interpolate from night to clear
+            night_color = (20, 30, 60)
+            dawn_color = (80, 50, 30)  # Warm sunrise tint
+            r = int(night_color[0] + (dawn_color[0] - night_color[0]) * phase_progress)
+            g = int(night_color[1] + (dawn_color[1] - night_color[1]) * phase_progress)
+            b = int(night_color[2] + (dawn_color[2] - night_color[2]) * phase_progress)
+            base_color = (r, g, b)
+            alpha = int(80 - 60 * phase_progress)  # Fade from 80 to 20
+        elif time_phase == "day":
+            # Very subtle warm tint during day (almost clear)
+            base_color = (255, 250, 220)  # Slight warm tint
+            alpha = 10  # Almost invisible
+        else:  # dusk
+            # Transition from day to night: warm orange to deep blue
+            dusk_color = (80, 40, 20)  # Warm sunset
+            night_color = (20, 30, 60)
+            r = int(dusk_color[0] + (night_color[0] - dusk_color[0]) * phase_progress)
+            g = int(dusk_color[1] + (night_color[1] - dusk_color[1]) * phase_progress)
+            b = int(dusk_color[2] + (night_color[2] - dusk_color[2]) * phase_progress)
+            base_color = (r, g, b)
+            alpha = int(20 + 60 * phase_progress)  # Fade from 20 to 80
+
+        # Apply overlay
+        overlay.fill((*base_color, alpha))
+        self.screen.blit(overlay, (0, 0))
+
+        # Draw time indicator in top-left of viewport
+        time_names = {"night": "Night", "dawn": "Dawn", "day": "Day", "dusk": "Dusk"}
+        time_icons = {"night": "🌙", "dawn": "🌅", "day": "☀️", "dusk": "🌆"}
+
+        # Simple text indicator (without emoji for compatibility)
+        time_text = f"{time_names.get(time_phase, 'Day')}"
+        text_color = (255, 255, 255) if time_phase in ("night", "dusk") else (40, 40, 40)
+
+        # Background for readability
+        text_surf = self.small_font.render(time_text, True, text_color)
+        bg_rect = pygame.Rect(8, 8, text_surf.get_width() + 12, text_surf.get_height() + 6)
+        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
+        bg_surface.fill((0, 0, 0, 100) if time_phase in ("night", "dusk") else (255, 255, 255, 100))
+        self.screen.blit(bg_surface, bg_rect.topleft)
+        self.screen.blit(text_surf, (14, 11))
 
     def render_ui(self, character: Character, mouse_pos: Tuple[int, int]):
         ui_rect = pygame.Rect(Config.VIEWPORT_WIDTH, 0, Config.UI_PANEL_WIDTH, Config.VIEWPORT_HEIGHT)

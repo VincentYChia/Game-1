@@ -28,8 +28,8 @@ class CombatConfig:
         self.exp_rewards = {"tier1": 100, "tier2": 400, "tier3": 1600, "tier4": 6400}
         self.boss_multiplier = 10.0
 
-        self.safe_zone_x = 50
-        self.safe_zone_y = 50
+        self.safe_zone_x = 0  # Center of world (origin)
+        self.safe_zone_y = 0
         self.safe_zone_radius = 15
 
         self.spawn_rates = {}
@@ -66,10 +66,10 @@ class CombatConfig:
             }
             self.boss_multiplier = exp_data.get('bossMultiplier', 10.0)
 
-            # Load safe zone
+            # Load safe zone (defaults to origin)
             safe_data = data.get('safeZone', {})
-            self.safe_zone_x = safe_data.get('centerX', 50)
-            self.safe_zone_y = safe_data.get('centerY', 50)
+            self.safe_zone_x = safe_data.get('centerX', 0)
+            self.safe_zone_y = safe_data.get('centerY', 0)
             self.safe_zone_radius = safe_data.get('radius', 15)
 
             # Load spawn rates
@@ -151,6 +151,10 @@ class CombatManager:
         # Combat state
         self.player_last_combat_time = 0.0
         self.player_in_combat = False
+
+        # Dungeon integration
+        self.dungeon_manager = None  # Set by game_engine when dungeon system is active
+        self.dungeon_enemies: List[Enemy] = []  # Enemies spawned in current dungeon
 
     def load_config(self, config_path: str, enemies_path: str, chunk_templates_path: Optional[str] = None):
         """Load combat configuration, enemy definitions, and chunk templates"""
@@ -445,11 +449,19 @@ class CombatManager:
 
         return random.choices(tiers, weights=weights)[0]
 
-    def update(self, dt: float, shield_blocking: bool = False):
+    def update(self, dt: float, shield_blocking: bool = False, is_night: bool = False):
         """Update all enemies and combat logic
-        shield_blocking: True if player is actively blocking with shield
+
+        Args:
+            dt: Delta time in seconds
+            shield_blocking: True if player is actively blocking with shield
+            is_night: True if it's currently night time (enemies are more aggressive)
         """
         player_pos = (self.character.position.x, self.character.position.y)
+
+        # Night aggression modifiers (30% more aggro range, 15% faster)
+        aggro_mult = 1.3 if is_night else 1.0
+        speed_mult = 1.15 if is_night else 1.0
 
         # Update spawn timers
         for chunk_coords in self.spawn_timers:
@@ -460,8 +472,8 @@ class CombatManager:
         for chunk_coords, enemy_list in self.enemies.items():
             for enemy in enemy_list:
                 if enemy.is_alive:
-                    # Update AI
-                    enemy.update_ai(dt, player_pos)
+                    # Update AI with night modifiers
+                    enemy.update_ai(dt, player_pos, aggro_multiplier=aggro_mult, speed_multiplier=speed_mult)
 
                     # Check if enemy can use special ability
                     dist = enemy.distance_to(player_pos)
@@ -643,10 +655,17 @@ class CombatManager:
             print(f"      ☠️ Killed!")
             exp_reward = self._calculate_exp_reward(enemy)
             self.character.leveling.add_exp(exp_reward)
-            loot = enemy.generate_loot()
-            if loot:
-                for material_id, quantity in loot:
-                    self.character.inventory.add_item(material_id, quantity)
+
+            # No loot drops in dungeons - only EXP (2x already applied in _calculate_exp_reward)
+            if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
+                loot = enemy.generate_loot()
+                if loot:
+                    for material_id, quantity in loot:
+                        self.character.inventory.add_item(material_id, quantity)
+
+            # Notify dungeon manager of kill for wave tracking
+            if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+                self.on_dungeon_enemy_killed(enemy)
 
         return (final_damage, is_crit, loot)
 
@@ -900,19 +919,27 @@ class CombatManager:
             self.character.leveling.add_exp(exp_reward)
             print(f"   +{exp_reward} EXP")
 
-            # Auto-loot: Generate and add loot to inventory automatically
-            loot = enemy.generate_loot()
-            if loot:
-                print(f"   💰 Auto-looting {len(loot)} item type(s):")
-                for material_id, quantity in loot:
-                    # Add to character's inventory
-                    success = self.character.inventory.add_item(material_id, quantity)
-                    if success:
-                        print(f"      +{quantity}x {material_id}")
-                    else:
-                        print(f"      ⚠️ Inventory full! Could not add {quantity}x {material_id}")
+            # No loot drops in dungeons - only EXP (2x already applied)
+            if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
+                # Auto-loot: Generate and add loot to inventory automatically
+                loot = enemy.generate_loot()
+                if loot:
+                    print(f"   💰 Auto-looting {len(loot)} item type(s):")
+                    for material_id, quantity in loot:
+                        # Add to character's inventory
+                        success = self.character.inventory.add_item(material_id, quantity)
+                        if success:
+                            print(f"      +{quantity}x {material_id}")
+                        else:
+                            print(f"      ⚠️ Inventory full! Could not add {quantity}x {material_id}")
+                else:
+                    print(f"   No loot dropped")
             else:
-                print(f"   No loot dropped")
+                print(f"   🏰 Dungeon kill - no loot, 2x EXP!")
+
+            # Notify dungeon manager of kill for wave tracking
+            if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+                self.on_dungeon_enemy_killed(enemy)
 
             # Track combat activity
             if hasattr(self.character, 'activity_tracker'):
@@ -1135,16 +1162,21 @@ class CombatManager:
                     total_damage += effect_params.get("baseDamage", 0)
                     print(f"   💀 {target.definition.name} killed!")
 
-                    # EXP reward
+                    # EXP reward (2x in dungeons via _calculate_exp_reward)
                     exp_reward = self._calculate_exp_reward(target)
                     self.character.leveling.add_exp(exp_reward)
 
-                    # Auto-loot
-                    target_loot = target.generate_loot()
-                    if target_loot:
-                        for material_id, quantity in target_loot:
-                            self.character.inventory.add_item(material_id, quantity)
-                            loot.extend(target_loot)
+                    # No loot drops in dungeons
+                    if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
+                        target_loot = target.generate_loot()
+                        if target_loot:
+                            for material_id, quantity in target_loot:
+                                self.character.inventory.add_item(material_id, quantity)
+                                loot.extend(target_loot)
+
+                    # Notify dungeon manager of kill for wave tracking
+                    if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+                        self.on_dungeon_enemy_killed(target)
 
             return (total_damage, False, loot)
 
@@ -1294,16 +1326,24 @@ class CombatManager:
                 self.character.leveling.add_exp(exp_reward)
                 print(f"   +{exp_reward} EXP")
 
-                # Auto-loot
-                loot = enemy.generate_loot()
-                if loot:
-                    print(f"   💰 Auto-looting {len(loot)} item type(s):")
-                    for material_id, quantity in loot:
-                        success = self.character.inventory.add_item(material_id, quantity)
-                        if success:
-                            print(f"      +{quantity}x {material_id}")
-                        else:
-                            print(f"      ⚠️ Inventory full! Could not add {quantity}x {material_id}")
+                # No loot drops in dungeons - only EXP (2x already applied)
+                if not (self.dungeon_manager and self.dungeon_manager.in_dungeon):
+                    # Auto-loot
+                    loot = enemy.generate_loot()
+                    if loot:
+                        print(f"   💰 Auto-looting {len(loot)} item type(s):")
+                        for material_id, quantity in loot:
+                            success = self.character.inventory.add_item(material_id, quantity)
+                            if success:
+                                print(f"      +{quantity}x {material_id}")
+                            else:
+                                print(f"      ⚠️ Inventory full! Could not add {quantity}x {material_id}")
+                else:
+                    print(f"   🏰 Dungeon kill - no loot, 2x EXP!")
+
+                # Notify dungeon manager of kill for wave tracking
+                if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+                    self.on_dungeon_enemy_killed(enemy)
 
                 # Track combat activity
                 if hasattr(self.character, 'activity_tracker'):
@@ -1465,8 +1505,8 @@ class CombatManager:
         final_damage = max(1, final_damage)  # Minimum 1 damage
         print(f"   ➜ Final damage to player: {final_damage:.1f}")
 
-        # Apply to player
-        self.character.take_damage(final_damage, from_attack=True)
+        # Apply to player (pass dungeon_manager for death handling in dungeons)
+        self.character.take_damage(final_damage, from_attack=True, dungeon_manager=self.dungeon_manager)
         print(f"   Player HP: {self.character.health:.1f}/{self.character.max_health:.1f}")
 
         # NEW: Track damage taken
@@ -1536,6 +1576,10 @@ class CombatManager:
         if enemy.is_boss:
             base_exp *= self.config.boss_multiplier
 
+        # Dungeon multiplier: 2x EXP in dungeons
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            base_exp *= 2
+
         return int(base_exp)
 
     def _update_player_combat_state(self, dt: float):
@@ -1546,30 +1590,51 @@ class CombatManager:
                 self.player_in_combat = False
 
     def get_enemies_in_range(self, position: Tuple[float, float], radius: float) -> List[Enemy]:
-        """Get all living enemies within radius of position"""
+        """Get all living enemies within radius of position.
+
+        Includes dungeon enemies when in dungeon.
+        """
         result = []
-        for enemy_list in self.enemies.values():
-            for enemy in enemy_list:
-                if enemy.is_alive:
-                    dist = math.sqrt(
-                        (enemy.position[0] - position[0]) ** 2 +
-                        (enemy.position[1] - position[1]) ** 2
-                    )
-                    if dist <= radius:
-                        result.append(enemy)
+
+        # Get the appropriate enemy list
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            enemies_to_check = self.dungeon_enemies
+        else:
+            enemies_to_check = []
+            for enemy_list in self.enemies.values():
+                enemies_to_check.extend(enemy_list)
+
+        for enemy in enemies_to_check:
+            if enemy.is_alive:
+                dist = math.sqrt(
+                    (enemy.position[0] - position[0]) ** 2 +
+                    (enemy.position[1] - position[1]) ** 2
+                )
+                if dist <= radius:
+                    result.append(enemy)
         return result
 
     def get_enemy_at_position(self, position: Tuple[float, float], tolerance: float = 0.7) -> Optional[Enemy]:
-        """Get enemy at or near a position (for clicking)"""
-        for enemy_list in self.enemies.values():
-            for enemy in enemy_list:
-                if enemy.is_alive:
-                    dist = math.sqrt(
-                        (enemy.position[0] - position[0]) ** 2 +
-                        (enemy.position[1] - position[1]) ** 2
-                    )
-                    if dist <= tolerance:
-                        return enemy
+        """Get enemy at or near a position (for clicking).
+
+        Includes dungeon enemies when in dungeon.
+        """
+        # Get the appropriate enemy list
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            enemies_to_check = self.dungeon_enemies
+        else:
+            enemies_to_check = []
+            for enemy_list in self.enemies.values():
+                enemies_to_check.extend(enemy_list)
+
+        for enemy in enemies_to_check:
+            if enemy.is_alive:
+                dist = math.sqrt(
+                    (enemy.position[0] - position[0]) ** 2 +
+                    (enemy.position[1] - position[1]) ** 2
+                )
+                if dist <= tolerance:
+                    return enemy
         return None
 
     def get_corpse_at_position(self, position: Tuple[float, float], tolerance: float = 0.7) -> Optional[Enemy]:
@@ -1585,6 +1650,15 @@ class CombatManager:
 
     def loot_corpse(self, corpse: Enemy, player_inventory) -> List[Tuple[str, int]]:
         """Loot a corpse and add items to player inventory"""
+        # No drops in dungeons - only EXP
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            # Remove corpse without generating loot
+            if corpse in self.corpses:
+                self.corpses.remove(corpse)
+            if corpse in self.dungeon_enemies:
+                self.dungeon_enemies.remove(corpse)
+            return []
+
         loot = corpse.generate_loot()
 
         # Add to inventory
@@ -1647,8 +1721,171 @@ class CombatManager:
                     # Add more trigger effect types as needed
 
     def get_all_active_enemies(self) -> List[Enemy]:
-        """Get all enemies (for rendering)"""
+        """Get all enemies (for rendering and combat).
+
+        Returns dungeon enemies if in dungeon, otherwise world enemies.
+        """
+        # If in dungeon, return dungeon enemies
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            return list(self.dungeon_enemies)
+
+        # Otherwise return world enemies
         all_enemies = []
         for enemy_list in self.enemies.values():
             all_enemies.extend(enemy_list)
         return all_enemies
+
+    # ========================================================================
+    # DUNGEON COMBAT METHODS
+    # ========================================================================
+
+    def spawn_dungeon_wave(self) -> int:
+        """
+        Spawn a wave of enemies for the current dungeon.
+
+        Returns:
+            Number of enemies spawned
+        """
+        if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
+            return 0
+
+        dungeon = self.dungeon_manager.current_dungeon
+        if not dungeon:
+            return 0
+
+        # Get number of enemies to spawn for this wave
+        enemy_count = dungeon.start_wave()
+        if enemy_count == 0:
+            return 0
+
+        # Clear any remaining dungeon enemies from previous wave
+        self.dungeon_enemies = [e for e in self.dungeon_enemies if e.is_alive]
+
+        # Get all available enemy definitions by tier
+        enemies_by_tier: Dict[int, List[EnemyDefinition]] = {1: [], 2: [], 3: [], 4: []}
+        for enemy_id, definition in self.enemy_db.enemies.items():
+            tier = definition.tier
+            if tier in enemies_by_tier:
+                enemies_by_tier[tier].append(definition)
+
+        # Spawn enemies based on dungeon tier weights
+        spawned = 0
+        for _ in range(enemy_count):
+            # Get tier for this spawn
+            tier = dungeon.get_enemy_tier_for_spawn()
+
+            # Get available enemies for this tier (fallback to lower tier if empty)
+            available = enemies_by_tier.get(tier, [])
+            while not available and tier > 1:
+                tier -= 1
+                available = enemies_by_tier.get(tier, [])
+
+            if not available:
+                continue
+
+            # Select random enemy from tier
+            definition = random.choice(available)
+
+            # Get spawn position in dungeon
+            spawn_pos = dungeon.get_spawn_position()
+
+            # Create enemy instance
+            enemy = Enemy(
+                definition=definition,
+                position=(spawn_pos.x, spawn_pos.y),
+                chunk_coords=(0, 0)  # Dungeon uses special chunk
+            )
+
+            # Mark as dungeon enemy (for special handling)
+            enemy.is_dungeon_enemy = True
+
+            # Make dungeon enemies immediately aggressive - start in CHASE state
+            enemy.ai_state = AIState.CHASE
+            enemy.in_combat = True
+
+            self.dungeon_enemies.append(enemy)
+            dungeon.spawned_enemy_ids.append(enemy.enemy_id if hasattr(enemy, 'enemy_id') else str(id(enemy)))
+            spawned += 1
+
+        print(f"🏰 Dungeon Wave {dungeon.current_wave}: Spawned {spawned} enemies")
+        return spawned
+
+    def clear_dungeon_enemies(self):
+        """Clear all dungeon enemies (when exiting dungeon)."""
+        self.dungeon_enemies.clear()
+
+        # Also remove any dungeon enemy corpses
+        self.corpses = [c for c in self.corpses if not getattr(c, 'is_dungeon_enemy', False)]
+
+    def on_dungeon_enemy_killed(self, enemy: Enemy):
+        """Handle dungeon enemy death - notify dungeon manager."""
+        if self.dungeon_manager and self.dungeon_manager.in_dungeon:
+            self.dungeon_manager.on_enemy_killed()
+
+        # Remove from dungeon enemies list
+        if enemy in self.dungeon_enemies:
+            self.dungeon_enemies.remove(enemy)
+
+    def get_dungeon_enemies(self) -> List[Enemy]:
+        """Get all dungeon enemies (for rendering and combat)."""
+        return [e for e in self.dungeon_enemies if e.is_alive]
+
+    def get_dungeon_enemy_at_position(self, position: Tuple[float, float], tolerance: float = 0.7) -> Optional[Enemy]:
+        """Get dungeon enemy at or near a position (for clicking)."""
+        for enemy in self.dungeon_enemies:
+            if enemy.is_alive:
+                dist = math.sqrt(
+                    (enemy.position[0] - position[0]) ** 2 +
+                    (enemy.position[1] - position[1]) ** 2
+                )
+                if dist <= tolerance:
+                    return enemy
+        return None
+
+    def update_dungeon_enemies(self, dt: float, player_position: Tuple[float, float],
+                                aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0,
+                                shield_blocking: bool = False):
+        """Update all dungeon enemies with full combat logic.
+
+        Args:
+            dt: Delta time in seconds
+            player_position: Current player position
+            aggro_multiplier: Aggro range multiplier (e.g., 1.3 at night)
+            speed_multiplier: Movement speed multiplier (e.g., 1.15 at night)
+            shield_blocking: True if player is blocking with shield
+        """
+        dead_enemies = []
+
+        for enemy in self.dungeon_enemies:
+            if enemy.is_alive:
+                # Update AI with night modifiers
+                enemy.update_ai(dt, player_position, aggro_multiplier, speed_multiplier)
+
+                # Check if enemy can use special ability
+                dist = enemy.distance_to(player_position)
+                special_ability = enemy.can_use_special_ability(dist_to_target=dist, target_position=player_position)
+                if special_ability:
+                    # Build available targets list (just player in dungeons)
+                    available_targets = [self.character]
+                    enemy.use_special_ability(special_ability, self.character, available_targets)
+
+                # Check if enemy can attack player normally
+                elif enemy.can_attack():
+                    if dist <= 1.5:  # Melee range
+                        self._enemy_attack_player(enemy, shield_blocking=shield_blocking)
+
+            else:
+                # Enemy is dead - handle corpse
+                if enemy.ai_state == AIState.CORPSE:
+                    enemy.time_since_death += dt
+                    if enemy.time_since_death >= enemy.corpse_lifetime:
+                        dead_enemies.append(enemy)
+                    elif enemy not in self.corpses:
+                        self.corpses.append(enemy)
+
+        # Remove expired corpses
+        for enemy in dead_enemies:
+            if enemy in self.dungeon_enemies:
+                self.dungeon_enemies.remove(enemy)
+            if enemy in self.corpses:
+                self.corpses.remove(enemy)
