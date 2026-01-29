@@ -369,12 +369,12 @@ class WorldSystem:
         Returns:
             WorldTile at position, or None if invalid
         """
-        # Python floor division handles negative coordinates correctly
-        # e.g., -1 // 16 = -1 (chunk -1 covers tiles -16 to -1)
-        pos_x = int(position.x) if position.x >= 0 else int(position.x - 0.999999)
-        pos_y = int(position.y) if position.y >= 0 else int(position.y - 0.999999)
-        chunk_x = pos_x // Config.CHUNK_SIZE
-        chunk_y = pos_y // Config.CHUNK_SIZE
+        # Use math.floor for proper negative coordinate handling
+        import math
+        tile_x = math.floor(position.x)
+        tile_y = math.floor(position.y)
+        chunk_x = tile_x // Config.CHUNK_SIZE
+        chunk_y = tile_y // Config.CHUNK_SIZE
 
         chunk = self.get_chunk(chunk_x, chunk_y)
         return chunk.tiles.get(position.snap_to_grid().to_key())
@@ -405,11 +405,11 @@ class WorldSystem:
             return False
 
         # Check for blocking resources in nearby loaded chunks
-        # Python floor division handles negative coordinates correctly
-        pos_x = int(position.x) if position.x >= 0 else int(position.x - 0.999999)
-        pos_y = int(position.y) if position.y >= 0 else int(position.y - 0.999999)
-        chunk_x = pos_x // Config.CHUNK_SIZE
-        chunk_y = pos_y // Config.CHUNK_SIZE
+        import math
+        tile_x = math.floor(position.x)
+        tile_y = math.floor(position.y)
+        chunk_x = tile_x // Config.CHUNK_SIZE
+        chunk_y = tile_y // Config.CHUNK_SIZE
 
         chunk = self.loaded_chunks.get((chunk_x, chunk_y))
         if chunk:
@@ -484,11 +484,11 @@ class WorldSystem:
         Returns:
             NaturalResource at position, or None
         """
-        # Python floor division handles negative coordinates correctly
-        pos_x = int(position.x) if position.x >= 0 else int(position.x - 0.999999)
-        pos_y = int(position.y) if position.y >= 0 else int(position.y - 0.999999)
-        chunk_x = pos_x // Config.CHUNK_SIZE
-        chunk_y = pos_y // Config.CHUNK_SIZE
+        import math
+        tile_x = math.floor(position.x)
+        tile_y = math.floor(position.y)
+        chunk_x = tile_x // Config.CHUNK_SIZE
+        chunk_y = tile_y // Config.CHUNK_SIZE
 
         # Check current and adjacent chunks
         for dx in range(-1, 2):
@@ -720,11 +720,11 @@ class WorldSystem:
         Args:
             resource: The modified resource
         """
-        # Python floor division handles negative coordinates correctly
-        pos_x = int(resource.position.x) if resource.position.x >= 0 else int(resource.position.x - 0.999999)
-        pos_y = int(resource.position.y) if resource.position.y >= 0 else int(resource.position.y - 0.999999)
-        chunk_x = pos_x // Config.CHUNK_SIZE
-        chunk_y = pos_y // Config.CHUNK_SIZE
+        import math
+        tile_x = math.floor(resource.position.x)
+        tile_y = math.floor(resource.position.y)
+        chunk_x = tile_x // Config.CHUNK_SIZE
+        chunk_y = tile_y // Config.CHUNK_SIZE
 
         chunk = self.loaded_chunks.get((chunk_x, chunk_y))
         if chunk:

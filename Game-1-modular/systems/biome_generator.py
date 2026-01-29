@@ -49,8 +49,8 @@ class BiomeGenerator:
     """
 
     # Clustering configuration
-    CATEGORY_REGION_SCALE = 6.0   # Larger = bigger category regions (12-20 chunks)
-    TYPE_CLUSTER_SCALE = 2.5     # Smaller = tighter type clusters (3-5 chunks)
+    SUPER_REGION_SIZE = 4        # Super-region = 4x4 chunks (16 chunks per region)
+    TYPE_CLUSTER_SCALE = 2.5     # Noise scale for type clusters (3-5 chunks)
 
     # Safety zone configuration
     SAFE_ZONE_RADIUS = 8  # Chunks - within this, progressively safer toward spawn
@@ -199,7 +199,12 @@ class BiomeGenerator:
     def _get_biome_category(self, chunk_x: int, chunk_y: int) -> BiomeCategory:
         """Determine the high-level biome category for a chunk.
 
-        Uses COARSE noise to create large (12-20 chunk) category regions.
+        Uses a hybrid approach for proper distribution:
+        1. Divides world into "super-regions" (4x4 chunks each)
+        2. Each super-region gets a deterministic category via hash (uniform)
+        3. Boundary chunks use noise for organic transitions
+
+        This ensures ~10% water, ~50% forest, ~40% cave distribution.
 
         Args:
             chunk_x: Chunk X coordinate
@@ -208,21 +213,71 @@ class BiomeGenerator:
         Returns:
             BiomeCategory for this chunk
         """
-        # Get noise value for category selection (coarse scale for large regions)
-        noise = self._fractal_noise(
-            chunk_x, chunk_y,
-            octaves=2,
-            scale=self.CATEGORY_REGION_SCALE,
-            offset=0
-        )
+        # Super-region size (4x4 chunks = 64x64 tiles per region)
+        REGION_SIZE = 4
 
-        # Normalize from [-1, 1] to [0, 1]
-        normalized = (noise + 1) / 2
+        # Get super-region coordinates
+        region_x = chunk_x // REGION_SIZE
+        region_y = chunk_y // REGION_SIZE
 
-        # Map to biome categories based on ratios from config
-        if normalized < self._water_ratio:
+        # Position within super-region (0-3)
+        local_x = chunk_x % REGION_SIZE
+        local_y = chunk_y % REGION_SIZE
+        if chunk_x < 0 and local_x != 0:
+            local_x = REGION_SIZE + local_x
+        if chunk_y < 0 and local_y != 0:
+            local_y = REGION_SIZE + local_y
+
+        # Check if this is a boundary chunk (outer edge of super-region)
+        is_boundary = (local_x == 0 or local_x == REGION_SIZE - 1 or
+                       local_y == 0 or local_y == REGION_SIZE - 1)
+
+        # Get the base category for this super-region (deterministic hash)
+        base_category = self._get_region_category(region_x, region_y)
+
+        if is_boundary:
+            # Boundary chunks may blend with neighboring regions
+            # Use noise to create organic transitions
+            blend_noise = self._hash_2d(chunk_x, chunk_y, offset=7000)
+
+            if blend_noise < 0.3:  # 30% chance to blend
+                # Check which neighbor to potentially blend with
+                if local_x == 0:
+                    neighbor_cat = self._get_region_category(region_x - 1, region_y)
+                elif local_x == REGION_SIZE - 1:
+                    neighbor_cat = self._get_region_category(region_x + 1, region_y)
+                elif local_y == 0:
+                    neighbor_cat = self._get_region_category(region_x, region_y - 1)
+                else:
+                    neighbor_cat = self._get_region_category(region_x, region_y + 1)
+
+                # 50% chance to use neighbor's category at boundary
+                if self._hash_2d(chunk_x, chunk_y, offset=8000) < 0.5:
+                    return neighbor_cat
+
+        return base_category
+
+    def _get_region_category(self, region_x: int, region_y: int) -> BiomeCategory:
+        """Get the biome category for a super-region using uniform hash distribution.
+
+        This ensures the configured ratios (water/forest/cave) are respected
+        across the world.
+
+        Args:
+            region_x: Super-region X coordinate
+            region_y: Super-region Y coordinate
+
+        Returns:
+            BiomeCategory for this region
+        """
+        # Use deterministic hash for uniform distribution
+        hash_val = self._hash_2d(region_x, region_y, offset=100)
+
+        # Map to biome categories based on config ratios
+        # hash_val is uniform [0, 1), so this respects the ratios
+        if hash_val < self._water_ratio:
             return BiomeCategory.WATER
-        elif normalized < self._water_ratio + self._forest_ratio:
+        elif hash_val < self._water_ratio + self._forest_ratio:
             return BiomeCategory.FOREST
         else:
             return BiomeCategory.CAVE

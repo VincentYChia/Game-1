@@ -38,12 +38,18 @@
   },
 
   "biome_clustering": {
-    "_comment": "Controls how biomes group together. Higher values = larger contiguous regions",
-    "biome_noise_scale": 4.0,
-    "_biome_noise_scale_effects": "HIGHER (up to 10) = massive biome regions, rare transitions. LOWER (down to 2) = frequent biome changes, chaotic.",
-    "biome_noise_octaves": 3,
-    "_biome_noise_octaves_effects": "HIGHER = more detailed/organic boundaries. LOWER = simpler, blockier biome shapes.",
-    "danger_noise_scale": 6.0,
+    "_comment": "Controls how biomes group together using super-region system",
+    "_system_description": [
+      "World is divided into 4x4 chunk super-regions (64x64 tiles each)",
+      "Each super-region gets a biome category via deterministic hash",
+      "Boundary chunks have 15% chance to blend with neighbors for organic edges",
+      "Within categories, type clusters (3-5 chunks) create variety"
+    ],
+    "super_region_size": 4,
+    "_super_region_size_effects": "NOTE: Hardcoded in biome_generator.py. 4 = 16 chunks per region.",
+    "type_cluster_scale": 2.5,
+    "_type_cluster_scale_effects": "Controls type clustering within category regions. HIGHER = larger same-type areas.",
+    "danger_noise_scale": 4.0,
     "_danger_noise_scale_effects": "HIGHER = larger regions of same danger level. LOWER = more varied danger pockets."
   },
 

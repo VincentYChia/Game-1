@@ -5123,12 +5123,12 @@ class GameEngine:
         if not self.world or not self.character:
             return None
 
-        # Calculate chunk coordinates from player position
-        # Python floor division handles negative coordinates correctly
-        pos_x = int(self.character.position.x) if self.character.position.x >= 0 else int(self.character.position.x - 0.999999)
-        pos_y = int(self.character.position.y) if self.character.position.y >= 0 else int(self.character.position.y - 0.999999)
-        chunk_x = pos_x // Config.CHUNK_SIZE
-        chunk_y = pos_y // Config.CHUNK_SIZE
+        # Calculate chunk coordinates from player position using math.floor
+        import math
+        tile_x = math.floor(self.character.position.x)
+        tile_y = math.floor(self.character.position.y)
+        chunk_x = tile_x // Config.CHUNK_SIZE
+        chunk_y = tile_y // Config.CHUNK_SIZE
 
         # Get chunk from world system
         chunk = self.world.loaded_chunks.get((chunk_x, chunk_y))
