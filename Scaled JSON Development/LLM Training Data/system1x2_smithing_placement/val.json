@@ -1,162 +1,6 @@
 [
   {
     "input": {
-      "recipeId": "smithing_fire_crystal_staff",
-      "itemId": "fire_crystal_staff",
-      "tier": 3,
-      "gridSize": "7x7",
-      "inputs": [
-        {
-          "materialId": "fire_crystal",
-          "quantity": 8
-        },
-        {
-          "materialId": "ironwood_plank",
-          "quantity": 4
-        },
-        {
-          "materialId": "mithril_ingot",
-          "quantity": 2
-        },
-        {
-          "materialId": "phoenix_ash",
-          "quantity": 3
-        }
-      ],
-      "itemMetadata": {
-        "narrative": "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
-        "tags": [
-          "melee",
-          "staff",
-          "versatile",
-          "elemental",
-          "fire"
-        ]
-      }
-    },
-    "output": {
-      "recipeId": "smithing_fire_crystal_staff",
-      "placementMap": {
-        "1,7": "fire_crystal",
-        "2,6": "fire_crystal",
-        "2,5": "fire_crystal",
-        "3,6": "fire_crystal",
-        "6,2": "ironwood_plank",
-        "5,3": "ironwood_plank",
-        "4,4": "ironwood_plank",
-        "7,1": "phoenix_ash",
-        "3,5": "ironwood_plank",
-        "4,6": "fire_crystal",
-        "3,7": "fire_crystal",
-        "1,5": "fire_crystal",
-        "2,4": "fire_crystal",
-        "1,6": "mithril_ingot",
-        "2,7": "mithril_ingot",
-        "5,6": "phoenix_ash",
-        "2,3": "phoenix_ash"
-      },
-      "metadata": {
-        "gridSize": "7x7",
-        "narrative": "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis."
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_iron_round_shield",
-      "itemId": "iron_round_shield",
-      "tier": 1,
-      "gridSize": "3x3",
-      "inputs": [
-        {
-          "materialId": "iron_ingot",
-          "quantity": 1
-        },
-        {
-          "materialId": "oak_plank",
-          "quantity": 3
-        },
-        {
-          "materialId": "wolf_pelt",
-          "quantity": 1
-        }
-      ],
-      "itemMetadata": {
-        "narrative": "Round iron shield with oak backing. Not just for blocking - bash enemies with the rim or use it to create openings. Defense and offense in one hand.",
-        "tags": [
-          "melee",
-          "shield",
-          "1H",
-          "defensive",
-          "bash"
-        ]
-      }
-    },
-    "output": {
-      "recipeId": "smithing_iron_round_shield",
-      "placementMap": {
-        "2,2": "iron_ingot",
-        "2,1": "wolf_pelt",
-        "1,2": "oak_plank",
-        "2,3": "oak_plank",
-        "3,2": "oak_plank"
-      },
-      "metadata": {
-        "gridSize": "3x3",
-        "narrative": "A simple round shield - iron face with oak backing. Protects and strikes in equal measure."
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_steel_leggings",
-      "itemId": "steel_leggings",
-      "tier": 2,
-      "gridSize": "5x5",
-      "inputs": [
-        {
-          "materialId": "steel_ingot",
-          "quantity": 7
-        },
-        {
-          "materialId": "wolf_pelt",
-          "quantity": 5
-        }
-      ],
-      "itemMetadata": {
-        "narrative": "Steel plate leggings with articulated joints. Heavy but protective, they guard your legs without restricting movement. Every smith's second major armor piece after the chestplate.",
-        "tags": [
-          "armor",
-          "legs",
-          "metal",
-          "heavy"
-        ]
-      }
-    },
-    "output": {
-      "recipeId": "smithing_steel_leggings",
-      "placementMap": {
-        "5,4": "wolf_pelt",
-        "5,2": "wolf_pelt",
-        "4,2": "steel_ingot",
-        "3,2": "steel_ingot",
-        "2,2": "steel_ingot",
-        "2,4": "steel_ingot",
-        "3,4": "steel_ingot",
-        "4,4": "steel_ingot",
-        "1,2": "wolf_pelt",
-        "1,4": "wolf_pelt",
-        "2,3": "steel_ingot",
-        "1,3": "wolf_pelt"
-      },
-      "metadata": {
-        "gridSize": "5x5",
-        "narrative": "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor."
-      }
-    }
-  },
-  {
-    "input": {
       "recipeId": "smithing_iron_studded_gauntlets",
       "itemId": "iron_studded_gauntlets",
       "tier": 1,
@@ -164,11 +8,33 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -193,6 +59,148 @@
       "metadata": {
         "gridSize": "3x3",
         "narrative": "Reinforced leather gloves with iron studs across the knuckles. Your hands are your tools - protect them properly."
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_bamboo_fishing_rod",
+      "itemId": "bamboo_fishing_rod",
+      "tier": 1,
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
+        },
+        {
+          "materialId": "oak_log",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Oak Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "wood",
+              "versatile"
+            ]
+          }
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Flexible bamboo rod with silk line and bronze hook. Patient hands pull dinner from rivers and lakes. Not much use in a fight, but starvation kills just as surely as swords.",
+        "tags": [
+          "tool",
+          "fishing",
+          "gathering"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "smithing_bamboo_fishing_rod",
+      "placementMap": {
+        "2,2": "oak_log",
+        "1,3": "oak_log",
+        "3,1": "copper_ingot",
+        "2,3": "spectral_thread",
+        "3,3": "spectral_thread"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Flexible bamboo rod with silk line and bronze hook. Patience and the right tool can pull dinner from any water."
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_sickle",
+      "itemId": "steel_sickle",
+      "tier": 2,
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "birch_plank",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Birch Plank",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "fine"
+            ]
+          }
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Curved steel blade designed for harvesting herbs, grains, and fibrous plants. The razor edge cuts clean without bruising delicate materials. Adequate for self-defense in a pinch.",
+        "tags": [
+          "tool",
+          "harvesting",
+          "gathering",
+          "herbs"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "smithing_steel_sickle",
+      "placementMap": {
+        "5,3": "birch_plank",
+        "4,3": "birch_plank",
+        "3,2": "steel_ingot",
+        "2,2": "steel_ingot",
+        "1,3": "steel_ingot",
+        "1,4": "steel_ingot",
+        "2,5": "steel_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Curved steel blade perfect for harvesting delicate plants. Clean cuts preserve quality and maximize yield."
       }
     }
   }

@@ -7,15 +7,48 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "maple_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Maple Plank",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "durable"
+            ]
+          }
         },
         {
           "materialId": "shale",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Shale",
+            "tier": 1,
+            "category": "stone",
+            "rarity": "uncommon",
+            "tags": [
+              "basic",
+              "stone",
+              "layered"
+            ]
+          }
         }
       ],
       "applicableTo": [
@@ -173,15 +206,48 @@
       "inputs": [
         {
           "materialId": "dire_fang",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Dire Fang",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "fang"
+            ]
+          }
         },
         {
           "materialId": "shadow_core",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Shadow Core",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "dark",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "applicableTo": [
@@ -321,19 +387,63 @@
       "inputs": [
         {
           "materialId": "essence_blood",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Essence Blood",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "blood"
+            ]
+          }
         },
         {
           "materialId": "living_ichor",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
         },
         {
           "materialId": "obsidian",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Obsidian",
+            "tier": 3,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "sharp"
+            ]
+          }
         },
         {
           "materialId": "shadow_core",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Shadow Core",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "dark",
+              "rare"
+            ]
+          }
         }
       ],
       "applicableTo": [

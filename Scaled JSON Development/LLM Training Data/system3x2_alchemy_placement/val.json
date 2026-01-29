@@ -1,37 +1,54 @@
 [
   {
     "input": {
-      "recipeId": "alchemy_regeneration_tonic",
-      "itemId": "regeneration_tonic",
-      "tier": 3,
+      "recipeId": "alchemy_refine_essence_blood",
+      "itemId": "essence_blood",
+      "tier": 2,
       "inputs": [
         {
           "materialId": "living_ichor",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 3
-        },
-        {
-          "materialId": "essence_blood",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         }
       ],
       "itemMetadata": {
-        "narrative": "Regeneration tonic that mends wounds over time. Light gems infused with living essence create a sustained healing effect. Your body remembers how to heal itself.",
+        "narrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
         "tags": [
-          "potion",
-          "healing",
-          "regeneration",
-          "advanced"
+          "monster",
+          "rare",
+          "blood"
         ]
       }
     },
     "output": {
-      "recipeId": "alchemy_regeneration_tonic",
-      "outputId": "regeneration_tonic",
-      "stationTier": 3,
+      "recipeId": "alchemy_refine_essence_blood",
+      "outputId": "essence_blood",
+      "stationTier": 2,
       "ingredients": [
         {
           "slot": 1,
@@ -41,15 +58,75 @@
         {
           "slot": 2,
           "materialId": "light_gem",
-          "quantity": 3
-        },
-        {
-          "slot": 3,
-          "materialId": "essence_blood",
           "quantity": 2
         }
       ],
-      "narrative": "Living ichor creates sustained healing potential. Light gems infuse persistent illumination. Essence blood binds regenerative effect. Body remembers how to heal continuously."
+      "narrative": "Living ichor provides raw life force. Light gems purify and concentrate. Pure essence emerges - no impurities, pure vitality."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_crystallize_fire",
+      "itemId": "fire_crystal",
+      "tier": 1,
+      "inputs": [
+        {
+          "materialId": "limestone",
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Limestone",
+            "tier": 1,
+            "category": "stone",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "stone",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Phoenix Ash",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "fire",
+              "legendary"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
+        "tags": [
+          "elemental",
+          "fire",
+          "common"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_crystallize_fire",
+      "outputId": "fire_crystal",
+      "stationTier": 1,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "limestone",
+          "quantity": 5
+        },
+        {
+          "slot": 2,
+          "materialId": "phoenix_ash",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Limestone dissolves, creating crystalline matrix. Phoenix ash ignites transformation. Chaos becomes order - heat solidifies into stable crystal."
     }
   }
 ]

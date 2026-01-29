@@ -58,7 +58,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.2,
         "callForHelpRadius": 8
       }
@@ -123,7 +123,7 @@
       "aiPattern": {
         "defaultState": "idle",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0,
         "callForHelpRadius": 0
       }
@@ -188,7 +188,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.3,
         "callForHelpRadius": 0
       }
@@ -253,7 +253,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.3,
         "callForHelpRadius": 0
       }
@@ -318,7 +318,7 @@
       "aiPattern": {
         "defaultState": "idle",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0,
         "callForHelpRadius": 0
       }
@@ -383,7 +383,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.2,
         "callForHelpRadius": 8
       }
@@ -522,7 +522,7 @@
       "aiPattern": {
         "defaultState": "idle",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0,
         "callForHelpRadius": 0
       }
@@ -663,7 +663,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.3,
         "callForHelpRadius": 0
       }
@@ -804,7 +804,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.3,
         "callForHelpRadius": 0
       }
@@ -1878,6 +1878,253 @@
           "void_rift",
           "temporal_distortion",
           "chaos_burst"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "chunkType": "water_cursed_swamp",
+      "chunkCategory": "rare_water",
+      "chunkTheme": "water",
+      "enemySpawns": {
+        "slime_acid": {
+          "density": "high",
+          "tier": 2
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Corrosive slime that dissolves anything it touches. Highly aggressive and surprisingly fast.",
+        "tags": [
+          "slime",
+          "uncommon",
+          "aggressive",
+          "mid-game"
+        ]
+      },
+      "enemyId": "slime_acid",
+      "name": "Acid Slime",
+      "tier": 2,
+      "category": "ooze",
+      "behavior": "aggressive_swarm",
+      "stats": {
+        "health": 120,
+        "damage": [
+          15,
+          22
+        ],
+        "defense": 8,
+        "speed": 0.9,
+        "aggroRange": 6,
+        "attackSpeed": 1.0
+      },
+      "drops": [
+        {
+          "materialId": "slime_gel",
+          "quantity": [
+            5,
+            10
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "living_ichor",
+          "quantity": [
+            2,
+            3
+          ],
+          "chance": "high"
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": [
+            1,
+            1
+          ],
+          "chance": "low"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "patrol",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0,
+        "callForHelpRadius": 10,
+        "specialAbilities": [
+          "acid_damage_over_time"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "chunkType": "water_cursed_swamp",
+      "chunkCategory": "rare_water",
+      "chunkTheme": "water",
+      "enemySpawns": {
+        "slime_crystal": {
+          "density": "moderate",
+          "tier": 3
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Crystalline slime formed from pure elemental energy. Extremely rare and dangerously powerful.",
+        "tags": [
+          "slime",
+          "rare",
+          "boss",
+          "end-game"
+        ]
+      },
+      "enemyId": "slime_crystal",
+      "name": "Crystal Slime",
+      "tier": 3,
+      "category": "ooze",
+      "behavior": "boss_encounter",
+      "stats": {
+        "health": 500,
+        "damage": [
+          40,
+          60
+        ],
+        "defense": 30,
+        "speed": 1.0,
+        "aggroRange": 10,
+        "attackSpeed": 1.2
+      },
+      "drops": [
+        {
+          "materialId": "slime_gel",
+          "quantity": [
+            12,
+            20
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": [
+            4,
+            6
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "crystal_quartz",
+          "quantity": [
+            5,
+            8
+          ],
+          "chance": "high"
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": [
+            2,
+            3
+          ],
+          "chance": "moderate"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "patrol",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0,
+        "callForHelpRadius": 15,
+        "specialAbilities": [
+          "split_on_damage",
+          "elemental_burst"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "chunkType": "water_cursed_swamp",
+      "chunkCategory": "rare_water",
+      "chunkTheme": "water",
+      "enemySpawns": {
+        "void_wraith": {
+          "density": "low",
+          "tier": 4
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Spectral entity that phases between dimensions. Attacks pass through it unpredictably.",
+        "tags": [
+          "wraith",
+          "rare",
+          "phase",
+          "end-game"
+        ]
+      },
+      "enemyId": "void_wraith",
+      "name": "Void Wraith",
+      "tier": 4,
+      "category": "undead",
+      "behavior": "aggressive_phase",
+      "stats": {
+        "health": 400,
+        "damage": [
+          60,
+          90
+        ],
+        "defense": 15,
+        "speed": 1.5,
+        "aggroRange": 15,
+        "attackSpeed": 1.3
+      },
+      "drops": [
+        {
+          "materialId": "spectral_thread",
+          "quantity": [
+            5,
+            10
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": [
+            3,
+            5
+          ],
+          "chance": "high"
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": [
+            4,
+            6
+          ],
+          "chance": "high"
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": [
+            3,
+            4
+          ],
+          "chance": "moderate"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "patrol",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0,
+        "callForHelpRadius": 0,
+        "specialAbilities": [
+          "phase_shift",
+          "life_drain",
+          "teleport"
         ]
       }
     }

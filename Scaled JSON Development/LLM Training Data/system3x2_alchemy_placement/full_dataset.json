@@ -7,11 +7,33 @@
       "inputs": [
         {
           "materialId": "slime_gel",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -51,15 +73,48 @@
       "inputs": [
         {
           "materialId": "living_ichor",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
         },
         {
           "materialId": "water_crystal",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Water Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "water",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "slime_gel",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -104,15 +159,48 @@
       "inputs": [
         {
           "materialId": "essence_blood",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Essence Blood",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "blood"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "living_ichor",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -151,21 +239,409 @@
   },
   {
     "input": {
+      "recipeId": "alchemy_strength_elixir",
+      "itemId": "strength_elixir",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "dire_fang",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Dire Fang",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "fang"
+            ]
+          }
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Strength-enhancing elixir using dire fangs and fire crystals. Muscles surge with power, every strike hits harder. Feel the beast's ferocity flowing through you.",
+        "tags": [
+          "potion",
+          "buff",
+          "strength",
+          "combat"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_strength_elixir",
+      "outputId": "strength_elixir",
+      "stationTier": 2,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "dire_fang",
+          "quantity": 3
+        },
+        {
+          "slot": 2,
+          "materialId": "fire_crystal",
+          "quantity": 2
+        },
+        {
+          "slot": 3,
+          "materialId": "beetle_carapace",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Dire fangs dissolve first, releasing strength essence. Fire crystals amplify power. Beetle carapace adds durability to effect. Too early blocks absorption, too late makes it brief."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_iron_skin_potion",
+      "itemId": "iron_skin_potion",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Beetle Carapace",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "carapace"
+            ]
+          }
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Earth Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "earth",
+              "common"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Defense-boosting potion using iron scales and earth crystals. Skin hardens like metal, blows that should fell you merely bruise. Stand firm, unbreakable.",
+        "tags": [
+          "potion",
+          "buff",
+          "defense",
+          "protection"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_iron_skin_potion",
+      "outputId": "iron_skin_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "iron_scales",
+          "quantity": 3
+        },
+        {
+          "slot": 2,
+          "materialId": "earth_crystal",
+          "quantity": 2
+        },
+        {
+          "slot": 3,
+          "materialId": "golem_core",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Iron scales dissolve into liquid stone base. Earth crystal adds flexible protection. Golem core solidifies without rigidity. Skin hardens like metal."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_swiftness_draught",
+      "itemId": "swiftness_draught",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "air_crystal",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Speed-enhancing draught using air crystals and spectral thread. Time seems to slow around you. Your movements blur, strikes land before enemies can react.",
+        "tags": [
+          "potion",
+          "buff",
+          "speed",
+          "agility"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_swiftness_draught",
+      "outputId": "swiftness_draught",
+      "stationTier": 2,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "air_crystal",
+          "quantity": 3
+        },
+        {
+          "slot": 2,
+          "materialId": "spectral_thread",
+          "quantity": 2
+        },
+        {
+          "slot": 3,
+          "materialId": "slime_gel",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Air crystals create fluid motion essence. Spectral thread lightens body, quickens reflexes. Slime gel binds to living form. World seems to slow."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_fire_resistance_potion",
+      "itemId": "fire_resistance_potion",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Phoenix Ash",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "fire",
+              "legendary"
+            ]
+          }
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Water Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "water",
+              "common"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Fire resistance potion using water and frost essences. Body temperature regulates perfectly. Walk through flames unscathed, fire becomes a gentle warmth.",
+        "tags": [
+          "potion",
+          "resistance",
+          "fire",
+          "protection"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_fire_resistance_potion",
+      "outputId": "fire_resistance_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "water_crystal",
+          "quantity": 3
+        },
+        {
+          "slot": 2,
+          "materialId": "frost_essence",
+          "quantity": 2
+        },
+        {
+          "slot": 3,
+          "materialId": "slime_gel",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Water crystals create cooling base. Frost essence adds cold countering flame. Slime gel binds protection to skin. Fire cannot touch you."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_frost_resistance_potion",
+      "itemId": "frost_resistance_potion",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "frost_essence",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Frost Essence",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "ice",
+              "rare"
+            ]
+          }
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Frost resistance potion using fire crystals to create internal warmth. Cold cannot touch you. Ice shatters against your skin, blizzards feel like spring breezes.",
+        "tags": [
+          "potion",
+          "resistance",
+          "frost",
+          "protection"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_frost_resistance_potion",
+      "outputId": "frost_resistance_potion",
+      "stationTier": 2,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "fire_crystal",
+          "quantity": 3
+        },
+        {
+          "slot": 2,
+          "materialId": "phoenix_ash",
+          "quantity": 1
+        },
+        {
+          "slot": 3,
+          "materialId": "slime_gel",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Fire crystals generate inner warmth. Phoenix ash adds perpetual heat never fading. Slime gel spreads throughout body. Cold cannot touch you."
+    }
+  },
+  {
+    "input": {
       "recipeId": "alchemy_regeneration_tonic",
       "itemId": "regeneration_tonic",
       "tier": 3,
       "inputs": [
         {
           "materialId": "living_ichor",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "essence_blood",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Essence Blood",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "blood"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -200,6 +676,748 @@
         }
       ],
       "narrative": "Living ichor creates sustained healing potential. Light gems infuse persistent illumination. Essence blood binds regenerative effect. Body remembers how to heal continuously."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_titans_brew",
+      "itemId": "titans_brew",
+      "tier": 4,
+      "inputs": [
+        {
+          "materialId": "golem_core",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Golem Core",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "ancient"
+            ]
+          }
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Storm Heart",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "lightning",
+              "legendary"
+            ]
+          }
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Phoenix Ash",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "fire",
+              "legendary"
+            ]
+          }
+        },
+        {
+          "materialId": "essence_blood",
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Essence Blood",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "blood"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Legendary brew combining dragon essence with phoenix ash. Maximum HP surges, strength magnifies. For a brief time, you become something more than mortal.",
+        "tags": [
+          "potion",
+          "buff",
+          "legendary",
+          "power"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_titans_brew",
+      "outputId": "titans_brew",
+      "stationTier": 4,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "golem_core",
+          "quantity": 3
+        },
+        {
+          "slot": 2,
+          "materialId": "storm_heart",
+          "quantity": 2
+        },
+        {
+          "slot": 3,
+          "materialId": "phoenix_ash",
+          "quantity": 3
+        },
+        {
+          "slot": 4,
+          "materialId": "essence_blood",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Golem core provides titan strength. Storm heart adds raw power. Phoenix ash ensures perpetual effect. Essence blood binds all. You feel unstoppable."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_elemental_harmony",
+      "itemId": "elemental_harmony_potion",
+      "tier": 3,
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Water Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "water",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Earth Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "earth",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "air_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Combining all basic elements into a harmony potion. Balance in a bottle. All elemental forces recognize you as kin and refuse to harm their own.",
+        "tags": [
+          "potion",
+          "resistance",
+          "elemental",
+          "harmony"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_elemental_harmony",
+      "outputId": "elemental_harmony_potion",
+      "stationTier": 3,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "fire_crystal",
+          "quantity": 2
+        },
+        {
+          "slot": 2,
+          "materialId": "water_crystal",
+          "quantity": 2
+        },
+        {
+          "slot": 3,
+          "materialId": "earth_crystal",
+          "quantity": 2
+        },
+        {
+          "slot": 4,
+          "materialId": "air_crystal",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Fire then water - must balance before adding earth. Air completes cycle. Balance in bottle - all elements recognize you as kin."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_efficiency_oil",
+      "itemId": "efficiency_oil",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "slime_gel",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Water Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "water",
+              "common"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Oil that makes tools work faster and smoother. Craftsmen swear by this formula. Apply it before work and watch efficiency soar.",
+        "tags": [
+          "utility",
+          "enhancement",
+          "tool",
+          "crafting"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_efficiency_oil",
+      "outputId": "efficiency_oil",
+      "stationTier": 2,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "slime_gel",
+          "quantity": 3
+        },
+        {
+          "slot": 2,
+          "materialId": "spectral_thread",
+          "quantity": 2
+        },
+        {
+          "slot": 3,
+          "materialId": "water_crystal",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Slime gel creates slick base. Spectral thread adds supernatural efficiency. Water crystal prevents evaporation. Productivity soars."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_armor_polish",
+      "itemId": "armor_polish",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "limestone",
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Limestone",
+            "tier": 1,
+            "category": "stone",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "stone",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
+        },
+        {
+          "materialId": "slime_gel",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Polish that makes armor gleam and deflect attacks. Knights pay fortunes for this. The sheen isn't just for show - it actually turns blades.",
+        "tags": [
+          "utility",
+          "enhancement",
+          "armor",
+          "protection"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_armor_polish",
+      "outputId": "armor_polish",
+      "stationTier": 2,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "limestone",
+          "quantity": 4
+        },
+        {
+          "slot": 2,
+          "materialId": "light_gem",
+          "quantity": 1
+        },
+        {
+          "slot": 3,
+          "materialId": "slime_gel",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Limestone grinds to powder. Light gem infuses protective shimmer. Slime gel binds into paste. Sheen turns blades."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_universal_solvent",
+      "itemId": "universal_solvent",
+      "tier": 3,
+      "inputs": [
+        {
+          "materialId": "void_essence",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Void Essence",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "void",
+              "legendary"
+            ]
+          }
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Shadow Core",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "dark",
+              "rare"
+            ]
+          }
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Voidstone",
+            "tier": 3,
+            "category": "stone",
+            "rarity": "epic",
+            "tags": [
+              "basic",
+              "stone",
+              "void"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Creating universal solvent that can dissolve anything. Handle with extreme care. The void essence makes it unstable, the shadow core makes it hungry. It wants to unmake things.",
+        "tags": [
+          "utility",
+          "solvent",
+          "dangerous",
+          "void"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_universal_solvent",
+      "outputId": "universal_solvent",
+      "stationTier": 3,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "void_essence",
+          "quantity": 2
+        },
+        {
+          "slot": 2,
+          "materialId": "shadow_core",
+          "quantity": 3
+        },
+        {
+          "slot": 3,
+          "materialId": "voidstone",
+          "quantity": 4
+        }
+      ],
+      "narrative": "Void essence unmakes matter. Shadow cores channel dissolution. Voidstone stabilizes impossible. Miss timing, dissolves cauldron itself."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_transmute_copper_tin",
+      "itemId": "tin_ingot",
+      "tier": 1,
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Refined tin with excellent magical conductivity. Used in alloys and enchanted items.",
+        "tags": [
+          "refined",
+          "metal",
+          "magical"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_transmute_copper_tin",
+      "outputId": "tin_ingot",
+      "stationTier": 1,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "copper_ingot",
+          "quantity": 3
+        },
+        {
+          "slot": 2,
+          "materialId": "fire_crystal",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Copper dissolves first into base form. Fire crystal catalyzes transformation to tin. Foundation of alchemical wealth."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_transmute_iron_steel",
+      "itemId": "steel_ingot",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
+        },
+        {
+          "materialId": "coal",
+          "quantity": 3,
+          "material_metadata": {
+            "note": "not_in_materials_db"
+          }
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Superior to iron in every way. Holds a keen edge, resists corrosion, and strikes with authority.",
+        "tags": [
+          "refined",
+          "metal",
+          "advanced"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_transmute_iron_steel",
+      "outputId": "steel_ingot",
+      "stationTier": 2,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "iron_ingot",
+          "quantity": 2
+        },
+        {
+          "slot": 2,
+          "materialId": "coal",
+          "quantity": 3
+        },
+        {
+          "slot": 3,
+          "materialId": "fire_crystal",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Iron dissolves to potential. Coal provides carbon. Fire crystal bonds them into steel. Alchemy surpasses forging."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_refine_essence_blood",
+      "itemId": "essence_blood",
+      "tier": 2,
+      "inputs": [
+        {
+          "materialId": "living_ichor",
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
+        "tags": [
+          "monster",
+          "rare",
+          "blood"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_refine_essence_blood",
+      "outputId": "essence_blood",
+      "stationTier": 2,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "living_ichor",
+          "quantity": 4
+        },
+        {
+          "slot": 2,
+          "materialId": "light_gem",
+          "quantity": 2
+        }
+      ],
+      "narrative": "Living ichor provides raw life force. Light gems purify and concentrate. Pure essence emerges - no impurities, pure vitality."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_crystallize_fire",
+      "itemId": "fire_crystal",
+      "tier": 1,
+      "inputs": [
+        {
+          "materialId": "limestone",
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Limestone",
+            "tier": 1,
+            "category": "stone",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "stone",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Phoenix Ash",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "fire",
+              "legendary"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
+        "tags": [
+          "elemental",
+          "fire",
+          "common"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "alchemy_crystallize_fire",
+      "outputId": "fire_crystal",
+      "stationTier": 1,
+      "ingredients": [
+        {
+          "slot": 1,
+          "materialId": "limestone",
+          "quantity": 5
+        },
+        {
+          "slot": 2,
+          "materialId": "phoenix_ash",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Limestone dissolves, creating crystalline matrix. Phoenix ash ignites transformation. Chaos becomes order - heat solidifies into stable crystal."
     }
   }
 ]

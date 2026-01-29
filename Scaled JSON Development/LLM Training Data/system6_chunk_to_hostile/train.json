@@ -58,7 +58,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.2,
         "callForHelpRadius": 8
       }
@@ -123,7 +123,7 @@
       "aiPattern": {
         "defaultState": "idle",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0,
         "callForHelpRadius": 0
       }
@@ -188,7 +188,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.3,
         "callForHelpRadius": 0
       }
@@ -253,7 +253,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.3,
         "callForHelpRadius": 0
       }
@@ -318,7 +318,7 @@
       "aiPattern": {
         "defaultState": "idle",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0,
         "callForHelpRadius": 0
       }
@@ -383,7 +383,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.2,
         "callForHelpRadius": 8
       }
@@ -522,7 +522,7 @@
       "aiPattern": {
         "defaultState": "idle",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0,
         "callForHelpRadius": 0
       }
@@ -663,7 +663,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.3,
         "callForHelpRadius": 0
       }
@@ -804,7 +804,7 @@
       "aiPattern": {
         "defaultState": "wander",
         "aggroOnDamage": true,
-        "aggroOnProximity": false,
+        "aggroOnProximity": true,
         "fleeAtHealth": 0.3,
         "callForHelpRadius": 0
       }
@@ -1612,6 +1612,272 @@
           "phase_shift",
           "life_drain",
           "teleport"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_cave",
+      "chunkCategory": "rare",
+      "chunkTheme": "cave",
+      "enemySpawns": {
+        "golem_stone": {
+          "density": "low",
+          "tier": 3
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Animated stone construct that guards ancient places. Slow but nearly indestructible.",
+        "tags": [
+          "golem",
+          "rare",
+          "boss",
+          "construct"
+        ]
+      },
+      "enemyId": "golem_stone",
+      "name": "Stone Golem",
+      "tier": 3,
+      "category": "construct",
+      "behavior": "boss_encounter",
+      "stats": {
+        "health": 800,
+        "damage": [
+          50,
+          80
+        ],
+        "defense": 40,
+        "speed": 0.5,
+        "aggroRange": 10,
+        "attackSpeed": 0.6
+      },
+      "drops": [
+        {
+          "materialId": "golem_core",
+          "quantity": [
+            2,
+            4
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "granite",
+          "quantity": [
+            10,
+            15
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "earth_crystal",
+          "quantity": [
+            5,
+            8
+          ],
+          "chance": "high"
+        },
+        {
+          "materialId": "diamond",
+          "quantity": [
+            1,
+            2
+          ],
+          "chance": "moderate"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "guard",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0,
+        "callForHelpRadius": 0,
+        "specialAbilities": [
+          "ground_slam",
+          "stone_armor"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_cave",
+      "chunkCategory": "rare",
+      "chunkTheme": "cave",
+      "enemySpawns": {
+        "beetle_titan": {
+          "density": "very_low",
+          "tier": 4
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Massive beetle with diamond-hard shell. Ancient guardian that has survived eons.",
+        "tags": [
+          "beetle",
+          "rare",
+          "boss",
+          "end-game"
+        ]
+      },
+      "enemyId": "beetle_titan",
+      "name": "Titan Beetle",
+      "tier": 4,
+      "category": "insect",
+      "behavior": "boss_encounter",
+      "stats": {
+        "health": 1200,
+        "damage": [
+          70,
+          110
+        ],
+        "defense": 50,
+        "speed": 0.6,
+        "aggroRange": 15,
+        "attackSpeed": 0.7
+      },
+      "drops": [
+        {
+          "materialId": "beetle_carapace",
+          "quantity": [
+            15,
+            25
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "iron_scales",
+          "quantity": [
+            10,
+            15
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "golem_core",
+          "quantity": [
+            3,
+            5
+          ],
+          "chance": "high"
+        },
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": [
+            2,
+            3
+          ],
+          "chance": "moderate"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "patrol",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0,
+        "callForHelpRadius": 0,
+        "specialAbilities": [
+          "earthquake_stomp",
+          "shell_shield",
+          "rampage"
+        ]
+      }
+    }
+  },
+  {
+    "input": {
+      "chunkType": "rare_cave",
+      "chunkCategory": "rare",
+      "chunkTheme": "cave",
+      "enemySpawns": {
+        "entity_primordial": {
+          "density": "very_low",
+          "tier": 4
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Reality-warped entity from beyond comprehension. Existence itself bends around it. Only the most prepared dare engage.",
+        "tags": [
+          "entity",
+          "mythical",
+          "boss",
+          "reality-bender"
+        ]
+      },
+      "enemyId": "entity_primordial",
+      "name": "Primordial Entity",
+      "tier": 4,
+      "category": "aberration",
+      "behavior": "boss_encounter",
+      "stats": {
+        "health": 2000,
+        "damage": [
+          120,
+          180
+        ],
+        "defense": 60,
+        "speed": 1.0,
+        "aggroRange": 20,
+        "attackSpeed": 1.0
+      },
+      "drops": [
+        {
+          "materialId": "chaos_matrix",
+          "quantity": [
+            3,
+            5
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": [
+            8,
+            12
+          ],
+          "chance": "guaranteed"
+        },
+        {
+          "materialId": "etherion_ingot",
+          "quantity": [
+            5,
+            8
+          ],
+          "chance": "high"
+        },
+        {
+          "materialId": "genesis_lattice",
+          "quantity": [
+            2,
+            3
+          ],
+          "chance": "moderate"
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": [
+            2,
+            4
+          ],
+          "chance": "moderate"
+        }
+      ],
+      "aiPattern": {
+        "defaultState": "guard",
+        "aggroOnDamage": true,
+        "aggroOnProximity": true,
+        "fleeAtHealth": 0,
+        "callForHelpRadius": 0,
+        "specialAbilities": [
+          "reality_warp",
+          "void_rift",
+          "temporal_distortion",
+          "chaos_burst"
         ]
       }
     }

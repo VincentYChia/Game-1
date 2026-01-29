@@ -1467,5 +1467,47 @@
       ],
       "respawnTime": null
     }
+  },
+  {
+    "input": {
+      "chunkType": "water_cursed_swamp",
+      "chunkCategory": "rare_water",
+      "chunkTheme": "water",
+      "resourceDensity": {
+        "voidstone_shard": {
+          "density": "very_low",
+          "tierBias": "high"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Pitch-black stone that pulls light into itself. Radiates subtle wrongness.",
+        "tags": [
+          "stone",
+          "void",
+          "rare"
+        ]
+      },
+      "resourceId": "voidstone_shard",
+      "name": "Voidstone Shard",
+      "category": "stone",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        {
+          "materialId": "voidstone",
+          "quantity": "few",
+          "chance": "moderate"
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": "few",
+          "chance": "low"
+        }
+      ],
+      "respawnTime": null
+    }
   }
 ]

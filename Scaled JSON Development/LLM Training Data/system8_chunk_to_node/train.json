@@ -1304,5 +1304,47 @@
       ],
       "respawnTime": null
     }
+  },
+  {
+    "input": {
+      "chunkType": "rare_cave",
+      "chunkCategory": "rare",
+      "chunkTheme": "cave",
+      "resourceDensity": {
+        "genesis_structure": {
+          "density": "very_low",
+          "tierBias": "legendary"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is.",
+        "tags": [
+          "stone",
+          "mythical",
+          "impossible"
+        ]
+      },
+      "resourceId": "genesis_structure",
+      "name": "Genesis Structure",
+      "category": "stone",
+      "tier": 4,
+      "requiredTool": "pickaxe",
+      "baseHealth": 800,
+      "drops": [
+        {
+          "materialId": "genesis_lattice",
+          "quantity": "few",
+          "chance": "improbable"
+        },
+        {
+          "materialId": "chaos_matrix",
+          "quantity": "few",
+          "chance": "improbable"
+        }
+      ],
+      "respawnTime": null
+    }
   }
 ]

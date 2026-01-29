@@ -11,23 +11,17 @@ Output:
 """
 
 import json
-import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Any
 from collections import defaultdict
-
-# Import material enricher for metadata enrichment
-sys.path.insert(0, str(Path(__file__).parent / "LLM Training Data/Fewshot_llm/src"))
-try:
-    from material_enricher import MaterialEnricher
-    ENRICHER_AVAILABLE = True
-except ImportError:
-    print("⚠️  Warning: MaterialEnricher not available. Training data will not be enriched.")
-    ENRICHER_AVAILABLE = False
+from copy import deepcopy
 
 # Configure paths (relative to where script is run from, expected: /home/user/Game-1/Scaled JSON Development/)
 GAME_ROOT = Path("../Game-1-modular")
 OUTPUT_DIR = Path("LLM Training Data")
+
+# Keys to skip when iterating over JSON sections (metadata blurbs, etc.)
+SKIP_KEYS = {"metadata", "version", "lastupdated", "description", "schema", "fileinfo"}
 
 # File paths
 PATHS = {
@@ -64,6 +58,188 @@ PATHS = {
 }
 
 
+# ============================================================================
+# MATERIAL ENRICHER (Integrated)
+# ============================================================================
+class MaterialEnricher:
+    """
+    Enriches recipe inputs with material metadata for LLM training.
+
+    Takes recipe inputs like:
+        {"materialId": "iron_ingot", "quantity": 3}
+
+    And enriches them to:
+        {
+            "materialId": "iron_ingot",
+            "quantity": 3,
+            "material_metadata": {
+                "name": "Iron Ingot",
+                "tier": 1,
+                "category": "metal",
+                "tags": ["refined", "common"],
+                ...
+            }
+        }
+    """
+
+    def __init__(self, materials_path: str):
+        """
+        Initialize the enricher with a materials JSON file.
+
+        Args:
+            materials_path: Path to items-materials-1.JSON
+        """
+        self.materials_path = Path(materials_path)
+        self.materials: Dict[str, Dict] = {}
+        self._load_materials()
+
+    def _load_materials(self):
+        """Load and index materials by materialId"""
+        try:
+            with open(self.materials_path, 'r') as f:
+                data = json.load(f)
+
+            # Handle both "materials" array format and sectioned format
+            if "materials" in data:
+                for material in data.get("materials", []):
+                    material_id = material.get("materialId")
+                    if material_id:
+                        self.materials[material_id] = material
+            else:
+                # Sectioned format - iterate all sections
+                for key, value in data.items():
+                    if key.lower() in SKIP_KEYS:
+                        continue
+                    if isinstance(value, list):
+                        for material in value:
+                            if isinstance(material, dict):
+                                material_id = material.get("materialId")
+                                if material_id:
+                                    self.materials[material_id] = material
+
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Materials file not found: {self.materials_path}")
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in materials file: {e}")
+
+    def get_material(self, material_id: str) -> Optional[Dict]:
+        """Get a material by its ID"""
+        return self.materials.get(material_id)
+
+    def extract_material_metadata(self, material: Dict) -> Dict:
+        """
+        Extract relevant metadata from a material for training context.
+
+        Returns a subset of material data useful for LLM understanding.
+        """
+        metadata = {
+            "name": material.get("name", ""),
+            "tier": material.get("tier", 1),
+            "category": material.get("category", ""),
+            "rarity": material.get("rarity", "common"),
+        }
+
+        # Include tags if present
+        mat_metadata = material.get("metadata", {})
+        if "tags" in mat_metadata:
+            metadata["tags"] = mat_metadata["tags"]
+
+        # Include description if present (helps LLM understand material)
+        if "description" in mat_metadata:
+            metadata["description"] = mat_metadata["description"]
+
+        # Include source info if present
+        if "source" in mat_metadata:
+            metadata["source"] = mat_metadata["source"]
+
+        # Include elemental/damage type if present
+        if "elementalType" in material:
+            metadata["elementalType"] = material["elementalType"]
+        if "damageType" in material:
+            metadata["damageType"] = material["damageType"]
+
+        return metadata
+
+    def enrich_input(self, input_item: Dict) -> Dict:
+        """
+        Enrich a single recipe input with material metadata.
+
+        Args:
+            input_item: A recipe input dict, e.g. {"materialId": "iron_ingot", "quantity": 3}
+
+        Returns:
+            Enriched input with material_metadata added
+        """
+        enriched = deepcopy(input_item)
+
+        # Handle different input formats
+        material_id = input_item.get("materialId") or input_item.get("itemId")
+
+        if material_id:
+            material = self.get_material(material_id)
+            if material:
+                enriched["material_metadata"] = self.extract_material_metadata(material)
+            else:
+                # Material not found - might be an item, not a material
+                enriched["material_metadata"] = {"note": "not_in_materials_db"}
+
+        return enriched
+
+    def enrich_recipe(self, recipe_input: Dict) -> Dict:
+        """
+        Enrich all inputs in a recipe with material metadata.
+
+        Args:
+            recipe_input: Recipe input dict containing an "inputs" array
+
+        Returns:
+            Enriched recipe input with all materials annotated
+        """
+        enriched = deepcopy(recipe_input)
+
+        # Enrich standard inputs array
+        if "inputs" in enriched:
+            enriched["inputs"] = [
+                self.enrich_input(inp) for inp in enriched["inputs"]
+            ]
+
+        # Enrich coreInput if present (refining recipes)
+        if "coreInput" in enriched and enriched["coreInput"]:
+            enriched["coreInput"] = self.enrich_input(enriched["coreInput"])
+
+        # Enrich surroundingInputs if present (refining recipes)
+        if "surroundingInputs" in enriched:
+            enriched["surroundingInputs"] = [
+                self.enrich_input(inp) for inp in enriched["surroundingInputs"]
+            ]
+
+        return enriched
+
+    def enrich_training_pair(self, pair: Dict) -> Dict:
+        """
+        Enrich a complete training pair (input + output).
+
+        Args:
+            pair: Training pair with 'input' and 'output' keys
+
+        Returns:
+            Enriched training pair
+        """
+        enriched_pair = deepcopy(pair)
+
+        if "input" in enriched_pair:
+            enriched_pair["input"] = self.enrich_recipe(enriched_pair["input"])
+
+        return enriched_pair
+
+
+# Global enricher instance (initialized in main)
+ENRICHER: Optional[MaterialEnricher] = None
+
+
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
 def load_json(filepath: Path) -> dict:
     """Load JSON file with error handling"""
     try:
@@ -77,8 +253,52 @@ def load_json(filepath: Path) -> dict:
         return {}
 
 
+def extract_all_items(data: dict, id_key: str = "itemId", skip_sections: set = None) -> Dict[str, Dict]:
+    """
+    Extract all items from a JSON file, iterating over all sections.
+    Skips metadata and non-list values.
+
+    Args:
+        data: The loaded JSON data
+        id_key: The key used for item IDs (e.g., "itemId", "materialId")
+        skip_sections: Optional set of section names to skip (e.g., {"stations"})
+
+    Returns:
+        Dict mapping item IDs to their full data
+    """
+    items = {}
+    skip_sections = skip_sections or set()
+
+    for key, value in data.items():
+        if key.lower() in SKIP_KEYS:
+            continue
+        if key.lower() in skip_sections:
+            continue
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict) and id_key in item:
+                    items[item[id_key]] = item
+    return items
+
+
 def save_training_pairs(system_name: str, pairs: List[Dict], split_ratio=0.9):
     """Save training pairs as JSON files with train/val split"""
+    global ENRICHER
+
+    # Enrich pairs if enricher available and pairs have inputs
+    if ENRICHER:
+        enriched_pairs = []
+        for pair in pairs:
+            inp = pair.get('input', {})
+            if any(k in inp for k in ['inputs', 'coreInput', 'surroundingInputs']):
+                enriched_pairs.append({
+                    'input': ENRICHER.enrich_recipe(inp),
+                    'output': pair.get('output', {})
+                })
+            else:
+                enriched_pairs.append(pair)
+        pairs = enriched_pairs
+
     output_path = OUTPUT_DIR / system_name
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -114,18 +334,9 @@ def extract_smithing_pairs():
     items_main = load_json(PATHS["smithing_items_main"])
     items_tools = load_json(PATHS["smithing_items_tools"])
 
-    # Combine item sources (smithing items split across files)
-    all_items = {}
-
-    # Items from smithing file (organized in sections)
-    for section in ["weapons", "armor", "accessories", "stations"]:
-        for item in items_main.get(section, []):
-            all_items[item["itemId"]] = item
-
-    # Items from tools file (organized in sections)
-    for section in ["tools"]:
-        for item in items_tools.get(section, []):
-            all_items[item["itemId"]] = item
+    # Combine item sources, excluding stations
+    all_items = extract_all_items(items_main, skip_sections={"stations"})
+    all_items.update(extract_all_items(items_tools))
 
     pairs = []
     for recipe in recipes:
@@ -171,14 +382,9 @@ def extract_smithing_placement_pairs():
     items_tools = load_json(PATHS["smithing_items_tools"])
     placements = load_json(PATHS["smithing_placements"]).get("placements", [])
 
-    # Combine items
-    all_items = {}
-    for section in ["weapons", "armor", "accessories", "stations"]:
-        for item in items_main.get(section, []):
-            all_items[item["itemId"]] = item
-    for section in ["tools"]:
-        for item in items_tools.get(section, []):
-            all_items[item["itemId"]] = item
+    # Combine items, excluding stations
+    all_items = extract_all_items(items_main, skip_sections={"stations"})
+    all_items.update(extract_all_items(items_tools))
 
     # Index placements by recipeId
     placements_by_recipe = {p["recipeId"]: p for p in placements}
@@ -229,8 +435,11 @@ def extract_refining_pairs():
     recipes = load_json(PATHS["refining_recipes"]).get("recipes", [])
     materials_data = load_json(PATHS["refining_materials"])
 
-    # Index materials
-    materials = {m["materialId"]: m for m in materials_data.get("materials", [])}
+    # Index materials - handle both formats
+    if "materials" in materials_data:
+        materials = {m["materialId"]: m for m in materials_data.get("materials", [])}
+    else:
+        materials = extract_all_items(materials_data, id_key="materialId")
 
     pairs = []
     for recipe in recipes:
@@ -254,8 +463,8 @@ def extract_refining_pairs():
         # Build INPUT
         input_data = {
             "recipeId": recipe["recipeId"],
-            "stationTier": recipe.get("stationTier", 1),
-            "stationType": recipe.get("stationType", "refining"),
+            "stationTier": recipe.get("stationTierRequired", 1),
+            "stationType": recipe.get("stationRequired", "refinery"),
             "inputs": recipe.get("inputs", []),
             "narrative": recipe.get("metadata", {}).get("narrative", "")
         }
@@ -284,7 +493,11 @@ def extract_refining_placement_pairs():
     placements = load_json(PATHS["refining_placements"]).get("placements", [])
 
     # Index materials and placements
-    materials = {m["materialId"]: m for m in materials_data.get("materials", [])}
+    if "materials" in materials_data:
+        materials = {m["materialId"]: m for m in materials_data.get("materials", [])}
+    else:
+        materials = extract_all_items(materials_data, id_key="materialId")
+
     placements_by_recipe = {p["recipeId"]: p for p in placements}
 
     pairs = []
@@ -306,7 +519,7 @@ def extract_refining_placement_pairs():
         input_data = {
             "recipeId": recipe_id,
             "materialId": material_id,
-            "tier": recipe.get("stationTier", 1),
+            "tier": recipe.get("stationTierRequired", 1),
             "coreInput": recipe.get("coreInput", {}),
             "surroundingInputs": recipe.get("surroundingInputs", []),
             "materialMetadata": material.get("metadata", {})
@@ -333,12 +546,18 @@ def extract_alchemy_pairs():
 
     recipes = load_json(PATHS["alchemy_recipes"]).get("recipes", [])
     items_data = load_json(PATHS["alchemy_items"])
+    materials_data = load_json(PATHS["materials"])
 
-    # Index items (alchemy items organized in sections)
-    items = {}
-    for section in ["potions_healing", "potions_mana", "potions_utility", "elixirs"]:
-        for item in items_data.get(section, []):
-            items[item["itemId"]] = item
+    # Alchemy outputs can be items (potions) OR materials (transmutation)
+    items = extract_all_items(items_data)
+
+    if "materials" in materials_data:
+        materials = {m["materialId"]: m for m in materials_data.get("materials", [])}
+    else:
+        materials = extract_all_items(materials_data, id_key="materialId")
+
+    # Combine both - check items first, then materials
+    all_outputs = {**materials, **items}  # items override materials if same ID
 
     pairs = []
     for recipe in recipes:
@@ -346,9 +565,9 @@ def extract_alchemy_pairs():
         if not output_id:
             continue
 
-        item = items.get(output_id)
+        item = all_outputs.get(output_id)
         if not item:
-            print(f"  ⚠️  Missing item for recipe: {output_id}")
+            print(f"  ⚠️  Missing item/material for recipe: {output_id}")
             continue
 
         # Build INPUT
@@ -381,14 +600,18 @@ def extract_alchemy_placement_pairs():
 
     recipes = load_json(PATHS["alchemy_recipes"]).get("recipes", [])
     items_data = load_json(PATHS["alchemy_items"])
+    materials_data = load_json(PATHS["materials"])
     placements = load_json(PATHS["alchemy_placements"]).get("placements", [])
 
-    # Index items
-    items = {}
-    for section in ["potions_healing", "potions_mana", "potions_utility", "elixirs"]:
-        for item in items_data.get(section, []):
-            items[item["itemId"]] = item
+    # Alchemy outputs can be items (potions) OR materials (transmutation)
+    items = extract_all_items(items_data)
 
+    if "materials" in materials_data:
+        materials = {m["materialId"]: m for m in materials_data.get("materials", [])}
+    else:
+        materials = extract_all_items(materials_data, id_key="materialId")
+
+    all_outputs = {**materials, **items}
     placements_by_recipe = {p["recipeId"]: p for p in placements}
 
     pairs = []
@@ -399,7 +622,7 @@ def extract_alchemy_placement_pairs():
         if not recipe_id or not output_id:
             continue
 
-        item = items.get(output_id)
+        item = all_outputs.get(output_id)
         placement = placements_by_recipe.get(recipe_id)
 
         if not item or not placement:
@@ -434,14 +657,10 @@ def extract_engineering_pairs():
     print("\n[System 4] Extracting Engineering Recipe → Device pairs...")
 
     recipes = load_json(PATHS["engineering_recipes"]).get("recipes", [])
-    # Engineering items share the alchemy file
     items_data = load_json(PATHS["engineering_items"])
 
-    # Index items (engineering items in sections: turrets, bombs, traps)
-    items = {}
-    for section in ["turrets", "bombs", "traps"]:
-        for item in items_data.get(section, []):
-            items[item["itemId"]] = item
+    # Index items - get all sections dynamically
+    items = extract_all_items(items_data)
 
     pairs = []
     for recipe in recipes:
@@ -486,12 +705,8 @@ def extract_engineering_placement_pairs():
     items_data = load_json(PATHS["engineering_items"])
     placements = load_json(PATHS["engineering_placements"]).get("placements", [])
 
-    # Index items
-    items = {}
-    for section in ["turrets", "bombs", "traps"]:
-        for item in items_data.get(section, []):
-            items[item["itemId"]] = item
-
+    # Index items dynamically
+    items = extract_all_items(items_data)
     placements_by_recipe = {p["recipeId"]: p for p in placements}
 
     pairs = []
@@ -637,8 +852,11 @@ def extract_hostile_pairs():
     hostiles_data = load_json(PATHS["hostiles"])
     chunk_templates = load_json(PATHS["chunk_templates"])
 
-    # Index hostiles by enemyId for quick lookup
-    hostiles_by_id = {h["enemyId"]: h for h in hostiles_data.get("enemies", [])}
+    # Index hostiles by enemyId for quick lookup - handle both formats
+    if "enemies" in hostiles_data:
+        hostiles_by_id = {h["enemyId"]: h for h in hostiles_data.get("enemies", [])}
+    else:
+        hostiles_by_id = extract_all_items(hostiles_data, id_key="enemyId")
 
     # Extract pairs: one pair per (chunk, enemy) combination
     pairs = []
@@ -688,11 +906,29 @@ def extract_material_pairs():
     hostiles_data = load_json(PATHS["hostiles"])
     nodes_data = load_json(PATHS["nodes"])
 
+    # Index materials - handle both formats
+    if "materials" in materials_data:
+        all_materials = {m["materialId"]: m for m in materials_data.get("materials", [])}
+    else:
+        all_materials = extract_all_items(materials_data, id_key="materialId")
+
+    # Index hostiles - handle both formats
+    if "enemies" in hostiles_data:
+        hostiles = hostiles_data.get("enemies", [])
+    else:
+        hostiles = list(extract_all_items(hostiles_data, id_key="enemyId").values())
+
+    # Index nodes - handle both formats
+    if "nodes" in nodes_data:
+        nodes = nodes_data.get("nodes", [])
+    else:
+        nodes = list(extract_all_items(nodes_data, id_key="resourceId").values())
+
     # Build drop source mapping
     material_sources = {}
 
     # From hostiles
-    for hostile in hostiles_data.get("enemies", []):
+    for hostile in hostiles:
         for drop in hostile.get("drops", []):
             material_id = drop.get("materialId")
             if material_id:
@@ -706,7 +942,7 @@ def extract_material_pairs():
                 })
 
     # From nodes (drops are objects with materialId field)
-    for node in nodes_data.get("nodes", []):
+    for node in nodes:
         for drop_obj in node.get("drops", []):
             material_id = drop_obj.get("materialId") if isinstance(drop_obj, dict) else drop_obj
             if material_id:
@@ -721,11 +957,7 @@ def extract_material_pairs():
 
     # Extract pairs
     pairs = []
-    for material in materials_data.get("materials", []):
-        material_id = material.get("materialId")
-        if not material_id:
-            continue
-
+    for material_id, material in all_materials.items():
         sources = material_sources.get(material_id, [])
         if not sources:
             # Skip materials without drop sources (crafted materials)
@@ -772,8 +1004,11 @@ def extract_node_pairs():
     nodes_data = load_json(PATHS["nodes"])
     chunk_templates = load_json(PATHS["chunk_templates"])
 
-    # Index nodes by resourceId for quick lookup
-    nodes_by_id = {n["resourceId"]: n for n in nodes_data.get("nodes", [])}
+    # Index nodes by resourceId for quick lookup - handle both formats
+    if "nodes" in nodes_data:
+        nodes_by_id = {n["resourceId"]: n for n in nodes_data.get("nodes", [])}
+    else:
+        nodes_by_id = extract_all_items(nodes_data, id_key="resourceId")
 
     # Extract pairs: one pair per (chunk, resource) combination
     pairs = []
@@ -821,8 +1056,14 @@ def extract_skill_pairs():
 
     skills_data = load_json(PATHS["skills"])
 
+    # Handle both formats
+    if "skills" in skills_data:
+        skills = skills_data.get("skills", [])
+    else:
+        skills = list(extract_all_items(skills_data, id_key="skillId").values())
+
     pairs = []
-    for skill in skills_data.get("skills", []):
+    for skill in skills:
         skill_id = skill.get("skillId")
         if not skill_id:
             continue
@@ -856,8 +1097,14 @@ def extract_title_pairs():
 
     titles_data = load_json(PATHS["titles"])
 
+    # Handle both formats
+    if "titles" in titles_data:
+        titles = titles_data.get("titles", [])
+    else:
+        titles = list(extract_all_items(titles_data, id_key="titleId").values())
+
     pairs = []
-    for title in titles_data.get("titles", []):
+    for title in titles:
         title_id = title.get("titleId")
         if not title_id:
             continue
@@ -883,30 +1130,22 @@ def extract_title_pairs():
 
 
 # ============================================================================
-# MATERIAL METADATA ENRICHMENT
+# MATERIAL METADATA ENRICHMENT (Post-processing alternative)
 # ============================================================================
 def enrich_all_training_data():
-    """Enrich all training data files with material metadata"""
-    if not ENRICHER_AVAILABLE:
+    """
+    Enrich all training data files with material metadata.
+    This is an alternative to inline enrichment during extraction.
+    """
+    global ENRICHER
+
+    if not ENRICHER:
         print("\n⚠️  Skipping enrichment - MaterialEnricher not available")
         return
 
     print("\n" + "=" * 80)
     print("ENRICHING TRAINING DATA WITH MATERIAL METADATA")
     print("=" * 80)
-
-    # Load materials database
-    materials_path = GAME_ROOT / "items.JSON/items-materials-1.JSON"
-    if not materials_path.exists():
-        print(f"⚠️  Materials database not found: {materials_path}")
-        return
-
-    try:
-        enricher = MaterialEnricher(str(materials_path))
-        print(f"✓ Loaded {len(enricher.materials)} materials")
-    except Exception as e:
-        print(f"⚠️  Error loading materials: {e}")
-        return
 
     # List of all systems to enrich (recipe-based systems with inputs)
     systems_to_enrich = [
@@ -943,8 +1182,8 @@ def enrich_all_training_data():
                     input_data = pair.get('input', {})
 
                     # Check if this input has an 'inputs' array to enrich
-                    if 'inputs' in input_data:
-                        enriched_input = enricher.enrich_recipe(input_data)
+                    if 'inputs' in input_data or 'coreInput' in input_data or 'surroundingInputs' in input_data:
+                        enriched_input = ENRICHER.enrich_recipe(input_data)
                         enriched_pair = {
                             'input': enriched_input,
                             'output': pair.get('output', {})
@@ -972,12 +1211,26 @@ def enrich_all_training_data():
 # ============================================================================
 def main():
     """Run all extraction functions"""
+    global ENRICHER
+
     print("=" * 80)
     print("LLM TRAINING DATA GENERATOR")
     print("=" * 80)
 
     # Create output directory
     OUTPUT_DIR.mkdir(exist_ok=True)
+
+    # Initialize enricher
+    materials_path = PATHS["materials"]
+    if materials_path.exists():
+        try:
+            ENRICHER = MaterialEnricher(str(materials_path))
+            print(f"✓ MaterialEnricher loaded with {len(ENRICHER.materials)} materials")
+        except Exception as e:
+            print(f"⚠️  MaterialEnricher failed to load: {e}")
+            ENRICHER = None
+    else:
+        print("⚠️  Materials file not found - enrichment disabled")
 
     total_pairs = 0
 
@@ -1006,14 +1259,6 @@ def main():
     print(f"✓ EXTRACTION COMPLETE")
     print(f"  Total training pairs generated: {total_pairs}")
     print(f"  Output directory: {OUTPUT_DIR}")
-    print("=" * 80)
-
-    # Enrich all training data with material metadata
-    enrich_all_training_data()
-
-    print("\n" + "=" * 80)
-    print(f"✓ ALL DONE")
-    print(f"  Training data generated and enriched")
     print("=" * 80)
 
 

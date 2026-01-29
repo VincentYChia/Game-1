@@ -3,11 +3,22 @@
     "input": {
       "recipeId": "refining_copper_ore_to_ingot",
       "stationTier": 1,
-      "stationType": "refining",
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "copper_ore",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Copper Ore",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "metal",
+              "starter"
+            ]
+          }
         }
       ],
       "narrative": "Smelting raw copper into usable ingots. The foundation of metallurgy."
@@ -32,11 +43,22 @@
     "input": {
       "recipeId": "refining_iron_ore_to_ingot",
       "stationTier": 1,
-      "stationType": "refining",
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "iron_ore",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Iron Ore",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "metal",
+              "standard"
+            ]
+          }
         }
       ],
       "narrative": "Smelting iron ore into reliable metal. Backbone of civilization. Crushing the ore first increases yield."
@@ -61,11 +83,22 @@
     "input": {
       "recipeId": "refining_tin_ore_to_ingot",
       "stationTier": 1,
-      "stationType": "refining",
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "tin_ore",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Tin Ore",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "basic",
+              "metal",
+              "magical"
+            ]
+          }
         }
       ],
       "narrative": "Refining tin ore into silvery metal. Essential for alloys."
@@ -89,12 +122,23 @@
   {
     "input": {
       "recipeId": "refining_steel_ore_to_ingot",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 2,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "steel_ore",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Steel Ore",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "basic",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "narrative": "Forging steel from carbon-rich ore. Requires intense heat."
@@ -118,12 +162,23 @@
   {
     "input": {
       "recipeId": "refining_mithril_ore_to_ingot",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 2,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "mithril_ore",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Mithril Ore",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Refining legendary mithril. The metal seems to purify itself, occasionally yielding higher quality ingots."
@@ -147,12 +202,23 @@
   {
     "input": {
       "recipeId": "refining_adamantine_ore_to_ingot",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 3,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "adamantine_ore",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Adamantine Ore",
+            "tier": 3,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "metal",
+              "rare"
+            ]
+          }
         }
       ],
       "narrative": "Smelting adamantine requires extreme heat and purification techniques. Sometimes yields exceptionally pure ingots."
@@ -176,12 +242,23 @@
   {
     "input": {
       "recipeId": "refining_orichalcum_ore_to_ingot",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 3,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "orichalcum_ore",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Orichalcum Ore",
+            "tier": 3,
+            "category": "metal",
+            "rarity": "epic",
+            "tags": [
+              "basic",
+              "metal",
+              "ancient"
+            ]
+          }
         }
       ],
       "narrative": "Refining the ancient metal. Channels both physical and magical forces."
@@ -205,12 +282,24 @@
   {
     "input": {
       "recipeId": "refining_etherion_ore_to_ingot",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "etherion_ore",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Etherion Ore",
+            "tier": 4,
+            "category": "metal",
+            "rarity": "legendary",
+            "tags": [
+              "basic",
+              "metal",
+              "mythical",
+              "temporal"
+            ]
+          }
         }
       ],
       "narrative": "Refining metal that exists in multiple states. Reality bends during the process."
@@ -236,11 +325,22 @@
     "input": {
       "recipeId": "refining_oak_log_to_plank",
       "stationTier": 1,
-      "stationType": "refining",
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "oak_log",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Oak Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "wood",
+              "versatile"
+            ]
+          }
         }
       ],
       "narrative": "Sawing oak logs into usable planks. Basic carpentry."
@@ -265,11 +365,22 @@
     "input": {
       "recipeId": "refining_pine_log_to_plank",
       "stationTier": 1,
-      "stationType": "refining",
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "pine_log",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Pine Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "wood",
+              "flexible"
+            ]
+          }
         }
       ],
       "narrative": "Processing pine into planks. Light, flexible wood."
@@ -294,11 +405,22 @@
     "input": {
       "recipeId": "refining_ash_log_to_plank",
       "stationTier": 1,
-      "stationType": "refining",
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "ash_log",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Ash Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "basic",
+              "wood",
+              "quality"
+            ]
+          }
         }
       ],
       "narrative": "Milling ash into planks. Superior shock absorption."
@@ -322,12 +444,23 @@
   {
     "input": {
       "recipeId": "refining_birch_log_to_plank",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 2,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "birch_log",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Birch Log",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "basic",
+              "wood",
+              "fine"
+            ]
+          }
         }
       ],
       "narrative": "Processing birch into fine planks. Excellent for detail work."
@@ -351,12 +484,23 @@
   {
     "input": {
       "recipeId": "refining_maple_log_to_plank",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 2,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "maple_log",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Maple Log",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "wood",
+              "durable"
+            ]
+          }
         }
       ],
       "narrative": "Milling maple wood. Resists warping beautifully."
@@ -380,12 +524,23 @@
   {
     "input": {
       "recipeId": "refining_ironwood_log_to_plank",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 3,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "ironwood_log",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Ironwood Log",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "wood",
+              "metallic"
+            ]
+          }
         }
       ],
       "narrative": "Sawing ironwood requires special blades. Wood dulls them quickly."
@@ -409,12 +564,23 @@
   {
     "input": {
       "recipeId": "refining_ebony_log_to_plank",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 3,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "ebony_log",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Ebony Log",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "epic",
+            "tags": [
+              "basic",
+              "wood",
+              "magical"
+            ]
+          }
         }
       ],
       "narrative": "Processing ebony. The wood absorbs light as you work."
@@ -438,12 +604,24 @@
   {
     "input": {
       "recipeId": "refining_worldtree_log_to_plank",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "worldtree_log",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Worldtree Log",
+            "tier": 4,
+            "category": "wood",
+            "rarity": "legendary",
+            "tags": [
+              "basic",
+              "wood",
+              "legendary",
+              "living"
+            ]
+          }
         }
       ],
       "narrative": "Working worldtree wood. It remembers being part of something greater."
@@ -467,14 +645,245 @@
   },
   {
     "input": {
+      "recipeId": "refining_bronze_alloy",
+      "stationTier": 1,
+      "stationType": "refinery",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
+        },
+        {
+          "materialId": "tin_ingot",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Tin Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "magical"
+            ]
+          }
+        }
+      ],
+      "narrative": "Creating bronze through ancient metallurgical alloying. Harder than copper, more workable than iron. Rarely produces exceptional quality ingots."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+        "tags": [
+          "metal",
+          "refined",
+          "durable"
+        ]
+      },
+      "materialId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_fire_steel",
+      "stationTier": 2,
+      "stationType": "refinery",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
+        }
+      ],
+      "narrative": "Infusing steel with fire essence. The metal burns without being consumed."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+        "tags": [
+          "metal",
+          "refined",
+          "fire"
+        ]
+      },
+      "materialId": "fire_steel_ingot",
+      "name": "Fire Steel Ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_frost_steel",
+      "stationTier": 2,
+      "stationType": "refinery",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Frost Essence",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "ice",
+              "rare"
+            ]
+          }
+        }
+      ],
+      "narrative": "Forging steel with frost essence. The metal is cold to touch, always."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+        "tags": [
+          "metal",
+          "refined",
+          "ice"
+        ]
+      },
+      "materialId": "frost_steel_ingot",
+      "name": "Frost Steel Ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_lightning_copper",
+      "stationTier": 2,
+      "stationType": "refinery",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Lightning Shard",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "lightning",
+              "rare"
+            ]
+          }
+        }
+      ],
+      "narrative": "Infusing copper with storm essence. Perfect magical conductivity."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+        "tags": [
+          "metal",
+          "refined",
+          "lightning"
+        ]
+      },
+      "materialId": "lightning_copper_ingot",
+      "name": "Lightning Copper Ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
       "recipeId": "refining_rarity_copper_uncommon",
       "stationTier": 1,
-      "stationType": "refining",
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "copper_ingot",
           "quantity": 4,
-          "rarity": "common"
+          "rarity": "common",
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         }
       ],
       "narrative": "Refining common copper into uncommon quality. Careful heat and patience."
@@ -498,13 +907,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_copper_rare",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 2,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "copper_ingot",
           "quantity": 4,
-          "rarity": "uncommon"
+          "rarity": "uncommon",
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         }
       ],
       "narrative": "Refining uncommon copper into rare quality. The grain becomes perfect."
@@ -528,13 +948,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_copper_epic",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 3,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "copper_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         }
       ],
       "narrative": "Refining rare copper into epic quality. Approaching theoretical perfection."
@@ -558,13 +989,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_copper_legendary",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "copper_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         }
       ],
       "narrative": "Refining epic copper into legendary quality. Perfect molecular alignment achieved."
@@ -588,13 +1030,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_iron_uncommon",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 2,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "iron_ingot",
           "quantity": 4,
-          "rarity": "common"
+          "rarity": "common",
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         }
       ],
       "narrative": "Refining common iron into uncommon quality. Patient work and precise heat."
@@ -618,13 +1071,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_iron_rare",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 3,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "iron_ingot",
           "quantity": 4,
-          "rarity": "uncommon"
+          "rarity": "uncommon",
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         }
       ],
       "narrative": "Refining uncommon iron into rare quality. Crystalline structure perfecting."
@@ -648,13 +1112,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_iron_epic",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 3,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "iron_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         }
       ],
       "narrative": "Refining rare iron into epic quality. Metal that defies conventional limits."
@@ -678,13 +1153,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_iron_legendary",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "iron_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         }
       ],
       "narrative": "Refining epic iron into legendary quality. Transcending conventional limits."
@@ -708,13 +1194,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_steel_rare",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 2,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "steel_ingot",
           "quantity": 4,
-          "rarity": "uncommon"
+          "rarity": "uncommon",
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "narrative": "Refining uncommon steel into rare quality. Perfect crystalline structure."
@@ -738,13 +1235,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_steel_epic",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "steel_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "narrative": "Refining rare steel into epic quality. Months of dedication distilled into perfection."
@@ -768,13 +1276,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_steel_legendary",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "steel_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "narrative": "Refining epic steel into legendary quality. Perfection crystallized in metal."
@@ -798,13 +1317,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_mithril_epic",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 3,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "mithril_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Refining rare mithril into epic quality. The metal sings as it transforms."
@@ -828,13 +1358,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_mithril_legendary",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "mithril_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Refining epic mithril into legendary quality. The impossible made real."
@@ -858,13 +1399,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_mithril_mythical",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "mithril_ingot",
           "quantity": 4,
-          "rarity": "legendary"
+          "rarity": "legendary",
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Refining legendary mithril into mythical quality. The metal sings in harmonic perfection."
@@ -888,13 +1440,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_adamantine_epic",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 3,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "adamantine_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "material_metadata": {
+            "name": "Adamantine Ingot",
+            "tier": 3,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "rare"
+            ]
+          }
         }
       ],
       "narrative": "Refining rare adamantine into epic quality. Nearly indestructible becomes truly eternal."
@@ -918,13 +1481,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_adamantine_legendary",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "adamantine_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "material_metadata": {
+            "name": "Adamantine Ingot",
+            "tier": 3,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "rare"
+            ]
+          }
         }
       ],
       "narrative": "Refining epic adamantine into legendary quality. Hardness beyond measurement."
@@ -948,16 +1522,68 @@
   {
     "input": {
       "recipeId": "refining_rarity_orichalcum_legendary",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "orichalcum_ingot",
           "quantity": 4,
-          "rarity": "epic"
+          "rarity": "epic",
+          "material_metadata": {
+            "name": "Orichalcum Ingot",
+            "tier": 3,
+            "category": "metal",
+            "rarity": "epic",
+            "tags": [
+              "refined",
+              "metal",
+              "ancient"
+            ]
+          }
         }
       ],
       "narrative": "Refining epic orichalcum into legendary quality. Ancient metal awakens fully."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+        "tags": [
+          "refined",
+          "metal",
+          "ancient"
+        ]
+      },
+      "materialId": "orichalcum_ingot",
+      "name": "Orichalcum Ingot",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_orichalcum_mythical",
+      "stationTier": 4,
+      "stationType": "refinery",
+      "inputs": [
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 4,
+          "rarity": "legendary",
+          "material_metadata": {
+            "name": "Orichalcum Ingot",
+            "tier": 3,
+            "category": "metal",
+            "rarity": "epic",
+            "tags": [
+              "refined",
+              "metal",
+              "ancient"
+            ]
+          }
+        }
+      ],
+      "narrative": "Refining legendary orichalcum into mythical quality. The ancient metal awakens completely."
     },
     "output": {
       "metadata": {

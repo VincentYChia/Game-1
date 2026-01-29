@@ -5,48 +5,6 @@
       "chunkCategory": "rare",
       "chunkTheme": "cave",
       "resourceDensity": {
-        "genesis_structure": {
-          "density": "very_low",
-          "tierBias": "legendary"
-        }
-      }
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Impossibly perfect geometric form that cannot exist in three-dimensional space, yet here it is.",
-        "tags": [
-          "stone",
-          "mythical",
-          "impossible"
-        ]
-      },
-      "resourceId": "genesis_structure",
-      "name": "Genesis Structure",
-      "category": "stone",
-      "tier": 4,
-      "requiredTool": "pickaxe",
-      "baseHealth": 800,
-      "drops": [
-        {
-          "materialId": "genesis_lattice",
-          "quantity": "few",
-          "chance": "improbable"
-        },
-        {
-          "materialId": "chaos_matrix",
-          "quantity": "few",
-          "chance": "improbable"
-        }
-      ],
-      "respawnTime": null
-    }
-  },
-  {
-    "input": {
-      "chunkType": "rare_cave",
-      "chunkCategory": "rare",
-      "chunkTheme": "cave",
-      "resourceDensity": {
         "eternity_monolith": {
           "density": "very_low",
           "tierBias": "legendary"
@@ -128,6 +86,48 @@
       "resourceDensity": {
         "voidstone_shard": {
           "density": "low",
+          "tierBias": "high"
+        }
+      }
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Pitch-black stone that pulls light into itself. Radiates subtle wrongness.",
+        "tags": [
+          "stone",
+          "void",
+          "rare"
+        ]
+      },
+      "resourceId": "voidstone_shard",
+      "name": "Voidstone Shard",
+      "category": "stone",
+      "tier": 3,
+      "requiredTool": "pickaxe",
+      "baseHealth": 400,
+      "drops": [
+        {
+          "materialId": "voidstone",
+          "quantity": "few",
+          "chance": "moderate"
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": "few",
+          "chance": "low"
+        }
+      ],
+      "respawnTime": null
+    }
+  },
+  {
+    "input": {
+      "chunkType": "water_cursed_swamp",
+      "chunkCategory": "rare_water",
+      "chunkTheme": "water",
+      "resourceDensity": {
+        "voidstone_shard": {
+          "density": "very_low",
           "tierBias": "high"
         }
       }

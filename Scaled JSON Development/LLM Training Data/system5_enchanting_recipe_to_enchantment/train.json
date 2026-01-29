@@ -8,19 +8,63 @@
       "inputs": [
         {
           "materialId": "fire_crystal",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "granite",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Granite",
+            "tier": 1,
+            "category": "stone",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "stone",
+              "durable"
+            ]
+          }
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "tin_ore",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Tin Ore",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "basic",
+              "metal",
+              "magical"
+            ]
+          }
         }
       ],
       "narrative": "Basic sharpening enchantment using fire crystals. The edge never dulls."
@@ -59,19 +103,63 @@
       "inputs": [
         {
           "materialId": "dire_fang",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Dire Fang",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "fang"
+            ]
+          }
         },
         {
           "materialId": "frost_essence",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Frost Essence",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "ice",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "lightning_shard",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Lightning Shard",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "lightning",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "marble",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Marble",
+            "tier": 2,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "radiant"
+            ]
+          }
         }
       ],
       "narrative": "Improved sharpening using lightning shards. The blade crackles with energy."
@@ -110,23 +198,78 @@
       "inputs": [
         {
           "materialId": "adamantine_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Adamantine Ingot",
+            "tier": 3,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "diamond",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Diamond",
+            "tier": 3,
+            "category": "stone",
+            "rarity": "epic",
+            "tags": [
+              "basic",
+              "stone",
+              "precious"
+            ]
+          }
         },
         {
           "materialId": "essence_blood",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Essence Blood",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "blood"
+            ]
+          }
         },
         {
           "materialId": "marble",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Marble",
+            "tier": 2,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "radiant"
+            ]
+          }
         },
         {
           "materialId": "phoenix_ash",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Phoenix Ash",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "fire",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Master sharpening using phoenix ash. The edge exists between states of matter."
@@ -165,11 +308,33 @@
       "inputs": [
         {
           "materialId": "beetle_carapace",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Beetle Carapace",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "carapace"
+            ]
+          }
         },
         {
           "materialId": "earth_crystal",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Earth Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "earth",
+              "common"
+            ]
+          }
         }
       ],
       "narrative": "Basic durability enchantment. Items last longer before needing repair."
@@ -209,23 +374,78 @@
       "inputs": [
         {
           "materialId": "adamantine_ingot",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Adamantine Ingot",
+            "tier": 3,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "diamond",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Diamond",
+            "tier": 3,
+            "category": "stone",
+            "rarity": "epic",
+            "tags": [
+              "basic",
+              "stone",
+              "precious"
+            ]
+          }
         },
         {
           "materialId": "golem_core",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Golem Core",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "ancient"
+            ]
+          }
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 8
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 8
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
         }
       ],
       "narrative": "Advanced durability enchantment using diamond. Nearly indestructible."
@@ -265,19 +485,63 @@
       "inputs": [
         {
           "materialId": "fire_crystal",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "maple_plank",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Maple Plank",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "durable"
+            ]
+          }
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "narrative": "Fire enchantment for weapons. Strikes leave burning wounds."
@@ -315,19 +579,63 @@
       "inputs": [
         {
           "materialId": "frost_essence",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Frost Essence",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "ice",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "marble",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Marble",
+            "tier": 2,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "radiant"
+            ]
+          }
         },
         {
           "materialId": "water_crystal",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Water Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "water",
+              "common"
+            ]
+          }
         }
       ],
       "narrative": "Frost enchantment for weapons. Enemies slow and freeze."
@@ -365,19 +673,63 @@
       "inputs": [
         {
           "materialId": "light_gem",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "lightning_shard",
-          "quantity": 10
+          "quantity": 10,
+          "material_metadata": {
+            "name": "Lightning Shard",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "lightning",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "marble",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Marble",
+            "tier": 2,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "radiant"
+            ]
+          }
         },
         {
           "materialId": "storm_heart",
-          "quantity": 8
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Storm Heart",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "lightning",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Lightning enchantment for weapons. Chain attacks to nearby enemies."
@@ -416,15 +768,48 @@
       "inputs": [
         {
           "materialId": "earth_crystal",
-          "quantity": 8
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Earth Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "earth",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "granite",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Granite",
+            "tier": 1,
+            "category": "stone",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "stone",
+              "durable"
+            ]
+          }
         },
         {
           "materialId": "iron_ore",
-          "quantity": 8
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Iron Ore",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "metal",
+              "standard"
+            ]
+          }
         }
       ],
       "narrative": "Protection enchantment. Incoming damage reduced."
@@ -463,15 +848,48 @@
       "inputs": [
         {
           "materialId": "crystal_quartz",
-          "quantity": 8
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Crystal Quartz",
+            "tier": 2,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "earth_crystal",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Earth Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "earth",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "iron_scales",
-          "quantity": 8
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Iron Scales",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "scales"
+            ]
+          }
         }
       ],
       "narrative": "Advanced protection using golem essence. Stone-like resilience."
@@ -510,23 +928,78 @@
       "inputs": [
         {
           "materialId": "crystal_quartz",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Crystal Quartz",
+            "tier": 2,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "diamond",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Diamond",
+            "tier": 3,
+            "category": "stone",
+            "rarity": "epic",
+            "tags": [
+              "basic",
+              "stone",
+              "precious"
+            ]
+          }
         },
         {
           "materialId": "golem_core",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Golem Core",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "ancient"
+            ]
+          }
         },
         {
           "materialId": "orichalcum_ingot",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Orichalcum Ingot",
+            "tier": 3,
+            "category": "metal",
+            "rarity": "epic",
+            "tags": [
+              "refined",
+              "metal",
+              "ancient"
+            ]
+          }
         },
         {
           "materialId": "void_essence",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Void Essence",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "void",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Master protection with void essence. Damage dissipates into nothing."
@@ -565,15 +1038,48 @@
       "inputs": [
         {
           "materialId": "beetle_carapace",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Beetle Carapace",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "carapace"
+            ]
+          }
         },
         {
           "materialId": "dire_fang",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Dire Fang",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "fang"
+            ]
+          }
         },
         {
           "materialId": "iron_scales",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Iron Scales",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "scales"
+            ]
+          }
         }
       ],
       "narrative": "Thorns enchantment. Attackers hurt themselves."
@@ -609,15 +1115,48 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "ash_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Ash Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "quality"
+            ]
+          }
         },
         {
           "materialId": "slime_gel",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
         }
       ],
       "narrative": "Efficiency enchantment for tools. Gather resources faster."
@@ -655,15 +1194,48 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "ironwood_plank",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Ironwood Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "metallic"
+            ]
+          }
         },
         {
           "materialId": "storm_heart",
-          "quantity": 7
+          "quantity": 7,
+          "material_metadata": {
+            "name": "Storm Heart",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "lightning",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Advanced efficiency using storm essence. Tools blur with speed."
@@ -701,19 +1273,63 @@
       "inputs": [
         {
           "materialId": "crystal_quartz",
-          "quantity": 8
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Crystal Quartz",
+            "tier": 2,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "living_ichor",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Fortune enchantment for tools. Better yields from resources."
@@ -752,27 +1368,94 @@
       "inputs": [
         {
           "materialId": "chaos_matrix",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Chaos Matrix",
+            "tier": 4,
+            "category": "elemental",
+            "rarity": "legendary",
+            "tags": [
+              "elemental",
+              "chaos",
+              "mythical"
+            ]
+          }
         },
         {
           "materialId": "diamond",
-          "quantity": 9
+          "quantity": 9,
+          "material_metadata": {
+            "name": "Diamond",
+            "tier": 3,
+            "category": "stone",
+            "rarity": "epic",
+            "tags": [
+              "basic",
+              "stone",
+              "precious"
+            ]
+          }
         },
         {
           "materialId": "genesis_lattice",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Genesis Lattice",
+            "tier": 4,
+            "category": "stone",
+            "rarity": "legendary",
+            "tags": [
+              "basic",
+              "stone",
+              "mythical",
+              "impossible"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "living_ichor",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
         },
         {
           "materialId": "obsidian",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Obsidian",
+            "tier": 3,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "sharp"
+            ]
+          }
         }
       ],
       "narrative": "Master fortune using chaos essence. Reality bends toward abundance."
@@ -811,15 +1494,48 @@
       "inputs": [
         {
           "materialId": "light_gem",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
         },
         {
           "materialId": "void_essence",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Void Essence",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "void",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Silk touch enchantment. Harvest blocks exactly as they are."
@@ -858,19 +1574,63 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "lightning_shard",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Lightning Shard",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "lightning",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Speed enchantment. Move faster while wearing this armor."
@@ -907,23 +1667,78 @@
       "inputs": [
         {
           "materialId": "essence_blood",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Essence Blood",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "blood"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "living_ichor",
-          "quantity": 12
+          "quantity": 12,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
         },
         {
           "materialId": "marble",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Marble",
+            "tier": 2,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "radiant"
+            ]
+          }
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
         }
       ],
       "narrative": "Regeneration enchantment. Slowly heal over time."
@@ -960,19 +1775,63 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "ash_plank",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Ash Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "quality"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "slime_gel",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
         }
       ],
       "narrative": "Weightless enchantment. Items become lighter without losing strength."
@@ -1010,23 +1869,78 @@
       "inputs": [
         {
           "materialId": "ebony_log",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Ebony Log",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "epic",
+            "tags": [
+              "basic",
+              "wood",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "ebony_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Ebony Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "epic",
+            "tags": [
+              "refined",
+              "wood",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "golem_core",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Golem Core",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "ancient"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "living_ichor",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
         }
       ],
       "narrative": "Self-repair enchantment. Items slowly fix themselves over time."
@@ -1065,31 +1979,111 @@
       "inputs": [
         {
           "materialId": "adamantine_ingot",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Adamantine Ingot",
+            "tier": 3,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "chaos_matrix",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Chaos Matrix",
+            "tier": 4,
+            "category": "elemental",
+            "rarity": "legendary",
+            "tags": [
+              "elemental",
+              "chaos",
+              "mythical"
+            ]
+          }
         },
         {
           "materialId": "eternity_stone",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Eternity Stone",
+            "tier": 4,
+            "category": "stone",
+            "rarity": "legendary",
+            "tags": [
+              "basic",
+              "stone",
+              "mythical",
+              "memory"
+            ]
+          }
         },
         {
           "materialId": "obsidian",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Obsidian",
+            "tier": 3,
+            "category": "stone",
+            "rarity": "rare",
+            "tags": [
+              "basic",
+              "stone",
+              "sharp"
+            ]
+          }
         },
         {
           "materialId": "primordial_crystal",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Primordial Crystal",
+            "tier": 4,
+            "category": "stone",
+            "rarity": "legendary",
+            "tags": [
+              "basic",
+              "stone",
+              "mythical",
+              "quantum"
+            ]
+          }
         },
         {
           "materialId": "voidstone",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Voidstone",
+            "tier": 3,
+            "category": "stone",
+            "rarity": "epic",
+            "tags": [
+              "basic",
+              "stone",
+              "void"
+            ]
+          }
         },
         {
           "materialId": "worldtree_plank",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Worldtree Plank",
+            "tier": 4,
+            "category": "wood",
+            "rarity": "legendary",
+            "tags": [
+              "refined",
+              "wood",
+              "legendary",
+              "living"
+            ]
+          }
         }
       ],
       "narrative": "Soul bound enchantment. Item returns to you upon death."

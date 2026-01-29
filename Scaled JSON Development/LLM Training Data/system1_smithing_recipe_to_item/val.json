@@ -1,210 +1,39 @@
 [
   {
     "input": {
-      "recipeId": "smithing_fire_crystal_staff",
-      "stationTier": 3,
-      "stationType": "smithing",
-      "inputs": [
-        {
-          "materialId": "fire_crystal",
-          "quantity": 8
-        },
-        {
-          "materialId": "ironwood_plank",
-          "quantity": 4
-        },
-        {
-          "materialId": "mithril_ingot",
-          "quantity": 2
-        },
-        {
-          "materialId": "phoenix_ash",
-          "quantity": 3
-        }
-      ],
-      "narrative": "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
-        "tags": [
-          "melee",
-          "staff",
-          "versatile",
-          "elemental",
-          "fire"
-        ]
-      },
-      "itemId": "fire_crystal_staff",
-      "name": "Fire Crystal Staff",
-      "category": "equipment",
-      "type": "staff",
-      "subtype": "staff",
-      "tier": 3,
-      "rarity": "rare",
-      "range": 8,
-      "slot": "mainHand",
-      "effectTags": [
-        "fire",
-        "single",
-        "burn"
-      ],
-      "effectParams": {
-        "baseDamage": 45,
-        "burn_duration": 3.0,
-        "burn_damage_per_second": 5.0
-      },
-      "statMultipliers": {
-        "damage": 0.85,
-        "attackSpeed": 1.1,
-        "durability": 1.0,
-        "weight": 0.7
-      },
-      "attributes": [
-        {
-          "type": "damage",
-          "element": "fire",
-          "value": 15,
-          "effect": "Elemental attacks deal bonus fire damage"
-        }
-      ],
-      "requirements": {
-        "level": 15,
-        "stats": {
-          "INT": 18
-        }
-      },
-      "flags": {
-        "stackable": false,
-        "equippable": true,
-        "repairable": true
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_iron_round_shield",
-      "stationTier": 1,
-      "stationType": "smithing",
-      "inputs": [
-        {
-          "materialId": "iron_ingot",
-          "quantity": 1
-        },
-        {
-          "materialId": "oak_plank",
-          "quantity": 3
-        },
-        {
-          "materialId": "wolf_pelt",
-          "quantity": 1
-        }
-      ],
-      "narrative": "A simple round shield - iron face with oak backing. Protects and strikes in equal measure."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Round iron shield with oak backing. Not just for blocking - bash enemies with the rim or use it to create openings. Defense and offense in one hand.",
-        "tags": [
-          "melee",
-          "shield",
-          "1H",
-          "defensive",
-          "bash"
-        ]
-      },
-      "itemId": "iron_round_shield",
-      "name": "Iron Round Shield",
-      "category": "equipment",
-      "type": "shield",
-      "subtype": "buckler",
-      "tier": 1,
-      "rarity": "common",
-      "range": 1,
-      "slot": "mainHand",
-      "statMultipliers": {
-        "damage": 0.6,
-        "attackSpeed": 1.1,
-        "durability": 1.8,
-        "weight": 1.3
-      },
-      "requirements": {
-        "level": 3,
-        "stats": {
-          "STR": 8
-        }
-      },
-      "flags": {
-        "stackable": false,
-        "equippable": true,
-        "repairable": true
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_steel_leggings",
-      "stationTier": 2,
-      "stationType": "smithing",
-      "inputs": [
-        {
-          "materialId": "steel_ingot",
-          "quantity": 7
-        },
-        {
-          "materialId": "wolf_pelt",
-          "quantity": 5
-        }
-      ],
-      "narrative": "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Steel plate leggings with articulated joints. Heavy but protective, they guard your legs without restricting movement. Every smith's second major armor piece after the chestplate.",
-        "tags": [
-          "armor",
-          "legs",
-          "metal",
-          "heavy"
-        ]
-      },
-      "itemId": "steel_leggings",
-      "name": "Steel Leggings",
-      "category": "equipment",
-      "type": "armor",
-      "subtype": "leggings",
-      "tier": 2,
-      "rarity": "common",
-      "slot": "legs",
-      "statMultipliers": {
-        "defense": 1.0,
-        "durability": 1.0,
-        "weight": 1.0
-      },
-      "requirements": {
-        "level": 7,
-        "stats": {}
-      },
-      "flags": {
-        "stackable": false,
-        "equippable": true,
-        "repairable": true
-      }
-    }
-  },
-  {
-    "input": {
       "recipeId": "smithing_iron_studded_gauntlets",
       "stationTier": 1,
       "stationType": "smithing",
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "narrative": "Reinforced leather gloves with iron studs across the knuckles. Your hands are your tools - protect them properly."
@@ -234,6 +63,178 @@
       },
       "requirements": {
         "level": 2,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_bamboo_fishing_rod",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
+        },
+        {
+          "materialId": "oak_log",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Oak Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "wood",
+              "versatile"
+            ]
+          }
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
+        }
+      ],
+      "narrative": "Flexible bamboo rod with silk line and bronze hook. Patience and the right tool can pull dinner from any water."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Flexible bamboo rod with silk line and bronze hook. Patient hands pull dinner from rivers and lakes. Not much use in a fight, but starvation kills just as surely as swords.",
+        "tags": [
+          "tool",
+          "fishing",
+          "gathering"
+        ]
+      },
+      "itemId": "bamboo_fishing_rod",
+      "name": "Bamboo Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 1,
+      "rarity": "common",
+      "range": 5,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.5,
+        "gathering": 1.0,
+        "durability": 0.8,
+        "weight": 0.6
+      },
+      "requirements": {
+        "level": 1,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_sickle",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "birch_plank",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Birch Plank",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "fine"
+            ]
+          }
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
+        }
+      ],
+      "narrative": "Curved steel blade perfect for harvesting delicate plants. Clean cuts preserve quality and maximize yield."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Curved steel blade designed for harvesting herbs, grains, and fibrous plants. The razor edge cuts clean without bruising delicate materials. Adequate for self-defense in a pinch.",
+        "tags": [
+          "tool",
+          "harvesting",
+          "gathering",
+          "herbs"
+        ]
+      },
+      "itemId": "steel_sickle",
+      "name": "Steel Sickle",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "sickle",
+      "tier": 2,
+      "rarity": "common",
+      "range": 0.5,
+      "slot": "mainHand",
+      "effectTags": [
+        "physical",
+        "slashing",
+        "single"
+      ],
+      "effectParams": {
+        "baseDamage": 22
+      },
+      "statMultipliers": {
+        "damage": 0.7,
+        "gathering": 1.0,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 5,
         "stats": {}
       },
       "flags": {

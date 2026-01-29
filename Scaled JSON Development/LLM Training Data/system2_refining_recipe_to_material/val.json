@@ -1,44 +1,26 @@
 [
   {
     "input": {
-      "recipeId": "refining_rarity_orichalcum_mythical",
-      "stationTier": 1,
-      "stationType": "refining",
-      "inputs": [
-        {
-          "materialId": "orichalcum_ingot",
-          "quantity": 4,
-          "rarity": "legendary"
-        }
-      ],
-      "narrative": "Refining legendary orichalcum into mythical quality. The ancient metal awakens completely."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
-        "tags": [
-          "refined",
-          "metal",
-          "ancient"
-        ]
-      },
-      "materialId": "orichalcum_ingot",
-      "name": "Orichalcum Ingot",
-      "tier": 3,
-      "rarity": "epic",
-      "category": "metal"
-    }
-  },
-  {
-    "input": {
       "recipeId": "refining_rarity_etherion_mythical",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 4,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "etherion_ingot",
           "quantity": 4,
-          "rarity": "legendary"
+          "rarity": "legendary",
+          "material_metadata": {
+            "name": "Etherion Ingot",
+            "tier": 4,
+            "category": "metal",
+            "rarity": "legendary",
+            "tags": [
+              "refined",
+              "metal",
+              "mythical",
+              "temporal"
+            ]
+          }
         }
       ],
       "narrative": "Refining legendary etherion into mythical quality. Temporal boundaries dissolve entirely."
@@ -63,13 +45,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_tin_rare",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 2,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "tin_ingot",
           "quantity": 4,
-          "rarity": "uncommon"
+          "rarity": "uncommon",
+          "material_metadata": {
+            "name": "Tin Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "magical"
+            ]
+          }
         }
       ],
       "narrative": "Refining uncommon tin into rare quality. Silvery sheen becomes mirror-bright."
@@ -93,13 +86,24 @@
   {
     "input": {
       "recipeId": "refining_rarity_tin_epic",
-      "stationTier": 1,
-      "stationType": "refining",
+      "stationTier": 3,
+      "stationType": "refinery",
       "inputs": [
         {
           "materialId": "tin_ingot",
           "quantity": 4,
-          "rarity": "rare"
+          "rarity": "rare",
+          "material_metadata": {
+            "name": "Tin Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "magical"
+            ]
+          }
         }
       ],
       "narrative": "Refining rare tin into epic quality. Perfect magical conductivity achieved."
@@ -115,6 +119,88 @@
       },
       "materialId": "tin_ingot",
       "name": "Tin Ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_bronze_rare",
+      "stationTier": 2,
+      "stationType": "refinery",
+      "inputs": [
+        {
+          "materialId": "bronze_ingot",
+          "quantity": 4,
+          "rarity": "uncommon",
+          "material_metadata": {
+            "name": "Bronze Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "metal",
+              "refined",
+              "durable"
+            ]
+          }
+        }
+      ],
+      "narrative": "Refining uncommon bronze into rare quality. The ancient alloy perfected."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+        "tags": [
+          "metal",
+          "refined",
+          "durable"
+        ]
+      },
+      "materialId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_bronze_epic",
+      "stationTier": 3,
+      "stationType": "refinery",
+      "inputs": [
+        {
+          "materialId": "bronze_ingot",
+          "quantity": 4,
+          "rarity": "rare",
+          "material_metadata": {
+            "name": "Bronze Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "metal",
+              "refined",
+              "durable"
+            ]
+          }
+        }
+      ],
+      "narrative": "Refining rare bronze into epic quality. Surpassing even the legendary smiths of old."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+        "tags": [
+          "metal",
+          "refined",
+          "durable"
+        ]
+      },
+      "materialId": "bronze_ingot",
+      "name": "Bronze Ingot",
       "tier": 1,
       "rarity": "uncommon",
       "category": "metal"

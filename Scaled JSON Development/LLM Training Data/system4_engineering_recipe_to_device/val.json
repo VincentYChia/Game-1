@@ -1,127 +1,190 @@
 [
   {
     "input": {
-      "recipeId": "engineering_frost_mine",
+      "recipeId": "engineering_grappling_hook",
       "stationTier": 2,
       "stationType": "engineering",
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 3
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
-          "materialId": "blast_powder",
-          "quantity": 2
+          "materialId": "spectral_thread",
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
         },
         {
-          "materialId": "frost_essence",
-          "quantity": 3
+          "materialId": "air_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
         }
       ],
-      "narrative": "Frost mine that erupts in a blast of ice shards. The cold bites deep."
+      "narrative": "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces."
     },
     "output": {
       "metadata": {
-        "narrative": "Frost mine that erupts in a blast of ice shards. Triggers on proximity. The cold bites deep, slowing everything it touches.",
+        "narrative": "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces. The spectral thread never breaks, the iron hook never fails.",
         "tags": [
           "device",
-          "trap",
-          "frost",
-          "elemental"
+          "utility",
+          "mobility",
+          "tool"
         ]
       },
-      "itemId": "frost_mine",
-      "name": "Frost Mine",
+      "itemId": "grappling_hook",
+      "name": "Grappling Hook",
       "category": "device",
-      "type": "trap",
-      "subtype": "elemental",
+      "type": "utility",
+      "subtype": "mobility",
       "tier": 2,
       "rarity": "uncommon",
-      "effect": "Triggers on proximity, 50 damage + slow",
-      "effectTags": [
-        "ice",
-        "circle",
-        "freeze",
-        "slow"
-      ],
-      "effectParams": {
-        "baseDamage": 50,
-        "circle_radius": 3.0,
-        "freeze_duration": 3.0,
-        "slow_factor": 0.5
-      },
-      "stackSize": 10,
+      "effect": "Launches grappling hook up to 15 units, pulls player to location",
+      "stackSize": 1,
       "statMultipliers": {
-        "weight": 0.8
+        "weight": 1.5
       },
       "requirements": {
-        "level": 6,
+        "level": 9,
         "stats": {}
       },
       "flags": {
-        "stackable": true,
-        "placeable": true,
-        "repairable": false
+        "stackable": false,
+        "placeable": false,
+        "repairable": true
       }
     }
   },
   {
     "input": {
-      "recipeId": "engineering_bear_trap",
-      "stationTier": 1,
+      "recipeId": "engineering_jetpack",
+      "stationTier": 3,
       "stationType": "engineering",
       "inputs": [
         {
-          "materialId": "steel_ingot",
-          "quantity": 4
+          "materialId": "mithril_ingot",
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         },
         {
-          "materialId": "dire_fang",
-          "quantity": 6
+          "materialId": "fire_crystal",
+          "quantity": 10,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "air_crystal",
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Phoenix Ash",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "fire",
+              "legendary"
+            ]
+          }
         }
       ],
-      "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it."
+      "narrative": "Jetpack for brief flight. Fuel not included (but fire crystals work great)."
     },
     "output": {
       "metadata": {
-        "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it. The teeth dig deep and don't let go.",
+        "narrative": "Jetpack for brief flight. Fuel not included (but fire crystals work great). The mithril construction keeps it lightweight while phoenix ash provides sustained thrust.",
         "tags": [
           "device",
-          "trap",
-          "physical",
-          "immobilize"
+          "utility",
+          "flight",
+          "mobility"
         ]
       },
-      "itemId": "bear_trap",
-      "name": "Bear Trap",
+      "itemId": "jetpack",
+      "name": "Jetpack",
       "category": "device",
-      "type": "trap",
-      "subtype": "physical",
-      "tier": 1,
-      "rarity": "common",
-      "effect": "Triggers on contact, 25 damage + immobilize for 5 seconds",
-      "effectTags": [
-        "physical",
-        "crushing",
-        "single",
-        "root"
-      ],
-      "effectParams": {
-        "baseDamage": 25,
-        "root_duration": 5.0
-      },
-      "stackSize": 10,
+      "type": "utility",
+      "subtype": "mobility",
+      "tier": 3,
+      "rarity": "epic",
+      "effect": "Enables flight for up to 30 seconds, recharge time 2 minutes",
+      "stackSize": 1,
       "statMultipliers": {
-        "weight": 1.2
+        "weight": 2.5
       },
       "requirements": {
-        "level": 3,
+        "level": 18,
         "stats": {}
       },
       "flags": {
-        "stackable": true,
-        "placeable": true,
-        "repairable": false
+        "stackable": false,
+        "placeable": false,
+        "repairable": true
       }
     }
   }

@@ -93,7 +93,7 @@
     "input": {
       "recipeId": "refining_steel_ore_to_ingot",
       "materialId": "steel_ingot",
-      "tier": 1,
+      "tier": 2,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -123,7 +123,7 @@
     "input": {
       "recipeId": "refining_mithril_ore_to_ingot",
       "materialId": "mithril_ingot",
-      "tier": 1,
+      "tier": 2,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -153,7 +153,7 @@
     "input": {
       "recipeId": "refining_adamantine_ore_to_ingot",
       "materialId": "adamantine_ingot",
-      "tier": 1,
+      "tier": 3,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -183,7 +183,7 @@
     "input": {
       "recipeId": "refining_orichalcum_ore_to_ingot",
       "materialId": "orichalcum_ingot",
-      "tier": 1,
+      "tier": 3,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -213,7 +213,7 @@
     "input": {
       "recipeId": "refining_etherion_ore_to_ingot",
       "materialId": "etherion_ingot",
-      "tier": 1,
+      "tier": 4,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -334,7 +334,7 @@
     "input": {
       "recipeId": "refining_birch_log_to_plank",
       "materialId": "birch_plank",
-      "tier": 1,
+      "tier": 2,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -364,7 +364,7 @@
     "input": {
       "recipeId": "refining_maple_log_to_plank",
       "materialId": "maple_plank",
-      "tier": 1,
+      "tier": 2,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -394,7 +394,7 @@
     "input": {
       "recipeId": "refining_ironwood_log_to_plank",
       "materialId": "ironwood_plank",
-      "tier": 1,
+      "tier": 3,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -424,7 +424,7 @@
     "input": {
       "recipeId": "refining_ebony_log_to_plank",
       "materialId": "ebony_plank",
-      "tier": 1,
+      "tier": 3,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -454,7 +454,7 @@
     "input": {
       "recipeId": "refining_worldtree_log_to_plank",
       "materialId": "worldtree_plank",
-      "tier": 1,
+      "tier": 4,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -479,6 +479,146 @@
       ],
       "surroundingInputs": [],
       "narrative": "Working worldtree wood. It remembers being part of something greater."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_bronze_alloy",
+      "materialId": "bronze_ingot",
+      "tier": 1,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+        "tags": [
+          "metal",
+          "refined",
+          "durable"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_bronze_alloy",
+      "outputId": "bronze_ingot",
+      "stationTier": 1,
+      "coreInputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 2
+        }
+      ],
+      "surroundingInputs": [
+        {
+          "materialId": "tin_ingot",
+          "quantity": 1
+        }
+      ],
+      "narrative": "Creating bronze. Copper in core determines base, tin in surrounding modifies to alloy. T1 allows 1 core + 2 surrounding."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_fire_steel",
+      "materialId": "fire_steel_ingot",
+      "tier": 2,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+        "tags": [
+          "metal",
+          "refined",
+          "fire"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_fire_steel",
+      "outputId": "fire_steel_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Infusing steel with fire. Metal burns without consumption - crystals seep energy in."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_frost_steel",
+      "materialId": "frost_steel_ingot",
+      "tier": 2,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+        "tags": [
+          "metal",
+          "refined",
+          "ice"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_frost_steel",
+      "outputId": "frost_steel_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [
+        {
+          "materialId": "frost_essence",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Forging steel with frost. Perpetually cold metal - crystallizing impossible cold."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_lightning_copper",
+      "materialId": "lightning_copper_ingot",
+      "tier": 2,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+        "tags": [
+          "metal",
+          "refined",
+          "lightning"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_lightning_copper",
+      "outputId": "lightning_copper_ingot",
+      "stationTier": 2,
+      "coreInputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1
+        }
+      ],
+      "surroundingInputs": [
+        {
+          "materialId": "lightning_shard",
+          "quantity": 3
+        }
+      ],
+      "narrative": "Infusing copper with storm. Perfect conductivity - arcs jump between shards and metal."
     }
   },
   {
@@ -516,7 +656,7 @@
     "input": {
       "recipeId": "refining_rarity_copper_rare",
       "materialId": "copper_ingot",
-      "tier": 1,
+      "tier": 2,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -547,7 +687,7 @@
     "input": {
       "recipeId": "refining_rarity_copper_epic",
       "materialId": "copper_ingot",
-      "tier": 1,
+      "tier": 3,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -578,7 +718,7 @@
     "input": {
       "recipeId": "refining_rarity_copper_legendary",
       "materialId": "copper_ingot",
-      "tier": 1,
+      "tier": 4,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -609,7 +749,7 @@
     "input": {
       "recipeId": "refining_rarity_iron_uncommon",
       "materialId": "iron_ingot",
-      "tier": 1,
+      "tier": 2,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -640,7 +780,7 @@
     "input": {
       "recipeId": "refining_rarity_iron_rare",
       "materialId": "iron_ingot",
-      "tier": 1,
+      "tier": 3,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -671,7 +811,7 @@
     "input": {
       "recipeId": "refining_rarity_iron_epic",
       "materialId": "iron_ingot",
-      "tier": 1,
+      "tier": 3,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -702,7 +842,7 @@
     "input": {
       "recipeId": "refining_rarity_iron_legendary",
       "materialId": "iron_ingot",
-      "tier": 1,
+      "tier": 4,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -733,7 +873,7 @@
     "input": {
       "recipeId": "refining_rarity_steel_rare",
       "materialId": "steel_ingot",
-      "tier": 1,
+      "tier": 2,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -764,7 +904,7 @@
     "input": {
       "recipeId": "refining_rarity_steel_epic",
       "materialId": "steel_ingot",
-      "tier": 1,
+      "tier": 4,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -795,7 +935,7 @@
     "input": {
       "recipeId": "refining_rarity_steel_legendary",
       "materialId": "steel_ingot",
-      "tier": 1,
+      "tier": 4,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -826,7 +966,7 @@
     "input": {
       "recipeId": "refining_rarity_mithril_epic",
       "materialId": "mithril_ingot",
-      "tier": 1,
+      "tier": 3,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -857,7 +997,7 @@
     "input": {
       "recipeId": "refining_rarity_mithril_legendary",
       "materialId": "mithril_ingot",
-      "tier": 1,
+      "tier": 4,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -888,7 +1028,7 @@
     "input": {
       "recipeId": "refining_rarity_mithril_mythical",
       "materialId": "mithril_ingot",
-      "tier": 1,
+      "tier": 4,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -919,7 +1059,7 @@
     "input": {
       "recipeId": "refining_rarity_adamantine_epic",
       "materialId": "adamantine_ingot",
-      "tier": 1,
+      "tier": 3,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -950,7 +1090,7 @@
     "input": {
       "recipeId": "refining_rarity_adamantine_legendary",
       "materialId": "adamantine_ingot",
-      "tier": 1,
+      "tier": 4,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -981,7 +1121,7 @@
     "input": {
       "recipeId": "refining_rarity_orichalcum_legendary",
       "materialId": "orichalcum_ingot",
-      "tier": 1,
+      "tier": 4,
       "coreInput": {},
       "surroundingInputs": [],
       "materialMetadata": {
@@ -1006,6 +1146,37 @@
       ],
       "surroundingInputs": [],
       "narrative": "Refining epic orichalcum to legendary. Ancient metal awakens fully."
+    }
+  },
+  {
+    "input": {
+      "recipeId": "refining_rarity_orichalcum_mythical",
+      "materialId": "orichalcum_ingot",
+      "tier": 4,
+      "coreInput": {},
+      "surroundingInputs": [],
+      "materialMetadata": {
+        "narrative": "The pinnacle of mortal metallurgy. Channels both physical force and magical energy with perfect efficiency.",
+        "tags": [
+          "refined",
+          "metal",
+          "ancient"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "refining_rarity_orichalcum_mythical",
+      "outputId": "orichalcum_ingot",
+      "stationTier": 4,
+      "coreInputs": [
+        {
+          "materialId": "orichalcum_ingot",
+          "quantity": 4,
+          "rarity": "legendary"
+        }
+      ],
+      "surroundingInputs": [],
+      "narrative": "Refining legendary orichalcum to mythical. Complete awakening achieved."
     }
   }
 ]

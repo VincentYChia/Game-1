@@ -8,11 +8,33 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "oak_plank",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Oak Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "wood",
+              "versatile"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -47,11 +69,33 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         },
         {
           "materialId": "oak_log",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Oak Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "wood",
+              "versatile"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -87,11 +131,33 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         },
         {
           "materialId": "pine_log",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Pine Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "wood",
+              "flexible"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -127,11 +193,33 @@
       "inputs": [
         {
           "materialId": "ash_log",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Ash Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "basic",
+              "wood",
+              "quality"
+            ]
+          }
         },
         {
           "materialId": "copper_ingot",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -166,11 +254,33 @@
       "inputs": [
         {
           "materialId": "slime_gel",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -210,11 +320,33 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -250,11 +382,33 @@
       "inputs": [
         {
           "materialId": "ash_plank",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Ash Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "quality"
+            ]
+          }
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -290,11 +444,33 @@
       "inputs": [
         {
           "materialId": "birch_plank",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Birch Plank",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "fine"
+            ]
+          }
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -330,15 +506,48 @@
       "inputs": [
         {
           "materialId": "dire_fang",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Dire Fang",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "fang"
+            ]
+          }
         },
         {
           "materialId": "maple_plank",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Maple Plank",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "durable"
+            ]
+          }
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -377,15 +586,48 @@
       "inputs": [
         {
           "materialId": "beetle_carapace",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Beetle Carapace",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "carapace"
+            ]
+          }
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 7
+          "quantity": 7,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -435,11 +677,33 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 10
+          "quantity": 10,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -484,7 +748,18 @@
       "inputs": [
         {
           "materialId": "ironwood_plank",
-          "quantity": 10
+          "quantity": 10,
+          "material_metadata": {
+            "name": "Ironwood Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "metallic"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -525,11 +800,33 @@
       "inputs": [
         {
           "materialId": "ironwood_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Ironwood Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "metallic"
+            ]
+          }
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -569,15 +866,48 @@
       "inputs": [
         {
           "materialId": "ebony_plank",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Ebony Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "epic",
+            "tags": [
+              "refined",
+              "wood",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "essence_blood",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Essence Blood",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "blood"
+            ]
+          }
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -619,11 +949,33 @@
       "inputs": [
         {
           "materialId": "ebony_plank",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Ebony Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "epic",
+            "tags": [
+              "refined",
+              "wood",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 9
+          "quantity": 9,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -668,15 +1020,48 @@
       "inputs": [
         {
           "materialId": "ebony_plank",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Ebony Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "epic",
+            "tags": [
+              "refined",
+              "wood",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "golem_core",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Golem Core",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "ancient"
+            ]
+          }
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 11
+          "quantity": 11,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -723,11 +1108,33 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         },
         {
           "materialId": "fire_crystal",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -762,11 +1169,33 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "water_crystal",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Water Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "water",
+              "common"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -806,15 +1235,48 @@
       "inputs": [
         {
           "materialId": "lightning_shard",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Lightning Shard",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "lightning",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -848,250 +1310,6 @@
   },
   {
     "input": {
-      "recipeId": "smithing_forge_t1",
-      "itemId": "forge_t1",
-      "tier": 1,
-      "gridSize": "3x3",
-      "inputs": [
-        {
-          "materialId": "granite",
-          "quantity": 5
-        },
-        {
-          "materialId": "iron_ingot",
-          "quantity": 4
-        }
-      ],
-      "itemMetadata": {
-        "narrative": "Basic stone forge suitable for working copper and iron. The foundation of smithing - crude but functional. Every master started with a forge like this.",
-        "tags": [
-          "station",
-          "forge",
-          "smithing",
-          "starter"
-        ]
-      }
-    },
-    "output": {
-      "recipeId": "smithing_forge_t1",
-      "placementMap": {
-        "2,1": "granite",
-        "3,1": "granite",
-        "3,2": "granite",
-        "3,3": "granite",
-        "2,3": "granite",
-        "1,1": "iron_ingot",
-        "1,2": "iron_ingot",
-        "1,3": "iron_ingot",
-        "2,2": "iron_ingot"
-      },
-      "metadata": {
-        "gridSize": "3x3",
-        "narrative": "Basic stone forge suitable for working copper and iron. The foundation of smithing."
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_forge_t2",
-      "itemId": "forge_t2",
-      "tier": 1,
-      "gridSize": "5x5",
-      "inputs": [
-        {
-          "materialId": "basalt",
-          "quantity": 5
-        },
-        {
-          "materialId": "fire_crystal",
-          "quantity": 1
-        },
-        {
-          "materialId": "steel_ingot",
-          "quantity": 3
-        }
-      ],
-      "itemMetadata": {
-        "narrative": "Improved forge with better heat retention and basalt construction. Can work steel reliably. Fire crystals enhance the heat, pushing temperatures higher.",
-        "tags": [
-          "station",
-          "forge",
-          "smithing",
-          "standard"
-        ]
-      }
-    },
-    "output": {
-      "recipeId": "smithing_forge_t2",
-      "placementMap": {
-        "2,1": "basalt",
-        "3,1": "basalt",
-        "3,2": "basalt",
-        "3,3": "basalt",
-        "2,3": "basalt",
-        "2,2": "fire_crystal",
-        "1,1": "steel_ingot",
-        "1,2": "steel_ingot",
-        "1,3": "steel_ingot"
-      },
-      "metadata": {
-        "gridSize": "5x5",
-        "narrative": "Improved forge with better heat retention. Can work steel reliably."
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_forge_t3",
-      "itemId": "forge_t3",
-      "tier": 2,
-      "gridSize": "7x7",
-      "inputs": [
-        {
-          "materialId": "mithril_ingot",
-          "quantity": 5
-        },
-        {
-          "materialId": "obsidian",
-          "quantity": 10
-        },
-        {
-          "materialId": "phoenix_ash",
-          "quantity": 4
-        },
-        {
-          "materialId": "storm_heart",
-          "quantity": 1
-        }
-      ],
-      "itemMetadata": {
-        "narrative": "Master forge with obsidian construction and crystal enhancement. Can reach extreme temperatures needed for legendary metals. Phoenix ash ensures the flames never die.",
-        "tags": [
-          "station",
-          "forge",
-          "smithing",
-          "master"
-        ]
-      }
-    },
-    "output": {
-      "recipeId": "smithing_forge_t3",
-      "placementMap": {
-        "3,2": "phoenix_ash",
-        "3,4": "phoenix_ash",
-        "2,4": "phoenix_ash",
-        "2,2": "phoenix_ash",
-        "1,1": "mithril_ingot",
-        "1,2": "mithril_ingot",
-        "1,3": "mithril_ingot",
-        "1,4": "mithril_ingot",
-        "1,5": "mithril_ingot",
-        "2,3": "obsidian",
-        "2,5": "obsidian",
-        "2,1": "obsidian",
-        "3,3": "storm_heart",
-        "3,1": "obsidian",
-        "4,1": "obsidian",
-        "4,2": "obsidian",
-        "4,3": "obsidian",
-        "4,4": "obsidian",
-        "4,5": "obsidian",
-        "3,5": "obsidian"
-      },
-      "metadata": {
-        "gridSize": "7x7",
-        "narrative": "Master forge with crystal enhancement. Can reach extreme temperatures."
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_refinery_t1",
-      "itemId": "refinery_t1",
-      "tier": 1,
-      "gridSize": "3x3",
-      "inputs": [
-        {
-          "materialId": "copper_ingot",
-          "quantity": 4
-        },
-        {
-          "materialId": "limestone",
-          "quantity": 3
-        }
-      ],
-      "itemMetadata": {
-        "narrative": "Basic limestone refinery for turning raw ores into usable ingots. Essential for any metalworker. The crucible glows red-hot as impurities burn away.",
-        "tags": [
-          "station",
-          "refinery",
-          "forging",
-          "starter"
-        ]
-      }
-    },
-    "output": {
-      "recipeId": "smithing_refinery_t1",
-      "placementMap": {
-        "2,1": "copper_ingot",
-        "3,1": "copper_ingot",
-        "3,2": "limestone",
-        "2,3": "copper_ingot",
-        "1,1": "limestone",
-        "1,3": "limestone",
-        "3,3": "copper_ingot"
-      },
-      "metadata": {
-        "gridSize": "3x3",
-        "narrative": "Basic refinery for turning raw ores into usable ingots. Essential for any metalworker."
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_refinery_t2",
-      "itemId": "refinery_t2",
-      "tier": 1,
-      "gridSize": "5x5",
-      "inputs": [
-        {
-          "materialId": "earth_crystal",
-          "quantity": 2
-        },
-        {
-          "materialId": "granite",
-          "quantity": 5
-        }
-      ],
-      "itemMetadata": {
-        "narrative": "Advanced refinery with improved efficiency and heat control. Can process higher-grade ores and create complex alloys. The granite construction handles intense heat without cracking.",
-        "tags": [
-          "station",
-          "refinery",
-          "forging",
-          "standard"
-        ]
-      }
-    },
-    "output": {
-      "recipeId": "smithing_refinery_t2",
-      "placementMap": {
-        "1,1": "granite",
-        "2,1": "granite",
-        "2,3": "granite",
-        "1,3": "granite",
-        "3,2": "granite",
-        "3,1": "earth_crystal",
-        "3,3": "earth_crystal"
-      },
-      "metadata": {
-        "gridSize": "5x5",
-        "narrative": "Advanced refinery with better efficiency and heat control."
-      }
-    }
-  },
-  {
-    "input": {
       "recipeId": "smithing_pine_shortbow",
       "itemId": "pine_shortbow",
       "tier": 1,
@@ -1099,15 +1317,48 @@
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "pine_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Pine Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "wood",
+              "flexible"
+            ]
+          }
         },
         {
           "materialId": "slime_gel",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -1138,104 +1389,6 @@
   },
   {
     "input": {
-      "recipeId": "smithing_alchemy_table_t1",
-      "itemId": "alchemy_table_t1",
-      "tier": 1,
-      "gridSize": "3x3",
-      "inputs": [
-        {
-          "materialId": "granite",
-          "quantity": 5
-        },
-        {
-          "materialId": "oak_plank",
-          "quantity": 2
-        },
-        {
-          "materialId": "water_crystal",
-          "quantity": 2
-        }
-      ],
-      "itemMetadata": {
-        "narrative": "Wooden workbench fitted with glass vials, copper cauldrons, and measuring instruments. This is where plants become potions and careful mixing creates powerful effects.",
-        "tags": [
-          "station",
-          "alchemy",
-          "brewing",
-          "starter"
-        ]
-      }
-    },
-    "output": {
-      "recipeId": "smithing_alchemy_table_t1",
-      "placementMap": {
-        "1,1": "water_crystal",
-        "1,3": "water_crystal",
-        "2,1": "granite",
-        "3,1": "granite",
-        "3,2": "granite",
-        "3,3": "granite",
-        "2,3": "granite",
-        "2,2": "oak_plank",
-        "1,2": "oak_plank"
-      },
-      "metadata": {
-        "gridSize": "3x3",
-        "narrative": "Basic alchemy table with mortar, pestle, and glassware."
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_engineering_bench_t1",
-      "itemId": "engineering_bench_t1",
-      "tier": 1,
-      "gridSize": "3x3",
-      "inputs": [
-        {
-          "materialId": "beetle_carapace",
-          "quantity": 3
-        },
-        {
-          "materialId": "birch_plank",
-          "quantity": 4
-        },
-        {
-          "materialId": "iron_ingot",
-          "quantity": 2
-        }
-      ],
-      "itemMetadata": {
-        "narrative": "Sturdy iron workbench equipped with precision tools, vises, and gear assemblies. Here mechanisms take shape - springs tension, gears mesh, devices come to life.",
-        "tags": [
-          "station",
-          "engineering",
-          "mechanical",
-          "starter"
-        ]
-      }
-    },
-    "output": {
-      "recipeId": "smithing_engineering_bench_t1",
-      "placementMap": {
-        "2,1": "iron_ingot",
-        "2,3": "iron_ingot",
-        "1,1": "beetle_carapace",
-        "1,2": "beetle_carapace",
-        "1,3": "beetle_carapace",
-        "2,2": "birch_plank",
-        "3,1": "birch_plank",
-        "3,2": "birch_plank",
-        "3,3": "birch_plank"
-      },
-      "metadata": {
-        "gridSize": "3x3",
-        "narrative": "Basic workbench for assembling mechanical devices."
-      }
-    }
-  },
-  {
-    "input": {
       "recipeId": "smithing_steel_battleaxe",
       "itemId": "steel_battleaxe",
       "tier": 2,
@@ -1243,15 +1396,48 @@
       "inputs": [
         {
           "materialId": "dire_fang",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Dire Fang",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "fang"
+            ]
+          }
         },
         {
           "materialId": "ironwood_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Ironwood Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "metallic"
+            ]
+          }
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -1294,15 +1480,48 @@
       "inputs": [
         {
           "materialId": "granite",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Granite",
+            "tier": 1,
+            "category": "stone",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "stone",
+              "durable"
+            ]
+          }
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "oak_plank",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Oak Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "wood",
+              "versatile"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -1345,11 +1564,33 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -1384,15 +1625,48 @@
       "inputs": [
         {
           "materialId": "ash_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Ash Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "quality"
+            ]
+          }
         },
         {
           "materialId": "slime_gel",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -1434,19 +1708,63 @@
       "inputs": [
         {
           "materialId": "fire_crystal",
-          "quantity": 8
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "ironwood_plank",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Ironwood Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "metallic"
+            ]
+          }
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         },
         {
           "materialId": "phoenix_ash",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Phoenix Ash",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "fire",
+              "legendary"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -1496,15 +1814,48 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "oak_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Oak Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "wood",
+              "versatile"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -1542,11 +1893,33 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 7
+          "quantity": 7,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -1590,11 +1963,33 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "itemMetadata": {
@@ -1619,6 +2014,148 @@
       "metadata": {
         "gridSize": "3x3",
         "narrative": "Reinforced leather gloves with iron studs across the knuckles. Your hands are your tools - protect them properly."
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_bamboo_fishing_rod",
+      "itemId": "bamboo_fishing_rod",
+      "tier": 1,
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "copper_ingot",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
+        },
+        {
+          "materialId": "oak_log",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Oak Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "wood",
+              "versatile"
+            ]
+          }
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Flexible bamboo rod with silk line and bronze hook. Patient hands pull dinner from rivers and lakes. Not much use in a fight, but starvation kills just as surely as swords.",
+        "tags": [
+          "tool",
+          "fishing",
+          "gathering"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "smithing_bamboo_fishing_rod",
+      "placementMap": {
+        "2,2": "oak_log",
+        "1,3": "oak_log",
+        "3,1": "copper_ingot",
+        "2,3": "spectral_thread",
+        "3,3": "spectral_thread"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Flexible bamboo rod with silk line and bronze hook. Patience and the right tool can pull dinner from any water."
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_sickle",
+      "itemId": "steel_sickle",
+      "tier": 2,
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "birch_plank",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Birch Plank",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "fine"
+            ]
+          }
+        },
+        {
+          "materialId": "steel_ingot",
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
+        }
+      ],
+      "itemMetadata": {
+        "narrative": "Curved steel blade designed for harvesting herbs, grains, and fibrous plants. The razor edge cuts clean without bruising delicate materials. Adequate for self-defense in a pinch.",
+        "tags": [
+          "tool",
+          "harvesting",
+          "gathering",
+          "herbs"
+        ]
+      }
+    },
+    "output": {
+      "recipeId": "smithing_steel_sickle",
+      "placementMap": {
+        "5,3": "birch_plank",
+        "4,3": "birch_plank",
+        "3,2": "steel_ingot",
+        "2,2": "steel_ingot",
+        "1,3": "steel_ingot",
+        "1,4": "steel_ingot",
+        "2,5": "steel_ingot"
+      },
+      "metadata": {
+        "gridSize": "3x3",
+        "narrative": "Curved steel blade perfect for harvesting delicate plants. Clean cuts preserve quality and maximize yield."
       }
     }
   }

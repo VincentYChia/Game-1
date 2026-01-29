@@ -1,72 +1,112 @@
 [
   {
     "input": {
-      "recipeId": "alchemy_regeneration_tonic",
-      "stationTier": 3,
+      "recipeId": "alchemy_refine_essence_blood",
+      "stationTier": 2,
       "stationType": "alchemy",
       "inputs": [
         {
           "materialId": "living_ichor",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Living Ichor",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "essence"
+            ]
+          }
         },
         {
           "materialId": "light_gem",
-          "quantity": 3
-        },
-        {
-          "materialId": "essence_blood",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Light Gem",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "light",
+              "rare"
+            ]
+          }
         }
       ],
-      "narrative": "Regeneration tonic that mends wounds over time. Body remembers how to heal continuously."
+      "narrative": "Refining raw life force into pure essence blood. No impurities, pure vitality."
     },
     "output": {
       "metadata": {
-        "narrative": "Regeneration tonic that mends wounds over time. Light gems infused with living essence create a sustained healing effect. Your body remembers how to heal itself.",
+        "narrative": "Crystallized blood from elemental beasts. Pulses with residual power.",
         "tags": [
-          "potion",
-          "healing",
-          "regeneration",
-          "advanced"
+          "monster",
+          "rare",
+          "blood"
         ]
       },
-      "itemId": "regeneration_tonic",
-      "name": "Regeneration Tonic",
-      "category": "consumable",
-      "type": "potion",
-      "subtype": "healing",
+      "materialId": "essence_blood",
+      "name": "Essence Blood",
       "tier": 3,
       "rarity": "rare",
-      "effect": "Restores 75 HP instantly and 5 HP per second",
-      "duration": 60,
-      "stackSize": 10,
-      "effectTags": [
-        "healing",
-        "instant",
-        "over_time",
-        "self"
-      ],
-      "effectParams": [
+      "category": "monster_drop"
+    }
+  },
+  {
+    "input": {
+      "recipeId": "alchemy_crystallize_fire",
+      "stationTier": 1,
+      "stationType": "alchemy",
+      "inputs": [
         {
-          "heal_amount": 75
+          "materialId": "limestone",
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Limestone",
+            "tier": 1,
+            "category": "stone",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "stone",
+              "common"
+            ]
+          }
         },
         {
-          "heal_per_second": 5.0,
-          "duration": 60.0
+          "materialId": "phoenix_ash",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Phoenix Ash",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "fire",
+              "legendary"
+            ]
+          }
         }
       ],
-      "statMultipliers": {
-        "weight": 0.3
+      "narrative": "Crystallizing fire essence from raw materials. Chaos becomes order."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Orange-red crystal pulsing with trapped flames. Warm to touch, occasionally sparks.",
+        "tags": [
+          "elemental",
+          "fire",
+          "common"
+        ]
       },
-      "requirements": {
-        "level": 14,
-        "stats": {}
-      },
-      "flags": {
-        "stackable": true,
-        "consumable": true,
-        "repairable": false
-      }
+      "materialId": "fire_crystal",
+      "name": "Fire Crystal",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "elemental"
     }
   }
 ]

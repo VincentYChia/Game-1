@@ -7,11 +7,33 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "oak_plank",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Oak Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "wood",
+              "versatile"
+            ]
+          }
         }
       ],
       "narrative": "The foundational smithing technique - blade, tang, handle. Simple in concept, demanding in execution. Every smith remembers their first sword."
@@ -68,11 +90,33 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         },
         {
           "materialId": "oak_log",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Oak Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "wood",
+              "versatile"
+            ]
+          }
         }
       ],
       "narrative": "Your first pickaxe. The gateway to greater resources and deeper discoveries."
@@ -132,11 +176,33 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         },
         {
           "materialId": "pine_log",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Pine Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "wood",
+              "flexible"
+            ]
+          }
         }
       ],
       "narrative": "Basic axe for woodcutting. Simple but essential for any aspiring adventurer."
@@ -196,11 +262,33 @@
       "inputs": [
         {
           "materialId": "ash_log",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Ash Log",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "basic",
+              "wood",
+              "quality"
+            ]
+          }
         },
         {
           "materialId": "copper_ingot",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         }
       ],
       "narrative": "Simple spear with copper tip. Keep your enemies at a distance."
@@ -257,11 +345,33 @@
       "inputs": [
         {
           "materialId": "slime_gel",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "narrative": "Basic leather protection. Better than nothing, lighter than metal."
@@ -308,11 +418,33 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "narrative": "Reinforced leather boots with iron caps. Protects your feet without slowing you down."
@@ -359,11 +491,33 @@
       "inputs": [
         {
           "materialId": "ash_plank",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Ash Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "quality"
+            ]
+          }
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         }
       ],
       "narrative": "Upgraded pickaxe that can tackle tougher deposits. Iron reliability meets practical design."
@@ -423,11 +577,33 @@
       "inputs": [
         {
           "materialId": "birch_plank",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Birch Plank",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "fine"
+            ]
+          }
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         }
       ],
       "narrative": "Solid iron axe for serious forestry work. Bites deep and true."
@@ -487,15 +663,48 @@
       "inputs": [
         {
           "materialId": "dire_fang",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Dire Fang",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "fang"
+            ]
+          }
         },
         {
           "materialId": "maple_plank",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Maple Plank",
+            "tier": 2,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "durable"
+            ]
+          }
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "narrative": "Balanced steel longsword. The blade flows like water, strikes like thunder."
@@ -554,15 +763,48 @@
       "inputs": [
         {
           "materialId": "beetle_carapace",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Beetle Carapace",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "carapace"
+            ]
+          }
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 7
+          "quantity": 7,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "narrative": "Iron plates protect vital organs. Heavy but reliable."
@@ -609,11 +851,33 @@
       "inputs": [
         {
           "materialId": "steel_ingot",
-          "quantity": 10
+          "quantity": 10,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "narrative": "Steel helm with full face protection. Your head stays attached, which is nice."
@@ -660,7 +924,18 @@
       "inputs": [
         {
           "materialId": "ironwood_plank",
-          "quantity": 10
+          "quantity": 10,
+          "material_metadata": {
+            "name": "Ironwood Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "metallic"
+            ]
+          }
         }
       ],
       "narrative": "Steel pickaxe with perfect balance. Makes hard rock feel like clay."
@@ -720,11 +995,33 @@
       "inputs": [
         {
           "materialId": "ironwood_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Ironwood Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "metallic"
+            ]
+          }
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "narrative": "Razor-edged steel axe. Ancient trees fall before it."
@@ -784,15 +1081,48 @@
       "inputs": [
         {
           "materialId": "ebony_plank",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Ebony Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "epic",
+            "tags": [
+              "refined",
+              "wood",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "essence_blood",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Essence Blood",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "blood"
+            ]
+          }
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Mithril dagger that seems to shimmer out of existence. Wickedly sharp, impossibly light."
@@ -853,11 +1183,33 @@
       "inputs": [
         {
           "materialId": "ebony_plank",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Ebony Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "epic",
+            "tags": [
+              "refined",
+              "wood",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 9
+          "quantity": 9,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Legendary mithril pickaxe that sings through stone. Impossibly light yet incredibly effective."
@@ -917,15 +1269,48 @@
       "inputs": [
         {
           "materialId": "ebony_plank",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Ebony Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "epic",
+            "tags": [
+              "refined",
+              "wood",
+              "magical"
+            ]
+          }
         },
         {
           "materialId": "golem_core",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Golem Core",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "ancient"
+            ]
+          }
         },
         {
           "materialId": "mithril_ingot",
-          "quantity": 11
+          "quantity": 11,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         }
       ],
       "narrative": "Ethereal mithril axe that phases through wood fibers. Cuts with minimal resistance."
@@ -985,11 +1370,33 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         },
         {
           "materialId": "fire_crystal",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
         }
       ],
       "narrative": "Simple copper band with fire crystal. Radiates gentle warmth."
@@ -1042,11 +1449,33 @@
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "water_crystal",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Water Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "water",
+              "common"
+            ]
+          }
         }
       ],
       "narrative": "Iron amulet holding a water crystal. Feels cool against your skin."
@@ -1099,15 +1528,48 @@
       "inputs": [
         {
           "materialId": "lightning_shard",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Lightning Shard",
+            "tier": 2,
+            "category": "elemental",
+            "rarity": "rare",
+            "tags": [
+              "elemental",
+              "lightning",
+              "rare"
+            ]
+          }
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 4
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "narrative": "Steel bracelet with lightning shard. Crackles with stored static."
@@ -1154,273 +1616,54 @@
   },
   {
     "input": {
-      "recipeId": "smithing_forge_t1",
-      "stationTier": 1,
-      "stationType": "smithing",
-      "inputs": [
-        {
-          "materialId": "granite",
-          "quantity": 5
-        },
-        {
-          "materialId": "iron_ingot",
-          "quantity": 4
-        }
-      ],
-      "narrative": "Basic stone forge suitable for working copper and iron. The foundation of smithing."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Basic stone forge suitable for working copper and iron. The foundation of smithing - crude but functional. Every master started with a forge like this.",
-        "tags": [
-          "station",
-          "forge",
-          "smithing",
-          "starter"
-        ]
-      },
-      "itemId": "forge_t1",
-      "name": "Basic Stone Forge",
-      "category": "station",
-      "type": "smithing",
-      "subtype": "forge",
-      "tier": 1,
-      "rarity": "common",
-      "statMultipliers": {
-        "weight": 1.0
-      },
-      "requirements": {
-        "level": 1,
-        "stats": {}
-      },
-      "flags": {
-        "stackable": false,
-        "placeable": true,
-        "repairable": false
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_forge_t2",
-      "stationTier": 1,
-      "stationType": "smithing",
-      "inputs": [
-        {
-          "materialId": "basalt",
-          "quantity": 5
-        },
-        {
-          "materialId": "fire_crystal",
-          "quantity": 1
-        },
-        {
-          "materialId": "steel_ingot",
-          "quantity": 3
-        }
-      ],
-      "narrative": "Improved forge with better heat retention. Can work steel reliably."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Improved forge with better heat retention and basalt construction. Can work steel reliably. Fire crystals enhance the heat, pushing temperatures higher.",
-        "tags": [
-          "station",
-          "forge",
-          "smithing",
-          "standard"
-        ]
-      },
-      "itemId": "forge_t2",
-      "name": "Steel Forge",
-      "category": "station",
-      "type": "smithing",
-      "subtype": "forge",
-      "tier": 2,
-      "rarity": "uncommon",
-      "statMultipliers": {
-        "weight": 1.0
-      },
-      "requirements": {
-        "level": 8,
-        "stats": {}
-      },
-      "flags": {
-        "stackable": false,
-        "placeable": true,
-        "repairable": false
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_forge_t3",
-      "stationTier": 2,
-      "stationType": "smithing",
-      "inputs": [
-        {
-          "materialId": "mithril_ingot",
-          "quantity": 5
-        },
-        {
-          "materialId": "obsidian",
-          "quantity": 10
-        },
-        {
-          "materialId": "phoenix_ash",
-          "quantity": 4
-        },
-        {
-          "materialId": "storm_heart",
-          "quantity": 1
-        }
-      ],
-      "narrative": "Master forge with crystal enhancement. Can reach extreme temperatures."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Master forge with obsidian construction and crystal enhancement. Can reach extreme temperatures needed for legendary metals. Phoenix ash ensures the flames never die.",
-        "tags": [
-          "station",
-          "forge",
-          "smithing",
-          "master"
-        ]
-      },
-      "itemId": "forge_t3",
-      "name": "Master Forge",
-      "category": "station",
-      "type": "smithing",
-      "subtype": "forge",
-      "tier": 3,
-      "rarity": "rare",
-      "statMultipliers": {
-        "weight": 1.0
-      },
-      "requirements": {
-        "level": 15,
-        "stats": {}
-      },
-      "flags": {
-        "stackable": false,
-        "placeable": true,
-        "repairable": false
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_refinery_t1",
-      "stationTier": 1,
-      "stationType": "smithing",
-      "inputs": [
-        {
-          "materialId": "copper_ingot",
-          "quantity": 4
-        },
-        {
-          "materialId": "limestone",
-          "quantity": 3
-        }
-      ],
-      "narrative": "Basic refinery for turning raw ores into usable ingots. Essential for any metalworker."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Basic limestone refinery for turning raw ores into usable ingots. Essential for any metalworker. The crucible glows red-hot as impurities burn away.",
-        "tags": [
-          "station",
-          "refinery",
-          "forging",
-          "starter"
-        ]
-      },
-      "itemId": "refinery_t1",
-      "name": "Basic Refinery",
-      "category": "station",
-      "type": "refining",
-      "subtype": "refinery",
-      "tier": 1,
-      "rarity": "common",
-      "statMultipliers": {
-        "weight": 1.0
-      },
-      "requirements": {
-        "level": 1,
-        "stats": {}
-      },
-      "flags": {
-        "stackable": false,
-        "placeable": true,
-        "repairable": false
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_refinery_t2",
-      "stationTier": 1,
-      "stationType": "smithing",
-      "inputs": [
-        {
-          "materialId": "earth_crystal",
-          "quantity": 2
-        },
-        {
-          "materialId": "granite",
-          "quantity": 5
-        }
-      ],
-      "narrative": "Advanced refinery with better efficiency and heat control."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Advanced refinery with improved efficiency and heat control. Can process higher-grade ores and create complex alloys. The granite construction handles intense heat without cracking.",
-        "tags": [
-          "station",
-          "refinery",
-          "forging",
-          "standard"
-        ]
-      },
-      "itemId": "refinery_t2",
-      "name": "Steel Refinery",
-      "category": "station",
-      "type": "refining",
-      "subtype": "refinery",
-      "tier": 2,
-      "rarity": "uncommon",
-      "statMultipliers": {
-        "weight": 1.0
-      },
-      "requirements": {
-        "level": 8,
-        "stats": {}
-      },
-      "flags": {
-        "stackable": false,
-        "placeable": true,
-        "repairable": false
-      }
-    }
-  },
-  {
-    "input": {
       "recipeId": "smithing_pine_shortbow",
       "stationTier": 1,
       "stationType": "smithing",
       "inputs": [
         {
           "materialId": "air_crystal",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
         },
         {
           "materialId": "pine_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Pine Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "wood",
+              "flexible"
+            ]
+          }
         },
         {
           "materialId": "slime_gel",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
         }
       ],
       "narrative": "Simple pine bow strung with treated sinew. Not powerful, but reliable."
@@ -1473,125 +1716,54 @@
   },
   {
     "input": {
-      "recipeId": "smithing_alchemy_table_t1",
-      "stationTier": 1,
-      "stationType": "smithing",
-      "inputs": [
-        {
-          "materialId": "granite",
-          "quantity": 5
-        },
-        {
-          "materialId": "oak_plank",
-          "quantity": 2
-        },
-        {
-          "materialId": "water_crystal",
-          "quantity": 2
-        }
-      ],
-      "narrative": "Basic alchemy table with mortar, pestle, and glassware."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Wooden workbench fitted with glass vials, copper cauldrons, and measuring instruments. This is where plants become potions and careful mixing creates powerful effects.",
-        "tags": [
-          "station",
-          "alchemy",
-          "brewing",
-          "starter"
-        ]
-      },
-      "itemId": "alchemy_table_t1",
-      "name": "Basic Alchemy Table",
-      "category": "station",
-      "type": "alchemy",
-      "subtype": "alchemy_table",
-      "tier": 1,
-      "rarity": "common",
-      "statMultipliers": {
-        "weight": 1.0
-      },
-      "requirements": {
-        "level": 1,
-        "stats": {}
-      },
-      "flags": {
-        "stackable": false,
-        "placeable": true,
-        "repairable": false
-      }
-    }
-  },
-  {
-    "input": {
-      "recipeId": "smithing_engineering_bench_t1",
-      "stationTier": 1,
-      "stationType": "smithing",
-      "inputs": [
-        {
-          "materialId": "beetle_carapace",
-          "quantity": 3
-        },
-        {
-          "materialId": "birch_plank",
-          "quantity": 4
-        },
-        {
-          "materialId": "iron_ingot",
-          "quantity": 2
-        }
-      ],
-      "narrative": "Basic workbench for assembling mechanical devices."
-    },
-    "output": {
-      "metadata": {
-        "narrative": "Sturdy iron workbench equipped with precision tools, vises, and gear assemblies. Here mechanisms take shape - springs tension, gears mesh, devices come to life.",
-        "tags": [
-          "station",
-          "engineering",
-          "mechanical",
-          "starter"
-        ]
-      },
-      "itemId": "engineering_bench_t1",
-      "name": "Basic Engineering Bench",
-      "category": "station",
-      "type": "engineering",
-      "subtype": "engineering_bench",
-      "tier": 1,
-      "rarity": "common",
-      "statMultipliers": {
-        "weight": 1.0
-      },
-      "requirements": {
-        "level": 1,
-        "stats": {}
-      },
-      "flags": {
-        "stackable": false,
-        "placeable": true,
-        "repairable": false
-      }
-    }
-  },
-  {
-    "input": {
       "recipeId": "smithing_steel_battleaxe",
       "stationTier": 2,
       "stationType": "smithing",
       "inputs": [
         {
           "materialId": "dire_fang",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Dire Fang",
+            "tier": 2,
+            "category": "monster_drop",
+            "rarity": "uncommon",
+            "tags": [
+              "monster",
+              "uncommon",
+              "fang"
+            ]
+          }
         },
         {
           "materialId": "ironwood_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Ironwood Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "metallic"
+            ]
+          }
         },
         {
           "materialId": "steel_ingot",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
         }
       ],
       "narrative": "Forging a steel battleaxe requires balance - too heavy and it's unwieldy, too light and it lacks impact. This versatile weapon can devastate with two hands or still threaten with one."
@@ -1650,15 +1822,48 @@
       "inputs": [
         {
           "materialId": "granite",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Granite",
+            "tier": 1,
+            "category": "stone",
+            "rarity": "common",
+            "tags": [
+              "basic",
+              "stone",
+              "durable"
+            ]
+          }
         },
         {
           "materialId": "iron_ingot",
-          "quantity": 6
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
           "materialId": "oak_plank",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Oak Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "wood",
+              "versatile"
+            ]
+          }
         }
       ],
       "narrative": "Crafting a warhammer is about managing weight distribution. The crushing head must be perfectly balanced on the shaft, or it becomes a liability rather than a weapon."
@@ -1718,11 +1923,33 @@
       "inputs": [
         {
           "materialId": "copper_ingot",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Copper Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "starter"
+            ]
+          }
         },
         {
           "materialId": "wolf_pelt",
-          "quantity": 1
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
         }
       ],
       "narrative": "A dagger is deceptively simple - just a blade and a grip. But the balance must be perfect for quick, precise strikes."
@@ -1782,15 +2009,48 @@
       "inputs": [
         {
           "materialId": "ash_plank",
-          "quantity": 3
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Ash Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "wood",
+              "quality"
+            ]
+          }
         },
         {
           "materialId": "slime_gel",
-          "quantity": 2
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Slime Gel",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "gel"
+            ]
+          }
         },
         {
           "materialId": "spectral_thread",
-          "quantity": 5
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
         }
       ],
       "narrative": "Crafting a composite bow requires laminating different materials - wood for flexibility, sinew for power, silk for the string. Patience yields deadly accuracy."
@@ -1833,6 +2093,298 @@
         "stats": {
           "AGI": 14
         }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_fire_crystal_staff",
+      "stationTier": 3,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "fire_crystal",
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Ironwood Plank",
+            "tier": 3,
+            "category": "wood",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "wood",
+              "metallic"
+            ]
+          }
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Phoenix Ash",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "fire",
+              "legendary"
+            ]
+          }
+        }
+      ],
+      "narrative": "Binding a fire crystal to ironwood creates a conduit for elemental power. The wood never burns, the crystal never dims - a perfect symbiosis."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Ironwood staff capped with a pulsing fire crystal. The wood never burns, the crystal never dims. Channel elemental forces through this focus, or wield it as a quarterstaff when enemies close distance.",
+        "tags": [
+          "melee",
+          "staff",
+          "versatile",
+          "elemental",
+          "fire"
+        ]
+      },
+      "itemId": "fire_crystal_staff",
+      "name": "Fire Crystal Staff",
+      "category": "equipment",
+      "type": "staff",
+      "subtype": "staff",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 8,
+      "slot": "mainHand",
+      "effectTags": [
+        "fire",
+        "single",
+        "burn"
+      ],
+      "effectParams": {
+        "baseDamage": 45,
+        "burn_duration": 3.0,
+        "burn_damage_per_second": 5.0
+      },
+      "statMultipliers": {
+        "damage": 0.85,
+        "attackSpeed": 1.1,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "attributes": [
+        {
+          "type": "damage",
+          "element": "fire",
+          "value": 15,
+          "effect": "Elemental attacks deal bonus fire damage"
+        }
+      ],
+      "requirements": {
+        "level": 15,
+        "stats": {
+          "INT": 18
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_iron_round_shield",
+      "stationTier": 1,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "iron_ingot",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 3,
+          "material_metadata": {
+            "name": "Oak Plank",
+            "tier": 1,
+            "category": "wood",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "wood",
+              "versatile"
+            ]
+          }
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 1,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
+        }
+      ],
+      "narrative": "A simple round shield - iron face with oak backing. Protects and strikes in equal measure."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Round iron shield with oak backing. Not just for blocking - bash enemies with the rim or use it to create openings. Defense and offense in one hand.",
+        "tags": [
+          "melee",
+          "shield",
+          "1H",
+          "defensive",
+          "bash"
+        ]
+      },
+      "itemId": "iron_round_shield",
+      "name": "Iron Round Shield",
+      "category": "equipment",
+      "type": "shield",
+      "subtype": "buckler",
+      "tier": 1,
+      "rarity": "common",
+      "range": 1,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.6,
+        "attackSpeed": 1.1,
+        "durability": 1.8,
+        "weight": 1.3
+      },
+      "requirements": {
+        "level": 3,
+        "stats": {
+          "STR": 8
+        }
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
+  },
+  {
+    "input": {
+      "recipeId": "smithing_steel_leggings",
+      "stationTier": 2,
+      "stationType": "smithing",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 7,
+          "material_metadata": {
+            "name": "Steel Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "uncommon",
+            "tags": [
+              "refined",
+              "metal",
+              "advanced"
+            ]
+          }
+        },
+        {
+          "materialId": "wolf_pelt",
+          "quantity": 5,
+          "material_metadata": {
+            "name": "Wolf Pelt",
+            "tier": 1,
+            "category": "monster_drop",
+            "rarity": "common",
+            "tags": [
+              "monster",
+              "common",
+              "leather"
+            ]
+          }
+        }
+      ],
+      "narrative": "Steel plate leggings with articulated joints. Protecting your legs without sacrificing mobility is the mark of quality armor."
+    },
+    "output": {
+      "metadata": {
+        "narrative": "Steel plate leggings with articulated joints. Heavy but protective, they guard your legs without restricting movement. Every smith's second major armor piece after the chestplate.",
+        "tags": [
+          "armor",
+          "legs",
+          "metal",
+          "heavy"
+        ]
+      },
+      "itemId": "steel_leggings",
+      "name": "Steel Leggings",
+      "category": "equipment",
+      "type": "armor",
+      "subtype": "leggings",
+      "tier": 2,
+      "rarity": "common",
+      "slot": "legs",
+      "statMultipliers": {
+        "defense": 1.0,
+        "durability": 1.0,
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 7,
+        "stats": {}
       },
       "flags": {
         "stackable": false,

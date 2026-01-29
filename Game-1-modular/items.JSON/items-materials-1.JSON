@@ -721,6 +721,50 @@
       "tier": 3,
       "rarity": "rare",
       "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Lightning-infused copper with perfect magical conductivity. Static crackles across its surface. The metal every mage dreams of - channels elemental power without resistance.",
+        "tags": ["metal", "refined", "lightning"]
+      },
+      "materialId": "lightning_copper_ingot",
+      "name": "Lightning Copper Ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    },
+        {
+     "metadata": {
+        "narrative": "Frost-forged steel, cold to the touch always. Ice crystals form on its surface in warm air. Blades made from this never rust, armor never overheats in battle.",
+        "tags": ["metal", "refined", "ice"]
+      },
+      "materialId": "frost_steel_ingot",
+      "name": "Frost Steel Ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    },
+            {
+     "metadata": {
+        "narrative": "Fire-infused steel that burns without being consumed. The metal radiates heat, never cools. Weapons forged from this never need sharpening - they cauterize as they cut.",
+        "tags": ["metal", "refined", "fire"]
+      },
+     "materialId": "fire_steel_ingot",
+      "name": "Fire Steel Ingot",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "metal"
+    },
+         {
+     "metadata": {
+        "narrative": "Bronze alloy forged from copper and tin. Stronger than either parent metal, the ancient alloy that built civilizations. The first lesson in combining materials.",
+        "tags": ["metal", "refined", "durable"]
+      },
+      "materialId": "bronze_ingot",
+      "name": "Bronze Ingot",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "metal"
     }
   ]
 }

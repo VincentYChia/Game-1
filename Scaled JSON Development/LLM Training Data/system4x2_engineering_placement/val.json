@@ -1,99 +1,194 @@
 [
   {
     "input": {
-      "recipeId": "engineering_frost_mine",
-      "itemId": "frost_mine",
+      "recipeId": "engineering_grappling_hook",
+      "itemId": "grappling_hook",
       "tier": 2,
       "inputs": [
         {
           "materialId": "iron_ingot",
-          "quantity": 3
+          "quantity": 4,
+          "material_metadata": {
+            "name": "Iron Ingot",
+            "tier": 1,
+            "category": "metal",
+            "rarity": "common",
+            "tags": [
+              "refined",
+              "metal",
+              "standard"
+            ]
+          }
         },
         {
-          "materialId": "blast_powder",
-          "quantity": 2
+          "materialId": "spectral_thread",
+          "quantity": 6,
+          "material_metadata": {
+            "name": "Spectral Thread",
+            "tier": 3,
+            "category": "monster_drop",
+            "rarity": "rare",
+            "tags": [
+              "monster",
+              "rare",
+              "spectral"
+            ]
+          }
         },
         {
-          "materialId": "frost_essence",
-          "quantity": 3
+          "materialId": "air_crystal",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
         }
       ],
       "itemMetadata": {
-        "narrative": "Frost mine that erupts in a blast of ice shards. Triggers on proximity. The cold bites deep, slowing everything it touches.",
+        "narrative": "Grappling hook launcher for vertical mobility. Hooks onto distant surfaces. The spectral thread never breaks, the iron hook never fails.",
         "tags": [
           "device",
-          "trap",
-          "frost",
-          "elemental"
+          "utility",
+          "mobility",
+          "tool"
         ]
       }
     },
     "output": {
-      "recipeId": "engineering_frost_mine",
-      "outputId": "frost_mine",
+      "recipeId": "engineering_grappling_hook",
+      "outputId": "grappling_hook",
       "stationTier": 2,
       "slots": [
         {
           "type": "FRAME",
           "materialId": "iron_ingot",
-          "quantity": 3
+          "quantity": 4
         },
         {
           "type": "FUNCTION",
-          "materialId": "blast_powder",
-          "quantity": 2
+          "materialId": "spectral_thread",
+          "quantity": 6
         },
         {
           "type": "POWER",
-          "materialId": "frost_essence",
-          "quantity": 3
+          "materialId": "air_crystal",
+          "quantity": 2
         }
       ],
-      "narrative": "Frost mine - iron casing protects mechanism, blast powder triggers, frost essence provides freezing blast. Bury and wait."
+      "narrative": "Grappling hook - iron forms hook, spectral thread creates unbreakable line, air crystals enable vertical mobility. Hooks distant surfaces."
     }
   },
   {
     "input": {
-      "recipeId": "engineering_bear_trap",
-      "itemId": "bear_trap",
-      "tier": 1,
+      "recipeId": "engineering_jetpack",
+      "itemId": "jetpack",
+      "tier": 3,
       "inputs": [
         {
-          "materialId": "steel_ingot",
-          "quantity": 4
+          "materialId": "mithril_ingot",
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Mithril Ingot",
+            "tier": 2,
+            "category": "metal",
+            "rarity": "rare",
+            "tags": [
+              "refined",
+              "metal",
+              "legendary"
+            ]
+          }
         },
         {
-          "materialId": "dire_fang",
-          "quantity": 6
+          "materialId": "fire_crystal",
+          "quantity": 10,
+          "material_metadata": {
+            "name": "Fire Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "fire",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "air_crystal",
+          "quantity": 8,
+          "material_metadata": {
+            "name": "Air Crystal",
+            "tier": 1,
+            "category": "elemental",
+            "rarity": "uncommon",
+            "tags": [
+              "elemental",
+              "air",
+              "common"
+            ]
+          }
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 2,
+          "material_metadata": {
+            "name": "Phoenix Ash",
+            "tier": 3,
+            "category": "elemental",
+            "rarity": "epic",
+            "tags": [
+              "elemental",
+              "fire",
+              "legendary"
+            ]
+          }
         }
       ],
       "itemMetadata": {
-        "narrative": "Bear trap with brutal steel jaws. Immobilizes anything that steps on it. The teeth dig deep and don't let go.",
+        "narrative": "Jetpack for brief flight. Fuel not included (but fire crystals work great). The mithril construction keeps it lightweight while phoenix ash provides sustained thrust.",
         "tags": [
           "device",
-          "trap",
-          "physical",
-          "immobilize"
+          "utility",
+          "flight",
+          "mobility"
         ]
       }
     },
     "output": {
-      "recipeId": "engineering_bear_trap",
-      "outputId": "bear_trap",
-      "stationTier": 1,
+      "recipeId": "engineering_jetpack",
+      "outputId": "jetpack",
+      "stationTier": 3,
       "slots": [
         {
           "type": "FRAME",
-          "materialId": "steel_ingot",
-          "quantity": 4
+          "materialId": "mithril_ingot",
+          "quantity": 8
         },
         {
-          "type": "FUNCTION",
-          "materialId": "dire_fang",
-          "quantity": 6
+          "type": "POWER",
+          "materialId": "fire_crystal",
+          "quantity": 10
+        },
+        {
+          "type": "MODIFIER",
+          "materialId": "air_crystal",
+          "quantity": 8
+        },
+        {
+          "type": "UTILITY",
+          "materialId": "phoenix_ash",
+          "quantity": 2
         }
       ],
-      "narrative": "Bear trap - steel forms jaw mechanism, dire fangs form serrated edges. Once closed, nothing escapes. Perfect spring tension required."
+      "narrative": "Jetpack for brief flight - mithril frame lightweight, fire crystals provide thrust, air crystals stabilize, phoenix ash ensures sustained burn. Fuel not included."
     }
   }
 ]
