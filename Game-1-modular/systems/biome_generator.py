@@ -2,6 +2,9 @@
 
 Uses deterministic noise-based algorithms to generate consistent biome
 assignments for any chunk coordinate, enabling infinite world expansion.
+
+All configuration values are loaded from Definitions.JSON/world_generation.JSON
+for easy customization without code changes.
 """
 
 import random
@@ -9,7 +12,7 @@ from typing import Tuple, Optional
 from enum import Enum
 
 from data.models import ChunkType
-from core.config import Config
+from data.databases.world_generation_db import WorldGenerationConfig
 
 
 class BiomeCategory(Enum):
@@ -24,17 +27,17 @@ class BiomeGenerator:
 
     Generates consistent chunk types for any coordinate based on a world seed.
     Supports infinite world expansion with controlled distribution ratios.
+
+    All configuration is loaded from world_generation.JSON:
+    - Biome distribution ratios (water/forest/cave percentages)
+    - Biome clustering scale (how big biome regions are)
+    - Danger zone configuration (safe zone, transition zone, outer zone)
+    - Dungeon spawn chance
+
+    Usage:
+        generator = BiomeGenerator(world_seed=12345)
+        chunk_type = generator.get_chunk_type(5, -3)  # Returns ChunkType
     """
-
-    # Target biome distribution ratios
-    WATER_RATIO = 0.10   # 10% water
-    FOREST_RATIO = 0.50  # 50% forest
-    CAVE_RATIO = 0.40    # 40% caves/quarries
-
-    # Contiguity settings for natural-feeling biome regions
-    BIOME_SCALE = 4.0           # Noise scale for biome boundaries
-    DANGER_SCALE = 6.0          # Noise scale for danger level
-    VARIATION_SCALE = 2.0       # Noise scale for sub-type variation
 
     def __init__(self, world_seed: int):
         """Initialize biome generator with world seed.
@@ -43,6 +46,30 @@ class BiomeGenerator:
             world_seed: Master seed for deterministic generation
         """
         self.seed = world_seed
+
+        # Load configuration from JSON
+        self._config = WorldGenerationConfig.get_instance()
+
+        # Cache frequently accessed config values
+        self._water_ratio = self._config.biome_distribution.water
+        self._forest_ratio = self._config.biome_distribution.forest
+        self._cave_ratio = self._config.biome_distribution.cave
+
+        self._biome_scale = self._config.biome_clustering.biome_noise_scale
+        self._biome_octaves = self._config.biome_clustering.biome_noise_octaves
+        self._danger_scale = self._config.biome_clustering.danger_noise_scale
+
+        self._safe_zone_radius = self._config.danger_zones.safe_zone_radius
+        self._transition_zone_radius = self._config.danger_zones.transition_zone_radius
+        self._max_danger_enabled = self._config.danger_zones.max_danger_enabled
+
+        self._dungeon_spawn_chance = self._config.dungeon_spawning.spawn_chance_per_chunk
+        self._dungeon_min_distance = self._config.dungeon_spawning.min_distance_from_spawn
+
+        if self._config.debug.log_biome_assignments:
+            print(f"BiomeGenerator initialized with seed {world_seed}")
+            print(f"  Biome distribution: water={self._water_ratio:.0%}, forest={self._forest_ratio:.0%}, cave={self._cave_ratio:.0%}")
+            print(f"  Danger zones: safe={self._safe_zone_radius}, transition={self._transition_zone_radius}")
 
     def get_chunk_seed(self, chunk_x: int, chunk_y: int) -> int:
         """Derive a deterministic seed for a specific chunk.
@@ -162,7 +189,7 @@ class BiomeGenerator:
         """Determine the high-level biome category for a chunk.
 
         Uses noise to create organic biome boundaries while maintaining
-        target distribution ratios.
+        target distribution ratios from configuration.
 
         Args:
             chunk_x: Chunk X coordinate
@@ -172,16 +199,20 @@ class BiomeGenerator:
             BiomeCategory for this chunk
         """
         # Get noise value for biome selection
-        noise = self._fractal_noise(chunk_x, chunk_y, octaves=3,
-                                    scale=self.BIOME_SCALE, offset=0)
+        noise = self._fractal_noise(
+            chunk_x, chunk_y,
+            octaves=self._biome_octaves,
+            scale=self._biome_scale,
+            offset=0
+        )
 
         # Normalize from [-1, 1] to [0, 1]
         normalized = (noise + 1) / 2
 
-        # Map to biome categories based on ratios
-        if normalized < self.WATER_RATIO:
+        # Map to biome categories based on ratios from config
+        if normalized < self._water_ratio:
             return BiomeCategory.WATER
-        elif normalized < self.WATER_RATIO + self.FOREST_RATIO:
+        elif normalized < self._water_ratio + self._forest_ratio:
             return BiomeCategory.FOREST
         else:
             return BiomeCategory.CAVE
@@ -189,8 +220,10 @@ class BiomeGenerator:
     def _get_danger_level(self, chunk_x: int, chunk_y: int) -> str:
         """Determine danger level based on distance and noise.
 
-        Danger generally increases with distance from spawn,
-        with noise adding variation.
+        Uses the zone-based system from configuration:
+        - Safe zone: Mostly peaceful
+        - Transition zone: Mixed danger
+        - Outer zone: Full danger (capped if max_danger_enabled)
 
         Args:
             chunk_x: Chunk X coordinate
@@ -202,48 +235,46 @@ class BiomeGenerator:
         # Distance from spawn (Chebyshev distance)
         distance = max(abs(chunk_x), abs(chunk_y))
 
-        # Get danger noise for variation
-        noise = self._fractal_noise(chunk_x, chunk_y, octaves=2,
-                                    scale=self.DANGER_SCALE, offset=5000)
+        # Get danger noise for variation within zones
+        noise = self._fractal_noise(
+            chunk_x, chunk_y,
+            octaves=2,
+            scale=self._danger_scale,
+            offset=5000
+        )
 
         # Normalize to [0, 1]
         noise_factor = (noise + 1) / 2
 
-        # Calculate effective danger level
-        # Base danger increases with distance
-        if distance <= 2:
-            # Very close to spawn - mostly peaceful
-            if noise_factor > 0.85:
-                return "dangerous"
+        # Get the appropriate distribution for this distance
+        distribution = self._config.get_danger_distribution(distance)
+
+        # Use noise to select danger level based on distribution
+        # peaceful_threshold = distribution.peaceful
+        # dangerous_threshold = distribution.peaceful + distribution.dangerous
+        # rare_threshold = 1.0
+
+        if noise_factor < distribution.peaceful:
             return "peaceful"
-        elif distance <= 5:
-            # Mid-range - mix of peaceful and dangerous
-            if noise_factor < 0.4:
-                return "peaceful"
-            elif noise_factor < 0.9:
-                return "dangerous"
-            else:
-                return "rare"
+        elif noise_factor < distribution.peaceful + distribution.dangerous:
+            return "dangerous"
         else:
-            # Far from spawn - more dangerous and rare
-            if noise_factor < 0.25:
-                return "peaceful"
-            elif noise_factor < 0.75:
-                return "dangerous"
-            else:
-                return "rare"
+            return "rare"
 
     def _is_spawn_area(self, chunk_x: int, chunk_y: int) -> bool:
         """Check if chunk is in the protected spawn area.
+
+        Uses the spawn_always_loaded_radius from configuration.
 
         Args:
             chunk_x: Chunk X coordinate
             chunk_y: Chunk Y coordinate
 
         Returns:
-            True if chunk is in spawn area (±1 chunks from origin)
+            True if chunk is in spawn area
         """
-        return abs(chunk_x) <= 1 and abs(chunk_y) <= 1
+        spawn_radius = self._config.chunk_loading.spawn_always_loaded_radius
+        return abs(chunk_x) <= spawn_radius and abs(chunk_y) <= spawn_radius
 
     def get_chunk_type(self, chunk_x: int, chunk_y: int) -> ChunkType:
         """Get the chunk type for any coordinate.
@@ -267,7 +298,12 @@ class BiomeGenerator:
         danger = self._get_danger_level(chunk_x, chunk_y)
 
         # Convert to specific chunk type
-        return self._biome_to_chunk_type(biome, danger, chunk_x, chunk_y)
+        chunk_type = self._biome_to_chunk_type(biome, danger, chunk_x, chunk_y)
+
+        if self._config.debug.log_biome_assignments:
+            print(f"Chunk ({chunk_x}, {chunk_y}): biome={biome.value}, danger={danger}, type={chunk_type.value}")
+
+        return chunk_type
 
     def _get_spawn_area_type(self, chunk_x: int, chunk_y: int) -> ChunkType:
         """Get chunk type for spawn area (always peaceful).
@@ -308,7 +344,13 @@ class BiomeGenerator:
         if biome == BiomeCategory.WATER:
             if danger == "rare":
                 return ChunkType.WATER_CURSED_SWAMP
-            return rng.choice([ChunkType.WATER_LAKE, ChunkType.WATER_RIVER])
+            # Use water subtype chances from config
+            roll = rng.random()
+            lake_chance = self._config.water_chunks.lake_chance
+            if roll < lake_chance:
+                return ChunkType.WATER_LAKE
+            else:
+                return ChunkType.WATER_RIVER
 
         elif biome == BiomeCategory.FOREST:
             if danger == "peaceful":
@@ -349,7 +391,7 @@ class BiomeGenerator:
     def should_spawn_dungeon(self, chunk_x: int, chunk_y: int) -> bool:
         """Determine if a dungeon entrance should spawn in this chunk.
 
-        Dungeons spawn with ~8% probability per non-spawn, non-water chunk.
+        Uses configuration for spawn chance and exclusion rules.
 
         Args:
             chunk_x: Chunk X coordinate
@@ -358,19 +400,35 @@ class BiomeGenerator:
         Returns:
             True if dungeon should spawn
         """
-        # No dungeons in spawn area
-        if self._is_spawn_area(chunk_x, chunk_y):
+        # Check if dungeons are enabled
+        if not self._config.dungeon_spawning.enabled:
             return False
 
-        # No dungeons in water chunks
-        if self.is_water_chunk(chunk_x, chunk_y):
+        # Check minimum distance from spawn
+        distance = max(abs(chunk_x), abs(chunk_y))
+        if distance < self._dungeon_min_distance:
             return False
+
+        # No dungeons in spawn area (if configured)
+        if self._config.dungeon_spawning.excluded_in_spawn_area:
+            if self._is_spawn_area(chunk_x, chunk_y):
+                return False
+
+        # No dungeons in water chunks (if configured)
+        if self._config.dungeon_spawning.excluded_in_water:
+            if self.is_water_chunk(chunk_x, chunk_y):
+                return False
 
         # Use deterministic roll based on chunk seed
         roll = self._hash_2d(chunk_x, chunk_y, offset=10000)
 
-        # ~8% chance (roughly 1 per 12 chunks)
-        return roll < 0.083
+        # Check against spawn chance from config
+        should_spawn = roll < self._dungeon_spawn_chance
+
+        if should_spawn and self._config.debug.log_dungeon_spawns:
+            print(f"Dungeon spawning at chunk ({chunk_x}, {chunk_y})")
+
+        return should_spawn
 
     def get_biome_debug_info(self, chunk_x: int, chunk_y: int) -> dict:
         """Get debug information about biome calculation for a chunk.
@@ -385,15 +443,26 @@ class BiomeGenerator:
         biome = self._get_biome_category(chunk_x, chunk_y)
         danger = self._get_danger_level(chunk_x, chunk_y)
         chunk_type = self.get_chunk_type(chunk_x, chunk_y)
+        distance = max(abs(chunk_x), abs(chunk_y))
+
+        # Determine which zone the chunk is in
+        if distance <= self._safe_zone_radius:
+            zone = "safe"
+        elif distance <= self._transition_zone_radius:
+            zone = "transition"
+        else:
+            zone = "outer"
 
         return {
             "chunk_coords": (chunk_x, chunk_y),
             "chunk_seed": self.get_chunk_seed(chunk_x, chunk_y),
             "biome_category": biome.value,
             "danger_level": danger,
+            "danger_zone": zone,
             "chunk_type": chunk_type.value,
             "is_spawn_area": self._is_spawn_area(chunk_x, chunk_y),
             "is_water": self.is_water_chunk(chunk_x, chunk_y),
             "has_dungeon": self.should_spawn_dungeon(chunk_x, chunk_y),
-            "distance_from_spawn": max(abs(chunk_x), abs(chunk_y))
+            "distance_from_spawn": distance,
+            "config_summary": self._config.get_summary()
         }

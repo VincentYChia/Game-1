@@ -1,0 +1,159 @@
+{
+  "_comment": "World Generation Configuration - Controls infinite world generation parameters",
+  "_version": "1.0",
+  "_documentation": {
+    "overview": "This file controls how the infinite world generates chunks, biomes, resources, and dungeons.",
+    "biome_system": "Uses deterministic noise to create organic biome clusters. The same seed always generates the same world.",
+    "danger_zones": "The world is divided into zones based on distance from spawn. Each zone has different danger levels.",
+    "resource_spawning": "Resources spawn based on chunk danger level and biome type.",
+    "customization_tips": [
+      "Increase biome_noise_scale for larger biome regions",
+      "Adjust danger_zone_radius to control safe starting area",
+      "Modify resource_counts to make the world more or less resource-rich",
+      "Set dungeon_spawn_chance higher for more dungeon-focused gameplay"
+    ]
+  },
+
+  "chunk_loading": {
+    "_comment": "Controls how many chunks are loaded around the player",
+    "load_radius": 4,
+    "load_radius_description": "Chunks loaded in each direction from player (4 = 9x9 grid = 81 chunks)",
+    "spawn_always_loaded_radius": 1,
+    "spawn_always_loaded_description": "Spawn area chunks that stay loaded even when player is far away",
+    "chunk_size": 16,
+    "chunk_size_description": "Tiles per chunk side (16 = 256 tiles per chunk). Changing this requires world regeneration."
+  },
+
+  "biome_distribution": {
+    "_comment": "Percentage of each biome type. Must sum to 1.0 (100%)",
+    "water": 0.10,
+    "water_description": "Lakes, rivers, and swamps - 10% default",
+    "forest": 0.50,
+    "forest_description": "Trees, plants, wood resources - 50% default",
+    "cave": 0.40,
+    "cave_description": "Caves and quarries with ores and stones - 40% default"
+  },
+
+  "biome_clustering": {
+    "_comment": "Controls how biomes group together. Higher values = larger contiguous regions",
+    "biome_noise_scale": 4.0,
+    "biome_noise_scale_description": "Base scale for biome boundaries. Range: 2.0 (small clusters) to 10.0 (massive regions)",
+    "biome_noise_octaves": 3,
+    "biome_noise_octaves_description": "Noise complexity layers. More octaves = more detailed boundaries",
+    "danger_noise_scale": 6.0,
+    "danger_noise_scale_description": "Scale for danger level variation within zones"
+  },
+
+  "danger_zones": {
+    "_comment": "Controls how danger increases with distance from spawn. Uses chunk distance (not tile distance).",
+    "safe_zone_radius": 2,
+    "safe_zone_radius_description": "Chunks from spawn that are always peaceful (no dangerous/rare chunks)",
+    "transition_zone_radius": 10,
+    "transition_zone_radius_description": "Chunks where danger gradually increases. Beyond this, danger is at maximum levels.",
+    "max_danger_enabled": true,
+    "max_danger_enabled_description": "If true, danger caps at transition_zone_radius. If false, continues scaling forever.",
+
+    "safe_zone_distribution": {
+      "_comment": "Danger distribution within safe zone (0 to safe_zone_radius chunks)",
+      "peaceful": 1.0,
+      "dangerous": 0.0,
+      "rare": 0.0
+    },
+    "transition_zone_distribution": {
+      "_comment": "Danger distribution in transition zone (safe_zone_radius to transition_zone_radius)",
+      "peaceful": 0.40,
+      "dangerous": 0.50,
+      "rare": 0.10
+    },
+    "outer_zone_distribution": {
+      "_comment": "Danger distribution beyond transition zone (full difficulty)",
+      "peaceful": 0.20,
+      "dangerous": 0.50,
+      "rare": 0.30
+    }
+  },
+
+  "spawn_area": {
+    "_comment": "Controls the safe starting area around world origin (0,0)",
+    "resource_exclusion_radius": 8,
+    "resource_exclusion_description": "Tiles from origin where no resources spawn (keeps spawn area clear)",
+    "crafting_station_area": {
+      "enabled": true,
+      "description": "Fixed crafting stations spawn north of origin"
+    }
+  },
+
+  "resource_spawning": {
+    "_comment": "Controls how many resources spawn per chunk based on danger level",
+    "peaceful_chunks": {
+      "min_resources": 3,
+      "max_resources": 6,
+      "tier_range": [1, 2],
+      "tier_description": "T1-T2 resources (common materials)"
+    },
+    "dangerous_chunks": {
+      "min_resources": 5,
+      "max_resources": 8,
+      "tier_range": [2, 3],
+      "tier_description": "T2-T3 resources (uncommon to rare materials)"
+    },
+    "rare_chunks": {
+      "min_resources": 6,
+      "max_resources": 10,
+      "tier_range": [3, 4],
+      "tier_description": "T3-T4 resources (rare to legendary materials)"
+    }
+  },
+
+  "water_chunks": {
+    "_comment": "Special settings for water-type chunks",
+    "fishing_spots": {
+      "normal_water": {
+        "min_spots": 3,
+        "max_spots": 6,
+        "tier_range": [1, 2]
+      },
+      "cursed_swamp": {
+        "min_spots": 5,
+        "max_spots": 8,
+        "tier_range": [3, 4],
+        "description": "Cursed swamps have higher tier fishing"
+      }
+    },
+    "water_subtypes": {
+      "_comment": "Distribution of water chunk subtypes",
+      "lake_chance": 0.45,
+      "river_chance": 0.45,
+      "cursed_swamp_chance": 0.10,
+      "cursed_swamp_note": "Cursed swamps only appear in rare danger zones"
+    }
+  },
+
+  "dungeon_spawning": {
+    "_comment": "Controls dungeon entrance generation",
+    "enabled": true,
+    "spawn_chance_per_chunk": 0.083,
+    "spawn_chance_description": "Probability of dungeon in eligible chunk (~8% = roughly 1 per 12 chunks)",
+    "excluded_in_spawn_area": true,
+    "excluded_in_water": true,
+    "min_distance_from_spawn": 2,
+    "min_distance_description": "Minimum chunk distance from origin for dungeons"
+  },
+
+  "chunk_unloading": {
+    "_comment": "Controls chunk memory management for infinite worlds",
+    "enabled": true,
+    "save_modified_chunks": true,
+    "save_modified_description": "Save chunks with harvested resources to separate files",
+    "track_unload_time": true,
+    "track_unload_description": "Track when chunks unload for resource respawn calculations"
+  },
+
+  "debug": {
+    "_comment": "Debug and development settings",
+    "log_chunk_generation": false,
+    "log_biome_assignments": false,
+    "log_dungeon_spawns": true,
+    "show_seed_on_f1": true
+  }
+}

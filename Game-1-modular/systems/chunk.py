@@ -10,6 +10,7 @@ from typing import Dict, List, Set, Tuple, Optional, ClassVar, TYPE_CHECKING
 
 from data.models import Position, TileType, WorldTile, ChunkType, ResourceType, RESOURCE_TIERS
 from data.databases.resource_node_db import ResourceNodeDatabase
+from data.databases.world_generation_db import WorldGenerationConfig
 from systems.natural_resource import NaturalResource
 from core.config import Config
 
@@ -249,16 +250,19 @@ class Chunk:
         start_x = self.chunk_x * Config.CHUNK_SIZE
         start_y = self.chunk_y * Config.CHUNK_SIZE
 
+        # Get resource spawning config from JSON
+        world_config = WorldGenerationConfig.get_instance()
+
         # Determine resource count and tier range based on chunk danger level
         if "peaceful" in self.chunk_type.value:
-            resource_count = self._rng.randint(3, 6)
-            tier_range = (1, 2)
+            res_config = world_config.resource_spawning.peaceful_chunks
         elif "dangerous" in self.chunk_type.value:
-            resource_count = self._rng.randint(5, 8)
-            tier_range = (2, 3)
+            res_config = world_config.resource_spawning.dangerous_chunks
         else:  # rare chunks
-            resource_count = self._rng.randint(6, 10)
-            tier_range = (3, 4)
+            res_config = world_config.resource_spawning.rare_chunks
+
+        resource_count = self._rng.randint(res_config.min_resources, res_config.max_resources)
+        tier_range = res_config.tier_range
 
         # Track occupied positions to prevent overlap
         occupied_positions: Set[Tuple[int, int]] = set()
@@ -306,13 +310,17 @@ class Chunk:
         Returns:
             Valid Position or None if no position found
         """
+        # Get spawn area exclusion radius from JSON config
+        world_config = WorldGenerationConfig.get_instance()
+        exclusion_radius = world_config.spawn_area.resource_exclusion_radius
+
         for _ in range(10):  # Up to 10 attempts
             candidate_x = start_x + self._rng.randint(1, Config.CHUNK_SIZE - 2)
             candidate_y = start_y + self._rng.randint(1, Config.CHUNK_SIZE - 2)
 
-            # Check safe zone around origin (0, 0)
+            # Check safe zone around origin (0, 0) using config value
             dist_to_origin = math.sqrt(candidate_x ** 2 + candidate_y ** 2)
-            if dist_to_origin < Config.SAFE_ZONE_RADIUS:
+            if dist_to_origin < exclusion_radius:
                 continue
 
             # Check collision with existing resources
@@ -374,14 +382,21 @@ class Chunk:
             if tile.tile_type == TileType.WATER
         ]
 
+        # Get water chunk config from JSON
+        world_config = WorldGenerationConfig.get_instance()
+
         # Determine tier based on water type
         is_swamp = self.chunk_type == ChunkType.WATER_CURSED_SWAMP
         if is_swamp:
-            tier_range = (3, 4)
-            num_spots = min(self._rng.randint(5, 8), len(water_tiles))
+            fishing_config = world_config.water_chunks.cursed_swamp
         else:
-            tier_range = (1, 2)
-            num_spots = min(self._rng.randint(3, 6), len(water_tiles))
+            fishing_config = world_config.water_chunks.normal_water
+
+        tier_range = fishing_config.tier_range
+        num_spots = min(
+            self._rng.randint(fishing_config.min_spots, fishing_config.max_spots),
+            len(water_tiles)
+        )
 
         if water_tiles and num_spots > 0:
             spots = self._rng.sample(water_tiles, num_spots)

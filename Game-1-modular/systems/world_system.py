@@ -18,6 +18,7 @@ from data.models.world import DUNGEON_CONFIG
 from systems.natural_resource import NaturalResource
 from systems.chunk import Chunk
 from systems.biome_generator import BiomeGenerator
+from data.databases.world_generation_db import WorldGenerationConfig
 from core.config import Config
 from core.paths import get_save_path
 
@@ -74,7 +75,8 @@ class WorldSystem:
 
     def _load_initial_chunks(self):
         """Load chunks around spawn that should always be loaded."""
-        spawn_radius = Config.SPAWN_ALWAYS_LOADED
+        world_config = WorldGenerationConfig.get_instance()
+        spawn_radius = world_config.chunk_loading.spawn_always_loaded_radius
 
         for cx in range(-spawn_radius, spawn_radius + 1):
             for cy in range(-spawn_radius, spawn_radius + 1):
@@ -198,7 +200,8 @@ class WorldSystem:
     def update_loaded_chunks(self, player_pos: Position):
         """Update which chunks are loaded based on player position.
 
-        Loads chunks within CHUNK_LOAD_RADIUS of player and unloads distant ones.
+        Loads chunks within load_radius of player and unloads distant ones.
+        Radius values are read from world_generation.JSON configuration.
 
         Args:
             player_pos: Current player position
@@ -206,8 +209,10 @@ class WorldSystem:
         player_chunk_x = int(player_pos.x) // Config.CHUNK_SIZE
         player_chunk_y = int(player_pos.y) // Config.CHUNK_SIZE
 
-        load_radius = Config.CHUNK_LOAD_RADIUS
-        spawn_radius = Config.SPAWN_ALWAYS_LOADED
+        # Get chunk loading config from JSON
+        world_config = WorldGenerationConfig.get_instance()
+        load_radius = world_config.chunk_loading.load_radius
+        spawn_radius = world_config.chunk_loading.spawn_always_loaded_radius
 
         # Determine which chunks should be loaded
         should_be_loaded: Set[Tuple[int, int]] = set()
