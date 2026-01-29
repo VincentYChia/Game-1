@@ -1695,7 +1695,15 @@ class Renderer:
         self.screen.blit(bg_surface, bg_rect.topleft)
         self.screen.blit(text_surf, (14, 11))
 
-    def render_ui(self, character: Character, mouse_pos: Tuple[int, int]):
+    def render_ui(self, character: Character, mouse_pos: Tuple[int, int],
+                  chunk_info: Optional[Dict[str, Any]] = None):
+        """Render the character info UI panel.
+
+        Args:
+            character: Player character
+            mouse_pos: Current mouse position
+            chunk_info: Optional dict with 'name', 'danger_level' for current chunk
+        """
         ui_rect = pygame.Rect(Config.VIEWPORT_WIDTH, 0, Config.UI_PANEL_WIDTH, Config.VIEWPORT_HEIGHT)
         pygame.draw.rect(self.screen, Config.COLOR_UI_BG, ui_rect)
 
@@ -1730,7 +1738,27 @@ class Renderer:
 
         self.render_text(f"Position: ({character.position.x:.1f}, {character.position.y:.1f})",
                          Config.VIEWPORT_WIDTH + 20, y, small=True)
-        y += 25
+        y += 20
+
+        # Display current chunk name with color based on danger level
+        if chunk_info:
+            chunk_name = chunk_info.get('name', 'Unknown')
+            danger_level = chunk_info.get('danger_level', 'peaceful')
+
+            # Color based on danger level
+            chunk_colors = {
+                'peaceful': (100, 200, 100),   # Green - safe
+                'dangerous': (255, 165, 0),    # Orange - caution
+                'rare': (180, 100, 255),       # Purple - rare/special
+                'water': (100, 180, 255),      # Blue - water
+            }
+            chunk_color = chunk_colors.get(danger_level, (180, 180, 180))
+
+            chunk_surf = self.small_font.render(f"Chunk: {chunk_name}", True, chunk_color)
+            self.screen.blit(chunk_surf, (Config.VIEWPORT_WIDTH + 20, y))
+            y += 25
+        else:
+            y += 5
 
         lvl_text = f"Level: {character.leveling.level}"
         if character.leveling.unallocated_stat_points > 0:

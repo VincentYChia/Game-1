@@ -1,20 +1,17 @@
 {
   "metadata": {
-    "version": "3.0",
+    "version": "3.1",
     "description": "Dungeon system configuration - each dungeon type is fully self-contained",
     "notes": [
       "Add new dungeons by creating new entries in the 'dungeons' object",
       "spawnWeight is dilutive: probability = weight / sum(all_weights)",
       "dropChances are dilutive: normalized to sum to 1.0 automatically",
-      "tierTables allows multiple tier loot tables per dungeon"
+      "tierTables allows multiple tier loot tables per dungeon",
+      "ENTRANCE PLACEMENT is configured in world_generation.JSON (dungeon_spawning section)"
     ]
   },
 
-  "entranceGeneration": {
-    "spawnChance": 0.08,
-    "minDistanceFromSpawn": 10,
-    "comment": "spawnChance is global per-chunk chance, ~1 dungeon per 12 chunks"
-  },
+  "_entranceGeneration_note": "Dungeon entrance placement (spawn chance, min distance) is now in world_generation.JSON. This file defines dungeon CONTENT only.",
 
   "dungeons": {
     "common": {

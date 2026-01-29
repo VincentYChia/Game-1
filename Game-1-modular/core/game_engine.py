@@ -5114,6 +5114,66 @@ class GameEngine:
         phase, _ = self.get_time_of_day()
         return phase == "night"
 
+    def _get_current_chunk_info(self) -> Optional[dict]:
+        """Get information about the chunk the player is currently in.
+
+        Returns:
+            Dict with 'name' and 'danger_level', or None if unavailable
+        """
+        if not self.world or not self.character:
+            return None
+
+        # Calculate chunk coordinates from player position
+        chunk_x = int(self.character.position.x) // Config.CHUNK_SIZE
+        chunk_y = int(self.character.position.y) // Config.CHUNK_SIZE
+
+        # Handle negative coordinates correctly
+        if self.character.position.x < 0 and self.character.position.x % Config.CHUNK_SIZE != 0:
+            chunk_x -= 1
+        if self.character.position.y < 0 and self.character.position.y % Config.CHUNK_SIZE != 0:
+            chunk_y -= 1
+
+        # Get chunk from world system
+        chunk = self.world.loaded_chunks.get((chunk_x, chunk_y))
+        if not chunk:
+            return None
+
+        # Map chunk type to display name and danger level
+        chunk_type_value = chunk.chunk_type.value
+
+        # Display names for chunk types (more readable)
+        chunk_display_names = {
+            'peaceful_forest': 'Peaceful Forest',
+            'peaceful_quarry': 'Peaceful Quarry',
+            'peaceful_cave': 'Peaceful Cave',
+            'dangerous_forest': 'Dangerous Forest',
+            'dangerous_quarry': 'Dangerous Quarry',
+            'dangerous_cave': 'Dangerous Cave',
+            'rare_hidden_forest': 'Ancient Heartwood',
+            'rare_ancient_quarry': 'Primordial Vein',
+            'rare_deep_cave': 'Paradox Hollow',
+            'water_lake': 'Tranquil Lake',
+            'water_river': 'Flowing Stream',
+            'water_cursed_swamp': 'Cursed Swamp',
+        }
+
+        # Determine danger level from chunk type
+        if 'peaceful' in chunk_type_value:
+            danger_level = 'peaceful'
+        elif 'dangerous' in chunk_type_value:
+            danger_level = 'dangerous'
+        elif 'rare' in chunk_type_value or 'cursed' in chunk_type_value:
+            danger_level = 'rare'
+        elif 'water' in chunk_type_value:
+            danger_level = 'water'
+        else:
+            danger_level = 'peaceful'
+
+        return {
+            'name': chunk_display_names.get(chunk_type_value, chunk_type_value.replace('_', ' ').title()),
+            'danger_level': danger_level
+        }
+
     # =========================================================================
     # DUNGEON SYSTEM METHODS
     # =========================================================================
@@ -5602,7 +5662,9 @@ class GameEngine:
         time_phase, phase_progress = self.get_time_of_day()
         self.renderer.render_day_night_overlay(time_phase, phase_progress)
 
-        self.renderer.render_ui(self.character, self.mouse_pos)
+        # Get current chunk info for display
+        chunk_info = self._get_current_chunk_info()
+        self.renderer.render_ui(self.character, self.mouse_pos, chunk_info)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
 
         # Render skill hotbar at bottom center (over viewport)

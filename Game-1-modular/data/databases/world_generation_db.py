@@ -286,6 +286,19 @@ class WorldGenerationConfig:
             wc = data["water_chunks"]
             fishing = wc.get("fishing_spots", {})
             subtypes = wc.get("water_subtypes", {})
+
+            # Parse water subtype chances with dilutive normalization
+            lake_chance = subtypes.get("lake_chance", 0.45)
+            river_chance = subtypes.get("river_chance", 0.45)
+            cursed_swamp_chance = subtypes.get("cursed_swamp_chance", 0.10)
+
+            # Normalize if sum != 1.0 (dilutive approach)
+            total_water = lake_chance + river_chance + cursed_swamp_chance
+            if abs(total_water - 1.0) > 0.001 and total_water > 0:
+                lake_chance /= total_water
+                river_chance /= total_water
+                cursed_swamp_chance /= total_water
+
             self.water_chunks = WaterChunksConfig(
                 normal_water=self._parse_fishing_spots(
                     fishing.get("normal_water", {}), FishingSpotConfig(3, 6, (1, 2))
@@ -293,9 +306,9 @@ class WorldGenerationConfig:
                 cursed_swamp=self._parse_fishing_spots(
                     fishing.get("cursed_swamp", {}), FishingSpotConfig(5, 8, (3, 4))
                 ),
-                lake_chance=subtypes.get("lake_chance", 0.45),
-                river_chance=subtypes.get("river_chance", 0.45),
-                cursed_swamp_chance=subtypes.get("cursed_swamp_chance", 0.10)
+                lake_chance=lake_chance,
+                river_chance=river_chance,
+                cursed_swamp_chance=cursed_swamp_chance
             )
 
         # Dungeon spawning
@@ -329,13 +342,29 @@ class WorldGenerationConfig:
             )
 
     def _parse_danger_distribution(self, data: Dict[str, Any], default: DangerDistribution) -> DangerDistribution:
-        """Parse a danger distribution from JSON."""
+        """Parse a danger distribution from JSON with dilutive normalization.
+
+        If values don't sum to 1.0, they are normalized proportionally.
+        E.g., peaceful=6, dangerous=3, rare=1 becomes 0.6, 0.3, 0.1
+        """
         if not data:
             return default
+
+        peaceful = data.get("peaceful", default.peaceful)
+        dangerous = data.get("dangerous", default.dangerous)
+        rare = data.get("rare", default.rare)
+
+        # Normalize if sum != 1.0 (dilutive approach)
+        total = peaceful + dangerous + rare
+        if abs(total - 1.0) > 0.001 and total > 0:
+            peaceful /= total
+            dangerous /= total
+            rare /= total
+
         return DangerDistribution(
-            peaceful=data.get("peaceful", default.peaceful),
-            dangerous=data.get("dangerous", default.dangerous),
-            rare=data.get("rare", default.rare)
+            peaceful=peaceful,
+            dangerous=dangerous,
+            rare=rare
         )
 
     def _parse_resource_spawn(self, data: Dict[str, Any], default: ResourceSpawnConfig) -> ResourceSpawnConfig:
