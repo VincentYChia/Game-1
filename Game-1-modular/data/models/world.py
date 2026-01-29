@@ -401,3 +401,63 @@ class PlacedEntity:
             if effect.is_expired():
                 effect.on_remove(self)
                 self.status_effects.remove(effect)
+
+
+class DungeonRarity(Enum):
+    """Rarity tiers for dungeons - determines difficulty and rewards"""
+    COMMON = "common"
+    UNCOMMON = "uncommon"
+    RARE = "rare"
+    EPIC = "epic"
+    LEGENDARY = "legendary"
+    UNIQUE = "unique"
+
+
+# Hardcoded fallback dungeon configuration (JSON takes priority)
+# Used when dungeon-config-1.JSON is not available
+DUNGEON_CONFIG = {
+    DungeonRarity.COMMON: {
+        "spawn_weight": 50,
+        "mob_count": 20,
+        "tier_weights": {1: 80, 2: 20},
+        "display_name": "Common Dungeon"
+    },
+    DungeonRarity.UNCOMMON: {
+        "spawn_weight": 25,
+        "mob_count": 30,
+        "tier_weights": {1: 50, 2: 40, 3: 10},
+        "display_name": "Uncommon Dungeon"
+    },
+    DungeonRarity.RARE: {
+        "spawn_weight": 15,
+        "mob_count": 40,
+        "tier_weights": {2: 60, 3: 35, 4: 5},
+        "display_name": "Rare Dungeon"
+    },
+    DungeonRarity.EPIC: {
+        "spawn_weight": 7,
+        "mob_count": 50,
+        "tier_weights": {2: 20, 3: 60, 4: 20},
+        "display_name": "Epic Dungeon"
+    },
+    DungeonRarity.LEGENDARY: {
+        "spawn_weight": 2,
+        "mob_count": 50,
+        "tier_weights": {3: 40, 4: 60},
+        "display_name": "Legendary Dungeon"
+    },
+    DungeonRarity.UNIQUE: {
+        "spawn_weight": 1,
+        "mob_count": 50,
+        "tier_weights": {3: 10, 4: 90},
+        "display_name": "Unique Dungeon"
+    }
+}
+
+
+@dataclass
+class DungeonEntrance:
+    """A dungeon entrance in the world"""
+    position: Position
+    rarity: DungeonRarity
+    discovered: bool = False  # Whether player has found this entrance
