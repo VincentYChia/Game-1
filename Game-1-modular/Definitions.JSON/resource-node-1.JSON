@@ -19,13 +19,9 @@
       "requiredTool": "axe",
       "baseHealth": 100,
       "drops": [
-        {
-          "materialId": "oak_log",
-          "quantity": "many",
-          "chance": "guaranteed"
-        }
+        { "materialId": "oak_log", "quantity": "many", "chance": "guaranteed" }
       ],
-      "respawnTime": "normal"
+      "respawnTime": "quick"
     },
     {
       "metadata": {
@@ -39,13 +35,9 @@
       "requiredTool": "axe",
       "baseHealth": 100,
       "drops": [
-        {
-          "materialId": "pine_log",
-          "quantity": "many",
-          "chance": "guaranteed"
-        }
+        { "materialId": "pine_log", "quantity": "many", "chance": "guaranteed" }
       ],
-      "respawnTime": "normal"
+      "respawnTime": "quick"
     },
     {
       "metadata": {
@@ -59,13 +51,9 @@
       "requiredTool": "axe",
       "baseHealth": 100,
       "drops": [
-        {
-          "materialId": "ash_log",
-          "quantity": "several",
-          "chance": "guaranteed"
-        }
+        { "materialId": "ash_log", "quantity": "several", "chance": "guaranteed" }
       ],
-      "respawnTime": "slow"
+      "respawnTime": "quick"
     },
     {
       "metadata": {
@@ -79,13 +67,9 @@
       "requiredTool": "axe",
       "baseHealth": 200,
       "drops": [
-        {
-          "materialId": "birch_log",
-          "quantity": "several",
-          "chance": "guaranteed"
-        }
+        { "materialId": "birch_log", "quantity": "several", "chance": "guaranteed" }
       ],
-      "respawnTime": "slow"
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -99,13 +83,9 @@
       "requiredTool": "axe",
       "baseHealth": 200,
       "drops": [
-        {
-          "materialId": "maple_log",
-          "quantity": "several",
-          "chance": "high"
-        }
+        { "materialId": "maple_log", "quantity": "several", "chance": "high" }
       ],
-      "respawnTime": "very_slow"
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -119,13 +99,9 @@
       "requiredTool": "axe",
       "baseHealth": 400,
       "drops": [
-        {
-          "materialId": "ironwood_log",
-          "quantity": "few",
-          "chance": "high"
-        }
+        { "materialId": "ironwood_log", "quantity": "few", "chance": "high" }
       ],
-      "respawnTime": "very_slow"
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -139,13 +115,9 @@
       "requiredTool": "axe",
       "baseHealth": 400,
       "drops": [
-        {
-          "materialId": "ebony_log",
-          "quantity": "few",
-          "chance": "moderate"
-        }
+        { "materialId": "ebony_log", "quantity": "few", "chance": "moderate" }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -159,13 +131,9 @@
       "requiredTool": "axe",
       "baseHealth": 800,
       "drops": [
-        {
-          "materialId": "worldtree_log",
-          "quantity": "few",
-          "chance": "low"
-        }
+        { "materialId": "worldtree_log", "quantity": "few", "chance": "low" }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     },
     {
       "metadata": {
@@ -179,13 +147,9 @@
       "requiredTool": "pickaxe",
       "baseHealth": 100,
       "drops": [
-        {
-          "materialId": "copper_ore",
-          "quantity": "many",
-          "chance": "guaranteed"
-        }
+        { "materialId": "copper_ore", "quantity": "many", "chance": "guaranteed" }
       ],
-      "respawnTime": "normal"
+      "respawnTime": "quick"
     },
     {
       "metadata": {
@@ -199,13 +163,9 @@
       "requiredTool": "pickaxe",
       "baseHealth": 100,
       "drops": [
-        {
-          "materialId": "iron_ore",
-          "quantity": "many",
-          "chance": "guaranteed"
-        }
+        { "materialId": "iron_ore", "quantity": "many", "chance": "guaranteed" }
       ],
-      "respawnTime": "normal"
+      "respawnTime": "quick"
     },
     {
       "metadata": {
@@ -219,13 +179,9 @@
       "requiredTool": "pickaxe",
       "baseHealth": 100,
       "drops": [
-        {
-          "materialId": "tin_ore",
-          "quantity": "several",
-          "chance": "high"
-        }
+        { "materialId": "tin_ore", "quantity": "several", "chance": "high" }
       ],
-      "respawnTime": "normal"
+      "respawnTime": "quick"
     },
     {
       "metadata": {
@@ -239,13 +195,9 @@
       "requiredTool": "pickaxe",
       "baseHealth": 200,
       "drops": [
-        {
-          "materialId": "steel_ore",
-          "quantity": "several",
-          "chance": "guaranteed"
-        }
+        { "materialId": "steel_ore", "quantity": "several", "chance": "guaranteed" }
       ],
-      "respawnTime": "slow"
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -259,13 +211,9 @@
       "requiredTool": "pickaxe",
       "baseHealth": 200,
       "drops": [
-        {
-          "materialId": "mithril_ore",
-          "quantity": "few",
-          "chance": "high"
-        }
+        { "materialId": "mithril_ore", "quantity": "few", "chance": "high" }
       ],
-      "respawnTime": "slow"
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -279,13 +227,9 @@
       "requiredTool": "pickaxe",
       "baseHealth": 400,
       "drops": [
-        {
-          "materialId": "adamantine_ore",
-          "quantity": "few",
-          "chance": "moderate"
-        }
+        { "materialId": "adamantine_ore", "quantity": "few", "chance": "moderate" }
       ],
-      "respawnTime": "very_slow"
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -299,13 +243,9 @@
       "requiredTool": "pickaxe",
       "baseHealth": 400,
       "drops": [
-        {
-          "materialId": "orichalcum_ore",
-          "quantity": "few",
-          "chance": "low"
-        }
+        { "materialId": "orichalcum_ore", "quantity": "few", "chance": "low" }
       ],
-      "respawnTime": "very_slow"
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -319,13 +259,9 @@
       "requiredTool": "pickaxe",
       "baseHealth": 800,
       "drops": [
-        {
-          "materialId": "etherion_ore",
-          "quantity": "few",
-          "chance": "improbable"
-        }
+        { "materialId": "etherion_ore", "quantity": "few", "chance": "improbable" }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     },
     {
       "metadata": {
@@ -339,18 +275,10 @@
       "requiredTool": "pickaxe",
       "baseHealth": 100,
       "drops": [
-        {
-          "materialId": "limestone",
-          "quantity": "abundant",
-          "chance": "guaranteed"
-        },
-        {
-          "materialId": "fire_crystal",
-          "quantity": "few",
-          "chance": "low"
-        }
+        { "materialId": "limestone", "quantity": "abundant", "chance": "guaranteed" },
+        { "materialId": "fire_crystal", "quantity": "few", "chance": "low" }
       ],
-      "respawnTime": "normal"
+      "respawnTime": "quick"
     },
     {
       "metadata": {
@@ -364,18 +292,10 @@
       "requiredTool": "pickaxe",
       "baseHealth": 100,
       "drops": [
-        {
-          "materialId": "granite",
-          "quantity": "abundant",
-          "chance": "guaranteed"
-        },
-        {
-          "materialId": "water_crystal",
-          "quantity": "few",
-          "chance": "low"
-        }
+        { "materialId": "granite", "quantity": "abundant", "chance": "guaranteed" },
+        { "materialId": "water_crystal", "quantity": "few", "chance": "low" }
       ],
-      "respawnTime": "normal"
+      "respawnTime": "quick"
     },
     {
       "metadata": {
@@ -389,18 +309,10 @@
       "requiredTool": "pickaxe",
       "baseHealth": 100,
       "drops": [
-        {
-          "materialId": "shale",
-          "quantity": "many",
-          "chance": "guaranteed"
-        },
-        {
-          "materialId": "earth_crystal",
-          "quantity": "few",
-          "chance": "rare"
-        }
+        { "materialId": "shale", "quantity": "many", "chance": "guaranteed" },
+        { "materialId": "earth_crystal", "quantity": "few", "chance": "rare" }
       ],
-      "respawnTime": "normal"
+      "respawnTime": "quick"
     },
     {
       "metadata": {
@@ -414,18 +326,10 @@
       "requiredTool": "pickaxe",
       "baseHealth": 200,
       "drops": [
-        {
-          "materialId": "basalt",
-          "quantity": "several",
-          "chance": "guaranteed"
-        },
-        {
-          "materialId": "fire_crystal",
-          "quantity": "few",
-          "chance": "moderate"
-        }
+        { "materialId": "basalt", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "fire_crystal", "quantity": "few", "chance": "moderate" }
       ],
-      "respawnTime": "slow"
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -439,18 +343,10 @@
       "requiredTool": "pickaxe",
       "baseHealth": 200,
       "drops": [
-        {
-          "materialId": "marble",
-          "quantity": "several",
-          "chance": "guaranteed"
-        },
-        {
-          "materialId": "light_gem",
-          "quantity": "few",
-          "chance": "low"
-        }
+        { "materialId": "marble", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "light_gem", "quantity": "few", "chance": "low" }
       ],
-      "respawnTime": "slow"
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -464,18 +360,10 @@
       "requiredTool": "pickaxe",
       "baseHealth": 200,
       "drops": [
-        {
-          "materialId": "crystal_quartz",
-          "quantity": "several",
-          "chance": "high"
-        },
-        {
-          "materialId": "lightning_shard",
-          "quantity": "few",
-          "chance": "rare"
-        }
+        { "materialId": "crystal_quartz", "quantity": "several", "chance": "high" },
+        { "materialId": "lightning_shard", "quantity": "few", "chance": "rare" }
       ],
-      "respawnTime": "slow"
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -489,18 +377,10 @@
       "requiredTool": "pickaxe",
       "baseHealth": 400,
       "drops": [
-        {
-          "materialId": "obsidian",
-          "quantity": "several",
-          "chance": "guaranteed"
-        },
-        {
-          "materialId": "phoenix_ash",
-          "quantity": "few",
-          "chance": "rare"
-        }
+        { "materialId": "obsidian", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "phoenix_ash", "quantity": "few", "chance": "rare" }
       ],
-      "respawnTime": "very_slow"
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -514,18 +394,10 @@
       "requiredTool": "pickaxe",
       "baseHealth": 400,
       "drops": [
-        {
-          "materialId": "voidstone",
-          "quantity": "few",
-          "chance": "moderate"
-        },
-        {
-          "materialId": "void_essence",
-          "quantity": "few",
-          "chance": "low"
-        }
+        { "materialId": "voidstone", "quantity": "few", "chance": "moderate" },
+        { "materialId": "void_essence", "quantity": "few", "chance": "low" }
       ],
-      "respawnTime": "very_slow"
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -539,18 +411,10 @@
       "requiredTool": "pickaxe",
       "baseHealth": 400,
       "drops": [
-        {
-          "materialId": "diamond",
-          "quantity": "few",
-          "chance": "low"
-        },
-        {
-          "materialId": "storm_heart",
-          "quantity": "few",
-          "chance": "improbable"
-        }
+        { "materialId": "diamond", "quantity": "few", "chance": "low" },
+        { "materialId": "storm_heart", "quantity": "few", "chance": "improbable" }
       ],
-      "respawnTime": "very_slow"
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -564,13 +428,9 @@
       "requiredTool": "pickaxe",
       "baseHealth": 800,
       "drops": [
-        {
-          "materialId": "eternity_stone",
-          "quantity": "few",
-          "chance": "improbable"
-        }
+        { "materialId": "eternity_stone", "quantity": "few", "chance": "improbable" }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     },
     {
       "metadata": {
@@ -584,13 +444,9 @@
       "requiredTool": "pickaxe",
       "baseHealth": 800,
       "drops": [
-        {
-          "materialId": "primordial_crystal",
-          "quantity": "few",
-          "chance": "improbable"
-        }
+        { "materialId": "primordial_crystal", "quantity": "few", "chance": "improbable" }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     },
     {
       "metadata": {
@@ -604,18 +460,10 @@
       "requiredTool": "pickaxe",
       "baseHealth": 800,
       "drops": [
-        {
-          "materialId": "genesis_lattice",
-          "quantity": "few",
-          "chance": "improbable"
-        },
-        {
-          "materialId": "chaos_matrix",
-          "quantity": "few",
-          "chance": "improbable"
-        }
+        { "materialId": "genesis_lattice", "quantity": "few", "chance": "improbable" },
+        { "materialId": "chaos_matrix", "quantity": "few", "chance": "improbable" }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   ]
 }
