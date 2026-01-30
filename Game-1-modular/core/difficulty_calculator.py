@@ -83,13 +83,17 @@ SMITHING_PARAMS = {
     'required_hits': (3, 12),
 
     # Target zone width (pixels) - where 70+ score is achieved
+    # Note: This is now less important as scoring uses binned system
     'target_width': (100, 30),
 
     # Perfect zone width (pixels) - where 100 score is achieved
+    # Note: This is now less important as scoring uses binned system
     'perfect_width': (50, 10),
 
     # Hammer oscillation speed (pixels/frame) - higher = faster = harder to time
-    'hammer_speed': (2.0, 7.0),
+    # Updated: ~50% faster average, ~2x max speed
+    # Easy: 3.0 (was 2.0), Hard: 14.0 (was 7.0)
+    'hammer_speed': (3.0, 14.0),
 }
 
 

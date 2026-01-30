@@ -2698,47 +2698,54 @@ class GameEngine:
 
         # Apply INT stat difficulty reduction (-2% per INT point)
         # This affects gameplay parameters but NOT reward calculation (difficulty_points preserved)
-        # INT slows down ALL minigames (except adornments) - makes timing easier
+        # INT slows down minigames (except adornments) - makes timing easier
         int_stat = self.character.stats.intelligence
         if int_stat > 0:
             int_reduction = int_stat * 0.02  # -2% per INT point
-            print(f"🧠 INT stat: {int_stat} (-{int_reduction*100:.0f}% minigame speed)")
+            print(f"🧠 INT stat: {int_stat} (-{int_reduction*100:.0f}% minigame difficulty)")
 
-            # SMITHING: Slower hammer, slower temp decay, wider zones
-            if hasattr(minigame, 'HAMMER_SPEED'):
-                # Slower hammer = easier timing
-                minigame.HAMMER_SPEED = minigame.HAMMER_SPEED * (1 - int_reduction)
-                print(f"   Hammer speed: {minigame.HAMMER_SPEED:.2f}")
+            # Determine minigame type for targeted modifications
+            minigame_type = recipe.station_type if hasattr(recipe, 'station_type') else None
 
-            if hasattr(minigame, 'TEMP_DECAY'):
-                # Slower decay = easier to maintain temperature
-                minigame.TEMP_DECAY = minigame.TEMP_DECAY * (1 - int_reduction * 0.5)
+            # SMITHING: Slower hammer, slower temp decay
+            if minigame_type == 'smithing':
+                if hasattr(minigame, 'HAMMER_SPEED'):
+                    # Slower hammer = easier timing
+                    minigame.HAMMER_SPEED = minigame.HAMMER_SPEED * (1 - int_reduction)
+                    print(f"   Hammer speed: {minigame.HAMMER_SPEED:.2f}")
 
-            if hasattr(minigame, 'TARGET_WIDTH'):
-                # Wider target = easier (smithing)
-                minigame.TARGET_WIDTH = int(minigame.TARGET_WIDTH * (1 + int_reduction * 0.5))
+                if hasattr(minigame, 'TEMP_DECAY'):
+                    # Slower decay = easier to maintain temperature
+                    minigame.TEMP_DECAY = minigame.TEMP_DECAY * (1 - int_reduction * 0.5)
+                    print(f"   Temp decay: {minigame.TEMP_DECAY:.2f}")
 
-            if hasattr(minigame, 'PERFECT_WIDTH'):
-                # Wider perfect zone = easier (smithing)
-                minigame.PERFECT_WIDTH = int(minigame.PERFECT_WIDTH * (1 + int_reduction * 0.5))
+                if hasattr(minigame, 'time_limit'):
+                    minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
+                    print(f"   Time limit: {minigame.time_limit}s")
 
-            # REFINING: Slower spinner rotation
-            if hasattr(minigame, 'rotation_speed'):
-                # Slower rotation = easier timing
-                minigame.rotation_speed = minigame.rotation_speed * (1 - int_reduction)
-                print(f"   Rotation speed: {minigame.rotation_speed:.2f}")
+            # REFINING: More time only (don't touch rotation_speed or timing_window)
+            # Modifying rotation_speed shrinks the visual window which is confusing
+            elif minigame_type == 'refining':
+                if hasattr(minigame, 'time_limit'):
+                    minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
+                    print(f"   Time limit: {minigame.time_limit}s")
 
             # ALCHEMY: Longer reaction windows (via speed_bonus)
-            if hasattr(minigame, 'speed_bonus'):
-                # Higher speed_bonus = longer reaction windows = easier
-                minigame.speed_bonus = minigame.speed_bonus + int_reduction
-                print(f"   Reaction bonus: +{minigame.speed_bonus*100:.0f}%")
+            elif minigame_type == 'alchemy':
+                if hasattr(minigame, 'speed_bonus'):
+                    # Higher speed_bonus = longer reaction windows = easier
+                    minigame.speed_bonus = minigame.speed_bonus + int_reduction
+                    print(f"   Reaction bonus: +{minigame.speed_bonus*100:.0f}%")
 
-            # ENGINEERING: More time (already applies via time_limit)
-            if hasattr(minigame, 'time_limit'):
-                # More time = easier
-                minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
-                print(f"   Time limit: {minigame.time_limit}s")
+                if hasattr(minigame, 'time_limit'):
+                    minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
+                    print(f"   Time limit: {minigame.time_limit}s")
+
+            # ENGINEERING: More time only
+            elif minigame_type == 'engineering':
+                if hasattr(minigame, 'time_limit'):
+                    minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
+                    print(f"   Time limit: {minigame.time_limit}s")
 
         # Start minigame
         minigame.start()
@@ -6930,21 +6937,25 @@ class GameEngine:
         if state['hammer_scores']:
             for i, score in enumerate(state['hammer_scores'][-6:]):
                 y_pos = quality_panel_y + 40 + i * 25
-                if score >= 90:
-                    color = (255, 215, 100)
-                    quality = "PERFECT"
+
+                # Color-coded by score range (new: show actual score)
+                if score >= 100:
+                    color = (255, 215, 100)      # Gold for perfect
                     bar_color = (255, 200, 50)
+                elif score >= 90:
+                    color = (200, 255, 100)      # Light green for excellent
+                    bar_color = (180, 230, 80)
                 elif score >= 70:
-                    color = (100, 255, 100)
-                    quality = "Good"
+                    color = (100, 255, 100)      # Green for good
                     bar_color = (100, 200, 80)
                 elif score >= 50:
-                    color = (200, 200, 100)
-                    quality = "Fair"
+                    color = (200, 200, 100)      # Yellow for fair
                     bar_color = (180, 180, 80)
+                elif score >= 30:
+                    color = (255, 150, 100)      # Orange for poor
+                    bar_color = (200, 120, 60)
                 else:
-                    color = (150, 100, 100)
-                    quality = "Miss"
+                    color = (150, 100, 100)      # Red for miss
                     bar_color = (150, 80, 80)
 
                 # Score bar
@@ -6952,9 +6963,9 @@ class GameEngine:
                 pygame.draw.rect(surf, (50, 45, 40), (quality_panel_x + 15, y_pos, 100, 12), border_radius=3)
                 pygame.draw.rect(surf, bar_color, (quality_panel_x + 15, y_pos, bar_width, 12), border_radius=3)
 
-                # Quality text
-                qual_text = self.renderer.tiny_font.render(quality, True, color)
-                surf.blit(qual_text, (quality_panel_x + 125, y_pos - 2))
+                # Show actual score number instead of quality label
+                score_text = self.renderer.tiny_font.render(f"{score}", True, color)
+                surf.blit(score_text, (quality_panel_x + 125, y_pos - 2))
 
         # Result (if completed)
         if state['result']:

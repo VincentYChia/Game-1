@@ -15,6 +15,7 @@ Minigame: Temperature management + hammering/forging
 
 import pygame
 import json
+import math
 from pathlib import Path
 from rarity_utils import rarity_system
 
@@ -73,6 +74,22 @@ class SmithingMinigame:
         # Strike feedback (for UI display)
         self.last_strike_score = None  # Score of last strike (None = no strike yet)
         self.last_strike_temp_ok = True  # Was temperature OK during last strike?
+        self.last_strike_temp_mult = 1.0  # Temperature multiplier for last strike
+        self.last_strike_hammer_score = 0  # Raw hammer timing score before temp
+
+        # Detailed stats tracking (for backwards compatibility and analytics)
+        self.stats = {
+            'perfect_strikes': 0,      # 100-point strikes (timing + temp both perfect)
+            'excellent_strikes': 0,    # 90-99 point strikes
+            'good_strikes': 0,         # 70-89 point strikes
+            'fair_strikes': 0,         # 50-69 point strikes
+            'poor_strikes': 0,         # 30-49 point strikes
+            'miss_strikes': 0,         # <30 point strikes
+            'temp_readings': [],       # Temperature at each strike
+            'hammer_timing_scores': [], # Raw timing scores (before temp multiplier)
+            'temp_multipliers': [],    # Temperature multipliers applied to each strike
+            'time_in_ideal_temp': 0.0, # Cumulative time spent in ideal temp range
+        }
 
     def _setup_difficulty_from_materials(self):
         """
@@ -172,6 +189,26 @@ class SmithingMinigame:
         self.last_temp_update = pygame.time.get_ticks()
         self.result = None
 
+        # Reset strike feedback
+        self.last_strike_score = None
+        self.last_strike_temp_ok = True
+        self.last_strike_temp_mult = 1.0
+        self.last_strike_hammer_score = 0
+
+        # Reset stats tracking
+        self.stats = {
+            'perfect_strikes': 0,
+            'excellent_strikes': 0,
+            'good_strikes': 0,
+            'fair_strikes': 0,
+            'poor_strikes': 0,
+            'miss_strikes': 0,
+            'temp_readings': [],
+            'hammer_timing_scores': [],
+            'temp_multipliers': [],
+            'time_in_ideal_temp': 0.0,
+        }
+
     def update(self, dt):
         """
         Update minigame state
@@ -181,6 +218,10 @@ class SmithingMinigame:
         """
         if not self.active:
             return
+
+        # Track time in ideal temperature range
+        if self.TEMP_IDEAL_MIN <= self.temperature <= self.TEMP_IDEAL_MAX:
+            self.stats['time_in_ideal_temp'] += dt
 
         # Temperature decay using TEMP_DECAY parameter from difficulty calculator
         # TEMP_DECAY scales with difficulty: 0.3 (easy) to 1.2 (hard) per 100ms tick
@@ -213,38 +254,145 @@ class SmithingMinigame:
         if self.active:
             self.temperature = min(100, self.temperature + self.TEMP_FAN_INCREMENT)
 
+    def _calculate_hammer_timing_score(self, distance_from_center):
+        """
+        Calculate hammer timing score using binned system.
+
+        Pattern: 0-30-50-60-70-80-90-100-90-80-70-60-50-30-0 (from edge to center to edge)
+        - Standard zone width: w
+        - 50 zone: 2w (2x larger)
+        - 30 zone: 3w (3x larger)
+        - Beyond zones: 0
+
+        With HAMMER_BAR_WIDTH=400, half_width=200
+        Zone widths: w=200/9≈22.2 pixels
+
+        Returns:
+            int: Raw timing score (0-100) before temperature multiplier
+        """
+        half_width = self.HAMMER_BAR_WIDTH / 2
+
+        # Calculate zone width based on bar width
+        # Total: 100(tiny) + 90(w) + 80(w) + 70(w) + 60(w) + 50(2w) + 30(3w) = 9w
+        w = half_width / 9.0
+
+        # Define cumulative thresholds from center
+        # Zone boundaries (distance from center):
+        perfect_threshold = w * 0.3  # Tiny center zone for 100 (easier to get center hits)
+        zone_90 = w * 1.0
+        zone_80 = w * 2.0
+        zone_70 = w * 3.0
+        zone_60 = w * 4.0
+        zone_50 = w * 6.0  # 2w for 50 zone
+        zone_30 = w * 9.0  # 3w for 30 zone
+
+        # Determine score based on distance
+        if distance_from_center <= perfect_threshold:
+            return 100
+        elif distance_from_center <= zone_90:
+            return 90
+        elif distance_from_center <= zone_80:
+            return 80
+        elif distance_from_center <= zone_70:
+            return 70
+        elif distance_from_center <= zone_60:
+            return 60
+        elif distance_from_center <= zone_50:
+            return 50
+        elif distance_from_center <= zone_30:
+            return 30
+        else:
+            return 0
+
+    def _calculate_temp_multiplier(self):
+        """
+        Calculate temperature multiplier using exponential falloff.
+
+        - Maximum multiplier: 1.0 (when in ideal range)
+        - At 4 degrees off from ideal: 0.5 multiplier
+        - Exponential decay: mult = e^(-k * deviation^2)
+        - k is tuned so that at 4 degrees: 0.5 = e^(-k * 16) → k = ln(2)/16 ≈ 0.0433
+
+        Returns:
+            float: Temperature multiplier (0.0 to 1.0)
+        """
+        # Calculate deviation from ideal center
+        ideal_center = (self.TEMP_IDEAL_MIN + self.TEMP_IDEAL_MAX) / 2.0
+        ideal_half_range = (self.TEMP_IDEAL_MAX - self.TEMP_IDEAL_MIN) / 2.0
+
+        # If within ideal range, full multiplier
+        if self.TEMP_IDEAL_MIN <= self.temperature <= self.TEMP_IDEAL_MAX:
+            return 1.0
+
+        # Calculate deviation from nearest ideal boundary
+        if self.temperature < self.TEMP_IDEAL_MIN:
+            deviation = self.TEMP_IDEAL_MIN - self.temperature
+        else:
+            deviation = self.temperature - self.TEMP_IDEAL_MAX
+
+        # Exponential decay: 0.5 multiplier at 4 degrees off
+        # k = ln(2) / 16 ≈ 0.0433
+        k = 0.0433
+        temp_mult = math.exp(-k * deviation * deviation)
+
+        # Clamp to minimum of 0.1 to prevent complete zeroing
+        return max(0.1, min(1.0, temp_mult))
+
     def handle_hammer(self):
-        """Handle hammer strike (click) - check timing AND temperature accuracy"""
+        """
+        Handle hammer strike with binned timing score and exponential temperature multiplier.
+
+        Scoring system:
+        - Hammer timing: Binned 0-30-50-60-70-80-90-100 scale based on distance from center
+        - Temperature: Exponential multiplier (max 1.0, 0.5 at 4° off ideal)
+        - Final score = hammer_score * temp_multiplier
+        """
         if not self.active or self.hammer_hits >= self.REQUIRED_HITS:
             return
 
         center = self.HAMMER_BAR_WIDTH / 2
         distance = abs(self.hammer_position - center)
 
-        # Check if temperature is in ideal range
+        # Calculate raw hammer timing score (0-100 binned)
+        hammer_timing_score = self._calculate_hammer_timing_score(distance)
+
+        # Calculate temperature multiplier (exponential, max 1.0, 0.5 at 4° off)
+        temp_mult = self._calculate_temp_multiplier()
+
+        # Final score = timing * temp multiplier
+        final_score = int(round(hammer_timing_score * temp_mult))
+
+        # Track temperature state for UI
         temp_in_ideal = self.TEMP_IDEAL_MIN <= self.temperature <= self.TEMP_IDEAL_MAX
 
-        # Score based on accuracy AND temperature
-        # Perfect (100) requires BOTH perfect timing AND ideal temperature
-        if distance <= self.PERFECT_WIDTH / 2:
-            if temp_in_ideal:
-                score = 100  # Perfect: timing + temperature both ideal
-            else:
-                score = 85   # Good timing but temperature was off
-        elif distance <= self.TARGET_WIDTH / 2:
-            if temp_in_ideal:
-                score = 75   # Good timing with ideal temp
-            else:
-                score = 65   # Good timing but temp off
-        else:
-            score = 30  # Miss - bad timing regardless of temp
+        # Store detailed stats
+        self.stats['temp_readings'].append(self.temperature)
+        self.stats['hammer_timing_scores'].append(hammer_timing_score)
+        self.stats['temp_multipliers'].append(temp_mult)
 
-        self.hammer_scores.append(score)
+        # Categorize the strike for stats tracking
+        if final_score >= 100:
+            self.stats['perfect_strikes'] += 1
+        elif final_score >= 90:
+            self.stats['excellent_strikes'] += 1
+        elif final_score >= 70:
+            self.stats['good_strikes'] += 1
+        elif final_score >= 50:
+            self.stats['fair_strikes'] += 1
+        elif final_score >= 30:
+            self.stats['poor_strikes'] += 1
+        else:
+            self.stats['miss_strikes'] += 1
+
+        # Store final score
+        self.hammer_scores.append(final_score)
         self.hammer_hits += 1
 
         # Store strike result for UI feedback
-        self.last_strike_score = score
+        self.last_strike_score = final_score
         self.last_strike_temp_ok = temp_in_ideal
+        self.last_strike_temp_mult = temp_mult
+        self.last_strike_hammer_score = hammer_timing_score
 
         if self.hammer_hits >= self.REQUIRED_HITS:
             self.end(completed=True)
@@ -319,13 +467,15 @@ class SmithingMinigame:
                 "bonus": bonus,
                 "quality_tier": quality_tier,
                 "stat_multiplier": stat_multiplier,
-                "temp_mult": temp_mult,
+                "temp_in_ideal": in_ideal_range,
                 "avg_hammer": avg_hammer_score,
                 "difficulty_points": self.difficulty_points,
                 "first_try_eligible": first_try_eligible,
                 "earned_points": earned_points,
                 "max_points": max_points,
-                "message": f"Crafted {quality_tier} item with +{bonus}% bonus!"
+                "message": f"Crafted {quality_tier} item with +{bonus}% bonus!",
+                # Detailed stats for backwards compatibility and analytics
+                "stats": self.stats.copy(),
             }
 
         except ImportError:
@@ -348,13 +498,15 @@ class SmithingMinigame:
                 "bonus": bonus,
                 "quality_tier": "Normal" if bonus == 0 else "Fine" if bonus <= 5 else "Superior",
                 "stat_multiplier": 1.0 + (bonus / 100),
-                "temp_mult": temp_mult,
+                "temp_in_ideal": in_ideal_range,
                 "avg_hammer": avg_hammer_score,
                 "difficulty_points": self.difficulty_points,
                 "first_try_eligible": False,
                 "earned_points": earned_points,
                 "max_points": max_points,
-                "message": f"Crafted with {bonus}% bonus!"
+                "message": f"Crafted with {bonus}% bonus!",
+                # Detailed stats for backwards compatibility and analytics
+                "stats": self.stats.copy(),
             }
 
     def get_state(self):
@@ -373,7 +525,14 @@ class SmithingMinigame:
             "temp_ideal_max": self.TEMP_IDEAL_MAX,
             "hammer_bar_width": self.HAMMER_BAR_WIDTH,
             "target_width": self.TARGET_WIDTH,
-            "perfect_width": self.PERFECT_WIDTH
+            "perfect_width": self.PERFECT_WIDTH,
+            # Strike feedback for UI (new)
+            "last_strike_score": self.last_strike_score,
+            "last_strike_temp_ok": self.last_strike_temp_ok,
+            "last_strike_temp_mult": self.last_strike_temp_mult,
+            "last_strike_hammer_score": self.last_strike_hammer_score,
+            # Stats for UI display
+            "stats": self.stats,
         }
 
 

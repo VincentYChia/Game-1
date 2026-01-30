@@ -281,12 +281,95 @@ def compare_with_catalog():
             if len(in_generated_only) > 5:
                 print(f"      ... and {len(in_generated_only) - 5} more")
 
+def cross_cycle_comparison(all_results, category='resources'):
+    """Compare a category across all cycles to find missing items"""
+    print("\n" + "="*80)
+    print(f"CROSS-CYCLE {category.upper()} COMPARISON")
+    print("="*80)
+    print(f"\nComparing {category} across all cycles to identify missing files...\n")
+
+    # Build reverse map: file_name -> catalog_name
+    reverse_map = {v: k for k, v in RESOURCE_NAME_MAP.items()}
+
+    def normalize_name(name):
+        """Normalize item name to canonical form (catalog name)"""
+        # If it's a mapped file name, convert to catalog name
+        if name in reverse_map:
+            return reverse_map[name]
+        # If it's already a catalog name or unmapped, use as-is
+        return name
+
+    # Build a matrix: {normalized_name: {cycle/version: [actual_names]}}
+    all_items = set()
+    item_presence = defaultdict(lambda: defaultdict(list))
+
+    for cycle_name, cycle_data in all_results.items():
+        for ver_name, categories in cycle_data.items():
+            cat_data = categories.get(category, {})
+
+            # Track all items found (normalized)
+            for item_name in cat_data.keys():
+                normalized = normalize_name(item_name) if category == 'resources' else item_name
+                all_items.add(normalized)
+
+            # Mark presence with actual name found
+            key = f"{cycle_name}/{ver_name}"
+            for item_name in cat_data.keys():
+                normalized = normalize_name(item_name) if category == 'resources' else item_name
+                item_presence[normalized][key].append(item_name)
+
+    # Get all cycle/version keys
+    all_keys = set()
+    for cycle_name, cycle_data in all_results.items():
+        for ver_name in cycle_data.keys():
+            all_keys.add(f"{cycle_name}/{ver_name}")
+    all_keys = sorted(all_keys)
+
+    # Find items that are missing in at least one cycle/version
+    items_with_gaps = []
+    for item_name in sorted(all_items):
+        presence = item_presence[item_name]
+        missing_in = [k for k in all_keys if k not in presence]
+        if missing_in:
+            items_with_gaps.append((item_name, missing_in, len(all_keys) - len(missing_in)))
+
+    # Sort by how many cycles have it (most coverage first)
+    items_with_gaps.sort(key=lambda x: -x[2])
+
+    if not items_with_gaps:
+        print(f"✓ All {len(all_items)} {category} items are present in all cycles!")
+    else:
+        print(f"Found {len(items_with_gaps)} {category} items with incomplete coverage:\n")
+        print("-"*80)
+
+        for item_name, missing_in, count in items_with_gaps:
+            coverage_pct = count / len(all_keys) * 100
+            print(f"\n  {item_name} ({count}/{len(all_keys)} = {coverage_pct:.0f}% coverage)")
+            print(f"    Missing in:")
+            for m in missing_in[:10]:
+                print(f"      - {m}")
+            if len(missing_in) > 10:
+                print(f"      ... and {len(missing_in) - 10} more")
+
+    # Summary by cycle
+    print("\n" + "-"*80)
+    print("COVERAGE BY CYCLE:")
+    print("-"*80)
+    for key in all_keys:
+        count = sum(1 for item in all_items if key in item_presence[item])
+        pct = count / len(all_items) * 100 if all_items else 0
+        status = "✓" if count == len(all_items) else "⚠"
+        print(f"  {status} {key}: {count}/{len(all_items)} ({pct:.1f}%)")
+
+
 def main():
     parser = argparse.ArgumentParser(description='Scan Vheer generated icon folders')
     parser.add_argument('--detail', '-d', action='store_true', help='Show detailed file listing')
     parser.add_argument('--category', '-c', help='Filter detail view by category')
     parser.add_argument('--compare-catalog', '-C', action='store_true', help='Compare against item catalog')
     parser.add_argument('--check-mapping', '-m', action='store_true', help='Check resource name mapping')
+    parser.add_argument('--cross-cycle', '-x', action='store_true', help='Show cross-cycle comparison for resources')
+    parser.add_argument('--cross-cycle-cat', help='Category for cross-cycle comparison (default: resources)')
     args = parser.parse_args()
 
     print("Scanning Vheer generated icon folders...")
@@ -321,6 +404,11 @@ def main():
     # Compare with catalog
     if args.compare_catalog:
         compare_with_catalog()
+
+    # Cross-cycle comparison
+    if args.cross_cycle:
+        category = args.cross_cycle_cat or 'resources'
+        cross_cycle_comparison(all_results, category)
 
     print("\n" + "="*80)
     print("Scan complete!")
