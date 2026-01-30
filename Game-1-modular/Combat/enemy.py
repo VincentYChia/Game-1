@@ -424,7 +424,7 @@ class Enemy:
         # Death and respawn
         self.is_alive = True
         self.time_since_death = 0.0
-        self.corpse_lifetime = 60.0  # Will be overridden by config
+        self.corpse_lifetime = 30.0  # Will be overridden by config
 
         # Dungeon enemy flag (for special handling - 2x EXP, no drops)
         self.is_dungeon_enemy = False

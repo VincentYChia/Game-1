@@ -6068,6 +6068,51 @@ class GameEngine:
                                                 item_name = mat.name if mat else material_id
                                                 self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
 
+            # Handle continuous left-click (mainhand) attacks when mouse is held
+            # This allows attacking while also blocking with right-click
+            if 1 in self.mouse_buttons_pressed and self.character.can_attack('mainHand'):
+                # Check if not stunned/frozen
+                can_attack = True
+                if hasattr(self.character, 'status_manager'):
+                    if self.character.status_manager.has_status('stun') or self.character.status_manager.has_status('freeze'):
+                        can_attack = False
+
+                if can_attack:
+                    # Get mouse position and convert to world coordinates
+                    mouse_pos = pygame.mouse.get_pos()
+                    if mouse_pos[0] < Config.VIEWPORT_WIDTH:  # In viewport (not UI)
+                        wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
+                        wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
+
+                        # Check for enemy at mouse position
+                        if self.dungeon_manager.in_dungeon:
+                            enemy = self.combat_manager.get_dungeon_enemy_at_position((wx, wy))
+                        else:
+                            enemy = self.combat_manager.get_enemy_at_position((wx, wy))
+
+                        if enemy and enemy.is_alive:
+                            # Check if in range
+                            weapon_range = self.character.equipment.get_weapon_range('mainHand')
+                            dist = enemy.distance_to((self.character.position.x, self.character.position.y))
+                            if dist <= weapon_range:
+                                # Attack with mainhand
+                                effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
+                                damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                                    enemy, effect_tags, effect_params
+                                )
+                                self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
+                                self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
+
+                                if not enemy.is_alive:
+                                    self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
+                                    self.character.activities.record_activity('combat', 1)
+                                    if loot:
+                                        mat_db = MaterialDatabase.get_instance()
+                                        for material_id, qty in loot:
+                                            mat = mat_db.get_material(material_id)
+                                            item_name = mat.name if mat else material_id
+                                            self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+
             # Update combat based on whether in dungeon or world
             if self.dungeon_manager.in_dungeon:
                 self._update_dungeon(dt)

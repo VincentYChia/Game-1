@@ -694,5 +694,5 @@ In-game, use debug mode (F1) and:
 1. **JSON Format**: Always validate JSON after editing. Use `python -m json.tool filename.json`
 2. **IDs must be unique**: Check existing IDs before adding new ones
 3. **Tier consistency**: Fish tier should match fishing spot tier
-4. **Translation tables**: Quantities like "few", "several", "many" are translated via `value-translation-tables-1.JSON`
+4. **Translation tables**: Quantities like "few", "several", "many" are translated via `value-translation-table-1.JSON`
 5. **Existing patterns**: Follow the exact format of existing entries in each file

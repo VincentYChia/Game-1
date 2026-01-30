@@ -47,7 +47,7 @@ class CombatConfig:
         # Attack ranges are now determined by equipped weapon
         self.base_attack_cooldown = 1.0
         self.tool_attack_cooldown = 0.5
-        self.corpse_lifetime = 60.0
+        self.corpse_lifetime = 30.0  # Corpses/loot drops disappear after 30 seconds
         self.combat_timeout = 5.0
 
     def load_from_file(self, filepath: str) -> bool:
@@ -91,7 +91,7 @@ class CombatConfig:
             # Note: player_attack_range is now determined by equipped weapon
             self.base_attack_cooldown = mechanics.get('baseAttackCooldown', 1.0)
             self.tool_attack_cooldown = mechanics.get('toolAttackCooldown', 0.5)
-            self.corpse_lifetime = mechanics.get('enemyCorpseLifetime', 60)
+            self.corpse_lifetime = mechanics.get('enemyCorpseLifetime', 30)
             self.combat_timeout = mechanics.get('combatTimeout', 5.0)
 
             # Load spawn weights (optional, uses defaults if not present)
