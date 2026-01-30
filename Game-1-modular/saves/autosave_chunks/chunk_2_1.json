@@ -1,0 +1,13 @@
+{
+  "chunk_x": 2,
+  "chunk_y": 1,
+  "chunk_type": "rare_hidden_forest",
+  "dungeon_entrance": {
+    "position": {
+      "x": 41,
+      "y": 21,
+      "z": 0
+    },
+    "rarity": "rare"
+  }
+}

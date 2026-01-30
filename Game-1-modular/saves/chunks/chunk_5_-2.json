@@ -1,0 +1,26 @@
+{
+  "chunk_x": 5,
+  "chunk_y": -2,
+  "chunk_type": "dangerous_forest",
+  "modified_resources": [
+    {
+      "local_x": 8,
+      "local_y": 11,
+      "resource_type": "QUARTZ_CLUSTER",
+      "current_hp": 172,
+      "max_hp": 200,
+      "depleted": false,
+      "time_until_respawn": 0.0
+    },
+    {
+      "local_x": 7,
+      "local_y": 9,
+      "resource_type": "QUARTZ_CLUSTER",
+      "current_hp": 116,
+      "max_hp": 200,
+      "depleted": false,
+      "time_until_respawn": 0.0
+    }
+  ],
+  "unload_timestamp": 483.47299999999314
+}

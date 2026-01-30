@@ -1,0 +1,14 @@
+{
+  "chunk_x": 16,
+  "chunk_y": 14,
+  "chunk_type": "rare_ancient_quarry",
+  "dungeon_entrance": {
+    "position": {
+      "x": 262,
+      "y": 232,
+      "z": 0
+    },
+    "rarity": "uncommon"
+  },
+  "unload_timestamp": 2240.3020000004744
+}
