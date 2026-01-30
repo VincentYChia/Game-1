@@ -208,6 +208,9 @@ class GameEngine:
         self.combat_manager.dungeon_manager = self.dungeon_manager  # Link for 2x EXP, no drops
         self.world.dungeon_manager = self.dungeon_manager  # Link for dungeon tile walkability checks
 
+        # Load character stat modifiers config for INT minigame effects
+        self.stat_modifiers_config = self._load_stat_modifiers_config()
+
         # Only spawn initial enemies if we have a real character
         if self.character:
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
@@ -2586,6 +2589,52 @@ class GameEngine:
         self.add_notification("Rename cancelled", (150, 150, 150))
 
     # ========================================================================
+    # CONFIGURATION LOADERS
+    # ========================================================================
+    def _load_stat_modifiers_config(self) -> Dict:
+        """Load character stat modifiers from stats-calculations.JSON"""
+        import json
+        config_path = get_resource_path("Definitions.JSON/stats-calculations.JSON")
+
+        # Default config with bounds - used if JSON loading fails
+        default_config = {
+            "intelligence": {
+                "reductionPerPoint": 0.02,
+                "maxEffectiveINT": 30,
+                "smithing": {
+                    "hammerSpeedMultiplier": {"minimumMultiplier": 0.4},
+                    "tempDecayMultiplier": {"minimumMultiplier": 0.5},
+                    "timeLimitMultiplier": {"maximumMultiplier": 1.6}
+                },
+                "refining": {
+                    "rotationSpeedMultiplier": {"minimumMultiplier": 0.4},
+                    "timeLimitMultiplier": {"maximumMultiplier": 1.6}
+                },
+                "alchemy": {
+                    "speedBonusAddition": {"maximumAddition": 0.6},
+                    "timeLimitMultiplier": {"maximumMultiplier": 1.6}
+                },
+                "engineering": {
+                    "timeLimitMultiplier": {"maximumMultiplier": 1.6}
+                }
+            }
+        }
+
+        try:
+            with open(config_path, 'r') as f:
+                data = json.load(f)
+                char_stats = data.get('characterStatModifiers', {})
+                if char_stats:
+                    print(f"✓ Loaded character stat modifiers from JSON")
+                    return char_stats
+                else:
+                    print("⚠ No characterStatModifiers in JSON, using defaults")
+                    return default_config
+        except Exception as e:
+            print(f"⚠ Failed to load stat modifiers config: {e}, using defaults")
+            return default_config
+
+    # ========================================================================
     # CRAFTING INTEGRATION HELPERS
     # ========================================================================
     def inventory_to_dict(self) -> Dict[str, int]:
@@ -2629,53 +2678,62 @@ class GameEngine:
         total_time_bonus = 0.0
         total_quality_bonus = 0.0
 
-        # Enchanting has different minigame signature (requires target_item, no buff bonuses)
+        # Calculate skill buff bonuses for ALL crafting disciplines (including enchanting)
+        if hasattr(self.character, 'buffs'):
+            # For enchanting/adornments, map station_type to category
+            buff_category = 'enchanting' if recipe.station_type == 'adornments' else recipe.station_type
+
+            # Quicken buff: Extends minigame time
+            quicken_general = self.character.buffs.get_total_bonus('quicken', buff_category)
+            quicken_smithing_alt = self.character.buffs.get_total_bonus('quicken', 'smithing') if recipe.station_type in ['smithing', 'refining'] else 0
+            buff_time_bonus = max(quicken_general, quicken_smithing_alt)
+
+            # Empower/Elevate buff: Improves quality
+            empower_bonus = self.character.buffs.get_total_bonus('empower', buff_category)
+            elevate_bonus = self.character.buffs.get_total_bonus('elevate', buff_category)
+            buff_quality_bonus = max(empower_bonus, elevate_bonus)
+
+            # Pierce buff: For enchanting critical/rarity bonus (treated as quality boost)
+            pierce_bonus = self.character.buffs.get_total_bonus('pierce', buff_category)
+            if pierce_bonus > 0:
+                buff_quality_bonus = max(buff_quality_bonus, pierce_bonus)
+
+        # Calculate title bonuses for this crafting discipline
+        if recipe.station_type == 'smithing':
+            title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
+            title_quality_bonus = self.character.titles.get_total_bonus('smithingQuality')
+        elif recipe.station_type == 'refining':
+            # Refining shares smithingTime and uses refiningPrecision for quality
+            title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
+            title_quality_bonus = self.character.titles.get_total_bonus('refiningPrecision')
+        elif recipe.station_type == 'alchemy':
+            title_time_bonus = self.character.titles.get_total_bonus('alchemyTime')
+            title_quality_bonus = self.character.titles.get_total_bonus('alchemyQuality')
+        elif recipe.station_type == 'engineering':
+            title_time_bonus = self.character.titles.get_total_bonus('engineeringTime')
+            title_quality_bonus = self.character.titles.get_total_bonus('engineeringQuality')
+        elif recipe.station_type == 'adornments':
+            # Enchanting title bonuses (if any exist)
+            title_time_bonus = self.character.titles.get_total_bonus('enchantingTime')
+            title_quality_bonus = self.character.titles.get_total_bonus('enchantingQuality')
+
+        # Combine skill buffs and title bonuses
+        total_time_bonus = buff_time_bonus + title_time_bonus
+        total_quality_bonus = buff_quality_bonus + title_quality_bonus
+
+        # Create minigame based on station type
         if recipe.station_type == 'adornments':
-            # Get target item from stored enchantment selection
+            # Enchanting requires target_item parameter
             target_item = None
             if self.enchantment_selected_item:
                 target_item = self.enchantment_selected_item.get('equipment')
 
-            minigame = crafter.create_minigame(recipe.recipe_id, target_item)
+            minigame = crafter.create_minigame(recipe.recipe_id, target_item, total_time_bonus, total_quality_bonus)
             if not minigame:
                 self.add_notification("Minigame not available!", (255, 100, 100))
                 return
         else:
-            # Other crafting disciplines use buff bonuses + title bonuses
-            # Calculate skill buff bonuses for this crafting discipline
-            if hasattr(self.character, 'buffs'):
-                # Quicken buff: Extends minigame time
-                quicken_general = self.character.buffs.get_total_bonus('quicken', recipe.station_type)
-                quicken_smithing_alt = self.character.buffs.get_total_bonus('quicken', 'smithing') if recipe.station_type in ['smithing', 'refining'] else 0
-                buff_time_bonus = max(quicken_general, quicken_smithing_alt)
-
-                # Empower/Elevate buff: Improves quality
-                empower_bonus = self.character.buffs.get_total_bonus('empower', recipe.station_type)
-                elevate_bonus = self.character.buffs.get_total_bonus('elevate', recipe.station_type)
-                buff_quality_bonus = max(empower_bonus, elevate_bonus)
-
-            # Calculate title bonuses for this crafting discipline
-            # (Already initialized at function start)
-
-            if recipe.station_type == 'smithing':
-                title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
-                title_quality_bonus = self.character.titles.get_total_bonus('smithingQuality')
-            elif recipe.station_type == 'refining':
-                # Refining shares smithingTime and uses refiningPrecision for quality
-                title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
-                title_quality_bonus = self.character.titles.get_total_bonus('refiningPrecision')
-            elif recipe.station_type == 'alchemy':
-                title_time_bonus = self.character.titles.get_total_bonus('alchemyTime')
-                title_quality_bonus = self.character.titles.get_total_bonus('alchemyQuality')
-            elif recipe.station_type == 'engineering':
-                title_time_bonus = self.character.titles.get_total_bonus('engineeringTime')
-                title_quality_bonus = self.character.titles.get_total_bonus('engineeringQuality')
-
-            # Combine skill buffs and title bonuses
-            total_time_bonus = buff_time_bonus + title_time_bonus
-            total_quality_bonus = buff_quality_bonus + title_quality_bonus
-
-            # Create minigame instance with combined bonuses
+            # Other crafting disciplines: recipe_id, time_bonus, quality_bonus
             minigame = crafter.create_minigame(recipe.recipe_id, total_time_bonus, total_quality_bonus)
             if not minigame:
                 self.add_notification("Minigame not available!", (255, 100, 100))
@@ -2696,29 +2754,93 @@ class GameEngine:
             if total_quality_bonus > 0:
                 print(f"   Total: +{total_quality_bonus*100:.0f}% quality bonus")
 
-        # Apply INT stat difficulty reduction (-1% per INT point)
+        # Apply INT stat difficulty reduction (configured via stats-calculations.JSON)
         # This affects gameplay parameters but NOT reward calculation (difficulty_points preserved)
+        # INT slows down minigames (except adornments) - makes timing easier
         int_stat = self.character.stats.intelligence
         if int_stat > 0:
-            int_reduction = int_stat * 0.01  # -1% per INT point
-            print(f"🧠 INT stat: {int_stat} (-{int_reduction*100:.0f}% minigame difficulty)")
+            # Load config values with fallbacks
+            int_config = self.stat_modifiers_config.get('intelligence', {})
+            reduction_per_point = int_config.get('reductionPerPoint', 0.02)
+            max_effective_int = int_config.get('maxEffectiveINT', 30)
 
-            # Apply reduction to gameplay parameters (varies by minigame type)
-            if hasattr(minigame, 'time_limit'):
-                # More time = easier
-                minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
+            # Cap INT effectiveness to prevent values going to zero
+            effective_int = min(int_stat, max_effective_int)
+            int_reduction = effective_int * reduction_per_point
+            print(f"🧠 INT stat: {int_stat} (effective: {effective_int}, -{int_reduction*100:.0f}% minigame difficulty)")
 
-            if hasattr(minigame, 'TARGET_WIDTH'):
-                # Wider target = easier (smithing)
-                minigame.TARGET_WIDTH = int(minigame.TARGET_WIDTH * (1 + int_reduction * 0.5))
+            # Determine minigame type for targeted modifications
+            minigame_type = recipe.station_type if hasattr(recipe, 'station_type') else None
 
-            if hasattr(minigame, 'PERFECT_WIDTH'):
-                # Wider perfect zone = easier (smithing)
-                minigame.PERFECT_WIDTH = int(minigame.PERFECT_WIDTH * (1 + int_reduction * 0.5))
+            # SMITHING: Slower hammer, slower temp decay (with bounds)
+            if minigame_type == 'smithing':
+                smithing_cfg = int_config.get('smithing', {})
 
-            if hasattr(minigame, 'TEMP_DECAY'):
-                # Slower decay = easier (smithing)
-                minigame.TEMP_DECAY = minigame.TEMP_DECAY * (1 - int_reduction * 0.5)
+                if hasattr(minigame, 'HAMMER_SPEED'):
+                    # Slower hammer = easier timing
+                    min_mult = smithing_cfg.get('hammerSpeedMultiplier', {}).get('minimumMultiplier', 0.4)
+                    multiplier = max(min_mult, 1 - int_reduction)
+                    minigame.HAMMER_SPEED = minigame.HAMMER_SPEED * multiplier
+                    print(f"   Hammer speed: {minigame.HAMMER_SPEED:.2f} (×{multiplier:.2f}, min {min_mult})")
+
+                if hasattr(minigame, 'TEMP_DECAY'):
+                    # Slower decay = easier to maintain temperature
+                    min_mult = smithing_cfg.get('tempDecayMultiplier', {}).get('minimumMultiplier', 0.5)
+                    multiplier = max(min_mult, 1 - int_reduction * 0.5)
+                    minigame.TEMP_DECAY = minigame.TEMP_DECAY * multiplier
+                    print(f"   Temp decay: {minigame.TEMP_DECAY:.2f} (×{multiplier:.2f}, min {min_mult})")
+
+                if hasattr(minigame, 'time_limit'):
+                    max_mult = smithing_cfg.get('timeLimitMultiplier', {}).get('maximumMultiplier', 1.6)
+                    multiplier = min(max_mult, 1 + int_reduction)
+                    minigame.time_limit = int(minigame.time_limit * multiplier)
+                    print(f"   Time limit: {minigame.time_limit}s (×{multiplier:.2f}, max {max_mult})")
+
+            # REFINING: Slower rotation + more time (with bounds)
+            # Visual window is now decoupled (base_window_degrees is fixed at setup)
+            # so we can safely slow rotation without shrinking the visual window
+            elif minigame_type == 'refining':
+                refining_cfg = int_config.get('refining', {})
+
+                if hasattr(minigame, 'rotation_speed'):
+                    # Slower rotation = more time to react within same angular window
+                    min_mult = refining_cfg.get('rotationSpeedMultiplier', {}).get('minimumMultiplier', 0.4)
+                    multiplier = max(min_mult, 1 - int_reduction)
+                    minigame.rotation_speed = minigame.rotation_speed * multiplier
+                    print(f"   Rotation speed: {minigame.rotation_speed:.2f} (×{multiplier:.2f}, min {min_mult})")
+
+                if hasattr(minigame, 'time_limit'):
+                    max_mult = refining_cfg.get('timeLimitMultiplier', {}).get('maximumMultiplier', 1.6)
+                    multiplier = min(max_mult, 1 + int_reduction)
+                    minigame.time_limit = int(minigame.time_limit * multiplier)
+                    print(f"   Time limit: {minigame.time_limit}s (×{multiplier:.2f}, max {max_mult})")
+
+            # ALCHEMY: Longer reaction windows (via speed_bonus) (with bounds)
+            elif minigame_type == 'alchemy':
+                alchemy_cfg = int_config.get('alchemy', {})
+
+                if hasattr(minigame, 'speed_bonus'):
+                    # Higher speed_bonus = longer reaction windows = easier
+                    max_add = alchemy_cfg.get('speedBonusAddition', {}).get('maximumAddition', 0.6)
+                    addition = min(max_add, int_reduction)
+                    minigame.speed_bonus = minigame.speed_bonus + addition
+                    print(f"   Reaction bonus: +{minigame.speed_bonus*100:.0f}% (+{addition*100:.0f}%, max +{max_add*100:.0f}%)")
+
+                if hasattr(minigame, 'time_limit'):
+                    max_mult = alchemy_cfg.get('timeLimitMultiplier', {}).get('maximumMultiplier', 1.6)
+                    multiplier = min(max_mult, 1 + int_reduction)
+                    minigame.time_limit = int(minigame.time_limit * multiplier)
+                    print(f"   Time limit: {minigame.time_limit}s (×{multiplier:.2f}, max {max_mult})")
+
+            # ENGINEERING: More time only (with bounds)
+            elif minigame_type == 'engineering':
+                engineering_cfg = int_config.get('engineering', {})
+
+                if hasattr(minigame, 'time_limit'):
+                    max_mult = engineering_cfg.get('timeLimitMultiplier', {}).get('maximumMultiplier', 1.6)
+                    multiplier = min(max_mult, 1 + int_reduction)
+                    minigame.time_limit = int(minigame.time_limit * multiplier)
+                    print(f"   Time limit: {minigame.time_limit}s (×{multiplier:.2f}, max {max_mult})")
 
         # Start minigame
         minigame.start()
@@ -5218,6 +5340,13 @@ class GameEngine:
                 if new_title:
                     self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
+                # Consume any active crafting buffs (same as minigame path)
+                # This prevents exploit where buffs persist through instant crafts
+                if hasattr(self.character, 'buffs'):
+                    consumed_buffs = self.character.buffs.consume_buffs_for_action("craft", category=activity_type)
+                    if consumed_buffs:
+                        print(f"   Consumed {len(consumed_buffs)} crafting buff(s)")
+
                 # Get item name for notification
                 if equip_db.is_equipment(output_id):
                     equipment = equip_db.create_equipment_from_id(output_id)
@@ -5246,6 +5375,15 @@ class GameEngine:
             if recipe_db.consume_materials(recipe, self.character.inventory):
                 self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
                 self.add_notification(f"Crafted (legacy) {recipe.output_id} x{recipe.output_qty}", (100, 255, 100))
+
+                # Consume any active crafting buffs (legacy path)
+                if hasattr(self.character, 'buffs'):
+                    activity_map = {
+                        'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
+                        'engineering': 'engineering', 'adornments': 'enchanting'
+                    }
+                    activity_type = activity_map.get(recipe.station_type, 'smithing')
+                    self.character.buffs.consume_buffs_for_action("craft", category=activity_type)
 
     def _apply_enchantment(self, recipe: Recipe):
         """Apply an enchantment to an item - shows selection UI"""
@@ -6566,70 +6704,77 @@ class GameEngine:
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Enhanced forge gradient background
-        for y in range(wh):
-            progress = y / wh
-            # Darker at top, warm glow at bottom
-            r = int(25 + 55 * progress * progress)
-            g = int(15 + 25 * progress * progress)
-            b = int(20 - 15 * progress)
-            pygame.draw.line(surf, (max(0, r), max(0, g), max(0, b)), (0, y), (ww, y))
+        # Check for custom background image
+        bg = effects.backgrounds.get('smithing')
+        custom_bg_drawn = bg and bg.draw_to_local_surface(surf)
 
-        # Forge glow at bottom
-        tick = pygame.time.get_ticks()
-        glow_intensity = 0.7 + 0.3 * math.sin(tick * 0.003)
-        for y in range(150):
-            alpha = int(80 * (1 - y / 150) * glow_intensity)
-            glow_color = (255, 100 + int(50 * glow_intensity), 20, alpha)
-            glow_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
-            glow_surf.fill(glow_color)
-            surf.blit(glow_surf, (0, wh - 150 + y))
+        if not custom_bg_drawn:
+            # Enhanced forge gradient background (fallback)
+            for y in range(wh):
+                progress = y / wh
+                # Darker at top, warm glow at bottom
+                r = int(25 + 55 * progress * progress)
+                g = int(15 + 25 * progress * progress)
+                b = int(20 - 15 * progress)
+                pygame.draw.line(surf, (max(0, r), max(0, g), max(0, b)), (0, y), (ww, y))
 
-        # Animated flames at bottom
-        flame_base_y = wh - 30
-        for i in range(16):
-            flame_x = 30 + i * 60
-            flame_phase = tick * 0.008 + i * 0.7
-            flame_height = 40 + 25 * math.sin(flame_phase) + 15 * math.sin(flame_phase * 2.3)
+            # Forge glow at bottom
+            tick = pygame.time.get_ticks()
+            glow_intensity = 0.7 + 0.3 * math.sin(tick * 0.003)
+            for y in range(150):
+                alpha = int(80 * (1 - y / 150) * glow_intensity)
+                glow_color = (255, 100 + int(50 * glow_intensity), 20, alpha)
+                glow_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
+                glow_surf.fill(glow_color)
+                surf.blit(glow_surf, (0, wh - 150 + y))
 
-            # Multi-layer flames
-            for layer in range(3):
-                layer_height = flame_height * (1 - layer * 0.25)
-                layer_width = 25 - layer * 5
+            # Animated flames at bottom
+            flame_base_y = wh - 30
+            for i in range(16):
+                flame_x = 30 + i * 60
+                flame_phase = tick * 0.008 + i * 0.7
+                flame_height = 40 + 25 * math.sin(flame_phase) + 15 * math.sin(flame_phase * 2.3)
 
-                if state['temperature'] > 70:
-                    colors = [(255, 240, 180), (255, 180, 50), (255, 100, 20)]
-                elif state['temperature'] > 50:
-                    colors = [(255, 200, 100), (255, 140, 30), (200, 60, 10)]
-                else:
-                    colors = [(100, 120, 200), (60, 80, 180), (40, 50, 120)]
+                # Multi-layer flames
+                for layer in range(3):
+                    layer_height = flame_height * (1 - layer * 0.25)
+                    layer_width = 25 - layer * 5
 
-                flame_points = [
-                    (flame_x - layer_width//2, flame_base_y),
-                    (flame_x - layer_width//4, flame_base_y - layer_height * 0.5),
-                    (flame_x, flame_base_y - layer_height),
-                    (flame_x + layer_width//4, flame_base_y - layer_height * 0.6),
-                    (flame_x + layer_width//2, flame_base_y),
-                ]
-                pygame.draw.polygon(surf, colors[layer], flame_points)
+                    if state['temperature'] > 70:
+                        colors = [(255, 240, 180), (255, 180, 50), (255, 100, 20)]
+                    elif state['temperature'] > 50:
+                        colors = [(255, 200, 100), (255, 140, 30), (200, 60, 10)]
+                    else:
+                        colors = [(100, 120, 200), (60, 80, 180), (40, 50, 120)]
 
-        # Animated ember particles
-        for i in range(20):
-            ember_phase = tick * 0.002 + i * 1.3
-            ember_x = 50 + (i * 47 + int(tick * 0.05)) % (ww - 100)
-            ember_y = wh - 80 - (int(tick * 0.03 + i * 17) % 250)
-            ember_size = 2 + int(2 * math.sin(ember_phase))
-            ember_alpha = int(150 + 80 * math.sin(ember_phase * 1.5))
-            ember_alpha = max(50, min(230, ember_alpha))
+                    flame_points = [
+                        (flame_x - layer_width//2, flame_base_y),
+                        (flame_x - layer_width//4, flame_base_y - layer_height * 0.5),
+                        (flame_x, flame_base_y - layer_height),
+                        (flame_x + layer_width//4, flame_base_y - layer_height * 0.6),
+                        (flame_x + layer_width//2, flame_base_y),
+                    ]
+                    pygame.draw.polygon(surf, colors[layer], flame_points)
 
-            ember_surf = pygame.Surface((ember_size * 3, ember_size * 3), pygame.SRCALPHA)
-            # Glow
-            pygame.draw.circle(ember_surf, (255, 150, 50, ember_alpha // 3),
-                             (ember_size * 1.5, ember_size * 1.5), ember_size * 1.5)
-            # Core
-            pygame.draw.circle(ember_surf, (255, 200, 100, ember_alpha),
-                             (ember_size * 1.5, ember_size * 1.5), ember_size)
-            surf.blit(ember_surf, (int(ember_x), int(ember_y)))
+            # Animated ember particles
+            for i in range(20):
+                ember_phase = tick * 0.002 + i * 1.3
+                ember_x = 50 + (i * 47 + int(tick * 0.05)) % (ww - 100)
+                ember_y = wh - 80 - (int(tick * 0.03 + i * 17) % 250)
+                ember_size = 2 + int(2 * math.sin(ember_phase))
+                ember_alpha = int(150 + 80 * math.sin(ember_phase * 1.5))
+                ember_alpha = max(50, min(230, ember_alpha))
+
+                ember_surf = pygame.Surface((ember_size * 3, ember_size * 3), pygame.SRCALPHA)
+                # Glow
+                pygame.draw.circle(ember_surf, (255, 150, 50, ember_alpha // 3),
+                                 (ember_size * 1.5, ember_size * 1.5), ember_size * 1.5)
+                # Core
+                pygame.draw.circle(ember_surf, (255, 200, 100, ember_alpha),
+                                 (ember_size * 1.5, ember_size * 1.5), ember_size)
+                surf.blit(ember_surf, (int(ember_x), int(ember_y)))
+        else:
+            tick = pygame.time.get_ticks()  # Still needed for UI elements
 
         # Header with forge theme
         header_surf = self.renderer.font.render("FORGE", True, (255, 200, 100))
@@ -6910,21 +7055,25 @@ class GameEngine:
         if state['hammer_scores']:
             for i, score in enumerate(state['hammer_scores'][-6:]):
                 y_pos = quality_panel_y + 40 + i * 25
-                if score >= 90:
-                    color = (255, 215, 100)
-                    quality = "PERFECT"
+
+                # Color-coded by score range (new: show actual score)
+                if score >= 100:
+                    color = (255, 215, 100)      # Gold for perfect
                     bar_color = (255, 200, 50)
+                elif score >= 90:
+                    color = (200, 255, 100)      # Light green for excellent
+                    bar_color = (180, 230, 80)
                 elif score >= 70:
-                    color = (100, 255, 100)
-                    quality = "Good"
+                    color = (100, 255, 100)      # Green for good
                     bar_color = (100, 200, 80)
                 elif score >= 50:
-                    color = (200, 200, 100)
-                    quality = "Fair"
+                    color = (200, 200, 100)      # Yellow for fair
                     bar_color = (180, 180, 80)
+                elif score >= 30:
+                    color = (255, 150, 100)      # Orange for poor
+                    bar_color = (200, 120, 60)
                 else:
-                    color = (150, 100, 100)
-                    quality = "Miss"
+                    color = (150, 100, 100)      # Red for miss
                     bar_color = (150, 80, 80)
 
                 # Score bar
@@ -6932,9 +7081,9 @@ class GameEngine:
                 pygame.draw.rect(surf, (50, 45, 40), (quality_panel_x + 15, y_pos, 100, 12), border_radius=3)
                 pygame.draw.rect(surf, bar_color, (quality_panel_x + 15, y_pos, bar_width, 12), border_radius=3)
 
-                # Quality text
-                qual_text = self.renderer.tiny_font.render(quality, True, color)
-                surf.blit(qual_text, (quality_panel_x + 125, y_pos - 2))
+                # Show actual score number instead of quality label
+                score_text = self.renderer.tiny_font.render(f"{score}", True, color)
+                surf.blit(score_text, (quality_panel_x + 125, y_pos - 2))
 
         # Result (if completed)
         if state['result']:
@@ -7081,48 +7230,53 @@ class GameEngine:
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Clean lab-style gradient background (light professional)
-        for y in range(wh):
-            progress = y / wh
-            r = int(240 - 30 * progress)
-            g = int(245 - 25 * progress)
-            b = int(250 - 20 * progress)
-            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
+        # Check for custom background image
+        bg = effects.backgrounds.get('alchemy')
+        custom_bg_drawn = bg and bg.draw_to_local_surface(surf)
 
-        # Wood paneling at bottom (lab workbench)
-        wood_y = wh - 120
-        pygame.draw.rect(surf, (120, 85, 55), (0, wood_y, ww, 120))
-        for i in range(8):
-            line_y = wood_y + 15 + i * 14
-            pygame.draw.line(surf, (100, 70, 45), (0, line_y), (ww, line_y), 1)
-        pygame.draw.rect(surf, (90, 65, 40), (0, wood_y, ww, 8))
+        if not custom_bg_drawn:
+            # Clean lab-style gradient background (light professional)
+            for y in range(wh):
+                progress = y / wh
+                r = int(240 - 30 * progress)
+                g = int(245 - 25 * progress)
+                b = int(250 - 20 * progress)
+                pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-        # Lab shelves on left with bottles
-        shelf_y = 100
-        pygame.draw.rect(surf, (100, 75, 50), (30, shelf_y, 150, 12))
-        pygame.draw.rect(surf, (80, 60, 40), (30, shelf_y + 8, 150, 4))
+            # Wood paneling at bottom (lab workbench)
+            wood_y = wh - 120
+            pygame.draw.rect(surf, (120, 85, 55), (0, wood_y, ww, 120))
+            for i in range(8):
+                line_y = wood_y + 15 + i * 14
+                pygame.draw.line(surf, (100, 70, 45), (0, line_y), (ww, line_y), 1)
+            pygame.draw.rect(surf, (90, 65, 40), (0, wood_y, ww, 8))
 
-        # Decorative bottles on shelf
-        bottle_positions = [(50, shelf_y - 35, (100, 200, 150)), (90, shelf_y - 30, (180, 120, 200)),
-                          (130, shelf_y - 40, (200, 180, 100))]
-        for bx, by, bcolor in bottle_positions:
-            pygame.draw.rect(surf, bcolor, (bx, by, 20, 35), border_radius=3)
-            pygame.draw.rect(surf, (80, 80, 90), (bx + 5, by - 8, 10, 10))
+            # Lab shelves on left with bottles
+            shelf_y = 100
+            pygame.draw.rect(surf, (100, 75, 50), (30, shelf_y, 150, 12))
+            pygame.draw.rect(surf, (80, 60, 40), (30, shelf_y + 8, 150, 4))
 
-        # Second shelf
-        pygame.draw.rect(surf, (100, 75, 50), (30, shelf_y + 80, 150, 12))
+            # Decorative bottles on shelf
+            bottle_positions = [(50, shelf_y - 35, (100, 200, 150)), (90, shelf_y - 30, (180, 120, 200)),
+                              (130, shelf_y - 40, (200, 180, 100))]
+            for bx, by, bcolor in bottle_positions:
+                pygame.draw.rect(surf, bcolor, (bx, by, 20, 35), border_radius=3)
+                pygame.draw.rect(surf, (80, 80, 90), (bx + 5, by - 8, 10, 10))
 
-        # Mystical elements - floating runes on right side
-        for i in range(5):
-            rune_x = ww - 100 + math.sin(tick * 0.001 + i) * 30
-            rune_y = 150 + i * 70 + math.cos(tick * 0.0015 + i * 0.5) * 20
-            rune_alpha = int(100 + 50 * math.sin(tick * 0.003 + i))
-            rune_surf = pygame.Surface((30, 30), pygame.SRCALPHA)
-            pygame.draw.circle(rune_surf, (100, 180, 150, rune_alpha), (15, 15), 12, 2)
-            # Simple rune symbol
-            pygame.draw.line(rune_surf, (100, 180, 150, rune_alpha), (15, 5), (15, 25), 2)
-            pygame.draw.line(rune_surf, (100, 180, 150, rune_alpha), (8, 10), (22, 20), 2)
-            surf.blit(rune_surf, (int(rune_x), int(rune_y)))
+            # Second shelf
+            pygame.draw.rect(surf, (100, 75, 50), (30, shelf_y + 80, 150, 12))
+
+            # Mystical elements - floating runes on right side
+            for i in range(5):
+                rune_x = ww - 100 + math.sin(tick * 0.001 + i) * 30
+                rune_y = 150 + i * 70 + math.cos(tick * 0.0015 + i * 0.5) * 20
+                rune_alpha = int(100 + 50 * math.sin(tick * 0.003 + i))
+                rune_surf = pygame.Surface((30, 30), pygame.SRCALPHA)
+                pygame.draw.circle(rune_surf, (100, 180, 150, rune_alpha), (15, 15), 12, 2)
+                # Simple rune symbol
+                pygame.draw.line(rune_surf, (100, 180, 150, rune_alpha), (15, 5), (15, 25), 2)
+                pygame.draw.line(rune_surf, (100, 180, 150, rune_alpha), (8, 10), (22, 20), 2)
+                surf.blit(rune_surf, (int(rune_x), int(rune_y)))
 
         # Header
         header = self.renderer.font.render("ALCHEMIST'S WORKSHOP", True, (60, 120, 80))
@@ -7416,95 +7570,100 @@ class GameEngine:
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Bronze/copper gradient background
-        for y in range(wh):
-            progress = y / wh
-            r = int(45 + 25 * progress)
-            g = int(32 + 15 * progress)
-            b = int(22 + 8 * progress)
-            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
+        # Check for custom background image
+        bg = effects.backgrounds.get('refining')
+        custom_bg_drawn = bg and bg.draw_to_local_surface(surf)
 
-        # Kiln arch glow at bottom
-        glow_intensity = 0.6 + 0.3 * math.sin(tick * 0.002)
-        for y in range(180):
-            alpha = int(100 * (1 - y / 180) * glow_intensity)
-            glow_color = (255, 160 + int(40 * glow_intensity), 60, alpha)
-            glow_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
-            glow_surf.fill(glow_color)
-            surf.blit(glow_surf, (0, wh - 180 + y))
+        if not custom_bg_drawn:
+            # Bronze/copper gradient background
+            for y in range(wh):
+                progress = y / wh
+                r = int(45 + 25 * progress)
+                g = int(32 + 15 * progress)
+                b = int(22 + 8 * progress)
+                pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-        # Kiln mouth arch
-        arch_center_x = ww // 2
-        arch_y = wh - 100
-        arch_width, arch_height = 400, 120
+            # Kiln arch glow at bottom
+            glow_intensity = 0.6 + 0.3 * math.sin(tick * 0.002)
+            for y in range(180):
+                alpha = int(100 * (1 - y / 180) * glow_intensity)
+                glow_color = (255, 160 + int(40 * glow_intensity), 60, alpha)
+                glow_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
+                glow_surf.fill(glow_color)
+                surf.blit(glow_surf, (0, wh - 180 + y))
 
-        # Outer brickwork
-        for row in range(8):
-            for col in range(14):
-                brick_x = arch_center_x - 210 + col * 30
-                brick_y = wh - 130 + row * 16
-                if row < 3 or abs(col - 7) > 4 - row:
-                    brick_color = (120 + (row * col) % 20, 70 + (row + col) % 15, 45)
-                    pygame.draw.rect(surf, brick_color, (brick_x, brick_y, 28, 14))
-                    pygame.draw.rect(surf, (80, 50, 35), (brick_x, brick_y, 28, 14), 1)
+            # Kiln mouth arch
+            arch_center_x = ww // 2
+            arch_y = wh - 100
+            arch_width, arch_height = 400, 120
 
-        # Inner kiln glow
-        inner_rect = pygame.Rect(arch_center_x - 150, wh - 90, 300, 90)
-        for i in range(5):
-            shrink = i * 15
-            glow_alpha = int(150 * (1 - i/5) * glow_intensity)
-            inner_glow = pygame.Surface((300 - shrink*2, 90), pygame.SRCALPHA)
-            inner_glow.fill((255, 180 - i*20, 80 - i*15, glow_alpha))
-            surf.blit(inner_glow, (inner_rect.x + shrink, inner_rect.y))
+            # Outer brickwork
+            for row in range(8):
+                for col in range(14):
+                    brick_x = arch_center_x - 210 + col * 30
+                    brick_y = wh - 130 + row * 16
+                    if row < 3 or abs(col - 7) > 4 - row:
+                        brick_color = (120 + (row * col) % 20, 70 + (row + col) % 15, 45)
+                        pygame.draw.rect(surf, brick_color, (brick_x, brick_y, 28, 14))
+                        pygame.draw.rect(surf, (80, 50, 35), (brick_x, brick_y, 28, 14), 1)
 
-        # Animated flames inside kiln
-        for i in range(8):
-            flame_x = arch_center_x - 100 + i * 28
-            flame_phase = tick * 0.01 + i * 0.9
-            flame_height = 50 + 20 * math.sin(flame_phase) + 10 * math.sin(flame_phase * 2.1)
+            # Inner kiln glow
+            inner_rect = pygame.Rect(arch_center_x - 150, wh - 90, 300, 90)
+            for i in range(5):
+                shrink = i * 15
+                glow_alpha = int(150 * (1 - i/5) * glow_intensity)
+                inner_glow = pygame.Surface((300 - shrink*2, 90), pygame.SRCALPHA)
+                inner_glow.fill((255, 180 - i*20, 80 - i*15, glow_alpha))
+                surf.blit(inner_glow, (inner_rect.x + shrink, inner_rect.y))
 
-            for layer in range(3):
-                lh = flame_height * (1 - layer * 0.25)
-                lw = 18 - layer * 4
-                colors = [(255, 220, 140), (255, 160, 60), (255, 100, 30)]
+            # Animated flames inside kiln
+            for i in range(8):
+                flame_x = arch_center_x - 100 + i * 28
+                flame_phase = tick * 0.01 + i * 0.9
+                flame_height = 50 + 20 * math.sin(flame_phase) + 10 * math.sin(flame_phase * 2.1)
 
-                pts = [
-                    (flame_x - lw//2, wh - 10),
-                    (flame_x - lw//4, wh - 10 - lh * 0.5),
-                    (flame_x, wh - 10 - lh),
-                    (flame_x + lw//4, wh - 10 - lh * 0.6),
-                    (flame_x + lw//2, wh - 10),
-                ]
-                pygame.draw.polygon(surf, colors[layer], pts)
+                for layer in range(3):
+                    lh = flame_height * (1 - layer * 0.25)
+                    lw = 18 - layer * 4
+                    colors = [(255, 220, 140), (255, 160, 60), (255, 100, 30)]
 
-        # Decorative gears in corners
-        gear_positions = [
-            (80, 80, 45, 10, 25),
-            (ww - 80, 80, 40, 8, -30),
-            (100, wh - 200, 35, 8, 20),
-            (ww - 100, wh - 200, 50, 12, -18),
-        ]
+                    pts = [
+                        (flame_x - lw//2, wh - 10),
+                        (flame_x - lw//4, wh - 10 - lh * 0.5),
+                        (flame_x, wh - 10 - lh),
+                        (flame_x + lw//4, wh - 10 - lh * 0.6),
+                        (flame_x + lw//2, wh - 10),
+                    ]
+                    pygame.draw.polygon(surf, colors[layer], pts)
 
-        for gx, gy, radius, teeth, speed in gear_positions:
-            angle = (tick * speed / 1000) % 360
-            gear_color = (180, 140, 80)
-            gear_dark = (120, 90, 55)
+            # Decorative gears in corners
+            gear_positions = [
+                (80, 80, 45, 10, 25),
+                (ww - 80, 80, 40, 8, -30),
+                (100, wh - 200, 35, 8, 20),
+                (ww - 100, wh - 200, 50, 12, -18),
+            ]
 
-            # Outer ring
-            pygame.draw.circle(surf, gear_color, (gx, gy), radius, 4)
-            pygame.draw.circle(surf, gear_dark, (gx, gy), radius - 8, 2)
+            for gx, gy, radius, teeth, speed in gear_positions:
+                angle = (tick * speed / 1000) % 360
+                gear_color = (180, 140, 80)
+                gear_dark = (120, 90, 55)
 
-            # Teeth
-            for t in range(teeth):
-                tooth_angle = math.radians(angle + t * (360 / teeth))
-                inner_tx = gx + math.cos(tooth_angle) * radius
-                inner_ty = gy + math.sin(tooth_angle) * radius
-                outer_tx = gx + math.cos(tooth_angle) * (radius + 10)
-                outer_ty = gy + math.sin(tooth_angle) * (radius + 10)
-                pygame.draw.line(surf, gear_color, (inner_tx, inner_ty), (outer_tx, outer_ty), 4)
+                # Outer ring
+                pygame.draw.circle(surf, gear_color, (gx, gy), radius, 4)
+                pygame.draw.circle(surf, gear_dark, (gx, gy), radius - 8, 2)
 
-            # Center
-            pygame.draw.circle(surf, gear_dark, (gx, gy), radius // 4)
+                # Teeth
+                for t in range(teeth):
+                    tooth_angle = math.radians(angle + t * (360 / teeth))
+                    inner_tx = gx + math.cos(tooth_angle) * radius
+                    inner_ty = gy + math.sin(tooth_angle) * radius
+                    outer_tx = gx + math.cos(tooth_angle) * (radius + 10)
+                    outer_ty = gy + math.sin(tooth_angle) * (radius + 10)
+                    pygame.draw.line(surf, gear_color, (inner_tx, inner_ty), (outer_tx, outer_ty), 4)
+
+                # Center
+                pygame.draw.circle(surf, gear_dark, (gx, gy), radius // 4)
 
         # Header
         header = self.renderer.font.render("MATERIAL REFINERY", True, (220, 180, 120))
@@ -7894,57 +8053,62 @@ class GameEngine:
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Workbench wood background
-        for y in range(wh):
-            progress = y / wh
-            r = int(100 + 30 * math.sin(y * 0.02))
-            g = int(70 + 20 * math.sin(y * 0.02))
-            b = int(50 + 10 * math.sin(y * 0.02))
-            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
+        # Check for custom background image
+        bg = effects.backgrounds.get('engineering')
+        custom_bg_drawn = bg and bg.draw_to_local_surface(surf)
 
-        # Wood grain texture
-        for i in range(0, wh, 25):
-            grain_intensity = 10 + int(10 * math.sin(i * 0.1))
-            pygame.draw.line(surf, (90 + grain_intensity, 60 + grain_intensity, 45), (0, i), (ww, i), 1)
+        if not custom_bg_drawn:
+            # Workbench wood background
+            for y in range(wh):
+                progress = y / wh
+                r = int(100 + 30 * math.sin(y * 0.02))
+                g = int(70 + 20 * math.sin(y * 0.02))
+                b = int(50 + 10 * math.sin(y * 0.02))
+                pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-        # Warm overhead lighting effect
-        light_intensity = 0.85 + 0.1 * math.sin(tick * 0.001)
-        for y in range(200):
-            alpha = int(60 * (1 - y / 200) * light_intensity)
-            light_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
-            light_surf.fill((255, 230, 180, alpha))
-            surf.blit(light_surf, (0, y))
+            # Wood grain texture
+            for i in range(0, wh, 25):
+                grain_intensity = 10 + int(10 * math.sin(i * 0.1))
+                pygame.draw.line(surf, (90 + grain_intensity, 60 + grain_intensity, 45), (0, i), (ww, i), 1)
 
-        # Scattered tools decoration
-        tool_positions = [
-            ('wrench', 50, 80, 20),
-            ('screwdriver', ww - 80, 100, -15),
-            ('pliers', 70, wh - 120, 30),
-            ('hammer', ww - 100, wh - 100, -25),
-        ]
+            # Warm overhead lighting effect
+            light_intensity = 0.85 + 0.1 * math.sin(tick * 0.001)
+            for y in range(200):
+                alpha = int(60 * (1 - y / 200) * light_intensity)
+                light_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
+                light_surf.fill((255, 230, 180, alpha))
+                surf.blit(light_surf, (0, y))
 
-        for tool_type, tx, ty, angle in tool_positions:
-            tool_surf = pygame.Surface((60, 60), pygame.SRCALPHA)
-            tool_color = (120, 125, 130)
-            handle_color = (140, 100, 60)
+            # Scattered tools decoration
+            tool_positions = [
+                ('wrench', 50, 80, 20),
+                ('screwdriver', ww - 80, 100, -15),
+                ('pliers', 70, wh - 120, 30),
+                ('hammer', ww - 100, wh - 100, -25),
+            ]
 
-            if tool_type == 'wrench':
-                pygame.draw.line(tool_surf, tool_color, (10, 30), (50, 30), 5)
-                pygame.draw.circle(tool_surf, tool_color, (50, 30), 10, 3)
-                pygame.draw.circle(tool_surf, tool_color, (10, 30), 8, 3)
-            elif tool_type == 'screwdriver':
-                pygame.draw.line(tool_surf, handle_color, (10, 30), (35, 30), 8)
-                pygame.draw.line(tool_surf, tool_color, (35, 30), (55, 30), 4)
-            elif tool_type == 'pliers':
-                pygame.draw.line(tool_surf, tool_color, (15, 25), (45, 35), 4)
-                pygame.draw.line(tool_surf, tool_color, (15, 35), (45, 25), 4)
-                pygame.draw.circle(tool_surf, (80, 80, 85), (30, 30), 5)
-            elif tool_type == 'hammer':
-                pygame.draw.line(tool_surf, handle_color, (10, 35), (35, 35), 7)
-                pygame.draw.rect(tool_surf, tool_color, (35, 22, 20, 26))
+            for tool_type, tx, ty, angle in tool_positions:
+                tool_surf = pygame.Surface((60, 60), pygame.SRCALPHA)
+                tool_color = (120, 125, 130)
+                handle_color = (140, 100, 60)
 
-            rotated = pygame.transform.rotate(tool_surf, angle)
-            surf.blit(rotated, (tx - rotated.get_width()//2, ty - rotated.get_height()//2))
+                if tool_type == 'wrench':
+                    pygame.draw.line(tool_surf, tool_color, (10, 30), (50, 30), 5)
+                    pygame.draw.circle(tool_surf, tool_color, (50, 30), 10, 3)
+                    pygame.draw.circle(tool_surf, tool_color, (10, 30), 8, 3)
+                elif tool_type == 'screwdriver':
+                    pygame.draw.line(tool_surf, handle_color, (10, 30), (35, 30), 8)
+                    pygame.draw.line(tool_surf, tool_color, (35, 30), (55, 30), 4)
+                elif tool_type == 'pliers':
+                    pygame.draw.line(tool_surf, tool_color, (15, 25), (45, 35), 4)
+                    pygame.draw.line(tool_surf, tool_color, (15, 35), (45, 25), 4)
+                    pygame.draw.circle(tool_surf, (80, 80, 85), (30, 30), 5)
+                elif tool_type == 'hammer':
+                    pygame.draw.line(tool_surf, handle_color, (10, 35), (35, 35), 7)
+                    pygame.draw.rect(tool_surf, tool_color, (35, 22, 20, 26))
+
+                rotated = pygame.transform.rotate(tool_surf, angle)
+                surf.blit(rotated, (tx - rotated.get_width()//2, ty - rotated.get_height()//2))
 
         # Header with workbench theme
         header = self.renderer.font.render("ENGINEER'S WORKBENCH", True, (60, 80, 100))
@@ -8531,38 +8695,43 @@ class GameEngine:
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Light blue spirit gradient background
-        for y in range(wh):
-            progress = y / wh
-            r = int(20 + 25 * progress)
-            g = int(35 + 30 * progress)
-            b = int(55 + 20 * progress)
-            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
+        # Check for custom background image
+        bg = effects.backgrounds.get('enchanting')
+        custom_bg_drawn = bg and bg.draw_to_local_surface(surf)
 
-        # Floating spirit particles
-        for i in range(25):
-            particle_phase = tick * 0.001 + i * 0.5
-            px = 50 + (i * 37) % (ww - 100) + math.sin(particle_phase) * 30
-            py = 50 + (i * 53) % (wh - 100) + math.cos(particle_phase * 0.7) * 25
-            particle_size = 3 + int(2 * math.sin(particle_phase * 2))
-            particle_alpha = int(80 + 60 * math.sin(particle_phase * 1.5))
+        if not custom_bg_drawn:
+            # Light blue spirit gradient background
+            for y in range(wh):
+                progress = y / wh
+                r = int(20 + 25 * progress)
+                g = int(35 + 30 * progress)
+                b = int(55 + 20 * progress)
+                pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-            particle_surf = pygame.Surface((particle_size * 4, particle_size * 4), pygame.SRCALPHA)
-            # Soft glow
-            pygame.draw.circle(particle_surf, (150, 200, 255, particle_alpha // 3),
-                             (particle_size * 2, particle_size * 2), particle_size * 2)
-            # Core
-            pygame.draw.circle(particle_surf, (180, 220, 255, particle_alpha),
-                             (particle_size * 2, particle_size * 2), particle_size)
-            surf.blit(particle_surf, (int(px), int(py)))
+            # Floating spirit particles
+            for i in range(25):
+                particle_phase = tick * 0.001 + i * 0.5
+                px = 50 + (i * 37) % (ww - 100) + math.sin(particle_phase) * 30
+                py = 50 + (i * 53) % (wh - 100) + math.cos(particle_phase * 0.7) * 25
+                particle_size = 3 + int(2 * math.sin(particle_phase * 2))
+                particle_alpha = int(80 + 60 * math.sin(particle_phase * 1.5))
 
-        # Central aura glow
-        aura_intensity = 0.5 + 0.3 * math.sin(tick * 0.002)
-        for r in range(150, 0, -10):
-            alpha = int(25 * (r / 150) * aura_intensity)
-            aura_surf = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
-            pygame.draw.circle(aura_surf, (100, 180, 240, alpha), (r, r), r)
-            surf.blit(aura_surf, (ww//2 - r, 350 - r))
+                particle_surf = pygame.Surface((particle_size * 4, particle_size * 4), pygame.SRCALPHA)
+                # Soft glow
+                pygame.draw.circle(particle_surf, (150, 200, 255, particle_alpha // 3),
+                                 (particle_size * 2, particle_size * 2), particle_size * 2)
+                # Core
+                pygame.draw.circle(particle_surf, (180, 220, 255, particle_alpha),
+                                 (particle_size * 2, particle_size * 2), particle_size)
+                surf.blit(particle_surf, (int(px), int(py)))
+
+            # Central aura glow
+            aura_intensity = 0.5 + 0.3 * math.sin(tick * 0.002)
+            for r in range(150, 0, -10):
+                alpha = int(25 * (r / 150) * aura_intensity)
+                aura_surf = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+                pygame.draw.circle(aura_surf, (100, 180, 240, alpha), (r, r), r)
+                surf.blit(aura_surf, (ww//2 - r, 350 - r))
 
         # Header with spirit theme
         header = self.renderer.font.render("SPIRIT WHEEL", True, (150, 200, 255))

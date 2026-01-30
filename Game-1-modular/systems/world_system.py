@@ -408,25 +408,29 @@ class WorldSystem:
         if not tile or tile.tile_type == TileType.WATER or not tile.walkable:
             return False
 
-        # Check for blocking resources in nearby loaded chunks
-        tile_x = int(position.x)
-        tile_y = int(position.y)
+        # Check for blocking resources using distance-based collision
+        # This is more accurate than tile-based matching for sub-tile positioning
+        tile_x = math.floor(position.x)
+        tile_y = math.floor(position.y)
         chunk_x = tile_x // Config.CHUNK_SIZE
         chunk_y = tile_y // Config.CHUNK_SIZE
 
         chunk = self.loaded_chunks.get((chunk_x, chunk_y))
         if chunk:
-            # Use direct tile position check for resources
             for resource in chunk.resources:
                 if not resource.depleted:
-                    res_tile_x = int(resource.position.x)
-                    res_tile_y = int(resource.position.y)
-                    if res_tile_x == tile_x and res_tile_y == tile_y:
+                    dx = abs(resource.position.x - position.x)
+                    dy = abs(resource.position.y - position.y)
+                    if dx < 0.5 and dy < 0.5:
                         return False
 
-        # Check for blocking placed barriers using O(1) cache lookup
-        if (tile_x, tile_y) in self._barrier_positions:
-            return False
+        # Check for blocking placed barriers using distance-based collision
+        for entity in self.placed_entities:
+            if entity.entity_type == PlacedEntityType.BARRIER:
+                dx = abs(entity.position.x - position.x)
+                dy = abs(entity.position.y - position.y)
+                if dx < 0.5 and dy < 0.5:
+                    return False
 
         return True
 

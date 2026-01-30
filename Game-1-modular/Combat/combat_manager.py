@@ -500,11 +500,20 @@ class CombatManager:
 
                 else:
                     # Enemy is dead - handle corpse
-                    if enemy.ai_state == AIState.CORPSE and enemy.time_since_death >= enemy.corpse_lifetime:
-                        # Remove corpse
-                        dead_enemies.append((chunk_coords, enemy))
-                    elif enemy not in self.corpses and enemy.ai_state == AIState.CORPSE:
-                        self.corpses.append(enemy)
+                    # First, transition from DEAD to CORPSE if needed
+                    # (This normally happens in update_ai, but we don't call that for dead enemies)
+                    if enemy.ai_state == AIState.DEAD:
+                        enemy.ai_state = AIState.CORPSE
+                        enemy.time_since_death = 0.0  # Reset timer when entering corpse state
+
+                    if enemy.ai_state == AIState.CORPSE:
+                        # Increment corpse timer
+                        enemy.time_since_death += dt
+                        if enemy.time_since_death >= enemy.corpse_lifetime:
+                            # Remove corpse
+                            dead_enemies.append((chunk_coords, enemy))
+                        elif enemy not in self.corpses:
+                            self.corpses.append(enemy)
 
         # Remove expired corpses
         for chunk_coords, enemy in dead_enemies:
@@ -1973,6 +1982,11 @@ class CombatManager:
 
             else:
                 # Enemy is dead - handle corpse
+                # First, transition from DEAD to CORPSE if needed
+                if enemy.ai_state == AIState.DEAD:
+                    enemy.ai_state = AIState.CORPSE
+                    enemy.time_since_death = 0.0  # Reset timer when entering corpse state
+
                 if enemy.ai_state == AIState.CORPSE:
                     enemy.time_since_death += dt
                     if enemy.time_since_death >= enemy.corpse_lifetime:

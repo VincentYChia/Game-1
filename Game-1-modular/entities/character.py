@@ -58,6 +58,27 @@ from entities.status_manager import add_status_manager_to_entity
 
 
 class Character:
+    # Class-level cache for combat config (loaded once, shared across instances)
+    _combat_config_cache = None
+
+    @classmethod
+    def _get_combat_config(cls) -> dict:
+        """Load and cache combat config from JSON"""
+        if cls._combat_config_cache is None:
+            try:
+                config_path = os.path.join(os.path.dirname(__file__), '..', 'Definitions.JSON', 'combat-config.JSON')
+                with open(config_path, 'r') as f:
+                    cls._combat_config_cache = json.load(f)
+            except Exception as e:
+                print(f"⚠ Failed to load combat-config.JSON: {e}, using defaults")
+                cls._combat_config_cache = {
+                    "shieldMechanics": {
+                        "maxDamageReduction": 0.75,
+                        "minDamageReduction": 0.0
+                    }
+                }
+        return cls._combat_config_cache
+
     def __init__(self, start_position: Position):
         self.position = start_position
         self.facing = "down"
@@ -2080,7 +2101,10 @@ class Character:
         return None
 
     def get_shield_damage_reduction(self) -> float:
-        """Get damage reduction multiplier from active shield (0.0-1.0)"""
+        """Get damage reduction multiplier from active shield (0.0-1.0)
+
+        Shield cap is configured via combat-config.JSON shieldMechanics.maxDamageReduction
+        """
         shield = self.get_equipped_shield()
         if not shield:
             return 0.0
@@ -2100,7 +2124,13 @@ class Character:
         # E.g., base 40% reduction with +25% defense_mult = 40% * 1.25 = 50% reduction
         enhanced_reduction = base_reduction * defense_mult
 
-        return max(0.0, min(0.75, enhanced_reduction))  # Cap at 75% reduction
+        # Load shield cap from config (JSON-driven balance value)
+        config = self._get_combat_config()
+        shield_cfg = config.get('shieldMechanics', {})
+        min_reduction = shield_cfg.get('minDamageReduction', 0.0)
+        max_reduction = shield_cfg.get('maxDamageReduction', 0.75)
+
+        return max(min_reduction, min(max_reduction, enhanced_reduction))
 
     def update_attack_cooldown(self, dt: float):
         """Update attack cooldown timer"""

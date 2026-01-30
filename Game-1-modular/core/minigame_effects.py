@@ -12,6 +12,33 @@ import math
 import random
 from typing import List, Dict, Tuple, Optional, Callable
 from dataclasses import dataclass, field
+from pathlib import Path
+
+
+# =============================================================================
+# BACKGROUND IMAGE LOADING
+# =============================================================================
+
+# Directory containing optional background images
+BACKGROUNDS_DIR = Path(__file__).parent.parent / "assets" / "minigame_backgrounds"
+
+def find_background_image(discipline: str) -> Optional[str]:
+    """
+    Find a background image for the given discipline.
+
+    Searches for both PNG and JPG files in the minigame_backgrounds folder.
+    Returns the path if found, None otherwise.
+    """
+    discipline = discipline.lower()
+    base_name = f"{discipline}_bg"
+
+    # Check for PNG first, then JPG
+    for ext in ['.png', '.jpg', '.jpeg']:
+        path = BACKGROUNDS_DIR / f"{base_name}{ext}"
+        if path.exists():
+            return str(path)
+
+    return None
 
 
 # =============================================================================
@@ -1022,6 +1049,20 @@ class MinigameBackground:
         else:
             self._draw_generated_background(surface)
 
+    def draw_to_local_surface(self, surface: pygame.Surface):
+        """Draw the background to a local surface (coordinates start at 0,0).
+
+        Use this when drawing to a minigame overlay surface rather than the screen.
+        """
+        if self.background_image:
+            surface.blit(self.background_image, (0, 0))
+            return True  # Image was drawn
+        return False  # No image, caller should draw procedural background
+
+    def has_custom_background(self) -> bool:
+        """Check if a custom background image is loaded."""
+        return self.background_image is not None
+
     def _draw_generated_background(self, surface: pygame.Surface):
         """Override in subclasses for procedural backgrounds."""
         pygame.draw.rect(surface, (40, 40, 50), self.rect)
@@ -1382,6 +1423,16 @@ class MinigameEffectsManager:
             self.backgrounds[discipline] = EnchantingBackground(rect)
         else:
             self.backgrounds[discipline] = MinigameBackground(rect)
+
+        # Try to load custom background image from assets folder
+        # This allows users to add PNG/JPG files to replace procedural backgrounds
+        bg_path = find_background_image(discipline.lower())
+        if bg_path:
+            bg = self.backgrounds[discipline]
+            if bg.load_image(bg_path):
+                print(f"[MinigameEffects] Loaded custom background: {bg_path}")
+            else:
+                print(f"[MinigameEffects] Failed to load background: {bg_path}")
 
         # Create particle system for this discipline
         self.particle_systems[discipline] = ParticleSystem(max_particles=150)

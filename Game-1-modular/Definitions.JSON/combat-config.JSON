@@ -75,5 +75,11 @@
     "enemyDamage": "enemyBaseDamage * (1 - (DEF * 0.02 + armorBonus))",
     "critMultiplier": 2.0,
     "comment": "Formulas are for reference, implemented in code"
+  },
+
+  "shieldMechanics": {
+    "maxDamageReduction": 0.75,
+    "minDamageReduction": 0.0,
+    "note": "Shield damage reduction is capped at 75% (0.75) regardless of shield quality or bonuses"
   }
 }
