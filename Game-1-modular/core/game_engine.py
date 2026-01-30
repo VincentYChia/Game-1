@@ -590,8 +590,10 @@ class GameEngine:
                             self.waypoint_rename_text = self.waypoint_rename_text[:-1]
                         continue
                     elif event.unicode and event.unicode.isprintable():
-                        # Add character (limit to 30 chars)
-                        if len(self.waypoint_rename_text) < 30:
+                        # Add character (limit from config)
+                        from data.databases.map_waypoint_db import MapWaypointConfig
+                        max_len = MapWaypointConfig.get_instance().waypoint.max_name_length
+                        if len(self.waypoint_rename_text) < max_len:
                             self.waypoint_rename_text += event.unicode
                         continue
                     # Block other keys during renaming

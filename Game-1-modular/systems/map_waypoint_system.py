@@ -11,8 +11,7 @@ Usage:
 """
 
 import math
-import time
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -680,8 +679,11 @@ class MapWaypointSystem:
             if key in saved_stats:
                 self.stats[key] = saved_stats[key]
 
-    def get_debug_info(self) -> Dict:
+    def get_debug_info(self, game_time: float = 0.0) -> Dict:
         """Get debug information about the map/waypoint system.
+
+        Args:
+            game_time: Current game time (for accurate cooldown display)
 
         Returns:
             Dictionary with debug information
@@ -693,5 +695,6 @@ class MapWaypointSystem:
             'max_waypoints': self._config.waypoint.max_waypoints,
             'map_zoom': self.map_zoom,
             'map_position': (self.map_scroll_x, self.map_scroll_y),
-            'teleport_cooldown_remaining': self.get_teleport_cooldown_remaining(time.time())
+            'teleport_cooldown_remaining': self.get_teleport_cooldown_remaining(game_time),
+            'stats': self.stats.copy()
         }

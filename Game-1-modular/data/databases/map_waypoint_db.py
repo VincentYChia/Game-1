@@ -86,6 +86,7 @@ class MapWaypointConfig:
         self.dungeon_marker = MarkerConfig()
         self.waypoint = WaypointSystemConfig()
         self.ui = UIConfig()
+        self.loaded = False
 
         self._load_config()
 
@@ -119,6 +120,9 @@ class MapWaypointConfig:
             self._parse_markers(data.get('marker_icons', {}))
             self._parse_waypoint_system(data.get('waypoint_system', {}))
             self._parse_ui_settings(data.get('ui_settings', {}))
+
+            self.loaded = True
+            print(f"✓ Loaded map/waypoint config (max {self.waypoint.max_waypoints} waypoints, {len(self.biome_colors)} biome colors)")
 
         except json.JSONDecodeError as e:
             print(f"Error parsing map-waypoint-config.JSON: {e}")
@@ -245,6 +249,7 @@ class MapWaypointConfig:
         self.dungeon_marker = MarkerConfig(color=(220, 20, 60), shape='skull')
         self.waypoint = WaypointSystemConfig()
         self.ui = UIConfig()
+        self.loaded = True  # Defaults are still usable
 
     def get_biome_color(self, chunk_type: str) -> Tuple[int, int, int]:
         """Get the color for a specific chunk type.
