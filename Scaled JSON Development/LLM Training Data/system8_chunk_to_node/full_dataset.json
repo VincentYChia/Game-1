@@ -185,7 +185,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -226,7 +226,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -267,7 +267,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -304,7 +304,7 @@
           "chance": "guaranteed"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -341,7 +341,7 @@
           "chance": "guaranteed"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -419,7 +419,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -456,7 +456,7 @@
           "chance": "guaranteed"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -493,7 +493,7 @@
           "chance": "guaranteed"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -534,7 +534,7 @@
           "chance": "rare"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -724,7 +724,7 @@
           "chance": "moderate"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     }
   },
   {
@@ -761,7 +761,7 @@
           "chance": "guaranteed"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     }
   },
   {
@@ -798,7 +798,7 @@
           "chance": "guaranteed"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -839,7 +839,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     }
   },
   {
@@ -876,7 +876,7 @@
           "chance": "guaranteed"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     }
   },
   {
@@ -913,7 +913,7 @@
           "chance": "high"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     }
   },
   {
@@ -955,7 +955,7 @@
           "chance": "rare"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     }
   },
   {
@@ -997,7 +997,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   },
   {
@@ -1185,7 +1185,7 @@
           "chance": "moderate"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   },
   {
@@ -1222,7 +1222,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   },
   {
@@ -1264,7 +1264,7 @@
           "chance": "improbable"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   },
   {
@@ -1423,7 +1423,7 @@
           "chance": "rare"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   },
   {
@@ -1465,7 +1465,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   },
   {
@@ -1507,7 +1507,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   }
 ]

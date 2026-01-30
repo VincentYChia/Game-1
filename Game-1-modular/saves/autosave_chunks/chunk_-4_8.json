@@ -1,0 +1,17 @@
+{
+  "chunk_x": -4,
+  "chunk_y": 8,
+  "chunk_type": "peaceful_quarry",
+  "modified_resources": [
+    {
+      "local_x": 13,
+      "local_y": 6,
+      "resource_type": "SHALE_BED",
+      "current_hp": 0,
+      "max_hp": 100,
+      "depleted": true,
+      "time_until_respawn": 0.0
+    }
+  ],
+  "unload_timestamp": 2455.3190000001955
+}

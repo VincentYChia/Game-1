@@ -1,0 +1,26 @@
+{
+  "chunk_x": -4,
+  "chunk_y": 7,
+  "chunk_type": "peaceful_cave",
+  "modified_resources": [
+    {
+      "local_x": 11,
+      "local_y": 12,
+      "resource_type": "TIN_SEAM",
+      "current_hp": 0,
+      "max_hp": 100,
+      "depleted": true,
+      "time_until_respawn": 0.0
+    },
+    {
+      "local_x": 10,
+      "local_y": 14,
+      "resource_type": "IRON_DEPOSIT",
+      "current_hp": 0,
+      "max_hp": 100,
+      "depleted": true,
+      "time_until_respawn": 0.0
+    }
+  ],
+  "unload_timestamp": 2393.0960000002633
+}
