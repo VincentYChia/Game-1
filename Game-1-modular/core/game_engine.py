@@ -2678,53 +2678,62 @@ class GameEngine:
         total_time_bonus = 0.0
         total_quality_bonus = 0.0
 
-        # Enchanting has different minigame signature (requires target_item, no buff bonuses)
+        # Calculate skill buff bonuses for ALL crafting disciplines (including enchanting)
+        if hasattr(self.character, 'buffs'):
+            # For enchanting/adornments, map station_type to category
+            buff_category = 'enchanting' if recipe.station_type == 'adornments' else recipe.station_type
+
+            # Quicken buff: Extends minigame time
+            quicken_general = self.character.buffs.get_total_bonus('quicken', buff_category)
+            quicken_smithing_alt = self.character.buffs.get_total_bonus('quicken', 'smithing') if recipe.station_type in ['smithing', 'refining'] else 0
+            buff_time_bonus = max(quicken_general, quicken_smithing_alt)
+
+            # Empower/Elevate buff: Improves quality
+            empower_bonus = self.character.buffs.get_total_bonus('empower', buff_category)
+            elevate_bonus = self.character.buffs.get_total_bonus('elevate', buff_category)
+            buff_quality_bonus = max(empower_bonus, elevate_bonus)
+
+            # Pierce buff: For enchanting critical/rarity bonus (treated as quality boost)
+            pierce_bonus = self.character.buffs.get_total_bonus('pierce', buff_category)
+            if pierce_bonus > 0:
+                buff_quality_bonus = max(buff_quality_bonus, pierce_bonus)
+
+        # Calculate title bonuses for this crafting discipline
+        if recipe.station_type == 'smithing':
+            title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
+            title_quality_bonus = self.character.titles.get_total_bonus('smithingQuality')
+        elif recipe.station_type == 'refining':
+            # Refining shares smithingTime and uses refiningPrecision for quality
+            title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
+            title_quality_bonus = self.character.titles.get_total_bonus('refiningPrecision')
+        elif recipe.station_type == 'alchemy':
+            title_time_bonus = self.character.titles.get_total_bonus('alchemyTime')
+            title_quality_bonus = self.character.titles.get_total_bonus('alchemyQuality')
+        elif recipe.station_type == 'engineering':
+            title_time_bonus = self.character.titles.get_total_bonus('engineeringTime')
+            title_quality_bonus = self.character.titles.get_total_bonus('engineeringQuality')
+        elif recipe.station_type == 'adornments':
+            # Enchanting title bonuses (if any exist)
+            title_time_bonus = self.character.titles.get_total_bonus('enchantingTime')
+            title_quality_bonus = self.character.titles.get_total_bonus('enchantingQuality')
+
+        # Combine skill buffs and title bonuses
+        total_time_bonus = buff_time_bonus + title_time_bonus
+        total_quality_bonus = buff_quality_bonus + title_quality_bonus
+
+        # Create minigame based on station type
         if recipe.station_type == 'adornments':
-            # Get target item from stored enchantment selection
+            # Enchanting requires target_item parameter
             target_item = None
             if self.enchantment_selected_item:
                 target_item = self.enchantment_selected_item.get('equipment')
 
-            minigame = crafter.create_minigame(recipe.recipe_id, target_item)
+            minigame = crafter.create_minigame(recipe.recipe_id, target_item, total_time_bonus, total_quality_bonus)
             if not minigame:
                 self.add_notification("Minigame not available!", (255, 100, 100))
                 return
         else:
-            # Other crafting disciplines use buff bonuses + title bonuses
-            # Calculate skill buff bonuses for this crafting discipline
-            if hasattr(self.character, 'buffs'):
-                # Quicken buff: Extends minigame time
-                quicken_general = self.character.buffs.get_total_bonus('quicken', recipe.station_type)
-                quicken_smithing_alt = self.character.buffs.get_total_bonus('quicken', 'smithing') if recipe.station_type in ['smithing', 'refining'] else 0
-                buff_time_bonus = max(quicken_general, quicken_smithing_alt)
-
-                # Empower/Elevate buff: Improves quality
-                empower_bonus = self.character.buffs.get_total_bonus('empower', recipe.station_type)
-                elevate_bonus = self.character.buffs.get_total_bonus('elevate', recipe.station_type)
-                buff_quality_bonus = max(empower_bonus, elevate_bonus)
-
-            # Calculate title bonuses for this crafting discipline
-            # (Already initialized at function start)
-
-            if recipe.station_type == 'smithing':
-                title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
-                title_quality_bonus = self.character.titles.get_total_bonus('smithingQuality')
-            elif recipe.station_type == 'refining':
-                # Refining shares smithingTime and uses refiningPrecision for quality
-                title_time_bonus = self.character.titles.get_total_bonus('smithingTime')
-                title_quality_bonus = self.character.titles.get_total_bonus('refiningPrecision')
-            elif recipe.station_type == 'alchemy':
-                title_time_bonus = self.character.titles.get_total_bonus('alchemyTime')
-                title_quality_bonus = self.character.titles.get_total_bonus('alchemyQuality')
-            elif recipe.station_type == 'engineering':
-                title_time_bonus = self.character.titles.get_total_bonus('engineeringTime')
-                title_quality_bonus = self.character.titles.get_total_bonus('engineeringQuality')
-
-            # Combine skill buffs and title bonuses
-            total_time_bonus = buff_time_bonus + title_time_bonus
-            total_quality_bonus = buff_quality_bonus + title_quality_bonus
-
-            # Create minigame instance with combined bonuses
+            # Other crafting disciplines: recipe_id, time_bonus, quality_bonus
             minigame = crafter.create_minigame(recipe.recipe_id, total_time_bonus, total_quality_bonus)
             if not minigame:
                 self.add_notification("Minigame not available!", (255, 100, 100))
@@ -5331,6 +5340,13 @@ class GameEngine:
                 if new_title:
                     self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
 
+                # Consume any active crafting buffs (same as minigame path)
+                # This prevents exploit where buffs persist through instant crafts
+                if hasattr(self.character, 'buffs'):
+                    consumed_buffs = self.character.buffs.consume_buffs_for_action("craft", category=activity_type)
+                    if consumed_buffs:
+                        print(f"   Consumed {len(consumed_buffs)} crafting buff(s)")
+
                 # Get item name for notification
                 if equip_db.is_equipment(output_id):
                     equipment = equip_db.create_equipment_from_id(output_id)
@@ -5359,6 +5375,15 @@ class GameEngine:
             if recipe_db.consume_materials(recipe, self.character.inventory):
                 self.character.inventory.add_item(recipe.output_id, recipe.output_qty)
                 self.add_notification(f"Crafted (legacy) {recipe.output_id} x{recipe.output_qty}", (100, 255, 100))
+
+                # Consume any active crafting buffs (legacy path)
+                if hasattr(self.character, 'buffs'):
+                    activity_map = {
+                        'smithing': 'smithing', 'refining': 'refining', 'alchemy': 'alchemy',
+                        'engineering': 'engineering', 'adornments': 'enchanting'
+                    }
+                    activity_type = activity_map.get(recipe.station_type, 'smithing')
+                    self.character.buffs.consume_buffs_for_action("craft", category=activity_type)
 
     def _apply_enchantment(self, recipe: Recipe):
         """Apply an enchantment to an item - shows selection UI"""
