@@ -178,22 +178,21 @@ class SmithingMinigame:
         if not self.active:
             return
 
-        # Temperature decay using difficulty-scaled TEMP_DECAY parameter
-        # Base decay reduced by 30% from original calibration, then scaled by difficulty
-        # Speed bonus further slows decay: effective_rate = base_rate / (1.0 + speed_bonus)
+        # Temperature decay using TEMP_DECAY parameter from difficulty calculator
+        # TEMP_DECAY scales with difficulty: 0.3 (easy) to 1.2 (hard) per 100ms tick
+        # Speed bonus slows down decay: effective_rate = base_rate / (1.0 + speed_bonus)
         now = pygame.time.get_ticks()
         if now - self.last_temp_update > 100:
-            # Use TEMP_DECAY directly (set by difficulty calculator)
-            # Base reduction of 30% applied (multiply by 0.7)
-            base_decay_per_tick = self.TEMP_DECAY * 0.7
+            # Use TEMP_DECAY directly - higher value = faster decay = harder
+            base_decay_per_tick = self.TEMP_DECAY
 
-            # Apply speed bonus (slows down fire decrease)
+            # Apply speed bonus from skill buffs (slows down fire decrease)
             effective_decay = base_decay_per_tick / (1.0 + self.speed_bonus)
 
             self.temperature = max(0, self.temperature - effective_decay)
             self.last_temp_update = now
 
-        # Hammer movement - speed scales with difficulty
+        # Hammer movement - HAMMER_SPEED scales with difficulty (higher = faster = harder)
         if self.hammer_hits < self.REQUIRED_HITS:
             self.hammer_position += self.hammer_direction * self.HAMMER_SPEED
             if self.hammer_position <= 0 or self.hammer_position >= self.HAMMER_BAR_WIDTH:
@@ -255,33 +254,33 @@ class SmithingMinigame:
         # Calculate performance metrics
         avg_hammer_score = sum(self.hammer_scores) / len(self.hammer_scores) if self.hammer_scores else 0
 
-        # Temperature affects score significantly using difficulty-scaled ideal range:
+        # Temperature affects score using difficulty-scaled ideal range:
         # - In ideal range: 1.2x bonus
-        # - Below ideal: gradual penalty based on deviation (down to 0.5x at 0°C)
-        # - Above ideal: gradual penalty based on deviation (down to 0.5x at 100°C)
-        # The penalty scales with how far outside the ideal range the temperature is
+        # - Below ideal: gradual penalty scaling to 0.5x at 0°C
+        # - Above ideal: gradual penalty scaling to 0.5x at 100°C
+        # Penalty is proportional to how far outside the ideal range
         in_ideal_range = self.TEMP_IDEAL_MIN <= self.temperature <= self.TEMP_IDEAL_MAX
         if in_ideal_range:
             temp_mult = 1.2  # Ideal temperature bonus
         elif self.temperature < self.TEMP_IDEAL_MIN:
-            # Too cold - penalty scales with deviation from ideal minimum
-            # At temperature 0, worst case = 0.5x multiplier
-            # At TEMP_IDEAL_MIN, no penalty = 1.0x multiplier
+            # Too cold - penalty based on distance from ideal minimum
+            # At 0°C: worst case = 0.5x multiplier
+            # At TEMP_IDEAL_MIN: boundary = 1.0x multiplier
             deviation = self.TEMP_IDEAL_MIN - self.temperature
-            max_deviation = self.TEMP_IDEAL_MIN  # From 0 to ideal min
+            max_deviation = self.TEMP_IDEAL_MIN  # Distance from 0 to ideal_min
             if max_deviation > 0:
-                penalty_factor = min(deviation / max_deviation, 1.0)  # 0.0 to 1.0
+                penalty_factor = min(1.0, deviation / max_deviation)  # 0.0 to 1.0
                 temp_mult = 1.0 - (penalty_factor * 0.5)  # 1.0 down to 0.5
             else:
                 temp_mult = 1.0
         else:
-            # Too hot - penalty scales with deviation from ideal maximum
-            # At temperature 100, worst case = 0.5x multiplier
-            # At TEMP_IDEAL_MAX, no penalty = 1.0x multiplier
+            # Too hot - penalty based on distance from ideal maximum
+            # At 100°C: worst case = 0.5x multiplier
+            # At TEMP_IDEAL_MAX: boundary = 1.0x multiplier
             deviation = self.temperature - self.TEMP_IDEAL_MAX
-            max_deviation = 100 - self.TEMP_IDEAL_MAX  # From ideal max to 100
+            max_deviation = 100 - self.TEMP_IDEAL_MAX  # Distance from ideal_max to 100
             if max_deviation > 0:
-                penalty_factor = min(deviation / max_deviation, 1.0)  # 0.0 to 1.0
+                penalty_factor = min(1.0, deviation / max_deviation)  # 0.0 to 1.0
                 temp_mult = 1.0 - (penalty_factor * 0.5)  # 1.0 down to 0.5
             else:
                 temp_mult = 1.0

@@ -70,25 +70,26 @@ SMITHING_PARAMS = {
     # Temperature ideal range: wide at low difficulty, VERY narrow at high (min 3°C)
     'temp_ideal_range': (25, 3),  # Degrees of acceptable range
 
-    # Temperature decay rate per 100ms tick (affects how fast fire goes out)
-    # Low difficulty: slow decay (0.5/tick = 5/sec), High difficulty: fast decay (2.0/tick = 20/sec)
-    # Note: smithing.py applies additional 30% reduction (x0.7) to these values
-    'temp_decay_rate': (0.5, 2.0),
+    # Temperature decay rate per 100ms tick
+    # Easy (0.3): 3°/sec decay, with FAN=4 need ~0.75 clicks/sec to maintain
+    # Hard (0.6): 6°/sec decay, with FAN=1.5 need ~4 clicks/sec to maintain
+    # This parameter is used by smithing.py update() and modified by INT stat
+    'temp_decay_rate': (0.3, 0.6),
 
-    # Fan increment: big boost at low, small at high
+    # Fan increment: big boost at low difficulty, small at high
     'temp_fan_increment': (4, 1.5),
 
     # Required hammer hits
     'required_hits': (3, 12),
 
-    # Target zone width (pixels) - where hits count (NARROWED)
-    'target_width': (80, 25),  # Reduced from (100, 30) for more challenge
+    # Target zone width (pixels) - where 70+ score is achieved
+    'target_width': (100, 30),
 
-    # Perfect zone width (pixels) - for bonus score (NARROWED)
-    'perfect_width': (35, 8),  # Reduced from (50, 10) for more challenge
+    # Perfect zone width (pixels) - where 100 score is achieved
+    'perfect_width': (50, 10),
 
-    # Hammer oscillation speed - TIED TO DIFFICULTY (higher difficulty = faster)
-    'hammer_speed': (2.5, 8.0),  # Increased base and max for more challenge
+    # Hammer oscillation speed (pixels/frame) - higher = faster = harder to time
+    'hammer_speed': (2.0, 7.0),
 }
 
 
