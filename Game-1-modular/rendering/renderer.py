@@ -2364,7 +2364,8 @@ class Renderer:
 
     def render_map_ui(self, character: Character, map_system, world_system,
                       mouse_pos: Tuple[int, int], game_time: float = 0.0,
-                      rename_state: Optional[Tuple[int, str]] = None):
+                      rename_state: Optional[Tuple[int, str]] = None,
+                      delete_confirm_slot: int = -1):
         """Render the world map UI with explored chunks and waypoints.
 
         Args:
@@ -2374,9 +2375,10 @@ class Renderer:
             mouse_pos: Current mouse position
             game_time: Current game time for cooldown display
             rename_state: Tuple of (slot, current_text) if renaming, else None
+            delete_confirm_slot: Slot index pending delete confirmation, or -1
 
         Returns:
-            Tuple of (window_rect, waypoint_rects) for click detection
+            Tuple of (window_rect, map_area_rect, waypoint_rects, action_rects) for click detection
         """
         import math
 
@@ -2622,21 +2624,35 @@ class Renderer:
             is_hovered = wp_rect.collidepoint(rx, ry)
 
             if wp:
-                # Check if this waypoint is being renamed
+                # Check if this waypoint is being renamed or pending delete
                 is_renaming = rename_state is not None and rename_state[0] == i
+                is_deleting = delete_confirm_slot == i
 
                 # Filled slot
-                if is_renaming:
+                if is_deleting:
+                    bg_color = (80, 30, 30)  # Red tint for delete confirmation
+                elif is_renaming:
                     bg_color = (70, 70, 40)  # Yellow tint for rename mode
                 elif is_hovered:
                     bg_color = (50, 50, 70)
                 else:
                     bg_color = (35, 35, 50)
                 pygame.draw.rect(surf, bg_color, wp_rect)
-                border_color = (200, 180, 80) if is_renaming else (80, 80, 100)
-                pygame.draw.rect(surf, border_color, wp_rect, s(2) if is_renaming else s(1))
+                if is_deleting:
+                    border_color = (255, 100, 100)
+                elif is_renaming:
+                    border_color = (200, 180, 80)
+                else:
+                    border_color = (80, 80, 100)
+                pygame.draw.rect(surf, border_color, wp_rect, s(2) if (is_renaming or is_deleting) else s(1))
 
-                if is_renaming:
+                if is_deleting:
+                    # Show delete confirmation
+                    confirm_text = f"Delete '{wp.name[:12]}'?"
+                    surf.blit(self.small_font.render(confirm_text, True, (255, 200, 200)), (wp_rect.x + s(5), wp_rect.y + s(5)))
+                    surf.blit(self.tiny_font.render("Enter=Confirm | Esc=Cancel", True, (255, 150, 150)),
+                             (wp_rect.x + s(5), wp_rect.y + s(25)))
+                elif is_renaming:
                     # Show text input field
                     input_rect = pygame.Rect(wp_rect.x + s(3), wp_rect.y + s(3), wp_rect.w - s(6), s(20))
                     pygame.draw.rect(surf, (40, 40, 30), input_rect)

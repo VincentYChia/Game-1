@@ -307,6 +307,8 @@ class GameEngine:
         self.waypoint_renaming = False  # Whether we're in rename mode
         self.waypoint_rename_slot = -1  # Which waypoint slot is being renamed
         self.waypoint_rename_text = ""  # Current text being entered
+        self.waypoint_delete_confirm = False  # Whether we're in delete confirmation mode
+        self.waypoint_delete_slot = -1  # Which waypoint slot is pending delete
 
         # Enchantment/Adornment selection UI
         self.enchantment_selection_active = False
@@ -561,13 +563,24 @@ class GameEngine:
                             self.interactive_ui.player_narrative += event.unicode
                         continue
 
+                # Waypoint delete confirmation handling
+                if self.waypoint_delete_confirm:
+                    if event.key == pygame.K_ESCAPE:
+                        self._cancel_delete_confirmation()
+                        continue
+                    elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                        self._do_delete_waypoint(self.waypoint_delete_slot)
+                        continue
+                    # Block other keys during confirmation
+                    continue
+
                 # Waypoint renaming text input
                 if self.waypoint_renaming:
                     if event.key == pygame.K_ESCAPE:
                         # Cancel renaming
                         self.cancel_waypoint_rename()
                         continue
-                    elif event.key == pygame.K_RETURN:
+                    elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
                         # Confirm renaming
                         self.confirm_waypoint_rename()
                         continue
@@ -581,6 +594,8 @@ class GameEngine:
                         if len(self.waypoint_rename_text) < 30:
                             self.waypoint_rename_text += event.unicode
                         continue
+                    # Block other keys during renaming
+                    continue
 
                 if event.key == pygame.K_ESCAPE:
                     if self.enchantment_selection_active:
@@ -2363,8 +2378,22 @@ class GameEngine:
         if not self.map_window_rect:
             return
 
-        # If renaming, cancel on click outside the rename input
+        # If in delete confirmation mode, handle it
+        if self.waypoint_delete_confirm:
+            # Clicking anywhere cancels the confirmation
+            self.waypoint_delete_confirm = False
+            self.waypoint_delete_slot = -1
+            self.add_notification("Delete cancelled", (150, 150, 150))
+            return
+
+        # If renaming, clicking the waypoint row continues editing, clicking elsewhere cancels
         if self.waypoint_renaming:
+            # Check if clicking on the same waypoint row (allow re-clicking to keep focus)
+            for wp_rect, slot in self.map_waypoint_rects:
+                if wp_rect.collidepoint(mouse_pos) and slot == self.waypoint_rename_slot:
+                    # Clicked on the same row, keep renaming
+                    return
+            # Clicked elsewhere, cancel renaming
             self.cancel_waypoint_rename()
             return
 
@@ -2384,7 +2413,7 @@ class GameEngine:
                         self.start_waypoint_rename_for_slot(slot)
                 elif action == 'delete':
                     if not wp.is_spawn:
-                        self._do_delete_waypoint(slot)
+                        self._start_delete_confirmation(slot)
                 return
 
         # Check waypoint row clicks (for teleport)
@@ -2425,14 +2454,34 @@ class GameEngine:
         else:
             self.add_notification(message, (255, 150, 100))
 
+    def _start_delete_confirmation(self, slot: int):
+        """Start delete confirmation for a waypoint."""
+        wp = self.map_system.get_waypoint(slot)
+        if wp is None or wp.is_spawn:
+            return
+
+        self.waypoint_delete_confirm = True
+        self.waypoint_delete_slot = slot
+        self.add_notification(f"Delete '{wp.name}'? Press Enter to confirm, Esc to cancel", (255, 200, 100))
+
     def _do_delete_waypoint(self, slot: int):
-        """Delete a waypoint."""
+        """Delete a waypoint (after confirmation)."""
         success, message = self.map_system.remove_waypoint(slot)
         if success:
             self.add_notification(message, (100, 255, 200))
             print(f"🗑️ {message}")
         else:
             self.add_notification(message, (255, 150, 100))
+
+        # Clear confirmation state
+        self.waypoint_delete_confirm = False
+        self.waypoint_delete_slot = -1
+
+    def _cancel_delete_confirmation(self):
+        """Cancel the delete confirmation."""
+        self.waypoint_delete_confirm = False
+        self.waypoint_delete_slot = -1
+        self.add_notification("Delete cancelled", (150, 150, 150))
 
     def start_waypoint_rename_for_slot(self, slot: int):
         """Start renaming a specific waypoint slot."""
@@ -6074,9 +6123,10 @@ class GameEngine:
                 rename_state = None
                 if self.waypoint_renaming:
                     rename_state = (self.waypoint_rename_slot, self.waypoint_rename_text)
+                delete_confirm_slot = self.waypoint_delete_slot if self.waypoint_delete_confirm else -1
                 result = self.renderer.render_map_ui(
                     self.character, self.map_system, self.world, self.mouse_pos, self.game_time,
-                    rename_state)
+                    rename_state, delete_confirm_slot)
                 if result:
                     self.map_window_rect, self.map_area_rect, self.map_waypoint_rects, self.map_action_rects = result
             else:

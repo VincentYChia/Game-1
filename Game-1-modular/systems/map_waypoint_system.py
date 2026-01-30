@@ -662,10 +662,10 @@ class MapWaypointSystem:
                 else:
                     self.waypoints[i] = None
 
-        # Ensure spawn waypoint exists
+        # Ensure spawn waypoint exists with correct position
+        # Always reset spawn to config position (in case save has wrong coords)
         if self._config.waypoint.spawn_always_available:
-            if self.waypoints[0] is None or not self.waypoints[0].is_spawn:
-                self._init_spawn_waypoint()
+            self._init_spawn_waypoint()  # Always reinitialize to ensure correct position
 
         # Restore other state
         self.last_teleport_time = data.get('last_teleport_time', 0.0)
