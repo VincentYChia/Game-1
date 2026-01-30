@@ -384,7 +384,7 @@ All stats start at 0, gain 1 point per level (max 30):
 - **VIT**: +15 max HP, +1% health regen
 - **LCK**: +2% crit chance, +2% resource quality, +3% rare drops
 - **AGI**: +5% forestry damage, +3% attack speed
-- **INT**: +2% alchemy time, +20 mana, +5% elemental damage
+- **INT**: -2% minigame difficulty (smithing, refining, alchemy, engineering), +20 mana, +5% elemental damage
 
 ### 3. Multiplicative Scaling
 ```

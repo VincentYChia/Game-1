@@ -208,6 +208,9 @@ class GameEngine:
         self.combat_manager.dungeon_manager = self.dungeon_manager  # Link for 2x EXP, no drops
         self.world.dungeon_manager = self.dungeon_manager  # Link for dungeon tile walkability checks
 
+        # Load character stat modifiers config for INT minigame effects
+        self.stat_modifiers_config = self._load_stat_modifiers_config()
+
         # Only spawn initial enemies if we have a real character
         if self.character:
             self.combat_manager.spawn_initial_enemies((self.character.position.x, self.character.position.y), count=5)
@@ -2586,6 +2589,52 @@ class GameEngine:
         self.add_notification("Rename cancelled", (150, 150, 150))
 
     # ========================================================================
+    # CONFIGURATION LOADERS
+    # ========================================================================
+    def _load_stat_modifiers_config(self) -> Dict:
+        """Load character stat modifiers from stats-calculations.JSON"""
+        import json
+        config_path = get_resource_path("Definitions.JSON/stats-calculations.JSON")
+
+        # Default config with bounds - used if JSON loading fails
+        default_config = {
+            "intelligence": {
+                "reductionPerPoint": 0.02,
+                "maxEffectiveINT": 30,
+                "smithing": {
+                    "hammerSpeedMultiplier": {"minimumMultiplier": 0.4},
+                    "tempDecayMultiplier": {"minimumMultiplier": 0.5},
+                    "timeLimitMultiplier": {"maximumMultiplier": 1.6}
+                },
+                "refining": {
+                    "rotationSpeedMultiplier": {"minimumMultiplier": 0.4},
+                    "timeLimitMultiplier": {"maximumMultiplier": 1.6}
+                },
+                "alchemy": {
+                    "speedBonusAddition": {"maximumAddition": 0.6},
+                    "timeLimitMultiplier": {"maximumMultiplier": 1.6}
+                },
+                "engineering": {
+                    "timeLimitMultiplier": {"maximumMultiplier": 1.6}
+                }
+            }
+        }
+
+        try:
+            with open(config_path, 'r') as f:
+                data = json.load(f)
+                char_stats = data.get('characterStatModifiers', {})
+                if char_stats:
+                    print(f"✓ Loaded character stat modifiers from JSON")
+                    return char_stats
+                else:
+                    print("⚠ No characterStatModifiers in JSON, using defaults")
+                    return default_config
+        except Exception as e:
+            print(f"⚠ Failed to load stat modifiers config: {e}, using defaults")
+            return default_config
+
+    # ========================================================================
     # CRAFTING INTEGRATION HELPERS
     # ========================================================================
     def inventory_to_dict(self) -> Dict[str, int]:
@@ -2696,62 +2745,93 @@ class GameEngine:
             if total_quality_bonus > 0:
                 print(f"   Total: +{total_quality_bonus*100:.0f}% quality bonus")
 
-        # Apply INT stat difficulty reduction (-2% per INT point)
+        # Apply INT stat difficulty reduction (configured via stats-calculations.JSON)
         # This affects gameplay parameters but NOT reward calculation (difficulty_points preserved)
         # INT slows down minigames (except adornments) - makes timing easier
         int_stat = self.character.stats.intelligence
         if int_stat > 0:
-            int_reduction = int_stat * 0.02  # -2% per INT point
-            print(f"🧠 INT stat: {int_stat} (-{int_reduction*100:.0f}% minigame difficulty)")
+            # Load config values with fallbacks
+            int_config = self.stat_modifiers_config.get('intelligence', {})
+            reduction_per_point = int_config.get('reductionPerPoint', 0.02)
+            max_effective_int = int_config.get('maxEffectiveINT', 30)
+
+            # Cap INT effectiveness to prevent values going to zero
+            effective_int = min(int_stat, max_effective_int)
+            int_reduction = effective_int * reduction_per_point
+            print(f"🧠 INT stat: {int_stat} (effective: {effective_int}, -{int_reduction*100:.0f}% minigame difficulty)")
 
             # Determine minigame type for targeted modifications
             minigame_type = recipe.station_type if hasattr(recipe, 'station_type') else None
 
-            # SMITHING: Slower hammer, slower temp decay
+            # SMITHING: Slower hammer, slower temp decay (with bounds)
             if minigame_type == 'smithing':
+                smithing_cfg = int_config.get('smithing', {})
+
                 if hasattr(minigame, 'HAMMER_SPEED'):
                     # Slower hammer = easier timing
-                    minigame.HAMMER_SPEED = minigame.HAMMER_SPEED * (1 - int_reduction)
-                    print(f"   Hammer speed: {minigame.HAMMER_SPEED:.2f}")
+                    min_mult = smithing_cfg.get('hammerSpeedMultiplier', {}).get('minimumMultiplier', 0.4)
+                    multiplier = max(min_mult, 1 - int_reduction)
+                    minigame.HAMMER_SPEED = minigame.HAMMER_SPEED * multiplier
+                    print(f"   Hammer speed: {minigame.HAMMER_SPEED:.2f} (×{multiplier:.2f}, min {min_mult})")
 
                 if hasattr(minigame, 'TEMP_DECAY'):
                     # Slower decay = easier to maintain temperature
-                    minigame.TEMP_DECAY = minigame.TEMP_DECAY * (1 - int_reduction * 0.5)
-                    print(f"   Temp decay: {minigame.TEMP_DECAY:.2f}")
+                    min_mult = smithing_cfg.get('tempDecayMultiplier', {}).get('minimumMultiplier', 0.5)
+                    multiplier = max(min_mult, 1 - int_reduction * 0.5)
+                    minigame.TEMP_DECAY = minigame.TEMP_DECAY * multiplier
+                    print(f"   Temp decay: {minigame.TEMP_DECAY:.2f} (×{multiplier:.2f}, min {min_mult})")
 
                 if hasattr(minigame, 'time_limit'):
-                    minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
-                    print(f"   Time limit: {minigame.time_limit}s")
+                    max_mult = smithing_cfg.get('timeLimitMultiplier', {}).get('maximumMultiplier', 1.6)
+                    multiplier = min(max_mult, 1 + int_reduction)
+                    minigame.time_limit = int(minigame.time_limit * multiplier)
+                    print(f"   Time limit: {minigame.time_limit}s (×{multiplier:.2f}, max {max_mult})")
 
-            # REFINING: Slower rotation + more time
+            # REFINING: Slower rotation + more time (with bounds)
             # Visual window is now decoupled (base_window_degrees is fixed at setup)
             # so we can safely slow rotation without shrinking the visual window
             elif minigame_type == 'refining':
+                refining_cfg = int_config.get('refining', {})
+
                 if hasattr(minigame, 'rotation_speed'):
                     # Slower rotation = more time to react within same angular window
-                    minigame.rotation_speed = minigame.rotation_speed * (1 - int_reduction)
-                    print(f"   Rotation speed: {minigame.rotation_speed:.2f}")
+                    min_mult = refining_cfg.get('rotationSpeedMultiplier', {}).get('minimumMultiplier', 0.4)
+                    multiplier = max(min_mult, 1 - int_reduction)
+                    minigame.rotation_speed = minigame.rotation_speed * multiplier
+                    print(f"   Rotation speed: {minigame.rotation_speed:.2f} (×{multiplier:.2f}, min {min_mult})")
 
                 if hasattr(minigame, 'time_limit'):
-                    minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
-                    print(f"   Time limit: {minigame.time_limit}s")
+                    max_mult = refining_cfg.get('timeLimitMultiplier', {}).get('maximumMultiplier', 1.6)
+                    multiplier = min(max_mult, 1 + int_reduction)
+                    minigame.time_limit = int(minigame.time_limit * multiplier)
+                    print(f"   Time limit: {minigame.time_limit}s (×{multiplier:.2f}, max {max_mult})")
 
-            # ALCHEMY: Longer reaction windows (via speed_bonus)
+            # ALCHEMY: Longer reaction windows (via speed_bonus) (with bounds)
             elif minigame_type == 'alchemy':
+                alchemy_cfg = int_config.get('alchemy', {})
+
                 if hasattr(minigame, 'speed_bonus'):
                     # Higher speed_bonus = longer reaction windows = easier
-                    minigame.speed_bonus = minigame.speed_bonus + int_reduction
-                    print(f"   Reaction bonus: +{minigame.speed_bonus*100:.0f}%")
+                    max_add = alchemy_cfg.get('speedBonusAddition', {}).get('maximumAddition', 0.6)
+                    addition = min(max_add, int_reduction)
+                    minigame.speed_bonus = minigame.speed_bonus + addition
+                    print(f"   Reaction bonus: +{minigame.speed_bonus*100:.0f}% (+{addition*100:.0f}%, max +{max_add*100:.0f}%)")
 
                 if hasattr(minigame, 'time_limit'):
-                    minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
-                    print(f"   Time limit: {minigame.time_limit}s")
+                    max_mult = alchemy_cfg.get('timeLimitMultiplier', {}).get('maximumMultiplier', 1.6)
+                    multiplier = min(max_mult, 1 + int_reduction)
+                    minigame.time_limit = int(minigame.time_limit * multiplier)
+                    print(f"   Time limit: {minigame.time_limit}s (×{multiplier:.2f}, max {max_mult})")
 
-            # ENGINEERING: More time only
+            # ENGINEERING: More time only (with bounds)
             elif minigame_type == 'engineering':
+                engineering_cfg = int_config.get('engineering', {})
+
                 if hasattr(minigame, 'time_limit'):
-                    minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
-                    print(f"   Time limit: {minigame.time_limit}s")
+                    max_mult = engineering_cfg.get('timeLimitMultiplier', {}).get('maximumMultiplier', 1.6)
+                    multiplier = min(max_mult, 1 + int_reduction)
+                    minigame.time_limit = int(minigame.time_limit * multiplier)
+                    print(f"   Time limit: {minigame.time_limit}s (×{multiplier:.2f}, max {max_mult})")
 
         # Start minigame
         minigame.start()

@@ -137,33 +137,14 @@ class SmithingMinigame:
         """
         Legacy difficulty setup based on station tier only.
         Used as fallback when difficulty_calculator is unavailable.
+        Always uses get_legacy_smithing_params() from difficulty_calculator
+        to ensure consistent values across the codebase.
         """
         tier = self.recipe.get('stationTier', 1)
 
-        try:
-            from core.difficulty_calculator import get_legacy_smithing_params
-            params = get_legacy_smithing_params(tier)
-        except ImportError:
-            # Hardcoded fallback
-            tier_configs = {
-                1: {'time_limit': 45, 'temp_ideal_min': 60, 'temp_ideal_max': 80,
-                    'temp_decay_rate': 0.5, 'temp_fan_increment': 3, 'required_hits': 5,
-                    'target_width': 100, 'perfect_width': 40, 'hammer_speed': 2.5,
-                    'difficulty_points': 5},
-                2: {'time_limit': 40, 'temp_ideal_min': 65, 'temp_ideal_max': 75,
-                    'temp_decay_rate': 0.7, 'temp_fan_increment': 2.5, 'required_hits': 7,
-                    'target_width': 80, 'perfect_width': 30, 'hammer_speed': 3.5,
-                    'difficulty_points': 20},
-                3: {'time_limit': 35, 'temp_ideal_min': 68, 'temp_ideal_max': 72,
-                    'temp_decay_rate': 0.9, 'temp_fan_increment': 2, 'required_hits': 9,
-                    'target_width': 60, 'perfect_width': 20, 'hammer_speed': 4.5,
-                    'difficulty_points': 50},
-                4: {'time_limit': 30, 'temp_ideal_min': 69, 'temp_ideal_max': 71,
-                    'temp_decay_rate': 1.1, 'temp_fan_increment': 1.5, 'required_hits': 12,
-                    'target_width': 40, 'perfect_width': 15, 'hammer_speed': 5.5,
-                    'difficulty_points': 80},
-            }
-            params = tier_configs.get(tier, tier_configs[1])
+        # Import from difficulty_calculator - this is a core module that should always be available
+        from core.difficulty_calculator import get_legacy_smithing_params
+        params = get_legacy_smithing_params(tier)
 
         self.difficulty_points = params.get('difficulty_points', tier * 20)
         self.TEMP_IDEAL_MIN = params.get('temp_ideal_min', 60)

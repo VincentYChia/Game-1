@@ -365,5 +365,107 @@
       "durability": "500 × 2.0 × 1.2 × 1.0 = 1200",
       "weight": "1.0 × 2.0 × 2.0 × 1.5 × 1.0 = 6.0 kg"
     }
+  },
+
+  "characterStatModifiers": {
+    "metadata": {
+      "description": "Character stat effects on gameplay systems",
+      "note": "All values are PLACEHOLDERS for balance testing"
+    },
+
+    "intelligence": {
+      "description": "INT affects minigame difficulty - higher INT = easier crafting",
+      "reductionPerPoint": 0.02,
+      "maxEffectiveINT": 30,
+      "note": "At max INT (30), total reduction = 60%. Bounds prevent values from going too low.",
+
+      "smithing": {
+        "hammerSpeedMultiplier": {
+          "formula": "baseSpeed × (1 - INT × reductionPerPoint)",
+          "minimumMultiplier": 0.4,
+          "note": "Slower hammer = easier timing. Min 40% of base speed."
+        },
+        "tempDecayMultiplier": {
+          "formula": "baseDecay × (1 - INT × reductionPerPoint × 0.5)",
+          "minimumMultiplier": 0.5,
+          "note": "Slower decay = easier temperature management. Min 50% of base decay."
+        },
+        "timeLimitMultiplier": {
+          "formula": "baseTime × (1 + INT × reductionPerPoint)",
+          "maximumMultiplier": 1.6,
+          "note": "More time. Max 160% of base time."
+        }
+      },
+
+      "refining": {
+        "rotationSpeedMultiplier": {
+          "formula": "baseSpeed × (1 - INT × reductionPerPoint)",
+          "minimumMultiplier": 0.4,
+          "note": "Slower rotation = more reaction time. Min 40% of base speed."
+        },
+        "timeLimitMultiplier": {
+          "formula": "baseTime × (1 + INT × reductionPerPoint)",
+          "maximumMultiplier": 1.6,
+          "note": "More time. Max 160% of base time."
+        }
+      },
+
+      "alchemy": {
+        "speedBonusAddition": {
+          "formula": "baseBonus + (INT × reductionPerPoint)",
+          "maximumAddition": 0.6,
+          "note": "Longer reaction windows. Max +60% added to base bonus."
+        },
+        "timeLimitMultiplier": {
+          "formula": "baseTime × (1 + INT × reductionPerPoint)",
+          "maximumMultiplier": 1.6,
+          "note": "More time. Max 160% of base time."
+        }
+      },
+
+      "engineering": {
+        "timeLimitMultiplier": {
+          "formula": "baseTime × (1 + INT × reductionPerPoint)",
+          "maximumMultiplier": 1.6,
+          "note": "Engineering only gets time bonus from INT."
+        }
+      },
+
+      "adornments": {
+        "note": "Adornments/Enchanting is NOT affected by INT stat"
+      }
+    },
+
+    "strength": {
+      "meleeDamagePerPoint": 0.05,
+      "miningDamagePerPoint": 0.05,
+      "inventorySlotsPerPoint": 10,
+      "note": "+5% melee/mining damage, +10 inventory slots per STR"
+    },
+
+    "defense": {
+      "damageReductionPerPoint": 0.02,
+      "armorEffectivenessPerPoint": 0.03,
+      "note": "+2% damage reduction, +3% armor effectiveness per DEF"
+    },
+
+    "vitality": {
+      "maxHPPerPoint": 15,
+      "healthRegenPerPoint": 0.01,
+      "note": "+15 max HP, +1% health regen per VIT"
+    },
+
+    "luck": {
+      "critChancePerPoint": 0.02,
+      "resourceQualityPerPoint": 0.02,
+      "rareDropChancePerPoint": 0.03,
+      "note": "+2% crit, +2% resource quality, +3% rare drops per LCK"
+    },
+
+    "agility": {
+      "forestryDamagePerPoint": 0.05,
+      "attackSpeedPerPoint": 0.03,
+      "note": "+5% forestry damage, +3% attack speed per AGI"
+    }
   }
 }
