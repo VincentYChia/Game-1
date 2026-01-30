@@ -345,6 +345,7 @@ class GameEngine:
         self.last_tick = pygame.time.get_ticks()
         self.last_click_time = 0
         self.last_clicked_slot = None
+        self.last_f_press_time = 0  # For double-tap F to exit dungeon
 
         # Day/Night Cycle (16 min day + 8 min night = 24 min total)
         # Time breakdown: 0-480s Night, 480-600s Dawn, 600-1320s Day, 1320-1440s Dusk
@@ -623,6 +624,12 @@ class GameEngine:
                         self.map_system.close_map()
                     elif self.character.class_selection_open:
                         pass
+                    elif self.npc_dialogue_open:
+                        # Close NPC dialogue
+                        self.npc_dialogue_open = False
+                        self.active_npc = None
+                        self.npc_dialogue_lines = []
+                        self.npc_available_quests = []
                     else:
                         # Autosave on quit (unless temporary world)
                         if not self.temporary_world:
@@ -661,8 +668,19 @@ class GameEngine:
                     if self.map_system.map_open and not self.waypoint_renaming:
                         self.place_waypoint_at_player()
                 elif event.key == pygame.K_f:
-                    # NPC interaction
-                    self.handle_npc_interaction()
+                    current_time = pygame.time.get_ticks()
+                    # Double-tap F within 0.5s to exit dungeon early
+                    if self.dungeon_manager.in_dungeon:
+                        if current_time - self.last_f_press_time < 500:  # 500ms = 0.5 seconds
+                            self._exit_dungeon()
+                            self.add_notification("Quick exit from dungeon!", (255, 200, 100))
+                            self.last_f_press_time = 0  # Reset to prevent triple-tap
+                        else:
+                            self.last_f_press_time = current_time
+                            self.add_notification("Press F again quickly to exit dungeon", (200, 200, 200))
+                    else:
+                        # NPC interaction (when not in dungeon)
+                        self.handle_npc_interaction()
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
@@ -1091,8 +1109,14 @@ class GameEngine:
                         self.character.encyclopedia.scroll_offset = max(0, self.character.encyclopedia.scroll_offset)
                 # Handle mouse wheel scrolling for skills menu
                 elif self.character.skills_ui_open:
-                    # Scroll the skills list
-                    self.character.skills_menu_scroll_offset -= event.y  # event.y is positive for scroll up
+                    # SHIFT + scroll = scroll available skills, regular scroll = scroll learned skills
+                    shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
+                    if shift_held:
+                        # Scroll the available skills list
+                        self.character.available_skills_scroll_offset -= event.y
+                    else:
+                        # Scroll the learned skills list
+                        self.character.skills_menu_scroll_offset -= event.y
                     # Clamp is handled in render_skills_menu_ui
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.mouse_buttons_pressed.add(1)
@@ -2671,6 +2695,30 @@ class GameEngine:
                 print(f"   +{title_quality_bonus*100:.0f}% quality bonus (titles)")
             if total_quality_bonus > 0:
                 print(f"   Total: +{total_quality_bonus*100:.0f}% quality bonus")
+
+        # Apply INT stat difficulty reduction (-1% per INT point)
+        # This affects gameplay parameters but NOT reward calculation (difficulty_points preserved)
+        int_stat = self.character.stats.intelligence
+        if int_stat > 0:
+            int_reduction = int_stat * 0.01  # -1% per INT point
+            print(f"🧠 INT stat: {int_stat} (-{int_reduction*100:.0f}% minigame difficulty)")
+
+            # Apply reduction to gameplay parameters (varies by minigame type)
+            if hasattr(minigame, 'time_limit'):
+                # More time = easier
+                minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
+
+            if hasattr(minigame, 'TARGET_WIDTH'):
+                # Wider target = easier (smithing)
+                minigame.TARGET_WIDTH = int(minigame.TARGET_WIDTH * (1 + int_reduction * 0.5))
+
+            if hasattr(minigame, 'PERFECT_WIDTH'):
+                # Wider perfect zone = easier (smithing)
+                minigame.PERFECT_WIDTH = int(minigame.PERFECT_WIDTH * (1 + int_reduction * 0.5))
+
+            if hasattr(minigame, 'TEMP_DECAY'):
+                # Slower decay = easier (smithing)
+                minigame.TEMP_DECAY = minigame.TEMP_DECAY * (1 - int_reduction * 0.5)
 
         # Start minigame
         minigame.start()
@@ -5973,6 +6021,7 @@ class GameEngine:
             x_key_held = pygame.K_x in self.keys_pressed
             has_shield = self.character.is_shield_active()
             shield_blocking = (mouse_held or x_key_held) and has_shield
+            self.character.is_blocking = shield_blocking  # Update visual blocking state
 
             # Debug output when trying to block
             if mouse_held or x_key_held:

@@ -110,7 +110,8 @@ class Character:
         self.stats_ui_open = False
         self.equipment_ui_open = False
         self.skills_ui_open = False
-        self.skills_menu_scroll_offset = 0  # For scrolling in skills menu
+        self.skills_menu_scroll_offset = 0  # For scrolling learned skills in skills menu
+        self.available_skills_scroll_offset = 0  # For scrolling available skills to learn
         self.class_selection_open = False
 
         # Combat
@@ -118,6 +119,7 @@ class Character:
         self.mainhand_cooldown = 0.0
         self.offhand_cooldown = 0.0
         self.last_attacked_enemy = None
+        self.is_blocking = False  # Visual state for shield blocking indicator
 
         # Health regeneration tracking
         self.time_since_last_damage_taken = 0.0
@@ -747,7 +749,9 @@ class Character:
             dy *= 0.1
 
         # Calculate movement speed from stats, class, and active buffs
-        speed_mult = 1.0 + self.stats.get_bonus('agility') * 0.02 + self.class_system.get_bonus('movement_speed') + self.buffs.get_movement_speed_bonus()
+        # AGI: +1.5% move speed per stat point
+        agi_speed_bonus = self.stats.agility * 0.015
+        speed_mult = 1.0 + agi_speed_bonus + self.class_system.get_bonus('movement_speed') + self.buffs.get_movement_speed_bonus()
 
         # Apply slow/chill speed reduction
         if hasattr(self, 'status_manager'):
@@ -1088,7 +1092,11 @@ class Character:
             loot = resource.get_loot()
             processed_loot = []
             for item_id, qty in loot:
-                # Luck-based bonus (uses effective luck including title/skill bonuses)
+                # LCK: +2% average drops per stat point (multiplicative on base quantity)
+                luck_multiplier = 1.0 + (self.stats.luck * 0.02)
+                qty = int(qty * luck_multiplier)
+
+                # Additional luck-based bonus chance (uses effective luck including title/skill bonuses)
                 effective_luck = self.get_effective_luck()
                 luck_chance = effective_luck * 0.02 + self.class_system.get_bonus('resource_quality')
                 if random.random() < luck_chance:
@@ -2046,29 +2054,47 @@ class Character:
         return duration_multiplier
 
     def is_shield_active(self) -> bool:
-        """Check if player has a shield equipped in offhand"""
+        """Check if player has a shield equipped in either hand"""
+        # Check offhand first (preferred shield slot)
         offhand = self.equipment.slots.get('offHand')
-        result = offhand is not None and offhand.item_type == 'shield'
-        if offhand:
-            print(f"[DEBUG] Shield check: offhand={offhand.name}, item_type={offhand.item_type}, is_shield={result}")
-        return result
+        if offhand is not None and offhand.item_type == 'shield':
+            return True
+
+        # Also check mainhand (shields can be equipped there too)
+        mainhand = self.equipment.slots.get('mainHand')
+        if mainhand is not None and mainhand.item_type == 'shield':
+            return True
+
+        return False
+
+    def get_equipped_shield(self):
+        """Get the currently equipped shield, checking offhand first, then mainhand"""
+        offhand = self.equipment.slots.get('offHand')
+        if offhand is not None and offhand.item_type == 'shield':
+            return offhand
+
+        mainhand = self.equipment.slots.get('mainHand')
+        if mainhand is not None and mainhand.item_type == 'shield':
+            return mainhand
+
+        return None
 
     def get_shield_damage_reduction(self) -> float:
         """Get damage reduction multiplier from active shield (0.0-1.0)"""
-        if not self.is_shield_active():
+        shield = self.get_equipped_shield()
+        if not shield:
             return 0.0
 
-        offhand = self.equipment.slots.get('offHand')
         # Shield uses its damage stat multiplier as base damage reduction
         # E.g., if shield has damage multiplier 0.6, it reduces incoming damage by 40%
-        damage_multiplier = offhand.stat_multipliers.get('damage', 1.0)
+        damage_multiplier = shield.stat_multipliers.get('damage', 1.0)
 
         # Base reduction from stat multiplier
         base_reduction = 1.0 - damage_multiplier
 
         # Apply crafted defense_multiplier bonus from bonuses dict
         # defense_multiplier: -0.5 to +0.5 (quality-based boost/penalty)
-        defense_mult = 1.0 + offhand.bonuses.get('defense_multiplier', 0.0)
+        defense_mult = 1.0 + shield.bonuses.get('defense_multiplier', 0.0)
 
         # Apply defense multiplier to increase/decrease reduction
         # E.g., base 40% reduction with +25% defense_mult = 40% * 1.25 = 50% reduction

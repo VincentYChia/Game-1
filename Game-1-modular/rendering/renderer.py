@@ -1872,6 +1872,11 @@ class Renderer:
         text = self.small_font.render(f"HP: {char.health}/{char.max_health}", True, Config.COLOR_TEXT)
         self.screen.blit(text, text.get_rect(center=(x + w // 2, y + h // 2)))
 
+        # Show blocking indicator if player is blocking with shield
+        if hasattr(char, 'is_blocking') and char.is_blocking:
+            shield_text = self.font.render("🛡️ BLOCKING", True, (100, 200, 255))
+            self.screen.blit(shield_text, (x + w + 10, y))
+
     def render_mana_bar(self, char, x, y):
         w, h = 300, 20
         pygame.draw.rect(self.screen, Config.COLOR_HEALTH_BG, (x, y, w, h))
@@ -2096,8 +2101,8 @@ class Renderer:
 
         # Title
         surf.blit(self.font.render("SKILLS MANAGEMENT", True, (150, 200, 255)), (ww // 2 - s(120), s(20)))
-        surf.blit(self.small_font.render("[ESC] Close | [Mouse Wheel] Scroll | Click to equip | Right-click to unequip", True, (180, 180, 180)),
-                  (ww // 2 - s(330), s(50)))
+        surf.blit(self.small_font.render("[ESC] Close | [Scroll] Learned | [SHIFT+Scroll] Available | Click equip/learn", True, (180, 180, 180)),
+                  (ww // 2 - s(340), s(50)))
 
         # Hotbar section (top)
         y_pos = s(90)
@@ -2158,7 +2163,7 @@ class Renderer:
         y_pos += s(30)
 
         skill_rects = []
-        max_visible = 10
+        max_visible = 6  # Reduced to leave room for available skills section
 
         # Calculate scroll bounds
         max_scroll = max(0, total_skills - max_visible)
@@ -2230,12 +2235,27 @@ class Renderer:
         y_pos += s(10)
         available_skill_ids = character.skills.get_available_skills(character)
         available_skill_rects = []
+        max_available_visible = 5  # Max available skills to show
 
         if available_skill_ids:
-            surf.blit(self.small_font.render(f"AVAILABLE TO LEARN ({len(available_skill_ids)}):", True, (100, 255, 100)), (s(20), y_pos))
+            # Calculate scroll bounds for available skills
+            max_available_scroll = max(0, len(available_skill_ids) - max_available_visible)
+            character.available_skills_scroll_offset = max(0, min(character.available_skills_scroll_offset, max_available_scroll))
+
+            # Show scroll indicator if needed
+            scroll_info = ""
+            if len(available_skill_ids) > max_available_visible:
+                start_idx = character.available_skills_scroll_offset + 1
+                end_idx = min(character.available_skills_scroll_offset + max_available_visible, len(available_skill_ids))
+                scroll_info = f" [{start_idx}-{end_idx} of {len(available_skill_ids)}]"
+
+            surf.blit(self.small_font.render(f"AVAILABLE TO LEARN ({len(available_skill_ids)}){scroll_info}:", True, (100, 255, 100)), (s(20), y_pos))
             y_pos += s(25)
 
-            for skill_id in available_skill_ids[:3]:  # Show first 3 available skills
+            # Get visible available skills based on scroll
+            visible_available = available_skill_ids[character.available_skills_scroll_offset:character.available_skills_scroll_offset + max_available_visible]
+
+            for skill_id in visible_available:
                 skill_def = skill_db.skills.get(skill_id)
                 if not skill_def:
                     continue
@@ -2272,9 +2292,6 @@ class Renderer:
 
                 available_skill_rects.append((skill_rect, skill_id, skill_def))
                 y_pos += s(50)
-
-            if len(available_skill_ids) > 3:
-                surf.blit(self.tiny_font.render(f"...and {len(available_skill_ids) - 3} more available", True, (120, 200, 120)), (s(30), y_pos))
 
         self.screen.blit(surf, (wx, wy))
         window_rect = pygame.Rect(wx, wy, ww, wh)

@@ -15,6 +15,7 @@ Minigame: Temperature management + hammering/forging
 
 import pygame
 import json
+from pathlib import Path
 from rarity_utils import rarity_system
 
 
@@ -255,8 +256,24 @@ class SmithingMinigame:
 
         # Calculate performance metrics
         avg_hammer_score = sum(self.hammer_scores) / len(self.hammer_scores) if self.hammer_scores else 0
+
+        # Temperature affects score significantly:
+        # - Ideal range (60-80): 1.2x bonus
+        # - Too cold (<40): penalty based on how cold
+        # - Too hot (>90): penalty based on how hot
+        # - Moderate deviation: no bonus/penalty
         in_ideal_range = self.TEMP_IDEAL_MIN <= self.temperature <= self.TEMP_IDEAL_MAX
-        temp_mult = 1.2 if in_ideal_range else 1.0
+        if in_ideal_range:
+            temp_mult = 1.2  # Ideal temperature bonus
+        elif self.temperature < 40:
+            # Too cold - linear penalty down to 0.6x at temperature 0
+            temp_mult = 0.6 + (self.temperature / 40) * 0.4  # 0.6 to 1.0
+        elif self.temperature > 90:
+            # Too hot - penalty approaching burn
+            overheat = min(self.temperature - 90, 10) / 10  # 0.0 to 1.0
+            temp_mult = 1.0 - (overheat * 0.3)  # 1.0 down to 0.7
+        else:
+            temp_mult = 1.0  # Moderate deviation - no bonus or penalty
 
         final_score = avg_hammer_score * temp_mult
 

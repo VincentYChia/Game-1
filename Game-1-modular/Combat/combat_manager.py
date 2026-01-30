@@ -1562,7 +1562,7 @@ class CombatManager:
 
         armor_multiplier = 1.0 - (armor_bonus * 0.01)
 
-        # PROTECTION ENCHANTMENTS: Apply defense_multiplier enchantments
+        # PROTECTION ENCHANTMENTS: Apply damage_reduction enchantments from armor
         protection_reduction = 0.0
         if hasattr(self.character, 'equipment'):
             armor_slots = ['helmet', 'chestplate', 'leggings', 'boots', 'gauntlets']
@@ -1571,7 +1571,8 @@ class CombatManager:
                 if armor_piece and hasattr(armor_piece, 'enchantments'):
                     for ench in armor_piece.enchantments:
                         effect = ench.get('effect', {})
-                        if effect.get('type') == 'defense_multiplier':
+                        # Check for damage_reduction type (Protection enchantments)
+                        if effect.get('type') == 'damage_reduction':
                             protection_reduction += effect.get('value', 0.0)
 
         if protection_reduction > 0:
