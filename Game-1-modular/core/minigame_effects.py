@@ -1049,6 +1049,20 @@ class MinigameBackground:
         else:
             self._draw_generated_background(surface)
 
+    def draw_to_local_surface(self, surface: pygame.Surface):
+        """Draw the background to a local surface (coordinates start at 0,0).
+
+        Use this when drawing to a minigame overlay surface rather than the screen.
+        """
+        if self.background_image:
+            surface.blit(self.background_image, (0, 0))
+            return True  # Image was drawn
+        return False  # No image, caller should draw procedural background
+
+    def has_custom_background(self) -> bool:
+        """Check if a custom background image is loaded."""
+        return self.background_image is not None
+
     def _draw_generated_background(self, surface: pygame.Surface):
         """Override in subclasses for procedural backgrounds."""
         pygame.draw.rect(surface, (40, 40, 50), self.rect)

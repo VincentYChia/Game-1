@@ -6599,70 +6599,77 @@ class GameEngine:
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Enhanced forge gradient background
-        for y in range(wh):
-            progress = y / wh
-            # Darker at top, warm glow at bottom
-            r = int(25 + 55 * progress * progress)
-            g = int(15 + 25 * progress * progress)
-            b = int(20 - 15 * progress)
-            pygame.draw.line(surf, (max(0, r), max(0, g), max(0, b)), (0, y), (ww, y))
+        # Check for custom background image
+        bg = effects.backgrounds.get('smithing')
+        custom_bg_drawn = bg and bg.draw_to_local_surface(surf)
 
-        # Forge glow at bottom
-        tick = pygame.time.get_ticks()
-        glow_intensity = 0.7 + 0.3 * math.sin(tick * 0.003)
-        for y in range(150):
-            alpha = int(80 * (1 - y / 150) * glow_intensity)
-            glow_color = (255, 100 + int(50 * glow_intensity), 20, alpha)
-            glow_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
-            glow_surf.fill(glow_color)
-            surf.blit(glow_surf, (0, wh - 150 + y))
+        if not custom_bg_drawn:
+            # Enhanced forge gradient background (fallback)
+            for y in range(wh):
+                progress = y / wh
+                # Darker at top, warm glow at bottom
+                r = int(25 + 55 * progress * progress)
+                g = int(15 + 25 * progress * progress)
+                b = int(20 - 15 * progress)
+                pygame.draw.line(surf, (max(0, r), max(0, g), max(0, b)), (0, y), (ww, y))
 
-        # Animated flames at bottom
-        flame_base_y = wh - 30
-        for i in range(16):
-            flame_x = 30 + i * 60
-            flame_phase = tick * 0.008 + i * 0.7
-            flame_height = 40 + 25 * math.sin(flame_phase) + 15 * math.sin(flame_phase * 2.3)
+            # Forge glow at bottom
+            tick = pygame.time.get_ticks()
+            glow_intensity = 0.7 + 0.3 * math.sin(tick * 0.003)
+            for y in range(150):
+                alpha = int(80 * (1 - y / 150) * glow_intensity)
+                glow_color = (255, 100 + int(50 * glow_intensity), 20, alpha)
+                glow_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
+                glow_surf.fill(glow_color)
+                surf.blit(glow_surf, (0, wh - 150 + y))
 
-            # Multi-layer flames
-            for layer in range(3):
-                layer_height = flame_height * (1 - layer * 0.25)
-                layer_width = 25 - layer * 5
+            # Animated flames at bottom
+            flame_base_y = wh - 30
+            for i in range(16):
+                flame_x = 30 + i * 60
+                flame_phase = tick * 0.008 + i * 0.7
+                flame_height = 40 + 25 * math.sin(flame_phase) + 15 * math.sin(flame_phase * 2.3)
 
-                if state['temperature'] > 70:
-                    colors = [(255, 240, 180), (255, 180, 50), (255, 100, 20)]
-                elif state['temperature'] > 50:
-                    colors = [(255, 200, 100), (255, 140, 30), (200, 60, 10)]
-                else:
-                    colors = [(100, 120, 200), (60, 80, 180), (40, 50, 120)]
+                # Multi-layer flames
+                for layer in range(3):
+                    layer_height = flame_height * (1 - layer * 0.25)
+                    layer_width = 25 - layer * 5
 
-                flame_points = [
-                    (flame_x - layer_width//2, flame_base_y),
-                    (flame_x - layer_width//4, flame_base_y - layer_height * 0.5),
-                    (flame_x, flame_base_y - layer_height),
-                    (flame_x + layer_width//4, flame_base_y - layer_height * 0.6),
-                    (flame_x + layer_width//2, flame_base_y),
-                ]
-                pygame.draw.polygon(surf, colors[layer], flame_points)
+                    if state['temperature'] > 70:
+                        colors = [(255, 240, 180), (255, 180, 50), (255, 100, 20)]
+                    elif state['temperature'] > 50:
+                        colors = [(255, 200, 100), (255, 140, 30), (200, 60, 10)]
+                    else:
+                        colors = [(100, 120, 200), (60, 80, 180), (40, 50, 120)]
 
-        # Animated ember particles
-        for i in range(20):
-            ember_phase = tick * 0.002 + i * 1.3
-            ember_x = 50 + (i * 47 + int(tick * 0.05)) % (ww - 100)
-            ember_y = wh - 80 - (int(tick * 0.03 + i * 17) % 250)
-            ember_size = 2 + int(2 * math.sin(ember_phase))
-            ember_alpha = int(150 + 80 * math.sin(ember_phase * 1.5))
-            ember_alpha = max(50, min(230, ember_alpha))
+                    flame_points = [
+                        (flame_x - layer_width//2, flame_base_y),
+                        (flame_x - layer_width//4, flame_base_y - layer_height * 0.5),
+                        (flame_x, flame_base_y - layer_height),
+                        (flame_x + layer_width//4, flame_base_y - layer_height * 0.6),
+                        (flame_x + layer_width//2, flame_base_y),
+                    ]
+                    pygame.draw.polygon(surf, colors[layer], flame_points)
 
-            ember_surf = pygame.Surface((ember_size * 3, ember_size * 3), pygame.SRCALPHA)
-            # Glow
-            pygame.draw.circle(ember_surf, (255, 150, 50, ember_alpha // 3),
-                             (ember_size * 1.5, ember_size * 1.5), ember_size * 1.5)
-            # Core
-            pygame.draw.circle(ember_surf, (255, 200, 100, ember_alpha),
-                             (ember_size * 1.5, ember_size * 1.5), ember_size)
-            surf.blit(ember_surf, (int(ember_x), int(ember_y)))
+            # Animated ember particles
+            for i in range(20):
+                ember_phase = tick * 0.002 + i * 1.3
+                ember_x = 50 + (i * 47 + int(tick * 0.05)) % (ww - 100)
+                ember_y = wh - 80 - (int(tick * 0.03 + i * 17) % 250)
+                ember_size = 2 + int(2 * math.sin(ember_phase))
+                ember_alpha = int(150 + 80 * math.sin(ember_phase * 1.5))
+                ember_alpha = max(50, min(230, ember_alpha))
+
+                ember_surf = pygame.Surface((ember_size * 3, ember_size * 3), pygame.SRCALPHA)
+                # Glow
+                pygame.draw.circle(ember_surf, (255, 150, 50, ember_alpha // 3),
+                                 (ember_size * 1.5, ember_size * 1.5), ember_size * 1.5)
+                # Core
+                pygame.draw.circle(ember_surf, (255, 200, 100, ember_alpha),
+                                 (ember_size * 1.5, ember_size * 1.5), ember_size)
+                surf.blit(ember_surf, (int(ember_x), int(ember_y)))
+        else:
+            tick = pygame.time.get_ticks()  # Still needed for UI elements
 
         # Header with forge theme
         header_surf = self.renderer.font.render("FORGE", True, (255, 200, 100))
@@ -7118,48 +7125,53 @@ class GameEngine:
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Clean lab-style gradient background (light professional)
-        for y in range(wh):
-            progress = y / wh
-            r = int(240 - 30 * progress)
-            g = int(245 - 25 * progress)
-            b = int(250 - 20 * progress)
-            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
+        # Check for custom background image
+        bg = effects.backgrounds.get('alchemy')
+        custom_bg_drawn = bg and bg.draw_to_local_surface(surf)
 
-        # Wood paneling at bottom (lab workbench)
-        wood_y = wh - 120
-        pygame.draw.rect(surf, (120, 85, 55), (0, wood_y, ww, 120))
-        for i in range(8):
-            line_y = wood_y + 15 + i * 14
-            pygame.draw.line(surf, (100, 70, 45), (0, line_y), (ww, line_y), 1)
-        pygame.draw.rect(surf, (90, 65, 40), (0, wood_y, ww, 8))
+        if not custom_bg_drawn:
+            # Clean lab-style gradient background (light professional)
+            for y in range(wh):
+                progress = y / wh
+                r = int(240 - 30 * progress)
+                g = int(245 - 25 * progress)
+                b = int(250 - 20 * progress)
+                pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-        # Lab shelves on left with bottles
-        shelf_y = 100
-        pygame.draw.rect(surf, (100, 75, 50), (30, shelf_y, 150, 12))
-        pygame.draw.rect(surf, (80, 60, 40), (30, shelf_y + 8, 150, 4))
+            # Wood paneling at bottom (lab workbench)
+            wood_y = wh - 120
+            pygame.draw.rect(surf, (120, 85, 55), (0, wood_y, ww, 120))
+            for i in range(8):
+                line_y = wood_y + 15 + i * 14
+                pygame.draw.line(surf, (100, 70, 45), (0, line_y), (ww, line_y), 1)
+            pygame.draw.rect(surf, (90, 65, 40), (0, wood_y, ww, 8))
 
-        # Decorative bottles on shelf
-        bottle_positions = [(50, shelf_y - 35, (100, 200, 150)), (90, shelf_y - 30, (180, 120, 200)),
-                          (130, shelf_y - 40, (200, 180, 100))]
-        for bx, by, bcolor in bottle_positions:
-            pygame.draw.rect(surf, bcolor, (bx, by, 20, 35), border_radius=3)
-            pygame.draw.rect(surf, (80, 80, 90), (bx + 5, by - 8, 10, 10))
+            # Lab shelves on left with bottles
+            shelf_y = 100
+            pygame.draw.rect(surf, (100, 75, 50), (30, shelf_y, 150, 12))
+            pygame.draw.rect(surf, (80, 60, 40), (30, shelf_y + 8, 150, 4))
 
-        # Second shelf
-        pygame.draw.rect(surf, (100, 75, 50), (30, shelf_y + 80, 150, 12))
+            # Decorative bottles on shelf
+            bottle_positions = [(50, shelf_y - 35, (100, 200, 150)), (90, shelf_y - 30, (180, 120, 200)),
+                              (130, shelf_y - 40, (200, 180, 100))]
+            for bx, by, bcolor in bottle_positions:
+                pygame.draw.rect(surf, bcolor, (bx, by, 20, 35), border_radius=3)
+                pygame.draw.rect(surf, (80, 80, 90), (bx + 5, by - 8, 10, 10))
 
-        # Mystical elements - floating runes on right side
-        for i in range(5):
-            rune_x = ww - 100 + math.sin(tick * 0.001 + i) * 30
-            rune_y = 150 + i * 70 + math.cos(tick * 0.0015 + i * 0.5) * 20
-            rune_alpha = int(100 + 50 * math.sin(tick * 0.003 + i))
-            rune_surf = pygame.Surface((30, 30), pygame.SRCALPHA)
-            pygame.draw.circle(rune_surf, (100, 180, 150, rune_alpha), (15, 15), 12, 2)
-            # Simple rune symbol
-            pygame.draw.line(rune_surf, (100, 180, 150, rune_alpha), (15, 5), (15, 25), 2)
-            pygame.draw.line(rune_surf, (100, 180, 150, rune_alpha), (8, 10), (22, 20), 2)
-            surf.blit(rune_surf, (int(rune_x), int(rune_y)))
+            # Second shelf
+            pygame.draw.rect(surf, (100, 75, 50), (30, shelf_y + 80, 150, 12))
+
+            # Mystical elements - floating runes on right side
+            for i in range(5):
+                rune_x = ww - 100 + math.sin(tick * 0.001 + i) * 30
+                rune_y = 150 + i * 70 + math.cos(tick * 0.0015 + i * 0.5) * 20
+                rune_alpha = int(100 + 50 * math.sin(tick * 0.003 + i))
+                rune_surf = pygame.Surface((30, 30), pygame.SRCALPHA)
+                pygame.draw.circle(rune_surf, (100, 180, 150, rune_alpha), (15, 15), 12, 2)
+                # Simple rune symbol
+                pygame.draw.line(rune_surf, (100, 180, 150, rune_alpha), (15, 5), (15, 25), 2)
+                pygame.draw.line(rune_surf, (100, 180, 150, rune_alpha), (8, 10), (22, 20), 2)
+                surf.blit(rune_surf, (int(rune_x), int(rune_y)))
 
         # Header
         header = self.renderer.font.render("ALCHEMIST'S WORKSHOP", True, (60, 120, 80))
@@ -7453,95 +7465,100 @@ class GameEngine:
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Bronze/copper gradient background
-        for y in range(wh):
-            progress = y / wh
-            r = int(45 + 25 * progress)
-            g = int(32 + 15 * progress)
-            b = int(22 + 8 * progress)
-            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
+        # Check for custom background image
+        bg = effects.backgrounds.get('refining')
+        custom_bg_drawn = bg and bg.draw_to_local_surface(surf)
 
-        # Kiln arch glow at bottom
-        glow_intensity = 0.6 + 0.3 * math.sin(tick * 0.002)
-        for y in range(180):
-            alpha = int(100 * (1 - y / 180) * glow_intensity)
-            glow_color = (255, 160 + int(40 * glow_intensity), 60, alpha)
-            glow_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
-            glow_surf.fill(glow_color)
-            surf.blit(glow_surf, (0, wh - 180 + y))
+        if not custom_bg_drawn:
+            # Bronze/copper gradient background
+            for y in range(wh):
+                progress = y / wh
+                r = int(45 + 25 * progress)
+                g = int(32 + 15 * progress)
+                b = int(22 + 8 * progress)
+                pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-        # Kiln mouth arch
-        arch_center_x = ww // 2
-        arch_y = wh - 100
-        arch_width, arch_height = 400, 120
+            # Kiln arch glow at bottom
+            glow_intensity = 0.6 + 0.3 * math.sin(tick * 0.002)
+            for y in range(180):
+                alpha = int(100 * (1 - y / 180) * glow_intensity)
+                glow_color = (255, 160 + int(40 * glow_intensity), 60, alpha)
+                glow_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
+                glow_surf.fill(glow_color)
+                surf.blit(glow_surf, (0, wh - 180 + y))
 
-        # Outer brickwork
-        for row in range(8):
-            for col in range(14):
-                brick_x = arch_center_x - 210 + col * 30
-                brick_y = wh - 130 + row * 16
-                if row < 3 or abs(col - 7) > 4 - row:
-                    brick_color = (120 + (row * col) % 20, 70 + (row + col) % 15, 45)
-                    pygame.draw.rect(surf, brick_color, (brick_x, brick_y, 28, 14))
-                    pygame.draw.rect(surf, (80, 50, 35), (brick_x, brick_y, 28, 14), 1)
+            # Kiln mouth arch
+            arch_center_x = ww // 2
+            arch_y = wh - 100
+            arch_width, arch_height = 400, 120
 
-        # Inner kiln glow
-        inner_rect = pygame.Rect(arch_center_x - 150, wh - 90, 300, 90)
-        for i in range(5):
-            shrink = i * 15
-            glow_alpha = int(150 * (1 - i/5) * glow_intensity)
-            inner_glow = pygame.Surface((300 - shrink*2, 90), pygame.SRCALPHA)
-            inner_glow.fill((255, 180 - i*20, 80 - i*15, glow_alpha))
-            surf.blit(inner_glow, (inner_rect.x + shrink, inner_rect.y))
+            # Outer brickwork
+            for row in range(8):
+                for col in range(14):
+                    brick_x = arch_center_x - 210 + col * 30
+                    brick_y = wh - 130 + row * 16
+                    if row < 3 or abs(col - 7) > 4 - row:
+                        brick_color = (120 + (row * col) % 20, 70 + (row + col) % 15, 45)
+                        pygame.draw.rect(surf, brick_color, (brick_x, brick_y, 28, 14))
+                        pygame.draw.rect(surf, (80, 50, 35), (brick_x, brick_y, 28, 14), 1)
 
-        # Animated flames inside kiln
-        for i in range(8):
-            flame_x = arch_center_x - 100 + i * 28
-            flame_phase = tick * 0.01 + i * 0.9
-            flame_height = 50 + 20 * math.sin(flame_phase) + 10 * math.sin(flame_phase * 2.1)
+            # Inner kiln glow
+            inner_rect = pygame.Rect(arch_center_x - 150, wh - 90, 300, 90)
+            for i in range(5):
+                shrink = i * 15
+                glow_alpha = int(150 * (1 - i/5) * glow_intensity)
+                inner_glow = pygame.Surface((300 - shrink*2, 90), pygame.SRCALPHA)
+                inner_glow.fill((255, 180 - i*20, 80 - i*15, glow_alpha))
+                surf.blit(inner_glow, (inner_rect.x + shrink, inner_rect.y))
 
-            for layer in range(3):
-                lh = flame_height * (1 - layer * 0.25)
-                lw = 18 - layer * 4
-                colors = [(255, 220, 140), (255, 160, 60), (255, 100, 30)]
+            # Animated flames inside kiln
+            for i in range(8):
+                flame_x = arch_center_x - 100 + i * 28
+                flame_phase = tick * 0.01 + i * 0.9
+                flame_height = 50 + 20 * math.sin(flame_phase) + 10 * math.sin(flame_phase * 2.1)
 
-                pts = [
-                    (flame_x - lw//2, wh - 10),
-                    (flame_x - lw//4, wh - 10 - lh * 0.5),
-                    (flame_x, wh - 10 - lh),
-                    (flame_x + lw//4, wh - 10 - lh * 0.6),
-                    (flame_x + lw//2, wh - 10),
-                ]
-                pygame.draw.polygon(surf, colors[layer], pts)
+                for layer in range(3):
+                    lh = flame_height * (1 - layer * 0.25)
+                    lw = 18 - layer * 4
+                    colors = [(255, 220, 140), (255, 160, 60), (255, 100, 30)]
 
-        # Decorative gears in corners
-        gear_positions = [
-            (80, 80, 45, 10, 25),
-            (ww - 80, 80, 40, 8, -30),
-            (100, wh - 200, 35, 8, 20),
-            (ww - 100, wh - 200, 50, 12, -18),
-        ]
+                    pts = [
+                        (flame_x - lw//2, wh - 10),
+                        (flame_x - lw//4, wh - 10 - lh * 0.5),
+                        (flame_x, wh - 10 - lh),
+                        (flame_x + lw//4, wh - 10 - lh * 0.6),
+                        (flame_x + lw//2, wh - 10),
+                    ]
+                    pygame.draw.polygon(surf, colors[layer], pts)
 
-        for gx, gy, radius, teeth, speed in gear_positions:
-            angle = (tick * speed / 1000) % 360
-            gear_color = (180, 140, 80)
-            gear_dark = (120, 90, 55)
+            # Decorative gears in corners
+            gear_positions = [
+                (80, 80, 45, 10, 25),
+                (ww - 80, 80, 40, 8, -30),
+                (100, wh - 200, 35, 8, 20),
+                (ww - 100, wh - 200, 50, 12, -18),
+            ]
 
-            # Outer ring
-            pygame.draw.circle(surf, gear_color, (gx, gy), radius, 4)
-            pygame.draw.circle(surf, gear_dark, (gx, gy), radius - 8, 2)
+            for gx, gy, radius, teeth, speed in gear_positions:
+                angle = (tick * speed / 1000) % 360
+                gear_color = (180, 140, 80)
+                gear_dark = (120, 90, 55)
 
-            # Teeth
-            for t in range(teeth):
-                tooth_angle = math.radians(angle + t * (360 / teeth))
-                inner_tx = gx + math.cos(tooth_angle) * radius
-                inner_ty = gy + math.sin(tooth_angle) * radius
-                outer_tx = gx + math.cos(tooth_angle) * (radius + 10)
-                outer_ty = gy + math.sin(tooth_angle) * (radius + 10)
-                pygame.draw.line(surf, gear_color, (inner_tx, inner_ty), (outer_tx, outer_ty), 4)
+                # Outer ring
+                pygame.draw.circle(surf, gear_color, (gx, gy), radius, 4)
+                pygame.draw.circle(surf, gear_dark, (gx, gy), radius - 8, 2)
 
-            # Center
-            pygame.draw.circle(surf, gear_dark, (gx, gy), radius // 4)
+                # Teeth
+                for t in range(teeth):
+                    tooth_angle = math.radians(angle + t * (360 / teeth))
+                    inner_tx = gx + math.cos(tooth_angle) * radius
+                    inner_ty = gy + math.sin(tooth_angle) * radius
+                    outer_tx = gx + math.cos(tooth_angle) * (radius + 10)
+                    outer_ty = gy + math.sin(tooth_angle) * (radius + 10)
+                    pygame.draw.line(surf, gear_color, (inner_tx, inner_ty), (outer_tx, outer_ty), 4)
+
+                # Center
+                pygame.draw.circle(surf, gear_dark, (gx, gy), radius // 4)
 
         # Header
         header = self.renderer.font.render("MATERIAL REFINERY", True, (220, 180, 120))
@@ -7931,57 +7948,62 @@ class GameEngine:
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Workbench wood background
-        for y in range(wh):
-            progress = y / wh
-            r = int(100 + 30 * math.sin(y * 0.02))
-            g = int(70 + 20 * math.sin(y * 0.02))
-            b = int(50 + 10 * math.sin(y * 0.02))
-            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
+        # Check for custom background image
+        bg = effects.backgrounds.get('engineering')
+        custom_bg_drawn = bg and bg.draw_to_local_surface(surf)
 
-        # Wood grain texture
-        for i in range(0, wh, 25):
-            grain_intensity = 10 + int(10 * math.sin(i * 0.1))
-            pygame.draw.line(surf, (90 + grain_intensity, 60 + grain_intensity, 45), (0, i), (ww, i), 1)
+        if not custom_bg_drawn:
+            # Workbench wood background
+            for y in range(wh):
+                progress = y / wh
+                r = int(100 + 30 * math.sin(y * 0.02))
+                g = int(70 + 20 * math.sin(y * 0.02))
+                b = int(50 + 10 * math.sin(y * 0.02))
+                pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-        # Warm overhead lighting effect
-        light_intensity = 0.85 + 0.1 * math.sin(tick * 0.001)
-        for y in range(200):
-            alpha = int(60 * (1 - y / 200) * light_intensity)
-            light_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
-            light_surf.fill((255, 230, 180, alpha))
-            surf.blit(light_surf, (0, y))
+            # Wood grain texture
+            for i in range(0, wh, 25):
+                grain_intensity = 10 + int(10 * math.sin(i * 0.1))
+                pygame.draw.line(surf, (90 + grain_intensity, 60 + grain_intensity, 45), (0, i), (ww, i), 1)
 
-        # Scattered tools decoration
-        tool_positions = [
-            ('wrench', 50, 80, 20),
-            ('screwdriver', ww - 80, 100, -15),
-            ('pliers', 70, wh - 120, 30),
-            ('hammer', ww - 100, wh - 100, -25),
-        ]
+            # Warm overhead lighting effect
+            light_intensity = 0.85 + 0.1 * math.sin(tick * 0.001)
+            for y in range(200):
+                alpha = int(60 * (1 - y / 200) * light_intensity)
+                light_surf = pygame.Surface((ww, 1), pygame.SRCALPHA)
+                light_surf.fill((255, 230, 180, alpha))
+                surf.blit(light_surf, (0, y))
 
-        for tool_type, tx, ty, angle in tool_positions:
-            tool_surf = pygame.Surface((60, 60), pygame.SRCALPHA)
-            tool_color = (120, 125, 130)
-            handle_color = (140, 100, 60)
+            # Scattered tools decoration
+            tool_positions = [
+                ('wrench', 50, 80, 20),
+                ('screwdriver', ww - 80, 100, -15),
+                ('pliers', 70, wh - 120, 30),
+                ('hammer', ww - 100, wh - 100, -25),
+            ]
 
-            if tool_type == 'wrench':
-                pygame.draw.line(tool_surf, tool_color, (10, 30), (50, 30), 5)
-                pygame.draw.circle(tool_surf, tool_color, (50, 30), 10, 3)
-                pygame.draw.circle(tool_surf, tool_color, (10, 30), 8, 3)
-            elif tool_type == 'screwdriver':
-                pygame.draw.line(tool_surf, handle_color, (10, 30), (35, 30), 8)
-                pygame.draw.line(tool_surf, tool_color, (35, 30), (55, 30), 4)
-            elif tool_type == 'pliers':
-                pygame.draw.line(tool_surf, tool_color, (15, 25), (45, 35), 4)
-                pygame.draw.line(tool_surf, tool_color, (15, 35), (45, 25), 4)
-                pygame.draw.circle(tool_surf, (80, 80, 85), (30, 30), 5)
-            elif tool_type == 'hammer':
-                pygame.draw.line(tool_surf, handle_color, (10, 35), (35, 35), 7)
-                pygame.draw.rect(tool_surf, tool_color, (35, 22, 20, 26))
+            for tool_type, tx, ty, angle in tool_positions:
+                tool_surf = pygame.Surface((60, 60), pygame.SRCALPHA)
+                tool_color = (120, 125, 130)
+                handle_color = (140, 100, 60)
 
-            rotated = pygame.transform.rotate(tool_surf, angle)
-            surf.blit(rotated, (tx - rotated.get_width()//2, ty - rotated.get_height()//2))
+                if tool_type == 'wrench':
+                    pygame.draw.line(tool_surf, tool_color, (10, 30), (50, 30), 5)
+                    pygame.draw.circle(tool_surf, tool_color, (50, 30), 10, 3)
+                    pygame.draw.circle(tool_surf, tool_color, (10, 30), 8, 3)
+                elif tool_type == 'screwdriver':
+                    pygame.draw.line(tool_surf, handle_color, (10, 30), (35, 30), 8)
+                    pygame.draw.line(tool_surf, tool_color, (35, 30), (55, 30), 4)
+                elif tool_type == 'pliers':
+                    pygame.draw.line(tool_surf, tool_color, (15, 25), (45, 35), 4)
+                    pygame.draw.line(tool_surf, tool_color, (15, 35), (45, 25), 4)
+                    pygame.draw.circle(tool_surf, (80, 80, 85), (30, 30), 5)
+                elif tool_type == 'hammer':
+                    pygame.draw.line(tool_surf, handle_color, (10, 35), (35, 35), 7)
+                    pygame.draw.rect(tool_surf, tool_color, (35, 22, 20, 26))
+
+                rotated = pygame.transform.rotate(tool_surf, angle)
+                surf.blit(rotated, (tx - rotated.get_width()//2, ty - rotated.get_height()//2))
 
         # Header with workbench theme
         header = self.renderer.font.render("ENGINEER'S WORKBENCH", True, (60, 80, 100))
@@ -8568,38 +8590,43 @@ class GameEngine:
 
         surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
 
-        # Light blue spirit gradient background
-        for y in range(wh):
-            progress = y / wh
-            r = int(20 + 25 * progress)
-            g = int(35 + 30 * progress)
-            b = int(55 + 20 * progress)
-            pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
+        # Check for custom background image
+        bg = effects.backgrounds.get('enchanting')
+        custom_bg_drawn = bg and bg.draw_to_local_surface(surf)
 
-        # Floating spirit particles
-        for i in range(25):
-            particle_phase = tick * 0.001 + i * 0.5
-            px = 50 + (i * 37) % (ww - 100) + math.sin(particle_phase) * 30
-            py = 50 + (i * 53) % (wh - 100) + math.cos(particle_phase * 0.7) * 25
-            particle_size = 3 + int(2 * math.sin(particle_phase * 2))
-            particle_alpha = int(80 + 60 * math.sin(particle_phase * 1.5))
+        if not custom_bg_drawn:
+            # Light blue spirit gradient background
+            for y in range(wh):
+                progress = y / wh
+                r = int(20 + 25 * progress)
+                g = int(35 + 30 * progress)
+                b = int(55 + 20 * progress)
+                pygame.draw.line(surf, (r, g, b), (0, y), (ww, y))
 
-            particle_surf = pygame.Surface((particle_size * 4, particle_size * 4), pygame.SRCALPHA)
-            # Soft glow
-            pygame.draw.circle(particle_surf, (150, 200, 255, particle_alpha // 3),
-                             (particle_size * 2, particle_size * 2), particle_size * 2)
-            # Core
-            pygame.draw.circle(particle_surf, (180, 220, 255, particle_alpha),
-                             (particle_size * 2, particle_size * 2), particle_size)
-            surf.blit(particle_surf, (int(px), int(py)))
+            # Floating spirit particles
+            for i in range(25):
+                particle_phase = tick * 0.001 + i * 0.5
+                px = 50 + (i * 37) % (ww - 100) + math.sin(particle_phase) * 30
+                py = 50 + (i * 53) % (wh - 100) + math.cos(particle_phase * 0.7) * 25
+                particle_size = 3 + int(2 * math.sin(particle_phase * 2))
+                particle_alpha = int(80 + 60 * math.sin(particle_phase * 1.5))
 
-        # Central aura glow
-        aura_intensity = 0.5 + 0.3 * math.sin(tick * 0.002)
-        for r in range(150, 0, -10):
-            alpha = int(25 * (r / 150) * aura_intensity)
-            aura_surf = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
-            pygame.draw.circle(aura_surf, (100, 180, 240, alpha), (r, r), r)
-            surf.blit(aura_surf, (ww//2 - r, 350 - r))
+                particle_surf = pygame.Surface((particle_size * 4, particle_size * 4), pygame.SRCALPHA)
+                # Soft glow
+                pygame.draw.circle(particle_surf, (150, 200, 255, particle_alpha // 3),
+                                 (particle_size * 2, particle_size * 2), particle_size * 2)
+                # Core
+                pygame.draw.circle(particle_surf, (180, 220, 255, particle_alpha),
+                                 (particle_size * 2, particle_size * 2), particle_size)
+                surf.blit(particle_surf, (int(px), int(py)))
+
+            # Central aura glow
+            aura_intensity = 0.5 + 0.3 * math.sin(tick * 0.002)
+            for r in range(150, 0, -10):
+                alpha = int(25 * (r / 150) * aura_intensity)
+                aura_surf = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+                pygame.draw.circle(aura_surf, (100, 180, 240, alpha), (r, r), r)
+                surf.blit(aura_surf, (ww//2 - r, 350 - r))
 
         # Header with spirit theme
         header = self.renderer.font.render("SPIRIT WHEEL", True, (150, 200, 255))
