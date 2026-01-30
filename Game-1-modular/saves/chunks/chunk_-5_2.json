@@ -1,7 +1,7 @@
 {
   "chunk_x": -5,
   "chunk_y": 2,
-  "chunk_type": "peaceful_quarry",
+  "chunk_type": "peaceful_forest",
   "dungeon_entrance": {
     "position": {
       "x": -73,
@@ -10,5 +10,5 @@
     },
     "rarity": "uncommon"
   },
-  "unload_timestamp": 51.07999999999977
+  "unload_timestamp": 50.8689999999998
 }
