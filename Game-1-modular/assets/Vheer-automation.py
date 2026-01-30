@@ -539,23 +539,36 @@ def pre_scan_directories(items, versions_to_generate):
             base_folder = item.get('base_folder', 'items')
             subfolder = item.get('subfolder')
 
+            # Build list of possible filenames (original + mapped names)
             if version == 1:
-                filename = f"{name}.png"
+                possible_filenames = [f"{name}.png"]
+                if name in RESOURCE_NAME_MAP:
+                    possible_filenames.append(f"{RESOURCE_NAME_MAP[name]}.png")
             else:
-                filename = f"{name}-{version}.png"
+                possible_filenames = [f"{name}-{version}.png"]
+                if name in RESOURCE_NAME_MAP:
+                    possible_filenames.append(f"{RESOURCE_NAME_MAP[name]}-{version}.png")
 
             if subfolder:
                 save_dir = output_base / base_folder / subfolder
             else:
                 save_dir = output_base / base_folder
 
-            save_path = save_dir / filename
+            # Check all possible filenames
+            found = False
+            found_path = None
+            for filename in possible_filenames:
+                save_path = save_dir / filename
+                if save_path.exists() and save_path.stat().st_size > MIN_FILE_SIZE:
+                    found = True
+                    found_path = save_path
+                    break
 
-            if save_path.exists() and save_path.stat().st_size > MIN_FILE_SIZE:
+            if found:
                 existing_files.append({
                     'name': name,
-                    'path': save_path,
-                    'size': save_path.stat().st_size
+                    'path': found_path,
+                    'size': found_path.stat().st_size
                 })
             else:
                 missing_items.append(name)
@@ -613,24 +626,37 @@ def pre_scan_directories_custom(items, version_start, version_end, cycle=None):
             base_folder = item.get('base_folder', 'items')
             subfolder = item.get('subfolder')
 
+            # Build list of possible filenames (original + mapped names)
             # Always use versioned filename for custom mode (or version 1 without cycle)
             if version == 1 and cycle is None:
-                filename = f"{name}.png"
+                possible_filenames = [f"{name}.png"]
+                if name in RESOURCE_NAME_MAP:
+                    possible_filenames.append(f"{RESOURCE_NAME_MAP[name]}.png")
             else:
-                filename = f"{name}-{version}.png"
+                possible_filenames = [f"{name}-{version}.png"]
+                if name in RESOURCE_NAME_MAP:
+                    possible_filenames.append(f"{RESOURCE_NAME_MAP[name]}-{version}.png")
 
             if subfolder:
                 save_dir = output_base / base_folder / subfolder
             else:
                 save_dir = output_base / base_folder
 
-            save_path = save_dir / filename
+            # Check all possible filenames
+            found = False
+            found_path = None
+            for filename in possible_filenames:
+                save_path = save_dir / filename
+                if save_path.exists() and save_path.stat().st_size > MIN_FILE_SIZE:
+                    found = True
+                    found_path = save_path
+                    break
 
-            if save_path.exists() and save_path.stat().st_size > MIN_FILE_SIZE:
+            if found:
                 existing_files.append({
                     'name': name,
-                    'path': save_path,
-                    'size': save_path.stat().st_size
+                    'path': found_path,
+                    'size': found_path.stat().st_size
                 })
             else:
                 missing_items.append(name)

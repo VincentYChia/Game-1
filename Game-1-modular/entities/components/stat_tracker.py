@@ -838,6 +838,18 @@ class StatTracker:
             "screenshots_taken": 0
         }
 
+        # Barrier and collision system stats
+        self.barrier_stats = {
+            "barriers_placed": 0,
+            "barriers_picked_up": 0,
+            "attacks_blocked_by_barriers": 0,
+            "enemy_attacks_blocked": 0,
+            "player_attacks_blocked": 0,
+            "turret_attacks_blocked": 0
+        }
+        # Per-material barrier placement tracking
+        self.barriers_by_material: Dict[str, int] = {}
+
     def _init_dungeon_stats(self):
         """Initialize dungeon statistics tracking."""
         self.dungeon_stats = {
@@ -1448,6 +1460,44 @@ class StatTracker:
         self.exploration["total_chunk_entries"] += 1
 
     # =========================================================================
+    # BARRIER STATISTICS
+    # =========================================================================
+
+    def record_barrier_placed(self, material_id: str):
+        """
+        Record a barrier being placed in the world.
+
+        Args:
+            material_id: ID of the stone material used
+        """
+        self.barrier_stats["barriers_placed"] += 1
+
+        # Track per-material
+        if material_id not in self.barriers_by_material:
+            self.barriers_by_material[material_id] = 0
+        self.barriers_by_material[material_id] += 1
+
+    def record_barrier_picked_up(self, material_id: str = None):
+        """Record a barrier being picked up."""
+        self.barrier_stats["barriers_picked_up"] += 1
+
+    def record_attack_blocked(self, source: str = "unknown"):
+        """
+        Record an attack being blocked by a barrier or obstacle.
+
+        Args:
+            source: Who was attacking ('player', 'enemy', 'turret')
+        """
+        self.barrier_stats["attacks_blocked_by_barriers"] += 1
+
+        if source == "player":
+            self.barrier_stats["player_attacks_blocked"] += 1
+        elif source == "enemy":
+            self.barrier_stats["enemy_attacks_blocked"] += 1
+        elif source == "turret":
+            self.barrier_stats["turret_attacks_blocked"] += 1
+
+    # =========================================================================
     # SERIALIZATION
     # =========================================================================
 
@@ -1506,7 +1556,11 @@ class StatTracker:
             "social_stats": dict(self.social_stats),
             "encyclopedia_stats": dict(self.encyclopedia_stats),
             "misc_stats": dict(self.misc_stats),
-            "dungeon_stats": self._serialize_dict_with_inf(self.dungeon_stats)
+            "dungeon_stats": self._serialize_dict_with_inf(self.dungeon_stats),
+
+            # Barrier system
+            "barrier_stats": dict(self.barrier_stats),
+            "barriers_by_material": dict(self.barriers_by_material)
         }
 
     def _serialize_dict_with_inf(self, data: Dict) -> Dict:
@@ -1590,6 +1644,12 @@ class StatTracker:
         # Restore dungeon stats (backwards compatible - won't exist in older saves)
         if "dungeon_stats" in data:
             tracker.dungeon_stats.update(tracker._deserialize_dict_with_inf(data.get("dungeon_stats", {})))
+
+        # Restore barrier stats (backwards compatible - won't exist in older saves)
+        if "barrier_stats" in data:
+            tracker.barrier_stats.update(data.get("barrier_stats", {}))
+        if "barriers_by_material" in data:
+            tracker.barriers_by_material.update(data.get("barriers_by_material", {}))
 
         return tracker
 

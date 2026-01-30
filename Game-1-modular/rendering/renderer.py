@@ -1260,6 +1260,9 @@ class Renderer:
         center_x, center_y = camera.world_to_screen(character.position)
         pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
 
+        # Render attack effects (lines, blocked indicators)
+        self._render_attack_effects(camera)
+
         for dmg in damage_numbers:
             sx, sy = camera.world_to_screen(dmg.position)
             alpha = int(255 * (dmg.lifetime / 1.0))
@@ -1433,6 +1436,9 @@ class Renderer:
         center_x, center_y = camera.world_to_screen(character.position)
         pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
         pygame.draw.circle(self.screen, (0, 0, 0), (center_x, center_y), Config.TILE_SIZE // 3, 2)
+
+        # Render attack effects (lines, blocked indicators)
+        self._render_attack_effects(camera)
 
         # Render damage numbers
         for dmg in damage_numbers:
@@ -1866,6 +1872,11 @@ class Renderer:
         text = self.small_font.render(f"HP: {char.health}/{char.max_health}", True, Config.COLOR_TEXT)
         self.screen.blit(text, text.get_rect(center=(x + w // 2, y + h // 2)))
 
+        # Show blocking indicator if player is blocking with shield
+        if hasattr(char, 'is_blocking') and char.is_blocking:
+            shield_text = self.font.render("🛡️ BLOCKING", True, (100, 200, 255))
+            self.screen.blit(shield_text, (x + w + 10, y))
+
     def render_mana_bar(self, char, x, y):
         w, h = 300, 20
         pygame.draw.rect(self.screen, Config.COLOR_HEALTH_BG, (x, y, w, h))
@@ -2090,8 +2101,8 @@ class Renderer:
 
         # Title
         surf.blit(self.font.render("SKILLS MANAGEMENT", True, (150, 200, 255)), (ww // 2 - s(120), s(20)))
-        surf.blit(self.small_font.render("[ESC] Close | [Mouse Wheel] Scroll | Click to equip | Right-click to unequip", True, (180, 180, 180)),
-                  (ww // 2 - s(330), s(50)))
+        surf.blit(self.small_font.render("[ESC] Close | [Scroll] Learned | [SHIFT+Scroll] Available | Click equip/learn", True, (180, 180, 180)),
+                  (ww // 2 - s(340), s(50)))
 
         # Hotbar section (top)
         y_pos = s(90)
@@ -2152,7 +2163,7 @@ class Renderer:
         y_pos += s(30)
 
         skill_rects = []
-        max_visible = 10
+        max_visible = 6  # Reduced to leave room for available skills section
 
         # Calculate scroll bounds
         max_scroll = max(0, total_skills - max_visible)
@@ -2224,12 +2235,27 @@ class Renderer:
         y_pos += s(10)
         available_skill_ids = character.skills.get_available_skills(character)
         available_skill_rects = []
+        max_available_visible = 5  # Max available skills to show
 
         if available_skill_ids:
-            surf.blit(self.small_font.render(f"AVAILABLE TO LEARN ({len(available_skill_ids)}):", True, (100, 255, 100)), (s(20), y_pos))
+            # Calculate scroll bounds for available skills
+            max_available_scroll = max(0, len(available_skill_ids) - max_available_visible)
+            character.available_skills_scroll_offset = max(0, min(character.available_skills_scroll_offset, max_available_scroll))
+
+            # Show scroll indicator if needed
+            scroll_info = ""
+            if len(available_skill_ids) > max_available_visible:
+                start_idx = character.available_skills_scroll_offset + 1
+                end_idx = min(character.available_skills_scroll_offset + max_available_visible, len(available_skill_ids))
+                scroll_info = f" [{start_idx}-{end_idx} of {len(available_skill_ids)}]"
+
+            surf.blit(self.small_font.render(f"AVAILABLE TO LEARN ({len(available_skill_ids)}){scroll_info}:", True, (100, 255, 100)), (s(20), y_pos))
             y_pos += s(25)
 
-            for skill_id in available_skill_ids[:3]:  # Show first 3 available skills
+            # Get visible available skills based on scroll
+            visible_available = available_skill_ids[character.available_skills_scroll_offset:character.available_skills_scroll_offset + max_available_visible]
+
+            for skill_id in visible_available:
                 skill_def = skill_db.skills.get(skill_id)
                 if not skill_def:
                     continue
@@ -2266,9 +2292,6 @@ class Renderer:
 
                 available_skill_rects.append((skill_rect, skill_id, skill_def))
                 y_pos += s(50)
-
-            if len(available_skill_ids) > 3:
-                surf.blit(self.tiny_font.render(f"...and {len(available_skill_ids) - 3} more available", True, (120, 200, 120)), (s(30), y_pos))
 
         self.screen.blit(surf, (wx, wy))
         window_rect = pygame.Rect(wx, wy, ww, wh)
@@ -6155,6 +6178,76 @@ class Renderer:
         self.screen.blit(surf, (x, y))
         if bold:
             font.set_bold(False)
+
+    def _render_attack_effects(self, camera: 'Camera'):
+        """Render attack effect visuals (lines, blocked indicators).
+
+        Args:
+            camera: Camera for world-to-screen coordinate conversion
+        """
+        try:
+            from systems.attack_effects import get_attack_effects_manager, AttackEffectType
+            from data.models.world import Position
+
+            manager = get_attack_effects_manager()
+            manager.update()  # Remove expired effects
+
+            for effect in manager.get_active_effects():
+                color = effect.get_color()
+
+                # Convert positions to screen coordinates
+                start_sx, start_sy = camera.world_to_screen(
+                    Position(effect.start_pos[0], effect.start_pos[1], 0)
+                )
+                end_sx, end_sy = camera.world_to_screen(
+                    Position(effect.end_pos[0], effect.end_pos[1], 0)
+                )
+
+                if effect.effect_type == AttackEffectType.LINE:
+                    # Draw attack line
+                    line_width = effect.get_line_width()
+
+                    # Create a surface for alpha support
+                    if color[3] > 0:  # Only draw if visible
+                        pygame.draw.line(self.screen, color[:3], (start_sx, start_sy),
+                                        (end_sx, end_sy), line_width)
+
+                        # Draw small circle at impact point
+                        impact_radius = max(2, line_width)
+                        pygame.draw.circle(self.screen, color[:3], (end_sx, end_sy), impact_radius)
+
+                elif effect.effect_type == AttackEffectType.BLOCKED:
+                    # Draw blocked indicator (X mark)
+                    size = int(Config.TILE_SIZE * 0.4 * effect.alpha)
+                    if size > 2:
+                        # Draw X
+                        pygame.draw.line(self.screen, color[:3],
+                                        (start_sx - size, start_sy - size),
+                                        (start_sx + size, start_sy + size), 3)
+                        pygame.draw.line(self.screen, color[:3],
+                                        (start_sx + size, start_sy - size),
+                                        (start_sx - size, start_sy + size), 3)
+
+                        # Draw "BLOCKED" text if effect is fresh
+                        if effect.alpha > 0.7:
+                            blocked_surf = self.tiny_font.render("BLOCKED", True, color[:3])
+                            self.screen.blit(blocked_surf,
+                                           (start_sx - blocked_surf.get_width() // 2,
+                                            start_sy - size - 15))
+
+                elif effect.effect_type == AttackEffectType.AREA:
+                    # Draw area effect circle
+                    radius_world = effect.end_pos[0] - effect.start_pos[0]  # Stored in end_pos
+                    radius_screen = int(radius_world * Config.TILE_SIZE)
+
+                    if color[3] > 0 and radius_screen > 0:
+                        # Draw expanding circle with fading alpha
+                        pygame.draw.circle(self.screen, color[:3], (start_sx, start_sy),
+                                         radius_screen, max(1, int(3 * effect.alpha)))
+
+        except ImportError:
+            # Attack effects module not available
+            pass
 
     def render_loading_indicator(self):
         """

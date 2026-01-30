@@ -345,6 +345,7 @@ class GameEngine:
         self.last_tick = pygame.time.get_ticks()
         self.last_click_time = 0
         self.last_clicked_slot = None
+        self.last_f_press_time = 0  # For double-tap F to exit dungeon
 
         # Day/Night Cycle (16 min day + 8 min night = 24 min total)
         # Time breakdown: 0-480s Night, 480-600s Dawn, 600-1320s Day, 1320-1440s Dusk
@@ -623,6 +624,12 @@ class GameEngine:
                         self.map_system.close_map()
                     elif self.character.class_selection_open:
                         pass
+                    elif self.npc_dialogue_open:
+                        # Close NPC dialogue
+                        self.npc_dialogue_open = False
+                        self.active_npc = None
+                        self.npc_dialogue_lines = []
+                        self.npc_available_quests = []
                     else:
                         # Autosave on quit (unless temporary world)
                         if not self.temporary_world:
@@ -661,8 +668,19 @@ class GameEngine:
                     if self.map_system.map_open and not self.waypoint_renaming:
                         self.place_waypoint_at_player()
                 elif event.key == pygame.K_f:
-                    # NPC interaction
-                    self.handle_npc_interaction()
+                    current_time = pygame.time.get_ticks()
+                    # Double-tap F within 0.5s to exit dungeon early
+                    if self.dungeon_manager.in_dungeon:
+                        if current_time - self.last_f_press_time < 500:  # 500ms = 0.5 seconds
+                            self._exit_dungeon()
+                            self.add_notification("Quick exit from dungeon!", (255, 200, 100))
+                            self.last_f_press_time = 0  # Reset to prevent triple-tap
+                        else:
+                            self.last_f_press_time = current_time
+                            self.add_notification("Press F again quickly to exit dungeon", (200, 200, 200))
+                    else:
+                        # NPC interaction (when not in dungeon)
+                        self.handle_npc_interaction()
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
@@ -1091,8 +1109,14 @@ class GameEngine:
                         self.character.encyclopedia.scroll_offset = max(0, self.character.encyclopedia.scroll_offset)
                 # Handle mouse wheel scrolling for skills menu
                 elif self.character.skills_ui_open:
-                    # Scroll the skills list
-                    self.character.skills_menu_scroll_offset -= event.y  # event.y is positive for scroll up
+                    # SHIFT + scroll = scroll available skills, regular scroll = scroll learned skills
+                    shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
+                    if shift_held:
+                        # Scroll the available skills list
+                        self.character.available_skills_scroll_offset -= event.y
+                    else:
+                        # Scroll the learned skills list
+                        self.character.skills_menu_scroll_offset -= event.y
                     # Clamp is handled in render_skills_menu_ui
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.mouse_buttons_pressed.add(1)
@@ -2099,7 +2123,7 @@ class GameEngine:
         # Note: Corpse looting is now automatic when enemy dies
         # Manual corpse looting has been removed as loot is auto-added to inventory
 
-        # Check for placed entity pickup (turrets, traps, etc.)
+        # Check for placed entity pickup (turrets, traps, barriers, etc.)
         if is_double_click:
             placed_entity = self.world.get_entity_at(world_pos)
             if placed_entity:
@@ -2108,7 +2132,8 @@ class GameEngine:
                     PlacedEntityType.TURRET,
                     PlacedEntityType.TRAP,
                     PlacedEntityType.BOMB,
-                    PlacedEntityType.UTILITY_DEVICE
+                    PlacedEntityType.UTILITY_DEVICE,
+                    PlacedEntityType.BARRIER  # Stone barriers can be picked up
                 ]
                 if placed_entity.entity_type in pickupable_types:
                     # Check if player is in range (use 2.0 units as pickup range)
@@ -2126,8 +2151,8 @@ class GameEngine:
                                 crafted_stats=entity_crafted_stats
                             )
                             if success:
-                                # Remove from world
-                                self.world.placed_entities.remove(placed_entity)
+                                # Remove from world (use remove_entity for proper cache updates)
+                                self.world.remove_entity(placed_entity)
                                 bonus_msg = " (with bonuses)" if entity_crafted_stats else ""
                                 self.add_notification(f"Picked up {mat_def.name}{bonus_msg}", (100, 255, 100))
                                 print(f"✓ Picked up {mat_def.name}{bonus_msg}")
@@ -2670,6 +2695,30 @@ class GameEngine:
                 print(f"   +{title_quality_bonus*100:.0f}% quality bonus (titles)")
             if total_quality_bonus > 0:
                 print(f"   Total: +{total_quality_bonus*100:.0f}% quality bonus")
+
+        # Apply INT stat difficulty reduction (-1% per INT point)
+        # This affects gameplay parameters but NOT reward calculation (difficulty_points preserved)
+        int_stat = self.character.stats.intelligence
+        if int_stat > 0:
+            int_reduction = int_stat * 0.01  # -1% per INT point
+            print(f"🧠 INT stat: {int_stat} (-{int_reduction*100:.0f}% minigame difficulty)")
+
+            # Apply reduction to gameplay parameters (varies by minigame type)
+            if hasattr(minigame, 'time_limit'):
+                # More time = easier
+                minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
+
+            if hasattr(minigame, 'TARGET_WIDTH'):
+                # Wider target = easier (smithing)
+                minigame.TARGET_WIDTH = int(minigame.TARGET_WIDTH * (1 + int_reduction * 0.5))
+
+            if hasattr(minigame, 'PERFECT_WIDTH'):
+                # Wider perfect zone = easier (smithing)
+                minigame.PERFECT_WIDTH = int(minigame.PERFECT_WIDTH * (1 + int_reduction * 0.5))
+
+            if hasattr(minigame, 'TEMP_DECAY'):
+                # Slower decay = easier (smithing)
+                minigame.TEMP_DECAY = minigame.TEMP_DECAY * (1 - int_reduction * 0.5)
 
         # Start minigame
         minigame.start()
@@ -5363,6 +5412,7 @@ class GameEngine:
             return
 
         if self.character.inventory.dragging_stack:
+            # Check if dropping onto inventory panel
             if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
                 # Calculate start_y to match renderer: tools_y(+55) + tool_slot(50) + padding(20) = +125
                 tools_y = Config.INVENTORY_PANEL_Y + 55
@@ -5380,6 +5430,63 @@ class GameEngine:
                         if 0 <= idx < self.character.inventory.max_slots:
                             self.character.inventory.end_drag(idx)
                             return
+
+            # Check if dropping onto the world viewport (for barrier placement)
+            elif mouse_pos[0] < Config.VIEWPORT_WIDTH and mouse_pos[1] < Config.INVENTORY_PANEL_Y:
+                # Check if item is a stone material for barrier placement
+                dragging_stack = self.character.inventory.dragging_stack
+                if dragging_stack:
+                    mat_def = MaterialDatabase.get_instance().get_material(dragging_stack.item_id)
+                    if mat_def and mat_def.category == "stone":
+                        # Calculate world position
+                        wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
+                        wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
+                        world_pos = Position(wx, wy, 0)
+
+                        # Check if position is walkable (can't place on water or existing obstacles)
+                        if not self.world.is_walkable(world_pos):
+                            self.add_notification("Cannot place barrier here!", (255, 100, 100))
+                            self.character.inventory.cancel_drag()
+                            return
+
+                        # Check if too far from player
+                        player_pos = self.character.position
+                        dist = math.sqrt((wx - player_pos.x)**2 + (wy - player_pos.y)**2)
+                        if dist > 3.0:  # Max placement range of 3 tiles
+                            self.add_notification("Too far to place barrier!", (255, 100, 100))
+                            self.character.inventory.cancel_drag()
+                            return
+
+                        # Place the barrier
+                        self.world.place_entity(
+                            world_pos,
+                            dragging_stack.item_id,
+                            PlacedEntityType.BARRIER,
+                            tier=mat_def.tier,
+                            range=0.0,  # Barriers don't have range
+                            damage=0.0,  # Barriers don't do damage
+                        )
+
+                        # Remove one item from the dragging slot
+                        dragging_slot = self.character.inventory.dragging_slot
+                        if dragging_stack.quantity > 1:
+                            dragging_stack.quantity -= 1
+                            self.character.inventory.slots[dragging_slot] = dragging_stack
+                        else:
+                            self.character.inventory.slots[dragging_slot] = None
+
+                        # Clear dragging state
+                        self.character.inventory.dragging_stack = None
+                        self.character.inventory.dragging_slot = None
+
+                        # Track barrier placement in stat tracker
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_barrier_placed(dragging_stack.item_id)
+
+                        self.add_notification(f"Placed {mat_def.name} barrier", (100, 255, 100))
+                        print(f"✓ Placed {mat_def.name} barrier at ({wx:.1f}, {wy:.1f})")
+                        return
+
             self.character.inventory.cancel_drag()
 
     def get_time_of_day(self) -> tuple:
@@ -5914,6 +6021,7 @@ class GameEngine:
             x_key_held = pygame.K_x in self.keys_pressed
             has_shield = self.character.is_shield_active()
             shield_blocking = (mouse_held or x_key_held) and has_shield
+            self.character.is_blocking = shield_blocking  # Update visual blocking state
 
             # Debug output when trying to block
             if mouse_held or x_key_held:
@@ -5959,6 +6067,51 @@ class GameEngine:
                                                 mat = mat_db.get_material(material_id)
                                                 item_name = mat.name if mat else material_id
                                                 self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+
+            # Handle continuous left-click (mainhand) attacks when mouse is held
+            # This allows attacking while also blocking with right-click
+            if 1 in self.mouse_buttons_pressed and self.character.can_attack('mainHand'):
+                # Check if not stunned/frozen
+                can_attack = True
+                if hasattr(self.character, 'status_manager'):
+                    if self.character.status_manager.has_status('stun') or self.character.status_manager.has_status('freeze'):
+                        can_attack = False
+
+                if can_attack:
+                    # Get mouse position and convert to world coordinates
+                    mouse_pos = pygame.mouse.get_pos()
+                    if mouse_pos[0] < Config.VIEWPORT_WIDTH:  # In viewport (not UI)
+                        wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
+                        wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
+
+                        # Check for enemy at mouse position
+                        if self.dungeon_manager.in_dungeon:
+                            enemy = self.combat_manager.get_dungeon_enemy_at_position((wx, wy))
+                        else:
+                            enemy = self.combat_manager.get_enemy_at_position((wx, wy))
+
+                        if enemy and enemy.is_alive:
+                            # Check if in range
+                            weapon_range = self.character.equipment.get_weapon_range('mainHand')
+                            dist = enemy.distance_to((self.character.position.x, self.character.position.y))
+                            if dist <= weapon_range:
+                                # Attack with mainhand
+                                effect_tags, effect_params = self._get_weapon_effect_data('mainHand')
+                                damage, is_crit, loot = self.combat_manager.player_attack_enemy_with_tags(
+                                    enemy, effect_tags, effect_params
+                                )
+                                self.damage_numbers.append(DamageNumber(int(damage), Position(enemy.position[0], enemy.position[1], 0), is_crit))
+                                self.character.reset_attack_cooldown(is_weapon=True, hand='mainHand')
+
+                                if not enemy.is_alive:
+                                    self.add_notification(f"Defeated {enemy.definition.name}!", (255, 215, 0))
+                                    self.character.activities.record_activity('combat', 1)
+                                    if loot:
+                                        mat_db = MaterialDatabase.get_instance()
+                                        for material_id, qty in loot:
+                                            mat = mat_db.get_material(material_id)
+                                            item_name = mat.name if mat else material_id
+                                            self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
 
             # Update combat based on whether in dungeon or world
             if self.dungeon_manager.in_dungeon:

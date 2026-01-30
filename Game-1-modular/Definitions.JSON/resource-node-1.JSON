@@ -185,7 +185,7 @@
           "chance": "guaranteed"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -205,7 +205,7 @@
           "chance": "guaranteed"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -225,7 +225,7 @@
           "chance": "high"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -245,7 +245,7 @@
           "chance": "guaranteed"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -265,7 +265,7 @@
           "chance": "high"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -285,7 +285,7 @@
           "chance": "moderate"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     },
     {
       "metadata": {
@@ -305,7 +305,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     },
     {
       "metadata": {
@@ -350,7 +350,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -375,7 +375,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -400,7 +400,7 @@
           "chance": "rare"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "normal"
     },
     {
       "metadata": {
@@ -425,7 +425,7 @@
           "chance": "moderate"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -450,7 +450,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -475,7 +475,7 @@
           "chance": "rare"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "slow"
     },
     {
       "metadata": {
@@ -500,7 +500,7 @@
           "chance": "rare"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     },
     {
       "metadata": {
@@ -525,7 +525,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     },
     {
       "metadata": {
@@ -550,7 +550,7 @@
           "chance": "improbable"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     },
     {
       "metadata": {

@@ -15,6 +15,7 @@ Minigame: Temperature management + hammering/forging
 
 import pygame
 import json
+from pathlib import Path
 from rarity_utils import rarity_system
 
 
@@ -177,16 +178,14 @@ class SmithingMinigame:
         if not self.active:
             return
 
-        # Temperature decay with speed bonus
-        # Fire decrease rate is calibrated to "5 clicks per second" equivalent
-        # Speed bonus slows down the decrease: effective_rate = base_rate / (1.0 + speed_bonus)
+        # Temperature decay using difficulty-scaled TEMP_DECAY parameter
+        # Base decay reduced by 30% from original calibration, then scaled by difficulty
+        # Speed bonus further slows decay: effective_rate = base_rate / (1.0 + speed_bonus)
         now = pygame.time.get_ticks()
         if now - self.last_temp_update > 100:
-            # Calculate base decay rate (5 clicks/sec worth, divided by 10 for 100ms ticks)
-            # This means player needs to maintain ~5 clicks/sec to keep temperature stable
-            clicks_per_second_equivalent = 5.0
-            base_decay_per_second = clicks_per_second_equivalent * self.TEMP_FAN_INCREMENT
-            base_decay_per_tick = base_decay_per_second / 10.0  # 100ms = 1/10 second
+            # Use TEMP_DECAY directly (set by difficulty calculator)
+            # Base reduction of 30% applied (multiply by 0.7)
+            base_decay_per_tick = self.TEMP_DECAY * 0.7
 
             # Apply speed bonus (slows down fire decrease)
             effective_decay = base_decay_per_tick / (1.0 + self.speed_bonus)
@@ -194,7 +193,7 @@ class SmithingMinigame:
             self.temperature = max(0, self.temperature - effective_decay)
             self.last_temp_update = now
 
-        # Hammer movement
+        # Hammer movement - speed scales with difficulty
         if self.hammer_hits < self.REQUIRED_HITS:
             self.hammer_position += self.hammer_direction * self.HAMMER_SPEED
             if self.hammer_position <= 0 or self.hammer_position >= self.HAMMER_BAR_WIDTH:
@@ -255,8 +254,37 @@ class SmithingMinigame:
 
         # Calculate performance metrics
         avg_hammer_score = sum(self.hammer_scores) / len(self.hammer_scores) if self.hammer_scores else 0
+
+        # Temperature affects score significantly using difficulty-scaled ideal range:
+        # - In ideal range: 1.2x bonus
+        # - Below ideal: gradual penalty based on deviation (down to 0.5x at 0°C)
+        # - Above ideal: gradual penalty based on deviation (down to 0.5x at 100°C)
+        # The penalty scales with how far outside the ideal range the temperature is
         in_ideal_range = self.TEMP_IDEAL_MIN <= self.temperature <= self.TEMP_IDEAL_MAX
-        temp_mult = 1.2 if in_ideal_range else 1.0
+        if in_ideal_range:
+            temp_mult = 1.2  # Ideal temperature bonus
+        elif self.temperature < self.TEMP_IDEAL_MIN:
+            # Too cold - penalty scales with deviation from ideal minimum
+            # At temperature 0, worst case = 0.5x multiplier
+            # At TEMP_IDEAL_MIN, no penalty = 1.0x multiplier
+            deviation = self.TEMP_IDEAL_MIN - self.temperature
+            max_deviation = self.TEMP_IDEAL_MIN  # From 0 to ideal min
+            if max_deviation > 0:
+                penalty_factor = min(deviation / max_deviation, 1.0)  # 0.0 to 1.0
+                temp_mult = 1.0 - (penalty_factor * 0.5)  # 1.0 down to 0.5
+            else:
+                temp_mult = 1.0
+        else:
+            # Too hot - penalty scales with deviation from ideal maximum
+            # At temperature 100, worst case = 0.5x multiplier
+            # At TEMP_IDEAL_MAX, no penalty = 1.0x multiplier
+            deviation = self.temperature - self.TEMP_IDEAL_MAX
+            max_deviation = 100 - self.TEMP_IDEAL_MAX  # From ideal max to 100
+            if max_deviation > 0:
+                penalty_factor = min(deviation / max_deviation, 1.0)  # 0.0 to 1.0
+                temp_mult = 1.0 - (penalty_factor * 0.5)  # 1.0 down to 0.5
+            else:
+                temp_mult = 1.0
 
         final_score = avg_hammer_score * temp_mult
 

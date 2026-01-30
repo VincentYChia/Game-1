@@ -250,6 +250,7 @@ class PlacedEntityType(Enum):
     UTILITY_DEVICE = "utility_device"
     CRAFTING_STATION = "crafting_station"
     TRAINING_DUMMY = "training_dummy"
+    BARRIER = "barrier"  # Player-placed stone barriers that block movement and attacks
 
 
 @dataclass
@@ -361,7 +362,8 @@ class PlacedEntity:
             PlacedEntityType.BOMB: (178, 34, 34),  # Firebrick
             PlacedEntityType.UTILITY_DEVICE: (60, 180, 180),  # Cyan
             PlacedEntityType.CRAFTING_STATION: (105, 105, 105),  # Gray
-            PlacedEntityType.TRAINING_DUMMY: (200, 200, 0)  # Yellow (visible target)
+            PlacedEntityType.TRAINING_DUMMY: (200, 200, 0),  # Yellow (visible target)
+            PlacedEntityType.BARRIER: (120, 120, 120)  # Stone gray for barriers
         }.get(self.entity_type, (150, 150, 150))
 
     def take_damage(self, damage: float, damage_type: str = "physical") -> bool:
