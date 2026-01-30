@@ -545,6 +545,10 @@ class Enemy:
             aggro_multiplier: Multiplier for aggro range (1.3 at night)
             speed_multiplier: Multiplier for movement speed (1.15 at night)
             world_system: WorldSystem instance for collision checking (optional)
+
+        Note:
+            If you add parameters to this method, also update TrainingDummy.update_ai()
+            in systems/training_dummy.py which overrides this method.
         """
         # Store world system reference for collision checking
         self._world_system = world_system

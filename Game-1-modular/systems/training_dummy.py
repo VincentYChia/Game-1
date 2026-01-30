@@ -1,6 +1,11 @@
 """
 Training Dummy System for Tag Testing
 Creates a special enemy that provides detailed feedback on effects applied
+
+DEVELOPER NOTE: TrainingDummy extends Enemy but overrides update_ai().
+When adding new parameters to Enemy.update_ai(), you MUST also update
+TrainingDummy.update_ai() to accept the same parameters (even if unused).
+This class is commonly missed when updating the Enemy interface.
 """
 
 from typing import Tuple
@@ -231,7 +236,8 @@ class TrainingDummy(Enemy):
         return False  # Never returns True (never dies)
 
     def update_ai(self, dt: float, player_position: Tuple[float, float],
-                  aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0):
+                  aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0,
+                  world_system=None):
         """Override AI - training dummy doesn't move or attack
 
         Args:
@@ -239,6 +245,7 @@ class TrainingDummy(Enemy):
             player_position: Current player position
             aggro_multiplier: Ignored (training dummy doesn't aggro)
             speed_multiplier: Ignored (training dummy doesn't move)
+            world_system: Ignored (training dummy doesn't need collision/pathfinding)
         """
         # Update status effects (burn, poison, etc. still tick)
         if hasattr(self, 'status_manager'):
