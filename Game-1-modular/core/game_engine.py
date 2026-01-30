@@ -2127,8 +2127,8 @@ class GameEngine:
                                 crafted_stats=entity_crafted_stats
                             )
                             if success:
-                                # Remove from world
-                                self.world.placed_entities.remove(placed_entity)
+                                # Remove from world (use remove_entity for proper cache updates)
+                                self.world.remove_entity(placed_entity)
                                 bonus_msg = " (with bonuses)" if entity_crafted_stats else ""
                                 self.add_notification(f"Picked up {mat_def.name}{bonus_msg}", (100, 255, 100))
                                 print(f"✓ Picked up {mat_def.name}{bonus_msg}")

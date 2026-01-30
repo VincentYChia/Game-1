@@ -12,6 +12,7 @@ from pathlib import Path
 from entities.status_manager import add_status_manager_to_entity
 from core.effect_executor import get_effect_executor
 from core.tag_debug import get_tag_debugger
+from data.models.world import Position
 
 
 # ============================================================================
@@ -781,7 +782,6 @@ class Enemy:
             world_system = getattr(self, '_world_system', None)
             if world_system is not None:
                 # Try to use collision system for walkability check
-                from data.models.world import Position
                 new_pos = Position(new_x, new_y, 0)
 
                 if world_system.is_walkable(new_pos):

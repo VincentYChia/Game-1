@@ -4,6 +4,7 @@ Supports infinite world generation through seed-based deterministic chunk loadin
 Chunks are loaded on-demand as the player explores and unloaded to save memory.
 """
 
+import math
 import random
 import os
 import json
@@ -59,6 +60,10 @@ class WorldSystem:
         # Fixed entities (not chunk-dependent)
         self.crafting_stations: List[CraftingStation] = []
         self.placed_entities: List[PlacedEntity] = []
+
+        # Barrier position cache for O(1) collision lookup
+        # Key: (tile_x, tile_y), avoids iterating all entities in is_walkable
+        self._barrier_positions: Set[Tuple[int, int]] = set()
 
         # Discovered dungeon entrances (persisted once found)
         self.discovered_dungeon_entrances: Dict[Tuple[int, int], DungeonEntrance] = {}
@@ -370,7 +375,6 @@ class WorldSystem:
             WorldTile at position, or None if invalid
         """
         # Use math.floor for proper negative coordinate handling
-        import math
         tile_x = math.floor(position.x)
         tile_y = math.floor(position.y)
         chunk_x = tile_x // Config.CHUNK_SIZE
@@ -405,28 +409,24 @@ class WorldSystem:
             return False
 
         # Check for blocking resources in nearby loaded chunks
-        import math
-        tile_x = math.floor(position.x)
-        tile_y = math.floor(position.y)
+        tile_x = int(position.x)
+        tile_y = int(position.y)
         chunk_x = tile_x // Config.CHUNK_SIZE
         chunk_y = tile_y // Config.CHUNK_SIZE
 
         chunk = self.loaded_chunks.get((chunk_x, chunk_y))
         if chunk:
+            # Use direct tile position check for resources
             for resource in chunk.resources:
                 if not resource.depleted:
-                    dx = abs(resource.position.x - position.x)
-                    dy = abs(resource.position.y - position.y)
-                    if dx < 0.5 and dy < 0.5:
+                    res_tile_x = int(resource.position.x)
+                    res_tile_y = int(resource.position.y)
+                    if res_tile_x == tile_x and res_tile_y == tile_y:
                         return False
 
-        # Check for blocking placed barriers
-        for entity in self.placed_entities:
-            if entity.entity_type == PlacedEntityType.BARRIER:
-                dx = abs(entity.position.x - position.x)
-                dy = abs(entity.position.y - position.y)
-                if dx < 0.5 and dy < 0.5:
-                    return False
+        # Check for blocking placed barriers using O(1) cache lookup
+        if (tile_x, tile_y) in self._barrier_positions:
+            return False
 
         return True
 
@@ -492,7 +492,6 @@ class WorldSystem:
         Returns:
             NaturalResource at position, or None
         """
-        import math
         tile_x = math.floor(position.x)
         tile_y = math.floor(position.y)
         chunk_x = tile_x // Config.CHUNK_SIZE
@@ -646,6 +645,12 @@ class WorldSystem:
             crafted_stats=crafted_stats
         )
         self.placed_entities.append(entity)
+
+        # Update barrier cache for O(1) collision lookup
+        if entity_type == PlacedEntityType.BARRIER:
+            tile_pos = (int(entity.position.x), int(entity.position.y))
+            self._barrier_positions.add(tile_pos)
+
         return entity
 
     def remove_entity(self, entity: PlacedEntity) -> bool:
@@ -659,6 +664,12 @@ class WorldSystem:
         """
         if entity in self.placed_entities:
             self.placed_entities.remove(entity)
+
+            # Update barrier cache
+            if entity.entity_type == PlacedEntityType.BARRIER:
+                tile_pos = (int(entity.position.x), int(entity.position.y))
+                self._barrier_positions.discard(tile_pos)
+
             return True
         return False
 
@@ -728,7 +739,6 @@ class WorldSystem:
         Args:
             resource: The modified resource
         """
-        import math
         tile_x = math.floor(resource.position.x)
         tile_y = math.floor(resource.position.y)
         chunk_x = tile_x // Config.CHUNK_SIZE
@@ -852,6 +862,13 @@ class WorldSystem:
                 entity.attack_speed = entity_data["attack_speed"]
 
             self.placed_entities.append(entity)
+
+        # Rebuild barrier position cache from restored entities
+        self._barrier_positions.clear()
+        for entity in self.placed_entities:
+            if entity.entity_type == PlacedEntityType.BARRIER:
+                tile_pos = (int(entity.position.x), int(entity.position.y))
+                self._barrier_positions.add(tile_pos)
 
         # Restore discovered dungeons
         self.discovered_dungeon_entrances.clear()
