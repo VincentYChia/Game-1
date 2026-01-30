@@ -2491,8 +2491,8 @@ class GameEngine:
 
         self.waypoint_renaming = True
         self.waypoint_rename_slot = slot
-        self.waypoint_rename_text = waypoint.name
-        self.add_notification("Type new name, Enter to save", (100, 200, 255))
+        self.waypoint_rename_text = ""  # Start with empty text
+        self.add_notification("Type new name, Enter to save, Esc to cancel", (100, 200, 255))
 
     def place_waypoint_at_player(self) -> None:
         """Place a new waypoint at the player's current position."""

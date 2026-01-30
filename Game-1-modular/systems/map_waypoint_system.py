@@ -378,10 +378,11 @@ class MapWaypointSystem:
         if len(name) > max_len:
             name = name[:max_len]
 
-        # Create waypoint
+        # Create waypoint - IMPORTANT: Copy position to avoid reference issues
+        # If we store the original Position object, the waypoint will move with the player!
         self.waypoints[slot] = Waypoint(
             name=name,
-            position=position,
+            position=Position(position.x, position.y, position.z),
             chunk_coords=(chunk_x, chunk_y),
             created_at=datetime.now().isoformat(),
             slot=slot,
