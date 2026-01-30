@@ -1260,6 +1260,9 @@ class Renderer:
         center_x, center_y = camera.world_to_screen(character.position)
         pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
 
+        # Render attack effects (lines, blocked indicators)
+        self._render_attack_effects(camera)
+
         for dmg in damage_numbers:
             sx, sy = camera.world_to_screen(dmg.position)
             alpha = int(255 * (dmg.lifetime / 1.0))
@@ -1433,6 +1436,9 @@ class Renderer:
         center_x, center_y = camera.world_to_screen(character.position)
         pygame.draw.circle(self.screen, Config.COLOR_PLAYER, (center_x, center_y), Config.TILE_SIZE // 3)
         pygame.draw.circle(self.screen, (0, 0, 0), (center_x, center_y), Config.TILE_SIZE // 3, 2)
+
+        # Render attack effects (lines, blocked indicators)
+        self._render_attack_effects(camera)
 
         # Render damage numbers
         for dmg in damage_numbers:
@@ -6155,6 +6161,76 @@ class Renderer:
         self.screen.blit(surf, (x, y))
         if bold:
             font.set_bold(False)
+
+    def _render_attack_effects(self, camera: 'Camera'):
+        """Render attack effect visuals (lines, blocked indicators).
+
+        Args:
+            camera: Camera for world-to-screen coordinate conversion
+        """
+        try:
+            from systems.attack_effects import get_attack_effects_manager, AttackEffectType
+            from data.models.world import Position
+
+            manager = get_attack_effects_manager()
+            manager.update()  # Remove expired effects
+
+            for effect in manager.get_active_effects():
+                color = effect.get_color()
+
+                # Convert positions to screen coordinates
+                start_sx, start_sy = camera.world_to_screen(
+                    Position(effect.start_pos[0], effect.start_pos[1], 0)
+                )
+                end_sx, end_sy = camera.world_to_screen(
+                    Position(effect.end_pos[0], effect.end_pos[1], 0)
+                )
+
+                if effect.effect_type == AttackEffectType.LINE:
+                    # Draw attack line
+                    line_width = effect.get_line_width()
+
+                    # Create a surface for alpha support
+                    if color[3] > 0:  # Only draw if visible
+                        pygame.draw.line(self.screen, color[:3], (start_sx, start_sy),
+                                        (end_sx, end_sy), line_width)
+
+                        # Draw small circle at impact point
+                        impact_radius = max(2, line_width)
+                        pygame.draw.circle(self.screen, color[:3], (end_sx, end_sy), impact_radius)
+
+                elif effect.effect_type == AttackEffectType.BLOCKED:
+                    # Draw blocked indicator (X mark)
+                    size = int(Config.TILE_SIZE * 0.4 * effect.alpha)
+                    if size > 2:
+                        # Draw X
+                        pygame.draw.line(self.screen, color[:3],
+                                        (start_sx - size, start_sy - size),
+                                        (start_sx + size, start_sy + size), 3)
+                        pygame.draw.line(self.screen, color[:3],
+                                        (start_sx + size, start_sy - size),
+                                        (start_sx - size, start_sy + size), 3)
+
+                        # Draw "BLOCKED" text if effect is fresh
+                        if effect.alpha > 0.7:
+                            blocked_surf = self.tiny_font.render("BLOCKED", True, color[:3])
+                            self.screen.blit(blocked_surf,
+                                           (start_sx - blocked_surf.get_width() // 2,
+                                            start_sy - size - 15))
+
+                elif effect.effect_type == AttackEffectType.AREA:
+                    # Draw area effect circle
+                    radius_world = effect.end_pos[0] - effect.start_pos[0]  # Stored in end_pos
+                    radius_screen = int(radius_world * Config.TILE_SIZE)
+
+                    if color[3] > 0 and radius_screen > 0:
+                        # Draw expanding circle with fading alpha
+                        pygame.draw.circle(self.screen, color[:3], (start_sx, start_sy),
+                                         radius_screen, max(1, int(3 * effect.alpha)))
+
+        except ImportError:
+            # Attack effects module not available
+            pass
 
     def render_loading_indicator(self):
         """

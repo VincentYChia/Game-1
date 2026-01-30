@@ -103,6 +103,42 @@ class TurretSystem:
 
     def _attack_enemy(self, turret: PlacedEntity, enemy: 'Enemy'):
         """Turret attacks an enemy using tag system or legacy damage"""
+        # Import attack effects for visual feedback
+        from systems.attack_effects import get_attack_effects_manager, AttackSourceType
+        from systems.collision_system import get_collision_system
+
+        attack_effects = get_attack_effects_manager()
+        collision_system = get_collision_system()
+
+        turret_pos = (turret.position.x, turret.position.y)
+        enemy_pos = (enemy.position[0], enemy.position[1])
+
+        # Line-of-sight check (circle/AoE attacks bypass this)
+        bypass_tags = {'circle', 'aoe', 'ground'}
+        attack_tags = turret.tags if turret.tags else []
+        if not any(tag in bypass_tags for tag in attack_tags):
+            los_result = collision_system.has_line_of_sight(
+                turret_pos, enemy_pos, attack_tags=attack_tags
+            )
+            if los_result.blocked:
+                # Turret attack is blocked by obstacle
+                print(f"⛔ Turret attack blocked by {los_result.collision_type.value}")
+
+                # Add blocked indicator
+                if los_result.collision_position:
+                    attack_effects.add_blocked_indicator(
+                        los_result.collision_position,
+                        AttackSourceType.TURRET
+                    )
+                return  # Attack blocked, cooldown already consumed
+
+        # Add attack line visual
+        attack_effects.add_attack_line(
+            turret_pos, enemy_pos,
+            AttackSourceType.TURRET,
+            damage=turret.damage
+        )
+
         # Use tag system if turret has tags configured
         if turret.tags and len(turret.tags) > 0:
             # DEBUG: Console output for turret attack

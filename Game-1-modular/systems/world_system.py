@@ -420,6 +420,14 @@ class WorldSystem:
                     if dx < 0.5 and dy < 0.5:
                         return False
 
+        # Check for blocking placed barriers
+        for entity in self.placed_entities:
+            if entity.entity_type == PlacedEntityType.BARRIER:
+                dx = abs(entity.position.x - position.x)
+                dy = abs(entity.position.y - position.y)
+                if dx < 0.5 and dy < 0.5:
+                    return False
+
         return True
 
     def get_visible_tiles(self, camera_pos: Position, vw: int, vh: int) -> List[WorldTile]:

@@ -2099,7 +2099,7 @@ class GameEngine:
         # Note: Corpse looting is now automatic when enemy dies
         # Manual corpse looting has been removed as loot is auto-added to inventory
 
-        # Check for placed entity pickup (turrets, traps, etc.)
+        # Check for placed entity pickup (turrets, traps, barriers, etc.)
         if is_double_click:
             placed_entity = self.world.get_entity_at(world_pos)
             if placed_entity:
@@ -2108,7 +2108,8 @@ class GameEngine:
                     PlacedEntityType.TURRET,
                     PlacedEntityType.TRAP,
                     PlacedEntityType.BOMB,
-                    PlacedEntityType.UTILITY_DEVICE
+                    PlacedEntityType.UTILITY_DEVICE,
+                    PlacedEntityType.BARRIER  # Stone barriers can be picked up
                 ]
                 if placed_entity.entity_type in pickupable_types:
                     # Check if player is in range (use 2.0 units as pickup range)
@@ -5363,6 +5364,7 @@ class GameEngine:
             return
 
         if self.character.inventory.dragging_stack:
+            # Check if dropping onto inventory panel
             if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
                 # Calculate start_y to match renderer: tools_y(+55) + tool_slot(50) + padding(20) = +125
                 tools_y = Config.INVENTORY_PANEL_Y + 55
@@ -5380,6 +5382,63 @@ class GameEngine:
                         if 0 <= idx < self.character.inventory.max_slots:
                             self.character.inventory.end_drag(idx)
                             return
+
+            # Check if dropping onto the world viewport (for barrier placement)
+            elif mouse_pos[0] < Config.VIEWPORT_WIDTH and mouse_pos[1] < Config.INVENTORY_PANEL_Y:
+                # Check if item is a stone material for barrier placement
+                dragging_stack = self.character.inventory.dragging_stack
+                if dragging_stack:
+                    mat_def = MaterialDatabase.get_instance().get_material(dragging_stack.item_id)
+                    if mat_def and mat_def.category == "stone":
+                        # Calculate world position
+                        wx = (mouse_pos[0] - Config.VIEWPORT_WIDTH // 2) / Config.TILE_SIZE + self.camera.position.x
+                        wy = (mouse_pos[1] - Config.VIEWPORT_HEIGHT // 2) / Config.TILE_SIZE + self.camera.position.y
+                        world_pos = Position(wx, wy, 0)
+
+                        # Check if position is walkable (can't place on water or existing obstacles)
+                        if not self.world.is_walkable(world_pos):
+                            self.add_notification("Cannot place barrier here!", (255, 100, 100))
+                            self.character.inventory.cancel_drag()
+                            return
+
+                        # Check if too far from player
+                        player_pos = self.character.position
+                        dist = math.sqrt((wx - player_pos.x)**2 + (wy - player_pos.y)**2)
+                        if dist > 3.0:  # Max placement range of 3 tiles
+                            self.add_notification("Too far to place barrier!", (255, 100, 100))
+                            self.character.inventory.cancel_drag()
+                            return
+
+                        # Place the barrier
+                        self.world.place_entity(
+                            world_pos,
+                            dragging_stack.item_id,
+                            PlacedEntityType.BARRIER,
+                            tier=mat_def.tier,
+                            range=0.0,  # Barriers don't have range
+                            damage=0.0,  # Barriers don't do damage
+                        )
+
+                        # Remove one item from the dragging slot
+                        dragging_slot = self.character.inventory.dragging_slot
+                        if dragging_stack.quantity > 1:
+                            dragging_stack.quantity -= 1
+                            self.character.inventory.slots[dragging_slot] = dragging_stack
+                        else:
+                            self.character.inventory.slots[dragging_slot] = None
+
+                        # Clear dragging state
+                        self.character.inventory.dragging_stack = None
+                        self.character.inventory.dragging_slot = None
+
+                        # Track barrier placement in stat tracker
+                        if hasattr(self.character, 'stat_tracker'):
+                            self.character.stat_tracker.record_barrier_placed(dragging_stack.item_id)
+
+                        self.add_notification(f"Placed {mat_def.name} barrier", (100, 255, 100))
+                        print(f"✓ Placed {mat_def.name} barrier at ({wx:.1f}, {wy:.1f})")
+                        return
+
             self.character.inventory.cancel_drag()
 
     def get_time_of_day(self) -> tuple:

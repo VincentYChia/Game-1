@@ -472,8 +472,9 @@ class CombatManager:
         for chunk_coords, enemy_list in self.enemies.items():
             for enemy in enemy_list:
                 if enemy.is_alive:
-                    # Update AI with night modifiers
-                    enemy.update_ai(dt, player_pos, aggro_multiplier=aggro_mult, speed_multiplier=speed_mult)
+                    # Update AI with night modifiers and world system for collision checking
+                    enemy.update_ai(dt, player_pos, aggro_multiplier=aggro_mult,
+                                    speed_multiplier=speed_mult, world_system=self.world)
 
                     # Check if enemy can use special ability
                     dist = enemy.distance_to(player_pos)
@@ -1197,6 +1198,56 @@ class CombatManager:
         Returns:
             (total_damage, any_crit, loot) where loot is empty if enemy didn't die
         """
+        # Import attack effects manager for visual feedback
+        from systems.attack_effects import get_attack_effects_manager, AttackSourceType
+        from systems.collision_system import get_collision_system
+
+        attack_effects = get_attack_effects_manager()
+        collision_system = get_collision_system()
+
+        # Set collision system world reference if not set
+        if collision_system.world_system is None:
+            collision_system.set_world_system(self.world)
+
+        player_pos = (self.character.position.x, self.character.position.y)
+        enemy_pos = (enemy.position[0], enemy.position[1])
+
+        # Line-of-sight check (circle/AoE attacks bypass this)
+        bypass_tags = {'circle', 'aoe', 'ground'}
+        if not any(tag in bypass_tags for tag in tags):
+            los_result = collision_system.has_line_of_sight(
+                player_pos, enemy_pos, attack_tags=tags
+            )
+            if los_result.blocked:
+                # Attack is blocked by obstacle
+                print(f"⛔ Attack blocked by {los_result.collision_type.value} at {los_result.collision_position}")
+
+                # Track blocked attack in stat tracker
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.record_attack_blocked("player")
+
+                # Add blocked effect visual
+                if los_result.collision_position:
+                    attack_effects.add_blocked_indicator(
+                        los_result.collision_position,
+                        AttackSourceType.PLAYER
+                    )
+                else:
+                    attack_effects.add_blocked_indicator(
+                        ((player_pos[0] + enemy_pos[0]) / 2, (player_pos[1] + enemy_pos[1]) / 2),
+                        AttackSourceType.PLAYER
+                    )
+
+                # Return 0 damage - cooldown is handled by caller
+                return (0.0, False, [])
+
+        # Add attack line visual effect (will be drawn by renderer)
+        attack_effects.add_attack_line(
+            player_pos, enemy_pos,
+            AttackSourceType.PLAYER,
+            damage=params.get('baseDamage', 0) if params else 0
+        )
+
         # Check for active devastate buffs (AoE attacks like Whirlwind Strike)
         # Must check BEFORE normal attack to trigger AoE
         if hasattr(self.character, 'buffs'):
@@ -1436,6 +1487,50 @@ class CombatManager:
         """Enemy attacks player
         shield_blocking: True if player is actively blocking with shield (right mouse held)
         """
+        # Import attack effects for visual feedback
+        from systems.attack_effects import get_attack_effects_manager, AttackSourceType
+        from systems.collision_system import get_collision_system
+
+        attack_effects = get_attack_effects_manager()
+        collision_system = get_collision_system()
+
+        # Set collision system world reference if not set
+        if collision_system.world_system is None:
+            collision_system.set_world_system(self.world)
+
+        enemy_pos = (enemy.position[0], enemy.position[1])
+        player_pos = (self.character.position.x, self.character.position.y)
+
+        # Line-of-sight check for enemy attacks (basic attacks are blocked by obstacles)
+        los_result = collision_system.has_line_of_sight(
+            enemy_pos, player_pos, attack_tags=[]
+        )
+        if los_result.blocked:
+            # Enemy attack is blocked
+            print(f"⛔ Enemy attack blocked by {los_result.collision_type.value}")
+
+            # Track blocked attack in stat tracker
+            if hasattr(self.character, 'stat_tracker'):
+                self.character.stat_tracker.record_attack_blocked("enemy")
+
+            # Add blocked indicator
+            if los_result.collision_position:
+                attack_effects.add_blocked_indicator(
+                    los_result.collision_position,
+                    AttackSourceType.ENEMY
+                )
+
+            # Still consume attack cooldown (enemy tried to attack)
+            enemy.attack_cooldown = 1.0 / enemy.definition.attack_speed
+            return
+
+        # Add attack line visual
+        attack_effects.add_attack_line(
+            enemy_pos, player_pos,
+            AttackSourceType.ENEMY,
+            damage=enemy.definition.damage_max
+        )
+
         print(f"\n👹 ENEMY ATTACK: {enemy.definition.name}")
 
         # Calculate damage
@@ -1858,8 +1953,9 @@ class CombatManager:
 
         for enemy in self.dungeon_enemies:
             if enemy.is_alive:
-                # Update AI with night modifiers
-                enemy.update_ai(dt, player_position, aggro_multiplier, speed_multiplier)
+                # Update AI with night modifiers and world system for collision checking
+                enemy.update_ai(dt, player_position, aggro_multiplier, speed_multiplier,
+                                world_system=self.world)
 
                 # Check if enemy can use special ability
                 dist = enemy.distance_to(player_position)

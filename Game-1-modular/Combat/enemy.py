@@ -535,7 +535,8 @@ class Enemy:
                 self.knockback_duration_remaining = 0.0
 
     def update_ai(self, dt: float, player_position: Tuple[float, float],
-                  aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0):
+                  aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0,
+                  world_system=None):
         """Update enemy AI behavior
 
         Args:
@@ -543,7 +544,11 @@ class Enemy:
             player_position: Current player position
             aggro_multiplier: Multiplier for aggro range (1.3 at night)
             speed_multiplier: Multiplier for movement speed (1.15 at night)
+            world_system: WorldSystem instance for collision checking (optional)
         """
+        # Store world system reference for collision checking
+        self._world_system = world_system
+
         if not self.is_alive:
             # Handle corpse decay
             if self.ai_state == AIState.DEAD:
@@ -743,7 +748,11 @@ class Enemy:
         return (x, y)
 
     def _move_towards(self, target: Tuple[float, float], dt: float):
-        """Move towards a target position, restricted to chunk boundaries"""
+        """Move towards a target position, restricted to chunk boundaries.
+
+        Now includes collision checking for obstacles (resources, barriers, tiles).
+        Uses collision sliding if direct movement is blocked.
+        """
         # Check if immobilized by status effects
         if hasattr(self, 'status_manager') and self.status_manager.is_immobilized():
             return
@@ -756,14 +765,50 @@ class Enemy:
             # Normalize and move (apply night speed multiplier)
             speed_mult = getattr(self, '_speed_multiplier', 1.0)
             move_speed = self.definition.speed * dt * 2 * speed_mult
-            new_x = self.position[0] + (dx / dist) * move_speed
-            new_y = self.position[1] + (dy / dist) * move_speed
+            move_dx = (dx / dist) * move_speed
+            move_dy = (dy / dist) * move_speed
+            new_x = self.position[0] + move_dx
+            new_y = self.position[1] + move_dy
 
-            # Clamp to chunk boundaries
+            # Clamp to chunk boundaries first
             new_x, new_y = self._clamp_to_chunk_bounds(new_x, new_y)
 
-            self.position[0] = new_x
-            self.position[1] = new_y
+            # Check collision with world
+            world_system = getattr(self, '_world_system', None)
+            if world_system is not None:
+                # Try to use collision system for walkability check
+                from data.models.world import Position
+                new_pos = Position(new_x, new_y, 0)
+
+                if world_system.is_walkable(new_pos):
+                    # Direct movement is clear
+                    self.position[0] = new_x
+                    self.position[1] = new_y
+                else:
+                    # Collision sliding: try X-only movement
+                    x_only_x, x_only_y = self._clamp_to_chunk_bounds(
+                        self.position[0] + move_dx, self.position[1]
+                    )
+                    x_only_pos = Position(x_only_x, x_only_y, 0)
+
+                    if world_system.is_walkable(x_only_pos):
+                        self.position[0] = x_only_x
+                        self.position[1] = x_only_y
+                    else:
+                        # Try Y-only movement
+                        y_only_x, y_only_y = self._clamp_to_chunk_bounds(
+                            self.position[0], self.position[1] + move_dy
+                        )
+                        y_only_pos = Position(y_only_x, y_only_y, 0)
+
+                        if world_system.is_walkable(y_only_pos):
+                            self.position[0] = y_only_x
+                            self.position[1] = y_only_y
+                        # Else: completely blocked, don't move
+            else:
+                # No world system available, use old behavior
+                self.position[0] = new_x
+                self.position[1] = new_y
 
     def can_attack(self) -> bool:
         """Check if enemy can attack (cooldown ready and not CC'd)"""
