@@ -302,6 +302,10 @@ class GameEngine:
         # Map UI state
         self.map_window_rect = None
         self.map_waypoint_rects = []  # [(rect, waypoint_slot), ...] for click detection
+        self.map_hovered_waypoint = -1  # Currently hovered waypoint slot
+        self.waypoint_renaming = False  # Whether we're in rename mode
+        self.waypoint_rename_slot = -1  # Which waypoint slot is being renamed
+        self.waypoint_rename_text = ""  # Current text being entered
 
         # Enchantment/Adornment selection UI
         self.enchantment_selection_active = False
@@ -556,6 +560,27 @@ class GameEngine:
                             self.interactive_ui.player_narrative += event.unicode
                         continue
 
+                # Waypoint renaming text input
+                if self.waypoint_renaming:
+                    if event.key == pygame.K_ESCAPE:
+                        # Cancel renaming
+                        self.cancel_waypoint_rename()
+                        continue
+                    elif event.key == pygame.K_RETURN:
+                        # Confirm renaming
+                        self.confirm_waypoint_rename()
+                        continue
+                    elif event.key == pygame.K_BACKSPACE:
+                        # Delete last character
+                        if self.waypoint_rename_text:
+                            self.waypoint_rename_text = self.waypoint_rename_text[:-1]
+                        continue
+                    elif event.unicode and event.unicode.isprintable():
+                        # Add character (limit to 30 chars)
+                        if len(self.waypoint_rename_text) < 30:
+                            self.waypoint_rename_text += event.unicode
+                        continue
+
                 if event.key == pygame.K_ESCAPE:
                     if self.enchantment_selection_active:
                         self._close_enchantment_selection()
@@ -615,8 +640,12 @@ class GameEngine:
                         self.map_system.center_on_position(self.character.position)
                 elif event.key == pygame.K_p:
                     # Place waypoint when map is open
-                    if self.map_system.map_open:
+                    if self.map_system.map_open and not self.waypoint_renaming:
                         self.place_waypoint_at_player()
+                elif event.key == pygame.K_r:
+                    # Rename waypoint when map is open and hovering over one
+                    if self.map_system.map_open and not self.waypoint_renaming:
+                        self.start_waypoint_rename()
                 elif event.key == pygame.K_f:
                     # NPC interaction
                     self.handle_npc_interaction()
@@ -2390,6 +2419,72 @@ class GameEngine:
             print(f"📍 {message}")
         else:
             self.add_notification(message, (255, 150, 100))
+
+    def get_hovered_waypoint_slot(self) -> int:
+        """Get the waypoint slot currently being hovered over.
+
+        Returns:
+            Slot index or -1 if no waypoint is hovered
+        """
+        if not self.map_waypoint_rects:
+            return -1
+
+        for wp_rect, slot in self.map_waypoint_rects:
+            if wp_rect.collidepoint(self.mouse_pos):
+                # Only return if there's actually a waypoint in this slot
+                if self.map_system.get_waypoint(slot) is not None:
+                    return slot
+        return -1
+
+    def start_waypoint_rename(self) -> None:
+        """Start renaming the currently hovered waypoint."""
+        hovered_slot = self.get_hovered_waypoint_slot()
+        if hovered_slot < 0:
+            self.add_notification("Hover over a waypoint to rename it", (255, 200, 100))
+            return
+
+        waypoint = self.map_system.get_waypoint(hovered_slot)
+        if waypoint is None:
+            return
+
+        if waypoint.is_spawn:
+            self.add_notification("Cannot rename spawn waypoint", (255, 150, 100))
+            return
+
+        self.waypoint_renaming = True
+        self.waypoint_rename_slot = hovered_slot
+        self.waypoint_rename_text = waypoint.name
+        self.add_notification("Type new name, Enter to confirm, Esc to cancel", (100, 200, 255))
+        print(f"✏️ Renaming waypoint slot {hovered_slot}: '{waypoint.name}'")
+
+    def confirm_waypoint_rename(self) -> None:
+        """Confirm and apply the waypoint rename."""
+        if not self.waypoint_renaming:
+            return
+
+        new_name = self.waypoint_rename_text.strip()
+        if not new_name:
+            self.add_notification("Name cannot be empty", (255, 150, 100))
+            return
+
+        success, message = self.map_system.rename_waypoint(self.waypoint_rename_slot, new_name)
+
+        if success:
+            self.add_notification(message, (100, 255, 200))
+            print(f"✅ {message}")
+        else:
+            self.add_notification(message, (255, 150, 100))
+
+        self.waypoint_renaming = False
+        self.waypoint_rename_slot = -1
+        self.waypoint_rename_text = ""
+
+    def cancel_waypoint_rename(self) -> None:
+        """Cancel the waypoint rename operation."""
+        self.waypoint_renaming = False
+        self.waypoint_rename_slot = -1
+        self.waypoint_rename_text = ""
+        self.add_notification("Rename cancelled", (150, 150, 150))
 
     # ========================================================================
     # CRAFTING INTEGRATION HELPERS
@@ -5949,8 +6044,12 @@ class GameEngine:
 
             # Map UI
             if self.map_system.map_open:
+                rename_state = None
+                if self.waypoint_renaming:
+                    rename_state = (self.waypoint_rename_slot, self.waypoint_rename_text)
                 result = self.renderer.render_map_ui(
-                    self.character, self.map_system, self.world, self.mouse_pos)
+                    self.character, self.map_system, self.world, self.mouse_pos, self.game_time,
+                    rename_state)
                 if result:
                     self.map_window_rect, self.map_waypoint_rects = result
             else:

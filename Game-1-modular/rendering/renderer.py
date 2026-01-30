@@ -2364,7 +2364,8 @@ class Renderer:
         return window_rect, tab_rects
 
     def render_map_ui(self, character: Character, map_system, world_system,
-                      mouse_pos: Tuple[int, int]):
+                      mouse_pos: Tuple[int, int], game_time: float = 0.0,
+                      rename_state: Optional[Tuple[int, str]] = None):
         """Render the world map UI with explored chunks and waypoints.
 
         Args:
@@ -2372,6 +2373,8 @@ class Renderer:
             map_system: MapWaypointSystem instance
             world_system: WorldSystem instance (for biome info)
             mouse_pos: Current mouse position
+            game_time: Current game time for cooldown display
+            rename_state: Tuple of (slot, current_text) if renaming, else None
 
         Returns:
             Tuple of (window_rect, waypoint_rects) for click detection
@@ -2617,18 +2620,44 @@ class Renderer:
             is_hovered = wp_rect.collidepoint(rx, ry)
 
             if wp:
+                # Check if this waypoint is being renamed
+                is_renaming = rename_state is not None and rename_state[0] == i
+
                 # Filled slot
-                bg_color = (50, 50, 70) if is_hovered else (35, 35, 50)
+                if is_renaming:
+                    bg_color = (70, 70, 40)  # Yellow tint for rename mode
+                elif is_hovered:
+                    bg_color = (50, 50, 70)
+                else:
+                    bg_color = (35, 35, 50)
                 pygame.draw.rect(surf, bg_color, wp_rect)
-                pygame.draw.rect(surf, (80, 80, 100), wp_rect, s(1))
+                border_color = (200, 180, 80) if is_renaming else (80, 80, 100)
+                pygame.draw.rect(surf, border_color, wp_rect, s(2) if is_renaming else s(1))
 
-                # Waypoint name
-                name_color = (255, 215, 0) if wp.is_spawn else (200, 200, 220)
-                surf.blit(self.small_font.render(wp.name[:15], True, name_color), (wp_rect.x + s(5), wp_rect.y + s(5)))
+                if is_renaming:
+                    # Show text input field
+                    input_rect = pygame.Rect(wp_rect.x + s(3), wp_rect.y + s(3), wp_rect.w - s(6), s(20))
+                    pygame.draw.rect(surf, (40, 40, 30), input_rect)
+                    pygame.draw.rect(surf, (200, 180, 80), input_rect, s(1))
 
-                # Coordinates
-                pos_text = f"({int(wp.position.x)}, {int(wp.position.y)})"
-                surf.blit(self.tiny_font.render(pos_text, True, (120, 120, 150)), (wp_rect.x + s(5), wp_rect.y + s(25)))
+                    # Show current rename text with cursor
+                    rename_text = rename_state[1]
+                    cursor_blink = (pygame.time.get_ticks() // 500) % 2 == 0
+                    display_text = rename_text + ("|" if cursor_blink else "")
+                    surf.blit(self.small_font.render(display_text[:18], True, (255, 255, 200)),
+                             (input_rect.x + s(3), input_rect.y + s(2)))
+
+                    # Instructions below
+                    surf.blit(self.tiny_font.render("Enter=Save | Esc=Cancel", True, (180, 160, 80)),
+                             (wp_rect.x + s(5), wp_rect.y + s(28)))
+                else:
+                    # Waypoint name
+                    name_color = (255, 215, 0) if wp.is_spawn else (200, 200, 220)
+                    surf.blit(self.small_font.render(wp.name[:15], True, name_color), (wp_rect.x + s(5), wp_rect.y + s(5)))
+
+                    # Coordinates
+                    pos_text = f"({int(wp.position.x)}, {int(wp.position.y)})"
+                    surf.blit(self.tiny_font.render(pos_text, True, (120, 120, 150)), (wp_rect.x + s(5), wp_rect.y + s(25)))
 
                 wp_list_rects.append((pygame.Rect(wx + wp_rect.x, wy + wp_rect.y, wp_rect.w, wp_rect.h), i))
             else:
@@ -2639,19 +2668,28 @@ class Renderer:
 
             wp_y += s(50)
 
-        # Teleport cooldown
-        cooldown = map_system.get_teleport_cooldown_remaining(time.time())
+        # Instructions and teleport cooldown at bottom of panel
+        instr_text = "Click to teleport | [R] Rename"
+        surf.blit(self.tiny_font.render(instr_text, True, (120, 120, 150)), (panel_x + s(10), panel_y + panel_h - s(60)))
+
+        # Teleport cooldown (use game_time for consistency)
+        cooldown = map_system.get_teleport_cooldown_remaining(game_time)
         if cooldown > 0:
             cd_text = f"Teleport: {int(cooldown)}s"
             cd_color = (255, 100, 100)
+            # Draw cooldown bar
+            bar_x = panel_x + s(10)
+            bar_y = panel_y + panel_h - s(30)
+            bar_w = waypoint_panel_w - s(20)
+            bar_h = s(8)
+            pygame.draw.rect(surf, (60, 30, 30), (bar_x, bar_y, bar_w, bar_h))
+            cooldown_pct = cooldown / config.waypoint.teleport_cooldown
+            pygame.draw.rect(surf, (200, 60, 60), (bar_x, bar_y, int(bar_w * cooldown_pct), bar_h))
+            pygame.draw.rect(surf, (100, 50, 50), (bar_x, bar_y, bar_w, bar_h), 1)
         else:
             cd_text = "Teleport: Ready"
             cd_color = (100, 255, 100)
-        surf.blit(self.tiny_font.render(cd_text, True, cd_color), (panel_x + s(10), panel_y + panel_h - s(25)))
-
-        # Instructions
-        instr_text = "Click waypoint to teleport"
-        surf.blit(self.tiny_font.render(instr_text, True, (120, 120, 150)), (panel_x + s(10), panel_y + panel_h - s(40)))
+        surf.blit(self.tiny_font.render(cd_text, True, cd_color), (panel_x + s(10), panel_y + panel_h - s(45)))
 
         # Draw to screen
         self.screen.blit(surf, (wx, wy))
