@@ -1849,7 +1849,6 @@ class Renderer:
             "E - Equipment",
             "K - Skills menu",
             "M - Map",
-            "P - Place waypoint",
             "L - Encyclopedia",
             "F1 - Debug Mode",
             "ESC - Close/Quit"
@@ -2401,7 +2400,7 @@ class Renderer:
         surf.blit(self.font.render(title_text, True, (255, 215, 0)), (s(20), s(15)))
 
         # Controls hint
-        controls = "[M/ESC] Close | [Scroll] Zoom | [P] Place waypoint | Click waypoint to teleport"
+        controls = "[M/ESC] Close | [Scroll] Zoom | [Drag] Pan map | [P] Place waypoint"
         surf.blit(self.small_font.render(controls, True, (180, 180, 180)), (s(20), s(40)))
 
         # Zoom indicator
@@ -2611,6 +2610,9 @@ class Renderer:
         # Waypoint list
         wp_y = panel_y + s(65)
         wp_list_rects = []
+        action_rects = []  # [(screen_rect, slot, action_type), ...]
+        btn_size = s(18)
+
         for i in range(available_slots):
             wp = map_system.get_waypoint(i)
             wp_rect = pygame.Rect(panel_x + s(5), wp_y, waypoint_panel_w - s(10), s(45))
@@ -2644,20 +2646,44 @@ class Renderer:
                     rename_text = rename_state[1]
                     cursor_blink = (pygame.time.get_ticks() // 500) % 2 == 0
                     display_text = rename_text + ("|" if cursor_blink else "")
-                    surf.blit(self.small_font.render(display_text[:18], True, (255, 255, 200)),
+                    surf.blit(self.small_font.render(display_text[:20], True, (255, 255, 200)),
                              (input_rect.x + s(3), input_rect.y + s(2)))
 
                     # Instructions below
                     surf.blit(self.tiny_font.render("Enter=Save | Esc=Cancel", True, (180, 160, 80)),
                              (wp_rect.x + s(5), wp_rect.y + s(28)))
                 else:
-                    # Waypoint name
+                    # Waypoint name (truncate to make room for buttons)
                     name_color = (255, 215, 0) if wp.is_spawn else (200, 200, 220)
-                    surf.blit(self.small_font.render(wp.name[:15], True, name_color), (wp_rect.x + s(5), wp_rect.y + s(5)))
+                    max_name_len = 12 if not wp.is_spawn else 15
+                    display_name = wp.name[:max_name_len] + ('...' if len(wp.name) > max_name_len else '')
+                    surf.blit(self.small_font.render(display_name, True, name_color), (wp_rect.x + s(5), wp_rect.y + s(5)))
 
                     # Coordinates
                     pos_text = f"({int(wp.position.x)}, {int(wp.position.y)})"
                     surf.blit(self.tiny_font.render(pos_text, True, (120, 120, 150)), (wp_rect.x + s(5), wp_rect.y + s(25)))
+
+                    # Action buttons (only for non-spawn waypoints)
+                    if not wp.is_spawn:
+                        # Rename button
+                        rename_btn_rect = pygame.Rect(wp_rect.x + wp_rect.w - btn_size * 2 - s(8), wp_rect.y + s(5), btn_size, btn_size)
+                        rename_hovered = rename_btn_rect.collidepoint(rx, ry)
+                        btn_color = (80, 100, 150) if rename_hovered else (50, 70, 100)
+                        pygame.draw.rect(surf, btn_color, rename_btn_rect)
+                        pygame.draw.rect(surf, (100, 120, 170), rename_btn_rect, 1)
+                        # Draw pencil icon (simple "R")
+                        surf.blit(self.tiny_font.render("R", True, (200, 200, 255)), (rename_btn_rect.x + s(5), rename_btn_rect.y + s(2)))
+                        action_rects.append((pygame.Rect(wx + rename_btn_rect.x, wy + rename_btn_rect.y, btn_size, btn_size), i, 'rename'))
+
+                        # Delete button
+                        delete_btn_rect = pygame.Rect(wp_rect.x + wp_rect.w - btn_size - s(4), wp_rect.y + s(5), btn_size, btn_size)
+                        delete_hovered = delete_btn_rect.collidepoint(rx, ry)
+                        btn_color = (150, 60, 60) if delete_hovered else (100, 50, 50)
+                        pygame.draw.rect(surf, btn_color, delete_btn_rect)
+                        pygame.draw.rect(surf, (170, 80, 80), delete_btn_rect, 1)
+                        # Draw X
+                        surf.blit(self.tiny_font.render("X", True, (255, 150, 150)), (delete_btn_rect.x + s(5), delete_btn_rect.y + s(2)))
+                        action_rects.append((pygame.Rect(wx + delete_btn_rect.x, wy + delete_btn_rect.y, btn_size, btn_size), i, 'delete'))
 
                 wp_list_rects.append((pygame.Rect(wx + wp_rect.x, wy + wp_rect.y, wp_rect.w, wp_rect.h), i))
             else:
@@ -2668,8 +2694,8 @@ class Renderer:
 
             wp_y += s(50)
 
-        # Instructions and teleport cooldown at bottom of panel
-        instr_text = "Click to teleport | [R] Rename"
+        # Instructions at bottom of panel
+        instr_text = "Click waypoint to teleport"
         surf.blit(self.tiny_font.render(instr_text, True, (120, 120, 150)), (panel_x + s(10), panel_y + panel_h - s(60)))
 
         # Teleport cooldown (use game_time for consistency)
@@ -2695,7 +2721,10 @@ class Renderer:
         self.screen.blit(surf, (wx, wy))
         window_rect = pygame.Rect(wx, wy, ww, wh)
 
-        return window_rect, wp_list_rects
+        # Map area rect for dragging (map_rect is local, convert to screen)
+        map_area_screen_rect = pygame.Rect(wx + map_area_x, wy + map_area_y, map_area_w, map_area_h)
+
+        return window_rect, map_area_screen_rect, wp_list_rects, action_rects
 
     def render_npc_dialogue_ui(self, npc: NPC, dialogue_lines: List[str], available_quests: List[str],
                                quest_to_turn_in: Optional[str], mouse_pos: Tuple[int, int]):

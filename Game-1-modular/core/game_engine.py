@@ -301,8 +301,9 @@ class GameEngine:
 
         # Map UI state
         self.map_window_rect = None
+        self.map_area_rect = None  # The map display area (for dragging)
         self.map_waypoint_rects = []  # [(rect, waypoint_slot), ...] for click detection
-        self.map_hovered_waypoint = -1  # Currently hovered waypoint slot
+        self.map_action_rects = []  # [(rect, slot, action_type), ...] for button clicks
         self.waypoint_renaming = False  # Whether we're in rename mode
         self.waypoint_rename_slot = -1  # Which waypoint slot is being renamed
         self.waypoint_rename_text = ""  # Current text being entered
@@ -642,10 +643,6 @@ class GameEngine:
                     # Place waypoint when map is open
                     if self.map_system.map_open and not self.waypoint_renaming:
                         self.place_waypoint_at_player()
-                elif event.key == pygame.K_r:
-                    # Rename waypoint when map is open and hovering over one
-                    if self.map_system.map_open and not self.waypoint_renaming:
-                        self.start_waypoint_rename()
                 elif event.key == pygame.K_f:
                     # NPC interaction
                     self.handle_npc_interaction()
@@ -965,6 +962,14 @@ class GameEngine:
                 self.keys_pressed.discard(event.key)
             elif event.type == pygame.MOUSEMOTION:
                 self.mouse_pos = event.pos
+
+                # Handle map dragging
+                if self.map_system.map_open and self.map_system.map_dragging:
+                    # Calculate chunk size for drag scaling
+                    from data.databases.map_waypoint_db import MapWaypointConfig
+                    config = MapWaypointConfig.get_instance()
+                    chunk_pixel_size = Config.scale(config.map_display.chunk_render_size) * self.map_system.map_zoom
+                    self.map_system.update_drag(event.pos[0], event.pos[1], chunk_pixel_size)
 
                 # Handle slider dragging for betting
                 if self.active_minigame and self.minigame_type == 'adornments':
@@ -2354,36 +2359,91 @@ class GameEngine:
                 break
 
     def handle_map_click(self, mouse_pos: Tuple[int, int]):
-        """Handle clicks in map UI for waypoint teleportation."""
-        if not self.map_window_rect or not self.map_waypoint_rects:
+        """Handle clicks in map UI for waypoint actions and map dragging."""
+        if not self.map_window_rect:
             return
 
-        # Check waypoint clicks
+        # If renaming, cancel on click outside the rename input
+        if self.waypoint_renaming:
+            self.cancel_waypoint_rename()
+            return
+
+        # Check for waypoint action button clicks first
+        clicked_action = False
+        for action_rect, slot, action in getattr(self, 'map_action_rects', []):
+            if action_rect.collidepoint(mouse_pos):
+                clicked_action = True
+                wp = self.map_system.get_waypoint(slot)
+                if wp is None:
+                    continue
+
+                if action == 'teleport':
+                    self._do_teleport_to_waypoint(slot)
+                elif action == 'rename':
+                    if not wp.is_spawn:
+                        self.start_waypoint_rename_for_slot(slot)
+                elif action == 'delete':
+                    if not wp.is_spawn:
+                        self._do_delete_waypoint(slot)
+                return
+
+        # Check waypoint row clicks (for teleport)
         for wp_rect, slot in self.map_waypoint_rects:
             if wp_rect.collidepoint(mouse_pos):
-                # Attempt teleportation
-                in_dungeon = self.dungeon_manager.in_dungeon
-                enemies_nearby = len(self.combat_manager.get_enemies_in_range(
-                    (self.character.position.x, self.character.position.y), 10.0)) > 0
-
-                success, message, new_pos = self.map_system.teleport_to_waypoint(
-                    slot, self.game_time, in_dungeon, enemies_nearby)
-
-                if success and new_pos:
-                    # Teleport the character
-                    self.character.position = new_pos
-                    self.camera.follow(new_pos)
-                    self.add_notification(message, (100, 255, 200))
-                    print(f"🌀 Teleported to waypoint slot {slot}: {new_pos}")
-
-                    # Update chunk exploration for new location
-                    self._update_chunk_exploration()
-
-                    # Close map after teleport
-                    self.map_system.close_map()
-                else:
-                    self.add_notification(message, (255, 150, 100))
+                self._do_teleport_to_waypoint(slot)
                 return
+
+        # Click on map area (not waypoint panel) - start dragging
+        # Calculate where the waypoint panel starts
+        if hasattr(self, 'map_area_rect') and self.map_area_rect:
+            if self.map_area_rect.collidepoint(mouse_pos):
+                # Start map drag
+                self.map_system.start_drag(mouse_pos[0], mouse_pos[1])
+
+    def _do_teleport_to_waypoint(self, slot: int):
+        """Execute teleportation to a waypoint."""
+        in_dungeon = self.dungeon_manager.in_dungeon
+        enemies_nearby = len(self.combat_manager.get_enemies_in_range(
+            (self.character.position.x, self.character.position.y), 10.0)) > 0
+
+        success, message, new_pos = self.map_system.teleport_to_waypoint(
+            slot, self.game_time, in_dungeon, enemies_nearby,
+            current_position=self.character.position)
+
+        if success and new_pos:
+            # Teleport the character
+            self.character.position = new_pos
+            self.camera.follow(new_pos)
+            self.add_notification(message, (100, 255, 200))
+            print(f"🌀 Teleported to waypoint slot {slot}: {new_pos}")
+
+            # Update chunk exploration for new location
+            self._update_chunk_exploration()
+
+            # Close map after teleport
+            self.map_system.close_map()
+        else:
+            self.add_notification(message, (255, 150, 100))
+
+    def _do_delete_waypoint(self, slot: int):
+        """Delete a waypoint."""
+        success, message = self.map_system.remove_waypoint(slot)
+        if success:
+            self.add_notification(message, (100, 255, 200))
+            print(f"🗑️ {message}")
+        else:
+            self.add_notification(message, (255, 150, 100))
+
+    def start_waypoint_rename_for_slot(self, slot: int):
+        """Start renaming a specific waypoint slot."""
+        waypoint = self.map_system.get_waypoint(slot)
+        if waypoint is None or waypoint.is_spawn:
+            return
+
+        self.waypoint_renaming = True
+        self.waypoint_rename_slot = slot
+        self.waypoint_rename_text = waypoint.name
+        self.add_notification("Type new name, Enter to save", (100, 200, 255))
 
     def place_waypoint_at_player(self) -> None:
         """Place a new waypoint at the player's current position."""
@@ -2419,43 +2479,6 @@ class GameEngine:
             print(f"📍 {message}")
         else:
             self.add_notification(message, (255, 150, 100))
-
-    def get_hovered_waypoint_slot(self) -> int:
-        """Get the waypoint slot currently being hovered over.
-
-        Returns:
-            Slot index or -1 if no waypoint is hovered
-        """
-        if not self.map_waypoint_rects:
-            return -1
-
-        for wp_rect, slot in self.map_waypoint_rects:
-            if wp_rect.collidepoint(self.mouse_pos):
-                # Only return if there's actually a waypoint in this slot
-                if self.map_system.get_waypoint(slot) is not None:
-                    return slot
-        return -1
-
-    def start_waypoint_rename(self) -> None:
-        """Start renaming the currently hovered waypoint."""
-        hovered_slot = self.get_hovered_waypoint_slot()
-        if hovered_slot < 0:
-            self.add_notification("Hover over a waypoint to rename it", (255, 200, 100))
-            return
-
-        waypoint = self.map_system.get_waypoint(hovered_slot)
-        if waypoint is None:
-            return
-
-        if waypoint.is_spawn:
-            self.add_notification("Cannot rename spawn waypoint", (255, 150, 100))
-            return
-
-        self.waypoint_renaming = True
-        self.waypoint_rename_slot = hovered_slot
-        self.waypoint_rename_text = waypoint.name
-        self.add_notification("Type new name, Enter to confirm, Esc to cancel", (100, 200, 255))
-        print(f"✏️ Renaming waypoint slot {hovered_slot}: '{waypoint.name}'")
 
     def confirm_waypoint_rename(self) -> None:
         """Confirm and apply the waypoint rename."""
@@ -5280,6 +5303,10 @@ class GameEngine:
         self.enchantment_scroll_offset = 0
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
+        # End map dragging if active
+        if self.map_system.map_dragging:
+            self.map_system.end_drag()
+
         # Skip if no character exists yet (e.g., still in start menu)
         if self.character is None:
             return
@@ -6051,10 +6078,12 @@ class GameEngine:
                     self.character, self.map_system, self.world, self.mouse_pos, self.game_time,
                     rename_state)
                 if result:
-                    self.map_window_rect, self.map_waypoint_rects = result
+                    self.map_window_rect, self.map_area_rect, self.map_waypoint_rects, self.map_action_rects = result
             else:
                 self.map_window_rect = None
+                self.map_area_rect = None
                 self.map_waypoint_rects = []
+                self.map_action_rects = []
 
             # NPC dialogue UI
             if self.npc_dialogue_open and self.active_npc:

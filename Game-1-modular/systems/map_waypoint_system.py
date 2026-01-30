@@ -140,6 +140,22 @@ class MapWaypointSystem:
         self.map_scroll_y: float = 0.0
         self.selected_waypoint_slot: int = -1
 
+        # Map dragging state
+        self.map_dragging: bool = False
+        self.drag_start_x: float = 0.0
+        self.drag_start_y: float = 0.0
+        self.drag_start_scroll_x: float = 0.0
+        self.drag_start_scroll_y: float = 0.0
+
+        # Statistics tracking
+        self.stats = {
+            'waypoints_placed_total': 0,
+            'waypoints_removed_total': 0,
+            'teleport_count': 0,
+            'distance_teleported': 0.0,
+            'chunks_explored_total': 0
+        }
+
         # Initialize spawn waypoint if configured
         if self._config.waypoint.spawn_always_available:
             self._init_spawn_waypoint()
@@ -192,6 +208,7 @@ class MapWaypointSystem:
                 discovered_at=datetime.now().isoformat(),
                 has_dungeon=has_dungeon
             )
+            self.stats['chunks_explored_total'] += 1
         elif has_dungeon and not self.explored_chunks[key].has_dungeon:
             # Update dungeon status if discovered later
             self.explored_chunks[key].has_dungeon = True
@@ -371,6 +388,7 @@ class MapWaypointSystem:
             is_spawn=False
         )
 
+        self.stats['waypoints_placed_total'] += 1
         return True, f"Waypoint '{name}' created in slot {slot + 1}"
 
     def remove_waypoint(self, slot: int) -> Tuple[bool, str]:
@@ -393,6 +411,7 @@ class MapWaypointSystem:
 
         name = self.waypoints[slot].name
         self.waypoints[slot] = None
+        self.stats['waypoints_removed_total'] += 1
         return True, f"Waypoint '{name}' removed"
 
     def rename_waypoint(self, slot: int, new_name: str) -> Tuple[bool, str]:
@@ -475,7 +494,8 @@ class MapWaypointSystem:
 
     def teleport_to_waypoint(self, slot: int, game_time: float,
                             in_dungeon: bool = False,
-                            enemies_nearby: bool = False) -> Tuple[bool, str, Optional[Position]]:
+                            enemies_nearby: bool = False,
+                            current_position: Optional[Position] = None) -> Tuple[bool, str, Optional[Position]]:
         """Attempt to teleport to a waypoint.
 
         Args:
@@ -483,21 +503,34 @@ class MapWaypointSystem:
             game_time: Current game time
             in_dungeon: Whether player is in a dungeon
             enemies_nearby: Whether combat is active
+            current_position: Current player position (for distance tracking)
 
         Returns:
             Tuple of (success, message, destination_position)
         """
         can_tp, reason = self.can_teleport(game_time, in_dungeon, enemies_nearby)
         if not can_tp:
+            print(f"🚫 Teleport blocked: {reason}")
             return False, reason, None
 
         waypoint = self.get_waypoint(slot)
         if waypoint is None:
+            print(f"🚫 Teleport failed: No waypoint in slot {slot + 1}")
             return False, f"No waypoint in slot {slot + 1}", None
 
-        # Update cooldown
-        self.last_teleport_time = game_time
+        # Calculate distance for stats
+        if current_position:
+            distance = math.sqrt(
+                (waypoint.position.x - current_position.x) ** 2 +
+                (waypoint.position.y - current_position.y) ** 2
+            )
+            self.stats['distance_teleported'] += distance
 
+        # Update cooldown and stats
+        self.last_teleport_time = game_time
+        self.stats['teleport_count'] += 1
+
+        print(f"✅ Teleport successful to '{waypoint.name}' at ({waypoint.position.x}, {waypoint.position.y})")
         return True, f"Teleported to '{waypoint.name}'", waypoint.position
 
     def get_teleport_cooldown_remaining(self, game_time: float) -> float:
@@ -549,6 +582,46 @@ class MapWaypointSystem:
         self.center_on_chunk(chunk_x, chunk_y)
 
     # =========================================================================
+    # MAP DRAGGING
+    # =========================================================================
+
+    def start_drag(self, mouse_x: float, mouse_y: float) -> None:
+        """Start dragging the map.
+
+        Args:
+            mouse_x: Mouse X position when drag started
+            mouse_y: Mouse Y position when drag started
+        """
+        self.map_dragging = True
+        self.drag_start_x = mouse_x
+        self.drag_start_y = mouse_y
+        self.drag_start_scroll_x = self.map_scroll_x
+        self.drag_start_scroll_y = self.map_scroll_y
+
+    def update_drag(self, mouse_x: float, mouse_y: float, chunk_pixel_size: float) -> None:
+        """Update map position while dragging.
+
+        Args:
+            mouse_x: Current mouse X position
+            mouse_y: Current mouse Y position
+            chunk_pixel_size: Current size of chunks in pixels (for scaling)
+        """
+        if not self.map_dragging:
+            return
+
+        # Calculate drag delta in chunks
+        dx = (mouse_x - self.drag_start_x) / max(1, chunk_pixel_size)
+        dy = (mouse_y - self.drag_start_y) / max(1, chunk_pixel_size)
+
+        # Update scroll position (subtract because dragging right should move map left)
+        self.map_scroll_x = self.drag_start_scroll_x - dx
+        self.map_scroll_y = self.drag_start_scroll_y - dy
+
+    def end_drag(self) -> None:
+        """End map dragging."""
+        self.map_dragging = False
+
+    # =========================================================================
     # SAVE / LOAD
     # =========================================================================
 
@@ -564,7 +637,8 @@ class MapWaypointSystem:
             'last_teleport_time': self.last_teleport_time,
             'map_zoom': self.map_zoom,
             'map_scroll_x': self.map_scroll_x,
-            'map_scroll_y': self.map_scroll_y
+            'map_scroll_y': self.map_scroll_y,
+            'stats': self.stats.copy()
         }
 
     def restore_from_save(self, data: Dict) -> None:
@@ -598,6 +672,12 @@ class MapWaypointSystem:
         self.map_zoom = data.get('map_zoom', self._config.map_display.default_zoom)
         self.map_scroll_x = data.get('map_scroll_x', 0.0)
         self.map_scroll_y = data.get('map_scroll_y', 0.0)
+
+        # Restore stats
+        saved_stats = data.get('stats', {})
+        for key in self.stats:
+            if key in saved_stats:
+                self.stats[key] = saved_stats[key]
 
     def get_debug_info(self) -> Dict:
         """Get debug information about the map/waypoint system.
