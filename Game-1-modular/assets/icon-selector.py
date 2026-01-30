@@ -35,6 +35,18 @@ REMAP_REGISTRY_FILE = SCRIPT_DIR / "icon_remap_registry.json"
 # Ensure custom icons directory exists
 CUSTOM_ICONS_DIR.mkdir(exist_ok=True)
 
+# Resource name mapping (catalog name -> file name)
+# Some resources were generated with different file names
+RESOURCE_NAME_MAP = {
+    'copper_vein': 'copper_ore_node',
+    'iron_deposit': 'iron_ore_node',
+    'limestone_outcrop': 'limestone_node',
+    'granite_formation': 'granite_node',
+    'mithril_cache': 'mithril_ore_node',
+    'obsidian_flow': 'obsidian_node',
+    'steel_node': 'steel_ore_node',
+}
+
 # Placeholder directories
 PLACEHOLDER_BASE = SCRIPT_DIR
 
@@ -142,9 +154,17 @@ def categorize_item(item_data):
 def find_all_icon_versions(item_name, base_folder, subfolder):
     """Find all generated versions of an icon across all generation cycles
 
+    Checks both the original catalog name and any mapped file names from RESOURCE_NAME_MAP.
+    This ensures icons generated with alternate names are still found.
+
     Returns list of dicts with 'path', 'cycle', 'version' keys
     """
     versions = []
+
+    # Build list of names to check: original + mapped (if exists)
+    names_to_check = [item_name]
+    if item_name in RESOURCE_NAME_MAP:
+        names_to_check.append(RESOURCE_NAME_MAP[item_name])
 
     # Check each generation cycle
     for cycle_dir in GENERATION_CYCLES:
@@ -153,28 +173,40 @@ def find_all_icon_versions(item_name, base_folder, subfolder):
             # Determine version number from folder name
             if version_dir.name == "generated_icons":
                 version_num = 1
-                expected_filename = f"{item_name}.png"
             else:
                 match = re.search(r'-(\d+)$', version_dir.name)
                 if match:
                     version_num = int(match.group(1))
-                    expected_filename = f"{item_name}-{version_num}.png"
                 else:
                     continue
 
-            # Build path to icon
-            if subfolder:
-                icon_path = version_dir / base_folder / subfolder / expected_filename
-            else:
-                icon_path = version_dir / base_folder / expected_filename
+            # Try each possible name
+            for check_name in names_to_check:
+                if version_num == 1 and version_dir.name == "generated_icons":
+                    expected_filename = f"{check_name}.png"
+                else:
+                    expected_filename = f"{check_name}-{version_num}.png"
 
-            if icon_path.exists():
-                versions.append({
-                    'path': icon_path,
-                    'cycle': cycle_dir.name,
-                    'version': version_num,
-                    'label': f"{cycle_dir.name}/v{version_num}"
-                })
+                # Build path to icon
+                if subfolder:
+                    icon_path = version_dir / base_folder / subfolder / expected_filename
+                else:
+                    icon_path = version_dir / base_folder / expected_filename
+
+                if icon_path.exists():
+                    # Add label indicating if this used a mapped name
+                    label = f"{cycle_dir.name}/v{version_num}"
+                    if check_name != item_name:
+                        label += f" ({check_name})"
+
+                    versions.append({
+                        'path': icon_path,
+                        'cycle': cycle_dir.name,
+                        'version': version_num,
+                        'label': label,
+                        'actual_name': check_name  # Track which name was found
+                    })
+                    break  # Found for this version, no need to check other names
 
     # Also check custom icons directory (for remapped PNGs)
     custom_path = CUSTOM_ICONS_DIR / f"{item_name}.png"
@@ -183,7 +215,8 @@ def find_all_icon_versions(item_name, base_folder, subfolder):
             'path': custom_path,
             'cycle': 'custom',
             'version': 0,
-            'label': 'Custom (Remapped)'
+            'label': 'Custom (Remapped)',
+            'actual_name': item_name
         })
 
     return sorted(versions, key=lambda x: (x['cycle'], x['version']))

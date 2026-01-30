@@ -2723,9 +2723,15 @@ class GameEngine:
                     minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
                     print(f"   Time limit: {minigame.time_limit}s")
 
-            # REFINING: More time only (don't touch rotation_speed or timing_window)
-            # Modifying rotation_speed shrinks the visual window which is confusing
+            # REFINING: Slower rotation + more time
+            # Visual window is now decoupled (base_window_degrees is fixed at setup)
+            # so we can safely slow rotation without shrinking the visual window
             elif minigame_type == 'refining':
+                if hasattr(minigame, 'rotation_speed'):
+                    # Slower rotation = more time to react within same angular window
+                    minigame.rotation_speed = minigame.rotation_speed * (1 - int_reduction)
+                    print(f"   Rotation speed: {minigame.rotation_speed:.2f}")
+
                 if hasattr(minigame, 'time_limit'):
                     minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
                     print(f"   Time limit: {minigame.time_limit}s")

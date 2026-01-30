@@ -109,6 +109,10 @@ class RefiningMinigame:
             self.time_limit = int(params['time_limit'])
             self.multi_speed = params.get('multi_speed', False)
 
+            # Calculate fixed angular window (decoupled from rotation speed changes)
+            # This ensures INT stat can slow rotation without shrinking the visual window
+            self.base_window_degrees = self.timing_window * self.rotation_speed * 360
+
             # Log difficulty info
             difficulty_desc = get_difficulty_description(self.difficulty_points)
             print(f"⚗️ Refining difficulty: {difficulty_desc} ({self.difficulty_points:.1f} points)")
@@ -155,6 +159,9 @@ class RefiningMinigame:
         self.allowed_failures = params.get('allowed_failures', 2)
         self.time_limit = params.get('time_limit', 45)
         self.multi_speed = params.get('multi_speed', False)
+
+        # Calculate fixed angular window (decoupled from rotation speed changes)
+        self.base_window_degrees = self.timing_window * self.rotation_speed * 360
 
     def start(self):
         """Start the minigame"""
@@ -245,8 +252,9 @@ class RefiningMinigame:
         # Calculate angular distance (accounting for wraparound)
         distance = min(abs(angle - target), 360 - abs(angle - target))
 
-        # Convert timing window from seconds to degrees
-        window_degrees = self.timing_window * cylinder["speed"] * 360
+        # Use fixed angular window (decoupled from rotation speed)
+        # This allows INT stat to slow rotation without shrinking the acceptance window
+        window_degrees = self.base_window_degrees
 
         # Make valid range 25% larger to fix sync issues (0.5 * 1.25 = 0.625)
         if distance <= window_degrees * 0.625:
@@ -344,7 +352,7 @@ class RefiningMinigame:
             "result": self.result,
             "feedback_timer": self.feedback_timer,
             "timing_window": self.timing_window,
-            "window_degrees": self.timing_window * self.rotation_speed * 360  # Visual window size
+            "window_degrees": self.base_window_degrees  # Fixed visual window size (decoupled from speed)
         }
 
 
