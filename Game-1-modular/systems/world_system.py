@@ -408,8 +408,8 @@ class WorldSystem:
         if not tile or tile.tile_type == TileType.WATER or not tile.walkable:
             return False
 
-        # Check for blocking resources in nearby loaded chunks
-        # Use math.floor for proper negative coordinate handling (must match get_tile)
+        # Check for blocking resources using distance-based collision
+        # This is more accurate than tile-based matching for sub-tile positioning
         tile_x = math.floor(position.x)
         tile_y = math.floor(position.y)
         chunk_x = tile_x // Config.CHUNK_SIZE
@@ -417,18 +417,20 @@ class WorldSystem:
 
         chunk = self.loaded_chunks.get((chunk_x, chunk_y))
         if chunk:
-            # Use direct tile position check for resources
             for resource in chunk.resources:
                 if not resource.depleted:
-                    # Use math.floor for proper negative coordinate handling
-                    res_tile_x = math.floor(resource.position.x)
-                    res_tile_y = math.floor(resource.position.y)
-                    if res_tile_x == tile_x and res_tile_y == tile_y:
+                    dx = abs(resource.position.x - position.x)
+                    dy = abs(resource.position.y - position.y)
+                    if dx < 0.5 and dy < 0.5:
                         return False
 
-        # Check for blocking placed barriers using O(1) cache lookup
-        if (tile_x, tile_y) in self._barrier_positions:
-            return False
+        # Check for blocking placed barriers using distance-based collision
+        for entity in self.placed_entities:
+            if entity.entity_type == PlacedEntityType.BARRIER:
+                dx = abs(entity.position.x - position.x)
+                dy = abs(entity.position.y - position.y)
+                if dx < 0.5 and dy < 0.5:
+                    return False
 
         return True
 
@@ -650,8 +652,7 @@ class WorldSystem:
 
         # Update barrier cache for O(1) collision lookup
         if entity_type == PlacedEntityType.BARRIER:
-            # Use math.floor for proper negative coordinate handling (must match is_walkable)
-            tile_pos = (math.floor(entity.position.x), math.floor(entity.position.y))
+            tile_pos = (int(entity.position.x), int(entity.position.y))
             self._barrier_positions.add(tile_pos)
 
         return entity
@@ -670,8 +671,7 @@ class WorldSystem:
 
             # Update barrier cache
             if entity.entity_type == PlacedEntityType.BARRIER:
-                # Use math.floor for proper negative coordinate handling (must match is_walkable)
-                tile_pos = (math.floor(entity.position.x), math.floor(entity.position.y))
+                tile_pos = (int(entity.position.x), int(entity.position.y))
                 self._barrier_positions.discard(tile_pos)
 
             return True
@@ -871,8 +871,7 @@ class WorldSystem:
         self._barrier_positions.clear()
         for entity in self.placed_entities:
             if entity.entity_type == PlacedEntityType.BARRIER:
-                # Use math.floor for proper negative coordinate handling (must match is_walkable)
-                tile_pos = (math.floor(entity.position.x), math.floor(entity.position.y))
+                tile_pos = (int(entity.position.x), int(entity.position.y))
                 self._barrier_positions.add(tile_pos)
 
         # Restore discovered dungeons
