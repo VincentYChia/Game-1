@@ -20,16 +20,28 @@ class Config:
     UI_SCALE = 1.0
 
     # World - Centered coordinate system with (0,0,0) at center
-    WORLD_SIZE = 176  # 11 chunks × 16 tiles per chunk
-    CHUNK_SIZE = 16
-    TILE_SIZE = 32
-    NUM_CHUNKS = 11  # 11×11 chunk grid (-5 to +5)
+    # Infinite world - no fixed size, chunks generated on demand
+    CHUNK_SIZE = 16  # Tiles per chunk side (also in world_generation.JSON)
+    TILE_SIZE = 32   # Pixels per tile
+
+    # Chunk loading configuration
+    # NOTE: These are default values. Actual values are loaded from
+    # Definitions.JSON/world_generation.JSON via WorldGenerationConfig.
+    # Systems should use WorldGenerationConfig.get_instance() for these values.
+    CHUNK_LOAD_RADIUS = 4      # Default: ±4 chunks around player (9x9 = 81 chunks)
+    SPAWN_ALWAYS_LOADED = 1    # Default: ±1 chunks around spawn always loaded (3x3 = 9 chunks)
+
+    # Legacy constants (kept for compatibility during transition)
+    WORLD_SIZE = 176  # Deprecated - world is now infinite
+    NUM_CHUNKS = 11   # Deprecated - chunks generated on demand
 
     # Player spawn and safe zone
     PLAYER_SPAWN_X = 0.0
     PLAYER_SPAWN_Y = 0.0
     PLAYER_SPAWN_Z = 0.0
-    SAFE_ZONE_RADIUS = 8  # No resources spawn within this radius of origin
+    # NOTE: SAFE_ZONE_RADIUS is a default. Actual value is in world_generation.JSON
+    # as spawn_area.resource_exclusion_radius. Use WorldGenerationConfig for this.
+    SAFE_ZONE_RADIUS = 8  # Default: No resources spawn within this radius of origin
 
     # Viewport (scales with screen width, 75% of screen width)
     VIEWPORT_WIDTH = 1200

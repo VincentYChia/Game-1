@@ -735,13 +735,8 @@ class Enemy:
         chunk_min_y = (self.chunk_coords[1] - 1) * chunk_size
         chunk_max_y = (self.chunk_coords[1] + 2) * chunk_size
 
-        # Also clamp to world boundaries (handles edge chunks and negative coords)
-        # World uses centered coordinates: -half to +half
-        half_world = Config.WORLD_SIZE // 2
-        chunk_min_x = max(-half_world, chunk_min_x)
-        chunk_max_x = min(half_world, chunk_max_x)
-        chunk_min_y = max(-half_world, chunk_min_y)
-        chunk_max_y = min(half_world, chunk_max_y)
+        # No world bounds - infinite world
+        # Enemies are only bounded to their spawn chunk area
 
         x = max(chunk_min_x, min(x, chunk_max_x))
         y = max(chunk_min_y, min(y, chunk_max_y))

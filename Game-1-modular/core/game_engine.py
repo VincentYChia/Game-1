@@ -54,6 +54,7 @@ from systems import WorldSystem, NPC
 from systems.turret_system import TurretSystem
 from systems.save_manager import SaveManager
 from systems.dungeon import DungeonManager
+from systems.map_waypoint_system import MapWaypointSystem
 
 # Rendering
 from rendering import Renderer
@@ -163,6 +164,8 @@ class GameEngine:
         print("\nInitializing systems...")
         self.world = WorldSystem()
         self.save_manager = SaveManager()
+        self.map_system = MapWaypointSystem(chunk_size=Config.CHUNK_SIZE)
+        print("✓ Map and waypoint system initialized")
 
         # Check for command line args for temporary world
         import sys
@@ -295,6 +298,17 @@ class GameEngine:
         self.encyclopedia_tab_rects = []
         self.class_selection_rect = None
         self.class_buttons = []
+
+        # Map UI state
+        self.map_window_rect = None
+        self.map_area_rect = None  # The map display area (for dragging)
+        self.map_waypoint_rects = []  # [(rect, waypoint_slot), ...] for click detection
+        self.map_action_rects = []  # [(rect, slot, action_type), ...] for button clicks
+        self.waypoint_renaming = False  # Whether we're in rename mode
+        self.waypoint_rename_slot = -1  # Which waypoint slot is being renamed
+        self.waypoint_rename_text = ""  # Current text being entered
+        self.waypoint_delete_confirm = False  # Whether we're in delete confirmation mode
+        self.waypoint_delete_slot = -1  # Which waypoint slot is pending delete
 
         # Enchantment/Adornment selection UI
         self.enchantment_selection_active = False
@@ -459,7 +473,8 @@ class GameEngine:
                         self.npcs,
                         "autosave.json",
                         self.dungeon_manager,
-                        self.game_time
+                        self.game_time,
+                        self.map_system
                     ):
                         print("💾 Autosaved on quit")
                 self.running = False
@@ -490,7 +505,8 @@ class GameEngine:
                                 self.npcs,
                                 "autosave.json",
                                 self.dungeon_manager,
-                                self.game_time
+                                self.game_time,
+                                self.map_system
                             ):
                                 print("💾 Autosaved on start menu quit")
                         self.running = False
@@ -547,6 +563,42 @@ class GameEngine:
                             self.interactive_ui.player_narrative += event.unicode
                         continue
 
+                # Waypoint delete confirmation handling
+                if self.waypoint_delete_confirm:
+                    if event.key == pygame.K_ESCAPE:
+                        self._cancel_delete_confirmation()
+                        continue
+                    elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                        self._do_delete_waypoint(self.waypoint_delete_slot)
+                        continue
+                    # Block other keys during confirmation
+                    continue
+
+                # Waypoint renaming text input
+                if self.waypoint_renaming:
+                    if event.key == pygame.K_ESCAPE:
+                        # Cancel renaming
+                        self.cancel_waypoint_rename()
+                        continue
+                    elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                        # Confirm renaming
+                        self.confirm_waypoint_rename()
+                        continue
+                    elif event.key == pygame.K_BACKSPACE:
+                        # Delete last character
+                        if self.waypoint_rename_text:
+                            self.waypoint_rename_text = self.waypoint_rename_text[:-1]
+                        continue
+                    elif event.unicode and event.unicode.isprintable():
+                        # Add character (limit from config)
+                        from data.databases.map_waypoint_db import MapWaypointConfig
+                        max_len = MapWaypointConfig.get_instance().waypoint.max_name_length
+                        if len(self.waypoint_rename_text) < max_len:
+                            self.waypoint_rename_text += event.unicode
+                        continue
+                    # Block other keys during renaming
+                    continue
+
                 if event.key == pygame.K_ESCAPE:
                     if self.enchantment_selection_active:
                         self._close_enchantment_selection()
@@ -567,6 +619,8 @@ class GameEngine:
                         self.character.toggle_skills_ui()
                     elif self.character.encyclopedia.is_open:
                         self.character.encyclopedia.toggle()
+                    elif self.map_system.map_open:
+                        self.map_system.close_map()
                     elif self.character.class_selection_open:
                         pass
                     else:
@@ -579,7 +633,8 @@ class GameEngine:
                                 self.npcs,
                                 "autosave.json",
                                 self.dungeon_manager,
-                                self.game_time
+                                self.game_time,
+                                self.map_system
                             ):
                                 print("💾 Autosaved on ESC quit")
                         self.running = False
@@ -595,6 +650,16 @@ class GameEngine:
                     self.character.toggle_skills_ui()
                 elif event.key == pygame.K_l:
                     self.character.encyclopedia.toggle()
+                elif event.key == pygame.K_m:
+                    # Toggle world map
+                    self.map_system.toggle_map()
+                    if self.map_system.map_open:
+                        # Center on player when opening
+                        self.map_system.center_on_position(self.character.position)
+                elif event.key == pygame.K_p:
+                    # Place waypoint when map is open
+                    if self.map_system.map_open and not self.waypoint_renaming:
+                        self.place_waypoint_at_player()
                 elif event.key == pygame.K_f:
                     # NPC interaction
                     self.handle_npc_interaction()
@@ -658,6 +723,8 @@ class GameEngine:
                         print(f"   • Infinite resources (no materials consumed)")
                         print(f"   • Level set to {self.character.leveling.level}")
                         print(f"   • 100 stat points available")
+                        print(f"   🎲 World seed: {self.world.seed}")
+                        print(f"   📍 Loaded chunks: {len(self.world.loaded_chunks)}")
                         self.add_notification("Debug F1: ENABLED", (100, 255, 100))
                     else:
                         # DISABLE: Restore original state
@@ -799,7 +866,8 @@ class GameEngine:
                             self.npcs,
                             "autosave.json",
                             self.dungeon_manager,
-                            self.game_time
+                            self.game_time,
+                            self.map_system
                         ):
                             self.add_notification("Game saved!", (100, 255, 100))
 
@@ -815,7 +883,8 @@ class GameEngine:
                             self.npcs,
                             f"save_{timestamp}.json",
                             self.dungeon_manager,
-                            self.game_time
+                            self.game_time,
+                            self.map_system
                         ):
                             self.add_notification(f"Saved!", (100, 255, 100))
 
@@ -830,11 +899,16 @@ class GameEngine:
                         self.add_notification("Infinite Durability: OFF", (255, 100, 100))
 
                 elif event.key == pygame.K_F8:
-                    # Enter/Exit Dungeon
-                    if self.dungeon_manager.in_dungeon:
-                        self._exit_dungeon()
+                    shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
+                    if shift_held:
+                        # Biome debug - print map and stats
+                        self._print_biome_debug()
                     else:
-                        self._enter_dungeon()
+                        # Enter/Exit Dungeon
+                        if self.dungeon_manager.in_dungeon:
+                            self._exit_dungeon()
+                        else:
+                            self._enter_dungeon()
 
                 elif event.key == pygame.K_F9:
                     # Load game (Shift+F9 for default save, F9 for autosave)
@@ -869,6 +943,10 @@ class GameEngine:
                         # Restore dungeon state (if present)
                         self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
 
+                        # Restore map/waypoint state (if present)
+                        if "map_state" in save_data:
+                            self.map_system.restore_from_save(save_data["map_state"])
+
                         # If in dungeon, respawn enemies
                         if self.dungeon_manager.in_dungeon:
                             self.combat_manager.spawn_dungeon_wave()
@@ -902,6 +980,14 @@ class GameEngine:
             elif event.type == pygame.MOUSEMOTION:
                 self.mouse_pos = event.pos
 
+                # Handle map dragging
+                if self.map_system.map_open and self.map_system.map_dragging:
+                    # Calculate chunk size for drag scaling
+                    from data.databases.map_waypoint_db import MapWaypointConfig
+                    config = MapWaypointConfig.get_instance()
+                    chunk_pixel_size = Config.scale(config.map_display.chunk_render_size) * self.map_system.map_zoom
+                    self.map_system.update_drag(event.pos[0], event.pos[1], chunk_pixel_size)
+
                 # Handle slider dragging for betting
                 if self.active_minigame and self.minigame_type == 'adornments':
                     state = self.active_minigame.get_state()
@@ -918,6 +1004,12 @@ class GameEngine:
                 # Skip if no character exists yet
                 if self.character is None:
                     continue
+
+                # Handle mouse wheel scrolling for map zoom
+                if self.map_system.map_open and hasattr(self, 'map_window_rect') and self.map_window_rect:
+                    if self.map_window_rect.collidepoint(self.mouse_pos):
+                        self.map_system.adjust_zoom(event.y)
+                        continue  # Skip other scroll handlers
 
                 # Handle mouse wheel scrolling for enchantment selection UI
                 if hasattr(self, 'enchantment_selection_active') and self.enchantment_selection_active:
@@ -1247,12 +1339,24 @@ class GameEngine:
                 self.start_menu_open = False
                 self.temporary_world = False
 
-                # Restore water chunk positions BEFORE world generation
+                # Get world state and seed
                 world_state = save_data.get("world_state", {})
-                water_chunks = world_state.get("water_chunks", [])
-                if water_chunks:
-                    from systems.chunk import Chunk
-                    Chunk.restore_water_chunks(water_chunks)
+                saved_seed = world_state.get("seed")
+
+                # Recreate WorldSystem with saved seed (for deterministic generation)
+                if saved_seed is not None:
+                    print(f"🎲 Loading world with seed: {saved_seed}")
+                    self.world = WorldSystem(seed=saved_seed)
+                    self.world.set_chunk_save_directory("autosave.json")
+                    self.world.dungeon_manager = self.dungeon_manager
+                    # Update combat manager's world reference
+                    self.combat_manager.world = self.world
+                else:
+                    # Legacy save - restore water chunks for backwards compatibility
+                    water_chunks = world_state.get("water_chunks", [])
+                    if water_chunks:
+                        from systems.chunk import Chunk
+                        Chunk.restore_water_chunks(water_chunks)
 
                 # Create character at starting position first
                 self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
@@ -1263,7 +1367,7 @@ class GameEngine:
                 # Register saved invented recipes with Crafters
                 self.register_saved_invented_recipes()
 
-                # Restore world state (placed entities, modified resources)
+                # Restore world state (placed entities, discovered dungeons, etc.)
                 self.world.restore_from_save(save_data["world_state"])
 
                 # Restore quest state
@@ -1278,6 +1382,10 @@ class GameEngine:
 
                 # Restore dungeon state (if present)
                 self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
+
+                # Restore map/waypoint state (if present)
+                if "map_state" in save_data:
+                    self.map_system.restore_from_save(save_data["map_state"])
 
                 # If in dungeon, respawn enemies
                 if self.dungeon_manager.in_dungeon:
@@ -1309,12 +1417,24 @@ class GameEngine:
                 self.start_menu_open = False
                 self.temporary_world = False
 
-                # Restore water chunk positions BEFORE world generation
+                # Get world state and seed
                 world_state = save_data.get("world_state", {})
-                water_chunks = world_state.get("water_chunks", [])
-                if water_chunks:
-                    from systems.chunk import Chunk
-                    Chunk.restore_water_chunks(water_chunks)
+                saved_seed = world_state.get("seed")
+
+                # Recreate WorldSystem with saved seed (for deterministic generation)
+                if saved_seed is not None:
+                    print(f"🎲 Loading world with seed: {saved_seed}")
+                    self.world = WorldSystem(seed=saved_seed)
+                    self.world.set_chunk_save_directory("default_save.json")
+                    self.world.dungeon_manager = self.dungeon_manager
+                    # Update combat manager's world reference
+                    self.combat_manager.world = self.world
+                else:
+                    # Legacy save - restore water chunks for backwards compatibility
+                    water_chunks = world_state.get("water_chunks", [])
+                    if water_chunks:
+                        from systems.chunk import Chunk
+                        Chunk.restore_water_chunks(water_chunks)
 
                 # Create character at starting position first
                 self.character = Character(Position(Config.PLAYER_SPAWN_X, Config.PLAYER_SPAWN_Y, Config.PLAYER_SPAWN_Z))
@@ -1325,7 +1445,7 @@ class GameEngine:
                 # Register saved invented recipes with Crafters
                 self.register_saved_invented_recipes()
 
-                # Restore world state (placed entities, modified resources)
+                # Restore world state (placed entities, discovered dungeons, etc.)
                 self.world.restore_from_save(save_data["world_state"])
 
                 # Restore quest state
@@ -1340,6 +1460,10 @@ class GameEngine:
 
                 # Restore dungeon state (if present)
                 self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
+
+                # Restore map/waypoint state (if present)
+                if "map_state" in save_data:
+                    self.map_system.restore_from_save(save_data["map_state"])
 
                 # If in dungeon, respawn enemies
                 if self.dungeon_manager.in_dungeon:
@@ -1609,6 +1733,16 @@ class GameEngine:
             # Click outside encyclopedia UI - close it
             else:
                 self.character.encyclopedia.toggle()
+                return
+
+        # Map UI
+        if self.map_system.map_open and self.map_window_rect:
+            if self.map_window_rect.collidepoint(mouse_pos):
+                self.handle_map_click(mouse_pos)
+                return
+            # Click outside map UI - close it
+            else:
+                self.map_system.close_map()
                 return
 
         # NPC Dialogue UI
@@ -2240,6 +2374,191 @@ class GameEngine:
                 self.character.encyclopedia.current_tab = tab_id
                 print(f"📚 Switched to {tab_id} tab")
                 break
+
+    def handle_map_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicks in map UI for waypoint actions and map dragging."""
+        if not self.map_window_rect:
+            return
+
+        # If in delete confirmation mode, handle it
+        if self.waypoint_delete_confirm:
+            # Clicking anywhere cancels the confirmation
+            self.waypoint_delete_confirm = False
+            self.waypoint_delete_slot = -1
+            self.add_notification("Delete cancelled", (150, 150, 150))
+            return
+
+        # If renaming, clicking the waypoint row continues editing, clicking elsewhere cancels
+        if self.waypoint_renaming:
+            # Check if clicking on the same waypoint row (allow re-clicking to keep focus)
+            for wp_rect, slot in self.map_waypoint_rects:
+                if wp_rect.collidepoint(mouse_pos) and slot == self.waypoint_rename_slot:
+                    # Clicked on the same row, keep renaming
+                    return
+            # Clicked elsewhere, cancel renaming
+            self.cancel_waypoint_rename()
+            return
+
+        # Check for waypoint action button clicks first
+        clicked_action = False
+        for action_rect, slot, action in getattr(self, 'map_action_rects', []):
+            if action_rect.collidepoint(mouse_pos):
+                clicked_action = True
+                wp = self.map_system.get_waypoint(slot)
+                if wp is None:
+                    continue
+
+                if action == 'teleport':
+                    self._do_teleport_to_waypoint(slot)
+                elif action == 'rename':
+                    if not wp.is_spawn:
+                        self.start_waypoint_rename_for_slot(slot)
+                elif action == 'delete':
+                    if not wp.is_spawn:
+                        self._start_delete_confirmation(slot)
+                return
+
+        # Check waypoint row clicks (for teleport)
+        for wp_rect, slot in self.map_waypoint_rects:
+            if wp_rect.collidepoint(mouse_pos):
+                self._do_teleport_to_waypoint(slot)
+                return
+
+        # Click on map area (not waypoint panel) - start dragging
+        # Calculate where the waypoint panel starts
+        if hasattr(self, 'map_area_rect') and self.map_area_rect:
+            if self.map_area_rect.collidepoint(mouse_pos):
+                # Start map drag
+                self.map_system.start_drag(mouse_pos[0], mouse_pos[1])
+
+    def _do_teleport_to_waypoint(self, slot: int):
+        """Execute teleportation to a waypoint."""
+        in_dungeon = self.dungeon_manager.in_dungeon
+        enemies_nearby = len(self.combat_manager.get_enemies_in_range(
+            (self.character.position.x, self.character.position.y), 10.0)) > 0
+
+        success, message, new_pos = self.map_system.teleport_to_waypoint(
+            slot, self.game_time, in_dungeon, enemies_nearby,
+            current_position=self.character.position)
+
+        if success and new_pos:
+            # Teleport the character
+            self.character.position = new_pos
+            self.camera.follow(new_pos)
+            self.add_notification(message, (100, 255, 200))
+            print(f"🌀 Teleported to waypoint slot {slot}: {new_pos}")
+
+            # Update chunk exploration for new location
+            self._update_chunk_exploration()
+
+            # Close map after teleport
+            self.map_system.close_map()
+        else:
+            self.add_notification(message, (255, 150, 100))
+
+    def _start_delete_confirmation(self, slot: int):
+        """Start delete confirmation for a waypoint."""
+        wp = self.map_system.get_waypoint(slot)
+        if wp is None or wp.is_spawn:
+            return
+
+        self.waypoint_delete_confirm = True
+        self.waypoint_delete_slot = slot
+        self.add_notification(f"Delete '{wp.name}'? Press Enter to confirm, Esc to cancel", (255, 200, 100))
+
+    def _do_delete_waypoint(self, slot: int):
+        """Delete a waypoint (after confirmation)."""
+        success, message = self.map_system.remove_waypoint(slot)
+        if success:
+            self.add_notification(message, (100, 255, 200))
+            print(f"🗑️ {message}")
+        else:
+            self.add_notification(message, (255, 150, 100))
+
+        # Clear confirmation state
+        self.waypoint_delete_confirm = False
+        self.waypoint_delete_slot = -1
+
+    def _cancel_delete_confirmation(self):
+        """Cancel the delete confirmation."""
+        self.waypoint_delete_confirm = False
+        self.waypoint_delete_slot = -1
+        self.add_notification("Delete cancelled", (150, 150, 150))
+
+    def start_waypoint_rename_for_slot(self, slot: int):
+        """Start renaming a specific waypoint slot."""
+        waypoint = self.map_system.get_waypoint(slot)
+        if waypoint is None or waypoint.is_spawn:
+            return
+
+        self.waypoint_renaming = True
+        self.waypoint_rename_slot = slot
+        self.waypoint_rename_text = ""  # Start with empty text
+        self.add_notification("Type new name, Enter to save, Esc to cancel", (100, 200, 255))
+
+    def place_waypoint_at_player(self) -> None:
+        """Place a new waypoint at the player's current position."""
+        player_level = self.character.leveling.level
+
+        # Check if player can add a waypoint
+        can_add, reason = self.map_system.can_add_waypoint(player_level)
+        if not can_add:
+            self.add_notification(reason, (255, 150, 100))
+            return
+
+        # Get current chunk info for the default name
+        chunk_x = int(self.character.position.x) // Config.CHUNK_SIZE
+        chunk_y = int(self.character.position.y) // Config.CHUNK_SIZE
+
+        # Generate a default name based on location
+        chunk_data = self.map_system.get_explored_chunk(chunk_x, chunk_y)
+        if chunk_data:
+            biome = chunk_data.chunk_type.replace('_', ' ').title()
+            default_name = f"{biome} ({int(self.character.position.x)}, {int(self.character.position.y)})"
+        else:
+            default_name = f"Waypoint ({int(self.character.position.x)}, {int(self.character.position.y)})"
+
+        # Add the waypoint
+        success, message = self.map_system.add_waypoint(
+            name=default_name,
+            position=self.character.position,
+            player_level=player_level
+        )
+
+        if success:
+            self.add_notification(message, (100, 255, 200))
+            print(f"📍 {message}")
+        else:
+            self.add_notification(message, (255, 150, 100))
+
+    def confirm_waypoint_rename(self) -> None:
+        """Confirm and apply the waypoint rename."""
+        if not self.waypoint_renaming:
+            return
+
+        new_name = self.waypoint_rename_text.strip()
+        if not new_name:
+            self.add_notification("Name cannot be empty", (255, 150, 100))
+            return
+
+        success, message = self.map_system.rename_waypoint(self.waypoint_rename_slot, new_name)
+
+        if success:
+            self.add_notification(message, (100, 255, 200))
+            print(f"✅ {message}")
+        else:
+            self.add_notification(message, (255, 150, 100))
+
+        self.waypoint_renaming = False
+        self.waypoint_rename_slot = -1
+        self.waypoint_rename_text = ""
+
+    def cancel_waypoint_rename(self) -> None:
+        """Cancel the waypoint rename operation."""
+        self.waypoint_renaming = False
+        self.waypoint_rename_slot = -1
+        self.waypoint_rename_text = ""
+        self.add_notification("Rename cancelled", (150, 150, 150))
 
     # ========================================================================
     # CRAFTING INTEGRATION HELPERS
@@ -5035,6 +5354,10 @@ class GameEngine:
         self.enchantment_scroll_offset = 0
 
     def handle_mouse_release(self, mouse_pos: Tuple[int, int]):
+        # End map dragging if active
+        if self.map_system.map_dragging:
+            self.map_system.end_drag()
+
         # Skip if no character exists yet (e.g., still in start menu)
         if self.character is None:
             return
@@ -5087,6 +5410,131 @@ class GameEngine:
         """Check if it's currently night time."""
         phase, _ = self.get_time_of_day()
         return phase == "night"
+
+    def _get_current_chunk_info(self) -> Optional[dict]:
+        """Get information about the chunk the player is currently in.
+
+        Returns:
+            Dict with 'name' and 'danger_level', or None if unavailable
+        """
+        if not self.world or not self.character:
+            return None
+
+        # Calculate chunk coordinates from player position using math.floor
+        import math
+        tile_x = math.floor(self.character.position.x)
+        tile_y = math.floor(self.character.position.y)
+        chunk_x = tile_x // Config.CHUNK_SIZE
+        chunk_y = tile_y // Config.CHUNK_SIZE
+
+        # Get chunk from world system
+        chunk = self.world.loaded_chunks.get((chunk_x, chunk_y))
+        if not chunk:
+            return None
+
+        # Map chunk type to display name and danger level
+        chunk_type_value = chunk.chunk_type.value
+
+        # Display names for chunk types (more readable)
+        chunk_display_names = {
+            'peaceful_forest': 'Peaceful Forest',
+            'peaceful_quarry': 'Peaceful Quarry',
+            'peaceful_cave': 'Peaceful Cave',
+            'dangerous_forest': 'Dangerous Forest',
+            'dangerous_quarry': 'Dangerous Quarry',
+            'dangerous_cave': 'Dangerous Cave',
+            'rare_hidden_forest': 'Ancient Heartwood',
+            'rare_ancient_quarry': 'Primordial Vein',
+            'rare_deep_cave': 'Paradox Hollow',
+            'water_lake': 'Tranquil Lake',
+            'water_river': 'Flowing Stream',
+            'water_cursed_swamp': 'Cursed Swamp',
+        }
+
+        # Determine danger level from chunk type
+        if 'peaceful' in chunk_type_value:
+            danger_level = 'peaceful'
+        elif 'dangerous' in chunk_type_value:
+            danger_level = 'dangerous'
+        elif 'rare' in chunk_type_value or 'cursed' in chunk_type_value:
+            danger_level = 'rare'
+        elif 'water' in chunk_type_value:
+            danger_level = 'water'
+        else:
+            danger_level = 'peaceful'
+
+        return {
+            'name': chunk_display_names.get(chunk_type_value, chunk_type_value.replace('_', ' ').title()),
+            'danger_level': danger_level
+        }
+
+    # =========================================================================
+    # BIOME DEBUG METHODS
+    # =========================================================================
+
+    def _print_biome_debug(self):
+        """Print biome debug information to console (Shift+F8)."""
+        import math
+
+        if not hasattr(self, 'world') or self.world is None:
+            print("No world loaded")
+            return
+
+        # Get current chunk coordinates
+        chunk_x = math.floor(self.character.position.x) // Config.CHUNK_SIZE
+        chunk_y = math.floor(self.character.position.y) // Config.CHUNK_SIZE
+
+        print("\n" + "=" * 60)
+        print("BIOME DEBUG (Shift+F8)")
+        print("=" * 60)
+        print(f"Player position: ({self.character.position.x:.1f}, {self.character.position.y:.1f})")
+        print(f"Current chunk: ({chunk_x}, {chunk_y})")
+
+        # Print debug map centered on player
+        if hasattr(self.world, 'biome_generator') and self.world.biome_generator:
+            self.world.biome_generator.print_area_debug(chunk_x, chunk_y, radius=8)
+
+            # Print generation stats
+            stats = self.world.biome_generator.get_generation_stats()
+            print("Generation Stats (all chunks generated so far):")
+            print(f"  Counts: {stats['counts']}")
+            if 'biome_percentages' in stats:
+                print(f"  Biome %: {stats['biome_percentages']}")
+            if 'danger_percentages' in stats:
+                print(f"  Danger %: {stats['danger_percentages']}")
+        else:
+            print("No biome generator available")
+
+        print("=" * 60 + "\n")
+        self.add_notification("Biome debug printed to console", (100, 255, 100))
+
+    def _update_chunk_exploration(self):
+        """Track chunk exploration for the world map.
+
+        Called every frame to check if player has entered a new chunk.
+        Marks chunks as explored and records their biome type.
+        """
+        if not hasattr(self, '_last_explored_chunk'):
+            self._last_explored_chunk = (None, None)
+
+        # Calculate current chunk
+        chunk_x = math.floor(self.character.position.x) // Config.CHUNK_SIZE
+        chunk_y = math.floor(self.character.position.y) // Config.CHUNK_SIZE
+
+        # Only process if chunk changed
+        if (chunk_x, chunk_y) != self._last_explored_chunk:
+            self._last_explored_chunk = (chunk_x, chunk_y)
+
+            # Get chunk type from world system
+            chunk = self.world.get_chunk(chunk_x, chunk_y)
+            if chunk:
+                chunk_type = chunk.chunk_type.value if hasattr(chunk.chunk_type, 'value') else str(chunk.chunk_type)
+
+                # Check for dungeon entrance
+                has_dungeon = chunk.dungeon_entrance is not None
+
+                # Mark as explored
+                self.map_system.mark_chunk_explored(chunk_x, chunk_y, chunk_type, has_dungeon)
 
     # =========================================================================
     # DUNGEON SYSTEM METHODS
@@ -5455,6 +5903,12 @@ class GameEngine:
         if not self.active_minigame:
             self.world.update(dt)
 
+            # Update loaded chunks based on player position (for infinite world)
+            if self.character:
+                self.world.update_loaded_chunks(self.character.position)
+                # Track chunk exploration for map
+                self._update_chunk_exploration()
+
             # Check if player is blocking with shield (right mouse held OR X key held)
             mouse_held = 3 in self.mouse_buttons_pressed
             x_key_held = pygame.K_x in self.keys_pressed
@@ -5572,7 +6026,9 @@ class GameEngine:
         time_phase, phase_progress = self.get_time_of_day()
         self.renderer.render_day_night_overlay(time_phase, phase_progress)
 
-        self.renderer.render_ui(self.character, self.mouse_pos)
+        # Get current chunk info for display
+        chunk_info = self._get_current_chunk_info()
+        self.renderer.render_ui(self.character, self.mouse_pos, chunk_info)
         self.renderer.render_inventory_panel(self.character, self.mouse_pos)
 
         # Render skill hotbar at bottom center (over viewport)
@@ -5663,6 +6119,23 @@ class GameEngine:
             else:
                 self.encyclopedia_window_rect = None
                 self.encyclopedia_tab_rects = []
+
+            # Map UI
+            if self.map_system.map_open:
+                rename_state = None
+                if self.waypoint_renaming:
+                    rename_state = (self.waypoint_rename_slot, self.waypoint_rename_text)
+                delete_confirm_slot = self.waypoint_delete_slot if self.waypoint_delete_confirm else -1
+                result = self.renderer.render_map_ui(
+                    self.character, self.map_system, self.world, self.mouse_pos, self.game_time,
+                    rename_state, delete_confirm_slot)
+                if result:
+                    self.map_window_rect, self.map_area_rect, self.map_waypoint_rects, self.map_action_rects = result
+            else:
+                self.map_window_rect = None
+                self.map_area_rect = None
+                self.map_waypoint_rects = []
+                self.map_action_rects = []
 
             # NPC dialogue UI
             if self.npc_dialogue_open and self.active_npc:

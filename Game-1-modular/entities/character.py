@@ -718,9 +718,8 @@ class Character:
             new_x = self.position.x + dx
             new_y = self.position.y + dy
 
-            # Clamp to world bounds
-            new_x = max(0, min(Config.WORLD_SIZE - 1, new_x))
-            new_y = max(0, min(Config.WORLD_SIZE - 1, new_y))
+            # No world bounds - infinite world
+            # Walkability check handles obstacles
 
             # Check if walkable (optional - knockback can push through obstacles)
             new_pos = Position(new_x, new_y, self.position.z)
@@ -776,19 +775,8 @@ class Character:
         new_x = self.position.x + dx * speed_mult
         new_y = self.position.y + dy * speed_mult
 
-        # Check bounds - skip world bounds when in a dungeon (dungeon has its own 32x32 tile bounds)
-        in_dungeon = (hasattr(world, 'dungeon_manager') and
-                      world.dungeon_manager and
-                      world.dungeon_manager.in_dungeon)
-
-        if not in_dungeon:
-            # World bounds (centered coordinate system based on chunk generation)
-            # Chunks range from -half to +half, each chunk is CHUNK_SIZE tiles
-            half_chunks = Config.NUM_CHUNKS // 2  # 5 for 11 chunks
-            min_bound = -half_chunks * Config.CHUNK_SIZE  # -80
-            max_bound = (half_chunks + 1) * Config.CHUNK_SIZE  # +96
-            if new_x < min_bound or new_x >= max_bound or new_y < min_bound or new_y >= max_bound:
-                return False
+        # No world bounds - infinite world
+        # Walkability check handles terrain obstacles
 
         # Check walkability with collision sliding
         new_pos = Position(new_x, new_y, self.position.z)

@@ -1,99 +1,46 @@
 """Chunk system for world generation - uses ResourceNodeDatabase for JSON-driven resources
 
 Uses centered coordinate system where (0,0) is world center.
-Chunk indices range from -half to +half (e.g., -5 to +5 for 11 chunks).
-Water chunks can spawn anywhere except the spawn area, with spacing constraints.
+Supports infinite world expansion through seed-based deterministic generation.
 """
 
 import random
 import math
-from typing import Dict, List, Set, Tuple, Optional, ClassVar
+from typing import Dict, List, Set, Tuple, Optional, ClassVar, TYPE_CHECKING
 
 from data.models import Position, TileType, WorldTile, ChunkType, ResourceType, RESOURCE_TIERS
 from data.databases.resource_node_db import ResourceNodeDatabase
+from data.databases.world_generation_db import WorldGenerationConfig
 from systems.natural_resource import NaturalResource
 from core.config import Config
+
+if TYPE_CHECKING:
+    from systems.biome_generator import BiomeGenerator
 
 
 class Chunk:
     """A 16x16 tile chunk of the world.
 
     Coordinates use centered system where chunk (0,0) contains the origin.
-    Chunk (-5,-5) is the northwest corner, (+5,+5) is the southeast corner.
-    """
+    Chunks can be generated at any coordinate for infinite world support.
 
-    # Class-level tracking of water chunk positions
-    _water_chunks: ClassVar[Set[Tuple[int, int]]] = set()
-    _initialized: ClassVar[bool] = False
+    Attributes:
+        chunk_x: Chunk X coordinate
+        chunk_y: Chunk Y coordinate
+        seed: Deterministic seed for this chunk
+        tiles: Dictionary of tiles keyed by position string
+        resources: List of natural resources in this chunk
+        chunk_type: The biome/type of this chunk
+        dungeon_entrance: Optional dungeon entrance in this chunk
+        unload_timestamp: Game time when chunk was unloaded (for respawn calculation)
+    """
 
     # Class-level reference to database (initialized once)
     _resource_db: ClassVar[Optional[ResourceNodeDatabase]] = None
 
-    @classmethod
-    def _plan_water_chunks(cls) -> None:
-        """Plan water chunk positions across the world.
-
-        Water chunks are placed:
-        - Anywhere except the spawn area (center 3x3 chunks)
-        - Never adjacent to each other (minimum 2 chunks apart)
-        - Approximately 8-12 water chunks total
-
-        This allows water bodies to form naturally across the map
-        rather than being restricted to edges only.
-        """
-        if cls._initialized:
-            return
-
-        cls._water_chunks = set()
-        half = Config.NUM_CHUNKS // 2  # 5 for 11 chunks
-
-        # Collect all valid chunk positions (excluding spawn area)
-        valid_chunks = []
-        for x in range(-half, half + 1):
-            for y in range(-half, half + 1):
-                # Skip spawn area (center 3x3 chunks)
-                if abs(x) <= 1 and abs(y) <= 1:
-                    continue
-                valid_chunks.append((x, y))
-
-        # Shuffle and select water chunks with spacing
-        random.shuffle(valid_chunks)
-        target_water_count = random.randint(8, 12)
-
-        for cx, cy in valid_chunks:
-            if len(cls._water_chunks) >= target_water_count:
-                break
-
-            # Check minimum distance from other water chunks (Manhattan distance >= 2)
-            too_close = False
-            for wx, wy in cls._water_chunks:
-                if abs(cx - wx) + abs(cy - wy) < 3:  # Minimum spacing of 3
-                    too_close = True
-                    break
-
-            if not too_close:
-                cls._water_chunks.add((cx, cy))
-
-        cls._initialized = True
-        print(f"🌊 Planned {len(cls._water_chunks)} water chunks across the world")
-
-    @classmethod
-    def is_water_chunk(cls, chunk_x: int, chunk_y: int) -> bool:
-        """Check if this position is designated as a water chunk."""
-        cls._plan_water_chunks()
-        return (chunk_x, chunk_y) in cls._water_chunks
-
-    @classmethod
-    def restore_water_chunks(cls, water_chunk_positions: List[Tuple[int, int]]) -> None:
-        """Restore water chunk positions from save data.
-
-        Args:
-            water_chunk_positions: List of (chunk_x, chunk_y) tuples for water chunks
-        """
-        if water_chunk_positions:
-            cls._water_chunks = set(tuple(pos) for pos in water_chunk_positions)
-            cls._initialized = True
-            print(f"🌊 Restored {len(cls._water_chunks)} water chunks from save")
+    # Legacy class-level water tracking (kept for save compatibility)
+    _water_chunks: ClassVar[Set[Tuple[int, int]]] = set()
+    _initialized: ClassVar[bool] = False
 
     @classmethod
     def get_resource_db(cls) -> ResourceNodeDatabase:
@@ -102,43 +49,118 @@ class Chunk:
             cls._resource_db = ResourceNodeDatabase.get_instance()
         return cls._resource_db
 
-    def __init__(self, chunk_x: int, chunk_y: int):
+    @classmethod
+    def restore_water_chunks(cls, water_chunk_positions: List[Tuple[int, int]]) -> None:
+        """Restore water chunk positions from legacy save data.
+
+        This method exists for backwards compatibility with saves that used
+        the old water planning system. New saves use seed-based generation.
+
+        Args:
+            water_chunk_positions: List of (chunk_x, chunk_y) tuples for water chunks
+        """
+        if water_chunk_positions:
+            cls._water_chunks = set(tuple(pos) for pos in water_chunk_positions)
+            cls._initialized = True
+            print(f"🌊 Restored {len(cls._water_chunks)} water chunks from legacy save")
+
+    def __init__(self, chunk_x: int, chunk_y: int,
+                 seed: Optional[int] = None,
+                 biome_generator: Optional['BiomeGenerator'] = None):
+        """Initialize a chunk at the given coordinates.
+
+        Args:
+            chunk_x: Chunk X coordinate
+            chunk_y: Chunk Y coordinate
+            seed: Deterministic seed for this chunk (optional, for legacy support)
+            biome_generator: BiomeGenerator instance for chunk type determination
+        """
         self.chunk_x = chunk_x
         self.chunk_y = chunk_y
+
+        # Store biome generator reference
+        self._biome_generator = biome_generator
+
+        # Get seed - either from biome generator, passed directly, or generate random
+        if biome_generator:
+            self.seed = biome_generator.get_chunk_seed(chunk_x, chunk_y)
+        elif seed is not None:
+            self.seed = seed
+        else:
+            # Legacy mode - random seed (not recommended for infinite worlds)
+            self.seed = random.randint(0, 2**32 - 1)
+
+        # Create seeded RNG for deterministic generation
+        self._rng = random.Random(self.seed)
+
+        # Initialize data structures
         self.tiles: Dict[str, WorldTile] = {}
         self.resources: List[NaturalResource] = []
+        self.dungeon_entrance = None  # Set by WorldSystem if dungeon spawns here
+        self.unload_timestamp: Optional[float] = None  # For respawn calculation on reload
+
+        # Modification tracking for save system
+        self._modified = False
+        self._resource_modifications: Dict[str, dict] = {}
+
+        # Determine chunk type and generate content
         self.chunk_type = self._determine_chunk_type()
         self.generate_tiles()
         self.spawn_resources()
 
     def _determine_chunk_type(self) -> ChunkType:
-        """Determine chunk type with spawn area protection and water placement.
+        """Determine chunk type using BiomeGenerator or legacy random.
 
-        The center chunk (0,0) and adjacent chunks are always peaceful.
-        Water chunks are designated during world planning.
+        Returns:
+            ChunkType for this chunk
         """
-        # Check if this is a pre-planned water chunk
-        if Chunk.is_water_chunk(self.chunk_x, self.chunk_y):
-            return random.choice([ChunkType.WATER_LAKE, ChunkType.WATER_RIVER])
+        # Use BiomeGenerator if available (new infinite world system)
+        if self._biome_generator:
+            return self._biome_generator.get_chunk_type(self.chunk_x, self.chunk_y)
+
+        # Legacy mode: check class-level water chunks first
+        if Chunk._initialized and (self.chunk_x, self.chunk_y) in Chunk._water_chunks:
+            return self._rng.choice([ChunkType.WATER_LAKE, ChunkType.WATER_RIVER])
 
         # Spawn area protection: center 3x3 chunks are always peaceful
         if abs(self.chunk_x) <= 1 and abs(self.chunk_y) <= 1:
-            return random.choice([ChunkType.PEACEFUL_FOREST, ChunkType.PEACEFUL_QUARRY, ChunkType.PEACEFUL_CAVE])
+            return self._rng.choice([
+                ChunkType.PEACEFUL_FOREST,
+                ChunkType.PEACEFUL_QUARRY,
+                ChunkType.PEACEFUL_CAVE
+            ])
 
-        roll = random.randint(1, 10)
+        # Legacy random distribution
+        roll = self._rng.randint(1, 10)
         if roll <= 5:
-            return random.choice([ChunkType.PEACEFUL_FOREST, ChunkType.PEACEFUL_QUARRY, ChunkType.PEACEFUL_CAVE])
+            return self._rng.choice([
+                ChunkType.PEACEFUL_FOREST,
+                ChunkType.PEACEFUL_QUARRY,
+                ChunkType.PEACEFUL_CAVE
+            ])
         elif roll <= 8:
-            return random.choice([ChunkType.DANGEROUS_FOREST, ChunkType.DANGEROUS_QUARRY, ChunkType.DANGEROUS_CAVE])
+            return self._rng.choice([
+                ChunkType.DANGEROUS_FOREST,
+                ChunkType.DANGEROUS_QUARRY,
+                ChunkType.DANGEROUS_CAVE
+            ])
         else:
             # Rare chunks (20% chance): 75% land rare, 25% cursed swamp
-            if random.random() < 0.25:
+            if self._rng.random() < 0.25:
                 return ChunkType.WATER_CURSED_SWAMP
-            return random.choice([ChunkType.RARE_HIDDEN_FOREST, ChunkType.RARE_ANCIENT_QUARRY, ChunkType.RARE_DEEP_CAVE])
+            return self._rng.choice([
+                ChunkType.RARE_HIDDEN_FOREST,
+                ChunkType.RARE_ANCIENT_QUARRY,
+                ChunkType.RARE_DEEP_CAVE
+            ])
 
     def _is_water_chunk(self) -> bool:
         """Check if this chunk is a water type."""
-        return self.chunk_type in (ChunkType.WATER_LAKE, ChunkType.WATER_RIVER, ChunkType.WATER_CURSED_SWAMP)
+        return self.chunk_type in (
+            ChunkType.WATER_LAKE,
+            ChunkType.WATER_RIVER,
+            ChunkType.WATER_CURSED_SWAMP
+        )
 
     def generate_tiles(self):
         """Generate tiles for this chunk using centered coordinates."""
@@ -152,12 +174,13 @@ class Chunk:
 
     def _generate_land_tiles(self, start_x: int, start_y: int):
         """Generate standard land tiles."""
-        base_tile = TileType.STONE if "quarry" in self.chunk_type.value or "cave" in self.chunk_type.value else TileType.GRASS
+        is_stone_biome = "quarry" in self.chunk_type.value or "cave" in self.chunk_type.value
+        base_tile = TileType.STONE if is_stone_biome else TileType.GRASS
 
         for x in range(start_x, start_x + Config.CHUNK_SIZE):
             for y in range(start_y, start_y + Config.CHUNK_SIZE):
                 pos = Position(x, y, 0)
-                tile_type = TileType.DIRT if random.random() < 0.1 else base_tile
+                tile_type = TileType.DIRT if self._rng.random() < 0.1 else base_tile
                 self.tiles[pos.to_key()] = WorldTile(pos, tile_type)
 
     def _generate_water_tiles(self, start_x: int, start_y: int):
@@ -183,34 +206,39 @@ class Chunk:
                 # Determine tile type based on water pattern
                 if is_lake:
                     # Lake: circular pattern with land border
-                    dist_from_center = math.sqrt((local_x - center_x) ** 2 + (local_y - center_y) ** 2)
+                    dist_from_center = math.sqrt(
+                        (local_x - center_x) ** 2 + (local_y - center_y) ** 2
+                    )
                     # Land border (outer 2 tiles)
-                    if local_x < 2 or local_x >= chunk_size - 2 or local_y < 2 or local_y >= chunk_size - 2:
+                    if (local_x < 2 or local_x >= chunk_size - 2 or
+                            local_y < 2 or local_y >= chunk_size - 2):
                         tile_type = TileType.GRASS
                     elif dist_from_center < 5:  # Water in center
                         tile_type = TileType.WATER
                     else:
                         tile_type = TileType.GRASS
+
                 elif is_swamp:
                     # Cursed swamp: 50% water with 4-way land paths
-                    # Create paths at cardinal directions
                     is_path = (abs(local_x - center_x) < 2) or (abs(local_y - center_y) < 2)
                     if is_path:
                         tile_type = TileType.DIRT
-                    elif random.random() < 0.5:
+                    elif self._rng.random() < 0.5:
                         tile_type = TileType.WATER
                     else:
-                        tile_type = TileType.DIRT if is_swamp else TileType.GRASS  # Island
+                        tile_type = TileType.DIRT
+
                 else:
-                    # River: create a flowing pattern
-                    # River runs roughly through the middle
+                    # River: create a flowing pattern through the middle
                     dist_from_center = abs(local_x - chunk_size // 2)
-                    if dist_from_center < 3 and random.random() < 0.8:
+                    if dist_from_center < 3 and self._rng.random() < 0.8:
                         tile_type = TileType.WATER
                     else:
                         tile_type = TileType.GRASS
 
-                self.tiles[pos.to_key()] = WorldTile(pos, tile_type, walkable=(tile_type != TileType.WATER))
+                self.tiles[pos.to_key()] = WorldTile(
+                    pos, tile_type, walkable=(tile_type != TileType.WATER)
+                )
 
     def spawn_resources(self):
         """Spawn resources using JSON-driven ResourceNodeDatabase"""
@@ -219,15 +247,22 @@ class Chunk:
             self._spawn_fishing_spots()
             return
 
-        start_x, start_y = self.chunk_x * Config.CHUNK_SIZE, self.chunk_y * Config.CHUNK_SIZE
+        start_x = self.chunk_x * Config.CHUNK_SIZE
+        start_y = self.chunk_y * Config.CHUNK_SIZE
+
+        # Get resource spawning config from JSON
+        world_config = WorldGenerationConfig.get_instance()
 
         # Determine resource count and tier range based on chunk danger level
         if "peaceful" in self.chunk_type.value:
-            resource_count, tier_range = random.randint(3, 6), (1, 2)
+            res_config = world_config.resource_spawning.peaceful_chunks
         elif "dangerous" in self.chunk_type.value:
-            resource_count, tier_range = random.randint(5, 8), (2, 3)
+            res_config = world_config.resource_spawning.dangerous_chunks
         else:  # rare chunks
-            resource_count, tier_range = random.randint(6, 10), (3, 4)
+            res_config = world_config.resource_spawning.rare_chunks
+
+        resource_count = self._rng.randint(res_config.min_resources, res_config.max_resources)
+        tier_range = res_config.tier_range
 
         # Track occupied positions to prevent overlap
         occupied_positions: Set[Tuple[int, int]] = set()
@@ -235,123 +270,256 @@ class Chunk:
         # Get resource candidates from database
         db = self.get_resource_db()
         if db.loaded:
-            # Use database for resource selection (JSON-driven)
             candidates = db.get_resources_for_chunk(self.chunk_type.value, tier_range)
             if candidates:
                 for _ in range(resource_count):
-                    # Try to find a valid position (up to 10 attempts)
-                    pos = None
-                    for attempt in range(10):
-                        candidate_x = start_x + random.randint(1, Config.CHUNK_SIZE - 2)
-                        candidate_y = start_y + random.randint(1, Config.CHUNK_SIZE - 2)
-
-                        # Check safe zone around origin (0, 0)
-                        dist_to_origin = math.sqrt(candidate_x ** 2 + candidate_y ** 2)
-                        if dist_to_origin < Config.SAFE_ZONE_RADIUS:
-                            continue
-
-                        # Check collision with existing resources in this chunk
-                        if (candidate_x, candidate_y) in occupied_positions:
-                            continue
-
-                        # Valid position found
-                        pos = Position(candidate_x, candidate_y, 0)
-                        occupied_positions.add((candidate_x, candidate_y))
-                        break
-
+                    pos = self._find_resource_position(
+                        start_x, start_y, occupied_positions
+                    )
                     if pos is None:
-                        continue  # Skip this resource if no valid position found
+                        continue
 
                     # Filter by tier within range
-                    tier = min(random.randint(*tier_range), 4)
+                    tier = min(self._rng.randint(*tier_range), 4)
                     valid = [r for r in candidates if r.tier <= tier]
                     if valid:
-                        node_def = random.choice(valid)
-                        # Convert to ResourceType enum for NaturalResource
+                        node_def = self._rng.choice(valid)
                         try:
                             resource_type = ResourceType(node_def.resource_id)
+                            self.resources.append(
+                                NaturalResource(pos, resource_type, node_def.tier)
+                            )
                         except ValueError:
-                            # If not in enum, skip (shouldn't happen with proper enum)
                             continue
-                        self.resources.append(NaturalResource(pos, resource_type, node_def.tier))
                 return
 
         # Fallback: Use hardcoded types if database not loaded
-        self._spawn_resources_fallback(start_x, start_y, resource_count, tier_range, occupied_positions)
+        self._spawn_resources_fallback(
+            start_x, start_y, resource_count, tier_range, occupied_positions
+        )
 
-    def _spawn_resources_fallback(self, start_x: int, start_y: int, resource_count: int, tier_range: tuple, occupied_positions: Set[Tuple[int, int]]):
-        """Fallback resource spawning using hardcoded types (for backwards compatibility)"""
+    def _find_resource_position(self, start_x: int, start_y: int,
+                                occupied: Set[Tuple[int, int]]) -> Optional[Position]:
+        """Find a valid position for a resource within this chunk.
+
+        Args:
+            start_x: Chunk start X coordinate
+            start_y: Chunk start Y coordinate
+            occupied: Set of already-occupied positions
+
+        Returns:
+            Valid Position or None if no position found
+        """
+        # Get spawn area exclusion radius from JSON config
+        world_config = WorldGenerationConfig.get_instance()
+        exclusion_radius = world_config.spawn_area.resource_exclusion_radius
+
+        for _ in range(10):  # Up to 10 attempts
+            candidate_x = start_x + self._rng.randint(1, Config.CHUNK_SIZE - 2)
+            candidate_y = start_y + self._rng.randint(1, Config.CHUNK_SIZE - 2)
+
+            # Check safe zone around origin (0, 0) using config value
+            dist_to_origin = math.sqrt(candidate_x ** 2 + candidate_y ** 2)
+            if dist_to_origin < exclusion_radius:
+                continue
+
+            # Check collision with existing resources
+            if (candidate_x, candidate_y) in occupied:
+                continue
+
+            # Valid position found
+            occupied.add((candidate_x, candidate_y))
+            return Position(candidate_x, candidate_y, 0)
+
+        return None
+
+    def _spawn_resources_fallback(self, start_x: int, start_y: int,
+                                  resource_count: int, tier_range: tuple,
+                                  occupied_positions: Set[Tuple[int, int]]):
+        """Fallback resource spawning using hardcoded types."""
         for _ in range(resource_count):
-            # Try to find a valid position (up to 10 attempts)
-            pos = None
-            for attempt in range(10):
-                candidate_x = start_x + random.randint(1, Config.CHUNK_SIZE - 2)
-                candidate_y = start_y + random.randint(1, Config.CHUNK_SIZE - 2)
-
-                # Check safe zone around origin (0, 0)
-                dist_to_origin = math.sqrt(candidate_x ** 2 + candidate_y ** 2)
-                if dist_to_origin < Config.SAFE_ZONE_RADIUS:
-                    continue
-
-                # Check collision with existing resources in this chunk
-                if (candidate_x, candidate_y) in occupied_positions:
-                    continue
-
-                # Valid position found
-                pos = Position(candidate_x, candidate_y, 0)
-                occupied_positions.add((candidate_x, candidate_y))
-                break
-
+            pos = self._find_resource_position(start_x, start_y, occupied_positions)
             if pos is None:
-                continue  # Skip this resource if no valid position found
+                continue
 
             # Determine resource types based on chunk category
             if "forest" in self.chunk_type.value:
                 types = [
-                    ResourceType.OAK_TREE, ResourceType.PINE_TREE, ResourceType.ASH_TREE,
-                    ResourceType.BIRCH_TREE, ResourceType.MAPLE_TREE, ResourceType.IRONWOOD_TREE,
+                    ResourceType.OAK_TREE, ResourceType.PINE_TREE,
+                    ResourceType.ASH_TREE, ResourceType.BIRCH_TREE,
+                    ResourceType.MAPLE_TREE, ResourceType.IRONWOOD_TREE,
                     ResourceType.EBONY_TREE, ResourceType.WORLDTREE_SAPLING
                 ]
             elif "quarry" in self.chunk_type.value:
                 types = [
-                    ResourceType.LIMESTONE_OUTCROP, ResourceType.GRANITE_FORMATION, ResourceType.SHALE_BED,
-                    ResourceType.BASALT_COLUMN, ResourceType.MARBLE_QUARRY, ResourceType.QUARTZ_CLUSTER,
-                    ResourceType.OBSIDIAN_FLOW, ResourceType.VOIDSTONE_SHARD, ResourceType.DIAMOND_GEODE,
-                    ResourceType.ETERNITY_MONOLITH, ResourceType.PRIMORDIAL_FORMATION, ResourceType.GENESIS_STRUCTURE
+                    ResourceType.LIMESTONE_OUTCROP, ResourceType.GRANITE_FORMATION,
+                    ResourceType.SHALE_BED, ResourceType.BASALT_COLUMN,
+                    ResourceType.MARBLE_QUARRY, ResourceType.QUARTZ_CLUSTER,
+                    ResourceType.OBSIDIAN_FLOW, ResourceType.VOIDSTONE_SHARD,
+                    ResourceType.DIAMOND_GEODE, ResourceType.ETERNITY_MONOLITH,
+                    ResourceType.PRIMORDIAL_FORMATION, ResourceType.GENESIS_STRUCTURE
                 ]
             else:  # cave
                 types = [
-                    ResourceType.COPPER_VEIN, ResourceType.IRON_DEPOSIT, ResourceType.TIN_SEAM,
-                    ResourceType.STEEL_NODE, ResourceType.MITHRIL_CACHE, ResourceType.ADAMANTINE_LODE,
+                    ResourceType.COPPER_VEIN, ResourceType.IRON_DEPOSIT,
+                    ResourceType.TIN_SEAM, ResourceType.STEEL_NODE,
+                    ResourceType.MITHRIL_CACHE, ResourceType.ADAMANTINE_LODE,
                     ResourceType.ORICHALCUM_TROVE, ResourceType.ETHERION_NEXUS
                 ]
 
-            tier = min(random.randint(*tier_range), 4)
+            tier = min(self._rng.randint(*tier_range), 4)
             valid = [r for r in types if RESOURCE_TIERS.get(r, 1) <= tier]
             if valid:
-                resource_type = random.choice(valid)
-                self.resources.append(NaturalResource(pos, resource_type, RESOURCE_TIERS.get(resource_type, 1)))
+                resource_type = self._rng.choice(valid)
+                self.resources.append(
+                    NaturalResource(pos, resource_type, RESOURCE_TIERS.get(resource_type, 1))
+                )
 
     def _spawn_fishing_spots(self):
         """Spawn fishing spots on water tiles."""
-        # Find water tiles
-        water_tiles = []
-        for key, tile in self.tiles.items():
-            if tile.tile_type == TileType.WATER:
-                water_tiles.append(tile.position)
+        water_tiles = [
+            tile.position for tile in self.tiles.values()
+            if tile.tile_type == TileType.WATER
+        ]
+
+        # Get water chunk config from JSON
+        world_config = WorldGenerationConfig.get_instance()
 
         # Determine tier based on water type
-        # Cursed swamp has higher tier fishing (3-4), lake/river are tier 1-2
         is_swamp = self.chunk_type == ChunkType.WATER_CURSED_SWAMP
         if is_swamp:
-            tier_range = (3, 4)  # High tier fishing in cursed swamp
-            num_spots = min(random.randint(5, 8), len(water_tiles))  # More spots
+            fishing_config = world_config.water_chunks.cursed_swamp
         else:
-            tier_range = (1, 2)
-            num_spots = min(random.randint(3, 6), len(water_tiles))
+            fishing_config = world_config.water_chunks.normal_water
+
+        tier_range = fishing_config.tier_range
+        num_spots = min(
+            self._rng.randint(fishing_config.min_spots, fishing_config.max_spots),
+            len(water_tiles)
+        )
 
         if water_tiles and num_spots > 0:
-            spots = random.sample(water_tiles, num_spots)
+            spots = self._rng.sample(water_tiles, num_spots)
             for pos in spots:
-                tier = random.randint(tier_range[0], tier_range[1])
-                self.resources.append(NaturalResource(pos, ResourceType.FISHING_SPOT, tier=tier))
+                tier = self._rng.randint(tier_range[0], tier_range[1])
+                self.resources.append(
+                    NaturalResource(pos, ResourceType.FISHING_SPOT, tier=tier)
+                )
+
+    # =========================================================================
+    # Modification Tracking (for save system)
+    # =========================================================================
+
+    def mark_resource_modified(self, resource: NaturalResource):
+        """Mark a resource as modified for save tracking.
+
+        Args:
+            resource: The modified resource
+        """
+        local_x = int(resource.position.x) - (self.chunk_x * Config.CHUNK_SIZE)
+        local_y = int(resource.position.y) - (self.chunk_y * Config.CHUNK_SIZE)
+        local_key = f"{local_x},{local_y}"
+
+        self._resource_modifications[local_key] = {
+            "local_x": local_x,
+            "local_y": local_y,
+            "resource_type": resource.resource_type.name,
+            "current_hp": resource.current_hp,
+            "max_hp": resource.max_hp,
+            "depleted": resource.depleted,
+            "time_until_respawn": resource.time_until_respawn
+        }
+        self._modified = True
+
+    def has_modifications(self) -> bool:
+        """Check if this chunk has any modifications to save."""
+        return self._modified or self.dungeon_entrance is not None
+
+    def get_save_data(self) -> Optional[dict]:
+        """Get save data for this chunk.
+
+        Returns:
+            Dictionary of chunk modifications, or None if no modifications
+        """
+        if not self.has_modifications():
+            return None
+
+        data = {
+            "chunk_x": self.chunk_x,
+            "chunk_y": self.chunk_y,
+            "chunk_type": self.chunk_type.value,
+        }
+
+        if self._resource_modifications:
+            data["modified_resources"] = list(self._resource_modifications.values())
+
+        if self.dungeon_entrance:
+            data["dungeon_entrance"] = {
+                "position": {
+                    "x": self.dungeon_entrance.position.x,
+                    "y": self.dungeon_entrance.position.y,
+                    "z": self.dungeon_entrance.position.z
+                },
+                "rarity": self.dungeon_entrance.rarity.value
+            }
+
+        if self.unload_timestamp is not None:
+            data["unload_timestamp"] = self.unload_timestamp
+
+        return data
+
+    def restore_modifications(self, save_data: dict, elapsed_time: float = 0.0):
+        """Restore chunk state from save data.
+
+        Args:
+            save_data: Chunk save data dictionary
+            elapsed_time: Time elapsed since chunk was saved (for respawn calculation)
+        """
+        # Restore resource modifications
+        modified_resources = save_data.get("modified_resources", [])
+
+        # Create lookup by local position
+        mod_lookup = {}
+        for mod in modified_resources:
+            key = f"{mod['local_x']},{mod['local_y']}"
+            mod_lookup[key] = mod
+
+        # Apply modifications to resources
+        for resource in self.resources:
+            local_x = int(resource.position.x) - (self.chunk_x * Config.CHUNK_SIZE)
+            local_y = int(resource.position.y) - (self.chunk_y * Config.CHUNK_SIZE)
+            key = f"{local_x},{local_y}"
+
+            if key in mod_lookup:
+                mod = mod_lookup[key]
+                resource.current_hp = mod.get("current_hp", resource.max_hp)
+                resource.depleted = mod.get("depleted", False)
+                resource.time_until_respawn = mod.get("time_until_respawn", 0.0)
+
+                # Add elapsed time for respawn calculation
+                if resource.depleted and resource.respawns and elapsed_time > 0:
+                    resource.time_until_respawn += elapsed_time
+                    # Check if resource should have respawned
+                    if resource.respawn_timer and resource.time_until_respawn >= resource.respawn_timer:
+                        resource.current_hp = resource.max_hp
+                        resource.depleted = False
+                        resource.time_until_respawn = 0.0
+
+        # Mark modifications as restored
+        self._resource_modifications = mod_lookup
+        self._modified = bool(mod_lookup)
+
+    def prepare_for_unload(self, game_time: float):
+        """Prepare chunk for unloading by recording timestamp.
+
+        Args:
+            game_time: Current game time for respawn calculation
+        """
+        self.unload_timestamp = game_time
+
+        # Update modifications for any resources that have been changed
+        for resource in self.resources:
+            if (resource.current_hp < resource.max_hp or
+                    resource.depleted or
+                    resource.time_until_respawn > 0):
+                self.mark_resource_modified(resource)

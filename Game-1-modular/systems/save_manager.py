@@ -16,7 +16,7 @@ from core.paths import get_save_path
 class SaveManager:
     """Centralized save/load manager for all game state."""
 
-    SAVE_VERSION = "2.0"
+    SAVE_VERSION = "3.0"  # v3.0: Infinite world with seed-based generation
 
     def __init__(self):
         """Initialize the save manager."""
@@ -35,7 +35,8 @@ class SaveManager:
         quest_manager,
         npcs,
         dungeon_manager=None,
-        game_time: float = 0.0
+        game_time: float = 0.0,
+        map_system=None
     ) -> Dict[str, Any]:
         """
         Create a comprehensive save data structure.
@@ -47,6 +48,7 @@ class SaveManager:
             npcs: List[NPC] instances
             dungeon_manager: DungeonManager instance (optional)
             game_time: Current game time for day/night cycle (optional)
+            map_system: MapWaypointSystem instance (optional)
 
         Returns:
             Dictionary containing all save data
@@ -63,6 +65,10 @@ class SaveManager:
         # Add dungeon state if dungeon system is active
         if dungeon_manager:
             save_data["dungeon_state"] = dungeon_manager.to_dict()
+
+        # Add map/waypoint state if map system is active
+        if map_system:
+            save_data["map_state"] = map_system.get_save_data()
 
         return save_data
 
@@ -302,7 +308,14 @@ class SaveManager:
 
     def _serialize_world_state(self, world_system, game_time: float = 0.0) -> Dict[str, Any]:
         """
-        Serialize world state (placed entities, modified resources, time, water chunks).
+        Serialize world state using the new infinite world system.
+
+        The WorldSystem now handles its own serialization, including:
+        - World seed for deterministic regeneration
+        - Discovered dungeon entrances
+        - Placed entities
+        - Crafting stations
+        - Modified chunks are saved to separate files
 
         Args:
             world_system: WorldSystem instance
@@ -311,81 +324,11 @@ class SaveManager:
         Returns:
             Dictionary containing world state data
         """
-        # Get water chunk positions for persistence
-        from systems.chunk import Chunk
-        water_chunk_positions = list(Chunk._water_chunks) if Chunk._initialized else []
+        # Use WorldSystem's built-in save method
+        world_data = world_system.get_save_state()
 
-        world_data = {
-            "placed_entities": [],
-            "modified_resources": [],
-            "crafting_stations": [],
-            "game_time": game_time,
-            "water_chunks": water_chunk_positions
-        }
-
-        # Serialize placed entities (turrets, traps, devices)
-        for entity in world_system.placed_entities:
-            entity_data = {
-                "position": {
-                    "x": entity.position.x,
-                    "y": entity.position.y,
-                    "z": entity.position.z
-                },
-                "item_id": entity.item_id,
-                "entity_type": entity.entity_type.name,
-                "tier": entity.tier,
-                "health": entity.health,
-                "owner": entity.owner,
-                "time_remaining": entity.time_remaining,
-                "tags": entity.tags if hasattr(entity, 'tags') else None,
-                "effect_params": entity.effect_params if hasattr(entity, 'effect_params') else None
-            }
-
-            # Add turret-specific data
-            if hasattr(entity, 'range'):
-                entity_data["range"] = entity.range
-                entity_data["damage"] = entity.damage
-                entity_data["attack_speed"] = entity.attack_speed
-
-            world_data["placed_entities"].append(entity_data)
-
-        # Serialize modified resources (harvested or with items placed on them)
-        for resource in world_system.resources:
-            # Only save if resource has been modified (HP < max OR depleted OR respawning)
-            if (resource.current_hp < resource.max_hp or
-                resource.depleted or
-                resource.time_until_respawn > 0):
-
-                resource_data = {
-                    "position": {
-                        "x": resource.position.x,
-                        "y": resource.position.y,
-                        "z": resource.position.z
-                    },
-                    "resource_type": resource.resource_type.name,
-                    "tier": resource.tier,
-                    "current_hp": resource.current_hp,
-                    "max_hp": resource.max_hp,
-                    "depleted": resource.depleted,
-                    "time_until_respawn": resource.time_until_respawn
-                }
-
-                world_data["modified_resources"].append(resource_data)
-
-        # Serialize crafting stations (only player-placed ones if any)
-        # Note: The current implementation has fixed crafting stations
-        # We'll save them in case the player can place custom ones in the future
-        for station in world_system.crafting_stations:
-            station_data = {
-                "position": {
-                    "x": station.position.x,
-                    "y": station.position.y,
-                    "z": station.position.z
-                },
-                "station_type": station.station_type.name,
-                "tier": station.tier
-            }
-            world_data["crafting_stations"].append(station_data)
+        # Ensure game_time is included (WorldSystem may use its internal time)
+        world_data["game_time"] = game_time
 
         return world_data
 
@@ -459,7 +402,8 @@ class SaveManager:
         npcs,
         filename: str = "autosave.json",
         dungeon_manager=None,
-        game_time: float = 0.0
+        game_time: float = 0.0,
+        map_system=None
     ) -> bool:
         """
         Save the current game state to a file.
@@ -472,6 +416,7 @@ class SaveManager:
             filename: Name of the save file
             dungeon_manager: DungeonManager instance (optional)
             game_time: Current game time for day/night cycle (optional)
+            map_system: MapWaypointSystem instance (optional)
 
         Returns:
             True if save was successful, False otherwise
@@ -483,7 +428,8 @@ class SaveManager:
                 quest_manager,
                 npcs,
                 dungeon_manager,
-                game_time
+                game_time,
+                map_system
             )
 
             filepath = get_save_path(filename)

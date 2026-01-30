@@ -17,10 +17,20 @@ class Position:
         return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2 + (self.z - other.z) ** 2)
 
     def snap_to_grid(self) -> 'Position':
-        return Position(int(self.x), int(self.y), int(self.z))
+        """Snap position to integer grid coordinates.
+
+        Uses floor() for proper handling of negative coordinates:
+        - Position -0.5 snaps to -1 (not 0)
+        - Position 0.5 snaps to 0
+        """
+        return Position(math.floor(self.x), math.floor(self.y), math.floor(self.z))
 
     def to_key(self) -> str:
-        return f"{int(self.x)},{int(self.y)},{int(self.z)}"
+        """Convert position to string key for tile lookups.
+
+        Uses floor() for proper handling of negative coordinates.
+        """
+        return f"{math.floor(self.x)},{math.floor(self.y)},{math.floor(self.z)}"
 
     def copy(self) -> 'Position':
         return Position(self.x, self.y, self.z)

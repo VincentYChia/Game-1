@@ -1,12 +1,14 @@
 {
   "metadata": {
-    "version": "2.0",
-    "description": "UPDATED: 9 predefined chunk templates with PROPER enemySpawns assignments",
-    "note": "All 13 hostiles properly assigned based on tier and theme. Density affects spawn weight: very_low=0.5x, low=0.75x, moderate=1x, high=2x, very_high=3x (vs base 1x for general pool)",
+    "version": "2.1",
+    "description": "Chunk templates define WHICH resources and enemies spawn per biome type",
+    "relationship_to_world_generation": "world_generation.JSON controls resource COUNT per chunk. This file controls WHICH resources with WHAT density.",
+    "note": "All 13 hostiles properly assigned based on tier and theme. Density affects spawn weight: very_low=0.5x, low=0.75x, moderate=1x, high=2x, very_high=3x",
     "changes": [
       "Fixed enemySpawns to include all appropriate hostiles",
       "Removed 'behavior' field (not used by code - AI behavior comes from aiPattern in hostile definition)",
-      "Adjusted density weights for better spawn balance"
+      "Adjusted density weights for better spawn balance",
+      "Added relationship note to world_generation.JSON"
     ]
   },
 
