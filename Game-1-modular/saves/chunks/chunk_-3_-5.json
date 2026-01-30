@@ -1,0 +1,14 @@
+{
+  "chunk_x": -3,
+  "chunk_y": -5,
+  "chunk_type": "peaceful_cave",
+  "dungeon_entrance": {
+    "position": {
+      "x": -35,
+      "y": -68,
+      "z": 0
+    },
+    "rarity": "rare"
+  },
+  "unload_timestamp": 442.2499999998614
+}

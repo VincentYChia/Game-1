@@ -1,0 +1,14 @@
+{
+  "chunk_x": -2,
+  "chunk_y": 4,
+  "chunk_type": "water_cursed_swamp",
+  "dungeon_entrance": {
+    "position": {
+      "x": -20,
+      "y": 75,
+      "z": 0
+    },
+    "rarity": "unique"
+  },
+  "unload_timestamp": 1.9049999999999983
+}
