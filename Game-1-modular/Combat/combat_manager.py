@@ -500,8 +500,14 @@ class CombatManager:
 
                 else:
                     # Enemy is dead - handle corpse
+                    # First, transition from DEAD to CORPSE if needed
+                    # (This normally happens in update_ai, but we don't call that for dead enemies)
+                    if enemy.ai_state == AIState.DEAD:
+                        enemy.ai_state = AIState.CORPSE
+                        enemy.time_since_death = 0.0  # Reset timer when entering corpse state
+
                     if enemy.ai_state == AIState.CORPSE:
-                        # Increment corpse timer (must be done here since update_ai isn't called for dead enemies)
+                        # Increment corpse timer
                         enemy.time_since_death += dt
                         if enemy.time_since_death >= enemy.corpse_lifetime:
                             # Remove corpse
@@ -1976,6 +1982,11 @@ class CombatManager:
 
             else:
                 # Enemy is dead - handle corpse
+                # First, transition from DEAD to CORPSE if needed
+                if enemy.ai_state == AIState.DEAD:
+                    enemy.ai_state = AIState.CORPSE
+                    enemy.time_since_death = 0.0  # Reset timer when entering corpse state
+
                 if enemy.ai_state == AIState.CORPSE:
                     enemy.time_since_death += dt
                     if enemy.time_since_death >= enemy.corpse_lifetime:
