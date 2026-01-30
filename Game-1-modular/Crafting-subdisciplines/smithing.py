@@ -70,6 +70,10 @@ class SmithingMinigame:
         self.last_temp_update = 0
         self.result = None
 
+        # Strike feedback (for UI display)
+        self.last_strike_score = None  # Score of last strike (None = no strike yet)
+        self.last_strike_temp_ok = True  # Was temperature OK during last strike?
+
     def _setup_difficulty_from_materials(self):
         """
         Setup difficulty parameters based on material tier point values.
@@ -210,23 +214,37 @@ class SmithingMinigame:
             self.temperature = min(100, self.temperature + self.TEMP_FAN_INCREMENT)
 
     def handle_hammer(self):
-        """Handle hammer strike (click) - check timing accuracy"""
+        """Handle hammer strike (click) - check timing AND temperature accuracy"""
         if not self.active or self.hammer_hits >= self.REQUIRED_HITS:
             return
 
         center = self.HAMMER_BAR_WIDTH / 2
         distance = abs(self.hammer_position - center)
 
-        # Score based on accuracy
+        # Check if temperature is in ideal range
+        temp_in_ideal = self.TEMP_IDEAL_MIN <= self.temperature <= self.TEMP_IDEAL_MAX
+
+        # Score based on accuracy AND temperature
+        # Perfect (100) requires BOTH perfect timing AND ideal temperature
         if distance <= self.PERFECT_WIDTH / 2:
-            score = 100
+            if temp_in_ideal:
+                score = 100  # Perfect: timing + temperature both ideal
+            else:
+                score = 85   # Good timing but temperature was off
         elif distance <= self.TARGET_WIDTH / 2:
-            score = 70
+            if temp_in_ideal:
+                score = 75   # Good timing with ideal temp
+            else:
+                score = 65   # Good timing but temp off
         else:
-            score = 30
+            score = 30  # Miss - bad timing regardless of temp
 
         self.hammer_scores.append(score)
         self.hammer_hits += 1
+
+        # Store strike result for UI feedback
+        self.last_strike_score = score
+        self.last_strike_temp_ok = temp_in_ideal
 
         if self.hammer_hits >= self.REQUIRED_HITS:
             self.end(completed=True)
@@ -252,40 +270,15 @@ class SmithingMinigame:
             return
 
         # Calculate performance metrics
+        # Temperature is now factored into each strike score (100=perfect, 85=good timing/bad temp, etc.)
+        # No need for additional temperature multiplier at the end
         avg_hammer_score = sum(self.hammer_scores) / len(self.hammer_scores) if self.hammer_scores else 0
 
-        # Temperature affects score using difficulty-scaled ideal range:
-        # - In ideal range: 1.2x bonus
-        # - Below ideal: gradual penalty scaling to 0.5x at 0°C
-        # - Above ideal: gradual penalty scaling to 0.5x at 100°C
-        # Penalty is proportional to how far outside the ideal range
+        # Check if final temperature is in ideal range (for reward calculator)
         in_ideal_range = self.TEMP_IDEAL_MIN <= self.temperature <= self.TEMP_IDEAL_MAX
-        if in_ideal_range:
-            temp_mult = 1.2  # Ideal temperature bonus
-        elif self.temperature < self.TEMP_IDEAL_MIN:
-            # Too cold - penalty based on distance from ideal minimum
-            # At 0°C: worst case = 0.5x multiplier
-            # At TEMP_IDEAL_MIN: boundary = 1.0x multiplier
-            deviation = self.TEMP_IDEAL_MIN - self.temperature
-            max_deviation = self.TEMP_IDEAL_MIN  # Distance from 0 to ideal_min
-            if max_deviation > 0:
-                penalty_factor = min(1.0, deviation / max_deviation)  # 0.0 to 1.0
-                temp_mult = 1.0 - (penalty_factor * 0.5)  # 1.0 down to 0.5
-            else:
-                temp_mult = 1.0
-        else:
-            # Too hot - penalty based on distance from ideal maximum
-            # At 100°C: worst case = 0.5x multiplier
-            # At TEMP_IDEAL_MAX: boundary = 1.0x multiplier
-            deviation = self.temperature - self.TEMP_IDEAL_MAX
-            max_deviation = 100 - self.TEMP_IDEAL_MAX  # Distance from ideal_max to 100
-            if max_deviation > 0:
-                penalty_factor = min(1.0, deviation / max_deviation)  # 0.0 to 1.0
-                temp_mult = 1.0 - (penalty_factor * 0.5)  # 1.0 down to 0.5
-            else:
-                temp_mult = 1.0
 
-        final_score = avg_hammer_score * temp_mult
+        # Final score is just the average of strike scores (temp already factored in)
+        final_score = avg_hammer_score
 
         # Calculate earned/max points for crafted stats system
         earned_points = sum(self.hammer_scores)  # Total actual points earned

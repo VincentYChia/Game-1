@@ -2696,17 +2696,23 @@ class GameEngine:
             if total_quality_bonus > 0:
                 print(f"   Total: +{total_quality_bonus*100:.0f}% quality bonus")
 
-        # Apply INT stat difficulty reduction (-1% per INT point)
+        # Apply INT stat difficulty reduction (-2% per INT point)
         # This affects gameplay parameters but NOT reward calculation (difficulty_points preserved)
+        # INT slows down ALL minigames (except adornments) - makes timing easier
         int_stat = self.character.stats.intelligence
         if int_stat > 0:
-            int_reduction = int_stat * 0.01  # -1% per INT point
-            print(f"🧠 INT stat: {int_stat} (-{int_reduction*100:.0f}% minigame difficulty)")
+            int_reduction = int_stat * 0.02  # -2% per INT point
+            print(f"🧠 INT stat: {int_stat} (-{int_reduction*100:.0f}% minigame speed)")
 
-            # Apply reduction to gameplay parameters (varies by minigame type)
-            if hasattr(minigame, 'time_limit'):
-                # More time = easier
-                minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
+            # SMITHING: Slower hammer, slower temp decay, wider zones
+            if hasattr(minigame, 'HAMMER_SPEED'):
+                # Slower hammer = easier timing
+                minigame.HAMMER_SPEED = minigame.HAMMER_SPEED * (1 - int_reduction)
+                print(f"   Hammer speed: {minigame.HAMMER_SPEED:.2f}")
+
+            if hasattr(minigame, 'TEMP_DECAY'):
+                # Slower decay = easier to maintain temperature
+                minigame.TEMP_DECAY = minigame.TEMP_DECAY * (1 - int_reduction * 0.5)
 
             if hasattr(minigame, 'TARGET_WIDTH'):
                 # Wider target = easier (smithing)
@@ -2716,9 +2722,23 @@ class GameEngine:
                 # Wider perfect zone = easier (smithing)
                 minigame.PERFECT_WIDTH = int(minigame.PERFECT_WIDTH * (1 + int_reduction * 0.5))
 
-            if hasattr(minigame, 'TEMP_DECAY'):
-                # Slower decay = easier (smithing)
-                minigame.TEMP_DECAY = minigame.TEMP_DECAY * (1 - int_reduction * 0.5)
+            # REFINING: Slower spinner rotation
+            if hasattr(minigame, 'rotation_speed'):
+                # Slower rotation = easier timing
+                minigame.rotation_speed = minigame.rotation_speed * (1 - int_reduction)
+                print(f"   Rotation speed: {minigame.rotation_speed:.2f}")
+
+            # ALCHEMY: Longer reaction windows (via speed_bonus)
+            if hasattr(minigame, 'speed_bonus'):
+                # Higher speed_bonus = longer reaction windows = easier
+                minigame.speed_bonus = minigame.speed_bonus + int_reduction
+                print(f"   Reaction bonus: +{minigame.speed_bonus*100:.0f}%")
+
+            # ENGINEERING: More time (already applies via time_limit)
+            if hasattr(minigame, 'time_limit'):
+                # More time = easier
+                minigame.time_limit = int(minigame.time_limit * (1 + int_reduction))
+                print(f"   Time limit: {minigame.time_limit}s")
 
         # Start minigame
         minigame.start()
