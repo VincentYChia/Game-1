@@ -1849,6 +1849,7 @@ class Renderer:
             "E - Equipment",
             "K - Skills menu",
             "M - Map",
+            "P - Place waypoint",
             "L - Encyclopedia",
             "F1 - Debug Mode",
             "ESC - Close/Quit"
@@ -2397,7 +2398,7 @@ class Renderer:
         surf.blit(self.font.render(title_text, True, (255, 215, 0)), (s(20), s(15)))
 
         # Controls hint
-        controls = "[M or ESC] Close | [Scroll] Zoom | [Drag] Pan"
+        controls = "[M/ESC] Close | [Scroll] Zoom | [P] Place waypoint | Click waypoint to teleport"
         surf.blit(self.small_font.render(controls, True, (180, 180, 180)), (s(20), s(40)))
 
         # Zoom indicator
@@ -2472,6 +2473,28 @@ class Renderer:
                 chunk_rect = pygame.Rect(px, py, chunk_size - 1, chunk_size - 1)
                 pygame.draw.rect(surf, color, chunk_rect)
 
+                # At high zoom, add subtle texture to explored chunks
+                if explored and map_system.map_zoom >= 1.5 and chunk_size >= s(20):
+                    # Add subtle grid lines within chunk to show tiles (every 4 tiles)
+                    tile_grid_color = tuple(max(0, c - 20) for c in color)
+                    tile_divisions = 4  # Show 4x4 sub-grid
+                    sub_size = chunk_size // tile_divisions
+                    for i in range(1, tile_divisions):
+                        # Vertical line
+                        lx = px + i * sub_size
+                        pygame.draw.line(surf, tile_grid_color, (lx, py + 2), (lx, py + chunk_size - 3), 1)
+                        # Horizontal line
+                        ly = py + i * sub_size
+                        pygame.draw.line(surf, tile_grid_color, (px + 2, ly), (px + chunk_size - 3, ly), 1)
+
+                # Show chunk coordinates when zoomed in
+                if explored and map_system.map_zoom >= 2.0 and chunk_size >= s(30):
+                    coord_label = f"{chunk_x},{chunk_y}"
+                    coord_surf = self.small_font.render(coord_label, True, (255, 255, 255, 180))
+                    label_x = px + (chunk_size - coord_surf.get_width()) // 2
+                    label_y = py + (chunk_size - coord_surf.get_height()) // 2
+                    surf.blit(coord_surf, (label_x, label_y))
+
                 # Highlight spawn area
                 if chunk_x == 0 and chunk_y == 0:
                     pygame.draw.rect(surf, config.biome_colors.get('spawn_area', (255, 215, 0)), chunk_rect, s(2))
@@ -2500,10 +2523,17 @@ class Renderer:
                 if map_area_y <= y <= map_area_y + map_area_h:
                     pygame.draw.line(surf, grid_color, (map_area_x, y), (map_area_x + map_area_w, y), 1)
 
-        # Draw player marker
+        # Draw player marker with precise position within chunk
         if config.map_display.show_player_marker:
-            player_px = map_area_x + map_center_x + int((player_chunk_x - center_chunk_x) * chunk_size) + chunk_size // 2
-            player_py = map_area_y + map_center_y + int((player_chunk_y - center_chunk_y) * chunk_size) + chunk_size // 2
+            # Calculate precise player position within chunk (0.0 to 1.0)
+            player_tile_x = character.position.x
+            player_tile_y = character.position.y
+            player_offset_x = (player_tile_x % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
+            player_offset_y = (player_tile_y % Config.CHUNK_SIZE) / Config.CHUNK_SIZE
+
+            # Player position on map with sub-chunk precision
+            player_px = map_area_x + map_center_x + int((player_chunk_x - center_chunk_x + player_offset_x) * chunk_size)
+            player_py = map_area_y + map_center_y + int((player_chunk_y - center_chunk_y + player_offset_y) * chunk_size)
 
             # Only draw if in visible area
             if map_area_x <= player_px <= map_area_x + map_area_w and map_area_y <= player_py <= map_area_y + map_area_h:

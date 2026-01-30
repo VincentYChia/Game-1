@@ -613,6 +613,10 @@ class GameEngine:
                     if self.map_system.map_open:
                         # Center on player when opening
                         self.map_system.center_on_position(self.character.position)
+                elif event.key == pygame.K_p:
+                    # Place waypoint when map is open
+                    if self.map_system.map_open:
+                        self.place_waypoint_at_player()
                 elif event.key == pygame.K_f:
                     # NPC interaction
                     self.handle_npc_interaction()
@@ -2330,8 +2334,8 @@ class GameEngine:
             if wp_rect.collidepoint(mouse_pos):
                 # Attempt teleportation
                 in_dungeon = self.dungeon_manager.in_dungeon
-                enemies_nearby = len(self.combat_manager.get_nearby_enemies(
-                    self.character.position.x, self.character.position.y, 10.0)) > 0
+                enemies_nearby = len(self.combat_manager.get_enemies_in_range(
+                    (self.character.position.x, self.character.position.y), 10.0)) > 0
 
                 success, message, new_pos = self.map_system.teleport_to_waypoint(
                     slot, self.game_time, in_dungeon, enemies_nearby)
@@ -2351,6 +2355,41 @@ class GameEngine:
                 else:
                     self.add_notification(message, (255, 150, 100))
                 return
+
+    def place_waypoint_at_player(self) -> None:
+        """Place a new waypoint at the player's current position."""
+        player_level = self.character.leveling.level
+
+        # Check if player can add a waypoint
+        can_add, reason = self.map_system.can_add_waypoint(player_level)
+        if not can_add:
+            self.add_notification(reason, (255, 150, 100))
+            return
+
+        # Get current chunk info for the default name
+        chunk_x = int(self.character.position.x) // Config.CHUNK_SIZE
+        chunk_y = int(self.character.position.y) // Config.CHUNK_SIZE
+
+        # Generate a default name based on location
+        chunk_data = self.map_system.get_explored_chunk(chunk_x, chunk_y)
+        if chunk_data:
+            biome = chunk_data.chunk_type.replace('_', ' ').title()
+            default_name = f"{biome} ({int(self.character.position.x)}, {int(self.character.position.y)})"
+        else:
+            default_name = f"Waypoint ({int(self.character.position.x)}, {int(self.character.position.y)})"
+
+        # Add the waypoint
+        success, message = self.map_system.add_waypoint(
+            name=default_name,
+            position=self.character.position,
+            player_level=player_level
+        )
+
+        if success:
+            self.add_notification(message, (100, 255, 200))
+            print(f"📍 {message}")
+        else:
+            self.add_notification(message, (255, 150, 100))
 
     # ========================================================================
     # CRAFTING INTEGRATION HELPERS
