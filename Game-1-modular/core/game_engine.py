@@ -54,6 +54,7 @@ from systems import WorldSystem, NPC
 from systems.turret_system import TurretSystem
 from systems.save_manager import SaveManager
 from systems.dungeon import DungeonManager
+from systems.map_waypoint_system import MapWaypointSystem
 
 # Rendering
 from rendering import Renderer
@@ -163,6 +164,8 @@ class GameEngine:
         print("\nInitializing systems...")
         self.world = WorldSystem()
         self.save_manager = SaveManager()
+        self.map_system = MapWaypointSystem(chunk_size=Config.CHUNK_SIZE)
+        print("✓ Map and waypoint system initialized")
 
         # Check for command line args for temporary world
         import sys
@@ -295,6 +298,10 @@ class GameEngine:
         self.encyclopedia_tab_rects = []
         self.class_selection_rect = None
         self.class_buttons = []
+
+        # Map UI state
+        self.map_window_rect = None
+        self.map_waypoint_rects = []  # [(rect, waypoint_slot), ...] for click detection
 
         # Enchantment/Adornment selection UI
         self.enchantment_selection_active = False
@@ -459,7 +466,8 @@ class GameEngine:
                         self.npcs,
                         "autosave.json",
                         self.dungeon_manager,
-                        self.game_time
+                        self.game_time,
+                        self.map_system
                     ):
                         print("💾 Autosaved on quit")
                 self.running = False
@@ -490,7 +498,8 @@ class GameEngine:
                                 self.npcs,
                                 "autosave.json",
                                 self.dungeon_manager,
-                                self.game_time
+                                self.game_time,
+                                self.map_system
                             ):
                                 print("💾 Autosaved on start menu quit")
                         self.running = False
@@ -567,6 +576,8 @@ class GameEngine:
                         self.character.toggle_skills_ui()
                     elif self.character.encyclopedia.is_open:
                         self.character.encyclopedia.toggle()
+                    elif self.map_system.map_open:
+                        self.map_system.close_map()
                     elif self.character.class_selection_open:
                         pass
                     else:
@@ -579,7 +590,8 @@ class GameEngine:
                                 self.npcs,
                                 "autosave.json",
                                 self.dungeon_manager,
-                                self.game_time
+                                self.game_time,
+                                self.map_system
                             ):
                                 print("💾 Autosaved on ESC quit")
                         self.running = False
@@ -595,6 +607,12 @@ class GameEngine:
                     self.character.toggle_skills_ui()
                 elif event.key == pygame.K_l:
                     self.character.encyclopedia.toggle()
+                elif event.key == pygame.K_m:
+                    # Toggle world map
+                    self.map_system.toggle_map()
+                    if self.map_system.map_open:
+                        # Center on player when opening
+                        self.map_system.center_on_position(self.character.position)
                 elif event.key == pygame.K_f:
                     # NPC interaction
                     self.handle_npc_interaction()
@@ -801,7 +819,8 @@ class GameEngine:
                             self.npcs,
                             "autosave.json",
                             self.dungeon_manager,
-                            self.game_time
+                            self.game_time,
+                            self.map_system
                         ):
                             self.add_notification("Game saved!", (100, 255, 100))
 
@@ -817,7 +836,8 @@ class GameEngine:
                             self.npcs,
                             f"save_{timestamp}.json",
                             self.dungeon_manager,
-                            self.game_time
+                            self.game_time,
+                            self.map_system
                         ):
                             self.add_notification(f"Saved!", (100, 255, 100))
 
@@ -876,6 +896,10 @@ class GameEngine:
                         # Restore dungeon state (if present)
                         self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
 
+                        # Restore map/waypoint state (if present)
+                        if "map_state" in save_data:
+                            self.map_system.restore_from_save(save_data["map_state"])
+
                         # If in dungeon, respawn enemies
                         if self.dungeon_manager.in_dungeon:
                             self.combat_manager.spawn_dungeon_wave()
@@ -925,6 +949,12 @@ class GameEngine:
                 # Skip if no character exists yet
                 if self.character is None:
                     continue
+
+                # Handle mouse wheel scrolling for map zoom
+                if self.map_system.map_open and hasattr(self, 'map_window_rect') and self.map_window_rect:
+                    if self.map_window_rect.collidepoint(self.mouse_pos):
+                        self.map_system.adjust_zoom(event.y)
+                        continue  # Skip other scroll handlers
 
                 # Handle mouse wheel scrolling for enchantment selection UI
                 if hasattr(self, 'enchantment_selection_active') and self.enchantment_selection_active:
@@ -1298,6 +1328,10 @@ class GameEngine:
                 # Restore dungeon state (if present)
                 self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
 
+                # Restore map/waypoint state (if present)
+                if "map_state" in save_data:
+                    self.map_system.restore_from_save(save_data["map_state"])
+
                 # If in dungeon, respawn enemies
                 if self.dungeon_manager.in_dungeon:
                     self.combat_manager.spawn_dungeon_wave()
@@ -1371,6 +1405,10 @@ class GameEngine:
 
                 # Restore dungeon state (if present)
                 self.save_manager.restore_dungeon_state(save_data, self.dungeon_manager)
+
+                # Restore map/waypoint state (if present)
+                if "map_state" in save_data:
+                    self.map_system.restore_from_save(save_data["map_state"])
 
                 # If in dungeon, respawn enemies
                 if self.dungeon_manager.in_dungeon:
@@ -1640,6 +1678,16 @@ class GameEngine:
             # Click outside encyclopedia UI - close it
             else:
                 self.character.encyclopedia.toggle()
+                return
+
+        # Map UI
+        if self.map_system.map_open and self.map_window_rect:
+            if self.map_window_rect.collidepoint(mouse_pos):
+                self.handle_map_click(mouse_pos)
+                return
+            # Click outside map UI - close it
+            else:
+                self.map_system.close_map()
                 return
 
         # NPC Dialogue UI
@@ -2271,6 +2319,38 @@ class GameEngine:
                 self.character.encyclopedia.current_tab = tab_id
                 print(f"📚 Switched to {tab_id} tab")
                 break
+
+    def handle_map_click(self, mouse_pos: Tuple[int, int]):
+        """Handle clicks in map UI for waypoint teleportation."""
+        if not self.map_window_rect or not self.map_waypoint_rects:
+            return
+
+        # Check waypoint clicks
+        for wp_rect, slot in self.map_waypoint_rects:
+            if wp_rect.collidepoint(mouse_pos):
+                # Attempt teleportation
+                in_dungeon = self.dungeon_manager.in_dungeon
+                enemies_nearby = len(self.combat_manager.get_nearby_enemies(
+                    self.character.position.x, self.character.position.y, 10.0)) > 0
+
+                success, message, new_pos = self.map_system.teleport_to_waypoint(
+                    slot, self.game_time, in_dungeon, enemies_nearby)
+
+                if success and new_pos:
+                    # Teleport the character
+                    self.character.position = new_pos
+                    self.camera.follow(new_pos)
+                    self.add_notification(message, (100, 255, 200))
+                    print(f"🌀 Teleported to waypoint slot {slot}: {new_pos}")
+
+                    # Update chunk exploration for new location
+                    self._update_chunk_exploration()
+
+                    # Close map after teleport
+                    self.map_system.close_map()
+                else:
+                    self.add_notification(message, (255, 150, 100))
+                return
 
     # ========================================================================
     # CRAFTING INTEGRATION HELPERS
@@ -5216,6 +5296,34 @@ class GameEngine:
         print("=" * 60 + "\n")
         self.add_notification("Biome debug printed to console", (100, 255, 100))
 
+    def _update_chunk_exploration(self):
+        """Track chunk exploration for the world map.
+
+        Called every frame to check if player has entered a new chunk.
+        Marks chunks as explored and records their biome type.
+        """
+        if not hasattr(self, '_last_explored_chunk'):
+            self._last_explored_chunk = (None, None)
+
+        # Calculate current chunk
+        chunk_x = math.floor(self.character.position.x) // Config.CHUNK_SIZE
+        chunk_y = math.floor(self.character.position.y) // Config.CHUNK_SIZE
+
+        # Only process if chunk changed
+        if (chunk_x, chunk_y) != self._last_explored_chunk:
+            self._last_explored_chunk = (chunk_x, chunk_y)
+
+            # Get chunk type from world system
+            chunk = self.world.get_chunk(chunk_x, chunk_y)
+            if chunk:
+                chunk_type = chunk.chunk_type.value if hasattr(chunk.chunk_type, 'value') else str(chunk.chunk_type)
+
+                # Check for dungeon entrance
+                has_dungeon = chunk.dungeon_entrance is not None
+
+                # Mark as explored
+                self.map_system.mark_chunk_explored(chunk_x, chunk_y, chunk_type, has_dungeon)
+
     # =========================================================================
     # DUNGEON SYSTEM METHODS
     # =========================================================================
@@ -5586,6 +5694,8 @@ class GameEngine:
             # Update loaded chunks based on player position (for infinite world)
             if self.character:
                 self.world.update_loaded_chunks(self.character.position)
+                # Track chunk exploration for map
+                self._update_chunk_exploration()
 
             # Check if player is blocking with shield (right mouse held OR X key held)
             mouse_held = 3 in self.mouse_buttons_pressed
@@ -5797,6 +5907,16 @@ class GameEngine:
             else:
                 self.encyclopedia_window_rect = None
                 self.encyclopedia_tab_rects = []
+
+            # Map UI
+            if self.map_system.map_open:
+                result = self.renderer.render_map_ui(
+                    self.character, self.map_system, self.world, self.mouse_pos)
+                if result:
+                    self.map_window_rect, self.map_waypoint_rects = result
+            else:
+                self.map_window_rect = None
+                self.map_waypoint_rects = []
 
             # NPC dialogue UI
             if self.npc_dialogue_open and self.active_npc:

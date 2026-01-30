@@ -38,19 +38,20 @@
   },
 
   "biome_clustering": {
-    "_comment": "Controls how biomes group together using super-region system",
+    "_comment": "DEPRECATED: Super-region system removed in favor of per-chunk random selection",
     "_system_description": [
-      "World is divided into 4x4 chunk super-regions (64x64 tiles each)",
-      "Each super-region gets a biome category via deterministic hash",
-      "Boundary chunks have 15% chance to blend with neighbors for organic edges",
-      "Within categories, type clusters (3-5 chunks) create variety"
+      "Each chunk gets an independent deterministic random roll",
+      "Rolls are compared against biome_distribution ratios above",
+      "This provides correct global distribution (~10% water, ~50% forest, ~40% cave)",
+      "No artificial clustering - natural variety emerges from random distribution"
     ],
+    "_legacy_note": "Super-region system was removed to eliminate mega-megabiomes. These values are no longer used.",
     "super_region_size": 4,
-    "_super_region_size_effects": "NOTE: Hardcoded in biome_generator.py. 4 = 16 chunks per region.",
+    "_super_region_size_effects": "DEPRECATED: No longer used in biome_generator.py",
     "type_cluster_scale": 2.5,
-    "_type_cluster_scale_effects": "Controls type clustering within category regions. HIGHER = larger same-type areas.",
+    "_type_cluster_scale_effects": "DEPRECATED: No longer used",
     "danger_noise_scale": 4.0,
-    "_danger_noise_scale_effects": "HIGHER = larger regions of same danger level. LOWER = more varied danger pockets."
+    "_danger_noise_scale_effects": "DEPRECATED: Danger is now per-chunk hash-based"
   },
 
   "danger_zones": {

@@ -1,0 +1,211 @@
+{
+  "_comment": "Map and Waypoint System Configuration",
+  "_version": "1.0",
+  "_documentation": {
+    "overview": "Controls the world map display and teleportation waypoint system.",
+    "map_system": "Shows explored chunks with color coding by biome type and danger level.",
+    "waypoint_system": "Players unlock waypoint slots as they level. Spawn is always waypoint #1.",
+    "persistence": "Map and waypoint data are saved with the character in the main save file."
+  },
+
+  "map_display": {
+    "_comment": "Controls how the map UI renders explored areas",
+    "default_zoom": 1.0,
+    "_default_zoom_effects": "HIGHER = zoomed in (larger chunks). LOWER = zoomed out (see more area).",
+    "min_zoom": 0.25,
+    "_min_zoom_effects": "Minimum zoom level (most zoomed out). LOWER = can see more chunks.",
+    "max_zoom": 4.0,
+    "_max_zoom_effects": "Maximum zoom level (most zoomed in). HIGHER = more detail on fewer chunks.",
+    "zoom_step": 0.25,
+    "_zoom_step_effects": "How much zoom changes per scroll wheel tick.",
+    "chunk_render_size": 12,
+    "_chunk_render_size_effects": "Base pixel size per chunk at zoom=1.0. HIGHER = larger chunks on map.",
+    "show_grid": true,
+    "_show_grid_effects": "TRUE = show grid lines between chunks. FALSE = seamless map.",
+    "show_coordinates": true,
+    "_show_coordinates_effects": "TRUE = show chunk coordinates on hover. FALSE = cleaner look.",
+    "show_player_marker": true,
+    "_show_player_marker_effects": "TRUE = show player's current location. FALSE = hide player position.",
+    "show_waypoint_markers": true,
+    "_show_waypoint_markers_effects": "TRUE = show waypoint icons on map. FALSE = hide waypoints from map.",
+    "center_on_player": true,
+    "_center_on_player_effects": "TRUE = map opens centered on player. FALSE = map opens centered on spawn."
+  },
+
+  "biome_colors": {
+    "_comment": "RGB colors for each biome type on the map. Format: [R, G, B]",
+    "_note": "Colors are modified by danger level: peaceful=base, dangerous=darker, rare=highlighted",
+
+    "peaceful_forest": [34, 139, 34],
+    "_peaceful_forest_color": "Forest green - safe wooded areas",
+
+    "dangerous_forest": [0, 100, 0],
+    "_dangerous_forest_color": "Dark green - hostile forest",
+
+    "rare_hidden_forest": [50, 205, 50],
+    "_rare_hidden_forest_color": "Lime green with glow - rare magical forest",
+
+    "peaceful_cave": [105, 105, 105],
+    "_peaceful_cave_color": "Dim gray - safe cave/mine",
+
+    "dangerous_cave": [64, 64, 64],
+    "_dangerous_cave_color": "Dark gray - hostile cave",
+
+    "rare_deep_cave": [138, 43, 226],
+    "_rare_deep_cave_color": "Blue violet - rare deep cave",
+
+    "peaceful_quarry": [160, 82, 45],
+    "_peaceful_quarry_color": "Sienna - safe quarry",
+
+    "dangerous_quarry": [139, 69, 19],
+    "_dangerous_quarry_color": "Saddle brown - hostile quarry",
+
+    "rare_ancient_quarry": [255, 140, 0],
+    "_rare_ancient_quarry_color": "Dark orange - rare ancient quarry",
+
+    "water_lake": [65, 105, 225],
+    "_water_lake_color": "Royal blue - lake",
+
+    "water_river": [70, 130, 180],
+    "_water_river_color": "Steel blue - river",
+
+    "water_cursed_swamp": [75, 0, 130],
+    "_water_cursed_swamp_color": "Indigo - cursed swamp",
+
+    "unexplored": [30, 30, 40],
+    "_unexplored_color": "Very dark gray - chunks not yet visited",
+
+    "spawn_area": [255, 215, 0],
+    "_spawn_area_color": "Gold border - marks the spawn chunk"
+  },
+
+  "marker_icons": {
+    "_comment": "Configuration for map markers (player, waypoints, dungeons)",
+    "player": {
+      "color": [255, 255, 255],
+      "_player_color": "White - player position marker",
+      "size": 8,
+      "_size_effects": "Pixel size of the player marker. HIGHER = more visible.",
+      "shape": "triangle",
+      "_shape_options": "triangle, circle, diamond"
+    },
+    "waypoint": {
+      "color": [255, 215, 0],
+      "_waypoint_color": "Gold - waypoint marker",
+      "size": 10,
+      "shape": "diamond",
+      "show_label": true,
+      "_show_label_effects": "TRUE = show waypoint name on map. FALSE = just icon."
+    },
+    "dungeon": {
+      "color": [220, 20, 60],
+      "_dungeon_color": "Crimson - discovered dungeon entrance",
+      "size": 8,
+      "shape": "skull",
+      "_shape_note": "skull renders as a small skull icon"
+    }
+  },
+
+  "waypoint_system": {
+    "_comment": "Controls teleportation waypoint unlocking and limits",
+    "enabled": true,
+    "_enabled_effects": "FALSE = disable waypoint system entirely.",
+
+    "spawn_waypoint": {
+      "always_available": true,
+      "_always_available_effects": "TRUE = spawn is always waypoint slot 1. FALSE = spawn must be unlocked.",
+      "default_name": "Spawn",
+      "_default_name_note": "Players can rename this waypoint",
+      "position": [0, 0],
+      "_position_note": "World coordinates [x, y] - spawn is at origin"
+    },
+
+    "unlock_schedule": {
+      "_comment": "Which levels unlock additional waypoint slots. Array index = slot number (0-indexed after spawn).",
+      "_note": "Spawn is slot 0 (always free). These are slots 1-6.",
+      "levels": [5, 10, 15, 20, 25, 30],
+      "_levels_explanation": [
+        "Level 1: 1 waypoint (spawn only)",
+        "Level 5: 2 waypoints",
+        "Level 10: 3 waypoints",
+        "Level 15: 4 waypoints",
+        "Level 20: 5 waypoints",
+        "Level 25: 6 waypoints",
+        "Level 30: 7 waypoints (maximum)"
+      ]
+    },
+
+    "max_waypoints": 7,
+    "_max_waypoints_effects": "Maximum number of waypoints a player can have. Includes spawn.",
+
+    "teleport_cooldown": 30.0,
+    "_teleport_cooldown_effects": "Seconds between teleports. HIGHER = longer wait. LOWER = faster travel.",
+
+    "teleport_cost": {
+      "enabled": false,
+      "_enabled_effects": "TRUE = teleporting costs resources/mana. FALSE = free teleport.",
+      "mana_cost": 50,
+      "_mana_cost_effects": "Mana consumed per teleport (if enabled).",
+      "item_cost": null,
+      "_item_cost_note": "Optional: {'item_id': 'teleport_crystal', 'quantity': 1}"
+    },
+
+    "placement_rules": {
+      "require_solid_ground": true,
+      "_require_solid_ground_effects": "TRUE = can only place waypoints on walkable tiles. FALSE = anywhere.",
+      "min_distance_between_waypoints": 32,
+      "_min_distance_effects": "Minimum tiles between waypoints. Prevents clustering. 0 = no limit.",
+      "blocked_in_dungeons": true,
+      "_blocked_in_dungeons_effects": "TRUE = cannot place/use waypoints inside dungeons. FALSE = allowed.",
+      "blocked_in_combat": true,
+      "_blocked_in_combat_effects": "TRUE = cannot teleport while enemies are nearby. FALSE = can flee."
+    },
+
+    "waypoint_naming": {
+      "max_name_length": 24,
+      "_max_name_length_effects": "Maximum characters for waypoint names.",
+      "allow_emoji": false,
+      "_allow_emoji_effects": "TRUE = allow emoji in names. FALSE = alphanumeric only.",
+      "default_name_format": "Waypoint {number}",
+      "_default_name_format_note": "{number} is replaced with slot number"
+    }
+  },
+
+  "persistence": {
+    "_comment": "How map and waypoint data is saved",
+    "save_explored_chunks": true,
+    "_save_explored_chunks_effects": "TRUE = remember which chunks were visited. FALSE = map resets on load.",
+    "save_with_character": true,
+    "_save_with_character_effects": "TRUE = map data in main save file. FALSE = separate map file.",
+    "chunk_data_format": "coordinates_only",
+    "_chunk_data_format_options": "coordinates_only (just x,y), full (includes biome type cached)"
+  },
+
+  "ui_settings": {
+    "_comment": "Map and waypoint menu appearance",
+    "map_window_size": [700, 600],
+    "_map_window_size_note": "[width, height] in pixels before scaling",
+    "waypoint_panel_width": 200,
+    "_waypoint_panel_width_note": "Width of waypoint list sidebar in map UI",
+    "background_color": [20, 20, 30, 240],
+    "_background_color_note": "[R, G, B, A] - semi-transparent dark background",
+    "border_color": [100, 100, 120],
+    "_border_color_note": "Color of UI borders",
+    "font_color": [220, 220, 220],
+    "_font_color_note": "Default text color"
+  },
+
+  "keybindings": {
+    "_comment": "Default keys for map/waypoint actions (can be remapped in settings)",
+    "open_map": "M",
+    "_open_map_note": "Key to toggle map UI",
+    "place_waypoint": "W",
+    "_place_waypoint_note": "Key to place waypoint at current location (when map closed)",
+    "center_on_player": "C",
+    "_center_on_player_note": "Key to re-center map on player (when map open)",
+    "zoom_in": "PLUS",
+    "_zoom_in_note": "Alternative to scroll wheel",
+    "zoom_out": "MINUS",
+    "_zoom_out_note": "Alternative to scroll wheel"
+  }
+}

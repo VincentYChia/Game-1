@@ -42,6 +42,9 @@ from systems import (
     NPC,
 )
 
+# Map/Waypoint config
+from data.databases.map_waypoint_db import MapWaypointConfig
+
 
 class Renderer:
     def __init__(self, screen: pygame.Surface):
@@ -1845,8 +1848,9 @@ class Renderer:
             "C - Stats",
             "E - Equipment",
             "K - Skills menu",
+            "M - Map",
+            "L - Encyclopedia",
             "F1 - Debug Mode",
-            "F2/F3/F4 - Debug Skills/Titles/Stats",
             "ESC - Close/Quit"
         ]
         for ctrl in controls:
@@ -2357,6 +2361,273 @@ class Renderer:
         window_rect = pygame.Rect(wx, wy, ww, wh)
         self.encyclopedia_window_rect = window_rect  # Store for mouse wheel scrolling
         return window_rect, tab_rects
+
+    def render_map_ui(self, character: Character, map_system, world_system,
+                      mouse_pos: Tuple[int, int]):
+        """Render the world map UI with explored chunks and waypoints.
+
+        Args:
+            character: Player character (for position and level)
+            map_system: MapWaypointSystem instance
+            world_system: WorldSystem instance (for biome info)
+            mouse_pos: Current mouse position
+
+        Returns:
+            Tuple of (window_rect, waypoint_rects) for click detection
+        """
+        import math
+
+        if not map_system.map_open:
+            return None
+
+        config = MapWaypointConfig.get_instance()
+        s = Config.scale
+
+        # Window dimensions
+        ww, wh = s(config.ui.map_window_size[0]), s(config.ui.map_window_size[1])
+        wx = max(0, (Config.VIEWPORT_WIDTH - ww) // 2)
+        wy = s(40)
+
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+        bg_color = config.ui.background_color
+        surf.fill(bg_color)
+
+        # Title bar
+        title_text = f"WORLD MAP - Explored: {map_system.get_explored_count()} chunks"
+        surf.blit(self.font.render(title_text, True, (255, 215, 0)), (s(20), s(15)))
+
+        # Controls hint
+        controls = "[M or ESC] Close | [Scroll] Zoom | [Drag] Pan"
+        surf.blit(self.small_font.render(controls, True, (180, 180, 180)), (s(20), s(40)))
+
+        # Zoom indicator
+        zoom_text = f"Zoom: {map_system.map_zoom:.1f}x"
+        surf.blit(self.small_font.render(zoom_text, True, (150, 200, 255)), (ww - s(100), s(15)))
+
+        # Map area dimensions
+        waypoint_panel_w = s(config.ui.waypoint_panel_width)
+        map_area_x = s(10)
+        map_area_y = s(60)
+        map_area_w = ww - waypoint_panel_w - s(30)
+        map_area_h = wh - s(80)
+
+        # Draw map background
+        map_rect = pygame.Rect(map_area_x, map_area_y, map_area_w, map_area_h)
+        pygame.draw.rect(surf, (15, 15, 25), map_rect)
+        pygame.draw.rect(surf, tuple(config.ui.border_color), map_rect, s(2))
+
+        # Calculate chunk rendering parameters
+        chunk_size = s(config.map_display.chunk_render_size) * map_system.map_zoom
+        chunk_size = max(s(4), int(chunk_size))  # Minimum size
+
+        # Get player chunk position
+        player_chunk_x = math.floor(character.position.x) // Config.CHUNK_SIZE
+        player_chunk_y = math.floor(character.position.y) // Config.CHUNK_SIZE
+
+        # Center on player if configured, otherwise use scroll position
+        if config.map_display.center_on_player:
+            center_chunk_x = player_chunk_x - map_system.map_scroll_x
+            center_chunk_y = player_chunk_y - map_system.map_scroll_y
+        else:
+            center_chunk_x = map_system.map_scroll_x
+            center_chunk_y = map_system.map_scroll_y
+
+        # Calculate visible chunk range
+        visible_chunks_x = int(map_area_w / chunk_size) + 2
+        visible_chunks_y = int(map_area_h / chunk_size) + 2
+
+        start_chunk_x = int(center_chunk_x - visible_chunks_x // 2)
+        start_chunk_y = int(center_chunk_y - visible_chunks_y // 2)
+
+        # Map center in pixels (relative to map_rect)
+        map_center_x = map_area_w // 2
+        map_center_y = map_area_h // 2
+
+        # Render chunks
+        hovered_chunk = None
+        for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 1):
+            for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 1):
+                chunk_x = int(center_chunk_x) + dx
+                chunk_y = int(center_chunk_y) + dy
+
+                # Calculate pixel position on map
+                px = map_area_x + map_center_x + int((chunk_x - center_chunk_x) * chunk_size)
+                py = map_area_y + map_center_y + int((chunk_y - center_chunk_y) * chunk_size)
+
+                # Skip if outside map area
+                if px + chunk_size < map_area_x or px > map_area_x + map_area_w:
+                    continue
+                if py + chunk_size < map_area_y or py > map_area_y + map_area_h:
+                    continue
+
+                # Get chunk color based on exploration status
+                explored = map_system.get_explored_chunk(chunk_x, chunk_y)
+                if explored:
+                    chunk_type = explored.chunk_type.lower().replace(' ', '_')
+                    color = config.get_biome_color(chunk_type)
+                else:
+                    color = config.biome_colors.get('unexplored', (30, 30, 40))
+
+                # Draw chunk
+                chunk_rect = pygame.Rect(px, py, chunk_size - 1, chunk_size - 1)
+                pygame.draw.rect(surf, color, chunk_rect)
+
+                # Highlight spawn area
+                if chunk_x == 0 and chunk_y == 0:
+                    pygame.draw.rect(surf, config.biome_colors.get('spawn_area', (255, 215, 0)), chunk_rect, s(2))
+
+                # Draw dungeon marker
+                if explored and explored.has_dungeon:
+                    dungeon_color = config.dungeon_marker.color
+                    cx, cy = px + chunk_size // 2, py + chunk_size // 2
+                    pygame.draw.circle(surf, dungeon_color, (cx, cy), max(s(3), chunk_size // 4))
+
+                # Check for hover
+                rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+                if chunk_rect.collidepoint(rx, ry):
+                    hovered_chunk = (chunk_x, chunk_y, explored)
+                    pygame.draw.rect(surf, (255, 255, 255), chunk_rect, s(1))
+
+        # Draw grid if enabled
+        if config.map_display.show_grid and chunk_size >= s(8):
+            grid_color = (50, 50, 70)
+            for dx in range(-visible_chunks_x // 2, visible_chunks_x // 2 + 2):
+                x = map_area_x + map_center_x + int((int(center_chunk_x) + dx - center_chunk_x - 0.5) * chunk_size)
+                if map_area_x <= x <= map_area_x + map_area_w:
+                    pygame.draw.line(surf, grid_color, (x, map_area_y), (x, map_area_y + map_area_h), 1)
+            for dy in range(-visible_chunks_y // 2, visible_chunks_y // 2 + 2):
+                y = map_area_y + map_center_y + int((int(center_chunk_y) + dy - center_chunk_y - 0.5) * chunk_size)
+                if map_area_y <= y <= map_area_y + map_area_h:
+                    pygame.draw.line(surf, grid_color, (map_area_x, y), (map_area_x + map_area_w, y), 1)
+
+        # Draw player marker
+        if config.map_display.show_player_marker:
+            player_px = map_area_x + map_center_x + int((player_chunk_x - center_chunk_x) * chunk_size) + chunk_size // 2
+            player_py = map_area_y + map_center_y + int((player_chunk_y - center_chunk_y) * chunk_size) + chunk_size // 2
+
+            # Only draw if in visible area
+            if map_area_x <= player_px <= map_area_x + map_area_w and map_area_y <= player_py <= map_area_y + map_area_h:
+                marker_size = config.player_marker.size
+                marker_color = config.player_marker.color
+                # Draw triangle pointing up
+                points = [
+                    (player_px, player_py - s(marker_size)),
+                    (player_px - s(marker_size // 2), player_py + s(marker_size // 2)),
+                    (player_px + s(marker_size // 2), player_py + s(marker_size // 2))
+                ]
+                pygame.draw.polygon(surf, marker_color, points)
+                pygame.draw.polygon(surf, (0, 0, 0), points, s(1))
+
+        # Draw waypoint markers and collect rects
+        waypoint_rects = []
+        if config.map_display.show_waypoint_markers:
+            for wp in map_system.get_all_waypoints():
+                wp_chunk_x, wp_chunk_y = wp.chunk_coords
+                wp_px = map_area_x + map_center_x + int((wp_chunk_x - center_chunk_x) * chunk_size) + chunk_size // 2
+                wp_py = map_area_y + map_center_y + int((wp_chunk_y - center_chunk_y) * chunk_size) + chunk_size // 2
+
+                if map_area_x <= wp_px <= map_area_x + map_area_w and map_area_y <= wp_py <= map_area_y + map_area_h:
+                    marker_size = config.waypoint_marker.size
+                    marker_color = config.waypoint_marker.color
+                    # Draw diamond
+                    points = [
+                        (wp_px, wp_py - s(marker_size)),
+                        (wp_px + s(marker_size), wp_py),
+                        (wp_px, wp_py + s(marker_size)),
+                        (wp_px - s(marker_size), wp_py)
+                    ]
+                    pygame.draw.polygon(surf, marker_color, points)
+                    pygame.draw.polygon(surf, (0, 0, 0), points, s(1))
+
+        # Draw hovered chunk info
+        if hovered_chunk and config.map_display.show_coordinates:
+            cx, cy, explored = hovered_chunk
+            info_y = map_area_y + map_area_h + s(5)
+            coord_text = f"Chunk: ({cx}, {cy})"
+            if explored:
+                type_name = explored.chunk_type.replace('_', ' ').title()
+                coord_text += f" - {type_name}"
+                if explored.has_dungeon:
+                    coord_text += " [DUNGEON]"
+            else:
+                coord_text += " - Unexplored"
+            surf.blit(self.small_font.render(coord_text, True, (200, 200, 200)), (map_area_x, info_y))
+
+        # ========== WAYPOINT PANEL ==========
+        panel_x = ww - waypoint_panel_w - s(10)
+        panel_y = map_area_y
+        panel_h = map_area_h
+
+        # Panel background
+        panel_rect = pygame.Rect(panel_x, panel_y, waypoint_panel_w, panel_h)
+        pygame.draw.rect(surf, (25, 25, 35), panel_rect)
+        pygame.draw.rect(surf, tuple(config.ui.border_color), panel_rect, s(2))
+
+        # Panel title
+        surf.blit(self.small_font.render("WAYPOINTS", True, (255, 215, 0)), (panel_x + s(10), panel_y + s(10)))
+
+        # Available slots info
+        available_slots = map_system.get_available_slots(character.leveling.level)
+        next_unlock = map_system.get_next_unlocked_level(character.leveling.level)
+        slots_text = f"Slots: {len(map_system.get_all_waypoints())}/{available_slots}"
+        surf.blit(self.tiny_font.render(slots_text, True, (150, 150, 180)), (panel_x + s(10), panel_y + s(30)))
+        if next_unlock:
+            unlock_text = f"Next at Lv.{next_unlock}"
+            surf.blit(self.tiny_font.render(unlock_text, True, (100, 150, 200)), (panel_x + s(10), panel_y + s(45)))
+
+        # Waypoint list
+        wp_y = panel_y + s(65)
+        wp_list_rects = []
+        for i in range(available_slots):
+            wp = map_system.get_waypoint(i)
+            wp_rect = pygame.Rect(panel_x + s(5), wp_y, waypoint_panel_w - s(10), s(45))
+
+            # Check if hovered
+            rx, ry = mouse_pos[0] - wx, mouse_pos[1] - wy
+            is_hovered = wp_rect.collidepoint(rx, ry)
+
+            if wp:
+                # Filled slot
+                bg_color = (50, 50, 70) if is_hovered else (35, 35, 50)
+                pygame.draw.rect(surf, bg_color, wp_rect)
+                pygame.draw.rect(surf, (80, 80, 100), wp_rect, s(1))
+
+                # Waypoint name
+                name_color = (255, 215, 0) if wp.is_spawn else (200, 200, 220)
+                surf.blit(self.small_font.render(wp.name[:15], True, name_color), (wp_rect.x + s(5), wp_rect.y + s(5)))
+
+                # Coordinates
+                pos_text = f"({int(wp.position.x)}, {int(wp.position.y)})"
+                surf.blit(self.tiny_font.render(pos_text, True, (120, 120, 150)), (wp_rect.x + s(5), wp_rect.y + s(25)))
+
+                wp_list_rects.append((pygame.Rect(wx + wp_rect.x, wy + wp_rect.y, wp_rect.w, wp_rect.h), i))
+            else:
+                # Empty slot
+                pygame.draw.rect(surf, (30, 30, 40), wp_rect)
+                pygame.draw.rect(surf, (60, 60, 70), wp_rect, s(1))
+                surf.blit(self.tiny_font.render(f"Empty Slot {i + 1}", True, (80, 80, 100)), (wp_rect.x + s(5), wp_rect.y + s(15)))
+
+            wp_y += s(50)
+
+        # Teleport cooldown
+        cooldown = map_system.get_teleport_cooldown_remaining(time.time())
+        if cooldown > 0:
+            cd_text = f"Teleport: {int(cooldown)}s"
+            cd_color = (255, 100, 100)
+        else:
+            cd_text = "Teleport: Ready"
+            cd_color = (100, 255, 100)
+        surf.blit(self.tiny_font.render(cd_text, True, cd_color), (panel_x + s(10), panel_y + panel_h - s(25)))
+
+        # Instructions
+        instr_text = "Click waypoint to teleport"
+        surf.blit(self.tiny_font.render(instr_text, True, (120, 120, 150)), (panel_x + s(10), panel_y + panel_h - s(40)))
+
+        # Draw to screen
+        self.screen.blit(surf, (wx, wy))
+        window_rect = pygame.Rect(wx, wy, ww, wh)
+
+        return window_rect, wp_list_rects
 
     def render_npc_dialogue_ui(self, npc: NPC, dialogue_lines: List[str], available_quests: List[str],
                                quest_to_turn_in: Optional[str], mouse_pos: Tuple[int, int]):

@@ -35,7 +35,8 @@ class SaveManager:
         quest_manager,
         npcs,
         dungeon_manager=None,
-        game_time: float = 0.0
+        game_time: float = 0.0,
+        map_system=None
     ) -> Dict[str, Any]:
         """
         Create a comprehensive save data structure.
@@ -47,6 +48,7 @@ class SaveManager:
             npcs: List[NPC] instances
             dungeon_manager: DungeonManager instance (optional)
             game_time: Current game time for day/night cycle (optional)
+            map_system: MapWaypointSystem instance (optional)
 
         Returns:
             Dictionary containing all save data
@@ -63,6 +65,10 @@ class SaveManager:
         # Add dungeon state if dungeon system is active
         if dungeon_manager:
             save_data["dungeon_state"] = dungeon_manager.to_dict()
+
+        # Add map/waypoint state if map system is active
+        if map_system:
+            save_data["map_state"] = map_system.get_save_data()
 
         return save_data
 
@@ -396,7 +402,8 @@ class SaveManager:
         npcs,
         filename: str = "autosave.json",
         dungeon_manager=None,
-        game_time: float = 0.0
+        game_time: float = 0.0,
+        map_system=None
     ) -> bool:
         """
         Save the current game state to a file.
@@ -409,6 +416,7 @@ class SaveManager:
             filename: Name of the save file
             dungeon_manager: DungeonManager instance (optional)
             game_time: Current game time for day/night cycle (optional)
+            map_system: MapWaypointSystem instance (optional)
 
         Returns:
             True if save was successful, False otherwise
@@ -420,7 +428,8 @@ class SaveManager:
                 quest_manager,
                 npcs,
                 dungeon_manager,
-                game_time
+                game_time,
+                map_system
             )
 
             filepath = get_save_path(filename)
