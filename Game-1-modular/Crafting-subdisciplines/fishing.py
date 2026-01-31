@@ -17,13 +17,111 @@ Stat Effects:
 
 Win: Get materials and XP like killing a mob
 Fail: Get nothing, rod takes double durability loss
+
+Configuration loaded from: Definitions.JSON/fishing-config.JSON
 """
 
 import pygame
 import math
 import random
+import json
+import os
 from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass, field
+
+
+# ============================================================================
+# FISHING CONFIG LOADER - JSON-driven configuration
+# ============================================================================
+
+class FishingConfig:
+    """
+    Singleton class that loads and caches fishing minigame configuration from JSON.
+
+    Follows the game's JSON-driven design philosophy - all values that might need
+    balancing are stored in Definitions.JSON/fishing-config.JSON.
+    """
+    _instance = None
+    _config = None
+
+    @classmethod
+    def get_instance(cls):
+        """Get the singleton config instance."""
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    def __init__(self):
+        """Load config from JSON file."""
+        if FishingConfig._config is None:
+            self._load_config()
+
+    def _load_config(self):
+        """Load configuration from JSON file with fallback to defaults."""
+        config_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            'Definitions.JSON',
+            'fishing-config.JSON'
+        )
+
+        try:
+            with open(config_path, 'r') as f:
+                FishingConfig._config = json.load(f)
+                print(f"Loaded fishing config from {config_path}")
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Warning: Could not load fishing config ({e}), using defaults")
+            FishingConfig._config = self._get_defaults()
+
+    def _get_defaults(self) -> Dict[str, Any]:
+        """Return default config values if JSON fails to load."""
+        return {
+            "minigame": {
+                "pond_dimensions": {"width": 500, "height": 400, "margin": 50},
+                "base_difficulty": {
+                    "ripple_count": 8, "target_radius": 40, "expand_speed": 80,
+                    "hit_tolerance": 15, "spawn_delay": 1.5, "max_active_ripples": 2
+                },
+                "scoring": {
+                    "perfect_tolerance": 5, "good_tolerance": 10, "fair_tolerance": 15,
+                    "perfect_score": 100, "good_score": 75, "fair_score": 50, "min_partial_score": 25
+                },
+                "success_thresholds": {"min_hit_rate": 0.5, "min_avg_score": 40},
+                "quality_tiers": {
+                    "legendary": {"min_performance": 0.9, "bonus_mult": 1.5},
+                    "masterwork": {"min_performance": 0.75, "bonus_mult": 1.3},
+                    "superior": {"min_performance": 0.6, "bonus_mult": 1.15},
+                    "fine": {"min_performance": 0.4, "bonus_mult": 1.0},
+                    "normal": {"min_performance": 0.0, "bonus_mult": 0.8}
+                }
+            },
+            "stat_effects": {
+                "luck": {"ripple_reduction_per_point": 0.1, "min_ripples": 4, "max_ripples": 15},
+                "strength": {"tolerance_bonus_per_point": 0.5, "max_tolerance": 30},
+                "rod_tier": {"speed_reduction_per_tier": 0.15, "min_speed_mult": 0.55}
+            },
+            "tier_scaling": {"ripple_multiplier": 0.25, "speed_multiplier": 0.2},
+            "xp_rewards": {"tier_1": 100, "tier_2": 400, "tier_3": 1600, "tier_4": 6400},
+            "durability": {"success_loss": 1.0, "fail_loss_multiplier": 2.0}
+        }
+
+    @property
+    def config(self) -> Dict[str, Any]:
+        """Get the loaded configuration."""
+        return FishingConfig._config
+
+    def get(self, *keys, default=None):
+        """
+        Get a nested config value by keys.
+
+        Example: config.get('minigame', 'pond_dimensions', 'width')
+        """
+        result = self.config
+        for key in keys:
+            if isinstance(result, dict) and key in result:
+                result = result[key]
+            else:
+                return default
+        return result
 
 
 @dataclass
@@ -50,24 +148,9 @@ class FishingMinigame:
     - LCK (Luck): Reduces required ripple count
     - STR (Strength): Increases hit tolerance (larger click area)
     - Rod tier: Slows down ripple expansion (more time to react)
+
+    Configuration is loaded from Definitions.JSON/fishing-config.JSON
     """
-
-    # Base constants
-    POND_WIDTH = 500
-    POND_HEIGHT = 400
-    POND_MARGIN = 50  # Edge margin for spawning
-
-    # Base difficulty (modified by tier and stats)
-    BASE_RIPPLE_COUNT = 8  # Base number of ripples to complete
-    BASE_TARGET_RADIUS = 40  # Base target ring size
-    BASE_EXPAND_SPEED = 80  # Base expansion speed (pixels/sec)
-    BASE_HIT_TOLERANCE = 15  # Base tolerance for hit detection
-    BASE_SPAWN_DELAY = 1.5  # Seconds between ripples
-
-    # Scoring
-    PERFECT_TOLERANCE = 5  # Within 5px = perfect
-    GOOD_TOLERANCE = 10  # Within 10px = good
-    FAIR_TOLERANCE = 15  # Within 15px = fair
 
     def __init__(self, fishing_spot_tier: int, equipped_rod: Optional[Any] = None,
                  player_stats: Optional[Dict] = None):
@@ -79,11 +162,45 @@ class FishingMinigame:
             equipped_rod: The equipped fishing rod (for tier/quality)
             player_stats: Player's stats dict with 'luck', 'strength', etc.
         """
+        # Load config from JSON
+        self.cfg = FishingConfig.get_instance()
+
+        # Store parameters
         self.fishing_spot_tier = fishing_spot_tier
         self.equipped_rod = equipped_rod
         self.player_stats = player_stats or {}
 
-        # Extract stats
+        # Load base constants from config
+        pond = self.cfg.get('minigame', 'pond_dimensions', default={})
+        self.POND_WIDTH = pond.get('width', 500)
+        self.POND_HEIGHT = pond.get('height', 400)
+        self.POND_MARGIN = pond.get('margin', 50)
+
+        # Load base difficulty from config
+        base = self.cfg.get('minigame', 'base_difficulty', default={})
+        self.BASE_RIPPLE_COUNT = base.get('ripple_count', 8)
+        self.BASE_TARGET_RADIUS = base.get('target_radius', 40)
+        self.BASE_EXPAND_SPEED = base.get('expand_speed', 80)
+        self.BASE_HIT_TOLERANCE = base.get('hit_tolerance', 15)
+        self.BASE_SPAWN_DELAY = base.get('spawn_delay', 1.5)
+        self.MAX_ACTIVE_RIPPLES = base.get('max_active_ripples', 2)
+
+        # Load scoring thresholds from config
+        scoring = self.cfg.get('minigame', 'scoring', default={})
+        self.PERFECT_TOLERANCE = scoring.get('perfect_tolerance', 5)
+        self.GOOD_TOLERANCE = scoring.get('good_tolerance', 10)
+        self.FAIR_TOLERANCE = scoring.get('fair_tolerance', 15)
+        self.PERFECT_SCORE = scoring.get('perfect_score', 100)
+        self.GOOD_SCORE = scoring.get('good_score', 75)
+        self.FAIR_SCORE = scoring.get('fair_score', 50)
+        self.MIN_PARTIAL_SCORE = scoring.get('min_partial_score', 25)
+
+        # Load success thresholds
+        thresholds = self.cfg.get('minigame', 'success_thresholds', default={})
+        self.MIN_HIT_RATE = thresholds.get('min_hit_rate', 0.5)
+        self.MIN_AVG_SCORE = thresholds.get('min_avg_score', 40)
+
+        # Extract player stats
         self.luck = self.player_stats.get('luck', 0)
         self.strength = self.player_stats.get('strength', 0)
 
@@ -122,32 +239,47 @@ class FishingMinigame:
         self.last_hit_time: float = 0.0
 
     def _calculate_difficulty(self):
-        """Calculate game parameters based on tier and stats."""
+        """Calculate game parameters based on tier and stats using JSON config."""
+        # Load stat effect configs
+        luck_cfg = self.cfg.get('stat_effects', 'luck', default={})
+        str_cfg = self.cfg.get('stat_effects', 'strength', default={})
+        rod_cfg = self.cfg.get('stat_effects', 'rod_tier', default={})
+        tier_cfg = self.cfg.get('tier_scaling', default={})
+
         # Base difficulty scales with fishing spot tier
-        tier_multiplier = 1.0 + (self.fishing_spot_tier - 1) * 0.25
+        tier_mult = tier_cfg.get('ripple_multiplier', 0.25)
+        tier_multiplier = 1.0 + (self.fishing_spot_tier - 1) * tier_mult
 
         # LCK reduces ripple count (makes game shorter)
-        # Each luck point reduces by 0.1 ripples, min 4 ripples
-        luck_reduction = self.luck * 0.1
-        self.required_ripples = max(4, int(self.BASE_RIPPLE_COUNT - luck_reduction))
+        luck_reduction_per = luck_cfg.get('ripple_reduction_per_point', 0.1)
+        min_ripples = luck_cfg.get('min_ripples', 4)
+        max_ripples = luck_cfg.get('max_ripples', 15)
+
+        luck_reduction = self.luck * luck_reduction_per
+        self.required_ripples = max(min_ripples, int(self.BASE_RIPPLE_COUNT - luck_reduction))
 
         # Higher tier fishing spots need more ripples
         self.required_ripples = int(self.required_ripples * tier_multiplier)
-        self.required_ripples = max(4, min(15, self.required_ripples))  # Clamp 4-15
+        self.required_ripples = max(min_ripples, min(max_ripples, self.required_ripples))
 
         # STR increases hit tolerance (larger click area)
-        # Each strength point adds 0.5px tolerance
-        str_bonus = self.strength * 0.5
+        tolerance_per = str_cfg.get('tolerance_bonus_per_point', 0.5)
+        max_tolerance = str_cfg.get('max_tolerance', 30)
+
+        str_bonus = self.strength * tolerance_per
         self.hit_tolerance = self.BASE_HIT_TOLERANCE + str_bonus
-        self.hit_tolerance = min(30, self.hit_tolerance)  # Cap at 30px
+        self.hit_tolerance = min(max_tolerance, self.hit_tolerance)
 
         # Rod tier affects expansion speed (higher tier = slower = more time)
-        # T1: 1.0x, T2: 0.85x, T3: 0.70x, T4: 0.55x speed
-        rod_speed_mult = 1.0 - (self.rod_tier - 1) * 0.15
-        rod_speed_mult = max(0.55, rod_speed_mult)
+        speed_reduction = rod_cfg.get('speed_reduction_per_tier', 0.15)
+        min_speed_mult = rod_cfg.get('min_speed_mult', 0.55)
+
+        rod_speed_mult = 1.0 - (self.rod_tier - 1) * speed_reduction
+        rod_speed_mult = max(min_speed_mult, rod_speed_mult)
 
         # Fishing spot tier increases speed (harder)
-        spot_speed_mult = 1.0 + (self.fishing_spot_tier - 1) * 0.2
+        spot_speed_multiplier = tier_cfg.get('speed_multiplier', 0.2)
+        spot_speed_mult = 1.0 + (self.fishing_spot_tier - 1) * spot_speed_multiplier
 
         self.expand_speed = self.BASE_EXPAND_SPEED * rod_speed_mult * spot_speed_mult
 
@@ -160,7 +292,7 @@ class FishingMinigame:
         self.max_radius = self.target_radius * 2.5  # Miss if expand past this
 
         # Log difficulty info
-        print(f"🎣 Fishing difficulty calculated:")
+        print(f"Fishing difficulty calculated:")
         print(f"   Spot Tier: {self.fishing_spot_tier}, Rod Tier: {self.rod_tier}")
         print(f"   LCK: {self.luck} -> {self.required_ripples} ripples required")
         print(f"   STR: {self.strength} -> {self.hit_tolerance:.1f}px hit tolerance")
@@ -203,7 +335,7 @@ class FishingMinigame:
         self.time_since_last_spawn += dt
 
         # Spawn new ripples
-        if (len([r for r in self.ripples if r.active]) < 2 and  # Max 2 active
+        if (len([r for r in self.ripples if r.active]) < self.MAX_ACTIVE_RIPPLES and
             self.current_ripple_index < self.required_ripples and
             self.time_since_last_spawn >= self.spawn_delay):
             self._spawn_ripple()
@@ -279,20 +411,20 @@ class FishingMinigame:
 
         # Check if within hit tolerance (adjusted by STR)
         if ring_distance <= self.hit_tolerance:
-            # Calculate score based on accuracy
+            # Calculate score based on accuracy using config values
             if ring_distance <= self.PERFECT_TOLERANCE:
-                score = 100
+                score = self.PERFECT_SCORE
                 self.perfect_hits += 1
-                print(f"   ✨ PERFECT! (+100)")
+                print(f"   PERFECT! (+{score})")
             elif ring_distance <= self.GOOD_TOLERANCE:
-                score = 75
-                print(f"   ⭐ Good! (+75)")
+                score = self.GOOD_SCORE
+                print(f"   Good! (+{score})")
             elif ring_distance <= self.FAIR_TOLERANCE:
-                score = 50
-                print(f"   ✓ Fair (+50)")
+                score = self.FAIR_SCORE
+                print(f"   Fair (+{score})")
             else:
                 # Partial hit
-                score = max(25, int(50 * (1 - ring_distance / self.hit_tolerance)))
+                score = max(self.MIN_PARTIAL_SCORE, int(self.FAIR_SCORE * (1 - ring_distance / self.hit_tolerance)))
                 print(f"   ~ Late/Early (+{score})")
 
             best_ripple.hit = True
@@ -319,7 +451,7 @@ class FishingMinigame:
             return 0
 
     def _end_game(self):
-        """End the minigame and calculate results."""
+        """End the minigame and calculate results using JSON config."""
         self.active = False
         self.completed = True
 
@@ -338,29 +470,33 @@ class FishingMinigame:
         # Performance rating (0.0 to 1.0)
         performance = (avg_score / 100) * hit_rate
 
-        # Success threshold: need at least 50% hit rate with 40+ avg score
-        self.success = hit_rate >= 0.5 and avg_score >= 40
+        # Success threshold from config
+        self.success = hit_rate >= self.MIN_HIT_RATE and avg_score >= self.MIN_AVG_SCORE
 
-        # Determine quality tier based on performance
-        if performance >= 0.9:
+        # Determine quality tier based on performance using config
+        quality_tiers = self.cfg.get('minigame', 'quality_tiers', default={})
+
+        # Check tiers in order from highest to lowest
+        if performance >= quality_tiers.get('legendary', {}).get('min_performance', 0.9):
             quality_tier = "Legendary"
-            bonus_mult = 1.5
-        elif performance >= 0.75:
+            bonus_mult = quality_tiers.get('legendary', {}).get('bonus_mult', 1.5)
+        elif performance >= quality_tiers.get('masterwork', {}).get('min_performance', 0.75):
             quality_tier = "Masterwork"
-            bonus_mult = 1.3
-        elif performance >= 0.6:
+            bonus_mult = quality_tiers.get('masterwork', {}).get('bonus_mult', 1.3)
+        elif performance >= quality_tiers.get('superior', {}).get('min_performance', 0.6):
             quality_tier = "Superior"
-            bonus_mult = 1.15
-        elif performance >= 0.4:
+            bonus_mult = quality_tiers.get('superior', {}).get('bonus_mult', 1.15)
+        elif performance >= quality_tiers.get('fine', {}).get('min_performance', 0.4):
             quality_tier = "Fine"
-            bonus_mult = 1.0
+            bonus_mult = quality_tiers.get('fine', {}).get('bonus_mult', 1.0)
         else:
             quality_tier = "Normal"
-            bonus_mult = 0.8
+            bonus_mult = quality_tiers.get('normal', {}).get('bonus_mult', 0.8)
 
-        # XP reward based on fishing spot tier (like mob kills)
-        # T1: 100, T2: 400, T3: 1600, T4: 6400
-        base_xp = 100 * (4 ** (self.fishing_spot_tier - 1))
+        # XP reward based on fishing spot tier from config
+        xp_config = self.cfg.get('xp_rewards', default={})
+        tier_key = f"tier_{self.fishing_spot_tier}"
+        base_xp = xp_config.get(tier_key, 100 * (4 ** (self.fishing_spot_tier - 1)))
         xp_reward = int(base_xp * bonus_mult) if self.success else 0
 
         self.result = {
@@ -538,6 +674,12 @@ class FishingManager:
         result = self.active_minigame.result
         equipped_rod = character.get_equipped_tool('fishing_rod')
 
+        # Load durability config
+        cfg = FishingConfig.get_instance()
+        durability_cfg = cfg.get('durability', default={})
+        success_loss = durability_cfg.get('success_loss', 1.0)
+        fail_loss_mult = durability_cfg.get('fail_loss_multiplier', 2.0)
+
         if result['success']:
             # SUCCESS: Get loot and XP
             # Loot is handled by the resource's drop table
@@ -550,8 +692,8 @@ class FishingManager:
                 bonus_qty = int(qty * luck_mult * result['bonus_mult'])
                 processed_loot.append((item_id, max(1, bonus_qty)))
 
-            # Normal durability loss
-            durability_loss = 1.0
+            # Normal durability loss from config
+            durability_loss = success_loss
 
             # Mark resource as depleted (it will respawn)
             if self.current_fishing_spot:
@@ -568,8 +710,8 @@ class FishingManager:
             }
 
         else:
-            # FAIL: No loot, double durability loss
-            durability_loss = 2.0
+            # FAIL: No loot, multiplied durability loss from config
+            durability_loss = success_loss * fail_loss_mult
 
             result_data = {
                 "success": False,

@@ -729,6 +729,7 @@ class StatTracker:
             "exp_from_combat": 0,
             "exp_from_quests": 0,
             "exp_from_exploration": 0,
+            "exp_from_fishing": 0,
             "total_levels_gained": 0,
             "highest_level_reached": 0,
             "stat_points_allocated": 0,
