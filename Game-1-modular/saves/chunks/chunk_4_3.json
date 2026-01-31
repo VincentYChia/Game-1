@@ -1,7 +1,7 @@
 {
   "chunk_x": 4,
   "chunk_y": 3,
-  "chunk_type": "peaceful_quarry",
+  "chunk_type": "water_river",
   "dungeon_entrance": {
     "position": {
       "x": 74,
@@ -10,5 +10,5 @@
     },
     "rarity": "common"
   },
-  "unload_timestamp": 1.707999999999999
+  "unload_timestamp": 3.058
 }

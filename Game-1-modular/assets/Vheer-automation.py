@@ -1201,15 +1201,19 @@ def get_possible_filenames(item_name, version):
 
     Returns list of lowercase filenames to check (without path).
     """
-    filenames = [f"{item_name}-{version}.png".lower()]
-
-    # Add mapped name if exists
-    if item_name in RESOURCE_NAME_MAP:
-        mapped_name = RESOURCE_NAME_MAP[item_name]
-        filenames.append(f"{mapped_name}-{version}.png".lower())
+    # v1 = no suffix (item.png), v2+ = with suffix (item-2.png)
+    if version == 1:
+        filenames = [f"{item_name}.png".lower()]
+        if item_name in RESOURCE_NAME_MAP:
+            mapped_name = RESOURCE_NAME_MAP[item_name]
+            filenames.append(f"{mapped_name}.png".lower())
+    else:
+        filenames = [f"{item_name}-{version}.png".lower()]
+        if item_name in RESOURCE_NAME_MAP:
+            mapped_name = RESOURCE_NAME_MAP[item_name]
+            filenames.append(f"{mapped_name}-{version}.png".lower())
 
     return filenames
-
 
 def run_generation_for_cycle(items, version_start, version_end, output_cycle, configs_dict=None):
     """Run icon generation for a specific cycle with its configuration.
@@ -1410,8 +1414,12 @@ def main():
                 continue
 
             cycle_missing = 0
-            for ver in range(2, 5):  # Versions 2, 3, 4
-                ver_dir = cycle_dir / f'generated_icons-{ver}'
+            for ver in range(1, 5):  # Versions 1, 2, 3, 4
+                # v1 = generated_icons (no suffix), v2+ = generated_icons-{ver}
+                if ver == 1:
+                    ver_dir = cycle_dir / 'generated_icons'
+                else:
+                    ver_dir = cycle_dir / f'generated_icons-{ver}'
 
                 # Only scan versions that have existing folders
                 if not ver_dir.exists():

@@ -1,7 +1,7 @@
 {
   "chunk_x": -2,
   "chunk_y": 3,
-  "chunk_type": "water_lake",
+  "chunk_type": "peaceful_forest",
   "dungeon_entrance": {
     "position": {
       "x": -27,
@@ -10,5 +10,5 @@
     },
     "rarity": "rare"
   },
-  "unload_timestamp": 46.23999999999984
+  "unload_timestamp": 48.31399999999977
 }
