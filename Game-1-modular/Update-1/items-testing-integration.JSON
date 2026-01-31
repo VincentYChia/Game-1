@@ -260,36 +260,6 @@
   "fishing_rods": [
     {
       "metadata": {
-        "narrative": "Flexible bamboo rod with silk line and bronze hook. Patient hands pull dinner from rivers and lakes.",
-        "tags": ["tool", "fishing", "starter"]
-      },
-      "itemId": "bamboo_fishing_rod",
-      "name": "Bamboo Fishing Rod",
-      "category": "equipment",
-      "type": "tool",
-      "subtype": "fishing_rod",
-      "tier": 1,
-      "rarity": "common",
-      "range": 5,
-      "slot": "mainHand",
-      "statMultipliers": {
-        "damage": 0.5,
-        "gathering": 1.0,
-        "durability": 0.8,
-        "weight": 0.6
-      },
-      "requirements": {
-        "level": 1,
-        "stats": {}
-      },
-      "flags": {
-        "stackable": false,
-        "equippable": true,
-        "repairable": true
-      }
-    },
-    {
-      "metadata": {
         "narrative": "Steel-reinforced fishing rod with improved line tension and a barbed hook. Reliable for larger catches.",
         "tags": ["tool", "fishing", "standard"]
       },
@@ -340,6 +310,36 @@
       },
       "requirements": {
         "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary fishing rod forged from adamantine with void-touched line. Can pull catches from dimensions beyond mortal waters.",
+        "tags": ["tool", "fishing", "legendary"]
+      },
+      "itemId": "adamantine_fishing_rod",
+      "name": "Adamantine Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 8,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.8,
+        "gathering": 2.0,
+        "durability": 1.5,
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 25,
         "stats": {}
       },
       "flags": {
