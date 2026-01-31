@@ -1,14 +1,14 @@
 {
   "chunk_x": -4,
   "chunk_y": -5,
-  "chunk_type": "water_lake",
+  "chunk_type": "rare_hidden_forest",
   "dungeon_entrance": {
     "position": {
-      "x": -57,
-      "y": -71,
+      "x": -56,
+      "y": -72,
       "z": 0
     },
-    "rarity": "epic"
+    "rarity": "uncommon"
   },
-  "unload_timestamp": 43.20699999999978
+  "unload_timestamp": 4.953000000000004
 }

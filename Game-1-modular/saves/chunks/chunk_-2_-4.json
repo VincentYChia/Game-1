@@ -1,0 +1,14 @@
+{
+  "chunk_x": -2,
+  "chunk_y": -4,
+  "chunk_type": "peaceful_quarry",
+  "dungeon_entrance": {
+    "position": {
+      "x": -23,
+      "y": -59,
+      "z": 0
+    },
+    "rarity": "common"
+  },
+  "unload_timestamp": 167.08199999999883
+}

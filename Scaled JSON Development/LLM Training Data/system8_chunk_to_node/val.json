@@ -75,7 +75,7 @@
           "chance": "rare"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   },
   {
@@ -117,7 +117,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   },
   {
@@ -159,7 +159,7 @@
           "chance": "low"
         }
       ],
-      "respawnTime": null
+      "respawnTime": "very_slow"
     }
   }
 ]

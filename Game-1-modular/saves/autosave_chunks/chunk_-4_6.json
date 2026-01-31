@@ -1,0 +1,35 @@
+{
+  "chunk_x": -4,
+  "chunk_y": 6,
+  "chunk_type": "peaceful_cave",
+  "modified_resources": [
+    {
+      "local_x": 11,
+      "local_y": 7,
+      "resource_type": "TIN_SEAM",
+      "current_hp": 0,
+      "max_hp": 100,
+      "depleted": true,
+      "time_until_respawn": 0.0
+    },
+    {
+      "local_x": 5,
+      "local_y": 6,
+      "resource_type": "COPPER_VEIN",
+      "current_hp": 0,
+      "max_hp": 100,
+      "depleted": true,
+      "time_until_respawn": 0.0
+    },
+    {
+      "local_x": 7,
+      "local_y": 2,
+      "resource_type": "TIN_SEAM",
+      "current_hp": 0,
+      "max_hp": 100,
+      "depleted": true,
+      "time_until_respawn": 0.0
+    }
+  ],
+  "unload_timestamp": 2411.2130000002244
+}
