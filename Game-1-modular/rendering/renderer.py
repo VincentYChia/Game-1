@@ -1042,7 +1042,7 @@ class Renderer:
                 if mat and hasattr(mat, 'icon_path') and mat.icon_path:
                     icon_path = mat.icon_path
                 elif equip_db.is_equipment(entity.item_id):
-                    eq = equip_db.get_equipment(entity.item_id)
+                    eq = equip_db.create_equipment_from_id(entity.item_id)
                     if eq and hasattr(eq, 'icon_path') and eq.icon_path:
                         icon_path = eq.icon_path
             else:
@@ -1655,7 +1655,7 @@ class Renderer:
                     icon = image_cache.get_image(mat.icon_path, (slot_size - 8, slot_size - 8))
 
             if not icon and equip_db.is_equipment(item_id):
-                eq = equip_db.get_equipment(item_id)
+                eq = equip_db.create_equipment_from_id(item_id)
                 if eq:
                     item_name = eq.name if hasattr(eq, 'name') else item_id
                     if hasattr(eq, 'icon_path') and eq.icon_path:
@@ -1766,7 +1766,7 @@ class Renderer:
                     icon = image_cache.get_image(mat.icon_path, (slot_size - 8, slot_size - 8))
 
             if not icon and equip_db.is_equipment(item_id):
-                eq = equip_db.get_equipment(item_id)
+                eq = equip_db.create_equipment_from_id(item_id)
                 if eq:
                     item_name = eq.name if hasattr(eq, 'name') else item_id
                     if hasattr(eq, 'icon_path') and eq.icon_path:
@@ -1794,7 +1794,7 @@ class Renderer:
         if not chest.contents:
             empty_surf = self.small_font.render("Chest is empty", True, (120, 160, 200))
             self.screen.blit(empty_surf, (ui_x + (ui_width - empty_surf.get_width()) // 2, ui_y + ui_height // 2 - 20))
-            hint_surf = self.tiny_font.render("Hover item + press Q to store", True, (100, 140, 180))
+            hint_surf = self.tiny_font.render("Click inventory item to store", True, (100, 140, 180))
             self.screen.blit(hint_surf, (ui_x + (ui_width - hint_surf.get_width()) // 2, ui_y + ui_height // 2 + 10))
 
         # Item count at bottom

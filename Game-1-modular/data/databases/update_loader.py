@@ -52,9 +52,9 @@ def scan_update_directory(update_dir: Path, database_type: str) -> List[Path]:
         # Look for hostiles/enemies JSONs
         patterns = ['*hostiles*.JSON', '*enemies*.JSON', '*hostiles*.json', '*enemies*.json']
     elif database_type == 'materials':
-        # Look for materials/consumables/devices/stations JSONs (stations go here, not equipment)
-        patterns = ['*materials*.JSON', '*consumables*.JSON', '*devices*.JSON', '*stations*.JSON',
-                    '*materials*.json', '*consumables*.json', '*devices*.json', '*stations*.json']
+        # Look for materials/consumables/devices JSONs (stations are in main items file, not updates)
+        patterns = ['*materials*.JSON', '*consumables*.JSON', '*devices*.JSON',
+                    '*materials*.json', '*consumables*.json', '*devices*.json']
     else:
         patterns = ['*.JSON', '*.json']
 
@@ -195,8 +195,8 @@ def load_recipe_updates(project_root: Path):
             print(f"   ⚠️  Update directory not found: {update_name}")
             continue
 
-        # Scan for recipe files (both .JSON and .json)
-        patterns = ['*recipes*.JSON', '*crafting*.JSON', '*recipes*.json', '*crafting*.json']
+        # Scan for recipe files (both .JSON and .json), excluding station files
+        patterns = ['*recipes*.JSON', '*recipes*.json']
         files = []
         for pattern in patterns:
             files.extend(update_dir.glob(pattern))

@@ -1009,6 +1009,231 @@
         "placeable": true,
         "repairable": false
       }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary forge that bends reality itself. Can work metals that shouldn't exist. The flames burn with colors that have no name.",
+        "tags": ["station", "forge", "smithing", "legendary"]
+      },
+      "itemId": "forge_t4",
+      "name": "Eternal Forge",
+      "category": "station",
+      "type": "smithing",
+      "subtype": "forge",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary refinery that exists partially outside normal reality. Can process materials that shouldn't be refinable.",
+        "tags": ["station", "refinery", "forging", "legendary"]
+      },
+      "itemId": "refinery_t4",
+      "name": "Eternal Refinery",
+      "category": "station",
+      "type": "refining",
+      "subtype": "refinery",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master alchemy laboratory with crystalline distillation chambers and self-regulating temperature controls.",
+        "tags": ["station", "alchemy", "brewing", "master"]
+      },
+      "itemId": "alchemy_table_t3",
+      "name": "Master Alchemy Lab",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary alchemy apparatus that bends the laws of chemistry. Can create potions that defy natural law.",
+        "tags": ["station", "alchemy", "brewing", "legendary"]
+      },
+      "itemId": "alchemy_table_t4",
+      "name": "Philosopher's Laboratory",
+      "category": "station",
+      "type": "alchemy",
+      "subtype": "alchemy_table",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master engineering station with precision measurement tools and automated assembly assistance.",
+        "tags": ["station", "engineering", "mechanical", "master"]
+      },
+      "itemId": "engineering_bench_t3",
+      "name": "Master Engineering Station",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary engineering workshop that incorporates arcane machinery. Can craft devices that blur the line between magic and technology.",
+        "tags": ["station", "engineering", "mechanical", "legendary"]
+      },
+      "itemId": "engineering_bench_t4",
+      "name": "Arcane Engineering Workshop",
+      "category": "station",
+      "type": "engineering",
+      "subtype": "engineering_bench",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Advanced enchanting table surrounded by floating crystals. Channels magical energies with precision.",
+        "tags": ["station", "enchanting", "enhancement", "standard"]
+      },
+      "itemId": "enchanting_table_t2",
+      "name": "Arcane Enchanting Table",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 2,
+      "rarity": "uncommon",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master enchanting table with floating crystal matrices and perfect rune alignment tools.",
+        "tags": ["station", "enchanting", "enhancement", "master"]
+      },
+      "itemId": "enchanting_table_t3",
+      "name": "Master Enchanting Altar",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 3,
+      "rarity": "rare",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary enchanting nexus that taps into the fabric of reality itself. Can imbue items with powers beyond mortal understanding.",
+        "tags": ["station", "enchanting", "enhancement", "legendary"]
+      },
+      "itemId": "enchanting_table_t4",
+      "name": "Nexus of Enchantment",
+      "category": "station",
+      "type": "adornments",
+      "subtype": "altar",
+      "tier": 4,
+      "rarity": "epic",
+      "statMultipliers": {
+        "weight": 1.0
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
     }
   ]
 }
