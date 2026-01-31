@@ -537,7 +537,8 @@ class Enemy:
 
     def update_ai(self, dt: float, player_position: Tuple[float, float],
                   aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0,
-                  world_system=None):
+                  world_system=None, safe_zone_center: Tuple[float, float] = None,
+                  safe_zone_radius: float = 0.0):
         """Update enemy AI behavior
 
         Args:
@@ -546,6 +547,8 @@ class Enemy:
             aggro_multiplier: Multiplier for aggro range (1.3 at night)
             speed_multiplier: Multiplier for movement speed (1.15 at night)
             world_system: WorldSystem instance for collision checking (optional)
+            safe_zone_center: Center of player safe zone (enemies cannot enter)
+            safe_zone_radius: Radius of safe zone around center
 
         Note:
             If you add parameters to this method, also update TrainingDummy.update_ai()
@@ -553,6 +556,9 @@ class Enemy:
         """
         # Store world system reference for collision checking
         self._world_system = world_system
+        # Store safe zone for movement restriction
+        self._safe_zone_center = safe_zone_center
+        self._safe_zone_radius = safe_zone_radius
 
         if not self.is_alive:
             # Handle corpse decay
@@ -777,6 +783,18 @@ class Enemy:
 
             # Clamp to chunk boundaries first
             new_x, new_y = self._clamp_to_chunk_bounds(new_x, new_y)
+
+            # Check if new position would enter safe zone (enemies cannot enter)
+            safe_zone_center = getattr(self, '_safe_zone_center', None)
+            safe_zone_radius = getattr(self, '_safe_zone_radius', 0.0)
+            if safe_zone_center is not None and safe_zone_radius > 0:
+                dx_safe = new_x - safe_zone_center[0]
+                dy_safe = new_y - safe_zone_center[1]
+                dist_to_safe = (dx_safe * dx_safe + dy_safe * dy_safe) ** 0.5
+                if dist_to_safe <= safe_zone_radius:
+                    # Would enter safe zone - don't move toward it
+                    # Instead, try to move perpendicular or away
+                    return
 
             # Check collision with world
             world_system = getattr(self, '_world_system', None)

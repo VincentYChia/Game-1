@@ -327,6 +327,11 @@ class GameEngine:
         self.dungeon_chest_rect = None  # Bounding rect for chest UI
         self.dungeon_chest_item_rects = []  # [(rect, item_idx), ...] for click detection
 
+        # Spawn storage chest UI state
+        self.spawn_chest_open = False  # True when spawn storage chest UI is open
+        self.spawn_chest_rect = None  # Bounding rect for chest UI
+        self.spawn_chest_item_rects = []  # [(rect, item_idx), ...] for click detection
+
         # Minigame state
         self.active_minigame = None  # Current minigame instance (SmithingMinigame, etc.)
         self.minigame_type = None  # Station type: 'smithing', 'alchemy', 'refining', 'engineering', 'adornments'
@@ -684,6 +689,16 @@ class GameEngine:
                     else:
                         # NPC interaction (when not in dungeon)
                         self.handle_npc_interaction()
+                elif event.key == pygame.K_q:
+                    # Q behavior depends on context:
+                    # - If spawn chest is open: store hovered item in chest
+                    # - Otherwise: drop item to world (Q = 1 item, Shift+Q = entire stack)
+                    if self.spawn_chest_open:
+                        slot_idx = self._get_hovered_inventory_slot()
+                        if slot_idx >= 0 and self.character.inventory.slots[slot_idx]:
+                            self._transfer_to_spawn_chest(slot_idx)
+                    else:
+                        self._handle_inventory_drop()
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
@@ -1831,6 +1846,18 @@ class GameEngine:
             # Clicking outside chest UI closes it
             # But check if clicking on inventory first (for transfers)
 
+        # Spawn Storage Chest UI - takes priority when open
+        if self.spawn_chest_open:
+            # Check if clicking on chest UI area
+            if self.spawn_chest_rect and self.spawn_chest_rect.collidepoint(mouse_pos):
+                # Check chest item clicks
+                for rect, item_idx in self.spawn_chest_item_rects:
+                    if rect.collidepoint(mouse_pos):
+                        self._transfer_from_spawn_chest(item_idx)
+                        return
+                return  # Clicked in chest area but not on item
+            # Clicking outside chest UI closes it (unless clicking on inventory)
+
         # Inventory - check for equipment equipping
         if mouse_pos[1] >= Config.INVENTORY_PANEL_Y:
             # CRITICAL: These values MUST match the renderer exactly!
@@ -2167,6 +2194,50 @@ class GameEngine:
                         self.add_notification("Too far to pick up", (255, 100, 100))
                         return
 
+        # Check for dropped item pickup (single click, before dungeon entrance)
+        placed_entity = self.world.get_entity_at(world_pos)
+        if placed_entity and placed_entity.entity_type == PlacedEntityType.DROPPED_ITEM:
+            dist = self.character.position.distance_to(placed_entity.position)
+            if dist <= 2.0:
+                # Get item info from effect_params
+                item_id = placed_entity.item_id
+                quantity = placed_entity.effect_params.get('quantity', 1) if placed_entity.effect_params else 1
+                rarity = placed_entity.effect_params.get('rarity', 'common') if placed_entity.effect_params else 'common'
+                crafted_stats = placed_entity.crafted_stats if hasattr(placed_entity, 'crafted_stats') else None
+                equipment_data = placed_entity.effect_params.get('equipment_data') if placed_entity.effect_params else None
+
+                # Try to add to inventory
+                success = self.character.inventory.add_item(
+                    item_id, quantity,
+                    equipment_instance=equipment_data,
+                    rarity=rarity,
+                    crafted_stats=crafted_stats
+                )
+
+                if success:
+                    self.world.remove_entity(placed_entity)
+                    item_name = item_id.replace('_', ' ').title()
+                    self.add_notification(f"Picked up {quantity}x {item_name}", (100, 255, 100))
+                    print(f"✓ Picked up {quantity}x {item_id}")
+                    return
+                else:
+                    self.add_notification("Inventory full!", (255, 100, 100))
+                    return
+            else:
+                self.add_notification("Too far to pick up", (255, 100, 100))
+                return
+
+        # Check for spawn storage chest click
+        if self.world.spawn_storage_chest:
+            chest = self.world.spawn_storage_chest
+            chest_dist = math.sqrt(
+                (world_pos.x - chest.position.x) ** 2 +
+                (world_pos.y - chest.position.y) ** 2
+            )
+            if chest_dist <= 1.5:  # Within click range of chest
+                self._toggle_spawn_chest()
+                return
+
         # Check for dungeon entrance click (before stations and resources)
         dungeon_entrance = self.world.get_dungeon_entrance_at(world_pos)
         if dungeon_entrance:
@@ -2267,6 +2338,39 @@ class GameEngine:
                         mat = mat_db.get_material(item_id)
                         item_name = mat.name if mat else item_id
                         self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+            return
+
+        # Check for placed entity that can be broken (barriers, etc.)
+        placed_entity = self.world.get_entity_at(world_pos)
+        if placed_entity and placed_entity.entity_type == PlacedEntityType.BARRIER:
+            # Check distance - must be within interaction range (2.5 tiles)
+            dist = self.character.position.distance_to(placed_entity.position)
+            if dist > 2.5:
+                self.add_notification("Too far to break!", (255, 100, 100))
+                return
+
+            # Break the placed entity using tool
+            was_destroyed, damage, is_crit = self.character.break_placed_entity(placed_entity)
+
+            # Show damage number
+            self.damage_numbers.append(DamageNumber(damage, placed_entity.position.copy(), is_crit))
+
+            if was_destroyed:
+                # Drop the material back to player's inventory
+                mat_db = MaterialDatabase.get_instance()
+                mat = mat_db.get_material(placed_entity.item_id)
+                item_name = mat.name if mat else placed_entity.item_id
+
+                # Add material back to inventory (could add partial return based on tool efficiency)
+                self.character.inventory.add_item(placed_entity.item_id, 1)
+                self.add_notification(f"Broke {item_name}!", (100, 255, 100))
+
+                # Remove the entity from the world
+                self.world.remove_entity(placed_entity)
+            else:
+                # Show remaining health percentage
+                health_pct = (placed_entity.health / placed_entity.max_health) * 100
+                print(f"   Block health: {placed_entity.health:.0f}/{placed_entity.max_health:.0f} ({health_pct:.0f}%)")
 
     def handle_enchantment_selection_click(self, mouse_pos: Tuple[int, int]):
         """Handle clicks on the enchantment selection UI"""
@@ -3686,7 +3790,11 @@ class GameEngine:
             damage = (int(base * 0.8), int(base * 1.2))
 
         # Calculate durability from stats or tier
-        durability = 500
+        # Base durability 250, with tier multipliers: T1=1x, T2=2x, T3=4x, T4=8x
+        # Results in: T1=250, T2=500, T3=1000, T4=2000
+        BASE_DURABILITY = 250
+        TIER_MULTIPLIERS = {1: 1.0, 2: 2.0, 3: 4.0, 4: 8.0}
+        durability = BASE_DURABILITY
         if 'durability' in stats:
             dur = stats['durability']
             if isinstance(dur, list) and len(dur) >= 1:
@@ -3694,9 +3802,10 @@ class GameEngine:
             elif isinstance(dur, (int, float)):
                 durability = int(dur)
         else:
-            # Default based on tier
+            # Default based on tier with proper multipliers
             tier = item_data.get('tier', 1)
-            durability = 500 * tier
+            tier_mult = TIER_MULTIPLIERS.get(tier, 1.0)
+            durability = int(BASE_DURABILITY * tier_mult)
 
         # Extract weight
         weight = 1.0
@@ -5986,6 +6095,79 @@ class GameEngine:
         self.dungeon_chest_open = False
         self.dungeon_chest_item_rects = []
 
+    def _toggle_spawn_chest(self):
+        """Toggle the spawn storage chest UI open/closed."""
+        if not self.world.spawn_storage_chest:
+            return
+
+        # Check distance
+        chest = self.world.spawn_storage_chest
+        distance = self.character.position.distance_to(chest.position)
+        if distance > 2.0:
+            self.add_notification("Get closer to the chest!", (255, 255, 100))
+            return
+
+        # Toggle chest UI open/closed
+        self.spawn_chest_open = not self.spawn_chest_open
+
+        if self.spawn_chest_open:
+            self.add_notification("Storage chest opened! Q to store hovered item.", (100, 200, 255))
+        else:
+            self.add_notification("Storage chest closed.", (200, 200, 200))
+
+    def _close_spawn_chest(self):
+        """Close the spawn storage chest UI."""
+        self.spawn_chest_open = False
+        self.spawn_chest_item_rects = []
+
+    def _transfer_to_spawn_chest(self, inventory_slot: int):
+        """Transfer an item from inventory to spawn storage chest."""
+        if not self.world.spawn_storage_chest:
+            return False
+
+        chest = self.world.spawn_storage_chest
+
+        # Get item from inventory slot
+        slot = self.character.inventory.slots[inventory_slot]
+        if not slot:
+            return False
+
+        item_id = slot.item_id
+        quantity = slot.quantity
+
+        # Add to chest contents
+        chest.add_item(item_id, quantity)
+
+        # Remove from inventory
+        self.character.inventory.slots[inventory_slot] = None
+
+        item_name = item_id.replace('_', ' ').title()
+        self.add_notification(f"Stored {quantity}x {item_name}", (100, 200, 255))
+        return True
+
+    def _transfer_from_spawn_chest(self, chest_item_idx: int):
+        """Transfer an item from spawn storage chest to inventory."""
+        if not self.world.spawn_storage_chest:
+            return False
+
+        chest = self.world.spawn_storage_chest
+        if chest_item_idx >= len(chest.contents):
+            return False
+
+        item_id, quantity = chest.contents[chest_item_idx]
+
+        # Try to add to inventory
+        success = self.character.inventory.add_item(item_id, quantity)
+        if success:
+            # Remove from chest
+            chest.contents.pop(chest_item_idx)
+            item_name = item_id.replace('_', ' ').title()
+            self.add_notification(f"Retrieved {quantity}x {item_name}", (100, 255, 100))
+            return True
+        else:
+            self.add_notification("Inventory full!", (255, 100, 100))
+            return False
+
     def _transfer_item_to_chest(self, inventory_slot: int):
         """Transfer an item from inventory to dungeon chest."""
         if not self.dungeon_manager or not self.dungeon_manager.in_dungeon:
@@ -6047,6 +6229,107 @@ class GameEngine:
         else:
             self.add_notification("Inventory full!", (255, 100, 100))
             return False
+
+    def _get_hovered_inventory_slot(self) -> int:
+        """
+        Get the inventory slot index that the mouse is currently hovering over.
+
+        Returns:
+            Slot index (0-29) if hovering over a valid slot, -1 otherwise.
+        """
+        if not hasattr(self, 'mouse_pos') or not self.mouse_pos:
+            return -1
+
+        # Check if inventory panel is visible
+        if not hasattr(self.character, 'inventory'):
+            return -1
+
+        # Calculate slot positions (must match renderer.py render_inventory_panel)
+        # Tool section ends at: Config.INVENTORY_PANEL_Y + 35 + 20 + 50 = Y + 105
+        tools_y = Config.INVENTORY_PANEL_Y + 35
+        tool_slot_size = 50
+        start_x, start_y = 20, tools_y + tool_slot_size + 20  # Match renderer
+        slot_size = Config.INVENTORY_SLOT_SIZE
+        spacing = 10
+        slots_per_row = Config.INVENTORY_SLOTS_PER_ROW
+
+        mouse_x, mouse_y = self.mouse_pos
+
+        for i in range(len(self.character.inventory.slots)):
+            row, col = i // slots_per_row, i % slots_per_row
+            x = start_x + col * (slot_size + spacing)
+            y = start_y + row * (slot_size + spacing)
+
+            if (x <= mouse_x <= x + slot_size and
+                y <= mouse_y <= y + slot_size):
+                return i
+
+        return -1
+
+    def _handle_inventory_drop(self):
+        """
+        Handle Q/Shift+Q key press to drop items from inventory.
+
+        Q: Drop 1 of the hovered item
+        Shift+Q: Drop the entire stack
+        """
+        # Get hovered slot
+        slot_idx = self._get_hovered_inventory_slot()
+        if slot_idx < 0:
+            return
+
+        slot = self.character.inventory.slots[slot_idx]
+        if not slot:
+            return
+
+        # Check if shift is held
+        shift_held = pygame.K_LSHIFT in self.keys_pressed or pygame.K_RSHIFT in self.keys_pressed
+
+        # Determine how many to drop
+        drop_qty = slot.quantity if shift_held else 1
+
+        # Get item info before removing
+        item_id = slot.item_id
+        item_name = item_id.replace('_', ' ').title()
+        rarity = getattr(slot, 'rarity', 'common')
+        crafted_stats = getattr(slot, 'crafted_stats', None)
+        equipment_data = slot.equipment_data if slot.is_equipment() else None
+
+        # Remove from inventory
+        if drop_qty >= slot.quantity:
+            # Remove entire slot
+            self.character.inventory.slots[slot_idx] = None
+        else:
+            # Decrease quantity
+            slot.quantity -= drop_qty
+
+        # Create dropped item entity in world at player position
+        # Place it slightly in front of player to avoid overlapping
+        drop_x = self.character.position.x + 0.5
+        drop_y = self.character.position.y + 0.5
+
+        dropped_entity = PlacedEntity(
+            position=Position(drop_x, drop_y, 0),
+            item_id=item_id,
+            entity_type=PlacedEntityType.DROPPED_ITEM,
+            tier=1,  # Will be set from item data
+            health=1.0,  # Dropped items don't need health
+            lifetime=300.0,  # 5 minutes
+            time_remaining=300.0,
+            crafted_stats=crafted_stats or {}
+        )
+
+        # Store drop quantity and other metadata for pickup
+        dropped_entity.effect_params = {
+            'quantity': drop_qty,
+            'rarity': rarity,
+            'equipment_data': equipment_data,
+        }
+
+        self.world.placed_entities.append(dropped_entity)
+
+        self.add_notification(f"Dropped {drop_qty}x {item_name}", (200, 200, 150))
+        print(f"🎒 Dropped {drop_qty}x {item_id} at ({drop_x:.1f}, {drop_y:.1f})")
 
     def _exit_dungeon_via_portal(self):
         """Exit the dungeon through the exit portal."""
@@ -6334,6 +6617,14 @@ class GameEngine:
             if chest:
                 self.dungeon_chest_rect, self.dungeon_chest_item_rects = \
                     self.renderer.render_dungeon_chest_ui(chest, self.dungeon_manager)
+
+        # Render spawn storage chest UI
+        if self.spawn_chest_open and self.world.spawn_storage_chest:
+            self.spawn_chest_rect, self.spawn_chest_item_rects = \
+                self.renderer.render_spawn_chest_ui(self.world.spawn_storage_chest)
+        else:
+            self.spawn_chest_rect = None
+            self.spawn_chest_item_rects = []
 
         if self.character.class_selection_open:
             result = self.renderer.render_class_selection_ui(self.character, self.mouse_pos)
@@ -7319,22 +7610,40 @@ class GameEngine:
         pygame.draw.ellipse(surf, (90, 85, 95), (cauldron_x - cauldron_w//2 - 8, cauldron_y - 35, cauldron_w + 16, 35))
         pygame.draw.ellipse(surf, (60, 55, 65), (cauldron_x - cauldron_w//2, cauldron_y - 30, cauldron_w, 25))
 
-        # Liquid in cauldron - color based on reaction stage
+        # Liquid in cauldron - color interpolates toward peak based on quality
         if state['current_reaction']:
             reaction = state['current_reaction']
             stage = reaction.get('stage', 1)
+            quality = reaction.get('quality', 0.0)
+            max_quality = reaction.get('max_quality', 0.3)  # This ingredient's max contribution
 
-            # Liquid color changes with stage
+            # Base color by stage
             if stage == 1:
-                liquid_color = (80, 160, 120)  # Green-blue
+                base_color = (80, 160, 120)  # Green-blue
             elif stage == 2:
-                liquid_color = (100, 200, 140)  # Brighter green
+                base_color = (100, 200, 140)  # Brighter green
             elif stage == 3:
-                liquid_color = (200, 220, 100)  # Golden (sweet spot)
+                base_color = (200, 220, 100)  # Golden (sweet spot)
             elif stage == 4:
-                liquid_color = (200, 150, 80)  # Orange
+                base_color = (200, 150, 80)  # Orange
             else:
-                liquid_color = (200, 80, 80)  # Red (danger)
+                base_color = (200, 80, 80)  # Red (danger)
+
+            # Ideal peak color is bright golden - interpolate toward it based on quality ratio
+            ideal_color = (255, 220, 80)  # Bright golden peak color
+            quality_ratio = quality / max(0.01, max_quality)  # How close to this ingredient's peak
+
+            # Interpolate from base to ideal based on quality ratio
+            if quality_ratio > 0.7:
+                # Near peak - blend toward golden
+                blend = (quality_ratio - 0.7) / 0.3  # 0 to 1 as approaching peak
+                liquid_color = (
+                    int(base_color[0] + (ideal_color[0] - base_color[0]) * blend),
+                    int(base_color[1] + (ideal_color[1] - base_color[1]) * blend),
+                    int(base_color[2] + (ideal_color[2] - base_color[2]) * blend)
+                )
+            else:
+                liquid_color = base_color
 
             # Animated liquid surface
             liquid_points = []
@@ -7392,9 +7701,9 @@ class GameEngine:
         if state['current_reaction']:
             reaction = state['current_reaction']
 
-            # Quality panel on left side (removed stage name indicators per user request)
+            # Quality panel on left side with cycle indicator
             stage_panel_x, stage_panel_y = 50, 130
-            stage_panel_w, stage_panel_h = 150, 120
+            stage_panel_w, stage_panel_h = 150, 145  # Expanded to fit cycle indicator
 
             pygame.draw.rect(surf, (230, 235, 240), (stage_panel_x, stage_panel_y, stage_panel_w, stage_panel_h), border_radius=8)
             pygame.draw.rect(surf, (150, 160, 155), (stage_panel_x, stage_panel_y, stage_panel_w, stage_panel_h), 2, border_radius=8)
@@ -7419,9 +7728,33 @@ class GameEngine:
                 pygame.draw.rect(surf, qcolor, (qbar_x, qbar_y, qfill, qbar_h), border_radius=4)
             pygame.draw.rect(surf, (140, 150, 145), (qbar_x, qbar_y, qbar_w, qbar_h), 1, border_radius=4)
 
-        # Ingredient progress panel on right (expanded for name)
+            # Multicycle indicator - shows how many oscillation cycles (1, 2, or 3)
+            oscillation_count = reaction.get('oscillation_count', 2)
+            cycle_label = self.renderer.tiny_font.render("Cycles:", True, (100, 100, 100))
+            surf.blit(cycle_label, (stage_panel_x + 10, stage_panel_y + 100))
+
+            # Draw cycle indicators as small circles
+            cycle_start_x = stage_panel_x + 65
+            cycle_y = stage_panel_y + 105
+            for i in range(3):
+                circle_x = cycle_start_x + i * 22
+                if i < oscillation_count:
+                    # Filled circle with color based on cycle number
+                    if i == oscillation_count - 1:
+                        # Last cycle (ideal peak) is golden
+                        cycle_color = (255, 200, 50)
+                    else:
+                        # Earlier cycles are dimmer
+                        cycle_color = (150, 180, 130)
+                    pygame.draw.circle(surf, cycle_color, (circle_x, cycle_y), 8)
+                    pygame.draw.circle(surf, (100, 120, 100), (circle_x, cycle_y), 8, 2)
+                else:
+                    # Empty circle for unused cycles
+                    pygame.draw.circle(surf, (180, 180, 180), (circle_x, cycle_y), 8, 2)
+
+        # Ingredient progress panel on right (expanded for name and volatility info)
         ingr_panel_x, ingr_panel_y = ww - 230, 130
-        ingr_panel_w, ingr_panel_h = 180, 130
+        ingr_panel_w, ingr_panel_h = 180, 145  # Expanded to fit volatility and max quality
 
         pygame.draw.rect(surf, (230, 235, 240), (ingr_panel_x, ingr_panel_y, ingr_panel_w, ingr_panel_h), border_radius=8)
         pygame.draw.rect(surf, (150, 160, 155), (ingr_panel_x, ingr_panel_y, ingr_panel_w, ingr_panel_h), 2, border_radius=8)
@@ -7434,7 +7767,7 @@ class GameEngine:
         ingr_text = self.renderer.font.render(f"{current_ingr} / {total_ingr}", True, (60, 120, 80))
         surf.blit(ingr_text, (ingr_panel_x + ingr_panel_w//2 - ingr_text.get_width()//2, ingr_panel_y + 40))
 
-        # Display current ingredient name
+        # Display current ingredient name with volatility-based color
         current_ingredient_name = state.get('current_ingredient_name')
         if current_ingredient_name:
             # Format name (remove underscores, capitalize)
@@ -7445,8 +7778,24 @@ class GameEngine:
             name_label_font = pygame.font.Font(None, 18)
             name_label = name_label_font.render("Current:", True, (100, 100, 100))
             surf.blit(name_label, (ingr_panel_x + ingr_panel_w//2 - name_label.get_width()//2, ingr_panel_y + 75))
-            name_text = self.renderer.small_font.render(display_name, True, (80, 140, 100))
+
+            # Volatility-based color: low volatility = green, high = orange/red
+            volatility = state.get('current_ingredient_volatility', 0.5)
+            if volatility < 0.3:
+                name_color = (80, 180, 100)  # Green - low volatility
+            elif volatility < 0.6:
+                name_color = (180, 180, 80)  # Yellow - medium
+            else:
+                name_color = (220, 120, 60)  # Orange - high volatility
+
+            name_text = self.renderer.small_font.render(display_name, True, name_color)
             surf.blit(name_text, (ingr_panel_x + ingr_panel_w//2 - name_text.get_width()//2, ingr_panel_y + 92))
+
+            # Display max quality contribution for this ingredient
+            max_qual = state.get('current_ingredient_max_quality', 0)
+            if max_qual > 0:
+                qual_hint = self.renderer.tiny_font.render(f"Max: {int(max_qual * 100)}%", True, (120, 120, 120))
+                surf.blit(qual_hint, (ingr_panel_x + ingr_panel_w//2 - qual_hint.get_width()//2, ingr_panel_y + 112))
 
         # Timer panel
         timer_panel_x, timer_panel_y = ww - 230, 250

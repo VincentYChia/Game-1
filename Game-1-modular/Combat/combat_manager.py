@@ -472,9 +472,11 @@ class CombatManager:
         for chunk_coords, enemy_list in self.enemies.items():
             for enemy in enemy_list:
                 if enemy.is_alive:
-                    # Update AI with night modifiers and world system for collision checking
+                    # Update AI with night modifiers, world system for collision, and safe zone
                     enemy.update_ai(dt, player_pos, aggro_multiplier=aggro_mult,
-                                    speed_multiplier=speed_mult, world_system=self.world)
+                                    speed_multiplier=speed_mult, world_system=self.world,
+                                    safe_zone_center=(self.config.safe_zone_x, self.config.safe_zone_y),
+                                    safe_zone_radius=self.config.safe_zone_radius)
 
                     # Check if enemy can use special ability
                     dist = enemy.distance_to(player_pos)

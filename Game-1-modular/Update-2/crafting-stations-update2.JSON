@@ -1,0 +1,218 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Update-2: Missing Tier 3 and Tier 4 crafting stations",
+    "note": "Adds T3/T4 stations for refining, alchemy, engineering, and enchanting"
+  },
+
+  "items": [
+    {
+      "metadata": {
+        "narrative": "Master refinery with arcane heat control. Can process the rarest ores without any waste.",
+        "tags": ["station", "refining", "quality"]
+      },
+      "itemId": "refinery_t3",
+      "name": "Master Refinery",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "refining",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 85.0
+      },
+      "requirements": {
+        "level": 15
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary refinery that exists partially outside normal reality. Can process materials that shouldn't be refinable.",
+        "tags": ["station", "refining", "legendary"]
+      },
+      "itemId": "refinery_t4",
+      "name": "Eternal Refinery",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "refining",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 120.0
+      },
+      "requirements": {
+        "level": 25
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master alchemy laboratory with crystalline distillation chambers and self-regulating temperature controls.",
+        "tags": ["station", "alchemy", "quality"]
+      },
+      "itemId": "alchemy_table_t3",
+      "name": "Master Alchemy Lab",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "alchemy",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 70.0
+      },
+      "requirements": {
+        "level": 15
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary alchemy apparatus that bends the laws of chemistry. Can create potions that defy natural law.",
+        "tags": ["station", "alchemy", "legendary"]
+      },
+      "itemId": "alchemy_table_t4",
+      "name": "Philosopher's Laboratory",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "alchemy",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 100.0
+      },
+      "requirements": {
+        "level": 25
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master engineering station with precision measurement tools and automated assembly assistance.",
+        "tags": ["station", "engineering", "quality"]
+      },
+      "itemId": "engineering_bench_t3",
+      "name": "Master Engineering Station",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "engineering",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 75.0
+      },
+      "requirements": {
+        "level": 15
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary engineering workshop that incorporates arcane machinery. Can craft devices that blur the line between magic and technology.",
+        "tags": ["station", "engineering", "legendary"]
+      },
+      "itemId": "engineering_bench_t4",
+      "name": "Arcane Engineering Workshop",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "engineering",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 110.0
+      },
+      "requirements": {
+        "level": 25
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master enchanting table with floating crystal matrices and perfect rune alignment tools.",
+        "tags": ["station", "enchanting", "quality"]
+      },
+      "itemId": "enchanting_table_t3",
+      "name": "Master Enchanting Altar",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "enchanting",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 80.0
+      },
+      "requirements": {
+        "level": 15
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary enchanting nexus that taps into the fabric of reality itself. Can imbue items with powers beyond mortal understanding.",
+        "tags": ["station", "enchanting", "legendary"]
+      },
+      "itemId": "enchanting_table_t4",
+      "name": "Nexus of Enchantment",
+      "category": "station",
+      "type": "crafting",
+      "subtype": "enchanting",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 0,
+      "stats": {
+        "durability": [9999, 9999],
+        "weight": 120.0
+      },
+      "requirements": {
+        "level": 25
+      },
+      "flags": {
+        "stackable": false,
+        "placeable": true,
+        "repairable": false
+      }
+    }
+  ]
+}

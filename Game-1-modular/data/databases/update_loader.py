@@ -42,9 +42,9 @@ def scan_update_directory(update_dir: Path, database_type: str) -> List[Path]:
     files = []
 
     if database_type == 'equipment':
-        # Look for items/weapons/armor JSONs
-        patterns = ['*items*.JSON', '*weapons*.JSON', '*armor*.JSON', '*tools*.JSON',
-                    '*items*.json', '*weapons*.json', '*armor*.json', '*tools*.json']
+        # Look for items/weapons/armor/stations JSONs
+        patterns = ['*items*.JSON', '*weapons*.JSON', '*armor*.JSON', '*tools*.JSON', '*stations*.JSON',
+                    '*items*.json', '*weapons*.json', '*armor*.json', '*tools*.json', '*stations*.json']
     elif database_type == 'skills':
         # Look for skills JSONs
         patterns = ['*skills*.JSON', '*skills*.json']

@@ -302,7 +302,10 @@ class AlchemyReaction:
             "quality": self.locked_quality if self.locked_quality is not None else self.get_quality(),
             "size": self.size,
             "glow": self.glow,
-            "color_shift": self.color_shift
+            "color_shift": self.color_shift,
+            "oscillation_count": self.oscillation_count,  # 1, 2, or 3 cycles
+            "max_quality": self.max_quality,  # This ingredient's max quality contribution
+            "secret_value": self.secret_value  # Vowel-based volatility score
         }
 
 
@@ -742,19 +745,29 @@ class AlchemyMinigame:
         """Get current minigame state for rendering"""
         # Get current ingredient name for display
         current_ingredient_name = None
+        current_ingredient_volatility = 0.0  # 0.0 = low volatility, 1.0 = high volatility
+        current_ingredient_max_quality = 0.0
         if 0 <= self.current_ingredient_index < len(self.ingredients):
             ingredient = self.ingredients[self.current_ingredient_index]
             current_ingredient_name = ingredient.get('materialId') or ingredient.get('itemId', 'Unknown')
+            # Get volatility from max quality (higher max = more important = higher volatility indicator)
+            if self.current_ingredient_index < len(self.ingredient_max_qualities):
+                current_ingredient_max_quality = self.ingredient_max_qualities[self.current_ingredient_index]
+                # Volatility scales from 0-1 based on relative importance
+                current_ingredient_volatility = min(1.0, current_ingredient_max_quality * len(self.ingredients))
 
         return {
             "active": self.active,
             "current_ingredient_index": self.current_ingredient_index,
             "current_ingredient_name": current_ingredient_name,
+            "current_ingredient_volatility": current_ingredient_volatility,  # 0.0-1.0 for color
+            "current_ingredient_max_quality": current_ingredient_max_quality,  # For display
             "total_ingredients": len(self.ingredients),
             "current_reaction": self.current_reaction.get_state() if self.current_reaction else None,
             "locked_reactions": [r.get_state() for r in self.locked_reactions],
             "total_progress": self.total_progress,
             "time_left": self.time_left,
+            "time_limit": self.time_limit,
             "result": self.result
         }
 
