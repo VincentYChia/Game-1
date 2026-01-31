@@ -35,11 +35,15 @@ class NaturalResource:
                 self.required_tool = "axe"
                 self.respawns = True
                 self.respawn_timer = 60.0 if not Config.DEBUG_INFINITE_RESOURCES else 1.0
-            elif resource_type == ResourceType.FISHING_SPOT:
+            elif "fishing_spot" in resource_type.value:
+                # All fishing spots (carp, sunfish, stormfin, etc.)
                 self.required_tool = "fishing_rod"
                 self.respawns = True
-                self.respawn_timer = 30.0 if not Config.DEBUG_INFINITE_RESOURCES else 1.0
-                self.max_hp = 50  # Fishing spots are quick to "deplete"
+                # Higher tier fishing spots respawn slower
+                base_respawn = {1: 30.0, 2: 45.0, 3: 60.0, 4: 90.0}.get(tier, 30.0)
+                self.respawn_timer = base_respawn if not Config.DEBUG_INFINITE_RESOURCES else 1.0
+                # Fishing spot HP scales with tier
+                self.max_hp = {1: 50, 2: 75, 3: 100, 4: 150}.get(tier, 50)
             else:
                 self.required_tool = "pickaxe"
                 self.respawns = False
@@ -174,8 +178,8 @@ class NaturalResource:
         if "tree" in res_value or "sapling" in res_value:
             return Config.COLOR_TREE
 
-        # Fishing spots
-        if self.resource_type == ResourceType.FISHING_SPOT:
+        # Fishing spots (all types)
+        if "fishing_spot" in res_value:
             return (0, 191, 255)  # Deep sky blue for fishing spots
 
         # Ores: contain ore-related keywords

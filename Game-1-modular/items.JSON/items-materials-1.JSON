@@ -765,6 +765,94 @@
       "tier": 1,
       "rarity": "uncommon",
       "category": "metal"
+    },
+    {
+      "metadata": {
+        "narrative": "Dull bronze-green scales from common freshwater fish. Surprisingly durable and often used in basic crafting.",
+        "tags": ["scales", "fishing", "common", "crafting"]
+      },
+      "materialId": "common_scales",
+      "name": "Common Scales",
+      "tier": 1,
+      "rarity": "common",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Silvery-white scales with a subtle iridescent sheen. Prized by craftsmen for their flexibility and beauty.",
+        "tags": ["scales", "fishing", "quality", "crafting"]
+      },
+      "materialId": "fine_scales",
+      "name": "Fine Scales",
+      "tier": 1,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Hard metallic scales from fish dwelling near ore deposits. Naturally infused with trace minerals.",
+        "tags": ["scales", "fishing", "metallic", "durable"]
+      },
+      "materialId": "steel_scales",
+      "name": "Steel Scales",
+      "tier": 2,
+      "rarity": "uncommon",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Luminous scales that seem to drink in moonlight. Found on fish from the deepest, purest waters.",
+        "tags": ["scales", "fishing", "magical", "rare"]
+      },
+      "materialId": "mithril_scales",
+      "name": "Mithril Scales",
+      "tier": 2,
+      "rarity": "rare",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Nearly indestructible scales from fish that dwell in volcanic springs. Incredibly heat-resistant.",
+        "tags": ["scales", "fishing", "fire", "legendary"]
+      },
+      "materialId": "adamantine_scales",
+      "name": "Adamantine Scales",
+      "tier": 3,
+      "rarity": "rare",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Golden-green scales with an otherworldly shimmer. Said to come from fish blessed by ancient water spirits.",
+        "tags": ["scales", "fishing", "ancient", "magical"]
+      },
+      "materialId": "orichalcum_scales",
+      "name": "Orichalcum Scales",
+      "tier": 3,
+      "rarity": "epic",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Scales that phase in and out of existence. Harvested from fish that swim between dimensions.",
+        "tags": ["scales", "fishing", "mythical", "temporal"]
+      },
+      "materialId": "primordial_scales",
+      "name": "Primordial Scales",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "monster_drop"
+    },
+    {
+      "metadata": {
+        "narrative": "Reality-warping scales that shift color unpredictably. Each one contains a fragment of pure chaos.",
+        "tags": ["scales", "fishing", "mythical", "chaos"]
+      },
+      "materialId": "chaos_scales",
+      "name": "Chaos Scales",
+      "tier": 4,
+      "rarity": "legendary",
+      "category": "monster_drop"
     }
   ]
 }

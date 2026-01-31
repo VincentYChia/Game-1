@@ -1,698 +1,235 @@
-# Fishing Expansion Plan
+# Fishing System Implementation
 
-**Purpose**: This document provides everything needed to implement a complete fishing system.
-**Target**: Lower model implementation
-**Date**: 2026-01-29
-
----
-
-## Current State Analysis
-
-### What Exists
-1. **ResourceType.FISHING_SPOT** - Defined in `data/models/world.py:73`
-2. **Fishing spot spawning** - In `systems/chunk.py:286-311`, spawns 3-8 fishing spots on water chunks
-3. **Tier distribution**: Lake/River = tier 1-2, Cursed Swamp = tier 3-4
-4. **One fishing rod** - `bamboo_fishing_rod` (tier 1) in `items.JSON/items-smithing-2.JSON:571`
-5. **Hardcoded loot** - In `systems/natural_resource.py:184`: `("raw_fish", 1, 3)` - **BUT THIS ITEM DOESN'T EXIST**
-
-### What's Missing
-1. **No fish materials** - `raw_fish` is referenced but not defined anywhere
-2. **No fishing nodes in JSON** - `resource-node-1.JSON` has no fishing entries
-3. **No tiered fish** - Only one generic "raw_fish" hardcoded
-4. **No higher-tier fishing rods** - Only tier 1 exists
-5. **No cooked fish/recipes** - No alchemy or cooking recipes for fish
+**Status**: FULLY IMPLEMENTED
+**Date**: 2026-01-31
+**Version**: 2.0
 
 ---
 
-## Implementation Tasks
+## Overview
 
-### Task 1: Add Fish Materials to items-materials-1.JSON
+The fishing system is an OSU-style rhythm minigame where players click expanding ripples on a virtual pond. Success rewards materials and XP similar to combat, while failure results in no rewards and double durability loss on the fishing rod.
 
-**File**: `items.JSON/items-materials-1.JSON`
+### Core Mechanics
 
-Add these fish materials at the end of the materials array. Follow the existing format in the file.
-
-```json
-{
-  "metadata": {
-    "narrative": "Common freshwater fish caught in calm waters. The staple catch of novice anglers.",
-    "tags": ["fish", "food", "raw", "common"]
-  },
-  "materialId": "raw_carp",
-  "name": "Raw Carp",
-  "category": "fish",
-  "tier": 1,
-  "rarity": "common",
-  "stackSize": 20,
-  "weight": 0.5,
-  "sources": ["fishing_spot"],
-  "flags": {
-    "stackable": true,
-    "perishable": false
-  }
-},
-{
-  "metadata": {
-    "narrative": "Small silvery fish that swim in schools. Easy to catch, quick to cook.",
-    "tags": ["fish", "food", "raw", "common"]
-  },
-  "materialId": "raw_minnow",
-  "name": "Raw Minnow",
-  "category": "fish",
-  "tier": 1,
-  "rarity": "common",
-  "stackSize": 30,
-  "weight": 0.2,
-  "sources": ["fishing_spot"],
-  "flags": {
-    "stackable": true,
-    "perishable": false
-  }
-},
-{
-  "metadata": {
-    "narrative": "Spotted river fish with firm flesh. Prized for its taste when properly prepared.",
-    "tags": ["fish", "food", "raw", "quality"]
-  },
-  "materialId": "raw_trout",
-  "name": "Raw Trout",
-  "category": "fish",
-  "tier": 2,
-  "rarity": "common",
-  "stackSize": 20,
-  "weight": 0.8,
-  "sources": ["fishing_spot"],
-  "flags": {
-    "stackable": true,
-    "perishable": false
-  }
-},
-{
-  "metadata": {
-    "narrative": "Large predatory fish that fights hard on the line. Excellent eating.",
-    "tags": ["fish", "food", "raw", "quality"]
-  },
-  "materialId": "raw_bass",
-  "name": "Raw Bass",
-  "category": "fish",
-  "tier": 2,
-  "rarity": "common",
-  "stackSize": 15,
-  "weight": 1.2,
-  "sources": ["fishing_spot"],
-  "flags": {
-    "stackable": true,
-    "perishable": false
-  }
-},
-{
-  "metadata": {
-    "narrative": "Ancient fish that lurks in deep, still waters. Said to grant visions when consumed.",
-    "tags": ["fish", "food", "raw", "rare", "magical"]
-  },
-  "materialId": "raw_ghostfish",
-  "name": "Raw Ghostfish",
-  "category": "fish",
-  "tier": 3,
-  "rarity": "uncommon",
-  "stackSize": 10,
-  "weight": 1.5,
-  "sources": ["fishing_spot"],
-  "flags": {
-    "stackable": true,
-    "perishable": false
-  }
-},
-{
-  "metadata": {
-    "narrative": "Eel-like fish found in cursed waters. Its flesh pulses with dark energy.",
-    "tags": ["fish", "food", "raw", "rare", "cursed"]
-  },
-  "materialId": "raw_shadoweel",
-  "name": "Raw Shadoweel",
-  "category": "fish",
-  "tier": 3,
-  "rarity": "uncommon",
-  "stackSize": 10,
-  "weight": 1.0,
-  "sources": ["fishing_spot"],
-  "flags": {
-    "stackable": true,
-    "perishable": false
-  }
-},
-{
-  "metadata": {
-    "narrative": "Legendary fish that shimmers with otherworldly light. Grants temporary magical enhancement.",
-    "tags": ["fish", "food", "raw", "legendary", "magical"]
-  },
-  "materialId": "raw_starscale",
-  "name": "Raw Starscale",
-  "category": "fish",
-  "tier": 4,
-  "rarity": "rare",
-  "stackSize": 5,
-  "weight": 2.0,
-  "sources": ["fishing_spot"],
-  "flags": {
-    "stackable": true,
-    "perishable": false
-  }
-},
-{
-  "metadata": {
-    "narrative": "Massive primordial fish from the deepest waters. Its scales are harder than iron.",
-    "tags": ["fish", "food", "raw", "legendary", "ancient"]
-  },
-  "materialId": "raw_leviathan_fry",
-  "name": "Raw Leviathan Fry",
-  "category": "fish",
-  "tier": 4,
-  "rarity": "rare",
-  "stackSize": 5,
-  "weight": 3.0,
-  "sources": ["fishing_spot"],
-  "flags": {
-    "stackable": true,
-    "perishable": false
-  }
-}
-```
+- **OSU-Style Minigame**: Click when expanding rings hit target rings
+- **Stat Effects**:
+  - **LCK (Luck)**: Reduces number of ripples needed (shorter game)
+  - **STR (Strength)**: Increases hit tolerance (larger click area)
+  - **Rod Tier/Quality**: Slows expansion speed (more time to react)
+- **Win**: Get materials + XP (like killing a mob)
+- **Fail**: Get nothing + double durability loss
 
 ---
 
-### Task 2: Add Fishing Nodes to resource-node-1.JSON
+## Files Created/Modified
 
-**File**: `Definitions.JSON/resource-node-1.JSON`
+### New Files
 
-Add these entries to the `nodes` array. Place them after the stone/ore entries.
+| File | Purpose |
+|------|---------|
+| `Crafting-subdisciplines/fishing.py` | OSU-style fishing minigame (~500 lines) |
 
-```json
-{
-  "metadata": {
-    "narrative": "Calm shallows where small fish gather. Ripples on the surface betray their presence.",
-    "tags": ["water", "fishing", "starter"]
-  },
-  "resourceId": "fishing_spot_shallow",
-  "name": "Shallow Fishing Spot",
-  "category": "fishing",
-  "tier": 1,
-  "requiredTool": "fishing_rod",
-  "baseHealth": 50,
-  "drops": [
-    {
-      "materialId": "raw_carp",
-      "quantity": "several",
-      "chance": "high"
-    },
-    {
-      "materialId": "raw_minnow",
-      "quantity": "many",
-      "chance": "guaranteed"
-    }
-  ],
-  "respawnTime": "fast"
-},
-{
-  "metadata": {
-    "narrative": "Deeper waters where larger fish swim. Patience and skill required.",
-    "tags": ["water", "fishing", "quality"]
-  },
-  "resourceId": "fishing_spot_deep",
-  "name": "Deep Fishing Spot",
-  "category": "fishing",
-  "tier": 2,
-  "requiredTool": "fishing_rod",
-  "baseHealth": 50,
-  "drops": [
-    {
-      "materialId": "raw_trout",
-      "quantity": "several",
-      "chance": "high"
-    },
-    {
-      "materialId": "raw_bass",
-      "quantity": "few",
-      "chance": "moderate"
-    }
-  ],
-  "respawnTime": "fast"
-},
-{
-  "metadata": {
-    "narrative": "Dark waters that seem to swallow light. Strange fish lurk in the depths.",
-    "tags": ["water", "fishing", "rare", "cursed"]
-  },
-  "resourceId": "fishing_spot_cursed",
-  "name": "Cursed Fishing Spot",
-  "category": "fishing",
-  "tier": 3,
-  "requiredTool": "fishing_rod",
-  "baseHealth": 50,
-  "drops": [
-    {
-      "materialId": "raw_ghostfish",
-      "quantity": "few",
-      "chance": "moderate"
-    },
-    {
-      "materialId": "raw_shadoweel",
-      "quantity": "few",
-      "chance": "moderate"
-    }
-  ],
-  "respawnTime": "normal"
-},
-{
-  "metadata": {
-    "narrative": "Waters that shimmer with starlight even during the day. Legendary catches await.",
-    "tags": ["water", "fishing", "legendary", "magical"]
-  },
-  "resourceId": "fishing_spot_ethereal",
-  "name": "Ethereal Fishing Spot",
-  "category": "fishing",
-  "tier": 4,
-  "requiredTool": "fishing_rod",
-  "baseHealth": 50,
-  "drops": [
-    {
-      "materialId": "raw_starscale",
-      "quantity": "few",
-      "chance": "low"
-    },
-    {
-      "materialId": "raw_leviathan_fry",
-      "quantity": "few",
-      "chance": "rare"
-    },
-    {
-      "materialId": "raw_ghostfish",
-      "quantity": "few",
-      "chance": "moderate"
-    }
-  ],
-  "respawnTime": "slow"
-}
-```
+### Modified Files
+
+| File | Changes |
+|------|---------|
+| `items.JSON/items-materials-1.JSON` | Added 8 scale materials (2 per tier) |
+| `Definitions.JSON/resource-node-1.JSON` | Added 12 fishing nodes across 4 tiers |
+| `items.JSON/items-smithing-2.JSON` | Added 3 fishing rods (T2, T3, T4) |
+| `recipes.JSON/recipes-smithing-3.JSON` | Added 3 fishing rod recipes |
+| `data/models/world.py` | Added fishing spot ResourceType enums |
+| `systems/chunk.py` | Updated fishing spot spawning logic |
+| `systems/natural_resource.py` | Updated fishing spot handling |
+| `core/game_engine.py` | Added fishing minigame integration |
 
 ---
 
-### Task 3: Update natural_resource.py Type-to-ID Mapping
+## New Materials: Scales
 
-**File**: `systems/natural_resource.py`
+8 new scale materials with the "scales" tag (2 per tier):
 
-**Location**: Find the `_get_resource_node_data` function around line 141.
-
-**Current code** (around line 159):
-```python
-ResourceType.FISHING_SPOT: None,  # No JSON definition for fishing
-```
-
-**Change to**:
-```python
-ResourceType.FISHING_SPOT: "fishing_spot_shallow",  # Default to shallow, tier determines actual spot
-```
-
-**Additional change**: The mapping should be tier-aware. Update the function to handle fishing specially:
-
-Find the `_get_resource_node_data` function and modify it. After the line:
-```python
-resource_id = type_to_id_map.get(resource_type)
-```
-
-Add this logic BEFORE the return statement:
-```python
-# Special handling for fishing spots - map by tier
-if resource_type == ResourceType.FISHING_SPOT:
-    # This will be handled differently - fishing spots use tier from spawning
-    # The actual node lookup happens in NaturalResource.__init__
-    return None  # Let the tier-based lookup handle it
-```
-
-Then in `NaturalResource.__init__`, after the line `node_data = _get_resource_node_data(resource_type)`:
-```python
-# Special handling for tiered fishing spots
-if resource_type == ResourceType.FISHING_SPOT and node_data is None:
-    nodes = _load_resource_nodes()
-    tier_to_fishing_spot = {
-        1: "fishing_spot_shallow",
-        2: "fishing_spot_deep",
-        3: "fishing_spot_cursed",
-        4: "fishing_spot_ethereal"
-    }
-    fishing_id = tier_to_fishing_spot.get(tier, "fishing_spot_shallow")
-    node_data = nodes.get(fishing_id)
-```
+| Material ID | Tier | Rarity | Description |
+|-------------|------|--------|-------------|
+| common_scales | 1 | Common | Basic freshwater fish scales |
+| fine_scales | 1 | Uncommon | Silvery-white iridescent scales |
+| steel_scales | 2 | Uncommon | Metallic scales from ore-fed fish |
+| mithril_scales | 2 | Rare | Luminous moonlight-drinking scales |
+| adamantine_scales | 3 | Rare | Heat-resistant volcanic spring scales |
+| orichalcum_scales | 3 | Epic | Otherworldly spirit-blessed scales |
+| primordial_scales | 4 | Legendary | Dimension-phasing scales |
+| chaos_scales | 4 | Legendary | Reality-warping chaotic scales |
 
 ---
 
-### Task 4: Add Higher-Tier Fishing Rods to items-smithing-2.JSON
+## Fishing Nodes
 
-**File**: `items.JSON/items-smithing-2.JSON`
+12 unique fishing spots across 4 tiers:
 
-Find the `tools` array (around line 565) and add these after the `bamboo_fishing_rod`:
+### Tier 1 (3 nodes)
+| Resource ID | Name | Elemental Drops | Scale Drops |
+|-------------|------|-----------------|-------------|
+| fishing_spot_carp | Carp Pool | water_crystal, earth_crystal | common_scales, fine_scales |
+| fishing_spot_sunfish | Sunfish Shallows | fire_crystal, air_crystal | common_scales, fine_scales |
+| fishing_spot_minnow | Minnow Stream | All T1 crystals | common_scales |
 
-```json
-{
-  "metadata": {
-    "narrative": "Sturdy oak rod reinforced with iron fittings. Reliable for medium-sized catches.",
-    "tags": ["tool", "fishing", "gathering", "quality"]
-  },
-  "itemId": "reinforced_fishing_rod",
-  "name": "Reinforced Fishing Rod",
-  "category": "equipment",
-  "type": "tool",
-  "subtype": "fishing_rod",
-  "tier": 2,
-  "rarity": "common",
-  "range": 6,
-  "slot": "mainHand",
-  "statMultipliers": {
-    "damage": 0.6,
-    "gathering": 1.3,
-    "durability": 1.0,
-    "weight": 0.8
-  },
-  "requirements": {
-    "level": 5,
-    "stats": {}
-  },
-  "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
-  }
-},
-{
-  "metadata": {
-    "narrative": "Mithril-tipped rod with enchanted line. Can sense fish before they bite.",
-    "tags": ["tool", "fishing", "gathering", "rare", "magical"]
-  },
-  "itemId": "mithril_fishing_rod",
-  "name": "Mithril Fishing Rod",
-  "category": "equipment",
-  "type": "tool",
-  "subtype": "fishing_rod",
-  "tier": 3,
-  "rarity": "uncommon",
-  "range": 8,
-  "slot": "mainHand",
-  "statMultipliers": {
-    "damage": 0.7,
-    "gathering": 1.6,
-    "durability": 1.2,
-    "weight": 0.5
-  },
-  "requirements": {
-    "level": 12,
-    "stats": {}
-  },
-  "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
-  }
-},
-{
-  "metadata": {
-    "narrative": "Legendary rod crafted from worldtree branches. The line seems to know where fish will be.",
-    "tags": ["tool", "fishing", "gathering", "legendary", "sentient"]
-  },
-  "itemId": "worldtree_fishing_rod",
-  "name": "Worldtree Fishing Rod",
-  "category": "equipment",
-  "type": "tool",
-  "subtype": "fishing_rod",
-  "tier": 4,
-  "rarity": "rare",
-  "range": 10,
-  "slot": "mainHand",
-  "statMultipliers": {
-    "damage": 0.8,
-    "gathering": 2.0,
-    "durability": 1.5,
-    "weight": 0.4
-  },
-  "requirements": {
-    "level": 20,
-    "stats": {}
-  },
-  "flags": {
-    "stackable": false,
-    "equippable": true,
-    "repairable": true
-  }
-}
-```
+### Tier 2 (4 nodes - covers all T2 elements)
+| Resource ID | Name | Elemental Drops | Scale Drops |
+|-------------|------|-----------------|-------------|
+| fishing_spot_stormfin | Stormfin Pool | lightning_shard | steel_scales, mithril_scales |
+| fishing_spot_frostback | Frostback Pool | frost_essence | steel_scales, mithril_scales |
+| fishing_spot_lighteye | Lighteye Grotto | light_gem | mithril_scales, steel_scales |
+| fishing_spot_shadowgill | Shadowgill Depths | shadow_core | mithril_scales, steel_scales |
+
+### Tier 3 (3 nodes)
+| Resource ID | Name | Elemental Drops | Scale Drops |
+|-------------|------|-----------------|-------------|
+| fishing_spot_phoenixkoi | Phoenix Koi Spring | phoenix_ash, fire_crystal | adamantine_scales, orichalcum_scales |
+| fishing_spot_voidswimmer | Voidswimmer Abyss | void_essence, shadow_core | adamantine_scales, orichalcum_scales |
+| fishing_spot_tempesteel | Tempest Eel Waters | storm_heart, lightning_shard | orichalcum_scales, adamantine_scales |
+
+### Tier 4 (2 nodes - full coverage)
+| Resource ID | Name | Elemental Drops | Scale Drops |
+|-------------|------|-----------------|-------------|
+| fishing_spot_leviathan | Leviathan Deep | phoenix_ash, void_essence, storm_heart | primordial_scales, chaos_scales |
+| fishing_spot_chaosscale | Chaosscale Rift | chaos_matrix, void_essence, all T3 | chaos_scales, primordial_scales |
 
 ---
 
-### Task 5: Add Fishing Rod Recipes to recipes-smithing-3.json
+## Fishing Rods
 
-**File**: `recipes.JSON/recipes-smithing-3.json`
+4 tiers of fishing rods:
 
-Add these recipes to the appropriate section:
+| Item ID | Tier | Rarity | Gathering Mult | Station Tier |
+|---------|------|--------|----------------|--------------|
+| bamboo_fishing_rod | 1 | Common | 1.0x | 1 |
+| reinforced_fishing_rod | 2 | Uncommon | 1.3x | 2 |
+| mithril_fishing_rod | 3 | Rare | 1.6x | 3 |
+| worldtree_fishing_rod | 4 | Epic | 2.0x | 4 |
 
-```json
-{
-  "recipeId": "smithing_reinforced_fishing_rod_001",
-  "outputId": "reinforced_fishing_rod",
-  "outputQty": 1,
-  "stationType": "smithing",
-  "stationTier": 1,
-  "discipline": "smithing",
-  "inputs": [
-    {"materialId": "oak_log", "qty": 2},
-    {"materialId": "iron_ingot", "qty": 1},
-    {"materialId": "silk_thread", "qty": 2}
-  ]
-},
-{
-  "recipeId": "smithing_mithril_fishing_rod_001",
-  "outputId": "mithril_fishing_rod",
-  "outputQty": 1,
-  "stationType": "smithing",
-  "stationTier": 2,
-  "discipline": "smithing",
-  "inputs": [
-    {"materialId": "ironwood_log", "qty": 1},
-    {"materialId": "mithril_ingot", "qty": 2},
-    {"materialId": "enchanted_thread", "qty": 2}
-  ]
-},
-{
-  "recipeId": "smithing_worldtree_fishing_rod_001",
-  "outputId": "worldtree_fishing_rod",
-  "outputQty": 1,
-  "stationType": "smithing",
-  "stationTier": 3,
-  "discipline": "smithing",
-  "inputs": [
-    {"materialId": "worldtree_log", "qty": 1},
-    {"materialId": "etherion_ingot", "qty": 1},
-    {"materialId": "starweave_thread", "qty": 2}
-  ]
-}
-```
-
-**Note**: Check if `silk_thread`, `enchanted_thread`, and `starweave_thread` exist in materials. If not, either:
-- Use existing materials like `fiber` or `leather`
-- Add thread materials to items-materials-1.JSON
+### Rod Effects on Minigame
+- Higher tier rods slow down ripple expansion
+- Speed multiplier: T1=1.0x, T2=0.85x, T3=0.70x, T4=0.55x
+- This gives players more time to react with better rods
 
 ---
 
-### Task 6 (Optional): Add Cooked Fish Consumables
+## Minigame Mechanics
 
-**File**: `items.JSON/items-alchemy-1.JSON`
+### Starting the Minigame
+1. Player clicks on a fishing spot in the world
+2. Must have a fishing rod equipped with tier >= spot tier
+3. Fishing minigame window opens
 
-Add a new section `food` or add to existing consumables:
+### Gameplay
+1. Ripples spawn at random positions on a virtual pond
+2. Each ripple has:
+   - A fixed **target ring** (what to hit)
+   - An **expanding outer ring** that starts small and grows
+3. Player clicks when the expanding ring overlaps the target ring
+4. Scoring based on timing accuracy:
+   - Within 5px = **PERFECT** (100 points)
+   - Within 10px = **GOOD** (75 points)
+   - Within 15px = **FAIR** (50 points)
+   - Beyond tolerance = **MISS** (0 points)
 
-```json
-{
-  "metadata": {
-    "narrative": "Simply grilled fish. Restores a small amount of health over time.",
-    "tags": ["food", "fish", "cooked", "healing"]
-  },
-  "itemId": "grilled_fish",
-  "name": "Grilled Fish",
-  "category": "consumable",
-  "type": "food",
-  "subtype": "cooked_fish",
-  "tier": 1,
-  "rarity": "common",
-  "effect": "Restores 30 HP over 10 seconds",
-  "duration": 10,
-  "stackSize": 20,
-  "effectTags": ["healing", "over_time", "self"],
-  "effectParams": {
-    "heal_per_second": 3,
-    "duration": 10
-  },
-  "flags": {
-    "stackable": true,
-    "consumable": true
-  }
-},
-{
-  "metadata": {
-    "narrative": "Expertly prepared fish filet. The taste alone is worth the effort.",
-    "tags": ["food", "fish", "cooked", "healing", "quality"]
-  },
-  "itemId": "fish_filet",
-  "name": "Fish Filet",
-  "category": "consumable",
-  "type": "food",
-  "subtype": "cooked_fish",
-  "tier": 2,
-  "rarity": "common",
-  "effect": "Restores 60 HP over 10 seconds",
-  "duration": 10,
-  "stackSize": 20,
-  "effectTags": ["healing", "over_time", "self"],
-  "effectParams": {
-    "heal_per_second": 6,
-    "duration": 10
-  },
-  "flags": {
-    "stackable": true,
-    "consumable": true
-  }
-},
-{
-  "metadata": {
-    "narrative": "Magical fish prepared with arcane seasonings. Grants temporary mana regeneration.",
-    "tags": ["food", "fish", "cooked", "magical", "mana"]
-  },
-  "itemId": "ethereal_fish_stew",
-  "name": "Ethereal Fish Stew",
-  "category": "consumable",
-  "type": "food",
-  "subtype": "cooked_fish",
-  "tier": 3,
-  "rarity": "uncommon",
-  "effect": "Restores 5 mana per second for 30 seconds",
-  "duration": 30,
-  "stackSize": 10,
-  "effectTags": ["mana", "over_time", "self"],
-  "effectParams": {
-    "mana_per_second": 5,
-    "duration": 30
-  },
-  "flags": {
-    "stackable": true,
-    "consumable": true
-  }
-}
-```
+### Stat Effects
+- **LCK**: Each point reduces required ripples by 0.1 (min 4, max 15)
+- **STR**: Each point adds 0.5px hit tolerance (max 30px)
+- **Rod Tier**: Reduces expansion speed (more time to react)
+
+### Success Criteria
+- Need at least 50% hit rate
+- Need at least 40 average score
+- Both conditions must be met
+
+### Rewards (Success)
+- **Materials**: All drops from the fishing spot's drop table
+- **XP**: Tier-based like mob kills (T1=100, T2=400, T3=1600, T4=6400)
+- **Quality Bonus**: Performance multiplier (0.8x to 1.5x on rewards)
+- **Durability**: Normal loss (1 point)
+
+### Penalties (Failure)
+- **No materials**
+- **No XP**
+- **Durability**: Double loss (2 points)
 
 ---
 
-### Task 7 (Optional): Add Cooking Recipes
+## Respawn Mechanics
 
-**File**: `recipes.JSON/recipes-alchemy-1.JSON`
-
-```json
-{
-  "recipeId": "alchemy_grilled_fish_001",
-  "outputId": "grilled_fish",
-  "outputQty": 2,
-  "stationType": "alchemy",
-  "stationTier": 1,
-  "discipline": "alchemy",
-  "inputs": [
-    {"materialId": "raw_carp", "qty": 1}
-  ]
-},
-{
-  "recipeId": "alchemy_grilled_fish_002",
-  "outputId": "grilled_fish",
-  "outputQty": 3,
-  "stationType": "alchemy",
-  "stationTier": 1,
-  "discipline": "alchemy",
-  "inputs": [
-    {"materialId": "raw_minnow", "qty": 2}
-  ]
-},
-{
-  "recipeId": "alchemy_fish_filet_001",
-  "outputId": "fish_filet",
-  "outputQty": 2,
-  "stationType": "alchemy",
-  "stationTier": 1,
-  "discipline": "alchemy",
-  "inputs": [
-    {"materialId": "raw_trout", "qty": 1}
-  ]
-},
-{
-  "recipeId": "alchemy_fish_filet_002",
-  "outputId": "fish_filet",
-  "outputQty": 2,
-  "stationType": "alchemy",
-  "stationTier": 1,
-  "discipline": "alchemy",
-  "inputs": [
-    {"materialId": "raw_bass", "qty": 1}
-  ]
-},
-{
-  "recipeId": "alchemy_ethereal_fish_stew_001",
-  "outputId": "ethereal_fish_stew",
-  "outputQty": 1,
-  "stationType": "alchemy",
-  "stationTier": 2,
-  "discipline": "alchemy",
-  "inputs": [
-    {"materialId": "raw_ghostfish", "qty": 1},
-    {"materialId": "water_crystal", "qty": 1}
-  ]
-}
-```
+Fishing spots respawn like other resources:
+- T1: 30 seconds
+- T2: 45 seconds
+- T3: 60 seconds
+- T4: 90 seconds
+- (Debug mode: 1 second)
 
 ---
 
-## Verification Checklist
+## Stat Tracking
 
-After implementation, verify:
+The following fishing statistics are tracked:
 
-1. [ ] Fish materials load correctly - check `MaterialDatabase.get_instance().materials`
-2. [ ] Fishing nodes appear in resource-node-1.JSON
-3. [ ] Fishing spots drop tiered fish based on location tier
-4. [ ] Higher-tier fishing rods exist in equipment database
-5. [ ] Fishing rod recipes appear in smithing
-6. [ ] (Optional) Cooked fish items work as consumables
-7. [ ] (Optional) Cooking recipes appear in alchemy
+**Gathering Totals**:
+- `total_fish_caught`
+- `fishing_rod_casts`
+- `fishing_rod_durability_lost`
 
-## Testing Commands
-
-In-game, use debug mode (F1) and:
-1. Find a water chunk (blue area)
-2. Look for fishing spots (should be visible)
-3. Equip a fishing rod
-4. Interact with fishing spot
-5. Check inventory for fish drops
+**Advanced Metrics**:
+- `largest_fish_caught`
+- `fish_catch_streak`
+- `longest_fish_catch_streak`
+- `rare_fish_caught`
+- `legendary_fish_caught`
 
 ---
 
-## File Summary
+## Integration Points
 
-| File | Action |
-|------|--------|
-| `items.JSON/items-materials-1.JSON` | ADD 8 fish materials |
-| `Definitions.JSON/resource-node-1.JSON` | ADD 4 fishing node definitions |
-| `systems/natural_resource.py` | MODIFY tier-based fishing spot lookup |
-| `items.JSON/items-smithing-2.JSON` | ADD 3 fishing rods (tier 2-4) |
-| `recipes.JSON/recipes-smithing-3.json` | ADD 3 fishing rod recipes |
-| `items.JSON/items-alchemy-1.JSON` | ADD 3 cooked fish consumables (optional) |
-| `recipes.JSON/recipes-alchemy-1.JSON` | ADD 5 cooking recipes (optional) |
+### Game Engine Integration
+- Fishing minigame triggered when clicking fishing spots
+- Renders above all other UI
+- Updates at 60 FPS like other minigames
+- Results processed on click after completion
+
+### Save System
+- Fishing rod durability saved with equipment
+- Fishing stats saved with character stat tracker
+- Fishing spot depletion/respawn state saved with world chunks
 
 ---
 
-## Notes for Implementer
+## Testing
 
-1. **JSON Format**: Always validate JSON after editing. Use `python -m json.tool filename.json`
-2. **IDs must be unique**: Check existing IDs before adding new ones
-3. **Tier consistency**: Fish tier should match fishing spot tier
-4. **Translation tables**: Quantities like "few", "several", "many" are translated via `value-translation-table-1.JSON`
-5. **Existing patterns**: Follow the exact format of existing entries in each file
+1. Find a water chunk (blue tiles on the map)
+2. Look for fishing spots (deep sky blue color)
+3. Equip a fishing rod (craft one at smithing station)
+4. Click on a fishing spot to start minigame
+5. Click ripples when rings overlap
+6. Collect rewards on success
+
+### Debug Commands
+- F1: Toggle debug mode (instant respawn, infinite resources)
+- F7: Toggle infinite durability
+
+---
+
+## Design Philosophy
+
+The fishing system was designed to:
+1. **Work with existing systems** - Uses the same resource node, spawning, and loot systems
+2. **Be JSON-driven** - All fishing spots, drops, and rods defined in JSON
+3. **Be scalable** - Easy to add new fishing spots, drops, or mechanics
+4. **Provide unique value** - Best source of elemental materials and scales
+5. **Be balanced** - Not more impactful than combat/gathering, but has its niche
+
+---
+
+## Future Expansion Ideas
+
+1. **Fishing-specific enchantments** (e.g., "Lucky Lure" for better drops)
+2. **Weather effects** on fishing (rain = better catches)
+3. **Rare fish achievements/titles**
+4. **Fishing tournaments/events**
+5. **Bait system** for targeting specific fish

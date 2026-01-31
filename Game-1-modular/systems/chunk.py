@@ -398,12 +398,45 @@ class Chunk:
             len(water_tiles)
         )
 
+        # Map tiers to specific fishing spot types
+        fishing_spot_by_tier = {
+            1: [
+                ResourceType.FISHING_SPOT_CARP,
+                ResourceType.FISHING_SPOT_SUNFISH,
+                ResourceType.FISHING_SPOT_MINNOW,
+            ],
+            2: [
+                ResourceType.FISHING_SPOT_STORMFIN,
+                ResourceType.FISHING_SPOT_FROSTBACK,
+                ResourceType.FISHING_SPOT_LIGHTEYE,
+                ResourceType.FISHING_SPOT_SHADOWGILL,
+            ],
+            3: [
+                ResourceType.FISHING_SPOT_PHOENIXKOI,
+                ResourceType.FISHING_SPOT_VOIDSWIMMER,
+                ResourceType.FISHING_SPOT_TEMPESTEEL,
+            ],
+            4: [
+                ResourceType.FISHING_SPOT_LEVIATHAN,
+                ResourceType.FISHING_SPOT_CHAOSSCALE,
+            ],
+        }
+
         if water_tiles and num_spots > 0:
             spots = self._rng.sample(water_tiles, num_spots)
             for pos in spots:
                 tier = self._rng.randint(tier_range[0], tier_range[1])
+                tier = min(4, max(1, tier))  # Clamp to 1-4
+
+                # Select a random fishing spot type for this tier
+                available_spots = fishing_spot_by_tier.get(tier, [ResourceType.FISHING_SPOT])
+                if available_spots:
+                    spot_type = self._rng.choice(available_spots)
+                else:
+                    spot_type = ResourceType.FISHING_SPOT
+
                 self.resources.append(
-                    NaturalResource(pos, ResourceType.FISHING_SPOT, tier=tier)
+                    NaturalResource(pos, spot_type, tier=tier)
                 )
 
     # =========================================================================

@@ -1696,6 +1696,121 @@
     },
     {
       "metadata": {
+        "narrative": "Sturdy oak rod reinforced with steel fittings. Handles heavier catches and reaches deeper waters.",
+        "tags": [
+          "tool",
+          "fishing",
+          "quality"
+        ]
+      },
+      "recipeId": "smithing_reinforced_fishing_rod",
+      "outputId": "reinforced_fishing_rod",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "oak_log",
+          "quantity": 3
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 3
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "moderate",
+        "baseTime": 35
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Mithril-tipped rod with enchanted line. The magical construction senses fish before they bite.",
+        "tags": [
+          "tool",
+          "fishing",
+          "rare",
+          "magical"
+        ]
+      },
+      "recipeId": "smithing_mithril_fishing_rod",
+      "outputId": "mithril_fishing_rod",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "ironwood_log",
+          "quantity": 2
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 4
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "hard",
+        "baseTime": 45
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary rod crafted from worldtree branches and etherion. The line knows where fish will be.",
+        "tags": [
+          "tool",
+          "fishing",
+          "legendary",
+          "mythical"
+        ]
+      },
+      "recipeId": "smithing_worldtree_fishing_rod",
+      "outputId": "worldtree_fishing_rod",
+      "outputQty": 1,
+      "stationTier": 4,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "etherion_ingot",
+          "quantity": 2
+        },
+        {
+          "materialId": "worldtree_log",
+          "quantity": 2
+        },
+        {
+          "materialId": "spectral_thread",
+          "quantity": 5
+        },
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "very_hard",
+        "baseTime": 60
+      }
+    },
+    {
+      "metadata": {
         "narrative": "Curved steel blade perfect for harvesting delicate plants. Clean cuts preserve quality and maximize yield.",
         "tags": [
           "tool",
