@@ -16,6 +16,7 @@ from data.models import (
     PlacedEntity, PlacedEntityType, DungeonRarity, DungeonEntrance
 )
 from data.models.world import DUNGEON_CONFIG
+from systems.dungeon import LootChest
 from systems.natural_resource import NaturalResource
 from systems.chunk import Chunk
 from systems.biome_generator import BiomeGenerator
@@ -71,9 +72,13 @@ class WorldSystem:
         # Dungeon manager reference (set by game_engine)
         self.dungeon_manager = None
 
+        # Spawn storage chest (player-placed items)
+        self.spawn_storage_chest = None  # Will be set in spawn_storage_chest()
+
         # Load initial chunks and spawn fixed content
         self._load_initial_chunks()
         self.spawn_starting_stations()
+        self.spawn_spawn_storage_chest()
 
         print(f"🌍 World initialized with seed: {self.seed}")
         print(f"   Loaded {len(self.loaded_chunks)} initial chunks")
@@ -197,6 +202,22 @@ class WorldSystem:
                 self.crafting_stations.append(
                     CraftingStation(Position(base_x, y, 0), stype, tier)
                 )
+
+    def spawn_spawn_storage_chest(self):
+        """Spawn a player storage chest near the spawn point.
+
+        This chest allows players to store items for inventory management.
+        Position: East of spawn at (3, -2) to be accessible but not blocking.
+        """
+        self.spawn_storage_chest = LootChest(
+            position=Position(3, -2, 0),
+            tier=1,
+            is_opened=False,
+            contents=[],  # Empty - player adds items
+            is_player_storage=True,
+            chest_id="spawn_storage_chest"
+        )
+        print("📦 Spawn storage chest placed at (3, -2)")
 
     # =========================================================================
     # Chunk Loading Management
@@ -774,6 +795,7 @@ class WorldSystem:
             "placed_entities": self._serialize_placed_entities(),
             "crafting_stations": self._serialize_crafting_stations(),
             "discovered_dungeons": self._serialize_discovered_dungeons(),
+            "spawn_chest": self._serialize_spawn_chest(),
         }
 
     def _serialize_placed_entities(self) -> List[dict]:
@@ -827,6 +849,13 @@ class WorldSystem:
             }
             for key, e in self.discovered_dungeon_entrances.items()
         ]
+
+    def _serialize_spawn_chest(self) -> Optional[dict]:
+        """Serialize spawn storage chest for saving."""
+        if not self.spawn_storage_chest:
+            return None
+        chest = self.spawn_storage_chest
+        return chest.to_dict()
 
     def restore_from_save(self, world_state: dict):
         """Restore world state from save data.
@@ -908,6 +937,15 @@ class WorldSystem:
                     tier=station_data.get("tier", 1)
                 )
                 self.crafting_stations.append(station)
+
+        # Restore spawn storage chest contents
+        spawn_chest_data = world_state.get("spawn_chest")
+        if spawn_chest_data:
+            self.spawn_storage_chest = LootChest.from_dict(spawn_chest_data)
+            print(f"   Restored spawn chest with {len(self.spawn_storage_chest.contents)} items")
+        else:
+            # Create fresh chest if not in save (backwards compatibility)
+            self.spawn_spawn_storage_chest()
 
         print(f"Restored world state: {len(self.placed_entities)} entities, "
               f"{len(self.discovered_dungeon_entrances)} dungeons")

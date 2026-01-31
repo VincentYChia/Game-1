@@ -1,7 +1,7 @@
 {
   "chunk_x": 5,
   "chunk_y": -2,
-  "chunk_type": "dangerous_forest",
+  "chunk_type": "peaceful_cave",
   "modified_resources": [
     {
       "local_x": 8,
@@ -22,5 +22,5 @@
       "time_until_respawn": 0.0
     }
   ],
-  "unload_timestamp": 483.47299999999314
+  "unload_timestamp": 358.04400000000294
 }

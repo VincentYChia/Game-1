@@ -1245,6 +1245,91 @@ class Character:
 
         return result
 
+    def break_placed_entity(self, placed_entity) -> Tuple[bool, int, bool]:
+        """
+        Attack a placed entity (barrier, etc.) to break it.
+
+        Args:
+            placed_entity: The PlacedEntity to attack
+
+        Returns:
+            Tuple of (was_destroyed, damage_dealt, was_crit)
+
+        Tool Efficiency:
+            - Pickaxe: 2.0x damage (optimal for breaking stone/blocks)
+            - All other tools/weapons: 0.5x damage (reduced efficiency)
+        """
+        # Get equipped tool (prefer pickaxe for breaking blocks)
+        equipped_tool = self.equipment.slots.get('pickaxe') or \
+                       self.equipment.slots.get('axe') or \
+                       self.equipment.slots.get('mainHand')
+
+        if not equipped_tool:
+            print("⚠ No tool equipped to break block")
+            return (False, 0, False)
+
+        # Calculate base damage from tool
+        if isinstance(equipped_tool.damage, tuple):
+            base_damage = (equipped_tool.damage[0] + equipped_tool.damage[1]) // 2
+        else:
+            base_damage = equipped_tool.damage if equipped_tool.damage else 10
+
+        # Durability-based effectiveness
+        durability_effectiveness = equipped_tool.get_effectiveness()
+
+        # Tool type effectiveness for breaking placed blocks
+        # Pickaxe is optimal (2.0x), everything else is reduced (0.5x)
+        tool_slot = None
+        for slot, item in self.equipment.slots.items():
+            if item == equipped_tool:
+                tool_slot = slot
+                break
+
+        if tool_slot == 'pickaxe':
+            tool_type_effectiveness = 2.0  # Pickaxe is optimal for breaking
+        else:
+            tool_type_effectiveness = 0.5  # Other tools are less effective
+
+        # Combine effectiveness multipliers
+        total_effectiveness = durability_effectiveness * tool_type_effectiveness
+
+        # Stat bonuses (STR for breaking)
+        stat_bonus = self.stats.get_bonus('strength')
+        damage_mult = 1.0 + stat_bonus
+
+        # Critical hit check
+        effective_luck = self.get_effective_luck()
+        crit_chance = effective_luck * 0.02 + self.class_system.get_bonus('crit_chance')
+        is_crit = random.random() < crit_chance
+
+        # Calculate final damage
+        damage = int(base_damage * total_effectiveness * damage_mult)
+        if is_crit:
+            damage *= 2
+
+        # Apply damage to placed entity
+        was_destroyed = placed_entity.take_damage(damage)
+
+        # Reduce tool durability
+        if not Config.DEBUG_INFINITE_DURABILITY:
+            base_durability_loss = 1.0 if tool_type_effectiveness >= 1.0 else 2.0
+            durability_loss = base_durability_loss
+
+            # DEF stat reduces durability loss
+            durability_loss *= self.stats.get_durability_loss_multiplier()
+
+            # Unbreaking enchantment reduces durability loss
+            if hasattr(equipped_tool, 'enchantments') and equipped_tool.enchantments:
+                for ench in equipped_tool.enchantments:
+                    effect = ench.get('effect', {})
+                    if effect.get('type') == 'durability_multiplier':
+                        reduction = effect.get('value', 0.0)
+                        durability_loss *= (1.0 - reduction)
+
+            equipped_tool.durability_current = max(0, equipped_tool.durability_current - durability_loss)
+
+        return (was_destroyed, damage, is_crit)
+
     def switch_tool(self):
         """Cycle through equipped tools and weapons (mainHand/offHand → axe → pickaxe)"""
         # Build list of available items from equipment slots

@@ -2,7 +2,7 @@
   "metadata": {
     "version": "1.0",
     "modified": true,
-    "totalRecipes": 37
+    "totalRecipes": 50
   },
   "recipes": [
     {
@@ -894,6 +894,493 @@
     },
     {
       "metadata": {
+        "narrative": "Legendary forge that bends reality itself. Can work metals that shouldn't exist.",
+        "tags": [
+          "station",
+          "forge",
+          "legendary"
+        ]
+      },
+      "recipeId": "smithing_forge_t4",
+      "outputId": "forge_t4",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "smithing",
+      "gridSize": "9x9",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 8
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 6
+        },
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 2
+        },
+        {
+          "materialId": "phoenix_ash",
+          "quantity": 8
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "extreme",
+        "baseTime": 120
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master refinery capable of processing legendary materials. Obsidian crucibles contain extreme temperatures.",
+        "tags": [
+          "station",
+          "refinery",
+          "quality"
+        ]
+      },
+      "recipeId": "smithing_refinery_t3",
+      "outputId": "refinery_t3",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "smithing",
+      "gridSize": "7x7",
+      "inputs": [
+        {
+          "materialId": "obsidian",
+          "quantity": 8
+        },
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 3
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "extreme",
+        "baseTime": 90
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary refinery that exists partially outside normal reality. Can process materials that shouldn't be refinable.",
+        "tags": [
+          "station",
+          "refinery",
+          "legendary"
+        ]
+      },
+      "recipeId": "smithing_refinery_t4",
+      "outputId": "refinery_t4",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "smithing",
+      "gridSize": "9x9",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "voidstone",
+          "quantity": 8
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 4
+        },
+        {
+          "materialId": "eternity_stone",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "extreme",
+        "baseTime": 120
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Professional alchemy setup with distillation equipment and precise measuring tools.",
+        "tags": [
+          "station",
+          "alchemy",
+          "standard"
+        ]
+      },
+      "recipeId": "smithing_alchemy_table_t2",
+      "outputId": "alchemy_table_t2",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "5x5",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 3
+        },
+        {
+          "materialId": "fire_crystal",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "hard",
+        "baseTime": 55
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master alchemy laboratory with crystalline distillation chambers and self-regulating temperature controls.",
+        "tags": [
+          "station",
+          "alchemy",
+          "quality"
+        ]
+      },
+      "recipeId": "smithing_alchemy_table_t3",
+      "outputId": "alchemy_table_t3",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "smithing",
+      "gridSize": "7x7",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 6
+        },
+        {
+          "materialId": "frost_essence",
+          "quantity": 3
+        },
+        {
+          "materialId": "water_crystal",
+          "quantity": 4
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "extreme",
+        "baseTime": 90
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary alchemy apparatus that bends the laws of chemistry. Can create potions that defy natural law.",
+        "tags": [
+          "station",
+          "alchemy",
+          "legendary"
+        ]
+      },
+      "recipeId": "smithing_alchemy_table_t4",
+      "outputId": "alchemy_table_t4",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "smithing",
+      "gridSize": "9x9",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 4
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": 2
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 3
+        },
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "extreme",
+        "baseTime": 120
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Precision engineering station with specialized tools for complex device assembly.",
+        "tags": [
+          "station",
+          "engineering",
+          "standard"
+        ]
+      },
+      "recipeId": "smithing_engineering_bench_t2",
+      "outputId": "engineering_bench_t2",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "5x5",
+      "inputs": [
+        {
+          "materialId": "steel_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "ash_plank",
+          "quantity": 4
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "hard",
+        "baseTime": 55
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master engineering station with precision measurement tools and automated assembly assistance.",
+        "tags": [
+          "station",
+          "engineering",
+          "quality"
+        ]
+      },
+      "recipeId": "smithing_engineering_bench_t3",
+      "outputId": "engineering_bench_t3",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "smithing",
+      "gridSize": "7x7",
+      "inputs": [
+        {
+          "materialId": "mithril_ingot",
+          "quantity": 5
+        },
+        {
+          "materialId": "ironwood_plank",
+          "quantity": 6
+        },
+        {
+          "materialId": "lightning_shard",
+          "quantity": 4
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "extreme",
+        "baseTime": 90
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary engineering workshop that incorporates arcane machinery. Can craft devices that blur the line between magic and technology.",
+        "tags": [
+          "station",
+          "engineering",
+          "legendary"
+        ]
+      },
+      "recipeId": "smithing_engineering_bench_t4",
+      "outputId": "engineering_bench_t4",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "smithing",
+      "gridSize": "9x9",
+      "inputs": [
+        {
+          "materialId": "adamantine_ingot",
+          "quantity": 6
+        },
+        {
+          "materialId": "ebony_plank",
+          "quantity": 8
+        },
+        {
+          "materialId": "storm_heart",
+          "quantity": 3
+        },
+        {
+          "materialId": "genesis_lattice",
+          "quantity": 1
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "extreme",
+        "baseTime": 120
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Simple enchanting table with basic rune-carving tools. Sufficient for minor enchantments.",
+        "tags": [
+          "station",
+          "enchanting",
+          "starter"
+        ]
+      },
+      "recipeId": "smithing_enchanting_table_t1",
+      "outputId": "enchanting_table_t1",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": [
+        {
+          "materialId": "marble",
+          "quantity": 5
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 2
+        },
+        {
+          "materialId": "oak_plank",
+          "quantity": 3
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "moderate",
+        "baseTime": 45
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Arcane enchanting table surrounded by floating crystals. Channels magical energies precisely.",
+        "tags": [
+          "station",
+          "enchanting",
+          "standard"
+        ]
+      },
+      "recipeId": "smithing_enchanting_table_t2",
+      "outputId": "enchanting_table_t2",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "5x5",
+      "inputs": [
+        {
+          "materialId": "marble",
+          "quantity": 6
+        },
+        {
+          "materialId": "crystal_quartz",
+          "quantity": 4
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "hard",
+        "baseTime": 60
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master enchanting table with floating crystal matrices and perfect rune alignment tools.",
+        "tags": [
+          "station",
+          "enchanting",
+          "quality"
+        ]
+      },
+      "recipeId": "smithing_enchanting_table_t3",
+      "outputId": "enchanting_table_t3",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "smithing",
+      "gridSize": "7x7",
+      "inputs": [
+        {
+          "materialId": "obsidian",
+          "quantity": 6
+        },
+        {
+          "materialId": "light_gem",
+          "quantity": 4
+        },
+        {
+          "materialId": "shadow_core",
+          "quantity": 3
+        },
+        {
+          "materialId": "void_essence",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "extreme",
+        "baseTime": 90
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary enchanting nexus that taps into the fabric of reality itself. Can imbue items with powers beyond mortal understanding.",
+        "tags": [
+          "station",
+          "enchanting",
+          "legendary"
+        ]
+      },
+      "recipeId": "smithing_enchanting_table_t4",
+      "outputId": "enchanting_table_t4",
+      "outputQty": 1,
+      "stationTier": 3,
+      "stationType": "smithing",
+      "gridSize": "9x9",
+      "inputs": [
+        {
+          "materialId": "voidstone",
+          "quantity": 8
+        },
+        {
+          "materialId": "primordial_crystal",
+          "quantity": 3
+        },
+        {
+          "materialId": "chaos_matrix",
+          "quantity": 2
+        },
+        {
+          "materialId": "eternity_stone",
+          "quantity": 2
+        }
+      ],
+      "miniGame": {
+        "type": "smithing",
+        "difficulty": "extreme",
+        "baseTime": 120
+      }
+    },
+    {
+      "metadata": {
         "narrative": "Forging a steel battleaxe requires balance - too heavy and it's unwieldy, too light and it lacks impact. This versatile weapon can devastate with two hands or still threaten with one.",
         "tags": [
           "weapon",
@@ -1178,7 +1665,7 @@
         "tags": [
           "tool",
           "fishing",
-          "gathering"
+          "starter"
         ]
       },
       "recipeId": "smithing_bamboo_fishing_rod",

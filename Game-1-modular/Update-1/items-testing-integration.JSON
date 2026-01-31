@@ -255,5 +255,98 @@
         "repairable": true
       }
     }
+  ],
+
+  "fishing_rods": [
+    {
+      "metadata": {
+        "narrative": "Steel-reinforced fishing rod with improved line tension and a barbed hook. Reliable for larger catches.",
+        "tags": ["tool", "fishing", "standard"]
+      },
+      "itemId": "steel_fishing_rod",
+      "name": "Steel Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 2,
+      "rarity": "uncommon",
+      "range": 6,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.6,
+        "gathering": 1.25,
+        "durability": 1.0,
+        "weight": 0.7
+      },
+      "requirements": {
+        "level": 8,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Master-crafted mithril fishing rod with enchanted line. The lightweight metal allows for precise casts and effortless retrieval.",
+        "tags": ["tool", "fishing", "quality"]
+      },
+      "itemId": "mithril_fishing_rod",
+      "name": "Mithril Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 3,
+      "rarity": "rare",
+      "range": 7,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.7,
+        "gathering": 1.5,
+        "durability": 1.25,
+        "weight": 0.5
+      },
+      "requirements": {
+        "level": 15,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    },
+    {
+      "metadata": {
+        "narrative": "Legendary fishing rod forged from adamantine with void-touched line. Can pull catches from dimensions beyond mortal waters.",
+        "tags": ["tool", "fishing", "legendary"]
+      },
+      "itemId": "adamantine_fishing_rod",
+      "name": "Adamantine Fishing Rod",
+      "category": "equipment",
+      "type": "tool",
+      "subtype": "fishing_rod",
+      "tier": 4,
+      "rarity": "epic",
+      "range": 8,
+      "slot": "mainHand",
+      "statMultipliers": {
+        "damage": 0.8,
+        "gathering": 2.0,
+        "durability": 1.5,
+        "weight": 0.4
+      },
+      "requirements": {
+        "level": 25,
+        "stats": {}
+      },
+      "flags": {
+        "stackable": false,
+        "equippable": true,
+        "repairable": true
+      }
+    }
   ]
 }

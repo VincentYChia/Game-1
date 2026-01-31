@@ -42,7 +42,7 @@ def scan_update_directory(update_dir: Path, database_type: str) -> List[Path]:
     files = []
 
     if database_type == 'equipment':
-        # Look for items/weapons/armor JSONs
+        # Look for items/weapons/armor/tools JSONs (NOT stations - those go to MaterialDatabase)
         patterns = ['*items*.JSON', '*weapons*.JSON', '*armor*.JSON', '*tools*.JSON',
                     '*items*.json', '*weapons*.json', '*armor*.json', '*tools*.json']
     elif database_type == 'skills':
@@ -52,7 +52,7 @@ def scan_update_directory(update_dir: Path, database_type: str) -> List[Path]:
         # Look for hostiles/enemies JSONs
         patterns = ['*hostiles*.JSON', '*enemies*.JSON', '*hostiles*.json', '*enemies*.json']
     elif database_type == 'materials':
-        # Look for materials/consumables/devices JSONs
+        # Look for materials/consumables/devices JSONs (stations are in main items file, not updates)
         patterns = ['*materials*.JSON', '*consumables*.JSON', '*devices*.JSON',
                     '*materials*.json', '*consumables*.json', '*devices*.json']
     else:
@@ -195,8 +195,8 @@ def load_recipe_updates(project_root: Path):
             print(f"   ⚠️  Update directory not found: {update_name}")
             continue
 
-        # Scan for recipe files (both .JSON and .json)
-        patterns = ['*recipes*.JSON', '*crafting*.JSON', '*recipes*.json', '*crafting*.json']
+        # Scan for recipe files (both .JSON and .json), excluding station files
+        patterns = ['*recipes*.JSON', '*recipes*.json']
         files = []
         for pattern in patterns:
             files.extend(update_dir.glob(pattern))

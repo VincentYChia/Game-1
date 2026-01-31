@@ -237,7 +237,8 @@ class TrainingDummy(Enemy):
 
     def update_ai(self, dt: float, player_position: Tuple[float, float],
                   aggro_multiplier: float = 1.0, speed_multiplier: float = 1.0,
-                  world_system=None):
+                  world_system=None, safe_zone_center: Tuple[float, float] = None,
+                  safe_zone_radius: float = 0.0):
         """Override AI - training dummy doesn't move or attack
 
         Args:
@@ -246,6 +247,8 @@ class TrainingDummy(Enemy):
             aggro_multiplier: Ignored (training dummy doesn't aggro)
             speed_multiplier: Ignored (training dummy doesn't move)
             world_system: Ignored (training dummy doesn't need collision/pathfinding)
+            safe_zone_center: Ignored (training dummy doesn't move)
+            safe_zone_radius: Ignored (training dummy doesn't move)
         """
         # Update status effects (burn, poison, etc. still tick)
         if hasattr(self, 'status_manager'):

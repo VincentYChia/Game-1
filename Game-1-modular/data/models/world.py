@@ -251,6 +251,7 @@ class PlacedEntityType(Enum):
     CRAFTING_STATION = "crafting_station"
     TRAINING_DUMMY = "training_dummy"
     BARRIER = "barrier"  # Player-placed stone barriers that block movement and attacks
+    DROPPED_ITEM = "dropped_item"  # Items dropped by player, despawn after 5 minutes
 
 
 @dataclass
@@ -298,6 +299,15 @@ class PlacedEntity:
             self.visual_effects = set()
         if self.crafted_stats is None:
             self.crafted_stats = {}
+
+        # Calculate tier-based health for breakable placed entities (barriers, etc.)
+        # Health by tier: T1=50, T2=100, T3=200, T4=400
+        if self.entity_type == PlacedEntityType.BARRIER:
+            BARRIER_HEALTH_BY_TIER = {1: 50, 2: 100, 3: 200, 4: 400}
+            self.health = float(BARRIER_HEALTH_BY_TIER.get(self.tier, 50))
+
+        # Store max health for percentage calculations
+        self.max_health = self.health
 
         # Apply crafted stats from minigame bonuses
         self._apply_crafted_stats()
@@ -363,7 +373,8 @@ class PlacedEntity:
             PlacedEntityType.UTILITY_DEVICE: (60, 180, 180),  # Cyan
             PlacedEntityType.CRAFTING_STATION: (105, 105, 105),  # Gray
             PlacedEntityType.TRAINING_DUMMY: (200, 200, 0),  # Yellow (visible target)
-            PlacedEntityType.BARRIER: (120, 120, 120)  # Stone gray for barriers
+            PlacedEntityType.BARRIER: (120, 120, 120),  # Stone gray for barriers
+            PlacedEntityType.DROPPED_ITEM: (255, 215, 0)  # Gold color for dropped items
         }.get(self.entity_type, (150, 150, 150))
 
     def take_damage(self, damage: float, damage_type: str = "physical") -> bool:

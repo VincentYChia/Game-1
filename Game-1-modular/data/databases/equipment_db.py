@@ -186,6 +186,28 @@ class EquipmentDatabase:
 
         return defense
 
+    def _calculate_durability(self, tier: int, stat_multipliers: Dict) -> int:
+        """Calculate item durability based on stats-calculations.JSON formula.
+
+        Formula: globalBase × tierMult × itemMult
+        - globalBase = 250 (from stats-calculations.JSON)
+        - tierMult = {1: 1.0, 2: 2.0, 3: 4.0, 4: 8.0}
+        - itemMult = statMultipliers.durability (defaults to 1.0)
+
+        Results in: T1=250, T2=500, T3=1000, T4=2000 with 1.0 multiplier
+        Example: T2 with 1.25 multiplier = 250 × 2.0 × 1.25 = 625
+        """
+        global_base = 250  # From globalBases.durability in stats-calculations.JSON
+
+        tier_mults = {1: 1.0, 2: 2.0, 3: 4.0, 4: 8.0}
+        tier_mult = tier_mults.get(tier, 1.0)
+
+        item_mult = stat_multipliers.get('durability', 1.0)
+
+        durability = int(global_base * tier_mult * item_mult)
+
+        return durability
+
     def create_equipment_from_id(self, item_id: str) -> Optional[EquipmentItem]:
         if item_id not in self.items:
             return None
@@ -283,12 +305,18 @@ class EquipmentDatabase:
         elif 'defense' in stats:
             defense = stats.get('defense', 0)
 
-        # Calculate durability
-        durability = stats.get('durability', [100, 100])
-        if isinstance(durability, list):
-            dur_max = durability[1] if len(durability) > 1 else durability[0]
+        # Calculate durability using tier-based formula
+        # If stats has explicit durability value, use it (for backwards compatibility)
+        # Otherwise calculate from tier × base × item multiplier
+        if 'durability' in stats:
+            durability = stats['durability']
+            if isinstance(durability, list):
+                dur_max = durability[1] if len(durability) > 1 else durability[0]
+            else:
+                dur_max = int(durability)
         else:
-            dur_max = int(durability)
+            # Calculate durability from tier and statMultipliers.durability
+            dur_max = self._calculate_durability(tier, stat_multipliers)
 
         # Auto-generate icon path if not provided
         icon_path = data.get('iconPath')
