@@ -967,6 +967,9 @@ class Renderer:
                      damage_numbers: List[DamageNumber], combat_manager=None):
         pygame.draw.rect(self.screen, Config.COLOR_BACKGROUND, (0, 0, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT))
 
+        # Get image cache once at the start for all icon rendering
+        image_cache = ImageCache.get_instance()
+
         for tile in world.get_visible_tiles(camera.position, Config.VIEWPORT_WIDTH, Config.VIEWPORT_HEIGHT):
             sx, sy = camera.world_to_screen(tile.position)
             if -Config.TILE_SIZE <= sx <= Config.VIEWPORT_WIDTH and -Config.TILE_SIZE <= sy <= Config.VIEWPORT_HEIGHT:
@@ -991,7 +994,6 @@ class Renderer:
             station_icon_path = f"stations/{station_name}_t{station.tier}.png"
 
             # Try to load station icon
-            image_cache = ImageCache.get_instance()
             icon = image_cache.get_image(station_icon_path, (size, size))
 
             if icon:
