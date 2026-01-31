@@ -566,7 +566,7 @@
     {
       "metadata": {
         "narrative": "Flexible bamboo rod with silk line and bronze hook. Patient hands pull dinner from rivers and lakes. Not much use in a fight, but starvation kills just as surely as swords.",
-        "tags": ["tool", "fishing", "gathering"]
+        "tags": ["tool", "fishing", "starter"]
       },
       "itemId": "bamboo_fishing_rod",
       "name": "Bamboo Fishing Rod",

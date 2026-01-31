@@ -2,7 +2,7 @@
   "metadata": {
     "version": "1.0",
     "modified": true,
-    "totalRecipes": 5
+    "totalRecipes": 8
   },
   "recipes": [
     {
@@ -140,6 +140,33 @@
           "quantity": 6
         }
       ]
+    },
+    {
+      "recipeId": "smithing_bamboo_fishing_rod",
+      "outputId": "bamboo_fishing_rod",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "3x3",
+      "inputs": []
+    },
+    {
+      "recipeId": "smithing_steel_fishing_rod",
+      "outputId": "steel_fishing_rod",
+      "outputQty": 1,
+      "stationTier": 1,
+      "stationType": "smithing",
+      "gridSize": "5x5",
+      "inputs": []
+    },
+    {
+      "recipeId": "smithing_mithril_fishing_rod",
+      "outputId": "mithril_fishing_rod",
+      "outputQty": 1,
+      "stationTier": 2,
+      "stationType": "smithing",
+      "gridSize": "7x7",
+      "inputs": []
     }
   ]
 }
