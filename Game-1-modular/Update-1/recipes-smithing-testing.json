@@ -140,33 +140,6 @@
           "quantity": 6
         }
       ]
-    },
-    {
-      "recipeId": "smithing_steel_fishing_rod",
-      "outputId": "steel_fishing_rod",
-      "outputQty": 1,
-      "stationTier": 2,
-      "stationType": "smithing",
-      "gridSize": "5x5",
-      "inputs": []
-    },
-    {
-      "recipeId": "smithing_mithril_fishing_rod",
-      "outputId": "mithril_fishing_rod",
-      "outputQty": 1,
-      "stationTier": 3,
-      "stationType": "smithing",
-      "gridSize": "7x7",
-      "inputs": []
-    },
-    {
-      "recipeId": "smithing_adamantine_fishing_rod",
-      "outputId": "adamantine_fishing_rod",
-      "outputQty": 1,
-      "stationTier": 4,
-      "stationType": "smithing",
-      "gridSize": "9x9",
-      "inputs": []
     }
   ]
 }
