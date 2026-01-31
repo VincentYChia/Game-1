@@ -16,10 +16,10 @@
   "safeZone": {
     "centerX": 0,
     "centerY": 0,
-    "radius": 20,
+    "radius": 30,
     "noSpawning": true,
     "noEnemyEntry": true,
-    "comment": "No enemies spawn within +/-20 tiles of spawn point, and enemies cannot enter this zone"
+    "comment": "No enemies spawn within +/-30 tiles of spawn point, and enemies cannot enter this zone"
   },
 
   "spawnRates": {

@@ -618,6 +618,9 @@ class GameEngine:
                     elif self.dungeon_chest_open:
                         # Close dungeon chest UI
                         self._close_dungeon_chest()
+                    elif self.spawn_chest_open:
+                        # Close spawn storage chest UI
+                        self._close_spawn_chest()
                     elif self.character.crafting_ui_open:
                         self.character.close_crafting_ui()
                     elif self.character.stats_ui_open:
@@ -690,15 +693,9 @@ class GameEngine:
                         # NPC interaction (when not in dungeon)
                         self.handle_npc_interaction()
                 elif event.key == pygame.K_q:
-                    # Q behavior depends on context:
-                    # - If spawn chest is open: store hovered item in chest
-                    # - Otherwise: drop item to world (Q = 1 item, Shift+Q = entire stack)
-                    if self.spawn_chest_open:
-                        slot_idx = self._get_hovered_inventory_slot()
-                        if slot_idx >= 0 and self.character.inventory.slots[slot_idx]:
-                            self._transfer_to_spawn_chest(slot_idx)
-                    else:
-                        self._handle_inventory_drop()
+                    # Drop item from inventory (Q = 1 item, Shift+Q = entire stack)
+                    # Works regardless of chest state
+                    self._handle_inventory_drop()
 
                 # Skill hotbar (keys 1-5)
                 elif event.key == pygame.K_1:
@@ -1884,6 +1881,12 @@ class GameEngine:
                                 self._transfer_item_to_chest(idx)
                             return
 
+                        # If spawn storage chest is open, transfer to chest instead of equipping
+                        if self.spawn_chest_open:
+                            if self.character.inventory.slots[idx]:
+                                self._transfer_to_spawn_chest(idx)
+                            return
+
                         # Double-click to equip equipment or tools
                         if is_double_click and self.last_clicked_slot == idx:
                             # Check if item is being dragged (first click started drag)
@@ -2153,46 +2156,8 @@ class GameEngine:
         # Note: Corpse looting is now automatic when enemy dies
         # Manual corpse looting has been removed as loot is auto-added to inventory
 
-        # Check for placed entity pickup (turrets, traps, barriers, etc.)
-        if is_double_click:
-            placed_entity = self.world.get_entity_at(world_pos)
-            if placed_entity:
-                # Check if entity is pickupable (not crafting stations)
-                pickupable_types = [
-                    PlacedEntityType.TURRET,
-                    PlacedEntityType.TRAP,
-                    PlacedEntityType.BOMB,
-                    PlacedEntityType.UTILITY_DEVICE,
-                    PlacedEntityType.BARRIER  # Stone barriers can be picked up
-                ]
-                if placed_entity.entity_type in pickupable_types:
-                    # Check if player is in range (use 2.0 units as pickup range)
-                    dist = self.character.position.distance_to(placed_entity.position)
-                    if dist <= 2.0:
-                        # Add item back to inventory with preserved crafted_stats (minigame bonuses)
-                        mat_db = MaterialDatabase.get_instance()
-                        mat_def = mat_db.get_material(placed_entity.item_id)
-                        if mat_def:
-                            # Restore crafted_stats from placed entity
-                            entity_crafted_stats = placed_entity.crafted_stats if hasattr(placed_entity, 'crafted_stats') and placed_entity.crafted_stats else None
-                            # Try to add to inventory with preserved stats
-                            success = self.character.inventory.add_item(
-                                placed_entity.item_id, 1,
-                                crafted_stats=entity_crafted_stats
-                            )
-                            if success:
-                                # Remove from world (use remove_entity for proper cache updates)
-                                self.world.remove_entity(placed_entity)
-                                bonus_msg = " (with bonuses)" if entity_crafted_stats else ""
-                                self.add_notification(f"Picked up {mat_def.name}{bonus_msg}", (100, 255, 100))
-                                print(f"✓ Picked up {mat_def.name}{bonus_msg}")
-                                return
-                            else:
-                                self.add_notification("Inventory full!", (255, 100, 100))
-                                return
-                    else:
-                        self.add_notification("Too far to pick up", (255, 100, 100))
-                        return
+        # Note: Placed entities (turrets, traps, barriers) must be broken with tools to recover
+        # Double-click pickup was removed - only dropped items can be picked up with single click
 
         # Check for dropped item pickup (single click, before dungeon entrance)
         placed_entity = self.world.get_entity_at(world_pos)
@@ -6111,7 +6076,7 @@ class GameEngine:
         self.spawn_chest_open = not self.spawn_chest_open
 
         if self.spawn_chest_open:
-            self.add_notification("Storage chest opened! Q to store hovered item.", (100, 200, 255))
+            self.add_notification("Storage chest opened! Click items to transfer.", (100, 200, 255))
         else:
             self.add_notification("Storage chest closed.", (200, 200, 200))
 
@@ -6273,6 +6238,8 @@ class GameEngine:
         Q: Drop 1 of the hovered item
         Shift+Q: Drop the entire stack
         """
+        from data.models.world import PlacedEntity, PlacedEntityType, Position
+
         # Get hovered slot
         slot_idx = self._get_hovered_inventory_slot()
         if slot_idx < 0:
@@ -7703,7 +7670,7 @@ class GameEngine:
 
             # Quality panel on left side with cycle indicator
             stage_panel_x, stage_panel_y = 50, 130
-            stage_panel_w, stage_panel_h = 150, 145  # Expanded to fit cycle indicator
+            stage_panel_w, stage_panel_h = 150, 150  # Fits quality + cycle indicator
 
             pygame.draw.rect(surf, (230, 235, 240), (stage_panel_x, stage_panel_y, stage_panel_w, stage_panel_h), border_radius=8)
             pygame.draw.rect(surf, (150, 160, 155), (stage_panel_x, stage_panel_y, stage_panel_w, stage_panel_h), 2, border_radius=8)
@@ -7731,11 +7698,11 @@ class GameEngine:
             # Multicycle indicator - shows how many oscillation cycles (1, 2, or 3)
             oscillation_count = reaction.get('oscillation_count', 2)
             cycle_label = self.renderer.tiny_font.render("Cycles:", True, (100, 100, 100))
-            surf.blit(cycle_label, (stage_panel_x + 10, stage_panel_y + 100))
+            surf.blit(cycle_label, (stage_panel_x + 10, stage_panel_y + 102))
 
-            # Draw cycle indicators as small circles
-            cycle_start_x = stage_panel_x + 65
-            cycle_y = stage_panel_y + 105
+            # Draw cycle indicators as small circles (more spacing from label)
+            cycle_start_x = stage_panel_x + 70
+            cycle_y = stage_panel_y + 125
             for i in range(3):
                 circle_x = cycle_start_x + i * 22
                 if i < oscillation_count:
@@ -7752,9 +7719,9 @@ class GameEngine:
                     # Empty circle for unused cycles
                     pygame.draw.circle(surf, (180, 180, 180), (circle_x, cycle_y), 8, 2)
 
-        # Ingredient progress panel on right (expanded for name and volatility info)
+        # Ingredient progress panel on right (shows ingredient count and current name)
         ingr_panel_x, ingr_panel_y = ww - 230, 130
-        ingr_panel_w, ingr_panel_h = 180, 145  # Expanded to fit volatility and max quality
+        ingr_panel_w, ingr_panel_h = 180, 130  # Standard size for count + name
 
         pygame.draw.rect(surf, (230, 235, 240), (ingr_panel_x, ingr_panel_y, ingr_panel_w, ingr_panel_h), border_radius=8)
         pygame.draw.rect(surf, (150, 160, 155), (ingr_panel_x, ingr_panel_y, ingr_panel_w, ingr_panel_h), 2, border_radius=8)
@@ -7790,12 +7757,6 @@ class GameEngine:
 
             name_text = self.renderer.small_font.render(display_name, True, name_color)
             surf.blit(name_text, (ingr_panel_x + ingr_panel_w//2 - name_text.get_width()//2, ingr_panel_y + 92))
-
-            # Display max quality contribution for this ingredient
-            max_qual = state.get('current_ingredient_max_quality', 0)
-            if max_qual > 0:
-                qual_hint = self.renderer.tiny_font.render(f"Max: {int(max_qual * 100)}%", True, (120, 120, 120))
-                surf.blit(qual_hint, (ingr_panel_x + ingr_panel_w//2 - qual_hint.get_width()//2, ingr_panel_y + 112))
 
         # Timer panel
         timer_panel_x, timer_panel_y = ww - 230, 250

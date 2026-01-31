@@ -42,9 +42,9 @@ def scan_update_directory(update_dir: Path, database_type: str) -> List[Path]:
     files = []
 
     if database_type == 'equipment':
-        # Look for items/weapons/armor/stations JSONs
-        patterns = ['*items*.JSON', '*weapons*.JSON', '*armor*.JSON', '*tools*.JSON', '*stations*.JSON',
-                    '*items*.json', '*weapons*.json', '*armor*.json', '*tools*.json', '*stations*.json']
+        # Look for items/weapons/armor/tools JSONs (NOT stations - those go to MaterialDatabase)
+        patterns = ['*items*.JSON', '*weapons*.JSON', '*armor*.JSON', '*tools*.JSON',
+                    '*items*.json', '*weapons*.json', '*armor*.json', '*tools*.json']
     elif database_type == 'skills':
         # Look for skills JSONs
         patterns = ['*skills*.JSON', '*skills*.json']
@@ -52,9 +52,9 @@ def scan_update_directory(update_dir: Path, database_type: str) -> List[Path]:
         # Look for hostiles/enemies JSONs
         patterns = ['*hostiles*.JSON', '*enemies*.JSON', '*hostiles*.json', '*enemies*.json']
     elif database_type == 'materials':
-        # Look for materials/consumables/devices JSONs
-        patterns = ['*materials*.JSON', '*consumables*.JSON', '*devices*.JSON',
-                    '*materials*.json', '*consumables*.json', '*devices*.json']
+        # Look for materials/consumables/devices/stations JSONs (stations go here, not equipment)
+        patterns = ['*materials*.JSON', '*consumables*.JSON', '*devices*.JSON', '*stations*.JSON',
+                    '*materials*.json', '*consumables*.json', '*devices*.json', '*stations*.json']
     else:
         patterns = ['*.JSON', '*.json']
 

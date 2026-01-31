@@ -5,7 +5,7 @@
     "note": "Adds T3/T4 stations for refining, alchemy, engineering, and enchanting"
   },
 
-  "items": [
+  "stations": [
     {
       "metadata": {
         "narrative": "Master refinery with arcane heat control. Can process the rarest ores without any waste.",

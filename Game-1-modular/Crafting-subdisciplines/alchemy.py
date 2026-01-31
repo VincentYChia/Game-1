@@ -272,8 +272,15 @@ class AlchemyReaction:
             amplitude = 0.6 + (0.4 * cycle_index / (oscillations - 1))
 
         # Scale to this ingredient's dynamic max quality
-        # Base quality increases slightly with overall progress
-        base_fraction = 0.15 + total_progress * 0.30  # 15% to 45% of max
+        # Base quality increases with progress, calibrated so final peak can reach 100%
+        # Final peak occurs at: (oscillations - 0.5) / oscillations
+        # e.g., 1 osc: 0.5, 2 osc: 0.75, 3 osc: 0.833
+        # At final peak, we need base_fraction = 0.45 so total can reach 1.0
+        final_peak_progress = (oscillations - 0.5) / oscillations
+        # Scale base so it reaches 0.45 at the final peak timing
+        # base_fraction = 0.15 at start, 0.45 at final_peak_progress
+        base_fraction = 0.15 + (total_progress / final_peak_progress) * 0.30
+        base_fraction = min(0.45, base_fraction)  # Cap at 0.45
         oscillation_fraction = cycle_value * amplitude * 0.55  # 0% to 55% of max
 
         quality_fraction = base_fraction + oscillation_fraction  # Total: 0% to 100% of max
