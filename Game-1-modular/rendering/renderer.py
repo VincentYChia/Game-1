@@ -237,10 +237,8 @@ class Renderer:
                         icon_size = max(cell_size - 8, 16)
                         icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
                         if icon:
-                            dimmed_icon = icon.copy()
-                            dimmed_icon.set_alpha(128)
-                            icon_rect = dimmed_icon.get_rect(center=cell_rect.center)
-                            surf.blit(dimmed_icon, icon_rect)
+                            icon_rect = icon.get_rect(center=cell_rect.center)
+                            surf.blit(icon, icon_rect)
                         else:
                             mat_name = mat.name[:6]
                             text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
