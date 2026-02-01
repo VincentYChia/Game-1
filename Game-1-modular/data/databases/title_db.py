@@ -106,7 +106,10 @@ class TitleDatabase:
             'durabilityBonus': 'durability_bonus', 'legendaryChance': 'legendary_chance',
             'dragonDamage': 'dragon_damage',
             'fireResistance': 'fire_resistance', 'legendaryDropRate': 'legendary_drop_rate', 'luckStat': 'luck_stat',
-            'rareDropRate': 'rare_drop_rate'
+            'rareDropRate': 'rare_drop_rate',
+            # Fishing bonuses
+            'fishingSpeed': 'fishing_speed', 'fishingAccuracy': 'fishing_accuracy',
+            'rareFishChance': 'rare_fish_chance', 'fishingYield': 'fishing_yield'
         }
 
         mapped_bonuses = {}

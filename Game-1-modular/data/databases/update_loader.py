@@ -19,7 +19,8 @@ from typing import List
 from data.databases.equipment_db import EquipmentDatabase
 from data.databases.skill_db import SkillDatabase
 from data.databases.material_db import MaterialDatabase
-# Add other databases as needed
+from data.databases.title_db import TitleDatabase
+from data.databases.skill_unlock_db import SkillUnlockDatabase
 
 
 def get_installed_updates(project_root: Path) -> List[str]:
@@ -55,6 +56,13 @@ def scan_update_directory(update_dir: Path, database_type: str) -> List[Path]:
         # Look for materials/consumables/devices JSONs (stations are in main items file, not updates)
         patterns = ['*materials*.JSON', '*consumables*.JSON', '*devices*.JSON',
                     '*materials*.json', '*consumables*.json', '*devices*.json']
+    elif database_type == 'titles':
+        # Look for titles JSONs
+        patterns = ['*titles*.JSON', '*titles*.json']
+    elif database_type == 'skill_unlocks':
+        # Look for skill-unlocks JSONs
+        patterns = ['*skill-unlocks*.JSON', '*skill-unlocks*.json',
+                    '*skill_unlocks*.JSON', '*skill_unlocks*.json']
     else:
         patterns = ['*.JSON', '*.json']
 
@@ -178,6 +186,58 @@ def load_material_updates(project_root: Path):
                 print(f"   ⚠️  Error loading {file.name}: {e}")
 
 
+def load_title_updates(project_root: Path):
+    """Load titles from all installed updates"""
+    db = TitleDatabase.get_instance()
+    installed = get_installed_updates(project_root)
+
+    if not installed:
+        return  # Silent - titles are optional
+
+    print(f"\n🔄 Loading titles from {len(installed)} update(s)...")
+
+    for update_name in installed:
+        update_dir = project_root / update_name
+        if not update_dir.exists():
+            print(f"   ⚠️  Update directory not found: {update_name}")
+            continue
+
+        files = scan_update_directory(update_dir, 'titles')
+
+        for file in files:
+            try:
+                print(f"   🏆 Loading: {update_name}/{file.name}")
+                db.load_from_file(str(file))
+            except Exception as e:
+                print(f"   ⚠️  Error loading {file.name}: {e}")
+
+
+def load_skill_unlock_updates(project_root: Path):
+    """Load skill unlocks from all installed updates"""
+    db = SkillUnlockDatabase.get_instance()
+    installed = get_installed_updates(project_root)
+
+    if not installed:
+        return  # Silent - skill unlocks are optional
+
+    print(f"\n🔄 Loading skill unlocks from {len(installed)} update(s)...")
+
+    for update_name in installed:
+        update_dir = project_root / update_name
+        if not update_dir.exists():
+            print(f"   ⚠️  Update directory not found: {update_name}")
+            continue
+
+        files = scan_update_directory(update_dir, 'skill_unlocks')
+
+        for file in files:
+            try:
+                print(f"   🔓 Loading: {update_name}/{file.name}")
+                db.load_from_file(str(file))
+            except Exception as e:
+                print(f"   ⚠️  Error loading {file.name}: {e}")
+
+
 def load_recipe_updates(project_root: Path):
     """Load recipes from all installed updates"""
     from data.databases.recipe_db import RecipeDatabase
@@ -257,6 +317,8 @@ def load_all_updates(project_root: Path = None):
     load_enemy_updates(project_root)
     load_material_updates(project_root)
     load_recipe_updates(project_root)
+    load_title_updates(project_root)
+    load_skill_unlock_updates(project_root)
 
     print(f"\n✅ Update-N packages loaded successfully")
     print("="*70 + "\n")

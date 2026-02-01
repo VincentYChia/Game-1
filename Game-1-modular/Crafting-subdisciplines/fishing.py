@@ -153,7 +153,7 @@ class FishingMinigame:
     """
 
     def __init__(self, fishing_spot_tier: int, equipped_rod: Optional[Any] = None,
-                 player_stats: Optional[Dict] = None):
+                 player_stats: Optional[Dict] = None, character: Optional[Any] = None):
         """
         Initialize fishing minigame.
 
@@ -161,6 +161,7 @@ class FishingMinigame:
             fishing_spot_tier: Tier of the fishing spot (1-4)
             equipped_rod: The equipped fishing rod (for tier/quality)
             player_stats: Player's stats dict with 'luck', 'strength', etc.
+            character: The player character (for title/buff bonuses)
         """
         # Load config from JSON
         self.cfg = FishingConfig.get_instance()
@@ -169,6 +170,7 @@ class FishingMinigame:
         self.fishing_spot_tier = fishing_spot_tier
         self.equipped_rod = equipped_rod
         self.player_stats = player_stats or {}
+        self.character = character
 
         # Load base constants from config
         pond = self.cfg.get('minigame', 'pond_dimensions', default={})
@@ -213,33 +215,94 @@ class FishingMinigame:
                 gathering_mult = equipped_rod.statMultipliers.get('gathering', 1.0)
                 self.rod_tier = max(self.rod_tier, int(gathering_mult))
 
+        # Extract bonuses from titles, skills, and enchantments
+        self._extract_bonuses()
+
         # Calculate adjusted parameters based on stats
         self._calculate_difficulty()
 
         # Game state
         self.active = False
         self.ripples: List[Ripple] = []
-        self.current_ripple_index = 0
-        self.time_since_last_spawn = 0.0
-        self.total_time = 0.0
-        self.completed = False
-        self.success = False
-        self.result = None
 
-        # Tracking
-        self.hits = 0
-        self.misses = 0
-        self.perfect_hits = 0
-        self.total_score = 0
-        self.scores: List[int] = []
+    def _extract_bonuses(self):
+        """
+        Extract bonuses from titles, skills (buffs), and enchantments.
 
-        # Visual feedback
-        self.last_hit_position: Optional[Tuple[float, float]] = None
-        self.last_hit_score: Optional[int] = None
-        self.last_hit_time: float = 0.0
+        Bonuses applied:
+        - Title bonuses: fishing_speed, fishing_accuracy, rare_fish_chance, fishing_yield
+        - Skill buffs: empower (STR boost), quicken (speed), elevate (quality), enrich (yield)
+        - Enchantments: Efficiency (gathering_speed_multiplier) on rod
+        """
+        # Initialize bonus accumulators
+        self.title_speed_bonus = 0.0
+        self.title_accuracy_bonus = 0.0
+        self.title_rare_fish_bonus = 0.0
+        self.title_yield_bonus = 0.0
+        self.title_luck_bonus = 0.0
+
+        self.buff_empower_bonus = 0.0  # STR boost for tolerance
+        self.buff_quicken_bonus = 0.0  # Speed (slower ripples)
+        self.buff_elevate_bonus = 0.0  # Quality (rare fish chance)
+        self.buff_enrich_bonus = 0.0   # Yield bonus
+
+        self.enchant_efficiency_bonus = 0.0  # Rod quality multiplier
+
+        # Extract title bonuses
+        if self.character and hasattr(self.character, 'titles'):
+            self.title_speed_bonus = self.character.titles.get_total_bonus('fishing_speed')
+            self.title_accuracy_bonus = self.character.titles.get_total_bonus('fishing_accuracy')
+            self.title_rare_fish_bonus = self.character.titles.get_total_bonus('rare_fish_chance')
+            self.title_yield_bonus = self.character.titles.get_total_bonus('fishing_yield')
+            self.title_luck_bonus = self.character.titles.get_total_bonus('luck_stat')
+
+        # Extract buff bonuses from skills
+        if self.character and hasattr(self.character, 'buffs'):
+            # Empower buff increases STR calculation (for hit tolerance)
+            self.buff_empower_bonus = self.character.buffs.get_total_bonus('empower', 'fishing')
+            # Quicken buff slows ripples (more time)
+            self.buff_quicken_bonus = self.character.buffs.get_total_bonus('quicken', 'fishing')
+            # Elevate buff increases quality/rare fish chance
+            self.buff_elevate_bonus = self.character.buffs.get_total_bonus('elevate', 'fishing')
+            # Enrich buff increases yield
+            self.buff_enrich_bonus = self.character.buffs.get_total_bonus('enrich', 'fishing')
+
+        # Extract enchantment bonuses from equipped rod
+        if self.equipped_rod and hasattr(self.equipped_rod, 'enchantments') and self.equipped_rod.enchantments:
+            for ench in self.equipped_rod.enchantments:
+                effect = ench.get('effect', {})
+                # Efficiency enchantment provides gathering_speed_multiplier
+                if effect.get('type') == 'gathering_speed_multiplier':
+                    self.enchant_efficiency_bonus = effect.get('value', 0.0)
+                    break  # Only use first efficiency enchantment
+
+        # Log extracted bonuses if any are present
+        total_bonuses = (self.title_speed_bonus + self.title_accuracy_bonus +
+                        self.buff_empower_bonus + self.buff_quicken_bonus +
+                        self.enchant_efficiency_bonus)
+        if total_bonuses > 0:
+            print(f"Fishing bonuses extracted:")
+            if self.title_speed_bonus > 0:
+                print(f"   Title speed: +{self.title_speed_bonus*100:.0f}%")
+            if self.title_accuracy_bonus > 0:
+                print(f"   Title accuracy: +{self.title_accuracy_bonus*100:.0f}%")
+            if self.title_rare_fish_bonus > 0:
+                print(f"   Title rare fish: +{self.title_rare_fish_bonus*100:.0f}%")
+            if self.title_yield_bonus > 0:
+                print(f"   Title yield: +{self.title_yield_bonus*100:.0f}%")
+            if self.buff_empower_bonus > 0:
+                print(f"   Skill empower (STR): +{self.buff_empower_bonus*100:.0f}%")
+            if self.buff_quicken_bonus > 0:
+                print(f"   Skill quicken (speed): +{self.buff_quicken_bonus*100:.0f}%")
+            if self.buff_elevate_bonus > 0:
+                print(f"   Skill elevate (quality): +{self.buff_elevate_bonus*100:.0f}%")
+            if self.buff_enrich_bonus > 0:
+                print(f"   Skill enrich (yield): +{self.buff_enrich_bonus*100:.0f}%")
+            if self.enchant_efficiency_bonus > 0:
+                print(f"   Efficiency enchant: +{self.enchant_efficiency_bonus*100:.0f}%")
 
     def _calculate_difficulty(self):
-        """Calculate game parameters based on tier and stats using JSON config."""
+        """Calculate game parameters based on tier, stats, titles, skills, and enchantments."""
         # Load stat effect configs
         luck_cfg = self.cfg.get('stat_effects', 'luck', default={})
         str_cfg = self.cfg.get('stat_effects', 'strength', default={})
@@ -251,11 +314,13 @@ class FishingMinigame:
         tier_multiplier = 1.0 + (self.fishing_spot_tier - 1) * tier_mult
 
         # LCK reduces ripple count (makes game shorter)
+        # Title luck bonus adds to effective luck
         luck_reduction_per = luck_cfg.get('ripple_reduction_per_point', 0.1)
         min_ripples = luck_cfg.get('min_ripples', 4)
         max_ripples = luck_cfg.get('max_ripples', 15)
 
-        luck_reduction = self.luck * luck_reduction_per
+        effective_luck = self.luck + (self.luck * self.title_luck_bonus)
+        luck_reduction = effective_luck * luck_reduction_per
         self.required_ripples = max(min_ripples, int(self.BASE_RIPPLE_COUNT - luck_reduction))
 
         # Higher tier fishing spots need more ripples
@@ -263,25 +328,44 @@ class FishingMinigame:
         self.required_ripples = max(min_ripples, min(max_ripples, self.required_ripples))
 
         # STR increases hit tolerance (larger click area)
+        # Empower buff and accuracy title bonus add to tolerance
         tolerance_per = str_cfg.get('tolerance_bonus_per_point', 0.5)
         max_tolerance = str_cfg.get('max_tolerance', 30)
 
-        str_bonus = self.strength * tolerance_per
-        self.hit_tolerance = self.BASE_HIT_TOLERANCE + str_bonus
+        # Calculate effective STR with empower buff bonus
+        effective_str = self.strength * (1.0 + self.buff_empower_bonus)
+        str_bonus = effective_str * tolerance_per
+
+        # Title accuracy bonus adds directly to tolerance
+        accuracy_bonus = self.BASE_HIT_TOLERANCE * self.title_accuracy_bonus
+
+        self.hit_tolerance = self.BASE_HIT_TOLERANCE + str_bonus + accuracy_bonus
         self.hit_tolerance = min(max_tolerance, self.hit_tolerance)
 
         # Rod tier affects expansion speed (higher tier = slower = more time)
+        # Efficiency enchantment and quicken buff further reduce speed (more time)
         speed_reduction = rod_cfg.get('speed_reduction_per_tier', 0.15)
         min_speed_mult = rod_cfg.get('min_speed_mult', 0.55)
 
         rod_speed_mult = 1.0 - (self.rod_tier - 1) * speed_reduction
+
+        # Efficiency enchantment acts as additional rod tier boost
+        # Each 20% efficiency = ~1 tier worth of speed reduction
+        efficiency_speed_reduction = self.enchant_efficiency_bonus * 0.75
+        rod_speed_mult -= efficiency_speed_reduction
+
         rod_speed_mult = max(min_speed_mult, rod_speed_mult)
 
         # Fishing spot tier increases speed (harder)
         spot_speed_multiplier = tier_cfg.get('speed_multiplier', 0.2)
         spot_speed_mult = 1.0 + (self.fishing_spot_tier - 1) * spot_speed_multiplier
 
-        self.expand_speed = self.BASE_EXPAND_SPEED * rod_speed_mult * spot_speed_mult
+        # Apply quicken buff and title speed bonus to reduce expand speed
+        speed_bonus = self.buff_quicken_bonus + self.title_speed_bonus
+        final_speed_mult = rod_speed_mult * spot_speed_mult * (1.0 - speed_bonus * 0.5)
+        final_speed_mult = max(0.3, final_speed_mult)  # Don't let it go too slow
+
+        self.expand_speed = self.BASE_EXPAND_SPEED * final_speed_mult
 
         # Spawn delay also affected by rod (more time between ripples)
         self.spawn_delay = self.BASE_SPAWN_DELAY * (1.0 / rod_speed_mult)
@@ -294,8 +378,8 @@ class FishingMinigame:
         # Log difficulty info
         print(f"Fishing difficulty calculated:")
         print(f"   Spot Tier: {self.fishing_spot_tier}, Rod Tier: {self.rod_tier}")
-        print(f"   LCK: {self.luck} -> {self.required_ripples} ripples required")
-        print(f"   STR: {self.strength} -> {self.hit_tolerance:.1f}px hit tolerance")
+        print(f"   LCK: {self.luck} (eff: {effective_luck:.1f}) -> {self.required_ripples} ripples")
+        print(f"   STR: {self.strength} (eff: {effective_str:.1f}) -> {self.hit_tolerance:.1f}px tolerance")
         print(f"   Speed: {self.expand_speed:.1f}px/s, Delay: {self.spawn_delay:.1f}s")
 
     def start(self):
@@ -451,7 +535,7 @@ class FishingMinigame:
             return 0
 
     def _end_game(self):
-        """End the minigame and calculate results using JSON config."""
+        """End the minigame and calculate results using JSON config, titles, and skills."""
         self.active = False
         self.completed = True
 
@@ -468,7 +552,10 @@ class FishingMinigame:
             avg_score = 0
 
         # Performance rating (0.0 to 1.0)
-        performance = (avg_score / 100) * hit_rate
+        # Apply elevate buff and rare fish title bonus to boost performance
+        base_performance = (avg_score / 100) * hit_rate
+        quality_bonus = self.buff_elevate_bonus + self.title_rare_fish_bonus
+        performance = min(1.0, base_performance * (1.0 + quality_bonus))
 
         # Success threshold from config
         self.success = hit_rate >= self.MIN_HIT_RATE and avg_score >= self.MIN_AVG_SCORE
@@ -492,6 +579,10 @@ class FishingMinigame:
         else:
             quality_tier = "Normal"
             bonus_mult = quality_tiers.get('normal', {}).get('bonus_mult', 0.8)
+
+        # Apply title and skill yield bonuses to bonus_mult
+        yield_bonus = self.title_yield_bonus + self.buff_enrich_bonus
+        bonus_mult *= (1.0 + yield_bonus)
 
         # XP reward based on fishing spot tier from config
         xp_config = self.cfg.get('xp_rewards', default={})
@@ -647,11 +738,12 @@ class FishingManager:
             'agility': character.stats.agility,
         }
 
-        # Create minigame
+        # Create minigame with character for title/buff bonuses
         self.active_minigame = FishingMinigame(
             fishing_spot_tier=resource.tier,
             equipped_rod=equipped_rod,
-            player_stats=player_stats
+            player_stats=player_stats,
+            character=character
         )
         self.current_fishing_spot = resource
         self.active_minigame.start()
@@ -728,6 +820,16 @@ class FishingManager:
             if not Config.DEBUG_INFINITE_DURABILITY:
                 # DEF stat reduces durability loss
                 loss_mult = character.stats.get_durability_loss_multiplier()
+
+                # Unbreaking enchantment reduces durability loss
+                if hasattr(equipped_rod, 'enchantments') and equipped_rod.enchantments:
+                    for ench in equipped_rod.enchantments:
+                        effect = ench.get('effect', {})
+                        if effect.get('type') == 'durability_multiplier':
+                            reduction = effect.get('value', 0.0)
+                            loss_mult *= (1.0 - reduction)
+                            break
+
                 final_loss = durability_loss * loss_mult
                 equipped_rod.durability_current = max(0, equipped_rod.durability_current - final_loss)
 
