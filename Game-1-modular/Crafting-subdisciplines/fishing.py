@@ -476,15 +476,18 @@ class FishingMinigame:
         if not self.active:
             return None
 
-        # Find ripple that was clicked (click must be within the ripple's visible area)
+        # Find ripple that was clicked
+        # Clickable area is the TARGET radius until expanding ring exceeds it
+        # This makes early clicks easier while preserving timing-based scoring
         best_ripple = None
         best_distance = float('inf')
 
         for ripple in self.ripples:
             if ripple.active and not ripple.hit:
                 distance = math.sqrt((click_x - ripple.x)**2 + (click_y - ripple.y)**2)
-                # Only consider if click is within the current expanding ring
-                if distance <= ripple.current_radius and distance < best_distance:
+                # Clickable area: target_radius until ring expands past it
+                clickable_radius = max(ripple.current_radius, self.target_radius)
+                if distance <= clickable_radius and distance < best_distance:
                     best_distance = distance
                     best_ripple = ripple
 
