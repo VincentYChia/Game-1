@@ -9765,6 +9765,12 @@ class GameEngine:
                 for item_id, qty in process_result.get('loot', []):
                     tracker.record_fish_caught(item_id, qty, fishing_tier, rarity, 0)
 
+            # Check for new titles based on fishing achievements
+            new_title = self.character.titles.check_for_title(self.character)
+            if new_title:
+                self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+                self.character.check_skill_unlocks(trigger_type='title_earned', trigger_value=new_title.title_id)
+
         else:
             self.add_notification("The fish got away!", (255, 150, 100))
 

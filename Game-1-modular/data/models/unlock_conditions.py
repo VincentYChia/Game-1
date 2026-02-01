@@ -332,7 +332,23 @@ class ConditionFactory:
             return LevelCondition(data.get("min_level", 1))
 
         elif condition_type == "stat":
-            return StatCondition(data.get("requirements", {}))
+            # Support both new format {"requirements": {...}} and
+            # JSON format {"stat_name": "STR", "min_value": 5}
+            if "requirements" in data:
+                return StatCondition(data.get("requirements", {}))
+            elif "stat_name" in data:
+                stat_name = data.get("stat_name", "").lower()
+                # Map abbreviated stat names to full names
+                stat_mapping = {
+                    'str': 'strength', 'def': 'defense', 'vit': 'vitality',
+                    'lck': 'luck', 'agi': 'agility', 'int': 'intelligence',
+                    'strength': 'strength', 'defense': 'defense', 'vitality': 'vitality',
+                    'luck': 'luck', 'agility': 'agility', 'intelligence': 'intelligence'
+                }
+                full_stat_name = stat_mapping.get(stat_name, stat_name)
+                return StatCondition({full_stat_name: data.get("min_value", 0)})
+            else:
+                return StatCondition({})
 
         elif condition_type == "activity":
             return ActivityCondition(
@@ -347,7 +363,12 @@ class ConditionFactory:
             )
 
         elif condition_type == "title":
-            return TitleCondition(data.get("required_titles", []))
+            # Support both {"required_titles": [...]} and {"required_title": "..."}
+            if "required_titles" in data:
+                return TitleCondition(data.get("required_titles", []))
+            elif "required_title" in data:
+                title_id = data.get("required_title", "")
+                return TitleCondition([title_id] if title_id else [])
 
         elif condition_type == "skill":
             return SkillCondition(data.get("required_skills", []))
