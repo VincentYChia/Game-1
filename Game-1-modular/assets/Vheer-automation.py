@@ -627,8 +627,8 @@ def pre_scan_directories_custom(items, version_start, version_end, cycle=None):
             subfolder = item.get('subfolder')
 
             # Build list of possible filenames (original + mapped names)
-            # Always use versioned filename for custom mode (or version 1 without cycle)
-            if version == 1 and cycle is None:
+            # v1 = no suffix, v2+ = with suffix
+            if version == 1:
                 possible_filenames = [f"{name}.png"]
                 if name in RESOURCE_NAME_MAP:
                     possible_filenames.append(f"{RESOURCE_NAME_MAP[name]}.png")
@@ -1035,7 +1035,7 @@ def generate_item(driver, item, version=1, cycle=None):
     # Use the shared output path logic
     output_base = get_output_base_for_version(version, cycle)
 
-    if version == 1 and cycle is None:
+    if version == 1:
         filename = f"{name}.png"
         version_label = ""
     else:
@@ -1200,8 +1200,11 @@ def get_possible_filenames(item_name, version):
     """Get all possible filename variations for an item.
 
     Returns list of lowercase filenames to check (without path).
+
+    Naming convention:
+    - v1: item.png (always, no suffix)
+    - v2+: item-{version}.png
     """
-    # v1 = no suffix (item.png), v2+ = with suffix (item-2.png)
     if version == 1:
         filenames = [f"{item_name}.png".lower()]
         if item_name in RESOURCE_NAME_MAP:
@@ -1214,7 +1217,6 @@ def get_possible_filenames(item_name, version):
             filenames.append(f"{mapped_name}-{version}.png".lower())
 
     return filenames
-
 def run_generation_for_cycle(items, version_start, version_end, output_cycle, configs_dict=None):
     """Run icon generation for a specific cycle with its configuration.
 
