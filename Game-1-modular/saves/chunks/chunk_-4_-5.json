@@ -1,7 +1,7 @@
 {
   "chunk_x": -4,
   "chunk_y": -5,
-  "chunk_type": "peaceful_forest",
+  "chunk_type": "water_cursed_swamp",
   "dungeon_entrance": {
     "position": {
       "x": -56,
@@ -10,5 +10,5 @@
     },
     "rarity": "uncommon"
   },
-  "unload_timestamp": 28.35099999999987
+  "unload_timestamp": 79.10400000000027
 }

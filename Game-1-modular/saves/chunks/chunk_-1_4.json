@@ -1,0 +1,14 @@
+{
+  "chunk_x": -1,
+  "chunk_y": 4,
+  "chunk_type": "water_river",
+  "dungeon_entrance": {
+    "position": {
+      "x": -6,
+      "y": 75,
+      "z": 0
+    },
+    "rarity": "uncommon"
+  },
+  "unload_timestamp": 3.416999999999996
+}

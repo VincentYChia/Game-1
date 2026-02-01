@@ -1,0 +1,153 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Fishing skill unlocks for Update-2 - defines how fishing skills become available",
+    "note": "Works alongside Update-2/skills-fishing.JSON"
+  },
+
+  "skillUnlocks": [
+    {
+      "unlockId": "unlock_anglers_patience",
+      "skillId": "anglers_patience",
+      "unlockMethod": "automatic",
+
+      "conditions": [
+        {"type": "level", "min_level": 1},
+        {"type": "stat_tracker", "stat_path": "gathering_totals.total_fish_caught", "min_value": 10}
+      ],
+
+      "unlockTrigger": {
+        "type": "stat_threshold",
+        "triggerValue": 10,
+        "message": "Your patience with the waters has taught you: Angler's Patience!"
+      },
+
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skillPoints": 0
+      },
+
+      "metadata": {
+        "narrative": "After catching your first several fish, you begin to understand the rhythm of the waters.",
+        "category": "fishing_starter"
+      }
+    },
+
+    {
+      "unlockId": "unlock_fishers_strength",
+      "skillId": "fishers_strength",
+      "unlockMethod": "automatic",
+
+      "conditions": [
+        {"type": "level", "min_level": 1},
+        {"type": "stat_tracker", "stat_path": "gathering_totals.total_fish_caught", "min_value": 25}
+      ],
+
+      "unlockTrigger": {
+        "type": "stat_threshold",
+        "triggerValue": 25,
+        "message": "Your growing strength as a fisher has unlocked: Fisher's Strength!"
+      },
+
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skillPoints": 0
+      },
+
+      "metadata": {
+        "narrative": "Hauling in catch after catch has strengthened your arms and grip.",
+        "category": "fishing_starter"
+      }
+    },
+
+    {
+      "unlockId": "unlock_lucky_catch",
+      "skillId": "lucky_catch",
+      "unlockMethod": "achievement",
+
+      "conditions": [
+        {"type": "level", "min_level": 5},
+        {"type": "stat_tracker", "stat_path": "gathering_advanced.rare_fish_caught", "min_value": 3},
+        {"type": "stat", "stat_name": "LCK", "min_value": 3}
+      ],
+
+      "unlockTrigger": {
+        "type": "stat_threshold",
+        "triggerValue": 3,
+        "message": "Your luck with rare catches has granted you: Lucky Catch!"
+      },
+
+      "cost": {
+        "gold": 100,
+        "materials": [],
+        "skillPoints": 1
+      },
+
+      "metadata": {
+        "narrative": "Fortune smiles upon those who persistently seek the rare denizens of the deep.",
+        "category": "fishing_progression"
+      }
+    },
+
+    {
+      "unlockId": "unlock_waters_blessing",
+      "skillId": "waters_blessing",
+      "unlockMethod": "title_reward",
+
+      "conditions": [
+        {"type": "level", "min_level": 8},
+        {"type": "title", "required_title": "novice_fisher"}
+      ],
+
+      "unlockTrigger": {
+        "type": "title_earned",
+        "triggerValue": "novice_fisher",
+        "message": "The title of Novice Fisher grants you: Water's Blessing!"
+      },
+
+      "cost": {
+        "gold": 0,
+        "materials": [],
+        "skillPoints": 0
+      },
+
+      "metadata": {
+        "narrative": "Earning the respect of the waters as a true fisher opens new paths.",
+        "category": "fishing_progression"
+      }
+    },
+
+    {
+      "unlockId": "unlock_master_angler",
+      "skillId": "master_angler",
+      "unlockMethod": "title_reward",
+
+      "conditions": [
+        {"type": "level", "min_level": 15},
+        {"type": "title", "required_title": "journeyman_fisher"},
+        {"type": "stat_tracker", "stat_path": "gathering_totals.total_fish_caught", "min_value": 500},
+        {"type": "stat", "stat_name": "STR", "min_value": 5},
+        {"type": "stat", "stat_name": "LCK", "min_value": 5}
+      ],
+
+      "unlockTrigger": {
+        "type": "title_earned",
+        "triggerValue": "journeyman_fisher",
+        "message": "Your mastery of the waters unlocks the ultimate technique: Master Angler!"
+      },
+
+      "cost": {
+        "gold": 500,
+        "materials": [{"materialId": "rare_fish_scale", "qty": 5}],
+        "skillPoints": 2
+      },
+
+      "metadata": {
+        "narrative": "Only those who have proven themselves as true masters of fishing may wield this power.",
+        "category": "fishing_mastery"
+      }
+    }
+  ]
+}

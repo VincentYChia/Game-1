@@ -72,10 +72,14 @@ try:
     from engineering import EngineeringCrafter
     from enchanting import EnchantingCrafter
     from rarity_utils import rarity_system
+    from fishing import FishingMinigame, FishingManager, get_fishing_manager
     CRAFTING_MODULES_LOADED = True
+    FISHING_MODULE_LOADED = True
     print("✓ Loaded crafting subdisciplines modules")
+    print("✓ Loaded fishing minigame module")
 except ImportError as e:
     CRAFTING_MODULES_LOADED = False
+    FISHING_MODULE_LOADED = False
     print(f"⚠ Could not load crafting subdisciplines: {e}")
     print("  Crafting will use legacy instant-craft only")
 
@@ -239,11 +243,15 @@ class GameEngine:
 
         # Minigame state
         self.active_minigame = None  # Current minigame instance
-        self.minigame_type = None  # 'smithing', 'alchemy', etc.
+        self.minigame_type = None  # 'smithing', 'alchemy', 'fishing', etc.
         self.minigame_recipe = None  # Recipe being crafted
         self.minigame_paused = False
         self.minigame_button_rect = None  # Primary button rect
         self.minigame_button_rect2 = None  # Secondary button rect (alchemy)
+
+        # Fishing minigame state
+        self.fishing_spot = None  # Current fishing spot resource
+        self.fishing_pond_rect = None  # Rect for the fishing pond UI
 
         # Placement state - for material placement UIs
         self.placement_mode = False  # True when in placement UI
@@ -1725,6 +1733,23 @@ class GameEngine:
                     if self.minigame_type == 'alchemy':
                         self.active_minigame.stabilize()
                     return
+
+            # Fishing minigame - click on pond to hit ripples
+            if self.minigame_type == 'fishing':
+                # Check if result is showing - click to complete
+                if hasattr(self.active_minigame, 'result') and self.active_minigame.result:
+                    self._complete_fishing_minigame()
+                    return
+
+                # Check for click on fishing pond
+                if hasattr(self, 'fishing_pond_rect') and self.fishing_pond_rect:
+                    if self.fishing_pond_rect.collidepoint(mouse_pos):
+                        # Convert to pond-local coordinates
+                        local_x = mouse_pos[0] - self.fishing_pond_rect.x
+                        local_y = mouse_pos[1] - self.fishing_pond_rect.y
+                        self.active_minigame.handle_click(local_x, local_y)
+                        return
+
             # Consume all clicks when minigame is active (don't interact with world)
             return
 
@@ -2290,6 +2315,18 @@ class GameEngine:
             can_harvest, reason = self.character.can_harvest_resource(resource)
             if not can_harvest:
                 self.add_notification(f"Cannot harvest: {reason}", (255, 100, 100))
+                return
+
+            # Check if this is a fishing spot - use minigame instead of normal harvest
+            from data.models import ResourceType
+            is_fishing_spot = (
+                resource.resource_type == ResourceType.FISHING_SPOT or
+                'fishing_spot' in resource.resource_type.value.lower()
+            )
+
+            if is_fishing_spot and FISHING_MODULE_LOADED:
+                # Start fishing minigame
+                self._start_fishing_minigame(resource)
                 return
 
             # Pass nearby resources for AoE gathering (Chain Harvest skill)
@@ -4902,8 +4939,10 @@ class GameEngine:
                         # Recipe clicked - select it
                         self.selected_recipe = recipe
                         print(f"📋 Selected recipe: {recipe.recipe_id}")
-                        # Auto-load recipe placement
-                        self.load_recipe_placement(recipe)
+                        # Clear user_placement - recipe preview is shown via renderer's
+                        # centered_recipe_placements, not user_placement
+                        # (Material placement in this UI is DISABLED - use Interactive Mode)
+                        self.user_placement = {}
                         return
 
                     y_off += btn_height + s(8)
@@ -6524,7 +6563,11 @@ class GameEngine:
 
             # Check if minigame completed
             if hasattr(self.active_minigame, 'result') and self.active_minigame.result is not None:
-                self._complete_minigame()
+                # Fishing minigame requires click to complete (shows result first)
+                if self.minigame_type == 'fishing':
+                    pass  # Wait for click to complete
+                else:
+                    self._complete_minigame()
 
         self.damage_numbers = [d for d in self.damage_numbers if d.update(dt)]
         self.notifications = [n for n in self.notifications if n.update(dt)]
@@ -6736,6 +6779,8 @@ class GameEngine:
             self._render_engineering_minigame()
         elif self.minigame_type == 'adornments':
             self._render_enchanting_minigame()
+        elif self.minigame_type == 'fishing':
+            self._render_fishing_minigame()
 
     def _complete_minigame(self):
         """Complete the active minigame and process results"""
@@ -9447,6 +9492,306 @@ class GameEngine:
 
         self.screen.blit(surf, (wx, wy))
         self.enchanting_minigame_window = pygame.Rect(wx, wy, ww, wh)
+
+    # =========================================================================
+    # FISHING MINIGAME
+    # =========================================================================
+
+    def _start_fishing_minigame(self, resource):
+        """Start the fishing minigame for a fishing spot."""
+        if not FISHING_MODULE_LOADED:
+            self.add_notification("Fishing module not loaded!", (255, 100, 100))
+            return
+
+        # Check if we can fish
+        fishing_manager = get_fishing_manager()
+        can_fish, reason = fishing_manager.can_fish(resource, self.character)
+        if not can_fish:
+            self.add_notification(f"Cannot fish: {reason}", (255, 100, 100))
+            return
+
+        # Create and start minigame
+        minigame = fishing_manager.start_fishing(resource, self.character)
+        if minigame:
+            self.active_minigame = minigame
+            self.minigame_type = 'fishing'
+            self.minigame_recipe = None  # No recipe for fishing
+            self.fishing_spot = resource
+
+            self.add_notification("Fishing started! Click the ripples!", (100, 200, 255))
+            print(f"🎣 Started fishing minigame at T{resource.tier} spot")
+
+    def _render_fishing_minigame(self):
+        """Render the fishing minigame UI with pond ripples aesthetic."""
+        if not self.active_minigame:
+            return
+
+        state = self.active_minigame.get_state()
+        effects = get_effects_manager()
+
+        # Window dimensions
+        ww = state.get('pond_width', 500) + 100
+        wh = state.get('pond_height', 400) + 150
+        wx = (Config.SCREEN_WIDTH - ww) // 2
+        wy = (Config.SCREEN_HEIGHT - wh) // 2
+
+        # Store pond rect for click detection
+        pond_x = wx + 50
+        pond_y = wy + 100
+        self.fishing_pond_rect = pygame.Rect(pond_x, pond_y,
+                                             state.get('pond_width', 500),
+                                             state.get('pond_height', 400))
+
+        # Create window surface
+        surf = pygame.Surface((ww, wh), pygame.SRCALPHA)
+
+        # Draw background (water gradient)
+        tick = pygame.time.get_ticks()
+        for y in range(wh):
+            progress = y / wh
+            # Deep blue to light blue gradient
+            r = int(20 + 40 * progress)
+            g = int(60 + 80 * progress)
+            b = int(120 + 60 * progress)
+            # Subtle wave effect
+            wave = int(5 * math.sin(y * 0.05 + tick * 0.002))
+            pygame.draw.line(surf, (r, g + wave, b), (0, y), (ww, y))
+
+        # Border
+        pygame.draw.rect(surf, (80, 130, 180), (0, 0, ww, wh), 4, border_radius=15)
+
+        # Title
+        title_text = f"FISHING - T{self.fishing_spot.tier if self.fishing_spot else 1} Spot"
+        title_surf = self.renderer.font.render(title_text, True, (200, 230, 255))
+        surf.blit(title_surf, (ww//2 - title_surf.get_width()//2, 15))
+
+        # Progress bar
+        hits = state.get('hits', 0)
+        required = state.get('required_ripples', 8)
+        progress_pct = min(1.0, hits / required) if required > 0 else 0
+        bar_w = 300
+        bar_h = 20
+        bar_x = (ww - bar_w) // 2
+        bar_y = 50
+
+        pygame.draw.rect(surf, (40, 60, 80), (bar_x, bar_y, bar_w, bar_h), border_radius=5)
+        fill_w = int(bar_w * progress_pct)
+        if fill_w > 0:
+            pygame.draw.rect(surf, (80, 180, 120), (bar_x, bar_y, fill_w, bar_h), border_radius=5)
+        pygame.draw.rect(surf, (100, 150, 200), (bar_x, bar_y, bar_w, bar_h), 2, border_radius=5)
+
+        progress_text = f"{hits}/{required} ripples"
+        prog_surf = self.renderer.small_font.render(progress_text, True, (200, 220, 240))
+        surf.blit(prog_surf, (bar_x + bar_w//2 - prog_surf.get_width()//2, bar_y + 2))
+
+        # Pond area
+        pond_rect = pygame.Rect(50, 100, state.get('pond_width', 500), state.get('pond_height', 400))
+
+        # Pond background (darker water)
+        pond_surf = pygame.Surface((pond_rect.width, pond_rect.height), pygame.SRCALPHA)
+        pond_surf.fill((30, 70, 100, 200))
+        pygame.draw.rect(pond_surf, (50, 90, 130), (0, 0, pond_rect.width, pond_rect.height), 3, border_radius=10)
+        surf.blit(pond_surf, (pond_rect.x, pond_rect.y))
+
+        # Draw ripples
+        for ripple in state.get('ripples', []):
+            if not ripple.get('active', False) and not ripple.get('hit', False):
+                continue
+
+            rx, ry = ripple['x'], ripple['y']
+            target_r = ripple['target_radius']
+            current_r = ripple['current_radius']
+            hit = ripple.get('hit', False)
+
+            # Target ring (what player needs to hit)
+            if not hit:
+                pygame.draw.circle(pond_surf, (100, 200, 255, 150),
+                                   (int(rx), int(ry)), int(target_r), 3)
+
+            # Expanding ring
+            if current_r > 0:
+                if hit:
+                    # Green for successful hit
+                    ring_color = (100, 255, 150)
+                elif current_r > target_r * 1.5:
+                    # Red when about to miss
+                    ring_color = (255, 100, 100)
+                else:
+                    # White/cyan for active
+                    ring_color = (200, 240, 255)
+
+                pygame.draw.circle(pond_surf, ring_color,
+                                   (int(rx), int(ry)), int(current_r), 2)
+
+            # Inner dot
+            dot_color = (255, 255, 200) if not hit else (150, 255, 150)
+            pygame.draw.circle(pond_surf, dot_color, (int(rx), int(ry)), 5)
+
+        # Re-draw pond with ripples
+        surf.blit(pond_surf, (pond_rect.x, pond_rect.y))
+
+        # Show last hit feedback
+        last_hit_pos = state.get('last_hit_position')
+        last_hit_score = state.get('last_hit_score')
+        last_hit_time = state.get('last_hit_time', 0)
+        last_hit_early = state.get('last_hit_early', False)
+        if last_hit_pos and last_hit_score is not None:
+            time_since_hit = state.get('total_time', 0) - last_hit_time
+            if time_since_hit < 1.0:
+                # Fade out
+                alpha = int(255 * (1.0 - time_since_hit))
+                if last_hit_score >= 75:
+                    color = (100, 255, 100)
+                    text = "PERFECT!" if last_hit_score == 100 else "GOOD!"
+                elif last_hit_score >= 50:
+                    color = (255, 255, 100)
+                    text = "OK"
+                elif last_hit_score == 0:
+                    color = (255, 150, 100)
+                    text = "MISS"
+                else:
+                    # Low score but not miss - show actual timing
+                    color = (255, 150, 100)
+                    text = "EARLY" if last_hit_early else "LATE"
+
+                score_surf = self.renderer.font.render(text, True, color)
+                score_surf.set_alpha(alpha)
+                surf.blit(score_surf, (pond_rect.x + int(last_hit_pos[0]) - score_surf.get_width()//2,
+                                       pond_rect.y + int(last_hit_pos[1]) - 30))
+
+        # Score display
+        total_score = state.get('total_score', 0)
+        score_text = f"Score: {total_score}"
+        score_surf = self.renderer.small_font.render(score_text, True, (200, 220, 240))
+        surf.blit(score_surf, (ww - score_surf.get_width() - 20, 15))
+
+        # Instructions
+        instr_text = "Click ripples when rings overlap!"
+        instr_surf = self.renderer.small_font.render(instr_text, True, (150, 180, 200))
+        surf.blit(instr_surf, (ww//2 - instr_surf.get_width()//2, wh - 40))
+
+        # ESC to cancel
+        esc_text = "ESC to cancel"
+        esc_surf = self.renderer.small_font.render(esc_text, True, (120, 140, 160))
+        surf.blit(esc_surf, (ww//2 - esc_surf.get_width()//2, wh - 20))
+
+        # Result screen if completed
+        result = state.get('result')
+        if result:
+            # Darken background
+            overlay = pygame.Surface((ww, wh), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 150))
+            surf.blit(overlay, (0, 0))
+
+            # Result box
+            result_rect = pygame.Rect(ww//2 - 200, wh//2 - 100, 400, 200)
+            pygame.draw.rect(surf, (40, 60, 80, 240), result_rect, border_radius=10)
+            pygame.draw.rect(surf, (80, 130, 180), result_rect, 3, border_radius=10)
+
+            # Title
+            if result.get('success'):
+                title = f"{result.get('quality_tier', 'SUCCESS')} CATCH!"
+                title_color = (100, 255, 150)
+            else:
+                title = "FISH ESCAPED!"
+                title_color = (255, 150, 150)
+
+            title_surf = self.renderer.font.render(title, True, title_color)
+            surf.blit(title_surf, (ww//2 - title_surf.get_width()//2, result_rect.y + 20))
+
+            # Stats
+            y_offset = result_rect.y + 70
+            stats_text = [
+                f"Hits: {result.get('hits', 0)}/{result.get('required_ripples', 0)}",
+                f"Perfect Hits: {result.get('perfect_hits', 0)}",
+                f"Avg Score: {result.get('avg_score', 0):.1f}",
+            ]
+            if result.get('success'):
+                stats_text.append(f"XP Reward: {result.get('xp_reward', 0)}")
+
+            for stat in stats_text:
+                stat_surf = self.renderer.small_font.render(stat, True, (180, 200, 220))
+                surf.blit(stat_surf, (ww//2 - stat_surf.get_width()//2, y_offset))
+                y_offset += 25
+
+            # Click to continue
+            cont_surf = self.renderer.small_font.render("Click to continue", True, (150, 180, 200))
+            surf.blit(cont_surf, (ww//2 - cont_surf.get_width()//2, result_rect.y + 170))
+
+        # Blit to screen
+        self.screen.blit(surf, (wx, wy))
+
+    def _complete_fishing_minigame(self):
+        """Complete the fishing minigame and process results."""
+        if not self.active_minigame or self.minigame_type != 'fishing':
+            return
+
+        result = self.active_minigame.result
+        if not result:
+            return
+
+        print("\n" + "=" * 60)
+        print("FISHING MINIGAME COMPLETE")
+        print(f"Success: {result.get('success', False)}")
+        print(f"Quality: {result.get('quality_tier', 'Unknown')}")
+        print("=" * 60 + "\n")
+
+        # Process loot and durability
+        fishing_manager = get_fishing_manager()
+        process_result = fishing_manager.process_result(self.character)
+
+        if process_result.get('success'):
+            # Add loot to inventory
+            for item_id, qty in process_result.get('loot', []):
+                self.character.inventory.add_item(item_id, qty)
+                mat_db = MaterialDatabase.get_instance()
+                mat = mat_db.get_material(item_id)
+                item_name = mat.name if mat else item_id
+                self.add_notification(f"+{qty} {item_name}", (100, 255, 100))
+
+            # Award XP
+            xp = process_result.get('xp', 0)
+            if xp > 0:
+                self.character.leveling.add_exp(xp, source="fishing")
+                self.add_notification(f"+{xp} XP", (255, 215, 0))
+
+                # Track fishing XP in stat tracker
+                if hasattr(self.character, 'stat_tracker'):
+                    self.character.stat_tracker.experience_stats["total_exp_earned"] += xp
+                    self.character.stat_tracker.experience_stats["exp_from_gathering"] += xp
+                    self.character.stat_tracker.experience_stats["exp_from_fishing"] += xp
+
+            self.add_notification(f"{result.get('quality_tier', 'Good')} catch!", (100, 255, 150))
+
+            # Track fishing success in stat tracker
+            if hasattr(self.character, 'stat_tracker'):
+                tracker = self.character.stat_tracker
+                fishing_tier = self.fishing_spot.tier if self.fishing_spot else 1
+                rarity = result.get('quality_tier', 'common').lower()
+                # Record each loot item as a fish caught
+                for item_id, qty in process_result.get('loot', []):
+                    tracker.record_fish_caught(item_id, qty, fishing_tier, rarity, 0)
+
+            # Check for new titles based on fishing achievements
+            new_title = self.character.titles.check_for_title(self.character)
+            if new_title:
+                self.add_notification(f"Title Earned: {new_title.name}!", (255, 215, 0))
+                self.character.check_skill_unlocks(trigger_type='title_earned', trigger_value=new_title.title_id)
+
+        else:
+            self.add_notification("The fish got away!", (255, 150, 100))
+
+            # Track fishing failure
+            if hasattr(self.character, 'stat_tracker'):
+                tracker = self.character.stat_tracker
+                tracker.record_fishing_failed()
+
+        # Clear minigame state
+        self.active_minigame = None
+        self.minigame_type = None
+        self.minigame_recipe = None
+        self.fishing_spot = None
+        self.fishing_pond_rect = None
 
     def run(self):
         print("=== GAME STARTED ===")

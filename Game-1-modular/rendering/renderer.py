@@ -133,59 +133,69 @@ class Renderer:
         grid_start_x = placement_rect.x + (placement_rect.width - grid_pixel_w) // 2
         grid_start_y = placement_rect.y + (placement_rect.height - grid_pixel_h) // 2
 
-        # Get recipe placement data if available
-        recipe_placement_map = {}
-        recipe_grid_w, recipe_grid_h = grid_w, grid_h  # Default to station grid size
+        # Get recipe placement data - PRESERVE intentional positioning from JSON
+        centered_recipe_placements = {}  # Maps display "gy,gx" to material_id
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
-            if placement_data and placement_data.grid_size:
-                # Parse recipe's actual grid size (e.g., "3x3")
-                parts = placement_data.grid_size.lower().split('x')
-                if len(parts) == 2:
-                    try:
-                        recipe_grid_w = int(parts[0])
-                        recipe_grid_h = int(parts[1])
-                    except ValueError:
-                        pass
+            if placement_data and placement_data.placement_map:
                 recipe_placement_map = placement_data.placement_map
 
-        # Calculate offset to center recipe on station grid
-        offset_x = (grid_w - recipe_grid_w) // 2
-        offset_y = (grid_h - recipe_grid_h) // 2
+                # Get the metadata grid size (the INTENDED grid size for this recipe)
+                recipe_grid_w, recipe_grid_h = grid_w, grid_h  # Default to station size
+                if placement_data.grid_size:
+                    parts = placement_data.grid_size.lower().split('x')
+                    if len(parts) == 2:
+                        try:
+                            recipe_grid_w = int(parts[0])
+                            recipe_grid_h = int(parts[1])
+                        except ValueError:
+                            pass
+
+                # Check if any placements exceed the metadata grid size (broken metadata)
+                # If so, expand the grid to fit all placements
+                for pos_str in recipe_placement_map.keys():
+                    parts = pos_str.split(',')
+                    if len(parts) == 2:
+                        row, col = int(parts[0]), int(parts[1])
+                        recipe_grid_h = max(recipe_grid_h, row)
+                        recipe_grid_w = max(recipe_grid_w, col)
+
+                # Center the recipe's grid within the station grid
+                # This preserves ALL intentional positioning within the recipe
+                offset_row = (grid_h - recipe_grid_h) // 2
+                offset_col = (grid_w - recipe_grid_w) // 2
+
+                # Build centered placements map - keep EXACT positions, just add station offset
+                for pos_str, mat_id in recipe_placement_map.items():
+                    parts = pos_str.split(',')
+                    if len(parts) == 2:
+                        orig_row, orig_col = int(parts[0]), int(parts[1])
+                        # Add station centering offset - NO normalization of recipe positions
+                        display_row = orig_row + offset_row
+                        display_col = orig_col + offset_col
+                        centered_key = f"{display_row},{display_col}"
+                        centered_recipe_placements[centered_key] = mat_id
 
         # Draw grid cells
         cell_rects = []  # Will store list of (pygame.Rect, (grid_x, grid_y)) for click detection
 
         for gy in range(1, grid_h + 1):  # 1-indexed to match placement data (row)
             for gx in range(1, grid_w + 1):  # 1-indexed (col)
-                # No Y axis flipping - row 1 is at top, like in crafting_tester.py
                 cell_x = grid_start_x + (gx - 1) * (cell_size + 4)
                 cell_y = grid_start_y + (gy - 1) * (cell_size + 4)
                 cell_rect = pygame.Rect(cell_x, cell_y, cell_size, cell_size)
 
-                # Check if this cell corresponds to a recipe requirement (with offset for centering)
-                recipe_x = gx - offset_x
-                recipe_y = gy - offset_y
-                # Placement data format is "row,col" where row=Y axis, col=X axis
-                # gy is the row (Y), gx is the col (X), so keys should be "{row},{col}" = "{gy},{gx}"
-                recipe_key = f"{recipe_y},{recipe_x}"
-
                 grid_key = f"{gy},{gx}"
-                has_recipe_requirement = (1 <= recipe_x <= recipe_grid_w and
-                                        1 <= recipe_y <= recipe_grid_h and
-                                        recipe_key in recipe_placement_map)
+                has_recipe_requirement = grid_key in centered_recipe_placements
                 has_user_placement = grid_key in user_placement
 
                 # Cell background color
                 if has_user_placement:
-                    # User placed something here
                     cell_color = (50, 70, 50)  # Green tint
                 elif has_recipe_requirement:
-                    # Recipe requires something here (but user hasn't placed it yet)
-                    cell_color = (70, 60, 40)  # Gold tint - shows what's needed
+                    cell_color = (70, 60, 40)  # Gold tint
                 else:
-                    # Empty cell
-                    cell_color = (30, 30, 40)
+                    cell_color = (30, 30, 40)  # Empty
 
                 # Highlight cell under mouse
                 is_hovered = cell_rect.collidepoint(mouse_pos)
@@ -200,52 +210,41 @@ class Renderer:
 
                 # Draw material icon/name
                 if has_user_placement:
-                    # Show user's placement
                     mat_id = user_placement[grid_key]
                     mat = mat_db.get_material(mat_id)
-                    # Try to show icon first
-                    if mat and mat.icon_path:
-                        image_cache = ImageCache.get_instance()
-                        icon_size = max(cell_size - 8, 16)  # Leave 4px padding on each side, min 16px
-                        icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
-                        if icon:
-                            icon_rect = icon.get_rect(center=cell_rect.center)
-                            surf.blit(icon, icon_rect)
-                        else:
-                            # Fallback to text
-                            mat_name = mat.name[:6]
-                            text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
-                            text_rect = text_surf.get_rect(center=cell_rect.center)
-                            surf.blit(text_surf, text_rect)
-                    else:
-                        # Fallback to text
-                        mat_name = (mat.name[:6] if mat else mat_id[:6])
-                        text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
-                        text_rect = text_surf.get_rect(center=cell_rect.center)
-                        surf.blit(text_surf, text_rect)
-                elif has_recipe_requirement:
-                    # Show what recipe requires (semi-transparent hint)
-                    req_mat_id = recipe_placement_map[recipe_key]
-                    mat = mat_db.get_material(req_mat_id)
-                    # Try to show icon first (slightly dimmed for hint)
                     if mat and mat.icon_path:
                         image_cache = ImageCache.get_instance()
                         icon_size = max(cell_size - 8, 16)
                         icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
                         if icon:
-                            # Create dimmed version for hint
-                            dimmed_icon = icon.copy()
-                            dimmed_icon.set_alpha(128)
-                            icon_rect = dimmed_icon.get_rect(center=cell_rect.center)
-                            surf.blit(dimmed_icon, icon_rect)
+                            icon_rect = icon.get_rect(center=cell_rect.center)
+                            surf.blit(icon, icon_rect)
                         else:
-                            # Fallback to text
+                            mat_name = mat.name[:6]
+                            text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                            text_rect = text_surf.get_rect(center=cell_rect.center)
+                            surf.blit(text_surf, text_rect)
+                    else:
+                        mat_name = (mat.name[:6] if mat else mat_id[:6])
+                        text_surf = self.tiny_font.render(mat_name, True, (200, 255, 200))
+                        text_rect = text_surf.get_rect(center=cell_rect.center)
+                        surf.blit(text_surf, text_rect)
+                elif has_recipe_requirement:
+                    req_mat_id = centered_recipe_placements[grid_key]
+                    mat = mat_db.get_material(req_mat_id)
+                    if mat and mat.icon_path:
+                        image_cache = ImageCache.get_instance()
+                        icon_size = max(cell_size - 8, 16)
+                        icon = image_cache.get_image(mat.icon_path, (icon_size, icon_size))
+                        if icon:
+                            icon_rect = icon.get_rect(center=cell_rect.center)
+                            surf.blit(icon, icon_rect)
+                        else:
                             mat_name = mat.name[:6]
                             text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
                             text_rect = text_surf.get_rect(center=cell_rect.center)
                             surf.blit(text_surf, text_rect)
                     else:
-                        # Fallback to text
                         mat_name = (mat.name[:6] if mat else req_mat_id[:6])
                         text_surf = self.tiny_font.render(mat_name, True, (180, 160, 120))
                         text_rect = text_surf.get_rect(center=cell_rect.center)

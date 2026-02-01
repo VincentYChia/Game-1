@@ -117,16 +117,37 @@ class SmithingDatasetVisualizer:
         """Convert placement to centered 9x9 grid"""
         grid = [[None] * 9 for _ in range(9)]
 
-        # Determine grid size and offset
-        grid_size_str = placement['metadata']['gridSize']
-        recipe_size = int(grid_size_str.split('x')[0])
-        offset = (9 - recipe_size) // 2
+        # Find actual bounding box of placements to handle off-center recipes
+        positions = []
+        for pos_str in placement['placementMap'].keys():
+            y_idx, x_idx = map(int, pos_str.split(','))
+            positions.append((y_idx, x_idx))
 
-        # Parse placement map (1-indexed y,x format)
+        if not positions:
+            return grid
+
+        # Calculate actual placement dimensions
+        min_y = min(p[0] for p in positions)
+        max_y = max(p[0] for p in positions)
+        min_x = min(p[1] for p in positions)
+        max_x = max(p[1] for p in positions)
+        actual_height = max_y - min_y + 1
+        actual_width = max_x - min_x + 1
+
+        # Use actual dimensions for centering
+        offset_y = (9 - actual_height) // 2
+        offset_x = (9 - actual_width) // 2
+
+        # Parse placement map and center on 9x9 grid
         for pos_str, material_id in placement['placementMap'].items():
             y_idx, x_idx = map(int, pos_str.split(','))
-            # Convert to 0-indexed and add offset
-            grid[offset + y_idx - 1][offset + x_idx - 1] = material_id
+            # Normalize to start at 0,0 then add centering offset
+            final_y = offset_y + (y_idx - min_y)
+            final_x = offset_x + (x_idx - min_x)
+
+            # Bounds check
+            if 0 <= final_y < 9 and 0 <= final_x < 9:
+                grid[final_y][final_x] = material_id
 
         return grid
 

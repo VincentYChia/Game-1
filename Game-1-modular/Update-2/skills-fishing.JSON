@@ -1,0 +1,168 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Fishing skills for Update-2 - enhances fishing minigame performance",
+    "totalSkills": 5,
+    "note": "Follows the same structure as Skills/skills-skills-1.JSON"
+  },
+
+  "skills": [
+    {
+      "skillId": "anglers_patience",
+      "name": "Angler's Patience",
+      "tier": 1,
+      "rarity": "common",
+      "categories": ["gathering", "fishing"],
+      "description": "Slow down the expansion of ripples, giving you more time to click accurately.",
+      "narrative": "The patient angler understands that rushing yields nothing but empty nets and broken lines.",
+      "tags": ["speed_boost", "gathering", "fishing", "basic"],
+
+      "effect": {
+        "type": "quicken",
+        "category": "fishing",
+        "magnitude": "moderate",
+        "target": "self",
+        "duration": "moderate",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": 50,
+        "cooldown": 180
+      },
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "fishers_strength",
+      "name": "Fisher's Strength",
+      "tier": 1,
+      "rarity": "common",
+      "categories": ["gathering", "fishing"],
+      "description": "Strengthen your grip and increase hit tolerance, making it easier to land catches.",
+      "narrative": "A strong arm and steady hand can wrestle even the most stubborn fish from the depths.",
+      "tags": ["damage_boost", "gathering", "fishing", "basic"],
+
+      "effect": {
+        "type": "empower",
+        "category": "fishing",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "moderate",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": 60,
+        "cooldown": 180
+      },
+
+      "requirements": {
+        "characterLevel": 1,
+        "stats": {},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "lucky_catch",
+      "name": "Lucky Catch",
+      "tier": 2,
+      "rarity": "uncommon",
+      "categories": ["gathering", "fishing"],
+      "description": "Increase your chances of catching rare and legendary fish.",
+      "narrative": "Fortune favors the prepared. Or maybe the fish just like you better.",
+      "tags": ["quality_boost", "gathering", "fishing", "luck"],
+
+      "effect": {
+        "type": "elevate",
+        "category": "fishing",
+        "magnitude": "major",
+        "target": "self",
+        "duration": "long",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": 80,
+        "cooldown": 300
+      },
+
+      "requirements": {
+        "characterLevel": 5,
+        "stats": {"LCK": 3},
+        "titles": []
+      }
+    },
+
+    {
+      "skillId": "waters_blessing",
+      "name": "Water's Blessing",
+      "tier": 2,
+      "rarity": "uncommon",
+      "categories": ["gathering", "fishing"],
+      "description": "The waters bless your efforts, potentially granting bonus catches.",
+      "narrative": "Those who respect the waters are rewarded with abundance.",
+      "tags": ["yield_boost", "gathering", "fishing"],
+
+      "effect": {
+        "type": "enrich",
+        "category": "fishing",
+        "magnitude": "moderate",
+        "target": "self",
+        "duration": "moderate",
+        "additionalEffects": []
+      },
+
+      "cost": {
+        "mana": 70,
+        "cooldown": 240
+      },
+
+      "requirements": {
+        "characterLevel": 8,
+        "stats": {},
+        "titles": ["novice_fisher"]
+      }
+    },
+
+    {
+      "skillId": "master_angler",
+      "name": "Master Angler",
+      "tier": 3,
+      "rarity": "rare",
+      "categories": ["gathering", "fishing"],
+      "description": "Channel your mastery of the waters, boosting all fishing abilities significantly.",
+      "narrative": "The waters recognize you as one of their own. All who dwell within answer your call.",
+      "tags": ["damage_boost", "speed_boost", "quality_boost", "fishing", "mastery"],
+
+      "effect": {
+        "type": "empower",
+        "category": "fishing",
+        "magnitude": "extreme",
+        "target": "self",
+        "duration": "long",
+        "additionalEffects": [
+          {"type": "quicken", "magnitude": "moderate"},
+          {"type": "elevate", "magnitude": "moderate"}
+        ]
+      },
+
+      "cost": {
+        "mana": 120,
+        "cooldown": 600
+      },
+
+      "requirements": {
+        "characterLevel": 15,
+        "stats": {"STR": 5, "LCK": 5},
+        "titles": ["journeyman_fisher"]
+      }
+    }
+  ]
+}

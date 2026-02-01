@@ -1,0 +1,137 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Fishing titles for the progression system",
+    "note": "Follows the same structure as progression/titles-1.JSON"
+  },
+
+  "titles": [
+    {
+      "titleId": "novice_fisher",
+      "name": "Novice Fisher",
+      "titleType": "gathering",
+      "difficultyTier": "novice",
+      "description": "You've cast your first lines and caught your first fish. The waters accept you.",
+      "bonuses": {
+        "fishingAccuracy": 0.10,
+        "fishingSpeed": 0.0,
+        "rareFishChance": 0.0
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "gathering_totals.total_fish_caught", "min_value": 50}
+        ]
+      },
+      "acquisitionMethod": "guaranteed_milestone",
+      "isHidden": false,
+      "narrative": "The river whispers your name. You are no longer a stranger to its depths."
+    },
+
+    {
+      "titleId": "apprentice_fisher",
+      "name": "Apprentice Fisher",
+      "titleType": "gathering",
+      "difficultyTier": "apprentice",
+      "description": "Your patience is rewarded. The fish seem to sense your presence and jump to your line.",
+      "bonuses": {
+        "fishingAccuracy": 0.15,
+        "fishingSpeed": 0.15,
+        "rareFishChance": 0.05
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "gathering_totals.total_fish_caught", "min_value": 250},
+          {"type": "stat_tracker", "stat_path": "gathering_advanced.rare_fish_caught", "min_value": 5},
+          {"type": "title", "required_title": "novice_fisher"},
+          {"type": "level", "min_level": 5}
+        ]
+      },
+      "acquisitionMethod": "event_based_rng",
+      "generationChance": 0.20,
+      "isHidden": false,
+      "narrative": "You read the water like an open book. Its secrets are becoming yours."
+    },
+
+    {
+      "titleId": "journeyman_fisher",
+      "name": "Journeyman Fisher",
+      "titleType": "gathering",
+      "difficultyTier": "journeyman",
+      "description": "Master of the waters. Rare fish seek you out, and your catches are bountiful.",
+      "bonuses": {
+        "fishingAccuracy": 0.25,
+        "fishingSpeed": 0.25,
+        "rareFishChance": 0.15,
+        "fishingYield": 0.10
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "gathering_totals.total_fish_caught", "min_value": 1000},
+          {"type": "stat_tracker", "stat_path": "gathering_advanced.rare_fish_caught", "min_value": 25},
+          {"type": "stat_tracker", "stat_path": "gathering_advanced.longest_fish_catch_streak", "min_value": 10},
+          {"type": "title", "required_title": "apprentice_fisher"},
+          {"type": "level", "min_level": 10}
+        ]
+      },
+      "acquisitionMethod": "event_based_rng",
+      "generationChance": 0.10,
+      "isHidden": false,
+      "narrative": "The ancient spirits of the deep recognize your mastery. Legendary fish fear your name."
+    },
+
+    {
+      "titleId": "expert_angler",
+      "name": "Expert Angler",
+      "titleType": "gathering",
+      "difficultyTier": "expert",
+      "description": "Your rod is an extension of your soul. The waters themselves bend to your will.",
+      "bonuses": {
+        "fishingAccuracy": 0.40,
+        "fishingSpeed": 0.40,
+        "rareFishChance": 0.30,
+        "fishingYield": 0.25
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "gathering_totals.total_fish_caught", "min_value": 5000},
+          {"type": "stat_tracker", "stat_path": "gathering_advanced.rare_fish_caught", "min_value": 100},
+          {"type": "stat_tracker", "stat_path": "gathering_advanced.legendary_fish_caught", "min_value": 5},
+          {"type": "title", "required_title": "journeyman_fisher"},
+          {"type": "level", "min_level": 18}
+        ]
+      },
+      "acquisitionMethod": "event_based_rng",
+      "generationChance": 0.05,
+      "isHidden": false,
+      "narrative": "Legends speak of anglers who could command leviathans. You may soon join their ranks."
+    },
+
+    {
+      "titleId": "master_of_tides",
+      "name": "Master of Tides",
+      "titleType": "gathering",
+      "difficultyTier": "master",
+      "description": "You are one with the waters. Fish leap willingly to your line, and legendary creatures bow before you.",
+      "bonuses": {
+        "fishingAccuracy": 0.60,
+        "fishingSpeed": 0.60,
+        "rareFishChance": 0.50,
+        "fishingYield": 0.50,
+        "luckStat": 0.05
+      },
+      "prerequisites": {
+        "conditions": [
+          {"type": "stat_tracker", "stat_path": "gathering_totals.total_fish_caught", "min_value": 20000},
+          {"type": "stat_tracker", "stat_path": "gathering_advanced.legendary_fish_caught", "min_value": 25},
+          {"type": "stat_tracker", "stat_path": "gathering_advanced.longest_fish_catch_streak", "min_value": 50},
+          {"type": "title", "required_title": "expert_angler"},
+          {"type": "level", "min_level": 25}
+        ]
+      },
+      "acquisitionMethod": "special_achievement",
+      "generationChance": 0.02,
+      "isHidden": false,
+      "narrative": "The primordial waters of creation know your name. You are their chosen vessel."
+    }
+  ]
+}

@@ -464,6 +464,245 @@
         { "materialId": "chaos_matrix", "quantity": "few", "chance": "improbable" }
       ],
       "respawnTime": "very_slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Calm shallows where bronze-scaled carp gather. Ripples on the surface betray their presence.",
+        "tags": ["fishing", "water", "starter", "carp"]
+      },
+      "resourceId": "fishing_spot_carp",
+      "name": "Carp Pool",
+      "category": "fishing",
+      "tier": 1,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 50,
+      "drops": [
+        { "materialId": "common_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "fine_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "water_crystal", "quantity": "few", "chance": "high" },
+        { "materialId": "earth_crystal", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "fast"
+    },
+    {
+      "metadata": {
+        "narrative": "Sun-warmed shallows where golden sunfish bask. Their scales flash like fire in the light.",
+        "tags": ["fishing", "water", "starter", "sunfish"]
+      },
+      "resourceId": "fishing_spot_sunfish",
+      "name": "Sunfish Shallows",
+      "category": "fishing",
+      "tier": 1,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 50,
+      "drops": [
+        { "materialId": "common_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "fine_scales", "quantity": "few", "chance": "high" },
+        { "materialId": "fire_crystal", "quantity": "few", "chance": "high" },
+        { "materialId": "air_crystal", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "fast"
+    },
+    {
+      "metadata": {
+        "narrative": "Clear waters teeming with silver minnows. Quick and abundant, perfect for novice anglers.",
+        "tags": ["fishing", "water", "starter", "minnow"]
+      },
+      "resourceId": "fishing_spot_minnow",
+      "name": "Minnow Stream",
+      "category": "fishing",
+      "tier": 1,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 50,
+      "drops": [
+        { "materialId": "common_scales", "quantity": "many", "chance": "guaranteed" },
+        { "materialId": "water_crystal", "quantity": "few", "chance": "moderate" },
+        { "materialId": "fire_crystal", "quantity": "few", "chance": "low" },
+        { "materialId": "earth_crystal", "quantity": "few", "chance": "low" },
+        { "materialId": "air_crystal", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "fast"
+    },
+    {
+      "metadata": {
+        "narrative": "Electrified waters where stormfin lurk. Static crackles across the surface during storms.",
+        "tags": ["fishing", "water", "lightning", "stormfin"]
+      },
+      "resourceId": "fishing_spot_stormfin",
+      "name": "Stormfin Pool",
+      "category": "fishing",
+      "tier": 2,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 75,
+      "drops": [
+        { "materialId": "steel_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "mithril_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "lightning_shard", "quantity": "few", "chance": "high" },
+        { "materialId": "common_scales", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Icy waters fed by glacial runoff. Frostback trout thrive in the numbing cold.",
+        "tags": ["fishing", "water", "ice", "frostback"]
+      },
+      "resourceId": "fishing_spot_frostback",
+      "name": "Frostback Pool",
+      "category": "fishing",
+      "tier": 2,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 75,
+      "drops": [
+        { "materialId": "steel_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "mithril_scales", "quantity": "few", "chance": "high" },
+        { "materialId": "frost_essence", "quantity": "few", "chance": "high" },
+        { "materialId": "water_crystal", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Luminescent waters where bioluminescent lighteye fish swim. The glow attracts them at night.",
+        "tags": ["fishing", "water", "light", "lighteye"]
+      },
+      "resourceId": "fishing_spot_lighteye",
+      "name": "Lighteye Grotto",
+      "category": "fishing",
+      "tier": 2,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 75,
+      "drops": [
+        { "materialId": "mithril_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "steel_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "light_gem", "quantity": "few", "chance": "high" },
+        { "materialId": "fine_scales", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Dark waters where shadowgill hide from the sun. They emerge only in deepest shadow.",
+        "tags": ["fishing", "water", "shadow", "shadowgill"]
+      },
+      "resourceId": "fishing_spot_shadowgill",
+      "name": "Shadowgill Depths",
+      "category": "fishing",
+      "tier": 2,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 75,
+      "drops": [
+        { "materialId": "mithril_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "steel_scales", "quantity": "few", "chance": "high" },
+        { "materialId": "shadow_core", "quantity": "few", "chance": "high" },
+        { "materialId": "fine_scales", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "normal"
+    },
+    {
+      "metadata": {
+        "narrative": "Volcanic hot springs where phoenix koi swim through impossibly hot water. Their scales glow like embers.",
+        "tags": ["fishing", "water", "fire", "phoenixkoi"]
+      },
+      "resourceId": "fishing_spot_phoenixkoi",
+      "name": "Phoenix Koi Spring",
+      "category": "fishing",
+      "tier": 3,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "adamantine_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "orichalcum_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "phoenix_ash", "quantity": "few", "chance": "high" },
+        { "materialId": "fire_crystal", "quantity": "few", "chance": "moderate" },
+        { "materialId": "lightning_shard", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Abyssal waters where voidswimmers phase between existence. The darkness here is absolute.",
+        "tags": ["fishing", "water", "void", "voidswimmer"]
+      },
+      "resourceId": "fishing_spot_voidswimmer",
+      "name": "Voidswimmer Abyss",
+      "category": "fishing",
+      "tier": 3,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "adamantine_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "orichalcum_scales", "quantity": "few", "chance": "high" },
+        { "materialId": "void_essence", "quantity": "few", "chance": "high" },
+        { "materialId": "shadow_core", "quantity": "few", "chance": "moderate" },
+        { "materialId": "frost_essence", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Storm-touched waters where tempest eels channel lightning through their bodies. Approach with caution.",
+        "tags": ["fishing", "water", "lightning", "tempesteel"]
+      },
+      "resourceId": "fishing_spot_tempesteel",
+      "name": "Tempest Eel Waters",
+      "category": "fishing",
+      "tier": 3,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 100,
+      "drops": [
+        { "materialId": "orichalcum_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "adamantine_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "storm_heart", "quantity": "few", "chance": "high" },
+        { "materialId": "lightning_shard", "quantity": "few", "chance": "high" },
+        { "materialId": "light_gem", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Ancient waters where primordial leviathans slumber. These fish predate civilization itself.",
+        "tags": ["fishing", "water", "mythical", "leviathan"]
+      },
+      "resourceId": "fishing_spot_leviathan",
+      "name": "Leviathan Deep",
+      "category": "fishing",
+      "tier": 4,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 150,
+      "drops": [
+        { "materialId": "primordial_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "chaos_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "phoenix_ash", "quantity": "few", "chance": "high" },
+        { "materialId": "void_essence", "quantity": "few", "chance": "high" },
+        { "materialId": "storm_heart", "quantity": "few", "chance": "moderate" },
+        { "materialId": "adamantine_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "orichalcum_scales", "quantity": "few", "chance": "low" }
+      ],
+      "respawnTime": "very_slow"
+    },
+    {
+      "metadata": {
+        "narrative": "Reality-warped waters where chaosscale fish swim through dimensional rifts. Their very existence defies logic.",
+        "tags": ["fishing", "water", "mythical", "chaos"]
+      },
+      "resourceId": "fishing_spot_chaosscale",
+      "name": "Chaosscale Rift",
+      "category": "fishing",
+      "tier": 4,
+      "requiredTool": "fishing_rod",
+      "baseHealth": 150,
+      "drops": [
+        { "materialId": "chaos_scales", "quantity": "several", "chance": "guaranteed" },
+        { "materialId": "primordial_scales", "quantity": "few", "chance": "high" },
+        { "materialId": "chaos_matrix", "quantity": "few", "chance": "moderate" },
+        { "materialId": "void_essence", "quantity": "few", "chance": "high" },
+        { "materialId": "phoenix_ash", "quantity": "few", "chance": "moderate" },
+        { "materialId": "storm_heart", "quantity": "few", "chance": "low" },
+        { "materialId": "mithril_scales", "quantity": "few", "chance": "moderate" },
+        { "materialId": "steel_scales", "quantity": "few", "chance": "moderate" }
+      ],
+      "respawnTime": "very_slow"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "chunk_x": 1,
   "chunk_y": 3,
-  "chunk_type": "rare_deep_cave",
+  "chunk_type": "rare_ancient_quarry",
   "dungeon_entrance": {
     "position": {
       "x": 23,
@@ -10,5 +10,5 @@
     },
     "rarity": "rare"
   },
-  "unload_timestamp": 48.31399999999977
+  "unload_timestamp": 15.940999999999978
 }

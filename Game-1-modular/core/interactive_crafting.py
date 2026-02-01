@@ -677,14 +677,57 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         self.grid.clear()
         self.matched_recipe = None
 
+    def _normalize_placement_map(self, placement_map: Dict[str, str]) -> Dict[str, str]:
+        """
+        Normalize a placement map so it starts at (1,1).
+
+        This ensures recipes placed anywhere on the grid can match,
+        and handles recipe JSON files that don't start at (1,1).
+
+        Args:
+            placement_map: Dict with "row,col" keys and material_id values
+
+        Returns:
+            Normalized placement map starting at (1,1)
+        """
+        if not placement_map:
+            return {}
+
+        # Parse coordinates from "row,col" format
+        coords = []
+        for coord_str in placement_map.keys():
+            parts = coord_str.split(',')
+            if len(parts) == 2:
+                row, col = int(parts[0]), int(parts[1])
+                coords.append((row, col))
+
+        if not coords:
+            return placement_map
+
+        # Find bounding box
+        min_row = min(c[0] for c in coords)
+        min_col = min(c[1] for c in coords)
+
+        # Normalize to start at (1,1)
+        normalized = {}
+        for coord_str, mat_id in placement_map.items():
+            parts = coord_str.split(',')
+            if len(parts) == 2:
+                row, col = int(parts[0]), int(parts[1])
+                norm_row = row - min_row + 1
+                norm_col = col - min_col + 1
+                normalized[f"{norm_row},{norm_col}"] = mat_id
+
+        return normalized
+
     def check_recipe_match(self) -> Optional[Recipe]:
         """
         Match against smithing recipes with multi-tier backwards compatibility.
 
         Strategy:
-        1. Try matching at current station tier first
-        2. If no match, try centering in lower tiers (T3 → T2 → T1)
-        3. Stop early if recipe is too large for a tier
+        1. Normalize player's placement to its bounding box (allows placement anywhere)
+        2. Normalize recipe placements too (handles off-center recipes in JSON)
+        3. Try matching at current station tier first, then lower tiers
         """
         if not self.grid:
             return None
@@ -695,9 +738,29 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         # Convert UI coordinates to placement map
         # UI uses 0-indexed (x,y) where x=column, y=row
         # JSON uses 1-indexed "row,col" format (Y,X)
-        current_placement_raw = {
-            (x, y): mat.item_id for (x, y), mat in self.grid.items()
-        }
+        current_placement_raw = {}
+        for (x, y), mat in self.grid.items():
+            # Convert to "row,col" format (row=y+1, col=x+1)
+            current_placement_raw[f"{y+1},{x+1}"] = mat.item_id
+
+        if not current_placement_raw:
+            return None
+
+        # Normalize player's placement to start at (1,1)
+        normalized_player = self._normalize_placement_map(current_placement_raw)
+
+        # Calculate placement dimensions for tier checking
+        coords = []
+        for coord_str in normalized_player.keys():
+            parts = coord_str.split(',')
+            if len(parts) == 2:
+                coords.append((int(parts[0]), int(parts[1])))
+
+        if not coords:
+            return None
+
+        placement_height = max(c[0] for c in coords)  # Max row
+        placement_width = max(c[1] for c in coords)   # Max col
 
         # Define grid sizes for each tier
         tier_grid_sizes = {1: 3, 2: 5, 3: 7, 4: 9}
@@ -706,51 +769,9 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         for check_tier in range(self.station_tier, 0, -1):
             check_grid_size = tier_grid_sizes[check_tier]
 
-            # Calculate offset to center this tier's grid in the station grid
-            offset_x = (self.grid_size - check_grid_size) // 2
-            offset_y = (self.grid_size - check_grid_size) // 2
-
-            # Transform current placement to this tier's coordinate space
-            tier_placement = {}
-            valid_for_tier = True
-
-            for (x, y), mat_id in current_placement_raw.items():
-                # Calculate position relative to centered grid
-                tier_x = x - offset_x
-                tier_y = y - offset_y
-
-                # Check if position is within this tier's grid bounds
-                if not (0 <= tier_x < check_grid_size and 0 <= tier_y < check_grid_size):
-                    valid_for_tier = False
-                    break
-
-                # Convert to 1-indexed JSON format "row,col" = (Y,X)
-                # tier_y is row, tier_x is column
-                tier_placement[f"{tier_y+1},{tier_x+1}"] = mat_id
-
-            if not valid_for_tier:
+            # If placement is too large for this tier, skip to lower tiers
+            if placement_width > check_grid_size or placement_height > check_grid_size:
                 continue
-
-            # Check if placement is too wide/tall for this tier (optimization)
-            if tier_placement:
-                coords = []
-                for coord_str in tier_placement.keys():
-                    parts = coord_str.split(',')
-                    if len(parts) == 2:
-                        coords.append((int(parts[0]), int(parts[1])))
-
-                if coords:
-                    min_x = min(c[0] for c in coords)
-                    max_x = max(c[0] for c in coords)
-                    min_y = min(c[1] for c in coords)
-                    max_y = max(c[1] for c in coords)
-
-                    width = max_x - min_x + 1
-                    height = max_y - min_y + 1
-
-                    # If pattern is wider/taller than this tier's grid, skip to lower tiers
-                    if width > check_grid_size or height > check_grid_size:
-                        continue
 
             # Try matching recipes for this tier
             recipes = recipe_db.get_recipes_for_station(self.station_type, check_tier)
@@ -760,8 +781,11 @@ class InteractiveSmithingUI(InteractiveBaseUI):
                 if not placement or placement.discipline != 'smithing':
                     continue
 
-                # Exact match required
-                if tier_placement == placement.placement_map:
+                # Normalize recipe placement too (handles off-center recipes in JSON)
+                normalized_recipe = self._normalize_placement_map(placement.placement_map)
+
+                # Exact match required (both normalized)
+                if normalized_player == normalized_recipe:
                     print(f"✓ Matched {recipe.recipe_id}")
                     return recipe
 

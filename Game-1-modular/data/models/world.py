@@ -118,6 +118,22 @@ class ResourceType(Enum):
 
     # Water resources
     FISHING_SPOT = "fishing_spot"
+    # Tier 1 fishing spots
+    FISHING_SPOT_CARP = "fishing_spot_carp"
+    FISHING_SPOT_SUNFISH = "fishing_spot_sunfish"
+    FISHING_SPOT_MINNOW = "fishing_spot_minnow"
+    # Tier 2 fishing spots
+    FISHING_SPOT_STORMFIN = "fishing_spot_stormfin"
+    FISHING_SPOT_FROSTBACK = "fishing_spot_frostback"
+    FISHING_SPOT_LIGHTEYE = "fishing_spot_lighteye"
+    FISHING_SPOT_SHADOWGILL = "fishing_spot_shadowgill"
+    # Tier 3 fishing spots
+    FISHING_SPOT_PHOENIXKOI = "fishing_spot_phoenixkoi"
+    FISHING_SPOT_VOIDSWIMMER = "fishing_spot_voidswimmer"
+    FISHING_SPOT_TEMPESTEEL = "fishing_spot_tempesteel"
+    # Tier 4 fishing spots
+    FISHING_SPOT_LEVIATHAN = "fishing_spot_leviathan"
+    FISHING_SPOT_CHAOSSCALE = "fishing_spot_chaosscale"
 
 
 def _build_resource_tiers() -> dict:
@@ -182,6 +198,19 @@ def _build_resource_tiers() -> dict:
         ResourceType.STAR_CRYSTAL: 3,
         # Water resources
         ResourceType.FISHING_SPOT: 1,
+        # Fishing spots by tier
+        ResourceType.FISHING_SPOT_CARP: 1,
+        ResourceType.FISHING_SPOT_SUNFISH: 1,
+        ResourceType.FISHING_SPOT_MINNOW: 1,
+        ResourceType.FISHING_SPOT_STORMFIN: 2,
+        ResourceType.FISHING_SPOT_FROSTBACK: 2,
+        ResourceType.FISHING_SPOT_LIGHTEYE: 2,
+        ResourceType.FISHING_SPOT_SHADOWGILL: 2,
+        ResourceType.FISHING_SPOT_PHOENIXKOI: 3,
+        ResourceType.FISHING_SPOT_VOIDSWIMMER: 3,
+        ResourceType.FISHING_SPOT_TEMPESTEEL: 3,
+        ResourceType.FISHING_SPOT_LEVIATHAN: 4,
+        ResourceType.FISHING_SPOT_CHAOSSCALE: 4,
     }
 
 
