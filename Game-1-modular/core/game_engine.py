@@ -9632,6 +9632,7 @@ class GameEngine:
         last_hit_pos = state.get('last_hit_position')
         last_hit_score = state.get('last_hit_score')
         last_hit_time = state.get('last_hit_time', 0)
+        last_hit_early = state.get('last_hit_early', False)
         if last_hit_pos and last_hit_score is not None:
             time_since_hit = state.get('total_time', 0) - last_hit_time
             if time_since_hit < 1.0:
@@ -9643,9 +9644,13 @@ class GameEngine:
                 elif last_hit_score >= 50:
                     color = (255, 255, 100)
                     text = "OK"
-                else:
+                elif last_hit_score == 0:
                     color = (255, 150, 100)
-                    text = "MISS" if last_hit_score == 0 else "LATE"
+                    text = "MISS"
+                else:
+                    # Low score but not miss - show actual timing
+                    color = (255, 150, 100)
+                    text = "EARLY" if last_hit_early else "LATE"
 
                 score_surf = self.renderer.font.render(text, True, color)
                 score_surf.set_alpha(alpha)

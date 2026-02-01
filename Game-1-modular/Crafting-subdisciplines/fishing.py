@@ -402,6 +402,7 @@ class FishingMinigame:
         self.last_hit_position = None
         self.last_hit_score = None
         self.last_hit_time = 0.0
+        self.last_hit_early = False  # Was the last hit early or late?
 
         print(f"🎣 Fishing started! Click {self.required_ripples} ripples to catch the fish!")
 
@@ -528,6 +529,7 @@ class FishingMinigame:
             self.last_hit_position = (best_ripple.x, best_ripple.y)
             self.last_hit_score = score
             self.last_hit_time = self.total_time
+            self.last_hit_early = is_early
 
             return score
         else:
@@ -538,6 +540,12 @@ class FishingMinigame:
             self.scores.append(0)
             timing = "too early" if is_early else "too late"
             print(f"   ❌ Missed! Clicked {timing} ({ring_distance:.1f}px off)")
+
+            # Visual feedback for miss
+            self.last_hit_position = (best_ripple.x, best_ripple.y)
+            self.last_hit_score = 0
+            self.last_hit_time = self.total_time
+            self.last_hit_early = is_early
 
             return 0
 
@@ -670,6 +678,7 @@ class FishingMinigame:
             "last_hit_position": self.last_hit_position,
             "last_hit_score": self.last_hit_score,
             "last_hit_time": self.last_hit_time,
+            "last_hit_early": self.last_hit_early,
             # Config
             "pond_width": self.POND_WIDTH,
             "pond_height": self.POND_HEIGHT,
