@@ -4939,8 +4939,10 @@ class GameEngine:
                         # Recipe clicked - select it
                         self.selected_recipe = recipe
                         print(f"📋 Selected recipe: {recipe.recipe_id}")
-                        # Auto-load recipe placement
-                        self.load_recipe_placement(recipe)
+                        # Clear user_placement - recipe preview is shown via renderer's
+                        # centered_recipe_placements, not user_placement
+                        # (Material placement in this UI is DISABLED - use Interactive Mode)
+                        self.user_placement = {}
                         return
 
                     y_off += btn_height + s(8)
