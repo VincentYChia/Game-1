@@ -133,59 +133,48 @@ class Renderer:
         grid_start_x = placement_rect.x + (placement_rect.width - grid_pixel_w) // 2
         grid_start_y = placement_rect.y + (placement_rect.height - grid_pixel_h) // 2
 
-        # Get recipe placement data and pre-compute centered positions
+        # Get recipe placement data - PRESERVE intentional positioning from JSON
         centered_recipe_placements = {}  # Maps display "gy,gx" to material_id
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
             if placement_data and placement_data.placement_map:
                 recipe_placement_map = placement_data.placement_map
 
-                # Calculate bounding box of recipe
-                positions = []
+                # Get the metadata grid size (the INTENDED grid size for this recipe)
+                recipe_grid_w, recipe_grid_h = grid_w, grid_h  # Default to station size
+                if placement_data.grid_size:
+                    parts = placement_data.grid_size.lower().split('x')
+                    if len(parts) == 2:
+                        try:
+                            recipe_grid_w = int(parts[0])
+                            recipe_grid_h = int(parts[1])
+                        except ValueError:
+                            pass
+
+                # Check if any placements exceed the metadata grid size (broken metadata)
+                # If so, expand the grid to fit all placements
                 for pos_str in recipe_placement_map.keys():
                     parts = pos_str.split(',')
                     if len(parts) == 2:
                         row, col = int(parts[0]), int(parts[1])
-                        positions.append((row, col))
+                        recipe_grid_h = max(recipe_grid_h, row)
+                        recipe_grid_w = max(recipe_grid_w, col)
 
-                if positions:
-                    min_row = min(p[0] for p in positions)
-                    max_row = max(p[0] for p in positions)
-                    min_col = min(p[1] for p in positions)
-                    max_col = max(p[1] for p in positions)
-                    recipe_height = max_row - min_row + 1
-                    recipe_width = max_col - min_col + 1
+                # Center the recipe's grid within the station grid
+                # This preserves ALL intentional positioning within the recipe
+                offset_row = (grid_h - recipe_grid_h) // 2
+                offset_col = (grid_w - recipe_grid_w) // 2
 
-                    # Determine recipe's natural tier based on dimensions
-                    # T1=3x3, T2=5x5, T3=7x7, T4=9x9
-                    max_dim = max(recipe_width, recipe_height)
-                    if max_dim <= 3:
-                        recipe_tier_size = 3
-                    elif max_dim <= 5:
-                        recipe_tier_size = 5
-                    elif max_dim <= 7:
-                        recipe_tier_size = 7
-                    else:
-                        recipe_tier_size = 9
-
-                    # Center recipe within its natural tier grid
-                    recipe_offset_row = (recipe_tier_size - recipe_height) // 2 + 1  # +1 for 1-indexed
-                    recipe_offset_col = (recipe_tier_size - recipe_width) // 2 + 1
-
-                    # Center the recipe's tier grid within the station grid
-                    station_offset_row = (grid_h - recipe_tier_size) // 2
-                    station_offset_col = (grid_w - recipe_tier_size) // 2
-
-                    # Build centered placements map
-                    for pos_str, mat_id in recipe_placement_map.items():
-                        parts = pos_str.split(',')
-                        if len(parts) == 2:
-                            orig_row, orig_col = int(parts[0]), int(parts[1])
-                            # Normalize to 0-based, add recipe centering, add station centering
-                            display_row = (orig_row - min_row) + recipe_offset_row + station_offset_row
-                            display_col = (orig_col - min_col) + recipe_offset_col + station_offset_col
-                            centered_key = f"{display_row},{display_col}"
-                            centered_recipe_placements[centered_key] = mat_id
+                # Build centered placements map - keep EXACT positions, just add station offset
+                for pos_str, mat_id in recipe_placement_map.items():
+                    parts = pos_str.split(',')
+                    if len(parts) == 2:
+                        orig_row, orig_col = int(parts[0]), int(parts[1])
+                        # Add station centering offset - NO normalization of recipe positions
+                        display_row = orig_row + offset_row
+                        display_col = orig_col + offset_col
+                        centered_key = f"{display_row},{display_col}"
+                        centered_recipe_placements[centered_key] = mat_id
 
         # Draw grid cells
         cell_rects = []  # Will store list of (pygame.Rect, (grid_x, grid_y)) for click detection
