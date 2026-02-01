@@ -4747,6 +4747,29 @@ class Renderer:
             grid_offset_x = placement_x + (placement_w - grid_size * cell_size) // 2
             grid_offset_y = placement_y + s(30)
 
+            # Calculate centering offset based on placed materials
+            # This makes placements appear centered regardless of where player clicked
+            center_offset_x = 0
+            center_offset_y = 0
+            if interactive_ui.grid:
+                # Find bounding box of placed materials
+                placed_coords = list(interactive_ui.grid.keys())
+                min_x = min(p[0] for p in placed_coords)
+                max_x = max(p[0] for p in placed_coords)
+                min_y = min(p[1] for p in placed_coords)
+                max_y = max(p[1] for p in placed_coords)
+
+                # Calculate placement dimensions
+                placed_width = max_x - min_x + 1
+                placed_height = max_y - min_y + 1
+
+                # Calculate offset to center the placement on the grid
+                # Target center position minus current center position
+                target_center_x = (grid_size - placed_width) // 2
+                target_center_y = (grid_size - placed_height) // 2
+                center_offset_x = target_center_x - min_x
+                center_offset_y = target_center_y - min_y
+
             # Header
             header_text = f"SMITHING GRID ({grid_size}x{grid_size})"
             surf.blit(self.small_font.render(header_text, True, (200, 200, 200)), (placement_x + s(10), placement_y + s(8)))
@@ -4758,9 +4781,12 @@ class Renderer:
                     cell_y = grid_offset_y + y * cell_size
                     cell_rect = pygame.Rect(cell_x, cell_y, cell_size - s(2), cell_size - s(2))
 
-                    # Check if cell has material
-                    pos = (x, y)
-                    placed_mat = interactive_ui.grid.get(pos)
+                    # Check if cell has material (apply centering offset)
+                    # The display position (x, y) maps to source position (x - offset, y - offset)
+                    source_x = x - center_offset_x
+                    source_y = y - center_offset_y
+                    source_pos = (source_x, source_y)
+                    placed_mat = interactive_ui.grid.get(source_pos)
 
                     # Cell color
                     is_hovered = cell_rect.collidepoint((mouse_pos[0] - wx, mouse_pos[1] - wy))
@@ -4799,9 +4825,9 @@ class Renderer:
                                 text_y = cell_rect.centery - text.get_height() // 2
                                 surf.blit(text, (text_x, text_y))
 
-                    # Store for click detection
+                    # Store for click detection (use source_pos so clicks are consistent with display)
                     abs_rect = cell_rect.move(wx, wy)
-                    placement_rects.append((abs_rect, pos))
+                    placement_rects.append((abs_rect, source_pos))
 
         elif isinstance(interactive_ui, InteractiveRefiningUI):
             # HUB-AND-SPOKE (Refining) with tier-varying core slots
