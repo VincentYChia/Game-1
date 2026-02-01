@@ -476,22 +476,24 @@ class FishingMinigame:
         if not self.active:
             return None
 
-        # Find the closest active ripple to the click
+        # Find ripple that was clicked (click must be within the ripple's visible area)
         best_ripple = None
         best_distance = float('inf')
 
         for ripple in self.ripples:
             if ripple.active and not ripple.hit:
                 distance = math.sqrt((click_x - ripple.x)**2 + (click_y - ripple.y)**2)
-                if distance < best_distance:
+                # Only consider if click is within the current expanding ring
+                if distance <= ripple.current_radius and distance < best_distance:
                     best_distance = distance
                     best_ripple = ripple
 
         if best_ripple is None:
-            return None
+            return None  # Click wasn't inside any active ripple
 
-        # Check if click is within the expanding ring's area
+        # Check how close the expanding ring is to the target radius
         ring_distance = abs(best_ripple.current_radius - self.target_radius)
+        is_early = best_ripple.current_radius < self.target_radius
 
         # Check if within hit tolerance (adjusted by STR)
         if ring_distance <= self.hit_tolerance:
@@ -507,9 +509,10 @@ class FishingMinigame:
                 score = self.FAIR_SCORE
                 print(f"   Fair (+{score})")
             else:
-                # Partial hit
+                # Partial hit - show whether early or late
                 score = max(self.MIN_PARTIAL_SCORE, int(self.FAIR_SCORE * (1 - ring_distance / self.hit_tolerance)))
-                print(f"   ~ Late/Early (+{score})")
+                timing = "Early" if is_early else "Late"
+                print(f"   ~ {timing} (+{score})")
 
             best_ripple.hit = True
             best_ripple.score = score
@@ -530,7 +533,8 @@ class FishingMinigame:
             best_ripple.score = 0
             self.misses += 1
             self.scores.append(0)
-            print(f"   ❌ Missed! Ring was {ring_distance:.1f}px off")
+            timing = "too early" if is_early else "too late"
+            print(f"   ❌ Missed! Clicked {timing} ({ring_distance:.1f}px off)")
 
             return 0
 
