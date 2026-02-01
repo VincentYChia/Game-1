@@ -682,8 +682,8 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         Match against smithing recipes with multi-tier backwards compatibility.
 
         Strategy:
-        1. Try matching at current station tier first
-        2. If no match, try centering in lower tiers (T3 → T2 → T1)
+        1. Normalize player's placement to its bounding box (allows placement anywhere)
+        2. Try matching at current station tier first, then lower tiers
         3. Stop early if recipe is too large for a tier
         """
         if not self.grid:
@@ -699,6 +699,30 @@ class InteractiveSmithingUI(InteractiveBaseUI):
             (x, y): mat.item_id for (x, y), mat in self.grid.items()
         }
 
+        if not current_placement_raw:
+            return None
+
+        # Calculate bounding box of player's placement
+        all_coords = list(current_placement_raw.keys())
+        min_x = min(c[0] for c in all_coords)
+        max_x = max(c[0] for c in all_coords)
+        min_y = min(c[1] for c in all_coords)
+        max_y = max(c[1] for c in all_coords)
+
+        # Calculate placement dimensions
+        placement_width = max_x - min_x + 1
+        placement_height = max_y - min_y + 1
+
+        # Normalize placement to start at (1,1) in recipe coordinate space
+        # This allows the player to place recipes ANYWHERE on the grid
+        normalized_placement = {}
+        for (x, y), mat_id in current_placement_raw.items():
+            # Normalize to 1-indexed coordinates relative to bounding box
+            norm_col = x - min_x + 1  # Column (1-indexed)
+            norm_row = y - min_y + 1  # Row (1-indexed)
+            # JSON format is "row,col"
+            normalized_placement[f"{norm_row},{norm_col}"] = mat_id
+
         # Define grid sizes for each tier
         tier_grid_sizes = {1: 3, 2: 5, 3: 7, 4: 9}
 
@@ -706,51 +730,9 @@ class InteractiveSmithingUI(InteractiveBaseUI):
         for check_tier in range(self.station_tier, 0, -1):
             check_grid_size = tier_grid_sizes[check_tier]
 
-            # Calculate offset to center this tier's grid in the station grid
-            offset_x = (self.grid_size - check_grid_size) // 2
-            offset_y = (self.grid_size - check_grid_size) // 2
-
-            # Transform current placement to this tier's coordinate space
-            tier_placement = {}
-            valid_for_tier = True
-
-            for (x, y), mat_id in current_placement_raw.items():
-                # Calculate position relative to centered grid
-                tier_x = x - offset_x
-                tier_y = y - offset_y
-
-                # Check if position is within this tier's grid bounds
-                if not (0 <= tier_x < check_grid_size and 0 <= tier_y < check_grid_size):
-                    valid_for_tier = False
-                    break
-
-                # Convert to 1-indexed JSON format "row,col" = (Y,X)
-                # tier_y is row, tier_x is column
-                tier_placement[f"{tier_y+1},{tier_x+1}"] = mat_id
-
-            if not valid_for_tier:
+            # If placement is too large for this tier, skip to lower tiers
+            if placement_width > check_grid_size or placement_height > check_grid_size:
                 continue
-
-            # Check if placement is too wide/tall for this tier (optimization)
-            if tier_placement:
-                coords = []
-                for coord_str in tier_placement.keys():
-                    parts = coord_str.split(',')
-                    if len(parts) == 2:
-                        coords.append((int(parts[0]), int(parts[1])))
-
-                if coords:
-                    min_x = min(c[0] for c in coords)
-                    max_x = max(c[0] for c in coords)
-                    min_y = min(c[1] for c in coords)
-                    max_y = max(c[1] for c in coords)
-
-                    width = max_x - min_x + 1
-                    height = max_y - min_y + 1
-
-                    # If pattern is wider/taller than this tier's grid, skip to lower tiers
-                    if width > check_grid_size or height > check_grid_size:
-                        continue
 
             # Try matching recipes for this tier
             recipes = recipe_db.get_recipes_for_station(self.station_type, check_tier)
@@ -760,8 +742,8 @@ class InteractiveSmithingUI(InteractiveBaseUI):
                 if not placement or placement.discipline != 'smithing':
                     continue
 
-                # Exact match required
-                if tier_placement == placement.placement_map:
+                # Exact match required (normalized placement vs recipe placement)
+                if normalized_placement == placement.placement_map:
                     print(f"✓ Matched {recipe.recipe_id}")
                     return recipe
 
