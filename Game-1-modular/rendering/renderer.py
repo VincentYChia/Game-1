@@ -135,23 +135,32 @@ class Renderer:
 
         # Get recipe placement data if available
         recipe_placement_map = {}
-        recipe_grid_w, recipe_grid_h = grid_w, grid_h  # Default to station grid size
+        recipe_min_row, recipe_min_col = 1, 1
+        recipe_height, recipe_width = 1, 1
         if selected_recipe:
             placement_data = placement_db.get_placement(selected_recipe.recipe_id)
-            if placement_data and placement_data.grid_size:
-                # Parse recipe's actual grid size (e.g., "3x3")
-                parts = placement_data.grid_size.lower().split('x')
-                if len(parts) == 2:
-                    try:
-                        recipe_grid_w = int(parts[0])
-                        recipe_grid_h = int(parts[1])
-                    except ValueError:
-                        pass
+            if placement_data and placement_data.placement_map:
                 recipe_placement_map = placement_data.placement_map
+                # Calculate ACTUAL bounding box from placement positions (not metadata gridSize)
+                # This handles recipes that don't start at (1,1) or have incorrect gridSize metadata
+                positions = []
+                for pos_str in recipe_placement_map.keys():
+                    parts = pos_str.split(',')
+                    if len(parts) == 2:
+                        row, col = int(parts[0]), int(parts[1])
+                        positions.append((row, col))
+                if positions:
+                    recipe_min_row = min(p[0] for p in positions)
+                    recipe_max_row = max(p[0] for p in positions)
+                    recipe_min_col = min(p[1] for p in positions)
+                    recipe_max_col = max(p[1] for p in positions)
+                    recipe_height = recipe_max_row - recipe_min_row + 1
+                    recipe_width = recipe_max_col - recipe_min_col + 1
 
         # Calculate offset to center recipe on station grid
-        offset_x = (grid_w - recipe_grid_w) // 2
-        offset_y = (grid_h - recipe_grid_h) // 2
+        # Use actual bounding box dimensions, not metadata gridSize
+        offset_x = (grid_w - recipe_width) // 2
+        offset_y = (grid_h - recipe_height) // 2
 
         # Draw grid cells
         cell_rects = []  # Will store list of (pygame.Rect, (grid_x, grid_y)) for click detection
@@ -163,17 +172,15 @@ class Renderer:
                 cell_y = grid_start_y + (gy - 1) * (cell_size + 4)
                 cell_rect = pygame.Rect(cell_x, cell_y, cell_size, cell_size)
 
-                # Check if this cell corresponds to a recipe requirement (with offset for centering)
-                recipe_x = gx - offset_x
-                recipe_y = gy - offset_y
-                # Placement data format is "row,col" where row=Y axis, col=X axis
-                # gy is the row (Y), gx is the col (X), so keys should be "{row},{col}" = "{gy},{gx}"
-                recipe_key = f"{recipe_y},{recipe_x}"
+                # Check if this cell corresponds to a recipe requirement (with centering offset)
+                # Convert display position to ACTUAL recipe position in the placement map
+                # Grid position (gy, gx) maps to recipe position (gy - offset_y + min_row - 1, gx - offset_x + min_col - 1)
+                recipe_row = gy - offset_y + recipe_min_row - 1
+                recipe_col = gx - offset_x + recipe_min_col - 1
+                recipe_key = f"{recipe_row},{recipe_col}"
 
                 grid_key = f"{gy},{gx}"
-                has_recipe_requirement = (1 <= recipe_x <= recipe_grid_w and
-                                        1 <= recipe_y <= recipe_grid_h and
-                                        recipe_key in recipe_placement_map)
+                has_recipe_requirement = recipe_key in recipe_placement_map
                 has_user_placement = grid_key in user_placement
 
                 # Cell background color
@@ -4825,9 +4832,10 @@ class Renderer:
                                 text_y = cell_rect.centery - text.get_height() // 2
                                 surf.blit(text, (text_x, text_y))
 
-                    # Store for click detection (use source_pos so clicks are consistent with display)
+                    # Store for click detection (use DISPLAY position, not source)
+                    # The centering offset only affects rendering lookup, not where materials are stored
                     abs_rect = cell_rect.move(wx, wy)
-                    placement_rects.append((abs_rect, source_pos))
+                    placement_rects.append((abs_rect, (x, y)))
 
         elif isinstance(interactive_ui, InteractiveRefiningUI):
             # HUB-AND-SPOKE (Refining) with tier-varying core slots
