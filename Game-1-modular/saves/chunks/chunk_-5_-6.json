@@ -1,7 +1,7 @@
 {
   "chunk_x": -5,
   "chunk_y": -6,
-  "chunk_type": "water_cursed_swamp",
+  "chunk_type": "rare_deep_cave",
   "dungeon_entrance": {
     "position": {
       "x": -69,
@@ -10,5 +10,5 @@
     },
     "rarity": "uncommon"
   },
-  "unload_timestamp": 35.374999999999986
+  "unload_timestamp": 46.68000000000017
 }

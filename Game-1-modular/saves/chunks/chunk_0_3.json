@@ -1,7 +1,7 @@
 {
   "chunk_x": 0,
   "chunk_y": 3,
-  "chunk_type": "water_lake",
+  "chunk_type": "dangerous_forest",
   "dungeon_entrance": {
     "position": {
       "x": 11,
@@ -10,5 +10,5 @@
     },
     "rarity": "uncommon"
   },
-  "unload_timestamp": 157.32900000000103
+  "unload_timestamp": 15.940999999999978
 }
