@@ -1,7 +1,7 @@
 {
   "chunk_x": 4,
   "chunk_y": -1,
-  "chunk_type": "peaceful_forest",
+  "chunk_type": "dangerous_forest",
   "dungeon_entrance": {
     "position": {
       "x": 74,
@@ -10,5 +10,5 @@
     },
     "rarity": "common"
   },
-  "unload_timestamp": 4.294999999999993
+  "unload_timestamp": 2.2979999999999987
 }
