@@ -934,6 +934,14 @@ def train_lightgbm_classifier(X_train, y_train, X_test, y_test):
         print(f"Best robustness score: {best_score:.4f}")
     else:
         print(f"[!] WARNING: No valid models found! All configs showed signs of memorization.")
+        # Fall back to the best rejected model - pick the one with highest val_acc
+        if results:
+            best_rejected = max(results, key=lambda x: x['val_acc'])
+            best_model = best_rejected['model']
+            best_config_name = best_rejected['name']
+            print(f"[!] FALLBACK: Using best rejected model: {best_config_name}")
+            print(f"    Val accuracy: {best_rejected['val_acc']*100:.1f}%, Gap: {best_rejected['gap']*100:.2f}%")
+            print(f"    Reason rejected: {best_rejected.get('rejection_reason', 'unknown')}")
 
     # Show top 3 valid configs
     valid_results.sort(key=lambda x: x['score'], reverse=True)
@@ -1225,6 +1233,12 @@ Examples:
 
         # Train model
         model = train_lightgbm_classifier(X_train, y_train, X_test, y_test)
+
+        # Check if we got a model
+        if model is None:
+            print("\n[ERROR] No model was trained! All configurations may have failed.")
+            print("Check the data or hyperparameters.")
+            return
 
         # Evaluate
         metrics = evaluate_model(model, X_test, y_test, X_train, y_train)

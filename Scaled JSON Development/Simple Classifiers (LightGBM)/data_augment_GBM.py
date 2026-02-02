@@ -822,79 +822,165 @@ def augment_engineering_complete(recipe: Dict, all_materials: Dict) -> List[Dict
 
 
 def generate_engineering_negatives(valid_recipes: List[Dict], all_materials: Dict, num_per_recipe: int = 3) -> List[Tuple[Dict, int]]:
-    """Generate invalid engineering recipes."""
+    """
+    Generate invalid engineering recipes that are HARD to distinguish from valid ones.
+
+    Strategy: Create negatives that LOOK like valid recipes but have subtle errors:
+    - Wrong material for slot type (e.g., ore in FRAME instead of ingot)
+    - Tier mismatches (T1 materials in T3 recipe)
+    - Multiple wrong materials (2-3 slots wrong)
+    - Quantity anomalies combined with material issues
+
+    AVOID trivially-detectable patterns like:
+    - Single slot type only (too obvious)
+    - Missing critical slots entirely
+    - Random nonsense combinations
+    """
     negatives = []
 
+    # Categorize materials by type for smarter swaps
+    materials_by_category = {}
+    materials_by_tier = {1: [], 2: [], 3: [], 4: []}
+
+    for mat_id, mat_data in all_materials.items():
+        cat = mat_data.get('category', 'unknown')
+        if cat not in materials_by_category:
+            materials_by_category[cat] = []
+        materials_by_category[cat].append(mat_id)
+
+        tier = mat_data.get('tier', 1)
+        if tier in materials_by_tier:
+            materials_by_tier[tier].append(mat_id)
+
+    # Get all slot types used in valid recipes for realistic combinations
+    all_slot_types = set()
+    for recipe in valid_recipes:
+        for slot in recipe.get('slots', []):
+            all_slot_types.add(slot.get('type', 'FRAME'))
+
     slot_counts = [len(r['slots']) for r in valid_recipes]
-    negatives_per_type = max(1, num_per_recipe // 4)
+    negatives_per_type = max(1, num_per_recipe // 5)
 
     for recipe in valid_recipes:
         generated = 0
+        station_tier = recipe.get('stationTier', 1)
 
-        # Type 1: Wrong material category
+        # Type 1: Multiple wrong material categories (subtle - keeps structure)
         for _ in range(negatives_per_type):
             if generated >= num_per_recipe:
                 break
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
-            if negative['slots']:
-                idx = random.randint(0, len(negative['slots']) - 1)
+
+            # Change 2-3 materials to wrong categories
+            num_changes = random.randint(2, min(3, len(negative['slots'])))
+            indices = random.sample(range(len(negative['slots'])), num_changes)
+
+            for idx in indices:
                 mat_id = negative['slots'][idx]['materialId']
                 wrong = find_different_category(mat_id, all_materials)
                 negative['slots'][idx]['materialId'] = wrong
+
             negatives.append((negative, 0))
             generated += 1
 
-        # Type 2: Only one slot type
+        # Type 2: Tier mismatch (use wrong tier materials - subtle)
         for _ in range(negatives_per_type):
             if generated >= num_per_recipe:
                 break
-            negative = {
-                'recipeId': f"negative_{uuid.uuid4().hex[:8]}",
-                'outputId': "invalid",
-                'stationTier': recipe['stationTier'],
-                'slots': []
-            }
-            single_type = random.choice(['FRAME', 'POWER', 'FUNCTION'])
-            num_slots = random.choice(slot_counts) if slot_counts else 3
-
-            for _ in range(num_slots):
-                negative['slots'].append({
-                    'type': single_type,
-                    'materialId': random.choice(list(all_materials.keys())),
-                    'quantity': random.randint(1, 6)
-                })
-            negatives.append((negative, 0))
-            generated += 1
-
-        # Type 3: Missing critical slots
-        if generated < num_per_recipe:
             negative = copy.deepcopy(recipe)
             negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
-            critical_slots = [i for i, s in enumerate(negative['slots'])
-                             if s['type'] in ['FRAME', 'FUNCTION']]
-            if critical_slots:
-                remove_idx = random.choice(critical_slots)
-                negative['slots'].pop(remove_idx)
+
+            # For high-tier recipes, use low-tier materials (and vice versa)
+            if station_tier >= 2:
+                wrong_tier = 1
+            else:
+                wrong_tier = random.choice([3, 4]) if materials_by_tier[3] or materials_by_tier[4] else 2
+
+            # Change 1-2 materials to wrong tier
+            num_changes = random.randint(1, min(2, len(negative['slots'])))
+            indices = random.sample(range(len(negative['slots'])), num_changes)
+
+            for idx in indices:
+                if materials_by_tier.get(wrong_tier):
+                    negative['slots'][idx]['materialId'] = random.choice(materials_by_tier[wrong_tier])
+
             negatives.append((negative, 0))
             generated += 1
 
-        # Type 4: Nonsensical combinations
-        while generated < num_per_recipe:
-            negative = {
-                'recipeId': f"negative_{uuid.uuid4().hex[:8]}",
-                'outputId': "invalid",
-                'stationTier': recipe['stationTier'],
-                'slots': []
-            }
-            num_slots = random.choice(slot_counts) if slot_counts else 3
+        # Type 3: Duplicate slot positions (same slot type/material repeated)
+        for _ in range(negatives_per_type):
+            if generated >= num_per_recipe:
+                break
+            negative = copy.deepcopy(recipe)
+            negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
 
-            for _ in range(num_slots):
-                negative['slots'].append({
-                    'type': random.choice(['FRAME', 'FUNCTION', 'POWER', 'MODIFIER']),
-                    'materialId': random.choice(list(all_materials.keys())),
-                    'quantity': random.randint(1, 6)
-                })
+            if len(negative['slots']) >= 2:
+                # Pick a slot and duplicate it over another
+                src_idx = random.randint(0, len(negative['slots']) - 1)
+                dst_idx = random.randint(0, len(negative['slots']) - 1)
+                while dst_idx == src_idx and len(negative['slots']) > 1:
+                    dst_idx = random.randint(0, len(negative['slots']) - 1)
+
+                negative['slots'][dst_idx] = copy.deepcopy(negative['slots'][src_idx])
+
+            negatives.append((negative, 0))
+            generated += 1
+
+        # Type 4: Swapped slot types (keeps materials but wrong slot assignment)
+        for _ in range(negatives_per_type):
+            if generated >= num_per_recipe:
+                break
+            negative = copy.deepcopy(recipe)
+            negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
+
+            if len(negative['slots']) >= 2:
+                # Swap slot types between two slots
+                idx1 = random.randint(0, len(negative['slots']) - 1)
+                idx2 = random.randint(0, len(negative['slots']) - 1)
+                while idx2 == idx1 and len(negative['slots']) > 1:
+                    idx2 = random.randint(0, len(negative['slots']) - 1)
+
+                type1 = negative['slots'][idx1]['type']
+                type2 = negative['slots'][idx2]['type']
+                negative['slots'][idx1]['type'] = type2
+                negative['slots'][idx2]['type'] = type1
+
+            negatives.append((negative, 0))
+            generated += 1
+
+        # Type 5: Near-valid with wrong quantities and materials combined
+        while generated < num_per_recipe:
+            negative = copy.deepcopy(recipe)
+            negative['recipeId'] = f"negative_{uuid.uuid4().hex[:8]}"
+
+            # Make 1-2 subtle changes
+            num_changes = random.randint(1, 2)
+            for _ in range(num_changes):
+                if negative['slots']:
+                    idx = random.randint(0, len(negative['slots']) - 1)
+                    change_type = random.choice(['material', 'quantity', 'both'])
+
+                    if change_type in ['material', 'both']:
+                        # Use a similar but wrong material
+                        current_mat = negative['slots'][idx]['materialId']
+                        current_cat = all_materials.get(current_mat, {}).get('category', 'ore')
+
+                        # Pick from a related but wrong category
+                        wrong_categories = [c for c in materials_by_category.keys()
+                                           if c != current_cat and materials_by_category[c]]
+                        if wrong_categories:
+                            wrong_cat = random.choice(wrong_categories)
+                            negative['slots'][idx]['materialId'] = random.choice(materials_by_category[wrong_cat])
+
+                    if change_type in ['quantity', 'both']:
+                        # Extreme quantity (too high or too low)
+                        current_qty = negative['slots'][idx].get('quantity', 1)
+                        if random.random() < 0.5:
+                            negative['slots'][idx]['quantity'] = max(1, current_qty - random.randint(2, 4))
+                        else:
+                            negative['slots'][idx]['quantity'] = current_qty + random.randint(5, 10)
+
             negatives.append((negative, 0))
             generated += 1
 
