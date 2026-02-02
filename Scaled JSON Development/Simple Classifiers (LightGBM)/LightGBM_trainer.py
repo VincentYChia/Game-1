@@ -626,6 +626,9 @@ def evaluate_model(model, X_test, y_test, X_train=None, y_train=None):
     """Evaluate model performance."""
     print("\nEvaluating model...")
 
+    # Check for test mode from environment variable
+    test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
+
     # Predictions on test
     y_pred_proba = model.predict(X_test, num_iteration=model.best_iteration)
     y_pred = (y_pred_proba > 0.5).astype(int)
@@ -658,6 +661,17 @@ def evaluate_model(model, X_test, y_test, X_train=None, y_train=None):
     print(f"F1 Score:       {f1:.4f}")
     print(f"{'=' * 50}")
 
+    # Check requirements (95% accuracy, <4% overfit)
+    meets_acc = test_accuracy >= 0.95
+    meets_gap = overfit_gap is not None and overfit_gap < 0.04
+
+    print(f"\n{'=' * 50}")
+    print(f"REQUIREMENTS CHECK")
+    print(f"{'=' * 50}")
+    print(f"Accuracy >=95%: {'PASS' if meets_acc else 'FAIL'} ({test_accuracy*100:.1f}%)")
+    print(f"Gap <4%:        {'PASS' if meets_gap else 'FAIL'} ({overfit_gap*100:.1f}% gap)" if overfit_gap is not None else "Gap <4%:        N/A")
+    print(f"{'=' * 50}")
+
     # Confusion matrix
     cm = confusion_matrix(y_test, y_pred)
     print(f"\nConfusion Matrix:")
@@ -670,18 +684,54 @@ def evaluate_model(model, X_test, y_test, X_train=None, y_train=None):
     print(f"\nDetailed Classification Report:")
     print(classification_report(y_test, y_pred, target_names=['Invalid', 'Valid']))
 
+    # Determine if model meets criteria
+    all_pass = meets_acc and meets_gap
+
     return {
         'val_accuracy': test_accuracy,
         'train_accuracy': train_accuracy,
         'overfit_gap': overfit_gap,
         'precision': precision,
         'recall': recall,
-        'f1': f1
+        'f1': f1,
+        'meets_criteria': all_pass,
+        'test_mode': test_mode
     }
 
 
-def save_model(model, feature_extractor, discipline, output_dir):
-    """Save trained model and feature extractor."""
+def save_model(model, feature_extractor, discipline, output_dir, metrics=None):
+    """Save trained model and feature extractor.
+
+    Args:
+        model: Trained LightGBM model
+        feature_extractor: Feature extractor instance
+        discipline: Discipline name
+        output_dir: Output directory
+        metrics: Optional dict with 'meets_criteria' and 'test_mode' keys
+    """
+    # Check if we should save
+    should_save = True
+    save_reason = ""
+
+    if metrics is not None:
+        meets_criteria = metrics.get('meets_criteria', False)
+        test_mode = metrics.get('test_mode', False)
+
+        if test_mode:
+            should_save = True
+            save_reason = "(test mode)"
+        elif meets_criteria:
+            should_save = True
+            save_reason = "(meets criteria: >=95% acc, <4% gap)"
+        else:
+            should_save = False
+            val_acc = metrics.get('val_accuracy', 0)
+            gap = metrics.get('overfit_gap', 0)
+            print(f"\n[SKIPPED] Model NOT saved - does not meet criteria")
+            print(f"          Val accuracy: {val_acc*100:.1f}% (need >=95%)")
+            print(f"          Overfit gap: {gap*100:.1f}% (need <4%)")
+            return False
+
     os.makedirs(output_dir, exist_ok=True)
 
     model_path = os.path.join(output_dir, f'{discipline}_model.txt')
@@ -694,8 +744,9 @@ def save_model(model, feature_extractor, discipline, output_dir):
     with open(extractor_path, 'wb') as f:
         pickle.dump(feature_extractor, f)
 
-    print(f"\nModel saved to: {model_path}")
-    print(f"Feature extractor saved to: {extractor_path}")
+    print(f"\n[SAVED] Model saved {save_reason}: {model_path}")
+    print(f"        Feature extractor saved: {extractor_path}")
+    return True
 
 
 def load_model(discipline, model_dir):
@@ -842,10 +893,13 @@ Examples:
         # Evaluate
         metrics = evaluate_model(model, X_test, y_test, X_train, y_train)
 
-        # Save model
-        save_model(model, feature_extractor, discipline, model_output_dir)
+        # Save model (conditionally based on criteria)
+        saved = save_model(model, feature_extractor, discipline, model_output_dir, metrics)
 
-        print("\nTraining complete!")
+        if saved:
+            print("\nTraining complete! Model saved.")
+        else:
+            print("\nTraining complete. Model did not meet criteria and was not saved.")
 
 
 if __name__ == "__main__":

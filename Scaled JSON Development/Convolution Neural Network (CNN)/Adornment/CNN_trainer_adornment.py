@@ -207,16 +207,25 @@ class BestModelVariationTrainer:
         print(f"Training:   Acc={train_acc:.4f}, F1={train_f1:.4f}")
         print(f"Overfitting Gap: {acc_gap:.4f}")
 
+        # Check requirements (90% accuracy, <6% overfit)
+        meets_acc = val_acc >= 0.90
+        meets_gap = acc_gap < 0.06
+        print(f"Accuracy >=90%: {'PASS' if meets_acc else 'FAIL'}")
+        print(f"Gap <6%:        {'PASS' if meets_gap else 'FAIL'}")
+
         # Check for test mode from environment
         import os
         test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
 
-        # Save if good (F1 >= 0.90) or always save in test mode
-        if val_f1 >= 0.90 or test_mode:
-            model_path = self.model_save_dir / f"{model_name}_f1{val_f1:.4f}_model.keras"
+        # Save if meets criteria (90% acc, <6% gap) or always save in test mode
+        all_pass = meets_acc and meets_gap
+        if all_pass or test_mode:
+            model_path = self.model_save_dir / f"{model_name}_acc{val_acc:.4f}_model.keras"
             self.model.save(model_path)
             if test_mode:
                 print(f"[SAVED] Model saved (test mode): {model_path.name}")
+            elif all_pass:
+                print(f"[SAVED] Model saved (meets criteria): {model_path.name}")
             else:
                 print(f"[SAVED] Model saved: {model_path.name}")
 

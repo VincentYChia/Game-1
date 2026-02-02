@@ -310,15 +310,15 @@ class HyperparameterSearch:
             print(f"  Inference:     {avg_inference:.2f}ms")
             print(f"  Overfitting:   {overfitting_gap*100:.2f}% gap")
 
-            # Check requirements
-            meets_acc = val_acc >= 0.70
+            # Check requirements (90% accuracy, <6% overfit)
+            meets_acc = val_acc >= 0.90
             meets_inference = avg_inference < 200
-            meets_gap = overfitting_gap < 0.15
+            meets_gap = overfitting_gap < 0.06
 
             print(f"\n{'='*60}")
-            print(f"Accuracy >=70%:        {'PASS' if meets_acc else 'FAIL'}")
+            print(f"Accuracy >=90%:        {'PASS' if meets_acc else 'FAIL'}")
             print(f"Inference <200ms:      {'PASS' if meets_inference else 'FAIL'}")
-            print(f"Gap <15%:              {'PASS' if meets_gap else 'FAIL'}")
+            print(f"Gap <6%:               {'PASS' if meets_gap else 'FAIL'}")
 
             # Check for test mode
             test_mode = os.environ.get('CLASSIFIER_TEST_MODE', '0') == '1'
@@ -378,7 +378,7 @@ class HyperparameterSearch:
         print(f"HYPERPARAMETER SEARCH - ROUND 2")
         print(f"{'='*80}")
         print(f"Testing {len(configs)} configurations")
-        print(f"Target: >=70% val accuracy, <200ms inference, <15% gap")
+        print(f"Target: >=90% val accuracy, <200ms inference, <6% gap")
         print(f"{'='*80}")
 
         for i, config in enumerate(configs, 1):
