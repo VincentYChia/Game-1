@@ -396,17 +396,35 @@ class HyperparameterSearch:
             return None
 
     def run_search(self, configs):
-        """Run hyperparameter search on all configurations"""
+        """Run hyperparameter search on all configurations with robustness scoring"""
         print(f"\n{'='*80}")
-        print(f"HYPERPARAMETER SEARCH - ROUND 2")
+        print(f"CNN HYPERPARAMETER SEARCH - {len(configs)} CONFIGURATIONS")
         print(f"{'='*80}")
-        print(f"Testing {len(configs)} configurations")
+        print(f"Selection criteria: Robustness Score (accuracy × overfit penalty)")
         print(f"Target: >=90% val accuracy, <200ms inference, <6% gap")
         print(f"{'='*80}")
 
+        best_score = -1
+        best_config_name = None
+
         for i, config in enumerate(configs, 1):
-            print(f"\n\n>>> Configuration {i}/{len(configs)}")
-            self.train_single_config(config)
+            print(f"\n\n>>> Configuration {i}/{len(configs)}: {config.get('name', 'unnamed')}")
+            result = self.train_single_config(config)
+
+            if result:
+                # Calculate robustness score
+                rob_score = calculate_robustness_score(result['val_acc'], result['overfitting_gap'])
+                result['robustness_score'] = rob_score
+
+                print(f"\n  >> Robustness Score: {rob_score:.4f}")
+
+                if rob_score > best_score:
+                    best_score = rob_score
+                    best_config_name = result['name']
+                    print(f"  >> NEW BEST!")
+
+        self.best_config_name = best_config_name
+        self.best_score = best_score
 
         return self.results
 
@@ -422,35 +440,37 @@ class HyperparameterSearch:
         return filepath
 
     def print_summary(self):
-        """Print comprehensive summary"""
+        """Print comprehensive summary sorted by robustness score"""
         if not self.results:
             print("No results to summarize")
             return
 
         print(f"\n\n{'='*100}")
-        print(f"SUMMARY - All Configurations")
+        print(f"SUMMARY - RANKED BY ROBUSTNESS SCORE")
         print(f"{'='*100}")
 
-        # Sort by validation accuracy
+        # Sort by robustness score (not raw accuracy)
         sorted_results = sorted(
             self.results,
-            key=lambda x: x['val_acc'],
+            key=lambda x: x.get('robustness_score', x['val_acc']),
             reverse=True
         )
 
         # Table header
-        print(f"\n{'Rank':<6}{'Name':<28}{'Val Acc':<12}{'Gap':<10}{'Infer':<12}{'Status'}")
+        print(f"\n{'Rank':<6}{'Name':<25}{'Rob.Score':<12}{'Val Acc':<12}{'Gap':<10}{'Status'}")
         print(f"{'-'*100}")
 
         for i, r in enumerate(sorted_results, 1):
             status = '[PASS]' if r['meets_requirements'] else '[FAIL]'
+            rob_score = r.get('robustness_score', 0)
+            marker = " <-- BEST" if hasattr(self, 'best_config_name') and r['name'] == self.best_config_name else ""
             print(
                 f"{i:<6}"
-                f"{r['name']:<28}"
+                f"{r['name']:<25}"
+                f"{rob_score:>8.4f}   "
                 f"{r['val_acc']*100:>6.2f}%     "
                 f"{r['overfitting_gap']*100:>5.1f}%    "
-                f"{r['inference_ms']:>6.1f}ms    "
-                f"{status}"
+                f"{status}{marker}"
             )
 
         # Best model details
@@ -479,24 +499,111 @@ class HyperparameterSearch:
         print(f"{'='*100}\n")
 
 
+def calculate_robustness_score(val_acc, overfit_gap):
+    """
+    Calculate robustness-aware score that penalizes overfitting.
+
+    A model with 90% accuracy and 2% gap is BETTER than
+    a model with 94% accuracy and 10% gap.
+    """
+    gap = abs(overfit_gap)
+
+    if gap < 0.03:
+        penalty = 1.0  # Excellent generalization
+    elif gap < 0.06:
+        penalty = 0.97  # Acceptable
+    elif gap < 0.10:
+        penalty = 0.90  # Concerning
+    elif gap < 0.15:
+        penalty = 0.80  # Overfitting
+    else:
+        penalty = 0.65  # Severe overfitting
+
+    return val_acc * penalty
+
+
 def get_round2_configs():
     """
-    Single best configuration - parameters already tuned.
+    Generate up to 7 configurations exploring regularization and learning rate.
 
-    With 2-3x augmented data, we need fewer epochs.
-    Early stopping handles convergence.
+    Strategy: All configs use the proven architecture (config_4) but vary:
+    - Dropout rates (primary regularization)
+    - L2 regularization strength
+    - Learning rate
+    - Batch size
+
+    Robustness is prioritized over raw accuracy.
     """
-
     configs = [
-        # Best known config: minimal architecture, batch 20, L2 regularization
+        # Config 1: Baseline with slightly more epochs
         {
-            'name': 'best_config',
+            'name': 'baseline',
             'architecture': 'config_4',
             'learning_rate': 0.001,
             'batch_size': 20,
             'dropout_rates': (0.3, 0.4),
             'l2_reg': 0.0001,
-            'epochs': 25  # Reduced for augmented data
+            'epochs': 30
+        },
+        # Config 2: Higher dropout (more regularization)
+        {
+            'name': 'high_dropout',
+            'architecture': 'config_4',
+            'learning_rate': 0.001,
+            'batch_size': 20,
+            'dropout_rates': (0.4, 0.5),
+            'l2_reg': 0.0002,
+            'epochs': 35
+        },
+        # Config 3: Lower learning rate
+        {
+            'name': 'slow_learner',
+            'architecture': 'config_4',
+            'learning_rate': 0.0005,
+            'batch_size': 20,
+            'dropout_rates': (0.3, 0.4),
+            'l2_reg': 0.0001,
+            'epochs': 40
+        },
+        # Config 4: Stronger L2 regularization
+        {
+            'name': 'strong_l2',
+            'architecture': 'config_4',
+            'learning_rate': 0.001,
+            'batch_size': 20,
+            'dropout_rates': (0.3, 0.4),
+            'l2_reg': 0.0005,
+            'epochs': 35
+        },
+        # Config 5: Conservative (very high regularization)
+        {
+            'name': 'conservative',
+            'architecture': 'config_4',
+            'learning_rate': 0.0008,
+            'batch_size': 24,
+            'dropout_rates': (0.4, 0.5),
+            'l2_reg': 0.0003,
+            'epochs': 40
+        },
+        # Config 6: Larger batch, higher LR
+        {
+            'name': 'larger_batch',
+            'architecture': 'config_4',
+            'learning_rate': 0.0015,
+            'batch_size': 32,
+            'dropout_rates': (0.3, 0.4),
+            'l2_reg': 0.0002,
+            'epochs': 30
+        },
+        # Config 7: Very conservative
+        {
+            'name': 'very_conservative',
+            'architecture': 'config_4',
+            'learning_rate': 0.0006,
+            'batch_size': 20,
+            'dropout_rates': (0.45, 0.55),
+            'l2_reg': 0.0004,
+            'epochs': 45
         },
     ]
 
